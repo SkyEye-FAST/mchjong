@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "mchjong",
   "version": "${version}",
-  "name": "mchjong",
+  "name": "MCjhong",
   "description": "Mahjong mod for Minecraft 1.21.1.",
   "authors": [
     "SkyEye_FAST"
