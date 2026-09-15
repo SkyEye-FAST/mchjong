@@ -1,11 +1,11 @@
-# mchjong
+# MCjhong
 
 Mahjong mod for Minecraft 1.21.1.
 
 ## Mod Information
 
 - **Mod ID**: `mchjong`
-- **Mod Name**: `mchjong`
+- **Mod Name**: `MCjhong`
 - **Target Minecraft Version**: `1.21.1`
 - **Java Requirement**: `Java 21` (LTS)
 - **Base Package**: `top.skyeyefast.mchjong`
