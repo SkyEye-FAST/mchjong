@@ -13,6 +13,14 @@ base {
 repositories {
 	// Add repositories to retrieve artifacts from in here.
 	// Loom adds the essential maven repositories to download Minecraft and libraries automatically.
+	maven {
+		name = 'AliyunPublic'
+		url = 'https://maven.aliyun.com/repository/public/'
+	}
+	maven {
+		name = 'BMCLAPI'
+		url = 'https://bmclapi2.bangbang93.com/maven/'
+	}
 	mavenCentral()
 }
 
