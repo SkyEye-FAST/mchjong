@@ -1,0 +1,37 @@
+# Gradle
+.gradle/
+build/
+out/
+classes/
+
+# Eclipse
+*.launch
+.settings/
+bin/
+.classpath
+.project
+
+# IntelliJ IDEA
+.idea/
+*.iml
+*.ipr
+*.iws
+
+# Visual Studio Code
+.vscode/
+
+# OS Specific
+.DS_Store
+Thumbs.db
+
+# Minecraft Runtime & Logs
+run/
+runs/
+run-*/
+hs_err_*.log
+replay_*.log
+*.hprof
+*.jfr
+
+# NeoForge / Datagen cache
+src/generated/**/.cache/
