@@ -41,10 +41,12 @@ git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
+The default `main` branch contains both Fabric and NeoForge support for the
+current Minecraft version.
+
 ### Fabric
 
 ```bash
-git switch fabric/1.21.1
 ./gradlew build
 ./gradlew runClient   # optional development client
 ./gradlew runServer   # optional dedicated server
@@ -53,7 +55,6 @@ git switch fabric/1.21.1
 ### NeoForge
 
 ```bash
-git switch neoforge/1.21.1
 ./gradlew :neoforge:build
 ./gradlew :neoforge:runClient   # optional development client
 ./gradlew :neoforge:runServer   # optional dedicated server

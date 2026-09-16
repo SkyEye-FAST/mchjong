@@ -1,7 +1,9 @@
 # MCjhong architecture
 
-The current checkout builds both loaders. The root project is Fabric; `neoforge`
-uses the existing NeoForge 1.21.1 toolchain. No release branch history is rewritten.
+The repository keeps Fabric and NeoForge development together on `main` rather
+than maintaining loader-specific branches. The root project builds Fabric;
+`neoforge` is the NeoForge loader subproject. Both target Minecraft 1.21.1 and
+share the same gameplay, presentation, assets, and tests wherever possible.
 
 * `engine`: Minecraft-independent Java domain model, with one small, typed Kotlin
   adapter to the MIT-licensed mahjong-utils scoring and hand-analysis library.
