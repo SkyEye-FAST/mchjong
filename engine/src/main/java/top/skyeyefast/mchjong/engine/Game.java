@@ -17,7 +17,7 @@ import static top.skyeyefast.mchjong.engine.Action.Type.*;
 /** One server-owned table. All methods are called on the server thread. */
 public final class Game {
     public static final int DEAL_TICKS = 56;
-    public enum Phase { LOBBY, TURN, REACTION, HAND_END, MATCH_END }
+    public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
     RuleSet rules;
@@ -61,6 +61,9 @@ public final class Game {
     ExitVote exitVote;
     long exitVoteSequence;
     int exitCooldown;
+    boolean manual;
+    ManualHandling handling = new ManualHandling();
+    List<Integer> suppliedTiles = Tile.set(false);
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
@@ -77,6 +80,23 @@ public final class Game {
     public long revision() { return revision; }
     public Phase phase() { return phase; }
     public RuleSet rules() { return rules; }
+    public boolean manual() { return manual; }
+    public boolean equipped() { return suppliedTiles.size() == 136; }
+
+    /** The Minecraft adapter supplies checked physical tiles, or an empty list for an empty table. */
+    public boolean configureEquipment(boolean manual, List<Integer> tiles) {
+        Objects.requireNonNull(tiles);
+        if (phase != Phase.LOBBY || exitVote != null) return false;
+        if (!tiles.isEmpty() && (tiles.size() != 136 || !new HashSet<>(tiles).equals(new HashSet<>(Tile.set(false)))))
+            throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
+        if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
+        this.manual = manual;
+        suppliedTiles = List.copyOf(tiles);
+        handling = new ManualHandling();
+        for (PlayerState player : players) player.ready = false;
+        newDecision(Phase.LOBBY);
+        return true;
+    }
     public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
     public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
 
@@ -139,6 +159,7 @@ public final class Game {
         wall = null;
         pending = null;
         exitVote = null;
+        handling = new ManualHandling();
         exitCooldown = 0;
         for (int i = 0; i < players.length; i++) {
             players[i] = new PlayerState();
@@ -201,9 +222,9 @@ public final class Game {
         if (seat < 0 || seat >= rules.players() || players[seat].id == null || exitVote != null) return List.of();
         if (phase == Phase.LOBBY) {
             var actions = new ArrayList<Action>();
-            actions.add(new Action(READY));
+            if (equipped()) actions.add(new Action(READY));
             if (seat == host()) {
-                actions.add(new Action(PRACTICE));
+                if (equipped()) actions.add(new Action(PRACTICE));
                 for (RuleSet preset : RuleSet.values()) {
                     if (preset != rules && (preset.players() == 4 || players[3].id == null)) {
                         actions.add(new Action(CHANGE_RULE, preset.ordinal()));
@@ -212,6 +233,7 @@ public final class Game {
             }
             return actions;
         }
+        if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             return players[seat].ready ? List.of() : List.of(new Action(NEXT));
         }
@@ -226,6 +248,10 @@ public final class Game {
         var legal = actions(seat);
         if (actionIndex < 0 || actionIndex >= legal.size()) return false;
         Action action = legal.get(actionIndex);
+        if (ManualHandling.active(phase)) {
+            handling.act(this, seat, action);
+            return true;
+        }
         if (phase == Phase.LOBBY) {
             switch (action.type()) {
                 case READY -> players[seat].ready = !players[seat].ready;
@@ -239,6 +265,7 @@ public final class Game {
                 }
                 case CHANGE_RULE -> {
                     rules = RuleSet.values()[action.tiles().getFirst()];
+                    handling = new ManualHandling();
                     for (PlayerState player : players) {
                         player.points = rules.startingPoints();
                         player.ready = player.bot;
@@ -310,12 +337,8 @@ public final class Game {
 
     void startHand() {
         for (PlayerState player : players) player.resetHand();
-        wall = new Wall(rules, seed + 0x9e3779b97f4a7c15L * ++handNumber);
-        // Deal three groups of four tiles and then one tile to each player.
-        for (int packet = 0; packet < 3; packet++) for (int offset = 0; offset < rules.players(); offset++) {
-            for (int i = 0; i < 4; i++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
-        }
-        for (int offset = 0; offset < rules.players(); offset++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
+        handNumber++;
+        recorder = null;
         uninterrupted = true;
         fourKanAbort = false;
         lastTile = Tile.ABSENT;
@@ -326,11 +349,23 @@ public final class Game {
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "playing";
+        if (manual) { handling.begin(this); return; }
+        createWall();
+        // Deal three groups of four tiles and then one tile to each player.
+        for (int packet = 0; packet < 3; packet++) for (int offset = 0; offset < rules.players(); offset++) {
+            for (int i = 0; i < 4; i++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
+        }
+        for (int offset = 0; offset < rules.players(); offset++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
         recorder = replay == null ? null : new ReplayRecorder(this);
         draw(dealer, false, false);
         // Give the initial wall/deal presentation time before a training opponent acts.
         // This is not an animation-driven game state: explicit legal actions still work.
         age = -DEAL_TICKS;
+    }
+
+    void createWall() {
+        if (!equipped()) throw new IllegalStateException("Cannot deal without a physical set");
+        wall = new Wall(rules, seed + 0x9e3779b97f4a7c15L * handNumber, suppliedTiles);
     }
 
     int next(int seat) { return (seat + 1) % rules.players(); }
@@ -352,6 +387,17 @@ public final class Game {
             Settlement.exhaustive(this);
             return;
         }
+        turn = seat;
+        if (manual) {
+            handling.replacement = replacement;
+            handling.kan = kan;
+            newDecision(Phase.DRAW);
+            return;
+        }
+        drawNow(seat, replacement, kan);
+    }
+
+    void drawNow(int seat, boolean replacement, boolean kan) {
         turn = seat;
         PlayerState player = players[seat];
         player.drawn = replacement ? wall.replace() : wall.draw();
@@ -613,7 +659,7 @@ public final class Game {
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
-            wall == null ? List.of() : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
+            wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
             timeControl, clocks, finalRanks, openHands, exitVote);
     }
 
@@ -622,6 +668,10 @@ public final class Game {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(archiveQueue);
+        Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
+        if (!suppliedTiles.isEmpty() && (suppliedTiles.size() != 136
+            || !new HashSet<>(suppliedTiles).equals(new HashSet<>(Tile.set(false))))) throw new IllegalStateException("Invalid physical set");
+        handling.validate(this);
         if (exitCooldown < 0 || exitCooldown > ExitVote.DURATION_TICKS) throw new IllegalStateException("Invalid exit cooldown");
         if (exitVote != null && (exitVote.ticksLeft() < 1
             || exitVote.ticksLeft() > ExitVote.DURATION_TICKS || exitVote.required() < 2

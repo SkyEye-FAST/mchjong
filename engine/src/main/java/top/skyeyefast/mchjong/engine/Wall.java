@@ -19,7 +19,13 @@ final class Wall {
     int breakOffset;
 
     Wall(RuleSet rules, long seed) {
-        tiles = Tile.set(rules.sanma());
+        this(rules, seed, Tile.set(false));
+    }
+
+    Wall(RuleSet rules, long seed, List<Integer> supplied) {
+        if (supplied.size() != 136 || !new java.util.HashSet<>(supplied).equals(new java.util.HashSet<>(Tile.set(false))))
+            throw new IllegalArgumentException("A wall requires one complete supplied set");
+        tiles = new ArrayList<>(supplied.stream().filter(tile -> !rules.sanma() || Tile.kind(tile) == 0 || Tile.kind(tile) >= 8).toList());
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
         liveEnd = tiles.size() - 14;

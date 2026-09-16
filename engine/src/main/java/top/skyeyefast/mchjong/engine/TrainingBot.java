@@ -12,7 +12,7 @@ final class TrainingBot {
     private TrainingBot() {}
 
     static int choose(Game game, int seat, List<Action> actions) {
-        for (Action.Type type : List.of(RON, TSUMO, NEXT, READY, NUKI, CLOSED_KAN, RIICHI, ABORT_NINE, PASS)) {
+        for (Action.Type type : List.of(RON, TSUMO, NEXT, READY, SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW, NUKI, CLOSED_KAN, RIICHI, ABORT_NINE, PASS)) {
             int index = Game.indexOf(actions, type);
             if (index >= 0) return index;
         }
