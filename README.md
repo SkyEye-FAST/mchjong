@@ -16,7 +16,9 @@ Mahjong mod for Minecraft 1.21.1.
 
 ## Branch Structure
 
-This repository uses a multi-branch workflow to maintain separate development environments for each mod loader:
+The loader branches retain separate release histories. Both use the same
+multi-project checkout: the root project builds Fabric, and `neoforge` builds
+NeoForge from the shared `common`, `engine` and `art` sources.
 
 | Branch | Mod Loader | Build Plugin | Mappings |
 |---|---|---|---|
@@ -58,11 +60,26 @@ git checkout neoforge/1.21.1
 #### NeoForge (`neoforge/1.21.1`)
 ```bash
 # Build mod JAR
-./gradlew build
+./gradlew :neoforge:build
 
 # Run client for debugging
-./gradlew runClient
+./gradlew :neoforge:runClient
 
 # Run dedicated server for debugging
-./gradlew runServer
+./gradlew :neoforge:runServer
 ```
+
+On Windows, use `gradlew.bat` instead of `./gradlew`. Run `gradlew.bat buildAll`
+to test the shared modules and build both loaders. Fabric output is under
+`build/libs`; NeoForge output is under `neoforge/build/libs`.
+
+### 4. Tile artwork and optional backs
+
+Default tile backs are solid teal. To add a diamond pattern, enable
+**MCjhong: Patterned tile backs** in Minecraft's resource-pack screen. The pack is
+bundled but disabled by default, and disabling it restores the solid backs.
+Names and descriptions are available in all four supported languages.
+
+The tile faces use CC0 vector artwork rasterized during the build. Source
+attribution, resource-pack customization and the verification commands are in
+[docs/ASSETS.md](docs/ASSETS.md). The mod does not download artwork at runtime.
