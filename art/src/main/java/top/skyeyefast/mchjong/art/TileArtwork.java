@@ -23,7 +23,7 @@ final class TileArtwork implements AutoCloseable {
     static final int HEIGHT = 384;
     static final int ATLAS_SIZE = 2048;
     static final int FACE_COUNT = 37;
-    static final int IVORY = 0xfff4eedb;
+    static final int FACE_WHITE = 0xffffffff;
     static final int BACK = 0xffffffff;
     private static final String SOURCE_ROOT = "riichi-mahjong-tiles-26e127ba2117f45cdce5ea0225748cc0cfad3169/";
     private static final String SHA256 = "79f892bfde6e9450b359cabe939db69a4217ff539518018967a30947c295e276";
@@ -65,9 +65,9 @@ final class TileArtwork implements AutoCloseable {
         try {
             int border = WIDTH / 64;
             if (!transparent) {
-                g.setColor(new Color(0xc9c0a6)); g.fillRect(0, 0, WIDTH, HEIGHT);
-                g.setColor(new Color(IVORY, true)); g.fillRect(border, border, WIDTH - 2 * border, HEIGHT - 2 * border);
-                g.setColor(new Color(0xfffbef));
+                g.setColor(new Color(0xcbd0d4)); g.fillRect(0, 0, WIDTH, HEIGHT);
+                g.setColor(new Color(FACE_WHITE, true)); g.fillRect(border, border, WIDTH - 2 * border, HEIGHT - 2 * border);
+                g.setColor(Color.WHITE);
                 g.drawLine(2 * border, border, WIDTH - 3 * border, border);
                 g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
             }

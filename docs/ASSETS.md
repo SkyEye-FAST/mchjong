@@ -48,8 +48,10 @@ and magnification filters after rendering, including after resource-pack reloads
 `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 texture. Every
 pixel of the default back is opaque white, a neutral tint mask for the item's
 vanilla dye component. Defaults render blue. There is no logo, border or noise.
-The material-colored body and shallow back shell supply the tile's physical
-shape; the back shell samples the top-left pixel and applies the same dye tint.
+The material-colored body, opaque white face plate and shallow back shell supply
+the tile's physical shape; the back shell samples the top-left pixel and applies
+the same dye tint. Every material, including wood, amethyst and glass, has a white
+printed surface. Glass transparency is restricted to the body, not the face plate.
 
 No patterned resource pack is bundled. To supply a design, create a normal
 resource pack for your target Minecraft version containing that same texture
@@ -78,7 +80,11 @@ world and item faces use this glyph atlas. Glass additionally uses a sorted
 alpha-blended pass after opaque backs and table surfaces. A custom face pack
 should replace both atlases to cover GUI thumbnails and world/item rendering.
 Private tile faces are withheld by the server and never resolved by the hidden
-tile mesh. There is no per-tile world entity.
+tile mesh. There is no per-tile world entity. `TileMesh.WIDTH`, `HEIGHT` and `DEPTH`
+define the physical envelope used by picking and table layout. Wall columns and
+layers touch edge-to-edge; river steps equal the tile width and length, with the
+extra width of a sideways riichi tile accounted for. Called discards still leave
+the visible river without changing the original discard identities.
 
 The four source language files live in `common/src/main/resources`. Their engine
 action and ruleset keys match the corresponding names in lowercase. Upstream

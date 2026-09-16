@@ -54,8 +54,47 @@ class TableLayoutTest {
             if (i % 6 == 0) assertEquals(TableScene.RIVER_ROW, river.get(i).position().z - river.get(i - 1).position().z, 1e-6);
             else {
                 double widths = (river.get(i).yaw() == 90 ? .160 : .104) + (river.get(i - 1).yaw() == 90 ? .160 : .104);
-                assertTrue(river.get(i).position().x - river.get(i - 1).position().x > widths * TableScene.TILE_SCALE / 2);
+                assertEquals(widths * TableScene.TILE_SCALE / 2,
+                    river.get(i).position().x - river.get(i - 1).position().x, 1e-7, "Tiles must touch, including the riichi tile");
                 assertEquals(river.get(i).position().z, river.get(i - 1).position().z);
+            }
+        }
+    }
+
+    @Test void completeWallsTouchHorizontallyAndVerticallyForEveryRulesetAndSeat() {
+        for (RuleSet rules : RuleSet.values()) {
+            var view = start(rules);
+            int stacks = view.wall().size() / (rules.sanma() ? 6 : 8);
+            var wall = java.util.stream.IntStream.range(0, view.wall().size())
+                .mapToObj(i -> TableScene.wallPiece(view, i, true)).toList();
+            for (int seat = 0; seat < rules.players(); seat++) {
+                int side = seat;
+                var pieces = wall.stream().filter(piece -> piece.seat() == side).toList();
+                assertEquals(stacks * 2, pieces.size());
+                for (var piece : pieces) {
+                    var neighbors = pieces.stream().filter(other -> other != piece)
+                        .mapToDouble(other -> piece.position().distanceTo(other.position())).sorted().toArray();
+                    assertEquals(TileMesh.DEPTH * TableScene.TILE_SCALE, neighbors[0], 1e-7, "Stack must touch");
+                    assertEquals(TileMesh.WIDTH * TableScene.TILE_SCALE, neighbors[1], 1e-7, "Wall must touch");
+                }
+            }
+        }
+    }
+
+    @Test void normalRiverRowsTouchAndRiichiAtEveryColumnPreservesEdgeContact() {
+        for (int riichi = 0; riichi < 12; riichi++) {
+            var discards = new ArrayList<Discard>();
+            for (int i = 0; i < 18; i++) discards.add(new Discard(i, i == riichi, false, false));
+            var river = TableScene.build(replace(start(RuleSet.TENHOU_4), List.of(), List.of(), discards)).stream()
+                .filter(piece -> piece.area() == TableScene.Area.RIVER && piece.seat() == 0).toList();
+            for (int i = 0; i < river.size(); i++) {
+                if (i % 6 > 0) {
+                    double width = (i == riichi ? TileMesh.HEIGHT : TileMesh.WIDTH)
+                        + (i - 1 == riichi ? TileMesh.HEIGHT : TileMesh.WIDTH);
+                    assertEquals(width * TableScene.TILE_SCALE / 2, river.get(i).position().x - river.get(i - 1).position().x, 1e-7);
+                }
+                if (i >= 6) assertEquals(TileMesh.HEIGHT * TableScene.TILE_SCALE,
+                    river.get(i).position().z - river.get(i - 6).position().z, 1e-7);
             }
         }
     }

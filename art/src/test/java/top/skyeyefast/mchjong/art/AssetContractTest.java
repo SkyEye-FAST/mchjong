@@ -106,7 +106,7 @@ class AssetContractTest {
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(37));
         BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
             .getSubimage(31 % 8 * TileArtwork.WIDTH, 31 / 8 * TileArtwork.HEIGHT, TileArtwork.WIDTH, TileArtwork.HEIGHT);
-        for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(TileArtwork.IVORY, white.getRGB(x, y));
+        for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(0xffffffff, white.getRGB(x, y));
     }
 
     @Test void defaultBackIsSolidAndNoBuiltinPackShips() throws Exception {

@@ -9,8 +9,11 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import net.minecraft.world.item.DyeColor;
 
-/** Three shallow cuboids give a tile a back, ivory bevel and recessed printed face. */
+/** A dyed back, material body and opaque white face share one physical tile envelope. */
 public final class TileMesh {
+    public static final float WIDTH = .104f;
+    public static final float HEIGHT = .160f;
+    public static final float DEPTH = .0726f;
     public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
@@ -25,21 +28,20 @@ public final class TileMesh {
         return Tile.red(tile) ? 34 + kind / 9 : kind;
     }
 
-    public static void drawFace(PoseStack pose, VertexConsumer vertices, int tile, boolean concealed, int light) {
-        drawFace(pose, vertices, tile, concealed, light, TileMaterial.BONE);
+    public static void drawBody(PoseStack pose, VertexConsumer vertices, int light, TileMaterial material) {
+        box(pose, vertices, -WIDTH / 2, -HEIGHT / 2, -0.012f, WIDTH / 2, HEIGHT / 2, 0.030f, material.color(), light);
     }
 
-    public static void drawFace(PoseStack pose, VertexConsumer vertices, int tile, boolean concealed, int light, TileMaterial material) {
-        int color = material.color();
-        box(pose, vertices, -0.052f, -0.080f, -0.012f, 0.052f, 0.080f, 0.030f, color, light);
-        box(pose, vertices, -0.049f, -0.077f, 0.027f, 0.049f, 0.077f, 0.035f, color, light);
+    public static void drawFace(PoseStack pose, VertexConsumer vertices, int tile, boolean concealed, int light) {
+        // Draw this opaque inlay separately from the material core, including translucent glass.
+        box(pose, vertices, -0.049f, -0.077f, 0.027f, 0.049f, 0.077f, 0.036f, 0xffffffff, light);
         if (!concealed && tile >= 0) {
             int face = face(tile);
             float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_SIZE;
             float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_SIZE;
             float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_SIZE;
             float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_SIZE;
-            texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, 0.0353f, light, false, 0xffffffff);
+            texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
         }
     }
 
@@ -50,10 +52,10 @@ public final class TileMesh {
     public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, int light, DyeColor dye) {
         int color = 0xff000000 | dye.getTextureDiffuseColor();
         // The shell samples the back's corner, so custom back colors also color its edges.
-        box(pose, vertices, -0.052f, -0.080f, -0.036f, 0.052f, 0.080f, -0.011f,
+        box(pose, vertices, -WIDTH / 2, -HEIGHT / 2, -0.036f, WIDTH / 2, HEIGHT / 2, -0.011f,
             color, light, 0.5f / TILE_WIDTH, 0.5f / TILE_HEIGHT);
-        texturedFace(pose, vertices, 0, 0, 1, 1, 0.050f, 0.078f, -0.0363f, light, true, color);
-        if (concealed) texturedFace(pose, vertices, 0, 0, 1, 1, 0.048f, 0.073f, 0.0353f, light, false, color);
+        texturedFace(pose, vertices, 0, 0, 1, 1, 0.050f, 0.078f, -DEPTH / 2, light, true, color);
+        if (concealed) texturedFace(pose, vertices, 0, 0, 1, 1, 0.048f, 0.073f, DEPTH / 2, light, false, color);
     }
 
     private static void texturedFace(PoseStack pose, VertexConsumer out, float u0, float v0, float u1, float v1,

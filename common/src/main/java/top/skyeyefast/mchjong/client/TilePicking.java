@@ -7,7 +7,8 @@ import org.joml.Vector3f;
 
 /** Pick the rendered oriented tile box, including its animated pitch and selection lift. */
 public final class TilePicking {
-    private static final AABB TILE = new AABB(-0.052, -0.080, -0.036, 0.052, 0.080, 0.030);
+    private static final AABB TILE = new AABB(-TileMesh.WIDTH / 2.0, -TileMesh.HEIGHT / 2.0, -TileMesh.DEPTH / 2.0,
+        TileMesh.WIDTH / 2.0, TileMesh.HEIGHT / 2.0, TileMesh.DEPTH / 2.0);
     private TilePicking() {}
 
     public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {

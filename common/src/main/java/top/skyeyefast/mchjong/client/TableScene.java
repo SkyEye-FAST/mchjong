@@ -15,8 +15,10 @@ public final class TableScene {
     public static final double HAND_Z = 1.25;
     public static final double HAND_STEP = 0.1;
     public static final double HAND_LEFT = -1.12;
-    public static final double RIVER_STEP = 0.090;
-    public static final double RIVER_ROW = 0.137;
+    public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
+    public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
+    public static final double WALL_STEP = RIVER_STEP;
+    private static final double FLAT_CENTER = TileMesh.DEPTH / 2.0;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position, float yaw, boolean flat, boolean back) {}
     private TableScene() {}
@@ -40,7 +42,7 @@ public final class TableScene {
                     && view.focus().seat() == seat && view.focus().index() == i;
                 boolean flat = player.exposed() || declaration || view.openHands() && view.viewerSeat() >= 0 && seat != view.viewerSeat();
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
-                    left + i * HAND_STEP + (drawn ? 0.035 : 0), top + (flat ? 0.036 : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
+                    left + i * HAND_STEP + (drawn ? 0.035 : 0), top + (flat ? FLAT_CENTER : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
             }
             int riverSlot = 0;
             double riverX = -2.5 * RIVER_STEP;
@@ -48,9 +50,9 @@ public final class TableScene {
                 Discard discard = player.river().get(i);
                 if (discard.called()) continue;
                 if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
-                double extra = discard.riichi() ? (0.160 - 0.104) * TILE_SCALE : 0;
+                double extra = discard.riichi() ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) * TILE_SCALE : 0;
                 result.add(piece(discard.tile(), seat, Area.RIVER, i, riverX + extra / 2,
-                    top + 0.036 * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW, discard.riichi() ? 90 : 0, true, false));
+                    top + FLAT_CENTER * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW, discard.riichi() ? 90 : 0, true, false));
                 riverX += RIVER_STEP + extra;
                 riverSlot++;
             }
@@ -62,14 +64,14 @@ public final class TableScene {
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
                     result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x() * TILE_SCALE,
-                        top + (0.036 + (part.stacked() ? 0.072 : 0)) * TILE_SCALE, HAND_Z - 0.015,
+                        top + (FLAT_CENTER + (part.stacked() ? TileMesh.DEPTH : 0)) * TILE_SCALE, HAND_Z - 0.015,
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
                 meldRight = start - 0.035;
             }
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -1.17 + (i % 2) * 0.112,
-                    top + 0.036 * TILE_SCALE, 0.68 - i / 2 * 0.18, 0, true, false));
+                    top + FLAT_CENTER * TILE_SCALE, 0.68 - i / 2 * 0.18, 0, true, false));
         }
         int size = view.wall().size();
         if (size > 0) {
@@ -94,7 +96,7 @@ public final class TableScene {
             if (mate == Tile.ABSENT) mate = Tile.HIDDEN;
         }
         boolean upper = mate != Tile.ABSENT && (tile >= 0 || mate < 0 && index % 2 == 0);
-        return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * 0.108 - 0.08,
-            TableGeometry.FELT_Y + (0.036 + (upper ? 0.072 : 0)) * TILE_SCALE, 1.00, 0, true, tile < 0);
+        return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * WALL_STEP - 0.08,
+            TableGeometry.FELT_Y + (FLAT_CENTER + (upper ? TileMesh.DEPTH : 0)) * TILE_SCALE, 1.00, 0, true, tile < 0);
     }
 }
