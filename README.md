@@ -5,7 +5,9 @@ three or four players. It supports both Fabric and NeoForge.
 
 ## Features
 
-- Placeable mahjong tables, stools, and tiles
+- Ordinary tables with manual handling and automatic adjudication, plus upgradeable automatic tables
+- Component-based wood furniture, removable 16-color cloth and six physical tile materials
+- Stonecut blanks, boxed bulk engraving and dyeing, and physical point sticks
 - Three- and four-player riichi mahjong gameplay
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
@@ -82,6 +84,14 @@ To build both loaders and run the shared checks:
 On Windows, use `gradlew.bat` instead of `./gradlew`.
 
 ## Playing at a table
+
+Build an ordinary table from matching wooden slabs and fences. Cut material
+blocks into blanks, put them in a mahjong box, then craft the box with an ink sac
+to engrave a set. Install the full box on either kind of table; a separate cloth
+is optional. Empty tables cannot deal. Ordinary tables require shuffle, wall,
+packet and draw actions; automatic tables handle these steps for you.
+See [Survival equipment and recipes](docs/SURVIVAL.md) for the complete recipes,
+component schema, dyes, glass tiles, point sticks and removal controls.
 
 Place stools two blocks from the center on the sides used by your rules. Click
 the table to sit on the nearest side, or click a specific stool. Crouch-click the

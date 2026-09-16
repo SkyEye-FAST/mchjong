@@ -13,8 +13,17 @@ allows it.
   Both loaders for that profile compile these sources.
 * root `src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
-* `art`: deterministic CC0 vector-face rasterization, original back/table textures
-  and low-complexity block models. Its SVG renderer is never a game dependency.
+* `art`: deterministic CC0 vector-face rasterization and client model descriptors,
+  plus a separate server-data generator. Its SVG renderer is never a game dependency.
+
+Survival components, atomic box transformations and component-preserving recipes
+live in `common/item` and `common/recipe`. `TableEquipment` stores actual removable
+box, cloth and point-stick stacks; its public projection contains only wood,
+colors, material, box presence and placed-stick counts/values. Native container
+contents and game state never enter chunk updates. The two tables share one block
+entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall,
+packet and draw phases without duplicating scoring or inventing client authority.
+See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for

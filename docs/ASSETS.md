@@ -43,9 +43,10 @@ and magnification filters after rendering, including after resource-pack reloads
 ## Tile backs and customization
 
 `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 texture. Every
-pixel of the default back is the same opaque teal, `#2b6b75`. There is no logo,
-border or noise. The raised ivory body and shallow back shell supply the tile's
-physical shape; the back shell samples the texture's top-left pixel for its color.
+pixel of the default back is opaque white, a neutral tint mask for the item's
+vanilla dye component. Defaults render blue. There is no logo, border or noise.
+The material-colored body and shallow back shell supply the tile's physical
+shape; the back shell samples the top-left pixel and applies the same dye tint.
 
 No patterned resource pack is bundled. To supply a design, create a normal
 resource pack for your target Minecraft version containing that same texture
@@ -61,16 +62,20 @@ buffers for each tile.
 
 ## Table and other resources
 
-Cloth, wood, brass and cushion textures are original
-MCjhong artwork. Cloth and wood use a deterministic hash for their pixel grain.
-`models/block/mahjong_table.json` contains fourteen cuboids for the complete 3 by 3
-table, centered on its center block; the felt top is at y = 15/16. Its block ID is
-`mchjong:mahjong_table`. Block occupancy belongs to the world implementation, not
-the art generator.
+Furniture uses original Minecraft plank, wool, iron and copper textures rather
+than bundled substitutes. `FurnitureMesh` owns a small set of cuboids shared by
+the block-entity and item renderers. Component values select wood, cushion and
+cloth appearances without multiplying registry entries or blockstates. Ordinary
+tables have four legs; automatic tables have an iron pedestal and copper band.
+The 3 by 3 occupancy and colliders belong to the world implementation.
 
-`models/block/mahjong_stool.json` uses eight cuboids for a single-block stool with
-its cushion top at y = 10/16. Its ID is `mchjong:mahjong_stool`. Tile meshes retain
-three shallow cuboids instead of creating a separate entity for each tile.
+`assets/mchjong/textures/tile_glyphs.png` has the same cells and white material
+swatch as the GUI face atlas, but transparent backgrounds. All material-aware
+world and item faces use this glyph atlas. Glass additionally uses a sorted
+alpha-blended pass after opaque backs and table surfaces. A custom face pack
+should replace both atlases to cover GUI thumbnails and world/item rendering.
+Private tile faces are withheld by the server and never resolved by the hidden
+tile mesh. There is no per-tile world entity.
 
 The four source language files live in `common/src/main/resources`. Their engine
 action and ruleset keys match the corresponding names in lowercase. Upstream

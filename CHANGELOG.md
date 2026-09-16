@@ -7,6 +7,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Survival crafting for ordinary and automatic tables, eleven wood families, removable sixteen-color cloth, boxes, tiles and point sticks.
+- Server-authoritative manual shuffle, wall construction, starting-tile pickup and draws on ordinary tables; automatic tables keep automatic handling.
+- Physical 136-tile box validation, six tile materials, genuine translucent glass, batch engraving and whole-box dyeing.
+- Component-preserving furniture drops, stonecut engraving, box storage and placed point-stick interactions independent of scoring.
+
+### Changed
+
+- Shared component-aware furniture and item rendering uses vanilla material textures.
+- Texture/model generation and recipe/tag/loot generation have independent outputs and tests.
+
+### Removed
+
+- The bundled patterned-back resource pack and both loader registrations. Custom resource-pack backs remain supported.
+
 ## [0.1.0] - 2026-09-16
 
 ### Added
