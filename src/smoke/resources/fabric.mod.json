@@ -1,0 +1,9 @@
+{
+  "schemaVersion": 1,
+  "id": "mchjong_smoke",
+  "version": "1.0.0",
+  "name": "MCjhong client smoke tests",
+  "environment": "client",
+  "entrypoints": {"client": ["top.skyeyefast.mchjong.smoke.FabricSmoke"]},
+  "depends": {"mchjong": "*", "fabric-api": "*"}
+}
