@@ -23,6 +23,8 @@ import top.skyeyefast.mchjong.world.MahjongSounds;
 final class ReplaySmoke {
     private CompletableFuture<ReplayMatch> fixture;
     private ReplayMatch match;
+    private CompletableFuture<Boolean> deletion;
+    private ReplayInterfaceSmoke presentation;
     private int stage, ticks;
 
     boolean tick(Minecraft client, Path output) throws Exception {
@@ -44,7 +46,7 @@ final class ReplaySmoke {
         }
         if (stage == 0 && fixture.isDone()) {
             match = fixture.join();
-            ClientReplays.list(0);
+            ClientReplays.list(0, "", false);
             stage = 1; ticks = 0;
         } else if (stage == 1 && ticks > 15 && client.screen instanceof ReplayBrowserScreen) {
             checkBounds(client);
@@ -79,6 +81,52 @@ final class ReplaySmoke {
             require(json.get("ref").getAsString().equals(match.id().toString()), "Export has the wrong match identity");
             require(json.getAsJsonArray("log").size() == match.hands().size(), "Export is incomplete");
             require(!json.has("seed") && !json.has("recorder"), "Export contains live internal state");
+            ClientReplays.list(0, "Replay player", true);
+            stage = 6; ticks = 0;
+        } else if (stage == 6 && ticks > 15 && client.screen instanceof ReplayBrowserScreen) {
+            checkBounds(client);
+            var search = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                .map(net.minecraft.client.gui.components.EditBox.class::cast).findFirst().orElseThrow();
+            require(search.getValue().equals("Replay player"), "Replay search was not retained by the server");
+            capture(client, output, "23-replay-manager-small.png");
+            click(client, "replay.mchjong.delete");
+            stage = 7; ticks = 0;
+        } else if (stage == 7 && ticks > 5 && client.screen instanceof top.skyeyefast.mchjong.client.DeleteReplayScreen) {
+            checkBounds(client);
+            capture(client, output, "24-replay-delete-confirm.png");
+            client.screen.onClose();
+            require(client.screen instanceof ReplayBrowserScreen, "Cancelling deletion lost the browser");
+            click(client, "replay.mchjong.delete");
+            click(client, "replay.mchjong.delete");
+            stage = 8; ticks = 0;
+        } else if (stage == 8 && ticks > 15 && client.screen instanceof ReplayBrowserScreen) {
+            var button = button(client, "replay.mchjong.delete");
+            require(!button.active, "Deleted replay remains in the filtered archive");
+            capture(client, output, "25-replay-deleted.png");
+            var server = client.getSingleplayerServer();
+            UUID viewer = client.player.getUUID();
+            deletion = server.submit(() -> {
+                var store = new top.skyeyefast.mchjong.replay.ReplayStore(server.getWorldPath(
+                    net.minecraft.world.level.storage.LevelResource.ROOT).resolve("data/mchjong/replays"),
+                    top.skyeyefast.mchjong.network.TableNetworking.JSON);
+                try {
+                    require(store.list(viewer, 0, match.id().toString(), false).matches().isEmpty(), "Deletion did not reach disk");
+                    UUID other = match.participants().stream().map(ReplayMatch.Participant::id).filter(id -> !id.equals(viewer)).findFirst().orElseThrow();
+                    require(store.load(other, match.id()).equals(match), "Deletion affected another participant");
+                    store.save(match);
+                    require(store.list(viewer, 0, match.id().toString(), false).matches().isEmpty(), "Later saves resurrected a deleted replay");
+                    return true;
+                } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+            });
+            stage = 9; ticks = 0;
+        } else if (stage == 9 && deletion.isDone()) {
+            require(deletion.join(), "Deletion verification failed");
+            require(Files.isRegularFile(client.gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id() + ".json")),
+                "Deleting a server archive removed the local export");
+            presentation = new ReplayInterfaceSmoke(match.header());
+            stage = 10; ticks = 0;
+        } else if (stage == 10) {
+            if (!presentation.tick(client, output)) return false;
             client.options.guiScale().set(2); client.resizeDisplay();
             return true;
         }
@@ -116,6 +164,16 @@ final class ReplaySmoke {
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget)
             require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getRight() <= client.screen.width
                 && widget.getBottom() <= client.screen.height, "Replay control exceeds the window: " + widget.getMessage().getString());
+    }
+    private static AbstractWidget button(Minecraft client, String key) {
+        String title = net.minecraft.network.chat.Component.translatable(key).getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().equals(title)).findFirst().orElseThrow();
+    }
+    private static void click(Minecraft client, String key) {
+        var button = button(client, key);
+        require(button.active, "Replay control is disabled: " + key);
+        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
     }
     private static void capture(Minecraft client, Path output, String name) {
         Screenshot.grab(output.toFile(),name,client.getMainRenderTarget(),ignored -> {});

@@ -29,7 +29,7 @@ class ReplayStorageTransferTest {
         store.save(match);
         assertEquals(match, store.load(PLAYER, match.id()));
         UUID outsider = UUID.randomUUID();
-        assertTrue(store.list(outsider,0).matches().isEmpty());
+        assertTrue(store.list(outsider,0,"",false).matches().isEmpty());
         assertThrows(IOException.class, () -> store.load(outsider, match.id()));
         assertThrows(IOException.class, () -> store.load(new UUID(1,3), match.id()));
         // A forged or stale index is not sufficient to bypass the actual participant ACL.
@@ -44,12 +44,12 @@ class ReplayStorageTransferTest {
         var repeated = fixture();
         store.save(repeated); store.save(repeated);
         for (int i = 0; i < 12; i++) store.save(fixture());
-        var first = store.list(PLAYER,0);
+        var first = store.list(PLAYER,0,"",false);
         assertEquals(12,first.matches().size()); assertTrue(first.more());
-        var second = store.list(PLAYER,1);
+        var second = store.list(PLAYER,1,"",false);
         assertEquals(1,second.matches().size()); assertFalse(second.more());
-        assertTrue(store.list(PLAYER,2).matches().isEmpty());
-        assertThrows(IllegalArgumentException.class, () -> store.list(PLAYER,-1));
+        assertTrue(store.list(PLAYER,2,"",false).matches().isEmpty());
+        assertThrows(IllegalArgumentException.class, () -> store.list(PLAYER,-1,"",false));
     }
 
     @Test void malformedAndOversizedArchivesAreRejectedWithoutReturningPartialData() throws Exception {

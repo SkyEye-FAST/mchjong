@@ -7,11 +7,21 @@ Open **Replays** from the table overlay, or use these server commands:
 ```text
 /mchjong replays
 /mchjong replays 2
+/mchjong replays 1 true "player name"
 /mchjong replay <match UUID>
+/mchjong replay <match UUID> delete
 ```
 
-The index contains twelve matches per page. Select an entry with the mouse or
-Up/Down and Enter. The viewer's upper arrows change hands. Its lower controls
+The index contains twelve matches per page. Search player names or a replay UUID,
+and choose newest-first or oldest-first ordering. Search applies before pagination;
+timestamps come from the match rather than filesystem modification time. In the
+command form, `true` means oldest first and `false` means newest first. Select an
+entry with the mouse or Up/Down, then choose **View replay** or press Enter. A double
+click also opens it. **Delete** (or the Delete key while the list is focused) opens
+a confirmation screen; Escape or Cancel does not change any records. Deletion
+retains the active filter and sort order and returns to its first page.
+
+The viewer's upper arrows change hands. Its lower controls
 seek to the initial deal, step backward, play/pause at two steps per second,
 step forward, or seek to settlement. The timeline allows direct seeking.
 Left/Right step, Home/End seek and Space toggles playback. Wheel scrolling or
@@ -46,6 +56,14 @@ players' match lists. Fetches check the canonical match's human-participant IDs
 in addition to its index; possession of a UUID or forged index is insufficient.
 Spectators and training bots do not gain retrieval permissions. Administrators
 with direct filesystem access can naturally read the server's files.
+
+Deleting a replay removes only the requesting participant's reference. It never
+revokes another participant's access and never deletes a previously exported local
+file. Deletion checks the canonical record's participant IDs, not merely the index.
+A small `.deleted` marker persists beside the player's index so a later finished
+hand, a queued save or a server restart cannot recreate the deleted entry. Once
+every human participant has deleted their reference, the canonical archive is
+removed as well. These markers remain part of the world backup.
 
 Each finished hand updates the archive atomically. Pending writes also remain
 in the table's normal saved game data until all index updates succeed. An I/O

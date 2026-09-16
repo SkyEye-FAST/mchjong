@@ -22,10 +22,12 @@ public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt,
                 throw new IllegalArgumentException("Invalid replay header");
         }
     }
-    public record Index(int page, List<Header> matches, boolean more) {
+    public record Index(int page, String search, boolean oldestFirst, List<Header> matches, boolean more) {
         public Index {
+            Objects.requireNonNull(search);
             matches = List.copyOf(matches);
-            if (page < 0 || matches.size() > 12) throw new IllegalArgumentException("Invalid replay page");
+            if (page < 0 || page > 100_000 || search.length() > 80 || matches.size() > 12)
+                throw new IllegalArgumentException("Invalid replay page");
         }
     }
 

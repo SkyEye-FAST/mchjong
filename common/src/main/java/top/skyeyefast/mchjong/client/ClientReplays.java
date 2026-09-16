@@ -54,13 +54,25 @@ public final class ClientReplays {
         }
     }
 
-    public static void list(int page) {
+    public static void list(int page, String search, boolean oldestFirst) {
         var client = Minecraft.getInstance();
-        if (client.getConnection() != null) client.getConnection().sendCommand("mchjong replays " + (page + 1));
+        if (client.getConnection() != null) client.getConnection().sendCommand("mchjong replays " + (page + 1)
+            + " " + oldestFirst + " " + searchArgument(search));
     }
     public static void open(UUID id) {
         var client = Minecraft.getInstance();
         if (client.getConnection() != null) client.getConnection().sendCommand("mchjong replay " + id);
+    }
+
+    public static void delete(UUID id, String search, boolean oldestFirst) {
+        var client = Minecraft.getInstance();
+        if (client.getConnection() != null) client.getConnection().sendCommand("mchjong replay " + id + " delete "
+            + oldestFirst + " " + searchArgument(search));
+    }
+
+    static String searchArgument(String search) {
+        // Brigadier's escapeIfRequired returns an empty string unchanged; an argument still needs quotes.
+        return search.isEmpty() ? "\"\"" : com.mojang.brigadier.arguments.StringArgumentType.escapeIfRequired(search);
     }
 
     public static Path export(ReplayMatch match) throws IOException {

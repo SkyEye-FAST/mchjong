@@ -15,6 +15,9 @@ import top.skyeyefast.mchjong.engine.ReplayMatch;
 public final class ReplayBrowserScreen extends Screen {
     private final Screen parent;
     private final ReplayMatch.Index index;
+    private MahjongEditBox search;
+    private MatchList matches;
+    private int selected;
     public ReplayBrowserScreen(Screen parent, ReplayMatch.Index index) {
         super(Component.translatable("replay.mchjong.title"));
         this.parent = parent;
@@ -25,11 +28,30 @@ public final class ReplayBrowserScreen extends Screen {
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
     @Override protected void init() {
         int span = Math.min(650, width - 20), left = (width - span) / 2;
-        setInitialFocus(addRenderableWidget(new MatchList(left, 40, span, height - 80)));
-        var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> ClientReplays.list(index.page() - 1))
+        String text = search == null ? index.search() : search.getValue();
+        search = addRenderableWidget(new MahjongEditBox(font, left, 42, span - 140, 20,
+            Component.translatable("replay.mchjong.search")));
+        search.setMaxLength(80);
+        search.setHint(Component.translatable("replay.mchjong.search_hint"));
+        search.setValue(text);
+        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.search"), ignored -> refresh(0, index.oldestFirst()))
+            .bounds(left + span - 136, 42, 58, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable(index.oldestFirst()
+                ? "replay.mchjong.oldest" : "replay.mchjong.newest"), ignored -> refresh(0, !index.oldestFirst()))
+            .bounds(left + span - 74, 42, 74, 20).build());
+        selected = Math.clamp(selected, 0, Math.max(0, index.matches().size() - 1));
+        matches = addRenderableWidget(new MatchList(left, 68, span, height - 132));
+        matches.move(0);
+        setInitialFocus(matches);
+        var open = addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.open"), ignored -> matches.activate())
+            .bounds(left, height - 58, (span - 6) / 2, 20).build());
+        var delete = addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.delete"), ignored -> confirmDelete())
+            .bounds(left + (span + 6) / 2, height - 58, (span - 6) / 2, 20).build());
+        open.active = delete.active = !index.matches().isEmpty();
+        var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> refresh(index.page() - 1, index.oldestFirst()))
             .bounds(left, height - 30, 35, 20).build());
         previous.active = index.page() > 0;
-        var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> ClientReplays.list(index.page() + 1))
+        var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> refresh(index.page() + 1, index.oldestFirst()))
             .bounds(left + span - 35, height - 30, 35, 20).build());
         next.active = index.more();
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
@@ -43,9 +65,26 @@ public final class ReplayBrowserScreen extends Screen {
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 
+    private void refresh(int page, boolean oldestFirst) { ClientReplays.list(page, search.getValue(), oldestFirst); }
+
+    private void confirmDelete() {
+        if (!index.matches().isEmpty()) minecraft.setScreen(new DeleteReplayScreen(this, index.matches().get(selected)));
+    }
+
+    void delete(java.util.UUID id) { ClientReplays.delete(id, index.search(), index.oldestFirst()); }
+
+    @Override public boolean keyPressed(int key, int scan, int modifiers) {
+        if (search.isFocused() && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER)) {
+            refresh(0, index.oldestFirst());
+            return true;
+        }
+        return super.keyPressed(key, scan, modifiers);
+    }
+
     private final class MatchList extends AbstractWidget {
         private static final int ROW = 48;
-        private int selected, scroll;
+        private int scroll;
+        private long lastClick;
         MatchList(int x, int y, int width, int height) { super(x, y, width, height, title); }
         private Component label(int entry) {
             var match = index.matches().get(entry);
@@ -67,20 +106,33 @@ public final class ReplayBrowserScreen extends Screen {
                 var match = index.matches().get(i);
                 graphics.fill(getX() + 3, y + 2, getX() + width - 3, y + ROW - 2, i == selected ? MahjongUi.SELECTED : MahjongUi.SURFACE);
                 if (isFocused() && i == selected) graphics.renderOutline(getX() + 3, y + 2, width - 6, ROW - 4, MahjongUi.ACCENT);
-                graphics.drawString(font, font.split(label(i), width - 18).getFirst(), getX() + 9, y + 7, MahjongUi.TEXT);
+                MahjongUi.text(graphics, font, label(i), getX() + 9, y + 7, width - 22, MahjongUi.TEXT, false);
                 String date = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withZone(ZoneId.systemDefault())
                     .format(Instant.ofEpochMilli(match.updatedAt()));
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
-                graphics.drawString(font, font.split(info, width - 18).getFirst(), getX() + 9, y + 21, MahjongUi.MUTED);
+                MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
                 graphics.drawString(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
             }
             graphics.disableScissor();
+            int content = index.matches().size() * ROW;
+            if (content > height) {
+                int track = height - 8, thumb = Math.max(16, track * height / content);
+                int y = getY() + 4 + scroll * (track - thumb) / (content - height);
+                graphics.fill(getX() + width - 5, getY() + 4, getX() + width - 3, getY() + height - 4, MahjongUi.EDGE);
+                graphics.fill(getX() + width - 5, y, getX() + width - 3, y + thumb, MahjongUi.ACCENT);
+            }
         }
         @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (!super.mouseClicked(mouseX, mouseY, button)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
-            if (entry < index.matches().size()) { selected = entry; activate(); }
+            if (entry >= 0 && entry < index.matches().size()) {
+                long now = net.minecraft.Util.getMillis();
+                boolean open = entry == selected && now - lastClick < 250;
+                selected = entry;
+                lastClick = now;
+                if (open) activate();
+            }
             return true;
         }
         @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
@@ -94,6 +146,7 @@ public final class ReplayBrowserScreen extends Screen {
                 case GLFW.GLFW_KEY_UP -> move(-1);
                 case GLFW.GLFW_KEY_DOWN -> move(1);
                 case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_SPACE -> activate();
+                case GLFW.GLFW_KEY_DELETE -> confirmDelete();
                 default -> { return super.keyPressed(key, scan, modifiers); }
             }
             return true;

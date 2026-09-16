@@ -2,7 +2,8 @@ package top.skyeyefast.mchjong.replay;
 
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
-import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import com.mojang.brigadier.arguments.BoolArgumentType;
+import com.mojang.brigadier.arguments.StringArgumentType;
 import java.io.IOException;
 import java.util.HashMap;
 import java.util.Map;
@@ -43,14 +44,28 @@ public final class ReplayServer {
 
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("mchjong")
-            .then(Commands.literal("replays").executes(context -> send(context.getSource().getPlayerOrException(), null, 0))
+            .then(Commands.literal("replays").executes(context -> send(context.getSource().getPlayerOrException(), null, false, 0, "", false))
                 .then(Commands.argument("page", IntegerArgumentType.integer(1, 100_001)).executes(context ->
-                    send(context.getSource().getPlayerOrException(), null, IntegerArgumentType.getInteger(context, "page") - 1))))
+                    send(context.getSource().getPlayerOrException(), null, false, IntegerArgumentType.getInteger(context, "page") - 1, "", false))
+                    .then(Commands.argument("oldest", BoolArgumentType.bool()).executes(context ->
+                        send(context.getSource().getPlayerOrException(), null, false, IntegerArgumentType.getInteger(context, "page") - 1,
+                            "", BoolArgumentType.getBool(context, "oldest")))
+                        .then(Commands.argument("search", StringArgumentType.string()).executes(context ->
+                            send(context.getSource().getPlayerOrException(), null, false, IntegerArgumentType.getInteger(context, "page") - 1,
+                                StringArgumentType.getString(context, "search"), BoolArgumentType.getBool(context, "oldest")))))))
             .then(Commands.literal("replay").then(Commands.argument("match", UuidArgument.uuid()).executes(context ->
-                send(context.getSource().getPlayerOrException(), UuidArgument.getUuid(context, "match"), 0)))));
+                send(context.getSource().getPlayerOrException(), UuidArgument.getUuid(context, "match"), false, 0, "", false))
+                .then(Commands.literal("delete").executes(context ->
+                    send(context.getSource().getPlayerOrException(), UuidArgument.getUuid(context, "match"), true, 0, "", false))
+                    .then(Commands.argument("oldest", BoolArgumentType.bool()).executes(context ->
+                        send(context.getSource().getPlayerOrException(), UuidArgument.getUuid(context, "match"), true, 0,
+                            "", BoolArgumentType.getBool(context, "oldest")))
+                        .then(Commands.argument("search", StringArgumentType.string()).executes(context ->
+                            send(context.getSource().getPlayerOrException(), UuidArgument.getUuid(context, "match"), true, 0,
+                                StringArgumentType.getString(context, "search"), BoolArgumentType.getBool(context, "oldest")))))))));
     }
 
-    private static int send(ServerPlayer player, UUID match, int page) throws CommandSyntaxException {
+    private static int send(ServerPlayer player, UUID match, boolean remove, int page, String search, boolean oldestFirst) {
         State state = state(player.server);
         long now = System.nanoTime();
         state.requests().values().removeIf(time -> now - time >= 500_000_000L);
@@ -59,12 +74,15 @@ public final class ReplayServer {
             return 0;
         }
         try {
-            Object value = match == null ? state.store().list(player.getUUID(), page) : state.store().load(player.getUUID(), match);
-            for (var chunk : ReplayPayload.split(match == null ? ReplayPayload.Kind.INDEX : ReplayPayload.Kind.MATCH,
+            if (search.length() > 80) throw new IllegalArgumentException("Replay search is too long");
+            if (remove) state.store().delete(player.getUUID(), match);
+            Object value = match == null || remove ? state.store().list(player.getUUID(), page, search, oldestFirst)
+                : state.store().load(player.getUUID(), match);
+            for (var chunk : ReplayPayload.split(match == null || remove ? ReplayPayload.Kind.INDEX : ReplayPayload.Kind.MATCH,
                     TableNetworking.JSON.toJson(value))) player.connection.send(new ClientboundCustomPayloadPacket(chunk));
             return 1;
         } catch (IOException | RuntimeException failure) {
-            LoggerFactory.getLogger("mchjong").warn("Cannot read replay {} for {}", match, player.getUUID(), failure);
+            LoggerFactory.getLogger("mchjong").warn("Cannot {} replay {} for {}", remove ? "delete" : "read", match, player.getUUID(), failure);
             player.sendSystemMessage(Component.translatable("message.mchjong.replay_unavailable"));
             return 0;
         }

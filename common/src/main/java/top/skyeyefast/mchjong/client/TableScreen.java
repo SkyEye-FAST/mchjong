@@ -239,7 +239,7 @@ public final class TableScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable("ui.mchjong.center_short"), ignored -> resetView())
             .bounds(right - 48, 8, 48, 20).tooltip(Tooltip.create(Component.translatable("ui.mchjong.center_view"))).build());
         right -= 52;
-        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.title"), ignored -> ClientReplays.list(0))
+        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.title"), ignored -> ClientReplays.list(0, "", false))
             .bounds(right - 52, 8, 52, 20).build());
     }
 
