@@ -93,8 +93,9 @@ public final class TableEquipment {
     }
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {
-        if (!box.isEmpty()) tag.put("box", box.save(registries));
-        if (!cloth.isEmpty()) tag.put("cloth", cloth.save(registries));
+        // Empty slots are explicit in a private save, but absent from public appearance packets.
+        tag.put("box", box.saveOptional(registries));
+        tag.put("cloth", cloth.saveOptional(registries));
         ListTag placed = new ListTag();
         for (int seat = 0; seat < 4; seat++) if (!sticks.get(seat).isEmpty()) {
             CompoundTag entry = new CompoundTag();
@@ -124,7 +125,10 @@ public final class TableEquipment {
             }
             refreshSticks();
         }
-        if (tag.contains("cloth")) installCloth(ItemStack.parseOptional(registries, tag.getCompound("cloth")));
+        if (tag.contains("cloth")) {
+            cloth = ItemStack.parseOptional(registries, tag.getCompound("cloth"));
+            clothColor = cloth.isEmpty() ? -1 : MahjongSupplies.color(cloth).getId();
+        }
         if (tag.contains("has_box")) visibleBox = tag.getBoolean("has_box");
         if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
         if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));

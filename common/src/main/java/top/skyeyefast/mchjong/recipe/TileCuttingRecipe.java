@@ -23,16 +23,21 @@ public final class TileCuttingRecipe extends StonecutterRecipe {
     }
 
     @Override public boolean matches(SingleRecipeInput input, Level level) {
-        return input.item().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(input.item()).blank()
-            && super.matches(input, level);
+        return engraveable(input.item()) && super.matches(input, level);
     }
     @Override public ItemStack assemble(SingleRecipeInput input, HolderLookup.Provider registries) {
+        if (!engraveable(input.item())) return ItemStack.EMPTY;
         TileData design = MahjongSupplies.tile(result);
         ItemStack output = input.item().copyWithCount(1);
         output.set(MahjongComponents.TILE, MahjongSupplies.tile(input.item()).engraved(design.face(), design.red()));
         return output;
     }
     @Override public RecipeSerializer<?> getSerializer() { return MahjongRecipes.ENGRAVE_TILE; }
+
+    private static boolean engraveable(ItemStack stack) {
+        TileData data = MahjongSupplies.tile(stack);
+        return stack.is(MahjongContent.TILE_ITEM) && MahjongSupplies.storable(stack) && data.valid() && data.blank();
+    }
 
     public static final class Serializer extends SingleItemRecipe.Serializer<TileCuttingRecipe> {
         public Serializer() { super(TileCuttingRecipe::new); }

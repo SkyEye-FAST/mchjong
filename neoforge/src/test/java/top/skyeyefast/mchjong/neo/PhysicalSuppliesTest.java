@@ -108,6 +108,7 @@ class PhysicalSuppliesTest {
                 assertEquals(DyeColor.LIME, MahjongSupplies.color(tile));
                 assertEquals(1, tile.getCount());
                 assertFalse(engraving.matches(new SingleRecipeInput(tile), server.overworld()));
+                assertTrue(engraving.assemble(new SingleRecipeInput(tile), server.registryAccess()).isEmpty());
                 assertTrue(MahjongSupplies.tile(blanks).blank());
             }
         }
@@ -237,6 +238,50 @@ class PhysicalSuppliesTest {
         assertTrue(ItemStack.matches(stick, loaded.removeSticks(0)));
         assertTrue(loaded.removeSticks(0).isEmpty());
         assertEquals(0, loaded.stickCount(0));
+    }
+
+    @Test void publicAppearanceKeepsPrivateEquipmentButEmptySavesActuallyClearIt(MinecraftServer server) {
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment();
+        var box = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.BLUE);
+        equipment.installBox(box);
+        equipment.installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
+        var appearance = new net.minecraft.nbt.CompoundTag();
+        equipment.writeAppearance(appearance);
+        equipment.load(appearance, server.registryAccess());
+        assertTrue(ItemStack.matches(box, equipment.boxCopy()));
+        assertNotNull(equipment.deck());
+        var empty = new net.minecraft.nbt.CompoundTag();
+        new top.skyeyefast.mchjong.world.TableEquipment().save(empty, server.registryAccess());
+        equipment.load(empty, server.registryAccess());
+        assertTrue(equipment.boxCopy().isEmpty());
+        assertNull(equipment.deck());
+        assertFalse(equipment.hasBox());
+        assertFalse(equipment.hasCloth());
+    }
+
+    @Test void upgradesPreserveNamesAndInvalidPhysicalSetsStayUnchanged(MinecraftServer server) {
+        var table = new ItemStack(MahjongContent.TABLE_ITEM);
+        table.set(MahjongComponents.WOOD, FurnitureWood.BAMBOO);
+        table.set(DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("Home table"));
+        var input = List.of(new ItemStack(Items.IRON_INGOT), new ItemStack(Items.REDSTONE), new ItemStack(Items.IRON_INGOT),
+            new ItemStack(Items.REDSTONE), table, new ItemStack(Items.REDSTONE),
+            new ItemStack(Items.COPPER_INGOT), new ItemStack(Items.HOPPER), new ItemStack(Items.COPPER_INGOT));
+        var upgraded = craft(server, "upgrade_table", 3, 3, input);
+        assertEquals(table.get(DataComponents.CUSTOM_NAME), upgraded.get(DataComponents.CUSTOM_NAME));
+        assertEquals(FurnitureWood.BAMBOO, upgraded.get(MahjongComponents.WOOD));
+        table.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        assertFalse(crafting(server, "upgrade_table").matches(CraftingInput.of(3, 3, input), server.overworld()));
+        for (int alteration = 0; alteration < 3; alteration++) {
+            var original = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
+            var contents = MahjongSupplies.contents(original);
+            if (alteration == 0) contents.getFirst().shrink(1);
+            else if (alteration == 1) contents.getFirst().set(DataComponents.BASE_COLOR, DyeColor.RED);
+            else contents.getFirst().set(MahjongComponents.TILE, new TileData(0, TileMaterial.GLASS, false));
+            original.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
+            var before = original.copy();
+            assertNull(MahjongSupplies.deck(original));
+            assertTrue(ItemStack.matches(before, original));
+        }
     }
 
     @Test void nativeContainerAndComponentCodecsRoundTripACompleteGlassSet(MinecraftServer server) {

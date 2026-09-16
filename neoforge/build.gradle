@@ -104,6 +104,9 @@ neoForge {
     }
 }
 tasks.named('runSmokeClient') {
+    // An unqualified root task selector also selects this subproject task.
+    mustRunAfter rootProject.tasks.named('runSmokeClient')
+    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
     doLast {
         def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {

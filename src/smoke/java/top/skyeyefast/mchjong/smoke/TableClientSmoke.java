@@ -41,12 +41,15 @@ public final class TableClientSmoke {
     private int entered;
     private boolean saved;
     private CompletableFuture<Void> resourceReload;
+    private CompletableFuture<Boolean> survivalReady;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke();
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
     private final TableControlSmoke controlSmoke = new TableControlSmoke();
+    private final ManualTableSmoke manualSmoke = new ManualTableSmoke();
 
     public void tick(Minecraft client) {
+        if (step == 14) return;
         try {
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
@@ -80,6 +83,13 @@ public final class TableClientSmoke {
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
                 UUID id = client.player.getUUID();
+                if (survivalReady == null) {
+                    var server = client.getSingleplayerServer();
+                    survivalReady = server.submit(() -> SurvivalSmoke.ready(server.getPlayerList().getPlayer(id)));
+                    return;
+                }
+                if (!survivalReady.isDone()) return;
+                if (!survivalReady.join()) { survivalReady = null; return; }
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
@@ -237,6 +247,9 @@ public final class TableClientSmoke {
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 12; entered = ticks;
             } else if (step == 12 && replaySmoke.tick(client, output)) {
+                step = 19; entered = ticks;
+            } else if (step == 19 && manualSmoke.tick(client, output)) {
+                Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
                 Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
@@ -247,7 +260,12 @@ public final class TableClientSmoke {
             }
         } catch (Throwable failure) {
             LOG.error("MCJHONG_CLIENT_SMOKE_FAILED step={}", step, failure);
-            try { Files.createDirectories(output); Files.writeString(output.resolve("FAIL.txt"), failure.toString()); }
+            try {
+                var trace = new java.io.StringWriter();
+                failure.printStackTrace(new java.io.PrintWriter(trace));
+                Files.createDirectories(output);
+                Files.writeString(output.resolve("FAIL.txt"), trace.toString());
+            }
             catch (Exception ignored) { LOG.error("Could not write smoke failure evidence"); }
             step = 14;
             client.stop();

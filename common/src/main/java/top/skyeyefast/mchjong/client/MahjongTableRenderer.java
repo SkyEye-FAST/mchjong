@@ -35,7 +35,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             }
             pose.popPose();
         }
-        if (table.equipment().hasBox() && !table.automatic()) {
+        if (table.equipment().hasBox()) {
             pose.pushPose();
             pose.translate(0, top.skyeyefast.mchjong.world.TableGeometry.FELT_Y + .02, -1.18);
             pose.scale(.45f, .45f, .45f);

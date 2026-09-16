@@ -270,6 +270,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         equipment.load(tag, registries);
+        if (tag.contains("box")) {
+            game = null;
+            unreadableSave = null;
+            sentRevision = -1;
+        }
         if (!tag.contains("game")) return;
         String saved = tag.getString("game");
         try {
