@@ -9,7 +9,8 @@ three or four players. It supports both Fabric and NeoForge.
 - Three- and four-player riichi mahjong gameplay
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
-- Scrollable settlement receipts with winning hands, yaku, indicators, and point changes
+- Single-screen settlement panels with winning hands, yaku, indicators, and point changes
+- Unanimous table-exit voting and host-controlled open-hand games
 - Configurable per-hand reserve and per-decision clocks, with distinct discard animations
 - Player invitations, table sound effects, system speech and custom voice packs
 - Private replay archives, step-by-step playback and Tenhou JSON export
@@ -88,6 +89,20 @@ table to spectate. Clicking the table or your stool again reopens the controls
 without creating another seat. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
 
+In the lobby, select **Four-player mahjong** or **Three-player mahjong**, then
+choose the rule preset for that player count. The host can enable **Show
+opponents' hands** before starting. This setting reveals hands to seated
+participants, not spectators, and changing it clears the players' ready votes.
+
+**Exit** ends the table immediately when only one human is registered, even
+with bots present. With multiple humans, all must agree in a 30-second vote.
+The game and thinking clocks pause during the vote; rejecting or letting it
+expire resumes the same decision without granting extra thinking time. A failed
+vote has a 30-second cooldown. Disconnecting or dismounting does not count as
+agreement or remove a participant from the vote. Successful exit releases every
+seat and returns the table to the lobby. Completed hands stay in the replay
+archive; an unfinished hand is not scored.
+
 Click tiles directly on the physical table. Settings offer single-click,
 double-click, or select-and-confirm discards. Shift-click selects without
 discarding. Left/Right selects tiles and Enter confirms; R opens riichi selection
@@ -95,10 +110,19 @@ and P passes a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
 overlay. Right-drag looks around; Home or **Center view** restores the table view.
 
+The compact top bar shows points and essential table information; hover over a
+player card for detailed status. The concealed-hand rail reserves space for melds
+from the first deal. The Camera settings include **Show discards on the table**.
+Hiding the rivers always keeps the remaining wall count visible, even when that
+information would otherwise be disabled. This is a local presentation preference
+and does not change game rules or replay records.
+
 Results show each player's point movement, winning hands and melds, yaku, and
-revealed dora/ura indicators. Scroll or focus the receipt and use Page Up/Page Down
-or Home/End. Separate tabs show hand details, animated point changes and the
-server-authoritative final standings. **View table** hides the receipt without
+revealed dora/ura indicators without a scroll viewport. Select a winner's tab
+when several players ron, or focus the result panel and use Left/Right.
+Separate tabs show hand details, animated point changes and server-authoritative
+final standings. Large windows show point summaries alongside the hand;
+shorter windows keep the dedicated point-change tab available. **View table** hides the receipt without
 advancing play. **Continue** readies your seat for the next hand; **Ready for new
 match** starts another match only after all seats are ready. Table animations can be disabled
 independently of the game rules in the interaction settings.

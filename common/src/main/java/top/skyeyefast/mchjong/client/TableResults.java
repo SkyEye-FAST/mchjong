@@ -81,7 +81,8 @@ public final class TableResults extends AbstractWidget {
                 graphics.pose().scale(scale, scale, 1);
                 winningHand(graphics, bodyWidth, compact);
                 graphics.pose().popPose();
-                hits.add(new Hit(x + 10, top, bodyWidth, bodyHeight, winnerSummary(view.wins().get(winner))));
+                // Keep the tile row clear when the mouse rests in the result panel.
+                hits.add(new Hit(x + 10, top, bodyWidth, 10, winnerSummary(view.wins().get(winner))));
             }
             if (sidebar) scores(graphics, x + width - 156, y + 23, 148, bottom - y - 23, false);
             else if (strip) scores(graphics, x + 8, bottom - 36, width - 16, 36, true);

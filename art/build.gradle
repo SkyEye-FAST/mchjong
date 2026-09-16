@@ -61,6 +61,10 @@ test {
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
     systemProperty 'mchjong.resources', rootProject.layout.buildDirectory.dir('generated/assets').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
+    systemProperty 'mchjong.sourceRoot', rootProject.projectDir.absolutePath
+    ['common/src/main', 'engine/src/main', 'src/main', 'neoforge/src/main'].each { source ->
+        inputs.files rootProject.fileTree(source) { include '**/*.java', '**/*.kt' }
+    }
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')

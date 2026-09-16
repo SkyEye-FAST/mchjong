@@ -210,7 +210,6 @@ public final class Game {
                     }
                 }
             }
-            actions.add(new Action(LEAVE));
             return actions;
         }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
@@ -245,7 +244,6 @@ public final class Game {
                         player.ready = player.bot;
                     }
                 }
-                case LEAVE -> { return requestExit(actor); }
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
             revision++;

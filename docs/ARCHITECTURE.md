@@ -19,7 +19,10 @@ allows it.
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced
-with hidden sentinels **before serialization**. Persistent server NBT is separate
+with hidden sentinels **before serialization**. The host can enable open hands in
+the lobby; this reveals opponents only to seated participants, never spectators.
+Changing that setting invalidates readiness and is forbidden after play starts.
+Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
 The seated camera remains in the Minecraft world. The interaction overlay does not
@@ -36,16 +39,40 @@ Training opponents receive an opening grace period; the engine never waits for
 client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
 
-`TableResults` is a separate scrollable, narrated receipt widget. It displays
-server-authored point deltas and final scores without recalculating settlement or
+`TableResults` is a separate, narrated single-screen receipt widget. It uses compact
+hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
+winners have a mouse/keyboard selector. It displays server-authored deltas and final scores without recalculating settlement or
 inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
+
+The lobby selects four-player or three-player mahjong before offering matching
+rule presets. `TableHud` keeps player summaries along the screen edge and puts
+long names and supplementary details in hover text. Action buttons stay along
+the lower edge rather than covering the table center. The concealed-hand origin
+is fixed before the first meld. Rivers pack six visible tiles per row, close gaps
+left by calls and account for the width of sideways riichi discards. Hiding rivers
+is a local rendering preference; it also forces the remaining-wall count and
+current claimed-tile preview to remain visible, without changing game records.
+
+`TableControlPayload` carries administrative controls separately from tile-action
+indices. Both loaders use the same server authorization: loaded table, physical
+seat, table identity and current decision or vote token. One human can end the
+table immediately. Otherwise every human must agree, including reserved seats;
+bots, spectators, duplicate replies and stale ballots cannot supply approvals.
+Voting pauses play and its clocks without replenishing either time allowance.
+A rejection or 30-second timeout resumes play, followed by a 30-second ballot
+cooldown. Completing the vote releases seats and clears the unfinished hand;
+already completed replay records remain available and no fake settlement is made.
 
 Build: `gradlew.bat buildAll`. Loader-specific development runs remain
 `gradlew.bat runClient` and `gradlew.bat :neoforge:runClient`.
 
 `gradlew.bat :test` covers deterministic presentation and pointer geometry.
+It also checks outward-facing tile winding, stable hand placement, compact rivers
+and the mandatory remaining count. Engine tests cover exits, ballots, save reloads
+and recipient privacy. Asset tests check all four language key sets, duplicate
+keys, format arguments and literal translation references in production sources.
 `gradlew.bat runSmokeClient` runs a real Fabric integrated client/server, exercises
 seating and discard packets, and captures settlement and animation screenshots in
 `build/smoke/evidence`. Rare multi-winner and animation states use display-only

@@ -7,7 +7,7 @@ import java.util.Locale;
 public record Action(Type type, List<Integer> tiles) {
     public enum Type {
         DISCARD, RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI,
-        RON, TSUMO, PASS, ABORT_NINE, READY, NEXT, PRACTICE, CHANGE_RULE, LEAVE
+        RON, TSUMO, PASS, ABORT_NINE, READY, NEXT, PRACTICE, CHANGE_RULE
     }
 
     public Action { tiles = List.copyOf(tiles); }

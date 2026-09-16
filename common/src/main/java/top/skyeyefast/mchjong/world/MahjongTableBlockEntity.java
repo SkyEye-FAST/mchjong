@@ -15,7 +15,6 @@ import net.minecraft.world.level.block.state.BlockState;
 import net.minecraft.world.phys.AABB;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -159,14 +158,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     public void act(ServerPlayer player, TableActionPayload payload) {
         Game game = serverGame();
         if (game == null || !game.tableId().equals(payload.tableId()) || authorizedViewer(player) == null) return;
-        TableView before = game.view(player.getUUID());
-        if (before.decision() != payload.decision() || payload.action() < 0 || payload.action() >= before.actions().size()) {
-            sendView(player, false);
-            return;
-        }
-        Action action = before.actions().get(payload.action());
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
-            if (action.type() == Action.Type.LEAVE) refreshParticipants(true);
             setChanged();
             flushReplays();
         }
@@ -186,6 +178,8 @@ public final class MahjongTableBlockEntity extends BlockEntity {
             setChanged();
             sentRevision = -1;
             flushReplays();
+        } else if (payload.operation() == TableControlPayload.Operation.REQUEST_EXIT) {
+            player.displayClientMessage(Component.translatable("message.mchjong.exit_unavailable"), false);
         }
         sendView(player, false);
     }

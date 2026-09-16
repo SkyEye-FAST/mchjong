@@ -16,6 +16,7 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -76,6 +77,11 @@ class ServerIntegrationTest {
             var request = new TableActionPayload(new BlockPos(-5, 72, 9), UUID.randomUUID(), 17, 3);
             TableActionPayload.CODEC.encode(buffer, request);
             assertEquals(request, TableActionPayload.CODEC.decode(buffer));
+            for (var operation : TableControlPayload.Operation.values()) for (boolean enabled : new boolean[]{false, true}) {
+                var control = new TableControlPayload(new BlockPos(-6, 70, 20), UUID.randomUUID(), operation, Long.MAX_VALUE, enabled);
+                TableControlPayload.CODEC.encode(buffer, control);
+                assertEquals(control, TableControlPayload.CODEC.decode(buffer));
+            }
             Game game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false);
             TableViewPayload.CODEC.encode(buffer, payload);

@@ -45,6 +45,7 @@ public final class TableClientSmoke {
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke();
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
+    private final TableControlSmoke controlSmoke = new TableControlSmoke();
 
     public void tick(Minecraft client) {
         try {
@@ -63,6 +64,7 @@ public final class TableClientSmoke {
                 require(!client.getResourcePackRepository().getSelectedIds().contains(patternedPack),
                     "Patterned backs must be disabled by default");
                 client.options.pauseOnLostFocus = false;
+                client.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                 client.options.guiScale().set(2);
                 client.options.renderDistance().set(5);
                 client.options.simulationDistance().set(5);
@@ -188,13 +190,15 @@ public final class TableClientSmoke {
                 resourceReload.join();
                 TileResourceSmoke.verify(client, false);
                 capture(client, "07-restored-solid-backs.png");
+                step = 15; entered = ticks;
+            } else if (step == 15 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 10; entered = ticks;
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 12; entered = ticks;
             } else if (step == 12 && replaySmoke.tick(client, output)) {
-                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, multi-winner settlement, scrolling, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;
