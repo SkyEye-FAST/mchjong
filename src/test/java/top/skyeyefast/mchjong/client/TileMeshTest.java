@@ -32,6 +32,26 @@ class TileMeshTest {
         @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
     }
 
+    @Test void physicalFlowersHaveDistinctArtworkWithoutAliasingRedFives() {
+        var designs = new java.util.HashSet<Integer>();
+        var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
+        for (int face = 0; face < 42; face++) {
+            var data = new top.skyeyefast.mchjong.item.TileData(face, material, false);
+            int artwork = TileMesh.artwork(data);
+            assertTrue(designs.add(artwork));
+            var mesh = new Mesh();
+            TileMesh.drawArtwork(new PoseStack(), mesh, artwork, 0);
+            var printed = mesh.vertices.subList(mesh.vertices.size() - 4, mesh.vertices.size());
+            assertTrue(printed.stream().allMatch(vertex -> vertex.u >= 0 && vertex.u <= 1 && vertex.v >= 0 && vertex.v <= 1));
+            if (data.flower()) assertEquals(face + 3, artwork);
+        }
+        for (int face : new int[]{4, 13, 22})
+            assertTrue(designs.add(TileMesh.artwork(new top.skyeyefast.mchjong.item.TileData(face, material, true))));
+        assertEquals(45, designs.size());
+        assertEquals(-1, TileMesh.artwork(top.skyeyefast.mchjong.item.TileData.BLANK));
+        assertThrows(IllegalArgumentException.class, () -> TileMesh.drawArtwork(new PoseStack(), new Mesh(), 45, 0));
+    }
+
     @Test void everyQuadWindsOutwardIncludingTheBackAfterRotation() {
         for (int pitch : new int[]{0, -90, 90}) for (boolean hidden : new boolean[]{false, true}) {
             var pose = new PoseStack();
@@ -59,12 +79,12 @@ class TileMeshTest {
         var shown = new Mesh();
         TileMesh.drawFace(new PoseStack(), hidden, -1, false, 0);
         TileMesh.drawFace(new PoseStack(), shown, 0, false, 0);
-        assertEquals(24, hidden.vertices.size(), "White inlay only, no printed face");
+        assertEquals(76, hidden.vertices.size(), "Beveled white shell only, no printed face");
         assertEquals(hidden.vertices.size() + 4, shown.vertices.size());
         assertTrue(hidden.vertices.stream().allMatch(vertex -> vertex.color == 0xffffffff));
         var body = new Mesh();
         TileMesh.drawBody(new PoseStack(), body, 0, top.skyeyefast.mchjong.item.TileMaterial.GLASS);
-        assertEquals(24, body.vertices.size());
+        assertEquals(32, body.vertices.size(), "Eight material sides, no overlapping internal caps");
         assertTrue(body.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255));
         var backs = new Mesh();
         TileMesh.drawBack(new PoseStack(), backs, false, 0, net.minecraft.world.item.DyeColor.RED);
@@ -78,9 +98,10 @@ class TileMeshTest {
         for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
             var mesh = new Mesh();
             TileMesh.drawBody(new PoseStack(), mesh, 0, material);
+            int bodyVertices = mesh.vertices.size();
             TileMesh.drawFace(new PoseStack(), mesh, 0, false, 0);
-            assertTrue(mesh.vertices.subList(0, 24).stream().allMatch(vertex -> vertex.color == material.color()), material.name());
-            assertTrue(mesh.vertices.subList(24, 52).stream().allMatch(vertex -> vertex.color == 0xffffffff), material.name());
+            assertTrue(mesh.vertices.subList(0, bodyVertices).stream().allMatch(vertex -> vertex.color == material.color()), material.name());
+            assertTrue(mesh.vertices.subList(bodyVertices, mesh.vertices.size()).stream().allMatch(vertex -> vertex.color == 0xffffffff), material.name());
             assertEquals(TileMesh.DEPTH / 2, mesh.vertices.getLast().position.z);
         }
     }
@@ -90,11 +111,27 @@ class TileMeshTest {
         pose.mulPose(Axis.XP.rotationDegrees(90));
         var mesh = new Mesh();
         TileMesh.drawBack(pose, mesh, false, 0);
-        var face = mesh.vertices.subList(mesh.vertices.size() - 4, mesh.vertices.size());
+        var face = mesh.vertices.subList(mesh.vertices.size() - 12, mesh.vertices.size());
         assertTrue(face.stream().allMatch(vertex -> vertex.position.y > 0.036 && vertex.normal.y > 0.99));
-        assertEquals(0, face.get(0).u);
-        assertEquals(1, face.get(1).u);
-        assertEquals(1, face.get(0).v);
-        assertEquals(0, face.get(2).v);
+        for (var vertex : face) {
+            assertEquals(.5f - vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
+            assertEquals(.5f - vertex.position.z / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
+        }
+    }
+
+    @Test void backBodyAndFaceFormOneClosedShellWithoutDuplicateInternalSurfaces() {
+        var mesh = new Mesh();
+        var pose = new PoseStack();
+        TileMesh.drawBody(pose, mesh, 0, top.skyeyefast.mchjong.item.TileMaterial.BONE);
+        TileMesh.drawFace(pose, mesh, -1, false, 0);
+        TileMesh.drawBack(pose, mesh, false, 0);
+        var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
+        for (int i = 0; i < mesh.vertices.size(); i += 4) for (int corner = 0; corner < 4; corner++) {
+            var a = mesh.vertices.get(i + corner).position;
+            var b = mesh.vertices.get(i + (corner + 1) % 4).position;
+            assertNotEquals(a, b, "No degenerate edges");
+            edges.merge(java.util.Set.of(a, b), 1, Integer::sum);
+        }
+        assertTrue(edges.values().stream().allMatch(count -> count == 2), "Every edge has exactly two neighbors");
     }
 }

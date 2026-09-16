@@ -21,8 +21,9 @@ import java.util.zip.ZipFile;
 final class TileArtwork implements AutoCloseable {
     static final int WIDTH = 256;
     static final int HEIGHT = 384;
-    static final int ATLAS_SIZE = 2048;
-    static final int FACE_COUNT = 37;
+    static final int ATLAS_WIDTH = 2048;
+    static final int ATLAS_HEIGHT = 4096;
+    static final int FACE_COUNT = 45;
     static final int FACE_WHITE = 0xffffffff;
     static final int BACK = 0xffffffff;
     private static final String SOURCE_ROOT = "riichi-mahjong-tiles-26e127ba2117f45cdce5ea0225748cc0cfad3169/";
@@ -46,6 +47,7 @@ final class TileArtwork implements AutoCloseable {
 
     static String sourceName(int face) {
         if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
+        if (face >= 37) return new String[]{"Plum", "Orchid", "Chrysanthemum", "Bamboo", "Spring", "Summer", "Autumn", "Winter"}[face - 37];
         if (face >= 34) return SUITS[face - 34] + "5-Dora";
         return face < 27 ? SUITS[face / 9] + (face % 9 + 1) : HONORS[face - 27];
     }
@@ -72,7 +74,8 @@ final class TileArtwork implements AutoCloseable {
                 g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
             }
             // White dragons remain genuinely blank; no imported tile frame or lettering.
-            if (face != 31) {
+            if (face >= 37) FlowerArtwork.draw(g, face - 37, WIDTH, HEIGHT);
+            else if (face != 31) {
                 String entry = SOURCE_ROOT + "Regular/" + name + ".svg";
                 if (source.getEntry(entry) == null) throw new IOException("Missing artwork: " + entry);
                 SVGDocument document = loader.load(URI.create("jar:" + archive.toUri() + "!/" + entry).toURL());

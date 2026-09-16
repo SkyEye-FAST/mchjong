@@ -38,9 +38,9 @@ class FurnitureShapeTest {
         FurnitureShape.box(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0xffb8c4a2, 0);
         assertEquals(24, mesh.vertices.size());
         assertEquals(3, mesh.vertices.get(1).v);
-        assertEquals(.25f, mesh.vertices.get(0).u);
-        assertEquals(3, mesh.vertices.get(9).v);
-        assertEquals(2, mesh.vertices.get(8).u);
+        assertEquals(0, mesh.vertices.get(0).u);
+        assertEquals(3, mesh.vertices.get(9).u);
+        assertEquals(2, mesh.vertices.get(8).v);
         assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.color == 0xffb8c4a2));
     }
 
@@ -63,6 +63,28 @@ class FurnitureShapeTest {
                 assertTrue(Float.isFinite(a.u) && Float.isFinite(a.v));
             }
         }
+    }
+
+    @Test void continuousRimIsClosedAndTopTextureCoordinatesAgreeAcrossEveryJoint() {
+        var mesh = new Mesh();
+        FurnitureShape.frame(new PoseStack(), mesh, 1.3125f, 1.4375f, .859375f, 1, .015625f, -1, 0);
+        assertEquals(192, mesh.vertices.size());
+        var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
+        for (int i = 0; i < mesh.vertices.size(); i += 4) {
+            var a = mesh.vertices.get(i);
+            var normal = new Vector3f(mesh.vertices.get(i+1).position).sub(a.position)
+                .cross(new Vector3f(mesh.vertices.get(i+2).position).sub(a.position)).normalize();
+            assertTrue(normal.isFinite() && normal.dot(a.normal) > .999);
+            for (int corner = 0; corner < 4; corner++) {
+                var vertex = mesh.vertices.get(i + corner);
+                edges.merge(java.util.Set.of(vertex.position, mesh.vertices.get(i + (corner + 1) % 4).position), 1, Integer::sum);
+                if (vertex.normal.y > .999) {
+                    assertEquals(vertex.position.x, vertex.u);
+                    assertEquals(vertex.position.z, vertex.v);
+                }
+            }
+        }
+        assertTrue(edges.values().stream().allMatch(count -> count == 2), "No open seams or overlapping corner caps");
     }
 
     @Test void fullFurnitureRendersAllWoodsAndDyesWithoutDegenerateFacesOrOutOfBoundsGeometry() {

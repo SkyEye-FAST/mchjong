@@ -88,9 +88,8 @@ public final class TableIndicator {
 
     /** One upward-facing surface, rather than coplanar top/bottom faces of a thin cuboid. */
     private static void panel(PoseStack pose, VertexConsumer out, float x0, float z0, float x1, float z1, int color, int light) {
-        float swatch = (TileMesh.ATLAS_SIZE - 16f) / TileMesh.ATLAS_SIZE;
         for (float[] p : new float[][]{{x0,z1}, {x1,z1}, {x1,z0}, {x0,z0}})
-            out.addVertex(pose.last(), p[0], SURFACE + .003f, p[1]).setColor(color).setUv(swatch, swatch)
+            out.addVertex(pose.last(), p[0], SURFACE + .003f, p[1]).setColor(color).setUv(TileMesh.SWATCH_U, TileMesh.SWATCH_V)
                 .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), 0, 1, 0);
     }
 }

@@ -24,7 +24,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Real client menu packets and rendered controls; no screen-only inventory mutations. */
 final class InterfaceSmoke {
-    private int boxStage, boxTicks, settingsStage, settingsTicks;
+    private int boxStage, boxTicks, settingsStage, settingsTicks, storageStage, storageTicks;
     private int windowWidth, windowHeight, guiScale, originalTiles;
     private ItemStack moved = ItemStack.EMPTY;
 
@@ -68,6 +68,51 @@ final class InterfaceSmoke {
             restoreWindow(client);
             boxStage = 4; boxTicks = 0;
         } else if (boxStage == 4 && boxTicks > 10) return true;
+        return false;
+    }
+
+    boolean storage(Minecraft client, net.minecraft.core.BlockPos table, Path output) {
+        storageTicks++;
+        require(storageTicks < 400, "Table storage UI timed out at " + storageStage);
+        if (storageStage == 0) {
+            client.player.getInventory().selected = 0;
+            var edge = table.south();
+            client.gameMode.useItemOn(client.player, net.minecraft.world.InteractionHand.MAIN_HAND,
+                new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(edge),
+                    net.minecraft.core.Direction.UP, edge, false));
+            storageStage = 1; storageTicks = 0;
+            return false;
+        }
+        if (!(client.screen instanceof top.skyeyefast.mchjong.client.MahjongTableScreen)) return false;
+        var menu = (top.skyeyefast.mchjong.item.MahjongTableMenu) client.player.containerMenu;
+        if (storageStage == 1 && storageTicks > 10) {
+            require(menu.slots.size() == 38 && menu.hasCloth() && menu.activeBox() == 0, "Storage menu state was not synchronized");
+            require(menu.slots.get(0).hasItem() && !menu.slots.get(1).hasItem(), "Incorrect table fixture storage");
+            client.gameMode.handleInventoryMouseClick(menu.containerId, 29, 0, ClickType.QUICK_MOVE, client.player);
+            storageStage = 2; storageTicks = 0;
+        } else if (storageStage == 2 && storageTicks > 10) {
+            require(menu.slots.get(0).getItem().getCount() == 1 && menu.slots.get(1).getItem().getCount() == 1
+                && client.player.getInventory().getItem(0).isEmpty(), "Native packet did not store the second case");
+            capture(client, output, "46-table-storage.png");
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+            storageStage = 3; storageTicks = 0;
+        } else if (storageStage == 3 && storageTicks > 15) {
+            require(client.screen.width == 320 && client.screen.height == 240, "Small storage viewport was not 320x240");
+            for (var slot : menu.slots) require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 <= 230 && slot.y + 16 <= 192,
+                "Table storage slot exceeds its panel");
+            capture(client, output, "47-table-storage-320x240.png");
+            client.gameMode.handleInventoryMouseClick(menu.containerId, 1, 0, ClickType.PICKUP, client.player);
+            client.gameMode.handleInventoryMouseClick(menu.containerId, 29, 0, ClickType.PICKUP, client.player);
+            storageStage = 4; storageTicks = 0;
+        } else if (storageStage == 4 && storageTicks > 10) {
+            require(menu.getCarried().isEmpty() && !menu.slots.get(1).hasItem() && menu.activeBox() == 0
+                && MahjongSupplies.deck(client.player.getInventory().getItem(0)) != null, "Retrieved case lost contents or left a cursor duplicate");
+            client.screen.onClose();
+            restoreWindow(client);
+            return true;
+        }
         return false;
     }
 

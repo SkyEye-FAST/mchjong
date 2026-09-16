@@ -24,7 +24,7 @@ public final class TileGui {
             int face = TileMesh.face(tile);
             graphics.blit(TileMesh.ATLAS, 1, 1, width - 2, height - 2,
                 face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
-                TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.ATLAS_SIZE, TileMesh.ATLAS_SIZE);
+                TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.ATLAS_WIDTH, TileMesh.ATLAS_HEIGHT);
         }
         graphics.renderOutline(0, 0, width, height, marked ? 0xffffbd51 : 0xffa99c80);
         graphics.pose().popPose();

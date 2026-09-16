@@ -24,12 +24,14 @@ public final class GenerateAssets {
         tiles(artwork);
         for (var texture : FurnitureArtwork.textures().entrySet())
             png("furniture/" + texture.getKey(), texture.getValue());
+        for (var texture : TileMaterialArtwork.textures().entrySet())
+            png("tile_material/" + texture.getKey(), texture.getValue());
         models();
     }
 
     private void tiles(Path archive) throws IOException {
-        BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_SIZE, TileArtwork.ATLAS_SIZE, BufferedImage.TYPE_INT_ARGB);
-        BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_SIZE, TileArtwork.ATLAS_SIZE, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = atlas.createGraphics();
         Graphics2D glyphGraphics = glyphs.createGraphics();
         try (TileArtwork artwork = new TileArtwork(archive)) {
@@ -40,9 +42,9 @@ public final class GenerateAssets {
             }
             // Dedicated neutral swatch: body colors must not depend on a player's white-dragon art.
             g.setColor(Color.WHITE);
-            g.fillRect(TileArtwork.ATLAS_SIZE - 32, TileArtwork.ATLAS_SIZE - 32, 32, 32);
+            g.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
             glyphGraphics.setColor(Color.WHITE);
-            glyphGraphics.fillRect(TileArtwork.ATLAS_SIZE - 32, TileArtwork.ATLAS_SIZE - 32, 32, 32);
+            glyphGraphics.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
             text("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt", artwork.license());
         } finally {
             g.dispose();
@@ -71,12 +73,15 @@ public final class GenerateAssets {
             String rotation = name.equals("mahjong_tile") ? "[0,0,0]"
                 : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
+            String held = name.equals("mahjong_tile")
+                ? "{\"rotation\":[-12,-30,0],\"translation\":[-2,6,0],\"scale\":[0.36,0.36,0.36]}"
+                : "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","
                 + "\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"" + lighting + "\",\"display\":{"
                 + "\"gui\":{\"rotation\":" + rotation + "},"
                 + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
-                + "\"firstperson_righthand\":{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]},"
-                + "\"firstperson_lefthand\":{\"rotation\":[0,-30,0],\"scale\":[0.7,0.7,0.7]},"
+                + "\"firstperson_righthand\":" + held + ","
+                + "\"firstperson_lefthand\":" + held + ","
                 + "\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"scale\":[0.6,0.6,0.6]},"
                 + "\"thirdperson_lefthand\":{\"rotation\":[75,-45,0],\"scale\":[0.6,0.6,0.6]}}}");
         }

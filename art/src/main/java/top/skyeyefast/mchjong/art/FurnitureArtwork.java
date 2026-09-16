@@ -34,8 +34,8 @@ final class FurnitureArtwork {
             // Grain runs along the long face axis. Periodic waves avoid seams when repeating.
             double bend = 1.8 * Math.sin(y * Math.PI / 32) + .7 * Math.sin(y * Math.PI / 16);
             double grain = Math.sin((x + bend) * Math.PI / 8);
-            int pore = Math.floorMod(x * 37 + y * 17, 97) == 0 ? -7 : 0;
-            int shade = (int) Math.round(5 * grain + 2 * Math.sin((x + bend) * Math.PI / 2)) + pore;
+            int pore = Math.floorMod(x * 37 + y * 17, 97) == 0 ? -18 : 0;
+            int shade = (int) Math.round(16 * grain + 6 * Math.sin((x + bend) * Math.PI / 2)) + pore;
             image.setRGB(x, y, shade(base, shade));
         }
         return image;
@@ -44,9 +44,10 @@ final class FurnitureArtwork {
     private static BufferedImage fabric() {
         var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
-            int weave = ((x + y) & 1) == 0 ? 2 : -2;
-            int thread = x % 4 == 0 ? -3 : y % 4 == 0 ? 1 : 0;
-            image.setRGB(x, y, shade(0xf2f2f2, weave + thread));
+            int weave = ((x + y) & 1) == 0 ? 10 : -10;
+            int thread = x % 4 == 0 ? -12 : y % 4 == 0 ? 6 : 0;
+            int nap = (int) Math.round(4 * Math.sin((x + y) * Math.PI / 16));
+            image.setRGB(x, y, shade(0xebebeb, weave + thread + nap));
         }
         return image;
     }
@@ -54,9 +55,10 @@ final class FurnitureArtwork {
     private static BufferedImage metal(int base) {
         var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
-            int brushed = Math.floorMod(x * 13, 7) - 3;
-            int highlight = (int) Math.round(3 * Math.sin(x * Math.PI / 32));
-            image.setRGB(x, y, shade(base, brushed + highlight));
+            int brushed = (Math.floorMod(x * 13, 7) - 3) * 3;
+            int highlight = (int) Math.round(12 * Math.sin(x * Math.PI / 32));
+            int scratch = x % 23 == 0 && y % 32 < 21 ? 9 : 0;
+            image.setRGB(x, y, shade(base, brushed + highlight + scratch));
         }
         return image;
     }
@@ -64,7 +66,7 @@ final class FurnitureArtwork {
     private static BufferedImage edge() {
         var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++)
-            image.setRGB(x, y, shade(0x30383b, ((x + y) & 3) == 0 ? 2 : 0));
+            image.setRGB(x, y, shade(0x30383b, ((x + y) & 3) == 0 ? 6 : -2));
         return image;
     }
 

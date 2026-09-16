@@ -45,6 +45,37 @@ public final class FurnitureShape {
         cap(pose, out, top, y1, true, color, light);
     }
 
+    /** A continuous mitered rim. Adjacent sides share edges instead of overlapping at the corners. */
+    public static void frame(PoseStack pose, VertexConsumer out, float inner, float outer,
+                              float y0, float y1, float bevel, int color, int light) {
+        float[] outside = ring(-outer, -outer, outer, outer, bevel);
+        float[] topOutside = ring(-outer + bevel, -outer + bevel, outer - bevel, outer - bevel, bevel / 2);
+        float[] inside = ring(-inner, -inner, inner, inner, bevel / 2);
+        float[] topInside = ring(-inner - bevel, -inner - bevel, inner + bevel, inner + bevel, bevel / 2);
+        float shoulder = y1 - bevel;
+        for (int i = 0; i < 8; i++) {
+            int j = (i + 1) % 8;
+            quad(pose, out, color, light,
+                outside[2*i],y0,outside[2*i+1], outside[2*i],shoulder,outside[2*i+1],
+                outside[2*j],shoulder,outside[2*j+1], outside[2*j],y0,outside[2*j+1]);
+            quad(pose, out, color, light,
+                outside[2*i],shoulder,outside[2*i+1], topOutside[2*i],y1,topOutside[2*i+1],
+                topOutside[2*j],y1,topOutside[2*j+1], outside[2*j],shoulder,outside[2*j+1]);
+            quad(pose, out, color, light,
+                topOutside[2*i],y1,topOutside[2*i+1], topInside[2*i],y1,topInside[2*i+1],
+                topInside[2*j],y1,topInside[2*j+1], topOutside[2*j],y1,topOutside[2*j+1]);
+            quad(pose, out, color, light,
+                topInside[2*i],y1,topInside[2*i+1], inside[2*i],shoulder,inside[2*i+1],
+                inside[2*j],shoulder,inside[2*j+1], topInside[2*j],y1,topInside[2*j+1]);
+            quad(pose, out, color, light,
+                inside[2*i],shoulder,inside[2*i+1], inside[2*i],y0,inside[2*i+1],
+                inside[2*j],y0,inside[2*j+1], inside[2*j],shoulder,inside[2*j+1]);
+            quad(pose, out, color, light,
+                outside[2*i],y0,outside[2*i+1], outside[2*j],y0,outside[2*j+1],
+                inside[2*j],y0,inside[2*j+1], inside[2*i],y0,inside[2*i+1]);
+        }
+    }
+
     private static float[] ring(float x0, float z0, float x1, float z1, float r) {
         return new float[]{x0+r,z0, x1-r,z0, x1,z0+r, x1,z1-r,
             x1-r,z1, x0+r,z1, x0,z1-r, x0,z0+r};
@@ -67,12 +98,23 @@ public final class FurnitureShape {
         var across = new Vector3f(p[3]-p[0], p[4]-p[1], p[5]-p[2]);
         var along = new Vector3f(p[9]-p[0], p[10]-p[1], p[11]-p[2]);
         var normal = new Vector3f(across).cross(along).normalize();
-        float width = across.length(), height = along.length();
-        // One original 64px repeat per block; grain follows the long axis of each face.
+        boolean horizontal = Math.abs(normal.y) >= Math.abs(normal.x) && Math.abs(normal.y) >= Math.abs(normal.z);
+        boolean sideX = Math.abs(normal.x) > Math.abs(normal.z);
+        float minH = Float.POSITIVE_INFINITY, maxH = Float.NEGATIVE_INFINITY;
+        float minY = Float.POSITIVE_INFINITY, maxY = Float.NEGATIVE_INFINITY;
         for (int i = 0; i < 4; i++) {
-            float u = i == 1 || i == 2 ? width : 0, v = i < 2 ? height : 0;
+            float h = p[3*i + (sideX ? 2 : 0)];
+            minH = Math.min(minH, h); maxH = Math.max(maxH, h);
+            minY = Math.min(minY, p[3*i+1]); maxY = Math.max(maxY, p[3*i+1]);
+        }
+        // Coplanar polygons sample the same local-space coordinates, including split bevel caps.
+        // One 64px repeat per block; vertical boards still orient their grain along the longer edge.
+        for (int i = 0; i < 4; i++) {
+            float h = p[3*i + (sideX ? 2 : 0)], y = p[3*i+1];
+            float u = horizontal ? p[3*i] : maxH - minH > maxY - minY ? y : h;
+            float v = horizontal ? p[3*i+2] : maxH - minH > maxY - minY ? h : y;
             out.addVertex(pose.last(), p[3*i], p[3*i+1], p[3*i+2]).setColor(color)
-                .setUv(width > height ? v : u, width > height ? u : v)
+                .setUv(u, v)
                 .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
                 .setNormal(pose.last(), normal.x, normal.y, normal.z);
         }

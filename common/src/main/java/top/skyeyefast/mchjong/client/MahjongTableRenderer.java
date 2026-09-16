@@ -72,7 +72,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         boolean glass = material == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         var vertices = buffers.getBuffer(switch (layer) {
             case BACK -> TileRenderTypes.BACKS;
-            case BODY -> glass ? TileRenderTypes.GLASS : TileRenderTypes.FACES;
+            case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.FACES;
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);

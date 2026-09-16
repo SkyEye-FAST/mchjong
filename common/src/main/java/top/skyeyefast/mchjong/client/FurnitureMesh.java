@@ -26,6 +26,7 @@ public final class FurnitureMesh {
         // Both a bare playing surface and an installed mat finish at TableGeometry.FELT_Y.
         FurnitureShape.box(pose, wooden, -felt, .875f, -felt, felt,
             cloth == null ? .9375f : .925f, felt, WHITE, light);
+        FurnitureShape.frame(pose, wooden, felt, outer, .859375f, 1, .015625f, WHITE, light);
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
@@ -33,16 +34,11 @@ public final class FurnitureMesh {
                 felt - .03125f, .84375f, felt + .03125f, WHITE, light);
             FurnitureShape.box(pose, wooden, -felt + .03125f, .625f, felt - .109375f,
                 felt - .03125f, .671875f, felt + .046875f, SHADE, light);
-            FurnitureShape.box(pose, wooden, -outer, .859375f, felt, outer, .90625f, outer, SHADE, light);
-            FurnitureShape.bevel(pose, wooden, -felt, .890625f, felt, felt, 1, outer, .015625f, WHITE, light);
             if (!automatic) FurnitureShape.box(pose, wooden, -leg, .171875f, leg - .040625f,
                 leg, .234375f, leg + .0375f, SHADE, light);
             pose.popPose();
         }
         for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1}) {
-            float corner = felt + .0625f;
-            FurnitureShape.bevel(pose, wooden, x * corner - .0625f, .890625f, z * corner - .0625f,
-                x * corner + .0625f, 1, z * corner + .0625f, .015625f, WHITE, light);
             if (!automatic) {
                 FurnitureShape.tapered(pose, wooden, x * leg - .109375f, 0, z * leg - .109375f,
                     x * leg + .109375f, .796875f, z * leg + .109375f, .03125f, WHITE, light);

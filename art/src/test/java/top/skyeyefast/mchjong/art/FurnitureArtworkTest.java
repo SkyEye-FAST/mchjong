@@ -30,6 +30,9 @@ class FurnitureArtworkTest {
                 signature = 31 * signature + color;
             }
             assertTrue(colors.size() >= 2, "A material must contain original surface detail: " + entry.getKey());
+            int contrast = colors.stream().mapToInt(color -> color & 255).max().orElseThrow()
+                - colors.stream().mapToInt(color -> color & 255).min().orElseThrow();
+            assertTrue(contrast >= (entry.getKey().equals("edge") ? 8 : 35), "Visible material relief: " + entry.getKey());
             assertTrue(signatures.add(signature), "Duplicate material: " + entry.getKey());
         }
     }
@@ -44,6 +47,31 @@ class FurnitureArtworkTest {
         var tile = com.google.gson.JsonParser.parseString(Files.readString(resources.resolve("assets/mchjong/models/item/mahjong_tile.json")))
             .getAsJsonObject();
         assertEquals("front", tile.get("gui_light").getAsString());
+    }
+
+    @Test void tileBodiesHaveDistinctNeutralReliefAndHeldFacesTurnTowardBothHands() throws Exception {
+        var signatures = new HashSet<Integer>();
+        for (var entry : TileMaterialArtwork.textures().entrySet()) {
+            var texture = ImageIO.read(textures.getParent().resolve("tile_material/" + entry.getKey() + ".png").toFile());
+            int min = 255, max = 0, signature = 1;
+            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+                int color = texture.getRGB(x, y), v = color & 255;
+                assertEquals(v, color >> 8 & 255);
+                assertEquals(v, color >> 16 & 255);
+                assertEquals(255, color >>> 24);
+                min = Math.min(min, v); max = Math.max(max, v);
+                signature = 31 * signature + color;
+            }
+            assertTrue(max - min >= 12, entry.getKey());
+            assertTrue(signatures.add(signature));
+        }
+        var model = com.google.gson.JsonParser.parseString(Files.readString(textures.getParent().getParent()
+            .resolve("models/item/mahjong_tile.json"))).getAsJsonObject().getAsJsonObject("display");
+        var right = model.getAsJsonObject("firstperson_righthand");
+        assertEquals(right, model.getAsJsonObject("firstperson_lefthand"), "Vanilla mirrors the left-hand transform");
+        assertTrue(right.getAsJsonArray("rotation").get(1).getAsFloat() < 0);
+        assertTrue(right.getAsJsonArray("translation").get(1).getAsFloat() > 0);
+        assertTrue(right.getAsJsonArray("scale").get(0).getAsFloat() <= .45);
     }
 
     @Test void fabricIsNeutralSoEveryDyeKeepsItsHue() throws Exception {

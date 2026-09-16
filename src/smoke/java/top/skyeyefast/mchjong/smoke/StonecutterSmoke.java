@@ -65,6 +65,23 @@ final class StonecutterSmoke {
                 }
             }
             check(glass == 2 && bone == 3 && quartz == 1 && menu.getCarried().isEmpty(), "Stonecutting did not conserve physical tiles");
+            // Carve all eight designs through the real output slot, one physical blank at a time.
+            menu.getSlot(0).setByPlayer(MahjongSupplies.tile(new TileData(-1, TileMaterial.AMETHYST, false), DyeColor.PURPLE, 8));
+            for (int flower = 0; flower < 8; flower++) {
+                var recipe = MahjongContent.id("engrave_tile_" + (37 + flower));
+                int selected = -1;
+                for (int i = 0; i < menu.getRecipes().size(); i++) if (menu.getRecipes().get(i).id().equals(recipe)) selected = i;
+                check(selected >= 0 && menu.clickMenuButton(player, selected), "Flower stonecutting recipe is missing");
+                menu.clicked(1, 0, ClickType.PICKUP, player);
+                var carved = menu.getCarried();
+                check(carved.getCount() == 1 && MahjongSupplies.tile(carved).equals(new TileData(34 + flower, TileMaterial.AMETHYST, false))
+                    && MahjongSupplies.color(carved) == DyeColor.PURPLE, "Flower output lost its design or physical appearance");
+                menu.clicked(2 + flower, 0, ClickType.PICKUP, player);
+                check(menu.getCarried().isEmpty(), "Flower transfer left a cursor duplicate");
+            }
+            check(!menu.getSlot(0).hasItem() && !menu.getSlot(1).hasItem(), "Flower carving failed to consume exactly eight blanks");
+            check(java.util.stream.IntStream.range(9, 17).map(slot -> inventory.getItem(slot).getCount()).sum() == 8,
+                "Flower inventory count was not conserved");
         } finally {
             menu.removed(player);
             for (int i = 0; i < saved.size(); i++) inventory.setItem(i, saved.get(i));
@@ -73,7 +90,7 @@ final class StonecutterSmoke {
     }
 
     private static void selectRedFive(StonecutterMenu menu, ServerPlayer player) {
-        check(menu.getNumRecipes() == 37, "Blank tile does not expose 37 engravings");
+        check(menu.getNumRecipes() == 45, "Blank tile does not expose all 45 engravings");
         for (int i = 0; i < menu.getRecipes().size(); i++) if (menu.getRecipes().get(i).id().equals(MahjongContent.id("engrave_tile_34"))) {
             menu.clickMenuButton(player, i);
             check(menu.getSlot(1).getItem().getCount() == 1, "Missing stonecutter result");

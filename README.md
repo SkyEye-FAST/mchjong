@@ -14,7 +14,9 @@ three or four players. It supports both Fabric and NeoForge.
 - Single-screen settlement panels with winning hands, yaku, indicators, and point changes
 - Unanimous table-exit voting and host-controlled open-hand games
 - Configurable per-hand reserve and per-decision clocks, with distinct discard animations
-- Player invitations, table sound effects, system speech and custom voice packs
+- Player invitations, table sound effects and custom recorded voice packs
+- Two-case table storage, with a tablecloth required for play
+- Eight physical flower and season tiles, stored separately from the riichi wall
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - Shared gameplay and client presentation across both loaders
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization
@@ -87,18 +89,19 @@ On Windows, use `gradlew.bat` instead of `./gradlew`.
 
 Build an ordinary table from matching wooden slabs and fences. Cut material
 blocks into blanks, put them in a mahjong box, then craft the box with an ink sac
-to engrave a set. Install the full box on either kind of table; a separate cloth
-is optional. Empty tables cannot deal. Ordinary tables require shuffle, wall,
+to engrave a set. Right-click either table to store up to two boxes inside, and
+lay a cloth on its surface. A complete set and a cloth are required to play.
+Ordinary tables require shuffle, wall,
 packet and draw actions; automatic tables handle these steps for you.
 See [Survival equipment and recipes](docs/SURVIVAL.md) for the complete recipes,
 component schema, dyes, glass tiles, point sticks and removal controls.
 
 Place stools two blocks from the center on the sides used by your rules. Click
-the table to sit on the nearest side, or click a specific stool. Crouch-click with
+a stool to sit. Right-click the table to manage its two case slots. Crouch-click with
 both hands empty collects equipment first: the top returns your side's sticks,
-then the cloth; a side returns the box. Cloth and box removal requires the lobby.
+then the cloth. Retrieve boxes through the storage screen. Cloth and box changes require the lobby.
 When no equipment is collected, crouch-clicking opens the spectator view.
-Clicking the table or your stool again reopens the controls
+Clicking your stool again reopens the controls
 without creating another seat. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
 
@@ -125,8 +128,8 @@ overlay. Right-drag looks around; Home or **Center view** restores the table vie
 
 The compact top bar shows points and essential table information; hover over a
 player card for detailed status. The concealed run stays centered, with a separate
-drawn-tile slot. Melds have their own inner rail, so calls do not push the hand
-against the left edge. The Camera settings include **Show discards on the table**.
+drawn-tile slot. Melds extend left from your right corner at hand depth; the hand
+shifts left only when the actual tiles need room. The Camera settings include **Show discards on the table**.
 Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
 and does not change game rules or replay records.
@@ -157,8 +160,8 @@ expire after 60 seconds, are bound to the recipient and table identity, and are
 revalidated when accepted. Approach within six blocks before accepting; invitations
 do not teleport players or load distant chunks. Senders may invite once per five seconds.
 
-The Audio settings include positional table effects, countdown warnings, system
-speech and custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)
+The Audio settings include positional table effects, countdown warnings and
+custom resource-pack recordings. There is no device-generated speech. See [Audio customization](docs/AUDIO.md)
 for the event names, volume controls and an example voice resource pack.
 
 ## Replays

@@ -108,7 +108,7 @@ public final class TableClientSmoke {
                         furniture.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
                         MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
                         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
-                        table.useEquipment(player, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                        table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
                             top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
                         cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.GREEN);
@@ -116,6 +116,13 @@ public final class TableClientSmoke {
                         player.getInventory().selected = 0;
                         player.getInventory().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
                             top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
+                        var flowerBox = player.getInventory().getItem(0);
+                        var flowerContents = top.skyeyefast.mchjong.item.MahjongSupplies.contents(flowerBox);
+                        for (int flower = 0; flower < 8; flower++) flowerContents.set(37 + flower,
+                            top.skyeyefast.mchjong.item.MahjongSupplies.tile(new top.skyeyefast.mchjong.item.TileData(
+                                34 + flower, top.skyeyefast.mchjong.item.TileMaterial.GLASS, false), net.minecraft.world.item.DyeColor.BLUE, 1));
+                        flowerBox.set(net.minecraft.core.component.DataComponents.CONTAINER,
+                            net.minecraft.world.item.component.ItemContainerContents.fromItems(flowerContents));
                         player.getInventory().setItem(1, new ItemStack(MahjongContent.TABLE_ITEM));
                         player.getInventory().setItem(2, furniture.copy());
                         player.getInventory().setItem(3, cloth.copy());
@@ -126,6 +133,9 @@ public final class TableClientSmoke {
                         sticks.set(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 1000);
                         player.getInventory().setItem(5, sticks);
                         player.getInventory().setItem(6, new ItemStack(MahjongContent.STOOL_ITEM));
+                        player.getInventory().setItem(7, top.skyeyefast.mchjong.item.MahjongSupplies.tile(
+                            new top.skyeyefast.mchjong.item.TileData(41, top.skyeyefast.mchjong.item.TileMaterial.GLASS, false),
+                            net.minecraft.world.item.DyeColor.BLUE, 1));
                         player.getInventory().setChanged();
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
                         player.teleportTo(level, 0.5, 64, 3.5, 180, 30);
@@ -141,6 +151,10 @@ public final class TableClientSmoke {
                 step = 21; entered = ticks;
             } else if (step == 21 && ticks - entered > 20) {
                 capture(client, "00-material-gallery.png");
+                client.setScreen(new FlowerGalleryScreen());
+                step = 24; entered = ticks;
+            } else if (step == 24 && ticks - entered > 20) {
+                capture(client, "00-flower-gallery.png");
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
@@ -175,17 +189,19 @@ public final class TableClientSmoke {
                 step = 18; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
                 if (!itemPresentationSmoke.tick(client, output)) return;
+                step = 23; entered = ticks;
+            } else if (step == 23 && interfaceSmoke.storage(client, CENTER, output)) {
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
                         player.setShiftKeyDown(true);
-                        table.interact(player);
+                        table.open(player);
                         require(!player.isPassenger(), "Crouch-click must spectate without seating");
                         player.setShiftKeyDown(false);
-                        table.interact(player);
-                        require(player.isPassenger(), "Table click did not seat the player on the nearest side");
+                        table.sit(player, 0);
+                        require(player.isPassenger(), "Stool did not seat the player");
                         var mount = player.getVehicle();
                         table.sit(player, 0);
                         require(player.getVehicle() == mount, "Reopening the stool created a duplicate mount");

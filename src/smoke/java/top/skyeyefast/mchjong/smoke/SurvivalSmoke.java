@@ -37,14 +37,14 @@ final class SurvivalSmoke {
             var furniture = new ItemStack(block);
             furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
             table.applyComponentsFromItemStack(furniture);
-            table.equipment().installBox(MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN));
+            table.equipment().boxes().setItem(0, MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN));
             table.equipment().installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
             var drops = Block.getDrops(block.defaultBlockState(), level, BlockPos.ZERO, table);
             check(drops.size() == 1 && drops.getFirst().get(MahjongComponents.WOOD) == FurnitureWood.WARPED, "Table loot lost its wood");
             check(!drops.getFirst().has(DataComponents.CONTAINER) && !drops.getFirst().has(DataComponents.BLOCK_ENTITY_DATA), "Furniture loot duplicated equipment");
             var packet = table.getUpdatePacket();
             check(packet != null && packet.getTag().equals(table.getUpdateTag(level.registryAccess())), "Wrong appearance packet");
-            check(!packet.getTag().contains("game") && !packet.getTag().contains("box") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
+            check(!packet.getTag().contains("game") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
             check("glass".equals(packet.getTag().getString("tile_material")), "Missing glass appearance");
         }
         var stool = new FurnitureBlockEntity(BlockPos.ZERO, MahjongContent.STOOL.defaultBlockState());
@@ -57,6 +57,7 @@ final class SurvivalSmoke {
         check(drops.size() == 1 && drops.getFirst().get(MahjongComponents.WOOD) == FurnitureWood.CHERRY
             && drops.getFirst().get(DataComponents.BASE_COLOR) == DyeColor.MAGENTA, "Stool loot lost appearance");
         BoxMenuSmoke.verify(player);
+        TableStorageSmoke.verify(player);
         StonecutterSmoke.verify(player);
         EquipmentSmoke.verify(player);
         EquipmentLifecycleSmoke.verify(player);

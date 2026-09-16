@@ -50,8 +50,8 @@ final class TileResourceSmoke {
         require(Arrays.equals(originalBack, backBytes), "Back bytes changed after reload");
         require(Arrays.equals(originalGlyphs, glyphBytes), "Glyph bytes changed after reload");
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
-            require(atlas.getWidth() == 2048 && atlas.getHeight() == 2048, "High-resolution atlas did not reach the client");
-            require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_SIZE == 2048,
+            require(atlas.getWidth() == 2048 && atlas.getHeight() == 4096, "High-resolution atlas did not reach the client");
+            require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_WIDTH == 2048 && TileMesh.ATLAS_HEIGHT == 4096,
                 "Renderer and artwork dimensions disagree");
         }
         try (var back = NativeImage.read(new ByteArrayInputStream(backBytes))) {
@@ -63,7 +63,7 @@ final class TileResourceSmoke {
             require(!different, "Default back must be solid");
         }
         try (var glyphs = NativeImage.read(new ByteArrayInputStream(glyphBytes))) {
-            require(glyphs.getWidth() == 2048 && glyphs.getHeight() == 2048, "Glyph atlas dimensions changed");
+            require(glyphs.getWidth() == 2048 && glyphs.getHeight() == 4096, "Glyph atlas dimensions changed");
             require((glyphs.getPixelRGBA(0, 0) >>> 24) == 0, "Glass glyph atlas has an opaque background");
             boolean printed = false;
             for (int y = 0; y < TileMesh.TILE_HEIGHT; y++) for (int x = 0; x < TileMesh.TILE_WIDTH; x++)

@@ -12,10 +12,11 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** Removable physical equipment and a strictly public appearance projection. Never holds game state. */
 public final class TableEquipment {
-    private ItemStack box = ItemStack.EMPTY;
+    public static final int BOX_SLOTS = 2;
+    private final net.minecraft.world.SimpleContainer boxes = new net.minecraft.world.SimpleContainer(BOX_SLOTS);
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
-    private boolean visibleBox;
+    private boolean loading;
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back = DyeColor.BLUE;
@@ -23,13 +24,19 @@ public final class TableEquipment {
     private int[] stickValues = new int[4];
     private int[] stickCounts = new int[4];
 
-    public boolean hasBox() { return visibleBox; }
+    public TableEquipment(Runnable changed) {
+        boxes.addListener(container -> {
+            refreshDeck();
+            if (!loading) changed.run();
+        });
+    }
+
+    public net.minecraft.world.Container boxes() { return boxes; }
     public boolean hasCloth() { return clothColor >= 0; }
     public DyeColor clothColor() { return DyeColor.byId(clothColor); }
     public TileMaterial material() { return material; }
     public DyeColor back() { return back; }
     public MahjongSupplies.Deck deck() { return deck; }
-    public ItemStack boxCopy() { return box.copy(); }
     public int stickValue(int seat) { return stickValues[seat]; }
     public int stickCount(int seat) { return stickCounts[seat]; }
 
@@ -57,16 +64,11 @@ public final class TableEquipment {
         }
     }
 
-    public ItemStack installBox(ItemStack source) {
-        MahjongSupplies.Deck checked = MahjongSupplies.deck(source);
-        if (checked == null) throw new IllegalArgumentException("Incomplete physical set");
-        ItemStack previous = box;
-        box = source.copyWithCount(1);
-        deck = checked;
-        visibleBox = true;
-        material = checked.material();
-        back = checked.back();
-        return previous;
+    private void refreshDeck() {
+        deck = null;
+        for (int slot = 0; slot < BOX_SLOTS && deck == null; slot++) deck = MahjongSupplies.deck(boxes.getItem(slot));
+        material = deck == null ? TileMaterial.BONE : deck.material();
+        back = deck == null ? DyeColor.BLUE : deck.back();
     }
 
     public ItemStack installCloth(ItemStack source) {
@@ -74,14 +76,6 @@ public final class TableEquipment {
         ItemStack previous = cloth;
         cloth = source.copyWithCount(1);
         clothColor = MahjongSupplies.color(cloth).getId();
-        return previous;
-    }
-
-    public ItemStack removeBox() {
-        ItemStack previous = box;
-        box = ItemStack.EMPTY;
-        deck = null;
-        visibleBox = false;
         return previous;
     }
 
@@ -94,7 +88,9 @@ public final class TableEquipment {
 
     public void save(CompoundTag tag, HolderLookup.Provider registries) {
         // Empty slots are explicit in a private save, but absent from public appearance packets.
-        tag.put("box", box.saveOptional(registries));
+        ListTag storedBoxes = new ListTag();
+        for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot).saveOptional(registries));
+        tag.put("boxes", storedBoxes);
         tag.put("cloth", cloth.saveOptional(registries));
         ListTag placed = new ListTag();
         for (int seat = 0; seat < 4; seat++) if (!sticks.get(seat).isEmpty()) {
@@ -108,13 +104,13 @@ public final class TableEquipment {
 
     public void load(CompoundTag tag, HolderLookup.Provider registries) {
         // Update packets contain only the appearance fields, not either item stack.
-        if (tag.contains("box")) {
-            ItemStack stored = ItemStack.parseOptional(registries, tag.getCompound("box"));
-            // Retain invalid equipment for removal rather than inventing a free replacement set.
-            box = stored;
-            deck = MahjongSupplies.deck(stored);
-            visibleBox = !box.isEmpty();
-            if (deck != null) { material = deck.material(); back = deck.back(); }
+        if (tag.contains("boxes")) {
+            loading = true;
+            try {
+                ListTag stored = tag.getList("boxes", 10);
+                for (int slot = 0; slot < BOX_SLOTS; slot++)
+                    boxes.setItem(slot, slot < stored.size() ? ItemStack.parseOptional(registries, stored.getCompound(slot)) : ItemStack.EMPTY);
+            } finally { loading = false; }
         }
         if (tag.contains("placed_sticks")) {
             sticks.clear();
@@ -129,7 +125,6 @@ public final class TableEquipment {
             cloth = ItemStack.parseOptional(registries, tag.getCompound("cloth"));
             clothColor = cloth.isEmpty() ? -1 : MahjongSupplies.color(cloth).getId();
         }
-        if (tag.contains("has_box")) visibleBox = tag.getBoolean("has_box");
         if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
         if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
@@ -139,7 +134,6 @@ public final class TableEquipment {
     }
 
     public void writeAppearance(CompoundTag tag) {
-        tag.putBoolean("has_box", visibleBox);
         tag.putInt("cloth_color", clothColor);
         tag.putString("tile_material", material.getSerializedName());
         tag.putInt("tile_back", back.getId());

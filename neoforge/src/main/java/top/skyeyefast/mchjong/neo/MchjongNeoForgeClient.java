@@ -13,6 +13,7 @@ public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
     @SubscribeEvent public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
+        event.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
     }
     @SubscribeEvent public static void items(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent event) {
         var renderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();

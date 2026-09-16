@@ -117,7 +117,7 @@ public final class MahjongSupplies {
             if (stack.is(MahjongContent.POINT_STICK)) continue;
             TileData data = tile(stack);
             if (!data.valid()) return null;
-            if (data.blank()) continue;
+            if (data.blank() || data.flower()) continue;
             if (material == null) { material = data.material(); back = color(stack); }
             if (data.material() != material || color(stack) != back) return null;
             (data.red() ? red : normal)[data.face()] += stack.getCount();

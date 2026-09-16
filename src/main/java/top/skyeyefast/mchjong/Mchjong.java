@@ -44,6 +44,7 @@ public class Mchjong implements ModInitializer {
         MahjongContent.SUPPLIES.forEach((name, item) -> Registry.register(BuiltInRegistries.ITEM, MahjongContent.id(name), item));
         Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("mahjong_stool"), MahjongContent.STOOL_ITEM);
         Registry.register(BuiltInRegistries.MENU, MahjongContent.id("mahjong_box"), MahjongContent.BOX_MENU);
+        Registry.register(BuiltInRegistries.MENU, MahjongContent.id("mahjong_table"), MahjongContent.TABLE_MENU);
         MahjongContent.TABLE_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_table"),
             BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
         MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),
@@ -57,6 +58,10 @@ public class Mchjong implements ModInitializer {
             MahjongContent.SUPPLIES.values().forEach(entries::accept);
             entries.accept(top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
                 top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
+            for (int flower = 0; flower < top.skyeyefast.mchjong.item.TileData.FLOWER_COUNT; flower++)
+                entries.accept(top.skyeyefast.mchjong.item.MahjongSupplies.tile(new top.skyeyefast.mchjong.item.TileData(
+                    top.skyeyefast.mchjong.item.TileData.FIRST_FLOWER + flower, top.skyeyefast.mchjong.item.TileMaterial.BONE, false),
+                    net.minecraft.world.item.DyeColor.BLUE, 1));
         });
         PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);

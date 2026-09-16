@@ -46,13 +46,11 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             FurnitureMesh.stick(pose, buffers, light, stack.getOrDefault(MahjongComponents.POINTS, 0));
         } else if (stack.is(MahjongContent.TILE_ITEM)) {
             var data = MahjongSupplies.tile(stack);
-            boolean five = data.face() == 4 || data.face() == 13 || data.face() == 22;
-            int tile = data.blank() ? -2 : data.face() * 4 + (five && !data.red() ? 1 : 0);
             pose.translate(0, .35, 0);
             pose.scale(4.5f, 4.5f, 4.5f);
             TileMesh.drawBack(pose, buffers.getBuffer(TileRenderTypes.BACKS), false, light, MahjongSupplies.color(stack));
-            TileMesh.drawFace(pose, buffers.getBuffer(TileRenderTypes.FACES), tile, false, light);
-            TileMesh.drawBody(pose, buffers.getBuffer(data.material() == TileMaterial.GLASS ? TileRenderTypes.GLASS : TileRenderTypes.FACES),
+            TileMesh.drawArtwork(pose, buffers.getBuffer(TileRenderTypes.FACES), TileMesh.artwork(data), light);
+            TileMesh.drawBody(pose, buffers.getBuffer(TileRenderTypes.body(data.material())),
                 light, data.material());
         }
         pose.popPose();

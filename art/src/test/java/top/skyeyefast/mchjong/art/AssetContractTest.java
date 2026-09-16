@@ -73,10 +73,10 @@ class AssetContractTest {
 
     @Test void atlasContainsEveryDistinctFaceAtItsDeclaredCoordinates() throws Exception {
         BufferedImage atlas = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile());
-        assertEquals(2048, atlas.getWidth()); assertEquals(2048, atlas.getHeight());
+        assertEquals(2048, atlas.getWidth()); assertEquals(4096, atlas.getHeight());
         Set<String> hashes = new HashSet<>();
         try (var reference = new TileArtwork(artwork)) {
-            for (int i = 0; i < 37; i++) {
+            for (int i = 0; i < 45; i++) {
                 assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/" + i + ".png")), "Unused individual face shipped");
                 BufferedImage tile = reference.face(i);
                 assertEquals(256, tile.getWidth()); assertEquals(384, tile.getHeight());
@@ -90,10 +90,10 @@ class AssetContractTest {
                 hashes.add(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(pixels.array())));
             }
         }
-        assertEquals(37, hashes.size(), "A numbered, honor or red face was duplicated");
+        assertEquals(45, hashes.size(), "A numbered, honor, red or flower face was duplicated");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/37.png")));
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
-        for (int y = 2016; y < 2048; y++) for (int x = 2016; x < 2048; x++)
+        for (int y = 4064; y < 4096; y++) for (int x = 2016; x < 2048; x++)
             assertEquals(0xffffffff, atlas.getRGB(x, y), "Neutral material swatch");
     }
 
@@ -103,7 +103,9 @@ class AssetContractTest {
         assertEquals(List.of("Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun", "Man5-Dora", "Pin5-Dora", "Sou5-Dora"),
             java.util.stream.IntStream.range(27, 37).mapToObj(TileArtwork::sourceName).toList());
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(-1));
-        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(37));
+        assertEquals(List.of("Plum", "Orchid", "Chrysanthemum", "Bamboo", "Spring", "Summer", "Autumn", "Winter"),
+            java.util.stream.IntStream.range(37, 45).mapToObj(TileArtwork::sourceName).toList());
+        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(45));
         BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
             .getSubimage(31 % 8 * TileArtwork.WIDTH, 31 / 8 * TileArtwork.HEIGHT, TileArtwork.WIDTH, TileArtwork.HEIGHT);
         for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(0xffffffff, white.getRGB(x, y));
@@ -119,6 +121,7 @@ class AssetContractTest {
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
+        TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {
             assertEquals(expectedTextures, textures.filter(Files::isRegularFile)
                 .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())

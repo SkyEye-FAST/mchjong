@@ -98,43 +98,62 @@ final class EquipmentSmoke {
             var edge = POS.east();
             level.getBlockState(edge).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(edge), Direction.UP, edge, false));
-            check(inventory.getItem(0).isEmpty(), "Placeholder interaction did not consume the installed box");
+            check(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongTableMenu,
+                "Placeholder interaction did not open table storage");
+            check(ItemStack.matches(original, inventory.getItem(0)), "Opening storage consumed a box");
+            check(!player.containerMenu.quickMoveStack(player, 29).isEmpty(), "Shift-click did not store the box");
+            player.closeContainer();
+            check(inventory.getItem(0).isEmpty(), "Storage did not move exactly one box");
+            check(!table.participantGame(player).equipped(), "A complete box without a cloth could start a game");
             table.useEquipment(player, inventory.getItem(1));
-            table.useEquipment(player, inventory.getItem(3));
-            check(find(inventory, original) >= 0 && ItemStack.matches(replacement, table.equipment().boxCopy()), "Box replacement lost the old set");
-            inventory.selected = 8;
+            TableStorageSmoke.put(player, table, 1, inventory.getItem(3));
+            check(ItemStack.matches(original, table.equipment().boxes().getItem(0))
+                && ItemStack.matches(replacement, table.equipment().boxes().getItem(1)), "The two cases did not remain separate");
+            TableStorageSmoke.take(player, table, 0);
+            check(table.equipment().material() == TileMaterial.QUARTZ, "Removing the first set did not select the second complete set");
+            TableStorageSmoke.take(player, table, 1);
+            TableStorageSmoke.emptyHand(player);
             player.setShiftKeyDown(true);
-            check(table.removeEquipment(player, Direction.UP) && table.removeEquipment(player, Direction.EAST), "Lobby unloading failed");
-            check(!table.equipment().hasBox() && !table.equipment().hasCloth(), "Unloading retained installed appearances");
+            check(table.removeEquipment(player, Direction.UP), "Lobby cloth removal failed");
+            check(table.equipment().boxes().isEmpty() && !table.equipment().hasCloth(), "Unloading retained equipment");
             player.setShiftKeyDown(false);
-            table.useEquipment(player, inventory.getItem(find(inventory, replacement)));
+            TableStorageSmoke.put(player, table, 0, inventory.getItem(find(inventory, replacement)));
+            TableStorageSmoke.put(player, table, 1, inventory.getItem(find(inventory, original)));
             table.useEquipment(player, inventory.getItem(find(inventory, cloth)));
 
             var saved = table.saveWithoutMetadata(level.registryAccess());
             var appearance = table.getUpdatePacket().getTag();
-            check(!appearance.contains("game") && !appearance.contains("box") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
+            check(!appearance.contains("game") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
             table.loadWithComponents(appearance, level.registryAccess());
             check(saved.getString("game").equals(table.saveWithoutMetadata(level.registryAccess()).getString("game"))
-                && ItemStack.matches(replacement, table.equipment().boxCopy()), "Public update destroyed private state");
+                && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Public update destroyed private state");
             level.removeBlockEntity(POS);
             table = new MahjongTableBlockEntity(POS, block.defaultBlockState());
             table.setLevel(level);
             table.loadWithComponents(saved, level.registryAccess());
             level.setBlockEntity(table);
             check(table.wood() == FurnitureWood.WARPED && table.equipment().clothColor() == DyeColor.LIME
-                && ItemStack.matches(replacement, table.equipment().boxCopy()), "World reload lost equipment or components");
+                && ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
+                && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
             if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RuleSet.MAHJONG_SOUL_3.ordinal());
+            var staleMenu = TableStorageSmoke.open(player, table);
             act(table, player, Action.Type.PRACTICE, -1);
             game = table.participantGame(player);
             check(game.phase() == (table.automatic() ? Game.Phase.TURN : Game.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
-            var rejectedBox = original.copy();
-            table.useEquipment(player, rejectedBox);
+            staleMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
+            check(staleMenu.getCarried().isEmpty() && staleMenu.quickMoveStack(player, 1).isEmpty(),
+                "A menu opened before the game bypassed the equipment lock");
+            player.closeContainer();
+            table.openStorage(player);
+            check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongTableMenu), "Running table opened editable storage");
             table.useEquipment(player, cloth.copy());
+            TableStorageSmoke.emptyHand(player);
             player.setShiftKeyDown(true);
             check(!table.removeEquipment(player, Direction.EAST) && !table.removeEquipment(player, Direction.UP), "Active equipment lock was bypassed");
             player.setShiftKeyDown(false);
-            check(ItemStack.matches(original, rejectedBox) && ItemStack.matches(replacement, table.equipment().boxCopy()), "Locked replacement consumed equipment");
+            check(ItemStack.matches(original, table.equipment().boxes().getItem(1))
+                && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Locked storage changed equipment");
             var before = game.view(player.getUUID());
             table.useEquipment(player, inventory.getItem(2));
             var after = game.view(player.getUUID());
@@ -145,8 +164,10 @@ final class EquipmentSmoke {
             player.setShiftKeyDown(false);
             table.control(player, new TableControlPayload(POS, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
             check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exit did not release the player");
-            check(ItemStack.matches(replacement, table.equipment().boxCopy())
-                && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxCopy())) == 136, "Exit lost the full set or unused sanma tiles");
+            check(ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
+                && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,
+                "Exit lost the full set or unused sanma tiles");
+            check(!staleMenu.stillValid(player) && staleMenu.quickMoveStack(player, 0).isEmpty(), "An invalidated storage menu became live again after exit");
             for (int count = 0; count < 3; count++) table.useEquipment(player, inventory.getItem(2));
             player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, 0, 0);
             if (destruction == 0) level.destroyBlock(POS, true);
@@ -157,15 +178,17 @@ final class EquipmentSmoke {
             check(count(drops, block.asItem()) == 1 && drops.stream().filter(s -> s.is(block.asItem()))
                 .allMatch(s -> s.get(MahjongComponents.WOOD) == FurnitureWood.WARPED), "Furniture drop was duplicated or lost its wood: "
                     + block + " destruction=" + destruction + " drops=" + drops.stream().map(s -> s + " wood=" + s.get(MahjongComponents.WOOD)).toList());
-            check(count(drops, MahjongContent.BOX_ITEM) == 1 && drops.stream().anyMatch(s -> ItemStack.matches(s, replacement)), "Destroyed table did not return exactly one complete box");
+            check(count(drops, MahjongContent.BOX_ITEM) == 2 && drops.stream().anyMatch(s -> ItemStack.matches(s, replacement))
+                && drops.stream().anyMatch(s -> ItemStack.matches(s, original)), "Destroyed table did not return both complete boxes exactly once");
             check(count(drops, MahjongContent.CLOTH_ITEM) == 1 && drops.stream().anyMatch(s -> ItemStack.matches(s, cloth)), "Destroyed table lost its cloth");
             check(count(drops, MahjongContent.POINT_STICK) == 3 && inventory.getItem(2).getCount() == 5, "Destroyed table duplicated or lost point sticks");
-            check(find(inventory, original) >= 0, "Destruction changed previously returned equipment");
+            check(find(inventory, original) < 0 && find(inventory, replacement) < 0, "Storage duplicated a case in player inventory");
             int radius = TableGeometry.FOOTPRINT_RADIUS;
             for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++)
                 check(!level.getBlockState(POS.offset(x, 0, z)).is(MahjongContent.SPACE), "Orphaned table space remained");
         } finally {
             player.stopRiding();
+            player.closeContainer();
             player.setShiftKeyDown(false);
             level.destroyBlock(POS, false);
             for (int seat = 0; seat < 4; seat++) level.removeBlock(TableGeometry.stool(POS, seat), false);

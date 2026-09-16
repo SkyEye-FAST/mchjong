@@ -40,6 +40,8 @@ public final class MahjongContent {
     public static EntityType<SeatEntity> SEAT_ENTITY;
     public static final net.minecraft.world.inventory.MenuType<top.skyeyefast.mchjong.item.MahjongBoxMenu> BOX_MENU =
         new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.MahjongBoxMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
+    public static final net.minecraft.world.inventory.MenuType<top.skyeyefast.mchjong.item.MahjongTableMenu> TABLE_MENU =
+        new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.MahjongTableMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
 
     private MahjongContent() {}
 

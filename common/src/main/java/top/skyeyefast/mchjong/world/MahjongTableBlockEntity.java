@@ -33,7 +33,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private TableView clientView;
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
-    private final TableEquipment equipment = new TableEquipment();
+    private final TableEquipment equipment = new TableEquipment(this::equipmentChanged);
 
     public TableEquipment equipment() { return equipment; }
     public boolean automatic() { return getBlockState().is(MahjongContent.AUTO_TABLE); }
@@ -45,8 +45,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (unreadableSave != null) return null;
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, SEEDS.nextLong());
         if (game.phase() == Game.Phase.LOBBY)
-            game.configureEquipment(!automatic(), equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles(false));
-        else if (equipment.deck() == null) return null;
+            game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles(false));
+        else if (!equipment.hasCloth() || equipment.deck() == null) return null;
         return game;
     }
 
@@ -99,7 +99,25 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public void open(ServerPlayer player) { sendView(player, true); }
 
-    /** Empty-hand sneaking removes cloth from the top, or the box from a side, only between matches. */
+    public boolean equipmentEditable() { return unreadableSave == null && (game == null || game.phase() == Game.Phase.LOBBY); }
+
+    private void equipmentChanged() {
+        appearanceChanged();
+        sentRevision = -1;
+    }
+
+    public void openStorage(ServerPlayer player) {
+        if (player.serverLevel() != level || isRemoved() || player.isSpectator() || !equipmentEditable()
+            || !player.isAlive() || player.distanceToSqr(worldPosition.getCenter()) > 64) {
+            player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
+            return;
+        }
+        player.openMenu(new net.minecraft.world.SimpleMenuProvider(
+            (id, inventory, owner) -> new top.skyeyefast.mchjong.item.MahjongTableMenu(id, inventory, this),
+            Component.translatable("storage.mchjong.title")));
+    }
+
+    /** Empty-hand sneaking on the top collects sticks, then the cloth between matches. */
     public boolean removeEquipment(ServerPlayer player, net.minecraft.core.Direction face) {
         if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()
             || player.isSpectator()) return false;
@@ -109,8 +127,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             appearanceChanged();
             return true;
         }
-        if (game != null && game.phase() != Game.Phase.LOBBY) return false;
-        var removed = face == net.minecraft.core.Direction.UP ? equipment.removeCloth() : equipment.removeBox();
+        if (!equipmentEditable() || face != net.minecraft.core.Direction.UP) return false;
+        var removed = equipment.removeCloth();
         if (removed.isEmpty()) return false;
         give(player, removed);
         appearanceChanged();
@@ -127,16 +145,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             }
             return true;
         }
-        if (!stack.is(MahjongContent.CLOTH_ITEM) && !stack.is(MahjongContent.BOX_ITEM)) return false;
-        if (player.isSpectator() || unreadableSave != null || game != null && game.phase() != Game.Phase.LOBBY) {
+        if (!stack.is(MahjongContent.CLOTH_ITEM)) return false;
+        if (player.isSpectator() || !equipmentEditable()) {
             player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
             return true;
         }
-        if (stack.is(MahjongContent.BOX_ITEM) && top.skyeyefast.mchjong.item.MahjongSupplies.deck(stack) == null) {
-            player.displayClientMessage(Component.translatable("message.mchjong.incomplete_box"), true);
-            return true;
-        }
-        var previous = stack.is(MahjongContent.BOX_ITEM) ? equipment.installBox(stack) : equipment.installCloth(stack);
+        var previous = equipment.installCloth(stack);
         if (!player.isCreative()) stack.shrink(1);
         give(player, previous);
         appearanceChanged();
@@ -151,10 +165,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public void dropEquipment() {
         if (level == null || level.isClientSide) return;
         // Clear before spawning: neighbor removal and explosions must never duplicate a loaded set.
-        var box = equipment.removeBox();
+        var boxes = java.util.stream.IntStream.range(0, TableEquipment.BOX_SLOTS)
+            .mapToObj(slot -> equipment.boxes().removeItemNoUpdate(slot)).toList();
+        equipment.boxes().setChanged();
         var cloth = equipment.removeCloth();
         var sticks = java.util.stream.IntStream.range(0, 4).mapToObj(equipment::removeSticks).toList();
-        net.minecraft.world.level.block.Block.popResource(level, worldPosition, box);
+        boxes.forEach(stack -> net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack));
         net.minecraft.world.level.block.Block.popResource(level, worldPosition, cloth);
         sticks.forEach(stack -> net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack));
         flushReplays();
@@ -170,19 +186,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             LOGGER.error("Cannot archive completed mahjong hands at {}; they remain in the table save", worldPosition, failure);
             setChanged();
         }
-    }
-
-    /** Table clicks join the nearest side; crouching deliberately keeps the player spectating. */
-    public void interact(ServerPlayer player) {
-        if (authorizedViewer(player) != null || player.isShiftKeyDown() || player.isSpectator() || player.isPassenger()) {
-            open(player);
-            return;
-        }
-        Game game = serverGame();
-        if (game == null) { open(player); return; }
-        int reserved = game.seatOf(player.getUUID());
-        int side = reserved >= 0 ? reserved : TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
-        sit(player, side);
     }
 
     public void sit(ServerPlayer player, int seat) {
@@ -270,7 +273,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
         equipment.load(tag, registries);
-        if (tag.contains("box")) {
+        if (tag.contains("boxes")) {
             game = null;
             unreadableSave = null;
             sentRevision = -1;

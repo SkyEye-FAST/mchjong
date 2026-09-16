@@ -141,16 +141,23 @@ final class EquipmentLifecycleSmoke {
         mixedMaterial.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
         for (var invalid : List.of(shortSet, mixedColor, mixedMaterial)) {
             var before = invalid.copy();
-            table.useEquipment(player, invalid);
-            check(ItemStack.matches(before, invalid) && !table.equipment().hasBox(), "Invalid physical set was consumed or installed");
+            TableStorageSmoke.put(player, table, 0, invalid);
+            check(ItemStack.matches(before, table.equipment().boxes().getItem(0)) && table.equipment().deck() == null,
+                "An incomplete case was altered or treated as a playable set");
+            TableStorageSmoke.take(player, table, 0);
+            check(countInventory(player, before) == 1, "The incomplete case could not be recovered intact");
         }
         var first = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var firstExpected = first.copy();
-        table.useEquipment(player, first);
-        check(first.isEmpty(), "Initial box installation did not consume exactly one box");
+        TableStorageSmoke.put(player, table, 0, first);
+        check(first.isEmpty(), "Storage transfer did not move exactly one box");
         var installed = complete.copy();
-        table.useEquipment(player, installed);
-        check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Replacing a box lost or duplicated the previous contents");
+        TableStorageSmoke.put(player, table, 1, installed);
+        TableStorageSmoke.take(player, table, 0);
+        TableStorageSmoke.take(player, table, 1);
+        TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
+        check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Moving the cases lost or duplicated their contents");
+        check(!table.participantGame(player).equipped(), "Table started without a cloth");
         var green = new ItemStack(MahjongContent.CLOTH_ITEM);
         var greenExpected = green.copy();
         table.useEquipment(player, green);
@@ -167,15 +174,15 @@ final class EquipmentLifecycleSmoke {
         check(game.act(player.getUUID(), view.decision(), practice) && game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
         game.validate();
         var lockedCloth = redExpected.copy();
-        var lockedBox = firstExpected.copy();
         table.useEquipment(player, lockedCloth);
-        table.useEquipment(player, lockedBox);
-        check(ItemStack.matches(lockedCloth, redExpected) && ItemStack.matches(lockedBox, firstExpected)
-            && ItemStack.matches(complete, table.equipment().boxCopy()), "Equipment changed during a game");
-        inventory.selected = 8;
+        table.openStorage(player);
+        check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongTableMenu), "Equipment storage opened during a game");
+        check(ItemStack.matches(lockedCloth, redExpected)
+            && ItemStack.matches(complete, table.equipment().boxes().getItem(0)), "Equipment changed during a game");
+        TableStorageSmoke.emptyHand(player);
         player.setShiftKeyDown(true);
         table.removeEquipment(player, Direction.NORTH);
-        check(ItemStack.matches(complete, table.equipment().boxCopy()), "A running game's box was removed");
+        check(ItemStack.matches(complete, table.equipment().boxes().getItem(0)), "A running game's box was removed");
         player.setShiftKeyDown(false);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
         sticks.set(MahjongComponents.POINTS, 1000);
@@ -189,17 +196,19 @@ final class EquipmentLifecycleSmoke {
         check(game.phase() != Game.Phase.LOBBY && player.isPassenger(), "A stale exit token changed the game");
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
         check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
-        // Replacement returns can occupy the selected slot: empty both hands before removal.
-        inventory.selected = 8;
+        // Native inventory transfers can occupy any hotbar slot.
+        TableStorageSmoke.emptyHand(player);
         player.setShiftKeyDown(true);
         table.removeEquipment(player, Direction.UP);
         check(countInventory(player, expectedSticks) == 3 && table.equipment().stickCount(0) == 0, "Point tray did not return its physical stack");
+        TableStorageSmoke.emptyHand(player);
         table.removeEquipment(player, Direction.UP);
         check(countInventory(player, redExpected) == 1 && !table.equipment().hasCloth(), "Cloth was not removable after exit");
-        table.removeEquipment(player, Direction.NORTH);
-        check(countInventory(player, complete) == 1 && !table.equipment().hasBox(), "Box was not removable after exit");
         player.setShiftKeyDown(false);
-        table.useEquipment(player, findInventory(player, complete));
+        TableStorageSmoke.take(player, table, 0);
+        check(countInventory(player, complete) == 1 && table.equipment().boxes().isEmpty(), "Box was not removable after exit");
+        TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
+        TableStorageSmoke.put(player, table, 1, findInventory(player, firstExpected));
         table.useEquipment(player, findInventory(player, redExpected));
         var returnedSticks = findInventory(player, expectedSticks);
         for (int i = 0; i < 3; i++) table.useEquipment(player, returnedSticks);
@@ -219,7 +228,7 @@ final class EquipmentLifecycleSmoke {
             check(!level.getBlockState(CENTER.offset(x, 0, z)).is(MahjongContent.SPACE), "Orphaned table-space block after destruction");
         loaded.dropEquipment();
         var drops = level.getEntitiesOfClass(ItemEntity.class, AREA);
-        for (var expected : List.of(expectedFurniture, complete, redExpected, expectedSticks)) {
+        for (var expected : List.of(expectedFurniture, complete, firstExpected, redExpected, expectedSticks)) {
             int count = drops.stream().map(ItemEntity::getItem).filter(stack -> ItemStack.isSameItemSameComponents(stack, expected))
                 .mapToInt(ItemStack::getCount).sum();
             check(count == expected.getCount(), "Destruction " + destruction + " returned " + count + " rather than " + expected);

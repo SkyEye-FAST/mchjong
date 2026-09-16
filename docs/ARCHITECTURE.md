@@ -17,9 +17,9 @@ allows it.
   plus a separate server-data generator. Its SVG renderer is never a game dependency.
 
 Survival components, atomic box transformations and component-preserving recipes
-live in `common/item` and `common/recipe`. `TableEquipment` stores actual removable
-box, cloth and point-stick stacks; its public projection contains only wood,
-colors, material, box presence and placed-stick counts/values. Native container
+live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
+slots plus removable cloth and point-stick stacks; its public projection contains only wood,
+colors, material and placed-stick counts/values. Native container
 contents and game state never enter chunk updates. The two tables share one block
 entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall,
 packet and draw phases without duplicating scoring or inventing client authority.
@@ -30,6 +30,10 @@ project's presentation vocabulary without replacing native input machinery.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
 and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
 inventory wells and a packing summary; it never writes stored components.
+`MahjongTableMenu` exposes two case slots through the same native container protocol;
+its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
+shows the selected complete set and cloth readiness without changing equipment.
+Both manual and automatic tables require a cloth and complete set to begin.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
 
 The server owns the wall, hands, legal actions and settlement. Requests contain an
@@ -75,8 +79,8 @@ clearance and meld rendering.
 The table reserves a 3 x 3 footprint with dimensions shared by placement,
 colliders, furniture and seating. Melds are anchored at the owner's right-hand
 corner, beside the hand at the same depth. Extracted norths form two short rows
-to the left of the hand, clear of the adjacent player's corner. The equipment box is
-displayed only in the lobby, never over playing tiles.
+to the left of the hand, clear of the adjacent player's corner. Cases are kept inside
+the table and never rendered over its playing surface.
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers
 is a local rendering preference; it also forces the remaining-wall count and
@@ -146,12 +150,13 @@ and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 
 `TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
-owns client playback and its independent native speech instance. Registered
+owns client effects and resource-pack recording playback without creating device speech. Registered
 resource-pack events separate table effects from recordings. No game logic
 depends on an audio completion callback. See `AUDIO.md` for customization.
 
 Replay recording and playback live in the Minecraft-independent engine.
-`ReplayStore` handles bounded atomic files and indexes, `ReplayServer` handles
+`ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
+deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
 The viewer never feeds recorded actions back into a live `Game`. `TenhouReplay`
 is the only export encoder; it consumes completed records and does not rerun

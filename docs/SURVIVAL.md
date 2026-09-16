@@ -1,7 +1,7 @@
 # Survival equipment and play
 
 The survival loop is deliberately short: build furniture, cut blanks in a
-stonecutter, engrave a set in its box, then install the box at a table. There is
+stonecutter, engrave a set in its box, then store the box inside a clothed table. There is
 no new workstation, battery, diamond component or per-tile crafting grind.
 
 ## Registry entries
@@ -31,7 +31,8 @@ The two tables share the `mchjong:mahjong_table` block entity type. Stools use
 | `minecraft:container` | Native item-stack container | Mahjong boxes |
 
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
-are the winds and dragons, in engine order. Only faces `4`, `13`, `22` can have
+are the winds and dragons, in engine order. Faces `34..41` are plum, orchid,
+chrysanthemum, bamboo, spring, summer, autumn and winter. Only faces `4`, `13`, `22` can have
 `red = true`. Material is one of `wood`, `bone`, `quartz`, `calcite`, `glass`,
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Default backs are
@@ -96,8 +97,8 @@ marking material produce the same number of marked sticks:
 
 Already marked sticks cannot be remarked. All component-preserving operations
 use shared custom crafting serializers, not ingredients that accidentally
-ignore component values. They still use the vanilla crafting grid. Their rules
-are described in the item tooltips; component-dependent recipes are special
+ignore component values. They still use the vanilla crafting grid. The recipes
+are documented here; component-dependent recipes are special
 recipes rather than a separate custom crafting interface.
 
 ## Stonecutting
@@ -108,15 +109,23 @@ All wooden blanks use the single `wood` material; furniture still retains its
 specific wood species. One bone block can alternatively yield **16 unmarked
 point sticks**.
 
-Put a blank tile in a stonecutter to select any of the 34 ordinary faces or
-three red fives. One blank makes one tile, preserving its material and back
+Put a blank tile in a stonecutter to select any of the 34 ordinary faces,
+three red fives or eight flower designs. One blank makes one tile, preserving its material and back
 color. This is for replacements or individual pieces, not the normal full-set
-path. Engraved tiles cannot be recut into another face. The 37 shared engraving
+path. Engraved tiles cannot be recut into another face. The 45 shared engraving
 recipes use the native stonecutting interface and recipe type.
 The shared stonecutter hook invalidates vanilla's item-ID-only cache when a
 tile's components change. Swapping material, color or an already engraved tile
 into the input clears the old selection and output before another result can
 be taken. The recipe also independently rejects nonblank inputs on assembly.
+
+The eight flowers are physical tiles in all six materials and sixteen back colors.
+They can be carried, stored in a box, dyed and dropped like the other tiles. Cut
+eight extra blanks to complete a 144-tile case, or carve the eight spares left by
+bulk-engraving 144 blanks. Creative inventory also exposes the eight designs.
+Riichi rules do not draw flower tiles: the validated 136-tile set (108 in sanma)
+is unchanged, and flowers stay safely inside the case during those games. This
+does not introduce a different scoring ruleset or flower-replacement actions.
 
 ## Boxes, installation and removal
 
@@ -136,20 +145,29 @@ blocks across; melds extend left from the owner's right corner beside the hand.
 The hand remains centered while it fits, shifting left only enough to clear the
 actual melds and any drawn tile, without reserving unused slots.
 
-Use a full box on either table to install it. The table validates the physical
-136-tile multiset, three red fives, uniform material and uniform back color.
-Spare unengraved tiles and point sticks are allowed in the box. A mixed-back,
-mixed-material, incomplete or duplicate-faced set cannot start a game. The box
-is transferred into table storage, not copied in survival; replacing it returns
-the previous box. There is no free virtual set when a survival table is empty.
+Right-click either table, including any footprint cell, to open its two-case
+storage screen. Each slot holds one box, without rendering it on the tabletop.
+Empty and incomplete boxes can be stored and retrieved. The first complete box,
+reading left to right, supplies the game; the second box is not combined with it.
+Use normal clicks, shift-clicks or number-key swaps to move cases. The server
+checks distance, table identity and match state on every transaction. Closing
+the screen, leaving range, breaking the table or starting a match permanently
+invalidates an old menu. Both cases are locked during a match.
 
-Use a cloth on either table to install or replace it. Cloth is optional: a bare
-wooden surface remains playable. To remove the box or cloth, end the match, empty both
-hands and sneak-use: the top removes cloth, a side removes the box. If physical
+The table validates the physical
+136-tile multiset, three red fives, uniform material and uniform back color.
+Spare unengraved tiles, flowers and point sticks are allowed in the box. A mixed-back,
+mixed-material, incomplete or duplicate-faced set cannot start a game. The box
+is transferred into table storage, not copied, including when using creative
+inventory transfers. There is no free virtual set when a table is empty.
+
+Use a cloth on either table to install or replace it. Both table types require
+a cloth before play; a bare wooden table cannot ready players or start practice.
+To remove the cloth, end the match, empty both hands and sneak-use the top. If physical
 point sticks are present on the nearest side, the top first returns that stack.
 Equipment collection takes priority over spectator interaction; a sneak-click
 opens the spectator view only when it does not collect any equipment.
-Breaking a table returns its furniture, box, cloth and placed sticks; equipment
+Breaking a table returns its furniture, both stored boxes, cloth and placed sticks; equipment
 storage is cleared before spawning drops so occupancy-cell removal cannot
 duplicate the contents. An unfinished hand is not fabricated into a result.
 Explosion drop decay still follows vanilla rules for the furniture block; the
@@ -233,8 +251,8 @@ ordinary glass-tile table. `ManualTableSmoke` clicks the actual shuffle, wall,
 four packet, draw, discard and exit controls through normal client/server
 packets. It verifies waiting does not handle tiles for the human, private hands
 remain hidden, an in-progress manual save round-trips, and the full box can be
-recovered after exit. Screenshots include the manual phases and installed
-colored furniture, box, cloth and physical point sticks.
+recovered after exit. Screenshots include the manual phases, two-case inventory,
+colored furniture, cloth and physical point sticks.
 `ItemPresentationSmoke` also selects the actual hotbar items and sends native
 drop actions for both tables, cloth, a glass tile, a point stick and a stool.
 It checks inventory counts and the synchronized dropped-item components while

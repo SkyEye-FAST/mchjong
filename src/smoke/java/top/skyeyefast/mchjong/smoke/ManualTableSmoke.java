@@ -81,7 +81,8 @@ final class ManualTableSmoke {
             case 15 -> {
                 if (!(client.screen instanceof TableScreen) || view.viewerSeat() != 0 || ticks < 15) return false;
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
-                check(table.equipment().hasBox() && table.equipment().clothColor() == DyeColor.RED, "Ordinary table lost equipment appearance");
+                check(table.equipment().clothColor() == DyeColor.RED && table.equipment().material() == TileMaterial.GLASS,
+                    "Ordinary table lost equipment appearance");
                 check(table.equipment().stickCount(0) == 3 && table.equipment().stickValue(0) == 1000 && view.riichiSticks() == 0,
                     "Physical tray appearance or separation from riichi deposits was lost");
                 capture(client, output, "30-manual-lobby.png");
@@ -168,10 +169,9 @@ final class ManualTableSmoke {
                 capture(client, output, "38-manual-exited.png");
                 serverWork = onServer(client, player -> {
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
-                    check(ItemStack.matches(installedBox, serverTable.equipment().boxCopy()), "Playing consumed or altered the physical set");
-                    player.setShiftKeyDown(true);
-                    check(serverTable.removeEquipment(player, Direction.NORTH), "Box was locked after leaving the game");
-                    check(!serverTable.equipment().hasBox(), "Removed box remained installed");
+                    check(ItemStack.matches(installedBox, serverTable.equipment().boxes().getItem(0)), "Playing consumed or altered the physical set");
+                    TableStorageSmoke.take(player, serverTable, 0);
+                    check(serverTable.equipment().boxes().isEmpty(), "Removed box remained stored");
                     check(java.util.stream.IntStream.range(0, player.getInventory().getContainerSize())
                         .mapToObj(player.getInventory()::getItem).anyMatch(stack -> ItemStack.matches(installedBox, stack)),
                         "The complete set was not returned after exit");
@@ -207,8 +207,9 @@ final class ManualTableSmoke {
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         installedBox = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN);
         var box = installedBox.copy();
-        table.useEquipment(player, box);
-        check(box.isEmpty(), "Survival installation did not consume the physical box");
+        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
+        TableStorageSmoke.put(player, table, 0, box);
+        check(box.isEmpty(), "Storage transfer did not move the physical box");
         var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
         cloth.set(DataComponents.BASE_COLOR, DyeColor.RED);
         table.useEquipment(player, cloth);
