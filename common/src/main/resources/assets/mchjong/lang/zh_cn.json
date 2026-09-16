@@ -229,7 +229,7 @@
   "settings.mchjong.info.melds": "副露",
   "settings.mchjong.info.results": "和牌／流局结果",
   "settings.mchjong.info.help": "操作提示",
-  "message.mchjong.space": "麻将桌需要5×5的空地，且中心下方需要有坚实的支撑。",
+  "message.mchjong.space": "麻将桌需要3×3的空地，且中心下方需要有坚实的支撑。",
   "message.mchjong.no_table": "请将麻将凳放在距桌子中心两格的东、南、西或北侧。",
   "message.mchjong.occupied": "此座位已被占用，或已为其他玩家保留。",
   "message.mchjong.inactive_seat": "三人麻将不使用这一侧的座位。",

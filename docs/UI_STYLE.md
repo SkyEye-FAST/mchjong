@@ -91,20 +91,24 @@ Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
 ## Physical table layout
 
-The physical table reserves a 5 x 5 block footprint around a 4.375-block frame
-and a 4.125-block playing surface. `TableGeometry` owns these and the seat
+The physical table reserves a 3 x 3 block footprint around a 2.875-block frame
+and a 2.625-block playing surface. `TableGeometry` owns these and the seat
 dimensions; the furniture mesh, footprint colliders, placement checks, stool
 lookup and dismount positions must use those same dimensions.
-Enlarge the actual table when space is insufficient, not just its tile anchors.
+Keep this compact footprint; do not enlarge the furniture to avoid hand layout.
 
-The concealed hand stays centered on its owner's side at every meld count. The
-drawn tile sits just to its right and does not recenter the existing run. Melds
-start at the player's right-hand table corner and extend left along the same
-depth as the hand. Never move melds forward into a rail between the hand and the
-wall, or move the hand left to make room. The wider surface accommodates four
-melds, including open/closed/added kans, beside the centered hand. Removing tiles
-may compact the shorter hand around its center. Extracted norths use the left
-side so they cannot take the right-hand corner reserved for melds.
+Melds start at the player's right-hand table corner and extend left along the
+same depth as the hand. Never move melds forward into a rail between the hand
+and the wall. The concealed hand stays centered on the table while its right
+edge, including any drawn tile and draw gap, clears the actual meld bounds by
+`TableScene.HAND_MELD_GAP`. When
+they do not fit, shift the hand left only by the missing clearance. Do not use
+a fixed left offset or center the hand in the entire remaining space. Do not
+reserve absent melds or drawn tiles. Drawing can move a constrained hand only as
+far as the additional tile requires; an unconstrained hand does not move.
+Account for open/closed/added kans and sideways calls without moving
+earlier melds away from their corner. Extracted norths form two short rows on
+the left, with clearance from the adjacent player's right-corner melds.
 
 Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called
@@ -114,7 +118,7 @@ from those physical contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
 Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
-defaults must keep the larger table and its right corner usable from the seated view.
+defaults must keep the compact table and its right corner usable from the seated view.
 
 ## Acceptance and future changes
 
@@ -123,12 +127,18 @@ Run `gradlew.bat buildAll` and both `:runSmokeClient` and
 screenshots rather than treating compilation as visual verification. Cover
 small-window layout, keyboard focus, disabled/selected states, box carrier
 synchronization and real inventory transactions. Keep geometric regression
-tests for hand centering, draw stability, meld/wall clearance and tile contact.
+tests for conditional hand centering, minimal left shifts, drawn-tile clearance,
+meld/wall clearance and tile contact.
 Inspect the zero-to-four-meld screenshots and the four-open-kan fixture at both
 640 x 400 and 320 x 240 logical resolutions. The complete tile bounds must stay
 visible beside the hand, not just the center of the rightmost meld. Remove only
 the smoke's own dropped-item fixtures before those screenshots. Placement must
 reject obstructed outer corners and headroom without consuming an item; breaking
 an outer corner must remove all occupancy cells and return equipment once.
+Placement must also succeed with obstructions just outside the 3 x 3 footprint
+without overwriting them or reserving extra cells. Compare the two-open-kan
+waiting/drawn screenshots: the waiting hand stays centered, and only the actual
+draw causes a minimal shift. Geometric tests cover every call type and source,
+all four seats, standing/exposed tiles and waiting/drawn/post-call hands.
 Update this document and the shared tokens together when intentionally changing
 the style; do not establish a competing set of local widgets or palette values.

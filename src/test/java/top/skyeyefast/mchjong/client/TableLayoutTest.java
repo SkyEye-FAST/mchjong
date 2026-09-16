@@ -63,7 +63,7 @@ class TableLayoutTest {
         }
     }
 
-    @Test void everyMeldTypeFitsBesideTheCenteredHandAtTheRightCorner() {
+    @Test void everyMeldTypeOnlyDisplacesTheHandWhenItsActualWidthRequiresIt() {
         var view = start(RuleSet.TENHOU_4);
         for (Meld.Type type : Meld.Type.values()) for (int count = 1; count <= 4; count++) {
             for (int source = 1; source <= 3; source++) {
@@ -83,7 +83,7 @@ class TableLayoutTest {
                     .min().orElseThrow();
                 double handRight = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
                     .mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
-                assertTrue(meldLeft > handRight + TableScene.MELD_GAP, type + " x" + count + " overlaps the hand");
+                assertTrue(meldLeft >= handRight + TableScene.HAND_MELD_GAP - 1e-6, type + " x" + count + " overlaps the hand");
                 var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD).toList();
                 assertTrue(calls.stream().allMatch(p -> p.position().z == TableScene.HAND_Z),
                     "Melds belong beside the hand, never in an inner/front rail");
@@ -91,8 +91,11 @@ class TableLayoutTest {
                 assertEquals(TableScene.MELD_RIGHT, right, 1e-5);
                 assertTrue(top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH - right < 0.1,
                     "The first meld must stay anchored to the owner's right corner");
-                assertEquals(0, pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
-                    .mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-9);
+                double centeredRight = (size - 1) * TableScene.HAND_STEP / 2 + TableScene.RIVER_STEP / 2;
+                double expectedShift = Math.min(0, meldLeft - TableScene.HAND_MELD_GAP - centeredRight);
+                assertEquals(expectedShift, pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
+                    .mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7,
+                    "Do not center in the remaining space or apply a fixed left offset");
             }
         }
     }

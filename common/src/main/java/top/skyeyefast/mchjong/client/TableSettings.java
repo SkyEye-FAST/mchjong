@@ -39,10 +39,10 @@ public final class TableSettings {
     public boolean countdownSounds = true;
     public static final double MIN_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + .4;
     public static final double MAX_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 2.0;
-    public static final double MIN_CAMERA_HEIGHT = 1.9;
-    public static final double MAX_CAMERA_HEIGHT = 3.3;
+    public static final double MIN_CAMERA_HEIGHT = 1.7;
+    public static final double MAX_CAMERA_HEIGHT = 3.0;
     public double cameraDistance = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 1.15;
-    public double cameraHeight = 2.6;
+    public double cameraHeight = 2.25;
 
     public static TableSettings get() {
         if (current == null) {

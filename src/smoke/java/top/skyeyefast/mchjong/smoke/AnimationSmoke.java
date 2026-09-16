@@ -112,8 +112,10 @@ final class AnimationSmoke {
             client.setScreen(screen);
             screen.resetView();
         }
-        if (ticks >= 126 && ticks <= 182 && (ticks - 126) % 14 == 0)
+        if (ticks >= 126 && ticks <= 182 && (ticks - 126) % 14 == 0) {
+            verifyCornerVisible(client, table);
             capture(client, output, "40-layout-" + (ticks - 126) / 14 + "-melds.png");
+        }
         if (ticks == 184) {
             windowWidth = client.getWindow().getWidth();
             windowHeight = client.getWindow().getHeight();
@@ -144,6 +146,27 @@ final class AnimationSmoke {
         if (ticks == 220) {
             verifyCornerVisible(client, table);
             capture(client, output, "42-layout-four-kans.png");
+        }
+        if (ticks == 222 || ticks == 238) {
+            var seats = new ArrayList<>(fixture.seats());
+            var melds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i + 1, i * 4)).toList();
+            seats.set(0, seat(IntStream.range(80, ticks == 222 ? 87 : 88).boxed().toList(), melds, List.of(), false));
+            update(table, seats, fixture.wall());
+            var screen = new TableScreen(table.getBlockPos());
+            client.setScreen(screen);
+            screen.resetView();
+        }
+        if (ticks == 236 || ticks == 252) {
+            verifyCornerVisible(client, table);
+            var pieces = TableScene.build(table.clientView());
+            double center = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND && p.index() < 7)
+                .mapToDouble(p -> p.position().x).average().orElseThrow();
+            if (ticks == 236 ? Math.abs(center) > 1e-7 : center >= 0 || center < -TableScene.HAND_STEP - TableScene.DRAW_GAP)
+                throw new IllegalStateException("Two-kan hand did not use the closest feasible center: " + center);
+            capture(client, output, ticks == 236 ? "43-layout-two-kans-waiting.png" : "44-layout-two-kans-drawn.png");
+        }
+        if (ticks == 254) {
             TableSettings.get().animations = true;
             return true;
         }

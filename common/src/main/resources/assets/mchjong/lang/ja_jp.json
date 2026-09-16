@@ -229,7 +229,7 @@
   "settings.mchjong.info.melds": "副露",
   "settings.mchjong.info.results": "局結果",
   "settings.mchjong.info.help": "操作ヒント",
-  "message.mchjong.space": "卓の設置には5×5の空間と、中心の下に固い足場が必要です。",
+  "message.mchjong.space": "卓の設置には3×3の空間と、中心の下に固い足場が必要です。",
   "message.mchjong.no_table": "スツールは卓の中心から東西南北いずれかに2ブロック離して設置してください。",
   "message.mchjong.occupied": "この席は使用中か、別の対局者のために確保されています。",
   "message.mchjong.inactive_seat": "三人麻雀ではこちらの席を使用しません。",

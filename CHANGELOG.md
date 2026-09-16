@@ -16,8 +16,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Tables reserve a 5 x 5 footprint with a larger playing surface and matching furniture, collisions, seats and camera range.
-- Melds extend left from the player's right-hand table corner beside the centered hand, rather than occupying a forward rail; extracted norths use the left side.
+- Tables retain their compact 3 x 3 footprint, with matching furniture, collisions, seats and camera range.
+- Melds extend left from the player's right-hand table corner beside the hand. Hands stay centered where space permits and shift left only by the clearance required by actual melds and the drawn tile, without reserving unused slots. Extracted norths use two short rows on the left, clear of the adjacent corner.
 - Furniture uses original pixel wood, fabric and metal textures with beveled frames, tapered legs, padded stools and detailed case hardware.
 - All six tile materials have opaque white faces; material colors and glass transparency remain on the body.
 - Wall columns and layers and normal river rows now touch edge-to-edge, including width-aware sideways riichi discards.

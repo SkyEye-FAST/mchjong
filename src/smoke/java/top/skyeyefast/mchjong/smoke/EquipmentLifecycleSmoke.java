@@ -83,6 +83,7 @@ final class EquipmentLifecycleSmoke {
         inventory.setItem(0, furniture);
         var hit = new BlockHitResult(Vec3.atBottomCenterOf(CENTER), Direction.UP, CENTER.below(), false);
         int radius = TableGeometry.FOOTPRINT_RADIUS;
+        check(radius == 1, "Both tables must retain a 3x3 footprint");
         for (int x : new int[]{-radius, radius}) for (int z : new int[]{-radius, radius}) for (int y = 0; y <= 1; y++) {
             var obstacle = CENTER.offset(x, y, z);
             level.setBlock(obstacle, Blocks.STONE.defaultBlockState(), 3);
@@ -92,14 +93,27 @@ final class EquipmentLifecycleSmoke {
                 "Rejected placement consumed the item or placed a partial table");
             level.removeBlock(obstacle, false);
         }
+        int outside = radius + 1;
+        for (int x : new int[]{-outside, outside}) for (int z : new int[]{-outside, outside}) for (int y = 0; y <= 1; y++)
+            level.setBlock(CENTER.offset(x, y, z), Blocks.STONE.defaultBlockState(), 3);
         check(((MahjongTableItem) furniture.getItem()).place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, furniture, hit)).consumesAction(),
             "Survival table placement failed");
         check(furniture.isEmpty(), "Placement did not consume the table item");
+        for (int x = -outside; x <= outside; x++) for (int z = -outside; z <= outside; z++) {
+            if (Math.abs(x) <= radius && Math.abs(z) <= radius) continue;
+            check(!level.getBlockState(CENTER.offset(x, 0, z)).is(MahjongContent.SPACE),
+                "Compact placement reserved a cell outside its 3x3 footprint");
+            if (Math.abs(x) == outside && Math.abs(z) == outside) for (int y = 0; y <= 1; y++) {
+                var obstacle = CENTER.offset(x, y, z);
+                check(level.getBlockState(obstacle).is(Blocks.STONE), "Placement overwrote a neighboring block");
+                level.removeBlock(obstacle, false);
+            }
+        }
         for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) if (x != 0 || z != 0) {
             var pos = CENTER.offset(x, 0, z);
             var state = level.getBlockState(pos);
             check(state.is(MahjongContent.SPACE) && TableSpaceBlock.center(pos, state).equals(CENTER),
-                "Expanded table footprint lost a cell or its center mapping");
+                "Table footprint lost a cell or its center mapping");
         }
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         check(table.wood() == FurnitureWood.BAMBOO, "Placed table lost its component wood");
@@ -107,7 +121,7 @@ final class EquipmentLifecycleSmoke {
         var stool = TableGeometry.stool(CENTER, 0);
         level.getBlockState(stool).useWithoutItem(level, player,
             new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
-        check(player.isPassenger(), "The relocated stool did not find its table");
+        check(player.isPassenger(), "The stool did not find its table");
         Game game = table.participantGame(player);
         check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
             .noneMatch(action -> action.type() == Action.Type.READY || action.type() == Action.Type.PRACTICE), "Empty table could start a game");

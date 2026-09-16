@@ -17,7 +17,8 @@ public final class TableScene {
     public static final double DRAW_GAP = 0.035;
     public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
     public static final double MELD_GAP = 0.035;
-    public static final double WALL_Z = 1.40;
+    public static final double HAND_MELD_GAP = 0.06;
+    public static final double WALL_Z = 0.91;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double WALL_STEP = RIVER_STEP;
@@ -37,10 +38,23 @@ public final class TableScene {
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             TableView.Seat player = view.seats().get(seat);
-            // The wider tabletop reserves the owner's right corner for calls, on the hand's edge.
-            // The drawn tile is outside the centered run and cannot nudge existing tiles.
+            var melds = new ArrayList<MeldLayout>(player.melds().size());
+            double meldLeft = MELD_RIGHT;
+            for (Meld meld : player.melds()) {
+                var layout = MeldLayout.of(meld, seat);
+                if (!melds.isEmpty()) meldLeft -= MELD_GAP;
+                melds.add(layout);
+                meldLeft -= layout.width() * TILE_SCALE;
+            }
+            // Stay centered whenever possible; move only far enough to clear the actual meld bounds.
+            // Include the actual drawn tile and gap, without reserving empty meld or draw slots.
             int concealed = player.hand().size() - (player.drawn() != Tile.ABSENT ? 1 : 0);
             double left = -Math.max(0, concealed - 1) * HAND_STEP / 2;
+            if (!melds.isEmpty() && !player.hand().isEmpty()) {
+                double handRight = left + (player.hand().size() - 1) * HAND_STEP
+                    + (player.drawn() != Tile.ABSENT ? DRAW_GAP : 0) + RIVER_STEP / 2;
+                left += Math.min(0, meldLeft - HAND_MELD_GAP - handRight);
+            }
             for (int i = 0; i < player.hand().size(); i++) {
                 boolean drawn = player.drawn() != Tile.ABSENT && i == player.hand().size() - 1;
                 boolean declaration = view.focus() != null && view.focus().declaration()
@@ -62,9 +76,8 @@ public final class TableScene {
                 riverSlot++;
             }
             double meldRight = MELD_RIGHT;
-            for (int meldIndex = 0; meldIndex < player.melds().size(); meldIndex++) {
-                Meld meld = player.melds().get(meldIndex);
-                MeldLayout layout = MeldLayout.of(meld, seat);
+            for (int meldIndex = 0; meldIndex < melds.size(); meldIndex++) {
+                MeldLayout layout = melds.get(meldIndex);
                 double start = meldRight - layout.width() * TILE_SCALE;
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
@@ -74,9 +87,11 @@ public final class TableScene {
                 }
                 meldRight = start - MELD_GAP;
             }
+            // Two short rows leave the adjacent player's right-corner melds clear as well.
+            double northLeft = -HAND_Z + RIVER_ROW / 2 + MELD_GAP;
             for (int i = 0; i < player.norths().size(); i++)
-                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -0.95 - i * RIVER_STEP,
-                    top + FLAT_CENTER * TILE_SCALE, HAND_Z, 0, true, false));
+                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, northLeft + (i % 2 + .5) * RIVER_STEP,
+                    top + FLAT_CENTER * TILE_SCALE, HAND_Z - i / 2 * RIVER_ROW, 0, true, false));
         }
         int size = view.wall().size();
         if (size > 0) {

@@ -6,9 +6,9 @@ import net.minecraft.world.phys.Vec3;
 
 /** The same seat orientation is used by blocks, riders, meshes and pointer picking. */
 public final class TableGeometry {
-    public static final int FOOTPRINT_RADIUS = 2;
+    public static final int FOOTPRINT_RADIUS = 1;
     public static final int STOOL_DISTANCE = FOOTPRINT_RADIUS + 1;
-    public static final double FELT_HALF_WIDTH = 33.0 / 16.0;
+    public static final double FELT_HALF_WIDTH = 21.0 / 16.0;
     public static final double OUTER_HALF_WIDTH = FELT_HALF_WIDTH + 2.0 / 16.0;
     public static final double FELT_Y = 15.0 / 16.0;
     public static final Direction[] SIDES = {Direction.SOUTH, Direction.EAST, Direction.NORTH, Direction.WEST};

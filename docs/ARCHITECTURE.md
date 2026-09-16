@@ -66,12 +66,15 @@ The lobby selects four-player or three-player mahjong before offering matching
 rule presets. `TableHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
 the lower edge rather than covering the table center. The concealed run stays
-centered independently of meld count. The drawn tile has a separate slot, so
-drawing never shifts existing tiles. The table reserves a 5 x 5 footprint with
-its dimensions shared by placement, colliders, furniture and seating. Melds are
-anchored at the owner's right-hand corner, beside the hand at the same depth;
-even four kans cannot displace or cover the hand. Extracted norths sit to the
-left of the hand, leaving the right corner for melds. The equipment box is
+centered whenever the right-corner melds leave enough space; otherwise it shifts
+left by exactly the missing clearance, rather than centering in the remaining
+space. Only an actual drawn tile occupies the separate draw slot; unused draw
+and meld slots cannot push a waiting hand left. `MeldLayout` supplies the real occupied width, including sideways
+calls and stacked added kans, to both hand clearance and meld rendering.
+The table reserves a 3 x 3 footprint with dimensions shared by placement,
+colliders, furniture and seating. Melds are anchored at the owner's right-hand
+corner, beside the hand at the same depth. Extracted norths form two short rows
+to the left of the hand, clear of the adjacent player's corner. The equipment box is
 displayed only in the lobby, never over playing tiles.
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers
