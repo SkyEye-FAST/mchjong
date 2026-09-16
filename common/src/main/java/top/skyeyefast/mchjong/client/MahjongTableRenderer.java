@@ -14,6 +14,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTableBlockEntity> {
+    private enum Layer { BACK, BODY, FACE }
     private final Font font;
     public MahjongTableRenderer(BlockEntityRendererProvider.Context context) { font = context.getFont(); }
 
@@ -53,8 +54,9 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         pose.translate(0.5, 0, 0.5);
         // Opaque backs and furniture first; glass is sorted and blended after the opaque display.
         boolean glass = table.equipment().material() == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
-        tiles(table, frames, pose, buffers, light, false);
-        if (!glass) tiles(table, frames, pose, buffers, light, true);
+        tiles(table, frames, pose, buffers, light, Layer.BACK);
+        if (!glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
+        tiles(table, frames, pose, buffers, light, Layer.FACE);
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
         TileMesh.box(pose, vertices, -0.25f, (float) TableGeometry.FELT_Y, -0.25f,
             0.25f, (float) TableGeometry.FELT_Y + 0.035f, 0.25f, 0xff243c40, light);
@@ -104,15 +106,19 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         label(pose, buffers, Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()),
             0.080, 0.27f, 0.004f, 0xffb8d0c0, light);
         pose.popPose();
-        if (glass) tiles(table, frames, pose, buffers, light, true);
+        if (glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
         pose.popPose();
     }
 
     private static void tiles(MahjongTableBlockEntity table, java.util.List<TableAnimation.Frame> frames,
-            PoseStack pose, MultiBufferSource buffers, int light, boolean faces) {
+            PoseStack pose, MultiBufferSource buffers, int light, Layer layer) {
         var material = table.equipment().material();
         boolean glass = material == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
-        var vertices = buffers.getBuffer(!faces ? TileRenderTypes.BACKS : glass ? TileRenderTypes.GLASS : TileRenderTypes.FACES);
+        var vertices = buffers.getBuffer(switch (layer) {
+            case BACK -> TileRenderTypes.BACKS;
+            case BODY -> glass ? TileRenderTypes.GLASS : TileRenderTypes.FACES;
+            case FACE -> TileRenderTypes.FACES;
+        });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
         for (TableAnimation.Frame frame : frames) {
             TableScene.Piece piece = frame.piece();
@@ -123,8 +129,11 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
             pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
-            if (faces) TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light, material);
-            else TileMesh.drawBack(pose, vertices, !glass && (piece.back() || piece.tile() < 0), light, table.equipment().back());
+            switch (layer) {
+                case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
+                case BODY -> TileMesh.drawBody(pose, vertices, light, material);
+                case BACK -> TileMesh.drawBack(pose, vertices, !glass && (piece.back() || piece.tile() < 0), light, table.equipment().back());
+            }
             pose.popPose();
         }
     }
