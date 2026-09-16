@@ -47,6 +47,7 @@ public final class TableClientSmoke {
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
     private final TableControlSmoke controlSmoke = new TableControlSmoke();
     private final ManualTableSmoke manualSmoke = new ManualTableSmoke();
+    private final ItemPresentationSmoke itemPresentationSmoke = new ItemPresentationSmoke();
 
     public void tick(Minecraft client) {
         if (step == 14) return;
@@ -157,6 +158,7 @@ public final class TableClientSmoke {
                 client.screen.onClose();
                 step = 18; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
+                if (!itemPresentationSmoke.tick(client, output)) return;
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
                     try {

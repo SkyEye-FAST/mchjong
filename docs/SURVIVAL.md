@@ -226,6 +226,11 @@ packets. It verifies waiting does not handle tiles for the human, private hands
 remain hidden, an in-progress manual save round-trips, and the full box can be
 recovered after exit. Screenshots include the manual phases and installed
 colored furniture, box, cloth and physical point sticks.
+`ItemPresentationSmoke` also selects the actual hotbar items and sends native
+drop actions for both tables, cloth, a glass tile, a point stick and a stool.
+It checks inventory counts and the synchronized dropped-item components while
+capturing their first-person and dropped appearances, without spawning visual
+copies of those items.
 
 Run `gradlew.bat :runSmokeClient --console=plain` for Fabric, then
 `gradlew.bat :neoforge:runSmokeClient --console=plain` for NeoForge. The leading
