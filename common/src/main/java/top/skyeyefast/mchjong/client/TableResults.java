@@ -11,7 +11,6 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.Tile;
 
 /** Scrollable settlement receipt. Only the server's recipient-safe snapshot is displayed. */
 public final class TableResults extends AbstractWidget {

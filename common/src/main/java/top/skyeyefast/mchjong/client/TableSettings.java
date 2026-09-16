@@ -30,6 +30,7 @@ public final class TableSettings {
     public GuideLines guideLines = GuideLines.HOVER;
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
+    public boolean animations = true;
     public double cameraDistance = 3.15;
     public double cameraHeight = 2.25;
 
@@ -83,6 +84,7 @@ public final class TableSettings {
         guideLines = defaults.guideLines;
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
+        animations = defaults.animations;
         cameraDistance = defaults.cameraDistance;
         cameraHeight = defaults.cameraHeight;
     }

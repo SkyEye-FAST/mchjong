@@ -16,6 +16,7 @@ import static top.skyeyefast.mchjong.engine.Action.Type.*;
 
 /** One server-owned table. All methods are called on the server thread. */
 public final class Game {
+    public static final int DEAL_TICKS = 56;
     public enum Phase { LOBBY, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
@@ -223,6 +224,9 @@ public final class Game {
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "playing";
         draw(dealer, false, false);
+        // Give the initial wall/deal presentation time before a training opponent acts.
+        // This is not an animation-driven game state: explicit legal actions still work.
+        age = -DEAL_TICKS;
     }
 
     int next(int seat) { return (seat + 1) % rules.players(); }
@@ -425,6 +429,7 @@ public final class Game {
     /** A slow, visible training opponent. Timeouts for human seats never claim a win automatically. */
     public void tick() {
         age++;
+        if (age <= 0) return;
         if (age % 12 == 0) {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
@@ -474,7 +479,7 @@ public final class Game {
                 player.melds, player.river, player.norths, player.riichi, exposed[seat]));
         }
         boolean ura = wins.stream().anyMatch(win -> players[win.seat()].riichi);
-        return new TableView(tableId, revision, decision, rules, phase, viewer, dealer, round, honba, riichiSticks,
+        return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores);
     }

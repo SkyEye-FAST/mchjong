@@ -50,12 +50,13 @@ public final class TableScene {
                     top + 0.036, 0.31 + i / 6 * 0.175, discard.riichi() ? 90 : 0, true, false));
             }
             double meldRight = 1.12;
-            for (Meld meld : player.melds()) {
+            for (int meldIndex = 0; meldIndex < player.melds().size(); meldIndex++) {
+                Meld meld = player.melds().get(meldIndex);
                 MeldLayout layout = MeldLayout.of(meld, seat);
                 double start = meldRight - layout.width() * TILE_SCALE;
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
-                    result.add(piece(part.tile(), seat, Area.MELD, i, start + part.x() * TILE_SCALE,
+                    result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x() * TILE_SCALE,
                         top + (0.036 + (part.stacked() ? 0.072 : 0)) * TILE_SCALE, HAND_Z - 0.015,
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
@@ -67,19 +68,28 @@ public final class TableScene {
         }
         int size = view.wall().size();
         if (size > 0) {
-            int stacksPerSide = size / (view.rules().sanma() ? 6 : 8);
             for (int i = 0; i < size; i++) {
-                int tile = view.wall().get(i);
-                if (tile == Tile.ABSENT) continue;
-                int display = (i + view.wallBreak()) % size;
-                int seat = display / 2 / stacksPerSide;
-                int column = display / 2 % stacksPerSide;
-                int mate = view.wall().get(i ^ 1);
-                boolean upper = mate != Tile.ABSENT && (tile >= 0 || mate < 0 && i % 2 == 0);
-                result.add(piece(tile, seat, Area.WALL, i, (column - (stacksPerSide - 1) / 2.0) * 0.108 - 0.08,
-                    top + 0.036 + (upper ? 0.072 : 0), 1.00, 0, true, tile < 0));
+                if (view.wall().get(i) != Tile.ABSENT) result.add(wallPiece(view, i, false));
             }
         }
         return List.copyOf(result);
+    }
+
+    /** A complete wall is reconstructed with hidden sentinels, never guessed tile identities. */
+    public static Piece wallPiece(TableView view, int index, boolean complete) {
+        int size = view.wall().size();
+        int stacksPerSide = size / (view.rules().sanma() ? 6 : 8);
+        int display = (index + view.wallBreak()) % size;
+        int seat = display / 2 / stacksPerSide;
+        int column = display / 2 % stacksPerSide;
+        int tile = view.wall().get(index);
+        int mate = view.wall().get(index ^ 1);
+        if (complete) {
+            if (tile == Tile.ABSENT) tile = Tile.HIDDEN;
+            if (mate == Tile.ABSENT) mate = Tile.HIDDEN;
+        }
+        boolean upper = mate != Tile.ABSENT && (tile >= 0 || mate < 0 && index % 2 == 0);
+        return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * 0.108 - 0.08,
+            TableGeometry.FELT_Y + 0.036 + (upper ? 0.072 : 0), 1.00, 0, true, tile < 0);
     }
 }

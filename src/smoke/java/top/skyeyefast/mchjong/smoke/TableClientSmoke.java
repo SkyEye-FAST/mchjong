@@ -42,6 +42,8 @@ public final class TableClientSmoke {
     private boolean saved;
     private String patternedPack;
     private CompletableFuture<Void> resourceReload;
+    private final SettlementSmoke settlementSmoke = new SettlementSmoke();
+    private final AnimationSmoke animationSmoke = new AnimationSmoke();
 
     public void tick(Minecraft client) {
         try {
@@ -95,7 +97,16 @@ public final class TableClientSmoke {
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                        ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)).sit(player, 0);
+                        var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                        player.setShiftKeyDown(true);
+                        table.interact(player);
+                        require(!player.isPassenger(), "Crouch-click must spectate without seating");
+                        player.setShiftKeyDown(false);
+                        table.interact(player);
+                        require(player.isPassenger(), "Table click did not seat the player on the nearest side");
+                        var mount = player.getVehicle();
+                        table.sit(player, 0);
+                        require(player.getVehicle() == mount, "Reopening the stool created a duplicate mount");
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 3; entered = ticks;
@@ -119,6 +130,7 @@ public final class TableClientSmoke {
                 }
                 var view = table.clientView();
                 if (view == null) return;
+                if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
                 require(view.viewerSeat() == 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining intervening calls through the actual UI rather than changing game state.
@@ -168,18 +180,23 @@ public final class TableClientSmoke {
                 resourceReload.join();
                 TileResourceSmoke.verify(client, false);
                 capture(client, "07-restored-solid-backs.png");
-                Files.writeString(output.resolve("PASS.txt"), "Fabric: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and optional back pack enable/disable passed.\n");
-                LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 step = 10; entered = ticks;
-            } else if (step == 10 && ticks - entered > 30) {
+            } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                step = 11; entered = ticks;
+            } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Fabric: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, multi-winner settlement, scrolling, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Settlement and animation screenshots use display-only fixtures.\n");
+                LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
+                entered = ticks;
+                step = 12;
+            } else if (step == 12 && ticks - entered > 30) {
                 client.stop();
-                step = 11;
+                step = 13;
             }
         } catch (Throwable failure) {
             LOG.error("MCJHONG_CLIENT_SMOKE_FAILED step={}", step, failure);
             try { Files.createDirectories(output); Files.writeString(output.resolve("FAIL.txt"), failure.toString()); }
             catch (Exception ignored) { LOG.error("Could not write smoke failure evidence"); }
-            step = 11;
+            step = 13;
             client.stop();
         }
     }

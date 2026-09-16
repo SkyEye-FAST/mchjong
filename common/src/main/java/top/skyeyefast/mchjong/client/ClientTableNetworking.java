@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.Minecraft;
+import net.minecraft.Util;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableViewPayload;
@@ -16,14 +17,15 @@ public final class ClientTableNetworking {
         if (view == null || view.rules() == null || view.seats().size() != view.rules().players()
             || view.viewerSeat() < -1 || view.viewerSeat() >= view.rules().players()) return;
         table.acceptView(view);
+        if (table.clientView() != view) return;
+        if (table.clientView() != view) return;
+        TableAnimation.of(table).accept(view, Util.getMillis());
+        TableScreen active = TableScreen.active(client.screen);
+        if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();
         if (payload.open()) {
-            if (view.viewerSeat() >= 0 && client.player != null) {
-                client.player.setYRot(top.skyeyefast.mchjong.world.TableGeometry.yaw(view.viewerSeat()));
-                client.player.setXRot(30);
-                client.player.yRotO = client.player.getYRot();
-                client.player.xRotO = client.player.getXRot();
-            }
-            client.setScreen(new TableScreen(payload.pos()));
+            TableScreen screen = new TableScreen(payload.pos());
+            client.setScreen(screen);
+            screen.resetView();
         }
     }
 }

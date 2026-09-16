@@ -2,10 +2,13 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
@@ -29,11 +32,16 @@ public final class TableScreen extends Screen {
     private final BlockPos pos;
     private final List<CalloutButton> callouts = new ArrayList<>();
     private List<TableScene.Piece> scene = List.of();
+    private List<TableAnimation.Frame> frames = List.of();
+    private boolean awaitingReply;
+    private boolean choosingRiichi;
+    private Button confirmButton;
     private int selectedTile = Tile.ABSENT;
     private int hoveredTile = Tile.ABSENT;
     private int scroll;
     private long lastRevision = -1;
     private boolean dragging;
+    private double dragDistance;
     private float framePartial;
     private long lastClickAt;
     private int lastClickedTile = Tile.ABSENT;
@@ -56,12 +64,39 @@ public final class TableScreen extends Screen {
         TableView view = view();
         if (minecraft == null || minecraft.player == null || view == null || view.viewerSeat() < 0) return;
         minecraft.player.setYRot(TableGeometry.yaw(view.viewerSeat()));
-        minecraft.player.setXRot(52);
+        TableSettings settings = TableSettings.get();
+        minecraft.player.setXRot((float) Math.toDegrees(Math.atan2(settings.cameraHeight - TableGeometry.FELT_Y, settings.cameraDistance)));
+        minecraft.player.yRotO = minecraft.player.getYRot();
+        minecraft.player.xRotO = minecraft.player.getXRot();
     }
 
     private TableView view() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientView() : null;
+    }
+
+    private TableAnimation animation() {
+        if (minecraft == null || minecraft.level == null || !(minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table)) return null;
+        TableAnimation animation = TableAnimation.of(table);
+        animation.accept(table.clientView(), Util.getMillis());
+        return animation;
+    }
+
+    private void updateScene() {
+        TableAnimation animation = animation();
+        frames = animation == null ? List.of() : TableSettings.get().animations ? animation.sample(Util.getMillis()) : animation.settled();
+        scene = frames.stream().map(TableAnimation.Frame::piece).toList();
+    }
+
+    private boolean dealing() {
+        TableAnimation animation = animation();
+        return animation != null && TableSettings.get().animations && animation.dealing(Util.getMillis());
+    }
+
+    public void receivedView() {
+        awaitingReply = false;
+        lastRevision = -1;
+        lastClickedTile = Tile.ABSENT;
     }
 
     public static Component roundName(TableView view) {
@@ -92,6 +127,7 @@ public final class TableScreen extends Screen {
     private void rebuild() {
         clearWidgets();
         callouts.clear();
+        confirmButton = null;
         TableView view = view();
         if (view == null) return;
         boolean newResult = lastPhase != view.phase() && TableResults.available(view);
@@ -100,12 +136,13 @@ public final class TableScreen extends Screen {
         results = null;
         lastPhase = view.phase();
         lastRevision = view.revision();
-        scene = TableScene.build(view);
+        updateScene();
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
+        if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         List<Integer> choices = new ArrayList<>();
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
-            if (action.type() == Action.Type.DISCARD) continue;
+            if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI) continue;
             if (!tileChoice(action) || action.tiles().contains(selectedTile)) choices.add(i);
         }
         scroll = Math.clamp(scroll, 0, Math.max(0, choices.size() - 1));
@@ -113,6 +150,11 @@ public final class TableScreen extends Screen {
         int boxWidth = settlement ? Math.min(160, (width - 36) / 2) : Math.min(220, Math.max(140, width / 3));
         int x = width - boxWidth - 12;
         int y = settlement ? height - 48 : Math.max(52, height / 5);
+        if (view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
+            addRenderableWidget(Button.builder(Component.translatable(choosingRiichi ? "ui.mchjong.cancel_riichi" : "action.mchjong.riichi"),
+                ignored -> toggleRiichi()).bounds(x, y, boxWidth, 23).build());
+            y += 29;
+        }
         for (int n = scroll; n < choices.size(); n++) {
             int index = choices.get(n);
             Action action = view.actions().get(index);
@@ -131,26 +173,36 @@ public final class TableScreen extends Screen {
         }
         addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.open"), ignored -> minecraft.setScreen(new TableSettingsScreen(this)))
             .bounds(width - 34, 8, 26, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("ui.mchjong.center_view"), ignored -> resetView())
+            .bounds(width - 126, 8, 86, 20).build());
         if (TableResults.available(view) && TableSettings.get().show(TableSettings.Information.RESULTS)) {
             addRenderableWidget(Button.builder(Component.translatable(resultsExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"),
                 ignored -> { resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10, height - 48, boxWidth, 20).build());
             if (resultsExpanded) results = addRenderableWidget(new TableResults(font, view, 10, 38, width - 20, height - 96, resultScroll));
         }
-        if (TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM && selectedTile >= 0) {
-            int discard = discardAction(view, selectedTile);
+        if ((choosingRiichi || TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM) && selectedTile >= 0) {
+            int discard = tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD);
             if (discard >= 0) {
                 final TableView snapshot = view;
                 final int actionIndex = discard;
-                addRenderableWidget(Button.builder(Component.translatable("action.mchjong.discard"), ignored -> send(snapshot, actionIndex))
+                confirmButton = addRenderableWidget(Button.builder(Component.translatable(choosingRiichi ? "ui.mchjong.confirm_riichi" : "action.mchjong.discard"), ignored -> send(snapshot, actionIndex))
                     .bounds(width / 2 - 55, height - 42, 110, 20).build());
+                confirmButton.setTooltip(Tooltip.create(Component.translatable("ui.mchjong.confirm_hint")));
             }
         }
     }
 
     private void send(TableView snapshot, int index) {
-        if (minecraft.getConnection() == null) return;
+        TableView current = view();
+        if (awaitingReply || dealing() || minecraft.getConnection() == null || current == null
+            || !current.tableId().equals(snapshot.tableId()) || current.decision() != snapshot.decision()
+            || !current.actions().equals(snapshot.actions()) || index < 0 || index >= current.actions().size()) return;
+        awaitingReply = true;
         minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
         callouts.forEach(button -> button.active = false);
+        selectedTile = lastClickedTile = Tile.ABSENT;
+        choosingRiichi = false;
+        if (confirmButton != null) confirmButton.active = false;
     }
 
     private static boolean showsConsumed(Action action) {
@@ -198,20 +250,34 @@ public final class TableScreen extends Screen {
 
     private TableScene.Piece pick(double mouseX, double mouseY) {
         TableView view = view();
-        if (view == null || view.viewerSeat() < 0) return null;
+        if (view == null || view.viewerSeat() < 0 || dealing() || TableResults.available(view) || overWidget(mouseX, mouseY)) return null;
+        Camera camera = minecraft.gameRenderer.getMainCamera();
+        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        Vec3 forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+        Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        double fov = ((GameRendererAccessor) minecraft.gameRenderer).mchjong$getFov(camera, framePartial, true);
+        double focal = height / (2 * Math.tan(Math.toRadians(fov) / 2));
+        Vec3 ray = forward.add(right.scale((mouseX - width / 2.0) / focal))
+            .add(right.cross(forward).scale((height / 2.0 - mouseY) / focal));
+        Vec3 origin = camera.getPosition().subtract(TableGeometry.world(pos, Vec3.ZERO));
         TableScene.Piece best = null;
         double closest = Double.MAX_VALUE;
-        for (TableScene.Piece piece : scene) {
+        for (TableAnimation.Frame frame : frames) {
+            TableScene.Piece piece = frame.piece();
             if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()) continue;
-            Projected point = project(piece.position());
-            if (point == null) continue;
-            double dx = Math.abs(mouseX - point.x), dy = Math.abs(mouseY - point.y);
-            if (dx <= Math.max(5, point.scale * 0.06) && dy <= Math.max(9, point.scale * 0.11) && dx*dx + dy*dy < closest) {
-                closest = dx*dx + dy*dy;
+            if (choosingRiichi && tileAction(view, piece.tile(), Action.Type.RIICHI) < 0) continue;
+            double distance = TilePicking.distanceSquared(frame, origin, ray, selected(pos, piece));
+            if (distance < closest) {
+                closest = distance;
                 best = piece;
             }
         }
         return best;
+    }
+
+    private boolean overWidget(double x, double y) {
+        return children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .anyMatch(widget -> widget.visible && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -219,10 +285,14 @@ public final class TableScreen extends Screen {
         TableView view = view();
         if (view == null) return;
         if (view.revision() != lastRevision) rebuild();
+        updateScene();
         TableScene.Piece hovered = pick(mouseX, mouseY);
         hoveredTile = hovered == null ? Tile.ABSENT : hovered.tile();
         if (!TableResults.available(view)) renderInformation(graphics, view);
         TableSettings settings = TableSettings.get();
+        boolean inputEnabled = !awaitingReply && !dealing();
+        callouts.forEach(button -> button.active = inputEnabled);
+        if (confirmButton != null) confirmButton.active = inputEnabled;
         for (CalloutButton button : callouts) {
             boolean guide = settings.guideLines == TableSettings.GuideLines.ALWAYS
                 || settings.guideLines == TableSettings.GuideLines.HOVER && button.isHoveredOrFocused();
@@ -246,18 +316,22 @@ public final class TableScreen extends Screen {
                 graphics.renderOutline((int)point.x-radius, (int)point.y-radius, radius*2, radius*2, 0xfff6d483);
             }
         }
-        int lineY = 57;
-        if (view.phase() == Game.Phase.LOBBY) {
-            for (int i = 0; i < view.seats().size(); i++) {
-                Component status = Component.translatable(view.seats().get(i).ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready");
-                graphics.drawString(font, playerName(view, i).copy().append(" · ").append(status), 12, lineY, 0xffd0decb, true);
-                lineY += 14;
+        if (choosingRiichi) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.choose_riichi"), width / 2, height - 59, 0xffffd487);
+        super.render(graphics, mouseX, mouseY, partialTick);
+        if (dealing()) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.dealing"), width / 2, height - 29, 0xffffd487);
+        else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
+            int cueY = 32;
+            for (var cue : animation().cues(Util.getMillis())) {
+                graphics.drawCenteredString(font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
+                    width / 2, cueY, 0xffffd487);
+                cueY += 13;
             }
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
         if (settings.show(TableSettings.Information.HELP)) {
-            Component help = Component.translatable(TableResults.available(view) ? "ui.mchjong.result_scroll" : "ui.mchjong.help_direct");
-            graphics.drawString(font, help, 10, height - 13, 0xffe0deca, true);
+            String helpKey = TableResults.available(view) ? "ui.mchjong.result_scroll" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
+                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
+            Component help = Component.translatable(helpKey);
+            graphics.drawString(font, font.plainSubstrByWidth(help.getString(), width - 20), 10, height - 13, 0xffe0deca, true);
         }
     }
 
@@ -304,6 +378,7 @@ public final class TableScreen extends Screen {
                 parts.add(Component.translatable("ui.mchjong.rank", ahead + 1));
             }
             if (settings.show(TableSettings.Information.STATUS)) {
+                if (view.phase() == Game.Phase.LOBBY) parts.add(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
                 if (seat == view.dealer()) parts.add(Component.translatable("ui.mchjong.dealer"));
                 if (seat == view.turn()) parts.add(Component.translatable("ui.mchjong.current_turn"));
                 if (player.riichi()) parts.add(Component.translatable("ui.mchjong.riichi_status"));
@@ -348,13 +423,17 @@ public final class TableScreen extends Screen {
     }
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (results != null && results.isMouseOver(mouseX, mouseY)) return super.mouseClicked(mouseX, mouseY, button);
-        if (button == 1) { dragging = true; return true; }
+        if (overWidget(mouseX, mouseY)) { super.mouseClicked(mouseX, mouseY, button); return true; }
+        if (button == 1) { dragging = true; dragDistance = 0; return true; }
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button == 0) {
+            if (awaitingReply || dealing()) return true;
+            updateScene();
             TableScene.Piece piece = pick(mouseX, mouseY);
-            if (piece != null && discardFromClick(piece.tile())) return true;
+            if (piece != null && !choosingRiichi && !hasShiftDown() && discardFromClick(piece.tile())) return true;
             selectedTile = piece == null ? Tile.ABSENT : piece.tile();
+            lastClickedTile = Tile.ABSENT;
+            setFocused(null);
             scroll = 0;
             rebuild();
             return true;
@@ -368,7 +447,7 @@ public final class TableScreen extends Screen {
         int action = discardAction(view, tile);
         if (action < 0) return false;
         TableSettings.DiscardMode mode = TableSettings.get().discardMode;
-        long now = System.currentTimeMillis();
+        long now = Util.getMillis();
         if (mode == TableSettings.DiscardMode.SINGLE_CLICK) {
             send(view, action);
             return true;
@@ -386,18 +465,27 @@ public final class TableScreen extends Screen {
     }
 
     private static int discardAction(TableView view, int tile) {
+        return tileAction(view, tile, Action.Type.DISCARD);
+    }
+
+    private static int tileAction(TableView view, int tile, Action.Type type) {
         for (int i = 0; i < view.actions().size(); i++) {
             Action candidate = view.actions().get(i);
-            if (candidate.type() == Action.Type.DISCARD && candidate.tiles().contains(tile)) return i;
+            if (candidate.type() == type && candidate.tiles().contains(tile)) return i;
         }
         return -1;
     }
     @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (button == 1) { dragging = false; return true; }
+        if (button == 1 && dragging) {
+            dragging = false;
+            if (dragDistance < 4) cancelSelection();
+            return true;
+        }
         return super.mouseReleased(mouseX, mouseY, button);
     }
     @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
         if (dragging && minecraft.player != null) {
+            dragDistance += Math.abs(dx) + Math.abs(dy);
             minecraft.player.setYRot(minecraft.player.getYRot() + (float) dx * 0.35f);
             minecraft.player.setXRot(Mth.clamp(minecraft.player.getXRot() + (float) dy * 0.35f, -25, 85));
             return true;
@@ -406,22 +494,57 @@ public final class TableScreen extends Screen {
     }
     @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
         if (results != null && results.mouseScrolled(mouseX, mouseY, horizontal, vertical)) return true;
+        if (callouts.isEmpty() || mouseX < callouts.getFirst().getX()) return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
         scroll = Math.max(0, scroll - (int) Math.signum(vertical));
         rebuild();
         return true;
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
         TableView view = view();
+        if (results != null && results.isFocused() && results.keyPressed(key, scanCode, modifiers)) return true;
+        if (key == GLFW.GLFW_KEY_ESCAPE && (choosingRiichi || selectedTile >= 0)) { cancelSelection(); return true; }
+        if (key == GLFW.GLFW_KEY_HOME) { resetView(); return true; }
+        if (key == GLFW.GLFW_KEY_R && view != null && view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
+            toggleRiichi(); return true;
+        }
+        if (key == GLFW.GLFW_KEY_P && view != null) {
+            for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.PASS) { send(view, i); return true; }
+        }
+        if ((key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) && selectedTile >= 0 && view != null && getFocused() == null) {
+            int action = tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD);
+            if (action >= 0) send(view, action);
+            return true;
+        }
         if ((key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) && view != null && view.viewerSeat() >= 0) {
+            if (TableResults.available(view) || dealing() || awaitingReply) return super.keyPressed(key, scanCode, modifiers);
             List<Integer> hand = view.seats().get(view.viewerSeat()).hand();
+            if (choosingRiichi) hand = hand.stream().filter(tile -> tileAction(view, tile, Action.Type.RIICHI) >= 0).toList();
             if (!hand.isEmpty()) {
                 int index = hand.indexOf(selectedTile);
-                selectedTile = hand.get(Math.floorMod(index + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), hand.size()));
+                selectedTile = hand.get(index < 0 ? key == GLFW.GLFW_KEY_LEFT ? hand.size() - 1 : 0
+                    : Math.floorMod(index + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), hand.size()));
                 scroll = 0; rebuild();
+                setFocused(null);
             }
             return true;
         }
         return super.keyPressed(key, scanCode, modifiers);
+    }
+
+    private void toggleRiichi() {
+        if (awaitingReply || dealing()) return;
+        choosingRiichi = !choosingRiichi;
+        selectedTile = lastClickedTile = Tile.ABSENT;
+        scroll = 0;
+        rebuild();
+        setFocused(null);
+    }
+
+    private void cancelSelection() {
+        choosingRiichi = false;
+        selectedTile = lastClickedTile = Tile.ABSENT;
+        rebuild();
+        setFocused(null);
     }
 
     private final class CalloutButton extends Button {

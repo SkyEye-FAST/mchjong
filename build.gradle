@@ -32,7 +32,12 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
+
+test { useJUnitPlatform() }
 
 sourceSets.main {
     java.srcDir 'common/src/main/java'

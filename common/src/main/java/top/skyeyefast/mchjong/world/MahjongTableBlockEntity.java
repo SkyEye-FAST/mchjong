@@ -44,6 +44,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     public TableView clientView() { return clientView; }
     public void acceptView(TableView view) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client snapshot on server");
+        if (clientView != null && clientView.tableId().equals(view.tableId()) && view.revision() < clientView.revision()) return;
         clientView = view;
     }
 
@@ -82,16 +83,33 @@ public final class MahjongTableBlockEntity extends BlockEntity {
 
     public void open(ServerPlayer player) { sendView(player, true); }
 
+    /** Table clicks join the nearest side; crouching deliberately keeps the player spectating. */
+    public void interact(ServerPlayer player) {
+        if (authorizedViewer(player) != null || player.isShiftKeyDown() || player.isSpectator() || player.isPassenger()) {
+            open(player);
+            return;
+        }
+        Game game = serverGame();
+        if (game == null) { open(player); return; }
+        int reserved = game.seatOf(player.getUUID());
+        int side = reserved >= 0 ? reserved : TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
+        sit(player, side);
+    }
+
     public void sit(ServerPlayer player, int seat) {
         Game game = serverGame();
         if (game == null) { open(player); return; }
+        if (authorizedViewer(player) != null) { open(player); return; }
         if (seat < 0 || seat >= game.rules().players()) {
             player.displayClientMessage(Component.translatable("message.mchjong.inactive_seat"), true);
             return;
         }
         if (player.isSpectator() || player.isPassenger()) return;
         BlockPos stool = TableGeometry.stool(worldPosition, seat);
-        if (!level.getBlockState(stool).is(MahjongContent.STOOL)) return;
+        if (!level.getBlockState(stool).is(MahjongContent.STOOL)) {
+            player.displayClientMessage(Component.translatable("message.mchjong.missing_stool"), true);
+            return;
+        }
         if (!level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()
             || !game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
             player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);

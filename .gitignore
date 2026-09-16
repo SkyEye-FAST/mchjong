@@ -1,5 +1,6 @@
 # Gradle
 .gradle/
+.kotlin/
 build/
 out/
 classes/
@@ -25,6 +26,8 @@ bin/
 Thumbs.db
 
 # Minecraft Runtime & Logs
+logs/
+logs/
 run/
 runs/
 run-*/

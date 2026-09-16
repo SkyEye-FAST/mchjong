@@ -2,6 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -20,19 +21,24 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             MultiBufferSource buffers, int light, int overlay) {
         TableView view = table.clientView();
         if (view == null) return;
-        var pieces = TableScene.build(view);
+        long now = Util.getMillis();
+        TableAnimation animation = TableAnimation.of(table);
+        animation.accept(view, now);
+        boolean animated = TableSettings.get().animations;
+        var frames = animated ? animation.sample(now) : animation.settled();
         pose.pushPose();
         pose.translate(0.5, 0, 0.5);
         // Batch by material rather than switching buffers for every tile in the wall.
         for (int pass = 0; pass < 2; pass++) {
             var vertices = buffers.getBuffer(pass == 0 ? TileRenderTypes.FACES : TileRenderTypes.BACKS);
-            for (TableScene.Piece piece : pieces) {
+            for (TableAnimation.Frame frame : frames) {
+                TableScene.Piece piece = frame.piece();
                 pose.pushPose();
                 TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
                 boolean selected = screen != null && screen.selected(table.getBlockPos(), piece);
                 pose.translate(piece.position().x, piece.position().y + (selected ? 0.035 : 0), piece.position().z);
                 pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
-                if (piece.flat()) pose.mulPose(Axis.XP.rotationDegrees(-90));
+                pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
                 pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
                 if (pass == 0) TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 else TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, light);
@@ -44,6 +50,19 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             0.25f, (float) TableGeometry.FELT_Y + 0.035f, 0.25f, 0xff243c40, light);
         TileMesh.box(pose, vertices, -0.22f, (float) TableGeometry.FELT_Y + 0.035f, -0.22f,
             0.22f, (float) TableGeometry.FELT_Y + 0.038f, 0.22f, 0xff16272d, light);
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            if (view.seats().get(seat).riichi()) {
+                vertices = buffers.getBuffer(TileRenderTypes.FACES);
+                double progress = animated ? animation.riichiProgress(seat, now) : 1;
+                pose.pushPose();
+                pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
+                pose.translate(0.65 * progress, TableGeometry.FELT_Y + 0.013 + Math.sin(progress * Math.PI) * 0.07, 1.18 - 0.50 * progress);
+                TileMesh.box(pose, vertices, -0.12f, 0, -0.014f, 0.12f, 0.014f, 0.014f, 0xfff1ead9, light);
+                TileMesh.box(pose, vertices, -0.01f, 0.014f, -0.01f, 0.01f, 0.016f, 0.01f, 0xffbb3737, light);
+                pose.popPose();
+            }
+        }
+        // Text switches buffer material; finish every solid stick before drawing labels.
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
