@@ -9,7 +9,8 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores,
-                        TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks) {
+                        TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
+                        boolean openHands, ExitVote exitVote) {
     public record Seat(String name, boolean occupied, boolean bot, boolean ready, int points,
                        List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
                        List<Integer> norths, boolean riichi, boolean exposed) {

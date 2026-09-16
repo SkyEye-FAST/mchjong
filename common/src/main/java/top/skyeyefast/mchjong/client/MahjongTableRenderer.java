@@ -33,6 +33,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             var vertices = buffers.getBuffer(pass == 0 ? TileRenderTypes.FACES : TileRenderTypes.BACKS);
             for (TableAnimation.Frame frame : frames) {
                 TableScene.Piece piece = frame.piece();
+                if (piece.area() == TableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
                 pose.pushPose();
                 TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
                 boolean selected = screen != null && screen.selected(table.getBlockPos(), piece);
@@ -62,29 +63,48 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
                 pose.popPose();
             }
         }
-        // Text switches buffer material; finish every solid stick before drawing labels.
+        boolean playing = view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.TURN
+            || view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.REACTION;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-            pose.translate(0, TableGeometry.FELT_Y + 0.040, 0.17);
-            pose.mulPose(Axis.XP.rotationDegrees(-90));
-            pose.scale(0.006f, -0.006f, 0.006f);
+            TileMesh.box(pose, buffers.getBuffer(TileRenderTypes.FACES), -0.165f, (float) TableGeometry.FELT_Y + 0.038f, 0.175f,
+                0.165f, (float) TableGeometry.FELT_Y + 0.040f, 0.221f,
+                playing && seat == view.turn() ? 0xff65552f : 0xff294443, light);
+            pose.popPose();
+        }
+        // Text switches buffer material; finish all solids first. Seat bands do not cross the center readout.
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
             int wind = Math.floorMod(seat - view.dealer(), view.rules().players());
             Component label = Component.translatable("wind.mchjong." + new String[]{"east","south","west","north"}[wind])
                 .append(" " + view.seats().get(seat).points());
-            font.drawInBatch(label, -font.width(label) / 2f, -4, seat == view.turn() ? 0xffe3c47e : 0xffa8d6c1,
-                false, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
+            label(pose, buffers, label, 0.198, 0.308f, 0.004f,
+                playing && seat == view.turn() ? 0xffffdc92 : 0xffc1e4d5, light);
             pose.popPose();
         }
         pose.pushPose();
-        pose.translate(0, TableGeometry.FELT_Y + 0.041, -0.025);
-        pose.mulPose(Axis.XP.rotationDegrees(-90));
-        pose.scale(0.005f, -0.005f, 0.005f);
-        Component round = TableScreen.roundName(view);
-        font.drawInBatch(round, -font.width(round) / 2f, -3, 0xffeed6a0, false, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
-        String reserve = view.remaining() + " / " + view.riichiSticks();
-        font.drawInBatch(reserve, -font.width(reserve) / 2f, 8, 0xffb8d0c0, false, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
+        pose.mulPose(Axis.YP.rotationDegrees(Math.max(0, view.viewerSeat()) * 90));
+        Component wind = Component.translatable("wind.mchjong." + new String[]{"east", "south", "west", "north"}
+            [Math.min(3, view.round() / view.rules().players())]);
+        label(pose, buffers, Component.translatable("ui.mchjong.round_short", wind, view.round() % view.rules().players() + 1),
+            -0.080, 0.27f, 0.005f, 0xffeed6a0, light);
+        label(pose, buffers, Component.translatable("ui.mchjong.remaining", view.remaining()),
+            0, 0.27f, 0.005f, 0xffe0f2e3, light);
+        label(pose, buffers, Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()),
+            0.080, 0.27f, 0.004f, 0xffb8d0c0, light);
         pose.popPose();
+        pose.popPose();
+    }
+
+    private void label(PoseStack pose, MultiBufferSource buffers, Component text, double z, float width, float scale, int color, int light) {
+        float fitted = Math.min(scale, width / Math.max(1, font.width(text)));
+        pose.pushPose();
+        pose.translate(0, TableGeometry.FELT_Y + 0.042, z);
+        pose.mulPose(Axis.XP.rotationDegrees(-90));
+        pose.scale(fitted, -fitted, fitted);
+        font.drawInBatch(text, -font.width(text) / 2f, -4, color, false, pose.last().pose(), buffers, Font.DisplayMode.NORMAL, 0, light);
         pose.popPose();
     }
 

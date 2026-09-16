@@ -32,21 +32,21 @@ class TableAnimationTest {
         return new TableView(TABLE, 2, 2, 1, rules, Game.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of());
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null);
     }
 
     private static TableView lobby(RuleSet rules) {
         return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of());
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null);
     }
 
     private static TableView update(TableView old, List<TableView.Seat> seats, int viewer) {
         return new TableView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
             old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(),
-            old.timeControl(), old.clocks(), old.finalRanks());
+            old.timeControl(), old.clocks(), old.finalRanks(), old.openHands(), old.exitVote());
     }
 
     private static TableAnimation.Frame tile(List<TableAnimation.Frame> frames, int tile) {
@@ -215,13 +215,13 @@ class TableAnimationTest {
             animation.accept(playing(rules), 100);
             var wall = animation.sample(100);
             assertEquals(wall.size(), wall.stream().map(frame -> frame.piece().position()).distinct().count());
-            assertTrue(wall.stream().allMatch(frame -> frame.piece().tile() == Tile.HIDDEN && frame.pitch() == -90));
+            assertTrue(wall.stream().allMatch(frame -> frame.piece().tile() == Tile.HIDDEN && frame.pitch() == 90));
             var halfway = animation.sample(900);
             assertEquals(0, tile(halfway, 0).pitch());
             var last = halfway.stream().filter(frame -> frame.piece().area() == TableScene.Area.HAND
                 && frame.piece().seat() == 0 && frame.piece().index() == 12).findFirst().orElseThrow();
             assertEquals(Tile.HIDDEN, last.piece().tile());
-            assertEquals(-90, last.pitch());
+            assertEquals(90, last.pitch(), "Undealt tiles must keep their physical back facing up");
         }
     }
 }

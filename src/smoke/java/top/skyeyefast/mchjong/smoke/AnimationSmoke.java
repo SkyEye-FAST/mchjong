@@ -35,7 +35,7 @@ final class AnimationSmoke {
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
             fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1, base.handNumber() + 1,
                 base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
-                "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of());
+                "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null);
             table.acceptView(fixture);
             for (var information : TableSettings.Information.values())
                 if (information != TableSettings.Information.ROUND && information != TableSettings.Information.TURN
@@ -100,7 +100,7 @@ final class AnimationSmoke {
     private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall) {
         fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
             Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, 0, 70, fixture.wallBreak(), wall, null,
-            seats, List.of(), List.of(), "playing", List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of());
+            seats, List.of(), List.of(), "playing", List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), false, null);
         table.acceptView(fixture);
     }
 

@@ -118,7 +118,8 @@ public final class TableClientSmoke {
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
                 capture(client, "01-lobby.png");
-                for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().contains("training")) {
+                for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
+                    net.minecraft.network.chat.Component.translatable("ui.mchjong.practice_short").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     step = 4; entered = ticks;
                     return;

@@ -43,4 +43,5 @@ public enum RuleSet {
         return mahjongSoul() ? new int[]{15, 5, -5, -15} : new int[]{20, 10, -10, -20};
     }
     public String translationKey() { return "rule.mchjong." + name().toLowerCase(Locale.ROOT); }
+    public String presetKey() { return "preset.mchjong." + (mLeague() ? "m_league" : tenhou() ? "tenhou" : "mahjong_soul"); }
 }

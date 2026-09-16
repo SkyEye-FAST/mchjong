@@ -57,6 +57,10 @@ public final class Game {
     TimeControl timeControl = TimeControl.DEFAULT;
     int[] moveTicks = new int[4];
     int[] reserveTicks = new int[4];
+    boolean openHands;
+    ExitVote exitVote;
+    long exitVoteSequence;
+    int exitCooldown;
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
@@ -85,8 +89,74 @@ public final class Game {
     }
     public boolean isHost(UUID player) { return seatOf(player) >= 0 && seatOf(player) == host(); }
 
+    public boolean configureOpenHands(UUID actor, long expectedDecision, boolean enabled) {
+        if (phase != Phase.LOBBY || exitVote != null || !isHost(actor) || expectedDecision != decision || openHands == enabled) return false;
+        openHands = enabled;
+        for (PlayerState player : players) player.ready = player.bot;
+        newDecision(Phase.LOBBY);
+        return true;
+    }
+
+    public boolean requestExit(UUID actor) {
+        int seat = seatOf(actor);
+        if (seat < 0 || players[seat].bot || exitVote != null) return false;
+        int humans = 0;
+        for (int i = 0; i < rules.players(); i++) if (players[i].id != null && !players[i].bot) humans++;
+        if (humans == 1) { closeMatch(); return true; }
+        if (exitCooldown > 0) return false;
+        exitVote = new ExitVote(++exitVoteSequence, seat, ExitVote.DURATION_TICKS, humans, List.of(seat));
+        decision++;
+        revision++;
+        return true;
+    }
+
+    public boolean answerExit(UUID actor, long voteId, boolean agree) {
+        int seat = seatOf(actor);
+        if (seat < 0 || players[seat].bot || exitVote == null || exitVote.id() != voteId) return false;
+        if (!agree) { cancelExit(); return true; }
+        if (exitVote.agreed().contains(seat)) return false;
+        var votes = new ArrayList<>(exitVote.agreed());
+        votes.add(seat);
+        if (votes.size() == exitVote.required()) closeMatch();
+        else {
+            exitVote = new ExitVote(voteId, exitVote.requester(), exitVote.ticksLeft(), exitVote.required(), votes);
+            revision++;
+        }
+        return true;
+    }
+
+    private void cancelExit() {
+        exitVote = null;
+        exitCooldown = ExitVote.DURATION_TICKS;
+        decision++;
+        revision++;
+    }
+
+    private void closeMatch() {
+        // Completed hands remain queued for archival; an unfinished hand is not a settlement.
+        recorder = null;
+        replay = null;
+        wall = null;
+        pending = null;
+        exitVote = null;
+        exitCooldown = 0;
+        for (int i = 0; i < players.length; i++) {
+            players[i] = new PlayerState();
+            players[i].points = rules.startingPoints();
+        }
+        dealer = initialDealer = round = honba = riichiSticks = turn = 0;
+        lastFrom = -1;
+        lastTile = Tile.ABSENT;
+        wins.clear(); finalScores.clear(); finalRanks.clear();
+        exposed = new boolean[4];
+        deltas = new ArrayList<>(Collections.nCopies(4, 0));
+        result = "lobby";
+        Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
+        newDecision(Phase.LOBBY);
+    }
+
     public boolean configureClock(UUID actor, TimeControl control) {
-        if (phase != Phase.LOBBY || !isHost(actor)) return false;
+        if (phase != Phase.LOBBY || exitVote != null || !isHost(actor)) return false;
         timeControl = Objects.requireNonNull(control);
         for (PlayerState player : players) player.ready = player.bot;
         newDecision(Phase.LOBBY);
@@ -103,7 +173,7 @@ public final class Game {
         if (player == null || seat < 0 || seat >= rules.players()) return false;
         int existing = seatOf(player);
         if (existing >= 0) return existing == seat;
-        if (phase != Phase.LOBBY || players[seat].id != null) return false;
+        if (phase != Phase.LOBBY || exitVote != null || players[seat].id != null) return false;
         players[seat].id = player;
         players[seat].name = name.length() > 32 ? name.substring(0, 32) : name;
         revision++;
@@ -113,9 +183,11 @@ public final class Game {
     public void leave(UUID player) {
         int seat = seatOf(player);
         // During a match the seat stays reserved for reconnection; timers safely pass/discard.
-        if (seat >= 0 && phase == Phase.LOBBY) {
+        if (seat >= 0 && phase == Phase.LOBBY && exitVote == null) {
             players[seat] = new PlayerState();
             players[seat].points = rules.startingPoints();
+            for (PlayerState remaining : players) remaining.ready = remaining.bot;
+            decision++;
             revision++;
         }
     }
@@ -126,7 +198,7 @@ public final class Game {
     }
 
     List<Action> actions(int seat) {
-        if (seat < 0 || seat >= rules.players() || players[seat].id == null) return List.of();
+        if (seat < 0 || seat >= rules.players() || players[seat].id == null || exitVote != null) return List.of();
         if (phase == Phase.LOBBY) {
             var actions = new ArrayList<Action>();
             actions.add(new Action(READY));
@@ -173,7 +245,7 @@ public final class Game {
                         player.ready = player.bot;
                     }
                 }
-                case LEAVE -> leave(actor);
+                case LEAVE -> { return requestExit(actor); }
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
             revision++;
@@ -470,6 +542,14 @@ public final class Game {
 
     /** A slow, visible training opponent. Timeouts for human seats never claim a win automatically. */
     public void tick() {
+        if (exitCooldown > 0) exitCooldown--;
+        if (exitVote != null) {
+            int remaining = exitVote.ticksLeft() - 1;
+            if (remaining == 0) cancelExit();
+            else exitVote = new ExitVote(exitVote.id(), exitVote.requester(), remaining, exitVote.required(), exitVote.agreed());
+            if (remaining % 20 == 0) revision++;
+            return;
+        }
         age++;
         if (age <= 0) return;
         long token = decision;
@@ -517,7 +597,7 @@ public final class Game {
         TableView.Focus focus = null;
         for (int seat = 0; seat < rules.players(); seat++) {
             PlayerState player = players[seat];
-            boolean visible = seat == viewer || exposed[seat];
+            boolean visible = seat == viewer || exposed[seat] || openHands && viewer >= 0;
             List<Integer> hand = new ArrayList<>(player.hand);
             hand.sort(Comparator.comparingInt(Tile::kind).thenComparingInt(Integer::intValue));
             if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
@@ -536,7 +616,7 @@ public final class Game {
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
-            timeControl, clocks, finalRanks);
+            timeControl, clocks, finalRanks, openHands, exitVote);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
@@ -544,6 +624,14 @@ public final class Game {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(archiveQueue);
+        if (exitCooldown < 0 || exitCooldown > ExitVote.DURATION_TICKS) throw new IllegalStateException("Invalid exit cooldown");
+        if (exitVote != null && (exitVote.ticksLeft() < 1
+            || exitVote.ticksLeft() > ExitVote.DURATION_TICKS || exitVote.required() < 2
+            || exitVote.required() != Arrays.stream(players).limit(rules.players()).filter(p -> p.id != null && !p.bot).count()
+            || !exitVote.agreed().contains(exitVote.requester()) || exitVote.agreed().size() >= exitVote.required()
+            || new HashSet<>(exitVote.agreed()).size() != exitVote.agreed().size()
+            || exitVote.agreed().stream().anyMatch(seat -> seat < 0 || seat >= rules.players()
+                || players[seat].id == null || players[seat].bot))) throw new IllegalStateException("Invalid exit vote");
         if (moveTicks.length != 4 || reserveTicks.length != 4) throw new IllegalStateException("Invalid clocks");
         for (int seat = 0; seat < 4; seat++) {
             if (moveTicks[seat] < 0 || moveTicks[seat] > timeControl.moveSeconds() * 20

@@ -44,8 +44,12 @@ public final class TableSettingsScreen extends Screen {
             page = Math.clamp(page, 0, (values.length - 1) / perPage);
             for (int n = 0; n < perPage && page * perPage + n < values.length; n++) {
                 var information = values[page * perPage + n];
-                addToggle(left + (n % 2) * (column + 6), 65 + (n / 2) * 26, column,
+                var toggle = addToggle(left + (n % 2) * (column + 6), 65 + (n / 2) * 26, column,
                     information.key(), settings.show(information), () -> settings.toggle(information));
+                if (information == TableSettings.Information.REMAINING && !settings.showRiver) {
+                    toggle.active = false;
+                    toggle.setTooltip(Tooltip.create(Component.translatable("settings.mchjong.river_hint")));
+                }
             }
             if (values.length > perPage) {
                 var previous = Button.builder(Component.literal("<"), ignored -> { page--; init(); })
@@ -74,6 +78,8 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(new CameraSlider(left, 91, span, false));
             addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
                 .bounds(left, 117, span, 20).build());
+            addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver)
+                .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.river_hint")));
         } else {
             addRenderableWidget(new VolumeSlider(left, 65, column, false));
             var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
@@ -95,12 +101,12 @@ public final class TableSettingsScreen extends Screen {
             .bounds(left + column + 6, height - 30, column, 20).build());
     }
 
-    private void addToggle(int x, int y, int w, String key, boolean enabled, Runnable toggle) {
+    private Button addToggle(int x, int y, int w, String key, boolean enabled, Runnable toggle) {
         Component label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
             Component.translatable(enabled ? "options.on" : "options.off"));
         var button = Button.builder(label, ignored -> { toggle.run(); init(); }).bounds(x, y, w, 20).build();
         button.setTooltip(Tooltip.create(label));
-        addRenderableWidget(button);
+        return addRenderableWidget(button);
     }
 
     private static Component value(String key, Enum<?> value) {

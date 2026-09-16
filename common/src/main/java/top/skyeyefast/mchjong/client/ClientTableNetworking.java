@@ -16,11 +16,18 @@ public final class ClientTableNetworking {
         TableView view = TableNetworking.JSON.fromJson(payload.view(), TableView.class);
         if (view == null || view.rules() == null || view.seats().size() != view.rules().players()
             || view.viewerSeat() < -1 || view.viewerSeat() >= view.rules().players()) return;
+        TableView previous = table.clientView();
         table.acceptView(view);
         if (table.clientView() != view) return;
         TableAudio.accept(table, view);
         TableAnimation.of(table).accept(view, Util.getMillis());
         TableScreen active = TableScreen.active(client.screen);
+        if (previous != null && previous.viewerSeat() >= 0 && view.viewerSeat() < 0
+            && view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.LOBBY
+            && active != null && active.tablePos().equals(payload.pos())) {
+            client.setScreen(null);
+            return;
+        }
         if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();
         if (payload.open()) {
             TableScreen screen = new TableScreen(payload.pos());

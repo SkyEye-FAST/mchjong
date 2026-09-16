@@ -9,8 +9,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Three shallow cuboids give a tile a back, ivory bevel and recessed printed face. */
 public final class TileMesh {
-    public static final ResourceLocation ATLAS = MahjongContent.id("textures/tiles.png");
-    public static final ResourceLocation BACK = MahjongContent.id("textures/tile/back.png");
+    public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
+    public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final int TILE_WIDTH = 256;
     public static final int TILE_HEIGHT = 384;
     public static final int ATLAS_SIZE = 2048;
@@ -46,10 +46,11 @@ public final class TileMesh {
     private static void texturedFace(PoseStack pose, VertexConsumer out, float u0, float v0, float u1, float v1,
             float w, float h, float z, int light, boolean reverse) {
         float normal = reverse ? -1 : 1;
-        vertex(pose, out, -w, -h, z, reverse ? u1 : u0, v1, 0xffffffff, 0, 0, normal, light);
-        vertex(pose, out, w, -h, z, reverse ? u0 : u1, v1, 0xffffffff, 0, 0, normal, light);
-        vertex(pose, out, w, h, z, reverse ? u0 : u1, v0, 0xffffffff, 0, 0, normal, light);
-        vertex(pose, out, -w, h, z, reverse ? u1 : u0, v0, 0xffffffff, 0, 0, normal, light);
+        float left = reverse ? w : -w, right = -left;
+        vertex(pose, out, left, -h, z, u0, v1, 0xffffffff, 0, 0, normal, light);
+        vertex(pose, out, right, -h, z, u1, v1, 0xffffffff, 0, 0, normal, light);
+        vertex(pose, out, right, h, z, u1, v0, 0xffffffff, 0, 0, normal, light);
+        vertex(pose, out, left, h, z, u0, v0, 0xffffffff, 0, 0, normal, light);
     }
 
     public static void box(PoseStack pose, VertexConsumer out, float x0, float y0, float z0, float x1, float y1, float z1, int color, int light) {

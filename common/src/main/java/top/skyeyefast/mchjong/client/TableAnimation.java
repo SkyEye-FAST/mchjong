@@ -58,7 +58,10 @@ public final class TableAnimation {
     public List<Cue> cues(long now) { return cues.stream().filter(cue -> now - cue.started() < 1100).toList(); }
     public double riichiProgress(int seat, long now) { return ease((now - riichiStarted[seat]) / 450.0); }
 
-    private static Frame frame(TableScene.Piece piece) { return new Frame(piece, piece.flat() ? -90 : 0); }
+    private static Frame frame(TableScene.Piece piece) {
+        // Face-down tiles are physically flipped; repainting the face leaves the colored shell underneath.
+        return new Frame(piece, piece.flat() ? piece.back() ? 90 : -90 : 0);
+    }
     private static Frame moved(Frame target, Vec3 position, float yaw, float pitch, int tile, boolean back) {
         var piece = target.piece();
         return new Frame(new TableScene.Piece(tile, piece.seat(), piece.area(), piece.index(), position, yaw, piece.flat(), back), pitch);
@@ -83,7 +86,7 @@ public final class TableAnimation {
         if (next == null) return;
         if (view != null && view.tableId().equals(next.tableId()) && next.revision() < view.revision()) return;
         boolean sameViewer = view != null && view.tableId().equals(next.tableId())
-            && view.viewerSeat() == next.viewerSeat() && view.rules() == next.rules();
+            && view.viewerSeat() == next.viewerSeat() && view.rules() == next.rules() && view.openHands() == next.openHands();
         if (sameViewer && next.revision() <= view.revision()) return;
         List<Frame> before = sample(now);
         List<Frame> targets = TableScene.build(next).stream().map(TableAnimation::frame).toList();

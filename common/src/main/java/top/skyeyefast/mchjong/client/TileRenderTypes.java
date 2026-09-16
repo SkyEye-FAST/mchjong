@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
-/** Lit, two-sided tile materials which retain linear filtering at draw time. */
+/** Lit, outward-facing tile materials which retain linear filtering at draw time. */
 public final class TileRenderTypes extends RenderType {
     public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.ATLAS);
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
@@ -21,7 +21,7 @@ public final class TileRenderTypes extends RenderType {
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_ENTITY_CUTOUT_NO_CULL_SHADER)
                 .setTextureState(new TextureStateShard(texture, true, false))
-                .setCullState(NO_CULL)
+                .setCullState(CULL)
                 .setLightmapState(LIGHTMAP)
                 .setOverlayState(OVERLAY)
                 .createCompositeState(false));

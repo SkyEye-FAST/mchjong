@@ -11,11 +11,20 @@ public final class TableNetworking {
 
     /** Both loader handlers enqueue this on the server thread. Do not force-load chunks. */
     public static void receive(ServerPlayer player, TableActionPayload payload) {
-        if (!player.isAlive() || player.isSpectator()
-            || !player.serverLevel().getChunkSource().hasChunk(payload.pos().getX() >> 4, payload.pos().getZ() >> 4)
-            || player.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 36)
-            return;
+        if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.act(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, TableControlPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.control(player, payload);
+    }
+
+    private static boolean canReach(ServerPlayer player, net.minecraft.core.BlockPos pos) {
+        return player.isAlive() && !player.isSpectator()
+            && player.serverLevel().getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
+            && player.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) <= 36;
     }
 }

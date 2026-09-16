@@ -32,9 +32,10 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
             TableResults panel = panel(client);
-            client.screen.mouseScrolled(panel.getX() + 20, panel.getY() + 60, 0, -8);
+            int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
+            client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
         } else if (ticks == 20) {
-            if (panel(client).scrollAmount() <= 0) throw new IllegalStateException("Settlement did not scroll");
+            if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Second winner was not selectable");
             capture(client, output, "09-settlement-details.png");
             client.options.guiScale().set(3);
             client.resizeDisplay();
@@ -49,10 +50,23 @@ final class SettlementSmoke {
         } else if (ticks == 40) {
             TableResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
         } else if (ticks == 45) {
-            if (panel(client).scrollAmount() <= 0) throw new IllegalStateException("Keyboard settlement scrolling failed");
+            if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
             capture(client, output, "11-settlement-keyboard.png");
+            client.options.guiScale().set(4);
+            client.resizeDisplay();
+        } else if (ticks == 50) {
+            checkBounds(client);
+            capture(client, output, "15-settlement-smallest.png");
+            click(client, "Point changes");
+        } else if (ticks == 55) {
+            checkBounds(client);
+            capture(client, output, "16-settlement-smallest-points.png");
+            click(client, "Final standings");
+        } else if (ticks == 60) {
+            checkBounds(client);
+            capture(client, output, "17-settlement-smallest-ranking.png");
             client.options.guiScale().set(2);
             client.resizeDisplay();
             click(client, "Point changes");
@@ -68,7 +82,7 @@ final class SettlementSmoke {
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.NEXT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
-                fixture.timeControl(), fixture.clocks(), List.of());
+                fixture.timeControl(), fixture.clocks(), List.of(), false, null);
             table.acceptView(fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         } else if (ticks == 110) {
@@ -117,6 +131,6 @@ final class SettlementSmoke {
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new Action(Action.Type.NEXT)), wins, "ron",
-            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3));
+            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), false, null);
     }
 }

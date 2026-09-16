@@ -14,6 +14,9 @@ public final class TableScene {
     public static final float TILE_SCALE = 0.82f;
     public static final double HAND_Z = 1.25;
     public static final double HAND_STEP = 0.1;
+    public static final double HAND_LEFT = -1.12;
+    public static final double RIVER_STEP = 0.090;
+    public static final double RIVER_ROW = 0.137;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position, float yaw, boolean flat, boolean back) {}
     private TableScene() {}
@@ -29,25 +32,27 @@ public final class TableScene {
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             TableView.Seat player = view.seats().get(seat);
-            // Concealed tiles occupy the left rail after calling; melds pack from the right.
-            // Four kans and the two remaining hand tiles fit without crossing either corner.
-            double left = player.melds().isEmpty() ? -(player.hand().size() - 1) * HAND_STEP / 2 : -1.12;
+            // Reserve the right rail from the first deal, so calling never shifts the whole hand.
+            double left = HAND_LEFT;
             for (int i = 0; i < player.hand().size(); i++) {
                 boolean drawn = player.drawn() != Tile.ABSENT && i == player.hand().size() - 1;
                 boolean declaration = view.focus() != null && view.focus().declaration()
                     && view.focus().seat() == seat && view.focus().index() == i;
-                boolean flat = player.exposed() || declaration;
+                boolean flat = player.exposed() || declaration || view.openHands() && view.viewerSeat() >= 0 && seat != view.viewerSeat();
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
                     left + i * HAND_STEP + (drawn ? 0.035 : 0), top + (flat ? 0.036 : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
             }
+            int riverSlot = 0;
+            double riverX = -2.5 * RIVER_STEP;
             for (int i = 0; i < player.river().size(); i++) {
                 Discard discard = player.river().get(i);
                 if (discard.called()) continue;
-                double shifted = 0;
-                for (int preceding = i / 6 * 6; preceding < i; preceding++)
-                    if (player.river().get(preceding).riichi()) shifted += 0.056;
-                result.add(piece(discard.tile(), seat, Area.RIVER, i, (i % 6 - 2.5) * 0.117 + shifted + (discard.riichi() ? 0.028 : 0),
-                    top + 0.036, 0.31 + i / 6 * 0.175, discard.riichi() ? 90 : 0, true, false));
+                if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
+                double extra = discard.riichi() ? (0.160 - 0.104) * TILE_SCALE : 0;
+                result.add(piece(discard.tile(), seat, Area.RIVER, i, riverX + extra / 2,
+                    top + 0.036 * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW, discard.riichi() ? 90 : 0, true, false));
+                riverX += RIVER_STEP + extra;
+                riverSlot++;
             }
             double meldRight = 1.12;
             for (int meldIndex = 0; meldIndex < player.melds().size(); meldIndex++) {
@@ -64,7 +69,7 @@ public final class TableScene {
             }
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -1.17 + (i % 2) * 0.112,
-                    top + 0.036, 0.68 - i / 2 * 0.18, 0, true, false));
+                    top + 0.036 * TILE_SCALE, 0.68 - i / 2 * 0.18, 0, true, false));
         }
         int size = view.wall().size();
         if (size > 0) {
@@ -90,6 +95,6 @@ public final class TableScene {
         }
         boolean upper = mate != Tile.ABSENT && (tile >= 0 || mate < 0 && index % 2 == 0);
         return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * 0.108 - 0.08,
-            TableGeometry.FELT_Y + 0.036 + (upper ? 0.072 : 0), 1.00, 0, true, tile < 0);
+            TableGeometry.FELT_Y + (0.036 + (upper ? 0.072 : 0)) * TILE_SCALE, 1.00, 0, true, tile < 0);
     }
 }

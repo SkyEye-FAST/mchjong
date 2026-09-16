@@ -32,6 +32,7 @@ public final class TableSettings {
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
     public boolean animations = true;
+    public boolean showRiver = true;
     public VoiceSource voiceSource = VoiceSource.SYSTEM;
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
@@ -83,7 +84,9 @@ public final class TableSettings {
         } finally { Files.deleteIfExists(temporary); }
     }
 
-    public boolean show(Information information) { return !hiddenInformation.contains(information); }
+    public boolean show(Information information) {
+        return information == Information.REMAINING && !showRiver || !hiddenInformation.contains(information);
+    }
     public void toggle(Information information) {
         if (!hiddenInformation.remove(information)) hiddenInformation.add(information);
     }
@@ -95,6 +98,7 @@ public final class TableSettings {
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
         animations = defaults.animations;
+        showRiver = defaults.showRiver;
         voiceSource = defaults.voiceSource;
         effectsVolume = defaults.effectsVolume;
         voiceVolume = defaults.voiceVolume;

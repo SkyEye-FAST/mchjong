@@ -15,6 +15,7 @@ import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import top.skyeyefast.mchjong.client.ClientTableNetworking;
 import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -52,8 +53,11 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("1");
+        var registrar = event.registrar("2");
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
         registrar.playToClient(TableViewPayload.TYPE, TableViewPayload.CODEC,

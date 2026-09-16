@@ -20,6 +20,7 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 
@@ -165,11 +166,36 @@ public final class MahjongTableBlockEntity extends BlockEntity {
         }
         Action action = before.actions().get(payload.action());
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
-            if (action.type() == Action.Type.LEAVE) player.stopRiding();
+            if (action.type() == Action.Type.LEAVE) refreshParticipants(true);
             setChanged();
             flushReplays();
         }
         sendView(player, false);
+    }
+
+    public void control(ServerPlayer player, TableControlPayload payload) {
+        Game game = participantGame(player);
+        if (game == null || !game.tableId().equals(payload.tableId())) return;
+        boolean changed = switch (payload.operation()) {
+            case REQUEST_EXIT -> payload.token() == game.view(player.getUUID()).decision() && game.requestExit(player.getUUID());
+            case ANSWER_EXIT -> game.answerExit(player.getUUID(), payload.token(), payload.enabled());
+            case OPEN_HANDS -> game.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
+        };
+        if (changed) {
+            refreshParticipants(payload.operation() == TableControlPayload.Operation.REQUEST_EXIT);
+            setChanged();
+            sentRevision = -1;
+            flushReplays();
+        }
+        sendView(player, false);
+    }
+
+    private void refreshParticipants(boolean openVote) {
+        for (ServerPlayer participant : ((ServerLevel) level).players()) {
+            if (!(participant.getVehicle() instanceof SeatEntity seat) || !seat.tablePos().equals(worldPosition)) continue;
+            if (game.seatOf(participant.getUUID()) < 0) participant.stopRiding();
+            sendView(participant, openVote && game.view(participant.getUUID()).exitVote() != null);
+        }
     }
 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
