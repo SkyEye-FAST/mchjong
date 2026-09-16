@@ -1,0 +1,27 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="Apache-2.0"
+
+[[mods]]
+modId="mchjong"
+version="${version}"
+displayName="MCjhong"
+authors="SkyEye_FAST"
+description='''A seated, in-world riichi mahjong table for three or four players.'''
+
+[[mixins]]
+config="mchjong.client.mixins.json"
+
+[[dependencies.mchjong]]
+modId="neoforge"
+type="required"
+versionRange="[21.1.250,)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.mchjong]]
+modId="minecraft"
+type="required"
+versionRange="[1.21.1]"
+ordering="NONE"
+side="BOTH"
