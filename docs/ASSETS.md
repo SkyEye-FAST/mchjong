@@ -17,7 +17,8 @@ JSVG is a build-time dependency only. Neither JSVG nor the source archive is
 bundled in the playable mod. Rendering uses the source vector outlines rather
 than a platform font, with antialiased edges at 256 by 384 pixels. No network
 access is needed at game time. The source license is bundled under
-`META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt`; see `NOTICE` for attribution.
+`META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt`. Source provenance and the
+pinned revision are documented above.
 
 `assets/mchjong/textures/tiles.png` is a 2048 by 2048 atlas, eight cells per row.
 Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,

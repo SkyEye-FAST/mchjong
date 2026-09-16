@@ -172,8 +172,8 @@ customization and asset details.
 ## Credits
 
 Tile faces are generated from [FluffyStuff's riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles),
-released under CC0. See [NOTICE](NOTICE) and [docs/ASSETS.md](docs/ASSETS.md)
-for attribution and the asset generation contract.
+released under CC0. See [docs/ASSETS.md](docs/ASSETS.md) for source provenance,
+the bundled upstream license, and the asset generation contract.
 
 ## License
 

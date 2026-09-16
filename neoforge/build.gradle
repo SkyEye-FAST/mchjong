@@ -73,7 +73,7 @@ processResources {
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
 }
-jar { from(rootProject.file('LICENSE')); from(rootProject.file('NOTICE')) }
+jar { from(rootProject.file('LICENSE')) }
 
 // The same visual assertions run in both clients; only the lifecycle adapter differs.
 sourceSets {

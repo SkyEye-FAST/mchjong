@@ -32,7 +32,6 @@ shadowJar {
     exclude 'module-info.class', 'META-INF/versions/**/module-info.class'
     exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
     mergeServiceFiles()
-    from(rootProject.file('NOTICE'))
     manifest.attributes 'Automatic-Module-Name': 'top.skyeyefast.mchjong.engine', 'FMLModType': 'LIBRARY'
 }
 jar { archiveClassifier = 'unshaded' }
