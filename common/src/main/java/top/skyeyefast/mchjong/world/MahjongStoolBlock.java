@@ -48,7 +48,7 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player instanceof ServerPlayer serverPlayer) {
             for (int seat = 0; seat < 4; seat++) {
-                BlockPos center = pos.relative(TableGeometry.SIDES[seat].getOpposite(), 2);
+                BlockPos center = pos.relative(TableGeometry.SIDES[seat].getOpposite(), TableGeometry.STOOL_DISTANCE);
                 if (level.getBlockEntity(center) instanceof MahjongTableBlockEntity table) {
                     table.sit(serverPlayer, seat);
                     return InteractionResult.CONSUME;

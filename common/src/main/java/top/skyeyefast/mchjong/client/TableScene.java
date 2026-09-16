@@ -12,13 +12,12 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 /** One geometric description drives both the 3D meshes and the interaction anchors. */
 public final class TableScene {
     public static final float TILE_SCALE = 0.82f;
-    public static final double HAND_Z = 1.24;
+    public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - 0.09;
     public static final double HAND_STEP = 0.1;
     public static final double DRAW_GAP = 0.035;
-    public static final double MELD_Z = 1.075;
-    public static final double MELD_RIGHT = 1.0;
+    public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
     public static final double MELD_GAP = 0.035;
-    public static final double WALL_Z = 0.91;
+    public static final double WALL_Z = 1.40;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double WALL_STEP = RIVER_STEP;
@@ -38,7 +37,7 @@ public final class TableScene {
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             TableView.Seat player = view.seats().get(seat);
-            // Calls have an independent inner rail, so they never displace the hand.
+            // The wider tabletop reserves the owner's right corner for calls, on the hand's edge.
             // The drawn tile is outside the centered run and cannot nudge existing tiles.
             int concealed = player.hand().size() - (player.drawn() != Tile.ABSENT ? 1 : 0);
             double left = -Math.max(0, concealed - 1) * HAND_STEP / 2;
@@ -70,13 +69,13 @@ public final class TableScene {
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
                     result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x() * TILE_SCALE,
-                        top + (FLAT_CENTER + (part.stacked() ? TileMesh.DEPTH : 0)) * TILE_SCALE, MELD_Z,
+                        top + (FLAT_CENTER + (part.stacked() ? TileMesh.DEPTH : 0)) * TILE_SCALE, HAND_Z,
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
                 meldRight = start - MELD_GAP;
             }
             for (int i = 0; i < player.norths().size(); i++)
-                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, 0.90 + i * RIVER_STEP,
+                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -0.95 - i * RIVER_STEP,
                     top + FLAT_CENTER * TILE_SCALE, HAND_Z, 0, true, false));
         }
         int size = view.wall().size();

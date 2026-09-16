@@ -23,7 +23,8 @@ public final class MahjongTableItem extends BlockItem {
         Level level = context.getLevel();
         BlockPos center = context.getClickedPos();
         boolean clear = level.getBlockState(center.below()).isFaceSturdy(level, center.below(), net.minecraft.core.Direction.UP);
-        for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+        int radius = TableGeometry.FOOTPRINT_RADIUS;
+        for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) {
             BlockPos pos = center.offset(x, 0, z);
             clear &= level.getWorldBorder().isWithinBounds(pos) && !level.isOutsideBuildHeight(pos.above())
                 && level.getBlockState(pos).canBeReplaced() && level.getFluidState(pos).isEmpty()

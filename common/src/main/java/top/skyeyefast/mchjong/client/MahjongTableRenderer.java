@@ -28,7 +28,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         for (int side = 0; side < 4; side++) if (table.equipment().stickCount(side) > 0) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(-side * 90));
-            pose.translate(.83, TableGeometry.FELT_Y + .006, 1.39);
+            pose.translate(.83, 1.006, TableGeometry.FELT_HALF_WIDTH + .0775);
             pose.scale(.7f, 1, 1);
             for (int count = 0; count < Math.min(4, table.equipment().stickCount(side)); count++) {
                 FurnitureMesh.stick(pose, buffers, light, table.equipment().stickValue(side));
@@ -38,7 +38,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         }
         if (table.equipment().hasBox() && (view == null || view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.LOBBY)) {
             pose.pushPose();
-            pose.translate(0, top.skyeyefast.mchjong.world.TableGeometry.FELT_Y + .02, -1.18);
+            pose.translate(0, TableGeometry.FELT_Y + .02, -TableScene.HAND_Z);
             pose.scale(.45f, .45f, .45f);
             FurnitureMesh.box(pose, buffers, light);
             pose.popPose();
@@ -68,7 +68,8 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
                 double progress = animated ? animation.riichiProgress(seat, now) : 1;
                 pose.pushPose();
                 pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-                pose.translate(0.65 * progress, TableGeometry.FELT_Y + 0.013 + Math.sin(progress * Math.PI) * 0.07, 1.18 - 0.50 * progress);
+                pose.translate(0.65 * progress, TableGeometry.FELT_Y + 0.013 + Math.sin(progress * Math.PI) * 0.07,
+                    TableScene.HAND_Z + (0.68 - TableScene.HAND_Z) * progress);
                 TileMesh.box(pose, vertices, -0.12f, 0, -0.014f, 0.12f, 0.014f, 0.014f, 0xfff1ead9, light);
                 TileMesh.box(pose, vertices, -0.01f, 0.014f, -0.01f, 0.01f, 0.016f, 0.01f, 0xffbb3737, light);
                 pose.popPose();

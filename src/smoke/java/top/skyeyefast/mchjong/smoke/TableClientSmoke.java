@@ -71,6 +71,7 @@ public final class TableClientSmoke {
                 client.options.renderDistance().set(5);
                 client.options.simulationDistance().set(5);
                 client.options.fov().set(70);
+                TableSettings.get().reset();
                 client.resizeDisplay();
                 GameRules rules = new GameRules();
                 rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);

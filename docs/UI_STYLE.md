@@ -91,13 +91,19 @@ Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
 ## Physical table layout
 
+The physical table reserves a 5 x 5 block footprint. `TableGeometry` owns the
+playing-surface, outer-frame and seat dimensions; the furniture mesh, footprint
+colliders, placement checks and stool lookup must use those same dimensions.
+Enlarge the actual table when space is insufficient, not just its tile anchors.
+
 The concealed hand stays centered on its owner's side at every meld count. The
 drawn tile sits just to its right and does not recenter the existing run. Melds
-occupy their own inner rail between the hand and the wall, laid out right to
-left. This keeps space for four melds, including open/closed/added kans, without
-pinning the hand to the left edge or shrinking it after a call. Removing tiles
-may compact the shorter hand around its center, but meld existence must not
-switch the hand to a different left-biased alignment mode.
+start at the player's right-hand table corner and extend left along the same
+depth as the hand. Never move melds forward into a rail between the hand and the
+wall, or move the hand left to make room. The wider surface accommodates four
+melds, including open/closed/added kans, beside the centered hand. Removing tiles
+may compact the shorter hand around its center. Extracted norths use the left
+side so they cannot take the right-hand corner reserved for melds.
 
 Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called
@@ -105,6 +111,12 @@ tiles and stacked added kans. Wall tiles, river tiles and tiles within a meld
 touch edge to edge. Keep the deliberate drawn-tile and inter-meld gaps separate
 from those physical contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
+The playing surface is 4.125 blocks across inside a 4.375-block frame, reserved
+by a 5 by 5 footprint. `TableGeometry` defines the footprint, frame, felt and
+stool distance together; models, placement, outer-cell collision, seating and
+dismounting must agree. Extend wooden rails and cloth at their existing texture
+density rather than stretching the whole furniture mesh. Camera limits and
+defaults must keep the larger table and its right corner usable from the seated view.
 
 ## Acceptance and future changes
 

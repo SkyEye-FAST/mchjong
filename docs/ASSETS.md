@@ -86,8 +86,10 @@ have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
 have joined frames and padded, piped cushions. The dark wooden case has a fitted
 lid, corner hardware, paired clasps, hinges, a handle and a small tile inlay.
 Folded cloth uses the same woven material as the table. None of this adds block
-IDs or blockstate variants. The 3 by 3 occupancy and colliders remain in the world
-implementation. Bare panels and installed cloth finish at the same playing height.
+IDs. `TableGeometry` defines the 4.375-block frame and 4.125-block playing surface;
+rails and cloth retain their material density when extended. The 5 by 5 occupancy
+and colliders clipped to the frame remain in the world implementation. Bare panels
+and installed cloth finish at the same playing height.
 
 `assets/mchjong/textures/tile_glyphs.png` has the same cells and white material
 swatch as the GUI face atlas, but transparent backgrounds. All material-aware

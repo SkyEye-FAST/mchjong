@@ -30,7 +30,8 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
         var wood = stack.getOrDefault(MahjongComponents.WOOD, FurnitureWood.OAK);
         if (stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM)) {
             pose.translate(0, .18, 0);
-            pose.scale(.3f, .3f, .3f);
+            float scale = (float) (.9 / (2 * top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH));
+            pose.scale(scale, scale, scale);
             FurnitureMesh.table(pose, buffers, light, wood, null, stack.is(MahjongContent.AUTO_TABLE_ITEM));
         } else if (stack.is(MahjongContent.STOOL_ITEM)) {
             FurnitureMesh.stool(pose, buffers, light, wood, MahjongSupplies.color(stack));

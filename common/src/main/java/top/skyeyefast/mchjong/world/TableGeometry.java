@@ -6,11 +6,15 @@ import net.minecraft.world.phys.Vec3;
 
 /** The same seat orientation is used by blocks, riders, meshes and pointer picking. */
 public final class TableGeometry {
+    public static final int FOOTPRINT_RADIUS = 2;
+    public static final int STOOL_DISTANCE = FOOTPRINT_RADIUS + 1;
+    public static final double FELT_HALF_WIDTH = 33.0 / 16.0;
+    public static final double OUTER_HALF_WIDTH = FELT_HALF_WIDTH + 2.0 / 16.0;
     public static final double FELT_Y = 15.0 / 16.0;
     public static final Direction[] SIDES = {Direction.SOUTH, Direction.EAST, Direction.NORTH, Direction.WEST};
     private TableGeometry() {}
 
-    public static BlockPos stool(BlockPos center, int seat) { return center.relative(SIDES[seat], 2); }
+    public static BlockPos stool(BlockPos center, int seat) { return center.relative(SIDES[seat], STOOL_DISTANCE); }
     public static float yaw(int seat) { return 180 - seat * 90; }
 
     public static int nearestSide(Vec3 relative) {

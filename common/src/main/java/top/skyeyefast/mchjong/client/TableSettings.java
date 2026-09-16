@@ -37,8 +37,12 @@ public final class TableSettings {
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
     public boolean countdownSounds = true;
-    public double cameraDistance = 3.15;
-    public double cameraHeight = 2.25;
+    public static final double MIN_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + .4;
+    public static final double MAX_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 2.0;
+    public static final double MIN_CAMERA_HEIGHT = 1.9;
+    public static final double MAX_CAMERA_HEIGHT = 3.3;
+    public double cameraDistance = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 1.15;
+    public double cameraHeight = 2.6;
 
     public static TableSettings get() {
         if (current == null) {
@@ -69,8 +73,8 @@ public final class TableSettings {
             settings.voiceVolume = Math.clamp(settings.voiceVolume, 0, 1);
             if (!Double.isFinite(settings.cameraDistance) || !Double.isFinite(settings.cameraHeight))
                 throw new IllegalArgumentException("Camera settings must be finite");
-            settings.cameraDistance = Math.clamp(settings.cameraDistance, 2.4, 4.0);
-            settings.cameraHeight = Math.clamp(settings.cameraHeight, 1.7, 3.0);
+            settings.cameraDistance = Math.clamp(settings.cameraDistance, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
+            settings.cameraHeight = Math.clamp(settings.cameraHeight, MIN_CAMERA_HEIGHT, MAX_CAMERA_HEIGHT);
             return settings;
         }
     }

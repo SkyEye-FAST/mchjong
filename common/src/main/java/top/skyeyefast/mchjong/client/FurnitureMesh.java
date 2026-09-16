@@ -7,6 +7,7 @@ import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.item.FurnitureWood;
+import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Original furniture materials and compact meshes shared by world and item rendering. */
 public final class FurnitureMesh {
@@ -17,29 +18,36 @@ public final class FurnitureMesh {
     public static void table(PoseStack pose, MultiBufferSource buffers, int light,
                              FurnitureWood wood, DyeColor cloth, boolean automatic) {
         var wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
-        FurnitureShape.box(pose, wooden, -1.375f, .78125f, -1.375f, 1.375f, .890625f, 1.375f, SHADE, light);
+        float felt = (float) TableGeometry.FELT_HALF_WIDTH;
+        float outer = (float) TableGeometry.OUTER_HALF_WIDTH;
+        float leg = felt - .1625f;
+        FurnitureShape.box(pose, wooden, -felt - .0625f, .78125f, -felt - .0625f,
+            felt + .0625f, .890625f, felt + .0625f, SHADE, light);
         // Both a bare playing surface and an installed mat finish at TableGeometry.FELT_Y.
-        FurnitureShape.box(pose, wooden, -1.3125f, .875f, -1.3125f, 1.3125f,
-            cloth == null ? .9375f : .925f, 1.3125f, WHITE, light);
+        FurnitureShape.box(pose, wooden, -felt, .875f, -felt, felt,
+            cloth == null ? .9375f : .925f, felt, WHITE, light);
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.box(pose, wooden, -1.28125f, .640625f, 1.21875f, 1.28125f, .84375f, 1.34375f, WHITE, light);
-            FurnitureShape.box(pose, wooden, -1.28125f, .625f, 1.203125f, 1.28125f, .671875f, 1.359375f, SHADE, light);
-            FurnitureShape.box(pose, wooden, -1.4375f, .859375f, 1.3125f, 1.4375f, .90625f, 1.4375f, SHADE, light);
-            FurnitureShape.bevel(pose, wooden, -1.3125f, .890625f, 1.3125f, 1.3125f, 1, 1.4375f, .015625f, WHITE, light);
-            if (!automatic) FurnitureShape.box(pose, wooden, -1.15f, .171875f, 1.109375f,
-                1.15f, .234375f, 1.1875f, SHADE, light);
+            FurnitureShape.box(pose, wooden, -felt + .03125f, .640625f, felt - .09375f,
+                felt - .03125f, .84375f, felt + .03125f, WHITE, light);
+            FurnitureShape.box(pose, wooden, -felt + .03125f, .625f, felt - .109375f,
+                felt - .03125f, .671875f, felt + .046875f, SHADE, light);
+            FurnitureShape.box(pose, wooden, -outer, .859375f, felt, outer, .90625f, outer, SHADE, light);
+            FurnitureShape.bevel(pose, wooden, -felt, .890625f, felt, felt, 1, outer, .015625f, WHITE, light);
+            if (!automatic) FurnitureShape.box(pose, wooden, -leg, .171875f, leg - .040625f,
+                leg, .234375f, leg + .0375f, SHADE, light);
             pose.popPose();
         }
         for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1}) {
-            FurnitureShape.bevel(pose, wooden, x * 1.375f - .0625f, .890625f, z * 1.375f - .0625f,
-                x * 1.375f + .0625f, 1, z * 1.375f + .0625f, .015625f, WHITE, light);
+            float corner = felt + .0625f;
+            FurnitureShape.bevel(pose, wooden, x * corner - .0625f, .890625f, z * corner - .0625f,
+                x * corner + .0625f, 1, z * corner + .0625f, .015625f, WHITE, light);
             if (!automatic) {
-                FurnitureShape.tapered(pose, wooden, x * 1.15f - .109375f, 0, z * 1.15f - .109375f,
-                    x * 1.15f + .109375f, .796875f, z * 1.15f + .109375f, .03125f, WHITE, light);
-                FurnitureShape.box(pose, wooden, x * 1.15f - .1171875f, .5625f, z * 1.15f - .1171875f,
-                    x * 1.15f + .1171875f, .609375f, z * 1.15f + .1171875f, SHADE, light);
+                FurnitureShape.tapered(pose, wooden, x * leg - .109375f, 0, z * leg - .109375f,
+                    x * leg + .109375f, .796875f, z * leg + .109375f, .03125f, WHITE, light);
+                FurnitureShape.box(pose, wooden, x * leg - .1171875f, .5625f, z * leg - .1171875f,
+                    x * leg + .1171875f, .609375f, z * leg + .1171875f, SHADE, light);
             }
         }
         if (automatic) automaticBase(pose, buffers, light);
@@ -47,8 +55,8 @@ public final class FurnitureMesh {
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.bevel(pose, brass, -.11f, .707f, 1.344f, .11f, .758f, 1.36f, .004f, WHITE, light);
-            FurnitureShape.box(pose, brass, 1.355f, 1, 1.355f, 1.395f, 1.002f, 1.395f, WHITE, light);
+            FurnitureShape.bevel(pose, brass, -.11f, .707f, felt + .0315f, .11f, .758f, felt + .0475f, .004f, WHITE, light);
+            FurnitureShape.box(pose, brass, felt + .0425f, 1, felt + .0425f, felt + .0825f, 1.002f, felt + .0825f, WHITE, light);
             pose.popPose();
         }
         if (cloth != null) tableCloth(pose, buffers, light, cloth);
@@ -76,12 +84,15 @@ public final class FurnitureMesh {
 
     private static void tableCloth(PoseStack pose, MultiBufferSource buffers, int light, DyeColor color) {
         var felt = buffers.getBuffer(texture("felt"));
-        FurnitureShape.box(pose, felt, -1.3125f, .925f, -1.3125f, 1.3125f, .9375f, 1.3125f, tint(color, 1), light);
+        float half = (float) TableGeometry.FELT_HALF_WIDTH;
+        FurnitureShape.box(pose, felt, -half, .925f, -half, half, .9375f, half, tint(color, 1), light);
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.box(pose, felt, -1.29f, .9375f, 1.275f, 1.29f, .9378f, 1.29f, tint(color, .72f), light);
-            FurnitureShape.box(pose, felt, -1.265f, .9375f, 1.261f, 1.265f, .9378f, 1.265f, tint(color, .88f), light);
+            FurnitureShape.box(pose, felt, -half + .0225f, .9375f, half - .0375f,
+                half - .0225f, .9378f, half - .0225f, tint(color, .72f), light);
+            FurnitureShape.box(pose, felt, -half + .0475f, .9375f, half - .0515f,
+                half - .0475f, .9378f, half - .0475f, tint(color, .88f), light);
             pose.popPose();
         }
     }

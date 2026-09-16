@@ -49,9 +49,10 @@ public final class MahjongTableBlock extends BaseEntityBlock {
             table.applyComponentsFromItemStack(stack);
             table.appearanceChanged();
         }
-        for (int x = 0; x < 3; x++) for (int z = 0; z < 3; z++) if (x != 1 || z != 1) {
-            level.setBlock(center.offset(x - 1, 0, z - 1), MahjongContent.SPACE.defaultBlockState()
-                .setValue(TableSpaceBlock.X, x).setValue(TableSpaceBlock.Z, z), 3);
+        int radius = TableGeometry.FOOTPRINT_RADIUS;
+        for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) if (x != 0 || z != 0) {
+            level.setBlock(center.offset(x, 0, z), MahjongContent.SPACE.defaultBlockState()
+                .setValue(TableSpaceBlock.X, x + radius).setValue(TableSpaceBlock.Z, z + radius), 3);
         }
     }
 
@@ -75,9 +76,12 @@ public final class MahjongTableBlock extends BaseEntityBlock {
     @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
         if (!state.is(replacement.getBlock())) {
             if (level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) table.dropEquipment();
-            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++) {
+            int radius = TableGeometry.FOOTPRINT_RADIUS;
+            for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) {
                 BlockPos other = pos.offset(x, 0, z);
-                if (level.getBlockState(other).is(MahjongContent.SPACE)) level.removeBlock(other, false);
+                BlockState part = level.getBlockState(other);
+                if (part.is(MahjongContent.SPACE) && TableSpaceBlock.center(other, part).equals(pos))
+                    level.removeBlock(other, false);
             }
         }
         super.onRemove(state, level, pos, replacement, moving);

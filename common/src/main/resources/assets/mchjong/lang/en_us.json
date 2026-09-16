@@ -229,7 +229,7 @@
   "settings.mchjong.info.melds": "Melds",
   "settings.mchjong.info.results": "Hand results",
   "settings.mchjong.info.help": "Control hint",
-  "message.mchjong.space": "The table requires a clear 3 × 3 area with solid ground beneath its center.",
+  "message.mchjong.space": "The table requires a clear 5 × 5 area with solid ground beneath its center.",
   "message.mchjong.no_table": "Place the stool two blocks north, south, east or west of the table's center.",
   "message.mchjong.occupied": "This seat is occupied or reserved for another player.",
   "message.mchjong.inactive_seat": "This side is not used in three-player mahjong.",

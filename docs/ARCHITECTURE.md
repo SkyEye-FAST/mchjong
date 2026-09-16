@@ -67,9 +67,11 @@ rule presets. `TableHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
 the lower edge rather than covering the table center. The concealed run stays
 centered independently of meld count. The drawn tile has a separate slot, so
-drawing never shifts existing tiles. Right-aligned melds occupy an inner depth
-band outside the wall; even four kans cannot displace or cover the hand.
-Extracted norths sit on the outer rail beside the hand. The equipment box is
+drawing never shifts existing tiles. The table reserves a 5 x 5 footprint with
+its dimensions shared by placement, colliders, furniture and seating. Melds are
+anchored at the owner's right-hand corner, beside the hand at the same depth;
+even four kans cannot displace or cover the hand. Extracted norths sit to the
+left of the hand, leaving the right corner for melds. The equipment box is
 displayed only in the lobby, never over playing tiles.
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers

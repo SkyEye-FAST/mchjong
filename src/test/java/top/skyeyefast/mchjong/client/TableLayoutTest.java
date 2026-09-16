@@ -63,7 +63,7 @@ class TableLayoutTest {
         }
     }
 
-    @Test void everyMeldTypeFitsInItsOwnRailIncludingFourKansAndExposedHands() {
+    @Test void everyMeldTypeFitsBesideTheCenteredHandAtTheRightCorner() {
         var view = start(RuleSet.TENHOU_4);
         for (Meld.Type type : Meld.Type.values()) for (int count = 1; count <= 4; count++) {
             for (int source = 1; source <= 3; source++) {
@@ -81,13 +81,16 @@ class TableLayoutTest {
                 double meldLeft = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
                     .mapToDouble(p -> p.position().x - (p.yaw() == 90 ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE / 2)
                     .min().orElseThrow();
-                assertTrue(meldLeft >= -1.0, type + " x" + count + " must fit inside the playing surface");
-                assertTrue(TableScene.MELD_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2
-                    < TableScene.HAND_Z - TileMesh.HEIGHT * TableScene.TILE_SCALE / 2);
-                assertTrue(TableScene.MELD_Z - TileMesh.HEIGHT * TableScene.TILE_SCALE / 2
-                    > TableScene.WALL_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2);
-                assertTrue(pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
-                    .allMatch(p -> Math.abs(p.position().x) < 1.3125 && Math.abs(p.position().z) < 1.3125));
+                double handRight = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
+                    .mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
+                assertTrue(meldLeft > handRight + TableScene.MELD_GAP, type + " x" + count + " overlaps the hand");
+                var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD).toList();
+                assertTrue(calls.stream().allMatch(p -> p.position().z == TableScene.HAND_Z),
+                    "Melds belong beside the hand, never in an inner/front rail");
+                double right = calls.stream().mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
+                assertEquals(TableScene.MELD_RIGHT, right, 1e-5);
+                assertTrue(top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH - right < 0.1,
+                    "The first meld must stay anchored to the owner's right corner");
                 assertEquals(0, pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
                     .mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-9);
             }
@@ -95,7 +98,7 @@ class TableLayoutTest {
     }
 
     @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
-        for (RuleSet rules : RuleSet.values()) for (int count : new int[]{0, 1, 4}) {
+        for (RuleSet rules : RuleSet.values()) for (int count = 0; count <= 4; count++) {
             var v = start(rules);
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -113,8 +116,9 @@ class TableLayoutTest {
             for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {
                 var bounds = bounds(pieces.get(i));
-                assertTrue(bounds.minX >= -1.3125 && bounds.maxX <= 1.3125
-                    && bounds.minZ >= -1.3125 && bounds.maxZ <= 1.3125, pieces.get(i).toString());
+                double edge = top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH;
+                assertTrue(bounds.minX >= -edge && bounds.maxX <= edge
+                    && bounds.minZ >= -edge && bounds.maxZ <= edge, pieces.get(i).toString());
                 for (int j = i + 1; j < pieces.size(); j++) assertFalse(bounds.intersects(bounds(pieces.get(j))),
                     rules + " " + count + ": " + pieces.get(i) + " intersects " + pieces.get(j));
             }

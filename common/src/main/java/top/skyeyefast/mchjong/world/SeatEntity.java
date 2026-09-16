@@ -57,7 +57,7 @@ public final class SeatEntity extends Entity {
         }
     }
     @Override public Vec3 getDismountLocationForPassenger(LivingEntity passenger) {
-        BlockPos outward = tablePos().relative(TableGeometry.SIDES[seat()], 3);
+        BlockPos outward = tablePos().relative(TableGeometry.SIDES[seat()], TableGeometry.STOOL_DISTANCE + 1);
         for (BlockPos pos : new BlockPos[]{outward, outward.above(), outward.relative(TableGeometry.SIDES[seat()].getClockWise()),
                 outward.relative(TableGeometry.SIDES[seat()].getCounterClockWise())}) {
             Vec3 safe = DismountHelper.findSafeDismountLocation(passenger.getType(), level(), pos, true);

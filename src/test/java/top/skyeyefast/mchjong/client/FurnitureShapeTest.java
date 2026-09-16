@@ -78,7 +78,8 @@ class FurnitureShapeTest {
                 assertTrue(mesh.vertices.size() < 16000, "Avoid high-poly furniture");
                 for (var vertex : mesh.vertices) {
                     assertTrue(vertex.position.isFinite() && vertex.normal.isFinite());
-                    assertTrue(Math.abs(vertex.position.x) <= 1.437501 && Math.abs(vertex.position.z) <= 1.437501);
+                    double half = top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH + 1e-6;
+                    assertTrue(Math.abs(vertex.position.x) <= half && Math.abs(vertex.position.z) <= half);
                     assertTrue(vertex.position.y >= 0 && vertex.position.y <= 1.003);
                     assertEquals(255, vertex.color >>> 24);
                 }

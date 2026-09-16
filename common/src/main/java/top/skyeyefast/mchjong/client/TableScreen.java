@@ -369,7 +369,7 @@ public final class TableScreen extends Screen {
                         && piece.tile() == view.seats().get(view.viewerSeat()).drawn())) return piece.position();
         }
         if (action.type() == Action.Type.ABORT_NINE && view.viewerSeat() >= 0)
-            return TableGeometry.orient(0, TableGeometry.FELT_Y + 0.08, 1.24, view.viewerSeat());
+            return TableGeometry.orient(0, TableGeometry.FELT_Y + 0.08, TableScene.HAND_Z, view.viewerSeat());
         return new Vec3(0, TableGeometry.FELT_Y + 0.045, 0);
     }
 

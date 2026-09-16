@@ -147,7 +147,9 @@ public final class TableSettingsScreen extends Screen {
     private final class CameraSlider extends MahjongSlider {
         private final boolean distance;
         CameraSlider(int x, int y, int w, boolean distance) {
-            super(x, y, w, 20, Component.empty(), distance ? (settings.cameraDistance - 2.4) / 1.6 : (settings.cameraHeight - 1.7) / 1.3);
+            super(x, y, w, 20, Component.empty(), distance
+                ? (settings.cameraDistance - TableSettings.MIN_CAMERA_DISTANCE) / (TableSettings.MAX_CAMERA_DISTANCE - TableSettings.MIN_CAMERA_DISTANCE)
+                : (settings.cameraHeight - TableSettings.MIN_CAMERA_HEIGHT) / (TableSettings.MAX_CAMERA_HEIGHT - TableSettings.MIN_CAMERA_HEIGHT));
             this.distance = distance;
             updateMessage();
         }
@@ -156,8 +158,10 @@ public final class TableSettingsScreen extends Screen {
                 String.format(Locale.ROOT, "%.2f", distance ? settings.cameraDistance : settings.cameraHeight)));
         }
         @Override protected void applyValue() {
-            if (distance) settings.cameraDistance = 2.4 + value * 1.6;
-            else settings.cameraHeight = 1.7 + value * 1.3;
+            if (distance) settings.cameraDistance = TableSettings.MIN_CAMERA_DISTANCE
+                + value * (TableSettings.MAX_CAMERA_DISTANCE - TableSettings.MIN_CAMERA_DISTANCE);
+            else settings.cameraHeight = TableSettings.MIN_CAMERA_HEIGHT
+                + value * (TableSettings.MAX_CAMERA_HEIGHT - TableSettings.MIN_CAMERA_HEIGHT);
         }
     }
 
