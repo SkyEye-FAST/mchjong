@@ -25,6 +25,12 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        DeferredRegister<net.minecraft.core.component.DataComponentType<?>> components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);
+        top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) -> components.register(name, () -> type));
+        components.register(bus);
+        DeferredRegister<net.minecraft.world.item.crafting.RecipeSerializer<?>> recipes = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MahjongContent.MOD_ID);
+        top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) -> recipes.register(name, () -> serializer));
+        recipes.register(bus);
         DeferredRegister<net.minecraft.sounds.SoundEvent> sounds = DeferredRegister.create(Registries.SOUND_EVENT, MahjongContent.MOD_ID);
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) -> sounds.register(name, () -> event));
         sounds.register(bus);
@@ -33,16 +39,25 @@ public final class MchjongNeoForge {
                 top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));
         DeferredRegister<Block> blocks = DeferredRegister.create(Registries.BLOCK, MahjongContent.MOD_ID);
         blocks.register("mahjong_table", () -> MahjongContent.TABLE);
+        blocks.register("automatic_mahjong_table", () -> MahjongContent.AUTO_TABLE);
         blocks.register("table_space", () -> MahjongContent.SPACE);
         blocks.register("mahjong_stool", () -> MahjongContent.STOOL);
         blocks.register(bus);
         DeferredRegister<Item> items = DeferredRegister.create(Registries.ITEM, MahjongContent.MOD_ID);
         items.register("mahjong_table", () -> MahjongContent.TABLE_ITEM);
+        items.register("automatic_mahjong_table", () -> MahjongContent.AUTO_TABLE_ITEM);
+        // Do not initialize MahjongContent until the block registry event opens intrusive holders.
+        items.register("table_cloth", () -> MahjongContent.CLOTH_ITEM);
+        items.register("mahjong_tile", () -> MahjongContent.TILE_ITEM);
+        items.register("mahjong_box", () -> MahjongContent.BOX_ITEM);
+        items.register("point_stick", () -> MahjongContent.POINT_STICK);
         items.register("mahjong_stool", () -> MahjongContent.STOOL_ITEM);
         items.register(bus);
         DeferredRegister<BlockEntityType<?>> blockEntities = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MahjongContent.MOD_ID);
         blockEntities.register("mahjong_table", () -> MahjongContent.TABLE_ENTITY =
-            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE).build(null));
+            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
+        blockEntities.register("mahjong_stool", () -> MahjongContent.STOOL_ENTITY =
+            BlockEntityType.Builder.of(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build(null));
         blockEntities.register(bus);
         DeferredRegister<EntityType<?>> entities = DeferredRegister.create(Registries.ENTITY_TYPE, MahjongContent.MOD_ID);
         entities.register("seat", () -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
@@ -69,6 +84,10 @@ public final class MchjongNeoForge {
     private void creativeTab(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
             event.accept(MahjongContent.TABLE_ITEM); event.accept(MahjongContent.STOOL_ITEM);
+            event.accept(MahjongContent.AUTO_TABLE_ITEM);
+            MahjongContent.SUPPLIES.values().forEach(event::accept);
+            event.accept(top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
         }
     }
 }

@@ -11,6 +11,12 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 @EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
+    @SubscribeEvent public static void items(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent event) {
+        var renderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();
+        event.registerItem(new net.neoforged.neoforge.client.extensions.common.IClientItemExtensions() {
+            @Override public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() { return renderer; }
+        }, top.skyeyefast.mchjong.client.MahjongItemRenderer.items());
+    }
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
         top.skyeyefast.mchjong.client.TableAudio.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();
@@ -20,6 +26,7 @@ public final class MchjongNeoForgeClient {
     }
     @SubscribeEvent public static void renderers(EntityRenderersEvent.RegisterRenderers event) {
         event.registerBlockEntityRenderer(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);
+        event.registerBlockEntityRenderer(MahjongContent.STOOL_ENTITY, top.skyeyefast.mchjong.client.FurnitureRenderer::new);
         event.registerEntityRenderer(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
     }
 }

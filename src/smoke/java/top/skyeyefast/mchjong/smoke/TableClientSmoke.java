@@ -85,17 +85,68 @@ public final class TableClientSmoke {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         if (player == null) throw new IllegalStateException("Missing server player");
                         var level = player.serverLevel();
+                        SurvivalSmoke.verify(player);
                         level.setDayTime(6000);
                         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 5; z++)
                             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
-                        level.setBlock(CENTER, MahjongContent.TABLE.defaultBlockState(), 3);
-                        MahjongContent.TABLE.setPlacedBy(level, CENTER, MahjongContent.TABLE.defaultBlockState(), player, new ItemStack(MahjongContent.TABLE_ITEM));
+                        level.setBlock(CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), 3);
+                        ItemStack furniture = new ItemStack(MahjongContent.AUTO_TABLE_ITEM);
+                        furniture.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
+                        MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
+                        var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
+                        table.useEquipment(player, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                            top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
+                        ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
+                        cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.GREEN);
+                        table.useEquipment(player, cloth);
+                        player.getInventory().selected = 0;
+                        player.getInventory().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                            top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
+                        player.getInventory().setItem(1, new ItemStack(MahjongContent.TABLE_ITEM));
+                        player.getInventory().setItem(2, furniture.copy());
+                        player.getInventory().setItem(3, cloth.copy());
+                        player.getInventory().setItem(4, top.skyeyefast.mchjong.item.MahjongSupplies.tile(
+                            new top.skyeyefast.mchjong.item.TileData(4, top.skyeyefast.mchjong.item.TileMaterial.GLASS, true),
+                            net.minecraft.world.item.DyeColor.BLUE, 1));
+                        ItemStack sticks = new ItemStack(MahjongContent.POINT_STICK, 8);
+                        sticks.set(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 1000);
+                        player.getInventory().setItem(5, sticks);
+                        player.getInventory().setItem(6, new ItemStack(MahjongContent.STOOL_ITEM));
+                        player.getInventory().setChanged();
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
                         player.teleportTo(level, 0.5, 64, 3.5, 180, 30);
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
+                client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
+                step = 16; entered = ticks;
+            } else if (step == 16 && ticks - entered > 15) {
+                capture(client, "00-equipment-inventory.png");
+                client.screen.onClose();
+                UUID id = client.player.getUUID();
+                client.getSingleplayerServer().execute(() -> {
+                    try {
+                        var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                        var box = player.getMainHandItem();
+                        require(box.is(MahjongContent.BOX_ITEM), "Box fixture was not synchronized into the main hand");
+                        box.getItem().use(player.serverLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                        require(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu, "Box did not open its real menu");
+                        var menu = player.containerMenu;
+                        require(menu.slots.size() == 90, "Box menu differs from the vanilla six-row protocol");
+                        require(menu.quickMoveStack(player, 81).isEmpty(), "Shift-click moved the open carrier box");
+                        menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.SWAP, player);
+                        require(player.getMainHandItem() == box, "Hotbar swap replaced the open box");
+                        require(!menu.slots.getFirst().mayPlace(new ItemStack(MahjongContent.BOX_ITEM)), "Box accepts nested boxes");
+                    } catch (Throwable failure) { serverFailure.set(failure); }
+                });
+                step = 17; entered = ticks;
+            } else if (step == 17 && ticks - entered > 15 && client.screen instanceof net.minecraft.client.gui.screens.inventory.ContainerScreen) {
+                require(client.player.containerMenu.slots.size() == 90, "Client box slot layout differs from server");
+                capture(client, "00-physical-box.png");
+                client.screen.onClose();
+                step = 18; entered = ticks;
+            } else if (step == 18 && ticks - entered > 10) {
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
                     try {

@@ -20,10 +20,10 @@ repositories {
 dependencies {
     tileArtwork 'artwork:riichi-mahjong-tiles:26e127ba2117f45cdce5ea0225748cc0cfad3169@zip'
     implementation "com.github.weisj:jsvg:${jsvg_version}"
+    implementation "com.google.code.gson:gson:${gson_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation "com.google.code.gson:gson:${gson_version}"
     testImplementation project(':engine')
 }
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())

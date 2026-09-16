@@ -60,15 +60,31 @@ class ServerIntegrationTest {
         Game game = startedGame();
         CompoundTag saved = new CompoundTag();
         saved.putString("game", TableNetworking.JSON.toJson(game));
-        MahjongTableBlockEntity table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.TABLE.defaultBlockState());
+        MahjongTableBlockEntity table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         table.loadWithComponents(saved, server.registryAccess());
+        var box = top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+            top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.PURPLE);
+        table.equipment().installBox(box);
+        var cloth = new net.minecraft.world.item.ItemStack(MahjongContent.CLOTH_ITEM);
+        cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.LIME);
+        table.equipment().installCloth(cloth);
         CompoundTag restored = table.saveWithoutMetadata(server.registryAccess());
         assertTrue(restored.contains("game"));
+        assertTrue(restored.contains("box"));
+        assertTrue(restored.contains("cloth"));
         Game copy = TableNetworking.JSON.fromJson(restored.getString("game"), Game.class);
         copy.validate();
         assertEquals(TableNetworking.JSON.toJson(game.view(null)), TableNetworking.JSON.toJson(copy.view(null)));
-        assertTrue(table.getUpdateTag(server.registryAccess()).isEmpty());
-        assertNull(table.getUpdatePacket());
+        CompoundTag appearance = table.getUpdateTag(server.registryAccess());
+        assertEquals(java.util.Set.of("wood", "color", "has_box", "cloth_color", "tile_material", "tile_back", "stick_values", "stick_counts"), appearance.getAllKeys());
+        assertTrue(appearance.getBoolean("has_box"));
+        assertEquals("glass", appearance.getString("tile_material"));
+        // The ephemeral server provides registries but no loaded level. Live packet delivery is
+        // exercised by both client smoke runs; here the exact packet-tag whitelist is the contract.
+        var loaded = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        loaded.loadWithComponents(restored, server.registryAccess());
+        assertTrue(net.minecraft.world.item.ItemStack.matches(box, loaded.equipment().boxCopy()));
+        assertEquals(appearance, loaded.getUpdateTag(server.registryAccess()));
     }
 
     @Test void actualMinecraftCodecsRoundTripOnlyDeclaredPayloads(MinecraftServer server) {

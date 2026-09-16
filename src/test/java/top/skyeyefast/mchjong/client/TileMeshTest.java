@@ -14,17 +14,28 @@ class TileMeshTest {
         final Vector3f position;
         Vector3f normal;
         float u, v;
+        int alpha;
         Vertex(float x, float y, float z) { position = new Vector3f(x, y, z); }
     }
 
     private static final class Mesh implements VertexConsumer {
         final List<Vertex> vertices = new ArrayList<>();
         @Override public VertexConsumer addVertex(float x, float y, float z) { vertices.add(new Vertex(x, y, z)); return this; }
-        @Override public VertexConsumer setColor(int r, int g, int b, int a) { return this; }
+        @Override public VertexConsumer setColor(int r, int g, int b, int a) { vertices.getLast().alpha = a; return this; }
         @Override public VertexConsumer setUv(float u, float v) { vertices.getLast().u = u; vertices.getLast().v = v; return this; }
         @Override public VertexConsumer setUv1(int u, int v) { return this; }
         @Override public VertexConsumer setUv2(int u, int v) { return this; }
         @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
+    }
+
+    @Test void furnitureTexturesKeepVanillaPixelDensityAcrossDifferentCuboidDimensions() {
+        var mesh = new Mesh();
+        TileMesh.texturedBox(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0);
+        assertEquals(24, mesh.vertices.size());
+        assertEquals(3, mesh.vertices.get(1).u);
+        assertEquals(.25f, mesh.vertices.get(0).v);
+        assertEquals(3, mesh.vertices.get(9).u);
+        assertEquals(2, mesh.vertices.get(8).v);
     }
 
     @Test void everyQuadWindsOutwardIncludingTheBackAfterRotation() {
@@ -46,6 +57,22 @@ class TileMeshTest {
                 for (int corner = 1; corner < 4; corner++) assertEquals(a.normal, mesh.vertices.get(i + corner).normal);
             }
         }
+    }
+
+    @Test void glassBodyIsTranslucentAndHiddenFacesEmitNoGlyphGeometry() {
+        var hidden = new Mesh();
+        var shown = new Mesh();
+        TileMesh.drawFace(new PoseStack(), hidden, -1, false, 0, top.skyeyefast.mchjong.item.TileMaterial.GLASS);
+        TileMesh.drawFace(new PoseStack(), shown, 0, false, 0, top.skyeyefast.mchjong.item.TileMaterial.GLASS);
+        assertEquals(48, hidden.vertices.size(), "Two body cuboids, no printed face");
+        assertEquals(hidden.vertices.size() + 4, shown.vertices.size());
+        assertTrue(hidden.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255));
+        var backs = new Mesh();
+        TileMesh.drawBack(new PoseStack(), backs, false, 0, net.minecraft.world.item.DyeColor.RED);
+        assertTrue(backs.vertices.stream().allMatch(vertex -> vertex.alpha == 255), "Uniform opaque backs protect hand identity");
+        var faceDown = new Mesh();
+        TileMesh.drawFace(new PoseStack(), faceDown, 0, true, 0, top.skyeyefast.mchjong.item.TileMaterial.GLASS);
+        assertEquals(hidden.vertices.size(), faceDown.vertices.size());
     }
 
     @Test void faceDownBackIsAboveTheIvoryBodyAndTextureKeepsItsOrientation() {

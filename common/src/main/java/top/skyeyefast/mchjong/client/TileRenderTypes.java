@@ -7,8 +7,14 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Lit, outward-facing tile materials which retain linear filtering at draw time. */
 public final class TileRenderTypes extends RenderType {
-    public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.ATLAS);
+    public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.GLYPHS);
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
+    public static final RenderType GLASS = create("mchjong_glass_tiles", DefaultVertexFormat.NEW_ENTITY,
+        VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
+            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+            .setTextureState(new TextureStateShard(TileMesh.GLYPHS, true, false))
+            .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
+            .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false));
 
     private TileRenderTypes() {
         super("mchjong_tiles", DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS,

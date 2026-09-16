@@ -27,22 +27,35 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->
+            Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, MahjongContent.id(name), type));
+        top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->
+            Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MahjongContent.id(name), serializer));
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) ->
             Registry.register(BuiltInRegistries.SOUND_EVENT, MahjongContent.id(name), event));
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) ->
             top.skyeyefast.mchjong.world.TableCommands.register(dispatcher));
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("mahjong_table"), MahjongContent.TABLE);
+        Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("automatic_mahjong_table"), MahjongContent.AUTO_TABLE);
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("table_space"), MahjongContent.SPACE);
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("mahjong_stool"), MahjongContent.STOOL);
         Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("mahjong_table"), MahjongContent.TABLE_ITEM);
+        Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("automatic_mahjong_table"), MahjongContent.AUTO_TABLE_ITEM);
+        MahjongContent.SUPPLIES.forEach((name, item) -> Registry.register(BuiltInRegistries.ITEM, MahjongContent.id(name), item));
         Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("mahjong_stool"), MahjongContent.STOOL_ITEM);
         MahjongContent.TABLE_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_table"),
-            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE).build(null));
+            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
+        MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),
+            BlockEntityType.Builder.of(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build(null));
         MahjongContent.SEAT_ENTITY = Registry.register(BuiltInRegistries.ENTITY_TYPE, MahjongContent.id("seat"),
             EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
                 .clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             entries.accept(MahjongContent.TABLE_ITEM); entries.accept(MahjongContent.STOOL_ITEM);
+            entries.accept(MahjongContent.AUTO_TABLE_ITEM);
+            MahjongContent.SUPPLIES.values().forEach(entries::accept);
+            entries.accept(top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
         });
         PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);

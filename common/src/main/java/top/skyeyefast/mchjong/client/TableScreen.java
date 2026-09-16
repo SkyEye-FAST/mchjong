@@ -314,6 +314,12 @@ public final class TableScreen extends Screen {
             addRenderableWidget(button); callouts.add(button);
             column++;
         }
+        if (column == 0 && view.viewerSeat() >= 0 && view.exitVote() == null) {
+            var missing = Button.builder(Component.translatable("ui.mchjong.equipment_needed"), ignored -> {})
+                .bounds(left, y, span, 26).build();
+            missing.active = false;
+            addRenderableWidget(missing);
+        }
         actionTop = y;
     }
 

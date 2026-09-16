@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.client.TileMesh;
 final class TileResourceSmoke {
     private static byte[] originalAtlas;
     private static byte[] originalBack;
+    private static byte[] originalGlyphs;
     private TileResourceSmoke() {}
 
     static void verify(Minecraft client) throws IOException {
@@ -20,14 +21,18 @@ final class TileResourceSmoke {
             "Retired built-in pack is still registered");
         byte[] atlasBytes;
         byte[] backBytes;
+        byte[] glyphBytes;
         try (var stream = client.getResourceManager().open(TileMesh.ATLAS)) { atlasBytes = stream.readAllBytes(); }
         try (var stream = client.getResourceManager().open(TileMesh.BACK)) { backBytes = stream.readAllBytes(); }
+        try (var stream = client.getResourceManager().open(TileMesh.GLYPHS)) { glyphBytes = stream.readAllBytes(); }
         if (originalAtlas == null) {
             originalAtlas = atlasBytes;
             originalBack = backBytes;
+            originalGlyphs = glyphBytes;
         }
         require(Arrays.equals(originalAtlas, atlasBytes), "Back selection changed the face atlas");
         require(Arrays.equals(originalBack, backBytes), "Back bytes changed after reload");
+        require(Arrays.equals(originalGlyphs, glyphBytes), "Glyph bytes changed after reload");
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
             require(atlas.getWidth() == 2048 && atlas.getHeight() == 2048, "High-resolution atlas did not reach the client");
             require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_SIZE == 2048,
@@ -41,7 +46,15 @@ final class TileResourceSmoke {
                 different |= back.getPixelRGBA(x, y) != corner;
             require(!different, "Default back must be solid");
         }
-        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK}) {
+        try (var glyphs = NativeImage.read(new ByteArrayInputStream(glyphBytes))) {
+            require(glyphs.getWidth() == 2048 && glyphs.getHeight() == 2048, "Glyph atlas dimensions changed");
+            require((glyphs.getPixelRGBA(0, 0) >>> 24) == 0, "Glass glyph atlas has an opaque background");
+            boolean printed = false;
+            for (int y = 0; y < TileMesh.TILE_HEIGHT; y++) for (int x = 0; x < TileMesh.TILE_WIDTH; x++)
+                printed |= (glyphs.getPixelRGBA(x, y) >>> 24) > 0;
+            require(printed, "First tile lost its printed glyph");
+        }
+        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS}) {
             client.getTextureManager().getTexture(texture).bind();
             require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_LINEAR,
                 "World renderer disabled linear magnification for " + texture);

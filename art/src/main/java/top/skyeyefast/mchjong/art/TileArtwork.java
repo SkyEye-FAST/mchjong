@@ -24,7 +24,7 @@ final class TileArtwork implements AutoCloseable {
     static final int ATLAS_SIZE = 2048;
     static final int FACE_COUNT = 37;
     static final int IVORY = 0xfff4eedb;
-    static final int BACK = 0xff2b6b75;
+    static final int BACK = 0xffffffff;
     private static final String SOURCE_ROOT = "riichi-mahjong-tiles-26e127ba2117f45cdce5ea0225748cc0cfad3169/";
     private static final String SHA256 = "79f892bfde6e9450b359cabe939db69a4217ff539518018967a30947c295e276";
     private static final String[] SUITS = {"Man", "Pin", "Sou"};
@@ -51,16 +51,26 @@ final class TileArtwork implements AutoCloseable {
     }
 
     BufferedImage face(int face) throws IOException {
+        return renderFace(face, false);
+    }
+
+    BufferedImage glyph(int face) throws IOException {
+        return renderFace(face, true);
+    }
+
+    private BufferedImage renderFace(int face, boolean transparent) throws IOException {
         String name = sourceName(face);
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = image.createGraphics();
         try {
             int border = WIDTH / 64;
-            g.setColor(new Color(0xc9c0a6)); g.fillRect(0, 0, WIDTH, HEIGHT);
-            g.setColor(new Color(IVORY, true)); g.fillRect(border, border, WIDTH - 2 * border, HEIGHT - 2 * border);
-            g.setColor(new Color(0xfffbef));
-            g.drawLine(2 * border, border, WIDTH - 3 * border, border);
-            g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
+            if (!transparent) {
+                g.setColor(new Color(0xc9c0a6)); g.fillRect(0, 0, WIDTH, HEIGHT);
+                g.setColor(new Color(IVORY, true)); g.fillRect(border, border, WIDTH - 2 * border, HEIGHT - 2 * border);
+                g.setColor(new Color(0xfffbef));
+                g.drawLine(2 * border, border, WIDTH - 3 * border, border);
+                g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
+            }
             // White dragons remain genuinely blank; no imported tile frame or lettering.
             if (face != 31) {
                 String entry = SOURCE_ROOT + "Regular/" + name + ".svg";

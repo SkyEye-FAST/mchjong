@@ -23,7 +23,7 @@ import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 
-public final class MahjongTableBlockEntity extends BlockEntity {
+public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger("mchjong");
     private static final SecureRandom SEEDS = new SecureRandom();
     private Game game;
@@ -33,6 +33,10 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     private TableView clientView;
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
+    private final TableEquipment equipment = new TableEquipment();
+
+    public TableEquipment equipment() { return equipment; }
+    public boolean automatic() { return getBlockState().is(MahjongContent.AUTO_TABLE); }
 
     public MahjongTableBlockEntity(BlockPos pos, BlockState state) { super(MahjongContent.TABLE_ENTITY, pos, state); }
 
@@ -40,6 +44,9 @@ public final class MahjongTableBlockEntity extends BlockEntity {
         if (level == null || level.isClientSide) throw new IllegalStateException("Private state accessed outside server");
         if (unreadableSave != null) return null;
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, SEEDS.nextLong());
+        if (game.phase() == Game.Phase.LOBBY)
+            game.configureEquipment(!automatic(), equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles(false));
+        else if (equipment.deck() == null) return null;
         return game;
     }
 
@@ -91,6 +98,67 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     }
 
     public void open(ServerPlayer player) { sendView(player, true); }
+
+    /** Empty-hand sneaking removes cloth from the top, or the box from a side, only between matches. */
+    public boolean removeEquipment(ServerPlayer player, net.minecraft.core.Direction face) {
+        if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()
+            || player.isSpectator()) return false;
+        int side = TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
+        if (face == net.minecraft.core.Direction.UP && equipment.stickCount(side) > 0) {
+            give(player, equipment.removeSticks(side));
+            appearanceChanged();
+            return true;
+        }
+        if (game != null && game.phase() != Game.Phase.LOBBY) return false;
+        var removed = face == net.minecraft.core.Direction.UP ? equipment.removeCloth() : equipment.removeBox();
+        if (removed.isEmpty()) return false;
+        give(player, removed);
+        appearanceChanged();
+        sentRevision = -1;
+        return true;
+    }
+
+    public boolean useEquipment(ServerPlayer player, net.minecraft.world.item.ItemStack stack) {
+        if (stack.is(MahjongContent.POINT_STICK)) {
+            int side = TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
+            if (!player.isSpectator() && equipment.placeStick(side, stack)) {
+                if (!player.isCreative()) stack.shrink(1);
+                appearanceChanged();
+            }
+            return true;
+        }
+        if (!stack.is(MahjongContent.CLOTH_ITEM) && !stack.is(MahjongContent.BOX_ITEM)) return false;
+        if (player.isSpectator() || unreadableSave != null || game != null && game.phase() != Game.Phase.LOBBY) {
+            player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
+            return true;
+        }
+        if (stack.is(MahjongContent.BOX_ITEM) && top.skyeyefast.mchjong.item.MahjongSupplies.deck(stack) == null) {
+            player.displayClientMessage(Component.translatable("message.mchjong.incomplete_box"), true);
+            return true;
+        }
+        var previous = stack.is(MahjongContent.BOX_ITEM) ? equipment.installBox(stack) : equipment.installCloth(stack);
+        if (!player.isCreative()) stack.shrink(1);
+        give(player, previous);
+        appearanceChanged();
+        sentRevision = -1;
+        return true;
+    }
+
+    private static void give(ServerPlayer player, net.minecraft.world.item.ItemStack stack) {
+        if (!stack.isEmpty() && !player.getInventory().add(stack)) player.drop(stack, false);
+    }
+
+    public void dropEquipment() {
+        if (level == null || level.isClientSide) return;
+        // Clear before spawning: neighbor removal and explosions must never duplicate a loaded set.
+        var box = equipment.removeBox();
+        var cloth = equipment.removeCloth();
+        var sticks = java.util.stream.IntStream.range(0, 4).mapToObj(equipment::removeSticks).toList();
+        net.minecraft.world.level.block.Block.popResource(level, worldPosition, box);
+        net.minecraft.world.level.block.Block.popResource(level, worldPosition, cloth);
+        sticks.forEach(stack -> net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack));
+        flushReplays();
+    }
 
     private void flushReplays() {
         if (!(level instanceof ServerLevel server) || game == null || game.pendingReplays().isEmpty()
@@ -194,12 +262,14 @@ public final class MahjongTableBlockEntity extends BlockEntity {
 
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
+        equipment.save(tag, registries);
         if (unreadableSave != null) tag.putString("game", unreadableSave);
         else if (game != null) tag.putString("game", TableNetworking.JSON.toJson(game));
     }
 
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.loadAdditional(tag, registries);
+        equipment.load(tag, registries);
         if (!tag.contains("game")) return;
         String saved = tag.getString("game");
         try {
@@ -214,6 +284,8 @@ public final class MahjongTableBlockEntity extends BlockEntity {
         }
     }
 
-    /** Chunk synchronization deliberately excludes the server's save tag. */
-    @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) { return new CompoundTag(); }
+    @Override protected void writeAppearance(CompoundTag tag) {
+        super.writeAppearance(tag);
+        equipment.writeAppearance(tag);
+    }
 }

@@ -19,6 +19,10 @@ public final class MchjongClient implements ClientModInitializer {
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
         BlockEntityRenderers.register(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);
+        BlockEntityRenderers.register(MahjongContent.STOOL_ENTITY, top.skyeyefast.mchjong.client.FurnitureRenderer::new);
+        var itemRenderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();
+        for (var item : top.skyeyefast.mchjong.client.MahjongItemRenderer.items())
+            net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));

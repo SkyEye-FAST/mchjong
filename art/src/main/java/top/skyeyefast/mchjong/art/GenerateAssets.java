@@ -21,43 +21,38 @@ public final class GenerateAssets {
     }
 
     private void generate(Path artwork) throws IOException {
-        texture("block/felt", 32, 32, 0x235d53, 0x2a695d);
-        texture("block/wood", 32, 32, 0x493b32, 0x59483b);
-        texture("block/brass", 16, 16, 0xa88850, 0xc5a567);
-        texture("block/cushion", 32, 32, 0x294b49, 0x355e57);
         tiles(artwork);
         models();
     }
 
-    private void texture(String name, int width, int height, int first, int second) throws IOException {
-        BufferedImage image = new BufferedImage(width, height, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < height; y++) for (int x = 0; x < width; x++) {
-            int hash = Integer.rotateLeft(x * 73471 ^ y * 19349663, 7);
-            image.setRGB(x, y, 0xff000000 | ((hash & 7) == 0 ? second : first));
-        }
-        png(name, image);
-    }
-
     private void tiles(Path archive) throws IOException {
         BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_SIZE, TileArtwork.ATLAS_SIZE, BufferedImage.TYPE_INT_ARGB);
+        BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_SIZE, TileArtwork.ATLAS_SIZE, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = atlas.createGraphics();
+        Graphics2D glyphGraphics = glyphs.createGraphics();
         try (TileArtwork artwork = new TileArtwork(archive)) {
             for (int face = 0; face < TileArtwork.FACE_COUNT; face++) {
                 BufferedImage image = artwork.face(face);
                 png("tile/" + face, image);
                 g.drawImage(image, face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
+                glyphGraphics.drawImage(artwork.glyph(face), face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
             }
             // Dedicated neutral swatch: body colors must not depend on a player's white-dragon art.
             g.setColor(Color.WHITE);
             g.fillRect(TileArtwork.ATLAS_SIZE - 32, TileArtwork.ATLAS_SIZE - 32, 32, 32);
+            glyphGraphics.setColor(Color.WHITE);
+            glyphGraphics.fillRect(TileArtwork.ATLAS_SIZE - 32, TileArtwork.ATLAS_SIZE - 32, 32, 32);
             text("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt", artwork.license());
         } finally {
             g.dispose();
+            glyphGraphics.dispose();
         }
         png("tiles", atlas);
+        png("tile_glyphs", glyphs);
         png("tile/back", TileArtwork.back());
         String filtering = "{\"texture\":{\"blur\":true,\"clamp\":true}}";
         text("assets/mchjong/textures/tiles.png.mcmeta", filtering);
+        text("assets/mchjong/textures/tile_glyphs.png.mcmeta", filtering);
         text("assets/mchjong/textures/tile/back.png.mcmeta", filtering);
 
         BufferedImage panel = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
@@ -69,39 +64,24 @@ public final class GenerateAssets {
         png("gui/callout", panel);
     }
 
-    private static String box(double x1, double y1, double z1, double x2, double y2, double z2, String texture) {
-        String face = "{\"texture\":\"#" + texture + "\",\"uv\":[0,0,16,16]}";
-        return "{\"from\":[" + x1 + "," + y1 + "," + z1 + "],\"to\":[" + x2 + "," + y2 + "," + z2
-            + "],\"faces\":{\"up\":" + face + ",\"down\":" + face + ",\"north\":" + face
-            + ",\"south\":" + face + ",\"west\":" + face + ",\"east\":" + face + "}}";
-    }
-
     private void models() throws IOException {
-        String textures = "\"textures\":{\"particle\":\"mchjong:block/wood\",\"wood\":\"mchjong:block/wood\","
-            + "\"felt\":\"mchjong:block/felt\",\"brass\":\"mchjong:block/brass\",\"cushion\":\"mchjong:block/cushion\"}";
-        String table = String.join(",",
-            box(-15, 12, -15, 31, 14, 31, "wood"), box(-13, 14, -13, 29, 15, 29, "felt"),
-            box(-15, 14, -15, -13, 16, 31, "wood"), box(29, 14, -15, 31, 16, 31, "wood"),
-            box(-13, 14, -15, 29, 16, -13, "wood"), box(-13, 14, 29, 29, 16, 31, "wood"),
-            box(-14, 15.5, -14, -13.5, 16.1, 30, "brass"), box(29.5, 15.5, -14, 30, 16.1, 30, "brass"),
-            box(-14, 15.5, -14, 30, 16.1, -13.5, "brass"), box(-14, 15.5, 29.5, 30, 16.1, 30, "brass"),
-            box(2, 2, 2, 14, 12, 14, "wood"), box(-6, 0, 4, 22, 3, 12, "wood"),
-            box(4, 0, -6, 12, 3, 22, "wood"), box(3, 3, 3, 13, 4, 13, "brass"));
-        String display = "\"display\":{\"gui\":{\"rotation\":[30,225,0],\"scale\":[0.35,0.35,0.35]},"
-            + "\"ground\":{\"translation\":[0,3,0],\"scale\":[0.2,0.2,0.2]},"
-            + "\"firstperson_righthand\":{\"rotation\":[0,45,0],\"translation\":[0,2,0],\"scale\":[0.25,0.25,0.25]},"
-            + "\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"translation\":[0,2.5,0],\"scale\":[0.2,0.2,0.2]}}";
-        text("assets/mchjong/models/block/mahjong_table.json", "{" + textures + ",\"elements\":[" + table + "]," + display + "}");
-        String stool = String.join(",", box(2, 6, 2, 14, 8, 14, "wood"), box(2, 8, 2, 14, 10, 14, "cushion"),
-            box(3, 0, 3, 5, 6, 5, "wood"), box(11, 0, 3, 13, 6, 5, "wood"),
-            box(3, 0, 11, 5, 6, 13, "wood"), box(11, 0, 11, 13, 6, 13, "wood"),
-            box(3, 2, 4, 13, 3, 5, "brass"), box(3, 2, 11, 13, 3, 12, "brass"));
-        text("assets/mchjong/models/block/mahjong_stool.json", "{\"parent\":\"minecraft:block/block\"," + textures + ",\"elements\":[" + stool + "]}");
-        for (String name : new String[]{"mahjong_table", "mahjong_stool"})
-            text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"mchjong:block/" + name + "\"}");
-        text("assets/mchjong/models/block/table_space.json", "{\"textures\":{\"particle\":\"mchjong:block/wood\"},\"elements\":[]}");
-        for (String name : new String[]{"mahjong_table", "mahjong_stool", "table_space"})
+        // Component-aware geometry lives once in FurnitureMesh/TileMesh, shared by items and blocks.
+        for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"}) {
+            text("assets/mchjong/models/block/" + name + ".json",
+                "{\"textures\":{\"particle\":\"minecraft:block/oak_planks\"},\"elements\":[]}");
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
+        }
+        for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
+            String rotation = name.equals("mahjong_tile") ? "[0,0,0]" : "[30,225,0]";
+            text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","
+                + "\"textures\":{\"particle\":\"minecraft:block/oak_planks\"},\"gui_light\":\"side\",\"display\":{"
+                + "\"gui\":{\"rotation\":" + rotation + "},"
+                + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
+                + "\"firstperson_righthand\":{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]},"
+                + "\"firstperson_lefthand\":{\"rotation\":[0,-30,0],\"scale\":[0.7,0.7,0.7]},"
+                + "\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"scale\":[0.6,0.6,0.6]},"
+                + "\"thirdperson_lefthand\":{\"rotation\":[75,-45,0],\"scale\":[0.6,0.6,0.6]}}}");
+        }
     }
 
     private void png(String name, BufferedImage image) throws IOException {

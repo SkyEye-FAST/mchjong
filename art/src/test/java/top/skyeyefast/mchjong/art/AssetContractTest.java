@@ -126,7 +126,7 @@ class AssetContractTest {
             assertTrue(model.getAsJsonArray("elements").size() <= 16);
             for (var texture : model.getAsJsonObject("textures").entrySet()) {
                 String[] id = texture.getValue().getAsString().split(":", 2);
-                assertTrue(Files.isRegularFile(resources.resolve("assets/" + id[0] + "/textures/" + id[1] + ".png")), texture.getKey());
+                assertTrue(id[0].equals("minecraft") || Files.isRegularFile(resources.resolve("assets/" + id[0] + "/textures/" + id[1] + ".png")), texture.getKey());
             }
             for (var element : model.getAsJsonArray("elements")) for (String edge : List.of("from", "to"))
                 for (var coordinate : element.getAsJsonObject().getAsJsonArray(edge))

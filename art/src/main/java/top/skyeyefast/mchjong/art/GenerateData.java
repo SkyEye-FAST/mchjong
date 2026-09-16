@@ -1,32 +1,39 @@
 package top.skyeyefast.mchjong.art;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 
-/** Server data generation is independent of textures, SVG artwork and client models. */
+/** Server data has its own entry point and output, independent of SVG artwork. */
 public final class GenerateData {
+    private static final Gson JSON = new GsonBuilder().setPrettyPrinting().disableHtmlEscaping().create();
     private final Path root;
 
     private GenerateData(Path root) { this.root = root; }
 
     public static void main(String[] args) throws IOException {
         if (args.length != 1) throw new IllegalArgumentException("Expected data output directory");
-        new GenerateData(Path.of(args[0])).generate();
+        GenerateData output = new GenerateData(Path.of(args[0]));
+        SurvivalRecipes.generate(output);
+        FurnitureData.generate(output);
     }
 
-    private void generate() throws IOException {
-        for (String name : new String[]{"mahjong_table", "mahjong_stool"})
-            text("data/mchjong/loot_table/blocks/" + name + ".json", "{\"type\":\"minecraft:block\",\"pools\":[{\"rolls\":1,\"entries\":[{\"type\":\"minecraft:item\",\"name\":\"mchjong:" + name + "\"}],\"conditions\":[{\"condition\":\"minecraft:survives_explosion\"}]}]}");
-        text("data/mchjong/recipe/mahjong_table.json", "{\"type\":\"minecraft:crafting_shaped\",\"category\":\"misc\",\"pattern\":[\"PPP\",\"GIG\",\"P P\"],\"key\":{\"P\":{\"tag\":\"minecraft:planks\"},\"G\":{\"item\":\"minecraft:green_carpet\"},\"I\":{\"item\":\"minecraft:iron_ingot\"}},\"result\":{\"id\":\"mchjong:mahjong_table\",\"count\":1}}");
-        text("data/mchjong/recipe/mahjong_stool.json", "{\"type\":\"minecraft:crafting_shaped\",\"category\":\"misc\",\"pattern\":[\"GG\",\"PP\"],\"key\":{\"P\":{\"tag\":\"minecraft:planks\"},\"G\":{\"item\":\"minecraft:green_wool\"}},\"result\":{\"id\":\"mchjong:mahjong_stool\",\"count\":1}}");
-        text("data/minecraft/tags/block/mineable/axe.json", "{\"replace\":false,\"values\":[\"mchjong:mahjong_table\",\"mchjong:mahjong_stool\",\"mchjong:table_space\"]}");
-    }
-
-    private void text(String relative, String text) throws IOException {
+    void write(String relative, Object value) throws IOException {
         Path path = root.resolve(relative);
         Files.createDirectories(path.getParent());
-        Files.writeString(path, text + "\n", StandardCharsets.UTF_8);
+        Files.writeString(path, JSON.toJson(ordered(value)) + "\n", StandardCharsets.UTF_8);
+    }
+
+    private static Object ordered(Object value) {
+        if (value instanceof java.util.Map<?, ?> map) {
+            var sorted = new java.util.TreeMap<String, Object>();
+            map.forEach((key, item) -> sorted.put(key.toString(), ordered(item)));
+            return sorted;
+        }
+        if (value instanceof java.util.List<?> list) return list.stream().map(GenerateData::ordered).toList();
+        return value;
     }
 }
