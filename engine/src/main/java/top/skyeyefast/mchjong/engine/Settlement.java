@@ -174,12 +174,15 @@ final class Settlement {
         int[] bonus = game.rules.placementBonus();
         bonus[0] += (game.rules.returnPoints() - game.rules.startingPoints()) * game.rules.players() / 1000;
         game.finalScores = new ArrayList<>(Collections.nCopies(game.rules.players(), 0.0));
+        game.finalRanks = new ArrayList<>(Collections.nCopies(game.rules.players(), 0));
         int place = 0;
         for (List<Integer> group : groups) {
+            int rank = place + 1;
             double placement = 0;
             for (int i = 0; i < group.size(); i++) placement += bonus[place++];
             placement /= group.size();
             for (int seat : group) {
+                game.finalRanks.set(seat, rank);
                 game.finalScores.set(seat, (game.players[seat].points - game.rules.returnPoints()) / 1000.0 + placement);
             }
         }

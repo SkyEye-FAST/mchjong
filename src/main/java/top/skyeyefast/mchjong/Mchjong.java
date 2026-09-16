@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong;
 
 import net.fabricmc.api.ModInitializer;
+import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
@@ -25,6 +26,8 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) ->
+            top.skyeyefast.mchjong.world.TableCommands.register(dispatcher));
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("mahjong_table"), MahjongContent.TABLE);
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("table_space"), MahjongContent.SPACE);
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("mahjong_stool"), MahjongContent.STOOL);

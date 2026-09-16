@@ -2,6 +2,9 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Comparator;
+import java.util.stream.IntStream;
+import net.minecraft.Util;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -14,18 +17,23 @@ import top.skyeyefast.mchjong.engine.TableView;
 
 /** Scrollable settlement receipt. Only the server's recipient-safe snapshot is displayed. */
 public final class TableResults extends AbstractWidget {
+    public enum Page { HAND, POINTS, MATCH }
     private static final int TEXT = 0xffe8e6d8;
     private static final int MUTED = 0xffa8c5bc;
     private static final int GOLD = 0xfff2cf86;
     private final Font font;
     private final TableView view;
+    private final Page page;
+    private final long started;
     private int scroll;
     private int contentHeight;
 
-    public TableResults(Font font, TableView view, int x, int y, int width, int height, int scroll) {
+    public TableResults(Font font, TableView view, int x, int y, int width, int height, int scroll, Page page, long started) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
+        this.page = page;
+        this.started = started;
         this.scroll = Math.max(0, scroll);
     }
 
@@ -40,7 +48,9 @@ public final class TableResults extends AbstractWidget {
         graphics.fill(x, y, x + width, y + height, 0xf21a2a2e);
         graphics.renderOutline(x, y, width, height, isFocused() ? GOLD : 0xff678d82);
         graphics.fill(x, y, x + 3, y + height, GOLD);
-        graphics.drawString(font, getMessage(), x + 12, y + 10, GOLD, false);
+        Component heading = page == Page.HAND ? getMessage() : Component.translatable(
+            page == Page.POINTS ? "ui.mchjong.point_changes" : "ui.mchjong.match_complete");
+        graphics.drawString(font, heading, x + 12, y + 10, GOLD, false);
         Component subtitle = view.phase() == Game.Phase.MATCH_END
             ? Component.translatable("ui.mchjong.match_complete") : TableScreen.roundName(view);
         graphics.drawString(font, font.split(subtitle, width - 24).getFirst(), x + 12, y + 24, MUTED, false);
@@ -64,16 +74,23 @@ public final class TableResults extends AbstractWidget {
 
     private int contents(GuiGraphics graphics, int origin) {
         int y = origin;
+        if (page != Page.HAND) {
         y = paragraph(graphics, Component.translatable("ui.mchjong.point_changes"), y, GOLD);
-        // Seat order avoids inventing a tie-break order absent from the public snapshot.
-        for (int seat = 0; seat < view.seats().size(); seat++) {
+        var order = IntStream.range(0, view.seats().size()).boxed().toList();
+        if (page == Page.MATCH && view.finalRanks().size() == view.seats().size())
+            order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
+        for (int seat : order) {
             TableView.Seat player = view.seats().get(seat);
             int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
             Component name = TableScreen.playerName(view, seat);
+            if (page == Page.MATCH && seat < view.finalRanks().size()) name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat))
+                .append(" · ").append(name);
             if (seat == view.viewerSeat()) name = name.copy().append(" · ").append(Component.translatable("ui.mchjong.you"));
-            Component points = Component.literal((player.points() - delta) + " → " + player.points() + "  ("
+            double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
+            int displayed = player.points() - delta + (int) Math.round(delta * progress);
+            Component points = Component.literal((player.points() - delta) + " → " + displayed + "  ("
                 + String.format(Locale.ROOT, "%+d", delta) + ")");
-            Component finalScore = seat < view.finalScores().size() ? Component.translatable("ui.mchjong.final_score",
+            Component finalScore = page == Page.MATCH && seat < view.finalScores().size() ? Component.translatable("ui.mchjong.final_score",
                 String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)))
                 : Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready");
             int rowEnd = paragraph(null, points, paragraph(null, name, y + 2, TEXT), TEXT);
@@ -86,12 +103,21 @@ public final class TableResults extends AbstractWidget {
             y += 8;
         }
         y = paragraph(graphics, Component.translatable("ui.mchjong.settlement_note"), y, MUTED) + 8;
+        return y - origin;
+        }
         if (view.wins().isEmpty()) {
             y = paragraph(graphics, Component.translatable("ui.mchjong.no_winner"), y, TEXT);
             if (view.result().equals("exhaustive")) {
                 for (int seat = 0; seat < view.seats().size(); seat++) {
                     Component status = Component.translatable(view.seats().get(seat).exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten");
                     y = paragraph(graphics, TableScreen.playerName(view, seat).copy().append(" · ").append(status), y, MUTED);
+                    if (view.seats().get(seat).exposed()) {
+                        var tiles = view.seats().get(seat).hand();
+                        int tileWidth = Math.clamp((width - 36) / Math.max(1, tiles.size()) - 2, 7, 19);
+                        if (graphics != null) for (int i = 0; i < tiles.size(); i++)
+                            TileGui.tile(graphics, tiles.get(i), getX() + 12 + i * (tileWidth + 2), y, tileWidth, false, false, false);
+                        y += tileWidth * 3 / 2 + 8;
+                    }
                 }
             }
         }

@@ -8,7 +8,8 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,
-                        String result, List<Integer> deltas, List<Double> finalScores) {
+                        String result, List<Integer> deltas, List<Double> finalScores,
+                        TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks) {
     public record Seat(String name, boolean occupied, boolean bot, boolean ready, int points,
                        List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
                        List<Integer> norths, boolean riichi, boolean exposed) {
@@ -23,5 +24,6 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     public TableView {
         wall = List.copyOf(wall); seats = List.copyOf(seats); actions = List.copyOf(actions);
         wins = List.copyOf(wins); deltas = List.copyOf(deltas); finalScores = List.copyOf(finalScores);
+        clocks = List.copyOf(clocks); finalRanks = List.copyOf(finalRanks);
     }
 }

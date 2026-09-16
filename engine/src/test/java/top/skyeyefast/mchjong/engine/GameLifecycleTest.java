@@ -78,6 +78,8 @@ class GameLifecycleTest {
             if (game.phase() == Game.Phase.MATCH_END) {
                 TableView result = game.view(null);
                 assertEquals(rules.players(), result.finalScores().size());
+                assertEquals(rules.players(), result.finalRanks().size());
+                assertTrue(result.finalRanks().stream().allMatch(rank -> rank >= 1 && rank <= rules.players()));
                 assertEquals(0, result.finalScores().stream().mapToDouble(Double::doubleValue).sum(), 0.00001);
                 assertTrue(game.handNumber >= 1);
                 return;

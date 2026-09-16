@@ -9,6 +9,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -156,6 +157,19 @@ public final class TableAnimation {
                 continue;
             }
             Frame source = sources.get(key);
+            Discard discard = null;
+            if (target.piece().area() == TableScene.Area.RIVER) {
+                int seat = target.piece().seat(), index = target.piece().index();
+                if (index >= view.seats().get(seat).river().size()) {
+                    discard = next.seats().get(seat).river().get(index);
+                    if (source == null) {
+                        // Hidden hands expose only the distinction, never a guessed physical identity.
+                        int count = view.seats().get(seat).hand().size();
+                        int slot = discard.tsumogiri() ? count - 1 : Math.max(0, (count - 1) / 2);
+                        source = sources.get(new Key(TableScene.Area.HAND, seat, slot));
+                    }
+                }
+            }
             if (source == null && target.piece().area() == TableScene.Area.HAND && !drawn.isEmpty()) source = drawn.removeFirst();
             if (source == null && target.piece().area() != TableScene.Area.WALL) {
                 int owner = target.piece().seat();
@@ -166,8 +180,10 @@ public final class TableAnimation {
             }
             if (source == null) source = target;
             boolean moving = source.piece().position().distanceToSqr(target.piece().position()) > 0.0025;
-            long duration = source.equals(target) ? 0 : target.piece().area() == TableScene.Area.MELD ? 440 : 300;
-            Motion motion = new Motion(source, target, now, duration, moving ? 0.10 : 0, -1);
+            long duration = source.equals(target) ? 0 : discard != null ? discard.tsumogiri() ? 220 : 380
+                : target.piece().area() == TableScene.Area.MELD ? 440 : 300;
+            double arc = discard != null ? discard.tsumogiri() ? 0.045 : 0.16 : 0.10;
+            Motion motion = new Motion(source, target, now, duration, moving ? arc : 0, -1);
             updates.put(key, motion);
             finish = Math.max(finish, now + duration);
         }
@@ -185,6 +201,9 @@ public final class TableAnimation {
             if (player.riichi() && !old.riichi()) riichiStarted[seat] = now;
             if (player.river().size() > old.river().size() && player.river().getLast().riichi())
                 announcements.add(new Cue(seat, "action.mchjong.riichi", now));
+            else if (player.river().size() > old.river().size())
+                announcements.add(new Cue(seat, player.river().getLast().tsumogiri()
+                    ? "ui.mchjong.tsumogiri" : "ui.mchjong.tedashi", now));
             for (int i = 0; i < player.melds().size(); i++) {
                 var meld = player.melds().get(i);
                 if (i >= old.melds().size() || meld.type() != old.melds().get(i).type())

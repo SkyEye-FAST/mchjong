@@ -31,6 +31,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     private int ticks;
     private long sentRevision = -1;
     private TableView clientView;
+    private long clientViewReceivedNanos;
 
     public MahjongTableBlockEntity(BlockPos pos, BlockState state) { super(MahjongContent.TABLE_ENTITY, pos, state); }
 
@@ -42,10 +43,12 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     }
 
     public TableView clientView() { return clientView; }
+    public long clientViewAgeMillis() { return Math.max(0, System.nanoTime() - clientViewReceivedNanos) / 1_000_000L; }
     public void acceptView(TableView view) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client snapshot on server");
         if (clientView != null && clientView.tableId().equals(view.tableId()) && view.revision() < clientView.revision()) return;
         clientView = view;
+        clientViewReceivedNanos = System.nanoTime();
     }
 
     public static void serverTick(Level level, BlockPos pos, BlockState state, MahjongTableBlockEntity table) {
@@ -68,6 +71,10 @@ public final class MahjongTableBlockEntity extends BlockEntity {
             && seat.getFirstPassenger() == player && serverGame() != null
             && serverGame().seatOf(player.getUUID()) == seat.seat()) return player.getUUID();
         return null;
+    }
+
+    public Game participantGame(ServerPlayer player) {
+        return player.serverLevel() == level && authorizedViewer(player) != null ? serverGame() : null;
     }
 
     private void sendView(ServerPlayer player, boolean open) {

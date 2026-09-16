@@ -50,6 +50,10 @@ public final class Game {
     String result = "lobby";
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
+    List<Integer> finalRanks = new ArrayList<>();
+    TimeControl timeControl = TimeControl.DEFAULT;
+    int[] moveTicks = new int[4];
+    int[] reserveTicks = new int[4];
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
@@ -66,6 +70,16 @@ public final class Game {
     public long revision() { return revision; }
     public Phase phase() { return phase; }
     public RuleSet rules() { return rules; }
+    public boolean isHost(UUID player) { return seatOf(player) >= 0 && seatOf(player) == host(); }
+
+    public boolean configureClock(UUID actor, TimeControl control) {
+        if (phase != Phase.LOBBY || !isHost(actor)) return false;
+        timeControl = Objects.requireNonNull(control);
+        for (PlayerState player : players) player.ready = player.bot;
+        newDecision(Phase.LOBBY);
+        Arrays.fill(reserveTicks, control.reserveSeconds() * 20);
+        return true;
+    }
     public int seatOf(UUID player) {
         if (player == null) return -1;
         for (int i = 0; i < rules.players(); i++) if (player.equals(players[i].id)) return i;
@@ -219,7 +233,8 @@ public final class Game {
         lastTile = Tile.ABSENT;
         lastFrom = -1;
         pending = null;
-        wins.clear(); finalScores.clear();
+        wins.clear(); finalScores.clear(); finalRanks.clear();
+        Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "playing";
@@ -236,6 +251,7 @@ public final class Game {
     void newDecision(Phase nextPhase) {
         phase = nextPhase;
         age = 0;
+        Arrays.fill(moveTicks, timeControl.moveSeconds() * 20);
         decision++;
         revision++;
         Arrays.fill(replies, -1);
@@ -430,29 +446,38 @@ public final class Game {
     public void tick() {
         age++;
         if (age <= 0) return;
-        if (age % 12 == 0) {
+        long token = decision;
+        // Charge every eligible seat before processing any response, including bot responses.
+        // Otherwise a bot acting first would grant all humans a free tick.
+        for (int seat = 0; seat < rules.players(); seat++) if (clockActive(seat)) {
+            if (moveTicks[seat] > 0) moveTicks[seat]--;
+            else if (reserveTicks[seat] > 0) reserveTicks[seat]--;
+        }
+        for (int seat = 0; seat < rules.players() && decision == token; seat++) {
+            if (!clockActive(seat)) continue;
+            if (moveTicks[seat] + reserveTicks[seat] > 0) continue;
+            var legal = actions(seat);
+            int index = indexOf(legal, phase == Phase.REACTION ? PASS : DISCARD);
+            if (phase == Phase.TURN) for (int i = 0; i < legal.size(); i++) {
+                if (legal.get(i).type() == DISCARD && legal.get(i).tiles().getFirst() == players[seat].drawn) index = i;
+            }
+            if (index >= 0) act(players[seat].id, token, index);
+        }
+        if ((phase == Phase.TURN || phase == Phase.REACTION) && (age == 1 || age % 10 == 0)) revision++;
+        if (age > 0 && age % 12 == 0) {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
-                    int choice = TrainingBot.choose(this, seat, actions);
-                    act(players[seat].id, decision, choice);
+                    act(players[seat].id, decision, TrainingBot.choose(this, seat, actions));
                     return;
                 }
             }
         }
-        if (phase == Phase.REACTION && age >= 200) {
-            for (int seat = 0; seat < rules.players(); seat++) {
-                var actions = actions(seat);
-                int pass = indexOf(actions, PASS);
-                if (pass >= 0) { act(players[seat].id, decision, pass); return; }
-            }
-        } else if (phase == Phase.TURN && age >= 600) {
-            var actions = actions(turn);
-            int index = indexOf(actions, DISCARD);
-            for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == DISCARD
-                && actions.get(i).tiles().getFirst() == players[turn].drawn) index = i;
-            if (index >= 0) act(players[turn].id, decision, index);
-        }
+    }
+
+    private boolean clockActive(int seat) {
+        return age >= 0 && !players[seat].bot && (phase == Phase.TURN || phase == Phase.REACTION)
+            && !actions(seat).isEmpty();
     }
 
     static int indexOf(List<Action> actions, Action.Type type) {
@@ -479,14 +504,25 @@ public final class Game {
                 player.melds, player.river, player.norths, player.riichi, exposed[seat]));
         }
         boolean ura = wins.stream().anyMatch(win -> players[win.seat()].riichi);
+        var clocks = new ArrayList<TimeControl.Clock>();
+        for (int seat = 0; seat < rules.players(); seat++)
+            clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
-            wall == null ? List.of() : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores);
+            wall == null ? List.of() : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
+            timeControl, clocks, finalRanks);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
     public void validate() {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
+        Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
+        if (moveTicks.length != 4 || reserveTicks.length != 4) throw new IllegalStateException("Invalid clocks");
+        for (int seat = 0; seat < 4; seat++) {
+            if (moveTicks[seat] < 0 || moveTicks[seat] > timeControl.moveSeconds() * 20
+                || reserveTicks[seat] < 0 || reserveTicks[seat] > timeControl.reserveSeconds() * 20)
+                throw new IllegalStateException("Invalid clock allowance");
+        }
         if (players.length != 4 || options.size() != 4 || dealer < 0 || dealer >= rules.players()
             || round < 0 || round >= 3 * rules.players() || honba < 0 || riichiSticks < 0) {
             throw new IllegalStateException("Invalid saved table");

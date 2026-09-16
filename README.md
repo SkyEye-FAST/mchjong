@@ -94,9 +94,19 @@ overlay. Right-drag looks around; Home or **Center view** restores the table vie
 
 Results show each player's point movement, winning hands and melds, yaku, and
 revealed dora/ura indicators. Scroll or focus the receipt and use Page Up/Page Down
-or Home/End. **View table** hides the receipt without advancing play. **Continue**
-readies your seat for the next hand or match. Table animations can be disabled
+or Home/End. Separate tabs show hand details, animated point changes and the
+server-authoritative final standings. **View table** hides the receipt without
+advancing play. **Continue** readies your seat for the next hand; **Ready for new
+match** starts another match only after all seats are ready. Table animations can be disabled
 independently of the game rules in the interaction settings.
+
+The lobby host can open **Time control** or run `/mchjong clock 20 5`: a shared
+20-second reserve per hand plus a fresh 5-second allowance for each turn or
+reaction. The move allowance is used first. Answered reactions stop their own
+clock; dealing and settlement do not consume time. The server enforces timeouts
+even with the overlay closed or a player disconnected: pass a reaction or discard
+the drawn tile (a legal hand tile after a call), never automatically claim a win.
+Drawn-tile discards and hand discards have distinct animation paths and cues.
 
 ## Optional resource pack
 

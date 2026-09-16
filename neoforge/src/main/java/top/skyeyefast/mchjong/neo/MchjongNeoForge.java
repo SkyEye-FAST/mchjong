@@ -24,6 +24,9 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.RegisterCommandsEvent event) ->
+                top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));
         DeferredRegister<Block> blocks = DeferredRegister.create(Registries.BLOCK, MahjongContent.MOD_ID);
         blocks.register("mahjong_table", () -> MahjongContent.TABLE);
         blocks.register("table_space", () -> MahjongContent.SPACE);

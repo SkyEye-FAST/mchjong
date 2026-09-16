@@ -31,23 +31,49 @@ class TableAnimationTest {
         for (int i = 1; i < rules.players(); i++) seats.add(seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(), List.of(), false));
         return new TableView(TABLE, 2, 2, 1, rules, Game.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
-            List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of());
+            List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(),
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of());
     }
 
     private static TableView lobby(RuleSet rules) {
         return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
-            List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of());
+            List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(),
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of());
     }
 
     private static TableView update(TableView old, List<TableView.Seat> seats, int viewer) {
         return new TableView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
-            old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores());
+            old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(),
+            old.timeControl(), old.clocks(), old.finalRanks());
     }
 
     private static TableAnimation.Frame tile(List<TableAnimation.Frame> frames, int tile) {
         return frames.stream().filter(frame -> frame.piece().tile() == tile).findFirst().orElseThrow();
+    }
+
+    @Test void hiddenTsumogiriComesFromTheDrawSlotWhileTedashiComesFromTheHand() {
+        for (boolean tsumogiri : List.of(false, true)) {
+            var base = playing(RuleSet.MAHJONG_SOUL_4);
+            var seats = new ArrayList<>(base.seats());
+            seats.set(1, seat(Collections.nCopies(14, Tile.HIDDEN), Tile.HIDDEN, List.of(), List.of(), false));
+            base = update(base, seats, 0);
+            var animation = new TableAnimation();
+            animation.accept(base, 0);
+            int slot = tsumogiri ? 13 : 6;
+            var source = animation.sample(0).stream().filter(frame -> frame.piece().seat() == 1
+                && frame.piece().area() == TableScene.Area.HAND && frame.piece().index() == slot).findFirst().orElseThrow();
+            seats.set(1, seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(),
+                List.of(new Discard(40, false, false, tsumogiri)), false));
+            animation.accept(update(base, seats, 0), 100);
+            var start = animation.sample(100).stream().filter(frame -> frame.piece().area() == TableScene.Area.RIVER).findFirst().orElseThrow();
+            assertEquals(source.piece().position(), start.piece().position());
+            assertEquals(Tile.HIDDEN, start.piece().tile());
+            assertEquals(tsumogiri, animation.sample(450).equals(animation.settled()));
+            assertTrue(animation.sample(300).stream().filter(frame -> frame.piece().area() == TableScene.Area.HAND
+                && frame.piece().seat() == 1).allMatch(frame -> frame.piece().tile() == Tile.HIDDEN));
+        }
     }
 
     @Test void lateJoinDoesNotReplayAnOpening() {
