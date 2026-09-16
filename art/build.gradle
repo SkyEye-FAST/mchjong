@@ -54,12 +54,32 @@ tasks.register('generateAssets', Sync) {
     into rootProject.layout.buildDirectory.dir('generated/assets')
 }
 
+def renderedData = layout.buildDirectory.dir('renderedData')
+tasks.register('renderData', JavaExec) {
+    dependsOn classes
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.art.GenerateData'
+    doFirst {
+        def directory = renderedData.get().asFile
+        if (directory.exists() && !directory.deleteDir()) throw new GradleException("Could not clean ${directory}")
+        args directory.absolutePath
+    }
+    inputs.files sourceSets.main.allSource
+    outputs.dir renderedData
+}
+tasks.register('generateData', Sync) {
+    dependsOn 'renderData'
+    from renderedData
+    into rootProject.layout.buildDirectory.dir('generated/data')
+}
+
 test {
     useJUnitPlatform()
-    dependsOn generateAssets
+    dependsOn generateAssets, generateData
     doFirst { testTemp.get().asFile.mkdirs() }
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
     systemProperty 'mchjong.resources', rootProject.layout.buildDirectory.dir('generated/assets').get().asFile.absolutePath
+    systemProperty 'mchjong.data', rootProject.layout.buildDirectory.dir('generated/data').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     systemProperty 'mchjong.sourceRoot', rootProject.projectDir.absolutePath
     ['common/src/main', 'engine/src/main', 'src/main', 'neoforge/src/main'].each { source ->
@@ -68,6 +88,7 @@ test {
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
     inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')
+    inputs.dir rootProject.layout.buildDirectory.dir('generated/data')
     inputs.files configurations.tileArtwork
     doFirst { systemProperty 'mchjong.artwork', configurations.tileArtwork.singleFile.absolutePath }
     systemProperty 'java.awt.headless', 'true'

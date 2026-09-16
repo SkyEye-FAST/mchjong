@@ -16,7 +16,7 @@ three or four players. It supports both Fabric and NeoForge.
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - Shared gameplay and client presentation across both loaders
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization
-- Optional patterned tile-back resource pack
+- Resource-pack customization of tile faces and backs
 
 ## Compatibility
 
@@ -162,12 +162,11 @@ Nothing is uploaded to Tenhou. See [Replay storage and format](docs/REPLAYS.md)
 for privacy, controls, persistence and format details. Viewing a replay does not
 pause an active table or its server clock.
 
-## Optional resource pack
+## Tile customization
 
-Tile backs are solid teal by default. Enable **MCjhong: Patterned tile backs**
-under **Options > Resource Packs** to use the built-in diamond pattern. Disable
-the pack to restore the default backs. See [docs/ASSETS.md](docs/ASSETS.md) for
-customization and asset details.
+Tile backs are solid by default. Custom resource packs can replace the independent
+back texture without changing tile faces or rules. No patterned pack is bundled.
+See [docs/ASSETS.md](docs/ASSETS.md) for customization and asset details.
 
 ## Credits
 

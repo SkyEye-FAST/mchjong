@@ -22,6 +22,7 @@ sourceSets.main {
     java.srcDir '../common/src/main/java'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
+    resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
 }
 
 neoForge {
@@ -64,7 +65,7 @@ test {
 }
 
 processResources {
-    dependsOn ':art:generateAssets'
+    dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [
         version: project.version,
         minecraft_version: rootProject.minecraft_version,

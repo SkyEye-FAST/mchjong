@@ -78,21 +78,10 @@ final class TileArtwork implements AutoCloseable {
         return image;
     }
 
-    static BufferedImage back(boolean patterned) {
+    static BufferedImage back() {
         BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         for (int y = 0; y < HEIGHT; y++) for (int x = 0; x < WIDTH; x++) {
-            int color = BACK;
-            if (patterned) {
-                // Centered distances preserve exact 180-degree symmetry at any resolution.
-                float dx = Math.abs(2 * x - (WIDTH - 1)) * 64f / WIDTH;
-                float dy = Math.abs(2 * y - (HEIGHT - 1)) * 96f / HEIGHT;
-                float diamond = 2 * dx + dy;
-                if (dx >= 52 && dx <= 54 && dy <= 86 || dy >= 84 && dy <= 86 && dx <= 54) color = 0xff619292;
-                if (diamond >= 79 && diamond <= 83) color = 0xff44828a;
-                if (diamond >= 59 && diamond <= 63) color = 0xffd0b47a;
-                if (dx <= 3 && dy <= 7) color = 0xffd0b47a;
-            }
-            image.setRGB(x, y, color);
+            image.setRGB(x, y, BACK);
         }
         return image;
     }

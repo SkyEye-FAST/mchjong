@@ -55,23 +55,10 @@ public final class GenerateAssets {
             g.dispose();
         }
         png("tiles", atlas);
-        png("tile/back", TileArtwork.back(false));
+        png("tile/back", TileArtwork.back());
         String filtering = "{\"texture\":{\"blur\":true,\"clamp\":true}}";
         text("assets/mchjong/textures/tiles.png.mcmeta", filtering);
         text("assets/mchjong/textures/tile/back.png.mcmeta", filtering);
-
-        String pack = "resourcepacks/patterned_backs/";
-        BufferedImage pattern = TileArtwork.back(true);
-        writePng(pack + "assets/mchjong/textures/tile/back.png", pattern);
-        text(pack + "pack.mcmeta", "{\"pack\":{\"pack_format\":34,\"description\":{\"translate\":\"resourcePack.mchjong.patterned_backs.description\"}}}");
-        BufferedImage icon = new BufferedImage(128, 128, BufferedImage.TYPE_INT_ARGB);
-        g = icon.createGraphics();
-        g.setColor(new Color(0x182a2d)); g.fillRect(0, 0, 128, 128);
-        g.setColor(new Color(TileArtwork.IVORY, true)); g.fillRect(29, 13, 70, 102);
-        g.setRenderingHint(java.awt.RenderingHints.KEY_INTERPOLATION, java.awt.RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-        g.drawImage(pattern, 32, 16, 64, 96, null);
-        g.dispose();
-        writePng(pack + "pack.png", icon);
 
         BufferedImage panel = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
         g = panel.createGraphics();
@@ -115,11 +102,6 @@ public final class GenerateAssets {
         text("assets/mchjong/models/block/table_space.json", "{\"textures\":{\"particle\":\"mchjong:block/wood\"},\"elements\":[]}");
         for (String name : new String[]{"mahjong_table", "mahjong_stool", "table_space"})
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
-        for (String name : new String[]{"mahjong_table", "mahjong_stool"})
-            text("data/mchjong/loot_table/blocks/" + name + ".json", "{\"type\":\"minecraft:block\",\"pools\":[{\"rolls\":1,\"entries\":[{\"type\":\"minecraft:item\",\"name\":\"mchjong:" + name + "\"}],\"conditions\":[{\"condition\":\"minecraft:survives_explosion\"}]}]}");
-        text("data/mchjong/recipe/mahjong_table.json", "{\"type\":\"minecraft:crafting_shaped\",\"category\":\"misc\",\"pattern\":[\"PPP\",\"GIG\",\"P P\"],\"key\":{\"P\":{\"tag\":\"minecraft:planks\"},\"G\":{\"item\":\"minecraft:green_carpet\"},\"I\":{\"item\":\"minecraft:iron_ingot\"}},\"result\":{\"id\":\"mchjong:mahjong_table\",\"count\":1}}");
-        text("data/mchjong/recipe/mahjong_stool.json", "{\"type\":\"minecraft:crafting_shaped\",\"category\":\"misc\",\"pattern\":[\"GG\",\"PP\"],\"key\":{\"P\":{\"tag\":\"minecraft:planks\"},\"G\":{\"item\":\"minecraft:green_wool\"}},\"result\":{\"id\":\"mchjong:mahjong_stool\",\"count\":1}}");
-        text("data/minecraft/tags/block/mineable/axe.json", "{\"replace\":false,\"values\":[\"mchjong:mahjong_table\",\"mchjong:mahjong_stool\",\"mchjong:table_space\"]}");
     }
 
     private void png(String name, BufferedImage image) throws IOException {

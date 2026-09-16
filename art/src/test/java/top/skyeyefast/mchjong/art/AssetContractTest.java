@@ -19,6 +19,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class AssetContractTest {
     private final Path resources = Path.of(System.getProperty("mchjong.resources"));
+    private final Path data = Path.of(System.getProperty("mchjong.data"));
     private final Path languages = Path.of(System.getProperty("mchjong.languages"));
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
 
@@ -102,34 +103,14 @@ class AssetContractTest {
         for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(TileArtwork.IVORY, white.getRGB(x, y));
     }
 
-    @Test void defaultBackIsSolidAndOptionalPatternOnlyOverridesTheBack() throws Exception {
+    @Test void defaultBackIsSolidAndNoBuiltinPackShips() throws Exception {
         String backPath = "assets/mchjong/textures/tile/back.png";
         BufferedImage solid = ImageIO.read(resources.resolve(backPath).toFile());
-        Path pack = resources.resolve("resourcepacks/patterned_backs");
-        BufferedImage pattern = ImageIO.read(pack.resolve(backPath).toFile());
         assertEquals(256, solid.getWidth()); assertEquals(384, solid.getHeight());
-        assertEquals(solid.getWidth(), pattern.getWidth()); assertEquals(solid.getHeight(), pattern.getHeight());
-        Set<Integer> colors = new HashSet<>();
         for (int y = 0; y < TileArtwork.HEIGHT; y++) for (int x = 0; x < TileArtwork.WIDTH; x++) {
             assertEquals(TileArtwork.BACK, solid.getRGB(x, y));
-            assertEquals(255, pattern.getRGB(x, y) >>> 24);
-            assertEquals(pattern.getRGB(x, y), pattern.getRGB(TileArtwork.WIDTH - 1 - x, TileArtwork.HEIGHT - 1 - y), "Back must be 180-degree symmetric");
-            if (x < 16 || x >= 240 || y < 16 || y >= 368) assertEquals(TileArtwork.BACK, pattern.getRGB(x, y));
-            colors.add(pattern.getRGB(x, y));
         }
-        assertTrue(colors.size() > 1, "Optional pattern must differ visibly");
-        try (var files = Files.walk(pack.resolve("assets"))) {
-            assertEquals(List.of(pack.resolve(backPath)), files.filter(Files::isRegularFile).toList());
-        }
-        JsonObject metadata = JsonParser.parseString(Files.readString(pack.resolve("pack.mcmeta"))).getAsJsonObject().getAsJsonObject("pack");
-        assertEquals(34, metadata.get("pack_format").getAsInt());
-        String description = metadata.getAsJsonObject("description").get("translate").getAsString();
-        for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
-            JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve(language + ".json"))).getAsJsonObject();
-            assertTrue(translations.has(description));
-            assertTrue(translations.has("resourcePack.mchjong.patterned_backs.name"));
-        }
-        assertNotNull(ImageIO.read(pack.resolve("pack.png").toFile()));
+        assertFalse(Files.exists(resources.resolve("resourcepacks")));
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt")).contains("public domain"));
     }
 
@@ -151,13 +132,19 @@ class AssetContractTest {
                 for (var coordinate : element.getAsJsonObject().getAsJsonArray(edge))
                     assertTrue(coordinate.getAsDouble() >= -16 && coordinate.getAsDouble() <= 32, "Minecraft model bounds");
             assertTrue(Files.isRegularFile(resources.resolve("assets/mchjong/blockstates/" + name + ".json")));
-            assertTrue(Files.isRegularFile(resources.resolve("data/mchjong/recipe/" + name + ".json")));
-            assertTrue(Files.isRegularFile(resources.resolve("data/mchjong/loot_table/blocks/" + name + ".json")));
+            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" + name + ".json")));
+            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/loot_table/blocks/" + name + ".json")));
         }
     }
 
     @Test void generationIsByteForByteReproducible(@TempDir Path second) throws Exception {
         GenerateAssets.main(new String[]{second.toString(), artwork.toString()});
+        assertFalse(Files.exists(second.resolve("data")), "Artwork must not generate server data");
+        GenerateData.main(new String[]{second.resolve("server").toString()});
+        try (var files = Files.walk(data)) {
+            for (Path file : files.filter(Files::isRegularFile).toList())
+                assertArrayEquals(Files.readAllBytes(file), Files.readAllBytes(second.resolve("server").resolve(data.relativize(file))));
+        }
         try (var files = Files.walk(resources)) {
             for (Path file : files.filter(Files::isRegularFile).toList()) {
                 Path counterpart = second.resolve(resources.relativize(file));

@@ -4,6 +4,11 @@ Both loaders use the same generated textures and models. Run
 `gradlew.bat :art:generateAssets`; the resources are published to
 `build/generated/assets`. Edit the generator, not the generated PNG or JSON files.
 
+Server data is generated separately by `GenerateData` through
+`gradlew.bat :art:generateData` into `build/generated/data`. Both loaders include
+both directories. Recipes, tags and loot do not belong in `GenerateAssets`.
+Each output is synchronized independently, removing retired resources on rebuild.
+
 ## Tile faces
 
 The printed faces are rasterized from FluffyStuff's CC0
@@ -42,21 +47,12 @@ pixel of the default back is the same opaque teal, `#2b6b75`. There is no logo,
 border or noise. The raised ivory body and shallow back shell supply the tile's
 physical shape; the back shell samples the texture's top-left pixel for its color.
 
-The optional built-in pack `resourcepacks/patterned_backs` adds a restrained
-diamond motif. It is disabled by default on both loaders. In Minecraft, open
-**Options > Resource Packs** and enable **MCjhong: Patterned tile backs**
-(**MCjhong：图案牌背** in Simplified Chinese). Disable the pack to restore the solid
-back. Selection, persistence and reloading use Minecraft's resource-pack system.
-The pack name and description are localized in English, Japanese, Simplified
-Chinese and Traditional Chinese.
-
-The pattern is exactly symmetric under a 180-degree rotation, and its outer rim
-has the same color as the default back. The pack overrides only `tile/back.png`,
-not the face atlas or game data. To supply another design, create a normal
+No patterned resource pack is bundled. To supply a design, create a normal
 resource pack for your target Minecraft version containing that same texture
-path and the matching `pack_format`. Keep it opaque, preserve the 2:3 aspect ratio and use an unmarked,
-uniform rim so that the back shell matches. A higher-priority custom pack can
-replace the bundled pattern without editing any Java code.
+path and the matching `pack_format`. Keep it opaque, preserve the 2:3 aspect ratio
+and use an unmarked, uniform rim so that the back shell matches. Selection,
+persistence and reloading use Minecraft's resource-pack system. Custom backs do
+not replace the face atlas or affect private game data.
 
 Concealed tiles and physical rear faces use the independent back texture. There
 is no back cell in the face atlas, no `tile/37.png`, and no unused `tile/edge.png`.
@@ -65,7 +61,7 @@ buffers for each tile.
 
 ## Table and other resources
 
-Cloth, wood, brass and cushion textures and the optional back design are original
+Cloth, wood, brass and cushion textures are original
 MCjhong artwork. Cloth and wood use a deterministic hash for their pixel grain.
 `models/block/mahjong_table.json` contains fourteen cuboids for the complete 3 by 3
 table, centered on its center block; the felt top is at y = 15/16. Its block ID is
@@ -87,11 +83,11 @@ code from that project or riichi_advanced is bundled.
 
 `gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source
 order, red fives, the blank white dragon, texture resolution and filtering,
-uniform default backs, rotational symmetry, pack contents, language keys, model
+uniform default backs, absence of bundled packs, language keys, model
 bounds, source integrity and byte-for-byte reproducible generation.
 
 `gradlew.bat runSmokeClient` exercises placement, seating, a private deal and a
-discard in an isolated Fabric world, then enables and disables the optional
-pack. It checks that only the back changes and that disabling it restores the
-original resource bytes. Screenshots and the final result are written beneath
+discard in an isolated Fabric world, then reloads the resources. It checks that
+the retired pack is absent and that filtering and resource bytes survive reload.
+Screenshots and the final result are written beneath
 `build/smoke/evidence`.

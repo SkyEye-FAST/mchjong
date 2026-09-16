@@ -15,24 +15,19 @@ final class TileResourceSmoke {
     private static byte[] originalBack;
     private TileResourceSmoke() {}
 
-    static String optionalPack(Minecraft client) {
-        return client.getResourcePackRepository().getAvailableIds().stream()
-            .filter(id -> id.contains("mchjong") && id.endsWith("patterned_backs"))
-            .findFirst().orElseThrow(() -> new IllegalStateException("Optional patterned back pack is not discoverable"));
-    }
-
-    static void verify(Minecraft client, boolean patterned) throws IOException {
+    static void verify(Minecraft client) throws IOException {
+        require(client.getResourcePackRepository().getAvailableIds().stream().noneMatch(id -> id.endsWith("patterned_backs")),
+            "Retired built-in pack is still registered");
         byte[] atlasBytes;
         byte[] backBytes;
         try (var stream = client.getResourceManager().open(TileMesh.ATLAS)) { atlasBytes = stream.readAllBytes(); }
         try (var stream = client.getResourceManager().open(TileMesh.BACK)) { backBytes = stream.readAllBytes(); }
         if (originalAtlas == null) {
-            require(!patterned, "First resource check must use the default pack");
             originalAtlas = atlasBytes;
             originalBack = backBytes;
         }
         require(Arrays.equals(originalAtlas, atlasBytes), "Back selection changed the face atlas");
-        require(Arrays.equals(originalBack, backBytes) != patterned, "Default back bytes were not restored after reload");
+        require(Arrays.equals(originalBack, backBytes), "Back bytes changed after reload");
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
             require(atlas.getWidth() == 2048 && atlas.getHeight() == 2048, "High-resolution atlas did not reach the client");
             require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_SIZE == 2048,
@@ -44,7 +39,7 @@ final class TileResourceSmoke {
             boolean different = false;
             for (int y = 0; y < back.getHeight(); y++) for (int x = 0; x < back.getWidth(); x++)
                 different |= back.getPixelRGBA(x, y) != corner;
-            require(different == patterned, "Resource pack did not select the expected back");
+            require(!different, "Default back must be solid");
         }
         for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK}) {
             client.getTextureManager().getTexture(texture).bind();

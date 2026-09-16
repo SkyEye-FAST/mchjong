@@ -40,7 +40,6 @@ public final class TableClientSmoke {
     private int ticks;
     private int entered;
     private boolean saved;
-    private String patternedPack;
     private CompletableFuture<Void> resourceReload;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke();
@@ -60,9 +59,6 @@ public final class TableClientSmoke {
                 Files.createDirectories(output);
                 Files.deleteIfExists(output.resolve("PASS.txt"));
                 Files.deleteIfExists(output.resolve("FAIL.txt"));
-                patternedPack = TileResourceSmoke.optionalPack(client);
-                require(!client.getResourcePackRepository().getSelectedIds().contains(patternedPack),
-                    "Patterned backs must be disabled by default");
                 client.options.pauseOnLostFocus = false;
                 client.getTutorial().setStep(net.minecraft.client.tutorial.TutorialSteps.NONE);
                 client.options.guiScale().set(2);
@@ -175,21 +171,13 @@ public final class TableClientSmoke {
                 step = 7; entered = ticks;
             } else if (step == 7 && ticks - entered > 20) {
                 capture(client, "05-seated-world.png");
-                TileResourceSmoke.verify(client, false);
-                require(client.getResourcePackRepository().addPack(patternedPack), "Could not enable patterned backs");
+                TileResourceSmoke.verify(client);
                 resourceReload = client.reloadResourcePacks();
                 step = 8; entered = ticks;
             } else if (step == 8 && resourceReload.isDone() && client.getOverlay() == null && ticks - entered > 40) {
                 resourceReload.join();
-                TileResourceSmoke.verify(client, true);
-                capture(client, "06-patterned-backs.png");
-                require(client.getResourcePackRepository().removePack(patternedPack), "Could not disable patterned backs");
-                resourceReload = client.reloadResourcePacks();
-                step = 9; entered = ticks;
-            } else if (step == 9 && resourceReload.isDone() && client.getOverlay() == null && ticks - entered > 40) {
-                resourceReload.join();
-                TileResourceSmoke.verify(client, false);
-                capture(client, "07-restored-solid-backs.png");
+                TileResourceSmoke.verify(client);
+                capture(client, "06-reloaded-solid-backs.png");
                 step = 15; entered = ticks;
             } else if (step == 15 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 10; entered = ticks;
@@ -198,7 +186,7 @@ public final class TableClientSmoke {
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 12; entered = ticks;
             } else if (step == 12 && replaySmoke.tick(client, output)) {
-                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;

@@ -128,8 +128,6 @@
   "block.mchjong.mahjong_table": "麻雀卓",
   "block.mchjong.mahjong_stool": "麻雀用スツール",
   "itemGroup.mchjong": "MCjhong",
-  "resourcePack.mchjong.patterned_backs.name": "MCjhong：模様入りの牌背",
-  "resourcePack.mchjong.patterned_backs.description": "牌の背面に菱形模様を追加します。無効にすると青緑色の無地に戻ります。",
   "entity.mchjong.seat": "麻雀の座席",
   "ui.mchjong.title": "麻雀卓",
   "ui.mchjong.empty": "空席",

@@ -48,10 +48,11 @@ sourceSets.main {
     java.srcDir 'common/src/main/java'
     resources.srcDir 'common/src/main/resources'
     resources.srcDir layout.buildDirectory.dir('generated/assets')
+    resources.srcDir layout.buildDirectory.dir('generated/data')
 }
 
 processResources {
-    dependsOn ':art:generateAssets'
+    dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
@@ -71,7 +72,7 @@ tasks.withType(JavaCompile).configureEach {
     options.release = java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets' }
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData' }
 jar { from('LICENSE') }
 
 tasks.register('buildAll') {

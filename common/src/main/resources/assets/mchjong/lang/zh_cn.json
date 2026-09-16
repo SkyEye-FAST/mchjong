@@ -128,8 +128,6 @@
   "block.mchjong.mahjong_table": "麻将桌",
   "block.mchjong.mahjong_stool": "麻将凳",
   "itemGroup.mchjong": "MCjhong",
-  "resourcePack.mchjong.patterned_backs.name": "MCjhong：图案牌背",
-  "resourcePack.mchjong.patterned_backs.description": "为牌背添加菱形图案。停用后恢复默认的青绿色纯色牌背。",
   "entity.mchjong.seat": "麻将座位",
   "ui.mchjong.title": "麻将桌",
   "ui.mchjong.empty": "空席",

@@ -92,9 +92,9 @@ The selected Minecraft, Java, loader, mapping and dependency versions live in
 `gradle.properties`, and resource processing writes the matching compatibility
 metadata into each artifact.
 
-Tile faces and tile backs are independent materials. Optional patterned backs
-are a native, disabled-by-default resource pack registered by each loader's
-client entry point. Resource selection and reloads do not affect server rules,
+Tile faces and tile backs are independent materials. Custom backs use ordinary
+player-supplied resource packs; no optional back pack is bundled or registered.
+Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
 
 `TimeControl` is enforced entirely in `Game`: per-hand reserves and fresh decision
