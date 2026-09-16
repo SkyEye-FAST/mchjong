@@ -36,10 +36,26 @@ public final class TableScreen extends Screen {
     private long lastRevision = -1;
     private boolean dragging;
     private float framePartial;
+    private long lastClickAt;
+    private int lastClickedTile = Tile.ABSENT;
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    public BlockPos tablePos() { return pos; }
+
+    public static TableScreen active(Screen screen) {
+        if (screen instanceof TableScreen table) return table;
+        if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
+        return null;
+    }
+
+    public void resetView() {
+        TableView view = view();
+        if (minecraft == null || minecraft.player == null || view == null || view.viewerSeat() < 0) return;
+        minecraft.player.setYRot(TableGeometry.yaw(view.viewerSeat()));
+        minecraft.player.setXRot(52);
+    }
 
     private TableView view() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
@@ -82,6 +98,7 @@ public final class TableScreen extends Screen {
         List<Integer> choices = new ArrayList<>();
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
+            if (action.type() == Action.Type.DISCARD) continue;
             if (!tileChoice(action) || action.tiles().contains(selectedTile)) choices.add(i);
         }
         scroll = Math.clamp(scroll, 0, Math.max(0, choices.size() - 1));
@@ -94,7 +111,7 @@ public final class TableScreen extends Screen {
             Component label = action.type() == Action.Type.CHANGE_RULE
                 ? Component.translatable(action.translationKey(), Component.translatable(RuleSet.values()[action.tiles().getFirst()].translationKey()))
                 : Component.translatable(action.translationKey());
-            int iconWidth = showsConsumed(action) ? action.tiles().size() * 12 + 4 : 0;
+            int iconWidth = TableSettings.get().actionTiles ? actionPreviewWidth(view, action) : 0;
             int buttonHeight = Math.max(23, font.wordWrapHeight(label, boxWidth - iconWidth - 16) + 10);
             if (y + buttonHeight > height - 22) break;
             final TableView snapshot = view;
@@ -103,6 +120,17 @@ public final class TableScreen extends Screen {
             addRenderableWidget(button);
             callouts.add(button);
             y += buttonHeight + 6;
+        }
+        addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.open"), ignored -> minecraft.setScreen(new TableSettingsScreen(this)))
+            .bounds(width - 34, 8, 26, 20).build());
+        if (TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM && selectedTile >= 0) {
+            int discard = discardAction(view, selectedTile);
+            if (discard >= 0) {
+                final TableView snapshot = view;
+                final int actionIndex = discard;
+                addRenderableWidget(Button.builder(Component.translatable("action.mchjong.discard"), ignored -> send(snapshot, actionIndex))
+                    .bounds(width / 2 - 55, height - 42, 110, 20).build());
+            }
         }
     }
 
@@ -113,7 +141,13 @@ public final class TableScreen extends Screen {
     }
 
     private static boolean showsConsumed(Action action) {
-        return action.type() == Action.Type.CHI || action.type() == Action.Type.PON || action.type() == Action.Type.OPEN_KAN;
+        return ActionPreview.consumesHand(action);
+    }
+
+    private int actionPreviewWidth(TableView view, Action action) {
+        ActionPreview preview = ActionPreview.of(view, action);
+        if (preview.meld() != null) return TileGui.meldWidth(preview.meld(), view.viewerSeat(), 11) + 8;
+        return preview.tiles().isEmpty() ? 0 : preview.tiles().size() * 13 + 6;
     }
 
     private Vec3 anchor(TableView view, Action action) {
@@ -174,15 +208,16 @@ public final class TableScreen extends Screen {
         if (view.revision() != lastRevision) rebuild();
         TableScene.Piece hovered = pick(mouseX, mouseY);
         hoveredTile = hovered == null ? Tile.ABSENT : hovered.tile();
-        Component heading = Component.translatable(view.rules().translationKey());
-        graphics.fill(8, 8, Math.min(width - 8, Math.max(190, font.width(heading) + 24)), 47, 0xd9182a2d);
-        graphics.fill(8, 8, 11, 47, 0xffc4a469);
-        graphics.drawString(font, heading, 17, 15, 0xfff0dec1, false);
-        graphics.drawString(font, roundName(view), 17, 30, 0xffadd8c4, false);
+        renderInformation(graphics, view);
+        TableSettings settings = TableSettings.get();
         for (CalloutButton button : callouts) {
-            Projected point = project(anchor(view, button.action));
-            if (point != null) elbow(graphics, point, button, button.isHoveredOrFocused() ? 0xffffdc89 : 0xff8fbca9);
-            if (showsConsumed(button.action) && button.isHoveredOrFocused()) {
+            boolean guide = settings.guideLines == TableSettings.GuideLines.ALWAYS
+                || settings.guideLines == TableSettings.GuideLines.HOVER && button.isHoveredOrFocused();
+            if (guide && ActionPreview.hasGuide(button.action)) {
+                Projected point = project(anchor(view, button.action));
+                if (point != null) elbow(graphics, point, button, button.isHoveredOrFocused() ? 0xffffdc89 : 0xff8fbca9);
+            }
+            if (settings.highlightTiles && showsConsumed(button.action) && button.isHoveredOrFocused()) {
                 for (TableScene.Piece piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat()
                     && button.action.tiles().contains(piece.tile())) {
                     Projected own = project(piece.position());
@@ -200,26 +235,28 @@ public final class TableScreen extends Screen {
         }
         int lineY = 57;
         if (view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END) {
-            Component result = Component.translatable("result.mchjong." + view.result());
-            graphics.drawString(font, result, 12, lineY, 0xffffd487, true); lineY += 15;
-            for (TableView.Win win : view.wins()) {
-                Component name = playerName(view, win.seat());
-                Component score = win.score().yakuman() > 0 ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
-                    : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
-                graphics.drawString(font, name.copy().append(" · ").append(score), 12, lineY, 0xfff6e5c8, true); lineY += 12;
-                for (String yaku : win.score().yaku()) {
-                    graphics.drawString(font, Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)), 20, lineY, 0xffc7dcca, true);
-                    lineY += 11;
+            if (settings.show(TableSettings.Information.RESULTS)) {
+                Component result = Component.translatable("result.mchjong." + view.result());
+                graphics.drawString(font, result, 12, lineY, 0xffffd487, true); lineY += 15;
+                for (TableView.Win win : view.wins()) {
+                    Component name = playerName(view, win.seat());
+                    Component score = win.score().yakuman() > 0 ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
+                        : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
+                    graphics.drawString(font, name.copy().append(" · ").append(score), 12, lineY, 0xfff6e5c8, true); lineY += 12;
+                    for (String yaku : win.score().yaku()) {
+                        graphics.drawString(font, Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)), 20, lineY, 0xffc7dcca, true);
+                        lineY += 11;
+                    }
+                    if (win.score().dora() > 0) {
+                        graphics.drawString(font, Component.translatable("ui.mchjong.dora", win.score().dora()), 20, lineY, 0xffd4c39c, true); lineY += 11;
+                    }
                 }
-                if (win.score().dora() > 0) {
-                    graphics.drawString(font, Component.translatable("ui.mchjong.dora", win.score().dora()), 20, lineY, 0xffd4c39c, true); lineY += 11;
+                for (int i = 0; i < view.seats().size(); i++) {
+                    String change = i < view.deltas().size() ? String.format(Locale.ROOT, "%+d", view.deltas().get(i)) : "";
+                    Component line = playerName(view, i).copy().append("  " + view.seats().get(i).points() + "  " + change);
+                    if (i < view.finalScores().size()) line = line.copy().append("  ").append(Component.translatable("ui.mchjong.final_score", String.format(Locale.ROOT, "%+.1f", view.finalScores().get(i))));
+                    graphics.drawString(font, line, 12, lineY, 0xffd1dece, true); lineY += 12;
                 }
-            }
-            for (int i = 0; i < view.seats().size(); i++) {
-                String change = i < view.deltas().size() ? String.format(Locale.ROOT, "%+d", view.deltas().get(i)) : "";
-                Component line = playerName(view, i).copy().append("  " + view.seats().get(i).points() + "  " + change);
-                if (i < view.finalScores().size()) line = line.copy().append("  ").append(Component.translatable("ui.mchjong.final_score", String.format(Locale.ROOT, "%+.1f", view.finalScores().get(i))));
-                graphics.drawString(font, line, 12, lineY, 0xffd1dece, true); lineY += 12;
             }
         } else if (view.phase() == Game.Phase.LOBBY) {
             for (int i = 0; i < view.seats().size(); i++) {
@@ -229,8 +266,80 @@ public final class TableScreen extends Screen {
             }
         }
         super.render(graphics, mouseX, mouseY, partialTick);
-        Component help = Component.translatable(selectedTile < 0 && view.viewerSeat() >= 0 ? "ui.mchjong.help" : "ui.mchjong.pan");
-        graphics.drawString(font, help, 10, height - 13, 0xffe0deca, true);
+        if (settings.show(TableSettings.Information.HELP)) {
+            Component help = Component.translatable("ui.mchjong.help_direct");
+            graphics.drawString(font, help, 10, height - 13, 0xffe0deca, true);
+        }
+    }
+
+    private void renderInformation(GuiGraphics graphics, TableView view) {
+        TableSettings settings = TableSettings.get();
+        int y = 8;
+        List<Component> tableLines = new ArrayList<>();
+        if (settings.show(TableSettings.Information.RULES)) tableLines.add(Component.translatable(view.rules().translationKey()));
+        if (settings.show(TableSettings.Information.ROUND)) tableLines.add(roundName(view));
+        if (settings.show(TableSettings.Information.REMAINING)) tableLines.add(Component.translatable("ui.mchjong.remaining", view.remaining()));
+        if (settings.show(TableSettings.Information.DEPOSITS)) tableLines.add(Component.translatable("ui.mchjong.sticks", view.riichiSticks()));
+        if (settings.show(TableSettings.Information.TURN) && view.turn() >= 0 && view.turn() < view.seats().size())
+            tableLines.add(Component.translatable("ui.mchjong.turn", playerName(view, view.turn())));
+        if (settings.show(TableSettings.Information.FOCUS) && view.focus() != null)
+            tableLines.add(Component.translatable("ui.mchjong.focus"));
+        if (settings.show(TableSettings.Information.DORA)) {
+            var indicators = view.wall().stream().filter(tile -> tile >= 0).toList();
+            if (!indicators.isEmpty()) tableLines.add(Component.translatable("ui.mchjong.dora_indicators", indicators.size()));
+        }
+        if (!tableLines.isEmpty()) {
+            int panelWidth = Math.min(width / 2, Math.max(185, tableLines.stream().mapToInt(font::width).max().orElse(160) + 18));
+            graphics.fill(8, y, 8 + panelWidth, y + 8 + tableLines.size() * 12, 0xd9182a2d);
+            graphics.fill(8, y, 11, y + 8 + tableLines.size() * 12, 0xffc4a469);
+            for (int i = 0; i < tableLines.size(); i++) graphics.drawString(font, tableLines.get(i), 17, y + 6 + i * 12,
+                i == 0 ? 0xfff0dec1 : 0xffadd8c4, false);
+            y += 14 + tableLines.size() * 12;
+        }
+
+        if (!(settings.show(TableSettings.Information.NAMES) || settings.show(TableSettings.Information.WINDS)
+                || settings.show(TableSettings.Information.POINTS) || settings.show(TableSettings.Information.RANKS)
+                || settings.show(TableSettings.Information.STATUS) || settings.show(TableSettings.Information.COUNTS)
+                || settings.show(TableSettings.Information.MELDS))) return;
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            TableView.Seat player = view.seats().get(seat);
+            var parts = new ArrayList<Component>();
+            if (settings.show(TableSettings.Information.NAMES)) parts.add(playerName(view, seat));
+            if (settings.show(TableSettings.Information.WINDS)) {
+                int wind = Math.floorMod(seat - view.dealer(), view.rules().players());
+                parts.add(Component.translatable("wind.mchjong." + WINDS[Math.min(3, wind)]));
+            }
+            if (settings.show(TableSettings.Information.POINTS)) parts.add(Component.translatable("ui.mchjong.points", player.points()));
+            if (settings.show(TableSettings.Information.RANKS)) {
+                long ahead = view.seats().stream().filter(other -> other.points() > player.points()).count();
+                parts.add(Component.translatable("ui.mchjong.rank", ahead + 1));
+            }
+            if (settings.show(TableSettings.Information.STATUS)) {
+                if (seat == view.dealer()) parts.add(Component.translatable("ui.mchjong.dealer"));
+                if (seat == view.turn()) parts.add(Component.translatable("ui.mchjong.current_turn"));
+                if (player.riichi()) parts.add(Component.translatable("ui.mchjong.riichi_status"));
+                if (player.exposed()) parts.add(Component.translatable("ui.mchjong.exposed"));
+            }
+            if (settings.show(TableSettings.Information.COUNTS))
+                parts.add(Component.translatable("ui.mchjong.counts", player.hand().size(), player.river().size(), player.norths().size()));
+            Component line = Component.empty();
+            for (int i = 0; i < parts.size(); i++) {
+                if (i > 0) line = line.copy().append(" · ");
+                line = line.copy().append(parts.get(i));
+            }
+            int panelWidth = Math.min(Math.max(220, font.width(line) + 18), Math.max(220, width / 2));
+            int lineHeight = settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty() ? 35 : 21;
+            graphics.fill(8, y, 8 + panelWidth, y + lineHeight, seat == view.viewerSeat() ? 0xdc22383b : 0xc9182a2d);
+            graphics.drawString(font, line, 14, y + 6, seat == view.turn() ? 0xffffd487 : 0xffd1e4d9, false);
+            if (settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty()) {
+                int meldX = 14;
+                for (var meld : player.melds()) {
+                    TileGui.meld(graphics, meld, seat, meldX, y + 18, 8);
+                    meldX += TileGui.meldWidth(meld, seat, 8) + 5;
+                }
+            }
+            y += lineHeight + 3;
+        }
     }
 
     public static Component playerName(TableView view, int seat) {
@@ -254,12 +363,44 @@ public final class TableScreen extends Screen {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button == 0) {
             TableScene.Piece piece = pick(mouseX, mouseY);
+            if (piece != null && discardFromClick(piece.tile())) return true;
             selectedTile = piece == null ? Tile.ABSENT : piece.tile();
             scroll = 0;
             rebuild();
             return true;
         }
         return false;
+    }
+
+    private boolean discardFromClick(int tile) {
+        TableView view = view();
+        if (view == null) return false;
+        int action = discardAction(view, tile);
+        if (action < 0) return false;
+        TableSettings.DiscardMode mode = TableSettings.get().discardMode;
+        long now = System.currentTimeMillis();
+        if (mode == TableSettings.DiscardMode.SINGLE_CLICK) {
+            send(view, action);
+            return true;
+        }
+        if (mode == TableSettings.DiscardMode.DOUBLE_CLICK && lastClickedTile == tile && now - lastClickAt <= 450) {
+            lastClickedTile = Tile.ABSENT;
+            send(view, action);
+            return true;
+        }
+        lastClickedTile = tile;
+        lastClickAt = now;
+        selectedTile = tile;
+        rebuild();
+        return true;
+    }
+
+    private static int discardAction(TableView view, int tile) {
+        for (int i = 0; i < view.actions().size(); i++) {
+            Action candidate = view.actions().get(i);
+            if (candidate.type() == Action.Type.DISCARD && candidate.tiles().contains(tile)) return i;
+        }
+        return -1;
     }
     @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (button == 1) { dragging = false; return true; }
@@ -304,17 +445,19 @@ public final class TableScreen extends Screen {
             graphics.fill(getX(), getY(), getX()+width, getY()+height, 0xf01b2f32);
             graphics.renderOutline(getX(), getY(), width, height, border);
             graphics.fill(getX()+2, getY()+2, getX()+4, getY()+height-2, border);
-            int icons = showsConsumed(action) ? action.tiles().size() * 12 + 4 : 0;
+            TableView view = view();
+            int icons = view != null && TableSettings.get().actionTiles ? actionPreviewWidth(view, action) : 0;
             int y = getY() + 5;
             for (var line : font.split(getMessage(), width - icons - 16)) {
                 graphics.drawString(font, line, getX()+9, y, active ? 0xfff0e7d2 : 0xff9ba99e, false);
                 y += 9;
             }
-            if (icons > 0) for (int i = 0; i < action.tiles().size(); i++) {
-                int face = TileMesh.face(action.tiles().get(i));
-                graphics.blit(TileMesh.ATLAS, getX()+width-icons+i*12, getY()+4, 10, 15,
-                    face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
-                    TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.ATLAS_SIZE, TileMesh.ATLAS_SIZE);
+            if (icons > 0 && view != null) {
+                ActionPreview preview = ActionPreview.of(view, action);
+                int x = getX() + width - icons + 3;
+                if (preview.meld() != null) TileGui.meld(graphics, preview.meld(), view.viewerSeat(), x, getY() + 4, 9);
+                else for (int i = 0; i < preview.tiles().size(); i++)
+                    TileGui.tile(graphics, preview.tiles().get(i), x + i * 13, getY() + 4, 9, false, false, false);
             }
         }
     }

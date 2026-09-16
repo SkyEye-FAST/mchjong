@@ -15,11 +15,11 @@ import top.skyeyefast.mchjong.client.TableScreen;
 public abstract class TablePresentationMixin {
     @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableHands(Camera camera, float delta, Matrix4f projection, CallbackInfo callback) {
-        if (Minecraft.getInstance().screen instanceof TableScreen) callback.cancel();
+        if (TableScreen.active(Minecraft.getInstance().screen) != null) callback.cancel();
     }
 
     @Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableOutline(CallbackInfoReturnable<Boolean> callback) {
-        if (Minecraft.getInstance().screen instanceof TableScreen) callback.setReturnValue(false);
+        if (TableScreen.active(Minecraft.getInstance().screen) != null) callback.setReturnValue(false);
     }
 }
