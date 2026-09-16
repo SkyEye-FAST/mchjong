@@ -18,7 +18,6 @@ public final class ClientTableNetworking {
             || view.viewerSeat() < -1 || view.viewerSeat() >= view.rules().players()) return;
         table.acceptView(view);
         if (table.clientView() != view) return;
-        if (table.clientView() != view) return;
         TableAnimation.of(table).accept(view, Util.getMillis());
         TableScreen active = TableScreen.active(client.screen);
         if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();

@@ -30,7 +30,7 @@ public final class TableSpaceBlock extends Block {
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table)
-            table.open(serverPlayer);
+            table.interact(serverPlayer);
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
     @Override public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {

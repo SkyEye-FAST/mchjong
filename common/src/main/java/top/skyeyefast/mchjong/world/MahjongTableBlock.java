@@ -42,7 +42,7 @@ public final class MahjongTableBlock extends BaseEntityBlock {
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table)
-            table.open(serverPlayer);
+            table.interact(serverPlayer);
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 

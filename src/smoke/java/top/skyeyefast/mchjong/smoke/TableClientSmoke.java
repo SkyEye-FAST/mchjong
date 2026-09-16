@@ -152,6 +152,8 @@ public final class TableClientSmoke {
                 capture(client, "03-discard-confirm.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals("Discard")) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
+                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
+                    client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
                     step = 6; entered = ticks;
                     return;
                 }

@@ -13,6 +13,10 @@ public final class TableGeometry {
     public static BlockPos stool(BlockPos center, int seat) { return center.relative(SIDES[seat], 2); }
     public static float yaw(int seat) { return 180 - seat * 90; }
 
+    public static int nearestSide(Vec3 relative) {
+        return Math.abs(relative.x) > Math.abs(relative.z) ? relative.x > 0 ? 1 : 3 : relative.z >= 0 ? 0 : 2;
+    }
+
     public static Vec3 orient(double x, double y, double z, int seat) {
         return switch (seat) {
             case 0 -> new Vec3(x, y, z);

@@ -86,8 +86,12 @@ final class AnimationSmoke {
             capture(client, output, "19-closed-kan-settled.png");
         }
         if (ticks == 110) {
-            TableSettings.get().animations = true;
             hidden.forEach(TableSettings.get()::toggle);
+            InputSmoke.verify(client, table);
+        }
+        if (ticks == 114) capture(client, output, "20-riichi-selection.png");
+        if (ticks == 116) {
+            TableSettings.get().animations = true;
             return true;
         }
         return false;

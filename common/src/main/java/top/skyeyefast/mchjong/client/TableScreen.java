@@ -33,7 +33,7 @@ public final class TableScreen extends Screen {
     private final List<CalloutButton> callouts = new ArrayList<>();
     private List<TableScene.Piece> scene = List.of();
     private List<TableAnimation.Frame> frames = List.of();
-    private boolean awaitingReply;
+    private final TableDecision decision = new TableDecision();
     private boolean choosingRiichi;
     private Button confirmButton;
     private int selectedTile = Tile.ABSENT;
@@ -48,6 +48,9 @@ public final class TableScreen extends Screen {
     private TableResults results;
     private boolean resultsExpanded = true;
     private Game.Phase lastPhase;
+    private Component informationTooltip;
+    private int informationRight;
+    private int informationBottom;
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
@@ -94,9 +97,16 @@ public final class TableScreen extends Screen {
     }
 
     public void receivedView() {
-        awaitingReply = false;
+        refreshDecision(view());
         lastRevision = -1;
-        lastClickedTile = Tile.ABSENT;
+    }
+
+    private void refreshDecision(TableView view) {
+        if (decision.receive(view)) {
+            selectedTile = lastClickedTile = hoveredTile = Tile.ABSENT;
+            choosingRiichi = false;
+            scroll = 0;
+        }
     }
 
     public static Component roundName(TableView view) {
@@ -130,6 +140,7 @@ public final class TableScreen extends Screen {
         confirmButton = null;
         TableView view = view();
         if (view == null) return;
+        refreshDecision(view);
         boolean newResult = lastPhase != view.phase() && TableResults.available(view);
         if (newResult) resultsExpanded = true;
         int resultScroll = results == null || newResult ? 0 : results.scrollAmount();
@@ -143,7 +154,7 @@ public final class TableScreen extends Screen {
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
             if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI) continue;
-            if (!tileChoice(action) || action.tiles().contains(selectedTile)) choices.add(i);
+            choices.add(i);
         }
         scroll = Math.clamp(scroll, 0, Math.max(0, choices.size() - 1));
         boolean settlement = TableResults.available(view);
@@ -194,10 +205,8 @@ public final class TableScreen extends Screen {
 
     private void send(TableView snapshot, int index) {
         TableView current = view();
-        if (awaitingReply || dealing() || minecraft.getConnection() == null || current == null
-            || !current.tableId().equals(snapshot.tableId()) || current.decision() != snapshot.decision()
-            || !current.actions().equals(snapshot.actions()) || index < 0 || index >= current.actions().size()) return;
-        awaitingReply = true;
+        refreshDecision(current);
+        if (dealing() || minecraft.getConnection() == null || !decision.submit(snapshot, index)) return;
         minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
         callouts.forEach(button -> button.active = false);
         selectedTile = lastClickedTile = Tile.ABSENT;
@@ -250,7 +259,8 @@ public final class TableScreen extends Screen {
 
     private TableScene.Piece pick(double mouseX, double mouseY) {
         TableView view = view();
-        if (view == null || view.viewerSeat() < 0 || dealing() || TableResults.available(view) || overWidget(mouseX, mouseY)) return null;
+        if (view == null || view.viewerSeat() < 0 || dealing() || TableResults.available(view)
+            || overWidget(mouseX, mouseY) || overInformation(mouseX, mouseY)) return null;
         Camera camera = minecraft.gameRenderer.getMainCamera();
         double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
         Vec3 forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
@@ -280,6 +290,10 @@ public final class TableScreen extends Screen {
             .anyMatch(widget -> widget.visible && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
     }
 
+    private boolean overInformation(double x, double y) {
+        return x >= 8 && x < informationRight && y >= 8 && y < informationBottom;
+    }
+
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         framePartial = partialTick;
         TableView view = view();
@@ -288,9 +302,11 @@ public final class TableScreen extends Screen {
         updateScene();
         TableScene.Piece hovered = pick(mouseX, mouseY);
         hoveredTile = hovered == null ? Tile.ABSENT : hovered.tile();
-        if (!TableResults.available(view)) renderInformation(graphics, view);
+        informationTooltip = null;
+        informationRight = informationBottom = 0;
+        if (!TableResults.available(view)) renderInformation(graphics, view, mouseX, mouseY);
         TableSettings settings = TableSettings.get();
-        boolean inputEnabled = !awaitingReply && !dealing();
+        boolean inputEnabled = !decision.pending() && !dealing();
         callouts.forEach(button -> button.active = inputEnabled);
         if (confirmButton != null) confirmButton.active = inputEnabled;
         for (CalloutButton button : callouts) {
@@ -316,6 +332,15 @@ public final class TableScreen extends Screen {
                 graphics.renderOutline((int)point.x-radius, (int)point.y-radius, radius*2, radius*2, 0xfff6d483);
             }
         }
+        if (choosingRiichi) for (TableScene.Piece piece : scene) {
+            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()
+                || tileAction(view, piece.tile(), Action.Type.RIICHI) < 0) continue;
+            Projected point = project(piece.position());
+            if (point != null) {
+                int radius = Math.max(3, (int) (point.scale * 0.045));
+                graphics.hLine((int) point.x - radius, (int) point.x + radius, (int) (point.y + point.scale * 0.08), 0xffffd487);
+            }
+        }
         if (choosingRiichi) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.choose_riichi"), width / 2, height - 59, 0xffffd487);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (dealing()) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.dealing"), width / 2, height - 29, 0xffffd487);
@@ -333,9 +358,11 @@ public final class TableScreen extends Screen {
             Component help = Component.translatable(helpKey);
             graphics.drawString(font, font.plainSubstrByWidth(help.getString(), width - 20), 10, height - 13, 0xffe0deca, true);
         }
+        if (informationTooltip != null && !overWidget(mouseX, mouseY))
+            graphics.renderTooltip(font, font.split(informationTooltip, Math.min(320, width - 24)), mouseX, mouseY);
     }
 
-    private void renderInformation(GuiGraphics graphics, TableView view) {
+    private void renderInformation(GuiGraphics graphics, TableView view, int mouseX, int mouseY) {
         TableSettings settings = TableSettings.get();
         int y = 8;
         List<Component> tableLines = new ArrayList<>();
@@ -352,12 +379,19 @@ public final class TableScreen extends Screen {
             if (!indicators.isEmpty()) tableLines.add(Component.translatable("ui.mchjong.dora_indicators", indicators.size()));
         }
         if (!tableLines.isEmpty()) {
-            int panelWidth = Math.min(width / 2, Math.max(185, tableLines.stream().mapToInt(font::width).max().orElse(160) + 18));
+            int panelWidth = Math.min(width / 3, Math.max(185, tableLines.stream().mapToInt(font::width).max().orElse(160) + 18));
             graphics.fill(8, y, 8 + panelWidth, y + 8 + tableLines.size() * 12, 0xd9182a2d);
             graphics.fill(8, y, 11, y + 8 + tableLines.size() * 12, 0xffc4a469);
-            for (int i = 0; i < tableLines.size(); i++) graphics.drawString(font, tableLines.get(i), 17, y + 6 + i * 12,
-                i == 0 ? 0xfff0dec1 : 0xffadd8c4, false);
+            for (int i = 0; i < tableLines.size(); i++) {
+                Component line = tableLines.get(i);
+                graphics.drawString(font, font.plainSubstrByWidth(line.getString(), panelWidth - 18), 17, y + 6 + i * 12,
+                    i == 0 ? 0xfff0dec1 : 0xffadd8c4, false);
+                if (mouseX >= 8 && mouseX < 8 + panelWidth && mouseY >= y + 6 + i * 12 && mouseY < y + 18 + i * 12)
+                    informationTooltip = line;
+            }
             y += 14 + tableLines.size() * 12;
+            informationRight = 8 + panelWidth;
+            informationBottom = y;
         }
 
         if (!(settings.show(TableSettings.Information.NAMES) || settings.show(TableSettings.Information.WINDS)
@@ -391,18 +425,25 @@ public final class TableScreen extends Screen {
                 if (i > 0) line = line.copy().append(" · ");
                 line = line.copy().append(parts.get(i));
             }
-            int panelWidth = Math.min(Math.max(220, font.width(line) + 18), Math.max(220, width / 2));
-            int lineHeight = settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty() ? 35 : 21;
+            int panelWidth = Math.min(220, width / 3);
+            var lines = font.split(line, panelWidth - 24);
+            int textHeight = Math.min(2, lines.size()) * 11 + 10;
+            int lineHeight = textHeight + (settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty() ? 18 : 0);
             graphics.fill(8, y, 8 + panelWidth, y + lineHeight, seat == view.viewerSeat() ? 0xdc22383b : 0xc9182a2d);
-            graphics.drawString(font, line, 14, y + 6, seat == view.turn() ? 0xffffd487 : 0xffd1e4d9, false);
+            for (int i = 0; i < Math.min(2, lines.size()); i++)
+                graphics.drawString(font, lines.get(i), 14, y + 5 + i * 11, seat == view.turn() ? 0xffffd487 : 0xffd1e4d9, false);
+            if (lines.size() > 2) graphics.drawString(font, "…", panelWidth - 2, y + 16, 0xffadd8c4, false);
+            if (mouseX >= 8 && mouseX < 8 + panelWidth && mouseY >= y && mouseY < y + lineHeight) informationTooltip = line;
             if (settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty()) {
-                int meldX = 14;
+                int meldX = 19;
                 for (var meld : player.melds()) {
-                    TileGui.meld(graphics, meld, seat, meldX, y + 18, 8);
+                    TileGui.meld(graphics, meld, seat, meldX, y + textHeight, 8);
                     meldX += TileGui.meldWidth(meld, seat, 8) + 5;
                 }
             }
             y += lineHeight + 3;
+            informationRight = Math.max(informationRight, 8 + panelWidth);
+            informationBottom = y;
         }
     }
 
@@ -424,10 +465,11 @@ public final class TableScreen extends Screen {
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (overWidget(mouseX, mouseY)) { super.mouseClicked(mouseX, mouseY, button); return true; }
+        if (overInformation(mouseX, mouseY)) return true;
         if (button == 1) { dragging = true; dragDistance = 0; return true; }
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button == 0) {
-            if (awaitingReply || dealing()) return true;
+            if (decision.pending() || dealing()) return true;
             updateScene();
             TableScene.Piece piece = pick(mouseX, mouseY);
             if (piece != null && !choosingRiichi && !hasShiftDown() && discardFromClick(piece.tile())) return true;
@@ -461,6 +503,7 @@ public final class TableScreen extends Screen {
         lastClickAt = now;
         selectedTile = tile;
         rebuild();
+        setFocused(null);
         return true;
     }
 
@@ -516,7 +559,7 @@ public final class TableScreen extends Screen {
             return true;
         }
         if ((key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT) && view != null && view.viewerSeat() >= 0) {
-            if (TableResults.available(view) || dealing() || awaitingReply) return super.keyPressed(key, scanCode, modifiers);
+            if (TableResults.available(view) || dealing() || decision.pending()) return super.keyPressed(key, scanCode, modifiers);
             List<Integer> hand = view.seats().get(view.viewerSeat()).hand();
             if (choosingRiichi) hand = hand.stream().filter(tile -> tileAction(view, tile, Action.Type.RIICHI) >= 0).toList();
             if (!hand.isEmpty()) {
@@ -532,7 +575,7 @@ public final class TableScreen extends Screen {
     }
 
     private void toggleRiichi() {
-        if (awaitingReply || dealing()) return;
+        if (decision.pending() || dealing()) return;
         choosingRiichi = !choosingRiichi;
         selectedTile = lastClickedTile = Tile.ABSENT;
         scroll = 0;
