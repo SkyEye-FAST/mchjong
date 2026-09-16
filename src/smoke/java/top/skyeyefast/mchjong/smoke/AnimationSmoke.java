@@ -95,8 +95,10 @@ final class AnimationSmoke {
             InputSmoke.verify(client, table);
         }
         if (ticks == 114) capture(client, output, "20-riichi-selection.png");
-        if (ticks >= 116 && ticks <= 172 && (ticks - 116) % 14 == 0) {
-            int count = (ticks - 116) / 14;
+        // Repeat the same zero-to-four-meld fixtures at both accepted GUI sizes.
+        int layoutStart = ticks >= 256 ? 256 : 116;
+        if (ticks >= layoutStart && ticks <= layoutStart + 56 && (ticks - layoutStart) % 14 == 0) {
+            int count = (ticks - layoutStart) / 14;
             fixture = table.clientView();
             var seats = new ArrayList<>(fixture.seats());
             var melds = List.of(
@@ -112,9 +114,14 @@ final class AnimationSmoke {
             client.setScreen(screen);
             screen.resetView();
         }
-        if (ticks >= 126 && ticks <= 182 && (ticks - 126) % 14 == 0) {
+        int captureStart = layoutStart + 10;
+        if (ticks >= captureStart && ticks <= captureStart + 56 && (ticks - captureStart) % 14 == 0) {
+            boolean small = layoutStart == 256;
+            if (client.screen.width != (small ? 320 : 640) || client.screen.height != (small ? 240 : 400))
+                throw new IllegalStateException("Unexpected viewport for the corner layout matrix");
             verifyCornerVisible(client, table);
-            capture(client, output, "40-layout-" + (ticks - 126) / 14 + "-melds.png");
+            capture(client, output, (small ? "45-layout-" : "40-layout-") + (ticks - captureStart) / 14
+                + (small ? "-melds-320x240.png" : "-melds.png"));
         }
         if (ticks == 184) {
             windowWidth = client.getWindow().getWidth();
@@ -167,6 +174,16 @@ final class AnimationSmoke {
             capture(client, output, ticks == 236 ? "43-layout-two-kans-waiting.png" : "44-layout-two-kans-drawn.png");
         }
         if (ticks == 254) {
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+        }
+        if (ticks == 324) {
+            client.getWindow().setWindowed(windowWidth, windowHeight);
+            client.options.guiScale().set(guiScale);
+            client.resizeDisplay();
+        }
+        if (ticks == 338) {
             TableSettings.get().animations = true;
             return true;
         }

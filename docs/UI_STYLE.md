@@ -101,9 +101,9 @@ Melds start at the player's right-hand table corner and extend left along the
 same depth as the hand. Never move melds forward into a rail between the hand
 and the wall. The concealed hand stays centered on the table while its right
 edge, including any drawn tile and draw gap, clears the actual meld bounds by
-`TableScene.HAND_MELD_GAP`. When
-they do not fit, shift the hand left only by the missing clearance. Do not use
-a fixed left offset or center the hand in the entire remaining space. Do not
+`TableScene.HAND_MELD_GAP`. When they do not fit, shift the hand left only by the
+missing clearance. Do not use a fixed left offset or center the hand in the
+entire remaining space. Do not
 reserve absent melds or drawn tiles. Drawing can move a constrained hand only as
 far as the additional tile requires; an unconstrained hand does not move.
 Account for open/closed/added kans and sideways calls without moving
