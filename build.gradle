@@ -37,7 +37,12 @@ dependencies {
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
 }
 
-test { useJUnitPlatform() }
+def testTemp = layout.buildDirectory.dir('tmp/test')
+test {
+    useJUnitPlatform()
+    doFirst { testTemp.get().asFile.mkdirs() }
+    systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
+}
 
 sourceSets.main {
     java.srcDir 'common/src/main/java'

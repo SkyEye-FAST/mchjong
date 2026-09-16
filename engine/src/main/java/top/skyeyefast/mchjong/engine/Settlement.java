@@ -22,9 +22,13 @@ final class Settlement {
             game.wins.add(new TableView.Win(seat, from, tile, score));
             game.exposed[seat] = true;
             boolean receiveHonba = index == 0;
+            var winBefore = ReplayRecorder.points(game);
             payWin(game, seat, from, score, receiveHonba ? game.honba : 0);
+            if (game.recorder != null) game.recorder.win(game, seat, from, tile, score, winBefore,
+                pao(game, seat, score).keySet().stream().findFirst().orElse(-1), receiveHonba ? game.honba : 0);
         }
         game.players[winners.getFirst()].points += game.riichiSticks * 1000;
+        if (game.recorder != null) game.recorder.awardDeposit(game.riichiSticks);
         game.riichiSticks = 0;
         finish(game, winners.contains(game.dealer), false, false, from < 0 ? "tsumo" : "ron", before);
     }
@@ -135,6 +139,7 @@ final class Settlement {
         if (end) finalScores(game);
         game.deltas = new ArrayList<>();
         for (int seat = 0; seat < 4; seat++) game.deltas.add(game.players[seat].points - before[seat]);
+        game.finishReplay();
     }
 
     private static boolean matchEnds(Game game) {

@@ -74,3 +74,39 @@ processResources {
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
 }
 jar { from(rootProject.file('LICENSE')); from(rootProject.file('NOTICE')) }
+
+// The same visual assertions run in both clients; only the lifecycle adapter differs.
+sourceSets {
+    smoke {
+        java.srcDir '../src/smoke/java'
+        java.exclude '**/FabricSmoke.java'
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+def smokeEvidence = layout.buildDirectory.dir('smoke/evidence')
+neoForge {
+    mods { mchjong_smoke { sourceSet sourceSets.smoke } }
+    unitTest { loadedMods = [mods.mchjong] }
+    runs {
+        configureEach { loadedMods = [mods.mchjong] }
+        smokeClient {
+            client()
+            sourceSet = sourceSets.smoke
+            loadedMods = [mods.mchjong, mods.mchjong_smoke]
+            gameDirectory = layout.buildDirectory.dir('smoke/run').get().asFile
+            programArguments = ['--width', '1280', '--height', '800']
+            systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
+            systemProperty 'java.io.tmpdir', layout.buildDirectory.dir('smoke/run').get().asFile.absolutePath
+        }
+    }
+}
+tasks.named('runSmokeClient') {
+    doLast {
+        def evidence = smokeEvidence.get().asFile
+        if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
+            throw new GradleException('NeoForge client smoke failed; see neoforge/build/smoke/evidence and run/logs/latest.log')
+        }
+    }
+}

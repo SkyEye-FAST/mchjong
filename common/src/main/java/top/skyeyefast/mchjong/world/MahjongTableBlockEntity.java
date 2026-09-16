@@ -32,6 +32,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     private long sentRevision = -1;
     private TableView clientView;
     private long clientViewReceivedNanos;
+    private long nextArchiveRetry;
 
     public MahjongTableBlockEntity(BlockPos pos, BlockState state) { super(MahjongContent.TABLE_ENTITY, pos, state); }
 
@@ -56,6 +57,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
         if (game == null) return;
         game.tick();
         table.ticks++;
+        table.flushReplays();
         if (game.revision() != table.sentRevision || table.ticks % 40 == 0) {
             table.setChanged();
             for (ServerPlayer player : ((ServerLevel) level).players()) {
@@ -89,6 +91,18 @@ public final class MahjongTableBlockEntity extends BlockEntity {
     }
 
     public void open(ServerPlayer player) { sendView(player, true); }
+
+    private void flushReplays() {
+        if (!(level instanceof ServerLevel server) || game == null || game.pendingReplays().isEmpty()
+            || server.getGameTime() < nextArchiveRetry) return;
+        try {
+            if (top.skyeyefast.mchjong.replay.ReplayServer.flush(server.getServer(), game)) setChanged();
+        } catch (java.io.IOException | RuntimeException failure) {
+            nextArchiveRetry = server.getGameTime() + 20 * 60;
+            LOGGER.error("Cannot archive completed mahjong hands at {}; they remain in the table save", worldPosition, failure);
+            setChanged();
+        }
+    }
 
     /** Table clicks join the nearest side; crouching deliberately keeps the player spectating. */
     public void interact(ServerPlayer player) {
@@ -153,6 +167,7 @@ public final class MahjongTableBlockEntity extends BlockEntity {
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
             if (action.type() == Action.Type.LEAVE) player.stopRiding();
             setChanged();
+            flushReplays();
         }
         sendView(player, false);
     }

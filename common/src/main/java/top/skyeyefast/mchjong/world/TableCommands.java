@@ -14,6 +14,7 @@ import top.skyeyefast.mchjong.engine.TimeControl;
 public final class TableCommands {
     private TableCommands() {}
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
+        top.skyeyefast.mchjong.replay.ReplayServer.register(dispatcher);
         dispatcher.register(Commands.literal("mchjong")
             .then(Commands.literal("invite").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
                 .executes(context -> TableInvitations.invite(context.getSource().getPlayerOrException(),

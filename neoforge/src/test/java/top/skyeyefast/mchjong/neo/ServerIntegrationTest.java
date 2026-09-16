@@ -35,6 +35,10 @@ class ServerIntegrationTest {
             assertSame(sound, BuiltInRegistries.SOUND_EVENT.get(MahjongContent.id(name))));
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_table")).isPresent());
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_stool")).isPresent());
+        var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
+        assertNotNull(commands);
+        for (String name : java.util.List.of("clock", "invite", "accept", "decline", "replays", "replay"))
+            assertNotNull(commands.getChild(name), "Missing command: " + name);
     }
 
     private static Game startedGame() {
@@ -80,6 +84,11 @@ class ServerIntegrationTest {
             assertTrue(decoded.actions().isEmpty());
             assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == -1));
             assertFalse(payload.view().contains("\"seed\""));
+            for (var chunk : top.skyeyefast.mchjong.network.ReplayPayload.split(
+                    top.skyeyefast.mchjong.network.ReplayPayload.Kind.MATCH, "牌譜🀄".repeat(10_000))) {
+                top.skyeyefast.mchjong.network.ReplayPayload.CODEC.encode(buffer, chunk);
+                assertEquals(chunk, top.skyeyefast.mchjong.network.ReplayPayload.CODEC.decode(buffer));
+            }
         } finally { buffer.release(); }
     }
 }

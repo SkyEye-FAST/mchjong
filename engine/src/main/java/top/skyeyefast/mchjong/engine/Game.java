@@ -51,6 +51,9 @@ public final class Game {
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
     List<Integer> finalRanks = new ArrayList<>();
+    ReplayMatch replay;
+    ReplayRecorder recorder;
+    List<ReplayMatch> archiveQueue = new ArrayList<>();
     TimeControl timeControl = TimeControl.DEFAULT;
     int[] moveTicks = new int[4];
     int[] reserveTicks = new int[4];
@@ -70,6 +73,16 @@ public final class Game {
     public long revision() { return revision; }
     public Phase phase() { return phase; }
     public RuleSet rules() { return rules; }
+    public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
+    public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
+
+    void finishReplay() {
+        if (recorder == null || replay == null) return;
+        replay = replay.append(recorder.finish(this), phase == Phase.MATCH_END);
+        archiveQueue.removeIf(match -> match.id().equals(replay.id()));
+        archiveQueue.add(replay);
+        recorder = null;
+    }
     public boolean isHost(UUID player) { return seatOf(player) >= 0 && seatOf(player) == host(); }
 
     public boolean configureClock(UUID actor, TimeControl control) {
@@ -200,6 +213,7 @@ public final class Game {
                 lastTile = action.type() == CLOSED_KAN && action.tiles().contains(players[seat].drawn)
                     ? players[seat].drawn : action.tiles().getFirst();
                 lastFrom = seat;
+                if (recorder != null) recorder.declare(this, seat, action);
                 beginReactions();
             }
             case ABORT_NINE -> Settlement.abort(this, "nine_terminals");
@@ -217,6 +231,10 @@ public final class Game {
         initialDealer = dealer = new Random(seed ^ handNumber).nextInt(rules.players());
         round = honba = riichiSticks = 0;
         for (PlayerState player : players) player.points = rules.startingPoints();
+        long now = System.currentTimeMillis();
+        replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
+            Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.id, player.name, player.bot)).toList(),
+            List.of(), false);
         startHand();
     }
 
@@ -238,6 +256,7 @@ public final class Game {
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "playing";
+        recorder = replay == null ? null : new ReplayRecorder(this);
         draw(dealer, false, false);
         // Give the initial wall/deal presentation time before a training opponent acts.
         // This is not an animation-driven game state: explicit legal actions still work.
@@ -267,6 +286,7 @@ public final class Game {
         PlayerState player = players[seat];
         player.drawn = replacement ? wall.replace() : wall.draw();
         player.hand.add(player.drawn);
+        if (recorder != null) recorder.draw(seat, player.drawn);
         player.lastDraw = !replacement && wall.remaining() == 0;
         player.rinshan = kan;
         player.canDeclare = true;
@@ -281,6 +301,7 @@ public final class Game {
         if (!player.hand.remove(Integer.valueOf(tile))) throw new IllegalStateException("Missing discarded tile");
         boolean sideways = declare || player.nextDiscardSideways;
         player.river.add(new Discard(tile, sideways, false, tile == player.drawn));
+        if (recorder != null) recorder.discard(seat, tile, tile == player.drawn, declare);
         player.nextDiscardSideways = false;
         player.pendingRiichi = declare;
         if (declare) player.doubleRiichi = player.firstTurn && uninterrupted;
@@ -292,6 +313,7 @@ public final class Game {
         player.forbiddenDiscards.clear();
         player.drawn = Tile.ABSENT;
         wall.revealPending();
+        if (recorder != null) recorder.dora(this);
         lastTile = tile;
         lastFrom = seat;
         pending = null;
@@ -336,6 +358,7 @@ public final class Game {
             source.riichi = source.ippatsu = true;
             source.points -= 1000;
             riichiSticks++;
+            if (recorder != null) recorder.riichi(lastFrom);
         }
         if (rules.abortiveDraws()) {
             if (fourKanAbort) { Settlement.abort(this, "four_kans"); return; }
@@ -376,6 +399,7 @@ public final class Game {
             default -> throw new IllegalStateException("Not a call");
         };
         player.melds.add(new Meld(type, tiles, lastFrom, lastTile));
+        if (recorder != null) recorder.call(seat, player.melds.getLast());
         recordPao(seat, lastFrom, type == Meld.Type.OPEN_KAN);
         interrupt();
         turn = seat;
@@ -398,6 +422,7 @@ public final class Game {
         PlayerState player = players[seat];
         Action action = pending;
         pending = null;
+        if (recorder != null) recorder.confirmDeclaration();
         interrupt();
         if (action.type() == NUKI) {
             int tile = action.tiles().getFirst();
@@ -429,6 +454,7 @@ public final class Game {
         wall.revealPending();
         if (closed || !rules.delayedOpenKanDora()) wall.reveal();
         else wall.pendingIndicators++;
+        if (recorder != null) recorder.dora(this);
         fourKanAbort = rules.abortiveDraws() && kanCount() == 4 && Arrays.stream(players).filter(p -> p.melds.stream().anyMatch(Meld::kan)).count() > 1;
         draw(seat, true, true);
     }
@@ -517,6 +543,7 @@ public final class Game {
     public void validate() {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
+        Objects.requireNonNull(archiveQueue);
         if (moveTicks.length != 4 || reserveTicks.length != 4) throw new IllegalStateException("Invalid clocks");
         for (int seat = 0; seat < 4; seat++) {
             if (moveTicks[seat] < 0 || moveTicks[seat] > timeControl.moveSeconds() * 20

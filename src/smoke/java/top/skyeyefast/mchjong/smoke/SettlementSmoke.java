@@ -55,6 +55,25 @@ final class SettlementSmoke {
             capture(client, output, "11-settlement-keyboard.png");
             client.options.guiScale().set(2);
             client.resizeDisplay();
+            click(client, "Point changes");
+        } else if (ticks == 70) {
+            checkBounds(client);
+            capture(client, output, "12-settlement-points.png");
+            click(client, "Final standings");
+        } else if (ticks == 95) {
+            checkBounds(client);
+            capture(client, output, "13-settlement-ranking.png");
+            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+                fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
+                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.NEXT)),
+                List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
+                fixture.timeControl(), fixture.clocks(), List.of());
+            table.acceptView(fixture);
+            client.setScreen(new TableScreen(table.getBlockPos()));
+        } else if (ticks == 110) {
+            checkBounds(client);
+            capture(client, output, "14-settlement-draw.png");
             return true;
         }
         return false;

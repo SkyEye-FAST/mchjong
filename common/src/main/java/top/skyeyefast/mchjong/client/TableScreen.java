@@ -50,6 +50,7 @@ public final class TableScreen extends Screen {
     private Game.Phase lastPhase;
     private TableResults.Page resultPage = TableResults.Page.HAND;
     private long resultStarted;
+    private long resultPageStarted;
     private Component informationTooltip;
     private int informationRight;
     private int informationBottom;
@@ -150,6 +151,7 @@ public final class TableScreen extends Screen {
             resultsExpanded = true;
             resultPage = TableResults.Page.HAND;
             resultStarted = Util.getMillis();
+            resultPageStarted = resultStarted;
         }
         int resultScroll = results == null || newResult ? 0 : results.scrollAmount();
         results = null;
@@ -195,6 +197,8 @@ public final class TableScreen extends Screen {
             .bounds(width - 34, 8, 26, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("ui.mchjong.center_view"), ignored -> resetView())
             .bounds(width - 126, 8, 86, 20).build());
+        addRenderableWidget(Button.builder(Component.translatable("replay.mchjong.title"), ignored -> ClientReplays.list(0))
+            .bounds(width - 192, 8, 60, 20).build());
         if (view.phase() == Game.Phase.LOBBY && view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE))
             addRenderableWidget(Button.builder(Component.translatable("ui.mchjong.clock_settings"),
                 ignored -> minecraft.setScreen(new TableClockScreen(this, view.timeControl())))
@@ -212,13 +216,13 @@ public final class TableScreen extends Screen {
                 for (int i = 0; i < tabs; i++) {
                     var page = TableResults.Page.values()[i];
                     var button = Button.builder(Component.translatable("ui.mchjong.result_page." + i), ignored -> {
-                        resultPage = page; results = null; rebuild();
+                        resultPage = page; resultPageStarted = Util.getMillis(); results = null; rebuild();
                     }).bounds(10 + i * tabWidth, 38, tabWidth - 3, 20).build();
                     button.active = page != resultPage;
                     addRenderableWidget(button);
                 }
                 results = addRenderableWidget(new TableResults(font, view, 10, 64, width - 20, height - 122,
-                    resultScroll, resultPage, resultStarted));
+                    resultScroll, resultPage, resultPageStarted));
             }
         }
         if ((choosingRiichi || TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM) && selectedTile >= 0) {
@@ -386,8 +390,8 @@ public final class TableScreen extends Screen {
         }
         if (TableResults.available(view)) {
             long ready = view.seats().stream().filter(TableView.Seat::ready).count();
-            graphics.drawCenteredString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()),
-                width / 2, 14, 0xffd1e4d9);
+            graphics.drawString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()),
+                10, 14, 0xffd1e4d9);
         }
         if (dealing()) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.dealing"), width / 2, height - 29, 0xffffd487);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {

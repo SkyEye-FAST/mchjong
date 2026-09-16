@@ -29,7 +29,7 @@ public final class TableAudioEvents {
             for (int i = old.river().size(); i < next.river().size(); i++) {
                 var discard = next.river().get(i);
                 cues.add(effect(discard.tsumogiri() ? "tsumogiri" : "tedashi", 0));
-                if (discard.riichi()) cues.add(voice("riichi", "action.mchjong.riichi"));
+                if (discard.riichi() && !old.riichi()) cues.add(voice("riichi", "action.mchjong.riichi"));
             }
             for (int i = 0; i < next.melds().size(); i++) {
                 var meld = next.melds().get(i);

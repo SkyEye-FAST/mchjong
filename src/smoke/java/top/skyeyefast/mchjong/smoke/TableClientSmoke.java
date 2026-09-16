@@ -44,12 +44,17 @@ public final class TableClientSmoke {
     private CompletableFuture<Void> resourceReload;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke();
+    private final ReplaySmoke replaySmoke = new ReplaySmoke();
 
     public void tick(Minecraft client) {
         try {
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             if (ticks > 4000) throw new IllegalStateException("Smoke timed out at step " + step + ", screen=" + client.screen);
+            if (step == 0 && client.screen instanceof net.minecraft.client.gui.screens.AccessibilityOnboardingScreen onboarding) {
+                onboarding.onClose();
+                return;
+            }
             if (step == 0 && client.screen instanceof TitleScreen) {
                 Files.createDirectories(output);
                 Files.deleteIfExists(output.resolve("PASS.txt"));
@@ -186,19 +191,21 @@ public final class TableClientSmoke {
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
-                Files.writeString(output.resolve("PASS.txt"), "Fabric: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, multi-winner settlement, scrolling, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Settlement and animation screenshots use display-only fixtures.\n");
+                step = 12; entered = ticks;
+            } else if (step == 12 && replaySmoke.tick(client, output)) {
+                Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering, optional back pack enable/disable, multi-winner settlement, scrolling, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
-                step = 12;
-            } else if (step == 12 && ticks - entered > 30) {
-                client.stop();
                 step = 13;
+            } else if (step == 13 && ticks - entered > 30) {
+                client.stop();
+                step = 14;
             }
         } catch (Throwable failure) {
             LOG.error("MCJHONG_CLIENT_SMOKE_FAILED step={}", step, failure);
             try { Files.createDirectories(output); Files.writeString(output.resolve("FAIL.txt"), failure.toString()); }
             catch (Exception ignored) { LOG.error("Could not write smoke failure evidence"); }
-            step = 13;
+            step = 14;
             client.stop();
         }
     }

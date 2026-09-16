@@ -67,6 +67,8 @@ class GameLifecycleTest {
         assertFalse(publicJson.contains("\"seed\""));
         assertFalse(publicJson.contains("\"options\""));
         assertFalse(publicJson.contains("\"replacementIndices\""));
+        assertFalse(publicJson.contains("\"initialHands\""));
+        assertFalse(publicJson.contains("\"recorder\""));
     }
 
     @ParameterizedTest @EnumSource(RuleSet.class) @Timeout(120)
@@ -82,6 +84,25 @@ class GameLifecycleTest {
                 assertTrue(result.finalRanks().stream().allMatch(rank -> rank >= 1 && rank <= rules.players()));
                 assertEquals(0, result.finalScores().stream().mapToDouble(Double::doubleValue).sum(), 0.00001);
                 assertTrue(game.handNumber >= 1);
+                assertTrue(game.replay.complete());
+                assertEquals(game.handNumber, game.replay.hands().size());
+                ReplayMatch restored = JSON.fromJson(JSON.toJson(game.replay), ReplayMatch.class);
+                assertEquals(game.replay, restored);
+                assertEquals(TenhouReplay.export(game.replay), TenhouReplay.export(restored));
+                for (int hand = 0; hand < restored.hands().size(); hand++) {
+                    ReplayHand recorded = restored.hands().get(hand);
+                    var replayed = ReplayPlayback.at(restored, hand, recorded.events().size());
+                    for (int seat = 0; seat < rules.players(); seat++) {
+                        var expected = recorded.finalSeats().get(seat);
+                        var actual = replayed.seats().get(seat);
+                        assertEquals(new TreeSet<>(expected.hand()), new TreeSet<>(actual.hand()), "Replay concealed hand");
+                        assertEquals(expected.river(), actual.river(), "Replay discards");
+                        assertEquals(expected.melds(), actual.melds(), "Replay melds");
+                        assertEquals(expected.norths(), actual.norths(), "Replay extracted norths");
+                        assertEquals(expected.points() - recorded.deltas().get(seat), actual.points(), "Replay points before settlement");
+                    }
+                    assertEquals(recorded.finalSeats(), ReplayPlayback.at(restored, hand, Integer.MAX_VALUE).seats());
+                }
                 return;
             }
             if (step % 71 == 0) {

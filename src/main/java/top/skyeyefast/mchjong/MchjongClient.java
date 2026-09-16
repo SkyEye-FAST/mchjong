@@ -16,8 +16,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
-        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client ->
-            top.skyeyefast.mchjong.client.TableAudio.tick());
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            top.skyeyefast.mchjong.client.TableAudio.tick();
+            top.skyeyefast.mchjong.client.ClientReplays.tick();
+        });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
         if (!ResourceManagerHelper.registerBuiltinResourcePack(MahjongContent.id("patterned_backs"),
@@ -29,5 +31,7 @@ public final class MchjongClient implements ClientModInitializer {
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.ReplayPayload.TYPE,
+            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)));
     }
 }

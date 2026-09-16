@@ -17,6 +17,17 @@ import mahjongutils.yaku.Yakus
 
 /** The only boundary to mahjong-utils. No Minecraft or network types are accepted here. */
 object HandAnalyzer {
+    @JvmStatic
+    fun yakuValues(names: List<String>, closed: Boolean, rules: RuleSet): List<ReplayHand.Yaku> {
+        val options = HoraOptions(false, true, rules.doubleWindPairFu(), rules.kiriageMangan(),
+            rules.kazoeYakuman(), rules.doubleYakuman(), true)
+        val yakus = Yakus(options)
+        return names.map { name ->
+            val yaku = yakus.getYaku(name)
+            ReplayHand.Yaku(name, yaku.han - if (closed) 0 else yaku.furoLoss, yaku.isYakuman)
+        }
+    }
+
     private fun tiles(ids: List<Int>) = ids.map { LibraryTile[Tile.notation(Tile.kind(it))] }
     private fun furo(melds: List<Meld>) = melds.map { Furo(it.libraryNotation()) }
     private fun kind(tile: LibraryTile) = Tile.parseKind(tile.toString())

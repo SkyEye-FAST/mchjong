@@ -1,0 +1,16 @@
+modLoader="javafml"
+loaderVersion="[4,)"
+license="Apache-2.0"
+
+[[mods]]
+modId="mchjong_smoke"
+version="1.0.0"
+displayName="MCjhong development smoke"
+description='''Development-only client assertions. Never distributed in the mod artifact.'''
+
+[[dependencies.mchjong_smoke]]
+modId="mchjong"
+type="required"
+versionRange="[0,)"
+ordering="AFTER"
+side="CLIENT"

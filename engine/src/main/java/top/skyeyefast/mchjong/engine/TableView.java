@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.engine;
 import java.util.List;
 import java.util.UUID;
 
-/** This is the ONLY game object allowed in an S2C payload. No private game state is referenced. */
+/** The live S2C view. Private hands are redacted; completed replays use a separate authorized channel. */
 public record TableView(UUID tableId, long revision, long decision, int handNumber, RuleSet rules, Game.Phase phase,
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,

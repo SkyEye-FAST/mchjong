@@ -58,6 +58,8 @@ public final class MchjongNeoForge {
         });
         registrar.playToClient(TableViewPayload.TYPE, TableViewPayload.CODEC,
             (payload, context) -> ClientTableNetworking.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
     }
 
     private void creativeTab(BuildCreativeModeTabContentsEvent event) {

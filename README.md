@@ -1,17 +1,5 @@
 # MCjhong
 
-## Invitations and audio
-
-In a waiting table, **Invite player** lists online players. `/mchjong invite <player>`
-does the same. The recipient receives clickable Accept/Decline actions. Invitations
-expire after 60 seconds, are bound to the recipient and table identity, and are
-revalidated when accepted. Approach within six blocks before accepting; invitations
-do not teleport players or load distant chunks. Senders may invite once per five seconds.
-
-The Audio settings include positional table effects, countdown warnings, system
-speech and custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)
-for the event names, volume controls and an example voice resource pack.
-
 MCjhong is a Minecraft mod that adds a seated, in-world riichi mahjong table for
 three or four players. It supports both Fabric and NeoForge.
 
@@ -22,6 +10,9 @@ three or four players. It supports both Fabric and NeoForge.
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
 - Scrollable settlement receipts with winning hands, yaku, indicators, and point changes
+- Configurable per-hand reserve and per-decision clocks, with distinct discard animations
+- Player invitations, table sound effects, system speech and custom voice packs
+- Private replay archives, step-by-step playback and Tenhou JSON export
 - Shared gameplay and client presentation across both loaders
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization
 - Optional patterned tile-back resource pack
@@ -119,6 +110,33 @@ clock; dealing and settlement do not consume time. The server enforces timeouts
 even with the overlay closed or a player disconnected: pass a reaction or discard
 the drawn tile (a legal hand tile after a call), never automatically claim a win.
 Drawn-tile discards and hand discards have distinct animation paths and cues.
+
+## Invitations and audio
+
+In a waiting table, **Invite player** lists online players. `/mchjong invite <player>`
+does the same. The recipient receives clickable Accept/Decline actions. Invitations
+expire after 60 seconds, are bound to the recipient and table identity, and are
+revalidated when accepted. Approach within six blocks before accepting; invitations
+do not teleport players or load distant chunks. Senders may invite once per five seconds.
+
+The Audio settings include positional table effects, countdown warnings, system
+speech and custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)
+for the event names, volume controls and an example voice resource pack.
+
+## Replays
+
+Use **Replays** in the table overlay or `/mchjong replays [page]` anywhere on the
+server. Select a match to view completed hands; `/mchjong replay <match UUID>`
+opens a specific match. Only that match's human participants can retrieve it.
+Use the timeline, step controls and Play/Pause to inspect draws, discards, calls,
+riichi, indicators and settlements. Arrow keys step, Home/End seek, and Space
+toggles playback. Scroll the board to inspect every seat.
+
+**Export Tenhou JSON** writes `<game directory>/replays/mchjong/<match UUID>.json`.
+The export is Tenhou's `/6` JSON interchange format, not binary/XML `.mjlog`.
+Nothing is uploaded to Tenhou. See [Replay storage and format](docs/REPLAYS.md)
+for privacy, controls, persistence and format details. Viewing a replay does not
+pause an active table or its server clock.
 
 ## Optional resource pack
 

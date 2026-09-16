@@ -49,8 +49,13 @@ Build: `gradlew.bat buildAll`. Loader-specific development runs remain
 `gradlew.bat runSmokeClient` runs a real Fabric integrated client/server, exercises
 seating and discard packets, and captures settlement and animation screenshots in
 `build/smoke/evidence`. Rare multi-winner and animation states use display-only
-fixtures; they are not scoring-rule integration tests. NeoForge's dedicated-server
-integration tests run in `buildAll`.
+fixtures; they are not scoring-rule integration tests. The same harness runs with
+`gradlew.bat :neoforge:runSmokeClient` and stores evidence under
+`neoforge/build/smoke/evidence`. Both harnesses also create a real engine record,
+archive it on the integrated server, retrieve it through commands and chunked
+networking, render the replay timeline and click the Tenhou export button.
+Smoke adapters are separate source sets and are never packaged in release JARs.
+NeoForge's dedicated-server integration tests also run in `buildAll`.
 
 Minecraft-facing artifacts are version-scoped. The project targets mainstream
 releases from 1.20.1 onward, but does not declare one binary compatible with an
@@ -64,3 +69,21 @@ Tile faces and tile backs are independent materials. Optional patterned backs
 are a native, disabled-by-default resource pack registered by each loader's
 client entry point. Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
+
+`TimeControl` is enforced entirely in `Game`: per-hand reserves and fresh decision
+allowances are independent for each active responder. Client interpolation and
+warning sounds have no authority over deadlines. Lobby changes require the host
+and invalidate ready votes. `TableInvitations` binds expiring requests to player
+and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
+
+`TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
+owns client playback and its independent native speech instance. Registered
+resource-pack events separate table effects from recordings. No game logic
+depends on an audio completion callback. See `AUDIO.md` for customization.
+
+Replay recording and playback live in the Minecraft-independent engine.
+`ReplayStore` handles bounded atomic files and indexes, `ReplayServer` handles
+permissions and commands, and `ReplayTransfer` handles bounded reassembly.
+The viewer never feeds recorded actions back into a live `Game`. `TenhouReplay`
+is the only export encoder; it consumes completed records and does not rerun
+scoring. See `REPLAYS.md` for the storage layout and interchange details.
