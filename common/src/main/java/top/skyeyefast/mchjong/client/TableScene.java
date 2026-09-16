@@ -11,6 +11,9 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** One geometric description drives both the 3D meshes and the interaction anchors. */
 public final class TableScene {
+    public static final float TILE_SCALE = 0.82f;
+    public static final double HAND_Z = 1.25;
+    public static final double HAND_STEP = 0.1;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position, float yaw, boolean flat, boolean back) {}
     private TableScene() {}
@@ -26,14 +29,16 @@ public final class TableScene {
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             TableView.Seat player = view.seats().get(seat);
-            double left = player.melds().isEmpty() ? -(player.hand().size() - 1) * 0.055 : -1.07;
+            // Concealed tiles occupy the left rail after calling; melds pack from the right.
+            // Four kans and the two remaining hand tiles fit without crossing either corner.
+            double left = player.melds().isEmpty() ? -(player.hand().size() - 1) * HAND_STEP / 2 : -1.12;
             for (int i = 0; i < player.hand().size(); i++) {
                 boolean drawn = player.drawn() != Tile.ABSENT && i == player.hand().size() - 1;
                 boolean declaration = view.focus() != null && view.focus().declaration()
                     && view.focus().seat() == seat && view.focus().index() == i;
                 boolean flat = player.exposed() || declaration;
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
-                    left + i * 0.11 + (drawn ? 0.04 : 0), top + (flat ? 0.036 : 0.081), 1.24, 0, flat, false));
+                    left + i * HAND_STEP + (drawn ? 0.035 : 0), top + (flat ? 0.036 : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
             }
             for (int i = 0; i < player.river().size(); i++) {
                 Discard discard = player.river().get(i);
@@ -44,36 +49,17 @@ public final class TableScene {
                 result.add(piece(discard.tile(), seat, Area.RIVER, i, (i % 6 - 2.5) * 0.117 + shifted + (discard.riichi() ? 0.028 : 0),
                     top + 0.036, 0.31 + i / 6 * 0.175, discard.riichi() ? 90 : 0, true, false));
             }
-            double meldRight = 1.16;
+            double meldRight = 1.12;
             for (Meld meld : player.melds()) {
-                List<Integer> tiles = new ArrayList<>(meld.tiles());
-                Integer addedTile = meld.type() == Meld.Type.ADDED_KAN ? tiles.removeLast() : null;
-                tiles.remove(Integer.valueOf(meld.calledTile()));
-                tiles.sort(Integer::compareTo);
-                if (!meld.closed()) {
-                    int relative = Math.floorMod(meld.fromSeat() - seat, 4);
-                    int calledIndex = relative == 3 ? 0 : relative == 2 ? 1 : 2;
-                    tiles.add(Math.min(calledIndex, tiles.size()), meld.calledTile());
+                MeldLayout layout = MeldLayout.of(meld, seat);
+                double start = meldRight - layout.width() * TILE_SCALE;
+                for (int i = 0; i < layout.parts().size(); i++) {
+                    var part = layout.parts().get(i);
+                    result.add(piece(part.tile(), seat, Area.MELD, i, start + part.x() * TILE_SCALE,
+                        top + (0.036 + (part.stacked() ? 0.072 : 0)) * TILE_SCALE, HAND_Z - 0.015,
+                        part.sideways() ? 90 : 0, true, part.back()));
                 }
-                int baseCount = tiles.size();
-                double[] centers = new double[baseCount];
-                double offset = 0;
-                for (int i = 0; i < baseCount; i++) {
-                    double width = !meld.closed() && tiles.get(i) == meld.calledTile() ? 0.16 : 0.104;
-                    centers[i] = offset + width / 2;
-                    offset += width + 0.008;
-                }
-                double start = meldRight - offset;
-                if (addedTile != null) tiles.add(addedTile);
-                for (int i = 0; i < tiles.size(); i++) {
-                    boolean stacked = meld.type() == Meld.Type.ADDED_KAN && i == tiles.size() - 1;
-                    int calledIndex = Math.max(0, tiles.indexOf(meld.calledTile()));
-                    boolean sideways = !meld.closed() && (tiles.get(i) == meld.calledTile() || stacked);
-                    result.add(piece(tiles.get(i), seat, Area.MELD, i, start + centers[stacked ? calledIndex : i],
-                        top + 0.036 + (stacked ? 0.072 : 0), 1.23, sideways ? 90 : 0, true,
-                        meld.closed() && (i == 0 || i == tiles.size() - 1)));
-                }
-                meldRight = start - 0.18;
+                meldRight = start - 0.035;
             }
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -1.17 + (i % 2) * 0.112,

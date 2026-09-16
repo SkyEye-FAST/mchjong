@@ -28,10 +28,12 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             var vertices = buffers.getBuffer(pass == 0 ? TileRenderTypes.FACES : TileRenderTypes.BACKS);
             for (TableScene.Piece piece : pieces) {
                 pose.pushPose();
-                boolean selected = Minecraft.getInstance().screen instanceof TableScreen screen && screen.selected(table.getBlockPos(), piece);
+                TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
+                boolean selected = screen != null && screen.selected(table.getBlockPos(), piece);
                 pose.translate(piece.position().x, piece.position().y + (selected ? 0.035 : 0), piece.position().z);
                 pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
                 if (piece.flat()) pose.mulPose(Axis.XP.rotationDegrees(-90));
+                pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
                 if (pass == 0) TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 else TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, light);
                 pose.popPose();

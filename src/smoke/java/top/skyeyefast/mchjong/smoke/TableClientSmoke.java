@@ -24,6 +24,7 @@ import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -132,19 +133,20 @@ public final class TableClientSmoke {
                 if (view.phase() != Game.Phase.TURN || view.turn() != view.viewerSeat()) return;
                 require(view.seats().getFirst().hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
+                TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
-                capture(client, "03-discard-callout.png");
+                capture(client, "03-discard-confirm.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals("Discard")) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     step = 6; entered = ticks;
                     return;
                 }
-                throw new IllegalStateException("Selecting a real hand tile did not expose a discard callout");
+                throw new IllegalStateException("Confirm discard mode did not expose its standalone discard button");
             } else if (step == 6 && ticks - entered > 20) {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
-                require(view.seats().getFirst().river().size() == 1, "World callout did not discard on the server");
+                require(view.seats().getFirst().river().size() == 1, "Discard confirmation did not reach the server");
                 capture(client, "04-river.png");
                 client.screen.onClose();
                 client.player.setYRot(210); client.player.setXRot(35);
@@ -166,7 +168,7 @@ public final class TableClientSmoke {
                 resourceReload.join();
                 TileResourceSmoke.verify(client, false);
                 capture(client, "07-restored-solid-backs.png");
-                Files.writeString(output.resolve("PASS.txt"), "Fabric 1.21.1: world placement, seating, private deal, callout discard, river synchronization, HD texture filtering and optional back pack enable/disable passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Fabric 1.21.1: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and optional back pack enable/disable passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 step = 10; entered = ticks;
             } else if (step == 10 && ticks - entered > 30) {
