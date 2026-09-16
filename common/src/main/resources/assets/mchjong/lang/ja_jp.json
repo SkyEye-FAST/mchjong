@@ -14,7 +14,6 @@
   "ui.mchjong.dealing": "牌山の準備・配牌中…",
   "ui.mchjong.result_indicators": "ドラ表示牌",
   "ui.mchjong.ura_indicators": "裏ドラ表示牌",
-  "yaku.mchjong.nagashi": "流し満貫",
   "ui.mchjong.match_complete": "対局終了",
   "ui.mchjong.point_changes": "点数精算",
   "ui.mchjong.settlement_note": "精算前 → 精算後。本場と獲得した供託を含みます。",

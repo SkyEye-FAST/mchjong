@@ -2,6 +2,8 @@ package top.skyeyefast.mchjong.art;
 
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import com.google.gson.stream.JsonReader;
+import com.google.gson.stream.JsonToken;
 import java.awt.image.BufferedImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -19,6 +21,22 @@ class AssetContractTest {
     private final Path resources = Path.of(System.getProperty("mchjong.resources"));
     private final Path languages = Path.of(System.getProperty("mchjong.languages"));
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
+
+    @Test void translationObjectsDoNotRepeatKeys() throws Exception {
+        for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
+            try (var reader = new JsonReader(Files.newBufferedReader(languages.resolve(language + ".json")))) {
+                Set<String> keys = new HashSet<>();
+                reader.beginObject();
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+                    assertTrue(keys.add(key), language + ": duplicate translation " + key);
+                    reader.nextString();
+                }
+                reader.endObject();
+                assertEquals(JsonToken.END_DOCUMENT, reader.peek(), language);
+            }
+        }
+    }
 
     @Test void allFourLanguagesHaveIdenticalKeysAndFormatArguments() throws Exception {
         JsonObject reference = JsonParser.parseString(Files.readString(languages.resolve("en_us.json"))).getAsJsonObject();

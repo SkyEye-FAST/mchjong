@@ -14,7 +14,6 @@
   "ui.mchjong.dealing": "正在升起牌山並配牌…",
   "ui.mchjong.result_indicators": "寶牌指示牌",
   "ui.mchjong.ura_indicators": "裏寶牌指示牌",
-  "yaku.mchjong.nagashi": "流局滿貫",
   "ui.mchjong.match_complete": "對局結束",
   "ui.mchjong.point_changes": "點數結算",
   "ui.mchjong.settlement_note": "結算前 → 結算後，變動包含本場數及獲得的供託。",
