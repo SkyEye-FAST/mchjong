@@ -1,85 +1,85 @@
 # MCjhong
 
-Mahjong mod for Minecraft 1.21.1.
+MCjhong is a Minecraft 1.21.1 mod that adds a seated, in-world riichi mahjong
+table for three or four players. It supports both Fabric and NeoForge.
 
-## Mod Information
+## Features
 
-- **Mod ID**: `mchjong`
-- **Mod Name**: `MCjhong`
-- **Target Minecraft Version**: `1.21.1`
-- **Java Requirement**: `Java 21` (LTS)
-- **Base Package**: `top.skyeyefast.mchjong`
-- **Author**: `SkyEye_FAST`
-- **License**: Apache-2.0
+- Placeable mahjong tables, stools, and tiles
+- Three- and four-player riichi mahjong gameplay
+- In-world drawing, discarding, melds, and action previews
+- Shared gameplay and client presentation across both loaders
+- English, Japanese, Simplified Chinese, and Traditional Chinese localization
+- Optional patterned tile-back resource pack
 
----
+## Compatibility
 
-## Branch Structure
+| Platform | Required version |
+| --- | --- |
+| Minecraft | 1.21.1 |
+| Java | 21 or newer |
+| Fabric Loader | 0.16.10 or newer, plus Fabric API |
+| NeoForge | 21.1.250 or newer |
 
-The loader branches retain separate release histories. Both use the same
-multi-project checkout: the root project builds Fabric, and `neoforge` builds
-NeoForge from the shared `common`, `engine` and `art` sources.
+## Installation
 
-| Branch | Mod Loader | Build Plugin | Mappings |
-|---|---|---|---|
-| `main` | - | Repository baseline and documentation | - |
-| `fabric/1.21.1` | **Fabric** 1.21.1 | Fabric Loom (`net.fabricmc.fabric-loom-remap`) | Mojang Official Mappings |
-| `neoforge/1.21.1` | **NeoForge** 1.21.1 | NeoForge ModDevGradle (`net.neoforged.moddev`) | Parchment Mappings |
+Build the JAR for your loader as described below, then copy it to the
+Minecraft `mods` folder:
 
----
+- Fabric: `build/libs/mchjong-fabric-*.jar`
+- NeoForge: `neoforge/build/libs/mchjong-neoforge-*.jar`
 
-## Development Guide
+Install the matching loader and its required dependencies before launching the
+game. Fabric installations also require Fabric API.
 
-### 1. Prerequisites
-- **JDK**: Java 21+ (e.g., Zulu JDK 21, Eclipse Temurin 21, Microsoft OpenJDK 21)
-- **IDE**: IntelliJ IDEA (recommended) or VS Code
+## Building from source
 
-### 2. Switching Branches
+Requires JDK 21 or newer.
+
 ```bash
-# Switch to Fabric 1.21.1 environment
-git checkout fabric/1.21.1
-
-# Switch to NeoForge 1.21.1 environment
-git checkout neoforge/1.21.1
+git clone https://github.com/SkyEye-FAST/mchjong.git
+cd mchjong
 ```
 
-### 3. Building and Running
+### Fabric
 
-#### Fabric (`fabric/1.21.1`)
 ```bash
-# Build mod JAR
+git switch fabric/1.21.1
 ./gradlew build
-
-# Run client for debugging
-./gradlew runClient
-
-# Run dedicated server for debugging
-./gradlew runServer
+./gradlew runClient   # optional development client
+./gradlew runServer   # optional dedicated server
 ```
 
-#### NeoForge (`neoforge/1.21.1`)
+### NeoForge
+
 ```bash
-# Build mod JAR
+git switch neoforge/1.21.1
 ./gradlew :neoforge:build
-
-# Run client for debugging
-./gradlew :neoforge:runClient
-
-# Run dedicated server for debugging
-./gradlew :neoforge:runServer
+./gradlew :neoforge:runClient   # optional development client
+./gradlew :neoforge:runServer   # optional dedicated server
 ```
 
-On Windows, use `gradlew.bat` instead of `./gradlew`. Run `gradlew.bat buildAll`
-to test the shared modules and build both loaders. Fabric output is under
-`build/libs`; NeoForge output is under `neoforge/build/libs`.
+To build both loaders and run the shared checks:
 
-### 4. Tile artwork and optional backs
+```bash
+./gradlew buildAll
+```
 
-Default tile backs are solid teal. To add a diamond pattern, enable
-**MCjhong: Patterned tile backs** in Minecraft's resource-pack screen. The pack is
-bundled but disabled by default, and disabling it restores the solid backs.
-Names and descriptions are available in all four supported languages.
+On Windows, use `gradlew.bat` instead of `./gradlew`.
 
-The tile faces use CC0 vector artwork rasterized during the build. Source
-attribution, resource-pack customization and the verification commands are in
-[docs/ASSETS.md](docs/ASSETS.md). The mod does not download artwork at runtime.
+## Optional resource pack
+
+Tile backs are solid teal by default. Enable **MCjhong: Patterned tile backs**
+under **Options > Resource Packs** to use the built-in diamond pattern. Disable
+the pack to restore the default backs. See [docs/ASSETS.md](docs/ASSETS.md) for
+customization and asset details.
+
+## Credits
+
+Tile faces are generated from [FluffyStuff's riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles),
+released under CC0. See [NOTICE](NOTICE) and [docs/ASSETS.md](docs/ASSETS.md)
+for attribution and the asset generation contract.
+
+## License
+
+MCjhong is licensed under the [Apache License 2.0](LICENSE).
