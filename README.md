@@ -178,3 +178,5 @@ for attribution and the asset generation contract.
 ## License
 
 MCjhong is licensed under the [Apache License 2.0](LICENSE).
+
+Release history is maintained in [CHANGELOG.md](CHANGELOG.md).
