@@ -28,28 +28,42 @@ class TableLayoutTest {
             seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote());
     }
 
-    @Test void theFirstMeldDoesNotMoveTheConcealedHandOrigin() {
+    @Test void callingKeepsTheConcealedRunCenteredRatherThanPinningItsLeftEdge() {
         for (RuleSet rules : RuleSet.values()) {
             var view = start(rules);
             var hand = List.of(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16);
             var before = TableScene.build(replace(view, hand, List.of(), List.of())).stream()
-                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0 && piece.index() == 0).findFirst().orElseThrow();
+                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
             var after = TableScene.build(replace(view, hand.subList(3, hand.size()),
                 List.of(new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0)), List.of())).stream()
-                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0 && piece.index() == 0).findFirst().orElseThrow();
-            assertEquals(before.position(), after.position());
-            assertEquals(TableScene.HAND_LEFT, before.position().x, 1e-6);
+                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
+            assertEquals(0, before.stream().mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7);
+            assertEquals(0, after.stream().mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7);
+            assertTrue(after.getFirst().position().x > before.getFirst().position().x);
         }
     }
 
     @Test void completeHandAndDrawAreCenteredWithoutChangingSlotsBetweenDraws() {
-        double last = TableScene.HAND_LEFT + 13 * TableScene.HAND_STEP + TableScene.DRAW_GAP;
-        assertEquals(0, (TableScene.HAND_LEFT + last) / 2, 1e-9);
-        assertTrue(Math.abs(TableScene.HAND_LEFT + 6 * TableScene.HAND_STEP) < TileMesh.WIDTH);
-        assertTrue(TableScene.HAND_LEFT > -0.7, "Do not pin a normal hand to the left rail again");
+        for (int count : new int[]{1, 4, 7, 10, 13}) {
+            var base = start(RuleSet.TENHOU_4);
+            var tiles = java.util.stream.IntStream.range(80, 80 + count).boxed().toList();
+            var before = TableScene.build(replace(base, tiles, List.of(), List.of()));
+            var drawn = new ArrayList<>(tiles);
+            drawn.add(100);
+            var seats = new ArrayList<>(base.seats());
+            seats.set(0, new TableView.Seat("Test", true, false, false, 25000, drawn, 100,
+                List.of(), List.of(), List.of(), false, false));
+            var after = TableScene.build(new TableView(base.tableId(), base.revision(), base.decision(), base.handNumber(),
+                base.rules(), base.phase(), base.viewerSeat(), base.dealer(), base.round(), base.honba(), base.riichiSticks(),
+                base.turn(), base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
+                base.result(), base.deltas(), base.finalScores(), base.timeControl(), base.clocks(), base.finalRanks(), base.openHands(), base.exitVote()));
+            for (int i = 0; i < count; i++) assertEquals(before.get(i).position(), after.get(i).position());
+            assertEquals(TableScene.HAND_STEP + TableScene.DRAW_GAP,
+                after.get(count).position().x - after.get(count - 1).position().x, 1e-7);
+        }
     }
 
-    @Test void everyMeldTypeFitsBesideTheStationaryHandIncludingFourKansAndADraw() {
+    @Test void everyMeldTypeFitsInItsOwnRailIncludingFourKansAndExposedHands() {
         var view = start(RuleSet.TENHOU_4);
         for (Meld.Type type : Meld.Type.values()) for (int count = 1; count <= 4; count++) {
             for (int source = 1; source <= 3; source++) {
@@ -67,15 +81,53 @@ class TableLayoutTest {
                 double meldLeft = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
                     .mapToDouble(p -> p.position().x - (p.yaw() == 90 ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE / 2)
                     .min().orElseThrow();
-                double handRight = TableScene.HAND_LEFT + (size - 1) * TableScene.HAND_STEP + TableScene.DRAW_GAP
-                    + TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
-                assertTrue(meldLeft - handRight >= 0.05, type + " x" + count + " must leave a visible hand/meld gap");
+                assertTrue(meldLeft >= -1.0, type + " x" + count + " must fit inside the playing surface");
+                assertTrue(TableScene.MELD_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2
+                    < TableScene.HAND_Z - TileMesh.HEIGHT * TableScene.TILE_SCALE / 2);
+                assertTrue(TableScene.MELD_Z - TileMesh.HEIGHT * TableScene.TILE_SCALE / 2
+                    > TableScene.WALL_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2);
                 assertTrue(pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
                     .allMatch(p -> Math.abs(p.position().x) < 1.3125 && Math.abs(p.position().z) < 1.3125));
-                assertEquals(TableScene.HAND_LEFT, pieces.stream()
-                    .filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND).findFirst().orElseThrow().position().x, 1e-9);
+                assertEquals(0, pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
+                    .mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-9);
             }
         }
+    }
+
+    @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
+        for (RuleSet rules : RuleSet.values()) for (int count : new int[]{0, 1, 4}) {
+            var v = start(rules);
+            var seats = new ArrayList<TableView.Seat>();
+            for (int seat = 0; seat < rules.players(); seat++) {
+                var melds = new ArrayList<Meld>();
+                for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_KAN,
+                    List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
+                var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
+                seats.add(new TableView.Seat("Test", true, false, false, 25000, hand, hand.getLast(),
+                    melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true));
+            }
+            var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
+                v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote());
+            var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
+            for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
+            for (int i = 0; i < pieces.size(); i++) {
+                var bounds = bounds(pieces.get(i));
+                assertTrue(bounds.minX >= -1.3125 && bounds.maxX <= 1.3125
+                    && bounds.minZ >= -1.3125 && bounds.maxZ <= 1.3125, pieces.get(i).toString());
+                for (int j = i + 1; j < pieces.size(); j++) assertFalse(bounds.intersects(bounds(pieces.get(j))),
+                    rules + " " + count + ": " + pieces.get(i) + " intersects " + pieces.get(j));
+            }
+        }
+    }
+
+    private static net.minecraft.world.phys.AABB bounds(TableScene.Piece piece) {
+        double x = TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
+        double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2;
+        double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * TableScene.TILE_SCALE / 2;
+        if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
+        var p = piece.position();
+        return new net.minecraft.world.phys.AABB(p.x - x, p.y - y, p.z - z, p.x + x, p.y + y, p.z + z).deflate(1e-6);
     }
 
     @Test void meldTilesTouchAndAddedKanStacksOnItsCalledTile() {

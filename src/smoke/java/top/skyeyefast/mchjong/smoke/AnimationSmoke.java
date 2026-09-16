@@ -90,7 +90,26 @@ final class AnimationSmoke {
             InputSmoke.verify(client, table);
         }
         if (ticks == 114) capture(client, output, "20-riichi-selection.png");
-        if (ticks == 116) {
+        if (ticks >= 116 && ticks <= 172 && (ticks - 116) % 14 == 0) {
+            int count = (ticks - 116) / 14;
+            fixture = table.clientView();
+            var seats = new ArrayList<>(fixture.seats());
+            var melds = List.of(
+                new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0),
+                new Meld(Meld.Type.CLOSED_KAN, List.of(4, 5, 6, 7), 0, Tile.ABSENT),
+                new Meld(Meld.Type.ADDED_KAN, List.of(8, 9, 10, 11), 3, 8),
+                new Meld(Meld.Type.OPEN_KAN, List.of(12, 13, 14, 15), 2, 12));
+            seats.set(0, seat(IntStream.range(80, 94 - count * 3).boxed().toList(),
+                melds.subList(0, count), List.of(), false));
+            update(table, seats, fixture.wall());
+            TableSettings.get().animations = false;
+            var screen = new TableScreen(table.getBlockPos());
+            client.setScreen(screen);
+            screen.resetView();
+        }
+        if (ticks >= 126 && ticks <= 182 && (ticks - 126) % 14 == 0)
+            capture(client, output, "40-layout-" + (ticks - 126) / 14 + "-melds.png");
+        if (ticks == 184) {
             TableSettings.get().animations = true;
             return true;
         }
