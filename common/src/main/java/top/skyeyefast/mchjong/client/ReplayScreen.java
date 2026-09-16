@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -29,23 +28,23 @@ public final class ReplayScreen extends Screen {
     private int steps() { return match.hands().get(hand).events().size() + 1; }
 
     @Override protected void init() {
-        var previousHand = addRenderableWidget(Button.builder(Component.literal("<"), ignored -> changeHand(-1))
+        var previousHand = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> changeHand(-1))
             .bounds(10, 30, 30, 20).build());
         previousHand.active = hand > 0;
-        var nextHand = addRenderableWidget(Button.builder(Component.literal(">"), ignored -> changeHand(1))
+        var nextHand = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> changeHand(1))
             .bounds(width - 40, 30, 30, 20).build());
         nextHand.active = hand + 1 < match.hands().size();
         board = addRenderableWidget(new ReplayBoard(font, match, 10, 56, width - 20, height - 144));
         timeline = addRenderableWidget(new Timeline());
         int span = (width - 36) / 5;
-        addRenderableWidget(Button.builder(Component.literal("|<"), ignored -> seek(0)).bounds(10, height - 52, span, 20).build());
-        addRenderableWidget(Button.builder(Component.literal("<"), ignored -> seek(cursor - 1)).bounds(14 + span, height - 52, span, 20).build());
-        play = addRenderableWidget(Button.builder(Component.empty(), ignored -> togglePlay()).bounds(18 + span * 2, height - 52, span, 20).build());
-        addRenderableWidget(Button.builder(Component.literal(">"), ignored -> seek(cursor + 1)).bounds(22 + span * 3, height - 52, span, 20).build());
-        addRenderableWidget(Button.builder(Component.literal(">|"), ignored -> seek(steps())).bounds(26 + span * 4, height - 52, span, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.back"), ignored -> onClose())
+        addRenderableWidget(MahjongButton.create(Component.literal("|<"), ignored -> seek(0)).bounds(10, height - 52, span, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> seek(cursor - 1)).bounds(14 + span, height - 52, span, 20).build());
+        play = addRenderableWidget(MahjongButton.create(Component.empty(), ignored -> togglePlay()).bounds(18 + span * 2, height - 52, span, 20).build().primary());
+        addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> seek(cursor + 1)).bounds(22 + span * 3, height - 52, span, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.literal(">|"), ignored -> seek(steps())).bounds(26 + span * 4, height - 52, span, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
             .bounds(10, height - 28, width / 2 - 14, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("replay.mchjong.export"), ignored -> export())
+        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.export"), ignored -> export())
             .bounds(width / 2 + 4, height - 28, width / 2 - 14, 20).build());
         refresh();
     }
@@ -88,8 +87,8 @@ public final class ReplayScreen extends Screen {
         }
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xff18292e);
-        graphics.drawCenteredString(font, status.getString().isEmpty() ? title : status, width / 2, 12, 0xfff2cf86);
+        MahjongUi.backdrop(graphics, width, height, width - 24);
+        MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 12, width - 24, MahjongUi.TEXT, true);
         var round = match.hands().get(hand);
         var heading = Component.translatable("ui.mchjong.round",
             Component.translatable("wind.mchjong." + new String[]{"east", "south", "west", "north"}[round.round() / match.rules().players()]),
@@ -110,7 +109,7 @@ public final class ReplayScreen extends Screen {
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 
-    private final class Timeline extends AbstractSliderButton {
+    private final class Timeline extends MahjongSlider {
         Timeline() { super(10, ReplayScreen.this.height - 78, ReplayScreen.this.width - 20, 20, Component.empty(), 0); }
         void sync() { value = (double) cursor / steps(); updateMessage(); }
         @Override protected void updateMessage() { setMessage(Component.translatable("replay.mchjong.step", cursor, steps())); }

@@ -38,6 +38,8 @@ public final class MahjongContent {
     public static BlockEntityType<MahjongTableBlockEntity> TABLE_ENTITY;
     public static BlockEntityType<FurnitureBlockEntity> STOOL_ENTITY;
     public static EntityType<SeatEntity> SEAT_ENTITY;
+    public static final net.minecraft.world.inventory.MenuType<top.skyeyefast.mchjong.item.MahjongBoxMenu> BOX_MENU =
+        new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.MahjongBoxMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
 
     private MahjongContent() {}
 

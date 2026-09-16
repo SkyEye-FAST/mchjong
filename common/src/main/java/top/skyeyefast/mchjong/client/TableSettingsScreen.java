@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.client;
 import java.io.IOException;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -30,10 +29,10 @@ public final class TableSettingsScreen extends Screen {
         int left = (width - span) / 2;
         for (int i = 0; i < 4; i++) {
             final int index = i;
-            var button = Button.builder(Component.translatable("settings.mchjong.tab." + i), ignored -> {
+            var button = MahjongButton.create(Component.translatable("settings.mchjong.tab." + i), ignored -> {
                 tab = index; page = 0; init();
             }).bounds(left + i * (span / 4), 33, span / 4 - 4, 20).build();
-            button.active = tab != i;
+            button.selected(tab == i);
             addRenderableWidget(button);
         }
         int column = (span - 6) / 2;
@@ -52,21 +51,21 @@ public final class TableSettingsScreen extends Screen {
                 }
             }
             if (values.length > perPage) {
-                var previous = Button.builder(Component.literal("<"), ignored -> { page--; init(); })
+                var previous = MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
                     .bounds(width / 2 - 66, height - 61, 30, 20).build();
                 previous.active = page > 0;
                 addRenderableWidget(previous);
-                var next = Button.builder(Component.literal(">"), ignored -> { page++; init(); })
+                var next = MahjongButton.create(Component.literal(">"), ignored -> { page++; init(); })
                     .bounds(width / 2 + 36, height - 61, 30, 20).build();
                 next.active = (page + 1) * perPage < values.length;
                 addRenderableWidget(next);
             }
         } else if (tab == 1) {
-            addRenderableWidget(Button.builder(value("settings.mchjong.discard", settings.discardMode), ignored -> {
+            addRenderableWidget(MahjongButton.create(value("settings.mchjong.discard", settings.discardMode), ignored -> {
                 var values = TableSettings.DiscardMode.values();
                 settings.discardMode = values[(settings.discardMode.ordinal() + 1) % values.length]; init();
             }).bounds(left, 65, span, 20).build());
-            addRenderableWidget(Button.builder(value("settings.mchjong.guides", settings.guideLines), ignored -> {
+            addRenderableWidget(MahjongButton.create(value("settings.mchjong.guides", settings.guideLines), ignored -> {
                 var values = TableSettings.GuideLines.values();
                 settings.guideLines = values[(settings.guideLines.ordinal() + 1) % values.length]; init();
             }).bounds(left, 91, span, 20).build());
@@ -76,7 +75,7 @@ public final class TableSettingsScreen extends Screen {
         } else if (tab == 2) {
             addRenderableWidget(new CameraSlider(left, 65, span, true));
             addRenderableWidget(new CameraSlider(left, 91, span, false));
-            addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
+            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
                 .bounds(left, 117, span, 20).build());
             addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver)
                 .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.river_hint")));
@@ -84,27 +83,27 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(new VolumeSlider(left, 65, column, false));
             var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
             voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.RESOURCE_PACK;
-            addRenderableWidget(Button.builder(value("settings.mchjong.voice", settings.voiceSource), ignored -> {
+            addRenderableWidget(MahjongButton.create(value("settings.mchjong.voice", settings.voiceSource), ignored -> {
                 var modes = TableSettings.VoiceSource.values();
                 settings.voiceSource = modes[(settings.voiceSource.ordinal() + 1) % modes.length];
                 TableAudio.settingsChanged(); init();
             }).bounds(left, 91, span, 20).build());
             addToggle(left, 117, column, "settings.mchjong.countdown", settings.countdownSounds,
                 () -> settings.countdownSounds = !settings.countdownSounds);
-            addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.audio_preview"), ignored -> TableAudio.preview())
+            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.audio_preview"), ignored -> TableAudio.preview())
                 .bounds(left + column + 6, 117, column, 20).build());
         }
-        addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.reset"), ignored -> {
+        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
             settings.reset(); TableAudio.settingsChanged(); parent.resetView(); init();
         }).bounds(left, height - 30, column, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left + column + 6, height - 30, column, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
+            .bounds(left + column + 6, height - 30, column, 20).build().primary());
     }
 
     private Button addToggle(int x, int y, int w, String key, boolean enabled, Runnable toggle) {
         Component label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
             Component.translatable(enabled ? "options.on" : "options.off"));
-        var button = Button.builder(label, ignored -> { toggle.run(); init(); }).bounds(x, y, w, 20).build();
+        var button = MahjongButton.create(label, ignored -> { toggle.run(); init(); }).bounds(x, y, w, 20).build().selected(enabled);
         button.setTooltip(Tooltip.create(label));
         return addRenderableWidget(button);
     }
@@ -115,20 +114,20 @@ public final class TableSettingsScreen extends Screen {
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xe817272c);
-        graphics.drawCenteredString(font, title, width / 2, 14, 0xfff0dec1);
+        MahjongUi.backdrop(graphics, width, height, 560);
+        MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         if (tab == 0) {
             int pages = (TableSettings.Information.values().length - 1) / (Math.max(1, (height - 130) / 26) * 2) + 1;
-            if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 55, 0xffd1e4d9);
+            if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 55, MahjongUi.MUTED);
         }
-        if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, 0xffffa09a);
+        if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
         if (tab == 3) {
             String key = settings.voiceSource == TableSettings.VoiceSource.SYSTEM && TableAudio.systemVoiceUnavailable()
                 ? "settings.mchjong.voice_unavailable" : settings.voiceSource == TableSettings.VoiceSource.SYSTEM
                     ? "settings.mchjong.system_voice_note" : "settings.mchjong.pack_voice_note";
             int y = 145;
             for (var line : font.split(Component.translatable(key), Math.min(540, width - 32))) {
-                graphics.drawCenteredString(font, line, width / 2, y, 0xffd1e4d9);
+                graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.MUTED);
                 y += 11;
             }
         }
@@ -145,7 +144,7 @@ public final class TableSettingsScreen extends Screen {
         }
     }
 
-    private final class CameraSlider extends AbstractSliderButton {
+    private final class CameraSlider extends MahjongSlider {
         private final boolean distance;
         CameraSlider(int x, int y, int w, boolean distance) {
             super(x, y, w, 20, Component.empty(), distance ? (settings.cameraDistance - 2.4) / 1.6 : (settings.cameraHeight - 1.7) / 1.3);
@@ -162,7 +161,7 @@ public final class TableSettingsScreen extends Screen {
         }
     }
 
-    private final class VolumeSlider extends AbstractSliderButton {
+    private final class VolumeSlider extends MahjongSlider {
         private final boolean voice;
         VolumeSlider(int x, int y, int width, boolean voice) {
             super(x, y, width, 20, Component.empty(), voice ? settings.voiceVolume : settings.effectsVolume);

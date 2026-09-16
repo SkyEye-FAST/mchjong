@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();

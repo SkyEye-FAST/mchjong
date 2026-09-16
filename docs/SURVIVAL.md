@@ -120,7 +120,7 @@ be taken. The recipe also independently rejects nonblank inputs on assembly.
 
 ## Boxes, installation and removal
 
-Right-click a held box to open a vanilla six-row container. Its 54 slots accept
+Right-click a held box to open its dedicated supply-case screen. Its 54 slots accept
 tiles and point sticks only. The carried box slot is locked for ordinary clicks,
 shift-transfer, number keys, offhand swaps, dragging, double-click collection,
 throwing and creative cloning. Neither the carrier nor another box can be
@@ -140,6 +140,8 @@ Use a cloth on either table to install or replace it. Cloth is optional: a bare
 wooden surface remains playable. To remove the box or cloth, end the match, empty both
 hands and sneak-use: the top removes cloth, a side removes the box. If physical
 point sticks are present on the nearest side, the top first returns that stack.
+Equipment collection takes priority over spectator interaction; a sneak-click
+opens the spectator view only when it does not collect any equipment.
 Breaking a table returns its furniture, box, cloth and placed sticks; equipment
 storage is cleared before spawning drops so occupancy-cell removal cannot
 duplicate the contents. An unfinished hand is not fabricated into a result.

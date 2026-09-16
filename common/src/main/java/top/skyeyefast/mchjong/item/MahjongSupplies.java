@@ -103,11 +103,15 @@ public final class MahjongSupplies {
     /** A set is one uniform, unmarked set with exactly three red fives. No tile order is exposed. */
     public static Deck deck(ItemStack box) {
         if (!validBox(box)) return null;
+        return deck(contents(box));
+    }
+
+    public static Deck deck(List<ItemStack> items) {
         int[] normal = new int[34];
         int[] red = new int[34];
         TileMaterial material = null;
         DyeColor back = null;
-        for (ItemStack stack : contents(box)) {
+        for (ItemStack stack : items) {
             if (stack.isEmpty()) continue;
             if (!storable(stack)) return null;
             if (stack.is(MahjongContent.POINT_STICK)) continue;

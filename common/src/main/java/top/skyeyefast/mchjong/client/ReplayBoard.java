@@ -47,7 +47,7 @@ public final class ReplayBoard extends AbstractWidget {
     }
     @Override protected void renderWidget(GuiGraphics graphics, int x, int y, float partialTick) {
         if (frame == null) return;
-        graphics.fill(getX(), getY(), getX() + width, getY() + height, 0xff20373a);
+        MahjongUi.panel(graphics, getX(), getY(), width, height);
         contentHeight = contents(null, 0);
         scroll = Math.clamp(scroll, 0, Math.max(0, contentHeight - height + 8));
         graphics.enableScissor(getX() + 3, getY() + 3, getX() + width - 3, getY() + height - 3);
@@ -56,15 +56,15 @@ public final class ReplayBoard extends AbstractWidget {
         if (contentHeight > height) {
             int thumb = Math.max(10, height * height / contentHeight);
             int top = getY() + (height - thumb) * scroll / Math.max(1, contentHeight - height + 8);
-            graphics.fill(getX() + width - 4, top, getX() + width - 2, top + thumb, 0xfff2cf86);
+            graphics.fill(getX() + width - 4, top, getX() + width - 2, top + thumb, MahjongUi.ACCENT);
         }
     }
     private int contents(GuiGraphics graphics, int origin) {
         ReplayHand hand = match.hands().get(handIndex);
-        int y = paragraph(graphics, eventName(), origin, 0xfff2cf86);
+        int y = paragraph(graphics, eventName(), origin, MahjongUi.ACCENT);
         y = tiles(graphics, frame.dora(), y + 3, 14, -1);
         if (frame.settled() && !hand.ura().isEmpty()) {
-            y = paragraph(graphics, Component.translatable("ui.mchjong.ura_indicators"), y, 0xffa8c5bc);
+            y = paragraph(graphics, Component.translatable("ui.mchjong.ura_indicators"), y, MahjongUi.MUTED);
             y = tiles(graphics, hand.ura(), y + 3, 14, -1);
         }
         int tileWidth = Math.clamp((width - 32) / 14 - 2, 8, 21);
@@ -77,7 +77,7 @@ public final class ReplayBoard extends AbstractWidget {
                 heading.append("  " + String.format(Locale.ROOT, "%+d", hand.deltas().get(seat)));
                 if (!hand.finalRanks().isEmpty()) heading.append(" · ").append(Component.translatable("ui.mchjong.rank", hand.finalRanks().get(seat)));
             }
-            y = paragraph(graphics, heading, y, 0xffe8e6d8);
+            y = paragraph(graphics, heading, y, MahjongUi.TEXT);
             var concealed = new ArrayList<>(player.hand());
             int winning = Tile.ABSENT;
             if (frame.settled()) for (var win : hand.wins()) if (win.seat() == seat && win.tile() >= 0) {
@@ -102,17 +102,17 @@ public final class ReplayBoard extends AbstractWidget {
             y += (player.river().size() + 5) / 6 * (riverWidth * 3 / 2 + 4);
             if (frame.settled()) {
                 if (hand.result().equals("exhaustive")) y = paragraph(graphics,
-                    Component.translatable(player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten"), y + 4, 0xffa8c5bc);
+                    Component.translatable(player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten"), y + 4, MahjongUi.MUTED);
                 for (var win : hand.wins()) if (win.seat() == seat) {
                     y = paragraph(graphics, win.score().yakuman() > 0
                         ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
-                        : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu()), y + 4, 0xfff2cf86);
+                        : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu()), y + 4, MahjongUi.ACCENT);
                     for (String yaku : win.score().yaku()) y = paragraph(graphics,
-                        Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)), y, 0xffd1e4d9);
-                    if (win.score().dora() > 0) y = paragraph(graphics, Component.translatable("ui.mchjong.dora", win.score().dora()), y, 0xfff2cf86);
+                        Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)), y, MahjongUi.MUTED);
+                    if (win.score().dora() > 0) y = paragraph(graphics, Component.translatable("ui.mchjong.dora", win.score().dora()), y, MahjongUi.ACCENT);
                 }
                 if (!hand.finalScores().isEmpty()) y = paragraph(graphics, Component.translatable("ui.mchjong.final_score",
-                    String.format(Locale.ROOT, "%+.1f", hand.finalScores().get(seat))), y + 3, 0xfff2cf86);
+                    String.format(Locale.ROOT, "%+.1f", hand.finalScores().get(seat))), y + 3, MahjongUi.ACCENT);
             }
         }
         return y - origin + 6;

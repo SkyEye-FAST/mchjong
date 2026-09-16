@@ -25,6 +25,13 @@ entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall
 packet and draw phases without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
+`MahjongUi`, `MahjongButton`, `MahjongSlider` and `MahjongEditBox` share the
+project's presentation vocabulary without replacing native input machinery.
+`MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
+and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
+inventory wells and a packing summary; it never writes stored components.
+Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
+
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced

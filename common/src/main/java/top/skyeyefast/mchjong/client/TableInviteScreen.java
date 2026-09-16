@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.client;
 import java.util.List;
 import java.util.Comparator;
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
@@ -20,6 +19,7 @@ public final class TableInviteScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
+    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -33,26 +33,26 @@ public final class TableInviteScreen extends Screen {
         int span = Math.min(320, width - 24), left = (width - span) / 2;
         for (int index = page * rows; index < Math.min(players.size(), (page + 1) * rows); index++) {
             var profile = players.get(index).getProfile();
-            addRenderableWidget(Button.builder(Component.literal(profile.getName()), ignored -> {
+            addRenderableWidget(MahjongButton.create(Component.literal(profile.getName()), ignored -> {
                 if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong invite " + profile.getId());
                 onClose();
             }).bounds(left, 56 + (index % rows) * 24, span, 20).build());
         }
-        var previous = addRenderableWidget(Button.builder(Component.literal("<"), ignored -> { page--; init(); })
+        var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
             .bounds(left, height - 56, 32, 20).build());
         previous.active = page > 0;
-        var next = addRenderableWidget(Button.builder(Component.literal(">"), ignored -> { page++; init(); })
+        var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> { page++; init(); })
             .bounds(left + span - 32, height - 56, 32, 20).build());
         next.active = page + 1 < pages;
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), ignored -> onClose())
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(left, height - 30, span, 20).build());
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xf017272c);
-        graphics.drawCenteredString(font, title, width / 2, 14, 0xfff0dec1);
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.invite_hint"), width / 2, 34, 0xffd1e4d9);
-        graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 51, 0xffd1e4d9);
+        MahjongUi.backdrop(graphics, width, height, 320);
+        MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
+        MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.invite_hint"), 12, 34, width - 24, MahjongUi.MUTED, true);
+        graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 51, MahjongUi.MUTED);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }

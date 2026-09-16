@@ -22,6 +22,7 @@ public final class TableClockScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
+    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     @Override protected void init() {
         String reserveValue = reserve == null ? Integer.toString(initial.reserveSeconds()) : reserve.getValue();
@@ -29,18 +30,18 @@ public final class TableClockScreen extends Screen {
         int left = width / 2 - 100;
         reserve = field(left, 72, "ui.mchjong.reserve_time", reserveValue);
         move = field(left, 118, "ui.mchjong.move_time", moveValue);
-        apply = addRenderableWidget(Button.builder(Component.translatable("gui.done"), ignored -> {
+        apply = addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> {
             TimeControl control = control();
             if (control != null && minecraft.getConnection() != null) {
                 minecraft.getConnection().sendCommand("mchjong clock " + control.reserveSeconds() + " " + control.moveSeconds());
                 onClose();
             }
-        }).bounds(left, height - 30, 96, 20).build());
-        addRenderableWidget(Button.builder(Component.translatable("gui.cancel"), ignored -> onClose())
+        }).bounds(left, height - 30, 96, 20).build().primary());
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
             .bounds(left + 104, height - 30, 96, 20).build());
     }
     private EditBox field(int x, int y, String key, String value) {
-        var box = new EditBox(font, x, y, 200, 20, Component.translatable(key));
+        var box = new MahjongEditBox(font, x, y, 200, 20, Component.translatable(key));
         box.setMaxLength(3);
         box.setFilter(text -> text.matches("[0-9]{0,3}"));
         box.setValue(value);
@@ -51,10 +52,10 @@ public final class TableClockScreen extends Screen {
         catch (IllegalArgumentException failure) { return null; }
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xf017272c);
-        graphics.drawCenteredString(font, title, width / 2, 20, 0xfff0dec1);
-        graphics.drawString(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, 58, 0xffd1e4d9);
-        graphics.drawString(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, 104, 0xffd1e4d9);
+        MahjongUi.backdrop(graphics, width, height, 280);
+        MahjongUi.text(graphics, font, title, 12, 20, width - 24, MahjongUi.TEXT, true);
+        graphics.drawString(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, 58, MahjongUi.MUTED);
+        graphics.drawString(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, 104, MahjongUi.MUTED);
         apply.active = control() != null;
         super.render(graphics, x, y, partialTick);
     }

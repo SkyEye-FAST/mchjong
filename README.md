@@ -94,8 +94,11 @@ See [Survival equipment and recipes](docs/SURVIVAL.md) for the complete recipes,
 component schema, dyes, glass tiles, point sticks and removal controls.
 
 Place stools two blocks from the center on the sides used by your rules. Click
-the table to sit on the nearest side, or click a specific stool. Crouch-click the
-table to spectate. Clicking the table or your stool again reopens the controls
+the table to sit on the nearest side, or click a specific stool. Crouch-click with
+both hands empty collects equipment first: the top returns your side's sticks,
+then the cloth; a side returns the box. Cloth and box removal requires the lobby.
+When no equipment is collected, crouch-clicking opens the spectator view.
+Clicking the table or your stool again reopens the controls
 without creating another seat. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
 
@@ -121,8 +124,9 @@ requires confirmation. Right-click or Esc cancels a selection before closing the
 overlay. Right-drag looks around; Home or **Center view** restores the table view.
 
 The compact top bar shows points and essential table information; hover over a
-player card for detailed status. The concealed-hand rail reserves space for melds
-from the first deal. The Camera settings include **Show discards on the table**.
+player card for detailed status. The concealed run stays centered, with a separate
+drawn-tile slot. Melds have their own inner rail, so calls do not push the hand
+against the left edge. The Camera settings include **Show discards on the table**.
 Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
 and does not change game rules or replay records.
@@ -171,6 +175,13 @@ The export is Tenhou's `/6` JSON interchange format, not binary/XML `.mjlog`.
 Nothing is uploaded to Tenhou. See [Replay storage and format](docs/REPLAYS.md)
 for privacy, controls, persistence and format details. Viewing a replay does not
 pause an active table or its server clock.
+
+## Interface style
+
+The interface uses shared flat, dark-teal controls with warm-white text and brass
+accents. The mahjong box has a dedicated supply-case screen with a synchronized
+inventory, a locked carrier slot and a read-only packing summary. Contributors
+should follow [Interface style](docs/UI_STYLE.md) for all presentation changes.
 
 ## Tile customization
 

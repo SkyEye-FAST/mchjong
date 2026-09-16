@@ -43,6 +43,7 @@ public class Mchjong implements ModInitializer {
         Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("automatic_mahjong_table"), MahjongContent.AUTO_TABLE_ITEM);
         MahjongContent.SUPPLIES.forEach((name, item) -> Registry.register(BuiltInRegistries.ITEM, MahjongContent.id(name), item));
         Registry.register(BuiltInRegistries.ITEM, MahjongContent.id("mahjong_stool"), MahjongContent.STOOL_ITEM);
+        Registry.register(BuiltInRegistries.MENU, MahjongContent.id("mahjong_box"), MahjongContent.BOX_MENU);
         MahjongContent.TABLE_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_table"),
             BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
         MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),

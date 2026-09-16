@@ -5,7 +5,6 @@ import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
@@ -27,19 +26,19 @@ public final class ReplayBrowserScreen extends Screen {
     @Override protected void init() {
         int span = Math.min(650, width - 20), left = (width - span) / 2;
         setInitialFocus(addRenderableWidget(new MatchList(left, 40, span, height - 80)));
-        var previous = addRenderableWidget(Button.builder(Component.literal("<"), ignored -> ClientReplays.list(index.page() - 1))
+        var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> ClientReplays.list(index.page() - 1))
             .bounds(left, height - 30, 35, 20).build());
         previous.active = index.page() > 0;
-        var next = addRenderableWidget(Button.builder(Component.literal(">"), ignored -> ClientReplays.list(index.page() + 1))
+        var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> ClientReplays.list(index.page() + 1))
             .bounds(left + span - 35, height - 30, 35, 20).build());
         next.active = index.more();
-        addRenderableWidget(Button.builder(Component.translatable("gui.done"), ignored -> onClose())
+        addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(width / 2 - 55, height - 30, 110, 20).build());
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xf518292e);
-        graphics.drawCenteredString(font, title, width / 2, 11, 0xfff2cf86);
-        graphics.drawCenteredString(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, 0xffa8c5bc);
+        MahjongUi.backdrop(graphics, width, height, 650);
+        MahjongUi.text(graphics, font, title, 12, 11, width - 24, MahjongUi.TEXT, true);
+        graphics.drawCenteredString(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, MahjongUi.MUTED);
         super.render(graphics, x, y, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
@@ -58,23 +57,23 @@ public final class ReplayBrowserScreen extends Screen {
         }
         private void activate() { if (!index.matches().isEmpty()) ClientReplays.open(index.matches().get(selected).id()); }
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-            graphics.fill(getX(), getY(), getX() + width, getY() + height, 0xff20373a);
+            MahjongUi.panel(graphics, getX(), getY(), width, height);
             graphics.enableScissor(getX(), getY(), getX() + width, getY() + height);
             if (index.matches().isEmpty()) graphics.drawCenteredString(font, Component.translatable("replay.mchjong.empty"),
-                getX() + width / 2, getY() + 18, 0xffd1e4d9);
+                getX() + width / 2, getY() + 18, MahjongUi.MUTED);
             for (int i = 0; i < index.matches().size(); i++) {
                 int y = getY() + i * ROW - scroll;
                 if (y + ROW < getY() || y > getY() + height) continue;
                 var match = index.matches().get(i);
-                graphics.fill(getX() + 3, y + 2, getX() + width - 3, y + ROW - 2, i == selected ? 0xff345356 : 0xff273f42);
-                if (isFocused() && i == selected) graphics.renderOutline(getX() + 3, y + 2, width - 6, ROW - 4, 0xfff2cf86);
-                graphics.drawString(font, font.split(label(i), width - 18).getFirst(), getX() + 9, y + 7, 0xffe8e6d8);
+                graphics.fill(getX() + 3, y + 2, getX() + width - 3, y + ROW - 2, i == selected ? MahjongUi.SELECTED : MahjongUi.SURFACE);
+                if (isFocused() && i == selected) graphics.renderOutline(getX() + 3, y + 2, width - 6, ROW - 4, MahjongUi.ACCENT);
+                graphics.drawString(font, font.split(label(i), width - 18).getFirst(), getX() + 9, y + 7, MahjongUi.TEXT);
                 String date = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withZone(ZoneId.systemDefault())
                     .format(Instant.ofEpochMilli(match.updatedAt()));
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
-                graphics.drawString(font, font.split(info, width - 18).getFirst(), getX() + 9, y + 21, 0xffa8c5bc);
-                graphics.drawString(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, 0xfff2cf86);
+                graphics.drawString(font, font.split(info, width - 18).getFirst(), getX() + 9, y + 21, MahjongUi.MUTED);
+                graphics.drawString(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
             }
             graphics.disableScissor();
         }

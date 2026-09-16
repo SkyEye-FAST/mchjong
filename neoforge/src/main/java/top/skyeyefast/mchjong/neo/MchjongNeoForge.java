@@ -53,6 +53,9 @@ public final class MchjongNeoForge {
         items.register("point_stick", () -> MahjongContent.POINT_STICK);
         items.register("mahjong_stool", () -> MahjongContent.STOOL_ITEM);
         items.register(bus);
+        DeferredRegister<net.minecraft.world.inventory.MenuType<?>> menus = DeferredRegister.create(Registries.MENU, MahjongContent.MOD_ID);
+        menus.register("mahjong_box", () -> MahjongContent.BOX_MENU);
+        menus.register(bus);
         DeferredRegister<BlockEntityType<?>> blockEntities = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MahjongContent.MOD_ID);
         blockEntities.register("mahjong_table", () -> MahjongContent.TABLE_ENTITY =
             BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));

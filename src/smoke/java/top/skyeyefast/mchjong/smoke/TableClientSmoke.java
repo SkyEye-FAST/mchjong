@@ -48,6 +48,8 @@ public final class TableClientSmoke {
     private final TableControlSmoke controlSmoke = new TableControlSmoke();
     private final ManualTableSmoke manualSmoke = new ManualTableSmoke();
     private final ItemPresentationSmoke itemPresentationSmoke = new ItemPresentationSmoke();
+    private final InterfaceSmoke interfaceSmoke = new InterfaceSmoke();
+    private final BoxInterfaceSmoke boxInterfaceSmoke = new BoxInterfaceSmoke();
 
     public void tick(Minecraft client) {
         if (step == 14) return;
@@ -152,7 +154,7 @@ public final class TableClientSmoke {
                         box.getItem().use(player.serverLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
                         require(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu, "Box did not open its real menu");
                         var menu = player.containerMenu;
-                        require(menu.slots.size() == 90, "Box menu differs from the vanilla six-row protocol");
+                        require(menu.slots.size() == 90, "Box must retain 54 storage and 36 player slots");
                         require(menu.quickMoveStack(player, 81).isEmpty(), "Shift-click moved the open carrier box");
                         menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.SWAP, player);
                         require(player.getMainHandItem() == box, "Hotbar swap replaced the open box");
@@ -160,9 +162,14 @@ public final class TableClientSmoke {
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 17; entered = ticks;
-            } else if (step == 17 && ticks - entered > 15 && client.screen instanceof net.minecraft.client.gui.screens.inventory.ContainerScreen) {
+            } else if (step == 17 && ticks - entered > 15 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {
+                if (!interfaceSmoke.box(client, output)) return;
                 require(client.player.containerMenu.slots.size() == 90, "Client box slot layout differs from server");
+                require(client.player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu menu
+                    && menu.ownerSlot() == 0, "Client did not receive the server's carrier lock");
                 capture(client, "00-physical-box.png");
+                step = 22; entered = ticks;
+            } else if (step == 22 && boxInterfaceSmoke.tick(client, output)) {
                 client.screen.onClose();
                 step = 18; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
@@ -197,7 +204,8 @@ public final class TableClientSmoke {
             } else if (step == 4 && ticks - entered > 40) {
                 var table = (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER);
                 if (!saved && table.clientView() != null && table.clientView().phase() == Game.Phase.LOBBY) {
-                    for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().startsWith("Ready")) {
+                    for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.active
+                        && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.ready").getString())) {
                         client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                         saved = true; entered = ticks;
                         return;
@@ -211,7 +219,7 @@ public final class TableClientSmoke {
                 // declining intervening calls through the actual UI rather than changing game state.
                 if (view.phase() == Game.Phase.REACTION) {
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
-                            && widget.getMessage().getString().equals("Pass") && widget.active) {
+                            && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.pass").getString()) && widget.active) {
                         client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                         break;
                     }
@@ -225,7 +233,8 @@ public final class TableClientSmoke {
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
                 capture(client, "03-discard-confirm.png");
-                for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals("Discard")) {
+                for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
+                    && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
@@ -250,7 +259,8 @@ public final class TableClientSmoke {
                 TileResourceSmoke.verify(client);
                 capture(client, "06-reloaded-solid-backs.png");
                 step = 15; entered = ticks;
-            } else if (step == 15 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+            } else if (step == 15 && interfaceSmoke.settings(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
+                && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 10; entered = ticks;
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
