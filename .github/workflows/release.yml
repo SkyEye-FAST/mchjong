@@ -1,0 +1,76 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    name: Build and publish release
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v7
+
+      - name: Validate release version
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          tag="${GITHUB_REF_NAME}"
+          version="$(sed -n 's/^mod_version=//p' gradle.properties)"
+
+          if [[ ! "${tag}" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "Release tag must be a semantic version such as 0.1.0, got: ${tag}" >&2
+            exit 1
+          fi
+
+          if [[ -z "${version}" || "${tag}" != "${version}" ]]; then
+            echo "Release tag ${tag} does not match mod_version=${version:-<missing>}" >&2
+            exit 1
+          fi
+
+          echo "version=${version}" >> "${GITHUB_OUTPUT}"
+
+      - name: Setup Java
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          cache-provider: basic
+
+      - name: Build release artifacts
+        run: bash gradlew clean buildAll --no-daemon
+
+      - name: Verify release artifacts
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+          test -f "build/libs/mchjong-fabric-${version}.jar"
+          test -f "neoforge/build/libs/mchjong-neoforge-${version}.jar"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="${{ steps.version.outputs.version }}"
+
+          gh release create "${GITHUB_REF_NAME}" \
+            "build/libs/mchjong-fabric-${version}.jar#Fabric" \
+            "neoforge/build/libs/mchjong-neoforge-${version}.jar#NeoForge" \
+            --verify-tag \
+            --generate-notes \
+            --title "mchjong ${GITHUB_REF_NAME}"
