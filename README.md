@@ -161,7 +161,7 @@ revalidated when accepted. Approach within six blocks before accepting; invitati
 do not teleport players or load distant chunks. Senders may invite once per five seconds.
 
 The Audio settings include positional table effects, countdown warnings and
-custom resource-pack recordings. There is no device-generated speech. See [Audio customization](docs/AUDIO.md)
+custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)
 for the event names, volume controls and an example voice resource pack.
 
 ## Replays
@@ -174,8 +174,8 @@ riichi, indicators and settlements. Arrow keys step, Home/End seek, and Space
 toggles playback. Scroll the board to inspect every seat.
 
 **Export Tenhou JSON** writes `<game directory>/replays/mchjong/<match UUID>.json`.
-The export is Tenhou's `/6` JSON interchange format, not binary/XML `.mjlog`.
-Nothing is uploaded to Tenhou. See [Replay storage and format](docs/REPLAYS.md)
+The export uses Tenhou's `/6` JSON interchange format and is saved locally.
+See [Replay storage and format](docs/REPLAYS.md)
 for privacy, controls, persistence and format details. Viewing a replay does not
 pause an active table or its server clock.
 
@@ -189,7 +189,7 @@ should follow [Interface style](docs/UI_STYLE.md) for all presentation changes.
 ## Tile customization
 
 Tile backs are solid by default. Custom resource packs can replace the independent
-back texture without changing tile faces or rules. No patterned pack is bundled.
+back texture independently of tile faces and rules.
 See [docs/ASSETS.md](docs/ASSETS.md) for customization and asset details.
 
 ## Credits

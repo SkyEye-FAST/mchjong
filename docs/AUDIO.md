@@ -8,9 +8,8 @@ recorded voices respect Master volume. Setting an individual volume to zero mute
 **Resource pack** is the default and plays only recordings supplied by the selected
 resource pack, with independent volume. Missing recordings stay silent. **Off**
 disables recorded calls without disabling other effects. The preview button tests
-the selected source. Snapshots received on joining/reconnecting do not replay
-historical calls. The mod never creates a device speech backend or synthesizes
-calls; Minecraft's separate accessibility narration is unchanged.
+the selected source. Playback follows new table events after joining or reconnecting.
+Minecraft's accessibility narration retains its independent controls.
 
 ## Resource-pack contract
 
@@ -35,9 +34,8 @@ Add a recording at `assets/mchjong/sounds/my_voice/ron.ogg`, and place this in
 ```
 
 Select the pack in Minecraft and select **Resource pack** in the audio settings.
-Only use recordings you own or have permission to redistribute. Resource reload
-uses Minecraft's normal sound-resource handling; no executable plugins, network
-speech service, download step or server-side asset upload is needed.
+Only use recordings you own or have permission to redistribute. Selection and
+reload use Minecraft's normal client-side sound-resource handling.
 
 Voice suffixes: `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`, `tsumo`, `draw_end`,
 `match_end`. Prefix each with `voice.` in `sounds.json`.

@@ -33,9 +33,8 @@ the original point changes, winning tile, yaku, relevant ura indicators and,
 when the match has finished, final standings. Gold river borders mark hand
 discards; sideways tiles mark riichi discards; dimmed tiles have been called.
 
-The viewer is read-only. It neither submits table actions nor pauses a live
-game's clock. It currently views matches recorded by this server; importing
-arbitrary external Tenhou records is not implemented.
+The viewer provides read-only playback of matches recorded by this server.
+Live games and their clocks continue independently during replay viewing.
 
 Export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
 `<game directory>/replays/mchjong/<match UUID>.json`, using an atomic replacement.

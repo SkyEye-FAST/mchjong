@@ -23,10 +23,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Wall columns and layers and normal river rows now touch edge-to-edge, including width-aware sideways riichi discards.
 - Texture/model generation and recipe/tag/loot generation have independent outputs and tests.
 
-### Removed
-
-- The bundled patterned-back resource pack and both loader registrations. Custom resource-pack backs remain supported.
-
 ## [0.1.0] - 2026-09-16
 
 ### Added
@@ -35,10 +31,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Shared scoring and rules engine with configurable table rules and open-hand games.
 - Animated wall setup, dealing, discards, calls, kans, riichi sticks, and settlement stages.
 - Compact in-game table controls, settlement panels, configurable decision clocks, and unanimous table-exit voting.
-- Player invitations, table sound effects, system speech, and custom voice packs.
+- Player invitations, table sound effects and custom resource-pack recordings.
 - Private replay archives with timeline playback and Tenhou JSON export.
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization.
-- Deterministic high-resolution tile artwork generation and an optional patterned tile-back resource pack.
+- Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
 [Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.1.0...HEAD

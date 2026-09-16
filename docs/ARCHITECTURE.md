@@ -139,7 +139,7 @@ The selected Minecraft, Java, loader, mapping and dependency versions live in
 metadata into each artifact.
 
 Tile faces and tile backs are independent materials. Custom backs use ordinary
-player-supplied resource packs; no optional back pack is bundled or registered.
+player-supplied resource packs.
 Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
 
@@ -150,7 +150,7 @@ and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 
 `TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
-owns client effects and resource-pack recording playback without creating device speech. Registered
+owns client effects and resource-pack recording playback. Registered
 resource-pack events separate table effects from recordings. No game logic
 depends on an audio completion callback. See `AUDIO.md` for customization.
 

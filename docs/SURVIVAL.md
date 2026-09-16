@@ -1,8 +1,8 @@
 # Survival equipment and play
 
 The survival loop is deliberately short: build furniture, cut blanks in a
-stonecutter, engrave a set in its box, then store the box inside a clothed table. There is
-no new workstation, battery, diamond component or per-tile crafting grind.
+stonecutter, engrave a set in its box, then store the box inside a clothed table.
+It uses vanilla crafting and stonecutting with batch preparation for full sets.
 
 ## Registry entries
 
@@ -13,7 +13,7 @@ no new workstation, battery, diamond component or per-tile crafting grind.
 | Mahjong stool | `mchjong:mahjong_stool` | Block and item |
 | Table cloth | `mchjong:table_cloth` | Item |
 | Mahjong tile, blank or engraved | `mchjong:mahjong_tile` | Item |
-| Mahjong box | `mchjong:mahjong_box` | Item, not a workstation |
+| Mahjong box | `mchjong:mahjong_box` | Storage item |
 | Point stick, blank or marked | `mchjong:point_stick` | Item |
 | Table occupancy cell | `mchjong:table_space` | Internal block, no item or recipe |
 
@@ -123,9 +123,8 @@ The eight flowers are physical tiles in all six materials and sixteen back color
 They can be carried, stored in a box, dyed and dropped like the other tiles. Cut
 eight extra blanks to complete a 144-tile case, or carve the eight spares left by
 bulk-engraving 144 blanks. Creative inventory also exposes the eight designs.
-Riichi rules do not draw flower tiles: the validated 136-tile set (108 in sanma)
-is unchanged, and flowers stay safely inside the case during those games. This
-does not introduce a different scoring ruleset or flower-replacement actions.
+Riichi uses the validated 136-tile set (108 in sanma), while flowers remain
+stored safely inside the case during those games.
 
 ## Boxes, installation and removal
 
@@ -146,7 +145,7 @@ The hand remains centered while it fits, shifting left only enough to clear the
 actual melds and any drawn tile, without reserving unused slots.
 
 Right-click either table, including any footprint cell, to open its two-case
-storage screen. Each slot holds one box, without rendering it on the tabletop.
+storage screen. Each slot holds one box inside the table, keeping the playing surface clear.
 Empty and incomplete boxes can be stored and retrieved. The first complete box,
 reading left to right, supplies the game; the second box is not combined with it.
 Use normal clicks, shift-clicks or number-key swaps to move cases. The server
@@ -206,8 +205,8 @@ renderer never resolves a face texture for such a sentinel. Moving a camera
 behind a glass tile therefore cannot reveal an opponent's printed face.
 
 The default back is a neutral texture tinted by the 16 dye colors. Custom
-resource packs may still replace `assets/mchjong/textures/tile/back.png`.
-No patterned-back pack is bundled. See [ASSETS.md](ASSETS.md).
+resource packs can replace `assets/mchjong/textures/tile/back.png`.
+See [ASSETS.md](ASSETS.md).
 
 Use a marked stick on a table to place one on the nearest side; matching sticks
 stack there. Sneak-use the top with both hands empty to retrieve that side's
@@ -233,8 +232,7 @@ NeoForge defers intrusive object creation until registry events.
 
 `GenerateAssets` generates textures and client models only. `GenerateData`
 serializes server data through `SurvivalRecipes` and `FurnitureData`, with
-separate Gradle outputs and reproducibility checks. Retired generated data is
-removed, not retained as compatibility recipes.
+separate synchronized Gradle outputs and reproducibility checks.
 
 Run `gradlew.bat buildAll`. `ManualHandlingTest` checks all presets, stale
 actions, conservation, reloads and a complete manually handled bot hand.
