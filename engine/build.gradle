@@ -1,0 +1,47 @@
+plugins {
+    id 'java-library'
+    id 'org.jetbrains.kotlin.jvm' version '2.3.20'
+    id 'com.gradleup.shadow' version '9.6.1'
+}
+
+group = rootProject.maven_group
+version = rootProject.mod_version
+base.archivesName = 'mchjong-engine'
+repositories { mavenCentral() }
+
+dependencies {
+    implementation 'io.github.ssttkkl:mahjong-utils-jvm:0.7.7'
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0'
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation 'com.google.code.gson:gson:2.10.1'
+}
+
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+kotlin.jvmToolchain(21)
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+test { useJUnitPlatform(); maxHeapSize = '1G' }
+
+shadowJar {
+    archiveClassifier = ''
+    relocate 'mahjongutils', 'top.skyeyefast.mchjong.internal.mahjongutils'
+    relocate 'kotlin', 'top.skyeyefast.mchjong.internal.kotlin'
+    relocate 'kotlinx', 'top.skyeyefast.mchjong.internal.kotlinx'
+    exclude 'module-info.class', 'META-INF/versions/**/module-info.class'
+    exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    mergeServiceFiles()
+    from(rootProject.file('NOTICE'))
+    manifest.attributes 'Automatic-Module-Name': 'top.skyeyefast.mchjong.engine', 'FMLModType': 'LIBRARY'
+}
+jar { archiveClassifier = 'unshaded' }
+
+// Loader distributions embed one self-contained artifact. Its private runtime
+// is already inside the Shadow archive and has no external dependency graph.
+configurations {
+    embeddedEngine {
+        canBeConsumed = true
+        canBeResolved = false
+        outgoing.artifact(tasks.named('shadowJar'))
+    }
+}
