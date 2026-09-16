@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 public final class TableScene {
     public static final float TILE_SCALE = 0.82f;
     public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - 0.09;
-    public static final double HAND_STEP = 0.1;
+    public static final double HAND_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double DRAW_GAP = 0.035;
     public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
     public static final double MELD_GAP = 0.035;

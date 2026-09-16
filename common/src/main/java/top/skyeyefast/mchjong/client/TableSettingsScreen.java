@@ -47,7 +47,6 @@ public final class TableSettingsScreen extends Screen {
                     information.key(), settings.show(information), () -> settings.toggle(information));
                 if (information == TableSettings.Information.REMAINING && !settings.showRiver) {
                     toggle.active = false;
-                    toggle.setTooltip(Tooltip.create(Component.translatable("settings.mchjong.river_hint")));
                 }
             }
             if (values.length > perPage) {
@@ -77,8 +76,7 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(new CameraSlider(left, 91, span, false));
             addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
                 .bounds(left, 117, span, 20).build());
-            addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver)
-                .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.river_hint")));
+            addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver);
         } else {
             addRenderableWidget(new VolumeSlider(left, 65, column, false));
             var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
@@ -122,11 +120,8 @@ public final class TableSettingsScreen extends Screen {
         }
         if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
         if (tab == 3) {
-            String key = settings.voiceSource == TableSettings.VoiceSource.SYSTEM && TableAudio.systemVoiceUnavailable()
-                ? "settings.mchjong.voice_unavailable" : settings.voiceSource == TableSettings.VoiceSource.SYSTEM
-                    ? "settings.mchjong.system_voice_note" : "settings.mchjong.pack_voice_note";
             int y = 145;
-            for (var line : font.split(Component.translatable(key), Math.min(540, width - 32))) {
+            for (var line : font.split(Component.translatable("settings.mchjong.pack_voice_note"), Math.min(540, width - 32))) {
                 graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.MUTED);
                 y += 11;
             }
@@ -162,6 +157,7 @@ public final class TableSettingsScreen extends Screen {
                 + value * (TableSettings.MAX_CAMERA_DISTANCE - TableSettings.MIN_CAMERA_DISTANCE);
             else settings.cameraHeight = TableSettings.MIN_CAMERA_HEIGHT
                 + value * (TableSettings.MAX_CAMERA_HEIGHT - TableSettings.MIN_CAMERA_HEIGHT);
+            parent.resetView();
         }
     }
 

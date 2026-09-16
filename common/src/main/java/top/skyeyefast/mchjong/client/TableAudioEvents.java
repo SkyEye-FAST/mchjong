@@ -8,7 +8,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 
 /** Pure snapshot comparison, shared by playback and tests. A newly observed table is silent. */
 public final class TableAudioEvents {
-    public record Cue(String sound, String voice, String translation, int delay) {}
+    public record Cue(String sound, String voice, int delay) {}
     private TableAudioEvents() {}
 
     public static List<Cue> between(TableView before, TableView after) {
@@ -29,16 +29,16 @@ public final class TableAudioEvents {
             for (int i = old.river().size(); i < next.river().size(); i++) {
                 var discard = next.river().get(i);
                 cues.add(effect(discard.tsumogiri() ? "tsumogiri" : "tedashi", 0));
-                if (discard.riichi() && !old.riichi()) cues.add(voice("riichi", "action.mchjong.riichi"));
+                if (discard.riichi() && !old.riichi()) cues.add(voice("riichi"));
             }
             for (int i = 0; i < next.melds().size(); i++) {
                 var meld = next.melds().get(i);
                 if (i >= old.melds().size() || !meld.equals(old.melds().get(i))) {
                     String type = meld.kan() ? "kan" : meld.type().name().toLowerCase(java.util.Locale.ROOT);
-                    cues.add(voice(type, "voice.mchjong." + type));
+                    cues.add(voice(type));
                 }
             }
-            if (next.norths().size() > old.norths().size()) cues.add(voice("nuki", "voice.mchjong.nuki"));
+            if (next.norths().size() > old.norths().size()) cues.add(voice("nuki"));
             if (next.drawn() != Tile.ABSENT && (old.drawn() == Tile.ABSENT || next.hand().size() > old.hand().size()))
                 cues.add(effect("draw", 0));
         }
@@ -46,14 +46,14 @@ public final class TableAudioEvents {
         boolean wasEnded = before.phase() == Game.Phase.HAND_END || before.phase() == Game.Phase.MATCH_END;
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
-            cues.add(voice(result, "result.mchjong." + after.result()));
+            cues.add(voice(result));
             if (after.phase() == Game.Phase.MATCH_END)
-                cues.add(new Cue("match_end", "match_end", "ui.mchjong.match_complete", 25));
+                cues.add(new Cue("match_end", "match_end", 25));
         } else if (after.phase() == Game.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);
     }
 
-    private static Cue effect(String sound, int delay) { return new Cue(sound, null, null, delay); }
-    private static Cue voice(String sound, String text) { return new Cue(sound, sound, text, 0); }
+    private static Cue effect(String sound, int delay) { return new Cue(sound, null, delay); }
+    private static Cue voice(String sound) { return new Cue(sound, sound, 0); }
 }

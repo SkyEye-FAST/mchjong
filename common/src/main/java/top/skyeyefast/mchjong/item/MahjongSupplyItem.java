@@ -20,8 +20,6 @@ public class MahjongSupplyItem extends Item {
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null) {
             lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : Component.translatable("item.mchjong.denomination", points));
-            lines.add(Component.translatable("item.mchjong.point_help"));
-            lines.add(Component.translatable("item.mchjong.point_interaction"));
         }
         if (stack.has(net.minecraft.core.component.DataComponents.BASE_COLOR))
             lines.add(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));

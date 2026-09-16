@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import com.mojang.text2speech.Narrator;
 import java.util.ArrayList;
 import java.util.Map;
 import java.util.WeakHashMap;
@@ -9,7 +8,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
-import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -17,13 +15,12 @@ import top.skyeyefast.mchjong.world.MahjongSounds;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
-/** Playback is client-local and never produces a game action. Native speech has its own narrator. */
+/** Client-local effects and optional resource-pack recordings. Never invokes a speech backend. */
 public final class TableAudio {
     private static final Map<MahjongTableBlockEntity, TableView> VIEWS = new WeakHashMap<>();
     private static final ArrayList<Speech> SPEECH = new ArrayList<>();
-    private record Speech(long tick, String voice, String translation) {}
+    private record Speech(long tick, String voice) {}
     private static ClientLevel level;
-    private static Narrator narrator;
     private static long ticks;
     private static UUID clockTable;
     private static long clockDecision = -1;
@@ -38,7 +35,6 @@ public final class TableAudio {
         clockTable = null;
         clockDecision = -1;
         lastSecond = -1;
-        if (narrator != null) narrator.clear();
         level = current;
     }
 
@@ -47,12 +43,11 @@ public final class TableAudio {
         TableView before = VIEWS.put(table, view);
         if (before != null && (!before.tableId().equals(view.tableId()) || before.viewerSeat() != view.viewerSeat())) {
             SPEECH.clear();
-            if (narrator != null) narrator.clear();
         }
         for (var cue : TableAudioEvents.between(before, view)) {
             effect(cue.sound(), table.getBlockPos(), cue.delay());
             if (view.viewerSeat() >= 0 && cue.voice() != null)
-                SPEECH.add(new Speech(ticks + cue.delay(), cue.voice(), cue.translation()));
+                SPEECH.add(new Speech(ticks + cue.delay(), cue.voice()));
         }
     }
 
@@ -67,7 +62,7 @@ public final class TableAudio {
         }
         SPEECH.removeIf(speech -> {
             if (speech.tick() > ticks) return false;
-            speak(speech.voice(), speech.translation());
+            speak(speech.voice());
             return true;
         });
         if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
@@ -94,15 +89,10 @@ public final class TableAudio {
         Minecraft.getInstance().getSoundManager().playDelayed(sound, delay);
     }
 
-    private static void speak(String event, String translation) {
+    private static void speak(String event) {
         var settings = TableSettings.get();
         switch (settings.voiceSource) {
             case OFF -> { }
-            case SYSTEM -> {
-                if (Minecraft.getInstance().options.getSoundSourceVolume(SoundSource.MASTER) <= 0) return;
-                if (narrator == null) narrator = Narrator.getNarrator();
-                if (narrator.active()) narrator.say(Component.translatable(translation).getString(), false);
-            }
             case RESOURCE_PACK -> {
                 if (settings.voiceVolume > 0) Minecraft.getInstance().getSoundManager().play(
                     SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, (float) settings.voiceVolume));
@@ -112,20 +102,16 @@ public final class TableAudio {
 
     public static void settingsChanged() {
         SPEECH.clear();
-        if (narrator != null) narrator.clear();
         for (String name : MahjongSounds.VOICES)
             Minecraft.getInstance().getSoundManager().stop(MahjongSounds.voice(name).getLocation(), null);
     }
 
     public static void preview() {
         effect("ron", null, 0);
-        speak("ron", "action.mchjong.ron");
+        speak("ron");
     }
-
-    public static boolean systemVoiceUnavailable() { return narrator != null && !narrator.active(); }
 
     public static void close() {
         VIEWS.clear(); SPEECH.clear(); level = null;
-        if (narrator != null) { narrator.destroy(); narrator = null; }
     }
 }

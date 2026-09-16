@@ -22,7 +22,7 @@ public final class TableSettings {
     }
     public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK, CONFIRM }
     public enum GuideLines { ALWAYS, HOVER, OFF }
-    public enum VoiceSource { SYSTEM, RESOURCE_PACK, OFF }
+    public enum VoiceSource { RESOURCE_PACK, OFF }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static TableSettings current;
@@ -33,16 +33,16 @@ public final class TableSettings {
     public boolean highlightTiles = true;
     public boolean animations = true;
     public boolean showRiver = true;
-    public VoiceSource voiceSource = VoiceSource.SYSTEM;
+    public VoiceSource voiceSource = VoiceSource.RESOURCE_PACK;
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
     public boolean countdownSounds = true;
-    public static final double MIN_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + .4;
-    public static final double MAX_CAMERA_DISTANCE = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 2.0;
-    public static final double MIN_CAMERA_HEIGHT = 1.7;
-    public static final double MAX_CAMERA_HEIGHT = 3.0;
-    public double cameraDistance = top.skyeyefast.mchjong.world.TableGeometry.STOOL_DISTANCE + 1.15;
-    public double cameraHeight = 2.25;
+    public static final double MIN_CAMERA_DISTANCE = 1.6;
+    public static final double MAX_CAMERA_DISTANCE = 2.8;
+    public static final double MIN_CAMERA_HEIGHT = 1.35;
+    public static final double MAX_CAMERA_HEIGHT = 2.5;
+    public double cameraDistance = 2.45;
+    public double cameraHeight = 2.1;
 
     public static TableSettings get() {
         if (current == null) {

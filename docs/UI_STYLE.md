@@ -65,7 +65,8 @@ Secondary screens use a centered panel over a subdued backdrop. In the table
 view, compact HUD cards belong near the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit tabs
 and an orderly grid; selection does not replace the setting's written value.
-Detailed explanations belong in hover text rather than covering the table.
+Tooltips contain concise labels and state only. Gameplay and crafting explanations
+belong in the documentation, not long hover paragraphs covering the table.
 
 Design and verify against a minimum 320 x 240 **logical GUI** viewport as well as
 the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
@@ -112,13 +113,20 @@ the left, with clearance from the adjacent player's right-corner melds.
 
 Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called
-tiles and stacked added kans. Wall tiles, river tiles and tiles within a meld
+tiles and stacked added kans. Concealed hand tiles, wall tiles, river tiles and tiles within a meld
 touch edge to edge. Keep the deliberate drawn-tile and inter-meld gaps separate
 from those physical contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
 Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
 defaults must keep the compact table and its right corner usable from the seated view.
+
+The default seated camera is 2.45 blocks from the center and 2.1 blocks above the
+table's base, aiming at the felt. Camera sliders immediately re-aim at the table.
+Ordinary tables have no central machine indicator. Automatic tables use a compact
+seven-segment display, wind-tile pictograms, round pips and seat lamps. Each score
+display faces its owner, with glyph tops pointing toward the table center; do not
+render explanatory font labels across the felt.
 
 ## Acceptance and future changes
 

@@ -5,20 +5,12 @@ countdown warnings, voice source, and resource-pack voice volume. Effects are
 positional and also respect Minecraft's Blocks volume. Countdown warnings and
 recorded voices respect Master volume. Setting an individual volume to zero mutes it.
 
-**System speech** is the default: the Minecraft-bundled text-to-speech library
-reads translated calls using its platform speech backend. Windows uses SAPI;
-Linux uses the installed Flite backend, whose default voice is English. Voice,
-language availability and volume controls therefore depend on the platform.
-MCjhong owns a separate narrator and does not enable, disable, interrupt or change
-Minecraft's accessibility narration. Availability and pronunciation depend on the
-installed backend. Setting Minecraft's Master volume to zero also suppresses new
-system calls; use the operating system for other system-speech volume changes.
-This is not a bundled set of actor recordings.
-
-**Resource pack** plays recordings supplied by the selected resource pack, with
-independent volume. There is no automatic substitution with system speech when a
-recording is absent. **Off** disables calls. The preview button tests the selected
-source. Snapshots received on joining/reconnecting do not replay historical calls.
+**Resource pack** is the default and plays only recordings supplied by the selected
+resource pack, with independent volume. Missing recordings stay silent. **Off**
+disables recorded calls without disabling other effects. The preview button tests
+the selected source. Snapshots received on joining/reconnecting do not replay
+historical calls. The mod never creates a device speech backend or synthesizes
+calls; Minecraft's separate accessibility narration is unchanged.
 
 ## Resource-pack contract
 
