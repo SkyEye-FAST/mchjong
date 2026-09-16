@@ -1,0 +1,68 @@
+package top.skyeyefast.mchjong.art;
+
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.HashSet;
+import java.util.List;
+import javax.imageio.ImageIO;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class FurnitureArtworkTest {
+    private final Path textures = Path.of(System.getProperty("mchjong.resources"), "assets/mchjong/textures/furniture");
+
+    @Test void everyWoodAndSurfaceHasItsOwnOpaquePixelTexture() throws Exception {
+        assertEquals(11, FurnitureArtwork.WOODS.size());
+        assertEquals(15, FurnitureArtwork.textures().size());
+        var signatures = new HashSet<Integer>();
+        for (var entry : FurnitureArtwork.textures().entrySet()) {
+            var actual = ImageIO.read(textures.resolve(entry.getKey() + ".png").toFile());
+            assertNotNull(actual, entry.getKey());
+            assertEquals(64, actual.getWidth());
+            assertEquals(64, actual.getHeight());
+            var colors = new HashSet<Integer>();
+            int signature = 1;
+            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+                int color = actual.getRGB(x, y);
+                assertEquals(255, color >>> 24, entry.getKey());
+                assertEquals(entry.getValue().getRGB(x, y), color);
+                colors.add(color);
+                signature = 31 * signature + color;
+            }
+            assertTrue(colors.size() >= 2, "A material must contain original surface detail: " + entry.getKey());
+            assertTrue(signatures.add(signature), "Duplicate material: " + entry.getKey());
+        }
+    }
+
+    @Test void customParticleIsStitchedAndWhiteTileIconsUseFrontLighting() throws Exception {
+        Path resources = Path.of(System.getProperty("mchjong.resources"));
+        var atlas = com.google.gson.JsonParser.parseString(Files.readString(resources.resolve("assets/minecraft/atlases/blocks.json")))
+            .getAsJsonObject().getAsJsonArray("sources");
+        assertEquals(1, atlas.size());
+        assertEquals("minecraft:single", atlas.get(0).getAsJsonObject().get("type").getAsString());
+        assertEquals("mchjong:furniture/wood_oak", atlas.get(0).getAsJsonObject().get("resource").getAsString());
+        var tile = com.google.gson.JsonParser.parseString(Files.readString(resources.resolve("assets/mchjong/models/item/mahjong_tile.json")))
+            .getAsJsonObject();
+        assertEquals("front", tile.get("gui_light").getAsString());
+    }
+
+    @Test void fabricIsNeutralSoEveryDyeKeepsItsHue() throws Exception {
+        var felt = ImageIO.read(textures.resolve("felt.png").toFile());
+        for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+            int rgb = felt.getRGB(x, y);
+            assertEquals(rgb & 255, rgb >> 8 & 255);
+            assertEquals(rgb & 255, rgb >> 16 & 255);
+        }
+    }
+
+    @Test void furnitureDoesNotReferenceVanillaTextureSurrogates() throws Exception {
+        Path root = Path.of(System.getProperty("mchjong.sourceRoot"));
+        String renderer = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/client/FurnitureMesh.java"));
+        for (String retired : List.of("textures/block/", "_planks", "_wool", "iron_block", "copper_block"))
+            assertFalse(renderer.contains(retired), retired);
+        for (String wood : FurnitureArtwork.WOODS.keySet()) {
+            String definition = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/item/FurnitureWood.java"));
+            assertTrue(definition.contains(wood.toUpperCase(java.util.Locale.ROOT)), wood);
+        }
+    }
+}

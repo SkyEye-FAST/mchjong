@@ -130,6 +130,14 @@ public final class TableClientSmoke {
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
+                client.setScreen(new FurnitureGalleryScreen(false));
+                step = 20; entered = ticks;
+            } else if (step == 20 && ticks - entered > 20) {
+                capture(client, "00-furniture-details.png");
+                client.setScreen(new FurnitureGalleryScreen(true));
+                step = 21; entered = ticks;
+            } else if (step == 21 && ticks - entered > 20) {
+                capture(client, "00-material-gallery.png");
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {

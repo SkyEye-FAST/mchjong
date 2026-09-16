@@ -32,16 +32,6 @@ class TileMeshTest {
         @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
     }
 
-    @Test void furnitureTexturesKeepVanillaPixelDensityAcrossDifferentCuboidDimensions() {
-        var mesh = new Mesh();
-        TileMesh.texturedBox(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0);
-        assertEquals(24, mesh.vertices.size());
-        assertEquals(3, mesh.vertices.get(1).u);
-        assertEquals(.25f, mesh.vertices.get(0).v);
-        assertEquals(3, mesh.vertices.get(9).u);
-        assertEquals(2, mesh.vertices.get(8).v);
-    }
-
     @Test void everyQuadWindsOutwardIncludingTheBackAfterRotation() {
         for (int pitch : new int[]{0, -90, 90}) for (boolean hidden : new boolean[]{false, true}) {
             var pose = new PoseStack();

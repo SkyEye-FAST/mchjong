@@ -22,6 +22,8 @@ public final class GenerateAssets {
 
     private void generate(Path artwork) throws IOException {
         tiles(artwork);
+        for (var texture : FurnitureArtwork.textures().entrySet())
+            png("furniture/" + texture.getKey(), texture.getValue());
         models();
     }
 
@@ -56,16 +58,21 @@ public final class GenerateAssets {
     }
 
     private void models() throws IOException {
+        // Furniture is outside the automatic block/item texture directories. Stitch its particle explicitly.
+        text("assets/minecraft/atlases/blocks.json",
+            "{\"sources\":[{\"type\":\"minecraft:single\",\"resource\":\"mchjong:furniture/wood_oak\"}]}");
         // Component-aware geometry lives once in FurnitureMesh/TileMesh, shared by items and blocks.
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"}) {
             text("assets/mchjong/models/block/" + name + ".json",
-                "{\"textures\":{\"particle\":\"minecraft:block/oak_planks\"},\"elements\":[]}");
+                "{\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"elements\":[]}");
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
         }
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
-            String rotation = name.equals("mahjong_tile") ? "[0,0,0]" : "[30,225,0]";
+            String rotation = name.equals("mahjong_tile") ? "[0,0,0]"
+                : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
+            String lighting = name.equals("mahjong_tile") ? "front" : "side";
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","
-                + "\"textures\":{\"particle\":\"minecraft:block/oak_planks\"},\"gui_light\":\"side\",\"display\":{"
+                + "\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"" + lighting + "\",\"display\":{"
                 + "\"gui\":{\"rotation\":" + rotation + "},"
                 + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
                 + "\"firstperson_righthand\":{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]},"

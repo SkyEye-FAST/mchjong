@@ -14,9 +14,25 @@ final class TileResourceSmoke {
     private static byte[] originalAtlas;
     private static byte[] originalBack;
     private static byte[] originalGlyphs;
+    private static final java.util.Map<ResourceLocation, byte[]> originalFurniture = new java.util.HashMap<>();
     private TileResourceSmoke() {}
 
     static void verify(Minecraft client) throws IOException {
+        var particleId = ResourceLocation.fromNamespaceAndPath("mchjong", "furniture/wood_oak");
+        var particle = client.getTextureAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS).apply(particleId);
+        require(particle.contents().name().equals(particleId), "Furniture particle was not stitched into the block atlas");
+        var furniture = new java.util.ArrayList<>(java.util.List.of("felt", "steel", "brass", "edge"));
+        for (var wood : top.skyeyefast.mchjong.item.FurnitureWood.values()) furniture.add("wood_" + wood.getSerializedName());
+        for (String name : furniture) {
+            var texture = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/" + name + ".png");
+            byte[] bytes;
+            try (var stream = client.getResourceManager().open(texture)) { bytes = stream.readAllBytes(); }
+            byte[] previous = originalFurniture.putIfAbsent(texture, bytes);
+            require(previous == null || Arrays.equals(previous, bytes), "Furniture changed after resource reload: " + name);
+            try (var image = NativeImage.read(new ByteArrayInputStream(bytes))) {
+                require(image.getWidth() == 64 && image.getHeight() == 64, "Original furniture texture missing: " + name);
+            }
+        }
         require(client.getResourcePackRepository().getAvailableIds().stream().noneMatch(id -> id.endsWith("patterned_backs")),
             "Retired built-in pack is still registered");
         byte[] atlasBytes;

@@ -67,12 +67,27 @@ buffers for each tile.
 
 ## Table and other resources
 
-Furniture uses original Minecraft plank, wool, iron and copper textures rather
-than bundled substitutes. `FurnitureMesh` owns a small set of cuboids shared by
-the block-entity and item renderers. Component values select wood, cushion and
-cloth appearances without multiplying registry entries or blockstates. Ordinary
-tables have four legs; automatic tables have an iron pedestal and copper band.
-The 3 by 3 occupancy and colliders belong to the world implementation.
+Furniture uses fifteen original 64 by 64 pixel textures under
+`assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
+`felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
+flowing wood grain, neutral woven fabric, brushed metal and dark edge material
+deterministically. It does not read, copy or composite Minecraft textures. Wood
+components select the finish; neutral fabric is tinted by the existing dye
+component. Resource packs can replace these paths directly.
+The block atlas explicitly stitches the wooden particle sprite through
+`assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
+Tile inventory icons use front lighting so their white faces remain readable.
+
+`FurnitureShape` supplies small textured boxes, tapered legs and clipped-corner
+bevels with outward normals and consistent pixel density. `FurnitureMesh` shares
+the resulting geometry between blocks and items. Ordinary tables have framed
+playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
+have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
+have joined frames and padded, piped cushions. The dark wooden case has a fitted
+lid, corner hardware, paired clasps, hinges, a handle and a small tile inlay.
+Folded cloth uses the same woven material as the table. None of this adds block
+IDs or blockstate variants. The 3 by 3 occupancy and colliders remain in the world
+implementation. Bare panels and installed cloth finish at the same playing height.
 
 `assets/mchjong/textures/tile_glyphs.png` has the same cells and white material
 swatch as the GUI face atlas, but transparent backgrounds. All material-aware
@@ -97,11 +112,18 @@ code from that project or riichi_advanced is bundled.
 
 `gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source
 order, red fives, the blank white dragon, texture resolution and filtering,
-uniform default backs, absence of bundled packs, language keys, model
-bounds, source integrity and byte-for-byte reproducible generation.
+uniform default backs, absence of bundled packs, language keys, original furniture
+materials, source integrity and byte-for-byte reproducible generation. Client-side
+unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
+white face plates, picking and exact wall/river contact, including riichi discards.
 
 `gradlew.bat runSmokeClient` exercises placement, seating, a private deal and a
 discard in an isolated Fabric world, then reloads the resources. It checks that
 the retired pack is absent and that filtering and resource bytes survive reload.
-Screenshots and the final result are written beneath
-`build/smoke/evidence`.
+Screenshots and the final result are written beneath `build/smoke/evidence`.
+`00-furniture-details.png` and `00-material-gallery.png` are development-only
+contact sheets rendered by the real item renderer. They cover the furniture,
+eleven wood finishes and six white-face tile materials. The held/dropped-item
+screenshots and real table views additionally exercise the world render paths.
+`:neoforge:runSmokeClient` runs the same assertions and contact sheets under
+`neoforge/build/smoke/evidence`. Resource reload checks include all furniture textures.

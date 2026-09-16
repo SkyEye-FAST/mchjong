@@ -16,7 +16,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Shared component-aware furniture and item rendering uses vanilla material textures.
+- Furniture uses original pixel wood, fabric and metal textures with beveled frames, tapered legs, padded stools and detailed case hardware.
+- All six tile materials have opaque white faces; material colors and glass transparency remain on the body.
+- Wall columns and layers and normal river rows now touch edge-to-edge, including width-aware sideways riichi discards.
 - Texture/model generation and recipe/tag/loot generation have independent outputs and tests.
 
 ### Removed

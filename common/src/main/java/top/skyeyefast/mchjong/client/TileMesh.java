@@ -89,24 +89,6 @@ public final class TileMesh {
             vertex(pose, out, points[i], points[i+1], points[i+2], u, v, color, nx, ny, nz, light);
     }
 
-    public static void texturedBox(PoseStack pose, VertexConsumer out, float x0, float y0, float z0,
-            float x1, float y1, float z1, int light) {
-        texturedQuad(pose, out, light, 0,0,1, x0,y0,z1, x1,y0,z1, x1,y1,z1, x0,y1,z1);
-        texturedQuad(pose, out, light, 0,0,-1, x1,y0,z0, x0,y0,z0, x0,y1,z0, x1,y1,z0);
-        texturedQuad(pose, out, light, 0,1,0, x0,y1,z1, x1,y1,z1, x1,y1,z0, x0,y1,z0);
-        texturedQuad(pose, out, light, 0,-1,0, x0,y0,z0, x1,y0,z0, x1,y0,z1, x0,y0,z1);
-        texturedQuad(pose, out, light, 1,0,0, x1,y0,z1, x1,y0,z0, x1,y1,z0, x1,y1,z1);
-        texturedQuad(pose, out, light, -1,0,0, x0,y0,z0, x0,y0,z1, x0,y1,z1, x0,y1,z0);
-    }
-
-    private static void texturedQuad(PoseStack pose, VertexConsumer out, int light, float nx, float ny, float nz, float... points) {
-        // Axis-aligned cuboids use one vanilla texture repeat per block, not a stretched 3x3 tabletop.
-        float width = Math.abs(points[3] - points[0]) + Math.abs(points[4] - points[1]) + Math.abs(points[5] - points[2]);
-        float height = Math.abs(points[6] - points[3]) + Math.abs(points[7] - points[4]) + Math.abs(points[8] - points[5]);
-        for (int i = 0; i < 4; i++) vertex(pose, out, points[i*3], points[i*3+1], points[i*3+2],
-            i == 1 || i == 2 ? width : 0, i < 2 ? height : 0, 0xffffffff, nx, ny, nz, light);
-    }
-
     private static void vertex(PoseStack pose, VertexConsumer out, float x, float y, float z, float u, float v,
             int color, float nx, float ny, float nz, int light) {
         out.addVertex(pose.last(), x, y, z).setColor(color).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)

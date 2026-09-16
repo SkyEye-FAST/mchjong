@@ -117,8 +117,10 @@ class AssetContractTest {
             assertEquals(TileArtwork.BACK, solid.getRGB(x, y));
         }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
+        var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png"));
+        FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {
-            assertEquals(Set.of("tiles.png", "tile_glyphs.png", "back.png"), textures.filter(Files::isRegularFile)
+            assertEquals(expectedTextures, textures.filter(Files::isRegularFile)
                 .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
                 .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
         }

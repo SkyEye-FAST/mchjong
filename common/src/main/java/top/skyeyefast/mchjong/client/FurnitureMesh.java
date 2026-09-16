@@ -1,55 +1,154 @@
 package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 
-/** The same few cuboids render furniture in-world and in inventories. */
+/** Original furniture materials and compact meshes shared by world and item rendering. */
 public final class FurnitureMesh {
+    private static final int WHITE = 0xffffffff;
+    private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
 
     public static void table(PoseStack pose, MultiBufferSource buffers, int light,
                              FurnitureWood wood, DyeColor cloth, boolean automatic) {
-        var wooden = buffers.getBuffer(texture(wood.getSerializedName() + "_planks"));
-        TileMesh.texturedBox(pose, wooden, -1.4375f, .75f, -1.4375f, 1.4375f, .9375f, 1.4375f, light);
-        TileMesh.texturedBox(pose, wooden, -1.4375f, .9375f, -1.4375f, -1.3125f, 1, 1.4375f, light);
-        TileMesh.texturedBox(pose, wooden, 1.3125f, .9375f, -1.4375f, 1.4375f, 1, 1.4375f, light);
-        TileMesh.texturedBox(pose, wooden, -1.3125f, .9375f, -1.4375f, 1.3125f, 1, -1.3125f, light);
-        TileMesh.texturedBox(pose, wooden, -1.3125f, .9375f, 1.3125f, 1.3125f, 1, 1.4375f, light);
-        if (automatic) {
-            var metal = buffers.getBuffer(texture("iron_block"));
-            TileMesh.texturedBox(pose, metal, -.375f, .1f, -.375f, .375f, .75f, .375f, light);
-            TileMesh.texturedBox(pose, metal, -.85f, 0, -.2f, .85f, .12f, .2f, light);
-            TileMesh.texturedBox(pose, metal, -.2f, 0, -.85f, .2f, .12f, .85f, light);
-            var copper = buffers.getBuffer(texture("copper_block"));
-            TileMesh.texturedBox(pose, copper, -.39f, .45f, -.39f, .39f, .52f, .39f, light);
-        } else {
-            for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
-                TileMesh.texturedBox(pose, wooden, x * 1.15f - .09f, 0, z * 1.15f - .09f,
-                    x * 1.15f + .09f, .75f, z * 1.15f + .09f, light);
+        var wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
+        FurnitureShape.box(pose, wooden, -1.375f, .78125f, -1.375f, 1.375f, .890625f, 1.375f, SHADE, light);
+        // Both a bare playing surface and an installed mat finish at TableGeometry.FELT_Y.
+        FurnitureShape.box(pose, wooden, -1.3125f, .875f, -1.3125f, 1.3125f,
+            cloth == null ? .9375f : .925f, 1.3125f, WHITE, light);
+        for (int side = 0; side < 4; side++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
+            FurnitureShape.box(pose, wooden, -1.28125f, .640625f, 1.21875f, 1.28125f, .84375f, 1.34375f, WHITE, light);
+            FurnitureShape.box(pose, wooden, -1.28125f, .625f, 1.203125f, 1.28125f, .671875f, 1.359375f, SHADE, light);
+            FurnitureShape.box(pose, wooden, -1.4375f, .859375f, 1.3125f, 1.4375f, .90625f, 1.4375f, SHADE, light);
+            FurnitureShape.bevel(pose, wooden, -1.3125f, .890625f, 1.3125f, 1.3125f, 1, 1.4375f, .015625f, WHITE, light);
+            if (!automatic) FurnitureShape.box(pose, wooden, -1.15f, .171875f, 1.109375f,
+                1.15f, .234375f, 1.1875f, SHADE, light);
+            pose.popPose();
         }
-        if (cloth != null) TileMesh.texturedBox(pose, buffers.getBuffer(texture(cloth.getName() + "_wool")),
-            -1.3125f, .928f, -1.3125f, 1.3125f, .939f, 1.3125f, light);
+        for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1}) {
+            FurnitureShape.bevel(pose, wooden, x * 1.375f - .0625f, .890625f, z * 1.375f - .0625f,
+                x * 1.375f + .0625f, 1, z * 1.375f + .0625f, .015625f, WHITE, light);
+            if (!automatic) {
+                FurnitureShape.tapered(pose, wooden, x * 1.15f - .109375f, 0, z * 1.15f - .109375f,
+                    x * 1.15f + .109375f, .796875f, z * 1.15f + .109375f, .03125f, WHITE, light);
+                FurnitureShape.box(pose, wooden, x * 1.15f - .1171875f, .5625f, z * 1.15f - .1171875f,
+                    x * 1.15f + .1171875f, .609375f, z * 1.15f + .1171875f, SHADE, light);
+            }
+        }
+        if (automatic) automaticBase(pose, buffers, light);
+        var brass = buffers.getBuffer(texture("brass"));
+        for (int side = 0; side < 4; side++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
+            FurnitureShape.bevel(pose, brass, -.11f, .707f, 1.344f, .11f, .758f, 1.36f, .004f, WHITE, light);
+            FurnitureShape.box(pose, brass, 1.355f, 1, 1.355f, 1.395f, 1.002f, 1.395f, WHITE, light);
+            pose.popPose();
+        }
+        if (cloth != null) tableCloth(pose, buffers, light, cloth);
+    }
+
+    private static void automaticBase(PoseStack pose, MultiBufferSource buffers, int light) {
+        var metal = buffers.getBuffer(texture("steel"));
+        FurnitureShape.bevel(pose, metal, -.75f, .025f, -.75f, .75f, .14f, .75f, .05f, WHITE, light);
+        FurnitureShape.tapered(pose, metal, -.34375f, .125f, -.34375f, .34375f, .6875f, .34375f, .03125f, WHITE, light);
+        FurnitureShape.bevel(pose, metal, -.453125f, .640625f, -.453125f, .453125f, .8125f, .453125f, .03125f, WHITE, light);
+        var brass = buffers.getBuffer(texture("brass"));
+        FurnitureShape.box(pose, brass, -.35f, .4375f, -.35f, .35f, .4765625f, .35f, WHITE, light);
+        var edge = buffers.getBuffer(texture("edge"));
+        FurnitureShape.box(pose, edge, -.703125f, 0, -.703125f, .703125f, .03125f, .703125f, WHITE, light);
+        for (int side = 0; side < 4; side++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
+            for (int vent = 0; vent < 5; vent++) {
+                float x = (vent - 2) * .046875f;
+                FurnitureShape.box(pose, edge, x - .009f, .55f, .339f, x + .009f, .608f, .346f, WHITE, light);
+            }
+            pose.popPose();
+        }
+    }
+
+    private static void tableCloth(PoseStack pose, MultiBufferSource buffers, int light, DyeColor color) {
+        var felt = buffers.getBuffer(texture("felt"));
+        FurnitureShape.box(pose, felt, -1.3125f, .925f, -1.3125f, 1.3125f, .9375f, 1.3125f, tint(color, 1), light);
+        for (int side = 0; side < 4; side++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
+            FurnitureShape.box(pose, felt, -1.29f, .9375f, 1.275f, 1.29f, .9378f, 1.29f, tint(color, .72f), light);
+            FurnitureShape.box(pose, felt, -1.265f, .9375f, 1.261f, 1.265f, .9378f, 1.265f, tint(color, .88f), light);
+            pose.popPose();
+        }
     }
 
     public static void stool(PoseStack pose, MultiBufferSource buffers, int light, FurnitureWood wood, DyeColor color) {
-        var wooden = buffers.getBuffer(texture(wood.getSerializedName() + "_planks"));
-        TileMesh.texturedBox(pose, wooden, -.375f, .375f, -.375f, .375f, .5f, .375f, light);
+        var wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
+        FurnitureShape.bevel(pose, wooden, -.390625f, .40625f, -.390625f, .390625f, .515625f, .390625f, .0234375f, WHITE, light);
         for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
-            TileMesh.texturedBox(pose, wooden, x * .25f - .0625f, 0, z * .25f - .0625f,
-                x * .25f + .0625f, .375f, z * .25f + .0625f, light);
-        TileMesh.texturedBox(pose, buffers.getBuffer(texture(color.getName() + "_wool")),
-            -.375f, .5f, -.375f, .375f, .625f, .375f, light);
+            FurnitureShape.tapered(pose, wooden, x * .265625f - .078125f, 0, z * .265625f - .078125f,
+                x * .265625f + .078125f, .4375f, z * .265625f + .078125f, .0234375f, WHITE, light);
+        for (int side = 0; side < 4; side++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
+            FurnitureShape.box(pose, wooden, -.265625f, .14f, .24f, .265625f, .1875f, .29f, SHADE, light);
+            FurnitureShape.box(pose, wooden, -.28f, .34375f, .265625f, .28f, .421875f, .328125f, SHADE, light);
+            pose.popPose();
+        }
+        var felt = buffers.getBuffer(texture("felt"));
+        FurnitureShape.bevel(pose, felt, -.375f, .5f, -.375f, .375f, .54375f, .375f, .0125f, tint(color, .68f), light);
+        FurnitureShape.bevel(pose, felt, -.359375f, .52f, -.359375f, .359375f, .625f, .359375f, .04f, tint(color, 1), light);
+        for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
+            FurnitureShape.box(pose, felt, x * .14f - .01f, .624f, z * .14f - .01f,
+                x * .14f + .01f, .6255f, z * .14f + .01f, tint(color, .8f), light);
     }
 
     public static void box(PoseStack pose, MultiBufferSource buffers, int light) {
-        var wooden = buffers.getBuffer(texture("oak_planks"));
-        TileMesh.texturedBox(pose, wooden, -.35f, 0, -.25f, .35f, .2f, .25f, light);
-        TileMesh.texturedBox(pose, wooden, -.36f, .205f, -.26f, .36f, .28f, .26f, light);
-        TileMesh.texturedBox(pose, buffers.getBuffer(texture("copper_block")), -.05f, .12f, .251f, .05f, .25f, .275f, light);
+        var wooden = buffers.getBuffer(texture("wood_dark_oak"));
+        FurnitureShape.bevel(pose, wooden, -.359375f, 0, -.265625f, .359375f, .05f, .265625f, .0125f, SHADE, light);
+        FurnitureShape.box(pose, wooden, -.34375f, .03125f, -.25f, .34375f, .2375f, .25f, WHITE, light);
+        FurnitureShape.bevel(pose, wooden, -.359375f, .245f, -.265625f, .359375f, .328125f, .265625f, .0234375f, WHITE, light);
+        FurnitureShape.box(pose, wooden, -.28f, .328125f, -.1875f, .28f, .33f, .1875f, SHADE, light);
+        var edge = buffers.getBuffer(texture("edge"));
+        FurnitureShape.box(pose, edge, -.345f, .234375f, -.251f, .345f, .25f, .251f, WHITE, light);
+        FurnitureShape.box(pose, edge, -.1f, .126f, .273f, .1f, .151f, .302f, WHITE, light);
+        var brass = buffers.getBuffer(texture("brass"));
+        for (int side : new int[]{-1, 1}) {
+            float x = side * .21875f;
+            FurnitureShape.bevel(pose, brass, x - .032f, .175f, .249f, x + .032f, .282f, .275f, .006f, WHITE, light);
+            FurnitureShape.box(pose, brass, x - .041f, .213f, -.273f, x + .041f, .265f, -.25f, WHITE, light);
+            FurnitureShape.box(pose, brass, side * .105f - .014f, .126f, .258f,
+                side * .105f + .014f, .198f, .299f, WHITE, light);
+            for (int end : new int[]{-1, 1}) {
+                FurnitureShape.box(pose, brass, side * .322f - .02f, .055f, end * .252f - .009f,
+                    side * .322f + .02f, .219f, end * .252f + .009f, SHADE, light);
+                FurnitureShape.box(pose, brass, side * .345f - .009f, .055f, end * .228f - .025f,
+                    side * .345f + .009f, .219f, end * .228f + .025f, SHADE, light);
+            }
+        }
+        // A restrained tile-shaped lid inlay identifies the case without a borrowed block icon.
+        var inlay = buffers.getBuffer(TileRenderTypes.FACES);
+        TileMesh.box(pose, inlay, -.048f, .33f, -.071f, .048f, .333f, .071f, 0xfff4f4ed, light);
+        TileMesh.box(pose, inlay, -.009f, .333f, -.042f, .009f, .334f, .042f, 0xff3c715e, light);
+        for (float z : new float[]{-.027f, 0, .027f})
+            TileMesh.box(pose, inlay, -.018f, .333f, z - .004f, .018f, .334f, z + .004f, 0xff3c715e, light);
+    }
+
+    public static void foldedCloth(PoseStack pose, MultiBufferSource buffers, int light, DyeColor color) {
+        var felt = buffers.getBuffer(texture("felt"));
+        FurnitureShape.bevel(pose, felt, -.3125f, .1875f, -.28125f, .3125f, .24375f, .28125f, .015625f, tint(color, .78f), light);
+        FurnitureShape.bevel(pose, felt, -.3f, .235f, -.28125f, .3f, .3f, .28125f, .015625f, tint(color, 1), light);
+        FurnitureShape.box(pose, felt, -.27f, .3f, .22f, .27f, .301f, .23f, tint(color, .72f), light);
+    }
+
+    private static int tint(DyeColor dye, float brightness) {
+        int rgb = dye.getTextureDiffuseColor();
+        return 0xff000000 | (int) ((rgb >> 16 & 255) * brightness) << 16
+            | (int) ((rgb >> 8 & 255) * brightness) << 8 | (int) ((rgb & 255) * brightness);
     }
 
     public static void stick(PoseStack pose, MultiBufferSource buffers, int light, int points) {
@@ -65,6 +164,6 @@ public final class FurnitureMesh {
     }
 
     public static RenderType texture(String texture) {
-        return RenderType.entityCutout(ResourceLocation.withDefaultNamespace("textures/block/" + texture + ".png"));
+        return RenderType.entityCutout(ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/" + texture + ".png"));
     }
 }

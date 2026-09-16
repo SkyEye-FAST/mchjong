@@ -1,0 +1,87 @@
+package top.skyeyefast.mchjong.client;
+
+import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.math.Axis;
+import java.util.ArrayList;
+import java.util.List;
+import org.joml.Vector3f;
+import org.junit.jupiter.api.Test;
+import static org.junit.jupiter.api.Assertions.*;
+
+class FurnitureShapeTest {
+    @org.junit.jupiter.api.BeforeAll static void bootstrapMinecraft() {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
+    }
+
+    private static final class Vertex {
+        final Vector3f position;
+        Vector3f normal;
+        float u, v;
+        int color;
+        Vertex(float x, float y, float z) { position = new Vector3f(x, y, z); }
+    }
+
+    private static final class Mesh implements VertexConsumer {
+        final List<Vertex> vertices = new ArrayList<>();
+        @Override public VertexConsumer addVertex(float x, float y, float z) { vertices.add(new Vertex(x, y, z)); return this; }
+        @Override public VertexConsumer setColor(int r, int g, int b, int a) { vertices.getLast().color = a << 24 | r << 16 | g << 8 | b; return this; }
+        @Override public VertexConsumer setUv(float u, float v) { vertices.getLast().u = u; vertices.getLast().v = v; return this; }
+        @Override public VertexConsumer setUv1(int u, int v) { return this; }
+        @Override public VertexConsumer setUv2(int u, int v) { return this; }
+        @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
+    }
+
+    @Test void textureDensityAndComponentTintSurviveLongRails() {
+        var mesh = new Mesh();
+        FurnitureShape.box(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0xffb8c4a2, 0);
+        assertEquals(24, mesh.vertices.size());
+        assertEquals(3, mesh.vertices.get(1).v);
+        assertEquals(.25f, mesh.vertices.get(0).u);
+        assertEquals(3, mesh.vertices.get(9).v);
+        assertEquals(2, mesh.vertices.get(8).u);
+        assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.color == 0xffb8c4a2));
+    }
+
+    @Test void bevelsAndTaperedLegsHaveFiniteOutwardNormalsInEveryOrientation() {
+        for (int yaw : new int[]{0, 90, 180, 270}) for (boolean bevel : new boolean[]{false, true}) {
+            var pose = new PoseStack();
+            pose.mulPose(Axis.YP.rotationDegrees(yaw));
+            var mesh = new Mesh();
+            if (bevel) FurnitureShape.bevel(pose, mesh, -.4f, -.2f, -.3f, .4f, .2f, .3f, .04f, -1, 0);
+            else FurnitureShape.tapered(pose, mesh, -.4f, -.2f, -.3f, .4f, .2f, .3f, .06f, -1, 0);
+            assertTrue(mesh.vertices.size() <= 88, "Keep the furniture primitives small");
+            for (int i = 0; i < mesh.vertices.size(); i += 4) {
+                var a = mesh.vertices.get(i);
+                var b = mesh.vertices.get(i + 1);
+                var c = mesh.vertices.get(i + 2);
+                var normal = new Vector3f(b.position).sub(a.position).cross(new Vector3f(c.position).sub(a.position)).normalize();
+                assertTrue(normal.isFinite());
+                assertTrue(normal.dot(a.normal) > .999f, "Quad winding differs from its lighting normal");
+                assertTrue(normal.dot(a.position) > 0, "Face points into the solid");
+                assertTrue(Float.isFinite(a.u) && Float.isFinite(a.v));
+            }
+        }
+    }
+
+    @Test void fullFurnitureRendersAllWoodsAndDyesWithoutDegenerateFacesOrOutOfBoundsGeometry() {
+        for (var wood : top.skyeyefast.mchjong.item.FurnitureWood.values())
+            for (var dye : net.minecraft.world.item.DyeColor.values()) {
+                var mesh = new Mesh();
+                net.minecraft.client.renderer.MultiBufferSource buffers = ignored -> mesh;
+                FurnitureMesh.table(new PoseStack(), buffers, 0, wood, dye, false);
+                FurnitureMesh.table(new PoseStack(), buffers, 0, wood, null, true);
+                FurnitureMesh.stool(new PoseStack(), buffers, 0, wood, dye);
+                FurnitureMesh.box(new PoseStack(), buffers, 0);
+                FurnitureMesh.foldedCloth(new PoseStack(), buffers, 0, dye);
+                assertTrue(mesh.vertices.size() < 16000, "Avoid high-poly furniture");
+                for (var vertex : mesh.vertices) {
+                    assertTrue(vertex.position.isFinite() && vertex.normal.isFinite());
+                    assertTrue(Math.abs(vertex.position.x) <= 1.437501 && Math.abs(vertex.position.z) <= 1.437501);
+                    assertTrue(vertex.position.y >= 0 && vertex.position.y <= 1.003);
+                    assertEquals(255, vertex.color >>> 24);
+                }
+            }
+    }
+}

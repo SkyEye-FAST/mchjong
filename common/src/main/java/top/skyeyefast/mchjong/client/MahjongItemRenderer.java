@@ -29,7 +29,8 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
         pose.translate(.5, .15, .5);
         var wood = stack.getOrDefault(MahjongComponents.WOOD, FurnitureWood.OAK);
         if (stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM)) {
-            pose.scale(.29f, .6f, .29f);
+            pose.translate(0, .18, 0);
+            pose.scale(.3f, .3f, .3f);
             FurnitureMesh.table(pose, buffers, light, wood, null, stack.is(MahjongContent.AUTO_TABLE_ITEM));
         } else if (stack.is(MahjongContent.STOOL_ITEM)) {
             FurnitureMesh.stool(pose, buffers, light, wood, MahjongSupplies.color(stack));
@@ -37,9 +38,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(0, .15, 0);
             FurnitureMesh.box(pose, buffers, light);
         } else if (stack.is(MahjongContent.CLOTH_ITEM)) {
-            var cloth = buffers.getBuffer(FurnitureMesh.texture(MahjongSupplies.color(stack).getName() + "_wool"));
-            TileMesh.texturedBox(pose, cloth, -.3f, .2f, -.3f, .3f, .25f, .3f, light);
-            TileMesh.texturedBox(pose, cloth, -.3f, .25f, -.3f, .2f, .3f, .3f, light);
+            FurnitureMesh.foldedCloth(pose, buffers, light, MahjongSupplies.color(stack));
         } else if (stack.is(MahjongContent.POINT_STICK)) {
             pose.translate(0, .3, 0);
             pose.scale(1, 2, 2);
