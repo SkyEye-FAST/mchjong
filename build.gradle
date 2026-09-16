@@ -1,0 +1,94 @@
+plugins {
+    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+}
+
+version = mod_version
+group = maven_group
+base.archivesName = 'mchjong-fabric'
+
+allprojects {
+    repositories {
+        maven {
+            name = 'AliyunPublic'
+            url = 'https://maven.aliyun.com/repository/public/'
+        }
+        maven {
+            name = 'BMCLAPI'
+            url = 'https://bmclapi2.bangbang93.com/maven/'
+        }
+        mavenCentral()
+    }
+}
+
+dependencies {
+    minecraft "com.mojang:minecraft:${minecraft_version}"
+    mappings loom.officialMojangMappings()
+    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    implementation project(path: ':engine', configuration: 'embeddedEngine')
+    include project(path: ':engine', configuration: 'embeddedEngine')
+}
+
+sourceSets.main {
+    java.srcDir 'common/src/main/java'
+    resources.srcDir 'common/src/main/resources'
+    resources.srcDir layout.buildDirectory.dir('generated/assets')
+}
+
+processResources {
+    dependsOn ':art:generateAssets'
+    inputs.property 'version', project.version
+    filesMatching('fabric.mod.json') { expand version: project.version }
+}
+
+java {
+    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    withSourcesJar()
+}
+
+tasks.withType(JavaCompile).configureEach {
+    options.release = 21
+    options.encoding = 'UTF-8'
+}
+
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets' }
+jar { from('LICENSE'); from('NOTICE') }
+
+tasks.register('buildAll') {
+    group = 'build'
+    description = 'Test the shared engine and build both Minecraft 1.21.1 loaders.'
+    dependsOn 'build', ':engine:check', ':neoforge:build', ':art:check'
+}
+
+// This mod is loaded only by the visual smoke run, never packaged for players.
+sourceSets {
+    smoke {
+        compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
+        runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
+    }
+}
+loom {
+    mods {
+        mchjong { sourceSet sourceSets.main }
+        mchjong_smoke { sourceSet sourceSets.smoke }
+    }
+    runs {
+        smokeClient {
+            client()
+            source sourceSets.smoke
+            runDir 'build/smoke/run'
+            programArgs '--width', '1280', '--height', '800'
+            property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.output', layout.buildDirectory.dir('smoke/evidence').get().asFile.absolutePath
+        }
+    }
+}
+
+tasks.named('runSmokeClient') {
+    doLast {
+        def evidence = layout.buildDirectory.dir('smoke/evidence').get().asFile
+        if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
+            throw new GradleException('Client smoke failed; see build/smoke/evidence and build/smoke/run/logs/latest.log')
+        }
+    }
+}

@@ -1,0 +1,7 @@
+{
+  "required": true,
+  "package": "top.skyeyefast.mchjong.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["GameRendererAccessor", "TableCameraMixin", "TableHudMixin", "TablePresentationMixin"],
+  "injectors": {"defaultRequire": 1}
+}

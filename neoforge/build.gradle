@@ -1,0 +1,66 @@
+plugins {
+    id 'java-library'
+    id 'net.neoforged.moddev' version '2.0.147'
+}
+
+group = rootProject.maven_group
+version = rootProject.mod_version
+base.archivesName = 'mchjong-neoforge'
+repositories {
+    exclusiveContent {
+        forRepository { maven { name = 'NeoForgedReleases'; url = 'https://maven.neoforged.net/releases' } }
+        filter {
+            includeModule 'net.neoforged', 'neoforge'
+            includeModule 'net.neoforged', 'testframework'
+        }
+    }
+    mavenCentral()
+}
+java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+
+sourceSets.main {
+    java.srcDir '../common/src/main/java'
+    resources.srcDir '../common/src/main/resources'
+    resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
+}
+
+neoForge {
+    version = rootProject.neo_version
+    parchment {
+        mappingsVersion = '2024.11.17'
+        minecraftVersion = '1.21.1'
+    }
+    runs {
+        client { client() }
+        server { server(); programArgument '--nogui' }
+        gameTestServer {
+            type = 'gameTestServer'
+            systemProperty 'neoforge.enabledGameTestNamespaces', 'mchjong'
+        }
+    }
+    mods { mchjong { sourceSet sourceSets.main } }
+    unitTest {
+        enable()
+        testedMod = mods.mchjong
+    }
+}
+
+dependencies {
+    implementation project(path: ':engine', configuration: 'embeddedEngine')
+    jarJar project(path: ':engine', configuration: 'embeddedEngine')
+    additionalRuntimeClasspath project(path: ':engine', configuration: 'embeddedEngine')
+    testImplementation platform('org.junit:junit-bom:5.11.4')
+    testImplementation 'org.junit.jupiter:junit-jupiter'
+    testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+    testImplementation "net.neoforged:testframework:${rootProject.neo_version}"
+}
+
+test { useJUnitPlatform(); maxHeapSize = '2G' }
+
+processResources {
+    dependsOn ':art:generateAssets'
+    inputs.property 'version', project.version
+    filesMatching('META-INF/neoforge.mods.toml') { expand version: project.version }
+}
+tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+jar { from(rootProject.file('LICENSE')); from(rootProject.file('NOTICE')) }
