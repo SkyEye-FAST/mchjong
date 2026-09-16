@@ -113,13 +113,20 @@ three red fives. One blank makes one tile, preserving its material and back
 color. This is for replacements or individual pieces, not the normal full-set
 path. Engraved tiles cannot be recut into another face. The 37 shared engraving
 recipes use the native stonecutting interface and recipe type.
+The shared stonecutter hook invalidates vanilla's item-ID-only cache when a
+tile's components change. Swapping material, color or an already engraved tile
+into the input clears the old selection and output before another result can
+be taken. The recipe also independently rejects nonblank inputs on assembly.
 
 ## Boxes, installation and removal
 
 Right-click a held box to open a vanilla six-row container. Its 54 slots accept
-tiles and point sticks only. The carried box slot is locked while open;
-shift-transfer and offhand swaps cannot move the carrier or nest another box.
-Changes persist directly in `minecraft:container`. Oversized or nested
+tiles and point sticks only. The carried box slot is locked for ordinary clicks,
+shift-transfer, number keys, offhand swaps, dragging, double-click collection,
+throwing and creative cloning. Neither the carrier nor another box can be
+inserted. Changes persist immediately in `minecraft:container`. Closing the
+menu, replacing it, losing the carrier slot or dying permanently invalidates
+that menu; returning the carrier does not revive an old handle. Oversized or nested
 command-created containers cannot be silently truncated by opening or crafting.
 
 Use a full box on either table to install it. The table validates the physical
@@ -130,12 +137,15 @@ is transferred into table storage, not copied in survival; replacing it returns
 the previous box. There is no free virtual set when a survival table is empty.
 
 Use a cloth on either table to install or replace it. Cloth is optional: a bare
-wooden surface remains playable. To remove equipment, end the match, empty both
+wooden surface remains playable. To remove the box or cloth, end the match, empty both
 hands and sneak-use: the top removes cloth, a side removes the box. If physical
 point sticks are present on the nearest side, the top first returns that stack.
 Breaking a table returns its furniture, box, cloth and placed sticks; equipment
 storage is cleared before spawning drops so occupancy-cell removal cannot
 duplicate the contents. An unfinished hand is not fabricated into a result.
+Explosion drop decay still follows vanilla rules for the furniture block; the
+world tests disable that decay when asserting an exact furniture-item count.
+Stored equipment is returned once by the removal callback.
 
 ## Ordinary and automatic table flows
 
@@ -175,7 +185,9 @@ No patterned-back pack is bundled. See [ASSETS.md](ASSETS.md).
 Use a marked stick on a table to place one on the nearest side; matching sticks
 stack there. Sneak-use the top with both hands empty to retrieve that side's
 stack. They are stored and dropped as real item stacks, rendered with their
-denomination. These interactions never call the scoring engine or modify
+denomination. Physical point sticks can be placed and retrieved during a match;
+the active-game equipment lock applies to the box and cloth, not these trays.
+These interactions never call the scoring engine or modify
 points, honba or riichi deposits. The engine's riichi animation is a rule-state
 indicator, not permission to mint or withdraw physical currency.
 
@@ -200,6 +212,25 @@ removed, not retained as compatibility recipes.
 Run `gradlew.bat buildAll`. `ManualHandlingTest` checks all presets, stale
 actions, conservation, reloads and a complete manually handled bot hand.
 `PhysicalSuppliesTest` loads real recipes and component codecs on a dedicated
-NeoForge test server. The shared smoke harness uses an equipped automatic table
-with glass tiles: `gradlew.bat runSmokeClient` and
-`gradlew.bat :neoforge:runSmokeClient`.
+NeoForge test server. `BoxMenuSmoke` checks native container operations and exact
+inventory conservation on a real server player. `StonecutterSmoke` checks cached
+recipe invalidation and both ordinary and shift-click engraving. The equipment
+smokes exercise survival placement, occupancy-cell interaction, replacement,
+unloading, private/public save separation, sanma's recoverable unused tiles,
+root/occupancy destruction and native explosions in a real world.
+
+The shared client harness operates both an equipped automatic table and an
+ordinary glass-tile table. `ManualTableSmoke` clicks the actual shuffle, wall,
+four packet, draw, discard and exit controls through normal client/server
+packets. It verifies waiting does not handle tiles for the human, private hands
+remain hidden, an in-progress manual save round-trips, and the full box can be
+recovered after exit. Screenshots include the manual phases and installed
+colored furniture, box, cloth and physical point sticks.
+
+Run `gradlew.bat :runSmokeClient --console=plain` for Fabric, then
+`gradlew.bat :neoforge:runSmokeClient --console=plain` for NeoForge. The leading
+colon selects only the root Fabric task. The unqualified `runSmokeClient` task
+selector includes both loaders, with an explicit ordering constraint so they
+never launch together. Each run clears old PASS/FAIL markers before launch;
+only a fresh successful completion writes PASS. Inspect that run's logs and
+screenshots in `build/smoke/evidence` or `neoforge/build/smoke/evidence`.

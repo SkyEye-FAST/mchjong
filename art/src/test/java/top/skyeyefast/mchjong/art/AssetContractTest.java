@@ -75,14 +75,19 @@ class AssetContractTest {
         BufferedImage atlas = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile());
         assertEquals(2048, atlas.getWidth()); assertEquals(2048, atlas.getHeight());
         Set<String> hashes = new HashSet<>();
-        for (int i = 0; i < 37; i++) {
-            Path path = resources.resolve("assets/mchjong/textures/tile/" + i + ".png");
-            BufferedImage tile = ImageIO.read(path.toFile());
-            assertEquals(256, tile.getWidth()); assertEquals(384, tile.getHeight());
-            hashes.add(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(path))));
-            for (int y = 0; y < TileArtwork.HEIGHT; y++) for (int x = 0; x < TileArtwork.WIDTH; x++) {
-                assertEquals(255, tile.getRGB(x, y) >>> 24, "Transparent face " + i);
-                assertEquals(tile.getRGB(x, y), atlas.getRGB(i % 8 * TileArtwork.WIDTH + x, i / 8 * TileArtwork.HEIGHT + y), "Face " + i);
+        try (var reference = new TileArtwork(artwork)) {
+            for (int i = 0; i < 37; i++) {
+                assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/" + i + ".png")), "Unused individual face shipped");
+                BufferedImage tile = reference.face(i);
+                assertEquals(256, tile.getWidth()); assertEquals(384, tile.getHeight());
+                var pixels = java.nio.ByteBuffer.allocate(TileArtwork.WIDTH * TileArtwork.HEIGHT * Integer.BYTES);
+                for (int y = 0; y < TileArtwork.HEIGHT; y++) for (int x = 0; x < TileArtwork.WIDTH; x++) {
+                    int pixel = atlas.getRGB(i % 8 * TileArtwork.WIDTH + x, i / 8 * TileArtwork.HEIGHT + y);
+                    assertEquals(255, pixel >>> 24, "Transparent face " + i);
+                    assertEquals(tile.getRGB(x, y), pixel, "Source artwork differs from atlas cell " + i);
+                    pixels.putInt(pixel);
+                }
+                hashes.add(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(pixels.array())));
             }
         }
         assertEquals(37, hashes.size(), "A numbered, honor or red face was duplicated");
@@ -99,7 +104,8 @@ class AssetContractTest {
             java.util.stream.IntStream.range(27, 37).mapToObj(TileArtwork::sourceName).toList());
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(-1));
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(37));
-        BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tile/31.png").toFile());
+        BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
+            .getSubimage(31 % 8 * TileArtwork.WIDTH, 31 / 8 * TileArtwork.HEIGHT, TileArtwork.WIDTH, TileArtwork.HEIGHT);
         for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(TileArtwork.IVORY, white.getRGB(x, y));
     }
 
@@ -111,6 +117,11 @@ class AssetContractTest {
             assertEquals(TileArtwork.BACK, solid.getRGB(x, y));
         }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
+        try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {
+            assertEquals(Set.of("tiles.png", "tile_glyphs.png", "back.png"), textures.filter(Files::isRegularFile)
+                .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
+                .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
+        }
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt")).contains("public domain"));
     }
 

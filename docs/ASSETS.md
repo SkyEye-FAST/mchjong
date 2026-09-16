@@ -28,8 +28,11 @@ pinned revision are documented above.
 `assets/mchjong/textures/tiles.png` is a 2048 by 2048 atlas, eight cells per row.
 Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,
 North, white, green and red dragon. Cells 34-36 are the three red fives in suit
-order. The white dragon is intentionally blank. The individual images are
-`assets/mchjong/textures/tile/0.png` through `36.png`.
+order. The white dragon is intentionally blank. Individual face PNGs are not
+shipped: the renderer consumes the two atlases, not duplicate standalone images.
+The retired callout-panel PNG is also omitted; the UI draws its controls directly.
+The asset test compares every atlas cell directly against the pinned source
+artwork, including distinct faces, red fives, opacity and the declared order.
 
 The bottom-right 32 by 32 pixels, beginning at (2016, 2016), are a solid white
 material swatch. Keep this swatch white when replacing the atlas: the renderer

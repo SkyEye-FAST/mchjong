@@ -33,7 +33,6 @@ public final class GenerateAssets {
         try (TileArtwork artwork = new TileArtwork(archive)) {
             for (int face = 0; face < TileArtwork.FACE_COUNT; face++) {
                 BufferedImage image = artwork.face(face);
-                png("tile/" + face, image);
                 g.drawImage(image, face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
                 glyphGraphics.drawImage(artwork.glyph(face), face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
             }
@@ -54,14 +53,6 @@ public final class GenerateAssets {
         text("assets/mchjong/textures/tiles.png.mcmeta", filtering);
         text("assets/mchjong/textures/tile_glyphs.png.mcmeta", filtering);
         text("assets/mchjong/textures/tile/back.png.mcmeta", filtering);
-
-        BufferedImage panel = new BufferedImage(32, 32, BufferedImage.TYPE_INT_ARGB);
-        g = panel.createGraphics();
-        g.setColor(new Color(0x182a2d)); g.fillRect(0, 0, 32, 32);
-        g.setColor(new Color(0xbca16c)); g.drawRect(1, 1, 29, 29);
-        g.setColor(new Color(0x78b4a0)); g.drawRect(3, 3, 25, 25);
-        g.dispose();
-        png("gui/callout", panel);
     }
 
     private void models() throws IOException {

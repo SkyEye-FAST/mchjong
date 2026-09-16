@@ -15,7 +15,8 @@ class TileArtworkQualityTest {
 
     @Test void vectorFacesRetainHighResolutionAndAntialiasedEdges() throws Exception {
         // A single-color source glyph should still have many edge-coverage shades.
-        BufferedImage tile = ImageIO.read(resources.resolve("assets/mchjong/textures/tile/0.png").toFile());
+        BufferedImage tile = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
+            .getSubimage(0, 0, TileArtwork.WIDTH, TileArtwork.HEIGHT);
         assertEquals(256, tile.getWidth());
         assertEquals(384, tile.getHeight());
         Set<Integer> shades = new HashSet<>();
@@ -25,7 +26,7 @@ class TileArtworkQualityTest {
     }
 
     @Test void highResolutionTexturesUseLinearFilteringAndClamping() throws Exception {
-        for (String texture : new String[]{"tiles", "tile/back"}) {
+        for (String texture : new String[]{"tiles", "tile_glyphs", "tile/back"}) {
             var metadata = JsonParser.parseString(Files.readString(resources.resolve(
                 "assets/mchjong/textures/" + texture + ".png.mcmeta"))).getAsJsonObject().getAsJsonObject("texture");
             assertTrue(metadata.get("blur").getAsBoolean(), "Smooth oblique and UI sampling");

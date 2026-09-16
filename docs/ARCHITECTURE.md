@@ -82,7 +82,7 @@ It also checks outward-facing tile winding, stable hand placement, compact river
 and the mandatory remaining count. Engine tests cover exits, ballots, save reloads
 and recipient privacy. Asset tests check all four language key sets, duplicate
 keys, format arguments and literal translation references in production sources.
-`gradlew.bat runSmokeClient` runs a real Fabric integrated client/server, exercises
+`gradlew.bat :runSmokeClient` runs a real Fabric integrated client/server, exercises
 seating and discard packets, and captures settlement and animation screenshots in
 `build/smoke/evidence`. Rare multi-winner and animation states use display-only
 fixtures; they are not scoring-rule integration tests. The same harness runs with
@@ -92,6 +92,21 @@ archive it on the integrated server, retrieve it through commands and chunked
 networking, render the replay timeline and click the Tenhou export button.
 Smoke adapters are separate source sets and are never packaged in release JARs.
 NeoForge's dedicated-server integration tests also run in `buildAll`.
+
+Survival checks use real server players, menus and levels in the shared smoke
+source set rather than introducing null-world behavior into production code.
+The ordinary-table client smoke sends real button actions for shuffle, walls,
+packet dealing, draws, discards and exit; those snapshots are not display-only
+fixtures. Box menu lifetime is bound to the current menu and exact carrier
+stack, with immediate vanilla container-component persistence. A narrow shared
+stonecutter mixin adds component-aware cache invalidation to the native menu;
+crafting rules stay in `recipe/`, and neither loader carries separate rules.
+
+Private equipment saves explicitly encode empty slots. Public block updates
+omit those slots entirely and contain appearance only, so receiving an
+appearance update cannot clear a server's box, game or private wall. Loading a
+private empty save does clear those values. Loot copies only furniture
+appearance components; removable equipment is dropped once by the server.
 
 Minecraft-facing artifacts are version-scoped. The project targets mainstream
 releases from 1.20.1 onward, but does not declare one binary compatible with an
