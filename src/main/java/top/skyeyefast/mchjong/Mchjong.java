@@ -42,6 +42,6 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        LOGGER.info("Initializing {} for Fabric 1.21.1", MOD_ID);
+        LOGGER.info("Initializing {} for Fabric", MOD_ID);
     }
 }

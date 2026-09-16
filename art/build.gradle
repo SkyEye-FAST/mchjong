@@ -19,23 +19,26 @@ repositories {
 }
 dependencies {
     tileArtwork 'artwork:riichi-mahjong-tiles:26e127ba2117f45cdce5ea0225748cc0cfad3169@zip'
-    implementation 'com.github.weisj:jsvg:2.1.0'
-    testImplementation platform('org.junit:junit-bom:5.11.4')
+    implementation "com.github.weisj:jsvg:${jsvg_version}"
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation "com.google.code.gson:gson:${gson_version}"
     testImplementation project(':engine')
 }
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
 
 def renderedAssets = layout.buildDirectory.dir('renderedAssets')
+def testTemp = layout.buildDirectory.dir('tmp/test')
 tasks.register('renderAssets', JavaExec) {
     dependsOn classes
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'top.skyeyefast.mchjong.art.GenerateAssets'
     doFirst {
-        project.delete(renderedAssets)
+        def outputDir = renderedAssets.get().asFile
+        if (outputDir.exists() && !outputDir.deleteDir()) {
+            throw new GradleException("Could not clean ${outputDir}")
+        }
         args renderedAssets.get().asFile.absolutePath, configurations.tileArtwork.singleFile.absolutePath
     }
     outputs.dir renderedAssets
@@ -54,6 +57,8 @@ tasks.register('generateAssets', Sync) {
 test {
     useJUnitPlatform()
     dependsOn generateAssets
+    doFirst { testTemp.get().asFile.mkdirs() }
+    systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
     systemProperty 'mchjong.resources', rootProject.layout.buildDirectory.dir('generated/assets').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')

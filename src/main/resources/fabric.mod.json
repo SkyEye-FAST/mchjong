@@ -3,7 +3,7 @@
   "id": "mchjong",
   "version": "${version}",
   "name": "MCjhong",
-  "description": "Mahjong mod for Minecraft 1.21.1.",
+  "description": "A seated, in-world riichi mahjong mod.",
   "authors": [
     "SkyEye_FAST"
   ],
@@ -22,9 +22,15 @@
     "mchjong.client.mixins.json"
   ],
   "depends": {
-    "fabricloader": ">=0.16.10",
-    "minecraft": "1.21.1",
-    "java": ">=21",
-    "fabric-api": "*"
+    "fabricloader": ">=${fabric_loader_min_version}",
+    "minecraft": "${minecraft_version}",
+    "java": ">=${java_version}",
+    "fabric-item-group-api-v1": "*",
+    "fabric-networking-api-v1": "*",
+    "fabric-rendering-v1": "*",
+    "fabric-resource-loader-v0": "*",
+    "fabric-lifecycle-events-v1": "*",
+    "fabric-registry-sync-v0": "*",
+    "fabric-transitive-access-wideners-v1": "*"
   }
 }

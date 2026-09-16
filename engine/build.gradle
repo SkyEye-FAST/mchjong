@@ -1,7 +1,7 @@
 plugins {
     id 'java-library'
-    id 'org.jetbrains.kotlin.jvm' version '2.3.20'
-    id 'com.gradleup.shadow' version '9.6.1'
+    id 'org.jetbrains.kotlin.jvm' version "${kotlin_version}"
+    id 'com.gradleup.shadow' version "${shadow_version}"
 }
 
 group = rootProject.maven_group
@@ -10,20 +10,21 @@ base.archivesName = 'mchjong-engine'
 repositories { mavenCentral() }
 
 dependencies {
-    implementation 'io.github.ssttkkl:mahjong-utils-jvm:0.7.7'
-    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core-jvm:1.9.0'
-    testImplementation platform('org.junit:junit-bom:5.11.4')
+    implementation platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:${kotlinx_serialization_version}")
+    implementation "io.github.ssttkkl:mahjong-utils-jvm:${mahjong_utils_version}"
+    implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core-jvm'
+    testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation 'com.google.code.gson:gson:2.10.1'
+    testImplementation "com.google.code.gson:gson:${gson_version}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
-kotlin.jvmToolchain(21)
-tasks.withType(JavaCompile).configureEach { options.encoding = 'UTF-8' }
+java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
+kotlin.jvmToolchain(java_version.toInteger())
 test { useJUnitPlatform(); maxHeapSize = '1G' }
 
 shadowJar {
+    duplicatesStrategy = DuplicatesStrategy.INCLUDE
     archiveClassifier = ''
     relocate 'mahjongutils', 'top.skyeyefast.mchjong.internal.mahjongutils'
     relocate 'kotlin', 'top.skyeyefast.mchjong.internal.kotlin'

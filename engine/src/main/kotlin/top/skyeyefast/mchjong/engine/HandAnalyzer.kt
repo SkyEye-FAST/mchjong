@@ -100,7 +100,7 @@ object HandAnalyzer {
         // interpretation can beat 4-han 30-fu, so compare actual payments instead.
         val candidates = analysis.hand.patterns.flatMap {
             HoraHandPattern.build(it, agari, tsumo, self, round)
-        }.map { baseline.copy(pattern = it) }.filter { it.yaku.isNotEmpty() }
+        }.map { MahjongUtilsInterop.withPattern(baseline, it) }.filter { it.yaku.isNotEmpty() }
         val result = candidates.maxWithOrNull(compareBy({
             if (!tsumo) {
                 if (selfWind == 0) it.parentPoint.ron else it.childPoint.ron

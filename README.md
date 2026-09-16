@@ -1,7 +1,7 @@
 # MCjhong
 
-MCjhong is a Minecraft 1.21.1 mod that adds a seated, in-world riichi mahjong
-table for three or four players. It supports both Fabric and NeoForge.
+MCjhong is a Minecraft mod that adds a seated, in-world riichi mahjong table for
+three or four players. It supports both Fabric and NeoForge.
 
 ## Features
 
@@ -14,7 +14,13 @@ table for three or four players. It supports both Fabric and NeoForge.
 
 ## Compatibility
 
-| Platform | Required version |
+The compatibility target covers mainstream Minecraft releases from 1.20.1
+onward. Release artifacts are version-specific because Minecraft and loader APIs
+change between release lines; use the artifact built for your Minecraft version.
+
+The current development profile is:
+
+| Platform | Version |
 | --- | --- |
 | Minecraft | 1.21.1 |
 | Java | 21 or newer |
@@ -41,8 +47,9 @@ git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
-The default `main` branch contains both Fabric and NeoForge support for the
-current Minecraft version.
+The default `main` branch contains both Fabric and NeoForge support. Minecraft,
+loader, mappings, and Java versions are selected by the build profile in
+`gradle.properties`.
 
 ### Fabric
 

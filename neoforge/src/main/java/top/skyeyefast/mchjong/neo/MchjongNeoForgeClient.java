@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.client.MahjongTableRenderer;
 import top.skyeyefast.mchjong.client.SeatRenderer;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-@EventBusSubscriber(modid = MahjongContent.MOD_ID, bus = EventBusSubscriber.Bus.MOD, value = Dist.CLIENT)
+@EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
     @SubscribeEvent public static void resourcePacks(AddPackFindersEvent event) {

@@ -52,8 +52,8 @@ Chinese and Traditional Chinese.
 The pattern is exactly symmetric under a 180-degree rotation, and its outer rim
 has the same color as the default back. The pack overrides only `tile/back.png`,
 not the face atlas or game data. To supply another design, create a normal
-Minecraft 1.21.1 resource pack (`pack_format: 34`) containing that same texture
-path. Keep it opaque, preserve the 2:3 aspect ratio and use an unmarked,
+resource pack for your target Minecraft version containing that same texture
+path and the matching `pack_format`. Keep it opaque, preserve the 2:3 aspect ratio and use an unmarked,
 uniform rim so that the back shell matches. A higher-priority custom pack can
 replace the bundled pattern without editing any Java code.
 

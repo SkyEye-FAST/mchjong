@@ -5,5 +5,5 @@
   "name": "MCjhong client smoke tests",
   "environment": "client",
   "entrypoints": {"client": ["top.skyeyefast.mchjong.smoke.FabricSmoke"]},
-  "depends": {"mchjong": "*", "fabric-api": "*"}
+  "depends": {"mchjong": "*", "fabric-lifecycle-events-v1": "*"}
 }

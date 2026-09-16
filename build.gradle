@@ -18,13 +18,22 @@ allprojects {
         }
         mavenCentral()
     }
+
+    tasks.withType(JavaCompile).configureEach {
+        options.encoding = 'UTF-8'
+        options.compilerArgs.addAll(['-Xlint:deprecation', '-Xlint:removal'])
+    }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    ['fabric-item-group-api-v1', 'fabric-networking-api-v1', 'fabric-rendering-v1',
+     'fabric-resource-loader-v0', 'fabric-lifecycle-events-v1', 'fabric-registry-sync-v0',
+     'fabric-transitive-access-wideners-v1'].each { module ->
+        modImplementation fabricApi.module(module, fabric_version)
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
 }
@@ -37,18 +46,23 @@ sourceSets.main {
 
 processResources {
     dependsOn ':art:generateAssets'
-    inputs.property 'version', project.version
-    filesMatching('fabric.mod.json') { expand version: project.version }
+    def properties = [
+        version: project.version,
+        minecraft_version: minecraft_version,
+        java_version: java_version,
+        fabric_loader_min_version: fabric_loader_min_version
+    ]
+    inputs.properties properties
+    filesMatching('fabric.mod.json') { expand properties }
 }
 
 java {
-    toolchain.languageVersion = JavaLanguageVersion.of(21)
+    toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
     withSourcesJar()
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = 21
-    options.encoding = 'UTF-8'
+    options.release = java_version.toInteger()
 }
 
 tasks.named('sourcesJar') { dependsOn ':art:generateAssets' }
@@ -56,7 +70,7 @@ jar { from('LICENSE'); from('NOTICE') }
 
 tasks.register('buildAll') {
     group = 'build'
-    description = 'Test the shared engine and build both Minecraft 1.21.1 loaders.'
+    description = 'Test the shared engine and build both loader artifacts for the selected Minecraft profile.'
     dependsOn 'build', ':engine:check', ':neoforge:build', ':art:check'
 }
 
@@ -67,6 +81,7 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
+def smokeEvidence = layout.buildDirectory.dir('smoke/evidence')
 loom {
     mods {
         mchjong { sourceSet sourceSets.main }
@@ -79,14 +94,15 @@ loom {
             runDir 'build/smoke/run'
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
-            property 'mchjong.smoke.output', layout.buildDirectory.dir('smoke/evidence').get().asFile.absolutePath
+            property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
+            property 'java.io.tmpdir', layout.buildDirectory.dir('smoke/run').get().asFile.absolutePath
         }
     }
 }
 
 tasks.named('runSmokeClient') {
     doLast {
-        def evidence = layout.buildDirectory.dir('smoke/evidence').get().asFile
+        def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
             throw new GradleException('Client smoke failed; see build/smoke/evidence and build/smoke/run/logs/latest.log')
         }

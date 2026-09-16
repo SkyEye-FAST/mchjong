@@ -168,7 +168,7 @@ public final class TableClientSmoke {
                 resourceReload.join();
                 TileResourceSmoke.verify(client, false);
                 capture(client, "07-restored-solid-backs.png");
-                Files.writeString(output.resolve("PASS.txt"), "Fabric 1.21.1: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and optional back pack enable/disable passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Fabric: world placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and optional back pack enable/disable passed.\n");
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 step = 10; entered = ticks;
             } else if (step == 10 && ticks - entered > 30) {

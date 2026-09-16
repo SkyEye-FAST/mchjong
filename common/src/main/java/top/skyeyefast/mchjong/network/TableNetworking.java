@@ -11,7 +11,8 @@ public final class TableNetworking {
 
     /** Both loader handlers enqueue this on the server thread. Do not force-load chunks. */
     public static void receive(ServerPlayer player, TableActionPayload payload) {
-        if (!player.isAlive() || player.isSpectator() || !player.serverLevel().hasChunkAt(payload.pos())
+        if (!player.isAlive() || player.isSpectator()
+            || !player.serverLevel().getChunkSource().hasChunk(payload.pos().getX() >> 4, payload.pos().getZ() >> 4)
             || player.distanceToSqr(payload.pos().getX() + 0.5, payload.pos().getY() + 0.5, payload.pos().getZ() + 0.5) > 36)
             return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
