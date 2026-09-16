@@ -42,6 +42,58 @@ class TableLayoutTest {
         }
     }
 
+    @Test void completeHandAndDrawAreCenteredWithoutChangingSlotsBetweenDraws() {
+        double last = TableScene.HAND_LEFT + 13 * TableScene.HAND_STEP + TableScene.DRAW_GAP;
+        assertEquals(0, (TableScene.HAND_LEFT + last) / 2, 1e-9);
+        assertTrue(Math.abs(TableScene.HAND_LEFT + 6 * TableScene.HAND_STEP) < TileMesh.WIDTH);
+        assertTrue(TableScene.HAND_LEFT > -0.7, "Do not pin a normal hand to the left rail again");
+    }
+
+    @Test void everyMeldTypeFitsBesideTheStationaryHandIncludingFourKansAndADraw() {
+        var view = start(RuleSet.TENHOU_4);
+        for (Meld.Type type : Meld.Type.values()) for (int count = 1; count <= 4; count++) {
+            for (int source = 1; source <= 3; source++) {
+                var melds = new ArrayList<Meld>();
+                for (int i = 0; i < count; i++) {
+                    var tiles = type == Meld.Type.CHI ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
+                        : type == Meld.Type.PON ? List.of(i * 4, i * 4 + 1, i * 4 + 2)
+                        : List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
+                    melds.add(new Meld(type, tiles, type == Meld.Type.CLOSED_KAN ? 0 : source,
+                        type == Meld.Type.CLOSED_KAN ? Tile.ABSENT : tiles.getFirst()));
+                }
+                int size = 14 - count * 3;
+                var hand = java.util.stream.IntStream.range(100, 100 + size).boxed().toList();
+                var pieces = TableScene.build(replace(view, hand, melds, List.of()));
+                double meldLeft = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
+                    .mapToDouble(p -> p.position().x - (p.yaw() == 90 ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE / 2)
+                    .min().orElseThrow();
+                double handRight = TableScene.HAND_LEFT + (size - 1) * TableScene.HAND_STEP + TableScene.DRAW_GAP
+                    + TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
+                assertTrue(meldLeft - handRight >= 0.05, type + " x" + count + " must leave a visible hand/meld gap");
+                assertTrue(pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
+                    .allMatch(p -> Math.abs(p.position().x) < 1.3125 && Math.abs(p.position().z) < 1.3125));
+                assertEquals(TableScene.HAND_LEFT, pieces.stream()
+                    .filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND).findFirst().orElseThrow().position().x, 1e-9);
+            }
+        }
+    }
+
+    @Test void meldTilesTouchAndAddedKanStacksOnItsCalledTile() {
+        for (int source = 1; source <= 3; source++) {
+            var layout = MeldLayout.of(new Meld(Meld.Type.ADDED_KAN, List.of(0, 1, 2, 3), source, 0), 0);
+            for (int i = 1; i < 3; i++) {
+                var before = layout.parts().get(i - 1);
+                var after = layout.parts().get(i);
+                double widths = (before.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH)
+                    + (after.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH);
+                assertEquals(widths / 2, after.x() - before.x(), 1e-7);
+            }
+            var added = layout.parts().getLast();
+            assertTrue(added.stacked());
+            assertEquals(layout.parts().stream().filter(p -> p.sideways() && !p.stacked()).findFirst().orElseThrow().x(), added.x());
+        }
+    }
+
     @Test void riverSlotsCloseCalledGapsWithoutLosingDiscardIdentityOrOverlappingRiichi() {
         var discards = new ArrayList<Discard>();
         for (int i = 0; i < 26; i++) discards.add(new Discard(i, i == 2, i == 1 || i == 9, false));

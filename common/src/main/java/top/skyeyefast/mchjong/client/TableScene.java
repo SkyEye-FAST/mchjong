@@ -14,7 +14,12 @@ public final class TableScene {
     public static final float TILE_SCALE = 0.82f;
     public static final double HAND_Z = 1.25;
     public static final double HAND_STEP = 0.1;
-    public static final double HAND_LEFT = -1.12;
+    public static final double DRAW_GAP = 0.035;
+    // Centre a complete 13-tile hand plus its draw, then keep these slots stationary.
+    // Calls release slots on the right; they never recalculate the surviving hand's origin.
+    public static final double HAND_LEFT = -(13 * HAND_STEP + DRAW_GAP) / 2;
+    public static final double MELD_RIGHT = 1.22;
+    public static final double MELD_GAP = 0.035;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double WALL_STEP = RIVER_STEP;
@@ -34,7 +39,6 @@ public final class TableScene {
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             TableView.Seat player = view.seats().get(seat);
-            // Reserve the right rail from the first deal, so calling never shifts the whole hand.
             double left = HAND_LEFT;
             for (int i = 0; i < player.hand().size(); i++) {
                 boolean drawn = player.drawn() != Tile.ABSENT && i == player.hand().size() - 1;
@@ -42,7 +46,7 @@ public final class TableScene {
                     && view.focus().seat() == seat && view.focus().index() == i;
                 boolean flat = player.exposed() || declaration || view.openHands() && view.viewerSeat() >= 0 && seat != view.viewerSeat();
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
-                    left + i * HAND_STEP + (drawn ? 0.035 : 0), top + (flat ? FLAT_CENTER : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
+                    left + i * HAND_STEP + (drawn ? DRAW_GAP : 0), top + (flat ? FLAT_CENTER : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
             }
             int riverSlot = 0;
             double riverX = -2.5 * RIVER_STEP;
@@ -56,7 +60,7 @@ public final class TableScene {
                 riverX += RIVER_STEP + extra;
                 riverSlot++;
             }
-            double meldRight = 1.12;
+            double meldRight = MELD_RIGHT;
             for (int meldIndex = 0; meldIndex < player.melds().size(); meldIndex++) {
                 Meld meld = player.melds().get(meldIndex);
                 MeldLayout layout = MeldLayout.of(meld, seat);
@@ -67,7 +71,7 @@ public final class TableScene {
                         top + (FLAT_CENTER + (part.stacked() ? TileMesh.DEPTH : 0)) * TILE_SCALE, HAND_Z - 0.015,
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
-                meldRight = start - 0.035;
+                meldRight = start - MELD_GAP;
             }
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, -1.17 + (i % 2) * 0.112,

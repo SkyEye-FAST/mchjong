@@ -24,12 +24,12 @@ public record MeldLayout(List<Part> parts, double width) {
         double x = 0;
         for (int i = 0; i < tiles.size(); i++) {
             boolean sideways = i == called;
-            double width = sideways ? 0.160 : 0.104;
+            double width = sideways ? TileMesh.HEIGHT : TileMesh.WIDTH;
             parts.add(new Part(tiles.get(i), x + width / 2, sideways,
                 meld.closed() && (i == 0 || i == tiles.size() - 1), false));
-            x += width + 0.008;
+            x += width;
         }
         if (added != null) parts.add(new Part(added, parts.get(called).x(), true, false, true));
-        return new MeldLayout(parts, x - 0.008);
+        return new MeldLayout(parts, x);
     }
 }
