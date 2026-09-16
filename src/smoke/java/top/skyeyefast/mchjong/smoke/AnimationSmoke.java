@@ -8,20 +8,25 @@ import java.util.stream.IntStream;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.client.TableAnimation;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
+import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Real renderer, synthetic public snapshots: no fixture action is sent to the live server. */
 final class AnimationSmoke {
     private TableView fixture;
     private int ticks;
+    private int windowWidth, windowHeight, guiScale;
     private final List<TableSettings.Information> hidden = new ArrayList<>();
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
@@ -110,6 +115,35 @@ final class AnimationSmoke {
         if (ticks >= 126 && ticks <= 182 && (ticks - 126) % 14 == 0)
             capture(client, output, "40-layout-" + (ticks - 126) / 14 + "-melds.png");
         if (ticks == 184) {
+            windowWidth = client.getWindow().getWidth();
+            windowHeight = client.getWindow().getHeight();
+            guiScale = client.options.guiScale().get();
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+            var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i % 3 + 1, i * 4)).toList();
+            var seats = new ArrayList<>(fixture.seats());
+            seats.set(0, seat(List.of(80, 81), melds, List.of(), false));
+            update(table, seats, fixture.wall());
+            var screen = new TableScreen(table.getBlockPos());
+            client.setScreen(screen);
+            screen.resetView();
+        }
+        if (ticks == 204) {
+            if (client.screen.width != 320 || client.screen.height != 240)
+                throw new IllegalStateException("Corner layout viewport is not 320x240");
+            verifyCornerVisible(client, table);
+            capture(client, output, "41-layout-four-kans-320x240.png");
+        }
+        if (ticks == 206) {
+            client.getWindow().setWindowed(windowWidth, windowHeight);
+            client.options.guiScale().set(guiScale);
+            client.resizeDisplay();
+        }
+        if (ticks == 220) {
+            verifyCornerVisible(client, table);
+            capture(client, output, "42-layout-four-kans.png");
             TableSettings.get().animations = true;
             return true;
         }
@@ -126,6 +160,33 @@ final class AnimationSmoke {
     private static TableView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
         return new TableView.Seat("Player", true, false, false, riichi ? 24000 : 25000, hand,
             hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false);
+    }
+
+    /** Check the complete rendered tile envelopes, not just the centers of the last meld. */
+    private static void verifyCornerVisible(Minecraft client, MahjongTableBlockEntity table) {
+        var camera = client.gameRenderer.getMainCamera();
+        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        var forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+        var right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        var up = right.cross(forward);
+        double focal = client.screen.height / (2 * Math.tan(Math.toRadians(client.options.fov().get()) / 2));
+        for (var piece : TableScene.build(table.clientView())) {
+            if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;
+            double x = TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
+            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2;
+            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * TableScene.TILE_SCALE / 2;
+            if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
+            for (int dx : new int[]{-1, 1}) for (int dy : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
+                var point = TableGeometry.world(table.getBlockPos(), piece.position().add(dx * x, dy * y, dz * z))
+                    .subtract(camera.getPosition());
+                double depth = point.dot(forward);
+                double screenX = client.screen.width / 2.0 + point.dot(right) * focal / depth;
+                double screenY = client.screen.height / 2.0 - point.dot(up) * focal / depth;
+                if (depth <= 0 || screenX < 2 || screenX > client.screen.width - 2
+                        || screenY < 64 || screenY > client.screen.height - 20)
+                    throw new IllegalStateException("Hand or right-corner meld is clipped or covered by HUD: " + piece);
+            }
+        }
     }
 
     private static void capture(Minecraft client, Path output, String name) {

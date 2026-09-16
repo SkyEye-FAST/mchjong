@@ -33,6 +33,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlock;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.MahjongTableItem;
 import top.skyeyefast.mchjong.world.TableGeometry;
+import top.skyeyefast.mchjong.world.TableSpaceBlock;
 
 /** Placement, interaction, persistence, break callbacks and explosions in an actual ServerLevel. */
 final class EquipmentLifecycleSmoke {
@@ -81,13 +82,32 @@ final class EquipmentLifecycleSmoke {
         ItemStack expectedFurniture = furniture.copy();
         inventory.setItem(0, furniture);
         var hit = new BlockHitResult(Vec3.atBottomCenterOf(CENTER), Direction.UP, CENTER.below(), false);
+        int radius = TableGeometry.FOOTPRINT_RADIUS;
+        for (int x : new int[]{-radius, radius}) for (int z : new int[]{-radius, radius}) for (int y = 0; y <= 1; y++) {
+            var obstacle = CENTER.offset(x, y, z);
+            level.setBlock(obstacle, Blocks.STONE.defaultBlockState(), 3);
+            check(((MahjongTableItem) furniture.getItem()).place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, furniture, hit))
+                == net.minecraft.world.InteractionResult.FAIL, "An obstructed outer corner allowed placement");
+            check(ItemStack.matches(expectedFurniture, furniture) && level.getBlockState(CENTER).isAir(),
+                "Rejected placement consumed the item or placed a partial table");
+            level.removeBlock(obstacle, false);
+        }
         check(((MahjongTableItem) furniture.getItem()).place(new BlockPlaceContext(player, InteractionHand.MAIN_HAND, furniture, hit)).consumesAction(),
             "Survival table placement failed");
         check(furniture.isEmpty(), "Placement did not consume the table item");
+        for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) if (x != 0 || z != 0) {
+            var pos = CENTER.offset(x, 0, z);
+            var state = level.getBlockState(pos);
+            check(state.is(MahjongContent.SPACE) && TableSpaceBlock.center(pos, state).equals(CENTER),
+                "Expanded table footprint lost a cell or its center mapping");
+        }
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         check(table.wood() == FurnitureWood.BAMBOO, "Placed table lost its component wood");
         level.setBlock(TableGeometry.stool(CENTER, 0), MahjongContent.STOOL.defaultBlockState(), 3);
-        table.sit(player, 0);
+        var stool = TableGeometry.stool(CENTER, 0);
+        level.getBlockState(stool).useWithoutItem(level, player,
+            new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
+        check(player.isPassenger(), "The relocated stool did not find its table");
         Game game = table.participantGame(player);
         check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
             .noneMatch(action -> action.type() == Action.Type.READY || action.type() == Action.Type.PRACTICE), "Empty table could start a game");
@@ -178,10 +198,10 @@ final class EquipmentLifecycleSmoke {
         level.setBlockEntity(loaded);
         player.teleportTo(level, CENTER.getX() + 20, 64, .5, 0, 0);
         if (destruction == 0) level.destroyBlock(CENTER, true);
-        else if (destruction == 1) level.destroyBlock(CENTER.east(), true);
+        else if (destruction == 1) level.destroyBlock(CENTER.offset(radius, 0, radius), true);
         else level.explode(null, CENTER.getX() + .5, CENTER.getY() + .5, CENTER.getZ() + .5, 4, Level.ExplosionInteraction.TNT);
         check(!(level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity), "Destruction did not remove the table");
-        for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++)
+        for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++)
             check(!level.getBlockState(CENTER.offset(x, 0, z)).is(MahjongContent.SPACE), "Orphaned table-space block after destruction");
         loaded.dropEquipment();
         var drops = level.getEntitiesOfClass(ItemEntity.class, AREA);

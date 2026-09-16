@@ -97,6 +97,23 @@ class TableLayoutTest {
         }
     }
 
+    @Test void existingMeldsStayAtTheCornerAsAdditionalGroupsAreDeclared() {
+        var view = start(RuleSet.TENHOU_4);
+        var melds = List.of(
+            new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0),
+            new Meld(Meld.Type.ADDED_KAN, List.of(4, 5, 6, 7), 2, 4),
+            new Meld(Meld.Type.CLOSED_KAN, List.of(8, 9, 10, 11), 0, Tile.ABSENT),
+            new Meld(Meld.Type.OPEN_KAN, List.of(12, 13, 14, 15), 3, 12));
+        List<TableScene.Piece> previous = List.of();
+        for (int count = 1; count <= 4; count++) {
+            var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
+            var calls = TableScene.build(replace(view, hand, melds.subList(0, count), List.of())).stream()
+                .filter(piece -> piece.seat() == 0 && piece.area() == TableScene.Area.MELD).toList();
+            assertEquals(previous, calls.subList(0, previous.size()), "Adding a meld must not slide earlier calls away from the corner");
+            previous = calls;
+        }
+    }
+
     @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
         for (RuleSet rules : RuleSet.values()) for (int count = 0; count <= 4; count++) {
             var v = start(rules);

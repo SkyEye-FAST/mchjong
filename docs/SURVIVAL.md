@@ -129,6 +129,11 @@ menu, replacing it, losing the carrier slot or dying permanently invalidates
 that menu; returning the carrier does not revive an old handle. Oversized or nested
 command-created containers cannot be silently truncated by opening or crafting.
 
+Both tables need a clear 5 by 5 footprint, clear space immediately above it and
+solid support beneath the center. Place stools three blocks from the center on
+the four cardinal sides, outside that footprint. The playing surface is 4.125
+blocks across; melds extend left from the owner's right corner beside the hand.
+
 Use a full box on either table to install it. The table validates the physical
 136-tile multiset, three red fives, uniform material and uniform back color.
 Spare unengraved tiles and point sticks are allowed in the box. A mixed-back,

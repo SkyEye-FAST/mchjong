@@ -11,11 +11,27 @@ class TilePickingTest {
     }
 
     @Test void picksAllSeatOrientationsAndAnimatedTilts() {
+        var settings = new TableSettings();
         for (int seat = 0; seat < 4; seat++) for (float pitch : new float[]{0, -30, -60, -90}) {
-            var position = TableGeometry.orient(0, 1, 1.25, seat);
-            var origin = TableGeometry.orient(0, 2.25, 3.15, seat);
+            var position = TableGeometry.orient(0, TableGeometry.FELT_Y + .081 * TableScene.TILE_SCALE, TableScene.HAND_Z, seat);
+            var origin = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat);
             assertTrue(Double.isFinite(TilePicking.distanceSquared(tile(position, seat * 90, pitch), origin, position.subtract(origin), false)));
         }
+    }
+
+    @Test void rightCornerTilesArePickableFromEachSeatedCameraIncludingSidewaysAndStackedKans() {
+        var settings = new TableSettings();
+        for (int seat = 0; seat < 4; seat++) for (boolean sideways : new boolean[]{false, true})
+            for (boolean stacked : new boolean[]{false, true}) {
+                double width = (sideways ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE;
+                var position = TableGeometry.orient(TableScene.MELD_RIGHT - width / 2,
+                    TableGeometry.FELT_Y + TileMesh.DEPTH * TableScene.TILE_SCALE * (stacked ? 1.5 : .5), TableScene.HAND_Z, seat);
+                var piece = new TableScene.Piece(0, seat, TableScene.Area.MELD, 0, position,
+                    seat * 90 + (sideways ? 90 : 0), true, false);
+                var frame = new TableAnimation.Frame(piece, -90);
+                var origin = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat);
+                assertTrue(Double.isFinite(TilePicking.distanceSquared(frame, origin, position.subtract(origin), false)), piece.toString());
+            }
     }
 
     @Test void doesNotSelectTheGapOrTilesBehindTheCamera() {

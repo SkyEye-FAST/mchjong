@@ -150,7 +150,7 @@ final class EquipmentSmoke {
             for (int count = 0; count < 3; count++) table.useEquipment(player, inventory.getItem(2));
             player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, 0, 0);
             if (destruction == 0) level.destroyBlock(POS, true);
-            else if (destruction == 1) level.destroyBlock(POS.offset(1, 0, 1), true);
+            else if (destruction == 1) level.destroyBlock(POS.offset(TableGeometry.FOOTPRINT_RADIUS, 0, TableGeometry.FOOTPRINT_RADIUS), true);
             else level.explode(null, POS.getX() + .5, POS.getY() + .8, POS.getZ() + .5, 3, Level.ExplosionInteraction.BLOCK);
             table.dropEquipment();
             var drops = level.getEntitiesOfClass(ItemEntity.class, bounds).stream().filter(e -> !existing.contains(e)).map(ItemEntity::getItem).toList();
@@ -161,7 +161,8 @@ final class EquipmentSmoke {
             check(count(drops, MahjongContent.CLOTH_ITEM) == 1 && drops.stream().anyMatch(s -> ItemStack.matches(s, cloth)), "Destroyed table lost its cloth");
             check(count(drops, MahjongContent.POINT_STICK) == 3 && inventory.getItem(2).getCount() == 5, "Destroyed table duplicated or lost point sticks");
             check(find(inventory, original) >= 0, "Destruction changed previously returned equipment");
-            for (int x = -1; x <= 1; x++) for (int z = -1; z <= 1; z++)
+            int radius = TableGeometry.FOOTPRINT_RADIUS;
+            for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++)
                 check(!level.getBlockState(POS.offset(x, 0, z)).is(MahjongContent.SPACE), "Orphaned table space remained");
         } finally {
             player.stopRiding();

@@ -1,6 +1,10 @@
 package top.skyeyefast.mchjong.smoke;
 
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -11,9 +15,29 @@ final class ItemPresentationSmoke {
     private static final String[] NAMES = {"ordinary-table", "automatic-table", "cloth", "glass-tile", "point-stick", "stool"};
     private int sample, ticks, count;
     private ItemStack expected = ItemStack.EMPTY;
+    private final List<UUID> dropped = new ArrayList<>();
+    private CompletableFuture<Boolean> cleanup;
 
     boolean tick(Minecraft client, Path output) {
         if (sample == NAMES.length) {
+            if (cleanup == null) {
+                var server = client.getSingleplayerServer();
+                var ids = List.copyOf(dropped);
+                cleanup = server.submit(() -> {
+                    for (UUID id : ids) {
+                        var entity = server.overworld().getEntity(id);
+                        if (entity instanceof ItemEntity) entity.discard();
+                    }
+                    return true;
+                });
+            }
+            if (!cleanup.isDone()) return false;
+            cleanup.join();
+            if (client.level.getEntitiesOfClass(ItemEntity.class, client.player.getBoundingBox().inflate(6)).stream()
+                    .anyMatch(entity -> dropped.contains(entity.getUUID()))) {
+                check(++ticks < 60, "Item presentation fixtures were not removed before the table screenshots");
+                return false;
+            }
             client.player.getInventory().selected = 0;
             return true;
         }
@@ -41,6 +65,8 @@ final class ItemPresentationSmoke {
             check(client.player.getInventory().getItem(sample + 1).getCount() == count - 1,
                 "Dropping an item did not conserve the inventory count");
             Screenshot.grab(output.toFile(), "08-dropped-" + NAMES[sample] + ".png", client.getMainRenderTarget(), ignored -> {});
+            drops.stream().filter(entity -> ItemStack.isSameItemSameComponents(expected, entity.getItem()))
+                .map(ItemEntity::getUUID).forEach(dropped::add);
             sample++;
             ticks = 0;
         }
