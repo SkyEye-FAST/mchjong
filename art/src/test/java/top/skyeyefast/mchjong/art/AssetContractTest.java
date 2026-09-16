@@ -22,6 +22,21 @@ class AssetContractTest {
     private final Path languages = Path.of(System.getProperty("mchjong.languages"));
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
 
+    @Test void audioEventsHaveTranslatedSubtitlesAndSeparateCustomVoices() throws Exception {
+        JsonObject sounds = JsonParser.parseString(Files.readString(languages.getParent().resolve("sounds.json"))).getAsJsonObject();
+        JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve("en_us.json"))).getAsJsonObject();
+        assertEquals(25, sounds.size());
+        for (var entry : sounds.entrySet()) {
+            JsonObject sound = entry.getValue().getAsJsonObject();
+            assertTrue(translations.has(sound.get("subtitle").getAsString()), entry.getKey());
+            if (entry.getKey().startsWith("voice.")) assertTrue(sound.getAsJsonArray("sounds").isEmpty());
+            else for (var choice : sound.getAsJsonArray("sounds")) {
+                assertEquals("event", choice.getAsJsonObject().get("type").getAsString());
+                assertTrue(choice.getAsJsonObject().get("name").getAsString().startsWith("minecraft:"));
+            }
+        }
+    }
+
     @Test void translationObjectsDoNotRepeatKeys() throws Exception {
         for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
             try (var reader = new JsonReader(Files.newBufferedReader(languages.resolve(language + ".json")))) {

@@ -16,6 +16,12 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 @EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
+    @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
+        top.skyeyefast.mchjong.client.TableAudio.tick();
+    }
+    @SubscribeEvent public static void close(net.neoforged.neoforge.event.GameShuttingDownEvent event) {
+        top.skyeyefast.mchjong.client.TableAudio.close();
+    }
     @SubscribeEvent public static void resourcePacks(AddPackFindersEvent event) {
         event.addPackFinders(MahjongContent.id("resourcepacks/patterned_backs"), PackType.CLIENT_RESOURCES,
             Component.translatable("resourcePack.mchjong.patterned_backs.name"), PackSource.BUILT_IN, false, Pack.Position.TOP);

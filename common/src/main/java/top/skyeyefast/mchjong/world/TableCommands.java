@@ -15,6 +15,15 @@ public final class TableCommands {
     private TableCommands() {}
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         dispatcher.register(Commands.literal("mchjong")
+            .then(Commands.literal("invite").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
+                .executes(context -> TableInvitations.invite(context.getSource().getPlayerOrException(),
+                    net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player")))))
+            .then(Commands.literal("accept").then(Commands.argument("invitation", net.minecraft.commands.arguments.UuidArgument.uuid())
+                .executes(context -> TableInvitations.respond(context.getSource().getPlayerOrException(),
+                    net.minecraft.commands.arguments.UuidArgument.getUuid(context, "invitation"), true))))
+            .then(Commands.literal("decline").then(Commands.argument("invitation", net.minecraft.commands.arguments.UuidArgument.uuid())
+                .executes(context -> TableInvitations.respond(context.getSource().getPlayerOrException(),
+                    net.minecraft.commands.arguments.UuidArgument.getUuid(context, "invitation"), false))))
             .then(Commands.literal("clock")
                 .then(Commands.argument("reserve", IntegerArgumentType.integer(0, 600))
                     .then(Commands.argument("move", IntegerArgumentType.integer(1, 120)).executes(context -> {

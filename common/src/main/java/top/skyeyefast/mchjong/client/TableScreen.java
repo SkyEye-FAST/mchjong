@@ -63,6 +63,7 @@ public final class TableScreen extends Screen {
         if (screen instanceof TableScreen table) return table;
         if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
         if (screen instanceof TableClockScreen clock) return clock.tableScreen();
+        if (screen instanceof TableInviteScreen invite) return invite.tableScreen();
         return null;
     }
 
@@ -198,6 +199,10 @@ public final class TableScreen extends Screen {
             addRenderableWidget(Button.builder(Component.translatable("ui.mchjong.clock_settings"),
                 ignored -> minecraft.setScreen(new TableClockScreen(this, view.timeControl())))
                 .bounds(width - 126, 32, 118, 20).build());
+        if (view.phase() == Game.Phase.LOBBY && view.viewerSeat() >= 0)
+            addRenderableWidget(Button.builder(Component.translatable("ui.mchjong.invite"),
+                ignored -> minecraft.setScreen(new TableInviteScreen(this)))
+                .bounds(10, height - 40, Math.min(120, width / 3), 20).build());
         if (TableResults.available(view) && TableSettings.get().show(TableSettings.Information.RESULTS)) {
             addRenderableWidget(Button.builder(Component.translatable(resultsExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"),
                 ignored -> { resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10, height - 48, boxWidth, 20).build());

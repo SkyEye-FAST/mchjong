@@ -28,11 +28,11 @@ public final class TableSettingsScreen extends Screen {
         clearWidgets();
         int span = Math.min(560, width - 24);
         int left = (width - span) / 2;
-        for (int i = 0; i < 3; i++) {
+        for (int i = 0; i < 4; i++) {
             final int index = i;
             var button = Button.builder(Component.translatable("settings.mchjong.tab." + i), ignored -> {
                 tab = index; page = 0; init();
-            }).bounds(left + i * (span / 3), 33, span / 3 - 4, 20).build();
+            }).bounds(left + i * (span / 4), 33, span / 4 - 4, 20).build();
             button.active = tab != i;
             addRenderableWidget(button);
         }
@@ -69,14 +69,27 @@ public final class TableSettingsScreen extends Screen {
             addToggle(left, 117, column, "settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
             addToggle(left + column + 6, 117, column, "settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
             addToggle(left, 143, span, "settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
-        } else {
+        } else if (tab == 2) {
             addRenderableWidget(new CameraSlider(left, 65, span, true));
             addRenderableWidget(new CameraSlider(left, 91, span, false));
             addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
                 .bounds(left, 117, span, 20).build());
+        } else {
+            addRenderableWidget(new VolumeSlider(left, 65, column, false));
+            var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
+            voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.RESOURCE_PACK;
+            addRenderableWidget(Button.builder(value("settings.mchjong.voice", settings.voiceSource), ignored -> {
+                var modes = TableSettings.VoiceSource.values();
+                settings.voiceSource = modes[(settings.voiceSource.ordinal() + 1) % modes.length];
+                TableAudio.settingsChanged(); init();
+            }).bounds(left, 91, span, 20).build());
+            addToggle(left, 117, column, "settings.mchjong.countdown", settings.countdownSounds,
+                () -> settings.countdownSounds = !settings.countdownSounds);
+            addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.audio_preview"), ignored -> TableAudio.preview())
+                .bounds(left + column + 6, 117, column, 20).build());
         }
         addRenderableWidget(Button.builder(Component.translatable("settings.mchjong.reset"), ignored -> {
-            settings.reset(); parent.resetView(); init();
+            settings.reset(); TableAudio.settingsChanged(); parent.resetView(); init();
         }).bounds(left, height - 30, column, 20).build());
         addRenderableWidget(Button.builder(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(left + column + 6, height - 30, column, 20).build());
@@ -103,6 +116,16 @@ public final class TableSettingsScreen extends Screen {
             if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 55, 0xffd1e4d9);
         }
         if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, 0xffffa09a);
+        if (tab == 3) {
+            String key = settings.voiceSource == TableSettings.VoiceSource.SYSTEM && TableAudio.systemVoiceUnavailable()
+                ? "settings.mchjong.voice_unavailable" : settings.voiceSource == TableSettings.VoiceSource.SYSTEM
+                    ? "settings.mchjong.system_voice_note" : "settings.mchjong.pack_voice_note";
+            int y = 145;
+            for (var line : font.split(Component.translatable(key), Math.min(540, width - 32))) {
+                graphics.drawCenteredString(font, line, width / 2, y, 0xffd1e4d9);
+                y += 11;
+            }
+        }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
@@ -130,6 +153,22 @@ public final class TableSettingsScreen extends Screen {
         @Override protected void applyValue() {
             if (distance) settings.cameraDistance = 2.4 + value * 1.6;
             else settings.cameraHeight = 1.7 + value * 1.3;
+        }
+    }
+
+    private final class VolumeSlider extends AbstractSliderButton {
+        private final boolean voice;
+        VolumeSlider(int x, int y, int width, boolean voice) {
+            super(x, y, width, 20, Component.empty(), voice ? settings.voiceVolume : settings.effectsVolume);
+            this.voice = voice;
+            updateMessage();
+        }
+        @Override protected void updateMessage() {
+            setMessage(Component.translatable(voice ? "settings.mchjong.voice_volume" : "settings.mchjong.effects_volume", Math.round(value * 100)));
+        }
+        @Override protected void applyValue() {
+            if (voice) settings.voiceVolume = value;
+            else settings.effectsVolume = value;
         }
     }
 }

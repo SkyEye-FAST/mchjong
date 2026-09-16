@@ -22,6 +22,7 @@ public final class TableSettings {
     }
     public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK, CONFIRM }
     public enum GuideLines { ALWAYS, HOVER, OFF }
+    public enum VoiceSource { SYSTEM, RESOURCE_PACK, OFF }
 
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static TableSettings current;
@@ -31,6 +32,10 @@ public final class TableSettings {
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
     public boolean animations = true;
+    public VoiceSource voiceSource = VoiceSource.SYSTEM;
+    public double effectsVolume = 0.7;
+    public double voiceVolume = 0.8;
+    public boolean countdownSounds = true;
     public double cameraDistance = 3.15;
     public double cameraHeight = 2.25;
 
@@ -56,6 +61,11 @@ public final class TableSettings {
             Objects.requireNonNull(settings.hiddenInformation, "Missing information flags");
             Objects.requireNonNull(settings.discardMode, "Unknown discard mode");
             Objects.requireNonNull(settings.guideLines, "Unknown guide-line mode");
+            Objects.requireNonNull(settings.voiceSource, "Unknown voice source");
+            if (!Double.isFinite(settings.effectsVolume) || !Double.isFinite(settings.voiceVolume))
+                throw new IllegalArgumentException("Sound volumes must be finite");
+            settings.effectsVolume = Math.clamp(settings.effectsVolume, 0, 1);
+            settings.voiceVolume = Math.clamp(settings.voiceVolume, 0, 1);
             if (!Double.isFinite(settings.cameraDistance) || !Double.isFinite(settings.cameraHeight))
                 throw new IllegalArgumentException("Camera settings must be finite");
             settings.cameraDistance = Math.clamp(settings.cameraDistance, 2.4, 4.0);
@@ -85,6 +95,10 @@ public final class TableSettings {
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
         animations = defaults.animations;
+        voiceSource = defaults.voiceSource;
+        effectsVolume = defaults.effectsVolume;
+        voiceVolume = defaults.voiceVolume;
+        countdownSounds = defaults.countdownSounds;
         cameraDistance = defaults.cameraDistance;
         cameraHeight = defaults.cameraHeight;
     }

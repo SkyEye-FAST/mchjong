@@ -16,6 +16,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client ->
+            top.skyeyefast.mchjong.client.TableAudio.tick());
+        net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
+            top.skyeyefast.mchjong.client.TableAudio.close());
         if (!ResourceManagerHelper.registerBuiltinResourcePack(MahjongContent.id("patterned_backs"),
                 FabricLoader.getInstance().getModContainer(MahjongContent.MOD_ID).orElseThrow(),
                 Component.translatable("resourcePack.mchjong.patterned_backs.name"), ResourcePackActivationType.NORMAL)) {

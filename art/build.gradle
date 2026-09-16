@@ -62,6 +62,7 @@ test {
     systemProperty 'mchjong.resources', rootProject.layout.buildDirectory.dir('generated/assets').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')
+    inputs.file rootProject.file('common/src/main/resources/assets/mchjong/sounds.json')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')
     inputs.files configurations.tileArtwork
     doFirst { systemProperty 'mchjong.artwork', configurations.tileArtwork.singleFile.absolutePath }

@@ -24,6 +24,9 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        DeferredRegister<net.minecraft.sounds.SoundEvent> sounds = DeferredRegister.create(Registries.SOUND_EVENT, MahjongContent.MOD_ID);
+        top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) -> sounds.register(name, () -> event));
+        sounds.register(bus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.RegisterCommandsEvent event) ->
                 top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));

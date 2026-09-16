@@ -26,6 +26,8 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) ->
+            Registry.register(BuiltInRegistries.SOUND_EVENT, MahjongContent.id(name), event));
         CommandRegistrationCallback.EVENT.register((dispatcher, registry, environment) ->
             top.skyeyefast.mchjong.world.TableCommands.register(dispatcher));
         Registry.register(BuiltInRegistries.BLOCK, MahjongContent.id("mahjong_table"), MahjongContent.TABLE);

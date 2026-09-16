@@ -31,6 +31,8 @@ class ServerIntegrationTest {
         assertSame(MahjongContent.TABLE_ITEM, BuiltInRegistries.ITEM.get(MahjongContent.id("mahjong_table")));
         assertSame(MahjongContent.TABLE_ENTITY, BuiltInRegistries.BLOCK_ENTITY_TYPE.get(MahjongContent.id("mahjong_table")));
         assertSame(MahjongContent.SEAT_ENTITY, BuiltInRegistries.ENTITY_TYPE.get(MahjongContent.id("seat")));
+        top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, sound) ->
+            assertSame(sound, BuiltInRegistries.SOUND_EVENT.get(MahjongContent.id(name))));
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_table")).isPresent());
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_stool")).isPresent());
     }

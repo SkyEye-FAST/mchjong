@@ -1,5 +1,17 @@
 # MCjhong
 
+## Invitations and audio
+
+In a waiting table, **Invite player** lists online players. `/mchjong invite <player>`
+does the same. The recipient receives clickable Accept/Decline actions. Invitations
+expire after 60 seconds, are bound to the recipient and table identity, and are
+revalidated when accepted. Approach within six blocks before accepting; invitations
+do not teleport players or load distant chunks. Senders may invite once per five seconds.
+
+The Audio settings include positional table effects, countdown warnings, system
+speech and custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)
+for the event names, volume controls and an example voice resource pack.
+
 MCjhong is a Minecraft mod that adds a seated, in-world riichi mahjong table for
 three or four players. It supports both Fabric and NeoForge.
 
