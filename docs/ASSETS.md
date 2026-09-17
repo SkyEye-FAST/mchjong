@@ -83,11 +83,19 @@ lean outward like a held sword while the printed faces turn inward toward the
 player. Point sticks follow the same free-end and printed-surface relationship,
 retaining their slender length, width and thickness. Both meshes leave clearance above the hotbar and
 inside a 4:3 viewport. Minecraft mirrors these transforms for the left hand.
-The client smoke captures both hands in normal and 320 by 240 logical viewports,
-and in a 16:9 window.
-It also projects the actual loader-rendered meshes at 4:3, 16:10 and 16:9, checking
-all vertices against viewport and hotbar clearances, the printed face direction
-and the visible tile side or raised point-stick tip.
+`HeldSupplyArm` attaches the player's native arm and sleeve to the lower tile edge
+or point-stick end. The grip follows the model's first-person transform and the
+same vanilla equip and swing pose as the item, while the arm retains player scale.
+Both main-hand preferences and offhand supplies use the corresponding skin arm.
+Invisible players retain the vanilla hidden-arm presentation.
+
+For a focused grip check, run `gradlew.bat :runSmokeClient -PsmokeItems=true` or
+`gradlew.bat :neoforge:runSmokeClient -PsmokeItems=true`. This reuses the item
+presentation captures and writes four screenshots to each loader's
+`build/smoke/items-evidence/screenshots` directory, separately from full gameplay evidence.
+The shared item capture renders both supplies with each main-hand preference in
+the native first-person view at 1280 by 800. Inspect the resulting screenshots for
+grip contact, readable printed faces and clearance above the hotbar.
 
 To supply a design, create a normal resource pack for your target Minecraft
 version containing that same texture
@@ -174,8 +182,7 @@ Screenshots and the final result are written beneath `build/smoke/evidence`.
 contact sheets rendered by the real item renderer. They cover the furniture,
 eleven wood finishes and six white-face tile materials. `00-flower-gallery.png`
 shows all eight flowers and seasons through the native item renderer. The held-item
-screenshots cover both main-hand preferences at 1280 by 800 and a 960 by 720
-window with a 320 by 240 logical GUI. Dropped-item screenshots and real table
-views additionally exercise the world render paths.
+screenshots cover both main-hand preferences at 1280 by 800. Real table views
+additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and contact sheets under
 `neoforge/build/smoke/evidence`. Resource reload checks include all furniture textures.

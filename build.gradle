@@ -169,9 +169,10 @@ sourceSets {
     }
 }
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi'])) throw new GradleException('recipeBrowser must be none, jei or emi')
-def smokeProfile = recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -193,6 +194,7 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             property 'mchjong.smoke.ponder', ponderSmoke.toString()
             property 'mchjong.smoke.browser', recipeBrowser
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath

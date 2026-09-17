@@ -35,6 +35,7 @@ public final class TableClientSmoke {
     private static final Logger LOG = LoggerFactory.getLogger("mchjong-smoke");
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
+    private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
     private int step;
     private int ticks;
@@ -89,20 +90,22 @@ public final class TableClientSmoke {
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
                 UUID id = client.player.getUUID();
-                if (survivalReady == null) {
+                if (!itemsOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
                     survivalReady = server.submit(() -> SurvivalSmoke.ready(server.getPlayerList().getPlayer(id)));
                     return;
                 }
-                if (!survivalReady.isDone()) return;
-                if (!survivalReady.join()) { survivalReady = null; return; }
+                if (!itemsOnly && !survivalReady.isDone()) return;
+                if (!itemsOnly && !survivalReady.join()) { survivalReady = null; return; }
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         if (player == null) throw new IllegalStateException("Missing server player");
                         var level = player.serverLevel();
-                        SurvivalSmoke.verify(player);
-                        RecipeBrowserDataSmoke.verify(level);
+                        if (!itemsOnly) {
+                            SurvivalSmoke.verify(player);
+                            RecipeBrowserDataSmoke.verify(level);
+                        }
                         level.setDayTime(6000);
                         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 5; z++)
                             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
@@ -146,6 +149,11 @@ public final class TableClientSmoke {
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
+                if (itemsOnly) {
+                    client.setScreen(null);
+                    step = 18; entered = ticks;
+                    return;
+                }
                 client.setScreen(new FurnitureGalleryScreen(false));
                 step = 20; entered = ticks;
             } else if (step == 20 && ticks - entered > 20) {
@@ -192,6 +200,12 @@ public final class TableClientSmoke {
                 step = 18; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
                 if (!itemPresentationSmoke.tick(client, output)) return;
+                if (itemsOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Captured native tile and point-stick grips for right and left main hands.\n");
+                    LOG.info("MCJHONG_ITEM_PRESENTATION_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 step = 23; entered = ticks;
             } else if (step == 23 && interfaceSmoke.storage(client, CENTER, output)) {
                 UUID id = client.player.getUUID();

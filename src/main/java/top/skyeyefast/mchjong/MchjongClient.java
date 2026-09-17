@@ -12,6 +12,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
+            model.getTransforms().getTransform(context).apply(leftHand, pose));
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
             top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);

@@ -34,15 +34,15 @@ public final class TableDeposits {
 
     public static void render(TableView view, boolean automatic, TableAnimation animation, boolean animated, long now,
                               PoseStack pose, MultiBufferSource buffers, int light) {
-        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
         for (var stick : sticks(view)) {
             double progress = animated && stick.declared() ? animation.riichiProgress(stick.seat(), now) : 1;
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(stick.seat() * 90));
             pose.translate(0, TableGeometry.FELT_Y + (automatic ? .044 : .002) + stick.layer() * (HEIGHT + .002)
                 + Math.sin(progress * Math.PI) * .09, TableScene.HAND_Z + (LANE_Z - TableScene.HAND_Z) * progress);
-            TileMesh.box(pose, vertices, -HALF_LENGTH, 0, -HALF_WIDTH, HALF_LENGTH, HEIGHT, HALF_WIDTH, 0xfff1ead9, light);
-            TileMesh.box(pose, vertices, -.007f, HEIGHT, -.007f, .007f, HEIGHT + .001f, .007f, 0xffbb3737, light);
+            pose.scale(HALF_LENGTH / FurnitureMesh.STICK_HALF_LENGTH, HEIGHT / FurnitureMesh.STICK_HEIGHT,
+                HALF_WIDTH / FurnitureMesh.STICK_HALF_WIDTH);
+            FurnitureMesh.stick(pose, buffers, light, 1000);
             pose.popPose();
         }
     }

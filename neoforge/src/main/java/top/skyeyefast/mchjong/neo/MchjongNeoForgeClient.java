@@ -21,6 +21,8 @@ public final class MchjongNeoForgeClient {
         event.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
     }
     @SubscribeEvent public static void items(net.neoforged.neoforge.client.extensions.common.RegisterClientExtensionsEvent event) {
+        top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
+            model.applyTransform(context, pose, leftHand));
         var renderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();
         event.registerItem(new net.neoforged.neoforge.client.extensions.common.IClientItemExtensions() {
             @Override public net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer getCustomRenderer() { return renderer; }
