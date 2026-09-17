@@ -150,6 +150,7 @@ spotless {
     }
     format 'misc', {
         target '*.gradle', '*.md', '.gitignore'
+        targetExclude 'release-notes.md'
         trimTrailingWhitespace()
         endWithNewline()
     }
