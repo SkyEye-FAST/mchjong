@@ -98,6 +98,8 @@ sourceSets {
     smoke {
         java.srcDir '../src/smoke/java'
         java.exclude '**/FabricSmoke.java'
+        resources.srcDir '../src/smoke/resources'
+        resources.exclude 'fabric.mod.json'
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }

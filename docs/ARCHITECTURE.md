@@ -141,6 +141,9 @@ fixtures; they are not scoring-rule integration tests. The same harness runs wit
 archive it on the integrated server, retrieve it through commands and chunked
 networking, render the replay timeline and click the Tenhou export button.
 Development-only source sets contain the smoke adapters.
+Both smoke clients leave the desktop cursor free, including when closing screens
+or entering the world. A smoke-only mouse mixin prevents capture and recentering;
+the harness checks the logical grab state and native cursor mode each tick.
 NeoForge's dedicated-server integration tests also run in `buildAll`.
 
 The optional client integration in `compat/ponder` registers three tutorials with

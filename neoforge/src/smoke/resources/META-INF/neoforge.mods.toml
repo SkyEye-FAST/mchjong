@@ -8,6 +8,9 @@ version="1.0.0"
 displayName="MCjhong development smoke"
 description='''Development-only client assertions. Never distributed in the mod artifact.'''
 
+[[mixins]]
+config="mchjong.smoke.mixins.json"
+
 [[dependencies.mchjong_smoke]]
 modId="mchjong"
 type="required"

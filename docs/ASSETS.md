@@ -180,11 +180,7 @@ white face plates, picking and exact wall/river contact, including riichi discar
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
 Screenshots and the final result are written beneath `build/smoke/evidence`.
-`00-furniture-details.png` and `00-material-gallery.png` are development-only
-contact sheets rendered by the real item renderer. They cover the furniture,
-eleven wood finishes and six white-face tile materials. `00-flower-gallery.png`
-shows all eight flowers and seasons through the native item renderer. The held-item
-screenshots cover both main-hand preferences at 1280 by 800. Real table views
+The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
-`:neoforge:runSmokeClient` runs the same assertions and contact sheets under
+`:neoforge:runSmokeClient` runs the same assertions and screenshots under
 `neoforge/build/smoke/evidence`. Resource reload checks include all furniture textures.

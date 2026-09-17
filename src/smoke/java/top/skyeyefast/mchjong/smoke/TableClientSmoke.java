@@ -58,6 +58,9 @@ public final class TableClientSmoke {
     public void tick(Minecraft client) {
         if (step == 14) return;
         try {
+            require(!client.mouseHandler.isMouseGrabbed(), "Smoke client grabbed the desktop mouse");
+            require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
+                == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8000 : 6000))
@@ -157,10 +160,6 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                client.setScreen(new FurnitureGalleryScreen(false));
-                step = 20; entered = ticks;
-            } else if (step == 20 && ticks - entered > 20) {
-                capture(client, "00-furniture-details.png");
                 if (seatingOnly) {
                     client.setScreen(null);
                     UUID id = client.player.getUUID();
@@ -177,14 +176,6 @@ public final class TableClientSmoke {
                     step = 3; entered = ticks;
                     return;
                 }
-                client.setScreen(new FurnitureGalleryScreen(true));
-                step = 21; entered = ticks;
-            } else if (step == 21 && ticks - entered > 20) {
-                capture(client, "00-material-gallery.png");
-                client.setScreen(new FlowerGalleryScreen());
-                step = 24; entered = ticks;
-            } else if (step == 24 && ticks - entered > 20) {
-                capture(client, "00-flower-gallery.png");
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
