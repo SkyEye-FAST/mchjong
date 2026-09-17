@@ -22,17 +22,6 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, light, table.wood(), table.equipment().hasCloth() ? table.equipment().clothColor() : null,
             table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE));
-        for (int side = 0; side < 4; side++) if (table.equipment().stickCount(side) > 0) {
-            pose.pushPose();
-            pose.mulPose(Axis.YP.rotationDegrees(-side * 90));
-            pose.translate(.83, 1.006, TableGeometry.FELT_HALF_WIDTH + .0775);
-            pose.scale(.7f, 1, 1);
-            for (int count = 0; count < Math.min(4, table.equipment().stickCount(side)); count++) {
-                FurnitureMesh.stick(pose, buffers, light, table.equipment().stickValue(side));
-                pose.translate(0, .028, 0);
-            }
-            pose.popPose();
-        }
         pose.popPose();
         if (view == null) return;
         long now = Util.getMillis();
@@ -50,7 +39,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         if (table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE))
             TableIndicator.render(view, pose, buffers, light);
         for (int seat = 0; seat < view.seats().size(); seat++) {
-            if (view.seats().get(seat).riichi()) {
+            if (table.automatic() && view.seats().get(seat).riichi()) {
                 var vertices = buffers.getBuffer(TileRenderTypes.FACES);
                 double progress = animated ? animation.riichiProgress(seat, now) : 1;
                 pose.pushPose();
@@ -81,7 +70,8 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             if (piece.area() == TableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
             pose.pushPose();
             boolean selected = screen != null && screen.selected(table.getBlockPos(), piece);
-            pose.translate(piece.position().x, piece.position().y + (selected ? 0.035 : 0), piece.position().z);
+            var position = piece.position().add(screen == null ? net.minecraft.world.phys.Vec3.ZERO : screen.handlingOffset(table.getBlockPos(), piece));
+            pose.translate(position.x, position.y + (selected ? 0.035 : 0), position.z);
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
             pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);

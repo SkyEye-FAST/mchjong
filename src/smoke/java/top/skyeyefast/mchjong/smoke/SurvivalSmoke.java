@@ -58,6 +58,7 @@ final class SurvivalSmoke {
             && drops.getFirst().get(DataComponents.BASE_COLOR) == DyeColor.MAGENTA, "Stool loot lost appearance");
         BoxMenuSmoke.verify(player);
         TableStorageSmoke.verify(player);
+        PointStickMenuSmoke.verify(player);
         StonecutterSmoke.verify(player);
         EquipmentSmoke.verify(player);
         EquipmentLifecycleSmoke.verify(player);

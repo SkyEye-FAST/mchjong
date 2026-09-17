@@ -16,6 +16,7 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
+        net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();

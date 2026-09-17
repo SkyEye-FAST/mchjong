@@ -42,6 +42,8 @@ public final class MahjongContent {
         new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.MahjongBoxMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
     public static final net.minecraft.world.inventory.MenuType<top.skyeyefast.mchjong.item.MahjongTableMenu> TABLE_MENU =
         new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.MahjongTableMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
+    public static final net.minecraft.world.inventory.MenuType<top.skyeyefast.mchjong.item.PointStickMenu> STICK_MENU =
+        new net.minecraft.world.inventory.MenuType<>(top.skyeyefast.mchjong.item.PointStickMenu::new, net.minecraft.world.flag.FeatureFlags.VANILLA_SET);
 
     private MahjongContent() {}
 

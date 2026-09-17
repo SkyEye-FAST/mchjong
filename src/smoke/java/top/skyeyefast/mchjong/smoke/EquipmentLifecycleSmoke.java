@@ -188,8 +188,13 @@ final class EquipmentLifecycleSmoke {
         sticks.set(MahjongComponents.POINTS, 1000);
         var expectedSticks = sticks.copy();
         String scoresBefore = TableNetworking.JSON.toJson(game);
-        for (int i = 0; i < 3; i++) table.useEquipment(player, sticks);
-        check(sticks.isEmpty() && table.equipment().stickCount(0) == 3, "Physical point-stick placement failed");
+        if (!table.automatic()) {
+            PointStickMenuSmoke.put(player, table, 0, sticks);
+            check(sticks.isEmpty() && table.equipment().drawer(0).getItem(0).getCount() == 3, "Physical point-stick storage failed");
+        } else {
+            table.openSticks(player, 0);
+            check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu), "Automatic table opened a manual drawer");
+        }
         check(scoresBefore.equals(TableNetworking.JSON.toJson(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
@@ -197,11 +202,12 @@ final class EquipmentLifecycleSmoke {
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
         check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
+        if (!table.automatic()) {
+            PointStickMenuSmoke.take(player, table, 0);
+            check(countInventory(player, expectedSticks) == 3 && table.equipment().drawer(0).isEmpty(), "Drawer did not return its physical stack");
+        }
         TableStorageSmoke.emptyHand(player);
         player.setShiftKeyDown(true);
-        table.removeEquipment(player, Direction.UP);
-        check(countInventory(player, expectedSticks) == 3 && table.equipment().stickCount(0) == 0, "Point tray did not return its physical stack");
-        TableStorageSmoke.emptyHand(player);
         table.removeEquipment(player, Direction.UP);
         check(countInventory(player, redExpected) == 1 && !table.equipment().hasCloth(), "Cloth was not removable after exit");
         player.setShiftKeyDown(false);
@@ -210,8 +216,7 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         TableStorageSmoke.put(player, table, 1, findInventory(player, firstExpected));
         table.useEquipment(player, findInventory(player, redExpected));
-        var returnedSticks = findInventory(player, expectedSticks);
-        for (int i = 0; i < 3; i++) table.useEquipment(player, returnedSticks);
+        if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, findInventory(player, expectedSticks));
 
         var saved = table.saveWithoutMetadata(level.registryAccess());
         var loaded = new MahjongTableBlockEntity(CENTER, block.defaultBlockState());
@@ -228,7 +233,9 @@ final class EquipmentLifecycleSmoke {
             check(!level.getBlockState(CENTER.offset(x, 0, z)).is(MahjongContent.SPACE), "Orphaned table-space block after destruction");
         loaded.dropEquipment();
         var drops = level.getEntitiesOfClass(ItemEntity.class, AREA);
-        for (var expected : List.of(expectedFurniture, complete, firstExpected, redExpected, expectedSticks)) {
+        var expectedDrops = new ArrayList<>(List.of(expectedFurniture, complete, firstExpected, redExpected));
+        if (!loaded.automatic()) expectedDrops.add(expectedSticks);
+        for (var expected : expectedDrops) {
             int count = drops.stream().map(ItemEntity::getItem).filter(stack -> ItemStack.isSameItemSameComponents(stack, expected))
                 .mapToInt(ItemStack::getCount).sum();
             check(count == expected.getCount(), "Destruction " + destruction + " returned " + count + " rather than " + expected);

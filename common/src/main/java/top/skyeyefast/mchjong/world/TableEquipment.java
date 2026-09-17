@@ -3,8 +3,7 @@ package top.skyeyefast.mchjong.world;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
-import net.minecraft.core.NonNullList;
-import top.skyeyefast.mchjong.item.MahjongComponents;
+import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
@@ -13,56 +12,34 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 /** Removable physical equipment and a strictly public appearance projection. Never holds game state. */
 public final class TableEquipment {
     public static final int BOX_SLOTS = 2;
+    public static final int STICK_SLOTS = 9;
     private final net.minecraft.world.SimpleContainer boxes = new net.minecraft.world.SimpleContainer(BOX_SLOTS);
+    private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
     private boolean loading;
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back = DyeColor.BLUE;
-    private final NonNullList<ItemStack> sticks = NonNullList.withSize(4, ItemStack.EMPTY);
-    private int[] stickValues = new int[4];
-    private int[] stickCounts = new int[4];
 
     public TableEquipment(Runnable changed) {
         boxes.addListener(container -> {
             refreshDeck();
             if (!loading) changed.run();
         });
+        for (int side = 0; side < drawers.length; side++) {
+            drawers[side] = new SimpleContainer(STICK_SLOTS);
+            drawers[side].addListener(container -> { if (!loading) changed.run(); });
+        }
     }
 
     public net.minecraft.world.Container boxes() { return boxes; }
+    public net.minecraft.world.Container drawer(int side) { return drawers[side]; }
     public boolean hasCloth() { return clothColor >= 0; }
     public DyeColor clothColor() { return DyeColor.byId(clothColor); }
     public TileMaterial material() { return material; }
     public DyeColor back() { return back; }
     public MahjongSupplies.Deck deck() { return deck; }
-    public int stickValue(int seat) { return stickValues[seat]; }
-    public int stickCount(int seat) { return stickCounts[seat]; }
-
-    public boolean placeStick(int seat, ItemStack source) {
-        if (!source.is(MahjongContent.POINT_STICK) || !MahjongSupplies.storable(source)
-            || source.getOrDefault(MahjongComponents.POINTS, 0) == 0) return false;
-        ItemStack previous = sticks.get(seat);
-        if (previous.isEmpty()) sticks.set(seat, source.copyWithCount(1));
-        else if (ItemStack.isSameItemSameComponents(previous, source) && previous.getCount() < previous.getMaxStackSize()) previous.grow(1);
-        else return false;
-        refreshSticks();
-        return true;
-    }
-
-    public ItemStack removeSticks(int seat) {
-        ItemStack previous = sticks.set(seat, ItemStack.EMPTY);
-        refreshSticks();
-        return previous;
-    }
-
-    private void refreshSticks() {
-        for (int seat = 0; seat < 4; seat++) {
-            stickValues[seat] = sticks.get(seat).getOrDefault(MahjongComponents.POINTS, 0);
-            stickCounts[seat] = sticks.get(seat).getCount();
-        }
-    }
 
     private void refreshDeck() {
         deck = null;
@@ -92,14 +69,10 @@ public final class TableEquipment {
         for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot).saveOptional(registries));
         tag.put("boxes", storedBoxes);
         tag.put("cloth", cloth.saveOptional(registries));
-        ListTag placed = new ListTag();
-        for (int seat = 0; seat < 4; seat++) if (!sticks.get(seat).isEmpty()) {
-            CompoundTag entry = new CompoundTag();
-            entry.putInt("seat", seat);
-            entry.put("stack", sticks.get(seat).save(registries));
-            placed.add(entry);
-        }
-        tag.put("placed_sticks", placed);
+        ListTag storedSticks = new ListTag();
+        for (var drawer : drawers) for (int slot = 0; slot < STICK_SLOTS; slot++)
+            storedSticks.add(drawer.getItem(slot).saveOptional(registries));
+        tag.put("stick_drawers", storedSticks);
     }
 
     public void load(CompoundTag tag, HolderLookup.Provider registries) {
@@ -112,14 +85,16 @@ public final class TableEquipment {
                     boxes.setItem(slot, slot < stored.size() ? ItemStack.parseOptional(registries, stored.getCompound(slot)) : ItemStack.EMPTY);
             } finally { loading = false; }
         }
-        if (tag.contains("placed_sticks")) {
-            sticks.clear();
-            for (var value : tag.getList("placed_sticks", 10)) {
-                CompoundTag entry = (CompoundTag) value;
-                int seat = entry.getInt("seat");
-                if (seat >= 0 && seat < 4) sticks.set(seat, ItemStack.parseOptional(registries, entry.getCompound("stack")));
-            }
-            refreshSticks();
+        if (tag.contains("stick_drawers")) {
+            loading = true;
+            try {
+                ListTag stored = tag.getList("stick_drawers", 10);
+                for (int side = 0; side < drawers.length; side++) for (int slot = 0; slot < STICK_SLOTS; slot++) {
+                    int index = side * STICK_SLOTS + slot;
+                    drawers[side].setItem(slot, index < stored.size()
+                        ? ItemStack.parseOptional(registries, stored.getCompound(index)) : ItemStack.EMPTY);
+                }
+            } finally { loading = false; }
         }
         if (tag.contains("cloth")) {
             cloth = ItemStack.parseOptional(registries, tag.getCompound("cloth"));
@@ -129,17 +104,11 @@ public final class TableEquipment {
         if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
-        int[] loadedStickValues = tag.getIntArray("stick_values");
-        int[] loadedStickCounts = tag.getIntArray("stick_counts");
-        if (loadedStickValues.length == 4) stickValues = loadedStickValues.clone();
-        if (loadedStickCounts.length == 4) stickCounts = loadedStickCounts.clone();
     }
 
     public void writeAppearance(CompoundTag tag) {
         tag.putInt("cloth_color", clothColor);
         tag.putString("tile_material", material.getSerializedName());
         tag.putInt("tile_back", back.getId());
-        tag.putIntArray("stick_values", stickValues.clone());
-        tag.putIntArray("stick_counts", stickCounts.clone());
     }
 }

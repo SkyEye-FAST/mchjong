@@ -63,10 +63,11 @@ final class MahjongScenes {
         ItemStack stick = new ItemStack(MahjongContent.POINT_STICK);
         stick.set(MahjongComponents.POINTS, 1000);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
-            table -> table.equipment().placeStick(0, stick));
-        scene.overlay().showControls(FELT.add(0.9, 0, 1.2), Pointing.DOWN, 80).rightClick().withItem(stick);
-        say(scene, "Point sticks can be placed on your side. Flower and season tiles stay in the box during riichi games.", FELT);
-        say(scene, "Manage boxes through table storage in the lobby. Crouch-click with empty hands to collect placed equipment.", FELT);
+            table -> table.equipment().drawer(0).setItem(0, stick.copy()));
+        Vec3 drawer = TableGeometry.world(TABLE, TableGeometry.drawerBounds(0).getCenter());
+        scene.overlay().showControls(drawer, Pointing.DOWN, 80).rightClick().withItem(stick);
+        say(scene, "Open the side drawers to store point sticks and hand payments to the other players.", drawer);
+        say(scene, "Manage boxes through table storage in the lobby. Crouch-click the tabletop with empty hands to collect the cloth.", FELT);
         scene.markAsFinished();
     }
 
@@ -81,7 +82,7 @@ final class MahjongScenes {
         scene.overlay().showControls(stool, Pointing.DOWN, 80).rightClick();
         say(scene, "Click a stool to sit and open the table controls. Click it again to reopen the controls while seated.", stool);
         say(scene, "Choose three- or four-player mahjong and a rule preset in the lobby, then have every player ready up.", FELT);
-        say(scene, "On an ordinary table, use the controls to shuffle, build your wall, take starting packets and draw tiles.", FELT);
+        say(scene, "On an ordinary table, sweep the loose tiles to shuffle, drag them toward your wall, then pull wall tiles toward your hand.", FELT);
         scene.world().setBlock(TABLE, MahjongContent.AUTO_TABLE.defaultBlockState(), false);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class, table -> {
             table.equipment().installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));

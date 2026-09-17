@@ -155,20 +155,23 @@ final class EquipmentSmoke {
             check(ItemStack.matches(original, table.equipment().boxes().getItem(1))
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Locked storage changed equipment");
             var before = game.view(player.getUUID());
-            table.useEquipment(player, inventory.getItem(2));
+            if (!table.automatic()) {
+                PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(1));
+                check(table.equipment().drawer(0).getItem(0).getCount() == 1, "Active manual drawer did not receive its stick");
+                PointStickMenuSmoke.take(player, table, 0);
+                check(inventory.getItem(2).getCount() == 8 && table.equipment().drawer(0).isEmpty(),
+                    "Active manual drawer did not return its stick through the native container");
+            }
             var after = game.view(player.getUUID());
             check(before.seats().stream().map(s -> s.points()).toList().equals(after.seats().stream().map(s -> s.points()).toList())
                 && before.riichiSticks() == after.riichiSticks(), "Physical point stick changed engine scores or deposits");
-            player.setShiftKeyDown(true);
-            check(table.removeEquipment(player, Direction.UP), "Cannot recover the physical stick during a game");
-            player.setShiftKeyDown(false);
             table.control(player, new TableControlPayload(POS, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
             check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exit did not release the player");
             check(ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,
                 "Exit lost the full set or unused sanma tiles");
             check(!staleMenu.stillValid(player) && staleMenu.quickMoveStack(player, 0).isEmpty(), "An invalidated storage menu became live again after exit");
-            for (int count = 0; count < 3; count++) table.useEquipment(player, inventory.getItem(2));
+            if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(3));
             player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, 0, 0);
             if (destruction == 0) level.destroyBlock(POS, true);
             else if (destruction == 1) level.destroyBlock(POS.offset(TableGeometry.FOOTPRINT_RADIUS, 0, TableGeometry.FOOTPRINT_RADIUS), true);
@@ -181,7 +184,9 @@ final class EquipmentSmoke {
             check(count(drops, MahjongContent.BOX_ITEM) == 2 && drops.stream().anyMatch(s -> ItemStack.matches(s, replacement))
                 && drops.stream().anyMatch(s -> ItemStack.matches(s, original)), "Destroyed table did not return both complete boxes exactly once");
             check(count(drops, MahjongContent.CLOTH_ITEM) == 1 && drops.stream().anyMatch(s -> ItemStack.matches(s, cloth)), "Destroyed table lost its cloth");
-            check(count(drops, MahjongContent.POINT_STICK) == 3 && inventory.getItem(2).getCount() == 5, "Destroyed table duplicated or lost point sticks");
+            int storedSticks = table.automatic() ? 0 : 3;
+            check(count(drops, MahjongContent.POINT_STICK) == storedSticks && inventory.getItem(2).getCount() == 8 - storedSticks,
+                "Destroyed table duplicated or lost point sticks");
             check(find(inventory, original) < 0 && find(inventory, replacement) < 0, "Storage duplicated a case in player inventory");
             int radius = TableGeometry.FOOTPRINT_RADIUS;
             for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++)

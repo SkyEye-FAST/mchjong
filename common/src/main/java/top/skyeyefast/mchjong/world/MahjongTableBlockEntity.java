@@ -117,16 +117,49 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             Component.translatable("storage.mchjong.title")));
     }
 
-    /** Empty-hand sneaking on the top collects sticks, then the cloth between matches. */
+    public int drawerAt(net.minecraft.world.phys.BlockHitResult hit) {
+        return automatic() ? -1 : TableGeometry.drawerSide(hit.getLocation().subtract(TableGeometry.world(worldPosition, net.minecraft.world.phys.Vec3.ZERO)));
+    }
+
+    public boolean canUseSticks(net.minecraft.world.entity.player.Player player, int side) {
+        return side >= 0 && side < 4 && !automatic() && unreadableSave == null && player.level() == level
+            && !isRemoved() && player.isAlive() && !player.isRemoved() && !player.isSpectator()
+            && player.distanceToSqr(worldPosition.getCenter()) <= 64 && level.getBlockEntity(worldPosition) == this
+            && (equipmentEditable() || player instanceof ServerPlayer server && participantGame(server) != null);
+    }
+
+    public boolean canWithdrawSticks(net.minecraft.world.entity.player.Player player, int side) {
+        if (!canUseSticks(player, side)) return false;
+        if (equipmentEditable()) return true;
+        Game game = participantGame((ServerPlayer) player);
+        return game != null && (game.seatOf(player.getUUID()) == side || game.isHost(player.getUUID()) && game.trainingSeat(side));
+    }
+
+    public int pointScore(int side) {
+        Game game = serverGame();
+        return game == null || side >= game.rules().players() ? 0 : game.points(side);
+    }
+
+    public void openSticks(ServerPlayer player, int side) {
+        if (!canUseSticks(player, side)) return;
+        player.openMenu(new net.minecraft.world.SimpleMenuProvider(
+            (id, inventory, owner) -> new top.skyeyefast.mchjong.item.PointStickMenu(id, inventory, this, side),
+            Component.translatable("sticks.mchjong.title", side + 1)));
+    }
+
+    public void use(ServerPlayer player, net.minecraft.world.phys.BlockHitResult hit) {
+        int side = drawerAt(hit);
+        if (side >= 0) openSticks(player, side);
+        else if (!removeEquipment(player, hit.getDirection())) {
+            if (player.isShiftKeyDown()) open(player);
+            else openStorage(player);
+        }
+    }
+
+    /** Empty-hand sneaking on the top collects the cloth between matches. */
     public boolean removeEquipment(ServerPlayer player, net.minecraft.core.Direction face) {
         if (!player.isShiftKeyDown() || !player.getMainHandItem().isEmpty() || !player.getOffhandItem().isEmpty()
             || player.isSpectator()) return false;
-        int side = TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
-        if (face == net.minecraft.core.Direction.UP && equipment.stickCount(side) > 0) {
-            give(player, equipment.removeSticks(side));
-            appearanceChanged();
-            return true;
-        }
         if (!equipmentEditable() || face != net.minecraft.core.Direction.UP) return false;
         var removed = equipment.removeCloth();
         if (removed.isEmpty()) return false;
@@ -137,14 +170,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public boolean useEquipment(ServerPlayer player, net.minecraft.world.item.ItemStack stack) {
-        if (stack.is(MahjongContent.POINT_STICK)) {
-            int side = TableGeometry.nearestSide(player.position().subtract(worldPosition.getCenter()));
-            if (!player.isSpectator() && equipment.placeStick(side, stack)) {
-                if (!player.isCreative()) stack.shrink(1);
-                appearanceChanged();
-            }
-            return true;
-        }
         if (!stack.is(MahjongContent.CLOTH_ITEM)) return false;
         if (player.isSpectator() || !equipmentEditable()) {
             player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
@@ -169,7 +194,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             .mapToObj(slot -> equipment.boxes().removeItemNoUpdate(slot)).toList();
         equipment.boxes().setChanged();
         var cloth = equipment.removeCloth();
-        var sticks = java.util.stream.IntStream.range(0, 4).mapToObj(equipment::removeSticks).toList();
+        var sticks = new java.util.ArrayList<net.minecraft.world.item.ItemStack>();
+        for (int side = 0; side < 4; side++) for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++)
+            sticks.add(equipment.drawer(side).removeItemNoUpdate(slot));
         boxes.forEach(stack -> net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack));
         net.minecraft.world.level.block.Block.popResource(level, worldPosition, cloth);
         sticks.forEach(stack -> net.minecraft.world.level.block.Block.popResource(level, worldPosition, stack));

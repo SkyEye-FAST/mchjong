@@ -207,30 +207,30 @@ class PhysicalSuppliesTest {
         }
     }
 
-    @Test void pointTraysPersistPhysicalStacksWithoutChangingTheGame(MinecraftServer server) {
+    @Test void pointDrawersPersistMultipleDenominationsPrivately(MinecraftServer server) {
         var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         var source = new ItemStack(MahjongContent.POINT_STICK, 64);
         source.set(MahjongComponents.POINTS, 5000);
-        for (int i = 0; i < 64; i++) assertTrue(equipment.placeStick(2, source));
-        assertFalse(equipment.placeStick(2, source));
-        assertFalse(equipment.placeStick(0, new ItemStack(MahjongContent.POINT_STICK)));
-        assertEquals(64, source.getCount(), "Inventory consumption belongs to the server interaction transaction");
+        equipment.drawer(2).setItem(0, source.copy());
+        var small = source.copyWithCount(3);
+        small.set(MahjongComponents.POINTS, 100);
+        equipment.drawer(2).setItem(1, small.copy());
         var saved = new net.minecraft.nbt.CompoundTag();
         equipment.save(saved, server.registryAccess());
         var loaded = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         loaded.load(saved, server.registryAccess());
-        assertEquals(64, loaded.stickCount(2));
-        assertEquals(5000, loaded.stickValue(2));
+        assertTrue(ItemStack.matches(source, loaded.drawer(2).getItem(0)));
+        assertTrue(ItemStack.matches(small, loaded.drawer(2).getItem(1)));
+        assertEquals(9, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
-        assertFalse(publicData.contains("placed_sticks"), "Only public denomination/count summaries are broadcast");
-        assertTrue(ItemStack.matches(source, loaded.removeSticks(2)));
-        assertTrue(loaded.removeSticks(2).isEmpty());
-        assertEquals(0, loaded.stickCount(2));
+        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back"), publicData.getAllKeys());
+        assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
+        assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
         assertFalse(saved.contains("game"));
     }
 
-    @Test void equipmentSnapshotsOwnTheirPointStickArrays(MinecraftServer server) {
+    @Test void equipmentSnapshotsOwnTheirDrawerStacks(MinecraftServer server) {
         var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         var source = new ItemStack(MahjongContent.POINT_STICK);
         source.set(MahjongComponents.POINTS, 1000);
@@ -238,27 +238,28 @@ class PhysicalSuppliesTest {
         equipment.writeAppearance(saved);
         equipment.save(saved, server.registryAccess());
         var snapshot = saved.copy();
-        assertTrue(equipment.placeStick(0, source));
+        equipment.drawer(0).setItem(0, source.copy());
         assertEquals(snapshot, saved, "Later equipment changes must not mutate an earlier snapshot");
 
         var restored = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         restored.load(saved, server.registryAccess());
-        assertTrue(restored.placeStick(0, source));
+        restored.drawer(0).setItem(0, source.copy());
         assertEquals(snapshot, saved, "Restored equipment must not mutate its source NBT");
         restored.load(saved, server.registryAccess());
-        assertEquals(0, restored.stickCount(0));
-        assertEquals(0, restored.stickValue(0));
-        assertTrue(restored.removeSticks(0).isEmpty());
+        assertTrue(restored.drawer(0).isEmpty());
 
         var appearance = new net.minecraft.nbt.CompoundTag();
         equipment.writeAppearance(appearance);
         restored.load(appearance, server.registryAccess());
-        appearance.getIntArray("stick_counts")[0] = 63;
-        appearance.getIntArray("stick_values")[0] = 5000;
-        assertEquals(1, restored.stickCount(0), "Inbound appearance NBT must not alias live state");
-        assertEquals(1000, restored.stickValue(0));
-        assertEquals(1, equipment.stickCount(0), "Outbound appearance NBT must not alias live state");
-        assertEquals(1000, equipment.stickValue(0));
+        assertTrue(restored.drawer(0).isEmpty(), "Appearance packets must not disclose drawer contents");
+        equipment.load(appearance, server.registryAccess());
+        assertTrue(ItemStack.matches(source, equipment.drawer(0).getItem(0)), "Appearance updates must preserve private contents");
+        equipment.save(saved, server.registryAccess());
+        restored.load(saved, server.registryAccess());
+        var copy = saved.copy();
+        restored.drawer(0).getItem(0).grow(10);
+        assertEquals(copy, saved);
+        assertEquals(1, equipment.drawer(0).getItem(0).getCount());
     }
 
     @Test void furnitureExposesOnlyAppearanceComponentsForLoot(MinecraftServer server) {
@@ -283,7 +284,7 @@ class PhysicalSuppliesTest {
         assertEquals(DyeColor.MAGENTA, stool.collectComponents().get(DataComponents.BASE_COLOR));
     }
 
-    @Test void oversizedBoxesCannotLoseContentsAndPlacedSticksAreReturnedExactlyOnce(MinecraftServer server) {
+    @Test void oversizedBoxesCannotLoseContentsAndDrawerSlotsValidateSticks(MinecraftServer server) {
         var stored = new ArrayList<>(MahjongSupplies.contents(MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE)));
         stored.add(new ItemStack(MahjongContent.POINT_STICK));
         var oversized = box(stored);
@@ -292,22 +293,12 @@ class PhysicalSuppliesTest {
         assertTrue(MahjongSupplies.engrave(oversized).isEmpty());
         assertTrue(MahjongSupplies.dye(oversized, DyeColor.RED).isEmpty());
         assertEquals(55, oversized.get(DataComponents.CONTAINER).stream().count());
-        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         var stick = new ItemStack(MahjongContent.POINT_STICK, 64);
         stick.set(MahjongComponents.POINTS, 1000);
-        assertFalse(equipment.placeStick(0, new ItemStack(MahjongContent.POINT_STICK)));
-        for (int i = 0; i < 64; i++) assertTrue(equipment.placeStick(0, stick));
-        assertFalse(equipment.placeStick(0, stick));
-        assertEquals(64, stick.getCount(), "Inventory consumption belongs to the interaction, not the storage helper");
-        var saved = new net.minecraft.nbt.CompoundTag();
-        equipment.save(saved, server.registryAccess());
-        var loaded = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
-        loaded.load(saved, server.registryAccess());
-        assertEquals(64, loaded.stickCount(0));
-        assertEquals(1000, loaded.stickValue(0));
-        assertTrue(ItemStack.matches(stick, loaded.removeSticks(0)));
-        assertTrue(loaded.removeSticks(0).isEmpty());
-        assertEquals(0, loaded.stickCount(0));
+        assertTrue(top.skyeyefast.mchjong.item.PointStickMenu.validStick(stick));
+        assertFalse(top.skyeyefast.mchjong.item.PointStickMenu.validStick(new ItemStack(MahjongContent.POINT_STICK)));
+        assertFalse(top.skyeyefast.mchjong.item.PointStickMenu.validStick(new ItemStack(Items.STONE)));
+        assertFalse(top.skyeyefast.mchjong.item.PointStickMenu.validStick(oversized));
     }
 
     @Test void publicAppearanceKeepsPrivateEquipmentButEmptySavesActuallyClearIt(MinecraftServer server) {

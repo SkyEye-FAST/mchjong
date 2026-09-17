@@ -58,17 +58,18 @@ public final class MahjongTableBlock extends BaseEntityBlock {
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
-            if (!table.removeEquipment(serverPlayer, hit.getDirection())) {
-                if (player.isShiftKeyDown()) table.open(serverPlayer);
-                else table.openStorage(serverPlayer);
-            }
+            table.use(serverPlayer, hit);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
             BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
-        if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM) || stack.is(MahjongContent.POINT_STICK)) {
+        if (level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table && table.drawerAt(hit) >= 0) {
+            if (player instanceof ServerPlayer server) table.openSticks(server, table.drawerAt(hit));
+            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM)) {
             if (player instanceof ServerPlayer server && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
                 if (stack.is(MahjongContent.BOX_ITEM)) table.openStorage(server);
                 else table.useEquipment(server, stack);

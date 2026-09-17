@@ -42,21 +42,32 @@ public final class TableSpaceBlock extends Block {
     public static BlockPos center(BlockPos pos, BlockState state) { return pos.offset(RADIUS - state.getValue(X), 0, RADIUS - state.getValue(Z)); }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
-        return SHAPES[state.getValue(X)][state.getValue(Z)];
+        VoxelShape shape = SHAPES[state.getValue(X)][state.getValue(Z)];
+        BlockPos center = center(pos, state);
+        if (level.getBlockState(center).is(MahjongContent.TABLE)) {
+            var cell = new net.minecraft.world.phys.AABB(pos);
+            for (int side = 0; side < 4; side++) {
+                var drawer = TableGeometry.drawerBounds(side).move(center.getX() + .5, center.getY(), center.getZ() + .5);
+                if (drawer.intersects(cell)) shape = net.minecraft.world.phys.shapes.Shapes.or(shape,
+                    net.minecraft.world.phys.shapes.Shapes.create(drawer.intersect(cell).move(-pos.getX(), -pos.getY(), -pos.getZ())));
+            }
+        }
+        return shape;
     }
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table) {
-            if (!table.removeEquipment(serverPlayer, hit.getDirection())) {
-                if (player.isShiftKeyDown()) table.open(serverPlayer);
-                else table.openStorage(serverPlayer);
-            }
+            table.use(serverPlayer, hit);
         }
         return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
     @Override protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack,
             BlockState state, Level level, BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
-        if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM) || stack.is(MahjongContent.POINT_STICK)) {
+        if (level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table && table.drawerAt(hit) >= 0) {
+            if (player instanceof ServerPlayer server) table.openSticks(server, table.drawerAt(hit));
+            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+        }
+        if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM)) {
             if (player instanceof ServerPlayer server && level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table) {
                 if (stack.is(MahjongContent.BOX_ITEM)) table.openStorage(server);
                 else table.useEquipment(server, stack);

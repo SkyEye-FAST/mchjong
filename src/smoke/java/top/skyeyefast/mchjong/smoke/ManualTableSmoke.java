@@ -36,12 +36,13 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** All handling actions below travel from real buttons through the normal client/server packets. */
+/** Real world-space pointer gestures travel through the normal client/server action packets. */
 final class ManualTableSmoke {
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;
     private CompletableFuture<Void> serverWork;
     private ItemStack installedBox;
+    private final PointStickInterfaceSmoke drawers = new PointStickInterfaceSmoke();
 
     boolean tick(Minecraft client, Path output) {
         ticks++;
@@ -83,21 +84,35 @@ final class ManualTableSmoke {
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
                 check(table.equipment().clothColor() == DyeColor.RED && table.equipment().material() == TileMaterial.GLASS,
                     "Ordinary table lost equipment appearance");
-                check(table.equipment().stickCount(0) == 3 && table.equipment().stickValue(0) == 1000 && view.riichiSticks() == 0,
-                    "Physical tray appearance or separation from riichi deposits was lost");
+                check(table.equipment().drawer(0).isEmpty() && view.riichiSticks() == 0,
+                    "Private drawer contents leaked through the appearance update");
                 capture(client, output, "30-manual-lobby.png");
+                client.screen.keyPressed(GLFW.GLFW_KEY_E, 0, 0);
+                next(16);
+            }
+            case 16 -> {
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.PointStickScreen) || ticks < 10) return false;
+                if (!drawers.tick(client, output)) return false;
+                check(client.player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu menu
+                    && menu.totalPoints(0) == 3000 && menu.slots.size() == 72, "Native drawer screen did not synchronize all four rows");
+                capture(client, output, "30a-point-drawers.png");
+                client.screen.onClose();
+                next(17);
+            }
+            case 17 -> {
+                if (!(client.screen instanceof TableScreen) || ticks < 10) return false;
                 click(client, "ui.mchjong.practice_short");
                 next(2);
             }
             case 2 -> {
-                if (view.phase() != Game.Phase.SHUFFLE || ticks < 40) return false;
+                if (view.phase() != Game.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
                 check(view.wall().isEmpty() && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table shuffled itself");
                 capture(client, output, "31-manual-shuffle.png");
                 click(client, "action.mchjong.shuffle");
                 next(3);
             }
             case 3 -> {
-                if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15) return false;
+                if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table dealt before walls were built");
                 capture(client, output, "32-manual-build-wall.png");
                 click(client, "action.mchjong.build_wall");
@@ -125,6 +140,7 @@ final class ManualTableSmoke {
             }
             case 7 -> {
                 check(view.phase() == Game.Phase.DRAW && view.remaining() == remaining, "Draw advanced without the player's action");
+                if (!hasControl(client, "action.mchjong.draw")) return false;
                 click(client, "action.mchjong.draw");
                 next(8);
             }
@@ -151,7 +167,7 @@ final class ManualTableSmoke {
             }
             case 11 -> {
                 check(view.phase() == Game.Phase.DRAW && view.remaining() == remaining, "Normal draw ran automatically on an ordinary table");
-                if (ticks < 40) return false;
+                if (ticks < 40 || !hasControl(client, "action.mchjong.draw")) return false;
                 capture(client, output, "36-manual-normal-draw.png");
                 click(client, "action.mchjong.draw");
                 next(12);
@@ -233,8 +249,8 @@ final class ManualTableSmoke {
         player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
         sticks.set(MahjongComponents.POINTS, 1000);
-        for (int i = 0; i < 3; i++) table.useEquipment(player, sticks);
-        check(sticks.isEmpty(), "Manual fixture did not consume its physical tray sticks");
+        PointStickMenuSmoke.put(player, table, 0, sticks);
+        check(sticks.isEmpty(), "Manual fixture did not transfer its physical drawer sticks");
     }
 
     private static void verifySavedHandling(ServerPlayer player, BlockPos pos) {
@@ -276,11 +292,61 @@ final class ManualTableSmoke {
             .anyMatch(button -> button.getMessage().getString().equals(label) && button.active && button.visible);
     }
     private static void click(Minecraft client, String key) {
+        if (client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity table) {
+            var view = table.clientView();
+            int index = top.skyeyefast.mchjong.client.TableHandling.action(view);
+            if (index >= 0 && view.actions().get(index).translationKey().equals(key)) {
+                dragTiles(client, table, view);
+                return;
+            }
+        }
         String label = Component.translatable(key).getString();
         var widget = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(button -> button.getMessage().getString().equals(label) && button.active).findFirst()
             .orElseThrow(() -> new IllegalStateException("Missing live manual control: " + key));
         client.screen.mouseClicked(widget.getX() + 5, widget.getY() + 5, 0);
+    }
+
+    private static void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
+        var screen = (TableScreen) client.screen;
+        var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
+        var camera = client.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
+        for (var frame : frames) {
+            var piece = frame.piece();
+            if (!top.skyeyefast.mchjong.client.TableHandling.source(view, piece)) continue;
+            var destination = top.skyeyefast.mchjong.client.TableHandling.destination(view);
+            if (view.phase() == Game.Phase.SHUFFLE)
+                destination = new net.minecraft.world.phys.Vec3(piece.position().x < 0 ? .6 : -.6, TableGeometry.FELT_Y, 0);
+            var start = project(client, top.skyeyefast.mchjong.client.TableHandling.grip(piece, camera));
+            var end = project(client, destination);
+            if (start.x < 0 || start.x >= screen.width || start.y < 0 || start.y >= screen.height) continue;
+            screen.mouseClicked(start.x, start.y, 0);
+            screen.mouseDragged(end.x, end.y, 0, end.x - start.x, end.y - start.y);
+            boolean holding = frames.stream().anyMatch(value -> screen.handlingOffset(CENTER, value.piece()).lengthSqr() > 0);
+            screen.mouseReleased(end.x, end.y, 0);
+            if (holding) return;
+        }
+        var sources = frames.stream().filter(frame -> top.skyeyefast.mchjong.client.TableHandling.source(view, frame.piece()))
+            .map(frame -> {
+                var ray = top.skyeyefast.mchjong.client.TableHandling.grip(frame.piece(), camera).subtract(camera);
+                var nearest = frames.stream().min(java.util.Comparator.comparingDouble(other ->
+                    top.skyeyefast.mchjong.client.TilePicking.distanceSquared(other, camera, ray, false))).orElseThrow();
+                return frame.piece() + " screen=" + project(client, frame.piece().position()) + " nearest=" + nearest.piece();
+            }).toList();
+        throw new IllegalStateException("No physical source could be picked for " + view.phase() + " moving="
+            + TableAnimation.of(table).moving(net.minecraft.Util.getMillis()) + " sources=" + sources);
+    }
+
+    private static net.minecraft.world.phys.Vec3 project(Minecraft client, net.minecraft.world.phys.Vec3 point) {
+        var camera = client.gameRenderer.getMainCamera();
+        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+        var right = new net.minecraft.world.phys.Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        var delta = TableGeometry.world(CENTER, point).subtract(camera.getPosition());
+        double fov = ((top.skyeyefast.mchjong.mixin.GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        double scale = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2)) / delta.dot(forward);
+        return new net.minecraft.world.phys.Vec3(client.screen.width / 2.0 + delta.dot(right) * scale,
+            client.screen.height / 2.0 - delta.dot(right.cross(forward)) * scale, 0);
     }
     private static void capture(Minecraft client, Path output, String file) {
         Screenshot.grab(output.toFile(), file, client.getMainRenderTarget(), ignored -> {});

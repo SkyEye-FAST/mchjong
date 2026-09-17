@@ -121,6 +121,8 @@ class ManualHandlingTest {
         game.draw(game.dealer, true, true);
         int remaining = game.wall.remaining();
         assertEquals(0, game.wall.replacementIndex);
+        assertEquals(game.wall.nextReplacementSlot(), game.view(null).handling().sourceSlot());
+        assertEquals(1, game.view(null).handling().packetSize());
         game = reload(game);
         assertEquals(Game.Phase.DRAW, game.phase());
         assertTrue(game.handling.replacement);

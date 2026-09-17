@@ -162,7 +162,7 @@ final class PonderSmoke {
             MahjongTableBlockEntity initial = table(scene);
             require(initial.getBlockState().is(MahjongContent.TABLE), "Replay did not restore the ordinary table");
             require(!initial.equipment().hasCloth() && initial.equipment().boxes().isEmpty()
-                && initial.equipment().stickCount(0) == 0, "Replay retained demonstration equipment");
+                && initial.equipment().drawer(0).isEmpty(), "Replay retained demonstration equipment");
             for (int seat = 0; seat < 4; seat++)
                 require(scene.getWorld().getBlockState(TableGeometry.stool(TABLE, seat)).is(MahjongContent.STOOL), "Missing stool");
             scene.seekToTime(scene.getTotalTime() + 1);
@@ -170,7 +170,7 @@ final class PonderSmoke {
             if (id.equals("table_equipment")) {
                 require(table(scene).equipment().hasCloth() && table(scene).equipment().deck() != null,
                     "Equipment scene did not prepare a playable set");
-                require(table(scene).equipment().stickCount(0) == 1, "Point-stick demo failed");
+                require(table(scene).equipment().drawer(0).getItem(0).getCount() == 1, "Point-stick demo failed");
             } else if (id.equals("table_playing")) {
                 require(table(scene).getBlockState().is(MahjongContent.AUTO_TABLE), "Automatic-table transition failed");
             }

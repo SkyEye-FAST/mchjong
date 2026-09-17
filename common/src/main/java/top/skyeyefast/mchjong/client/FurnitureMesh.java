@@ -34,6 +34,19 @@ public final class FurnitureMesh {
                 felt - .03125f, .84375f, felt + .03125f, WHITE, light);
             FurnitureShape.box(pose, wooden, -felt + .03125f, .625f, felt - .109375f,
                 felt - .03125f, .671875f, felt + .046875f, SHADE, light);
+            if (!automatic) {
+                var drawer = TableGeometry.STICK_DRAWER;
+                var edge = buffers.getBuffer(texture("edge"));
+                FurnitureShape.box(pose, edge, (float) drawer.minX, (float) drawer.minY, (float) drawer.minZ,
+                    (float) drawer.maxX, (float) drawer.maxY, (float) drawer.maxZ - .006f, WHITE, light);
+                wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
+                FurnitureShape.box(pose, wooden, (float) drawer.minX + .012f, (float) drawer.minY + .012f, (float) drawer.minZ,
+                    (float) drawer.maxX - .012f, (float) drawer.maxY - .012f, (float) drawer.maxZ - .003f, WHITE, light);
+                var handle = buffers.getBuffer(texture("brass"));
+                FurnitureShape.box(pose, handle, -.105f, .715f, (float) drawer.maxZ - .003f,
+                    .105f, .76f, (float) drawer.maxZ, WHITE, light);
+                wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
+            }
             if (!automatic) FurnitureShape.box(pose, wooden, -leg, .171875f, leg - .040625f,
                 leg, .234375f, leg + .0375f, SHADE, light);
             pose.popPose();
@@ -51,7 +64,7 @@ public final class FurnitureMesh {
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.bevel(pose, brass, -.11f, .707f, felt + .0315f, .11f, .758f, felt + .0475f, .004f, WHITE, light);
+            if (automatic) FurnitureShape.bevel(pose, brass, -.11f, .707f, felt + .0315f, .11f, .758f, felt + .0475f, .004f, WHITE, light);
             FurnitureShape.box(pose, brass, felt + .0425f, 1, felt + .0425f, felt + .0825f, 1.002f, felt + .0825f, WHITE, light);
             pose.popPose();
         }

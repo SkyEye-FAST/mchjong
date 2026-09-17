@@ -55,6 +55,7 @@ public final class TableAnimation {
 
     public List<Frame> settled() { return settled; }
     public boolean dealing(long now) { return now < openingUntil; }
+    public boolean moving(long now) { return now < ending; }
     public List<Cue> cues(long now) { return cues.stream().filter(cue -> now - cue.started() < 1100).toList(); }
     public double riichiProgress(int seat, long now) { return ease((now - riichiStarted[seat]) / 450.0); }
 
@@ -72,7 +73,8 @@ public final class TableAnimation {
     }
     private static double angle(double degrees) { return degrees - Math.floor((degrees + 180) / 360) * 360; }
     private static Key key(TableScene.Piece piece) {
-        if (piece.area() == TableScene.Area.WALL) return new Key(piece.area(), -1, piece.index());
+        if (piece.area() == TableScene.Area.WALL || piece.area() == TableScene.Area.LOOSE)
+            return new Key(TableScene.Area.WALL, -1, piece.index());
         if (piece.tile() >= 0) return new Key(null, -1, piece.tile());
         return new Key(piece.area(), piece.seat(), piece.index());
     }
@@ -151,6 +153,7 @@ public final class TableAnimation {
         drawn.sort(java.util.Comparator.comparingInt(source -> source.piece().index()));
         var updates = new HashMap<Key, Motion>();
         long finish = now;
+        int handled = 0;
         for (Frame target : targets) {
             Key key = key(target.piece());
             Motion prior = motions.get(key);
@@ -171,6 +174,14 @@ public final class TableAnimation {
                         int slot = discard.tsumogiri() ? count - 1 : Math.max(0, (count - 1) / 2);
                         source = sources.get(new Key(TableScene.Area.HAND, seat, slot));
                     }
+                }
+            }
+            if (source == null && target.piece().area() == TableScene.Area.HAND && view.handling() != null
+                && view.handling().sourceSlot() >= 0 && target.piece().seat() == view.turn()) {
+                // The dead-wall slot can be refilled in the same snapshot; it need not disappear to be the source.
+                if (handled < view.handling().packetSize()) {
+                    source = sources.get(new Key(TableScene.Area.WALL, -1, view.handling().sourceSlot() + handled++));
+                    if (source != null) drawn.remove(source);
                 }
             }
             if (source == null && target.piece().area() == TableScene.Area.HAND && !drawn.isEmpty()) source = drawn.removeFirst();
