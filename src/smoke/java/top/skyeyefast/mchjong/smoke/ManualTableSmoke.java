@@ -42,6 +42,11 @@ final class ManualTableSmoke {
     private int stage, ticks, totalTicks, packets, remaining;
     private CompletableFuture<Void> serverWork;
     private ItemStack installedBox;
+    private TableScreen draggingScreen;
+    private net.minecraft.world.phys.Vec3 dragEnd;
+    private int dragTicks;
+    private String dragCapture;
+    private boolean originalAnimations;
     private final PointStickInterfaceSmoke drawers = new PointStickInterfaceSmoke();
     private final DepositVisualSmoke deposits = new DepositVisualSmoke();
 
@@ -60,6 +65,8 @@ final class ManualTableSmoke {
         if (stage == 0) {
             // ReplayScreen.onClose returns to its pausing list; leave the display fixtures entirely.
             client.setScreen(null);
+            originalAnimations = TableSettings.get().animations;
+            TableSettings.get().animations = true;
             serverWork = onServer(client, this::prepare);
             next(1);
             return false;
@@ -79,6 +86,18 @@ final class ManualTableSmoke {
         var view = table.clientView();
         if (view == null) return false;
         privateHands(view);
+        if (draggingScreen != null) {
+            if (++dragTicks < 4) return false;
+            check(client.screen == draggingScreen, "Physical drag lost its screen before release");
+            capture(client, output, dragCapture);
+            var held = TableAnimation.of(table).sample(net.minecraft.Util.getMillis()).stream()
+                .filter(frame -> draggingScreen.handlingOffset(CENTER, frame.piece()).lengthSqr() > 0).toList();
+            check(!held.isEmpty() && held.stream().allMatch(frame -> draggingScreen.highlight(CENTER, frame.piece()) != 0),
+                "Held physical source lost its outline in " + view.phase() + ", decision=" + view.decision());
+            draggingScreen.mouseReleased(dragEnd.x, dragEnd.y, 0);
+            draggingScreen = null;
+            return false;
+        }
         switch (stage) {
             case 15 -> {
                 if (!(client.screen instanceof TableScreen) || view.viewerSeat() != 0 || ticks < 15) return false;
@@ -210,7 +229,9 @@ final class ManualTableSmoke {
             }
             case 18 -> {
                 if (!client.player.isPassenger() || view.viewerSeat() < 0 || ticks < 10) return false;
-                return deposits.tick(client, table, output);
+                boolean complete = deposits.tick(client, table, output);
+                if (complete) TableSettings.get().animations = originalAnimations;
+                return complete;
             }
             default -> throw new IllegalStateException("Unknown manual smoke stage");
         }
@@ -307,7 +328,7 @@ final class ManualTableSmoke {
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(button -> button.getMessage().getString().equals(label) && button.active && button.visible);
     }
-    private static void click(Minecraft client, String key) {
+    private void click(Minecraft client, String key) {
         if (client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity table) {
             var view = table.clientView();
             int index = top.skyeyefast.mchjong.client.TableHandling.action(view);
@@ -323,7 +344,7 @@ final class ManualTableSmoke {
         client.screen.mouseClicked(widget.getX() + 5, widget.getY() + 5, 0);
     }
 
-    private static void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
+    private void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
         var screen = (TableScreen) client.screen;
         var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
         var camera = client.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
@@ -339,8 +360,14 @@ final class ManualTableSmoke {
             screen.mouseClicked(start.x, start.y, 0);
             screen.mouseDragged(end.x, end.y, 0, end.x - start.x, end.y - start.y);
             boolean holding = frames.stream().anyMatch(value -> screen.handlingOffset(CENTER, value.piece()).lengthSqr() > 0);
+            if (holding) {
+                draggingScreen = screen;
+                dragEnd = end;
+                dragTicks = 0;
+                dragCapture = "56-highlight-drag-" + view.phase().name().toLowerCase(java.util.Locale.ROOT) + "-" + packets + ".png";
+                return;
+            }
             screen.mouseReleased(end.x, end.y, 0);
-            if (holding) return;
         }
         var sources = frames.stream().filter(frame -> top.skyeyefast.mchjong.client.TableHandling.source(view, frame.piece()))
             .map(frame -> {

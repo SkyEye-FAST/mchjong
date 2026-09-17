@@ -14,6 +14,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
+import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
@@ -28,6 +29,7 @@ final class AnimationSmoke {
     private TableView fixture;
     private int ticks;
     private int windowWidth, windowHeight, guiScale;
+    private boolean originalHighlight;
     private final List<TableSettings.Information> hidden = new ArrayList<>();
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
@@ -184,7 +186,15 @@ final class AnimationSmoke {
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
         }
-        if (ticks >= 338) return deposits.tick(client, table, output);
+        if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
+        if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
+            var calls = new Action.Type[]{Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN};
+            InputSmoke.verifyCallFocus(client, table, calls[(ticks - 328) / 12]);
+        }
+        if (ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
+            capture(client, output, "56-highlight-" + new String[]{"chi", "pon", "kan"}[(ticks - 334) / 12] + "-focus.png");
+        if (ticks == 359) TableSettings.get().highlightTiles = originalHighlight;
+        if (ticks >= 370) return deposits.tick(client, table, output);
         return false;
     }
 

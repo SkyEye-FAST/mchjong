@@ -50,7 +50,9 @@ final class ManualHandling {
             }
             case BUILD_WALL -> {
                 builtWalls |= 1 << seat;
-                game.newDecision(builtWalls == (1 << game.rules.players()) - 1 ? Game.Phase.DEAL : Game.Phase.BUILD_WALL);
+                if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(Game.Phase.DEAL);
+                // Each seat builds its own wall independently. Keep other players' held drags valid.
+                else game.revision++;
             }
             case TAKE_PACKET -> {
                 int count = packetSize(game);

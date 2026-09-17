@@ -146,10 +146,14 @@ public final class TableScreen extends Screen {
             for (var button : callouts) if ((button.isFocused() || highlights && button.isHovered()) && showsConsumed(button.action)
                 && button.action.tiles().contains(piece.tile())) return MahjongUi.POSITIVE;
         }
-        if ((highlights || getFocused() instanceof PhysicalHandle) && TableHandling.action(view) >= 0
-            && !handlingMoving() && TableHandling.source(view, piece)) {
-            if (view.phase() != Game.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene)))
-                return handlingDrag == null ? MahjongUi.ACCENT : MahjongUi.POSITIVE;
+        if ((highlights || getFocused() instanceof PhysicalHandle) && TableHandling.action(view) >= 0) {
+            // A held packet may contain more tiles than the stack used to begin the gesture.
+            // Derive its outline from the same offset as the mesh, not the idle pickup hint.
+            if (handlingDrag != null)
+                return handlingOffset(table, piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
+            if (!handlingMoving() && TableHandling.source(view, piece)
+                && (view.phase() != Game.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene))))
+                return MahjongUi.ACCENT;
         }
         return 0;
     }

@@ -86,6 +86,45 @@ class ManualHandlingTest {
         }
     }
 
+    @Test void concurrentWallBuildingPreservesOtherSeatsDecisionAndRejectsDuplicateBuilds() {
+        for (RuleSet rules : RuleSet.values()) {
+            Game game = game(rules, true);
+            act(game, game.dealer, Action.Type.SHUFFLE);
+            long token = game.view(id(0)).decision();
+            for (int seat = 1; seat < rules.players(); seat++) {
+                long revision = game.view(id(0)).revision();
+                act(game, seat, Action.Type.BUILD_WALL);
+                assertEquals(token, game.view(id(0)).decision(), "Another wall cancelled the pending local drag");
+                assertTrue(game.view(id(0)).revision() > revision);
+                assertEquals(List.of(new Action(Action.Type.BUILD_WALL)), game.view(id(0)).actions());
+                assertTrue(game.view(id(seat)).actions().isEmpty());
+                assertFalse(game.act(id(seat), token, 0), "The shared token must not allow rebuilding a completed wall");
+                game = reload(game);
+            }
+            assertTrue(game.act(id(0), token, 0), "The original held wall action must remain valid");
+            assertEquals(Game.Phase.DEAL, game.phase());
+            assertNotEquals(token, game.view(id(0)).decision());
+            assertFalse(game.act(id(0), token, 0), "A wall action must not replay into packet dealing");
+            game.validate();
+        }
+    }
+
+    @Test void practiceBotsCanBuildWhileThePlayerHoldsTheirWall() {
+        for (RuleSet rules : RuleSet.values()) {
+            Game game = game(rules, true);
+            act(game, game.dealer, Action.Type.SHUFFLE);
+            long token = game.view(id(0)).decision();
+            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].bot = true;
+            for (int tick = 0; tick < 48; tick++) { game.tick(); game.validate(); }
+            assertEquals(Game.Phase.BUILD_WALL, game.phase());
+            assertEquals((1 << rules.players()) - 2, game.view(id(0)).handling().builtWalls());
+            assertEquals(token, game.view(id(0)).decision());
+            assertTrue(game.act(id(0), token, 0));
+            assertEquals(Game.Phase.DEAL, game.phase());
+            game.validate();
+        }
+    }
+
     @Test void manualAndAutomaticDealUseTheSameSuppliedTiles() {
         for (RuleSet rules : RuleSet.values()) {
             Game manual = game(rules, true), automatic = game(rules, false);
