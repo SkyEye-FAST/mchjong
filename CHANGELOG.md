@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-09-17
+
 ### Added
 
 - Optional Ponder integration on Fabric and NeoForge, with three animated guides and four-language localization.
@@ -14,11 +16,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Survival crafting for ordinary and automatic tables, eleven wood families, removable sixteen-color cloth, boxes, tiles and point sticks.
 - Server-authoritative manual shuffle, wall construction, starting-tile pickup and draws on ordinary tables; automatic tables keep automatic handling.
 - Physical 136-tile box validation, six tile materials, genuine translucent glass, batch engraving and whole-box dyeing.
+- High-resolution 3D rendered mod icon artwork for loader mod lists.
 - Component-preserving furniture drops, stonecut engraving, box storage and side-drawer point-stick storage with manual payments.
 
 ### Changed
 
-- The seated first-person view uses standing eye height at the stool position and stays consistent when opening or closing the controls.
+- The seated first-person view uses standing eye height at the stool position, adapts FOV to window aspect ratio to frame the playing surface, and stays consistent when opening or closing the controls.
 - Mahjong stools are low floor cushions with thin wooden bases, crafted in a 2 x 2 grid from carpets and matching wooden slabs.
 - Ordinary tables use physical drag gestures to shuffle scattered tiles, build walls, take packets, draw and collect a completed hand.
 - Tables retain their compact 3 x 3 footprint, with matching furniture, collisions, seats and camera range.
@@ -42,5 +45,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.1.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.2.0...HEAD
+[0.2.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.2.0
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
