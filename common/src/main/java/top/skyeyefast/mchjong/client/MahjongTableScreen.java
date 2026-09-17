@@ -8,6 +8,9 @@ import top.skyeyefast.mchjong.item.MahjongTableMenu;
 
 /** Read-only equipment summary around the two native case slots. */
 public final class MahjongTableScreen extends AbstractContainerScreen<MahjongTableMenu> {
+    public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
+        return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
+    }
     public MahjongTableScreen(MahjongTableMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 230;

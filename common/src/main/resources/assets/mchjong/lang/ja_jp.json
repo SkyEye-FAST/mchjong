@@ -1,4 +1,7 @@
 {
+  "browser.mchjong.crafting": "麻雀用品の製作",
+  "browser.mchjong.engraving": "麻雀牌の彫刻",
+  "browser.mchjong.components": "素材と内容を反映したレシピ",
   "settings.mchjong.tab.4": "自動操作",
   "settings.mchjong.auto_sort": "自動理牌",
   "settings.mchjong.auto_win": "自動和了",

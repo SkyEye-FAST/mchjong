@@ -63,7 +63,8 @@ final class InterfaceSmoke {
             boxStage = 3; boxTicks = 0;
         } else if (boxStage == 3 && boxTicks > 15) {
             require(client.screen.width == 320 && client.screen.height == 240, "Small case viewport was not 320x240");
-            for (var slot : menu.slots) require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 <= 304 && slot.y + 16 <= 232,
+            var bounds = ((MahjongBoxScreen) client.screen).browserBounds();
+            for (var slot : menu.slots) require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 <= bounds.width() && slot.y + 16 <= bounds.height(),
                 "Case slot exceeds the panel");
             checkBounds(client);
             capture(client, output, "32-box-320x240.png");

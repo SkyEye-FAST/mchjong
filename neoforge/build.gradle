@@ -49,6 +49,15 @@ neoForge {
 
 dependencies {
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
+    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
+    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
+        runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
+        runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-neoforge:${mezz_config_version}"
+    }
+    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'emi') {
+        runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
+    }
     if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
         runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     }
@@ -75,7 +84,9 @@ processResources {
         version: project.version,
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
-        ponder_version: rootProject.ponder_version
+        ponder_version: rootProject.ponder_version,
+        jei_version: rootProject.jei_version,
+        emi_version: rootProject.emi_version
     ]
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
@@ -92,13 +103,21 @@ sourceSets {
     }
 }
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
-def smokeEvidence = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-evidence' : 'smoke/evidence')
-def smokeRun = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-run' : 'smoke/run')
+def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+def smokeProfile = recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
+def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
     mods { mchjong_smoke { sourceSet sourceSets.smoke } }
     unitTest { loadedMods = [mods.mchjong] }
     runs {
         configureEach { loadedMods = [mods.mchjong] }
+        smokeServer {
+            server()
+            gameDirectory = layout.buildDirectory.dir("smoke/${smokeProfile}server").get().asFile
+            systemProperty 'java.io.tmpdir', layout.buildDirectory.dir("smoke/${smokeProfile}server").get().asFile.absolutePath
+            programArguments = ['--nogui', '--initSettings']
+        }
         smokeClient {
             client()
             sourceSet = sourceSets.smoke
@@ -107,6 +126,7 @@ neoForge {
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
+            systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }

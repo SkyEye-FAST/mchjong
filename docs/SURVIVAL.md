@@ -4,6 +4,29 @@ The survival loop is deliberately short: build furniture, cut blanks in a
 stonecutter, engrave a set in its box, then store the box inside a clothed table.
 It uses vanilla crafting and stonecutting with batch preparation for full sets.
 
+## Recipe browsing
+
+With JEI or EMI installed, inspect an item with the viewer's recipe/usage keys.
+Inspect a blue-backed bone blank's uses to find every engraved face, including
+flowers and red fives. Engraving examples pair matching material and back color on the input
+and output. The supplies catalogue places the empty and complete cases together
+and lists point sticks in ascending denomination.
+
+Component-aware crafting views show the marking reagent and one or eight blank
+sticks in separate crafting slots; the result contains the same number of marked
+sticks. Full-set engraving shows 136 matching blanks in a case plus an ink sac.
+Additional examples include 144 blanks and four 1,000-point sticks: engraving
+keeps the eight spare blanks and the sticks beside the completed set. Hover the
+case stacks to inspect their actual contents. Dyeing changes the relevant color
+while retaining faces, red markings, material and stored sticks. Table upgrading
+uses an empty ordinary table and retains its wood and custom name.
+
+The recipe browser's normal crafting and stonecutting controls remain available.
+The case, table-storage and point-stick screens reserve their complete panels,
+including summaries and controls, for the native container interface.
+See [COMPATIBILITY.md](COMPATIBILITY.md) for development profiles and the scope
+of the finite case examples.
+
 ## Registry entries
 
 | Name | Registry ID | Kind |

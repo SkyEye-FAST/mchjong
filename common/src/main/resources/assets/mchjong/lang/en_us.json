@@ -1,4 +1,7 @@
 {
+  "browser.mchjong.crafting": "Mahjong supplies",
+  "browser.mchjong.engraving": "Tile engraving",
+  "browser.mchjong.components": "Component-aware recipe",
   "settings.mchjong.tab.4": "Automatic",
   "settings.mchjong.auto_sort": "Sort hand automatically",
   "settings.mchjong.auto_win": "Claim wins automatically",

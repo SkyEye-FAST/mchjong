@@ -22,6 +22,7 @@ three or four players. It supports both Fabric and NeoForge.
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization
 - Resource-pack customization of tile faces and backs
 - Optional Ponder tutorials for table placement, equipment and seated play
+- Optional component-aware JEI and EMI recipe browsing
 
 ## Compatibility
 
@@ -41,6 +42,11 @@ The current development profile is:
 The optional Ponder integration targets Ponder 1.0.87 or newer for this profile.
 Use the Ponder release for the same Minecraft version and loader, together with
 its declared dependencies.
+
+JEI and EMI offer component-aware supply recipes and tile engraving. Use the
+viewer release for your loader and Minecraft version. See
+[compatibility and verification](docs/COMPATIBILITY.md) for the exact development
+dependencies, runtime profiles and test coverage.
 
 ## Installation
 

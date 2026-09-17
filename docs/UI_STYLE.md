@@ -137,7 +137,7 @@ win decision remains explicit. Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second
 hand reserve; lobby hosts can edit both values.
-Ordinary tables have no central machine indicator. Automatic tables use a compact
+Ordinary tables present their central deposits directly on the felt. Automatic tables use a compact
 seven-segment display, wind-tile pictograms, round pips and seat lamps. Each score
 display faces its owner, with glyph tops pointing toward the table center; do not
 render explanatory font labels across the felt.
@@ -164,3 +164,27 @@ draw causes a minimal shift. Geometric tests cover every call type and source,
 all four seats, standing/exposed tiles and waiting/drawn/post-call hands.
 Update this document and the shared tokens together when intentionally changing
 the style; do not establish a competing set of local widgets or palette values.
+
+The shared smoke captures the Automatic settings page in Simplified Chinese at
+640 x 400 and 320 x 240, plus one English layout. Native first-person screenshots
+cover a right-hand tile and point stick. Each table has one carried-deposit
+fixture. Live preference buttons exercise the client/server acknowledgement path.
+
+On Windows, `tools/Review-Smoke.ps1` creates labelled contact sheets from the
+original screenshots. Supply the evidence folder, filename pattern, run start
+time and output name, for example:
+
+```powershell
+./tools/Review-Smoke.ps1 -Evidence build/smoke/evidence `
+    -Pattern '54-settings-*.png' -Since (Get-Date '2026-09-17T18:41:00') -Name settings
+```
+
+Use the actual start time of the run being reviewed. The tool checks source
+timestamps and keeps the original screenshots alongside the contact sheets.
+
+Native supply containers reserve a 24-pixel logical bottom strip for optional
+recipe-browser controls. The 54-slot box uses a 304 x 212 panel and the four-row
+point-stick drawer a 286 x 216 panel. Their slot pitch remains 18 pixels; compact
+header and inventory gaps keep every native slot visible at 320 x 240. Screen
+bounds provide one source for viewer exclusion areas and native click tests.
+The JEI custom recipe categories reuse `MahjongUi` panel, slot and text tokens.

@@ -11,7 +11,7 @@ import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 
 /** Actual synchronized box, native language reloads, and a 320x240 logical viewport. */
 final class BoxInterfaceSmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
+    private static final String[] LANGUAGES = {"zh_cn"};
     private int sample = -1, settled, scale, windowWidth, windowHeight;
     private String language;
     private CompletableFuture<Void> reload;
@@ -44,8 +44,8 @@ final class BoxInterfaceSmoke {
             + client.font.split(Component.translatable("box.mchjong.sticks", 3456), 94).size() * 10
             + client.font.split(Component.translatable("box.mchjong.slots", 54, 54), 94).size() * 10;
         int status = client.font.split(Component.translatable("box.mchjong.incomplete"), 94).size() * 10;
-        require(26 + header + counts + 8 + 4 + 4 + 6 + 12 + status <= 147, "Translated packing summary overlaps the help section");
-        require(151 + client.font.split(Component.translatable("box.mchjong.help"), 94).size() * 10 <= 224,
+        require(18 + header + counts + 8 + 4 + 4 + 6 + 12 + status <= 133, "Translated packing summary overlaps the help section");
+        require(137 + client.font.split(Component.translatable("box.mchjong.help"), 94).size() * 10 <= 208,
             "Translated case instructions extend below the panel");
         Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
         sample++;

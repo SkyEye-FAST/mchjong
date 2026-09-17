@@ -1,4 +1,7 @@
 {
+  "browser.mchjong.crafting": "麻將用品製作",
+  "browser.mchjong.engraving": "麻將牌刻牌",
+  "browser.mchjong.components": "配方呈現材質與內容",
   "settings.mchjong.tab.4": "自動操作",
   "settings.mchjong.auto_sort": "自動理牌",
   "settings.mchjong.auto_win": "自動和了",

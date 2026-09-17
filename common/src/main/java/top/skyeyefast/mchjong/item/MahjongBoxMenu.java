@@ -25,15 +25,15 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         ownerSlot.set(-1);
         addDataSlot(ownerSlot);
         for (int row = 0; row < 6; row++) for (int col = 0; col < 9; col++)
-            addSlot(new Slot(contents, col + row * 9, 14 + col * 18, 24 + row * 18) {
+            addSlot(new Slot(contents, col + row * 9, 14 + col * 18, 16 + row * 18) {
                 @Override public boolean mayPlace(ItemStack stack) {
                     return stillValid(inventory.player) && MahjongSupplies.storable(stack);
                 }
                 @Override public boolean mayPickup(Player player) { return stillValid(player); }
             });
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++)
-            playerSlot(col + row * 9 + 9, 14 + col * 18, 148 + row * 18);
-        for (int col = 0; col < 9; col++) playerSlot(col, 14 + col * 18, 206);
+            playerSlot(col + row * 9 + 9, 14 + col * 18, 134 + row * 18);
+        for (int col = 0; col < 9; col++) playerSlot(col, 14 + col * 18, 192);
     }
 
     public MahjongBoxMenu(int id, Inventory inventory, int ownerSlot) {

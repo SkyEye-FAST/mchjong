@@ -38,14 +38,14 @@ public final class PointStickMenu extends AbstractContainerMenu {
             int owner = row;
             Container contents = table == null ? new SimpleContainer(TableEquipment.STICK_SLOTS) : table.equipment().drawer(row);
             for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++)
-                addSlot(new Slot(contents, slot, 113 + slot * 18, 30 + row * 24) {
+                addSlot(new Slot(contents, slot, 113 + slot * 18, 22 + row * 24) {
                     @Override public boolean mayPlace(ItemStack stack) { return stillValid(inventory.player) && validStick(stack); }
                     @Override public boolean mayPickup(Player player) { return stillValid(player) && canWithdraw(owner); }
                 });
         }
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++)
-            addSlot(new Slot(inventory, col + row * 9 + 9, 113 + col * 18, 142 + row * 18));
-        for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 113 + col * 18, 200));
+            addSlot(new Slot(inventory, col + row * 9 + 9, 113 + col * 18, 128 + row * 18));
+        for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 113 + col * 18, 186));
     }
 
     public static boolean validStick(ItemStack stack) {

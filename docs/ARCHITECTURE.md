@@ -26,6 +26,19 @@ entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall
 packet and draw phases without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
+`compat/recipes` creates executable display examples from the loaded recipe
+manager. Every output and cycling input is checked through the source recipe's
+`matches` and `assemble` methods. Marking reagents and the table-upgrade pattern
+are shared with `SupplyCraftingRecipe`; `MahjongSupplies` remains responsible for
+component and container transformations. `SupplySubtype` uses an immutable stack
+snapshot and Minecraft component equality for recipe-relevant identity.
+
+The independent `compat/jei` and `compat/emi` packages contain the respective
+official plugin entrypoints and rendering adapters. Their APIs are compile-only;
+the chosen development profile supplies the complete viewer at runtime. Screen
+boundaries come from the native container screens themselves. See
+[COMPATIBILITY.md](COMPATIBILITY.md) for profiles and validation coverage.
+
 `MahjongUi`, `MahjongButton`, `MahjongSlider` and `MahjongEditBox` share the
 project's presentation vocabulary without replacing native input machinery.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot

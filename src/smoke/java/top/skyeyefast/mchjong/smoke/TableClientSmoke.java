@@ -50,6 +50,7 @@ public final class TableClientSmoke {
     private final ItemPresentationSmoke itemPresentationSmoke = new ItemPresentationSmoke();
     private final InterfaceSmoke interfaceSmoke = new InterfaceSmoke();
     private final BoxInterfaceSmoke boxInterfaceSmoke = new BoxInterfaceSmoke();
+    private final BrowserSmoke browserSmoke = new BrowserSmoke();
 
     public void tick(Minecraft client) {
         if (step == 14) return;
@@ -101,6 +102,7 @@ public final class TableClientSmoke {
                         if (player == null) throw new IllegalStateException("Missing server player");
                         var level = player.serverLevel();
                         SurvivalSmoke.verify(player);
+                        RecipeBrowserDataSmoke.verify(level);
                         level.setDayTime(6000);
                         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 5; z++)
                             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
@@ -289,6 +291,7 @@ public final class TableClientSmoke {
             } else if (step == 19 && manualSmoke.tick(client, output)) {
                 step = 25; entered = ticks;
             } else if (step == 25) {
+                if (!browserSmoke.tick(client, output)) return;
                 if (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output)) return;
                 if (!Boolean.getBoolean("mchjong.smoke.ponder"))
                     Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");

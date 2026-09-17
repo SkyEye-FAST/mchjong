@@ -1,0 +1,127 @@
+package top.skyeyefast.mchjong.compat.recipes;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.item.crafting.RecipeHolder;
+import net.minecraft.world.level.Level;
+import top.skyeyefast.mchjong.item.FurnitureWood;
+import top.skyeyefast.mchjong.item.MahjongComponents;
+import top.skyeyefast.mchjong.item.MahjongSupplies;
+import top.skyeyefast.mchjong.item.TileData;
+import top.skyeyefast.mchjong.item.TileMaterial;
+import top.skyeyefast.mchjong.recipe.SupplyCraftingRecipe;
+import top.skyeyefast.mchjong.recipe.TileCuttingRecipe;
+import top.skyeyefast.mchjong.world.MahjongContent;
+
+/** Finite, executable examples, derived from recipes present in the current datapack.
+ * Alternatives are admitted only when the actual recipe produces the same complete output. */
+public final class SupplyRecipeExamples {
+    private SupplyRecipeExamples() {}
+
+    public static List<SupplyRecipeExample> create(Level level) {
+        var examples = new ArrayList<SupplyRecipeExample>();
+        var recipes = level.getRecipeManager().getRecipes().stream()
+            .sorted(Comparator.comparing(holder -> holder.id().toString())).toList();
+        for (var holder : recipes) {
+            if (holder.value() instanceof TileCuttingRecipe) {
+                add(examples, level, holder, "bone/blue",
+                    List.of(MahjongSupplies.tile(new TileData(-1, TileMaterial.BONE, false), DyeColor.BLUE, 1)), true);
+            } else if (holder.value() instanceof SupplyCraftingRecipe recipe) {
+                switch (recipe.operation()) {
+                    case MARK_STICK -> SupplyCraftingRecipe.markings().entrySet().stream()
+                        .sorted(java.util.Map.Entry.comparingByValue()).forEach(mark -> {
+                            for (int count : new int[]{1, 8}) {
+                                var input = new ArrayList<ItemStack>();
+                                for (int i = 0; i < count; i++) input.add(new ItemStack(MahjongContent.POINT_STICK));
+                                input.add(new ItemStack(mark.getKey()));
+                                add(examples, level, holder, mark.getValue() + "/" + count, input, false);
+                            }
+                        });
+                    case UPGRADE_TABLE -> {
+                        for (var wood : FurnitureWood.values()) {
+                            var input = SupplyCraftingRecipe.upgradePattern().stream().map(ItemStack::new).toList();
+                            input.get(4).set(MahjongComponents.WOOD, wood);
+                            add(examples, level, holder, wood.getSerializedName(), input, false);
+                        }
+                    }
+                    case ENGRAVE_SET -> {
+                        for (var material : TileMaterial.values()) {
+                            var color = DyeColor.BLUE;
+                            String key = material.getSerializedName() + "/" + color.getName();
+                            add(examples, level, holder, key + "/136", List.of(blanks(material, color, false), new ItemStack(Items.INK_SAC)), false);
+                            add(examples, level, holder, key + "/spares", List.of(blanks(material, color, true), new ItemStack(Items.INK_SAC)), false);
+                        }
+                    }
+                    case DYE -> {
+                        for (var color : List.of(DyeColor.RED, DyeColor.CYAN)) {
+                            var targets = new ArrayList<ItemStack>();
+                            targets.add(new ItemStack(MahjongContent.CLOTH_ITEM));
+                            for (var wood : FurnitureWood.values()) {
+                                var stool = new ItemStack(MahjongContent.STOOL_ITEM);
+                                stool.set(MahjongComponents.WOOD, wood);
+                                targets.add(stool);
+                            }
+                            for (var material : TileMaterial.values()) {
+                                for (int face : new int[]{-1, 4, TileData.FIRST_FLOWER + TileData.FLOWER_COUNT - 1})
+                                    targets.add(MahjongSupplies.tile(new TileData(face, material, face == 4), DyeColor.BLUE, 1));
+                                targets.add(MahjongSupplies.completeBox(material, DyeColor.BLUE));
+                                targets.add(blanks(material, DyeColor.BLUE, true));
+                            }
+                            for (int i = 0; i < targets.size(); i++)
+                                add(examples, level, holder, color.getName() + "/" + i,
+                                    List.of(targets.get(i), new ItemStack(DyeItem.byColor(color))), false);
+                        }
+                    }
+                }
+            }
+        }
+        return List.copyOf(examples);
+    }
+
+    public static ItemStack blanks(TileMaterial material, DyeColor color, boolean spares) {
+        var items = new ArrayList<ItemStack>();
+        var data = new TileData(-1, material, false);
+        items.add(MahjongSupplies.tile(data, color, 64));
+        items.add(MahjongSupplies.tile(data, color, 64));
+        items.add(MahjongSupplies.tile(data, color, spares ? 16 : 8));
+        if (spares) {
+            var stick = new ItemStack(MahjongContent.POINT_STICK, 4);
+            stick.set(MahjongComponents.POINTS, 1000);
+            items.add(stick);
+        }
+        var box = new ItemStack(MahjongContent.BOX_ITEM);
+        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        return box;
+    }
+
+    private static void add(List<SupplyRecipeExample> examples, Level level, RecipeHolder<?> source,
+                            String variant, List<ItemStack> ingredients, boolean cutting) {
+        var input = new ArrayList<>(ingredients);
+        if (!cutting) input.addAll(Collections.nCopies(9 - input.size(), ItemStack.EMPTY));
+        var id = MahjongContent.id("/supplies/" + source.id().getNamespace() + "/" + source.id().getPath() + "/" + variant);
+        var candidate = new SupplyRecipeExample(id, source, List.copyOf(input), ItemStack.EMPTY, cutting, List.of(input.getFirst()));
+        var output = candidate.assemble(level);
+        // A datapack may restrict a vanilla ingredient. Only publish actual matches.
+        if (output.isEmpty()) return;
+        var alternatives = new ArrayList<ItemStack>();
+        if (source.value() instanceof SupplyCraftingRecipe recipe && recipe.operation() == SupplyCraftingRecipe.Operation.DYE) {
+            for (var color : DyeColor.values()) {
+                var variantInput = new ArrayList<>(input);
+                var variantStack = MahjongSupplies.dye(input.getFirst(), color);
+                variantInput.set(0, variantStack);
+                var variantExample = new SupplyRecipeExample(id, source, variantInput, output, false, List.of(variantStack));
+                var result = variantExample.assemble(level);
+                if (ItemStack.matches(output, result)) alternatives.add(variantStack);
+            }
+        } else alternatives.add(input.getFirst());
+        examples.add(new SupplyRecipeExample(id, source, candidate.input(), output, cutting, List.copyOf(alternatives)));
+    }
+}

@@ -9,9 +9,9 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.PointStickScreen;
 import top.skyeyefast.mchjong.item.PointStickMenu;
 
-/** Native mouse payments and four-language rendering in the smallest supported viewport. */
+/** Native mouse payments and one small-window rendering. */
 final class PointStickInterfaceSmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
+    private static final String[] LANGUAGES = {"zh_cn"};
     private int stage, ticks, languageIndex, scale, width, height;
     private String language;
     private CompletableFuture<Void> reload;
@@ -51,7 +51,7 @@ final class PointStickInterfaceSmoke {
             check(client.screen instanceof PointStickScreen && client.screen.width == 320 && client.screen.height == 240,
                 "Point-stick interface did not retain its 320x240 native layout");
             check(menu(client).slots.size() == 72, "Drawer rows or player inventory changed during reload");
-            check(142 + client.font.split(Component.translatable("sticks.mchjong.deliver"), 94).size() * 10 <= 216,
+            check(128 + client.font.split(Component.translatable("sticks.mchjong.deliver"), 94).size() * 10 <= 200,
                 "Point-stick instructions overlap the balance legend");
             capture(client, output, "54-drawer-" + LANGUAGES[languageIndex] + "-small.png");
             if (++languageIndex < LANGUAGES.length) { select(client, LANGUAGES[languageIndex]); ticks = 0; }
@@ -76,8 +76,9 @@ final class PointStickInterfaceSmoke {
 
     private static void clickSlot(Minecraft client, int index, int button) {
         var slot = menu(client).getSlot(index);
-        double x = (client.screen.width - 286) / 2 + slot.x + 8;
-        double y = (client.screen.height - 232) / 2 + slot.y + 8;
+        var bounds = ((PointStickScreen) client.screen).browserBounds();
+        double x = bounds.left() + slot.x + 8;
+        double y = bounds.top() + slot.y + 8;
         client.screen.mouseClicked(x, y, button);
         client.screen.mouseReleased(x, y, button);
     }

@@ -21,6 +21,19 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
     public enum Operation { DYE, ENGRAVE_SET, MARK_STICK, UPGRADE_TABLE }
     private final Operation operation;
 
+    public Operation operation() { return operation; }
+
+    public static java.util.Map<net.minecraft.world.item.Item, Integer> markings() {
+        return java.util.Map.of(Items.BLACK_DYE, 100, Items.REDSTONE, 1000,
+            Items.LAPIS_LAZULI, 5000, Items.GOLD_NUGGET, 10000);
+    }
+
+    public static List<net.minecraft.world.item.Item> upgradePattern() {
+        return List.of(Items.IRON_INGOT, Items.REDSTONE, Items.IRON_INGOT,
+            Items.REDSTONE, MahjongContent.TABLE_ITEM, Items.REDSTONE,
+            Items.COPPER_INGOT, Items.HOPPER, Items.COPPER_INGOT);
+    }
+
     public SupplyCraftingRecipe(CraftingBookCategory category, Operation operation) {
         super(category);
         this.operation = operation;
@@ -67,8 +80,7 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
                 blanks++;
             } else {
                 if (points != 0) return ItemStack.EMPTY;
-                points = stack.is(Items.BLACK_DYE) ? 100 : stack.is(Items.REDSTONE) ? 1000
-                    : stack.is(Items.LAPIS_LAZULI) ? 5000 : stack.is(Items.GOLD_NUGGET) ? 10000 : 0;
+                points = markings().getOrDefault(stack.getItem(), 0);
                 if (points == 0) return ItemStack.EMPTY;
             }
         }
@@ -80,9 +92,7 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
 
     private ItemStack upgrade(CraftingInput input) {
         if (input.width() != 3 || input.height() != 3) return ItemStack.EMPTY;
-        var required = List.of(Items.IRON_INGOT, Items.REDSTONE, Items.IRON_INGOT,
-            Items.REDSTONE, MahjongContent.TABLE_ITEM, Items.REDSTONE,
-            Items.COPPER_INGOT, Items.HOPPER, Items.COPPER_INGOT);
+        var required = upgradePattern();
         for (int i = 0; i < 9; i++) if (!input.getItem(i).is(required.get(i))) return ItemStack.EMPTY;
         ItemStack table = input.getItem(4);
         // Furniture drops its removable contents separately; loaded creative stacks are not consumed.
