@@ -57,6 +57,11 @@ final class Wall {
             && !ura.subList(0, revealed).contains(slot);
     }
 
+    int nextReplacementSlot() {
+        return replacements.subList(replacementIndex, replacements.size()).stream()
+            .filter(this::usableReplacement).findFirst().orElseThrow(() -> new IllegalStateException("No replacement draw available"));
+    }
+
     int replace() {
         if (!canReplace()) throw new IllegalStateException("No replacement draw available");
         while (!usableReplacement(replacements.get(replacementIndex))) replacementIndex++;

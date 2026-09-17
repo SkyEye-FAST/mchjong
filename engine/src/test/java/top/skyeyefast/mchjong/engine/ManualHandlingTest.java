@@ -49,12 +49,14 @@ class ManualHandlingTest {
             Game game = game(rules, true);
             assertEquals(Game.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
+            assertEquals(new TableView.Handling(0, -1, 0), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(Game.Phase.SHUFFLE, game.phase());
             act(game, game.dealer, Action.Type.SHUFFLE);
             assertTrue(game.view(null).wall().stream().allMatch(tile -> tile == Tile.ABSENT));
             for (int seat = 0; seat < rules.players(); seat++) {
                 act(game, seat, Action.Type.BUILD_WALL);
+                assertEquals((1 << (seat + 1)) - 1, game.view(null).handling().builtWalls());
                 assertEquals((seat + 1L) * Tile.set(rules.sanma()).size() / rules.players(),
                     game.view(null).wall().stream().filter(tile -> tile == Tile.HIDDEN).count());
                 game = reload(game);
@@ -62,6 +64,10 @@ class ManualHandlingTest {
             assertEquals(Game.Phase.DEAL, game.phase());
             for (int packet = 0; packet < 4 * rules.players(); packet++) {
                 assertTrue(game.view(id(game.next(game.turn))).actions().isEmpty());
+                var handling = game.view(id(game.turn)).handling();
+                assertEquals(game.wall.cursor, handling.sourceSlot());
+                assertEquals(packet < 3 * rules.players() ? 4 : 1, handling.packetSize());
+                assertEquals(handling, game.view(null).handling(), "Spectators see positions, never private tile identities");
                 act(game, game.turn, Action.Type.TAKE_PACKET);
                 game = reload(game);
                 concealed(game);
@@ -69,6 +75,7 @@ class ManualHandlingTest {
             assertEquals(Game.Phase.DRAW, game.phase());
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(13, game.players[seat].hand.size());
             int remaining = game.wall.remaining();
+            assertEquals(new TableView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(remaining, game.wall.remaining(), "Human draw must not happen on a timeout");
             act(game, game.dealer, Action.Type.DRAW);
@@ -82,6 +89,7 @@ class ManualHandlingTest {
     @Test void manualAndAutomaticDealUseTheSameSuppliedTiles() {
         for (RuleSet rules : RuleSet.values()) {
             Game manual = game(rules, true), automatic = game(rules, false);
+            assertNull(automatic.view(null).handling());
             act(manual, manual.dealer, Action.Type.SHUFFLE);
             for (int seat = 0; seat < rules.players(); seat++) act(manual, seat, Action.Type.BUILD_WALL);
             for (int packet = 0; packet < 4 * rules.players(); packet++) act(manual, manual.turn, Action.Type.TAKE_PACKET);
@@ -118,7 +126,13 @@ class ManualHandlingTest {
         assertTrue(game.handling.replacement);
         assertTrue(game.handling.kan);
         assertEquals(13, game.players[game.dealer].hand.size());
+        var source = game.view(id(game.dealer)).handling();
+        assertEquals(game.wall.nextReplacementSlot(), source.sourceSlot());
+        assertEquals(game.wall.tiles.size() - 1, source.sourceSlot());
+        assertEquals(1, source.packetSize());
+        int replacementTile = game.wall.tiles.get(source.sourceSlot());
         act(game, game.dealer, Action.Type.DRAW);
+        assertTrue(game.players[game.dealer].hand.contains(replacementTile));
         assertEquals(1, game.wall.replacementIndex);
         assertEquals(remaining - 1, game.wall.remaining());
         assertTrue(game.players[game.dealer].rinshan);

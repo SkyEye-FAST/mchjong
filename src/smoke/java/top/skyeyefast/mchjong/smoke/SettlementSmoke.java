@@ -82,7 +82,7 @@ final class SettlementSmoke {
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.NEXT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
-                fixture.timeControl(), fixture.clocks(), List.of(), false, null);
+                fixture.timeControl(), fixture.clocks(), List.of(), false, null, null);
             table.acceptView(fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         } else if (ticks == 110) {
@@ -131,6 +131,6 @@ final class SettlementSmoke {
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new Action(Action.Type.NEXT)), wins, "ron",
-            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), false, null);
+            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), false, null, null);
     }
 }

@@ -81,6 +81,8 @@ public final class Game {
     public Phase phase() { return phase; }
     public RuleSet rules() { return rules; }
     public boolean manual() { return manual; }
+    public int points(int seat) { return players[seat].points; }
+    public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
     public boolean equipped() { return suppliedTiles.size() == 136; }
 
     /** The Minecraft adapter supplies checked physical tiles, or an empty list for an empty table. */
@@ -660,7 +662,7 @@ public final class Game {
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
-            timeControl, clocks, finalRanks, openHands, exitVote);
+            timeControl, clocks, finalRanks, openHands, exitVote, manual ? handling.view(this) : null);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */

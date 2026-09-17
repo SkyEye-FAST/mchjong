@@ -33,6 +33,15 @@ final class ManualHandling {
         };
     }
 
+    TableView.Handling view(Game game) {
+        int count = game.phase == Game.Phase.DEAL ? packetSize(game) : game.phase == Game.Phase.DRAW ? 1 : 0;
+        int source = count == 0 ? -1 : game.phase == Game.Phase.DRAW && replacement
+            ? game.wall.nextReplacementSlot() : game.wall.cursor;
+        return new TableView.Handling(builtWalls, source, count);
+    }
+
+    private int packetSize(Game game) { return packets < 3 * game.rules.players() ? 4 : 1; }
+
     void act(Game game, int seat, Action action) {
         switch (action.type()) {
             case SHUFFLE -> {
@@ -44,7 +53,7 @@ final class ManualHandling {
                 game.newDecision(builtWalls == (1 << game.rules.players()) - 1 ? Game.Phase.DEAL : Game.Phase.BUILD_WALL);
             }
             case TAKE_PACKET -> {
-                int count = packets < 3 * game.rules.players() ? 4 : 1;
+                int count = packetSize(game);
                 for (int i = 0; i < count; i++) game.players[seat].hand.add(game.wall.draw());
                 packets++;
                 if (packets == 4 * game.rules.players()) {

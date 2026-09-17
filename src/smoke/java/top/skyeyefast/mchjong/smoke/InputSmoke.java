@@ -30,7 +30,7 @@ final class InputSmoke {
         actions.add(new Action(Action.Type.RIICHI, 4));
         TableView fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
-            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null);
+            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null, null);
         table.acceptView(fixture);
         TableScreen screen = new TableScreen(table.getBlockPos());
         client.setScreen(screen);
