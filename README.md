@@ -21,6 +21,7 @@ three or four players. It supports both Fabric and NeoForge.
 - Shared gameplay and client presentation across both loaders
 - English, Japanese, Simplified Chinese, and Traditional Chinese localization
 - Resource-pack customization of tile faces and backs
+- Optional Ponder tutorials for table placement, equipment and seated play
 
 ## Compatibility
 
@@ -37,6 +38,10 @@ The current development profile is:
 | Fabric Loader | 0.16.10 or newer, plus Fabric API |
 | NeoForge | 21.1.250 or newer |
 
+The optional Ponder integration targets Ponder 1.0.87 or newer for this profile.
+Use the Ponder release for the same Minecraft version and loader, together with
+its declared dependencies.
+
 ## Installation
 
 Build the JAR for your loader as described below, then copy it to the
@@ -47,6 +52,18 @@ Minecraft `mods` folder:
 
 Install the matching loader and its required dependencies before launching the
 game. Fabric installations also require Fabric API.
+
+### In-game tutorials
+
+Install Ponder to add animated guides to both table items, stools, boxes, cloth,
+tiles and point sticks. Hover over an item in an inventory and hold the key shown
+by Ponder's tooltip. The **Mahjong** category groups the guides for placement,
+equipment and seated play. Tutorials follow the selected game language and use
+Ponder's playback, pause and replay controls.
+
+Ponder is an optional client integration. MCjhong's core gameplay works
+independently, and each player can choose whether to install the guide.
+See [Ponder integration](docs/PONDER.md) for development and validation.
 
 ## Building from source
 

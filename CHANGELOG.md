@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Optional Ponder integration on Fabric and NeoForge, with three animated guides and four-language localization.
+- Contributor guidance in `AGENTS.md`, including architecture, validation and signed delivery workflows.
 - Survival crafting for ordinary and automatic tables, eleven wood families, removable sixteen-color cloth, boxes, tiles and point sticks.
 - Server-authoritative manual shuffle, wall construction, starting-tile pickup and draws on ordinary tables; automatic tables keep automatic handling.
 - Physical 136-tile box validation, six tile materials, genuine translucent glass, batch engraving and whole-box dyeing.

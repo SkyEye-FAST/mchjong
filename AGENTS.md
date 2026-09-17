@@ -34,6 +34,7 @@ shared contracts.
 - `art`: deterministic asset and server-data generation, with separate outputs.
   Edit source generators rather than generated textures, models or recipes.
 - `src/smoke` and `neoforge/src/smoke`: development-only client/server checks.
+- `src/ponderData`: Minecraft-native build-time generation of Ponder structures.
 
 Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
@@ -77,6 +78,10 @@ both client smokes and inspection of fresh screenshots in `build/smoke/evidence`
 and `neoforge/build/smoke/evidence`. The leading colon selects the root Fabric
 task explicitly. Check fresh PASS/FAIL markers and logs; compilation alone is
 not visual acceptance. Report any validation that could not be performed.
+
+For Ponder changes, also run both installed-dependency smoke commands in
+[PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
+and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
 
 Use signed Git commits for each complete batch and push normally. Check
 `git signing-agent status` before committing. In a sandbox with a different

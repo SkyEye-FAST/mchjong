@@ -14,7 +14,7 @@ allows it.
 * root `src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
 * `art`: deterministic CC0 vector-face rasterization and client model descriptors,
-  plus a separate server-data generator. Its SVG renderer is never a game dependency.
+  plus a separate server-data generator. Its SVG renderer runs at build time.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
@@ -79,8 +79,8 @@ clearance and meld rendering.
 The table reserves a 3 x 3 footprint with dimensions shared by placement,
 colliders, furniture and seating. Melds are anchored at the owner's right-hand
 corner, beside the hand at the same depth. Extracted norths form two short rows
-to the left of the hand, clear of the adjacent player's corner. Cases are kept inside
-the table and never rendered over its playing surface.
+to the left of the hand, clear of the adjacent player's corner. The table's
+two-slot inventory stores up to two cases inside the furniture.
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers
 is a local rendering preference; it also forces the remaining-wall count and
@@ -112,8 +112,14 @@ fixtures; they are not scoring-rule integration tests. The same harness runs wit
 `neoforge/build/smoke/evidence`. Both harnesses also create a real engine record,
 archive it on the integrated server, retrieve it through commands and chunked
 networking, render the replay timeline and click the Tenhou export button.
-Smoke adapters are separate source sets and are never packaged in release JARs.
+Development-only source sets contain the smoke adapters.
 NeoForge's dedicated-server integration tests also run in `buildAll`.
+
+The optional client integration in `compat/ponder` registers three tutorials with
+Ponder after a loader presence check. The scenes share gameplay furniture models,
+component types and seating geometry inside Ponder's display worlds. Native NBT
+generation supplies the same structure to both loader artifacts. See
+[Ponder integration](PONDER.md) for the installed and base-client checks.
 
 Survival checks use real server players, menus and levels in the shared smoke
 source set rather than introducing null-world behavior into production code.
