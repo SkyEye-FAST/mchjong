@@ -36,6 +36,8 @@ public final class TableClientSmoke {
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
+    private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
+    private final boolean visualOnly = itemsOnly || seatingOnly;
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
     private int step;
     private int ticks;
@@ -74,6 +76,7 @@ public final class TableClientSmoke {
                 client.options.renderDistance().set(5);
                 client.options.simulationDistance().set(5);
                 client.options.fov().set(70);
+                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 TableSettings.get().reset();
                 client.resizeDisplay();
                 GameRules rules = new GameRules();
@@ -90,19 +93,19 @@ public final class TableClientSmoke {
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
                 UUID id = client.player.getUUID();
-                if (!itemsOnly && survivalReady == null) {
+                if (!visualOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
                     survivalReady = server.submit(() -> SurvivalSmoke.ready(server.getPlayerList().getPlayer(id)));
                     return;
                 }
-                if (!itemsOnly && !survivalReady.isDone()) return;
-                if (!itemsOnly && !survivalReady.join()) { survivalReady = null; return; }
+                if (!visualOnly && !survivalReady.isDone()) return;
+                if (!visualOnly && !survivalReady.join()) { survivalReady = null; return; }
                 client.getSingleplayerServer().execute(() -> {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         if (player == null) throw new IllegalStateException("Missing server player");
                         var level = player.serverLevel();
-                        if (!itemsOnly) {
+                        if (!visualOnly) {
                             SurvivalSmoke.verify(player);
                             RecipeBrowserDataSmoke.verify(level);
                         }
@@ -158,6 +161,22 @@ public final class TableClientSmoke {
                 step = 20; entered = ticks;
             } else if (step == 20 && ticks - entered > 20) {
                 capture(client, "00-furniture-details.png");
+                if (seatingOnly) {
+                    client.setScreen(null);
+                    UUID id = client.player.getUUID();
+                    client.getSingleplayerServer().execute(() -> {
+                        try {
+                            var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                            var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                            table.sit(player, 0);
+                            require(player.isPassenger(), "Cushion did not seat the player");
+                            require(Math.abs(player.getVehicle().getY() - CENTER.getY() - TableGeometry.STOOL_HEIGHT) < 1e-6,
+                                "Seat anchor differs from cushion height");
+                        } catch (Throwable failure) { serverFailure.set(failure); }
+                    });
+                    step = 3; entered = ticks;
+                    return;
+                }
                 client.setScreen(new FurnitureGalleryScreen(true));
                 step = 21; entered = ticks;
             } else if (step == 21 && ticks - entered > 20) {
@@ -227,6 +246,12 @@ public final class TableClientSmoke {
                 step = 3; entered = ticks;
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
+                if (seatingOnly) {
+                    var settings = TableSettings.get();
+                    var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
+                    require(client.gameRenderer.getMainCamera().getPosition().distanceTo(expected) < 1e-6,
+                        "Open controls did not retain the standing-at-seat camera");
+                }
                 capture(client, "01-lobby.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
                     net.minecraft.network.chat.Component.translatable("ui.mchjong.practice_short").getString())) {
@@ -262,6 +287,11 @@ public final class TableClientSmoke {
                 if (view.phase() != Game.Phase.TURN || view.turn() != view.viewerSeat()) return;
                 require(view.seats().getFirst().hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
+                if (seatingOnly) {
+                    client.screen.onClose();
+                    step = 26; entered = ticks;
+                    return;
+                }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
                 step = 5; entered = ticks;
@@ -314,6 +344,23 @@ public final class TableClientSmoke {
                 LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;
+            } else if (step == 26 && ticks - entered > 20) {
+                var camera = client.gameRenderer.getMainCamera();
+                var settings = TableSettings.get();
+                var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
+                require(camera.getPosition().distanceTo(expected) < 1e-6, "Closing controls moved the seated camera");
+                require(client.player.getEyePosition().distanceTo(expected) < 1e-6
+                    && client.player.getEyePosition(1).distanceTo(expected) < 1e-6, "Native picking differs from the seated camera");
+                capture(client, "03-seated-world.png");
+                client.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_BACK);
+                client.player.setYRot(145);
+                client.player.setXRot(15);
+                step = 27; entered = ticks;
+            } else if (step == 27 && ticks - entered > 20) {
+                capture(client, "04-cushion-third-person.png");
+                Files.writeString(output.resolve("PASS.txt"), "Cushion furniture, seat height, private deal and stable first-person camera with controls open/closed; third-person capture.\n");
+                LOG.info("MCJHONG_SEATING_SMOKE_PASS");
+                step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();
                 step = 14;

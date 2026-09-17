@@ -10,7 +10,11 @@ import java.util.EnumSet;
 import java.util.Locale;
 import java.util.Objects;
 import net.minecraft.client.Minecraft;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.phys.Vec3;
 import org.slf4j.LoggerFactory;
+import top.skyeyefast.mchjong.world.SeatEntity;
+import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Local presentation preferences. Never sent to the server or stored in a table save. */
 public final class TableSettings {
@@ -42,11 +46,15 @@ public final class TableSettings {
     public static final double MIN_CAMERA_HEIGHT = 1.35;
     public static final double MAX_CAMERA_HEIGHT = 2.5;
     public static final double CAMERA_TARGET_Z = .45;
-    public double cameraDistance = 2.15;
-    public double cameraHeight = 2.4;
+    public double cameraDistance = TableGeometry.STOOL_DISTANCE;
+    public double cameraHeight = Player.DEFAULT_EYE_HEIGHT;
+
+    public Vec3 cameraPosition(SeatEntity seat) {
+        return TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, cameraHeight, cameraDistance, seat.seat()));
+    }
 
     public float cameraPitch() {
-        return (float) Math.toDegrees(Math.atan2(cameraHeight - top.skyeyefast.mchjong.world.TableGeometry.FELT_Y,
+        return (float) Math.toDegrees(Math.atan2(cameraHeight - TableGeometry.FELT_Y,
             cameraDistance - CAMERA_TARGET_Z));
     }
 

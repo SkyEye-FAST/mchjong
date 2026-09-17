@@ -13,27 +13,20 @@ class TablePresentationTest {
         assertTrue(TableScene.DRAW_GAP > 0);
     }
 
-    @Test void closerDefaultViewKeepsTheNearCornerTilesInsideAFourByThreeViewport() {
+    @Test void defaultViewMatchesStandingAtTheStoolAndAimsAtTheFelt() {
         var settings = new TableSettings();
-        assertEquals(2.15, settings.cameraDistance);
-        assertEquals(2.4, settings.cameraHeight);
+        assertEquals(TableGeometry.STOOL_DISTANCE, settings.cameraDistance);
+        assertEquals(net.minecraft.world.entity.player.Player.DEFAULT_EYE_HEIGHT, settings.cameraHeight);
         double pitch = Math.toRadians(settings.cameraPitch());
-        for (double x : new double[]{-TableGeometry.FELT_HALF_WIDTH, TableGeometry.FELT_HALF_WIDTH})
-            for (double y : new double[]{TableGeometry.FELT_Y, TableGeometry.FELT_Y + TileMesh.HEIGHT * TableScene.TILE_SCALE}) {
-                double dy = y - settings.cameraHeight;
-                double dz = TableScene.HAND_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2 - settings.cameraDistance;
-                double depth = -dy * Math.sin(pitch) - dz * Math.cos(pitch);
-                double up = dy * Math.cos(pitch) - dz * Math.sin(pitch);
-                double halfHeight = depth * Math.tan(Math.toRadians(35));
-                assertTrue(Math.abs(x) < halfHeight * 4 / 3, "The near meld corner must remain visible");
-                assertTrue(Math.abs(up) < halfHeight);
-            }
-        double dy = TableGeometry.FELT_Y - settings.cameraHeight;
-        double dz = -TableScene.HAND_Z - settings.cameraDistance;
-        double depth = -dy * Math.sin(pitch) - dz * Math.cos(pitch);
-        double up = dy * Math.cos(pitch) - dz * Math.sin(pitch);
-        double top = .5 - up / (2 * depth * Math.tan(Math.toRadians(35)));
-        assertTrue(top < .30, "The far hand should use the upper part of the viewport, rather than leaving it to the sky");
+        assertEquals(TableGeometry.FELT_Y, settings.cameraHeight
+            - Math.tan(pitch) * (settings.cameraDistance - TableSettings.CAMERA_TARGET_Z), 1e-6);
+        for (int side = 0; side < 4; side++) {
+            var position = TableGeometry.world(net.minecraft.core.BlockPos.ZERO,
+                TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, side));
+            var stool = TableGeometry.stool(net.minecraft.core.BlockPos.ZERO, side);
+            assertEquals(stool.getX() + .5, position.x);
+            assertEquals(stool.getZ() + .5, position.z);
+        }
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {

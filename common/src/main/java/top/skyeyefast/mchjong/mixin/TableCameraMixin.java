@@ -10,10 +10,8 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.world.SeatEntity;
-import top.skyeyefast.mchjong.world.TableGeometry;
 
 @Mixin(Camera.class)
 public abstract class TableCameraMixin {
@@ -23,11 +21,9 @@ public abstract class TableCameraMixin {
     @Inject(method = "setup", at = @At("TAIL"))
     private void mchjong$tableCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
             float partialTick, CallbackInfo callback) {
-        TableScreen table = TableScreen.active(Minecraft.getInstance().screen);
-        if (table == null || entity != Minecraft.getInstance().player || !(entity.getVehicle() instanceof SeatEntity seat)
-                || !seat.tablePos().equals(table.tablePos())) return;
+        if (detached || entity != Minecraft.getInstance().player || !(entity.getVehicle() instanceof SeatEntity seat)) return;
         TableSettings settings = TableSettings.get();
-        Vec3 position = TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat.seat()));
+        Vec3 position = settings.cameraPosition(seat);
         setPosition(position.x, position.y, position.z);
         setRotation(entity.getViewYRot(partialTick), entity.getViewXRot(partialTick));
     }

@@ -121,11 +121,21 @@ Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
 defaults must keep the compact table and its right corner usable from the seated view.
 
-The default seated camera is 2.15 blocks from the center and 2.4 blocks above the
-table's base, aiming at the felt 0.45 blocks toward the viewer. This framing raises
-the far hand in the viewport while keeping the near corners visible at 4:3.
-Camera sliders immediately re-aim at the table. Tile highlights follow the beveled
+The default first-person seated camera matches standing at the stool's block:
+2 blocks from the center and the player's standard 1.62-block eye height above
+the table's base, aiming at the felt 0.45 blocks toward the viewer. It retains
+the same position with the controls open or closed, and permits free looking.
+Native first-person picking uses that same eye position.
+Minecraft controls third-person views. Camera sliders immediately re-aim at the
+table; saved personal adjustments remain adjustable, and Restore defaults applies
+the current standing-height framing. Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
+
+For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and
+`:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
+and private-deal captures, then inspect the camera with controls closed and the
+third-person cushion pose. Evidence goes to each loader's `build/smoke/seating-evidence`.
+
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
 The automatic table's settings include a per-seat Automatic page: sort hand,
