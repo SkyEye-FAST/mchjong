@@ -22,8 +22,11 @@ public final class GenerateAssets {
 
     private void generate(Path artwork) throws IOException {
         tiles(artwork);
-        for (var texture : FurnitureArtwork.textures().entrySet())
+        for (var texture : FurnitureArtwork.textures().entrySet()) {
             png("furniture/" + texture.getKey(), texture.getValue());
+            text("assets/mchjong/textures/furniture/" + texture.getKey() + ".png.mcmeta",
+                "{\"texture\":{\"blur\":false,\"clamp\":false}}");
+        }
         for (var texture : TileMaterialArtwork.textures().entrySet())
             png("tile_material/" + texture.getKey(), texture.getValue());
         models();

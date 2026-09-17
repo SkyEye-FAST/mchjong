@@ -18,11 +18,11 @@ class FurnitureArtworkTest {
         for (var entry : FurnitureArtwork.textures().entrySet()) {
             var actual = ImageIO.read(textures.resolve(entry.getKey() + ".png").toFile());
             assertNotNull(actual, entry.getKey());
-            assertEquals(64, actual.getWidth());
-            assertEquals(64, actual.getHeight());
+            assertEquals(16, actual.getWidth());
+            assertEquals(16, actual.getHeight());
             var colors = new HashSet<Integer>();
             int signature = 1;
-            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+            for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
                 int color = actual.getRGB(x, y);
                 assertEquals(255, color >>> 24, entry.getKey());
                 assertEquals(entry.getValue().getRGB(x, y), color);
@@ -30,9 +30,14 @@ class FurnitureArtworkTest {
                 signature = 31 * signature + color;
             }
             assertTrue(colors.size() >= 2, "A material must contain original surface detail: " + entry.getKey());
+            assertTrue(colors.size() <= 5, "A restrained pixel palette: " + entry.getKey());
             int contrast = colors.stream().mapToInt(color -> color & 255).max().orElseThrow()
                 - colors.stream().mapToInt(color -> color & 255).min().orElseThrow();
-            assertTrue(contrast >= (entry.getKey().equals("edge") ? 8 : 35), "Visible material relief: " + entry.getKey());
+            assertTrue(contrast >= (entry.getKey().equals("edge") ? 8 : 15), "Visible material relief: " + entry.getKey());
+            var metadata = com.google.gson.JsonParser.parseString(Files.readString(textures.resolve(entry.getKey() + ".png.mcmeta")))
+                .getAsJsonObject().getAsJsonObject("texture");
+            assertFalse(metadata.get("blur").getAsBoolean(), "Crisp furniture pixels");
+            assertFalse(metadata.get("clamp").getAsBoolean(), "Continuous local-space repeats");
             assertTrue(signatures.add(signature), "Duplicate material: " + entry.getKey());
         }
     }
@@ -76,7 +81,7 @@ class FurnitureArtworkTest {
 
     @Test void fabricIsNeutralSoEveryDyeKeepsItsHue() throws Exception {
         var felt = ImageIO.read(textures.resolve("felt.png").toFile());
-        for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+        for (int y = 0; y < felt.getHeight(); y++) for (int x = 0; x < felt.getWidth(); x++) {
             int rgb = felt.getRGB(x, y);
             assertEquals(rgb & 255, rgb >> 8 & 255);
             assertEquals(rgb & 255, rgb >> 16 & 255);

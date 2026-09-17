@@ -6,7 +6,7 @@ import java.util.Map;
 
 /** Original, deterministic pixel materials. No Minecraft images are read or composited. */
 final class FurnitureArtwork {
-    static final int SIZE = 64;
+    static final int SIZE = 16;
     static final Map<String, Integer> WOODS = Map.ofEntries(
         Map.entry("oak", 0xb38b59), Map.entry("spruce", 0x735037),
         Map.entry("birch", 0xd7c59a), Map.entry("jungle", 0xae7d60),
@@ -29,44 +29,45 @@ final class FurnitureArtwork {
     }
 
     private static BufferedImage wood(int base) {
-        var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
-            // Grain runs along the long face axis. Periodic waves avoid seams when repeating.
-            double bend = 1.8 * Math.sin(y * Math.PI / 32) + .7 * Math.sin(y * Math.PI / 16);
-            double grain = Math.sin((x + bend) * Math.PI / 8);
-            int pore = Math.floorMod(x * 37 + y * 17, 97) == 0 ? -18 : 0;
-            int shade = (int) Math.round(16 * grain + 6 * Math.sin((x + bend) * Math.PI / 2)) + pore;
-            image.setRGB(x, y, shade(base, shade));
-        }
-        return image;
+        // Broad, broken grain clusters. Each pixel occupies 1/16 of a world block.
+        return pixels(base, new int[]{-24, -12, 0, 10, 20},
+            "2233221222332212", "2233221222332212", "2332211222333212", "2332212222333212",
+            "2332212232333212", "2232212232332212", "2232212332322212", "2233212332222212",
+            "2233212332221212", "2233212332221212", "2232212332221222", "2232212322221222",
+            "2232212223321222", "2232211223321222", "2233211223322212", "2233221222332212");
     }
 
     private static BufferedImage fabric() {
-        var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
-            int weave = ((x + y) & 1) == 0 ? 10 : -10;
-            int thread = x % 4 == 0 ? -12 : y % 4 == 0 ? 6 : 0;
-            int nap = (int) Math.round(4 * Math.sin((x + y) * Math.PI / 16));
-            image.setRGB(x, y, shade(0xebebeb, weave + thread + nap));
-        }
-        return image;
+        return pixels(0xe8e8e8, new int[]{-16, -7, 0, 8},
+            "2222122223222221", "2232221122222322", "2222222222122222", "2122322222222112",
+            "2222221223222222", "2322122222223222", "2222222232122222", "2212221222222232",
+            "2223222222212222", "2122222322222212", "2222122222232222", "2232222221222222",
+            "2222212322222122", "2223222222122222", "2212221222222322", "2222222223222222");
     }
 
     private static BufferedImage metal(int base) {
-        var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++) {
-            int brushed = (Math.floorMod(x * 13, 7) - 3) * 3;
-            int highlight = (int) Math.round(12 * Math.sin(x * Math.PI / 32));
-            int scratch = x % 23 == 0 && y % 32 < 21 ? 9 : 0;
-            image.setRGB(x, y, shade(base, brushed + highlight + scratch));
-        }
-        return image;
+        return pixels(base, new int[]{-20, -9, 0, 12, 24},
+            "2233222222221122", "2233222222221122", "2333222222221122", "2332222222221122",
+            "2332222222221222", "2332222222221222", "2332222222221222", "2232222222221222",
+            "2232222222221222", "2232222222221222", "2232222222211222", "2232222222211222",
+            "2233222222211222", "2233222222211222", "2233222222221122", "2233222222221122");
     }
 
     private static BufferedImage edge() {
+        return pixels(0x30383b, new int[]{-4, 0, 6},
+            "1111111111111111", "1111111111111111", "1111211111111111", "1111111111100111",
+            "1111111111111111", "1101111111111111", "1111111121111111", "1111111111111111",
+            "1111111111111111", "1111111111111111", "1111111111112111", "1111111111111111",
+            "1111121111111111", "1111111110111111", "1111111111111111", "1111111111111111");
+    }
+
+    private static BufferedImage pixels(int base, int[] shades, String... rows) {
+        if (rows.length != SIZE) throw new IllegalArgumentException("Material height");
         var image = new BufferedImage(SIZE, SIZE, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < SIZE; y++) for (int x = 0; x < SIZE; x++)
-            image.setRGB(x, y, shade(0x30383b, ((x + y) & 3) == 0 ? 6 : -2));
+        for (int y = 0; y < SIZE; y++) {
+            if (rows[y].length() != SIZE) throw new IllegalArgumentException("Material width");
+            for (int x = 0; x < SIZE; x++) image.setRGB(x, y, shade(base, shades[rows[y].charAt(x) - '0']));
+        }
         return image;
     }
 

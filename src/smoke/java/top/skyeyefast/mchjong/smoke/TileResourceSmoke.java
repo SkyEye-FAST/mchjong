@@ -30,8 +30,11 @@ final class TileResourceSmoke {
             byte[] previous = originalFurniture.putIfAbsent(texture, bytes);
             require(previous == null || Arrays.equals(previous, bytes), "Furniture changed after resource reload: " + name);
             try (var image = NativeImage.read(new ByteArrayInputStream(bytes))) {
-                require(image.getWidth() == 64 && image.getHeight() == 64, "Original furniture texture missing: " + name);
+                require(image.getWidth() == 16 && image.getHeight() == 16, "Pixel furniture texture missing: " + name);
             }
+            client.getTextureManager().getTexture(texture).bind();
+            require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_NEAREST,
+                "Furniture pixels were blurred: " + name);
         }
         require(client.getResourcePackRepository().getAvailableIds().stream().noneMatch(id -> id.endsWith("patterned_backs")),
             "Retired built-in pack is still registered");

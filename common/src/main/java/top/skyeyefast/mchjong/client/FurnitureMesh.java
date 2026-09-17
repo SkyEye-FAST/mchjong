@@ -65,7 +65,7 @@ public final class FurnitureMesh {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
             if (automatic) FurnitureShape.bevel(pose, brass, -.11f, .707f, felt + .0315f, .11f, .758f, felt + .0475f, .004f, WHITE, light);
-            FurnitureShape.box(pose, brass, felt + .0425f, 1, felt + .0425f, felt + .0825f, 1.002f, felt + .0825f, WHITE, light);
+            FurnitureShape.box(pose, brass, felt + .03125f, 1, felt + .03125f, felt + .09375f, 1.002f, felt + .09375f, WHITE, light);
             pose.popPose();
         }
         if (cloth != null) tableCloth(pose, buffers, light, cloth);
@@ -83,9 +83,9 @@ public final class FurnitureMesh {
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            for (int vent = 0; vent < 5; vent++) {
-                float x = (vent - 2) * .046875f;
-                FurnitureShape.box(pose, edge, x - .009f, .55f, .339f, x + .009f, .608f, .346f, WHITE, light);
+            for (int vent = 0; vent < 3; vent++) {
+                float x = (vent - 1) * .125f;
+                FurnitureShape.box(pose, edge, x - .03125f, .53125f, .339f, x + .03125f, .59375f, .346f, WHITE, light);
             }
             pose.popPose();
         }
@@ -98,10 +98,8 @@ public final class FurnitureMesh {
         for (int side = 0; side < 4; side++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.box(pose, felt, -half + .0225f, .9375f, half - .0375f,
-                half - .0225f, .9378f, half - .0225f, tint(color, .72f), light);
-            FurnitureShape.box(pose, felt, -half + .0475f, .9375f, half - .0515f,
-                half - .0475f, .9378f, half - .0475f, tint(color, .88f), light);
+            FurnitureShape.box(pose, felt, -half + .03125f, .9375f, half - .0625f,
+                half - .03125f, .938f, half - .03125f, tint(color, .82f), light);
             pose.popPose();
         }
     }
@@ -123,8 +121,8 @@ public final class FurnitureMesh {
         FurnitureShape.bevel(pose, felt, -.375f, .5f, -.375f, .375f, .54375f, .375f, .0125f, tint(color, .68f), light);
         FurnitureShape.bevel(pose, felt, -.359375f, .52f, -.359375f, .359375f, .625f, .359375f, .04f, tint(color, 1), light);
         for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
-            FurnitureShape.box(pose, felt, x * .14f - .01f, .624f, z * .14f - .01f,
-                x * .14f + .01f, .6255f, z * .14f + .01f, tint(color, .8f), light);
+            FurnitureShape.box(pose, felt, x * .15625f - .03125f, .624f, z * .15625f - .03125f,
+                x * .15625f + .03125f, .626f, z * .15625f + .03125f, tint(color, .8f), light);
     }
 
     public static void box(PoseStack pose, MultiBufferSource buffers, int light) {

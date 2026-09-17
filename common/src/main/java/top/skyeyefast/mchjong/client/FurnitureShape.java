@@ -108,7 +108,7 @@ public final class FurnitureShape {
             minY = Math.min(minY, p[3*i+1]); maxY = Math.max(maxY, p[3*i+1]);
         }
         // Coplanar polygons sample the same local-space coordinates, including split bevel caps.
-        // One 64px repeat per block; vertical boards still orient their grain along the longer edge.
+        // One 16px repeat per block; vertical boards still orient their grain along the longer edge.
         for (int i = 0; i < 4; i++) {
             float h = p[3*i + (sideX ? 2 : 0)], y = p[3*i+1];
             float u = horizontal ? p[3*i] : maxH - minH > maxY - minY ? y : h;

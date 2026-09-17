@@ -78,11 +78,14 @@ buffers for each tile.
 
 ## Table and other resources
 
-Furniture uses fifteen original 64 by 64 pixel textures under
+Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
 `felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
-flowing wood grain, neutral woven fabric, brushed metal and dark edge material
-deterministically. It does not read, copy or composite Minecraft textures. Wood
+clustered wood grain, neutral felt, broad metal highlights and dark edge material
+deterministically with small, discrete palettes and nearest-neighbor sampling.
+Create's framed machinery and Farmer's Delight's crafted wooden utensils inform
+the restrained material separation and pixel scale. The patterns are original.
+Wood
 components select the finish; neutral fabric is tinted by the existing dye
 component. Resource packs can replace these paths directly.
 The block atlas explicitly stitches the wooden particle sprite through
@@ -91,9 +94,10 @@ Tile inventory icons use front lighting so their white faces remain readable.
 
 `FurnitureShape` supplies small textured boxes, tapered legs, clipped-corner
 bevels and a continuous mitered table rim, with outward normals and consistent
-pixel density. Coplanar polygons share local-space texture coordinates, preventing
-visible texture resets across subdivided caps. Grain, weave and brushed-metal
-contrast is deliberately visible at the seated camera distance. `FurnitureMesh` shares
+pixel density of sixteen texels per world block. Coplanar polygons share local-space
+texture coordinates, keeping the grain continuous across subdivided caps.
+Large material clusters, square fasteners, cushion tufts and ventilation slots
+remain readable at the seated camera distance. `FurnitureMesh` shares
 the resulting geometry between blocks and items. Ordinary tables have framed
 playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
