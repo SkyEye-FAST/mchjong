@@ -8,10 +8,12 @@ existing work and preserve unrelated tracked and untracked changes. Use
 Keep patches scoped to the requested work; avoid reset, clean, force pushes and
 overwriting local work.
 
-The Windows workspace is `C:\Java\mchjong`. Confirm the Coding Tools MCP workspace
-root before choosing a relative workdir (`Java/mchjong` when the root is `C:\`).
-Pass that workdir explicitly. Use `pwsh -NoProfile -Command` for PowerShell
-commands because the default command shell can be `cmd`.
+The Windows workspace is `C:\Java\mchjong`. When using the Coding Tools MCP,
+confirm the workspace root before choosing a relative workdir (`Java/mchjong`
+when the root is `C:\`), pass that workdir explicitly, and use
+`pwsh -NoProfile -Command` for PowerShell commands because its default command
+shell can be `cmd`. Outside Coding Tools MCP, `pwsh -NoProfile -Command` is not
+required.
 
 Deliver complete, runnable increments. Choose the simplest implementation that
 meets the requirements, extend existing components and dependencies, and keep
