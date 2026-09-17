@@ -171,10 +171,16 @@ public final class FurnitureMesh {
 
     public static void stick(PoseStack pose, MultiBufferSource buffers, int light, int points) {
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
-        TileMesh.box(pose, vertices, -.35f, 0, -.03f, .35f, .025f, .03f, 0xffeee6d4, light);
+        int body = switch (points) {
+            case 1000 -> 0xff80c5e8;
+            case 5000 -> 0xfff3d76b;
+            case 10000 -> 0xffee8d98;
+            default -> 0xffeee6d4;
+        };
+        TileMesh.box(pose, vertices, -.35f, 0, -.03f, .35f, .025f, .03f, body, light);
         if (points == 0) return;
         int count = points == 100 ? 6 : points == 1000 ? 1 : points == 5000 ? 5 : 2;
-        int color = points == 100 ? 0xff252525 : points == 1000 ? 0xffc53737 : points == 5000 ? 0xff315bb8 : 0xffcc9c31;
+        int color = points == 1000 ? 0xffa52b35 : points == 5000 ? 0xff315bb8 : 0xff252525;
         for (int i = 0; i < count; i++) {
             float x = (i - (count - 1) / 2f) * .07f;
             TileMesh.box(pose, vertices, x - .012f, .025f, -.012f, x + .012f, .026f, .012f, color, light);

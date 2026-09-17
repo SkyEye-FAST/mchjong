@@ -102,6 +102,11 @@ buffers for each tile.
 
 ## Table and other resources
 
+Point-stick bodies use ivory for blank and 100-point sticks, light blue for
+1,000 points, yellow for 5,000 points and pink-red for 10,000 points. Contrasting
+denomination marks remain visible on their printed faces. `FurnitureMesh.stick`
+supplies the same colored geometry to inventory, held-item and table renders.
+
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
 `felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
