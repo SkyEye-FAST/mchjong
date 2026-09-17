@@ -14,10 +14,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Survival crafting for ordinary and automatic tables, eleven wood families, removable sixteen-color cloth, boxes, tiles and point sticks.
 - Server-authoritative manual shuffle, wall construction, starting-tile pickup and draws on ordinary tables; automatic tables keep automatic handling.
 - Physical 136-tile box validation, six tile materials, genuine translucent glass, batch engraving and whole-box dyeing.
-- Component-preserving furniture drops, stonecut engraving, box storage and placed point-stick interactions independent of scoring.
+- Component-preserving furniture drops, stonecut engraving, box storage and side-drawer point-stick storage with manual payments.
 
 ### Changed
 
+- Ordinary tables use physical drag gestures to shuffle scattered tiles, build walls, take packets, draw and collect a completed hand.
 - Tables retain their compact 3 x 3 footprint, with matching furniture, collisions, seats and camera range.
 - Melds extend left from the player's right-hand table corner beside the hand. Hands stay centered where space permits and shift left only by the clearance required by actual melds and the drawn tile, without reserving unused slots. Extracted norths use two short rows on the left, clear of the adjacent corner.
 - Furniture uses original pixel wood, fabric and metal textures with beveled frames, tapered legs, padded stools and detailed case hardware.

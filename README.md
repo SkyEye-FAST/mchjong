@@ -108,19 +108,36 @@ Build an ordinary table from matching wooden slabs and fences. Cut material
 blocks into blanks, put them in a mahjong box, then craft the box with an ink sac
 to engrave a set. Right-click either table to store up to two boxes inside, and
 lay a cloth on its surface. A complete set and a cloth are required to play.
-Ordinary tables require shuffle, wall,
-packet and draw actions; automatic tables handle these steps for you.
+On ordinary tables, sweep the face-down tiles across the felt to shuffle, drag
+your highlighted loose tiles toward your wall, and pull starting packets and
+draws from the highlighted wall stack toward your hand. Automatic tables handle
+these steps for you. Tab focuses the physical source; Enter or Space performs
+its available action with keyboard and narration support.
 See [Survival equipment and recipes](docs/SURVIVAL.md) for the complete recipes,
 component schema, dyes, glass tiles, point sticks and removal controls.
 
 Place stools two blocks from the center on the sides used by your rules. Click
 a stool to sit. Right-click the table to manage its two case slots. Crouch-click with
-both hands empty collects equipment first: the top returns your side's sticks,
-then the cloth. Retrieve boxes through the storage screen. Cloth and box changes require the lobby.
+both hands empty collects the cloth from the tabletop. Retrieve boxes through
+the storage screen. Cloth and box changes require the lobby.
 When no equipment is collected, crouch-clicking opens the spectator view.
 Clicking your stool again reopens the controls
 without creating another seat. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
+
+Ordinary tables have a wooden point-stick drawer on each side. Open one from the
+world, click its front while seated, or press E in the seated overlay. The native container shows all four
+drawers: take sticks from your own row and place them in the recipient's row to
+pay. Each drawer holds nine stacks, including mixed denominations. Shift-click
+stores inventory sticks in the drawer you opened. During a match, withdrawal is
+limited to your own drawer; the practice host also handles training players'
+drawers. Closing the container returns to the seated view.
+
+The container displays physical totals beside the referee's game scores as a
+payment reference. Players transfer the actual items themselves. After settling
+a hand, close the result panel and sweep your tiles toward the center to collect
+them for the next hand. Drawer contents persist with the table and are returned
+with its equipment when the table is removed.
 
 In the lobby, select **Four-player mahjong** or **Three-player mahjong**, then
 choose the rule preset for that player count. The host can enable **Show

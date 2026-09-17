@@ -18,9 +18,9 @@ allows it.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
-slots plus removable cloth and point-stick stacks; its public projection contains only wood,
-colors, material and placed-stick counts/values. Native container
-contents and game state never enter chunk updates. The two tables share one block
+slots, removable cloth and four nine-slot point-stick drawers. Its public projection
+contains wood, cloth colors and tile appearance; inventory contents use authorized
+native container synchronization. The two tables share one block
 entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall,
 packet and draw phases without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
@@ -33,6 +33,11 @@ inventory wells and a packing summary; it never writes stored components.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
 shows the selected complete set and cloth readiness without changing equipment.
+`PointStickMenu` exposes all four drawer rows for hand payments, with withdrawals
+authorized per player and practice-bot ownership. `PointStickScreen` shows stored
+currency beside the referee's score; only ordinary inventory transactions move
+the physical sticks. Signed 32-bit reference scores use paired native data slots.
+Lifetime checks bind the menu to its player, current mount and exact table.
 Both manual and automatic tables require a cloth and complete set to begin.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
 
@@ -58,6 +63,15 @@ not restart motion. Changing viewer permissions clears the presentation history.
 Training opponents receive an opening grace period; the engine never waits for
 client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
+
+`TableView.Handling` publishes wall-build bits, the next physical source slot
+and packet size. `TableHandling` derives legal physical targets and drop regions
+from this recipient-safe view. Pointer gestures grab scattered tiles or the
+source wall stack, preview their movement, and submit the existing action index
+and decision token on a valid release. A token change or cancellation discards
+the gesture. Keyboard focus is anchored to the same physical source. Collected
+tiles turn face down toward the center as each participant acknowledges the
+settlement. Rendering and drag previews remain read-only.
 
 `TableResults` is a separate, narrated single-screen receipt widget. It uses compact
 hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
@@ -123,9 +137,11 @@ generation supplies the same structure to both loader artifacts. See
 
 Survival checks use real server players, menus and levels in the shared smoke
 source set rather than introducing null-world behavior into production code.
-The ordinary-table client smoke sends real button actions for shuffle, walls,
-packet dealing, draws, discards and exit; those snapshots are not display-only
-fixtures. Box menu lifetime is bound to the current menu and exact carrier
+The ordinary-table client smoke projects real tile positions and sends pointer
+drags for shuffle, walls, packet dealing and draws, followed by normal discard
+and exit controls. `PointStickMenuSmoke` exercises native transfers, splitting,
+drag distribution, swaps, close, distance and removal with exact item accounting.
+Box menu lifetime is bound to the current menu and exact carrier
 stack, with immediate vanilla container-component persistence. A narrow shared
 stonecutter mixin adds component-aware cache invalidation to the native menu;
 crafting rules stay in `recipe/`, and neither loader carries separate rules.

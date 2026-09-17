@@ -162,11 +162,11 @@ inventory transfers. There is no free virtual set when a table is empty.
 
 Use a cloth on either table to install or replace it. Both table types require
 a cloth before play; a bare wooden table cannot ready players or start practice.
-To remove the cloth, end the match, empty both hands and sneak-use the top. If physical
-point sticks are present on the nearest side, the top first returns that stack.
+To remove the cloth, end the match, empty both hands and sneak-use the top.
+Retrieve point sticks through the side drawers' container slots.
 Equipment collection takes priority over spectator interaction; a sneak-click
 opens the spectator view only when it does not collect any equipment.
-Breaking a table returns its furniture, both stored boxes, cloth and placed sticks; equipment
+Breaking a table returns its furniture, both stored boxes, cloth and stored point sticks; equipment
 storage is cleared before spawning drops so occupancy-cell removal cannot
 duplicate the contents. An unfinished hand is not fabricated into a result.
 Explosion drop decay still follows vanilla rules for the furniture block; the
@@ -177,18 +177,22 @@ Stored equipment is returned once by the removal callback.
 
 An ordinary table offers these server-authorized actions:
 
-1. Ready the players; the dealer chooses **Shuffle tiles**.
-2. Each participant chooses **Build my wall** once.
-3. Participants take starting tiles in turn: three rounds of four, then one.
-4. The dealer explicitly draws the fourteenth tile; subsequent normal and
-   replacement draws require **Draw a tile** from the player whose turn it is.
-5. Discard, call, win, and continue using the existing table controls. The
-   engine checks rules, furiten, legal calls, yaku, han/fu, payments and results.
+1. Ready the players; the dealer sweeps the face-down tiles across the felt to shuffle.
+2. Each participant drags their highlighted loose tiles toward their own wall.
+3. Participants pull starting packets from the highlighted wall stack toward
+   their hands in turn: three rounds of four, then one.
+4. The dealer pulls the fourteenth tile into their hand. Subsequent normal and
+   replacement draws use the same drag interaction at the appropriate wall stack.
+5. Discard, call and win with the existing rules controls. Hand over physical
+   point sticks through the side drawers, close the result panel, and sweep
+   your tiles to the center to collect them for the next hand.
 
-These are physical handling steps in the in-world controls, not a free-form
-wall editor. Humans do not shuffle or draw automatically on a timeout; training
-bots perform their own handling actions. Normal decision clocks still govern
-discards and claim responses. State and unfinished handling steps survive saves.
+The gesture completes when released over its destination. Escape cancels a
+held gesture; Tab focuses the physical source and Enter or Space activates it.
+The server validates the current action and decision token. Human handling
+waits for player input; training bots perform their own steps. Normal decision
+clocks govern discards and claim responses. State and unfinished handling steps
+survive saves. The referee checks rules, furiten, calls, yaku, han/fu and settlement.
 
 The automatic table uses the same installed physical set and referee but
 performs shuffle, wall construction, packet dealing and draws automatically.
@@ -208,14 +212,23 @@ The default back is a neutral texture tinted by the 16 dye colors. Custom
 resource packs can replace `assets/mchjong/textures/tile/back.png`.
 See [ASSETS.md](ASSETS.md).
 
-Use a marked stick on a table to place one on the nearest side; matching sticks
-stack there. Sneak-use the top with both hands empty to retrieve that side's
-stack. They are stored and dropped as real item stacks, rendered with their
-denomination. Physical point sticks can be placed and retrieved during a match;
-the active-game equipment lock applies to the box and cloth, not these trays.
-These interactions never call the scoring engine or modify
-points, honba or riichi deposits. The engine's riichi animation is a rule-state
-indicator, not permission to mint or withdraw physical currency.
+Ordinary tables have four wooden drawers below their side rails. Open a drawer
+by interacting with its front, including from the seated overlay. The native
+inventory shortcut E also opens your own drawer while seated. The
+container exposes nine slots per player. Marked denominations share a drawer;
+matching stacks use vanilla splitting, drag distribution and shift-click rules.
+
+Take sticks from your own row and place the chosen amount in the recipient's
+row to pay by hand. During a match, other human players' drawers accept deposits;
+their owners control withdrawals. The host handles bot drawers in practice.
+The opened drawer is highlighted and receives shift-clicked inventory stacks.
+Closing the container while seated returns to the table overlay.
+
+The screen pairs each physical total with the referee's signed game score.
+Scores provide the settlement reference; players handle the actual currency
+through inventory transactions. Drawers remain available to seated participants
+during play. Full item components persist in private table saves and are returned
+once on removal. Public appearance updates describe furniture and tile colors.
 
 ## Code ownership and checks
 
@@ -245,9 +258,10 @@ unloading, private/public save separation, sanma's recoverable unused tiles,
 root/occupancy destruction and native explosions in a real world.
 
 The shared client harness operates both an equipped automatic table and an
-ordinary glass-tile table. `ManualTableSmoke` clicks the actual shuffle, wall,
-four packet, draw, discard and exit controls through normal client/server
-packets. It verifies waiting does not handle tiles for the human, private hands
+ordinary glass-tile table. `ManualTableSmoke` drags actual scattered tiles and
+wall stacks to shuffle, build, take all four packets and draw, then uses normal
+discard and exit controls through client/server packets. It verifies that human
+handling waits for input, private hands
 remain hidden, an in-progress manual save round-trips, and the full box can be
 recovered after exit. Screenshots include the manual phases, two-case inventory,
 colored furniture, cloth and physical point sticks.
