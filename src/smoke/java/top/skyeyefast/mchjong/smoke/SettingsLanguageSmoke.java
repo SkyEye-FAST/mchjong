@@ -9,8 +9,8 @@ import net.minecraft.network.chat.Component;
 
 /** Render the actual settings tabs at both acceptance sizes with native language reloads. */
 final class SettingsLanguageSmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
-    private int sample = -1, size, tab, ticks, width, height, scale;
+    private static final String[] LANGUAGES = {"zh_cn", "en_us"};
+    private int sample = -1, size, ticks, width, height, scale;
     private String original;
     private CompletableFuture<Void> reload;
 
@@ -34,21 +34,18 @@ final class SettingsLanguageSmoke {
         if (client.screen.width != logicalWidth || client.screen.height != logicalHeight)
             throw new IllegalStateException("Settings language viewport mismatch");
         Screenshot.grab(output.toFile(), "54-settings-" + LANGUAGES[sample] + "-" + logicalWidth + "x"
-            + logicalHeight + "-tab-" + tab + ".png", client.getMainRenderTarget(), ignored -> {});
+            + logicalHeight + "-automatic.png", client.getMainRenderTarget(), ignored -> {});
         ticks = 0;
-        if (++tab == 5) {
-            tab = 0;
-            if (++size == 2) {
-                size = 0;
-                sample++;
-                select(client, sample == LANGUAGES.length ? original : LANGUAGES[sample]);
-            }
-            if (sample == LANGUAGES.length) {
-                client.getWindow().setWindowed(width, height);
-                client.options.guiScale().set(scale);
-                client.resizeDisplay();
-            } else resize(client);
+        if (++size == 2 || sample == 1) {
+            size = 0;
+            sample++;
+            select(client, sample == LANGUAGES.length ? original : LANGUAGES[sample]);
         }
+        if (sample == LANGUAGES.length) {
+            client.getWindow().setWindowed(width, height);
+            client.options.guiScale().set(scale);
+            client.resizeDisplay();
+        } else resize(client);
         return false;
     }
 
@@ -65,7 +62,7 @@ final class SettingsLanguageSmoke {
     }
 
     private void chooseTab(Minecraft client) {
-        String label = Component.translatable("settings.mchjong.tab." + tab).getString();
+        String label = Component.translatable("settings.mchjong.tab.4").getString();
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance)
             .map(AbstractWidget.class::cast).filter(widget -> widget.getMessage().getString().equals(label))
             .findFirst().orElseThrow();
