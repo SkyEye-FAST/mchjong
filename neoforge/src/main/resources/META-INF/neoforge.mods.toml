@@ -28,3 +28,10 @@ type="required"
 versionRange="[${minecraft_version}]"
 ordering="NONE"
 side="BOTH"
+
+[[dependencies.mchjong]]
+modId="ponder"
+type="optional"
+versionRange="[${ponder_version},)"
+ordering="AFTER"
+side="CLIENT"

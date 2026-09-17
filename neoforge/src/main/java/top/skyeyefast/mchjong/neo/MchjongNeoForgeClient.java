@@ -11,6 +11,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 @EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
+    @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("ponder"))
+            event.enqueueWork(top.skyeyefast.mchjong.compat.ponder.MchjongPonder::register);
+    }
     @SubscribeEvent public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         event.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);

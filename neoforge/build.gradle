@@ -23,6 +23,7 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
+    resources.srcDir rootProject.layout.buildDirectory.dir('generated/ponder')
 }
 
 neoForge {
@@ -47,6 +48,10 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
+        runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     jarJar project(path: ':engine', configuration: 'embeddedEngine')
     additionalRuntimeClasspath project(path: ':engine', configuration: 'embeddedEngine')
@@ -65,11 +70,12 @@ test {
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData'
+    dependsOn ':art:generateAssets', ':art:generateData', ':generatePonder'
     def properties = [
         version: project.version,
         minecraft_version: rootProject.minecraft_version,
-        neo_loader_min_version: rootProject.neo_loader_min_version
+        neo_loader_min_version: rootProject.neo_loader_min_version,
+        ponder_version: rootProject.ponder_version
     ]
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
@@ -85,7 +91,9 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def smokeEvidence = layout.buildDirectory.dir('smoke/evidence')
+def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def smokeEvidence = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-evidence' : 'smoke/evidence')
+def smokeRun = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-run' : 'smoke/run')
 neoForge {
     mods { mchjong_smoke { sourceSet sourceSets.smoke } }
     unitTest { loadedMods = [mods.mchjong] }
@@ -95,11 +103,12 @@ neoForge {
             client()
             sourceSet = sourceSets.smoke
             loadedMods = [mods.mchjong, mods.mchjong_smoke]
-            gameDirectory = layout.buildDirectory.dir('smoke/run').get().asFile
+            gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
-            systemProperty 'java.io.tmpdir', layout.buildDirectory.dir('smoke/run').get().asFile.absolutePath
+            systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }
     }
 }
@@ -110,7 +119,7 @@ tasks.named('runSmokeClient') {
     doLast {
         def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
-            throw new GradleException('NeoForge client smoke failed; see neoforge/build/smoke/evidence and run/logs/latest.log')
+            throw new GradleException("NeoForge client smoke failed; see ${evidence} and ${smokeRun.get().asFile}/logs/latest.log")
         }
     }
 }

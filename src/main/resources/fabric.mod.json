@@ -22,6 +22,9 @@
     "mchjong.mixins.json",
     "mchjong.client.mixins.json"
   ],
+  "suggests": {
+    "ponder": ">=${ponder_version}"
+  },
   "depends": {
     "fabricloader": ">=${fabric_loader_min_version}",
     "minecraft": "${minecraft_version}",

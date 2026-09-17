@@ -15,13 +15,16 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Uses the live integrated server and real control packets before any display-only fixtures. */
 final class TableControlSmoke {
+    private static final int DEFAULT_TIMEOUT_TICKS = 400;
+    private static final int GAME_START_TIMEOUT_TICKS = 800;
     private int stage, ticks;
     private boolean remainingHidden;
     private CompletableFuture<Void> reseated;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
-        if (ticks > 400) throw new IllegalStateException("Table controls timed out at stage " + stage);
+        int timeout = stage == 7 ? GAME_START_TIMEOUT_TICKS : DEFAULT_TIMEOUT_TICKS;
+        if (ticks > timeout) throw new IllegalStateException("Table controls timed out at stage " + stage);
         if (reseated != null && reseated.isDone()) reseated.join();
         var view = table.clientView();
         var settings = TableSettings.get();

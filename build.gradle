@@ -8,6 +8,17 @@ base.archivesName = 'mchjong-fabric'
 
 allprojects {
     repositories {
+        exclusiveContent {
+            forRepository { maven { name = 'Create'; url = 'https://maven.createmod.net' } }
+            filter {
+                includeGroup 'net.createmod.ponder'
+                includeGroup 'dev.engine-room.flywheel'
+            }
+        }
+        exclusiveContent {
+            forRepository { maven { name = 'ForgeConfigAPIPort'; url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
+            filter { includeGroup 'fuzs.forgeconfigapiport' }
+        }
         maven {
             name = 'AliyunPublic'
             url = 'https://maven.aliyun.com/repository/public/'
@@ -30,6 +41,10 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    modCompileOnly "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
+    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
+        modLocalRuntime "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")
@@ -49,15 +64,34 @@ sourceSets.main {
     resources.srcDir 'common/src/main/resources'
     resources.srcDir layout.buildDirectory.dir('generated/assets')
     resources.srcDir layout.buildDirectory.dir('generated/data')
+    resources.srcDir layout.buildDirectory.dir('generated/ponder')
+}
+
+// Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
+sourceSets {
+    ponderData { compileClasspath += sourceSets.main.compileClasspath }
+}
+sourceSets.ponderData.runtimeClasspath += sourceSets.ponderData.compileClasspath
+tasks.register('generatePonder', JavaExec) {
+    dependsOn tasks.named('ponderDataClasses')
+    classpath = sourceSets.ponderData.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
+    def output = layout.buildDirectory.dir('generated/ponder')
+    args output.get().asFile.absolutePath
+    inputs.files sourceSets.ponderData.allSource
+    outputs.dir output
+    doFirst { delete output }
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData'
+    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
         java_version: java_version,
-        fabric_loader_min_version: fabric_loader_min_version
+        fabric_loader_min_version: fabric_loader_min_version,
+        ponder_version: ponder_version
     ]
     inputs.properties properties
     filesMatching('fabric.mod.json') { expand properties }
@@ -72,7 +106,7 @@ tasks.withType(JavaCompile).configureEach {
     options.release = java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData' }
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
 jar { from('LICENSE') }
 
 tasks.register('buildAll') {
@@ -88,7 +122,9 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def smokeEvidence = layout.buildDirectory.dir('smoke/evidence')
+def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def smokeEvidence = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-evidence' : 'smoke/evidence')
+def smokeRun = layout.buildDirectory.dir(ponderSmoke ? 'smoke/ponder-run' : 'smoke/run')
 loom {
     mods {
         mchjong { sourceSet sourceSets.main }
@@ -98,11 +134,12 @@ loom {
         smokeClient {
             client()
             source sourceSets.smoke
-            runDir 'build/smoke/run'
+            runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.ponder', ponderSmoke.toString()
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
-            property 'java.io.tmpdir', layout.buildDirectory.dir('smoke/run').get().asFile.absolutePath
+            property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }
     }
 }
@@ -112,7 +149,7 @@ tasks.named('runSmokeClient') {
     doLast {
         def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {
-            throw new GradleException('Client smoke failed; see build/smoke/evidence and build/smoke/run/logs/latest.log')
+            throw new GradleException("Client smoke failed; see ${evidence} and ${smokeRun.get().asFile}/logs/latest.log")
         }
     }
 }
