@@ -230,6 +230,37 @@ class PhysicalSuppliesTest {
         assertFalse(saved.contains("game"));
     }
 
+    @Test void equipmentSnapshotsOwnTheirPointStickArrays(MinecraftServer server) {
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        var source = new ItemStack(MahjongContent.POINT_STICK);
+        source.set(MahjongComponents.POINTS, 1000);
+        var saved = new net.minecraft.nbt.CompoundTag();
+        equipment.writeAppearance(saved);
+        equipment.save(saved, server.registryAccess());
+        var snapshot = saved.copy();
+        assertTrue(equipment.placeStick(0, source));
+        assertEquals(snapshot, saved, "Later equipment changes must not mutate an earlier snapshot");
+
+        var restored = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        restored.load(saved, server.registryAccess());
+        assertTrue(restored.placeStick(0, source));
+        assertEquals(snapshot, saved, "Restored equipment must not mutate its source NBT");
+        restored.load(saved, server.registryAccess());
+        assertEquals(0, restored.stickCount(0));
+        assertEquals(0, restored.stickValue(0));
+        assertTrue(restored.removeSticks(0).isEmpty());
+
+        var appearance = new net.minecraft.nbt.CompoundTag();
+        equipment.writeAppearance(appearance);
+        restored.load(appearance, server.registryAccess());
+        appearance.getIntArray("stick_counts")[0] = 63;
+        appearance.getIntArray("stick_values")[0] = 5000;
+        assertEquals(1, restored.stickCount(0), "Inbound appearance NBT must not alias live state");
+        assertEquals(1000, restored.stickValue(0));
+        assertEquals(1, equipment.stickCount(0), "Outbound appearance NBT must not alias live state");
+        assertEquals(1000, equipment.stickValue(0));
+    }
+
     @Test void furnitureExposesOnlyAppearanceComponentsForLoot(MinecraftServer server) {
         for (var block : List.of(MahjongContent.TABLE, MahjongContent.AUTO_TABLE)) {
             var table = new top.skyeyefast.mchjong.world.MahjongTableBlockEntity(net.minecraft.core.BlockPos.ZERO, block.defaultBlockState());

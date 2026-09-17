@@ -129,15 +129,17 @@ public final class TableEquipment {
         if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
-        if (tag.getIntArray("stick_values").length == 4) stickValues = tag.getIntArray("stick_values");
-        if (tag.getIntArray("stick_counts").length == 4) stickCounts = tag.getIntArray("stick_counts");
+        int[] loadedStickValues = tag.getIntArray("stick_values");
+        int[] loadedStickCounts = tag.getIntArray("stick_counts");
+        if (loadedStickValues.length == 4) stickValues = loadedStickValues.clone();
+        if (loadedStickCounts.length == 4) stickCounts = loadedStickCounts.clone();
     }
 
     public void writeAppearance(CompoundTag tag) {
         tag.putInt("cloth_color", clothColor);
         tag.putString("tile_material", material.getSerializedName());
         tag.putInt("tile_back", back.getId());
-        tag.putIntArray("stick_values", stickValues);
-        tag.putIntArray("stick_counts", stickCounts);
+        tag.putIntArray("stick_values", stickValues.clone());
+        tag.putIntArray("stick_counts", stickCounts.clone());
     }
 }
