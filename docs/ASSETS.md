@@ -62,8 +62,10 @@ The body uses original neutral relief textures under `textures/tile_material/`:
 without borrowing game textures; the material component supplies their tint.
 The body and the beveled white and colored shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
-First-person transforms are smaller, raised and turned toward the player;
-Minecraft mirrors the same transform for the left hand.
+First-person tiles are raised, turned to expose their thickness, and lean inward
+from the hand toward the screen center. Point sticks extend inward with their
+marked top facing the player. Both meshes leave clearance above the hotbar and
+inside a 4:3 viewport. Minecraft mirrors these transforms for the left hand.
 
 To supply a design, create a normal resource pack for your target Minecraft
 version containing that same texture

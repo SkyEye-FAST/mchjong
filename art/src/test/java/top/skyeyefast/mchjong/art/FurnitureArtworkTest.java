@@ -75,8 +75,24 @@ class FurnitureArtworkTest {
         var right = model.getAsJsonObject("firstperson_righthand");
         assertEquals(right, model.getAsJsonObject("firstperson_lefthand"), "Vanilla mirrors the left-hand transform");
         assertTrue(right.getAsJsonArray("rotation").get(1).getAsFloat() < 0);
+        assertTrue(right.getAsJsonArray("rotation").get(2).getAsFloat() > 0, "Tile top leans left in the right hand");
+        assertTrue(right.getAsJsonArray("translation").get(0).getAsFloat() < 0);
         assertTrue(right.getAsJsonArray("translation").get(1).getAsFloat() > 0);
         assertTrue(right.getAsJsonArray("scale").get(0).getAsFloat() <= .45);
+    }
+
+    @Test void heldSticksExposeTheirMarkedTopAndExtendUpwardIntoTheViewport() throws Exception {
+        var item = com.google.gson.JsonParser.parseString(Files.readString(textures.getParent().getParent()
+            .resolve("models/item/point_stick.json"))).getAsJsonObject();
+        assertEquals("minecraft:builtin/entity", item.get("parent").getAsString(), "Keep the physical cuboid renderer");
+        var display = item.getAsJsonObject("display");
+        var right = display.getAsJsonObject("firstperson_righthand");
+        assertEquals(right, display.getAsJsonObject("firstperson_lefthand"));
+        assertTrue(right.getAsJsonArray("rotation").get(0).getAsFloat() > 45, "Expose printed top");
+        assertTrue(right.getAsJsonArray("rotation").get(2).getAsFloat() < 0, "Free end rises toward the left");
+        assertTrue(right.getAsJsonArray("translation").get(0).getAsFloat() < 0);
+        assertTrue(right.getAsJsonArray("translation").get(1).getAsFloat() >= 5, "Raise above the hotbar");
+        assertTrue(right.getAsJsonArray("translation").get(2).getAsFloat() < 0, "Allow narrow-window clearance");
     }
 
     @Test void fabricIsNeutralSoEveryDyeKeepsItsHue() throws Exception {

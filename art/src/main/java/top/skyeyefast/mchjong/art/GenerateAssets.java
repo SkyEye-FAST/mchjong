@@ -16,12 +16,12 @@ public final class GenerateAssets {
     private GenerateAssets(Path root) { this.root = root; }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 2) throw new IllegalArgumentException("Expected resource directory and source artwork archive");
-        new GenerateAssets(Path.of(args[0])).generate(Path.of(args[1]));
+        if (args.length != 3) throw new IllegalArgumentException("Expected resource directory, riichi archive and flower archive");
+        new GenerateAssets(Path.of(args[0])).generate(Path.of(args[1]), Path.of(args[2]));
     }
 
-    private void generate(Path artwork) throws IOException {
-        tiles(artwork);
+    private void generate(Path artwork, Path flowers) throws IOException {
+        tiles(artwork, flowers);
         for (var texture : FurnitureArtwork.textures().entrySet()) {
             png("furniture/" + texture.getKey(), texture.getValue());
             text("assets/mchjong/textures/furniture/" + texture.getKey() + ".png.mcmeta",
@@ -32,12 +32,12 @@ public final class GenerateAssets {
         models();
     }
 
-    private void tiles(Path archive) throws IOException {
+    private void tiles(Path archive, Path flowerArchive) throws IOException {
         BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = atlas.createGraphics();
         Graphics2D glyphGraphics = glyphs.createGraphics();
-        try (TileArtwork artwork = new TileArtwork(archive)) {
+        try (TileArtwork artwork = new TileArtwork(archive, flowerArchive)) {
             for (int face = 0; face < TileArtwork.FACE_COUNT; face++) {
                 BufferedImage image = artwork.face(face);
                 g.drawImage(image, face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
@@ -49,6 +49,8 @@ public final class GenerateAssets {
             glyphGraphics.setColor(Color.WHITE);
             glyphGraphics.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
             text("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt", artwork.license());
+            text("META-INF/licenses/I.Mahjong-LICENSE.txt", artwork.flowerLicense());
+            text("META-INF/licenses/I.Mahjong-NOTICE.txt", FlowerTileArtwork.notice());
         } finally {
             g.dispose();
             glyphGraphics.dispose();
@@ -76,9 +78,13 @@ public final class GenerateAssets {
             String rotation = name.equals("mahjong_tile") ? "[0,0,0]"
                 : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
-            String held = name.equals("mahjong_tile")
-                ? "{\"rotation\":[-12,-30,0],\"translation\":[-2,6,0],\"scale\":[0.36,0.36,0.36]}"
-                : "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
+            // Vanilla supplies the hand's 45-degree yaw and mirrors X translation/YZ rotation.
+            // Tilt the tile's top and the stick's free end inward; expose both the print and thickness.
+            String held = switch (name) {
+                case "mahjong_tile" -> "{\"rotation\":[-12,-65,25],\"translation\":[-3,6,-2],\"scale\":[0.4,0.4,0.4]}";
+                case "point_stick" -> "{\"rotation\":[65,-35,-25],\"translation\":[-4,6,-2],\"scale\":[0.7,0.7,0.7]}";
+                default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
+            };
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","
                 + "\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"" + lighting + "\",\"display\":{"
                 + "\"gui\":{\"rotation\":" + rotation + "},"
