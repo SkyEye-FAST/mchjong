@@ -33,8 +33,9 @@ final class TileArtwork implements AutoCloseable {
     private final Path archive;
     private final ZipFile source;
     private final SVGLoader loader = new SVGLoader();
+    private final FlowerTileArtwork flowers;
 
-    TileArtwork(Path archive) throws IOException {
+    TileArtwork(Path archive, Path flowerArchive) throws IOException {
         try {
             String actual = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(archive)));
             if (!SHA256.equals(actual)) throw new IOException("Tile artwork SHA-256 mismatch: " + actual);
@@ -42,6 +43,7 @@ final class TileArtwork implements AutoCloseable {
             throw new IllegalStateException("Java must provide SHA-256", impossible);
         }
         this.archive = archive.toAbsolutePath();
+        flowers = new FlowerTileArtwork(flowerArchive);
         source = new ZipFile(archive.toFile());
     }
 
@@ -74,7 +76,7 @@ final class TileArtwork implements AutoCloseable {
                 g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
             }
             // White dragons remain genuinely blank; no imported tile frame or lettering.
-            if (face >= 37) FlowerArtwork.draw(g, face - 37, WIDTH, HEIGHT);
+            if (face >= 37) flowers.draw(g, face - 37, WIDTH, HEIGHT);
             else if (face != 31) {
                 String entry = SOURCE_ROOT + "Regular/" + name + ".svg";
                 if (source.getEntry(entry) == null) throw new IOException("Missing artwork: " + entry);
@@ -106,6 +108,8 @@ final class TileArtwork implements AutoCloseable {
             return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
         }
     }
+
+    String flowerLicense() { return flowers.license(); }
 
     @Override public void close() throws IOException { source.close(); }
 }

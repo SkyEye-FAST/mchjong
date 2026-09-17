@@ -22,6 +22,7 @@ class AssetContractTest {
     private final Path data = Path.of(System.getProperty("mchjong.data"));
     private final Path languages = Path.of(System.getProperty("mchjong.languages"));
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
+    private final Path flowers = Path.of(System.getProperty("mchjong.flowerArtwork"));
 
     @Test void audioEventsHaveTranslatedSubtitlesAndSeparateCustomVoices() throws Exception {
         JsonObject sounds = JsonParser.parseString(Files.readString(languages.getParent().resolve("sounds.json"))).getAsJsonObject();
@@ -75,7 +76,7 @@ class AssetContractTest {
         BufferedImage atlas = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile());
         assertEquals(2048, atlas.getWidth()); assertEquals(4096, atlas.getHeight());
         Set<String> hashes = new HashSet<>();
-        try (var reference = new TileArtwork(artwork)) {
+        try (var reference = new TileArtwork(artwork, flowers)) {
             for (int i = 0; i < 45; i++) {
                 assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/" + i + ".png")), "Unused individual face shipped");
                 BufferedImage tile = reference.face(i);
@@ -133,7 +134,8 @@ class AssetContractTest {
     @Test void changedSourceArtworkIsRejected(@TempDir Path directory) throws Exception {
         Path corrupt = directory.resolve("corrupt.zip");
         Files.writeString(corrupt, "Not the pinned artwork");
-        assertTrue(assertThrows(java.io.IOException.class, () -> new TileArtwork(corrupt)).getMessage().contains("SHA-256 mismatch"));
+        assertTrue(assertThrows(java.io.IOException.class, () -> new TileArtwork(corrupt, flowers)).getMessage().contains("SHA-256 mismatch"));
+        assertTrue(assertThrows(java.io.IOException.class, () -> new TileArtwork(artwork, corrupt)).getMessage().contains("SHA-256 mismatch"));
     }
 
     @Test void modelsUseFewCuboidsAndOnlyAvailableTextures() throws Exception {
@@ -154,7 +156,7 @@ class AssetContractTest {
     }
 
     @Test void generationIsByteForByteReproducible(@TempDir Path second) throws Exception {
-        GenerateAssets.main(new String[]{second.toString(), artwork.toString()});
+        GenerateAssets.main(new String[]{second.toString(), artwork.toString(), flowers.toString()});
         assertFalse(Files.exists(second.resolve("data")), "Artwork must not generate server data");
         GenerateData.main(new String[]{second.resolve("server").toString()});
         try (var files = Files.walk(data)) {

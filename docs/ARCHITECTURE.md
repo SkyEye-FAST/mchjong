@@ -13,8 +13,9 @@ allows it.
   Both loaders for that profile compile these sources.
 * root `src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
-* `art`: deterministic CC0 vector-face rasterization and client model descriptors,
-  plus a separate server-data generator. Its SVG renderer runs at build time.
+* `art`: deterministic rasterization of pinned riichi vectors and flower engravings,
+  client model descriptors, plus a separate server-data generator. SVG rendering
+  and source-font outline extraction run at build time.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case

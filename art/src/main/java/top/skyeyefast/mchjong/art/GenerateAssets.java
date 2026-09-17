@@ -78,7 +78,7 @@ public final class GenerateAssets {
             String rotation = name.equals("mahjong_tile") ? "[0,0,0]"
                 : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
-            // Vanilla supplies the hand's 45-degree yaw and mirrors X translation/YZ rotation.
+            // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Tilt the tile's top and the stick's free end inward; expose both the print and thickness.
             String held = switch (name) {
                 case "mahjong_tile" -> "{\"rotation\":[-12,-65,25],\"translation\":[-3,6,-2],\"scale\":[0.4,0.4,0.4]}";

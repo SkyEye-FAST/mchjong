@@ -3,6 +3,7 @@ plugins { id 'java' }
 // Source artwork is a pinned, checksummed build dependency, not a game dependency.
 configurations {
     tileArtwork { canBeConsumed = false; transitive = false }
+    flowerArtwork { canBeConsumed = false; transitive = false }
 }
 repositories {
     exclusiveContent {
@@ -16,9 +17,21 @@ repositories {
         }
         filter { includeModule 'artwork', 'riichi-mahjong-tiles' }
     }
+    exclusiveContent {
+        forRepository {
+            ivy {
+                name = 'HongKongFlowerArtwork'
+                url = 'https://codeload.github.com/SyaoranHinata/I.Mahjong'
+                patternLayout { artifact 'zip/[revision]' }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeModule 'artwork', 'I.Mahjong' }
+    }
 }
 dependencies {
     tileArtwork 'artwork:riichi-mahjong-tiles:26e127ba2117f45cdce5ea0225748cc0cfad3169@zip'
+    flowerArtwork 'artwork:I.Mahjong:73c507836e6ab30579305257ae3e2a7e1142d066@zip'
     implementation "com.github.weisj:jsvg:${jsvg_version}"
     implementation "com.google.code.gson:gson:${gson_version}"
     testImplementation platform("org.junit:junit-bom:${junit_version}")
@@ -29,21 +42,26 @@ dependencies {
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
 
 def renderedAssets = layout.buildDirectory.dir('renderedAssets')
+def renderTemp = layout.buildDirectory.dir('tmp/renderAssets')
 def testTemp = layout.buildDirectory.dir('tmp/test')
 tasks.register('renderAssets', JavaExec) {
     dependsOn classes
     classpath = sourceSets.main.runtimeClasspath
     mainClass = 'top.skyeyefast.mchjong.art.GenerateAssets'
     doFirst {
+        renderTemp.get().asFile.mkdirs()
         def outputDir = renderedAssets.get().asFile
         if (outputDir.exists() && !outputDir.deleteDir()) {
             throw new GradleException("Could not clean ${outputDir}")
         }
-        args renderedAssets.get().asFile.absolutePath, configurations.tileArtwork.singleFile.absolutePath
+        args renderedAssets.get().asFile.absolutePath, configurations.tileArtwork.singleFile.absolutePath,
+            configurations.flowerArtwork.singleFile.absolutePath
     }
     outputs.dir renderedAssets
     inputs.files sourceSets.main.allSource
     inputs.files configurations.tileArtwork
+    inputs.files configurations.flowerArtwork
+    systemProperty 'java.io.tmpdir', renderTemp.get().asFile.absolutePath
     systemProperty 'java.awt.headless', 'true'
 }
 
@@ -90,6 +108,10 @@ test {
     inputs.dir rootProject.layout.buildDirectory.dir('generated/assets')
     inputs.dir rootProject.layout.buildDirectory.dir('generated/data')
     inputs.files configurations.tileArtwork
-    doFirst { systemProperty 'mchjong.artwork', configurations.tileArtwork.singleFile.absolutePath }
+    inputs.files configurations.flowerArtwork
+    doFirst {
+        systemProperty 'mchjong.artwork', configurations.tileArtwork.singleFile.absolutePath
+        systemProperty 'mchjong.flowerArtwork', configurations.flowerArtwork.singleFile.absolutePath
+    }
     systemProperty 'java.awt.headless', 'true'
 }

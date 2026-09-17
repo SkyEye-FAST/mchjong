@@ -18,6 +18,7 @@ final class ItemPresentationSmoke {
     private final List<UUID> dropped = new ArrayList<>();
     private CompletableFuture<Boolean> cleanup;
     private net.minecraft.world.entity.HumanoidArm originalArm;
+    private int windowWidth, windowHeight, guiScale;
 
     boolean tick(Minecraft client, Path output) {
         if (sample == NAMES.length) {
@@ -44,7 +45,12 @@ final class ItemPresentationSmoke {
             return true;
         }
         if (ticks == 0) {
-            if (originalArm == null) originalArm = client.options.mainHand().get();
+            if (originalArm == null) {
+                originalArm = client.options.mainHand().get();
+                windowWidth = client.getWindow().getScreenWidth();
+                windowHeight = client.getWindow().getScreenHeight();
+                guiScale = client.options.guiScale().get();
+            }
             client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
             client.player.getInventory().selected = sample + 1;
             var stack = client.player.getMainHandItem();
@@ -55,20 +61,34 @@ final class ItemPresentationSmoke {
         ticks++;
         if (ticks == 20) {
             check(ItemStack.isSameItemSameComponents(expected, client.player.getMainHandItem()), "Held item components changed");
+            HeldItemProjectionSmoke.verify(client, expected, false);
             Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + ".png", client.getMainRenderTarget(), ignored -> {});
             client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.LEFT);
         } else if (ticks == 30) {
+            HeldItemProjectionSmoke.verify(client, expected, true);
             Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-left.png", client.getMainRenderTarget(), ignored -> {});
             client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
-        } else if (ticks == 40) {
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+        } else if (ticks == 45) {
+            Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+            client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.LEFT);
+        } else if (ticks == 55) {
+            Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-left-small.png", client.getMainRenderTarget(), ignored -> {});
+            client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
+            client.getWindow().setWindowed(windowWidth, windowHeight);
+            client.options.guiScale().set(guiScale);
+            client.resizeDisplay();
+        } else if (ticks == 70) {
             // This is the real client's Q-key path, not a display-only spawned item.
             check(client.player.drop(false), "Native drop action did not remove the held item");
-        } else if (ticks >= 55) {
+        } else if (ticks >= 85) {
             var drops = client.level.getEntitiesOfClass(ItemEntity.class, client.player.getBoundingBox().inflate(6));
             int matching = drops.stream().map(ItemEntity::getItem)
                 .filter(stack -> ItemStack.isSameItemSameComponents(expected, stack)).mapToInt(ItemStack::getCount).sum();
             if (matching != 1) {
-                check(ticks < 75, "Dropped item or its appearance components did not reach the client: " + NAMES[sample]);
+                check(ticks < 105, "Dropped item or its appearance components did not reach the client: " + NAMES[sample]);
                 return false;
             }
             check(client.player.getInventory().getItem(sample + 1).getCount() == count - 1,

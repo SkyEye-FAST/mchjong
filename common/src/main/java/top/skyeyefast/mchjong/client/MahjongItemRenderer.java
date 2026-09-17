@@ -42,7 +42,6 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             FurnitureMesh.foldedCloth(pose, buffers, light, MahjongSupplies.color(stack));
         } else if (stack.is(MahjongContent.POINT_STICK)) {
             pose.translate(0, .3, 0);
-            pose.scale(1, 2, 2);
             FurnitureMesh.stick(pose, buffers, light, stack.getOrDefault(MahjongComponents.POINTS, 0));
         } else if (stack.is(MahjongContent.TILE_ITEM)) {
             var data = MahjongSupplies.tile(stack);

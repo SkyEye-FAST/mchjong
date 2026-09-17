@@ -228,9 +228,11 @@ See [docs/ASSETS.md](docs/ASSETS.md) for customization and asset details.
 
 ## Credits
 
-Tile faces are generated from [FluffyStuff's riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles),
-released under CC0. See [docs/ASSETS.md](docs/ASSETS.md) for source provenance,
-the bundled upstream license, and the asset generation contract.
+Riichi tile faces are generated from [FluffyStuff's riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles)
+under CC0. The eight flowers and seasons use colorized Hong Kong engravings from
+[I.Mahjong](https://github.com/SyaoranHinata/I.Mahjong) under the M+ FONT LICENSE.
+See [docs/ASSETS.md](docs/ASSETS.md) for source provenance, bundled upstream
+licenses, adaptation details, and the asset generation contract.
 
 ## License
 
