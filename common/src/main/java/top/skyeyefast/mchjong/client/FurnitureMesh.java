@@ -109,23 +109,14 @@ public final class FurnitureMesh {
 
     public static void stool(PoseStack pose, MultiBufferSource buffers, int light, FurnitureWood wood, DyeColor color) {
         var wooden = buffers.getBuffer(texture("wood_" + wood.getSerializedName()));
-        FurnitureShape.bevel(pose, wooden, -.390625f, .40625f, -.390625f, .390625f, .515625f, .390625f, .0234375f, WHITE, light);
-        for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
-            FurnitureShape.tapered(pose, wooden, x * .265625f - .078125f, 0, z * .265625f - .078125f,
-                x * .265625f + .078125f, .4375f, z * .265625f + .078125f, .0234375f, WHITE, light);
-        for (int side = 0; side < 4; side++) {
-            pose.pushPose();
-            pose.mulPose(Axis.YP.rotationDegrees(side * 90));
-            FurnitureShape.box(pose, wooden, -.265625f, .14f, .24f, .265625f, .1875f, .29f, SHADE, light);
-            FurnitureShape.box(pose, wooden, -.28f, .34375f, .265625f, .28f, .421875f, .328125f, SHADE, light);
-            pose.popPose();
-        }
+        FurnitureShape.bevel(pose, wooden, -.375f, 0, -.375f, .375f, .0625f, .375f, .015625f, WHITE, light);
         var felt = buffers.getBuffer(texture("felt"));
-        FurnitureShape.bevel(pose, felt, -.375f, .5f, -.375f, .375f, .54375f, .375f, .0125f, tint(color, .68f), light);
-        FurnitureShape.bevel(pose, felt, -.359375f, .52f, -.359375f, .359375f, .625f, .359375f, .04f, tint(color, 1), light);
+        float top = (float) TableGeometry.STOOL_HEIGHT;
+        FurnitureShape.bevel(pose, felt, -.375f, .0625f, -.375f, .375f, .109375f, .375f, .0125f, tint(color, .68f), light);
+        FurnitureShape.bevel(pose, felt, -.359375f, .09375f, -.359375f, .359375f, top - .001f, .359375f, .04f, tint(color, 1), light);
         for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1})
-            FurnitureShape.box(pose, felt, x * .15625f - .03125f, .624f, z * .15625f - .03125f,
-                x * .15625f + .03125f, .626f, z * .15625f + .03125f, tint(color, .8f), light);
+            FurnitureShape.box(pose, felt, x * .15625f - .03125f, top - .002f, z * .15625f - .03125f,
+                x * .15625f + .03125f, top, z * .15625f + .03125f, tint(color, .8f), light);
     }
 
     public static void box(PoseStack pose, MultiBufferSource buffers, int light) {

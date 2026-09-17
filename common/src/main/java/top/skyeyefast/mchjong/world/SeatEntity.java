@@ -31,7 +31,7 @@ public final class SeatEntity extends Entity {
         entityData.set(SEAT, seat);
         rider = player;
         BlockPos stool = TableGeometry.stool(table, seat);
-        setPos(stool.getX() + 0.5, stool.getY() + 0.625, stool.getZ() + 0.5);
+        setPos(stool.getX() + 0.5, stool.getY() + TableGeometry.STOOL_HEIGHT, stool.getZ() + 0.5);
         setYRot(TableGeometry.yaw(seat));
     }
 

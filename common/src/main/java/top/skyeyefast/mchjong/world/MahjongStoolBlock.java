@@ -21,7 +21,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class MahjongStoolBlock extends BaseEntityBlock {
     private static final MapCodec<MahjongStoolBlock> CODEC = simpleCodec(MahjongStoolBlock::new);
-    private static final VoxelShape SHAPE = box(2, 0, 2, 14, 10, 14);
+    private static final VoxelShape SHAPE = box(2, 0, 2, 14, TableGeometry.STOOL_HEIGHT * 16, 14);
     public MahjongStoolBlock(Properties properties) { super(properties); }
     @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new FurnitureBlockEntity(pos, state); }

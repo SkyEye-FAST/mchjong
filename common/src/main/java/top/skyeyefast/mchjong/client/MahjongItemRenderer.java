@@ -34,6 +34,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.scale(scale, scale, scale);
             FurnitureMesh.table(pose, buffers, light, wood, null, stack.is(MahjongContent.AUTO_TABLE_ITEM));
         } else if (stack.is(MahjongContent.STOOL_ITEM)) {
+            pose.translate(0, .35 - top.skyeyefast.mchjong.world.TableGeometry.STOOL_HEIGHT / 2, 0);
             FurnitureMesh.stool(pose, buffers, light, wood, MahjongSupplies.color(stack));
         } else if (stack.is(MahjongContent.BOX_ITEM)) {
             pose.translate(0, .15, 0);

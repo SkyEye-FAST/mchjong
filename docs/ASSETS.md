@@ -138,7 +138,9 @@ remain readable at the seated camera distance. `FurnitureMesh` shares
 the resulting geometry between blocks and items. Ordinary tables have framed
 playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
-have joined frames and padded, piped cushions. The dark wooden case has a fitted
+are quarter-block-high floor cushions with a thin wooden base, piped fabric and
+four tufts. Their mesh, collision and seat anchor share `TableGeometry.STOOL_HEIGHT`.
+The dark wooden case has a fitted
 lid, corner hardware, paired clasps, hinges, a handle and a small tile inlay.
 Folded cloth uses the same woven material as the table. None of this adds block
 IDs. `TableGeometry` defines the 2.875-block frame and 2.625-block playing surface;
