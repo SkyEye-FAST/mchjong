@@ -1,5 +1,6 @@
 plugins {
     id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'com.diffplug.spotless' version "${spotless_version}"
 }
 
 version = mod_version
@@ -109,10 +110,36 @@ tasks.withType(JavaCompile).configureEach {
 tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
 jar { from('LICENSE') }
 
+spotless {
+    java {
+        target 'common/src/**/*.java', 'src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingTabsToSpaces(4)
+    }
+    kotlin {
+        target 'engine/src/**/*.kt'
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingTabsToSpaces(4)
+    }
+    format 'json', {
+        target 'common/src/main/resources/**/*.json'
+        trimTrailingWhitespace()
+        endWithNewline()
+        leadingTabsToSpaces(2)
+    }
+    format 'misc', {
+        target '*.gradle', '*.md', '.gitignore'
+        trimTrailingWhitespace()
+        endWithNewline()
+    }
+}
+
 tasks.register('buildAll') {
     group = 'build'
     description = 'Test the shared engine and build both loader artifacts for the selected Minecraft profile.'
-    dependsOn 'build', ':engine:check', ':neoforge:build', ':art:check'
+    dependsOn 'build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
 }
 
 // This mod is loaded only by the visual smoke run, never packaged for players.
