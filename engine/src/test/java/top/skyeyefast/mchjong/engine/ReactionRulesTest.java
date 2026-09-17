@@ -92,6 +92,60 @@ class ReactionRulesTest {
         }
     }
 
+    @Test void automaticWinClaimsConcealedKanRobberyWithoutTakingAReplacementTile() {
+        Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        f.hand(1, "11m19p19s1234567z");
+        f.hand(0, "9999m");
+        int fourth = f.game.players[0].hand.getLast();
+        f.start(0, fourth);
+        for (int seat = 1; seat < 4; seat++) {
+            assertTrue(f.game.configureAutoPlay(f.game.players[seat].id, f.game.decision, AutoPlay.Option.WIN, true));
+            assertTrue(f.game.configureAutoPlay(f.game.players[seat].id, f.game.decision, AutoPlay.Option.NO_CALLS, true));
+        }
+        f.act(0, Action.Type.CLOSED_KAN, fourth);
+        for (int tick = 0; tick < Game.AUTO_ACTION_TICKS + 3; tick++) f.game.tick();
+        f.game.validate();
+        assertEquals(List.of(1), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertTrue(f.game.players[0].melds.isEmpty());
+        assertEquals(0, f.game.wall.replacementIndex);
+    }
+
+    @Test void automaticWinsUseLegalScoringAndPreserveSimultaneousRonPriority() {
+        Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        f.hand(1, "123456789m111p5z");
+        f.hand(2, "123456789p111s5z");
+        f.hand(3, "123456789s111m5z");
+        int discarded = f.take("5z").getFirst();
+        f.game.players[0].hand.add(discarded);
+        for (int seat = 1; seat <= 3; seat++) f.riichi(seat);
+        f.start(0, discarded);
+        for (int seat = 1; seat <= 3; seat++) {
+            UUID player = f.game.players[seat].id;
+            assertTrue(f.game.configureAutoPlay(player, f.game.decision, AutoPlay.Option.WIN, true));
+            assertTrue(f.game.configureAutoPlay(player, f.game.decision, AutoPlay.Option.NO_CALLS, true));
+        }
+        f.act(0, Action.Type.DISCARD, discarded);
+        for (int i = 0; i < Game.AUTO_ACTION_TICKS + 3; i++) { f.game.tick(); f.game.validate(); }
+        assertEquals(List.of(1, 2, 3), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertTrue(f.game.view(null).wins().stream().allMatch(win -> win.score().ron() > 0));
+    }
+
+    @Test void automaticTsumoSettlesInsteadOfDiscardingTheWinningTile() {
+        Fixture f = new Fixture(RuleSet.TENHOU_4);
+        f.hand(0, "123456789m111p55z");
+        f.riichi(0);
+        int drawn = f.game.players[0].hand.getLast();
+        f.start(0, drawn);
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].id, f.game.decision, AutoPlay.Option.WIN, true));
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].id, f.game.decision, AutoPlay.Option.DISCARD, true));
+        for (int i = 0; i < Game.AUTO_ACTION_TICKS; i++) f.game.tick();
+        f.game.validate();
+        assertEquals(1, f.game.view(null).wins().size());
+        assertEquals(0, f.game.view(null).wins().getFirst().seat());
+        assertTrue(f.game.players[0].river.isEmpty());
+        assertTrue(f.game.players[0].hand.contains(drawn));
+    }
+
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_4", "TENHOU_4", "M_LEAGUE"})
     void simultaneousRonUsesRulesetPriorityRatherThanPacketArrival(RuleSet rules) {
         Fixture f = new Fixture(rules);

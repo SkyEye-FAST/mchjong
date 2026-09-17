@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTableBlockEntity> {
-    private enum Layer { BACK, BODY, FACE }
+    private enum Layer { BACK, BODY, FACE, OUTLINE }
     public MahjongTableRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override public void render(MahjongTableBlockEntity table, float partialTick, PoseStack pose,
@@ -38,20 +38,9 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         tiles(table, frames, pose, buffers, light, Layer.FACE);
         if (table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE))
             TableIndicator.render(view, pose, buffers, light);
-        for (int seat = 0; seat < view.seats().size(); seat++) {
-            if (table.automatic() && view.seats().get(seat).riichi()) {
-                var vertices = buffers.getBuffer(TileRenderTypes.FACES);
-                double progress = animated ? animation.riichiProgress(seat, now) : 1;
-                pose.pushPose();
-                pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-                pose.translate(0.65 * progress, TableGeometry.FELT_Y + 0.013 + Math.sin(progress * Math.PI) * 0.07,
-                    TableScene.HAND_Z + (0.68 - TableScene.HAND_Z) * progress);
-                TileMesh.box(pose, vertices, -0.12f, 0, -0.014f, 0.12f, 0.014f, 0.014f, 0xfff1ead9, light);
-                TileMesh.box(pose, vertices, -0.01f, 0.014f, -0.01f, 0.01f, 0.016f, 0.01f, 0xffbb3737, light);
-                pose.popPose();
-            }
-        }
+        TableDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
         if (glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
+        tiles(table, frames, pose, buffers, light, Layer.OUTLINE);
         pose.popPose();
     }
 
@@ -63,11 +52,14 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             case BACK -> TileRenderTypes.BACKS;
             case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.FACES;
+            case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
         for (TableAnimation.Frame frame : frames) {
             TableScene.Piece piece = frame.piece();
             if (piece.area() == TableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
+            int highlight = layer == Layer.OUTLINE && screen != null ? screen.highlight(table.getBlockPos(), piece) : 0;
+            if (layer == Layer.OUTLINE && highlight == 0) continue;
             pose.pushPose();
             boolean selected = screen != null && screen.selected(table.getBlockPos(), piece);
             var position = piece.position().add(screen == null ? net.minecraft.world.phys.Vec3.ZERO : screen.handlingOffset(table.getBlockPos(), piece));
@@ -79,6 +71,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 case BODY -> TileMesh.drawBody(pose, vertices, light, material);
                 case BACK -> TileMesh.drawBack(pose, vertices, !glass && (piece.back() || piece.tile() < 0), light, table.equipment().back());
+                case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();
         }

@@ -1,4 +1,9 @@
 {
+  "settings.mchjong.tab.4": "Automatic",
+  "settings.mchjong.auto_sort": "Sort hand automatically",
+  "settings.mchjong.auto_win": "Claim wins automatically",
+  "settings.mchjong.no_calls": "Skip chi, pon and kan calls",
+  "settings.mchjong.auto_discard": "Discard drawn tiles automatically",
   "block.mchjong.table_space": "Mahjong Tabletop",
   "item.mchjong.point_stick_value": "%s-Point Stick",
   "sticks.mchjong.access": "E: point drawers",

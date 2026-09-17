@@ -206,7 +206,7 @@ class PhysicalHandlingTest {
         return new TableView(base.tableId(), revision, revision, base.handNumber(), base.rules(), phase, base.viewerSeat(),
             base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(), base.remaining(), base.wallBreak(), wall,
             base.focus(), seats, actions, base.wins(), base.result(), base.deltas(), base.finalScores(), base.timeControl(),
-            base.clocks(), base.finalRanks(), base.openHands(), base.exitVote(), handling);
+            base.clocks(), base.finalRanks(), base.openHands(), base.exitVote(), handling, null);
     }
 
     private static void assertPickable(TableView view) {

@@ -77,18 +77,27 @@ final class ItemPresentationSmoke {
         } else if (ticks == 55) {
             Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-left-small.png", client.getMainRenderTarget(), ignored -> {});
             client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
+            client.getWindow().setWindowed(1280, 720);
+            client.options.guiScale().set(2);
+            client.resizeDisplay();
+        } else if (ticks == 70) {
+            Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-wide.png", client.getMainRenderTarget(), ignored -> {});
+            client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.LEFT);
+        } else if (ticks == 80) {
+            Screenshot.grab(output.toFile(), "07-held-" + NAMES[sample] + "-left-wide.png", client.getMainRenderTarget(), ignored -> {});
+            client.options.mainHand().set(net.minecraft.world.entity.HumanoidArm.RIGHT);
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
-        } else if (ticks == 70) {
+        } else if (ticks == 95) {
             // This is the real client's Q-key path, not a display-only spawned item.
             check(client.player.drop(false), "Native drop action did not remove the held item");
-        } else if (ticks >= 85) {
+        } else if (ticks >= 110) {
             var drops = client.level.getEntitiesOfClass(ItemEntity.class, client.player.getBoundingBox().inflate(6));
             int matching = drops.stream().map(ItemEntity::getItem)
                 .filter(stack -> ItemStack.isSameItemSameComponents(expected, stack)).mapToInt(ItemStack::getCount).sum();
             if (matching != 1) {
-                check(ticks < 105, "Dropped item or its appearance components did not reach the client: " + NAMES[sample]);
+                check(ticks < 130, "Dropped item or its appearance components did not reach the client: " + NAMES[sample]);
                 return false;
             }
             check(client.player.getInventory().getItem(sample + 1).getCount() == count - 1,

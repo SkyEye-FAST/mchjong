@@ -41,8 +41,14 @@ public final class TableSettings {
     public static final double MAX_CAMERA_DISTANCE = 2.8;
     public static final double MIN_CAMERA_HEIGHT = 1.35;
     public static final double MAX_CAMERA_HEIGHT = 2.5;
-    public double cameraDistance = 2.45;
-    public double cameraHeight = 2.1;
+    public static final double CAMERA_TARGET_Z = .45;
+    public double cameraDistance = 2.15;
+    public double cameraHeight = 2.4;
+
+    public float cameraPitch() {
+        return (float) Math.toDegrees(Math.atan2(cameraHeight - top.skyeyefast.mchjong.world.TableGeometry.FELT_Y,
+            cameraDistance - CAMERA_TARGET_Z));
+    }
 
     public static TableSettings get() {
         if (current == null) {

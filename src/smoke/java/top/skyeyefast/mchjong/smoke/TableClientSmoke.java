@@ -56,7 +56,7 @@ public final class TableClientSmoke {
         try {
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
-            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 6000 : 4000))
+            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8000 : 6000))
                 throw new IllegalStateException("Smoke timed out at step " + step + ", screen=" + client.screen);
             if (step == 0 && client.screen instanceof net.minecraft.client.gui.screens.AccessibilityOnboardingScreen onboarding) {
                 onboarding.onClose();

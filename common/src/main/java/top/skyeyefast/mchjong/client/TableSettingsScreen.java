@@ -7,6 +7,8 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
+import top.skyeyefast.mchjong.engine.AutoPlay;
+import top.skyeyefast.mchjong.network.TableControlPayload;
 
 public final class TableSettingsScreen extends Screen {
     private final TableScreen parent;
@@ -14,6 +16,10 @@ public final class TableSettingsScreen extends Screen {
     private int tab;
     private int page;
     private boolean saveFailed;
+    private AutoPlay displayedAutoPlay;
+    private boolean automationPending;
+    private boolean automationAvailable;
+    private long pendingDecision;
 
     public TableSettingsScreen(TableScreen parent) {
         super(Component.translatable("settings.mchjong.title"));
@@ -23,15 +29,38 @@ public final class TableSettingsScreen extends Screen {
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
+    /** A rejected or redundant request can return an unchanged snapshot. */
+    public void receivedControlReply() {
+        if (!automationPending) return;
+        automationPending = false;
+        init();
+    }
+
+    @Override public void tick() {
+        var view = parent.view();
+        var preferences = view == null ? null : view.autoPlay();
+        boolean available = view != null && preferences != null && view.exitVote() == null;
+        if (!java.util.Objects.equals(displayedAutoPlay, preferences) || automationAvailable != available) {
+            // Another seat's reaction or a periodic snapshot is not a control acknowledgement.
+            if (!available) automationPending = false;
+            init();
+        }
+    }
+
     @Override protected void init() {
         clearWidgets();
         int span = Math.min(560, width - 24);
         int left = (width - span) / 2;
-        for (int i = 0; i < 4; i++) {
+        var view = parent.view();
+        displayedAutoPlay = view == null ? null : view.autoPlay();
+        automationAvailable = displayedAutoPlay != null && view.exitVote() == null;
+        int tabs = displayedAutoPlay == null ? 4 : 5;
+        tab = Math.min(tab, tabs - 1);
+        for (int i = 0; i < tabs; i++) {
             final int index = i;
             var button = MahjongButton.create(Component.translatable("settings.mchjong.tab." + i), ignored -> {
                 tab = index; page = 0; init();
-            }).bounds(left + i * (span / 4), 33, span / 4 - 4, 20).build();
+            }).bounds(left + i * (span / tabs), 33, span / tabs - 4, 20).build();
             button.selected(tab == i);
             addRenderableWidget(button);
         }
@@ -77,6 +106,24 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
                 .bounds(left, 117, span, 20).build());
             addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver);
+        } else if (tab == 4) {
+            var options = AutoPlay.Option.values();
+            var operations = new TableControlPayload.Operation[]{TableControlPayload.Operation.AUTO_SORT,
+                TableControlPayload.Operation.AUTO_WIN, TableControlPayload.Operation.NO_CALLS, TableControlPayload.Operation.AUTO_DISCARD};
+            String[] keys = {"settings.mchjong.auto_sort", "settings.mchjong.auto_win", "settings.mchjong.no_calls", "settings.mchjong.auto_discard"};
+            for (int i = 0; i < options.length; i++) {
+                boolean enabled = displayedAutoPlay.enabled(options[i]);
+                var operation = operations[i];
+                var button = addToggle(left, 65 + i * 26, span, keys[i], enabled, () -> {
+                    var current = parent.view();
+                    if (current != null && current.autoPlay() != null && current.exitVote() == null) {
+                        automationPending = true;
+                        pendingDecision = current.decision();
+                        parent.control(current, operation, pendingDecision, !enabled);
+                    }
+                });
+                button.active = automationAvailable && !automationPending;
+            }
         } else {
             addRenderableWidget(new VolumeSlider(left, 65, column, false));
             var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
@@ -91,11 +138,11 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.audio_preview"), ignored -> TableAudio.preview())
                 .bounds(left + column + 6, 117, column, 20).build());
         }
-        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
+        if (tab != 4) addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
             settings.reset(); TableAudio.settingsChanged(); parent.resetView(); init();
         }).bounds(left, height - 30, column, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left + column + 6, height - 30, column, 20).build().primary());
+            .bounds(tab == 4 ? left : left + column + 6, height - 30, tab == 4 ? span : column, 20).build().primary());
     }
 
     private Button addToggle(int x, int y, int w, String key, boolean enabled, Runnable toggle) {

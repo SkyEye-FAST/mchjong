@@ -52,10 +52,14 @@ final class HeldItemProjectionSmoke {
             var side = vertices.stream().filter(vertex -> vertex.sourceNormal.x * hand > .999f)
                 .findFirst().orElseThrow().normal;
             check(side.dot(eye) > .2f, "Tile thickness disappears behind the face: " + context);
+            var top = vertices.stream().filter(vertex -> vertex.sourceNormal.y > .999f)
+                .findFirst().orElseThrow().normal;
+            check(top.x * hand > .1f && top.y > .6f, "Tile top must lean outward like a sword: " + context);
         } else {
             var tip = new Vector3f(vertices.stream().filter(vertex -> vertex.sourceNormal.x * hand > .999f)
-                .findFirst().orElseThrow().normal).negate();
-            check(tip.x * hand < -.2f && tip.y > .2f, "Point stick's free end must rise inward: " + context);
+                .findFirst().orElseThrow().normal);
+            check(tip.x * hand > .2f && tip.y > .2f, "Point stick's free end must rise outward: " + context);
+            check(facing.x * hand < -.2f, "Point stick markings must face inward: " + context);
         }
         check(center.x * hand < .45f, "Held object should extend inward from the grip: " + context);
         for (float aspect : new float[]{4f / 3, 16f / 10, 16f / 9}) {

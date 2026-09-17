@@ -83,6 +83,33 @@ public final class TileMesh {
         return new float[]{-w+r,-h, w-r,-h, w,-h+r, w,h-r, w-r,h, -w+r,h, -w,h-r, -w,-h+r};
     }
 
+    /** Front/back bevel rims and the eight side edges; depth testing hides occluded edges. */
+    public static void drawOutline(PoseStack pose, VertexConsumer vertices, int color) {
+        pose.pushPose();
+        // Lift the lines just clear of the shell without changing picking or tile contact.
+        pose.scale(1.012f, 1.008f, 1.02f);
+        for (int i = 0; i < 8; i++) {
+            int j = (i + 1) % 8;
+            for (float z : new float[]{-.0343f, .0343f})
+                edge(pose, vertices, OUTLINE[2*i], OUTLINE[2*i+1], z,
+                    OUTLINE[2*j], OUTLINE[2*j+1], z, color);
+            edge(pose, vertices, OUTLINE[2*i], OUTLINE[2*i+1], -.0343f,
+                OUTLINE[2*i], OUTLINE[2*i+1], .0343f, color);
+            for (float z : new float[]{-DEPTH / 2, .0359f})
+                edge(pose, vertices, CAP_OUTLINE[2*i], CAP_OUTLINE[2*i+1], z,
+                    CAP_OUTLINE[2*j], CAP_OUTLINE[2*j+1], z, color);
+        }
+        pose.popPose();
+    }
+
+    private static void edge(PoseStack pose, VertexConsumer out, float x0, float y0, float z0,
+                             float x1, float y1, float z1, int color) {
+        float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
+        float length = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
+        out.addVertex(pose.last(), x0, y0, z0).setColor(color).setNormal(pose.last(), dx / length, dy / length, dz / length);
+        out.addVertex(pose.last(), x1, y1, z1).setColor(color).setNormal(pose.last(), dx / length, dy / length, dz / length);
+    }
+
     private static void band(PoseStack pose, VertexConsumer out, float[] a, float z0, float[] b, float z1,
                              int color, int light, boolean texture, float sampleU, float sampleV) {
         float perimeter = 0;

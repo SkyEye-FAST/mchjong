@@ -3,6 +3,7 @@ package top.skyeyefast.mchjong.engine;
 /** A fresh move allowance followed by a shared reserve, replenished at each hand. */
 public record TimeControl(int reserveSeconds, int moveSeconds) {
     public static final TimeControl DEFAULT = new TimeControl(20, 5);
+    public static final TimeControl MANUAL = new TimeControl(120, 30);
 
     public TimeControl {
         if (reserveSeconds < 0 || reserveSeconds > 600 || moveSeconds < 1 || moveSeconds > 120)

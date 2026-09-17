@@ -121,8 +121,22 @@ Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
 defaults must keep the compact table and its right corner usable from the seated view.
 
-The default seated camera is 2.45 blocks from the center and 2.1 blocks above the
-table's base, aiming at the felt. Camera sliders immediately re-aim at the table.
+The default seated camera is 2.15 blocks from the center and 2.4 blocks above the
+table's base, aiming at the felt 0.45 blocks toward the viewer. This framing raises
+the far hand in the viewport while keeping the near corners visible at 4:3.
+Camera sliders immediately re-aim at the table. Tile highlights follow the beveled
+front and back rims and the side edges in the animated world pose, with depth testing.
+Riichi deposits occupy four lanes in the central area, above the automatic display
+or on the ordinary table's felt; carried deposits remain visible between hands.
+The automatic table's settings include a per-seat Automatic page: sort hand,
+claim wins, skip calls, and discard drawn tiles. These preferences belong to the
+server's seated player and are acknowledged before another toggle is enabled.
+Sorting starts enabled; the other options start disabled. A legal win takes
+priority over automatic discards and skipped calls. Without automatic wins, the
+win decision remains explicit. Riichi draws and ordinary discards advance after
+12 server ticks on both tables, retaining legal concealed-kan and north-extraction
+choices. Ordinary tables start with a 30-second move allowance and 120-second
+hand reserve; lobby hosts can edit both values.
 Ordinary tables have no central machine indicator. Automatic tables use a compact
 seven-segment display, wind-tile pictograms, round pips and seat lamps. Each score
 display faces its owner, with glyph tops pointing toward the table center; do not

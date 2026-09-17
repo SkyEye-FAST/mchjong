@@ -79,10 +79,10 @@ public final class GenerateAssets {
                 : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
-            // Tilt the tile's top and the stick's free end inward; expose both the print and thickness.
+            // Like a held sword, the free end rises outward while the printed surface faces inward.
             String held = switch (name) {
-                case "mahjong_tile" -> "{\"rotation\":[-12,-65,25],\"translation\":[-3,6,-2],\"scale\":[0.4,0.4,0.4]}";
-                case "point_stick" -> "{\"rotation\":[65,-35,-25],\"translation\":[-4,6,-2],\"scale\":[0.7,0.7,0.7]}";
+                case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[-3,6,-2],\"scale\":[0.4,0.4,0.4]}";
+                case "point_stick" -> "{\"rotation\":[65,35,25],\"translation\":[-4,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
             };
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","

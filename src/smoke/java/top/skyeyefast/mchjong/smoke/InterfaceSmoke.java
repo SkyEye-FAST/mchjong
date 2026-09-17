@@ -24,6 +24,8 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Real client menu packets and rendered controls; no screen-only inventory mutations. */
 final class InterfaceSmoke {
+    private final AutomationControlsSmoke automation = new AutomationControlsSmoke();
+    private TableScreen settingsParent;
     private int boxStage, boxTicks, settingsStage, settingsTicks, storageStage, storageTicks;
     private int windowWidth, windowHeight, guiScale, originalTiles;
     private ItemStack moved = ItemStack.EMPTY;
@@ -117,12 +119,15 @@ final class InterfaceSmoke {
     }
 
     boolean settings(Minecraft client, MahjongTableBlockEntity table, Path output) {
+        if (settingsStage == 10) return true;
         settingsTicks++;
         if (settingsStage == 0) {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            client.setScreen(new TableSettingsScreen(new TableScreen(table.getBlockPos())));
+            settingsParent = new TableScreen(table.getBlockPos());
+            client.setScreen(settingsParent);
+            client.setScreen(new TableSettingsScreen(settingsParent));
             settingsStage = 1; settingsTicks = 0;
         } else if (settingsStage >= 1 && settingsStage <= 4 && settingsTicks > 12) {
             checkBounds(client);
@@ -131,7 +136,7 @@ final class InterfaceSmoke {
             require(client.screen.getFocused() != null, "Tab cannot focus a custom control");
             capture(client, output, "33-settings-tab-" + (settingsStage - 1) + ".png");
             if (settingsStage < 4) click(client, "settings.mchjong.tab." + settingsStage);
-            else client.setScreen(new TableClockScreen(new TableScreen(table.getBlockPos()), table.clientView().timeControl()));
+            else client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
             settingsStage++; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);
@@ -153,7 +158,7 @@ final class InterfaceSmoke {
             require(button(client, "gui.done").active, "Valid numeric input cannot be applied");
             capture(client, output, "34-clock-keyboard.png");
             client.screen.onClose(); // Do not send edited clock values into a running table.
-            client.setScreen(new TableInviteScreen(new TableScreen(table.getBlockPos())));
+            client.setScreen(new TableInviteScreen(settingsParent));
             settingsStage = 8; settingsTicks = 0;
         } else if (settingsStage == 8 && settingsTicks > 10) {
             checkBounds(client);
@@ -161,7 +166,11 @@ final class InterfaceSmoke {
             client.screen.onClose();
             restoreWindow(client);
             settingsStage = 9; settingsTicks = 0;
-        } else if (settingsStage == 9 && settingsTicks > 10) return true;
+        } else if (settingsStage == 9 && settingsTicks > 10 && automation.tick(client, table, output)) {
+            restoreWindow(client);
+            settingsStage = 10;
+            return true;
+        }
         return false;
     }
 

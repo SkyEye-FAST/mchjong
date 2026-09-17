@@ -122,7 +122,8 @@ be taken. The recipe also independently rejects nonblank inputs on assembly.
 The eight flowers are physical tiles in all six materials and sixteen back colors.
 They can be carried, stored in a box, dyed and dropped like the other tiles. Cut
 eight extra blanks to complete a 144-tile case, or carve the eight spares left by
-bulk-engraving 144 blanks. Creative inventory also exposes the eight designs.
+bulk-engraving 144 blanks. Their faces use the same tile component and engraving
+recipes as the other individual tiles.
 Riichi uses the validated 136-tile set (108 in sanma), while flowers remain
 stored safely inside the case during those games.
 
@@ -191,11 +192,20 @@ The gesture completes when released over its destination. Escape cancels a
 held gesture; Tab focuses the physical source and Enter or Space activates it.
 The server validates the current action and decision token. Human handling
 waits for player input; training bots perform their own steps. Normal decision
-clocks govern discards and claim responses. State and unfinished handling steps
+clocks govern discards and claim responses, starting with 30 seconds per decision
+and a 120-second reserve per hand. The lobby host can edit both allowances.
+After riichi, normal draws and drawn-tile discards advance after a short server-paced
+pause. Legal wins, concealed kans and north extractions retain explicit choices.
+State and unfinished handling steps
 survive saves. The referee checks rules, furiten, calls, yaku, han/fu and settlement.
 
 The automatic table uses the same installed physical set and referee but
 performs shuffle, wall construction, packet dealing and draws automatically.
+Its Automatic settings page stores each player's sorting, win, call and drawn-tile
+discard preferences with their seat. Sorting starts enabled. Automatic wins use
+the referee's legal tsumo and ron actions, including declaration-robbery responses.
+Wins take priority over skipped calls or automatic discards. Preferences remain
+with the player across hands and saves and reset when their seat is released.
 For three-player rules, the engine uses the appropriate 108 tiles; the unused
 28 remain part of the installed, recoverable 136-tile set. Tiles are not
 consumed by playing. Completed hands use the existing replay archive.

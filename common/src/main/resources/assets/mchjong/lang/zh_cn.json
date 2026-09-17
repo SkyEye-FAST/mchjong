@@ -1,4 +1,9 @@
 {
+  "settings.mchjong.tab.4": "自动操作",
+  "settings.mchjong.auto_sort": "自动理牌",
+  "settings.mchjong.auto_win": "自动和了",
+  "settings.mchjong.no_calls": "不吃碰杠",
+  "settings.mchjong.auto_discard": "自动摸切",
   "block.mchjong.table_space": "麻将桌桌面",
   "item.mchjong.point_stick_value": "%s点点棒",
   "sticks.mchjong.access": "E：点棒盒",

@@ -76,12 +76,12 @@ public final class TableScreen extends Screen {
         if (minecraft == null || minecraft.player == null || view == null || view.viewerSeat() < 0) return;
         minecraft.player.setYRot(TableGeometry.yaw(view.viewerSeat()));
         TableSettings settings = TableSettings.get();
-        minecraft.player.setXRot((float) Math.toDegrees(Math.atan2(settings.cameraHeight - TableGeometry.FELT_Y, settings.cameraDistance)));
+        minecraft.player.setXRot(settings.cameraPitch());
         minecraft.player.yRotO = minecraft.player.getYRot();
         minecraft.player.xRotO = minecraft.player.getXRot();
     }
 
-    private TableView view() {
+    TableView view() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientView() : null;
     }
@@ -132,6 +132,26 @@ public final class TableScreen extends Screen {
         TableView view = view();
         return pos.equals(table) && view != null && piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat()
             && piece.tile() >= 0 && (piece.tile() == selectedTile || piece.tile() == hoveredTile);
+    }
+
+    /** The world renderer applies this color to the same animated mesh used for picking. */
+    public int highlight(BlockPos table, TableScene.Piece piece) {
+        TableView view = view();
+        if (!pos.equals(table) || view == null || view.exitVote() != null || results != null) return 0;
+        boolean highlights = TableSettings.get().highlightTiles;
+        if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat()) {
+            if (piece.tile() >= 0 && (piece.tile() == selectedTile || highlights && piece.tile() == hoveredTile))
+                return MahjongUi.ACCENT;
+            if (highlights && choosingRiichi && tileAction(view, piece.tile(), Action.Type.RIICHI) >= 0) return MahjongUi.POSITIVE;
+            for (var button : callouts) if ((button.isFocused() || highlights && button.isHovered()) && showsConsumed(button.action)
+                && button.action.tiles().contains(piece.tile())) return MahjongUi.POSITIVE;
+        }
+        if ((highlights || getFocused() instanceof PhysicalHandle) && TableHandling.action(view) >= 0
+            && !handlingMoving() && TableHandling.source(view, piece)) {
+            if (view.phase() != Game.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene)))
+                return handlingDrag == null ? MahjongUi.ACCENT : MahjongUi.POSITIVE;
+        }
+        return 0;
     }
 
     @Override protected void init() { lastRevision = -1; rebuild(); }
@@ -255,7 +275,7 @@ public final class TableScreen extends Screen {
             .bounds(right - 52, 8, 52, 20).build());
     }
 
-    private void control(TableView view, TableControlPayload.Operation operation, long token, boolean enabled) {
+    void control(TableView view, TableControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
         minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableControlPayload(pos, view.tableId(), operation, token, enabled)));
     }
@@ -549,23 +569,6 @@ public final class TableScreen extends Screen {
                 }
             }
         }
-        if (selectedTile >= 0) for (TableScene.Piece piece : scene) if (piece.area() == TableScene.Area.HAND
-            && piece.seat() == view.viewerSeat() && piece.tile() == selectedTile) {
-            Projected point = project(piece.position());
-            if (point != null) {
-                int radius = Math.max(5, (int)(point.scale * 0.055));
-                graphics.renderOutline((int)point.x-radius, (int)point.y-radius, radius*2, radius*2, 0xfff6d483);
-            }
-        }
-        if (choosingRiichi) for (TableScene.Piece piece : scene) {
-            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()
-                || tileAction(view, piece.tile(), Action.Type.RIICHI) < 0) continue;
-            Projected point = project(piece.position());
-            if (point != null) {
-                int radius = Math.max(3, (int) (point.scale * 0.045));
-                graphics.hLine((int) point.x - radius, (int) point.x + radius, (int) (point.y + point.scale * 0.08), 0xffffd487);
-            }
-        }
         if (choosingRiichi) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.choose_riichi"), width / 2, actionTop - 14, 0xffffd487);
         super.render(graphics, mouseX, mouseY, partialTick);
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
@@ -607,14 +610,6 @@ public final class TableScreen extends Screen {
         int index = TableHandling.action(view);
         if (index < 0 || results != null) return;
         TableScene.Piece source = TableHandling.source(view, scene);
-        for (TableScene.Piece piece : scene) if (TableHandling.source(view, piece)
-            && (view.phase() != Game.Phase.SHUFFLE || piece == source)) {
-            Projected point = project(grip(piece).add(handlingOffset(pos, piece)));
-            if (point != null) {
-                int radius = Math.max(3, (int) (point.scale * .035));
-                graphics.renderOutline((int) point.x - radius, (int) point.y - radius, radius * 2, radius * 2, MahjongUi.ACCENT);
-            }
-        }
         if (source != null) {
             Projected target = project(TableHandling.destination(view));
             if (target != null && handlingDrag != null) {
@@ -824,7 +819,6 @@ public final class TableScreen extends Screen {
             if (point == null) return;
             setX((int) point.x - 10); setY((int) point.y - 10);
             if (active && isFocused()) {
-                graphics.renderOutline(getX(), getY(), 20, 20, MahjongUi.POSITIVE);
                 graphics.drawCenteredString(font, getMessage(), (int) point.x, (int) point.y - 22, MahjongUi.TEXT);
             }
         }

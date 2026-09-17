@@ -78,12 +78,13 @@ The body uses original neutral relief textures under `textures/tile_material/`:
 without borrowing game textures; the material component supplies their tint.
 The body and the beveled white and colored shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
-First-person tiles are raised, turned to expose their thickness, and lean inward
-from the hand toward the screen center. Point sticks retain their slender
-length, width and thickness, extending inward with their marked top facing the
-player. Both meshes leave clearance above the hotbar and
+First-person tiles are raised and turned to expose their thickness. Their tops
+lean outward like a held sword while the printed faces turn inward toward the
+player. Point sticks follow the same free-end and printed-surface relationship,
+retaining their slender length, width and thickness. Both meshes leave clearance above the hotbar and
 inside a 4:3 viewport. Minecraft mirrors these transforms for the left hand.
-The client smoke captures both hands in normal and 320 by 240 logical viewports.
+The client smoke captures both hands in normal and 320 by 240 logical viewports,
+and in a 16:9 window.
 It also projects the actual loader-rendered meshes at 4:3, 16:10 and 16:9, checking
 all vertices against viewport and hotbar clearances, the printed face direction
 and the visible tile side or raised point-stick tip.

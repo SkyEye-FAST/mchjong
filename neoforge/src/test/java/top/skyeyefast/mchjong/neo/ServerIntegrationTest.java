@@ -106,7 +106,7 @@ class ServerIntegrationTest {
                 assertEquals(control, TableControlPayload.CODEC.decode(buffer));
             }
             Game game = startedGame();
-            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false);
+            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true);
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
             TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);

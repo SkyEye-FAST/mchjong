@@ -32,21 +32,21 @@ class TableAnimationTest {
         return new TableView(TABLE, 2, 2, 1, rules, Game.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null, null);
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null, null, null);
     }
 
     private static TableView lobby(RuleSet rules) {
         return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null, null);
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null, null, null);
     }
 
     private static TableView update(TableView old, List<TableView.Seat> seats, int viewer) {
         return new TableView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
             old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(),
-            old.timeControl(), old.clocks(), old.finalRanks(), old.openHands(), old.exitVote(), old.handling());
+            old.timeControl(), old.clocks(), old.finalRanks(), old.openHands(), old.exitVote(), old.handling(), old.autoPlay());
     }
 
     private static TableAnimation.Frame tile(List<TableAnimation.Frame> frames, int tile) {

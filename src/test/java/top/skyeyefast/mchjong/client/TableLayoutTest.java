@@ -25,7 +25,7 @@ class TableLayoutTest {
             melds, river, List.of(), false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay());
     }
 
     @Test void callingKeepsTheConcealedRunCenteredRatherThanPinningItsLeftEdge() {
@@ -56,7 +56,7 @@ class TableLayoutTest {
             var after = TableScene.build(new TableView(base.tableId(), base.revision(), base.decision(), base.handNumber(),
                 base.rules(), base.phase(), base.viewerSeat(), base.dealer(), base.round(), base.honba(), base.riichiSticks(),
                 base.turn(), base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
-                base.result(), base.deltas(), base.finalScores(), base.timeControl(), base.clocks(), base.finalRanks(), base.openHands(), base.exitVote(), base.handling()));
+                base.result(), base.deltas(), base.finalScores(), base.timeControl(), base.clocks(), base.finalRanks(), base.openHands(), base.exitVote(), base.handling(), base.autoPlay()));
             for (int i = 0; i < count; i++) assertEquals(before.get(i).position(), after.get(i).position());
             assertEquals(TableScene.HAND_STEP + TableScene.DRAW_GAP,
                 after.get(count).position().x - after.get(count - 1).position().x, 1e-7);
@@ -131,7 +131,7 @@ class TableLayoutTest {
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling());
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
             for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {

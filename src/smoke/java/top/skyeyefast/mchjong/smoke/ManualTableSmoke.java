@@ -43,6 +43,7 @@ final class ManualTableSmoke {
     private CompletableFuture<Void> serverWork;
     private ItemStack installedBox;
     private final PointStickInterfaceSmoke drawers = new PointStickInterfaceSmoke();
+    private final DepositVisualSmoke deposits = new DepositVisualSmoke();
 
     boolean tick(Minecraft client, Path output) {
         ticks++;
@@ -82,6 +83,13 @@ final class ManualTableSmoke {
             case 15 -> {
                 if (!(client.screen instanceof TableScreen) || view.viewerSeat() != 0 || ticks < 15) return false;
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
+                check(view.timeControl().equals(top.skyeyefast.mchjong.engine.TimeControl.MANUAL), "Ordinary lobby clock defaults differ from the server");
+                var parent = (TableScreen) client.screen;
+                client.setScreen(new top.skyeyefast.mchjong.client.TableSettingsScreen(parent));
+                check(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                    .noneMatch(widget -> widget.getMessage().getString().equals(Component.translatable("settings.mchjong.tab.4").getString())),
+                    "Ordinary table exposed the automatic-only settings page");
+                client.setScreen(parent);
                 check(table.equipment().clothColor() == DyeColor.RED && table.equipment().material() == TileMaterial.GLASS,
                     "Ordinary table lost equipment appearance");
                 check(table.equipment().drawer(0).isEmpty() && view.riichiSticks() == 0,
@@ -195,7 +203,15 @@ final class ManualTableSmoke {
                 });
                 next(14);
             }
-            case 14 -> { return true; }
+            case 14 -> {
+                serverWork = onServer(client, player ->
+                    ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)).sit(player, 0));
+                next(18);
+            }
+            case 18 -> {
+                if (!client.player.isPassenger() || view.viewerSeat() < 0 || ticks < 10) return false;
+                return deposits.tick(client, table, output);
+            }
             default -> throw new IllegalStateException("Unknown manual smoke stage");
         }
         return false;

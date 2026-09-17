@@ -17,6 +17,7 @@ import static top.skyeyefast.mchjong.engine.Action.Type.*;
 /** One server-owned table. All methods are called on the server thread. */
 public final class Game {
     public static final int DEAL_TICKS = 56;
+    public static final int AUTO_ACTION_TICKS = 12;
     public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
@@ -92,6 +93,10 @@ public final class Game {
         if (!tiles.isEmpty() && (tiles.size() != 136 || !new HashSet<>(tiles).equals(new HashSet<>(Tile.set(false)))))
             throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
         if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
+        if (this.manual != manual) {
+            timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
+            Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
+        }
         this.manual = manual;
         suppliedTiles = List.copyOf(tiles);
         handling = new ManualHandling();
@@ -186,6 +191,17 @@ public final class Game {
         Arrays.fill(reserveTicks, control.reserveSeconds() * 20);
         return true;
     }
+
+    public boolean configureAutoPlay(UUID actor, long expectedDecision, AutoPlay.Option option, boolean enabled) {
+        int seat = seatOf(actor);
+        if (manual || seat < 0 || players[seat].bot || exitVote != null || expectedDecision != decision
+            || players[seat].autoPlay.enabled(option) == enabled) return false;
+        players[seat].autoPlay = players[seat].autoPlay.with(option, enabled);
+        // Other responders retain their decision token and remaining time.
+        revision++;
+        return true;
+    }
+
     public int seatOf(UUID player) {
         if (player == null) return -1;
         for (int i = 0; i < rules.players(); i++) if (player.equals(players[i].id)) return i;
@@ -586,7 +602,7 @@ public final class Game {
         if (openKan && rules.suukantsuPao() && player.melds.stream().filter(Meld::kan).count() == 4) player.kanPao = from;
     }
 
-    /** A slow, visible training opponent. Timeouts for human seats never claim a win automatically. */
+    /** Server-owned automation and timeouts, paced independently from client animations. */
     public void tick() {
         if (exitCooldown > 0) exitCooldown--;
         if (exitVote != null) {
@@ -604,6 +620,20 @@ public final class Game {
         for (int seat = 0; seat < rules.players(); seat++) if (clockActive(seat)) {
             if (moveTicks[seat] > 0) moveTicks[seat]--;
             else if (reserveTicks[seat] > 0) reserveTicks[seat]--;
+        }
+        if (age >= AUTO_ACTION_TICKS) {
+            for (int seat = 0; seat < rules.players(); seat++) {
+                PlayerState player = players[seat];
+                if (player.id == null || player.bot) continue;
+                var legal = actions(seat);
+                AutoPlay preference = manual ? AutoPlay.DEFAULT : player.autoPlay;
+                int index = manual && phase == Phase.DRAW && player.riichi ? indexOf(legal, DRAW)
+                    : preference.action(phase, player.riichi, player.drawn, legal);
+                if (index >= 0) {
+                    act(player.id, token, index);
+                    return;
+                }
+            }
         }
         for (int seat = 0; seat < rules.players() && decision == token; seat++) {
             if (!clockActive(seat)) continue;
@@ -645,7 +675,7 @@ public final class Game {
             PlayerState player = players[seat];
             boolean visible = seat == viewer || exposed[seat] || openHands && viewer >= 0;
             List<Integer> hand = new ArrayList<>(player.hand);
-            hand.sort(Comparator.comparingInt(Tile::kind).thenComparingInt(Integer::intValue));
+            if (manual || player.autoPlay.sort()) hand.sort(Comparator.comparingInt(Tile::kind).thenComparingInt(Integer::intValue));
             if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
             if (phase == Phase.REACTION && seat == lastFrom)
                 focus = new TableView.Focus(seat, lastTile, pending != null,
@@ -662,7 +692,8 @@ public final class Game {
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
-            timeControl, clocks, finalRanks, openHands, exitVote, manual ? handling.view(this) : null);
+            timeControl, clocks, finalRanks, openHands, exitVote, manual ? handling.view(this) : null,
+            viewer < 0 || manual ? null : players[viewer].autoPlay);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
@@ -693,6 +724,7 @@ public final class Game {
             throw new IllegalStateException("Invalid saved table");
         }
         Set<UUID> ids = new HashSet<>();
+        for (PlayerState player : players) Objects.requireNonNull(player.autoPlay);
         for (PlayerState player : players) if (player.id != null && !ids.add(player.id)) throw new IllegalStateException("Duplicate occupant");
         if (wall == null) return;
         Set<Integer> seen = new HashSet<>();

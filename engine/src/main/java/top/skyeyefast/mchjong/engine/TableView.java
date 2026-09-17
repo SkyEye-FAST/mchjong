@@ -10,7 +10,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         List<Seat> seats, List<Action> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
-                        boolean openHands, ExitVote exitVote, Handling handling) {
+                        boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay) {
     /** Public physical positions only: slot indices never reveal a concealed tile identity. */
     public record Handling(int builtWalls, int sourceSlot, int packetSize) {}
     public record Seat(String name, boolean occupied, boolean bot, boolean ready, int points,

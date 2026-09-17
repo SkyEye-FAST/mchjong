@@ -52,6 +52,32 @@ class TileMeshTest {
         assertThrows(IllegalArgumentException.class, () -> TileMesh.drawArtwork(new PoseStack(), new Mesh(), 45, 0));
     }
 
+    @Test void highlightFollowsBeveledFrontBackAndSideEdgesUnderTheTilePose() {
+        var local = new Mesh();
+        TileMesh.drawOutline(new PoseStack(), local, MahjongUi.ACCENT);
+        assertEquals(80, local.vertices.size(), "Forty edges include both beveled rims and the thickness");
+        assertTrue(local.vertices.stream().allMatch(vertex -> vertex.color == MahjongUi.ACCENT));
+        for (int i = 0; i < local.vertices.size(); i += 2) {
+            var a = local.vertices.get(i);
+            var b = local.vertices.get(i + 1);
+            assertNotEquals(a.position, b.position);
+            assertEquals(1, a.normal.length(), 1e-6);
+            assertTrue(new Vector3f(b.position).sub(a.position).normalize().dot(a.normal) > .999);
+        }
+        for (int yaw : new int[]{0, 90, 180, 270}) for (int pitch : new int[]{0, -45, -90, 90}) {
+            var pose = new PoseStack();
+            pose.translate(.2, 1.1, -.4);
+            pose.mulPose(Axis.YP.rotationDegrees(yaw));
+            pose.mulPose(Axis.XP.rotationDegrees(pitch));
+            pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            var transformed = new Mesh();
+            TileMesh.drawOutline(pose, transformed, MahjongUi.ACCENT);
+            for (int i = 0; i < local.vertices.size(); i++)
+                assertTrue(pose.last().pose().transformPosition(new Vector3f(local.vertices.get(i).position))
+                    .distance(transformed.vertices.get(i).position) < 1e-6);
+        }
+    }
+
     @Test void everyQuadWindsOutwardIncludingTheBackAfterRotation() {
         for (int pitch : new int[]{0, -90, 90}) for (boolean hidden : new boolean[]{false, true}) {
             var pose = new PoseStack();

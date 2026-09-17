@@ -24,6 +24,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Real renderer, synthetic public snapshots: no fixture action is sent to the live server. */
 final class AnimationSmoke {
+    private final DepositVisualSmoke deposits = new DepositVisualSmoke();
     private TableView fixture;
     private int ticks;
     private int windowWidth, windowHeight, guiScale;
@@ -40,7 +41,7 @@ final class AnimationSmoke {
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
             fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1, base.handNumber() + 1,
                 base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
-                "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null, null);
+                "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null, null, base.autoPlay());
             table.acceptView(fixture);
             for (var information : TableSettings.Information.values())
                 if (information != TableSettings.Information.ROUND && information != TableSettings.Information.TURN
@@ -183,17 +184,14 @@ final class AnimationSmoke {
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
         }
-        if (ticks == 338) {
-            TableSettings.get().animations = true;
-            return true;
-        }
+        if (ticks >= 338) return deposits.tick(client, table, output);
         return false;
     }
 
     private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall) {
         fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
             Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, 0, 70, fixture.wallBreak(), wall, null,
-            seats, List.of(), List.of(), "playing", List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), false, null, null);
+            seats, List.of(), List.of(), "playing", List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), false, null, null, fixture.autoPlay());
         table.acceptView(fixture);
     }
 

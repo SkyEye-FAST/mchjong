@@ -1,4 +1,9 @@
 {
+  "settings.mchjong.tab.4": "自動操作",
+  "settings.mchjong.auto_sort": "自動理牌",
+  "settings.mchjong.auto_win": "自動和了",
+  "settings.mchjong.no_calls": "鳴きなし",
+  "settings.mchjong.auto_discard": "自動ツモ切り",
   "block.mchjong.table_space": "麻雀卓の天板",
   "item.mchjong.point_stick_value": "%s点棒",
   "sticks.mchjong.access": "E：点棒箱",

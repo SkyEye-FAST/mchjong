@@ -10,6 +10,7 @@ final class PlayerState {
     String name = "";
     boolean bot;
     boolean ready;
+    AutoPlay autoPlay = AutoPlay.DEFAULT;
     int points;
     List<Integer> hand = new ArrayList<>();
     List<Meld> melds = new ArrayList<>();

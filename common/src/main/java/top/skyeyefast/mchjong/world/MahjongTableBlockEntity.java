@@ -69,7 +69,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             table.setChanged();
             for (ServerPlayer player : ((ServerLevel) level).players()) {
                 if (player.distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5) <= 24 * 24)
-                    table.sendView(player, false);
+                    table.sendView(player, false, false);
             }
             table.sentRevision = game.revision();
         }
@@ -86,7 +86,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         return player.serverLevel() == level && authorizedViewer(player) != null ? serverGame() : null;
     }
 
-    private void sendView(ServerPlayer player, boolean open) {
+    private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
         Game game = serverGame();
         if (game == null) {
             if (open) player.displayClientMessage(Component.translatable("message.mchjong.corrupt"), false);
@@ -94,10 +94,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         TableView snapshot = game.view(authorizedViewer(player));
         player.connection.send(new ClientboundCustomPayloadPacket(
-            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open)));
+            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply)));
     }
 
-    public void open(ServerPlayer player) { sendView(player, true); }
+    public void open(ServerPlayer player) { sendView(player, true, false); }
 
     public boolean equipmentEditable() { return unreadableSave == null && (game == null || game.phase() == Game.Phase.LOBBY); }
 
@@ -245,7 +245,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         player.setYRot(TableGeometry.yaw(seat));
         player.setXRot(30);
         setChanged();
-        sendView(player, true);
+        sendView(player, true, false);
     }
 
     public void stoodUp(UUID player) {
@@ -260,16 +260,23 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             setChanged();
             flushReplays();
         }
-        sendView(player, false);
+        sendView(player, false, false);
     }
 
     public void control(ServerPlayer player, TableControlPayload payload) {
         Game game = participantGame(player);
-        if (game == null || !game.tableId().equals(payload.tableId())) return;
+        if (game == null || !game.tableId().equals(payload.tableId())) {
+            sendView(player, false, true);
+            return;
+        }
         boolean changed = switch (payload.operation()) {
             case REQUEST_EXIT -> payload.token() == game.view(player.getUUID()).decision() && game.requestExit(player.getUUID());
             case ANSWER_EXIT -> game.answerExit(player.getUUID(), payload.token(), payload.enabled());
             case OPEN_HANDS -> game.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
+            case AUTO_SORT -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.SORT, payload.enabled());
+            case AUTO_WIN -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.WIN, payload.enabled());
+            case NO_CALLS -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.NO_CALLS, payload.enabled());
+            case AUTO_DISCARD -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.DISCARD, payload.enabled());
         };
         if (changed) {
             refreshParticipants(payload.operation() == TableControlPayload.Operation.REQUEST_EXIT);
@@ -279,14 +286,14 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         } else if (payload.operation() == TableControlPayload.Operation.REQUEST_EXIT) {
             player.displayClientMessage(Component.translatable("message.mchjong.exit_unavailable"), false);
         }
-        sendView(player, false);
+        sendView(player, false, true);
     }
 
     private void refreshParticipants(boolean openVote) {
         for (ServerPlayer participant : ((ServerLevel) level).players()) {
             if (!(participant.getVehicle() instanceof SeatEntity seat) || !seat.tablePos().equals(worldPosition)) continue;
             if (game.seatOf(participant.getUUID()) < 0) participant.stopRiding();
-            sendView(participant, openVote && game.view(participant.getUUID()).exitVote() != null);
+            sendView(participant, openVote && game.view(participant.getUUID()).exitVote() != null, false);
         }
     }
 
