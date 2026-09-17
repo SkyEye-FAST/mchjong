@@ -26,6 +26,10 @@ bin/
 .DS_Store
 Thumbs.db
 
+# Blender
+*.blend1
+*.blend2
+
 # Minecraft Runtime & Logs
 logs/
 run/
