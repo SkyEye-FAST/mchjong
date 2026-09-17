@@ -58,6 +58,18 @@ public final class TableSettings {
             cameraDistance - CAMERA_TARGET_Z));
     }
 
+    /** Fit the near playing-surface corners at the reset angle, independently of free looking. */
+    public double cameraFov(double requested, double aspectRatio) {
+        double pitch = Math.toRadians(cameraPitch());
+        double tileTop = TableGeometry.FELT_Y + (0.081 + TileMesh.HEIGHT / 2.0) * TableScene.TILE_SCALE;
+        double nearestDepth = (cameraDistance - TableGeometry.FELT_HALF_WIDTH) * Math.cos(pitch)
+            + (cameraHeight - tileTop) * Math.sin(pitch);
+        // Leave 2.5% of the viewport on each side of the complete tile envelopes.
+        double required = Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH
+            / (nearestDepth * aspectRatio * .95)));
+        return Math.max(requested, required);
+    }
+
     public static TableSettings get() {
         if (current == null) {
             try { current = load(configPath()); }

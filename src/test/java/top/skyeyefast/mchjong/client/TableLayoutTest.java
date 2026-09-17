@@ -78,6 +78,7 @@ class TableLayoutTest {
                 int size = 14 - count * 3;
                 var hand = java.util.stream.IntStream.range(100, 100 + size).boxed().toList();
                 var pieces = TableScene.build(replace(view, hand, melds, List.of()));
+                assertSeatedFraming(pieces);
                 double meldLeft = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
                     .mapToDouble(p -> p.position().x - (p.yaw() == 90 ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE / 2)
                     .min().orElseThrow();
@@ -141,6 +142,34 @@ class TableLayoutTest {
                     && bounds.minZ >= -edge && bounds.maxZ <= edge, pieces.get(i).toString());
                 for (int j = i + 1; j < pieces.size(); j++) assertFalse(bounds.intersects(bounds(pieces.get(j))),
                     rules + " " + count + ": " + pieces.get(i) + " intersects " + pieces.get(j));
+            }
+        }
+    }
+
+    private static void assertSeatedFraming(List<TableScene.Piece> pieces) {
+        var settings = new TableSettings();
+        double pitch = Math.toRadians(settings.cameraPitch());
+        var forward = new net.minecraft.world.phys.Vec3(0, -Math.sin(pitch), -Math.cos(pitch));
+        var up = new net.minecraft.world.phys.Vec3(0, Math.cos(pitch), -Math.sin(pitch));
+        var camera = new net.minecraft.world.phys.Vec3(0, settings.cameraHeight, settings.cameraDistance);
+        for (int[] viewport : new int[][]{{640, 400}, {320, 240}}) {
+            int width = viewport[0], height = viewport[1];
+            double fov = settings.cameraFov(70, (double) width / height);
+            double focal = height / (2 * Math.tan(Math.toRadians(fov) / 2));
+            for (var piece : pieces) {
+                if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;
+                var box = bounds(piece).inflate(1e-6);
+                for (double x : new double[]{box.minX, box.maxX})
+                    for (double y : new double[]{box.minY, box.maxY})
+                        for (double z : new double[]{box.minZ, box.maxZ}) {
+                            var point = new net.minecraft.world.phys.Vec3(x, y, z).subtract(camera);
+                            double depth = point.dot(forward);
+                            double screenX = width / 2.0 + point.x * focal / depth;
+                            double screenY = height / 2.0 - point.dot(up) * focal / depth;
+                            assertTrue(depth > 0 && screenX >= 2 && screenX <= width - 2
+                                && screenY >= 64 && screenY <= height - 20,
+                                () -> piece + " clipped at " + screenX + "," + screenY + " in " + width + "x" + height);
+                        }
             }
         }
     }

@@ -126,6 +126,9 @@ The default first-person seated camera matches standing at the stool's block:
 the table's base, aiming at the felt 0.45 blocks toward the viewer. It retains
 the same position with the controls open or closed, and permits free looking.
 Native first-person picking uses that same eye position.
+The seated world FOV expands as needed for the near playing-surface corners and
+window aspect ratio, while preserving wider player FOV settings. It stays stable
+while freely looking around; table projection and picking use the rendered FOV.
 Minecraft controls third-person views. Camera sliders immediately re-aim at the
 table; saved personal adjustments remain adjustable, and Restore defaults applies
 the current standing-height framing. Tile highlights follow the beveled

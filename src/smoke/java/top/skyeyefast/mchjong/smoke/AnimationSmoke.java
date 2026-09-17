@@ -20,6 +20,7 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -217,7 +218,8 @@ final class AnimationSmoke {
         var forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         var right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
         var up = right.cross(forward);
-        double focal = client.screen.height / (2 * Math.tan(Math.toRadians(client.options.fov().get()) / 2));
+        double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
         for (var piece : TableScene.build(table.clientView())) {
             if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;
             double x = TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
@@ -232,7 +234,9 @@ final class AnimationSmoke {
                 double screenY = client.screen.height / 2.0 - point.dot(up) * focal / depth;
                 if (depth <= 0 || screenX < 2 || screenX > client.screen.width - 2
                         || screenY < 64 || screenY > client.screen.height - 20)
-                    throw new IllegalStateException("Hand or right-corner meld is clipped or covered by HUD: " + piece);
+                    throw new IllegalStateException("Hand or right-corner meld is clipped or covered by HUD: " + piece
+                        + " screen=" + screenX + "," + screenY + " depth=" + depth + " viewport="
+                        + client.screen.width + "x" + client.screen.height + " fov=" + fov);
             }
         }
     }

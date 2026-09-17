@@ -29,6 +29,12 @@ class TablePresentationTest {
         }
     }
 
+    @Test void seatedFovAdaptsToAspectRatioAndPreservesWiderPlayerSettings() {
+        var settings = new TableSettings();
+        assertTrue(settings.cameraFov(70, 4.0 / 3) > settings.cameraFov(70, 16.0 / 10));
+        assertEquals(110, settings.cameraFov(110, 4.0 / 3));
+    }
+
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
         assertEquals(List.of(TableSettings.VoiceSource.RESOURCE_PACK, TableSettings.VoiceSource.OFF),
             List.of(TableSettings.VoiceSource.values()));
