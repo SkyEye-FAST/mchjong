@@ -11,6 +11,8 @@ public class MahjongSupplyItem extends Item {
     public MahjongSupplyItem(Properties properties) { super(properties); }
 
     @Override public Component getName(ItemStack stack) {
+        Integer points = stack.get(MahjongComponents.POINTS);
+        if (points != null && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
         TileData tile = stack.get(MahjongComponents.TILE);
         return tile != null && tile.flower() ? Component.translatable(tile.flowerKey()) : super.getName(stack);
     }

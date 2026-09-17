@@ -1,4 +1,6 @@
 {
+  "block.mchjong.table_space": "麻雀卓の天板",
+  "item.mchjong.point_stick_value": "%s点棒",
   "sticks.mchjong.access": "E：点棒箱",
   "sticks.mchjong.seat": "点棒箱 %s",
   "sticks.mchjong.deliver": "自分の点棒を相手の行に移して渡します。Shiftクリックで選択中の行に収納します。",

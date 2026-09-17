@@ -1,4 +1,6 @@
 {
+  "block.mchjong.table_space": "Mahjong Tabletop",
+  "item.mchjong.point_stick_value": "%s-Point Stick",
   "sticks.mchjong.access": "E: point drawers",
   "sticks.mchjong.seat": "Drawer %s",
   "sticks.mchjong.deliver": "Move your sticks to the recipient's row. Shift-click stores in the highlighted row.",

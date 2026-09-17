@@ -1,4 +1,6 @@
 {
+  "block.mchjong.table_space": "麻將桌桌面",
+  "item.mchjong.point_stick_value": "%s點點棒",
   "sticks.mchjong.access": "E：點棒盒",
   "sticks.mchjong.seat": "點棒盒 %s",
   "sticks.mchjong.deliver": "將自己的點棒移至收款方所在列。Shift點擊可快速存入標示列。",

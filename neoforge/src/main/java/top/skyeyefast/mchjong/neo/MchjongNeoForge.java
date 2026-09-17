@@ -88,15 +88,7 @@ public final class MchjongNeoForge {
 
     private void creativeTab(BuildCreativeModeTabContentsEvent event) {
         if (event.getTabKey() == CreativeModeTabs.FUNCTIONAL_BLOCKS) {
-            event.accept(MahjongContent.TABLE_ITEM); event.accept(MahjongContent.STOOL_ITEM);
-            event.accept(MahjongContent.AUTO_TABLE_ITEM);
-            MahjongContent.SUPPLIES.values().forEach(event::accept);
-            event.accept(top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
-                top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
-            for (int flower = 0; flower < top.skyeyefast.mchjong.item.TileData.FLOWER_COUNT; flower++)
-                event.accept(top.skyeyefast.mchjong.item.MahjongSupplies.tile(new top.skyeyefast.mchjong.item.TileData(
-                    top.skyeyefast.mchjong.item.TileData.FIRST_FLOWER + flower, top.skyeyefast.mchjong.item.TileMaterial.BONE, false),
-                    net.minecraft.world.item.DyeColor.BLUE, 1));
+            top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(event::accept);
         }
     }
 }

@@ -54,15 +54,7 @@ public class Mchjong implements ModInitializer {
             EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
                 .clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
-            entries.accept(MahjongContent.TABLE_ITEM); entries.accept(MahjongContent.STOOL_ITEM);
-            entries.accept(MahjongContent.AUTO_TABLE_ITEM);
-            MahjongContent.SUPPLIES.values().forEach(entries::accept);
-            entries.accept(top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
-                top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
-            for (int flower = 0; flower < top.skyeyefast.mchjong.item.TileData.FLOWER_COUNT; flower++)
-                entries.accept(top.skyeyefast.mchjong.item.MahjongSupplies.tile(new top.skyeyefast.mchjong.item.TileData(
-                    top.skyeyefast.mchjong.item.TileData.FIRST_FLOWER + flower, top.skyeyefast.mchjong.item.TileMaterial.BONE, false),
-                    net.minecraft.world.item.DyeColor.BLUE, 1));
+            top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
         PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);

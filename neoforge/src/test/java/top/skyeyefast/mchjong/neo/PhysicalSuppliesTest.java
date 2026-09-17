@@ -32,6 +32,24 @@ import static org.junit.jupiter.api.Assertions.*;
 /** These tests decode the generated datapacks and exercise actual registered Minecraft recipes. */
 @ExtendWith(EphemeralTestServerProvider.class)
 class PhysicalSuppliesTest {
+    @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
+        var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
+        assertEquals(12, entries.size());
+        assertTrue(entries.get(4).is(MahjongContent.BOX_ITEM));
+        assertTrue(entries.get(5).is(MahjongContent.BOX_ITEM));
+        assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(4))));
+        assertEquals(136, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(5))));
+        assertNotNull(MahjongSupplies.deck(entries.get(5)));
+        assertEquals(List.of(0, 100, 1000, 5000, 10000), entries.stream()
+            .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
+        assertEquals(1, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
+        assertTrue(MahjongSupplies.tile(entries.get(6)).blank());
+        for (int i = 0; i < entries.size(); i++) for (int j = i + 1; j < entries.size(); j++)
+            assertFalse(ItemStack.isSameItemSameComponents(entries.get(i), entries.get(j)));
+        entries.getFirst().shrink(1);
+        assertEquals(1, top.skyeyefast.mchjong.item.MahjongCatalog.entries().getFirst().getCount());
+    }
+
     private static Item vanilla(String name) {
         return BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.withDefaultNamespace(name));
     }

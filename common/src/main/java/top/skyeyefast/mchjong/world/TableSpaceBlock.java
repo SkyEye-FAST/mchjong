@@ -40,6 +40,14 @@ public final class TableSpaceBlock extends Block {
     }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(X, Z); }
     public static BlockPos center(BlockPos pos, BlockState state) { return pos.offset(RADIUS - state.getValue(X), 0, RADIUS - state.getValue(Z)); }
+    // Vanilla/Fabric hook; NeoForge's player-aware hook delegates to this method.
+    @SuppressWarnings("deprecation")
+    @Override public net.minecraft.world.item.ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+        BlockPos center = center(pos, state);
+        BlockState table = level.getBlockState(center);
+        return table.getBlock() instanceof MahjongTableBlock
+            ? table.getBlock().getCloneItemStack(level, center, table) : net.minecraft.world.item.ItemStack.EMPTY;
+    }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = SHAPES[state.getValue(X)][state.getValue(Z)];

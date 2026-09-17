@@ -30,6 +30,12 @@ class TranslationReferenceTest {
             }
         }
         for (RuleSet rules : RuleSet.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
+        // Registry-derived names can appear in Jade even when no source uses a literal translation key.
+        for (String block : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"))
+            used.add("block.mchjong." + block);
+        for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth"))
+            used.add("item.mchjong." + item);
+        used.add("entity.mchjong.seat");
         for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
             JsonObject translated = JsonParser.parseString(Files.readString(languages.resolve(language + ".json"))).getAsJsonObject();
             var missing = new TreeSet<>(used);
