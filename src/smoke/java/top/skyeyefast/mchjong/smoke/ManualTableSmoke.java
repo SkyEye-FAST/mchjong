@@ -49,6 +49,7 @@ final class ManualTableSmoke {
     private boolean originalAnimations;
     private final PointStickInterfaceSmoke drawers = new PointStickInterfaceSmoke();
     private final DepositVisualSmoke deposits = new DepositVisualSmoke();
+    private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
 
     boolean tick(Minecraft client, Path output) {
         ticks++;
@@ -123,8 +124,11 @@ final class ManualTableSmoke {
             }
             case 17 -> {
                 if (!(client.screen instanceof TableScreen) || ticks < 10) return false;
-                click(client, "ui.mchjong.practice_short");
-                next(2);
+                click(client, "action.mchjong.fill_bots");
+                next(19);
+            }
+            case 19 -> {
+                if (preparation.tick(client, table, output, "30-room")) next(2);
             }
             case 2 -> {
                 if (view.phase() != Game.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;

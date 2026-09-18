@@ -51,8 +51,8 @@ class AutoPlayTest {
         game.configureEquipment(true, Tile.set(false));
         for (int seat = 0; seat < 4; seat++) {
             game.join(new UUID(812, seat), "Player " + seat, seat);
-            assertTrue(game.act(game.players[seat].id, game.decision, 0));
         }
+        GameLifecycleTest.startPositioned(game);
         while (game.phase != Game.Phase.DRAW) {
             boolean acted = false;
             for (int seat = 0; seat < 4; seat++) if (!game.actions(seat).isEmpty()) {
@@ -145,7 +145,7 @@ class AutoPlayTest {
         assertEquals(expected, game.view(actor).autoPlay());
         game.wall = null;
         game.newDecision(Game.Phase.LOBBY);
-        game.leave(actor);
+        assertTrue(game.act(actor, game.decision, Game.indexOf(game.actions(game.seatOf(actor)), LEAVE_ROOM)));
         UUID newcomer = UUID.randomUUID();
         assertTrue(game.join(newcomer, "New player", 0));
         assertEquals(AutoPlay.DEFAULT, game.view(newcomer).autoPlay());
@@ -157,8 +157,8 @@ class AutoPlayTest {
         game.configureEquipment(true, Tile.set(false));
         for (int seat = 0; seat < 4; seat++) {
             game.join(new UUID(812, seat), "Player " + seat, seat);
-            assertTrue(game.act(game.players[seat].id, game.decision, 0));
         }
+        GameLifecycleTest.startPositioned(game);
         while (game.phase != Game.Phase.TURN) {
             for (int seat = 0; seat < 4; seat++) if (!game.actions(seat).isEmpty()) {
                 assertTrue(game.act(game.players[seat].id, game.decision, 0));

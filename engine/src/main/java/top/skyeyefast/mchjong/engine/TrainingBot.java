@@ -38,7 +38,7 @@ final class TrainingBot {
     static int choose(TableView view, BotDifficulty difficulty) {
         var actions = view.actions();
         if (actions.isEmpty()) throw new IllegalArgumentException("A bot needs a legal decision");
-        for (var type : List.of(RON, TSUMO, NEXT, READY, SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW)) {
+        for (var type : List.of(RON, TSUMO, NEXT, READY, DRAW_WIND, SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW)) {
             int index = Game.indexOf(actions, type);
             if (index >= 0) return index;
         }

@@ -10,7 +10,7 @@ class TableInvitationsTest {
     @Test void invitationIsBoundToItsRecipientAndExpiresAtTheExactDeadline() {
         UUID sender = UUID.randomUUID(), recipient = UUID.randomUUID();
         var invitation = new TableInvitations.Invitation(sender, recipient, UUID.randomUUID(),
-            Level.OVERWORLD, BlockPos.ZERO, 1200);
+            Level.OVERWORLD, BlockPos.ZERO, 1200, false);
         assertTrue(invitation.validFor(recipient, 1199));
         assertFalse(invitation.validFor(recipient, 1200));
         assertFalse(invitation.validFor(recipient, 1201));

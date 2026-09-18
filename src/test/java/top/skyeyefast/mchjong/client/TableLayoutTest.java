@@ -12,11 +12,20 @@ class TableLayoutTest {
         UUID player = new UUID(10, 15);
         var game = new Game(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(player, "Test", 0));
+        act(game, player, Action.Type.FILL_BOTS);
+        act(game, player, Action.Type.BEGIN_SEATING);
+        assertTrue(game.join(player, "Test", game.seatOf(player)));
+        act(game, player, Action.Type.READY);
+        return game.view(null);
+    }
+
+    private static void act(Game game, UUID player, Action.Type type) {
         var view = game.view(player);
-        int action = java.util.stream.IntStream.range(0, view.actions().size())
-            .filter(i -> view.actions().get(i).type() == Action.Type.PRACTICE).findFirst().orElseThrow();
-        assertTrue(game.act(player, view.decision(), action));
-        return game.view(player);
+        for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) {
+            assertTrue(game.act(player, view.decision(), i));
+            return;
+        }
+        fail("Missing " + type);
     }
 
     private static TableView replace(TableView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {

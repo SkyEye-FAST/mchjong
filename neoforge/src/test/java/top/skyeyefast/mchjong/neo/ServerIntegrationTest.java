@@ -47,6 +47,15 @@ class ServerIntegrationTest {
         for (int seat = 0; seat < 4; seat++) {
             UUID id = new UUID(5, seat);
             game.join(id, "Player " + seat, seat);
+        }
+        var host = new UUID(5, 0);
+        TableView lobby = game.view(host);
+        int begin = java.util.stream.IntStream.range(0, lobby.actions().size())
+            .filter(i -> lobby.actions().get(i).type() == Action.Type.BEGIN_SEATING).findFirst().orElseThrow();
+        assertTrue(game.act(host, lobby.decision(), begin));
+        for (int seat = 0; seat < 4; seat++) {
+            UUID id = new UUID(5, seat);
+            assertTrue(game.join(id, "Player " + seat, game.seatOf(id)));
             TableView view = game.view(id);
             int ready = -1;
             for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.READY) ready = i;

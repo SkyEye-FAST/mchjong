@@ -22,8 +22,9 @@ class PhysicalHandlingTest {
         game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
-            act(game, seat, Action.Type.READY);
         }
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
+        for (int seat = 0; seat < rules.players(); seat++) act(game, seat, Action.Type.READY);
         return game;
     }
 
@@ -105,8 +106,9 @@ class PhysicalHandlingTest {
         game.configureEquipment(false, Tile.set(false));
         for (int seat = 0; seat < 4; seat++) {
             game.join(id(seat), "Player " + seat, seat);
-            act(game, seat, Action.Type.READY);
         }
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
+        for (int seat = 0; seat < 4; seat++) act(game, seat, Action.Type.READY);
         var view = game.view(id(0));
         assertNull(view.handling());
         assertEquals(-1, TableHandling.action(view));

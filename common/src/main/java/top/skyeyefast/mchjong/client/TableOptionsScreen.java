@@ -46,19 +46,14 @@ public final class TableOptionsScreen extends Screen {
             entries.add(new Entry(toggle("ui.mchjong.open_hands", view.openHands()), false, () -> {}));
             entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), false, () -> {}));
         } else if (tab == 1) {
+            entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
+                () -> minecraft.setScreen(new TableSeatsScreen(parent))));
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
                 () -> minecraft.setScreen(new TableRulesScreen(parent, view))));
             entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
                 () -> minecraft.setScreen(new TableClockScreen(parent, view.timeControl()))));
             entries.add(new Entry(Component.translatable("ui.mchjong.invite"), view.viewerSeat() >= 0 && lobby,
                 () -> minecraft.setScreen(new TableInviteScreen(parent))));
-            for (int seat = 0; seat < view.seats().size(); seat++) {
-                var occupant = view.seats().get(seat);
-                if (!occupant.occupied() || occupant.bot() || seat == room.host()) continue;
-                entries.add(new Entry(Component.translatable("room.mchjong.transfer_host", occupant.name()), host, () -> {
-                    if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + occupant.name());
-                }));
-            }
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
                 () -> minecraft.setScreen(new TableSettingsScreen(parent))));

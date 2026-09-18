@@ -11,10 +11,7 @@ class TimeControlTest {
         Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 31);
         for (int seat = 0; seat < 4; seat++) game.join(new UUID(1, seat), "Player " + seat, seat);
         assertTrue(game.configureClock(game.players[0].id, new TimeControl(reserve, move)));
-        for (int seat = 0; seat < 4; seat++) {
-            var view = game.view(game.players[seat].id);
-            assertTrue(game.act(game.players[seat].id, view.decision(), GameLifecycleTest.index(view, Action.Type.READY)));
-        }
+        GameLifecycleTest.startPositioned(game);
         return game;
     }
     private static void tick(Game game, int ticks) { for (int i = 0; i < ticks; i++) game.tick(); }

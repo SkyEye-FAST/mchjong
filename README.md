@@ -15,6 +15,8 @@ three or four players. It supports both Fabric and NeoForge.
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
 - Single-screen settlement panels with winning hands, yaku, indicators, and point changes
 - Unanimous table-exit voting, transferable room ownership and world-controlled open-hand games
+- Wind drawing on ordinary tables, randomized automatic-table seating and verified physical seat assignments
+- Individually configurable Easy, Normal and Hard bots for vacant pregame seats
 - Configurable per-hand reserve and per-decision clocks, with distinct discard animations
 - Player invitations, table sound effects and custom recorded voice packs
 - Two-case table storage, with a tablecloth required for play

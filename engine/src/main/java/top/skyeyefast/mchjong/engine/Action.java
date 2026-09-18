@@ -7,7 +7,8 @@ import java.util.Locale;
 public record Action(Type type, List<Integer> tiles) {
     public enum Type {
         DISCARD, RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI,
-        RON, TSUMO, PASS, ABORT_NINE, READY, NEXT, PRACTICE, CHANGE_RULE,
+        RON, TSUMO, PASS, ABORT_NINE, READY, NEXT, FILL_BOTS, CHANGE_RULE,
+        BEGIN_SEATING, DRAW_WIND, SET_BOT, REMOVE_BOT, LEAVE_ROOM, TRANSFER_HOST,
         SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW
     }
 

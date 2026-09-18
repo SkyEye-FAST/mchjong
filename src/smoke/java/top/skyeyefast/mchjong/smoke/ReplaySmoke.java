@@ -139,9 +139,8 @@ final class ReplaySmoke {
         UUID[] ids = {viewer,UUID.randomUUID(),UUID.randomUUID(),UUID.randomUUID()};
         for (int seat = 0; seat < 4; seat++) {
             require(game.join(ids[seat], "Replay player " + (seat+1),seat),"Cannot join replay fixture");
-            var view = game.view(ids[seat]);
-            require(game.act(ids[seat],view.decision(),find(view,Action.Type.READY)),"Cannot ready replay fixture");
         }
+        SeatingFixtures.startPositioned(game, ids);
         for (int step = 0; step < 2000; step++) {
             if (game.phase() == Game.Phase.HAND_END || game.phase() == Game.Phase.MATCH_END) return game;
             boolean acted = false;

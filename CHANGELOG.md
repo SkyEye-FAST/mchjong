@@ -10,6 +10,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Added
 
 - World, room and personal settings, administrator-controlled hand visibility and optional safe invitation teleportation, plus transferable room ownership.
+- Pregame wind drawing for ordinary tables and randomized seating for automatic tables, with server-verified mounts before readiness and a fresh assignment for each match.
+- Per-seat bot selection and difficulty controls throughout room preparation, with wind reservations and host ownership preserved during repositioning.
 - Bot tile-efficiency, visible-tile availability, open-yaku calling and public-information push/fold analysis, with bounded easy, normal and hard policies.
 - Editable rules with named presets, independent scoring and progression options, physical red-set restrictions, starting/return/target points, and fixed or floating-player placement bonuses. Drafts use explicit apply/cancel and are validated by the server; complete rules are retained in saves and native replays.
 - Undo dye restores ordinary fives from red fives while preserving their other components.
@@ -26,6 +28,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Fixed
 
 - Settlement score changes play once per result and retain their progress across page navigation and screen rebuilds.
+- Ready bots retain their readiness while human players move to their assigned stools.
 - Clockwise wall draws, counterclockwise player turns and stable upper/lower dead-wall layers across manual handling, rendering and animation.
 
 ## [0.2.0] - 2026-09-17

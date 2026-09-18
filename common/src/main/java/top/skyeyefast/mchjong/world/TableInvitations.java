@@ -25,7 +25,7 @@ public final class TableInvitations {
     private final Map<UUID, Long> lastSent = new HashMap<>();
 
     record Invitation(UUID sender, UUID recipient, UUID tableId, ResourceKey<Level> dimension,
-                      BlockPos pos, long expiresAt) {
+                      BlockPos pos, long expiresAt, boolean teleportOffered) {
         boolean validFor(UUID player, long now) { return recipient.equals(player) && now < expiresAt; }
     }
 
@@ -56,7 +56,7 @@ public final class TableInvitations {
         UUID token = UUID.randomUUID();
         BlockPos pos = table.getBlockPos();
         inbox.pending.put(token, new Invitation(sender.getUUID(), recipient.getUUID(), game.tableId(),
-            sender.serverLevel().dimension(), pos, now + LIFETIME));
+            sender.serverLevel().dimension(), pos, now + LIFETIME, WorldSettings.of(server).policy().invitationTeleport()));
         Component accept = Component.translatable("ui.mchjong.invite_accept").withStyle(style -> style
             .withColor(ChatFormatting.GREEN).withUnderlined(true)
             .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mchjong accept " + token)));
@@ -98,7 +98,7 @@ public final class TableInvitations {
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var view = table.participantGame(sender).view(null);
         boolean remote = recipient.serverLevel() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
-        if (remote && !WorldSettings.of(server).policy().invitationTeleport())
+        if (remote && (!invitation.teleportOffered() || !WorldSettings.of(server).policy().invitationTeleport()))
             throw TableCommands.error("message.mchjong.invite_approach");
         int nearest = TableGeometry.nearestSide(recipient.position().subtract(pos.getCenter()));
         for (int offset = 0; offset < 4; offset++) {

@@ -18,12 +18,27 @@ class GameLifecycleTest {
         for (int seat = 0; seat < rules.players(); seat++) {
             UUID id = new UUID(1, seat + 1);
             assertTrue(game.join(id, "Player " + seat, seat));
-            TableView view = game.view(id);
-            assertTrue(game.act(id, view.decision(), index(view, Action.Type.READY)));
         }
+        startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         game.validate();
         return game;
+    }
+
+    /** Match-rule fixtures start with an assigned roster; RoomSeatingTest exercises the lottery. */
+    static void startPositioned(Game game) {
+        UUID host = game.hostId;
+        int fill = index(game.view(host), Action.Type.FILL_BOTS);
+        if (fill >= 0) assertTrue(game.act(host, game.decision, fill));
+        game.seating.positioned(game.rules.players());
+        for (int seat = 0; seat < game.rules.players(); seat++) {
+            var player = game.players[seat];
+            assertTrue(game.join(player.id, player.name, seat));
+            if (!player.bot) {
+                var view = game.view(player.id);
+                assertTrue(game.act(player.id, view.decision(), index(view, Action.Type.READY)));
+            }
+        }
     }
 
     static int index(TableView view, Action.Type type) {

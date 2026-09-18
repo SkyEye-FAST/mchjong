@@ -138,8 +138,7 @@ final class PointStickMenuSmoke {
         check(game != null, "Payment fixture did not obtain an authenticated seat");
         var recipient = new java.util.UUID(8418, 91);
         check(game.join(recipient, "Recipient", 1), "Recipient could not join the payment fixture");
-        act(game, recipient, top.skyeyefast.mchjong.engine.Action.Type.READY);
-        act(game, player.getUUID(), top.skyeyefast.mchjong.engine.Action.Type.PRACTICE);
+        SeatingFixtures.startPositioned(game, player.getUUID(), recipient);
         check(game.phase() == top.skyeyefast.mchjong.engine.Game.Phase.SHUFFLE, "Payment fixture did not start");
         check(table.equipment().drawer(0).getItem(8).isEmpty() && table.equipment().drawer(1).getItem(8).isEmpty(), "Payment test slots occupied");
         table.equipment().drawer(0).setItem(8, stick(1000, 3));

@@ -48,8 +48,7 @@ class TableControlTest {
         assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.TENHOU_3.config()));
         lobby.leave(id(3));
         assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
-        assertTrue(lobby.act(id(1), lobby.decision, GameLifecycleTest.index(lobby.view(id(1)), Action.Type.READY)));
-        assertTrue(lobby.act(id(0), lobby.decision, GameLifecycleTest.index(lobby.view(id(0)), Action.Type.PRACTICE)));
+        GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.M_LEAGUE.config()));
         assertEquals(custom, lobby.replay.rules());
         Settlement.abort(lobby, "nine_terminals");
@@ -62,9 +61,7 @@ class TableControlTest {
         Game game = new Game(UUID.randomUUID(), rules, 123);
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));
         game.configureWorld(open, false);
-        for (int seat = 1; seat < humans; seat++)
-            assertTrue(game.act(id(seat), game.decision, GameLifecycleTest.index(game.view(id(seat)), Action.Type.READY)));
-        assertTrue(game.act(id(0), game.decision, GameLifecycleTest.index(game.view(id(0)), Action.Type.PRACTICE)));
+        GameLifecycleTest.startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         return game;
     }
@@ -81,7 +78,7 @@ class TableControlTest {
             assertNull(game.view(null).exitVote());
             game.validate();
             assertTrue(game.join(id(0), "Again", 0));
-            assertTrue(game.act(id(0), game.decision, GameLifecycleTest.index(game.view(id(0)), Action.Type.PRACTICE)));
+            GameLifecycleTest.startPositioned(game);
             game.validate();
         }
     }

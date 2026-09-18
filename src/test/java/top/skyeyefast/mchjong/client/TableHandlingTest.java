@@ -18,8 +18,9 @@ class TableHandlingTest {
         game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             game.join(player(seat), "Player " + seat, seat);
-            act(game, seat, Action.Type.READY);
         }
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
+        for (int seat = 0; seat < rules.players(); seat++) act(game, seat, Action.Type.READY);
         return game;
     }
     private static void act(Game game, int seat, Action.Type type) {

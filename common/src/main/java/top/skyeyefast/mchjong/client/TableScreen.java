@@ -83,6 +83,7 @@ public final class TableScreen extends Screen {
     public static TableScreen active(Screen screen) {
         if (screen instanceof TableScreen table) return table;
         if (screen instanceof TableOptionsScreen options) return options.tableScreen();
+        if (screen instanceof TableSeatsScreen seats) return seats.tableScreen();
         if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
         if (screen instanceof TableClockScreen clock) return clock.tableScreen();
         if (screen instanceof TableRulesScreen rules) return rules.tableScreen();
@@ -346,6 +347,11 @@ public final class TableScreen extends Screen {
     }
 
     private void buildLobby(TableView view) {
+        var room = room();
+        if (room != null && room.seating() != top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
+            buildSeating(view, room);
+            return;
+        }
         int span = Math.min(400, width - 20), left = (width - span) / 2;
         int half = (span - 4) / 2;
         boolean host = view.actions().stream().anyMatch(action -> action.type() == Action.Type.CHANGE_RULE);
@@ -396,10 +402,10 @@ public final class TableScreen extends Screen {
         int column = 0;
         for (int i = 0; i < view.actions().size(); i++) {
             var action = view.actions().get(i);
-            if (action.type() != Action.Type.READY && action.type() != Action.Type.PRACTICE) continue;
+            if (action.type() != Action.Type.BEGIN_SEATING && action.type() != Action.Type.FILL_BOTS) continue;
             int index = i;
             var button = new CalloutButton(left + column * (half + 4), y, half, 26,
-                Component.translatable(action.type() == Action.Type.PRACTICE ? "ui.mchjong.practice_short" : action.translationKey()),
+                Component.translatable(action.translationKey()),
                 action, i, () -> send(view, index));
             addRenderableWidget(button); callouts.add(button);
             column++;
@@ -410,13 +416,58 @@ public final class TableScreen extends Screen {
                 if (!compositions.getSiblings().isEmpty()) compositions.append(" / ");
                 compositions.append(Component.translatable(composition.translationKey()));
             }
-            var missing = MahjongButton.create(Component.translatable("ui.mchjong.equipment_needed"), ignored -> {})
-                .bounds(left, y, span, 26).tooltip(Tooltip.create(Component.translatable("ui.mchjong.red_fives_rule",
+            var missing = MahjongButton.create(Component.translatable("room.mchjong.wait_host"), ignored -> {})
+                .bounds(left, y, half, 26).tooltip(Tooltip.create(Component.translatable("ui.mchjong.red_fives_rule",
                     compositions))).build();
             missing.active = false;
             addRenderableWidget(missing);
         }
+        addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.participants"), ignored ->
+            minecraft.setScreen(new TableSeatsScreen(this))).bounds(left + half + 4, y, half, 26).build());
         actionTop = y;
+    }
+
+    private void buildSeating(TableView view, top.skyeyefast.mchjong.engine.RoomView room) {
+        int span = Math.min(440, width - 24), left = (width - span) / 2;
+        boolean drawing = room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.DRAWING;
+        var heading = MahjongButton.create(Component.translatable(drawing ? "room.mchjong.draw_winds" : "room.mchjong.take_seats"), ignored -> {})
+            .bounds(left, 64, span, 20).build();
+        heading.active = false;
+        addRenderableWidget(heading);
+        for (int seat = 0; seat < view.seats().size(); seat++) {
+            var state = room.seats().get(seat);
+            var player = view.seats().get(seat);
+            Component status = drawing ? TableSeatsScreen.wind(state.wind())
+                : Component.translatable(player.ready() ? "ui.mchjong.ready" : state.present() ? "room.mchjong.present" : "room.mchjong.absent");
+            Component label = Component.translatable("room.mchjong.seat_status", drawing ? Component.literal(Integer.toString(seat + 1))
+                : TableSeatsScreen.wind(seat), playerName(view, seat), status);
+            var entry = MahjongButton.create(label, ignored -> {}).bounds(left, 88 + seat * 22, span, 20)
+                .tooltip(Tooltip.create(drawing ? label : TableSeatsScreen.position(this, seat))).build();
+            entry.active = false;
+            addRenderableWidget(entry);
+        }
+        int actionY = Math.min(height - 58, 182);
+        if (drawing) {
+            int count = view.seats().size(), cell = (span - 4 * (count - 1)) / count;
+            for (int slot = 0; slot < count; slot++) {
+                int index = TableSeatsScreen.find(view, Action.Type.DRAW_WIND, List.of(slot));
+                var button = MahjongButton.create(Component.translatable("room.mchjong.wind_tile", slot + 1), ignored -> send(view, index))
+                    .bounds(left + slot * (cell + 4), actionY, cell, 22).build();
+                button.active = index >= 0;
+                addRenderableWidget(button);
+            }
+        } else {
+            int ready = TableSeatsScreen.find(view, Action.Type.READY, List.of());
+            boolean present = view.viewerSeat() >= 0 && room.seats().get(view.viewerSeat()).present();
+            var button = MahjongButton.create(Component.translatable(ready >= 0 ? "action.mchjong.ready"
+                : present ? "ui.mchjong.equipment_needed" : "room.mchjong.take_seats"), ignored -> send(view, ready))
+                .bounds(left, actionY, span, 22).build().primary();
+            button.active = ready >= 0;
+            addRenderableWidget(button);
+        }
+        addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.participants"), ignored ->
+            minecraft.setScreen(new TableSeatsScreen(this))).bounds(left, height - 30, span, 20).build());
+        actionTop = actionY;
     }
 
     private static int ruleAction(TableView view, RuleSet rule) {
@@ -427,7 +478,7 @@ public final class TableScreen extends Screen {
         return -1;
     }
 
-    private void send(TableView snapshot, int index) {
+    void send(TableView snapshot, int index) {
         TableView current = view();
         refreshDecision(current);
         if (dealing() || TableResults.available(snapshot) && Util.getMillis() - resultStarted < 500
@@ -676,7 +727,7 @@ public final class TableScreen extends Screen {
                 cueY += 13;
             }
         }
-        if (!footerClock && settings.show(TableSettings.Information.HELP)) {
+        if (view.phase() != Game.Phase.LOBBY && !footerClock && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = Component.translatable(helpKey);

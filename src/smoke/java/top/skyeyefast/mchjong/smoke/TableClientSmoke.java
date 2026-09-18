@@ -42,9 +42,10 @@ public final class TableClientSmoke {
     private int step;
     private int ticks;
     private int entered;
-    private boolean saved;
+    private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<Void> resourceReload;
     private CompletableFuture<Boolean> survivalReady;
+    private CompletableFuture<Boolean> fixtureSeat;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke(seatingOnly);
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
@@ -251,26 +252,19 @@ public final class TableClientSmoke {
                 }
                 capture(client, "01-lobby.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
-                    net.minecraft.network.chat.Component.translatable("ui.mchjong.practice_short").getString())) {
+                    net.minecraft.network.chat.Component.translatable("action.mchjong.fill_bots").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     step = 4; entered = ticks;
                     return;
                 }
-                throw new IllegalStateException("Practice option missing from live lobby UI");
+                throw new IllegalStateException("Fill-bots option missing from live lobby UI");
             } else if (step == 4 && ticks - entered > 40) {
                 var table = (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER);
-                if (!saved && table.clientView() != null && table.clientView().phase() == Game.Phase.LOBBY) {
-                    for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.active
-                        && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.ready").getString())) {
-                        client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
-                        saved = true; entered = ticks;
-                        return;
-                    }
-                }
+                if (!preparation.tick(client, table, output, "01-room")) return;
                 var view = table.clientView();
                 if (view == null) return;
                 if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
-                require(view.viewerSeat() == 0, "Private seat snapshot not delivered");
+                require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining intervening calls through the actual UI rather than changing game state.
                 if (view.phase() == Game.Phase.REACTION) {
@@ -282,10 +276,10 @@ public final class TableClientSmoke {
                     return;
                 }
                 if (view.phase() != Game.Phase.TURN || view.turn() != view.viewerSeat()) return;
-                require(view.seats().getFirst().hand().size() == 14, "Active player did not receive fourteen tiles");
+                require(view.seats().get(view.viewerSeat()).hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
                 if (seatingOnly) {
-                    step = 11; entered = ticks;
+                    prepareDisplaySeat(client);
                     return;
                 }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
@@ -307,7 +301,7 @@ public final class TableClientSmoke {
                 throw new IllegalStateException("Confirm discard mode did not expose its standalone discard button");
             } else if (step == 6 && ticks - entered > 20) {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
-                require(view.seats().getFirst().river().size() == 1, "Discard confirmation did not reach the server");
+                require(view.seats().get(view.viewerSeat()).river().size() == 1, "Discard confirmation did not reach the server");
                 capture(client, "04-overhead-river.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 require(!((TableScreen) client.screen).overhead(), "Cannot return to the seated view");
@@ -326,7 +320,12 @@ public final class TableClientSmoke {
                 step = 15; entered = ticks;
             } else if (step == 15 && interfaceSmoke.settings(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
                 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
-                step = 10; entered = ticks;
+                prepareDisplaySeat(client);
+            } else if (step == 28 && fixtureSeat.isDone() && ticks - entered > 20) {
+                require(fixtureSeat.join(), "Display-only fixture did not obtain its fixed seat");
+                require(client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0,
+                    "Fixed display seat has not reached the client");
+                step = seatingOnly ? 11 : 10; entered = ticks;
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
@@ -380,6 +379,21 @@ public final class TableClientSmoke {
             step = 14;
             client.stop();
         }
+    }
+
+    /** Finish the live randomized-seat check before the existing seat-zero rendering fixtures. */
+    private void prepareDisplaySeat(Minecraft client) {
+        var id = client.player.getUUID();
+        fixtureSeat = client.getSingleplayerServer().submit(() -> {
+            var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+            var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+            var game = table.participantGame(player);
+            require(game != null && game.requestExit(id) && game.phase() == Game.Phase.LOBBY, "Cannot finish live smoke match");
+            player.stopRiding();
+            table.sit(player, 0);
+            return game.seatOf(id) == 0 && player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0;
+        });
+        step = 28; entered = ticks;
     }
 
     private void capture(Minecraft client, String name) {

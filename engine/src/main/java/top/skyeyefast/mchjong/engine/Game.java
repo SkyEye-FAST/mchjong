@@ -1,12 +1,12 @@
 package top.skyeyefast.mchjong.engine;
 
-import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.Random;
 import java.util.Set;
@@ -59,6 +59,7 @@ public final class Game {
     int[] moveTicks = new int[4];
     int[] reserveTicks = new int[4];
     UUID hostId;
+    RoomSeating seating = new RoomSeating();
     transient boolean openHands;
     transient boolean invitationTeleport;
     ExitVote exitVote;
@@ -103,6 +104,7 @@ public final class Game {
             throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
         if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
         if (this.manual != manual) {
+            seating = new RoomSeating();
             timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
             Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
         }
@@ -134,6 +136,7 @@ public final class Game {
     }
 
     private void applyRules(RuleConfig config) {
+        if (rules.players() != config.players()) seating = new RoomSeating();
         rules = config;
         handling = new ManualHandling();
         for (PlayerState player : players) {
@@ -150,7 +153,30 @@ public final class Game {
         revision++;
     }
 
-    public RoomView roomView() { return new RoomView(host(), invitationTeleport); }
+    public RoomView roomView() {
+        var seats = new ArrayList<RoomView.Seat>();
+        for (int i = 0; i < rules.players(); i++) seats.add(new RoomView.Seat(players[i].bot || players[i].seated,
+            seating.winds[i], players[i].bot ? players[i].botDifficulty : null));
+        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats);
+    }
+
+    /** Only the world adapter supplies actual mounts. Clients cannot confirm a seat through readiness. */
+    public void synchronizeSeats(Map<UUID, Integer> mounted) {
+        boolean changed = false;
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var player = players[seat];
+            if (player.id == null || player.bot) continue;
+            boolean present = Objects.equals(mounted.get(player.id), seat);
+            if (player.seated == present) continue;
+            player.seated = present;
+            if (phase == Phase.LOBBY) player.ready = false;
+            changed = true;
+        }
+        if (changed) {
+            revision++;
+            if (phase == Phase.LOBBY) decision++;
+        }
+    }
 
     public boolean transferHost(UUID actor, UUID successor) {
         int seat = seatOf(successor);
@@ -206,6 +232,7 @@ public final class Game {
         handling = new ManualHandling();
         exitCooldown = 0;
         hostId = null;
+        seating = new RoomSeating();
         for (int i = 0; i < players.length; i++) {
             players[i] = new PlayerState();
             players[i].points = rules.startingPoints();
@@ -249,32 +276,81 @@ public final class Game {
     public boolean join(UUID player, String name, int seat) {
         if (player == null || seat < 0 || seat >= rules.players()) return false;
         int existing = seatOf(player);
-        if (existing >= 0) return existing == seat;
+        if (existing >= 0) {
+            if (existing != seat) return false;
+            if (!players[seat].seated) {
+                players[seat].seated = true;
+                revision++;
+                if (phase == Phase.LOBBY) decision++;
+            }
+            return true;
+        }
         if (phase != Phase.LOBBY || exitVote != null || players[seat].id != null) return false;
         players[seat].id = player;
         players[seat].name = name.length() > 32 ? name.substring(0, 32) : name;
+        players[seat].seated = true;
         if (hostId == null) hostId = player;
+        decision++;
         revision++;
         return true;
     }
 
     public void leave(UUID player) {
         int seat = seatOf(player);
-        // During a match the seat stays reserved for reconnection; timers safely pass/discard.
-        if (seat >= 0 && phase == Phase.LOBBY && exitVote == null) {
-            players[seat] = new PlayerState();
-            players[seat].points = rules.startingPoints();
-            if (player.equals(hostId)) {
-                hostId = null;
-                for (PlayerState remaining : players) if (remaining.id != null && !remaining.bot) {
-                    hostId = remaining.id;
-                    break;
-                }
+        if (seat < 0) return;
+        players[seat].seated = false;
+        // Relocation retains membership; explicit Leave room or replacing an absent seat releases it.
+        if (phase == Phase.LOBBY && exitVote == null && seating.stage != RoomSeating.Stage.POSITIONING) removeMember(seat);
+        else if (phase == Phase.LOBBY) { players[seat].ready = false; decision++; revision++; }
+    }
+
+    private void removeMember(int seat) {
+        UUID player = players[seat].id;
+        players[seat] = new PlayerState();
+        players[seat].points = rules.startingPoints();
+        if (player.equals(hostId)) {
+            hostId = null;
+            for (PlayerState remaining : players) if (remaining.id != null && !remaining.bot) {
+                hostId = remaining.id;
+                break;
             }
-            for (PlayerState remaining : players) remaining.ready = remaining.bot;
-            decision++;
-            revision++;
         }
+        for (PlayerState remaining : players) remaining.ready = remaining.bot;
+        if (hostId == null) closeMatch();
+        decision++;
+        revision++;
+    }
+
+    private void setBot(int seat, BotDifficulty difficulty) {
+        var bot = players[seat];
+        if (!bot.bot) {
+            bot = players[seat] = new PlayerState();
+            bot.id = UUID.randomUUID();
+            bot.points = rules.startingPoints();
+        }
+        bot.name = "Bot " + (seat + 1);
+        bot.bot = bot.ready = true;
+        bot.botDifficulty = difficulty;
+    }
+
+    private boolean fullRoom() {
+        for (int i = 0; i < rules.players(); i++) if (players[i].id == null) return false;
+        return true;
+    }
+
+    private void assignSeats() {
+        PlayerState[] assigned = new PlayerState[4];
+        for (int i = 0; i < rules.players(); i++) {
+            var player = players[i];
+            int destination = seating.winds[i];
+            player.seated &= destination == i;
+            player.ready = player.bot;
+            if (player.bot) player.name = "Bot " + (destination + 1);
+            assigned[destination] = player;
+        }
+        if (rules.players() == 3) assigned[3] = players[3];
+        players = assigned;
+        seating.positioned(rules.players());
     }
 
     int host() {
@@ -285,9 +361,25 @@ public final class Game {
         if (seat < 0 || seat >= rules.players() || players[seat].id == null || exitVote != null) return List.of();
         if (phase == Phase.LOBBY) {
             var actions = new ArrayList<Action>();
-            if (equipped()) actions.add(new Action(READY));
+            if (!players[seat].bot) actions.add(new Action(LEAVE_ROOM));
+            if (seating.stage == RoomSeating.Stage.POSITIONING && (players[seat].bot || players[seat].seated)
+                && (!players[seat].bot || !players[seat].ready) && equipped())
+                actions.add(new Action(READY));
+            if (seating.stage == RoomSeating.Stage.DRAWING && seating.winds[seat] < 0)
+                for (int tile = 0; tile < rules.players(); tile++) if ((seating.available & 1 << tile) != 0)
+                    actions.add(new Action(DRAW_WIND, tile));
             if (seat == host()) {
-                if (equipped()) actions.add(new Action(PRACTICE));
+                if (!fullRoom()) actions.add(new Action(FILL_BOTS));
+                if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING) actions.add(new Action(BEGIN_SEATING));
+                for (int target = 0; target < rules.players(); target++) {
+                    var player = players[target];
+                    if (target != seat && (!player.seated || player.bot)) {
+                        for (var difficulty : BotDifficulty.values()) if (!player.bot || difficulty != player.botDifficulty)
+                            actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
+                        if (player.bot) actions.add(new Action(REMOVE_BOT, target));
+                    }
+                    if (target != seat && player.id != null && !player.bot) actions.add(new Action(TRANSFER_HOST, target));
+                }
                 for (RuleSet preset : RuleSet.values()) {
                     if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || players[3].id == null)) {
                         actions.add(new Action(CHANGE_RULE, preset.ordinal()));
@@ -318,17 +410,30 @@ public final class Game {
         if (phase == Phase.LOBBY) {
             switch (action.type()) {
                 case READY -> players[seat].ready = !players[seat].ready;
-                case PRACTICE -> {
-                    for (int i = 0; i < rules.players(); i++) if (players[i].id == null) {
-                        players[i].id = UUID.nameUUIDFromBytes((tableId + ":bot:" + i).getBytes(StandardCharsets.UTF_8));
-                        players[i].name = "Bot " + (i + 1);
-                        players[i].bot = players[i].ready = true;
-                    }
-                    players[seat].ready = true;
+                case FILL_BOTS -> {
+                    for (int i = 0; i < rules.players(); i++) if (players[i].id == null) setBot(i, BotDifficulty.NORMAL);
+                }
+                case SET_BOT -> setBot(action.tiles().getFirst(), BotDifficulty.values()[action.tiles().get(1)]);
+                case REMOVE_BOT -> {
+                    int target = action.tiles().getFirst();
+                    players[target] = new PlayerState();
+                    players[target].points = rules.startingPoints();
+                }
+                case TRANSFER_HOST -> transferHost(actor, players[action.tiles().getFirst()].id);
+                case LEAVE_ROOM -> removeMember(seat);
+                case BEGIN_SEATING -> {
+                    seating.begin(rules.players(), manual, seed ^ decision);
+                    if (!manual) assignSeats();
+                }
+                case DRAW_WIND -> {
+                    seating.draw(seat, action.tiles().getFirst());
+                    if (seating.complete(rules.players())) assignSeats();
                 }
                 case CHANGE_RULE -> applyRules(rules.withPreset(RuleSet.values()[action.tiles().getFirst()]));
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
+            if (action.type() == SET_BOT || action.type() == REMOVE_BOT || action.type() == FILL_BOTS)
+                for (var player : players) player.ready = player.bot;
             revision++;
             decision++;
             if (allReady()) startMatch();
@@ -338,7 +443,14 @@ public final class Game {
             players[seat].ready = true;
             revision++;
             if (allReady()) {
-                if (phase == Phase.MATCH_END) startMatch();
+                if (phase == Phase.MATCH_END) {
+                    var roster = players.clone();
+                    UUID host = hostId;
+                    closeMatch();
+                    players = roster;
+                    hostId = host;
+                    for (var player : players) { player.resetHand(); player.points = rules.startingPoints(); }
+                }
                 else {
                     if (!dealerRepeats) { dealer = next(dealer); round++; }
                     honba = drawResult || dealerRepeats ? honba + 1 : 0;
@@ -377,12 +489,14 @@ public final class Game {
 
     private boolean allReady() {
         if (!equipped()) return false;
+        if (phase == Phase.LOBBY && seating.stage != RoomSeating.Stage.POSITIONING) return false;
         for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
+        if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++) if (!players[i].bot && !players[i].seated) return false;
         return true;
     }
 
     private void startMatch() {
-        initialDealer = dealer = new Random(seed ^ handNumber).nextInt(rules.players());
+        initialDealer = dealer = 0;
         round = honba = riichiSticks = 0;
         for (PlayerState player : players) player.points = rules.startingPoints();
         long now = System.currentTimeMillis();
@@ -697,6 +811,9 @@ public final class Game {
         }
         if ((phase == Phase.TURN || phase == Phase.REACTION) && (age == 1 || age % 10 == 0)) revision++;
         if (age > 0 && age % 12 == 0) {
+            if (phase == Phase.LOBBY && seating.stage == RoomSeating.Stage.DRAWING)
+                for (int seat = 0; seat < rules.players(); seat++)
+                    if (players[seat].id != null && !players[seat].bot && seating.winds[seat] < 0) return;
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
@@ -749,6 +866,7 @@ public final class Game {
     /** Used on loading a saved table and by conservation tests, never as a network input. */
     public void validate() {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
+        Objects.requireNonNull(seating).validate(rules.players());
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(archiveQueue);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);

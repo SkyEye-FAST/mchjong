@@ -22,7 +22,7 @@ snapshot used by the engine, public views, saves and native replays. `RuleOption
 defines field bounds, translation keys, categories and preset defaults. Runtime
 logic reads individual settings instead of branching on a preset identity.
 `TableRulesPayload` carries a bounded proposal and the current table identity and
-decision. Only the seated host can apply it before play; clients retain a draft
+decision. Only the room host can apply it before play; clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
 Preset metadata distinguishes supported table options from custom changes; the
 editor shows options, read-only details and custom settings separately. The view
@@ -38,6 +38,14 @@ native container synchronization. The two tables share one block
 entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall,
 packet and draw phases without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
+
+`RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
+wind permutation is persisted server-side; `RoomView` sends only revealed winds,
+available choices, host seat, physical presence and bot difficulty. `PlayerState`
+follows a participant through seat reassignment. Mount presence is transient and
+is reconstructed from `SeatEntity` passengers; it is never accepted from a client
+or a saved room. Nearby room members retain preparation controls while relocating,
+but active-game actions and private hands require the correct physical seat.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's

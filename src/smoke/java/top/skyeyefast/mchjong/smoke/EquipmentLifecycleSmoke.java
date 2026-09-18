@@ -124,7 +124,7 @@ final class EquipmentLifecycleSmoke {
         check(player.isPassenger(), "The stool did not find its table");
         Game game = table.participantGame(player);
         check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
-            .noneMatch(action -> action.type() == Action.Type.READY || action.type() == Action.Type.PRACTICE), "Empty table could start a game");
+            .noneMatch(action -> action.type() == Action.Type.READY), "Empty table could start a game");
 
         var complete = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN);
         var shortSet = complete.copy();
@@ -168,10 +168,8 @@ final class EquipmentLifecycleSmoke {
         check(green.isEmpty() && red.isEmpty() && countInventory(player, greenExpected) == 1, "Replacing cloth did not conserve items");
 
         game = table.participantGame(player);
-        var view = game.view(player.getUUID());
-        int practice = java.util.stream.IntStream.range(0, view.actions().size())
-            .filter(i -> view.actions().get(i).type() == Action.Type.PRACTICE).findFirst().orElseThrow();
-        check(game.act(player.getUUID(), view.decision(), practice) && game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
+        SeatingFixtures.startPositioned(game, player.getUUID());
+        check(game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
         game.validate();
         var lockedCloth = redExpected.copy();
         table.useEquipment(player, lockedCloth);

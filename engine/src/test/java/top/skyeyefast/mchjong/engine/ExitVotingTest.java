@@ -22,7 +22,7 @@ class ExitVotingTest {
         var game = new Game(UUID.randomUUID(), rules, 71);
         assertTrue(game.join(HOST, "Host", 0));
         game.configureWorld(true, false);
-        action(game, HOST, Action.Type.PRACTICE);
+        GameLifecycleTest.startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         assertTrue(game.requestExit(HOST));
         assertEquals(Game.Phase.LOBBY, game.phase());
@@ -32,7 +32,7 @@ class ExitVotingTest {
         assertTrue(game.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
         assertTrue(game.view(null).openHands());
         assertTrue(game.join(HOST, "Host", 0));
-        action(game, HOST, Action.Type.PRACTICE);
+        GameLifecycleTest.startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         game.validate();
     }
@@ -41,8 +41,7 @@ class ExitVotingTest {
         var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 72);
         game.join(HOST, "Host", 0);
         game.join(GUEST, "Guest", 1);
-        action(game, GUEST, Action.Type.READY);
-        action(game, HOST, Action.Type.PRACTICE);
+        GameLifecycleTest.startPositioned(game);
         assertTrue(game.requestExit(HOST));
         var vote = game.view(GUEST).exitVote();
         assertEquals(2, vote.required());

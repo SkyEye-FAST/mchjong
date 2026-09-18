@@ -174,11 +174,17 @@ final class InterfaceSmoke {
             else if (settingsStage == 12) click(client, "settings.mchjong.scope.personal");
             else {
                 client.screen.onClose();
-                restoreWindow(client);
-                settingsStage = 9; settingsTicks = 0;
+                client.setScreen(new top.skyeyefast.mchjong.client.TableSeatsScreen(settingsParent));
+                settingsStage = 14; settingsTicks = 0;
                 return false;
             }
             settingsStage++; settingsTicks = 0;
+        } else if (settingsStage == 14 && settingsTicks > 10) {
+            checkBounds(client);
+            capture(client, output, "35-seats-320x240.png");
+            client.screen.onClose();
+            restoreWindow(client);
+            settingsStage = 9; settingsTicks = 0;
         } else if (settingsStage == 9 && settingsTicks > 10 && automation.tick(client, table, output)) {
             restoreWindow(client);
             settingsStage = 10;

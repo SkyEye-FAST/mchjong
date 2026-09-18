@@ -35,6 +35,7 @@ final class TableControlSmoke {
     private String originalLanguage;
     private CompletableFuture<Void> languageReload;
     private top.skyeyefast.mchjong.world.WorldSettings.Policy originalWorldPolicy;
+    private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
@@ -89,7 +90,7 @@ final class TableControlSmoke {
             click(client, "preset.mchjong.wrc");
             next(9);
         } else if (stage == 9 && view.rules().equals(RuleSet.WRC.config()) && ticks > 5) {
-            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "WRC rejected the default no-red box");
+            require((table.clientRedOptions() & 1) != 0, "WRC rejected the default no-red box");
             require(!widget(client, "preset.mchjong.m_league").active, "M.League could select missing red fives");
             capture(client, output, "25b-wrc-lobby.png");
             click(client, "preset.mchjong.mahjong_soul");
@@ -177,7 +178,7 @@ final class TableControlSmoke {
             next(23);
         } else if (stage == 23 && client.screen instanceof TableScreen && view.rules().redFives() == RedFives.FOUR && ticks > 5) {
             require(!view.rules().custom() && !view.rules().kuitan(), "Preset variants were classified as custom");
-            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "Surplus box cannot start play");
+            require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
             click(client, "rules.mchjong.title");
             click(client, "rules.mchjong.mode.details");
             click(client, "rules.mchjong.group.scoring");
@@ -268,18 +269,21 @@ final class TableControlSmoke {
                     commands.execute("mchjong world reload", server.createCommandSourceStack());
                     require(policy.policy().openHands() && policy.policy().invitationTeleport(), "World policy did not persist");
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                    InvitationSmoke.verify(player, serverTable);
                     var game = serverTable.participantGame(player);
                     require(game.view(id).openHands(), "Table did not adopt world policy");
                     require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
                     require(game.view(id).openHands() && game.roomView().invitationTeleport(), "Room setting replaced world policy");
-                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException failure) {
+                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | java.io.IOException failure) {
                     throw new IllegalStateException(failure);
                 }
             });
             next(6);
         } else if (stage == 6 && view.openHands()) {
-            click(client, "ui.mchjong.practice_short");
-            next(7);
+            click(client, "action.mchjong.fill_bots");
+            next(28);
+        } else if (stage == 28) {
+            if (preparation.tick(client, table, output, "26-room")) next(7);
         } else if (stage == 7 && view.phase() == Game.Phase.TURN && ticks > 60
             && !TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             require(view.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0),

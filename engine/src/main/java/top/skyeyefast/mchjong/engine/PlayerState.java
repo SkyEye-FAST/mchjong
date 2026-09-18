@@ -10,6 +10,7 @@ final class PlayerState {
     String name = "";
     boolean bot;
     BotDifficulty botDifficulty = BotDifficulty.NORMAL;
+    transient boolean seated;
     boolean ready;
     AutoPlay autoPlay = AutoPlay.DEFAULT;
     int points;

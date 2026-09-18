@@ -82,7 +82,7 @@ final class EquipmentSmoke {
             table.sit(player, 0);
             var game = table.participantGame(player);
             check(game != null && game.view(player.getUUID()).actions().stream().noneMatch(a ->
-                a.type() == Action.Type.READY || a.type() == Action.Type.PRACTICE), "Empty table offered a playable game");
+                a.type() == Action.Type.READY), "Empty table offered a playable game");
 
             var original = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.BLUE);
             var replacement = MahjongSupplies.completeBox(TileMaterial.QUARTZ, DyeColor.CYAN);
@@ -137,7 +137,7 @@ final class EquipmentSmoke {
                 && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
             if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RuleSet.MAHJONG_SOUL_3.ordinal());
             var staleMenu = TableStorageSmoke.open(player, table);
-            act(table, player, Action.Type.PRACTICE, -1);
+            SeatingFixtures.startPositioned(table.participantGame(player), player.getUUID());
             game = table.participantGame(player);
             check(game.phase() == (table.automatic() ? Game.Phase.TURN : Game.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
