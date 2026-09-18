@@ -162,11 +162,10 @@ final class TableBoard {
             int y = -depth / 2 + index / 6 * height;
             int occupiedWidth = discard.riichi() ? height : tileWidth;
             int occupiedHeight = discard.riichi() ? tileWidth : height;
-            int py = y + height - occupiedHeight;
             boolean focused = view.focus() != null && view.focus().tile() == discard.tile();
-            TileGui.tile(graphics, discard.tile(), x, py, tileWidth, false, discard.riichi(), focused, preset);
-            if (focused) graphics.renderOutline(x, py, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
-            int px = x + occupiedWidth / 2, localY = py + occupiedHeight / 2;
+            TileGui.tile(graphics, discard.tile(), x, y, tileWidth, false, discard.riichi(), focused, preset);
+            if (focused) graphics.renderOutline(x, y, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
+            int px = x + occupiedWidth / 2, localY = y + occupiedHeight / 2;
             Point point = switch (side) {
                 case 1 -> new Point(cx + localY, cy - px);
                 case 2 -> new Point(cx - px, cy - localY);
