@@ -249,13 +249,33 @@ class ReactionRulesTest {
     }
 
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
-    void northCanBeRobbedByOrdinaryYakuButDoesNotGiveChankan(RuleSet rules) {
+    void automaticNorthUsesTheLegalDeclarationAndReplacementDraw(RuleSet rules) {
+        Fixture f = new Fixture(rules);
+        f.hand(0, "147p258s19m11235z");
+        int north = f.take("4z").getFirst();
+        f.game.players[0].hand.add(north);
+        f.start(0, north);
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].id, f.game.decision, AutoPlay.Option.KITA, true));
+        for (int tick = 0; tick < Game.AUTO_ACTION_TICKS; tick++) f.game.tick();
+        f.passOthers();
+        assertEquals(List.of(north), f.game.players[0].norths);
+        assertEquals(1, f.game.wall.replacementIndex);
+        assertEquals(Game.Phase.TURN, f.game.phase());
+        assertNotEquals(north, f.game.players[0].drawn);
+        assertTrue(f.game.players[0].river.isEmpty());
+        f.game.validate();
+    }
+
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
+    void automaticNorthCanBeRobbedByOrdinaryYakuButDoesNotGiveChankan(RuleSet rules) {
         Fixture f = new Fixture(rules);
         f.hand(1, "123456789p111s4z");
         int north = f.take("4z").getFirst();
         f.game.players[0].hand.add(north);
         f.start(0, north);
-        f.act(0, Action.Type.NUKI, north);
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].id, f.game.decision, AutoPlay.Option.KITA, true));
+        for (int tick = 0; tick < Game.AUTO_ACTION_TICKS; tick++) f.game.tick();
+        f.game.validate();
         f.act(1, Action.Type.RON); f.passOthers();
         assertTrue(f.game.players[0].norths.isEmpty());
         assertEquals(0, f.game.wall.replacementIndex);

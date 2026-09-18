@@ -260,6 +260,7 @@ public final class Game {
     public boolean configureAutoPlay(UUID actor, long expectedDecision, AutoPlay.Option option, boolean enabled) {
         int seat = seatOf(actor);
         if (manual || seat < 0 || players[seat].bot || exitVote != null || expectedDecision != decision
+            || option == AutoPlay.Option.KITA && !rules.sanma()
             || players[seat].autoPlay.enabled(option) == enabled) return false;
         players[seat].autoPlay = players[seat].autoPlay.with(option, enabled);
         // Other responders retain their decision token and remaining time.

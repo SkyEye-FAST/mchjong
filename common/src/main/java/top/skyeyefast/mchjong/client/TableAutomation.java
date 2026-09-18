@@ -42,23 +42,27 @@ final class TableAutomation {
         buttons.add(MahjongButton.create(Component.translatable(expanded ? "ui.mchjong.automation_hide" : "ui.mchjong.automation_show"),
             ignored -> { expanded = !expanded; rebuild.run(); }).bounds(8, y, width, 20).build());
         if (!expanded) return buttons;
+        int count = view.rules().sanma() ? 5 : 4;
         for (var option : AutoPlay.Option.values()) {
+            if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
             String key = switch (option) {
                 case SORT -> "ui.mchjong.auto_sort";
                 case WIN -> "ui.mchjong.auto_win";
                 case NO_CALLS -> "ui.mchjong.no_calls";
                 case DISCARD -> "ui.mchjong.auto_discard";
+                case KITA -> "ui.mchjong.auto_kita";
             };
             var operation = switch (option) {
                 case SORT -> TableControlPayload.Operation.AUTO_SORT;
                 case WIN -> TableControlPayload.Operation.AUTO_WIN;
                 case NO_CALLS -> TableControlPayload.Operation.NO_CALLS;
                 case DISCARD -> TableControlPayload.Operation.AUTO_DISCARD;
+                case KITA -> TableControlPayload.Operation.AUTO_KITA;
             };
             boolean enabled = view.autoPlay().enabled(option);
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
                 Component.translatable(enabled ? "options.on" : "options.off"));
-            var button = new MahjongButton(8, y - (4 - option.ordinal()) * 22, width, 20, label, ignored -> {
+            var button = new MahjongButton(8, y - (count - option.ordinal()) * 22, width, 20, label, ignored -> {
                 var current = parent.view();
                 if (pending || !available(current)) return;
                 pending = true;

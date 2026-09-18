@@ -75,7 +75,7 @@ class AutoPlayTest {
     }
 
     @Test void winAndKanOpportunitiesAreNotSilentlyThrownAway() {
-        AutoPlay all = new AutoPlay(true, true, true, true);
+        AutoPlay all = new AutoPlay(true, true, true, true, true);
         List<Action> tsumo = List.of(new Action(DISCARD, 7), new Action(TSUMO));
         List<Action> ron = List.of(new Action(PASS), new Action(PON, List.of(1, 2)), new Action(RON));
         assertEquals(1, all.action(Game.Phase.TURN, true, 7, tsumo));
@@ -86,7 +86,15 @@ class AutoPlayTest {
         List<Action> kan = List.of(new Action(DISCARD, 7), new Action(CLOSED_KAN, List.of(4, 5, 6, 7)));
         assertEquals(-1, AutoPlay.DEFAULT.action(Game.Phase.TURN, true, 7, kan));
         assertEquals(0, all.action(Game.Phase.TURN, true, 7, kan));
-        assertEquals(-1, all.action(Game.Phase.TURN, true, 7, List.of(new Action(DISCARD, 7), new Action(NUKI, 7))));
+        List<Action> north = List.of(new Action(DISCARD, 7), new Action(NUKI, 7));
+        assertEquals(1, all.action(Game.Phase.TURN, true, 7, north));
+        assertEquals(-1, all.with(AutoPlay.Option.KITA, false).action(Game.Phase.TURN, true, 7, north));
+        var kitaOnly = AutoPlay.DEFAULT.with(AutoPlay.Option.KITA, true);
+        assertEquals(1, kitaOnly.action(Game.Phase.TURN, false, 7, north));
+        assertEquals(-1, kitaOnly.action(Game.Phase.TURN, false, 7, List.of(new Action(DISCARD, 7))));
+        assertEquals(-1, kitaOnly.action(Game.Phase.REACTION, false, 7, north));
+        assertEquals(-1, kitaOnly.action(Game.Phase.TURN, false, 7, List.of(new Action(NUKI, 7), new Action(TSUMO))));
+        assertEquals(1, all.action(Game.Phase.TURN, false, 7, List.of(new Action(NUKI, 7), new Action(TSUMO))));
         assertEquals(-1, all.action(Game.Phase.TURN, false, Tile.ABSENT, List.of(new Action(DISCARD, 7))));
         assertEquals(-1, all.action(Game.Phase.HAND_END, false, -1, List.of(new Action(NEXT))));
     }
@@ -108,6 +116,7 @@ class AutoPlayTest {
         assertTrue(game.view(game.players[1].id).autoPlay().noCalls());
         assertEquals(AutoPlay.DEFAULT, game.view(game.players[2].id).autoPlay());
         assertFalse(game.configureAutoPlay(UUID.randomUUID(), decision, AutoPlay.Option.WIN, true));
+        assertFalse(game.configureAutoPlay(game.players[1].id, decision, AutoPlay.Option.KITA, true));
         assertFalse(game.configureAutoPlay(game.players[1].id, decision - 1, AutoPlay.Option.WIN, true));
         ticks(game, Game.AUTO_ACTION_TICKS - 5);
         assertEquals(0, game.replies[1]);
@@ -132,11 +141,11 @@ class AutoPlayTest {
     }
 
     @Test void preferencesPersistAcrossHandsAndReloadButAreClearedWhenTheSeatIsReleased() {
-        Game game = GameLifecycleTest.started(RuleSet.TENHOU_4, 31);
+        Game game = GameLifecycleTest.started(RuleSet.TENHOU_3, 31);
         UUID actor = game.players[0].id;
         for (var option : AutoPlay.Option.values())
             assertTrue(game.configureAutoPlay(actor, game.decision, option, option != AutoPlay.Option.SORT));
-        AutoPlay expected = new AutoPlay(false, true, true, true);
+        AutoPlay expected = new AutoPlay(false, true, true, true, true);
         game.startHand();
         assertEquals(expected, game.view(actor).autoPlay());
         Gson json = new Gson();
@@ -196,12 +205,12 @@ class AutoPlayTest {
     }
 
     @Test void preferencesSurviveHandsAndSavesButNotSeatRelease() {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_3, 1);
         UUID host = UUID.randomUUID();
         game.join(host, "Host", 0);
         for (var option : AutoPlay.Option.values())
             assertTrue(game.configureAutoPlay(host, game.decision, option, option != AutoPlay.Option.SORT));
-        var expected = new AutoPlay(false, true, true, true);
+        var expected = new AutoPlay(false, true, true, true, true);
         Gson json = new Gson();
         game = json.fromJson(json.toJson(game), Game.class);
         game.validate();

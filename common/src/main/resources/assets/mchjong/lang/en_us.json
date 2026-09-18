@@ -193,6 +193,7 @@
   "ui.mchjong.auto_win": "Auto win",
   "ui.mchjong.no_calls": "No calls",
   "ui.mchjong.auto_discard": "Auto discard",
+  "ui.mchjong.auto_kita": "Auto Kita",
   "block.mchjong.table_space": "Mahjong Tabletop",
   "item.mchjong.point_stick_value": "%s-Point Stick",
   "sticks.mchjong.access": "E: point drawers",

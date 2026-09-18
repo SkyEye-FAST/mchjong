@@ -193,6 +193,7 @@
   "ui.mchjong.auto_win": "自動和了",
   "ui.mchjong.no_calls": "不吃碰槓",
   "ui.mchjong.auto_discard": "自動摸切",
+  "ui.mchjong.auto_kita": "自動拔北",
   "block.mchjong.table_space": "麻將桌桌面",
   "item.mchjong.point_stick_value": "%s點點棒",
   "sticks.mchjong.access": "E：點棒盒",
