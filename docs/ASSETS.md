@@ -12,9 +12,9 @@ Each output is synchronized independently with the current generator results.
 ## Tile faces
 
 The 45 faces use the supplied PNG source atlases under
-`presets/tile_faces/kansai_mizuno/atlas/mizuno.png` and
-`presets/tile_faces/kanto_fluffystuff/atlas/default.png`, assigned to Kanto and
-Kansai respectively. The supplied folder names are reversed.
+`presets/tile_faces/kanto_mizuno/atlas/mizuno.png` and
+`presets/tile_faces/kansai_fluffystuff/atlas/default.png`, assigned to Kanto and
+Kansai respectively.
 `TileArtwork` maps their 10-column source layout to runtime
 cells, including all three red fives, preserving proportions and antialiased
 edges. Both designs are ordinary mod resources selected in the mahjong box;
