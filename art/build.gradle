@@ -11,7 +11,7 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger()
 
 def presetDirectory = rootProject.file('presets/tile_faces')
 def presetSources = rootProject.fileTree(presetDirectory) {
-    include '*/atlas/*.png', '*/theme_metadata.json', 'NOTICE.md'
+    include '*/tiles/*.png', '*/theme_metadata.json', 'NOTICE.md'
 }
 
 def renderedAssets = layout.buildDirectory.dir('renderedAssets')

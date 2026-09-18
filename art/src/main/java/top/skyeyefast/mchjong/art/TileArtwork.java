@@ -9,72 +9,92 @@ import java.nio.file.Path;
 import java.util.List;
 import javax.imageio.ImageIO;
 
-/** Packs the supplied transparent engravings into the shared runtime atlas layout. */
+/**
+ * Packs the supplied transparent engravings into the shared runtime atlas
+ * layout.
+ */
 final class TileArtwork {
     static final List<String> PRESETS = List.of("kansai", "kanto");
     static final int WIDTH = 256, HEIGHT = 384, ATLAS_WIDTH = 2048, ATLAS_HEIGHT = 4096;
     static final int FACE_COUNT = 45, BACK = 0xffffffff;
-    private final BufferedImage source;
-    private final boolean kanto;
+    static final List<String> FACE_KEYS = List.of(
+            "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
+            "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p",
+            "1s", "2s", "3s", "4s", "5s", "6s", "7s", "8s", "9s",
+            "1z", "2z", "3z", "4z", "5z", "6z", "7z",
+            "0m", "0p", "0s",
+            "1q", "2q", "3q", "4q", "5q", "6q", "7q", "8q");
+
+    private final BufferedImage[] engravings = new BufferedImage[FACE_COUNT];
     private final String notice;
 
     TileArtwork(Path presets, String preset) throws IOException {
-        kanto = preset.equals("kanto");
-        String folder = switch (preset) {
-            case "kansai" -> "kansai_fluffystuff";
-            case "kanto" -> "kanto_mizuno";
-            default -> throw new IllegalArgumentException("Unknown face preset: " + preset);
-        };
-        Path directory = presets.resolve(folder);
-        source = readAtlas(directory.resolve("atlas/" + (kanto ? "mizuno" : "default") + ".png"));
+        if (!PRESETS.contains(preset))
+            throw new IllegalArgumentException("Unknown face preset: " + preset);
+        Path directory = presets.resolve(preset);
+        Path tilesDir = directory.resolve("tiles");
+        for (int face = 0; face < FACE_COUNT; face++) {
+            String key = FACE_KEYS.get(face);
+            Path tilePath = tilesDir.resolve(key + ".png");
+            if (Files.exists(tilePath)) {
+                var img = ImageIO.read(tilePath.toFile());
+                if (img != null)
+                    engravings[face] = img;
+            }
+        }
         notice = Files.readString(directory.resolve("theme_metadata.json"));
     }
 
-    private static BufferedImage readAtlas(Path path) throws IOException {
-        var atlas = ImageIO.read(path.toFile());
-        if (atlas == null || atlas.getWidth() != 1500 || atlas.getHeight() != 1000)
-            throw new IOException("Expected a 1500 x 1000 face atlas: " + path);
-        return atlas;
+    static String tileKey(int face) {
+        if (face < 0 || face >= FACE_COUNT)
+            throw new IllegalArgumentException("Tile face: " + face);
+        return FACE_KEYS.get(face);
     }
 
-    static int sourceCell(int face, boolean kanto) {
-        if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
-        if (face < 27) return face / 9 * 10 + face % 9 + 1;
-        if (face < 34) return face + 3;
-        if (face < 37) return (face - 34) * 10;
-        // The botanical source ends 梅蘭菊竹; public numbering ends 梅蘭竹菊.
-        return !kanto && face >= 43 ? 87 - face : face;
+    BufferedImage face(int face) {
+        return render(face, false);
     }
 
-    BufferedImage face(int face) { return render(face, false); }
-    BufferedImage glyph(int face) { return render(face, true); }
+    BufferedImage glyph(int face) {
+        return render(face, true);
+    }
 
     private BufferedImage render(int face, boolean transparent) {
-        if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
+        if (face < 0 || face >= FACE_COUNT)
+            throw new IllegalArgumentException("Tile face: " + face);
         var image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         var g = image.createGraphics();
         try {
             if (!transparent) {
-                g.setColor(new Color(0xcbd0d4)); g.fillRect(0, 0, WIDTH, HEIGHT);
-                g.setColor(Color.WHITE); g.fillRect(4, 4, WIDTH - 8, HEIGHT - 8);
+                g.setColor(new Color(0xcbd0d4));
+                g.fillRect(0, 0, WIDTH, HEIGHT);
+                g.setColor(Color.WHITE);
+                g.fillRect(4, 4, WIDTH - 8, HEIGHT - 8);
             }
-            if (face != 31) {
-                int cell = sourceCell(face, kanto), x = cell % 10 * 150, y = cell / 10 * 200;
+            if (face != 31 && engravings[face] != null) {
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
-                // Preserve the source 3:4 proportions on the 2:3 tile with a clear margin.
-                g.drawImage(source.getSubimage(x, y, 150, 200), 16, 43, 224, 298, null);
+                // Preserve the source proportions on the 2:3 tile with a clear margin.
+                g.drawImage(engravings[face], 16, 43, 224, 298, null);
             }
-        } finally { g.dispose(); }
+        } finally {
+            g.dispose();
+        }
         return image;
     }
 
     static BufferedImage back() {
         var image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
         var g = image.createGraphics();
-        try { g.setColor(Color.WHITE); g.fillRect(0, 0, WIDTH, HEIGHT); }
-        finally { g.dispose(); }
+        try {
+            g.setColor(Color.WHITE);
+            g.fillRect(0, 0, WIDTH, HEIGHT);
+        } finally {
+            g.dispose();
+        }
         return image;
     }
 
-    String notice() { return notice; }
+    String notice() {
+        return notice;
+    }
 }
