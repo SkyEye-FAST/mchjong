@@ -260,6 +260,7 @@ class PhysicalSuppliesTest {
         var surplus = box(items);
         var before = surplus.copy();
         for (boolean sanma : new boolean[]{false, true}) for (var reds : top.skyeyefast.mchjong.engine.RedFives.values()) {
+            assertTrue(MahjongSupplies.canSupplyReds(surplus, sanma, reds), "Surplus stock must enable every supported red composition");
             var selected = MahjongSupplies.deck(surplus, sanma, reds);
             assertNotNull(selected);
             assertEquals(sanma ? 108 : 136, selected.tiles().size());
