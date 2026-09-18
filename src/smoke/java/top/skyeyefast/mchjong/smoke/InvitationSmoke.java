@@ -26,6 +26,18 @@ final class InvitationSmoke {
         var policy = WorldSettings.of(sender.server);
         var original = policy.policy();
         var recipient = new Recipient(sender);
+        var dispatcher = sender.server.getCommands().getDispatcher();
+        for (String target : new String[]{sender.getUUID().toString(), sender.getGameProfile().getName(), UUID.randomUUID().toString()}) {
+            var parsed = dispatcher.parse("mchjong invite " + target, sender.createCommandSourceStack());
+            check(parsed.getExceptions().isEmpty() && !parsed.getReader().canRead(), "Invitation target failed command parsing: " + target);
+            try {
+                dispatcher.execute(parsed);
+                throw new IllegalStateException("Self/offline invitation was accepted");
+            } catch (CommandSyntaxException expected) {
+                check(expected.getRawMessage().getString().equals(Component.translatable("message.mchjong.invite_unavailable").getString()),
+                    "Invitation failed in selector parsing instead of player validation: " + expected.getMessage());
+            }
+        }
         var game = table.participantGame(sender);
         try {
             recipient.setPos(sender.getX() + 32, sender.getY(), sender.getZ());
