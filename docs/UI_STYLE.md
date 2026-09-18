@@ -169,9 +169,12 @@ win decision remains explicit. Riichi draws and ordinary discards advance after
 choices. Ordinary tables start with a 30-second move allowance and 120-second
 hand reserve; lobby hosts can edit both values.
 Ordinary tables present their central deposits directly on the felt. Automatic tables use a compact
-seven-segment display, wind-tile pictograms, round pips and seat lamps. Each score
-display faces its owner, with glyph tops pointing toward the table center; do not
-render explanatory font labels across the felt.
+seven-segment display, large localized wind characters, round pips and seat lamps.
+English winds use E/S/W/N; Chinese and Japanese use their localized characters.
+Scores use a .048-block digit height, with width fitting only for unusually long
+values. Each score display faces its owner, with glyph tops pointing toward the
+table center. The wind characters use the resource-pack font, keeping explanatory
+labels off the felt and the riichi-deposit lanes clear.
 
 ## Acceptance and future changes
 
