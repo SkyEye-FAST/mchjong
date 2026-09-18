@@ -86,8 +86,14 @@ class TableLayoutTest {
                     .mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
                 assertTrue(meldLeft >= handRight + TableScene.HAND_MELD_GAP - 1e-6, type + " x" + count + " overlaps the hand");
                 var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD).toList();
-                assertTrue(calls.stream().allMatch(p -> p.position().z == TableScene.HAND_Z),
-                    "Melds belong beside the hand, never in an inner/front rail");
+                for (var part : calls) {
+                    double bottom = TableScene.HAND_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2;
+                    if (type == Meld.Type.ADDED_KAN && part.index() % 4 == 3)
+                        bottom -= TileMesh.WIDTH * TableScene.TILE_SCALE;
+                    assertEquals(bottom, bounds(part).maxZ, 1e-5, "Align the bottom edges; added tiles go in front");
+                    assertEquals(top.skyeyefast.mchjong.world.TableGeometry.FELT_Y
+                        + TileMesh.DEPTH * TableScene.TILE_SCALE / 2, part.position().y, 1e-7);
+                }
                 double right = calls.stream().mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
                 assertEquals(TableScene.MELD_RIGHT, right, 1e-5);
                 assertTrue(top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH - right < 0.1,
@@ -114,6 +120,10 @@ class TableLayoutTest {
             var calls = TableScene.build(replace(view, hand, melds.subList(0, count), List.of())).stream()
                 .filter(piece -> piece.seat() == 0 && piece.area() == TableScene.Area.MELD).toList();
             assertEquals(previous, calls.subList(0, previous.size()), "Adding a meld must not slide earlier calls away from the corner");
+            if (!previous.isEmpty()) assertEquals(
+                previous.stream().mapToDouble(p -> bounds(p).minX).min().orElseThrow(),
+                calls.subList(previous.size(), calls.size()).stream().mapToDouble(p -> bounds(p).maxX).max().orElseThrow(),
+                1e-5, "Adjacent melds touch edge to edge");
             previous = calls;
         }
     }
@@ -183,7 +193,7 @@ class TableLayoutTest {
         return new net.minecraft.world.phys.AABB(p.x - x, p.y - y, p.z - z, p.x + x, p.y + y, p.z + z).deflate(1e-6);
     }
 
-    @Test void meldTilesTouchAndAddedKanStacksOnItsCalledTile() {
+    @Test void meldTilesTouchAndAddedKanLiesInFrontOfItsCalledTile() {
         for (int source = 1; source <= 3; source++) {
             var layout = MeldLayout.of(new Meld(Meld.Type.ADDED_KAN, List.of(0, 1, 2, 3), source, 0), 0);
             for (int i = 1; i < 3; i++) {
@@ -194,8 +204,12 @@ class TableLayoutTest {
                 assertEquals(widths / 2, after.x() - before.x(), 1e-7);
             }
             var added = layout.parts().getLast();
-            assertTrue(added.stacked());
-            assertEquals(layout.parts().stream().filter(p -> p.sideways() && !p.stacked()).findFirst().orElseThrow().x(), added.x());
+            var called = layout.parts().stream().filter(p -> p.tile() == 0).findFirst().orElseThrow();
+            assertTrue(added.sideways());
+            assertEquals(called.x(), added.x());
+            assertEquals(TileMesh.WIDTH, called.z() - added.z(), 1e-7);
+            for (var part : layout.parts().subList(0, 3)) assertEquals(TileMesh.HEIGHT / 2.0,
+                part.z() + (part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2.0, 1e-7);
         }
     }
 

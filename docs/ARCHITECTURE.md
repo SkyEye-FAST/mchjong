@@ -102,7 +102,7 @@ centered whenever the right-corner melds leave enough space; otherwise it shifts
 left by exactly the missing clearance, rather than centering in the remaining
 space. Only an actual drawn tile occupies the separate draw slot; unused draw
 and meld slots cannot push a waiting hand left. `MeldLayout` supplies the real
-occupied width, including sideways calls and stacked added kans, to both hand
+occupied width, including sideways calls and front-aligned added kans, to both hand
 clearance and meld rendering.
 The table reserves a 3 x 3 footprint with dimensions shared by placement,
 colliders, furniture and seating. Melds are anchored at the owner's right-hand

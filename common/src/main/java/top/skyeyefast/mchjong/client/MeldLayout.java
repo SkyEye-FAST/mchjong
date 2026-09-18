@@ -6,7 +6,7 @@ import top.skyeyefast.mchjong.engine.Meld;
 
 /** Shared ordering and geometry for the table mesh, HUD and action previews. */
 public record MeldLayout(List<Part> parts, double width) {
-    public record Part(int tile, double x, boolean sideways, boolean back, boolean stacked) {}
+    public record Part(int tile, double x, double z, boolean sideways, boolean back) {}
     public MeldLayout { parts = List.copyOf(parts); }
 
     public static MeldLayout of(Meld meld, int owner) {
@@ -25,11 +25,15 @@ public record MeldLayout(List<Part> parts, double width) {
         for (int i = 0; i < tiles.size(); i++) {
             boolean sideways = i == called;
             double width = sideways ? TileMesh.HEIGHT : TileMesh.WIDTH;
-            parts.add(new Part(tiles.get(i), x + width / 2, sideways,
-                meld.closed() && (i == 0 || i == tiles.size() - 1), false));
+            double z = sideways ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) / 2 : 0;
+            parts.add(new Part(tiles.get(i), x + width / 2, z, sideways,
+                meld.closed() && (i == 0 || i == tiles.size() - 1)));
             x += width;
         }
-        if (added != null) parts.add(new Part(added, parts.get(called).x(), true, false, true));
+        if (added != null) {
+            Part original = parts.get(called);
+            parts.add(new Part(added, original.x(), original.z() - TileMesh.WIDTH, true, false));
+        }
         return new MeldLayout(parts, x);
     }
 }

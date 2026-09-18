@@ -113,9 +113,12 @@ the left, with clearance from the adjacent player's right-corner melds.
 
 Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called
-tiles and stacked added kans. Concealed hand tiles, wall tiles, river tiles and tiles within a meld
-touch edge to edge. Keep the deliberate drawn-tile and inter-meld gaps separate
-from those physical contact rules. Keep all four seat orientations and exposed
+tiles and front-aligned added kans. All tiles in a meld share the same bottom
+edge toward their owner. An added-kan tile lies flat immediately in front of
+the sideways called tile, toward the center, at the same height.
+Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to edge.
+Keep the deliberate drawn-tile and hand-to-meld gaps separate from those physical
+contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
 Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and

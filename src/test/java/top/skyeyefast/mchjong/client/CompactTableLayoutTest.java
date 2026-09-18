@@ -101,7 +101,7 @@ class CompactTableLayoutTest {
             var pons = scene(v, owner, melds(Meld.Type.PON, 3, owner, 1), 5, true, false);
             var added = scene(v, owner, melds(Meld.Type.ADDED_KAN, 3, owner, 1), 5, true, false);
             var open = scene(v, owner, melds(Meld.Type.OPEN_KAN, 3, owner, 1), 5, true, false);
-            assertEquals(center(pons, 4), center(added, 4), 1e-9, "Stacked added tiles must not reserve extra horizontal width");
+            assertEquals(center(pons, 4), center(added, 4), 1e-9, "Front-aligned added tiles must not reserve extra horizontal width");
             assertTrue(center(open, 4) < center(pons, 4), "A genuinely wider open kan needs more room");
         }
     }

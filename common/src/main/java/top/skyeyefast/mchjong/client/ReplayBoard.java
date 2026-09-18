@@ -85,7 +85,7 @@ public final class ReplayBoard extends AbstractWidget {
             }
             y = tiles(graphics, concealed, y + 3, tileWidth, winning >= 0 ? winning : player.drawn());
             for (var meld : player.melds()) {
-                if (graphics != null) TileGui.meld(graphics, meld, seat, getX() + 24, y + 4, tileWidth);
+                if (graphics != null) TileGui.meld(graphics, meld, seat, getX() + 24, y + tileWidth / 2 + 4, tileWidth);
                 y += tileWidth * 2 + 8;
             }
             if (!player.norths().isEmpty()) y = tiles(graphics, player.norths(), y, tileWidth, -1);

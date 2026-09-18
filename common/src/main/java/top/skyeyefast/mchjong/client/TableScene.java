@@ -17,7 +17,6 @@ public final class TableScene {
     public static final double HAND_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double DRAW_GAP = 0.035;
     public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
-    public static final double MELD_GAP = 0.035;
     public static final double HAND_MELD_GAP = 0.06;
     public static final double WALL_Z = 0.91;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
@@ -51,7 +50,6 @@ public final class TableScene {
             double meldLeft = MELD_RIGHT;
             for (Meld meld : player.melds()) {
                 var layout = MeldLayout.of(meld, seat);
-                if (!melds.isEmpty()) meldLeft -= MELD_GAP;
                 melds.add(layout);
                 meldLeft -= layout.width() * TILE_SCALE;
             }
@@ -91,13 +89,13 @@ public final class TableScene {
                 for (int i = 0; i < layout.parts().size(); i++) {
                     var part = layout.parts().get(i);
                     result.add(piece(part.tile(), seat, Area.MELD, meldIndex * 4 + i, start + part.x() * TILE_SCALE,
-                        top + (FLAT_CENTER + (part.stacked() ? TileMesh.DEPTH : 0)) * TILE_SCALE, HAND_Z,
+                        top + FLAT_CENTER * TILE_SCALE, HAND_Z + part.z() * TILE_SCALE,
                         part.sideways() ? 90 : 0, true, part.back()));
                 }
-                meldRight = start - MELD_GAP;
+                meldRight = start;
             }
             // Two short rows leave the adjacent player's right-corner melds clear as well.
-            double northLeft = -HAND_Z + RIVER_ROW / 2 + MELD_GAP;
+            double northLeft = -HAND_Z + RIVER_ROW / 2 + .035;
             for (int i = 0; i < player.norths().size(); i++)
                 result.add(piece(player.norths().get(i), seat, Area.NORTH, i, northLeft + (i % 2 + .5) * RIVER_STEP,
                     top + FLAT_CENTER * TILE_SCALE, HAND_Z - i / 2 * RIVER_ROW, 0, true, false));

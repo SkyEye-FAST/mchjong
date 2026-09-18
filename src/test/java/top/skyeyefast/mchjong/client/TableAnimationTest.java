@@ -169,7 +169,8 @@ class TableAnimationTest {
             List.of(new Meld(Meld.Type.PON, List.of(40, 41, 42), 1, 40), new Meld(Meld.Type.ADDED_KAN, List.of(80, 81, 82, 83), 2, 80)), List.of(), false));
         var pieces = TableScene.build(update(base, seats, 0)).stream().filter(piece -> piece.area() == TableScene.Area.MELD).toList();
         assertEquals(7, pieces.stream().map(TableScene.Piece::index).distinct().count());
-        assertTrue(pieces.stream().anyMatch(piece -> piece.position().y > TableGeometry.FELT_Y + 0.08));
+        assertTrue(pieces.stream().allMatch(piece -> Math.abs(piece.position().y
+            - TableGeometry.FELT_Y - TileMesh.DEPTH * TableScene.TILE_SCALE / 2) < 1e-7));
     }
 
     @Test void staleSnapshotsCannotRewindAnOpeningOrItsViewingPermissions() {

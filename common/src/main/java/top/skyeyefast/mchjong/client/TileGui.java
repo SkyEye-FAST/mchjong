@@ -9,7 +9,7 @@ public final class TileGui {
     private TileGui() {}
 
     public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways, boolean marked) {
-        int height = width * 3 / 2;
+        int height = Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH);
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
         if (sideways) {
@@ -31,16 +31,17 @@ public final class TileGui {
     }
 
     public static int meldWidth(Meld meld, int owner, int tileWidth) {
-        return (int) Math.ceil(MeldLayout.of(meld, owner).width() * tileWidth / 0.104);
+        return (int) Math.ceil(MeldLayout.of(meld, owner).width() * tileWidth / TileMesh.WIDTH);
     }
 
     public static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth) {
-        double scale = tileWidth / 0.104;
+        double scale = tileWidth / (double) TileMesh.WIDTH;
         for (var part : MeldLayout.of(meld, owner).parts()) {
-            int span = part.sideways() ? tileWidth * 3 / 2 : tileWidth;
-            tile(graphics, part.tile(), x + (int) Math.round(part.x() * scale) - span / 2,
-                y + (part.sideways() ? tileWidth / 2 : 0) - (part.stacked() ? tileWidth / 2 : 0),
-                tileWidth, part.back(), part.sideways(), part.tile() == meld.calledTile() || part.stacked());
+            double span = part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH;
+            double depth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
+            tile(graphics, part.tile(), x + (int) Math.round((part.x() - span / 2) * scale),
+                y + (int) Math.round((part.z() + TileMesh.HEIGHT / 2.0 - depth / 2) * scale),
+                tileWidth, part.back(), part.sideways(), part.sideways());
         }
     }
 }
