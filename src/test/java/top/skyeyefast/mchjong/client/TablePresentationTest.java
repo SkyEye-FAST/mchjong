@@ -33,10 +33,22 @@ class TablePresentationTest {
         var settings = new TableSettings();
         assertTrue(settings.cameraFov(70, 4.0 / 3) > settings.cameraFov(70, 16.0 / 10));
         assertEquals(110, settings.cameraFov(110, 4.0 / 3));
-        assertTrue(TableCamera.overheadFov(4.0 / 3, 240) > 0 && TableCamera.overheadFov(4.0 / 3, 240) < 180);
-        assertEquals(TableCamera.overheadFov(4.0 / 3, 240), TableCamera.overheadFov(16.0 / 10, 240));
+    }
+
+    @Test void overheadFitsTheCompleteTableBetweenHudAndHand() {
+        for (int height : new int[] {240, 400, 600}) for (double aspect : new double[] {.75, 4.0 / 3, 16.0 / 10, 21.0 / 9}) {
+            int width = (int) Math.round(height * aspect);
+            double fov = TableCamera.overheadFov(aspect, height);
+            assertTrue(fov > 0 && fov < 90);
+            double scale = height / (2 * TableCamera.OVERHEAD_RISE * Math.tan(Math.toRadians(fov / 2)));
+            double center = height / 2.0 - TableCamera.overheadOffset(aspect, height) * scale;
+            double radius = TableGeometry.OUTER_HALF_WIDTH * scale;
+            assertTrue(center - radius >= 56 - 1e-6);
+            assertTrue(center + radius <= TableHand.top(width, height) - 8 + 1e-6);
+            assertTrue(width / 2.0 - radius >= 8 - 1e-6);
+            assertTrue(width / 2.0 + radius <= width - 8 + 1e-6);
+        }
         assertTrue(TableCamera.overheadFov(4.0 / 3, 400) < TableCamera.overheadFov(4.0 / 3, 240));
-        assertEquals(TableCamera.overheadFov(4.0 / 3, 400), TableCamera.overheadFov(4.0 / 3, 600));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {

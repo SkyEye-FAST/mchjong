@@ -15,7 +15,7 @@ final class TableHand {
     TableHand(TableView.Seat player, int width, int height) {
         tiles = player.hand();
         drawn = player.drawn();
-        tileWidth = Math.max(1, Math.min(26, (width - 36) / Math.max(14, tiles.size())));
+        tileWidth = tileWidth(width);
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT ? 0 : Math.max(4, tileWidth / 3);
         span = tiles.size() * tileWidth + gap;
@@ -25,6 +25,12 @@ final class TableHand {
     }
 
     int top() { return y - 7; }
+
+    private static int tileWidth(int width) { return Math.max(1, Math.min(26, (width - 36) / 14)); }
+
+    static int top(int width, int height) {
+        return height - 27 - Math.round(tileWidth(width) * TileMesh.HEIGHT / TileMesh.WIDTH);
+    }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);

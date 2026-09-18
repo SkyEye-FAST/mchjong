@@ -86,10 +86,12 @@ final class TableAutomation {
                     var caption = Component.translatable(expanded ? key : key + ".short");
                     if (expanded && font.width(caption) > getWidth() - 17) {
                         var lines = font.split(caption, getWidth() - 17);
-                        for (int line = 0; line < Math.min(2, lines.size()); line++)
-                            graphics.drawString(font, lines.get(line), getX() + 13, getY() + 1 + line * 9, color, false);
+                        int count = Math.min(2, lines.size());
+                        for (int line = 0; line < count; line++)
+                            graphics.drawString(font, lines.get(line), getX() + 13 + (getWidth() - 17 - font.width(lines.get(line))) / 2,
+                                getY() + (getHeight() - count * font.lineHeight) / 2 + line * font.lineHeight, color, false);
                     } else MahjongUi.text(graphics, font, caption, getX() + 13, getY() + 6,
-                        getWidth() - 17, color, false);
+                        getWidth() - 17, color, true);
                 }
             }.selected(enabled);
             button.active = !pending;

@@ -689,7 +689,7 @@ public final class TableScreen extends Screen {
             }
         }
         if (choosingRiichi) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.choose_riichi"),
-            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true);
+            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
         if (hand != null) hand.render(graphics, selectedTile, tile -> {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
@@ -709,7 +709,7 @@ public final class TableScreen extends Screen {
                 MahjongUi.text(graphics, font, text, footerClock ? 10 : actionLeft,
                     footerClock ? height - 13 : actionTop - (choosingRiichi ? 28 : 14),
                     footerClock ? width - 20 : width - actionLeft - 10,
-                    clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true);
+                    clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true, true);
             }
         }
         if (TableResults.available(view)) {
@@ -718,12 +718,12 @@ public final class TableScreen extends Screen {
                 10, 14, 0xffd1e4d9);
         }
         if (dealing()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.dealing"),
-            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true);
+            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             int cueY = 88;
             for (var cue : animation().cues(Util.getMillis())) {
                 MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
-                    actionLeft, cueY, width - actionLeft - 10, MahjongUi.ACCENT, true);
+                    actionLeft, cueY, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
                 cueY += 13;
             }
         }
@@ -972,10 +972,13 @@ public final class TableScreen extends Screen {
             renderSurface(graphics);
             TableView view = view();
             int icons = view != null && TableSettings.get().actionTiles ? actionPreviewWidth(view, action) : 0;
-            int y = getY() + 5;
-            for (var line : font.split(getMessage(), Math.max(16, width - icons - 16)).stream().limit(2).toList()) {
-                graphics.drawString(font, line, getX()+9, y, active ? MahjongUi.TEXT : MahjongUi.DISABLED, false);
-                y += 9;
+            int captionWidth = Math.max(16, width - icons - 16);
+            var lines = font.split(getMessage(), captionWidth).stream().limit(2).toList();
+            int y = getY() + (height - lines.size() * font.lineHeight) / 2;
+            for (var line : lines) {
+                graphics.drawString(font, line, getX() + 8 + (captionWidth - font.width(line)) / 2,
+                    y, active ? MahjongUi.TEXT : MahjongUi.DISABLED, false);
+                y += font.lineHeight;
             }
             if (icons > 0 && view != null) {
                 ActionPreview preview = ActionPreview.of(view, action);

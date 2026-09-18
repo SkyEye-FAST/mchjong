@@ -56,7 +56,9 @@ rules. Keep captions within their own bounds. Long one-line labels are ellipsize
 with the complete text available as a tooltip; longer explanations wrap. Do not
 shrink every caption to accommodate one long translation. Use the game's font
 and translated components, never a hardcoded replacement font or English-only
-labels. Button text is flat, without a drop shadow.
+labels. Button text is centered within its caption area and flat, without a drop
+shadow. Text over the world, including clocks, riichi prompts and animation cues,
+uses a drop shadow for contrast.
 
 ## Layout and information hierarchy
 
@@ -108,10 +110,10 @@ In the seated view the rail sits below the header, leaving the physical hand cle
 In the overhead view it sits above decisions, outside the expanded automation column.
 Closed settings persist locally and reset disables hints.
 
-The overhead camera uses a tighter field of view, with additional zoom as logical
-viewport height grows from 240 to 400 pixels. The camera offset keeps the near
-meld rail above the independent private-hand strip. World rendering and picking
-continue to use the same camera transform.
+The overhead camera looks straight down from an elevated eye to reduce perspective
+distortion. Its field of view and offset fit the complete table into the space
+between the top HUD and the independent private-hand strip, adapting to viewport
+size. World rendering and picking use the same camera transform.
 
 ## Mahjong box
 
