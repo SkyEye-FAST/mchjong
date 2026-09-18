@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- One/two/four-yaku-han minimum and East-only/East–South options for Mahjong Soul and Tenhou, with length-aware extensions, replay labels and an explicit custom bankruptcy control.
 - Automatic north extraction in three-player matches, with server-validated legal declarations, win priority and normal robbery/replacement handling.
 - World, room and personal settings, administrator-controlled hand visibility and optional safe invitation teleportation, plus transferable room ownership.
 - Pregame wind drawing for ordinary tables and randomized seating for automatic tables, with server-verified mounts before readiness and a fresh assignment for each match.

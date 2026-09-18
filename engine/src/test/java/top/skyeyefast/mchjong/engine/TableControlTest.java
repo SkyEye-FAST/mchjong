@@ -14,13 +14,21 @@ class TableControlTest {
             var rules = preset.config();
             assertFalse(rules.custom());
             assertEquals(rules, json.fromJson(json.toJson(rules), RuleConfig.class));
-            var variant = rules.with(RuleOption.KUITAN, 0).with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal());
+            assertEquals(1, rules.minHan());
+            assertEquals(2, rules.matchLength());
+            var variant = rules.with(RuleOption.KUITAN, 0).with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal())
+                .with(RuleOption.MIN_HAN, 4).with(RuleOption.MATCH_LENGTH, 1);
             assertEquals(!(preset.tenhou() || preset.mahjongSoul()), variant.custom());
+            assertEquals(4, variant.withPreset(RuleSet.TENHOU_4).minHan());
+            assertEquals(1, variant.withPreset(RuleSet.TENHOU_4).matchLength());
+            assertEquals(1, variant.withPreset(RuleSet.WRC).minHan());
+            assertEquals(2, variant.withPreset(RuleSet.WRC).matchLength());
             assertTrue(variant.with(RuleOption.STARTING_POINTS, rules.startingPoints() + 100).custom());
         }
         var custom = RuleSet.M_LEAGUE.config().with(RuleOption.STARTING_POINTS, 28000)
             .with(RuleOption.RETURN_POINTS, 35000).with(RuleOption.TARGET_POINTS, 40000)
-            .with(RuleOption.UMA_1, 25600).with(RuleOption.IPPATSU, 0).with(RuleOption.RED_FIVES, RedFives.NONE.ordinal());
+            .with(RuleOption.UMA_1, 25600).with(RuleOption.IPPATSU, 0).with(RuleOption.RED_FIVES, RedFives.NONE.ordinal())
+            .with(RuleOption.MIN_HAN, 2).with(RuleOption.MATCH_LENGTH, 1).with(RuleOption.BANKRUPTCY, 1);
         assertTrue(custom.custom());
         assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.IPPATSU, 2));
         assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.STARTING_POINTS, 28001));

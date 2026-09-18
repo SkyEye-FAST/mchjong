@@ -6,6 +6,25 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ScoringBridgeTest {
+    @Test void minimumHanExcludesBonusesAndUsesEachWinningInterpretation() {
+        var hand = TestHands.tiles("123456m456p22s789s");
+        var yakuman = TestHands.tiles("19m19p19s1234567z1m");
+        for (var preset : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.TENHOU_4)) {
+            for (int minimum : List.of(1, 2, 4)) {
+                var rules = preset.config().with(RuleOption.MIN_HAN, minimum);
+                var ron = HandAnalyzer.score(hand.subList(0, 13), List.of(), hand.getLast(), false, 1, 0,
+                    8, List.of("Richi"), rules);
+                assertEquals(minimum <= 2, ron != null, "Eight bonus han cannot satisfy the threshold");
+                var tsumo = HandAnalyzer.score(hand, List.of(), hand.getLast(), true, 1, 0,
+                    0, List.of("Richi", "Ippatsu"), rules);
+                assertEquals(minimum <= 2 || preset.mahjongSoul(), tsumo != null, "Tenhou excludes ippatsu from the minimum");
+                assertNotNull(HandAnalyzer.score(yakuman.subList(0, 13), List.of(), yakuman.getLast(), false, 1, 0,
+                    0, List.of(), rules));
+            }
+        }
+        assertThrows(IllegalArgumentException.class, () -> RuleSet.TENHOU_4.config().with(RuleOption.MIN_HAN, 3));
+    }
+
     @Test void customScoringOptionsOverridePresetsIndependently() {
         var hand = TestHands.tiles("123456m456p22s789s");
         var base = RuleSet.M_LEAGUE.config();

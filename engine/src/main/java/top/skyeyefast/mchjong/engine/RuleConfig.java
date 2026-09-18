@@ -61,6 +61,10 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
         return points;
     }
     public boolean kuitan() { return enabled(KUITAN); }
+    public int minHan() { return get(MIN_HAN); }
+    public boolean ippatsuCountsTowardMinimum() { return enabled(IPPATSU_COUNTS_TOWARD_MINIMUM); }
+    public int matchLength() { return get(MATCH_LENGTH); }
+    public int scheduledRounds() { return matchLength() * players(); }
     public boolean ippatsu() { return enabled(IPPATSU); }
     public boolean uraDora() { return enabled(URA_DORA); }
     public boolean kanDora() { return enabled(KAN_DORA); }
@@ -81,7 +85,7 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
     public boolean nagashiMangan() { return enabled(NAGASHI_MANGAN); }
     public boolean nagashiAllowsCalls() { return enabled(NAGASHI_ALLOWS_CALLS); }
     public boolean agariYame() { return enabled(AGARI_YAME); }
-    public boolean westExtension() { return enabled(WEST_EXTENSION); }
+    public boolean extension() { return enabled(EXTENSION); }
     public boolean formalTenpaiIgnoresMelds() { return enabled(FORMAL_TENPAI_IGNORES_MELDS); }
     public int minRiichiWall() { return get(MIN_RIICHI_WALL); }
     public boolean needsRiichiDeposit() { return enabled(NEEDS_RIICHI_DEPOSIT); }

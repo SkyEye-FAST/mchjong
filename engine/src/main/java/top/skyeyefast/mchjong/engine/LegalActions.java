@@ -61,9 +61,9 @@ final class LegalActions {
         if (!waits.equals(HandAnalyzer.waits(after, melds))) return false;
         if (game.rules.riichiKanKeepsMelds() && !HandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false;
         if (game.rules.riichiKanKeepsYaku()) for (int wait : waits) for (boolean tsumo : new boolean[]{false, true}) {
-            var previous = HandAnalyzer.score(before, player.melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
+            var previous = HandAnalyzer.score(before, player.melds, wait * 4, tsumo, game.wind(seat), game.round / game.rules.players(),
                 0, List.of("Richi"), game.rules);
-            var next = HandAnalyzer.score(after, melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
+            var next = HandAnalyzer.score(after, melds, wait * 4, tsumo, game.wind(seat), game.round / game.rules.players(),
                 0, List.of("Richi"), game.rules);
             if (previous != null && (next == null || !next.yaku().containsAll(previous.yaku()))) return false;
         }

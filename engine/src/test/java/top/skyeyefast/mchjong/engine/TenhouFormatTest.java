@@ -20,13 +20,16 @@ class TenhouFormatTest {
         assertThrows(IllegalArgumentException.class, () -> TenhouReplay.tile(-1));
         assertThrows(IllegalArgumentException.class, () -> TenhouReplay.tile(136));
         var match = fixture(RuleSet.TENHOU_4, 0, 0, List.of(), "exhaustive");
-        for (var reds : RedFives.values()) {
+        for (var reds : RedFives.values()) for (int length : List.of(1, 2)) {
             var configured = new ReplayMatch(match.id(), match.tableId(), match.startedAt(), match.updatedAt(),
-                match.rules().with(RuleOption.RED_FIVES, reds.ordinal()).with(RuleOption.KUITAN, 0),
+                match.rules().with(RuleOption.RED_FIVES, reds.ordinal()).with(RuleOption.KUITAN, 0)
+                    .with(RuleOption.MATCH_LENGTH, length).with(RuleOption.MIN_HAN, 4),
                 match.initialDealer(), match.participants(), match.hands(), false, reds);
             var rule = (java.util.Map<?, ?>) TenhouReplay.export(configured).get("rule");
             for (int suit = 0; suit < 3; suit++) assertEquals(reds.count(suit), rule.get("aka5" + (suit + 1)));
             assertFalse(rule.get("disp").toString().contains("喰"));
+            assertTrue(rule.get("disp").toString().startsWith(length == 1 ? "東" : "南"));
+            assertTrue(rule.get("disp").toString().contains("4飜縛り"));
         }
     }
 

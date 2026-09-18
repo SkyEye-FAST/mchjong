@@ -178,6 +178,47 @@ class GameLifecycleTest {
         assertEquals(3, RuleSet.MAHJONG_SOUL_3.minRiichiWall());
     }
 
+    @Test void matchLengthAndExtensionRespectPlayerCountAndDealerRepeats() {
+        for (var preset : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3, RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
+            for (int length : List.of(1, 2)) {
+                var rules = preset.config().with(RuleOption.MATCH_LENGTH, length);
+                int last = rules.scheduledRounds() - 1;
+                assertEquals(Game.Phase.HAND_END, endFixture(rules, last - 1, 0, true, false).phase());
+                assertEquals(Game.Phase.MATCH_END, endFixture(rules, last, 0, true, false).phase());
+                assertEquals(Game.Phase.HAND_END, endFixture(rules, last, 0, false, false).phase());
+                assertEquals(Game.Phase.MATCH_END, endFixture(rules.with(RuleOption.EXTENSION, 0), last, 0, false, false).phase());
+                assertEquals(Game.Phase.MATCH_END, endFixture(rules, last + preset.players(), 0, false, false).phase());
+                assertEquals(Game.Phase.HAND_END, endFixture(rules, last + 1, 0, true, true).phase(),
+                    "A non-leading dealer still repeats in an extension");
+            }
+        }
+    }
+
+    @Test void bankruptcyDefaultsAndCustomSwitchUseStrictlyNegativePoints() {
+        for (var preset : RuleSet.values()) {
+            assertEquals(preset.mahjongSoul() || preset.tenhou(), preset.config().bankruptcy(), preset.name());
+            assertEquals(Game.Phase.HAND_END, endFixture(preset.config(), 0, 0, false, false).phase());
+            for (int enabled : List.of(0, 1)) {
+                var rules = preset.config().with(RuleOption.BANKRUPTCY, enabled);
+                assertEquals(enabled == 1 ? Game.Phase.MATCH_END : Game.Phase.HAND_END,
+                    endFixture(rules, 0, -100, false, false).phase());
+            }
+        }
+    }
+
+    private static Game endFixture(RuleConfig rules, int round, int firstPoints, boolean target, boolean repeats) {
+        var game = new Game(new UUID(0, 1), rules.preset(), 1);
+        game.rules = rules;
+        game.round = round;
+        game.dealer = 0;
+        for (var player : game.players) player.points = rules.targetPoints() - 10000;
+        game.players[0].points = firstPoints;
+        if (target) game.players[1].points = rules.targetPoints() + 10000;
+        if (repeats) game.players[0].hand.addAll(TestHands.tiles("123456m456p22s78s"));
+        Settlement.exhaustive(game);
+        return game;
+    }
+
     @Test void leagueAFloatingBonusesAndCompetitiveTieSettlement() {
         int[][] scores = {{30000,30000,30000,30000}, {60000,25000,20000,15000},
             {40000,35000,25000,20000}, {40000,30000,30000,20000}, {29900,29900,29900,29300}};

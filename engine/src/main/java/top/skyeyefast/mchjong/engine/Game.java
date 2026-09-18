@@ -613,7 +613,8 @@ public final class Game {
         newDecision(Phase.REACTION);
         for (int i = 0; i < rules.players(); i++) if (i != lastFrom) {
             options.set(i, LegalActions.onReaction(this, i));
-            if (rules.yakulessFuriten() && (pending == null || pending.type() == ADDED_KAN)
+            if ((rules.yakulessFuriten() || rules.minHan() > 1) && (pending == null || pending.type() == ADDED_KAN
+                || pending.type() == NUKI && rules.robNorthWithoutKokushi())
                 && options.get(i).stream().noneMatch(action -> action.type() == RON)
                 && HandAnalyzer.waits(players[i].hand, players[i].melds).contains(Tile.kind(lastTile))) {
                 players[i].temporaryFuriten = true;
@@ -888,7 +889,7 @@ public final class Game {
                 throw new IllegalStateException("Invalid clock allowance");
         }
         if (players.length != 4 || options.size() != 4 || dealer < 0 || dealer >= rules.players()
-            || round < 0 || round >= 3 * rules.players() || honba < 0 || riichiSticks < 0) {
+            || round < 0 || round >= rules.scheduledRounds() + rules.players() || honba < 0 || riichiSticks < 0) {
             throw new IllegalStateException("Invalid saved table");
         }
         Set<UUID> ids = new HashSet<>();

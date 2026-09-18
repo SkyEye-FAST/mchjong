@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.engine;
 
 import java.util.Locale;
 
-/** Named hanchan presets. Source versions and settlement conventions are in docs/RULES.md. */
+/** Named rule presets. Source versions and settlement conventions are in docs/RULES.md. */
 public enum RuleSet {
     MAHJONG_SOUL_4(4), MAHJONG_SOUL_3(3), TENHOU_4(4), TENHOU_3(3), M_LEAGUE(4), JPML_A(4), WRC(4);
 
@@ -17,7 +17,8 @@ public enum RuleSet {
     public boolean mahjongSoul() { return this == MAHJONG_SOUL_3 || this == MAHJONG_SOUL_4; }
     private boolean online() { return tenhou() || mahjongSoul(); }
     public boolean adjustable(RuleOption option) {
-        return online() && (option == RuleOption.KUITAN || option == RuleOption.RED_FIVES);
+        return online() && (option == RuleOption.KUITAN || option == RuleOption.RED_FIVES
+            || option == RuleOption.MIN_HAN || option == RuleOption.MATCH_LENGTH);
     }
     public int startingPoints() { return this == JPML_A || this == WRC ? 30000 : sanma() ? 35000 : 25000; }
     public int returnPoints() { return mahjongSoul() ? startingPoints() : sanma() ? 40000 : 30000; }
@@ -36,7 +37,7 @@ public enum RuleSet {
     public boolean abortiveDraws() { return online(); }
     public boolean nagashiMangan() { return online(); }
     public boolean agariYame() { return online(); }
-    public boolean westExtension() { return online(); }
+    public boolean extension() { return online(); }
     public boolean robConcealedKan() { return mahjongSoul(); }
     public boolean robNorthWithoutKokushi() { return sanma(); }
     public boolean delayedOpenKanDora() { return online(); }

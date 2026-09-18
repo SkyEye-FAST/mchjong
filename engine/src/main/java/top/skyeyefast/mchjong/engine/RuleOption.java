@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.engine;
 
 import java.util.Locale;
+import java.util.List;
 import java.util.function.Predicate;
 import java.util.function.ToIntFunction;
 
@@ -31,15 +32,18 @@ public enum RuleOption {
     DOUBLE_WIND_PAIR_FU(Group.SCORING, RuleSet::doubleWindPairFu),
     RENHOU_MANGAN(Group.SCORING, RuleSet::renhouMangan),
     RED_FIVES(Group.SCORING, 0, 2, 1, r -> r.defaultRedFives().ordinal()),
+    MIN_HAN(Group.SCORING, 1, 4, 1, r -> 1),
+    IPPATSU_COUNTS_TOWARD_MINIMUM(Group.SCORING, r -> !r.tenhou()),
 
+    MATCH_LENGTH(Group.FLOW, 1, 2, 1, r -> 2),
+    BANKRUPTCY(Group.FLOW, RuleSet::bankruptcy),
     HEAD_BUMP(Group.FLOW, RuleSet::headBump),
     TRIPLE_RON_DRAW(Group.FLOW, RuleSet::tripleRonDraw),
-    BANKRUPTCY(Group.FLOW, RuleSet::bankruptcy),
     ABORTIVE_DRAWS(Group.FLOW, RuleSet::abortiveDraws),
     NAGASHI_MANGAN(Group.FLOW, RuleSet::nagashiMangan),
     NAGASHI_ALLOWS_CALLS(Group.FLOW, RuleSet::nagashiAllowsCalls),
     AGARI_YAME(Group.FLOW, RuleSet::agariYame),
-    WEST_EXTENSION(Group.FLOW, RuleSet::westExtension),
+    EXTENSION(Group.FLOW, RuleSet::extension),
     FORMAL_TENPAI_IGNORES_MELDS(Group.FLOW, RuleSet::tenhou),
 
     MIN_RIICHI_WALL(Group.CALLS, 0, 70, 1, RuleSet::minRiichiWall),
@@ -92,7 +96,17 @@ public enum RuleOption {
     public int step() { return step; }
     public boolean toggle() { return toggle; }
     public int defaultValue(RuleSet preset) { return defaults.applyAsInt(preset); }
-    public boolean valid(int value) { return value >= min && value <= max && value % step == 0; }
+    public List<Integer> choices() {
+        return switch (this) {
+            case MIN_HAN -> List.of(1, 2, 4);
+            case MATCH_LENGTH -> List.of(1, 2);
+            default -> List.of();
+        };
+    }
+    public boolean valid(int value) {
+        return value >= min && value <= max && value % step == 0
+            && (choices().isEmpty() || choices().contains(value));
+    }
     public String translationKey() {
         return group == Group.UMA ? floatingPlayers() < 0 ? "rules.mchjong.uma" : "rules.mchjong.floating_uma"
             : "rules.mchjong.option." + name().toLowerCase(Locale.ROOT);

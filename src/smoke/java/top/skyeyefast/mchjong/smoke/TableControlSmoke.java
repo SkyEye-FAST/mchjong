@@ -129,6 +129,18 @@ final class TableControlSmoke {
         } else if (stage == 21 && ticks > 10) {
             require(widget(client, RedFives.THREE.translationKey()).isHovered(), "Disabled red choice was not hovered");
             capture(client, output, "25h-insufficient-reds-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
+            var nextPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().equals(">")).findFirst().orElseThrow();
+            client.screen.mouseClicked(nextPage.getX() + 5, nextPage.getY() + 5, 0);
+            click(client, "rules.mchjong.option.min_han.4");
+            click(client, "rules.mchjong.option.match_length.1");
+            next(29);
+        } else if (stage == 29 && ticks > 5) {
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "25l-match-options-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
+            var previousPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().equals("<")).findFirst().orElseThrow();
+            client.screen.mouseClicked(previousPage.getX() + 5, previousPage.getY() + 5, 0);
             if (++ruleLanguage < RULE_LANGUAGES.length) {
                 selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
                 next(20);
@@ -179,6 +191,7 @@ final class TableControlSmoke {
             next(23);
         } else if (stage == 23 && client.screen instanceof TableScreen && view.rules().redFives() == RedFives.FOUR && ticks > 5) {
             require(!view.rules().custom() && !view.rules().kuitan(), "Preset variants were classified as custom");
+            require(view.rules().minHan() == 4 && view.rules().matchLength() == 1, "Match options were not acknowledged");
             require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
             click(client, "rules.mchjong.title");
             click(client, "rules.mchjong.mode.details");
@@ -225,11 +238,17 @@ final class TableControlSmoke {
             next(16);
         } else if (stage == 16 && ticks > 5) {
             capture(client, output, "25f-custom-scoring.png");
+            click(client, "rules.mchjong.group.flow");
+            String label = Component.translatable("rules.mchjong.option.bankruptcy").getString();
+            var bankruptcy = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+            client.screen.mouseClicked(bankruptcy.getX() + 5, bankruptcy.getY() + 5, 0);
             click(client, "rules.mchjong.apply");
             next(17);
         } else if (stage == 17 && client.screen instanceof TableScreen && view.rules().custom() && ticks > 5) {
             require(view.rules().startingPoints() == 32100 && view.rules().returnPoints() == 33300 && !view.rules().ippatsu(),
                 "Custom rule proposal was not synchronized");
+            require(!view.rules().bankruptcy(), "Custom bankruptcy setting was not acknowledged");
             require(view.seats().stream().allMatch(seat -> seat.points() == 32100), "Custom starting points not applied");
             capture(client, output, "25g-custom-lobby.png");
             click(client, "rules.mchjong.title");

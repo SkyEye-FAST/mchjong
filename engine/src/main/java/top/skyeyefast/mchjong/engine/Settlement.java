@@ -156,13 +156,14 @@ final class Settlement {
     private static boolean matchEnds(Game game) {
         int n = game.rules.players();
         if (game.rules.bankruptcy()) for (int seat = 0; seat < n; seat++) if (game.players[seat].points < 0) return true;
-        if (game.round < 2 * n - 1 || game.abortResult) return false;
+        if (game.round < game.rules.scheduledRounds() - 1 || game.abortResult) return false;
         int top = ranking(game).getFirst();
         if (game.dealerRepeats) {
             return game.rules.agariYame() && top == game.dealer && game.players[top].points >= game.rules.targetPoints();
         }
-        if (!game.rules.westExtension()) return true;
-        return game.players[top].points >= game.rules.targetPoints() || game.round >= 3 * n - 1;
+        if (!game.rules.extension()) return true;
+        return game.players[top].points >= game.rules.targetPoints()
+            || game.round >= game.rules.scheduledRounds() + n - 1;
     }
 
     private static List<Integer> ranking(Game game) {

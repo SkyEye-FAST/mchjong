@@ -96,6 +96,9 @@ labelled with a shortage tooltip. Availability comes from synchronized server
 capabilities rather than access to box inventory. All rule pages paginate at
 320 x 240, with complete labels available on hover. The shared smoke captures
 the disabled-red tooltip in all four locales at that size.
+Minimum yaku han uses explicit one/two/four choices and match length uses
+East-only/East–South choices. Bankruptcy stays visible in the preset overview
+and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
 ## Mahjong box
 
