@@ -619,12 +619,16 @@ public final class TableScreen extends Screen {
             return 0;
         });
         super.render(graphics, mouseX, mouseY, partialTick);
+        boolean footerClock = false;
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
             var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
             var clock = view.clocks().get(view.viewerSeat()).after(table.clientViewAgeMillis());
             if (clock.active()) {
+                footerClock = hand != null;
                 Component text = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());
-                MahjongUi.text(graphics, font, text, actionLeft, actionTop - (choosingRiichi ? 28 : 14), width - actionLeft - 10,
+                MahjongUi.text(graphics, font, text, footerClock ? 10 : actionLeft,
+                    footerClock ? height - 13 : actionTop - (choosingRiichi ? 28 : 14),
+                    footerClock ? width - 20 : width - actionLeft - 10,
                     clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true);
             }
         }
@@ -643,7 +647,7 @@ public final class TableScreen extends Screen {
                 cueY += 13;
             }
         }
-        if (settings.show(TableSettings.Information.HELP)) {
+        if (!footerClock && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = Component.translatable(helpKey);

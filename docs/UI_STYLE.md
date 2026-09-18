@@ -142,6 +142,7 @@ short hand does not cover the right-corner melds. Action buttons stay above it. 
 restores the seated camera; third-person remains under Minecraft's control.
 In overhead mode the seat cards use a single-line wind/score summary, with names
 in their hover details. Keep the near meld rail above the private hand panel.
+The active overhead clock replaces the footer help line instead of covering melds.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
