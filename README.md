@@ -255,13 +255,11 @@ See [docs/ASSETS.md](docs/ASSETS.md) for customization and asset details.
 
 ## Credits
 
-The built-in presets use the supplied Mizuno Maruichi and FluffyStuff/lietxia
-atlases. Their original attribution and permission metadata are preserved in
-[the artwork notice](presets/tile_faces/NOTICE.md), including the Mizuno source's
-unverified redistribution permission. Kansai includes the seasons and botanical
-flowers; Kanto includes the seasons and 福禄寿貴, with names matching each preset.
-See [docs/ASSETS.md](docs/ASSETS.md) for source provenance, bundled upstream
-licenses, adaptation details, and the asset generation contract.
+The built-in tile presets include Kansai and Kanto designs. Kansai uses the
+artwork created by lietxia (mahjong_graphic). Kansai includes the seasons and
+botanical flowers; Kanto includes the seasons and 福禄寿貴, with names matching
+each preset. See [the artwork notice](presets/tile_faces/NOTICE.md) and
+[docs/ASSETS.md](docs/ASSETS.md) for preset details and the asset generation contract.
 
 ## License
 

@@ -1,36 +1,29 @@
 # Native tile-face artwork
 
-The two source PNG atlases and their supplied metadata are build-time inputs.
+The individual tile images and their metadata in `presets/tile_faces` are build-time inputs.
 MCjhong composes all 45 faces into separate Kansai and Kanto texture atlases
 inside the mod. Players select them in the mahjong box; no resource-pack
 installation, extraction or download occurs at runtime.
 
 ## Kanto
 
-Source: `kanto_mizuno/atlas/mizuno.png` (1500 x 1000).
-The supplied metadata names Mizuno Maruichi (水野丸一) as the copyright holder,
-credits 棠坣TangStudio as contributor, and marks the artwork `unauthorized`.
-No permission or public-domain status is inferred from its inclusion here.
-The repository's code license does not relicense this artwork. Redistribution
-permission remains unverified. The original metadata is preserved alongside
-the source and in the built mod.
+Source: `kanto/tiles/` (45 individual transparent tile engravings).
+Built-in Kanto tile-face preset supporting standard 136-tile hands and flower tiles.
 
 ## Kansai
 
-Source: `kansai_fluffystuff/atlas/default.png` (1500 x 1000).
-The supplied metadata identifies the artwork as public domain and credits
-FluffyStuff and lietxia, referencing:
+Source: `kansai/tiles/` (45 individual transparent tile engravings).
+The Kansai artwork uses the open riichi mahjong tile graphics created by lietxia:
 
-- https://github.com/FluffyStuff/riichi-mahjong-tiles
 - https://github.com/lietxia/mahjong_graphic
+
+Released under the M+ Fonts License (free for commercial and noncommercial use).
 
 ## Flower numbering
 
 Kansai uses spring, summer, autumn, winter, plum, orchid, bamboo and
-chrysanthemum (1q-8q); its last two source cells are reordered accordingly.
+chrysanthemum (1q-8q).
 Kanto keeps its four seasons followed by 福禄寿貴 (5q-8q), with matching
 localized names. Both designs use their own supplied flower artwork.
 
-Only the two PNG atlases, source metadata and this notice are build inputs.
-Supplied ZIPs, WebP copies, individual crops and resource-pack exports are
-reference copies, not runtime resources or alternative implementation paths.
+The individual tile images, source metadata and this notice are build inputs.
