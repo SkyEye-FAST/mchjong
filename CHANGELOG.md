@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.1] - 2026-09-18
+
 ### Added
 
 - Immersive screen-space mahjong layout with a clickable private hand, public melds and rivers, usable under world obstructions with the existing selection and keyboard controls.
@@ -95,7 +97,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.1...HEAD
+[0.3.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.1
 [0.3.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.0
 [0.2.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.2.0
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
