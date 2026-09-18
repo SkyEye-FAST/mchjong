@@ -148,6 +148,7 @@ public final class TableClientSmoke {
                         player.getInventory().setItem(7, top.skyeyefast.mchjong.item.MahjongSupplies.tile(
                             new top.skyeyefast.mchjong.item.TileData(41, top.skyeyefast.mchjong.item.TileMaterial.GLASS, false),
                             net.minecraft.world.item.DyeColor.BLUE, 1));
+                        player.getInventory().setItem(8, ItemStack.EMPTY);
                         player.getInventory().setChanged();
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
                         player.teleportTo(level, 0.5, 64, 3.5, 180, 30);

@@ -83,8 +83,8 @@ public final class GenerateAssets {
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.
             String held = switch (name) {
-                case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[-3,6,-2],\"scale\":[0.4,0.4,0.4]}";
-                case "point_stick" -> "{\"rotation\":[65,35,25],\"translation\":[-4,6,-2],\"scale\":[0.7,0.7,0.7]}";
+                case "mahjong_tile" -> "{\"rotation\":[-12,-65,-25],\"translation\":[1,6,-3],\"scale\":[0.4,0.4,0.4]}";
+                case "point_stick" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
             };
             text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","

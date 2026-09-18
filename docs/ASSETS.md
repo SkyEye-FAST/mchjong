@@ -78,7 +78,8 @@ The body uses original neutral relief textures under `textures/tile_material/`:
 without borrowing game textures; the material component supplies their tint.
 The body and the beveled white and colored shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
-First-person tiles are raised and turned to expose their thickness. Their tops
+First-person supplies sit beside the native outstretched hand rather than shifting
+the grip toward the screen center. Tiles are turned to expose their thickness. Their tops
 lean outward like a held sword while the printed faces turn inward toward the
 player. Point sticks follow the same free-end and printed-surface relationship,
 retaining their slender length, width and thickness. Both meshes leave clearance above the hotbar and
@@ -91,11 +92,13 @@ Invisible players retain the vanilla hidden-arm presentation.
 
 For a focused grip check, run `gradlew.bat :runSmokeClient -PsmokeItems=true` or
 `gradlew.bat :neoforge:runSmokeClient -PsmokeItems=true`. This reuses the item
-presentation captures and writes four screenshots to each loader's
+presentation captures and writes nine screenshots to each loader's
 `build/smoke/items-evidence/screenshots` directory, separately from full gameplay evidence.
 The shared item capture renders both supplies with each main-hand preference in
-the native first-person view at 1280 by 800. Inspect the resulting screenshots for
-grip contact, readable printed faces and clearance above the hotbar.
+the native first-person view at 1280 by 800, with an empty-hand reference for each
+side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulting
+screenshots for native-like hand placement, grip
+contact, readable printed faces and clearance above the hotbar.
 
 To supply a design, create a normal resource pack for your target Minecraft
 version containing that same texture
