@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.MahjongBoxScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
+import top.skyeyefast.mchjong.item.MahjongSupplies;
 
 /** Actual synchronized box, native language reloads, and a 320x240 logical viewport. */
 final class BoxInterfaceSmoke {
@@ -36,10 +37,13 @@ final class BoxInterfaceSmoke {
         if (sample == LANGUAGES.length) return true;
         require(client.screen instanceof MahjongBoxScreen, "Language reload replaced the box screen");
         require(client.screen.width == 320 && client.screen.height == 240, "Small-box fixture is not a 320x240 logical viewport");
-        UiControlsSmoke.verify(client);
+        if (settled == 10) UiControlsSmoke.verify(client);
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         var preset = top.skyeyefast.mchjong.item.TileFacePreset.values()[sample % 2];
-        if (top.skyeyefast.mchjong.item.MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
+        if (MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
+            require(settled < 200, "Face printing timed out: language=" + LANGUAGES[sample]
+                + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
+                + ", menu=" + menu.containerId + ", printing=" + printing);
             if (!printing) {
                 press(client, preset.translationKey());
                 require(menu.canEngrave(preset), "Preset fixture cannot be printed");
@@ -49,7 +53,7 @@ final class BoxInterfaceSmoke {
             return false;
         }
         if (printing) { printing = false; settled = 0; return false; }
-        int boxSlots = top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS;
+        int boxSlots = MahjongSupplies.BOX_SLOTS;
         require(menu.ownerSlot() == 0 && menu.slots.size() == boxSlots + 36, "Box menu lost its synchronized layout or carrier index");
         require(!menu.slots.get(boxSlots + 27).mayPickup(client.player), "Client allows moving the open carrier");
         verifyTileLabels(client);
