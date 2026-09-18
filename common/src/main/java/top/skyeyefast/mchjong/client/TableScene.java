@@ -79,7 +79,7 @@ public final class TableScene {
                 if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
                 double extra = discard.riichi() ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) * TILE_SCALE : 0;
                 result.add(piece(discard.tile(), seat, Area.RIVER, i, riverX + extra / 2,
-                    top + FLAT_CENTER * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW, discard.riichi() ? 90 : 0, true, false));
+                    top + FLAT_CENTER * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW - extra / 2, discard.riichi() ? 90 : 0, true, false));
                 riverX += RIVER_STEP + extra;
                 riverSlot++;
             }

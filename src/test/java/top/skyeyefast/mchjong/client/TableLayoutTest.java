@@ -231,12 +231,12 @@ class TableLayoutTest {
         assertEquals(2, river.get(1).index());
         assertEquals(90, river.get(1).yaw());
         for (int i = 1; i < river.size(); i++) {
-            if (i % 6 == 0) assertEquals(TableScene.RIVER_ROW, river.get(i).position().z - river.get(i - 1).position().z, 1e-6);
+            if (i % 6 == 0) assertEquals(TableScene.RIVER_ROW, riverTop(river.get(i)) - riverTop(river.get(i - 1)), 1e-6);
             else {
                 double widths = (river.get(i).yaw() == 90 ? .160 : .104) + (river.get(i - 1).yaw() == 90 ? .160 : .104);
                 assertEquals(widths * TableScene.TILE_SCALE / 2,
                     river.get(i).position().x - river.get(i - 1).position().x, 1e-7, "Tiles must touch, including the riichi tile");
-                assertEquals(river.get(i).position().z, river.get(i - 1).position().z);
+                assertEquals(riverTop(river.get(i)), riverTop(river.get(i - 1)), 1e-7);
             }
         }
     }
@@ -298,9 +298,13 @@ class TableLayoutTest {
                     assertEquals(width * TableScene.TILE_SCALE / 2, river.get(i).position().x - river.get(i - 1).position().x, 1e-7);
                 }
                 if (i >= 6) assertEquals(TileMesh.HEIGHT * TableScene.TILE_SCALE,
-                    river.get(i).position().z - river.get(i - 6).position().z, 1e-7);
+                    riverTop(river.get(i)) - riverTop(river.get(i - 6)), 1e-7);
             }
         }
+    }
+
+    private static double riverTop(TableScene.Piece piece) {
+        return piece.position().z - (piece.yaw() == 90 ? TileMesh.WIDTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2.0;
     }
 
     @Test void hidingRiversAlwaysShowsRemainingTilesAndResetRestoresDefaults() {
