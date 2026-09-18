@@ -7,17 +7,15 @@ It uses vanilla crafting and stonecutting with batch preparation for full sets.
 ## Recipe browsing
 
 With JEI or EMI installed, inspect an item with the viewer's recipe/usage keys.
-Inspect a blue-backed bone blank's uses to find every engraved face, including
-flowers and red fives. Engraving examples pair matching material and back color on the input
-and output. The supplies catalogue places the empty and complete cases together
-and lists point sticks in ascending denomination.
+The ordinary four-color mahjong dye uses the normal crafting category. Face
+printing is performed inside a held box. The supplies catalogue places empty
+and complete cases together and lists point sticks in ascending denomination.
 
 Component-aware crafting views show the marking reagent and one or eight blank
 sticks in separate crafting slots; the result contains the same number of marked
-sticks. Full-set engraving shows 136 matching blanks in a case plus an ink sac.
-Additional examples include 144 blanks and four 1,000-point sticks: engraving
-keeps the eight spare blanks and the sticks beside the completed set. Hover the
-case stacks to inspect their actual contents. Dyeing changes the relevant color
+sticks. Back-dye examples include 144 blanks and four 1,000-point sticks in their
+separate compartment. Hover the case stacks to inspect their actual contents.
+Back dyeing changes the relevant color
 while retaining faces, red markings, material and stored sticks. Table upgrading
 uses an empty ordinary table and retains its wood and custom name.
 
@@ -38,6 +36,8 @@ of the finite case examples.
 | Mahjong tile, blank or engraved | `mchjong:mahjong_tile` | Item |
 | Mahjong box | `mchjong:mahjong_box` | Storage item |
 | Point stick, blank or marked | `mchjong:point_stick` | Item |
+| Mahjong dye | `mchjong:mahjong_dye` | Item, stacks to 64 |
+| Creative mahjong dye | `mchjong:creative_mahjong_dye` | Creative-only item, stacks to 1 |
 | Table occupancy cell | `mchjong:table_space` | Internal block, no item or recipe |
 
 The two tables share the `mchjong:mahjong_table` block entity type. Stools use
@@ -49,20 +49,23 @@ The two tables share the `mchjong:mahjong_table` block entity type. Stools use
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
+| `mchjong:face_preset` | `kansai`, `kanto` | Tile-face design; only Kansai currently applies |
 | `mchjong:points` | `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
 | `minecraft:container` | Native item-stack container | Mahjong boxes |
 
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
-are the winds and dragons, in engine order. Faces `34..41` are plum, orchid,
-chrysanthemum, bamboo, spring, summer, autumn and winter. Only faces `4`, `13`, `22` can have
+are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
+autumn, winter, plum, orchid, bamboo and chrysanthemum, written `1q..8q`.
+Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
+Only faces `4`, `13`, `22` can have
 `red = true`. Material is one of `wood`, `bone`, `quartz`, `calcite`, `glass`,
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Default backs are
 blue; default cloth is green and stool cushions are white.
 
 All custom components are immutable codec values with persistence and network
-serialization. No item IDs are generated for particular faces, dyes, woods or
+serialization. No item IDs are generated for particular faces, back colors, woods or
 denominations. Placed furniture projects its item components into its block
 entity, including drops and pick-block results. Private box contents are never
 part of a furniture appearance update.
@@ -99,14 +102,23 @@ A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
 
-Put at least 136 blanks of matching material and back color in a box, then craft
-that box with one ink sac. Exactly 136 blanks are engraved; spare blanks and
-point sticks remain in the result. The set contains four of each of the 34
-faces, replacing one five in each suit with a red five, not adding three extra
-tiles. Thus nine source blocks produce 144 blanks: one set and eight spares.
-The output occupies 37 tile stacks, plus the retained spare and stick stacks.
-The entire recipe fails unchanged if the box lacks enough room or the blanks
-do not match. It never partly consumes a set.
+One black, red, green and blue dye make one mahjong dye, shapeless. Ordinary
+mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
+through the creative catalogue, not survival crafting or loot.
+
+Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
+Insert mahjong dye into the dedicated dye slot and select **Apply faces**.
+The 136-tile set has four of each ordinary face, including one red five in each
+suit; 144 additionally includes one of each of the eight flowers. These sets
+occupy 37 and 45 stacks respectively. One ordinary dye is consumed per successful
+operation; creative dye remains unchanged, even when used by a survival player.
+Materials, back colors and point sticks are preserved. Invalid counts, mixed
+blanks, unavailable presets and unchanged presets do not consume anything.
+
+The current face preset is **Kansai**. **Kanto** is reserved in the component
+schema and shown disabled until its artwork is supplied. Reprinting an existing
+complete set changes only its face preset, retaining face identities and red
+fives. Tile-back recoloring remains the separate vanilla-grid dye recipe.
 
 One to eight unmarked point sticks, each in its own crafting slot, plus one
 marking material produce the same number of marked sticks:
@@ -118,11 +130,11 @@ marking material produce the same number of marked sticks:
 | Lapis lazuli | 5,000 |
 | Gold nugget | 10,000 |
 
-Already marked sticks cannot be remarked. All component-preserving operations
+Already marked sticks cannot be remarked. Component-preserving crafting operations
 use shared custom crafting serializers, not ingredients that accidentally
 ignore component values. They still use the vanilla crafting grid. The recipes
 are documented here; component-dependent recipes are special
-recipes rather than a separate custom crafting interface.
+recipes. Face printing instead uses the box's server-authorized menu button.
 
 ## Stonecutting
 
@@ -132,28 +144,17 @@ All wooden blanks use the single `wood` material; furniture still retains its
 specific wood species. One bone block can alternatively yield **16 unmarked
 point sticks**.
 
-Put a blank tile in a stonecutter to select any of the 34 ordinary faces,
-three red fives or eight flower designs. One blank makes one tile, preserving its material and back
-color. This is for replacements or individual pieces, not the normal full-set
-path. Engraved tiles cannot be recut into another face. The 45 shared engraving
-recipes use the native stonecutting interface and recipe type.
-The shared stonecutter hook invalidates vanilla's item-ID-only cache when a
-tile's components change. Swapping material, color or an already engraved tile
-into the input clears the old selection and output before another result can
-be taken. The recipe also independently rejects nonblank inputs on assembly.
-
 The eight flowers are physical tiles in all six materials and sixteen back colors.
-They can be carried, stored in a box, dyed and dropped like the other tiles. Cut
-eight extra blanks to complete a 144-tile case, or carve the eight spares left by
-bulk-engraving 144 blanks. Their faces use the same tile component and engraving
-recipes as the other individual tiles.
+They can be carried, stored in a box, dyed and dropped like the other tiles.
+Nine source blocks make the 144 blanks used to print a complete flower set.
 Riichi uses the validated 136-tile set (108 in sanma), while flowers remain
 stored safely inside the case during those games.
 
 ## Boxes, installation and removal
 
-Right-click a held box to open its dedicated supply-case screen. Its 54 slots accept
-tiles and point sticks only. The carried box slot is locked for ordinary clicks,
+Right-click a held box to open its dedicated supply-case screen. It has 45 tile
+slots, nine point-stick slots and one dye slot; shift-clicks route each supply to
+its own compartment. The carried box slot is locked for ordinary clicks,
 shift-transfer, number keys, offhand swaps, dragging, double-click collection,
 throwing and creative cloning. Neither the carrier nor another box can be
 inserted. Changes persist immediately in `minecraft:container`. Closing the
@@ -284,8 +285,8 @@ Run `gradlew.bat buildAll`. `ManualHandlingTest` checks all presets, stale
 actions, conservation, reloads and a complete manually handled bot hand.
 `PhysicalSuppliesTest` loads real recipes and component codecs on a dedicated
 NeoForge test server. `BoxMenuSmoke` checks native container operations and exact
-inventory conservation on a real server player. `StonecutterSmoke` checks cached
-recipe invalidation and both ordinary and shift-click engraving. The equipment
+inventory conservation on a real server player, including 136/144-tile printing,
+ordinary/creative dye consumption, invalid buttons and closed menus. The equipment
 smokes exercise survival placement, occupancy-cell interaction, replacement,
 unloading, private/public save separation, sanma's recoverable unused tiles,
 root/occupancy destruction and native explosions in a real world.

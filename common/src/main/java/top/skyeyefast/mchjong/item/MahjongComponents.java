@@ -11,9 +11,11 @@ public final class MahjongComponents {
     public static final Set<Integer> DENOMINATIONS = Set.of(0, 100, 1000, 5000, 10000);
     public static final DataComponentType<FurnitureWood> WOOD = type(FurnitureWood.CODEC);
     public static final DataComponentType<TileData> TILE = type(TileData.CODEC);
+    public static final DataComponentType<TileFacePreset> FACE_PRESET = type(TileFacePreset.CODEC);
     public static final DataComponentType<Integer> POINTS = type(Codec.INT.validate(value -> DENOMINATIONS.contains(value)
         ? DataResult.success(value) : DataResult.error(() -> "Invalid point-stick denomination")));
-    public static final Map<String, DataComponentType<?>> TYPES = Map.of("wood", WOOD, "tile", TILE, "points", POINTS);
+    public static final Map<String, DataComponentType<?>> TYPES = Map.of(
+        "wood", WOOD, "tile", TILE, "points", POINTS, "face_preset", FACE_PRESET);
 
     private MahjongComponents() {}
     // Minecraft derives a registry-aware stream codec from the persistent codec.

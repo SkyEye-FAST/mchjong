@@ -49,7 +49,7 @@ final class TileArtwork implements AutoCloseable {
 
     static String sourceName(int face) {
         if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
-        if (face >= 37) return new String[]{"Plum", "Orchid", "Chrysanthemum", "Bamboo", "Spring", "Summer", "Autumn", "Winter"}[face - 37];
+        if (face >= 37) return new String[]{"Spring", "Summer", "Autumn", "Winter", "Plum", "Orchid", "Bamboo", "Chrysanthemum"}[face - 37];
         if (face >= 34) return SUITS[face - 34] + "5-Dora";
         return face < 27 ? SUITS[face / 9] + (face % 9 + 1) : HONORS[face - 27];
     }

@@ -48,8 +48,8 @@ final class BrowserSmoke {
         if (stage == 0) {
             verifyCatalogue();
             var examples = SupplyRecipeExamples.create(client.level);
-            flower = pick(examples, e -> e.cutting() && MahjongSupplies.tile(e.output()).face() == TileData.FIRST_FLOWER);
-            var red = pick(examples, e -> e.cutting() && MahjongSupplies.tile(e.output()).red());
+            flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
+            var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());
             var upgrade = pick(examples, e -> e.source().value() instanceof SupplyCraftingRecipe recipe
                 && recipe.operation() == SupplyCraftingRecipe.Operation.UPGRADE_TABLE);
             for (var example : List.of(flower, red, upgrade)) {
@@ -94,7 +94,7 @@ final class BrowserSmoke {
             var bounds = screen.browserBounds();
             check(bounds.top() >= 0 && bounds.bottom() <= screen.height - 24, "Container overlaps browser controls");
             Screenshot.grab(output.toFile(), "60-browser-" + browser + "-container.png", client.getMainRenderTarget(), ignored -> {});
-            Files.writeString(output.resolve("browser-checks.txt"), browser + ": catalogue order, point denominations, flower/red engraving, component-preserving upgrade lookups and native container bounds passed.\n");
+            Files.writeString(output.resolve("browser-checks.txt"), browser + ": catalogue order, point denominations, flower/red back dyes, component-preserving upgrade lookups and native container bounds passed.\n");
             client.player.closeContainer();
             client.getWindow().setWindowed(width, height);
             client.options.guiScale().set(scale); client.resizeDisplay();

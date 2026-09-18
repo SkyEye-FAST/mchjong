@@ -1,7 +1,0 @@
-{
-  "required": true,
-  "package": "top.skyeyefast.mchjong.mixin",
-  "compatibilityLevel": "JAVA_21",
-  "mixins": ["StonecutterMenuMixin"],
-  "injectors": {"defaultRequire": 1}
-}

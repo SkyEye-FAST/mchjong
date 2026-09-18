@@ -18,7 +18,6 @@ import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.recipe.SupplyCraftingRecipe;
-import top.skyeyefast.mchjong.recipe.TileCuttingRecipe;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Finite, executable examples, derived from recipes present in the current datapack.
@@ -31,10 +30,7 @@ public final class SupplyRecipeExamples {
         var recipes = level.getRecipeManager().getRecipes().stream()
             .sorted(Comparator.comparing(holder -> holder.id().toString())).toList();
         for (var holder : recipes) {
-            if (holder.value() instanceof TileCuttingRecipe) {
-                add(examples, level, holder, "bone/blue",
-                    List.of(MahjongSupplies.tile(new TileData(-1, TileMaterial.BONE, false), DyeColor.BLUE, 1)), true);
-            } else if (holder.value() instanceof SupplyCraftingRecipe recipe) {
+            if (holder.value() instanceof SupplyCraftingRecipe recipe) {
                 switch (recipe.operation()) {
                     case MARK_STICK -> SupplyCraftingRecipe.markings().entrySet().stream()
                         .sorted(java.util.Map.Entry.comparingByValue()).forEach(mark -> {
@@ -42,22 +38,14 @@ public final class SupplyRecipeExamples {
                                 var input = new ArrayList<ItemStack>();
                                 for (int i = 0; i < count; i++) input.add(new ItemStack(MahjongContent.POINT_STICK));
                                 input.add(new ItemStack(mark.getKey()));
-                                add(examples, level, holder, mark.getValue() + "/" + count, input, false);
+                                add(examples, level, holder, mark.getValue() + "/" + count, input);
                             }
                         });
                     case UPGRADE_TABLE -> {
                         for (var wood : FurnitureWood.values()) {
                             var input = SupplyCraftingRecipe.upgradePattern().stream().map(ItemStack::new).toList();
                             input.get(4).set(MahjongComponents.WOOD, wood);
-                            add(examples, level, holder, wood.getSerializedName(), input, false);
-                        }
-                    }
-                    case ENGRAVE_SET -> {
-                        for (var material : TileMaterial.values()) {
-                            var color = DyeColor.BLUE;
-                            String key = material.getSerializedName() + "/" + color.getName();
-                            add(examples, level, holder, key + "/136", List.of(blanks(material, color, false), new ItemStack(Items.INK_SAC)), false);
-                            add(examples, level, holder, key + "/spares", List.of(blanks(material, color, true), new ItemStack(Items.INK_SAC)), false);
+                            add(examples, level, holder, wood.getSerializedName(), input);
                         }
                     }
                     case DYE -> {
@@ -77,7 +65,7 @@ public final class SupplyRecipeExamples {
                             }
                             for (int i = 0; i < targets.size(); i++)
                                 add(examples, level, holder, color.getName() + "/" + i,
-                                    List.of(targets.get(i), new ItemStack(DyeItem.byColor(color))), false);
+                                    List.of(targets.get(i), new ItemStack(DyeItem.byColor(color))));
                         }
                     }
                 }
@@ -87,15 +75,15 @@ public final class SupplyRecipeExamples {
     }
 
     public static ItemStack blanks(TileMaterial material, DyeColor color, boolean spares) {
-        var items = new ArrayList<ItemStack>();
+        var items = net.minecraft.core.NonNullList.withSize(MahjongSupplies.BOX_SLOTS, ItemStack.EMPTY);
         var data = new TileData(-1, material, false);
-        items.add(MahjongSupplies.tile(data, color, 64));
-        items.add(MahjongSupplies.tile(data, color, 64));
-        items.add(MahjongSupplies.tile(data, color, spares ? 16 : 8));
+        items.set(0, MahjongSupplies.tile(data, color, 64));
+        items.set(1, MahjongSupplies.tile(data, color, 64));
+        items.set(2, MahjongSupplies.tile(data, color, spares ? 16 : 8));
         if (spares) {
             var stick = new ItemStack(MahjongContent.POINT_STICK, 4);
             stick.set(MahjongComponents.POINTS, 1000);
-            items.add(stick);
+            items.set(MahjongSupplies.TILE_SLOTS, stick);
         }
         var box = new ItemStack(MahjongContent.BOX_ITEM);
         box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
@@ -103,11 +91,11 @@ public final class SupplyRecipeExamples {
     }
 
     private static void add(List<SupplyRecipeExample> examples, Level level, RecipeHolder<?> source,
-                            String variant, List<ItemStack> ingredients, boolean cutting) {
+                            String variant, List<ItemStack> ingredients) {
         var input = new ArrayList<>(ingredients);
-        if (!cutting) input.addAll(Collections.nCopies(9 - input.size(), ItemStack.EMPTY));
+        input.addAll(Collections.nCopies(9 - input.size(), ItemStack.EMPTY));
         var id = MahjongContent.id("/supplies/" + source.id().getNamespace() + "/" + source.id().getPath() + "/" + variant);
-        var candidate = new SupplyRecipeExample(id, source, List.copyOf(input), ItemStack.EMPTY, cutting, List.of(input.getFirst()));
+        var candidate = new SupplyRecipeExample(id, source, List.copyOf(input), ItemStack.EMPTY, List.of(input.getFirst()));
         var output = candidate.assemble(level);
         // A datapack may restrict a vanilla ingredient. Only publish actual matches.
         if (output.isEmpty()) return;
@@ -117,11 +105,11 @@ public final class SupplyRecipeExamples {
                 var variantInput = new ArrayList<>(input);
                 var variantStack = MahjongSupplies.dye(input.getFirst(), color);
                 variantInput.set(0, variantStack);
-                var variantExample = new SupplyRecipeExample(id, source, variantInput, output, false, List.of(variantStack));
+                var variantExample = new SupplyRecipeExample(id, source, variantInput, output, List.of(variantStack));
                 var result = variantExample.assemble(level);
                 if (ItemStack.matches(output, result)) alternatives.add(variantStack);
             }
         } else alternatives.add(input.getFirst());
-        examples.add(new SupplyRecipeExample(id, source, candidate.input(), output, cutting, List.copyOf(alternatives)));
+        examples.add(new SupplyRecipeExample(id, source, candidate.input(), output, List.copyOf(alternatives)));
     }
 }

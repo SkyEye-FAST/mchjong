@@ -67,6 +67,9 @@ Actions remain separate from informational labels. Settings use explicit tabs
 and an orderly grid; selection does not replace the setting's written value.
 Tooltips contain concise labels and state only. Gameplay and crafting explanations
 belong in the documentation, not long hover paragraphs covering the table.
+Tile tooltips use the same material, face and back-color rows for numbered,
+honor and flower tiles. Localized face names are the default; the interaction
+settings can switch them to mpsz notation and 1q-8q for flowers.
 
 Design and verify against a minimum 320 x 240 **logical GUI** viewport as well as
 the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
@@ -78,9 +81,9 @@ Retain existing no-scroll settlement navigation and replay keyboard controls.
 
 The box has its own registered menu type and `MahjongBoxScreen`. Never use the
 generic chest menu, title matching or a replacement of vanilla chest screens.
-The left side contains the 54 case slots and 36 player slots; the right side is
-a read-only packing summary with tile/stick counts, occupied slots and set
-readiness. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
+The left side contains 45 tile slots, nine point-stick slots and 36 player slots.
+The right side shows tile/stick counts, set readiness, a dedicated dye slot and
+face-preset controls. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
 has an accent border, a small lock mark and an explanatory tooltip.
 
 Set readiness must use `MahjongSupplies.deck`, including composition, material
@@ -217,7 +220,7 @@ Use the actual start time of the run being reviewed. The tool checks source
 timestamps and keeps the original screenshots alongside the contact sheets.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
-recipe-browser controls. The 54-slot box uses a 304 x 212 panel and the four-row
+recipe-browser controls. The 55-slot box uses a 304 x 216 panel and the four-row
 point-stick drawer a 286 x 216 panel. Their slot pitch remains 18 pixels; compact
 header and inventory gaps keep every native slot visible at 320 x 240. Screen
 bounds provide one source for viewer exclusion areas and native click tests.

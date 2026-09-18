@@ -18,7 +18,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Only component-dependent operations use code. Static recipes remain vanilla JSON. */
 public final class SupplyCraftingRecipe extends CustomRecipe {
-    public enum Operation { DYE, ENGRAVE_SET, MARK_STICK, UPGRADE_TABLE }
+    public enum Operation { DYE, MARK_STICK, UPGRADE_TABLE }
     private final Operation operation;
 
     public Operation operation() { return operation; }
@@ -62,9 +62,6 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
                         || target.is(MahjongContent.BOX_ITEM) || target.is(MahjongContent.STOOL_ITEM))
                         && reagent.getItem() instanceof DyeItem dye)
                         return MahjongSupplies.dye(target, dye.getDyeColor());
-                }
-                case ENGRAVE_SET -> {
-                    if (target.is(MahjongContent.BOX_ITEM) && reagent.is(Items.INK_SAC)) return MahjongSupplies.engrave(target);
                 }
                 default -> throw new IllegalStateException("Unexpected operation");
             }

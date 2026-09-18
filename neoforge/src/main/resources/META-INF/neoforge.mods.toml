@@ -11,9 +11,6 @@ authors="SkyEye_FAST"
 description='''A seated, in-world riichi mahjong table for three or four players.'''
 
 [[mixins]]
-config="mchjong.mixins.json"
-
-[[mixins]]
 config="mchjong.client.mixins.json"
 
 [[dependencies.mchjong]]

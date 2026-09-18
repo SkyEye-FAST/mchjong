@@ -14,7 +14,7 @@ class FlowerTileArtworkTest {
     private final Path resources = Path.of(System.getProperty("mchjong.resources"));
 
     @Test void unicodeOutlinesFollowThePhysicalFlowerNumbers() {
-        assertEquals(List.of(0x1f022, 0x1f023, 0x1f025, 0x1f024, 0x1f026, 0x1f027, 0x1f028, 0x1f029),
+        assertEquals(List.of(0x1f026, 0x1f027, 0x1f028, 0x1f029, 0x1f022, 0x1f023, 0x1f024, 0x1f025),
             java.util.stream.IntStream.range(0, 8).mapToObj(FlowerTileArtwork::codePoint).toList());
         assertThrows(IllegalArgumentException.class, () -> FlowerTileArtwork.codePoint(-1));
         assertThrows(IllegalArgumentException.class, () -> FlowerTileArtwork.codePoint(8));
@@ -69,11 +69,11 @@ class FlowerTileArtworkTest {
         // Registered source-coordinate regions clear of neighboring stems. These extremities were
         // cut into green fragments by broad elliptical masks or rectangular character crops.
         int[][] regions = {
-            {7, 175, 171, 225, 190, FlowerTileArtwork.RED},
-            {6, 135, 50, 149, 100, FlowerTileArtwork.RED},
-            {4, 141, 100, 153, 134, FlowerTileArtwork.RED},
-            {5, 60, 303, 85, 312, FlowerTileArtwork.RED},
-            {0, 18, 24, 116, 144, FlowerTileArtwork.BLUE}
+            {3, 175, 171, 225, 190, FlowerTileArtwork.RED},
+            {2, 135, 50, 149, 100, FlowerTileArtwork.RED},
+            {0, 141, 100, 153, 134, FlowerTileArtwork.RED},
+            {1, 60, 303, 85, 312, FlowerTileArtwork.RED},
+            {4, 18, 24, 116, 144, FlowerTileArtwork.BLUE}
         };
         for (var region : regions) {
             int face = region[0] + 37, printed = 0;

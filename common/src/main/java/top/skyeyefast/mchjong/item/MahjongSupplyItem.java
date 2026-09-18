@@ -5,25 +5,24 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
-import top.skyeyefast.mchjong.engine.Tile;
 
 public class MahjongSupplyItem extends Item {
     public MahjongSupplyItem(Properties properties) { super(properties); }
 
+    /** Dedicated servers use names; the client-only presentation mixin applies the local preference. */
+    private static Component tileLabel(TileData tile) { return tile.label(false); }
+
     @Override public Component getName(ItemStack stack) {
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
-        TileData tile = stack.get(MahjongComponents.TILE);
-        return tile != null && tile.flower() ? Component.translatable(tile.flowerKey()) : super.getName(stack);
+        return super.getName(stack);
     }
 
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         TileData tile = stack.get(MahjongComponents.TILE);
         if (tile != null) {
             lines.add(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
-            lines.add(tile.blank() ? Component.translatable("item.mchjong.blank")
-                : tile.flower() ? Component.translatable("item.mchjong.flower")
-                : Component.literal((tile.red() ? "0" + "mps".charAt(tile.face() / 9) : Tile.notation(tile.face()))));
+            lines.add(tileLabel(tile));
         }
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null) {

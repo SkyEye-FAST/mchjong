@@ -18,22 +18,27 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
     private ItemStack box = ItemStack.EMPTY;
     private final SimpleContainer contents = new SimpleContainer(MahjongSupplies.BOX_SLOTS);
     private boolean active = true;
+    private boolean updating;
 
     public MahjongBoxMenu(int id, Inventory inventory) {
         super(top.skyeyefast.mchjong.world.MahjongContent.BOX_MENU, id);
         this.inventory = inventory;
         ownerSlot.set(-1);
         addDataSlot(ownerSlot);
-        for (int row = 0; row < 6; row++) for (int col = 0; col < 9; col++)
-            addSlot(new Slot(contents, col + row * 9, 14 + col * 18, 16 + row * 18) {
+        for (int index = 0; index < MahjongSupplies.BOX_SLOTS; index++) {
+            int slot = index;
+            int x = slot == MahjongSupplies.DYE_SLOT ? 196 : 14 + (slot % 9) * 18;
+            int y = slot < MahjongSupplies.TILE_SLOTS ? 16 + slot / 9 * 18 : slot == MahjongSupplies.DYE_SLOT ? 83 : 114;
+            addSlot(new Slot(contents, slot, x, y) {
                 @Override public boolean mayPlace(ItemStack stack) {
-                    return stillValid(inventory.player) && MahjongSupplies.storable(stack);
+                    return stillValid(inventory.player) && MahjongSupplies.boxAccepts(slot, stack);
                 }
                 @Override public boolean mayPickup(Player player) { return stillValid(player); }
             });
+        }
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++)
-            playerSlot(col + row * 9 + 9, 14 + col * 18, 134 + row * 18);
-        for (int col = 0; col < 9; col++) playerSlot(col, 14 + col * 18, 192);
+            playerSlot(col + row * 9 + 9, 14 + col * 18, 142 + row * 18);
+        for (int col = 0; col < 9; col++) playerSlot(col, 14 + col * 18, 198);
     }
 
     public MahjongBoxMenu(int id, Inventory inventory, int ownerSlot) {
@@ -43,11 +48,34 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         if (!MahjongSupplies.validBox(box)) throw new IllegalArgumentException("Invalid mahjong box");
         var stored = MahjongSupplies.contents(box);
         for (int i = 0; i < stored.size(); i++) contents.setItem(i, stored.get(i));
-        contents.addListener(container -> {
-            if (!stillValid(inventory.player)) return;
-            box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items()));
-            inventory.setChanged();
-        });
+        contents.addListener(container -> save());
+    }
+
+    private void save() {
+        if (updating || !stillValid(inventory.player)) return;
+        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items()));
+        inventory.setChanged();
+    }
+
+    public boolean canEngrave(TileFacePreset preset) {
+        return MahjongSupplies.mahjongDye(contents.getItem(MahjongSupplies.DYE_SLOT))
+            && !MahjongSupplies.engravedContents(items(), preset).isEmpty();
+    }
+
+    @Override public boolean clickMenuButton(Player player, int id) {
+        if (player.level().isClientSide || !stillValid(player) || id < 0 || id >= TileFacePreset.values().length) return false;
+        var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (!MahjongSupplies.mahjongDye(dye)) return false;
+        var output = MahjongSupplies.engravedContents(items(), TileFacePreset.values()[id]);
+        if (output.isEmpty()) return false;
+        if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
+        updating = true;
+        try {
+            for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
+        } finally { updating = false; }
+        save();
+        broadcastChanges();
+        return true;
     }
 
     public int ownerSlot() { return ownerSlot.get(); }
@@ -89,11 +117,17 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         Slot slot = slots.get(index);
         if (!slot.mayPickup(player) || !slot.hasItem()) return ItemStack.EMPTY;
         ItemStack source = slot.getItem();
-        if (index >= MahjongSupplies.BOX_SLOTS && !MahjongSupplies.storable(source)) return ItemStack.EMPTY;
+        if (index >= MahjongSupplies.BOX_SLOTS && !MahjongSupplies.storable(source) && !MahjongSupplies.mahjongDye(source)) return ItemStack.EMPTY;
         ItemStack original = source.copy();
         if (index < MahjongSupplies.BOX_SLOTS) {
             if (!moveItemStackTo(source, MahjongSupplies.BOX_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!moveItemStackTo(source, 0, MahjongSupplies.BOX_SLOTS, false)) return ItemStack.EMPTY;
+        } else {
+            int start = source.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM) ? 0
+                : source.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) ? MahjongSupplies.TILE_SLOTS : MahjongSupplies.DYE_SLOT;
+            int end = start == 0 ? MahjongSupplies.TILE_SLOTS : start == MahjongSupplies.TILE_SLOTS
+                ? MahjongSupplies.DYE_SLOT : MahjongSupplies.BOX_SLOTS;
+            if (!moveItemStackTo(source, start, end, false)) return ItemStack.EMPTY;
+        }
         if (source.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
         else slot.setChanged();
         slot.onTake(player, source);

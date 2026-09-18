@@ -191,8 +191,8 @@ public final class TableClientSmoke {
                         box.getItem().use(player.serverLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
                         require(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu, "Box did not open its real menu");
                         var menu = player.containerMenu;
-                        require(menu.slots.size() == 90, "Box must retain 54 storage and 36 player slots");
-                        require(menu.quickMoveStack(player, 81).isEmpty(), "Shift-click moved the open carrier box");
+                        require(menu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Box compartment layout differs");
+                        require(menu.quickMoveStack(player, top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 27).isEmpty(), "Shift-click moved the open carrier box");
                         menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.SWAP, player);
                         require(player.getMainHandItem() == box, "Hotbar swap replaced the open box");
                         require(!menu.slots.getFirst().mayPlace(new ItemStack(MahjongContent.BOX_ITEM)), "Box accepts nested boxes");
@@ -201,7 +201,7 @@ public final class TableClientSmoke {
                 step = 17; entered = ticks;
             } else if (step == 17 && ticks - entered > 15 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {
                 if (!interfaceSmoke.box(client, output)) return;
-                require(client.player.containerMenu.slots.size() == 90, "Client box slot layout differs from server");
+                require(client.player.containerMenu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Client box slot layout differs from server");
                 require(client.player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu menu
                     && menu.ownerSlot() == 0, "Client did not receive the server's carrier lock");
                 capture(client, "00-physical-box.png");

@@ -51,6 +51,8 @@ public final class MchjongNeoForge {
         items.register("mahjong_tile", () -> MahjongContent.TILE_ITEM);
         items.register("mahjong_box", () -> MahjongContent.BOX_ITEM);
         items.register("point_stick", () -> MahjongContent.POINT_STICK);
+        items.register("mahjong_dye", () -> MahjongContent.MAHJONG_DYE);
+        items.register("creative_mahjong_dye", () -> MahjongContent.CREATIVE_MAHJONG_DYE);
         items.register("mahjong_stool", () -> MahjongContent.STOOL_ITEM);
         items.register(bus);
         DeferredRegister<net.minecraft.world.inventory.MenuType<?>> menus = DeferredRegister.create(Registries.MENU, MahjongContent.MOD_ID);

@@ -24,6 +24,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Vanilla click protocol on a real survival player, including the carrier's lifecycle. */
 final class BoxMenuSmoke {
+    private static final int HOTBAR = MahjongSupplies.BOX_SLOTS + 27;
     private BoxMenuSmoke() {}
 
     static void verify(ServerPlayer player) {
@@ -37,6 +38,7 @@ final class BoxMenuSmoke {
         try {
             player.setGameMode(GameType.SURVIVAL);
             for (int owner : new int[]{0, 4, 40}) verifyClicks(player, owner);
+            verifyPrinting(player);
             verifyLifecycle(player);
         } finally {
             player.setHealth(health);
@@ -73,18 +75,18 @@ final class BoxMenuSmoke {
         inventory.setItem(10, sticks);
         var menu = open(player, owner);
         var expected = snapshot(player, menu);
-        check(menu.slots.size() == 90 && menu.stillValid(player), "Invalid six-row menu");
+        check(menu.slots.size() == MahjongSupplies.BOX_SLOTS + 36 && menu.stillValid(player), "Invalid compartment layout");
 
         // Use clicked, not only quickMoveStack: vanilla repeats a shift transfer until exhausted.
-        menu.clicked(82, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(HOTBAR + 1, 0, ClickType.QUICK_MOVE, player);
         check(inventory.getItem(1).isEmpty() && menu.getSlot(0).getItem().getCount() == 64, "Shift insertion failed");
         conserved(player, menu, expected);
-        menu.clicked(83, 0, ClickType.QUICK_MOVE, player);
-        menu.clicked(84, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(HOTBAR + 2, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(HOTBAR + 3, 0, ClickType.QUICK_MOVE, player);
         check(inventory.getItem(2).is(Items.DIAMOND) && inventory.getItem(3).is(MahjongContent.BOX_ITEM), "Forbidden insertion");
 
         if (owner != 40) {
-            int carrier = 81 + owner;
+            int carrier = HOTBAR + owner;
             for (var type : new ClickType[]{ClickType.PICKUP, ClickType.QUICK_MOVE, ClickType.THROW, ClickType.CLONE})
                 for (int button : new int[]{0, 1}) menu.clicked(carrier, button, type, player);
             for (int button = 0; button < 9; button++) menu.clicked(carrier, button, ClickType.SWAP, player);
@@ -93,7 +95,7 @@ final class BoxMenuSmoke {
             menu.clicked(carrier, 2, ClickType.CLONE, player);
             player.setGameMode(GameType.SURVIVAL);
         }
-        for (int slot : new int[]{0, 1, 54, 82}) menu.clicked(slot, owner, ClickType.SWAP, player);
+        for (int slot : new int[]{0, 1, MahjongSupplies.BOX_SLOTS, HOTBAR + 1}) menu.clicked(slot, owner, ClickType.SWAP, player);
         check(menu.getCarried().isEmpty() && inventory.getItem(owner) == box, "Owner-slot lock was bypassed");
         conserved(player, menu, expected);
 
@@ -102,7 +104,7 @@ final class BoxMenuSmoke {
         check(menu.getCarried().getCount() == 32 && menu.getSlot(0).getItem().getCount() == 32, "Right click did not split");
         menu.clicked(1, 0, ClickType.PICKUP, player);
         menu.clicked(1, 0, ClickType.PICKUP, player);
-        drag(menu, player, 0, owner == 40 ? new int[]{1, 2} : new int[]{1, 81 + owner, 2});
+        drag(menu, player, 0, owner == 40 ? new int[]{1, 2} : new int[]{1, HOTBAR + owner, 2});
         check(menu.getSlot(1).getItem().getCount() == 16 && menu.getSlot(2).getItem().getCount() == 16, "Even drag failed");
         conserved(player, menu, expected);
         menu.clicked(1, 0, ClickType.PICKUP, player);
@@ -116,10 +118,10 @@ final class BoxMenuSmoke {
         menu.clicked(6, 0, ClickType.PICKUP, player);
 
         // Another box on the cursor or hotbar cannot nest in the open carrier.
-        menu.clicked(84, 0, ClickType.PICKUP, player);
+        menu.clicked(HOTBAR + 3, 0, ClickType.PICKUP, player);
         menu.clicked(7, 0, ClickType.PICKUP, player);
         check(menu.getCarried().is(MahjongContent.BOX_ITEM) && !menu.getSlot(7).hasItem(), "Nested box accepted");
-        menu.clicked(84, 0, ClickType.PICKUP, player);
+        menu.clicked(HOTBAR + 3, 0, ClickType.PICKUP, player);
         menu.clicked(7, 3, ClickType.SWAP, player);
         check(!menu.getSlot(7).hasItem(), "Hotbar swap nested a box");
 
@@ -132,7 +134,7 @@ final class BoxMenuSmoke {
             check(inventory.getItem(40).getCount() == 64, "Valid offhand extraction blocked");
             menu.clicked(6, 40, ClickType.SWAP, player);
         }
-        menu.clicked(55, 0, ClickType.QUICK_MOVE, player);
+        menu.clicked(MahjongSupplies.BOX_SLOTS + 1, 0, ClickType.QUICK_MOVE, player);
         check(inventory.getItem(10).isEmpty(), "Point-stick shift insertion failed");
         conserved(player, menu, expected);
 
@@ -143,6 +145,46 @@ final class BoxMenuSmoke {
         player.closeContainer();
         check(!menu.stillValid(player), "Closed menu remained valid");
         conserved(player, menu, expected);
+    }
+
+    private static void verifyPrinting(ServerPlayer player) {
+        for (int total : new int[]{136, 144}) for (boolean creative : new boolean[]{false, true}) {
+            player.closeContainer();
+            var inventory = player.getInventory();
+            inventory.clearContent();
+            var box = top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExamples.blanks(
+                top.skyeyefast.mchjong.item.TileMaterial.GLASS, DyeColor.PURPLE, total == 144);
+            inventory.setItem(0, box);
+            var dye = new ItemStack(creative ? MahjongContent.CREATIVE_MAHJONG_DYE : MahjongContent.MAHJONG_DYE, creative ? 1 : 2);
+            inventory.setItem(1, dye);
+            var menu = open(player, 0);
+            check(!menu.clickMenuButton(player, 0), "Printing without dye was accepted");
+            menu.clicked(HOTBAR + 1, 0, ClickType.QUICK_MOVE, player);
+            check(inventory.getItem(1).isEmpty() && menu.getSlot(MahjongSupplies.DYE_SLOT).hasItem(), "Dye shift transfer missed its compartment");
+            check(!menu.getSlot(0).mayPlace(dye) && !menu.getSlot(MahjongSupplies.TILE_SLOTS).mayPlace(dye)
+                && !menu.getSlot(MahjongSupplies.DYE_SLOT).mayPlace(new ItemStack(MahjongContent.POINT_STICK)), "Compartment accepts the wrong supply");
+            var before = box.copy();
+            check(!menu.clickMenuButton(player, -1) && !menu.clickMenuButton(player, 2)
+                && !menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANTO.ordinal()), "Unavailable print action accepted");
+            check(ItemStack.matches(before, box), "Rejected printing changed the carrier");
+            menu.getSlot(2).getItem().shrink(1);
+            check(!menu.clickMenuButton(player, 0), "Incomplete tile count was printed");
+            menu.getSlot(2).getItem().grow(1);
+            check(menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI.ordinal()), "Valid printing rejected");
+            var items = MahjongSupplies.contents(box);
+            check(ItemStack.matches(MahjongSupplies.contents(before).get(MahjongSupplies.TILE_SLOTS), items.get(MahjongSupplies.TILE_SLOTS)),
+                "Printing changed point sticks");
+            check(MahjongSupplies.tileCount(items) == total && MahjongSupplies.deck(box) != null, "Printing changed the set size or composition");
+            check(items.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(stack).flower()).count() == total - 136,
+                "Printing produced the wrong flowers");
+            check(items.get(MahjongSupplies.DYE_SLOT).getCount() == 1, "Printing consumed the wrong dye quantity");
+            check(items.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
+                .allMatch(stack -> MahjongSupplies.color(stack) == DyeColor.PURPLE && !MahjongSupplies.tile(stack).blank()), "Printing altered backs or left blanks");
+            var printed = box.copy();
+            check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "No-op printing consumed dye");
+            player.closeContainer();
+            check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "Closed menu printed stale contents");
+        }
     }
 
     private static void verifyLifecycle(ServerPlayer player) {

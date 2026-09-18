@@ -12,7 +12,9 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Pure stack transformations: callers commit the returned copy, never mutate recipe inputs. */
 public final class MahjongSupplies {
-    public static final int BOX_SLOTS = 54;
+    public static final int BOX_SLOTS = 55;
+    public static final int TILE_SLOTS = 45;
+    public static final int DYE_SLOT = BOX_SLOTS - 1;
     public static final int SET_SIZE = 136;
     private MahjongSupplies() {}
 
@@ -37,50 +39,88 @@ public final class MahjongSupplies {
             && !stack.has(DataComponents.CONTAINER) && !stack.has(DataComponents.BUNDLE_CONTENTS);
     }
 
+    public static boolean mahjongDye(ItemStack stack) {
+        return stack.is(MahjongContent.MAHJONG_DYE) || stack.is(MahjongContent.CREATIVE_MAHJONG_DYE);
+    }
+
+    public static boolean boxAccepts(int slot, ItemStack stack) {
+        if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
+        return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
+            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK) : mahjongDye(stack);
+    }
+
     /** Do not truncate oversized command-created containers when opening or crafting them. */
     public static boolean validBox(ItemStack box) {
         if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1) return false;
         var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        return stored.stream().limit(BOX_SLOTS + 1L).count() <= BOX_SLOTS
-            && stored.stream().allMatch(stack -> stack.isEmpty() || storable(stack));
+        if (stored.stream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
+        var items = contents(box);
+        for (int i = 0; i < items.size(); i++)
+            if (!items.get(i).isEmpty() && (!boxAccepts(i, items.get(i)) || items.get(i).getCount() > items.get(i).getMaxStackSize())) return false;
+        return true;
     }
 
     public static int tileCount(List<ItemStack> items) {
         return items.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).mapToInt(ItemStack::getCount).sum();
     }
 
-    public static ItemStack engrave(ItemStack box) {
+    public static ItemStack engrave(ItemStack box, TileFacePreset preset) {
         if (!validBox(box)) return ItemStack.EMPTY;
-        var input = contents(box);
-        TileData blank = null;
-        DyeColor color = null;
-        List<ItemStack> output = new ArrayList<>();
-        int total = 0;
-        for (ItemStack stack : input) {
-            if (stack.isEmpty()) continue;
-            if (!storable(stack)) return ItemStack.EMPTY;
-            if (stack.is(MahjongContent.POINT_STICK)) { output.add(stack.copy()); continue; }
-            TileData data = tile(stack);
-            if (!data.valid() || !data.blank()) return ItemStack.EMPTY;
-            if (blank == null) { blank = data; color = color(stack); }
-            if (!data.equals(blank) || color != color(stack)) return ItemStack.EMPTY;
-            total += stack.getCount();
-        }
-        if (total < SET_SIZE) return ItemStack.EMPTY;
-        int consumed = SET_SIZE;
-        for (ItemStack stack : input) if (stack.is(MahjongContent.TILE_ITEM)) {
-            int take = Math.min(consumed, stack.getCount());
-            consumed -= take;
-            if (take < stack.getCount()) output.add(stack.copyWithCount(stack.getCount() - take));
-        }
-        if (output.size() + 37 > BOX_SLOTS) return ItemStack.EMPTY;
-        for (int face = 0; face < 34; face++) {
-            boolean five = face == 4 || face == 13 || face == 22;
-            output.add(tile(blank.engraved(face, false), color, five ? 3 : 4));
-            if (five) output.add(tile(blank.engraved(face, true), color, 1));
-        }
+        var output = engravedContents(contents(box), preset);
+        if (output.isEmpty()) return ItemStack.EMPTY;
         ItemStack result = box.copyWithCount(1);
         result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(output));
+        return result;
+    }
+
+    /** Preview a complete transaction; callers own committing it and consuming the reagent. */
+    public static List<ItemStack> engravedContents(List<ItemStack> input, TileFacePreset preset) {
+        if (!preset.available() || input.size() != BOX_SLOTS) return List.of();
+        int total = tileCount(input);
+        if (total != SET_SIZE && total != SET_SIZE + TileData.FLOWER_COUNT) return List.of();
+        var tiles = input.subList(0, TILE_SLOTS).stream().filter(stack -> !stack.isEmpty()).toList();
+        if (tiles.isEmpty()) return List.of();
+        for (int i = 0; i < input.size(); i++)
+            if (!input.get(i).isEmpty() && (!boxAccepts(i, input.get(i)) || input.get(i).getCount() > input.get(i).getMaxStackSize())) return List.of();
+        ItemStack template = tiles.getFirst();
+        boolean blanks = tile(template).blank();
+        if (tiles.stream().anyMatch(stack -> !tile(stack).valid() || tile(stack).blank() != blanks)) return List.of();
+        var output = new ArrayList<>(input.stream().map(ItemStack::copy).toList());
+        if (blanks) {
+            if (tiles.stream().anyMatch(stack -> !ItemStack.isSameItemSameComponents(template, stack))) return List.of();
+            for (int i = 0; i < TILE_SLOTS; i++) output.set(i, ItemStack.EMPTY);
+            int slot = 0;
+            for (int face = 0; face < 34; face++) {
+                boolean five = face == 4 || face == 13 || face == 22;
+                output.set(slot++, printed(template, face, false, five ? 3 : 4, preset));
+                if (five) output.set(slot++, printed(template, face, true, 1, preset));
+            }
+            if (total == SET_SIZE + TileData.FLOWER_COUNT)
+                for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
+                    output.set(slot++, printed(template, TileData.FIRST_FLOWER + flower, false, 1, preset));
+        } else {
+            if (tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
+            for (int i = 0; i < TILE_SLOTS; i++)
+                if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
+            if (deck(output) == null) return List.of();
+            int[] flowers = new int[TileData.FLOWER_COUNT];
+            for (var stack : tiles) {
+                if (tile(stack).material() != tile(template).material() || color(stack) != color(template)) return List.of();
+                if (tile(stack).flower()) flowers[tile(stack).face() - TileData.FIRST_FLOWER] += stack.getCount();
+            }
+            for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
+        }
+        return List.copyOf(output);
+    }
+
+    public static TileFacePreset facePreset(ItemStack stack) {
+        return stack.getOrDefault(MahjongComponents.FACE_PRESET, TileFacePreset.KANSAI);
+    }
+
+    private static ItemStack printed(ItemStack template, int face, boolean red, int count, TileFacePreset preset) {
+        var result = template.copyWithCount(count);
+        result.set(MahjongComponents.TILE, tile(template).engraved(face, red));
+        result.set(MahjongComponents.FACE_PRESET, preset);
         return result;
     }
 
@@ -92,7 +132,6 @@ public final class MahjongSupplies {
             if (tileCount(items) == 0) return ItemStack.EMPTY;
             for (ItemStack stack : items) {
                 if (stack.isEmpty()) continue;
-                if (!storable(stack)) return ItemStack.EMPTY;
                 if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
             }
             result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
@@ -111,22 +150,24 @@ public final class MahjongSupplies {
         int[] red = new int[34];
         TileMaterial material = null;
         DyeColor back = null;
+        TileFacePreset preset = null;
         for (ItemStack stack : items) {
             if (stack.isEmpty()) continue;
+            if (mahjongDye(stack)) continue;
             if (!storable(stack)) return null;
             if (stack.is(MahjongContent.POINT_STICK)) continue;
             TileData data = tile(stack);
             if (!data.valid()) return null;
             if (data.blank() || data.flower()) continue;
-            if (material == null) { material = data.material(); back = color(stack); }
-            if (data.material() != material || color(stack) != back) return null;
+            if (material == null) { material = data.material(); back = color(stack); preset = facePreset(stack); }
+            if (data.material() != material || color(stack) != back || facePreset(stack) != preset) return null;
             (data.red() ? red : normal)[data.face()] += stack.getCount();
         }
         for (int face = 0; face < 34; face++) {
             boolean five = face == 4 || face == 13 || face == 22;
             if (normal[face] != (five ? 3 : 4) || red[face] != (five ? 1 : 0)) return null;
         }
-        return new Deck(material, back);
+        return preset != null && preset.available() ? new Deck(material, back) : null;
     }
 
     public record Deck(TileMaterial material, DyeColor back) {
@@ -140,6 +181,6 @@ public final class MahjongSupplies {
             tile(new TileData(-1, material, false), color, 64),
             tile(new TileData(-1, material, false), color, 64),
             tile(new TileData(-1, material, false), color, 8))));
-        return engrave(box);
+        return engrave(box, TileFacePreset.KANSAI);
     }
 }

@@ -25,12 +25,10 @@ import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExample;
 import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExamples;
 import top.skyeyefast.mchjong.compat.recipes.SupplySubtype;
 import top.skyeyefast.mchjong.recipe.SupplyCraftingRecipe;
-import top.skyeyefast.mchjong.recipe.TileCuttingRecipe;
 
 @JeiPlugin
 public final class MahjongJeiPlugin implements IModPlugin {
     public static final RecipeType<SupplyRecipeExample> CRAFTING = RecipeType.create("mchjong", "supplies", SupplyRecipeExample.class);
-    public static final RecipeType<SupplyRecipeExample> CUTTING = RecipeType.create("mchjong", "engraving", SupplyRecipeExample.class);
     private static IJeiRuntime runtime;
 
     public static IJeiRuntime runtime() { return runtime; }
@@ -49,20 +47,18 @@ public final class MahjongJeiPlugin implements IModPlugin {
 
     @Override public void registerCategories(IRecipeCategoryRegistration registration) {
         var gui = registration.getJeiHelpers().getGuiHelper();
-        registration.addRecipeCategories(new SupplyJeiCategory(CRAFTING, gui, false), new SupplyJeiCategory(CUTTING, gui, true));
+        registration.addRecipeCategories(new SupplyJeiCategory(CRAFTING, gui));
     }
 
     @Override public void registerRecipes(IRecipeRegistration registration) {
         var level = Minecraft.getInstance().level;
         if (level == null) return;
         var examples = SupplyRecipeExamples.create(level);
-        registration.addRecipes(CRAFTING, examples.stream().filter(example -> !example.cutting()).toList());
-        registration.addRecipes(CUTTING, examples.stream().filter(SupplyRecipeExample::cutting).toList());
+        registration.addRecipes(CRAFTING, examples);
     }
 
     @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
         registration.addRecipeCatalyst(new ItemStack(Items.CRAFTING_TABLE), CRAFTING);
-        registration.addRecipeCatalyst(new ItemStack(Items.STONECUTTER), CUTTING);
     }
 
     @Override public void onRuntimeAvailable(IJeiRuntime available) {
@@ -70,8 +66,6 @@ public final class MahjongJeiPlugin implements IModPlugin {
         var recipes = runtime.getRecipeManager();
         recipes.hideRecipes(RecipeTypes.CRAFTING, recipes.createRecipeLookup(RecipeTypes.CRAFTING).get()
             .filter(holder -> holder.value() instanceof SupplyCraftingRecipe).toList());
-        recipes.hideRecipes(RecipeTypes.STONECUTTING, recipes.createRecipeLookup(RecipeTypes.STONECUTTING).get()
-            .filter(holder -> holder.value() instanceof TileCuttingRecipe).toList());
     }
 
     @Override public void onRuntimeUnavailable() { runtime = null; }

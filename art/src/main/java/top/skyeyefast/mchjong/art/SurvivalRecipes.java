@@ -41,14 +41,10 @@ final class SurvivalRecipes {
         }
         output.write("data/mchjong/recipe/blank_point_sticks.json", Map.of("type", "minecraft:stonecutting",
             "ingredient", item("bone_block"), "result", stack("point_stick", 16, Map.of("mchjong:points", 0))));
-        for (int face = 0; face < 45; face++) {
-            boolean red = face >= 34 && face < 37;
-            int kind = red ? 4 + (face - 34) * 9 : face >= 37 ? face - 3 : face;
-            output.write("data/mchjong/recipe/engrave_tile_" + face + ".json", Map.of(
-                "type", "mchjong:engrave_tile", "group", "mchjong:engrave_tile",
-                "ingredient", Map.of("item", "mchjong:mahjong_tile"), "result", tile(kind, "bone", red, 1)));
-        }
-        for (String operation : List.of("dye", "engrave_set", "mark_stick", "upgrade_table"))
+        output.write("data/mchjong/recipe/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",
+            "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye")),
+            "result", stack("mahjong_dye", 1, Map.of())));
+        for (String operation : List.of("dye", "mark_stick", "upgrade_table"))
             output.write("data/mchjong/recipe/" + operation + ".json", Map.of("type", "mchjong:" + operation, "category", "misc"));
     }
 

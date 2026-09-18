@@ -24,6 +24,7 @@ public final class TableSettings {
         public String key() { return "settings.mchjong.info." + name().toLowerCase(Locale.ROOT); }
     }
     public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK, CONFIRM }
+    public enum TileLabels { NAME, MPSZ }
     public enum GuideLines { ALWAYS, HOVER, OFF }
     public enum VoiceSource { RESOURCE_PACK, OFF }
 
@@ -31,6 +32,7 @@ public final class TableSettings {
     private static TableSettings current;
     private EnumSet<Information> hiddenInformation = EnumSet.noneOf(Information.class);
     public DiscardMode discardMode = DiscardMode.SINGLE_CLICK;
+    public TileLabels tileLabels = TileLabels.NAME;
     public GuideLines guideLines = GuideLines.HOVER;
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
@@ -90,6 +92,7 @@ public final class TableSettings {
             TableSettings settings = Objects.requireNonNull(JSON.fromJson(reader, TableSettings.class), "Empty settings");
             Objects.requireNonNull(settings.hiddenInformation, "Missing information flags");
             Objects.requireNonNull(settings.discardMode, "Unknown discard mode");
+            Objects.requireNonNull(settings.tileLabels, "Unknown tile label format");
             Objects.requireNonNull(settings.guideLines, "Unknown guide-line mode");
             Objects.requireNonNull(settings.voiceSource, "Unknown voice source");
             if (!Double.isFinite(settings.effectsVolume) || !Double.isFinite(settings.voiceVolume))
@@ -123,6 +126,7 @@ public final class TableSettings {
         TableSettings defaults = new TableSettings();
         hiddenInformation.clear();
         discardMode = defaults.discardMode;
+        tileLabels = defaults.tileLabels;
         guideLines = defaults.guideLines;
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;

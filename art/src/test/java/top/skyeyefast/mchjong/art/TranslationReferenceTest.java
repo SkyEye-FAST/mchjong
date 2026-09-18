@@ -33,9 +33,12 @@ class TranslationReferenceTest {
         // Registry-derived names can appear in Jade even when no source uses a literal translation key.
         for (String block : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"))
             used.add("block.mchjong." + block);
-        for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth"))
+        for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth", "mahjong_dye", "creative_mahjong_dye"))
             used.add("item.mchjong." + item);
+        for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
+        for (int kind = 0; kind < 34; kind++) used.add("tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(kind));
+        for (String style : List.of("name", "mpsz")) used.add("settings.mchjong.tile_labels." + style);
         for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
             JsonObject translated = JsonParser.parseString(Files.readString(languages.resolve(language + ".json"))).getAsJsonObject();
             var missing = new TreeSet<>(used);

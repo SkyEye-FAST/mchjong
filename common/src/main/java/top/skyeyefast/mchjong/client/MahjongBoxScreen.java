@@ -7,22 +7,39 @@ import net.minecraft.world.inventory.Slot;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-/** A supply case, not a chest skin: native inventory behavior with a read-only packing summary. */
+/** Dedicated compartments and server-authorized face printing over native inventory synchronization. */
 public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMenu> {
+    private MahjongButton print;
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
     public MahjongBoxScreen(MahjongBoxMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         imageWidth = 304;
-        imageHeight = 212;
+        imageHeight = 216;
     }
 
     @Override protected void init() {
         super.init();
         topPos = Math.min(topPos, height - imageHeight - 24);
+        addRenderableWidget(MahjongButton.create(Component.translatable(TileFacePreset.KANSAI.translationKey()), ignored -> {})
+            .bounds(leftPos + 196, topPos + 122, 94, 20).build().selected(true));
+        var kanto = addRenderableWidget(MahjongButton.create(Component.translatable(TileFacePreset.KANTO.translationKey()), ignored -> {})
+            .bounds(leftPos + 196, topPos + 146, 94, 20)
+            .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("box.mchjong.preset_pending"))).build());
+        kanto.active = false;
+        print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, TileFacePreset.KANSAI.ordinal()))
+            .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
+        print.active = menu.canEngrave(TileFacePreset.KANSAI);
+    }
+
+    @Override protected void containerTick() {
+        super.containerTick();
+        print.active = menu.canEngrave(TileFacePreset.KANSAI);
     }
 
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -39,22 +56,20 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
 
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 14, 5, 276, MahjongUi.TEXT, false);
-        MahjongUi.text(graphics, font, playerInventoryTitle, 14, 124, 160, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.stick_storage"), 14, 104, 160, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, playerInventoryTitle, 14, 132, 160, MahjongUi.MUTED, false);
         var items = menu.items();
         int tiles = MahjongSupplies.tileCount(items);
-        int occupied = (int) items.stream().filter(stack -> !stack.isEmpty()).count();
         int sticks = items.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).mapToInt(stack -> stack.getCount()).sum();
         boolean ready = MahjongSupplies.deck(items) != null;
-        int y = paragraph(graphics, Component.translatable("box.mchjong.contents"), 18, MahjongUi.TEXT);
-        y = paragraph(graphics, Component.translatable("box.mchjong.tiles", tiles), y + 8, MahjongUi.TEXT);
-        y = paragraph(graphics, Component.translatable("box.mchjong.sticks", sticks), y + 4, MahjongUi.MUTED);
-        y = paragraph(graphics, Component.translatable("box.mchjong.slots", occupied, MahjongSupplies.BOX_SLOTS), y + 4, MahjongUi.MUTED);
-        int barY = y + 6;
-        graphics.fill(196, barY, 290, barY + 3, MahjongUi.INPUT);
-        graphics.fill(196, barY, 196 + occupied * 94 / MahjongSupplies.BOX_SLOTS, barY + 3, MahjongUi.ACCENT);
-        paragraph(graphics, Component.translatable(ready ? "box.mchjong.ready" : "box.mchjong.incomplete"), barY + 12,
-            ready ? MahjongUi.POSITIVE : MahjongUi.ACCENT);
-        paragraph(graphics, Component.translatable("box.mchjong.help"), 137, MahjongUi.MUTED);
+        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.tiles", tiles), 196, 18, 94, MahjongUi.TEXT, false);
+        MahjongUi.text(graphics, font, Component.translatable("box.mchjong.sticks", sticks), 196, 34, 94, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, Component.translatable(ready ? "box.mchjong.ready" : "box.mchjong.incomplete"), 196, 50, 94,
+            ready ? MahjongUi.POSITIVE : MahjongUi.ACCENT, false);
+        paragraph(graphics, Component.translatable("box.mchjong.dye_storage"), 70, MahjongUi.TEXT);
+        MahjongUi.text(graphics, font, Component.translatable(items.get(MahjongSupplies.DYE_SLOT).is(MahjongContent.CREATIVE_MAHJONG_DYE)
+            ? "box.mchjong.unlimited" : "box.mchjong.dye_cost"), 218, 87, 72, MahjongUi.MUTED, false);
+        paragraph(graphics, Component.translatable("box.mchjong.preset"), 110, MahjongUi.TEXT);
     }
 
     private int paragraph(GuiGraphics graphics, Component text, int y, int color) {

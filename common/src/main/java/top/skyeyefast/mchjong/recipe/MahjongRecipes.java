@@ -8,13 +8,11 @@ import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 
 public final class MahjongRecipes {
-    public static final RecipeSerializer<TileCuttingRecipe> ENGRAVE_TILE = new TileCuttingRecipe.Serializer();
     public static final Map<SupplyCraftingRecipe.Operation, RecipeSerializer<SupplyCraftingRecipe>> CRAFTING;
     public static final Map<String, RecipeSerializer<?>> SERIALIZERS;
     static {
         var crafting = new EnumMap<SupplyCraftingRecipe.Operation, RecipeSerializer<SupplyCraftingRecipe>>(SupplyCraftingRecipe.Operation.class);
         var serializers = new LinkedHashMap<String, RecipeSerializer<?>>();
-        serializers.put("engrave_tile", ENGRAVE_TILE);
         for (var operation : SupplyCraftingRecipe.Operation.values()) {
             RecipeSerializer<SupplyCraftingRecipe> serializer = new SimpleCraftingRecipeSerializer<>(category -> new SupplyCraftingRecipe(category, operation));
             crafting.put(operation, serializer);

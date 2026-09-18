@@ -22,7 +22,8 @@ public final class SupplySubtype {
 
     public static List<Item> items() {
         return List.of(MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM,
-            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK, MahjongContent.BOX_ITEM);
+            MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK, MahjongContent.BOX_ITEM,
+            MahjongContent.MAHJONG_DYE, MahjongContent.CREATIVE_MAHJONG_DYE);
     }
 
     @Override public boolean equals(Object other) {

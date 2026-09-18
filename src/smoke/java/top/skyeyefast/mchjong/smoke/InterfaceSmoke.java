@@ -39,7 +39,7 @@ final class InterfaceSmoke {
             windowWidth = client.getWindow().getWidth(); windowHeight = client.getWindow().getHeight();
             guiScale = client.options.guiScale().get();
             require(menu.ownerSlot() == 0, "Carrier index was not synchronized");
-            require(!menu.slots.get(81).mayPickup(client.player), "Client exposes the locked carrier");
+            require(!menu.slots.get(MahjongSupplies.BOX_SLOTS + 27).mayPickup(client.player), "Client exposes the locked carrier");
             require(MahjongSupplies.deck(menu.items()) != null, "Ready set is not reflected in client contents");
             originalTiles = MahjongSupplies.tileCount(menu.items());
             moved = menu.slots.getFirst().getItem().copy();

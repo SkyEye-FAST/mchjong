@@ -25,7 +25,6 @@
     ]
   },
   "mixins": [
-    "mchjong.mixins.json",
     "mchjong.client.mixins.json"
   ],
   "suggests": {

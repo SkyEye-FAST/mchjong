@@ -104,7 +104,7 @@ class AssetContractTest {
         assertEquals(List.of("Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun", "Man5-Dora", "Pin5-Dora", "Sou5-Dora"),
             java.util.stream.IntStream.range(27, 37).mapToObj(TileArtwork::sourceName).toList());
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(-1));
-        assertEquals(List.of("Plum", "Orchid", "Chrysanthemum", "Bamboo", "Spring", "Summer", "Autumn", "Winter"),
+        assertEquals(List.of("Spring", "Summer", "Autumn", "Winter", "Plum", "Orchid", "Bamboo", "Chrysanthemum"),
             java.util.stream.IntStream.range(37, 45).mapToObj(TileArtwork::sourceName).toList());
         assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(45));
         BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
@@ -120,7 +120,8 @@ class AssetContractTest {
             assertEquals(TileArtwork.BACK, solid.getRGB(x, y));
         }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
-        var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png"));
+        var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
+            "mahjong_dye.png", "creative_mahjong_dye.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {

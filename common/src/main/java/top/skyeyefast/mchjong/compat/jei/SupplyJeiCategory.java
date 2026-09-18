@@ -21,16 +21,14 @@ import top.skyeyefast.mchjong.client.MahjongUi;
 final class SupplyJeiCategory implements IRecipeCategory<SupplyRecipeExample> {
     private final RecipeType<SupplyRecipeExample> type;
     private final IDrawable icon;
-    private final boolean cutting;
 
-    SupplyJeiCategory(RecipeType<SupplyRecipeExample> type, IGuiHelper gui, boolean cutting) {
+    SupplyJeiCategory(RecipeType<SupplyRecipeExample> type, IGuiHelper gui) {
         this.type = type;
-        this.cutting = cutting;
-        icon = gui.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(cutting ? Items.STONECUTTER : Items.CRAFTING_TABLE));
+        icon = gui.createDrawableIngredient(VanillaTypes.ITEM_STACK, new ItemStack(Items.CRAFTING_TABLE));
     }
 
     @Override public RecipeType<SupplyRecipeExample> getRecipeType() { return type; }
-    @Override public Component getTitle() { return Component.translatable(cutting ? "browser.mchjong.engraving" : "browser.mchjong.crafting"); }
+    @Override public Component getTitle() { return Component.translatable("browser.mchjong.crafting"); }
     @Override public IDrawable getIcon() { return icon; }
     @Override public int getWidth() { return 134; }
     @Override public int getHeight() { return 78; }
@@ -54,6 +52,6 @@ final class SupplyJeiCategory implements IRecipeCategory<SupplyRecipeExample> {
         MahjongUi.text(graphics, font, Component.translatable("browser.mchjong.components"), 4, 64, 126, MahjongUi.MUTED, false);
     }
 
-    private int inputX(int index) { return cutting ? 23 : 5 + index % 3 * 18; }
-    private int inputY(int index) { return cutting ? 23 : 5 + index / 3 * 18; }
+    private int inputX(int index) { return 5 + index % 3 * 18; }
+    private int inputY(int index) { return 5 + index / 3 * 18; }
 }

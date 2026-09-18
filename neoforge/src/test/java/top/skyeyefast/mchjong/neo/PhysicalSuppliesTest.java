@@ -26,6 +26,7 @@ import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -34,7 +35,9 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(12, entries.size());
+        assertEquals(14, entries.size());
+        assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
+        assertEquals(1, new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE).getMaxStackSize());
         assertTrue(entries.get(4).is(MahjongContent.BOX_ITEM));
         assertTrue(entries.get(5).is(MahjongContent.BOX_ITEM));
         assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(4))));
@@ -104,7 +107,7 @@ class PhysicalSuppliesTest {
         MahjongContent.SUPPLIES.forEach((name, item) -> assertSame(item, BuiltInRegistries.ITEM.get(MahjongContent.id(name))));
     }
 
-    @Test void stonecuttingMakesBlanksAndEngravesAllFacesWithoutLosingMaterialOrDye(MinecraftServer server) {
+    @Test void stonecuttingMakesOnlyBlanksAndMahjongDyeUsesFourColors(MinecraftServer server) {
         for (TileMaterial material : TileMaterial.values()) {
             var cutting = (StonecutterRecipe) server.getRecipeManager().byKey(MahjongContent.id("blanks_" + material.getSerializedName())).orElseThrow().value();
             var input = new SingleRecipeInput(new ItemStack(vanilla(material.source())));
@@ -113,25 +116,15 @@ class PhysicalSuppliesTest {
             assertTrue(blanks.is(MahjongContent.TILE_ITEM));
             assertEquals(16, blanks.getCount());
             assertEquals(new TileData(-1, material, false), blanks.get(MahjongComponents.TILE));
-            blanks.set(DataComponents.BASE_COLOR, DyeColor.LIME);
-            for (int face = 0; face < 45; face++) {
-                var engraving = (StonecutterRecipe) server.getRecipeManager().byKey(MahjongContent.id("engrave_tile_" + face)).orElseThrow().value();
-                var blankInput = new SingleRecipeInput(blanks);
-                assertTrue(engraving.matches(blankInput, server.overworld()));
-                ItemStack tile = engraving.assemble(blankInput, server.registryAccess());
-                TileData data = MahjongSupplies.tile(tile);
-                assertEquals(material, data.material());
-                boolean red = face >= 34 && face < 37;
-                assertEquals(red ? 4 + (face - 34) * 9 : face >= 37 ? face - 3 : face, data.face());
-                assertEquals(red, data.red());
-                assertEquals(face >= 37, data.flower());
-                assertEquals(DyeColor.LIME, MahjongSupplies.color(tile));
-                assertEquals(1, tile.getCount());
-                assertFalse(engraving.matches(new SingleRecipeInput(tile), server.overworld()));
-                assertTrue(engraving.assemble(new SingleRecipeInput(tile), server.registryAccess()).isEmpty());
-                assertTrue(MahjongSupplies.tile(blanks).blank());
-            }
         }
+        var dye = craft(server, "mahjong_dye", 2, 2, List.of(new ItemStack(Items.BLUE_DYE), new ItemStack(Items.BLACK_DYE),
+            new ItemStack(Items.GREEN_DYE), new ItemStack(Items.RED_DYE)));
+        assertTrue(dye.is(MahjongContent.MAHJONG_DYE));
+        assertEquals(1, dye.getCount());
+        assertTrue(server.getRecipeManager().byKey(MahjongContent.id("engrave_set")).isEmpty());
+        assertTrue(server.getRecipeManager().getRecipes().stream().noneMatch(recipe ->
+            recipe.id().getPath().startsWith("engrave_tile_")
+                || recipe.value().getResultItem(server.registryAccess()).is(MahjongContent.CREATIVE_MAHJONG_DYE)));
     }
 
     @Test void eightFlowersRoundTripAndStayOutsideTheRiichiWall(MinecraftServer server) {
@@ -142,6 +135,9 @@ class PhysicalSuppliesTest {
                 var data = new TileData(TileData.FIRST_FLOWER + flower, material, false);
                 var stack = MahjongSupplies.tile(data, DyeColor.BLUE, 1);
                 assertTrue(data.flower());
+                assertEquals((flower + 1) + "q", data.notation());
+                assertEquals(data.notation(), data.label(true).getString());
+                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum").get(flower), data.flowerKey());
                 assertEquals(data, TileData.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,
                     TileData.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, data).getOrThrow()).getOrThrow());
                 contents.set(37 + flower, stack);
@@ -171,22 +167,30 @@ class PhysicalSuppliesTest {
         assertFalse(new TileData(34, TileMaterial.BONE, true).valid());
     }
 
-    @Test void engravingAndBulkDyeAreAtomicAndKeepSparesAndPhysicalSticks(MinecraftServer server) {
+    @Test void engravingAndBulkDyeAreAtomicAndKeepFlowersAndPhysicalSticks(MinecraftServer server) {
         for (TileMaterial material : TileMaterial.values()) {
             var blank = new TileData(-1, material, false);
             var stick = new ItemStack(MahjongContent.POINT_STICK, 12);
             stick.set(MahjongComponents.POINTS, 1000);
-            ItemStack source = box(List.of(MahjongSupplies.tile(blank, DyeColor.BLUE, 64), MahjongSupplies.tile(blank, DyeColor.BLUE, 64),
-                MahjongSupplies.tile(blank, DyeColor.BLUE, 16), stick));
+            var items = net.minecraft.core.NonNullList.withSize(MahjongSupplies.BOX_SLOTS, ItemStack.EMPTY);
+            items.set(0, MahjongSupplies.tile(blank, DyeColor.BLUE, 64));
+            items.set(1, MahjongSupplies.tile(blank, DyeColor.BLUE, 64));
+            items.set(2, MahjongSupplies.tile(blank, DyeColor.BLUE, 16));
+            items.set(MahjongSupplies.TILE_SLOTS, stick);
+            ItemStack source = box(items);
             ItemStack before = source.copy();
-            ItemStack engraved = craft(server, "engrave_set", 2, 1, List.of(source, new ItemStack(Items.INK_SAC)));
+            ItemStack engraved = MahjongSupplies.engrave(source, TileFacePreset.KANSAI);
             assertTrue(ItemStack.matches(before, source));
             assertNotNull(MahjongSupplies.deck(engraved));
             assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(engraved)));
             assertEquals(8, MahjongSupplies.contents(engraved).stream().filter(s -> s.is(MahjongContent.TILE_ITEM)
-                && MahjongSupplies.tile(s).blank()).mapToInt(ItemStack::getCount).sum());
+                && MahjongSupplies.tile(s).flower()).mapToInt(ItemStack::getCount).sum());
             assertEquals(12, MahjongSupplies.contents(engraved).stream().filter(s -> s.is(MahjongContent.POINT_STICK)).mapToInt(ItemStack::getCount).sum());
-            assertTrue(MahjongSupplies.engrave(engraved).isEmpty(), "Cannot re-engrave an existing set");
+            assertTrue(MahjongSupplies.engrave(engraved, TileFacePreset.KANSAI).isEmpty(), "An unchanged preset is not a paid operation");
+            assertTrue(MahjongSupplies.engrave(source, TileFacePreset.KANTO).isEmpty(), "Kanto artwork is not available");
+            var otherPreset = MahjongSupplies.contents(engraved);
+            for (var stack : otherPreset) if (stack.is(MahjongContent.TILE_ITEM)) stack.set(MahjongComponents.FACE_PRESET, TileFacePreset.KANTO);
+            assertTrue(ItemStack.matches(engraved, MahjongSupplies.engrave(box(otherPreset), TileFacePreset.KANSAI)));
             for (DyeColor color : DyeColor.values()) {
                 ItemStack dyed = craft(server, "dye", 2, 1, List.of(engraved, new ItemStack(vanilla(color.getName() + "_dye"))));
                 var deck = MahjongSupplies.deck(dyed);
@@ -202,10 +206,10 @@ class PhysicalSuppliesTest {
             }
         }
         var shortBox = box(List.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 64)));
-        assertTrue(MahjongSupplies.engrave(shortBox).isEmpty());
+        assertTrue(MahjongSupplies.engrave(shortBox, TileFacePreset.KANSAI).isEmpty());
         var mixed = box(List.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 64),
             MahjongSupplies.tile(TileData.BLANK, DyeColor.RED, 64), MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 8)));
-        assertTrue(MahjongSupplies.engrave(mixed).isEmpty());
+        assertTrue(MahjongSupplies.engrave(mixed, TileFacePreset.KANSAI).isEmpty());
         assertFalse(MahjongSupplies.storable(new ItemStack(MahjongContent.BOX_ITEM)));
         var nested = new ItemStack(MahjongContent.TILE_ITEM);
         nested.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
@@ -308,9 +312,9 @@ class PhysicalSuppliesTest {
         var oversized = box(stored);
         assertFalse(MahjongSupplies.validBox(oversized));
         assertNull(MahjongSupplies.deck(oversized));
-        assertTrue(MahjongSupplies.engrave(oversized).isEmpty());
+        assertTrue(MahjongSupplies.engrave(oversized, TileFacePreset.KANSAI).isEmpty());
         assertTrue(MahjongSupplies.dye(oversized, DyeColor.RED).isEmpty());
-        assertEquals(55, oversized.get(DataComponents.CONTAINER).stream().count());
+        assertEquals(MahjongSupplies.BOX_SLOTS + 1, oversized.get(DataComponents.CONTAINER).stream().count());
         var stick = new ItemStack(MahjongContent.POINT_STICK, 64);
         stick.set(MahjongComponents.POINTS, 1000);
         assertTrue(top.skyeyefast.mchjong.item.PointStickMenu.validStick(stick));

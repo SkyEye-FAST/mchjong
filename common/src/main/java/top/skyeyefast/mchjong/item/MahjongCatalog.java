@@ -19,6 +19,8 @@ public final class MahjongCatalog {
         entries.add(new ItemStack(MahjongContent.BOX_ITEM));
         entries.add(MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE));
         entries.add(new ItemStack(MahjongContent.TILE_ITEM));
+        entries.add(new ItemStack(MahjongContent.MAHJONG_DYE));
+        entries.add(new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE));
         MahjongComponents.DENOMINATIONS.stream().sorted().forEach(points -> {
             var stick = new ItemStack(MahjongContent.POINT_STICK);
             stick.set(MahjongComponents.POINTS, points);

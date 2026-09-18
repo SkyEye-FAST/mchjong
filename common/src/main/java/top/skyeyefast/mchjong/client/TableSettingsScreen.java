@@ -72,6 +72,11 @@ public final class TableSettingsScreen extends Screen {
             addToggle(left, 117, column, "settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
             addToggle(left + column + 6, 117, column, "settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
             addToggle(left, 143, span, "settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
+            addRenderableWidget(MahjongButton.create(value("settings.mchjong.tile_labels", settings.tileLabels), ignored -> {
+                settings.tileLabels = settings.tileLabels == TableSettings.TileLabels.NAME
+                    ? TableSettings.TileLabels.MPSZ : TableSettings.TileLabels.NAME;
+                init();
+            }).bounds(left, 169, span, 20).build());
         } else if (tab == 2) {
             addRenderableWidget(new CameraSlider(left, 65, span, true));
             addRenderableWidget(new CameraSlider(left, 91, span, false));

@@ -111,8 +111,9 @@ On Windows, use `gradlew.bat` instead of `./gradlew`.
 ## Playing at a table
 
 Build an ordinary table from matching wooden slabs and fences. Cut material
-blocks into blanks, put them in a mahjong box, then craft the box with an ink sac
-to engrave a set. Right-click either table to store up to two boxes inside, and
+blocks into blanks, put 136 or 144 matching blanks in a mahjong box, and apply
+the Kansai faces using one mahjong dye in the box's dye slot. The 144-tile set
+includes eight flowers. Right-click either table to store up to two boxes inside, and
 lay a cloth on its surface. A complete set and a cloth are required to play.
 On ordinary tables, sweep the face-down tiles across the felt to shuffle, drag
 your highlighted loose tiles toward your wall, and pull starting packets and

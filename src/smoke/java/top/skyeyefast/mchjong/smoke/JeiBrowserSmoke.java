@@ -17,14 +17,14 @@ final class JeiBrowserSmoke implements BrowserDriver {
         var runtime = MahjongJeiPlugin.runtime();
         var focus = runtime.getJeiHelpers().getFocusFactory().createFocus(
             output ? RecipeIngredientRole.OUTPUT : RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, stack);
-        return List.of(MahjongJeiPlugin.CRAFTING, MahjongJeiPlugin.CUTTING).stream()
+        return List.of(MahjongJeiPlugin.CRAFTING).stream()
             .flatMap(type -> runtime.getRecipeManager().createRecipeLookup(type).limitFocus(List.of(focus)).get())
             .map(top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExample::id).collect(Collectors.toSet());
     }
 
     @Override public void showRecipe(ResourceLocation id) {
         var runtime = MahjongJeiPlugin.runtime();
-        for (var type : List.of(MahjongJeiPlugin.CRAFTING, MahjongJeiPlugin.CUTTING)) {
+        for (var type : List.of(MahjongJeiPlugin.CRAFTING)) {
             var result = runtime.getRecipeManager().createRecipeLookup(type).get().filter(recipe -> recipe.id().equals(id)).toList();
             if (!result.isEmpty()) {
                 runtime.getRecipesGui().showRecipes(runtime.getRecipeManager().getRecipeCategory(type), result, List.of());

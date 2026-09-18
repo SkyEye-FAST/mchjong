@@ -44,6 +44,11 @@ project's presentation vocabulary without replacing native input machinery.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
 and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
 inventory wells and a packing summary; it never writes stored components.
+Face printing uses native menu-button packets. The server validates the complete
+136/144-tile input and selected preset, then commits all tile slots and dye
+consumption together. Tile, point-stick and dye compartments have distinct
+native insertion ranges. `TileFacePreset` is a separate immutable component;
+only presets with available artwork may be applied or supply an active game.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
 shows the selected complete set and cloth readiness without changing equipment.
@@ -168,9 +173,11 @@ drags for shuffle, walls, packet dealing and draws, followed by normal discard
 and exit controls. `PointStickMenuSmoke` exercises native transfers, splitting,
 drag distribution, swaps, close, distance and removal with exact item accounting.
 Box menu lifetime is bound to the current menu and exact carrier
-stack, with immediate vanilla container-component persistence. A narrow shared
-stonecutter mixin adds component-aware cache invalidation to the native menu;
-crafting rules stay in `recipe/`, and neither loader carries separate rules.
+stack, with immediate vanilla container-component persistence. Dedicated tile,
+point-stick and dye slots share vanilla click validation. Face printing previews
+the entire 136/144-tile transaction, then commits it with exactly one ordinary
+dye consumed; creative dye is retained. Presets are immutable item components.
+Crafting rules stay in `recipe/`, and neither loader carries separate rules.
 
 Private equipment saves explicitly encode empty slots. Public block updates
 omit those slots entirely and contain appearance only, so receiving an

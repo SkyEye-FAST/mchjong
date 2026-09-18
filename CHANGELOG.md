@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Tile-name and mpsz tooltip preferences, defaulting to localized names; flower tiles use 1q-8q in spring, summer, autumn, winter, plum, orchid, bamboo and chrysanthemum order.
+- Craftable mahjong dye, reusable creative mahjong dye, separate box compartments and atomic 136/144-tile Kansai face printing, with Kanto reserved for future artwork.
+
+### Changed
+
+- Tile-face printing is performed inside the box with mahjong dye; stonecutting prepares raw blanks and recipe viewers describe the surviving crafting operations.
+
 ### Fixed
 
 - Clockwise wall draws, counterclockwise player turns and stable upper/lower dead-wall layers across manual handling, rendering and animation.

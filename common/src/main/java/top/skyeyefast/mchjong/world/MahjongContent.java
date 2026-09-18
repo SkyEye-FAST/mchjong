@@ -30,11 +30,15 @@ public final class MahjongContent {
     public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
     public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.GREEN));
     public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.TILE, TileData.BLANK)
+        .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI)
         .component(DataComponents.BASE_COLOR, DyeColor.BLUE));
     public static final Item POINT_STICK = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.POINTS, 0));
     public static final Item BOX_ITEM = new MahjongBoxItem(new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
+    public static final Item MAHJONG_DYE = new Item(new Item.Properties().stacksTo(64));
+    public static final Item CREATIVE_MAHJONG_DYE = new Item(new Item.Properties().stacksTo(1).rarity(net.minecraft.world.item.Rarity.EPIC));
     public static final java.util.Map<String, Item> SUPPLIES = java.util.Map.of(
-        "table_cloth", CLOTH_ITEM, "mahjong_tile", TILE_ITEM, "point_stick", POINT_STICK, "mahjong_box", BOX_ITEM);
+        "table_cloth", CLOTH_ITEM, "mahjong_tile", TILE_ITEM, "point_stick", POINT_STICK, "mahjong_box", BOX_ITEM,
+        "mahjong_dye", MAHJONG_DYE, "creative_mahjong_dye", CREATIVE_MAHJONG_DYE);
     public static BlockEntityType<MahjongTableBlockEntity> TABLE_ENTITY;
     public static BlockEntityType<FurnitureBlockEntity> STOOL_ENTITY;
     public static EntityType<SeatEntity> SEAT_ENTITY;

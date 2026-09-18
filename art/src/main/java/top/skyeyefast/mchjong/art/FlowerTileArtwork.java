@@ -27,8 +27,10 @@ final class FlowerTileArtwork {
     private static final String ROOT = "I.Mahjong-" + REVISION + "/";
     private static final String SHA256 = "3bf09b9786adc8cb689fb5debfa9777e96de2c63856117db5d56855ecd501007";
     static final int RED = 0xa72a2e, GREEN = 0x134e2d, BLUE = 0x203e83;
-    // Unicode lists bamboo before chrysanthemum; our physical set numbers chrysanthemum 3, bamboo 4.
-    private static final int[] CODE_POINTS = {0x1f022, 0x1f023, 0x1f025, 0x1f024, 0x1f026, 0x1f027, 0x1f028, 0x1f029};
+    // 1q-8q: spring, summer, autumn, winter, plum, orchid, bamboo, chrysanthemum.
+    private static final int[] CODE_POINTS = {0x1f026, 0x1f027, 0x1f028, 0x1f029, 0x1f022, 0x1f023, 0x1f024, 0x1f025};
+    // Color regions are keyed by the source engravings, independently of the public tile order.
+    private static final int[] INK_DESIGNS = {4, 5, 6, 7, 0, 1, 3, 2};
     private final Layers[] flowers = new Layers[8];
     private final String license;
 
@@ -56,7 +58,7 @@ final class FlowerTileArtwork {
                 if (!font.canDisplay(code)) throw new IOException("Missing flower glyph: " + Integer.toHexString(code));
                 char[] text = Character.toChars(code);
                 Shape outline = font.layoutGlyphVector(context, text, 0, text.length, Font.LAYOUT_LEFT_TO_RIGHT).getOutline();
-                flowers[flower] = paint(withoutFrame(outline), flower);
+                flowers[flower] = paint(withoutFrame(outline), INK_DESIGNS[flower]);
             }
         } catch (FontFormatException invalid) {
             throw new IOException("Invalid pinned flower outlines", invalid);

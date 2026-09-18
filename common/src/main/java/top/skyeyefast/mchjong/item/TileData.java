@@ -10,7 +10,7 @@ public record TileData(int face, TileMaterial material, boolean red) {
     public static final int FIRST_FLOWER = 34;
     public static final int FLOWER_COUNT = 8;
     public static final java.util.List<String> FLOWERS = java.util.List.of(
-        "plum", "orchid", "chrysanthemum", "bamboo", "spring", "summer", "autumn", "winter");
+        "spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum");
     public static final TileData BLANK = new TileData(-1, TileMaterial.BONE, false);
     public static final Codec<TileData> CODEC = RecordCodecBuilder.<TileData>create(instance -> instance.group(
         Codec.intRange(-1, FIRST_FLOWER + FLOWER_COUNT - 1).fieldOf("face").forGetter(TileData::face),
@@ -25,6 +25,18 @@ public record TileData(int face, TileMaterial material, boolean red) {
     public String flowerKey() {
         if (!flower()) throw new IllegalStateException("Not a flower tile");
         return "flower.mchjong." + FLOWERS.get(face - FIRST_FLOWER);
+    }
+    public String notation() {
+        if (blank()) throw new IllegalStateException("A blank has no tile notation");
+        return flower() ? (face - FIRST_FLOWER + 1) + "q"
+            : red ? "0" + "mps".charAt(face / 9) : top.skyeyefast.mchjong.engine.Tile.notation(face);
+    }
+    public net.minecraft.network.chat.Component label(boolean notation) {
+        if (blank()) return net.minecraft.network.chat.Component.translatable("item.mchjong.blank");
+        if (notation) return net.minecraft.network.chat.Component.literal(notation());
+        var name = net.minecraft.network.chat.Component.translatable(flower() ? flowerKey()
+            : "tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(face));
+        return red ? net.minecraft.network.chat.Component.translatable("tile.mchjong.red", name) : name;
     }
     public boolean valid() { return face >= -1 && face < FIRST_FLOWER + FLOWER_COUNT && (!red || face == 4 || face == 13 || face == 22); }
     public TileData engraved(int face, boolean red) { return new TileData(face, material, red); }

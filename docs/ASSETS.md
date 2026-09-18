@@ -28,8 +28,8 @@ pinned revision are documented above.
 `assets/mchjong/textures/tiles.png` is a 2048 by 4096 atlas, eight cells per row.
 Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,
 North, white, green and red dragon. Cells 34-36 are the three red fives in suit
-order. Cells 37-44 are plum, orchid, chrysanthemum, bamboo, spring, summer,
-autumn and winter. `FlowerTileArtwork` rasterizes the traditional Hong Kong
+order. Cells 37-44 are spring, summer, autumn, winter, plum, orchid, bamboo and
+chrysanthemum, numbered 1q-8q. `FlowerTileArtwork` rasterizes the traditional Hong Kong
 engravings from [I.Mahjong](https://github.com/SyaoranHinata/I.Mahjong), by Ichiro
 (SyaoranHinata), based on Gutenberg Labo's GL-MahjongTile. The build pins revision
 `73c507836e6ab30579305257ae3e2a7e1142d066` and verifies archive SHA-256
@@ -61,6 +61,13 @@ render types also retain linear filtering at draw time (vanilla entity render
 types override the metadata). Face UVs stop at half-pixel insets to avoid
 sampling neighboring cells. The client smoke checks the live OpenGL minification
 and magnification filters after rendering, including after resource-pack reloads.
+
+## Mahjong dye items
+
+`MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at
+`assets/mchjong/textures/item/mahjong_dye.png` and `creative_mahjong_dye.png`.
+The reusable variant has a purple pouch and brass seal. Both use vanilla
+generated-item models and can be replaced independently by resource packs.
 
 ## Tile backs and customization
 
