@@ -8,12 +8,9 @@ existing work and preserve unrelated tracked and untracked changes. Use
 Keep patches scoped to the requested work; avoid reset, clean, force pushes and
 overwriting local work.
 
-The Windows workspace is `C:\Java\mchjong`. When using the Coding Tools MCP,
-confirm the workspace root before choosing a relative workdir (`Java/mchjong`
-when the root is `C:\`), pass that workdir explicitly, and use
-`pwsh -NoProfile -Command` for PowerShell commands because its default command
-shell can be `cmd`. Outside Coding Tools MCP, `pwsh -NoProfile -Command` is not
-required.
+Resolve the repository root from the current checkout and use it as the working
+directory for repository commands. Use syntax appropriate to the active shell;
+do not assume a particular checkout path, operating system or tool provider.
 
 Deliver complete, runnable increments. Choose the simplest implementation that
 meets the requirements, extend existing components and dependencies, and keep
@@ -65,12 +62,13 @@ operating requirements, permissions and privacy guarantees.
 
 ## Validation and delivery
 
-Use JDK 21 for the current profile and the checked-in Gradle wrapper:
+Use JDK 21 for the current profile and the checked-in Gradle wrapper. The examples
+below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 
 ```text
-gradlew.bat buildAll --warning-mode fail
-gradlew.bat :runSmokeClient --console=plain
-gradlew.bat :neoforge:runSmokeClient --console=plain
+./gradlew buildAll --warning-mode fail
+./gradlew :runSmokeClient --console=plain
+./gradlew :neoforge:runSmokeClient --console=plain
 ```
 
 `buildAll` covers the engine, presentation, generated resources and NeoForge
@@ -85,10 +83,10 @@ For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
 and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
 
-Use signed Git commits for each complete batch and push normally. Check
-`git signing-agent status` before committing. In a sandbox with a different
-home directory, use the existing user's Git configuration and signing setup;
-keep signing enabled and keep credentials and private keys out of the repository.
+Use signed Git commits for each complete batch and push normally. Confirm that
+the configured Git signing mechanism is ready before committing. Use the
+contributor's existing signing setup; keep signing enabled and keep credentials
+and private keys out of the repository.
 Inspect the staged diff, use `git commit -S`, verify each resulting signature,
 then push and confirm the remote ref. Report commit IDs, tests and outstanding
 limitations precisely.
