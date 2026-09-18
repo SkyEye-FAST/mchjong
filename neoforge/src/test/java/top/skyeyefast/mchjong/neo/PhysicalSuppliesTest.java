@@ -82,9 +82,9 @@ class PhysicalSuppliesTest {
             assertEquals(wood, table.get(MahjongComponents.WOOD));
             ingredients.set(0, new ItemStack(vanilla(wood == FurnitureWood.OAK ? "birch_slab" : "oak_slab")));
             assertFalse(crafting(server, "mahjong_table" + suffix).matches(CraftingInput.of(3, 3, ingredients), server.overworld()));
-            ItemStack stools = craft(server, "mahjong_stool" + suffix, 2, 2,
+            ItemStack stools = craft(server, "mahjong_stool" + suffix, 2, 3,
                 List.of(new ItemStack(Items.WHITE_CARPET), new ItemStack(Items.WHITE_CARPET),
-                    new ItemStack(slab), new ItemStack(slab)));
+                    new ItemStack(slab), new ItemStack(slab), new ItemStack(fence), new ItemStack(fence)));
             assertTrue(stools.is(MahjongContent.STOOL_ITEM));
             assertEquals(2, stools.getCount());
             assertEquals(wood, stools.get(MahjongComponents.WOOD));

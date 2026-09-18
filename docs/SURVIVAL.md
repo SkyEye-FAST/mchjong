@@ -81,12 +81,12 @@ S . S       F = wooden fence
 F . F       . = empty
 ```
 
-Floor-cushion stools, output two in a 2 x 2 crafting grid, with two matching
-wooden slabs and two white carpets:
+Padded wooden stools, output two, with slabs and fences from the same wood family:
 
 ```text
 C C       C = white carpet
 S S       S = wooden slab
+F F       F = wooden fence
 ```
 
 Automatic table, output one and preserve the ordinary table's wood and name:

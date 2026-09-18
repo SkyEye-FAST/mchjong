@@ -153,7 +153,7 @@ For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and
 `:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
 and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
 and overhead rivers with the hand and expanded automatic controls. They then
-inspect the camera with controls closed and the third-person cushion pose.
+inspect the camera with controls closed and the third-person stool pose.
 Evidence goes to each loader's `build/smoke/seating-evidence`.
 
 Riichi deposits occupy four lanes in the central area, above the automatic display

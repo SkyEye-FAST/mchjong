@@ -15,6 +15,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Tile-face printing is performed inside the box with mahjong dye; stonecutting prepares raw blanks and recipe viewers describe the surviving crafting operations.
+- Padded wooden stools have their tapered legs and carpet/slab/fence recipe restored while retaining the current seated and overhead cameras.
 
 ### Fixed
 

@@ -9,7 +9,7 @@ import net.minecraft.world.phys.AABB;
 public final class TableGeometry {
     public static final int FOOTPRINT_RADIUS = 1;
     public static final int STOOL_DISTANCE = FOOTPRINT_RADIUS + 1;
-    public static final double STOOL_HEIGHT = 4.0 / 16.0;
+    public static final double STOOL_HEIGHT = 10.0 / 16.0;
     public static final double FELT_HALF_WIDTH = 21.0 / 16.0;
     public static final double OUTER_HALF_WIDTH = FELT_HALF_WIDTH + 2.0 / 16.0;
     public static final double FELT_Y = 15.0 / 16.0;
