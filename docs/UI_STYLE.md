@@ -124,9 +124,9 @@ Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
 defaults must keep the compact table and its right corner usable from the seated view.
 
-The default first-person seated camera matches standing at the stool's block:
-2 blocks from the center and the player's standard 1.62-block eye height above
-the table's base, aiming at the felt 0.45 blocks toward the viewer. It retains
+The default first-person seated camera is 2 blocks from the center and
+2.20 blocks above the table's base, aiming at the felt 0.20 blocks toward the
+viewer so the hand does not obscure the rivers and central display. It retains
 the same position with the controls open or closed, and permits free looking.
 Native first-person picking uses that same eye position.
 The seated world FOV expands as needed for the near playing-surface corners and
@@ -134,7 +134,12 @@ window aspect ratio, while preserving wider player FOV settings. It stays stable
 while freely looking around; table projection and picking use the rendered FOV.
 Minecraft controls third-person views. Camera sliders immediately re-aim at the
 table; saved personal adjustments remain adjustable, and Restore defaults applies
-the current standing-height framing. Tile highlights follow the beveled
+the current elevated seating view. The top-bar view button or V switches to a
+seat-oriented, straight-down camera. `TableHand` displays only the recipient's
+own hand along the bottom, retaining the drawn-tile gap and normal selection,
+discard and riichi controls. Action buttons stay above it. Closing the overlay
+restores the seated camera; third-person remains under Minecraft's control.
+Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
 For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and

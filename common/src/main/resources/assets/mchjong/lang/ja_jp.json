@@ -1,4 +1,7 @@
 {
+  "ui.mchjong.view_seated": "着席",
+  "ui.mchjong.view_overhead": "俯瞰",
+  "ui.mchjong.switch_view": "着席 / 俯瞰視点の切り替え（V）",
   "browser.mchjong.crafting": "麻雀用品の製作",
   "browser.mchjong.engraving": "麻雀牌の彫刻",
   "browser.mchjong.components": "素材と内容を反映したレシピ",

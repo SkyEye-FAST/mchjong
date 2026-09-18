@@ -10,8 +10,9 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
-import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.TableCamera;
 import top.skyeyefast.mchjong.world.SeatEntity;
+import top.skyeyefast.mchjong.world.TableGeometry;
 
 @Mixin(Camera.class)
 public abstract class TableCameraMixin {
@@ -22,9 +23,9 @@ public abstract class TableCameraMixin {
     private void mchjong$tableCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
             float partialTick, CallbackInfo callback) {
         if (detached || entity != Minecraft.getInstance().player || !(entity.getVehicle() instanceof SeatEntity seat)) return;
-        TableSettings settings = TableSettings.get();
-        Vec3 position = settings.cameraPosition(seat);
+        Vec3 position = TableCamera.position(seat);
         setPosition(position.x, position.y, position.z);
-        setRotation(entity.getViewYRot(partialTick), entity.getViewXRot(partialTick));
+        if (TableCamera.overhead()) setRotation(TableGeometry.yaw(seat.seat()), 90);
+        else setRotation(entity.getViewYRot(partialTick), entity.getViewXRot(partialTick));
     }
 }

@@ -64,9 +64,11 @@ Changing that setting invalidates readiness and is forbidden after play starts.
 Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
-The seated camera remains in the Minecraft world. The interaction overlay does not
-draw a replacement 2D table; it projects actual 3D tile locations and connects legal
-choices to them with elbow lines. Rendering is read-only and cannot advance play.
+Both seated and overhead cameras remain in the Minecraft world. The interaction
+overlay projects the actual 3D table. In overhead mode, `TableHand` adds a bottom
+strip of the recipient's own synchronized hand, using the same tile identities,
+artwork and legal-action requests. `TableCamera` supplies the matching eye and
+FOV to world rendering and picking. Rendering is read-only and cannot advance play.
 
 `TableAnimation` tracks recipient-safe snapshots by table identity, hand number,
 and viewing permission. Visible physical tile identities follow hand/river/meld

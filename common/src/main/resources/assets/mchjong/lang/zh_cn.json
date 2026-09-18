@@ -1,4 +1,7 @@
 {
+  "ui.mchjong.view_seated": "座位",
+  "ui.mchjong.view_overhead": "俯视",
+  "ui.mchjong.switch_view": "切换座位 / 俯视视角（V）",
   "browser.mchjong.crafting": "麻将用品制作",
   "browser.mchjong.engraving": "麻将牌刻牌",
   "browser.mchjong.components": "配方体现材质与内容",

@@ -164,7 +164,11 @@ double-click, or select-and-confirm discards. Shift-click selects without
 discarding. Left/Right selects tiles and Enter confirms; R opens riichi selection
 and P passes a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
-overlay. Right-drag looks around; Home or **Center view** restores the table view.
+overlay. Right-drag looks around in the seated view; Home centers it again.
+Use the top-bar view button or V to switch between the elevated seated view and
+the overhead view. The overhead view keeps your hand in a clickable strip along
+the bottom, with the same discard modes and keyboard controls. Closing the
+overlay returns to the seated view.
 
 The compact top bar shows points and essential table information; hover over a
 player card for detailed status. The concealed run stays centered, with a separate

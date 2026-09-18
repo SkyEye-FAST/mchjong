@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.TableCamera;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** World rendering and table picking consume the same seated field of view. */
@@ -21,7 +21,7 @@ public abstract class TableFovMixin {
                 || client.player == null || !(client.player.getVehicle() instanceof SeatEntity)) return;
         var window = client.getWindow();
         if (window.getWidth() <= 0 || window.getHeight() <= 0) return;
-        callback.setReturnValue(TableSettings.get().cameraFov(callback.getReturnValue(),
+        callback.setReturnValue(TableCamera.fov(callback.getReturnValue(),
             (double) window.getWidth() / window.getHeight()));
     }
 }

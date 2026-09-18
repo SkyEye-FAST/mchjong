@@ -284,10 +284,13 @@ public final class TableClientSmoke {
                     return;
                 }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 28, 0);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
-                capture(client, "03-discard-confirm.png");
+                require(((TableScreen) client.screen).overhead() && Math.abs(client.gameRenderer.getMainCamera().getXRot() - 90) < .01,
+                    "Overhead hand selection did not use the top-down camera");
+                capture(client, "03-overhead-discard-confirm.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                     && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
@@ -300,7 +303,9 @@ public final class TableClientSmoke {
             } else if (step == 6 && ticks - entered > 20) {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
                 require(view.seats().getFirst().river().size() == 1, "Discard confirmation did not reach the server");
-                capture(client, "04-river.png");
+                capture(client, "04-overhead-river.png");
+                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                require(!((TableScreen) client.screen).overhead(), "Cannot return to the seated view");
                 client.screen.onClose();
                 client.player.setYRot(210); client.player.setXRot(35);
                 step = 7; entered = ticks;

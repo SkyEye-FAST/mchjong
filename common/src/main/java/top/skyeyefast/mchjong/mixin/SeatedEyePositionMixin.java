@@ -7,7 +7,7 @@ import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.TableCamera;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Vanilla first-person picking must start at the same eye as the seated camera. */
@@ -19,6 +19,6 @@ public abstract class SeatedEyePositionMixin {
         Minecraft client = Minecraft.getInstance();
         if ((Object) this != client.player || !client.options.getCameraType().isFirstPerson()) return;
         if (client.player.getVehicle() instanceof SeatEntity seat)
-            callback.setReturnValue(TableSettings.get().cameraPosition(seat));
+            callback.setReturnValue(TableCamera.position(seat));
     }
 }

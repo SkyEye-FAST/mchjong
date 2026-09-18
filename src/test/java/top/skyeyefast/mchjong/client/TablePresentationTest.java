@@ -13,10 +13,10 @@ class TablePresentationTest {
         assertTrue(TableScene.DRAW_GAP > 0);
     }
 
-    @Test void defaultViewMatchesStandingAtTheStoolAndAimsAtTheFelt() {
+    @Test void defaultViewLooksOverTheHandFromTheStoolAndAimsAtTheFelt() {
         var settings = new TableSettings();
         assertEquals(TableGeometry.STOOL_DISTANCE, settings.cameraDistance);
-        assertEquals(net.minecraft.world.entity.player.Player.DEFAULT_EYE_HEIGHT, settings.cameraHeight);
+        assertEquals(2.20, settings.cameraHeight);
         double pitch = Math.toRadians(settings.cameraPitch());
         assertEquals(TableGeometry.FELT_Y, settings.cameraHeight
             - Math.tan(pitch) * (settings.cameraDistance - TableSettings.CAMERA_TARGET_Z), 1e-6);
@@ -33,6 +33,8 @@ class TablePresentationTest {
         var settings = new TableSettings();
         assertTrue(settings.cameraFov(70, 4.0 / 3) > settings.cameraFov(70, 16.0 / 10));
         assertEquals(110, settings.cameraFov(110, 4.0 / 3));
+        assertTrue(TableCamera.overheadFov(4.0 / 3) > 0 && TableCamera.overheadFov(4.0 / 3) < 180);
+        assertEquals(TableCamera.overheadFov(4.0 / 3), TableCamera.overheadFov(16.0 / 10));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
