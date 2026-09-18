@@ -111,8 +111,9 @@ public final class TableSeatsScreen extends Screen {
                 var state = room.seats().get(seat);
                 var player = view.seats().get(seat);
                 Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(view, seat));
-                Component status = wind(state.wind()).copy().append(" · ").append(Component.translatable(player.bot()
-                    ? "room.mchjong.bot" : state.present() ? "room.mchjong.present" : "room.mchjong.absent"));
+                Component status = wind(state.wind()).copy().append(" · ").append(Component.translatable(!player.occupied()
+                    ? "room.mchjong.empty" : player.bot() ? "room.mchjong.bot"
+                    : state.present() ? "room.mchjong.present" : "room.mchjong.absent"));
                 MahjongUi.text(graphics, font, label, left, 43 + seat * 37, span - 108, MahjongUi.TEXT, false);
                 MahjongUi.text(graphics, font, status, left, 56 + seat * 37, span - 108, MahjongUi.MUTED, false);
             }

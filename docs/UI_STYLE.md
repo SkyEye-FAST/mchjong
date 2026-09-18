@@ -83,6 +83,12 @@ The settings hub has World, Room and Personal tabs. World-policy values remain
 visible but read-only, with a short administrator-only explanation. Room controls
 and ownership transfer are paginated separately from local presentation options.
 
+Room preparation uses separate gathering, concealed wind-selection and assigned-seat
+views. The participant screen distinguishes empty places from reserved participants
+who are absent, and keeps wind assignments separate from world-direction coordinates.
+Per-seat bot controls and ownership actions stay available throughout preparation;
+the Ready control reflects server-confirmed presence at the assigned stool.
+
 The rule screen separates preset options, read-only rule details and custom
 settings. Preset-supported options retain the preset identity. Red compositions
 use three separate choices; unavailable choices remain visible, disabled and

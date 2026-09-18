@@ -18,7 +18,8 @@ final class RoomPreparationSmoke {
     private int ticks;
     private int windSlot = -1;
     private boolean requestedWind;
-    private boolean captured;
+    private boolean capturedDrawing;
+    private boolean capturedPositioning;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         if (++ticks > 400) throw new IllegalStateException("Seat preparation timed out: " + table.clientRoom());
@@ -37,10 +38,10 @@ final class RoomPreparationSmoke {
             click(client, view.actions().stream().anyMatch(action -> action.type() == Action.Type.FILL_BOTS)
                 ? "action.mchjong.fill_bots" : "action.mchjong.begin_seating");
         } else if (room.seating() == RoomSeating.Stage.DRAWING) {
-            if (!captured) {
+            if (!capturedDrawing) {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-wind-draw.png");
-                captured = true;
+                capturedDrawing = true;
             }
             if (!requestedWind) {
                 requestedWind = true;
@@ -59,12 +60,12 @@ final class RoomPreparationSmoke {
             } else if (windSlot >= 0) click(client, "room.mchjong.wind_tile", windSlot + 1);
         } else if (view.viewerSeat() >= 0) {
             var state = room.seats().get(view.viewerSeat());
+            if (!capturedPositioning) {
+                AutomationControlsSmoke.checkBounds(client);
+                capture(client, output, prefix + "-assigned-seats.png");
+                capturedPositioning = true;
+            }
             if (!state.present()) {
-                if (!captured || table.automatic()) {
-                    AutomationControlsSmoke.checkBounds(client);
-                    capture(client, output, prefix + "-assigned-seats.png");
-                    captured = true;
-                }
                 if (view.actions().stream().anyMatch(action -> action.type() == Action.Type.READY))
                     throw new IllegalStateException("Unseated player can ready up");
                 var id = client.player.getUUID();

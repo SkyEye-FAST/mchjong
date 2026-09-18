@@ -411,16 +411,10 @@ public final class TableScreen extends Screen {
             column++;
         }
         if (column == 0 && view.viewerSeat() >= 0 && view.exitVote() == null) {
-            var compositions = Component.empty();
-            for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) if (view.rules().allows(composition)) {
-                if (!compositions.getSiblings().isEmpty()) compositions.append(" / ");
-                compositions.append(Component.translatable(composition.translationKey()));
-            }
-            var missing = MahjongButton.create(Component.translatable("room.mchjong.wait_host"), ignored -> {})
-                .bounds(left, y, half, 26).tooltip(Tooltip.create(Component.translatable("ui.mchjong.red_fives_rule",
-                    compositions))).build();
-            missing.active = false;
-            addRenderableWidget(missing);
+            var waiting = MahjongButton.create(Component.translatable("room.mchjong.wait_host"), ignored -> {})
+                .bounds(left, y, half, 26).build();
+            waiting.active = false;
+            addRenderableWidget(waiting);
         }
         addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.participants"), ignored ->
             minecraft.setScreen(new TableSeatsScreen(this))).bounds(left + half + 4, y, half, 26).build());

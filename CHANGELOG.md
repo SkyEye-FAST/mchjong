@@ -29,6 +29,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Settlement score changes play once per result and retain their progress across page navigation and screen rebuilds.
 - Ready bots retain their readiness while human players move to their assigned stools.
+- Waiting-room status distinguishes empty places from absent participants and displays the current preparation step.
 - Clockwise wall draws, counterclockwise player turns and stable upper/lower dead-wall layers across manual handling, rendering and animation.
 
 ## [0.2.0] - 2026-09-17
