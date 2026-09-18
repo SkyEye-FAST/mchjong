@@ -1,7 +1,7 @@
 # Rooms, permissions and settings
 
 The table's Settings button groups controls into World, Room and Personal.
-World values are displayed read-only to players, including room hosts. Personal
+Administrators can edit world values in the World tab; other players can inspect them. Personal
 display, input, camera and audio settings remain local to each player. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
@@ -18,7 +18,9 @@ tables in that save. Its initial contents are:
 }
 ```
 
-Administrators with command permission level 2 can query, change or reload it:
+Administrators with command permission level 2 can change these values in
+Settings → World. The buttons display server-confirmed values and use the same
+permission-checked commands available below:
 
 ```text
 /mchjong world
@@ -45,9 +47,10 @@ a remaining human. Standing up to move to an assigned stool retains room members
 
 Players join by sitting on a stool. The waiting room has three stages: gathering,
 wind drawing on an ordinary table, and occupying the assigned seats. The host
-can fill empty places with bots or manage each place through Players and bots.
+can fill empty places with bots or configure them directly on the top seat cards.
 
-Once all places have occupants, choose Assign seats. An ordinary table presents
+The centered primary button fills empty places, then advances seat preparation.
+Once all places have occupants, an ordinary table presents
 face-down wind tiles: each human chooses one, then bots draw the remainder. An
 automatic table shuffles the entire roster immediately. The original east seat is
 the south-side stool; the other winds follow the physical table order. The interface
@@ -73,7 +76,7 @@ Each bot can be set to Easy, Normal or Hard during any waiting-room stage.
 Changing the roster or difficulty clears human readiness. Bots remain ready while
 humans reposition themselves.
 
-The control beside each empty or bot-occupied place cycles through Empty, Easy,
+The control in each empty or bot-occupied top seat card cycles through Empty, Easy,
 Normal and Hard. A physically seated human cannot be replaced; their control is
 reserved for transferring room ownership. Fill empty seats adds Normal bots.
 
@@ -91,7 +94,8 @@ or a claim of a benchmarked win rate.
 
 ## Invitations
 
-Use Invite player or `/mchjong invite <player>`. Invitations are recipient-bound,
+Use Settings → Room → Invite player or `/mchjong invite <player>`, with an online
+player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.
 

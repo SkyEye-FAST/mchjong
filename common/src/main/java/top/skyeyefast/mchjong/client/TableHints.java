@@ -12,15 +12,15 @@ final class TableHints {
     private final TenpaiHints hints = new TenpaiHints();
 
     void render(GuiGraphics graphics, Font font, TableView view, int discard, int width, int leftBound, int bottom,
-                boolean overhead, TileFacePreset preset) {
+                boolean immersive, TileFacePreset preset) {
         var waits = hints.waits(view, discard);
         if (waits.isEmpty()) return;
-        int step = Math.min(20, (width - leftBound - 22) / waits.size()), tileWidth = step - 4;
+        int step = Math.min(20, (width - (immersive ? 8 : leftBound) - 22) / waits.size()), tileWidth = step - 4;
         int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         int span = Math.max(112, waits.size() * step + 12), height = tileHeight + 32;
-        int left = width - span - 10, top = overhead ? bottom - height : 66;
+        int left = width - span - 10, top = immersive ? 34 : 66;
         // Dense action choices take priority over the optional rail in a short viewport.
-        if (top < 58 || top + height > bottom) return;
+        if (tileWidth < 2 || top + height > bottom) return;
         int total = waits.stream().mapToInt(TenpaiHints.Wait::remaining).sum();
         boolean preview = view.seats().get(view.viewerSeat()).hand().size() % 3 == 2;
         MahjongUi.panel(graphics, left, top, span, height);

@@ -37,6 +37,19 @@ final class InputSmoke {
         TableScreen screen = new TableScreen(table.getBlockPos());
         client.setScreen(screen);
         TableSettings.get().animations = false;
+        screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
+        require(screen.zooming(), "Holding C did not zoom the seated view");
+        screen.keyReleased(GLFW.GLFW_KEY_C, 0, 0);
+        require(!screen.zooming(), "Releasing C retained zoom");
+        if (client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat) {
+            var before = TableSettings.get().cameraPosition(seat);
+            screen.mouseClicked(screen.width / 2.0, screen.height / 2.0, 1);
+            screen.mouseDragged(screen.width / 2.0, screen.height / 2.0 - 20, 1, 0, -20);
+            screen.mouseReleased(screen.width / 2.0, screen.height / 2.0 - 20, 1);
+            require(TableSettings.get().cameraPosition(seat).distanceTo(before) > .1, "Right-drag did not move the eye");
+            screen.keyPressed(GLFW.GLFW_KEY_HOME, 0, 0);
+            require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Home did not restore the eye");
+        }
         screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi selection is not discoverable");
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
@@ -56,11 +69,11 @@ final class InputSmoke {
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
         require(button(screen, "ui.mchjong.confirm_riichi"), "Riichi could not be reopened after cancellation");
         screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        require(screen.overhead() && selected(screen, fixture, 4), "Switching view lost the legal riichi selection");
+        require(screen.immersive() && selected(screen, fixture, 4), "Switching view lost the legal riichi selection");
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
-        require(selected(screen, fixture, 0), "Overhead keyboard selection did not wrap through legal riichi tiles");
+        require(selected(screen, fixture, 0), "Immersive keyboard selection did not wrap through legal riichi tiles");
         screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        require(!screen.overhead() && selected(screen, fixture, 0), "Returning to the seat lost hand selection");
+        require(!screen.immersive() && selected(screen, fixture, 0), "Returning to the seat lost hand selection");
     }
 
     private static boolean selected(TableScreen screen, TableView view, int tile) {

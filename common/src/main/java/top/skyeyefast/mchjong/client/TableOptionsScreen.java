@@ -8,7 +8,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Game;
 
-/** Scope navigation. World policy is a read-only projection, never a client proposal. */
+/** Scope navigation. Administrator edits use the server's permission-checked world commands. */
 public final class TableOptionsScreen extends Screen {
     private final TableScreen parent;
     private int tab = 1;
@@ -43,8 +43,10 @@ public final class TableOptionsScreen extends Screen {
         boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
         boolean lobby = view.phase() == Game.Phase.LOBBY;
         if (tab == 0) {
-            entries.add(new Entry(toggle("ui.mchjong.open_hands", view.openHands()), false, () -> {}));
-            entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), false, () -> {}));
+            entries.add(new Entry(toggle("ui.mchjong.open_hands", view.openHands()), canEditWorld(),
+                () -> setWorld("openHands", !view.openHands())));
+            entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), canEditWorld(),
+                () -> setWorld("invitationTeleport", !room.invitationTeleport())));
         } else if (tab == 1) {
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
                 () -> minecraft.setScreen(new TableSeatsScreen(parent))));
@@ -66,7 +68,7 @@ public final class TableOptionsScreen extends Screen {
             var button = MahjongButton.create(entry.label(), ignored -> entry.action().run())
                 .bounds(left, 84 + row * 24, span, 20).build();
             button.active = entry.enabled();
-            button.setTooltip(Tooltip.create(tab == 0 ? Component.translatable("settings.mchjong.world_locked") : entry.label()));
+            button.setTooltip(Tooltip.create(tab == 0 && !canEditWorld() ? Component.translatable("settings.mchjong.world_locked") : entry.label()));
             addRenderableWidget(button);
         }
         if (pages > 1) {
@@ -88,6 +90,16 @@ public final class TableOptionsScreen extends Screen {
             Component.translatable(enabled ? "options.on" : "options.off"));
     }
 
+    private boolean canEditWorld() {
+        if (minecraft.getConnection() == null) return false;
+        var command = minecraft.getConnection().getCommands().getRoot().getChild("mchjong");
+        return command != null && command.getChild("world") != null;
+    }
+
+    private void setWorld(String setting, boolean enabled) {
+        if (canEditWorld()) minecraft.getConnection().sendCommand("mchjong world " + setting + " " + enabled);
+    }
+
     @Override public void tick() {
         var view = parent.view();
         if (view == null) { onClose(); return; }
@@ -100,7 +112,7 @@ public final class TableOptionsScreen extends Screen {
         var view = parent.view();
         var room = parent.room();
         Component note = Component.translatable("settings.mchjong.personal_note");
-        if (tab == 0) note = Component.translatable("settings.mchjong.world_locked");
+        if (tab == 0) note = Component.translatable(canEditWorld() ? "settings.mchjong.world_admin" : "settings.mchjong.world_locked");
         if (tab == 1 && view != null && room != null) note = Component.translatable("room.mchjong.host",
             room.host() < 0 ? "—" : view.seats().get(room.host()).name());
         MahjongUi.text(graphics, font, note, 16, 66, width - 32, MahjongUi.MUTED, true);

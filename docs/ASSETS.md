@@ -140,8 +140,8 @@ playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
 have tapered wooden legs, stretchers, padded fabric and four tufts, with a
 10/16-block seat height. Their mesh, collision and seat anchor share
-`TableGeometry.STOOL_HEIGHT`; seated and overhead cameras remain independently
-anchored to the table and keep their current framing.
+`TableGeometry.STOOL_HEIGHT`; the seated camera remains anchored to the table,
+while immersive play uses the independent GUI layout.
 The dark wooden case has a fitted
 lid, corner hardware, paired clasps, hinges, a handle and a small tile inlay.
 Folded cloth uses the same woven material as the table. None of this adds block

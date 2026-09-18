@@ -7,6 +7,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Immersive screen-space mahjong layout with a clickable private hand, public melds and rivers, usable under world obstructions with the existing selection and keyboard controls.
+- Player skin portraits before names in table, room and result views, with distinct practice-bot portraits.
+- Hold-C seated zoom, forward/back camera movement with right-drag, and administrator world-policy editing in Settings.
+
+### Changed
+
+- Room seat cards contain bot controls, with a centered primary preparation button and table-specific seating guidance.
+- Immersive opponents and discards face inward around the player's bottom hand.
+- Immersive view requires 480 × 300 logical GUI pixels to keep side rivers readable, with a localized size hint and automatic return to the seated view when resized smaller.
+
+### Fixed
+
+- Player invitations resolve online UUIDs and names correctly.
+
 ## [0.3.0] - 2026-09-18
 
 ### Added
