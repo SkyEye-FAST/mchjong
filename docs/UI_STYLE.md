@@ -127,6 +127,11 @@ rectangle rather than projecting the physical square furniture. Put the viewer's
 interactive hand and melds along the bottom. Place immersive automation in a
 horizontal strip below the hand, with action buttons above it. Seated automation
 keeps its side column. Three-player layouts place both opponents at the sides.
+Anchor all rivers directly against one central score panel, with six tiles per
+row growing outward and a shared tile size across seats. The panel carries the
+round, remaining tiles, seat winds and scores facing each owner. Keep opponent
+hands on the outer rails and melds at each owner's right corner. Place compact
+portrait/name cards beside their seats; rules, deposits and dora stay at the top.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 Player names have a small skin portrait immediately before them; practice bots
 use a distinct robot portrait. Keep native font sizes and ellipsize long names,

@@ -67,15 +67,24 @@ class TablePresentationTest {
                 int bottom = width == 480 ? 203 : 303;
                 var board = new TableBoard(view, 8, width - 8, 38, bottom, bottom);
                 var card = board.card(0);
-                var river = board.area(0);
+                var river = board.riverArea(0);
                 assertTrue(card.right() < river.x(), "The local card must not cover its river");
                 for (int seat = 0; seat < rules.players(); seat++) {
-                    var area = board.area(seat);
+                    var area = board.riverArea(seat);
                     assertTrue(area.x() >= 8 && area.right() <= width - 8);
                     assertTrue(area.y() >= 38 && area.bottom() <= bottom);
+                    for (int other = 0; other < rules.players(); other++) {
+                        var seatCard = board.card(other);
+                        assertTrue(seatCard.right() <= area.x() || seatCard.x() >= area.right()
+                            || seatCard.bottom() <= area.y() || seatCard.y() >= area.bottom(), "Seat cards must clear all rivers");
+                        if (other == seat) continue;
+                        var otherRiver = board.riverArea(other);
+                        assertTrue(otherRiver.right() <= area.x() || otherRiver.x() >= area.right()
+                            || otherRiver.bottom() <= area.y() || otherRiver.y() >= area.bottom(), "Rivers must not overlap");
+                    }
                 }
-                if (rules.players() == 4) assertTrue(board.area(2).height() > board.area(0).height(),
-                    "The upper sector must also accommodate the opponent's card and hand");
+                if (rules.players() == 4) assertEquals(board.riverArea(2).height(), board.riverArea(0).height(),
+                    "Opposite rivers use the same tile size and row capacity");
             }
         }
     }

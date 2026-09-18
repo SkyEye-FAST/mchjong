@@ -420,6 +420,7 @@
   "ui.mchjong.turn": "%s's turn",
   "ui.mchjong.round": "%1$s %2$s (%3$s honba)",
   "ui.mchjong.remaining": "%s tiles left",
+  "ui.mchjong.remaining_short": "Left %s",
   "ui.mchjong.sticks": "%s riichi deposits",
   "ui.mchjong.points": "%s points",
   "ui.mchjong.han_fu": "%1$s han, %2$s fu",
