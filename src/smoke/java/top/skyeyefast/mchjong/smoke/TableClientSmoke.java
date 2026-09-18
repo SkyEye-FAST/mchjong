@@ -46,7 +46,7 @@ public final class TableClientSmoke {
     private CompletableFuture<Void> resourceReload;
     private CompletableFuture<Boolean> survivalReady;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
-    private final AnimationSmoke animationSmoke = new AnimationSmoke();
+    private final AnimationSmoke animationSmoke = new AnimationSmoke(seatingOnly);
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
     private final TableControlSmoke controlSmoke = new TableControlSmoke();
     private final ManualTableSmoke manualSmoke = new ManualTableSmoke();
@@ -279,8 +279,7 @@ public final class TableClientSmoke {
                 require(view.seats().getFirst().hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
                 if (seatingOnly) {
-                    client.screen.onClose();
-                    step = 26; entered = ticks;
+                    step = 11; entered = ticks;
                     return;
                 }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
@@ -325,7 +324,9 @@ public final class TableClientSmoke {
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
-                step = 12; entered = ticks;
+                if (seatingOnly) { client.screen.onClose(); step = 26; }
+                else step = 12;
+                entered = ticks;
             } else if (step == 12 && replaySmoke.tick(client, output)) {
                 step = 19; entered = ticks;
             } else if (step == 19 && manualSmoke.tick(client, output)) {
@@ -354,7 +355,7 @@ public final class TableClientSmoke {
                 step = 27; entered = ticks;
             } else if (step == 27 && ticks - entered > 20) {
                 capture(client, "04-cushion-third-person.png");
-                Files.writeString(output.resolve("PASS.txt"), "Cushion furniture, seat height, private deal and stable first-person camera with controls open/closed; third-person capture.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, overhead rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
                 LOG.info("MCJHONG_SEATING_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {

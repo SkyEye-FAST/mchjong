@@ -70,7 +70,7 @@ class HandClearanceTest {
         var pon = pieces(withHand(base, 0, tiles, 87, melds(Meld.Type.PON, 2, 0, 1)), 0, TableScene.Area.HAND);
         var added = pieces(withHand(base, 0, tiles, 87, melds(Meld.Type.ADDED_KAN, 2, 0, 1)), 0, TableScene.Area.HAND);
         var open = pieces(withHand(base, 0, tiles, 87, melds(Meld.Type.OPEN_KAN, 2, 0, 1)), 0, TableScene.Area.HAND);
-        assertEquals(pon, added, "A stacked added tile must not displace the hand");
+        assertEquals(pon, added, "A front-aligned added tile must not displace the hand");
         assertEquals(0, pon.subList(0, 7).stream().mapToDouble(HandClearanceTest::localX).average().orElseThrow(), 1e-7);
         double center = open.subList(0, 7).stream().mapToDouble(HandClearanceTest::localX).average().orElseThrow();
         assertTrue(center < 0 && center > -TableScene.HAND_STEP, "Two open kans need less than one hand slot of clearance");

@@ -18,7 +18,8 @@ final class TableHand {
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT ? 0 : Math.max(4, tileWidth / 3);
         span = tiles.size() * tileWidth + gap;
-        left = (width - span) / 2;
+        // Keep a stable fourteen-tile rail; a short hand must not cover the right-corner melds.
+        left = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2;
         y = height - 20 - tileHeight;
     }
 

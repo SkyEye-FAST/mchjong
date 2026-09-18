@@ -55,6 +55,12 @@ final class InputSmoke {
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
         require(button(screen, "ui.mchjong.confirm_riichi"), "Riichi could not be reopened after cancellation");
+        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        require(screen.overhead() && selected(screen, fixture, 4), "Switching view lost the legal riichi selection");
+        screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+        require(selected(screen, fixture, 0), "Overhead keyboard selection did not wrap through legal riichi tiles");
+        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        require(!screen.overhead() && selected(screen, fixture, 0), "Returning to the seat lost hand selection");
     }
 
     private static boolean selected(TableScreen screen, TableView view, int tile) {

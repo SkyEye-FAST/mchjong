@@ -4,10 +4,8 @@ import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
-import net.minecraft.client.gui.components.AbstractWidget;
-import net.minecraft.network.chat.Component;
 
-/** Render the actual settings tabs at both acceptance sizes with native language reloads. */
+/** Render the live table controls at both acceptance sizes with native language reloads. */
 final class SettingsLanguageSmoke {
     private static final String[] LANGUAGES = {"zh_cn", "en_us"};
     private int sample = -1, size, ticks, width, height, scale;
@@ -26,14 +24,13 @@ final class SettingsLanguageSmoke {
         }
         if (!reload.isDone() || client.getOverlay() != null) return false;
         reload.join();
-        if (++ticks == 1 && sample < LANGUAGES.length) chooseTab(client);
-        if (ticks < 10) return false;
+        if (++ticks < 10) return false;
         if (sample == LANGUAGES.length) return true;
         AutomationControlsSmoke.checkBounds(client);
         int logicalWidth = size == 0 ? 640 : 320, logicalHeight = size == 0 ? 400 : 240;
         if (client.screen.width != logicalWidth || client.screen.height != logicalHeight)
-            throw new IllegalStateException("Settings language viewport mismatch");
-        Screenshot.grab(output.toFile(), "54-settings-" + LANGUAGES[sample] + "-" + logicalWidth + "x"
+            throw new IllegalStateException("Table controls language viewport mismatch");
+        Screenshot.grab(output.toFile(), "54-table-options-" + LANGUAGES[sample] + "-" + logicalWidth + "x"
             + logicalHeight + "-automatic.png", client.getMainRenderTarget(), ignored -> {});
         ticks = 0;
         if (++size == 2 || sample == 1) {
@@ -61,12 +58,4 @@ final class SettingsLanguageSmoke {
         client.resizeDisplay();
     }
 
-    private void chooseTab(Minecraft client) {
-        String label = Component.translatable("settings.mchjong.tab.4").getString();
-        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance)
-            .map(AbstractWidget.class::cast).filter(widget -> widget.getMessage().getString().equals(label))
-            .findFirst().orElseThrow();
-        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
-        client.screen.mouseReleased(button.getX() + 5, button.getY() + 5, 0);
-    }
 }

@@ -20,7 +20,6 @@ final class TableControlSmoke {
     private int stage, ticks;
     private boolean remainingHidden;
     private CompletableFuture<Void> reseated;
-    private final AutoPlayControlSmoke autoPlay = new AutoPlayControlSmoke();
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
@@ -74,7 +73,6 @@ final class TableControlSmoke {
             client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
             next(6);
         } else if (stage == 6 && view.openHands()) {
-            if (!autoPlay.tick(client, table, output)) return false;
             click(client, "ui.mchjong.practice_short");
             next(7);
         } else if (stage == 7 && view.phase() == Game.Phase.TURN && ticks > 60

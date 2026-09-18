@@ -54,6 +54,7 @@ public final class TableScreen extends Screen {
     private Component informationTooltip;
     private final TableHud information = new TableHud();
     private int actionTop;
+    private int actionLeft;
     private TableView handlingDrag;
     private Vec3 handlingStart;
     private Vec3 handlingPointer;
@@ -216,6 +217,7 @@ public final class TableScreen extends Screen {
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
+        actionLeft = 10;
         automation.build(view, width, hand == null ? height - 17 : hand.top() - 8).forEach(this::addRenderableWidget);
         if (view.exitVote() != null) { buildExitVote(view); return; }
         if (view.phase() == Game.Phase.LOBBY) { buildLobby(view); return; }
@@ -232,6 +234,7 @@ public final class TableScreen extends Screen {
             ? tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD) : -1;
         int count = choices.size() + (riichi ? 1 : 0) + (discard >= 0 ? 1 : 0);
         int actionWidth = width - 20 - (TableAutomation.available(view) ? TableAutomation.width(width) + 8 : 0);
+        actionLeft = width - 10 - actionWidth;
         int columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / 88)));
         int boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
         int rows = Math.max(1, (count + columns - 1) / columns);
@@ -608,7 +611,8 @@ public final class TableScreen extends Screen {
                 }
             }
         }
-        if (choosingRiichi) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.choose_riichi"), width / 2, actionTop - 14, 0xffffd487);
+        if (choosingRiichi) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.choose_riichi"),
+            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true);
         if (hand != null) hand.render(graphics, selectedTile, tile -> {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
@@ -620,8 +624,8 @@ public final class TableScreen extends Screen {
             var clock = view.clocks().get(view.viewerSeat()).after(table.clientViewAgeMillis());
             if (clock.active()) {
                 Component text = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());
-                graphics.drawCenteredString(font, text, width / 2, actionTop - (choosingRiichi ? 28 : 14),
-                    clock.moveTicks() + clock.reserveTicks() <= 100 ? 0xffffaaa0 : 0xffffd487);
+                MahjongUi.text(graphics, font, text, actionLeft, actionTop - (choosingRiichi ? 28 : 14), width - actionLeft - 10,
+                    clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true);
             }
         }
         if (TableResults.available(view)) {
@@ -629,12 +633,13 @@ public final class TableScreen extends Screen {
             graphics.drawString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()),
                 10, 14, 0xffd1e4d9);
         }
-        if (dealing()) graphics.drawCenteredString(font, Component.translatable("ui.mchjong.dealing"), width / 2, height - 29, 0xffffd487);
+        if (dealing()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.dealing"),
+            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             int cueY = 88;
             for (var cue : animation().cues(Util.getMillis())) {
-                graphics.drawCenteredString(font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
-                    width / 2, cueY, 0xffffd487);
+                MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
+                    actionLeft, cueY, width - actionLeft - 10, MahjongUi.ACCENT, true);
                 cueY += 13;
             }
         }

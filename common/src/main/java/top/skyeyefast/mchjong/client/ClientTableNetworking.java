@@ -30,8 +30,7 @@ public final class ClientTableNetworking {
         }
         if (active != null && active.tablePos().equals(payload.pos())) {
             active.receivedView();
-            if (payload.controlReply() && client.screen instanceof TableSettingsScreen settings)
-                settings.receivedControlReply();
+            if (payload.controlReply()) active.receivedControlReply();
         }
         if (payload.open()) {
             TableScreen screen = new TableScreen(payload.pos());

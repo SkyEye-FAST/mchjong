@@ -6,14 +6,13 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableSettingsScreen;
 import top.skyeyefast.mchjong.engine.AutoPlay;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Exercise every preference through its real button, C2S packet and authoritative S2C snapshot. */
 final class AutomationControlsSmoke {
-    private static final String[] KEYS = {"settings.mchjong.auto_sort", "settings.mchjong.auto_win",
-        "settings.mchjong.no_calls", "settings.mchjong.auto_discard"};
+    private static final String[] KEYS = {"ui.mchjong.auto_sort", "ui.mchjong.auto_win",
+        "ui.mchjong.no_calls", "ui.mchjong.auto_discard"};
     private int stage, ticks, totalTicks, toggle;
     private long decision;
     private AutoPlay initial, expected;
@@ -28,8 +27,8 @@ final class AutomationControlsSmoke {
             initial = view.autoPlay();
             var parent = new TableScreen(table.getBlockPos());
             client.setScreen(parent);
-            client.setScreen(new TableSettingsScreen(parent));
-            click(client, Component.translatable("settings.mchjong.tab.4").getString());
+            parent.resetView();
+            click(client, Component.translatable("ui.mchjong.automation_show").getString());
             next(1);
         } else if (stage == 1 && ticks > 12) {
             checkBounds(client);
@@ -37,10 +36,12 @@ final class AutomationControlsSmoke {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             next(2);
         } else if (stage == 2 && ticks > 12) {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reflow to 320x240");
+            require(((TableScreen) client.screen).overhead(), "Small controls did not retain the overhead hand");
             Screenshot.grab(output.toFile(), "53-automatic-controls-small.png", client.getMainRenderTarget(), ignored -> {});
             next(3);
         } else if (stage == 3 && ticks > 2) {
@@ -66,6 +67,10 @@ final class AutomationControlsSmoke {
             }
             next(3);
         } else if (stage == 5 && languages.tick(client, output)) {
+            click(client, Component.translatable("ui.mchjong.automation_hide").getString());
+            require(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .noneMatch(widget -> widget.getMessage().getString().contains(Component.translatable(KEYS[0]).getString())),
+                "Collapsed controls still expose the option buttons");
             client.screen.onClose();
             return true;
         }

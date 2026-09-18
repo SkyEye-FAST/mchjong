@@ -224,8 +224,8 @@ survive saves. The referee checks rules, furiten, calls, yaku, han/fu and settle
 
 The automatic table uses the same installed physical set and referee but
 performs shuffle, wall construction, packet dealing and draws automatically.
-Its Automatic settings page stores each player's sorting, win, call and drawn-tile
-discard preferences with their seat. Sorting starts enabled. Automatic wins use
+Its collapsible in-match controls store each player's sorting, win, call and
+drawn-tile discard preferences with their seat. Sorting starts enabled. Automatic wins use
 the referee's legal tsumo and ron actions, including declaration-robbery responses.
 Wins take priority over skipped calls or automatic discards. Preferences remain
 with the player across hands and saves and reset when their seat is released.

@@ -103,12 +103,7 @@ final class ManualTableSmoke {
                 if (!(client.screen instanceof TableScreen) || view.viewerSeat() != 0 || ticks < 15) return false;
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
                 check(view.timeControl().equals(top.skyeyefast.mchjong.engine.TimeControl.MANUAL), "Ordinary lobby clock defaults differ from the server");
-                var parent = (TableScreen) client.screen;
-                client.setScreen(new top.skyeyefast.mchjong.client.TableSettingsScreen(parent));
-                check(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                    .noneMatch(widget -> widget.getMessage().getString().equals(Component.translatable("settings.mchjong.tab.4").getString())),
-                    "Ordinary table exposed the automatic-only settings page");
-                client.setScreen(parent);
+                check(view.autoPlay() == null, "Ordinary table exposed automatic controls");
                 check(table.equipment().clothColor() == DyeColor.RED && table.equipment().material() == TileMaterial.GLASS,
                     "Ordinary table lost equipment appearance");
                 check(table.equipment().drawer(0).isEmpty() && view.riichiSticks() == 0,

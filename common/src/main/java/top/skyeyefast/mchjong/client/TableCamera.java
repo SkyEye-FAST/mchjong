@@ -22,7 +22,7 @@ public final class TableCamera {
 
     public static Vec3 position(SeatEntity seat) {
         return overhead()
-            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE, .20, seat.seat()))
+            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE, .40, seat.seat()))
             : TableSettings.get().cameraPosition(seat);
     }
 
@@ -33,6 +33,7 @@ public final class TableCamera {
 
     static double overheadFov(double aspectRatio) {
         double depth = OVERHEAD_RISE - (0.081 + TileMesh.HEIGHT / 2.0) * TableScene.TILE_SCALE;
-        return Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH / (depth * Math.min(.82, aspectRatio * .95))));
+        // Leave room for the compact HUD and private hand without covering the near meld rail.
+        return Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH / (depth * Math.min(.75, aspectRatio * .95))));
     }
 }

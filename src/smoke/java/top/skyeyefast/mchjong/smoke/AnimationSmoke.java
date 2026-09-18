@@ -26,12 +26,15 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Real renderer, synthetic public snapshots: no fixture action is sent to the live server. */
 final class AnimationSmoke {
+    private final boolean layoutsOnly;
     private final DepositVisualSmoke deposits = new DepositVisualSmoke();
     private TableView fixture;
     private int ticks;
     private int windowWidth, windowHeight, guiScale;
     private boolean originalHighlight;
     private final List<TableSettings.Information> hidden = new ArrayList<>();
+
+    AnimationSmoke(boolean layoutsOnly) { this.layoutsOnly = layoutsOnly; }
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
@@ -42,7 +45,8 @@ final class AnimationSmoke {
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN), List.of(), List.of(), false));
             var wall = new ArrayList<>(Collections.nCopies(136, Tile.HIDDEN));
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
-            fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1, base.handNumber() + 1,
+            // Display-only fixtures must not be replaced by live game heartbeats during the captures.
+            fixture = new TableView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
                 base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
                 "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), false, null, null, base.autoPlay());
             table.acceptView(fixture);
@@ -56,6 +60,11 @@ final class AnimationSmoke {
             TableScreen screen = new TableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
+            if (layoutsOnly) {
+                hidden.forEach(TableSettings.get()::toggle);
+                hidden.clear();
+                ticks = 115;
+            }
         }
         if (ticks == 6) capture(client, output, "12-wall-rising.png");
         if (ticks == 18) capture(client, output, "13-dealing-packets.png");
@@ -182,11 +191,36 @@ final class AnimationSmoke {
             client.options.guiScale().set(3);
             client.resizeDisplay();
         }
+        if (ticks == 322) {
+            var seats = new ArrayList<>(fixture.seats());
+            for (int side = 0; side < seats.size(); side++) {
+                var player = seats.get(side);
+                int first = 40 + side * 20;
+                var river = IntStream.range(first, first + 12)
+                    .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
+                seats.set(side, new TableView.Seat(player.name(), player.occupied(), player.bot(), player.ready(),
+                    player.points(), player.hand(), player.drawn(), player.melds(), river, player.norths(),
+                    player.riichi(), player.exposed()));
+            }
+            update(table, seats, fixture.wall());
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
+            var toggle = client.screen.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
+                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+            client.screen.mouseClicked(toggle.getX() + 4, toggle.getY() + 4, 0);
+        }
         if (ticks == 324) {
+            capture(client, output, "57-overhead-rivers-melds-320x240.png");
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
         }
+        if (ticks == 327) {
+            capture(client, output, "57-overhead-rivers-melds-640x400.png");
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        }
+        if (layoutsOnly && ticks >= 328) return true;
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
         if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
             var calls = new Action.Type[]{Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN};

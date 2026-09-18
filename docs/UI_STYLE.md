@@ -137,15 +137,20 @@ table; saved personal adjustments remain adjustable, and Restore defaults applie
 the current elevated seating view. The top-bar view button or V switches to a
 seat-oriented, straight-down camera. `TableHand` displays only the recipient's
 own hand along the bottom, retaining the drawn-tile gap and normal selection,
-discard and riichi controls. Action buttons stay above it. Closing the overlay
+discard and riichi controls. Its left edge stays on a fourteen-tile rail so a
+short hand does not cover the right-corner melds. Action buttons stay above it. Closing the overlay
 restores the seated camera; third-person remains under Minecraft's control.
+In overhead mode the seat cards use a single-line wind/score summary, with names
+in their hover details. Keep the near meld rail above the private hand panel.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
 For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and
 `:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
-and private-deal captures, then inspect the camera with controls closed and the
-third-person cushion pose. Evidence goes to each loader's `build/smoke/seating-evidence`.
+and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
+and overhead rivers with the hand and expanded automatic controls. They then
+inspect the camera with controls closed and the third-person cushion pose.
+Evidence goes to each loader's `build/smoke/seating-evidence`.
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
@@ -154,6 +159,8 @@ left: sort hand, claim wins, skip calls, and discard drawn tiles. Keep a clear
 gutter between these controls and the action buttons, including at 320 x 240
 with the overhead hand visible. These preferences belong to the
 server's seated player and are acknowledged before another toggle is enabled.
+Long option labels use separate name/state lines; never truncate the on/off
+state. Countdown, riichi and animation text stay in the action-side gutter.
 Sorting starts enabled; the other options start disabled. A legal win takes
 priority over automatic discards and skipped calls. Without automatic wins, the
 win decision remains explicit. Riichi draws and ordinary discards advance after
