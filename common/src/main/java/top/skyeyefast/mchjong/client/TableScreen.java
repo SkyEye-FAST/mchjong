@@ -61,6 +61,7 @@ public final class TableScreen extends Screen {
     private boolean overhead;
     private boolean displayedOverhead;
     private TableHand hand;
+    private final TableHints hints = new TableHints();
     private final TableAutomation automation = new TableAutomation(this, () -> lastRevision = -1);
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
@@ -694,6 +695,9 @@ public final class TableScreen extends Screen {
                 return highlight(pos, piece);
             return 0;
         }, facePreset());
+        if (settings.convenienceHints && !dealing() && !decision.pending())
+            hints.render(graphics, font, view, hoveredTile >= 0 ? hoveredTile : selectedTile,
+                width, actionLeft, actionTop - (choosingRiichi ? 32 : 18), hand != null, facePreset());
         super.render(graphics, mouseX, mouseY, partialTick);
         boolean footerClock = false;
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {

@@ -322,6 +322,8 @@ class TableLayoutTest {
     @Test void riverVisibilityAndRemainingPreferencesSurviveSaving(@org.junit.jupiter.api.io.TempDir java.nio.file.Path directory) throws Exception {
         var settings = new TableSettings();
         assertEquals(TableSettings.TileLabels.NAME, settings.tileLabels);
+        assertFalse(settings.convenienceHints);
+        settings.convenienceHints = true;
         settings.tileLabels = TableSettings.TileLabels.MPSZ;
         settings.toggle(TableSettings.Information.REMAINING);
         settings.showRiver = false;
@@ -329,11 +331,13 @@ class TableLayoutTest {
         settings.save(path);
         var restored = TableSettings.load(path);
         assertEquals(TableSettings.TileLabels.MPSZ, restored.tileLabels);
+        assertTrue(restored.convenienceHints);
         assertFalse(restored.showRiver);
         assertTrue(restored.show(TableSettings.Information.REMAINING));
         restored.showRiver = true;
         assertFalse(restored.show(TableSettings.Information.REMAINING));
         restored.reset();
         assertEquals(TableSettings.TileLabels.NAME, restored.tileLabels);
+        assertFalse(restored.convenienceHints);
     }
 }

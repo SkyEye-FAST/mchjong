@@ -71,7 +71,10 @@ public final class TableSettingsScreen extends Screen {
             }).bounds(left, 91, span, 20).build());
             addToggle(left, 117, column, "settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
             addToggle(left + column + 6, 117, column, "settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
-            addToggle(left, 143, span, "settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
+            addToggle(left, 143, column, "settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
+            addToggle(left + column + 6, 143, column, "settings.mchjong.convenience_hints", settings.convenienceHints,
+                () -> settings.convenienceHints = !settings.convenienceHints)
+                .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.convenience_hints_help")));
             addRenderableWidget(MahjongButton.create(value("settings.mchjong.tile_labels", settings.tileLabels), ignored -> {
                 settings.tileLabels = settings.tileLabels == TableSettings.TileLabels.NAME
                     ? TableSettings.TileLabels.MPSZ : TableSettings.TileLabels.NAME;

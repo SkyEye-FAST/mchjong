@@ -100,6 +100,19 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
+Personal interaction settings include default-off tenpai hints. The hint rail
+shows structural waits and unseen-copy counts, including exhausted waits at zero;
+hovering or keyboard-selecting a legal discard previews the resulting waits.
+Counts combine red and ordinary fives and never claim to reveal the actual wall.
+In the seated view the rail sits below the header, leaving the physical hand clear.
+In the overhead view it sits above decisions, outside the expanded automation column.
+Closed settings persist locally and reset disables hints.
+
+The overhead camera uses a tighter field of view, with additional zoom as logical
+viewport height grows from 240 to 400 pixels. The camera offset keeps the near
+meld rail above the independent private-hand strip. World rendering and picking
+continue to use the same camera transform.
+
 ## Mahjong box
 
 The box has its own registered menu type and `MahjongBoxScreen`. Never use the

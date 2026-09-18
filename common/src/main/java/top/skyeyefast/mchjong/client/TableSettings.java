@@ -36,6 +36,7 @@ public final class TableSettings {
     public GuideLines guideLines = GuideLines.HOVER;
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
+    public boolean convenienceHints = false;
     public boolean animations = true;
     public boolean showRiver = true;
     public VoiceSource voiceSource = VoiceSource.RESOURCE_PACK;
@@ -130,6 +131,7 @@ public final class TableSettings {
         guideLines = defaults.guideLines;
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
+        convenienceHints = defaults.convenienceHints;
         animations = defaults.animations;
         showRiver = defaults.showRiver;
         voiceSource = defaults.voiceSource;

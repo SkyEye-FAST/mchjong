@@ -103,6 +103,14 @@ strip of the recipient's own synchronized hand, using the same tile identities,
 artwork and legal-action requests. `TableCamera` supplies the matching eye and
 FOV to world rendering and picking. Rendering is read-only and cannot advance play.
 
+`TenpaiHints` caches structural waits per concealed hand, meld set and discard
+kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
+physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
+and pending declarations. Training bots share this accounting. Opponents' concealed
+hands are ignored even under the world's open-hand policy. `TableHints` renders
+this information only when the local, default-off convenience preference is on;
+no private information or new request type is added to the protocol.
+
 `TableAnimation` tracks recipient-safe snapshots by table identity, hand number,
 and viewing permission. Visible physical tile identities follow hand/river/meld
 transitions; hidden slots never acquire guessed identities. Wall assembly and
