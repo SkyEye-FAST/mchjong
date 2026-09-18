@@ -16,12 +16,15 @@ public final class GenerateAssets {
     private GenerateAssets(Path root) { this.root = root; }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 3) throw new IllegalArgumentException("Expected resource directory, riichi archive and flower archive");
-        new GenerateAssets(Path.of(args[0])).generate(Path.of(args[1]), Path.of(args[2]));
+        if (args.length != 2) throw new IllegalArgumentException("Expected resource directory and native preset directory");
+        new GenerateAssets(Path.of(args[0])).generate(Path.of(args[1]));
     }
 
-    private void generate(Path artwork, Path flowers) throws IOException {
-        tiles(artwork, flowers);
+    private void generate(Path artwork) throws IOException {
+        for (String preset : TileArtwork.PRESETS) tiles(artwork, preset);
+        text("META-INF/licenses/tile-face-presets-NOTICE.md", Files.readString(artwork.resolve("NOTICE.md")));
+        png("tile/back", TileArtwork.back());
+        text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         for (var texture : FurnitureArtwork.textures().entrySet()) {
             png("furniture/" + texture.getKey(), texture.getValue());
             text("assets/mchjong/textures/furniture/" + texture.getKey() + ".png.mcmeta",
@@ -40,12 +43,13 @@ public final class GenerateAssets {
         }
     }
 
-    private void tiles(Path archive, Path flowerArchive) throws IOException {
+    private void tiles(Path presets, String preset) throws IOException {
         BufferedImage atlas = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         BufferedImage glyphs = new BufferedImage(TileArtwork.ATLAS_WIDTH, TileArtwork.ATLAS_HEIGHT, BufferedImage.TYPE_INT_ARGB);
         Graphics2D g = atlas.createGraphics();
         Graphics2D glyphGraphics = glyphs.createGraphics();
-        try (TileArtwork artwork = new TileArtwork(archive, flowerArchive)) {
+        try {
+            TileArtwork artwork = new TileArtwork(presets, preset);
             for (int face = 0; face < TileArtwork.FACE_COUNT; face++) {
                 BufferedImage image = artwork.face(face);
                 g.drawImage(image, face % 8 * TileArtwork.WIDTH, face / 8 * TileArtwork.HEIGHT, null);
@@ -56,20 +60,17 @@ public final class GenerateAssets {
             g.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
             glyphGraphics.setColor(Color.WHITE);
             glyphGraphics.fillRect(TileArtwork.ATLAS_WIDTH - 32, TileArtwork.ATLAS_HEIGHT - 32, 32, 32);
-            text("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt", artwork.license());
-            text("META-INF/licenses/I.Mahjong-LICENSE.txt", artwork.flowerLicense());
-            text("META-INF/licenses/I.Mahjong-NOTICE.txt", FlowerTileArtwork.notice());
+            text("META-INF/licenses/" + preset + "-source.json", artwork.notice());
         } finally {
             g.dispose();
             glyphGraphics.dispose();
         }
-        png("tiles", atlas);
-        png("tile_glyphs", glyphs);
-        png("tile/back", TileArtwork.back());
+        String path = preset.equals("kanto") ? "kanto/" : "";
+        png(path + "tiles", atlas);
+        png(path + "tile_glyphs", glyphs);
         String filtering = "{\"texture\":{\"blur\":true,\"clamp\":true}}";
-        text("assets/mchjong/textures/tiles.png.mcmeta", filtering);
-        text("assets/mchjong/textures/tile_glyphs.png.mcmeta", filtering);
-        text("assets/mchjong/textures/tile/back.png.mcmeta", filtering);
+        text("assets/mchjong/textures/" + path + "tiles.png.mcmeta", filtering);
+        text("assets/mchjong/textures/" + path + "tile_glyphs.png.mcmeta", filtering);
     }
 
     private void models() throws IOException {

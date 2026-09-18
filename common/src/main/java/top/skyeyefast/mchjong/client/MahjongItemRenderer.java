@@ -34,7 +34,6 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.scale(scale, scale, scale);
             FurnitureMesh.table(pose, buffers, light, wood, null, stack.is(MahjongContent.AUTO_TABLE_ITEM));
         } else if (stack.is(MahjongContent.STOOL_ITEM)) {
-            pose.translate(0, .35 - top.skyeyefast.mchjong.world.TableGeometry.STOOL_HEIGHT / 2, 0);
             FurnitureMesh.stool(pose, buffers, light, wood, MahjongSupplies.color(stack));
         } else if (stack.is(MahjongContent.BOX_ITEM)) {
             pose.translate(0, .15, 0);
@@ -49,7 +48,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             pose.translate(0, .35, 0);
             pose.scale(4.5f, 4.5f, 4.5f);
             TileMesh.drawBack(pose, buffers.getBuffer(TileRenderTypes.BACKS), false, light, MahjongSupplies.color(stack));
-            TileMesh.drawArtwork(pose, buffers.getBuffer(TileRenderTypes.FACES), TileMesh.artwork(data), light);
+            TileMesh.drawArtwork(pose, buffers.getBuffer(TileRenderTypes.faces(MahjongSupplies.facePreset(stack))), TileMesh.artwork(data), light);
             TileMesh.drawBody(pose, buffers.getBuffer(TileRenderTypes.body(data.material())),
                 light, data.material());
         }

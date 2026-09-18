@@ -11,45 +11,35 @@ Each output is synchronized independently with the current generator results.
 
 ## Tile faces
 
-The 37 riichi faces are rasterized from FluffyStuff's CC0
-[riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles), pinned to
-revision `26e127ba2117f45cdce5ea0225748cc0cfad3169`. Gradle resolves and caches the
-source archive as a build dependency. Its SHA-256 must be
-`79f892bfde6e9450b359cabe939db69a4217ff539518018967a30947c295e276`.
-The generator rejects changed archive bytes before rendering.
+The 45 faces use the supplied PNG source atlases under
+`presets/tile_faces/kansai_mizuno/atlas/mizuno.png` and
+`presets/tile_faces/kanto_fluffystuff/atlas/default.png`, assigned to Kanto and
+Kansai respectively. The supplied folder names are reversed.
+`TileArtwork` maps their 10-column source layout to runtime
+cells, including all three red fives, preserving proportions and antialiased
+edges. Both designs are ordinary mod resources selected in the mahjong box;
+there is no runtime pack installation or network access.
 
-JSVG is a build-time dependency only. Neither JSVG nor the source archive is
-bundled in the playable mod. Rendering uses the source vector outlines rather
-than a platform font, with antialiased edges at 256 by 384 pixels. No network
-access is needed at game time. The source license is bundled under
-`META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt`. Source provenance and the
-pinned revision are documented above.
+Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
+under `META-INF/licenses/`. The Kanto source names Mizuno Maruichi as copyright
+holder and explicitly marks its permission status `unauthorized`; its inclusion
+does not grant redistribution rights. The supplied Kansai metadata identifies
+FluffyStuff and lietxia and marks the source public domain. Neither preset is
+relicensed under the repository's code license.
 
-`assets/mchjong/textures/tiles.png` is a 2048 by 4096 atlas, eight cells per row.
+`assets/mchjong/textures/tiles.png` (Kansai) and `kanto/tiles.png` are 2048 by 4096
+atlases, eight cells per row, each with a matching `tile_glyphs.png` transparent
+engraving atlas in the same directory.
 Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,
 North, white, green and red dragon. Cells 34-36 are the three red fives in suit
-order. Cells 37-44 are spring, summer, autumn, winter, plum, orchid, bamboo and
-chrysanthemum, numbered 1q-8q. `FlowerTileArtwork` rasterizes the traditional Hong Kong
-engravings from [I.Mahjong](https://github.com/SyaoranHinata/I.Mahjong), by Ichiro
-(SyaoranHinata), based on Gutenberg Labo's GL-MahjongTile. The build pins revision
-`73c507836e6ab30579305257ae3e2a7e1142d066` and verifies archive SHA-256
-`3bf09b9786adc8cb689fb5debfa9777e96de2c63856117db5d56855ecd501007`.
-The M+ FONT LICENSE and adaptation notice ship under `META-INF/licenses/`.
-
-The generator loads the pinned HK outlines directly, extracts the eight glyphs,
-removes both contours of their tile frame, preserves their proportions and
-negative space, and paints their engraved strokes in red, green and blue.
-The flower group has blue names and red Arabic numbers; the seasons have red
-names and blue Chinese numbers. Peony, lotus, fruit and narcissus distinguish
-spring, summer, autumn and winter. The red/blue label layout and green foliage
-follow the physical flower set pictured in
-[The Mahjong Project's component guide](https://www.themahjongproject.com/how-to-play/components).
-Color separation follows complete engraving contours, including the character
-strokes and petal outlines. Source fonts and archives are build-time
-inputs; players receive the rasterized atlases and license notices.
-The physical component faces
-are 34-41, separate from engine wall tile IDs. The white dragon is intentionally
-blank. The renderer consumes the two atlases, and the UI draws its controls directly.
+order. Cells 37-44 are numbered 1q-8q. Kansai uses spring, summer, autumn,
+winter, plum, orchid, bamboo and chrysanthemum; Kanto uses the four seasons
+followed by fortune, prosperity, longevity and nobility (福禄寿貴).
+The generator swaps the Kansai source's final bamboo/chrysanthemum cells to
+match this numbering. All faces preserve the supplied artwork and proportions.
+Physical component faces are 34-41, separate from engine wall tile IDs.
+The white dragon is intentionally blank. Name tooltips follow the stored preset.
+World, held-item and GUI renderers all use the selected design's atlas pair.
 The asset test compares every atlas cell directly against its generated design,
 including all 45 distinct faces, red fives, flowers, opacity and the declared order.
 

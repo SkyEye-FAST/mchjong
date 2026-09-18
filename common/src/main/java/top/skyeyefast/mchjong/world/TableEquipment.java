@@ -8,6 +8,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Removable physical equipment and a strictly public appearance projection. Never holds game state. */
 public final class TableEquipment {
@@ -21,6 +22,7 @@ public final class TableEquipment {
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back = DyeColor.BLUE;
+    private TileFacePreset preset = TileFacePreset.KANSAI;
 
     public TableEquipment(Runnable changed) {
         boxes.addListener(container -> {
@@ -39,6 +41,7 @@ public final class TableEquipment {
     public DyeColor clothColor() { return DyeColor.byId(clothColor); }
     public TileMaterial material() { return material; }
     public DyeColor back() { return back; }
+    public TileFacePreset preset() { return preset; }
     public MahjongSupplies.Deck deck() { return deck; }
 
     private void refreshDeck() {
@@ -46,6 +49,7 @@ public final class TableEquipment {
         for (int slot = 0; slot < BOX_SLOTS && deck == null; slot++) deck = MahjongSupplies.deck(boxes.getItem(slot));
         material = deck == null ? TileMaterial.BONE : deck.material();
         back = deck == null ? DyeColor.BLUE : deck.back();
+        preset = deck == null ? TileFacePreset.KANSAI : deck.preset();
     }
 
     public ItemStack installCloth(ItemStack source) {
@@ -102,6 +106,8 @@ public final class TableEquipment {
         }
         if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
         if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));
+        if (tag.contains("tile_preset")) for (TileFacePreset candidate : TileFacePreset.values())
+            if (candidate.getSerializedName().equals(tag.getString("tile_preset"))) preset = candidate;
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
     }
@@ -110,5 +116,6 @@ public final class TableEquipment {
         tag.putInt("cloth_color", clothColor);
         tag.putString("tile_material", material.getSerializedName());
         tag.putInt("tile_back", back.getId());
+        tag.putString("tile_preset", preset.getSerializedName());
     }
 }

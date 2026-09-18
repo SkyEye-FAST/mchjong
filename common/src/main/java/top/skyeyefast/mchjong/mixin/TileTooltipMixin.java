@@ -8,12 +8,13 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.item.MahjongSupplyItem;
 import top.skyeyefast.mchjong.item.TileData;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Keep client settings out of the dedicated-server item class. */
 @Mixin(value = MahjongSupplyItem.class, remap = false)
 public abstract class TileTooltipMixin {
     @Inject(method = "tileLabel", at = @At("HEAD"), cancellable = true)
-    private static void mchjong$tileLabel(TileData tile, CallbackInfoReturnable<Component> callback) {
-        callback.setReturnValue(tile.label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ));
+    private static void mchjong$tileLabel(TileData tile, TileFacePreset preset, CallbackInfoReturnable<Component> callback) {
+        callback.setReturnValue(tile.label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ, preset));
     }
 }

@@ -164,8 +164,7 @@ final class BoxMenuSmoke {
             check(!menu.getSlot(0).mayPlace(dye) && !menu.getSlot(MahjongSupplies.TILE_SLOTS).mayPlace(dye)
                 && !menu.getSlot(MahjongSupplies.DYE_SLOT).mayPlace(new ItemStack(MahjongContent.POINT_STICK)), "Compartment accepts the wrong supply");
             var before = box.copy();
-            check(!menu.clickMenuButton(player, -1) && !menu.clickMenuButton(player, 2)
-                && !menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANTO.ordinal()), "Unavailable print action accepted");
+            check(!menu.clickMenuButton(player, -1) && !menu.clickMenuButton(player, 2), "Invalid print action accepted");
             check(ItemStack.matches(before, box), "Rejected printing changed the carrier");
             menu.getSlot(2).getItem().shrink(1);
             check(!menu.clickMenuButton(player, 0), "Incomplete tile count was printed");
@@ -182,6 +181,17 @@ final class BoxMenuSmoke {
                 .allMatch(stack -> MahjongSupplies.color(stack) == DyeColor.PURPLE && !MahjongSupplies.tile(stack).blank()), "Printing altered backs or left blanks");
             var printed = box.copy();
             check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "No-op printing consumed dye");
+            check(menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANTO.ordinal()), "Preset change rejected");
+            var changed = MahjongSupplies.contents(box);
+            for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
+                var expected = items.get(slot).copy();
+                if (!expected.isEmpty()) expected.set(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET,
+                    top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
+                check(ItemStack.matches(expected, changed.get(slot)), "Preset change altered tile identity, material or back");
+            }
+            check(changed.get(MahjongSupplies.DYE_SLOT).getCount() == (creative ? 1 : 0), "Preset change consumed the wrong dye quantity");
+            check(MahjongSupplies.deck(box).preset() == top.skyeyefast.mchjong.item.TileFacePreset.KANTO, "Table ignored the printed preset");
+            printed = box.copy();
             player.closeContainer();
             check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "Closed menu printed stale contents");
         }

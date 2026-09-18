@@ -16,6 +16,7 @@ final class TileResourceSmoke {
     private static byte[] originalBack;
     private static byte[] originalGlyphs;
     private static byte[] originalSticks;
+    private static final java.util.Map<ResourceLocation, byte[]> originalKanto = new java.util.HashMap<>();
     private static final java.util.Map<ResourceLocation, byte[]> originalFurniture = new java.util.HashMap<>();
     private TileResourceSmoke() {}
 
@@ -82,7 +83,19 @@ final class TileResourceSmoke {
                 printed |= (glyphs.getPixelRGBA(x, y) >>> 24) > 0;
             require(printed, "First tile lost its printed glyph");
         }
-        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS, FurnitureMesh.STICK_TEXTURE}) {
+        var kanto = top.skyeyefast.mchjong.item.TileFacePreset.KANTO;
+        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.atlas(kanto), TileMesh.glyphs(kanto)}) {
+            byte[] bytes;
+            try (var stream = client.getResourceManager().open(texture)) { bytes = stream.readAllBytes(); }
+            byte[] previous = originalKanto.putIfAbsent(texture, bytes);
+            require(previous == null || Arrays.equals(previous, bytes), "Kanto artwork changed after reload");
+            require(!Arrays.equals(texture.equals(TileMesh.atlas(kanto)) ? atlasBytes : glyphBytes, bytes), "Kanto uses the Kansai artwork");
+            try (var image = NativeImage.read(new ByteArrayInputStream(bytes))) {
+                require(image.getWidth() == 2048 && image.getHeight() == 4096, "Kanto atlas did not reach the client");
+            }
+        }
+        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS,
+                TileMesh.atlas(kanto), TileMesh.glyphs(kanto), FurnitureMesh.STICK_TEXTURE}) {
             client.getTextureManager().getTexture(texture).bind();
             require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_LINEAR,
                 "World renderer disabled linear magnification for " + texture);

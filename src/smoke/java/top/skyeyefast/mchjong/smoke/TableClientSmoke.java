@@ -120,8 +120,9 @@ public final class TableClientSmoke {
                         furniture.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
                         MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
                         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
-                        table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
-                            top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
+                        table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.engrave(
+                            top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.GLASS,
+                                net.minecraft.world.item.DyeColor.BLUE), top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
                         cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.GREEN);
                         table.useEquipment(player, cloth);
@@ -133,6 +134,8 @@ public final class TableClientSmoke {
                         for (int flower = 0; flower < 8; flower++) flowerContents.set(37 + flower,
                             top.skyeyefast.mchjong.item.MahjongSupplies.tile(new top.skyeyefast.mchjong.item.TileData(
                                 34 + flower, top.skyeyefast.mchjong.item.TileMaterial.GLASS, false), net.minecraft.world.item.DyeColor.BLUE, 1));
+                        flowerContents.set(top.skyeyefast.mchjong.item.MahjongSupplies.DYE_SLOT,
+                            new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE));
                         flowerBox.set(net.minecraft.core.component.DataComponents.CONTAINER,
                             net.minecraft.world.item.component.ItemContainerContents.fromItems(flowerContents));
                         player.getInventory().setItem(1, new ItemStack(MahjongContent.TABLE_ITEM));
@@ -156,6 +159,8 @@ public final class TableClientSmoke {
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
+                require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
+                    == top.skyeyefast.mchjong.item.TileFacePreset.KANTO, "Client table lost its synchronized face preset");
                 if (itemsOnly) {
                     client.setScreen(null);
                     step = 18; entered = ticks;

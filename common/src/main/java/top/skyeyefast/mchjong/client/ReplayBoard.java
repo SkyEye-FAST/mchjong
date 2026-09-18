@@ -85,7 +85,7 @@ public final class ReplayBoard extends AbstractWidget {
             }
             y = tiles(graphics, concealed, y + 3, tileWidth, winning >= 0 ? winning : player.drawn());
             for (var meld : player.melds()) {
-                if (graphics != null) TileGui.meld(graphics, meld, seat, getX() + 24, y + tileWidth / 2 + 4, tileWidth);
+                if (graphics != null) TileGui.meld(graphics, meld, seat, getX() + 24, y + tileWidth / 2 + 4, tileWidth, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI);
                 y += tileWidth * 2 + 8;
             }
             if (!player.norths().isEmpty()) y = tiles(graphics, player.norths(), y, tileWidth, -1);
@@ -95,7 +95,7 @@ public final class ReplayBoard extends AbstractWidget {
                 int x = getX() + 12 + (i % 6) * (riverWidth * 3 / 2 + 3);
                 int ty = y + i / 6 * (riverWidth * 3 / 2 + 4);
                 if (graphics != null) {
-                    TileGui.tile(graphics, discard.tile(), x, ty, riverWidth, false, discard.riichi(), !discard.tsumogiri());
+                    TileGui.tile(graphics, discard.tile(), x, ty, riverWidth, false, discard.riichi(), !discard.tsumogiri(), top.skyeyefast.mchjong.item.TileFacePreset.KANSAI);
                     if (discard.called()) graphics.fill(x, ty, x + riverWidth, ty + riverWidth * 3 / 2, 0x9920373a);
                 }
             }
@@ -121,7 +121,7 @@ public final class ReplayBoard extends AbstractWidget {
         int columns = Math.max(1, (width - 24) / (size + 2));
         for (int i = 0; i < tiles.size(); i++) if (graphics != null)
             TileGui.tile(graphics, tiles.get(i), getX() + 12 + i % columns * (size + 2),
-                y + i / columns * (size * 3 / 2 + 4), size, false, false, tiles.get(i) == marked);
+                y + i / columns * (size * 3 / 2 + 4), size, false, false, tiles.get(i) == marked, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI);
         return y + (tiles.size() + columns - 1) / columns * (size * 3 / 2 + 4) + 3;
     }
     private int paragraph(GuiGraphics graphics, Component text, int y, int color) {

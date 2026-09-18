@@ -51,7 +51,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         var vertices = buffers.getBuffer(switch (layer) {
             case BACK -> TileRenderTypes.BACKS;
             case BODY -> TileRenderTypes.body(material);
-            case FACE -> TileRenderTypes.FACES;
+            case FACE -> TileRenderTypes.faces(table.equipment().preset());
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);

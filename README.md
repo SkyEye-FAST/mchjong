@@ -43,7 +43,7 @@ The optional Ponder integration targets Ponder 1.0.87 or newer for this profile.
 Use the Ponder release for the same Minecraft version and loader, together with
 its declared dependencies.
 
-JEI and EMI offer component-aware supply recipes and tile engraving. Use the
+JEI and EMI offer component-aware supply recipes. Use the
 viewer release for your loader and Minecraft version. See
 [compatibility and verification](docs/COMPATIBILITY.md) for the exact development
 dependencies, runtime profiles and test coverage.
@@ -112,7 +112,7 @@ On Windows, use `gradlew.bat` instead of `./gradlew`.
 
 Build an ordinary table from matching wooden slabs and fences. Cut material
 blocks into blanks, put 136 or 144 matching blanks in a mahjong box, and apply
-the Kansai faces using one mahjong dye in the box's dye slot. The 144-tile set
+Kansai or Kanto faces using one mahjong dye in the box's dye slot. The 144-tile set
 includes eight flowers. Right-click either table to store up to two boxes inside, and
 lay a cloth on its surface. A complete set and a cloth are required to play.
 On ordinary tables, sweep the face-down tiles across the felt to shuffle, drag
@@ -244,14 +244,17 @@ See [docs/ASSETS.md](docs/ASSETS.md) for customization and asset details.
 
 ## Credits
 
-Riichi tile faces are generated from [FluffyStuff's riichi-mahjong-tiles](https://github.com/FluffyStuff/riichi-mahjong-tiles)
-under CC0. The eight flowers and seasons use colorized Hong Kong engravings from
-[I.Mahjong](https://github.com/SyaoranHinata/I.Mahjong) under the M+ FONT LICENSE.
+The built-in presets use the supplied Mizuno Maruichi and FluffyStuff/lietxia
+atlases. Their original attribution and permission metadata are preserved in
+[the artwork notice](presets/tile_faces/NOTICE.md), including the Mizuno source's
+unverified redistribution permission. Kansai includes the seasons and botanical
+flowers; Kanto includes the seasons and 福禄寿貴, with names matching each preset.
 See [docs/ASSETS.md](docs/ASSETS.md) for source provenance, bundled upstream
 licenses, adaptation details, and the asset generation contract.
 
 ## License
 
-MCjhong is licensed under the [Apache License 2.0](LICENSE).
+MCjhong's code is licensed under the [Apache License 2.0](LICENSE).
+Third-party artwork retains its separately documented rights and notices.
 
 Release history is maintained in [CHANGELOG.md](CHANGELOG.md).

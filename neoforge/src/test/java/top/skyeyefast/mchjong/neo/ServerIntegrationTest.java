@@ -64,6 +64,7 @@ class ServerIntegrationTest {
         table.loadWithComponents(saved, server.registryAccess());
         var box = top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
             top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.PURPLE);
+        box = top.skyeyefast.mchjong.item.MahjongSupplies.engrave(box, top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
         table.equipment().boxes().setItem(0, box.copy());
         var cloth = new net.minecraft.world.item.ItemStack(MahjongContent.CLOTH_ITEM);
         cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.LIME);
@@ -76,8 +77,9 @@ class ServerIntegrationTest {
         copy.validate();
         assertEquals(TableNetworking.JSON.toJson(game.view(null)), TableNetworking.JSON.toJson(copy.view(null)));
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
-        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back"), appearance.getAllKeys());
+        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset"), appearance.getAllKeys());
         assertEquals("glass", appearance.getString("tile_material"));
+        assertEquals("kanto", appearance.getString("tile_preset"));
         table.loadWithComponents(appearance, server.registryAccess());
         CompoundTag afterPublicUpdate = table.saveWithoutMetadata(server.registryAccess());
         assertEquals(restored.getString("game"), afterPublicUpdate.getString("game"));
@@ -88,6 +90,7 @@ class ServerIntegrationTest {
         loaded.loadWithComponents(restored, server.registryAccess());
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, loaded.equipment().boxes().getItem(0)));
         assertEquals(appearance, loaded.getUpdateTag(server.registryAccess()));
+        assertEquals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO, loaded.equipment().preset());
         var empty = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         loaded.loadWithComponents(empty.saveWithoutMetadata(server.registryAccess()), server.registryAccess());
         assertFalse(loaded.saveWithoutMetadata(server.registryAccess()).contains("game"));

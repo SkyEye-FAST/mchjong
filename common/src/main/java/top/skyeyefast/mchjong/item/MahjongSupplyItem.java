@@ -10,7 +10,7 @@ public class MahjongSupplyItem extends Item {
     public MahjongSupplyItem(Properties properties) { super(properties); }
 
     /** Dedicated servers use names; the client-only presentation mixin applies the local preference. */
-    private static Component tileLabel(TileData tile) { return tile.label(false); }
+    private static Component tileLabel(TileData tile, TileFacePreset preset) { return tile.label(false, preset); }
 
     @Override public Component getName(ItemStack stack) {
         Integer points = stack.get(MahjongComponents.POINTS);
@@ -22,7 +22,7 @@ public class MahjongSupplyItem extends Item {
         TileData tile = stack.get(MahjongComponents.TILE);
         if (tile != null) {
             lines.add(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
-            lines.add(tileLabel(tile));
+            lines.add(tileLabel(tile, MahjongSupplies.facePreset(stack)));
         }
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null) {

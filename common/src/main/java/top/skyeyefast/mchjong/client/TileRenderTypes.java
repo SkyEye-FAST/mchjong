@@ -8,6 +8,10 @@ import net.minecraft.resources.ResourceLocation;
 /** Lit, outward-facing tile materials which retain linear filtering at draw time. */
 public final class TileRenderTypes extends RenderType {
     public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.GLYPHS);
+    private static final RenderType KANTO_FACES = material("mchjong_kanto_faces", TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
+    public static RenderType faces(top.skyeyefast.mchjong.item.TileFacePreset preset) {
+        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_FACES : FACES;
+    }
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =

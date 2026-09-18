@@ -13,6 +13,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Dedicated compartments and server-authorized face printing over native inventory synchronization. */
 public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMenu> {
     private MahjongButton print;
+    private TileFacePreset preset = TileFacePreset.KANSAI;
+    private final java.util.List<MahjongButton> presets = new java.util.ArrayList<>();
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
@@ -25,21 +27,23 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     @Override protected void init() {
         super.init();
         topPos = Math.min(topPos, height - imageHeight - 24);
-        addRenderableWidget(MahjongButton.create(Component.translatable(TileFacePreset.KANSAI.translationKey()), ignored -> {})
-            .bounds(leftPos + 196, topPos + 122, 94, 20).build().selected(true));
-        var kanto = addRenderableWidget(MahjongButton.create(Component.translatable(TileFacePreset.KANTO.translationKey()), ignored -> {})
-            .bounds(leftPos + 196, topPos + 146, 94, 20)
-            .tooltip(net.minecraft.client.gui.components.Tooltip.create(Component.translatable("box.mchjong.preset_pending"))).build());
-        kanto.active = false;
+        presets.clear();
+        for (var choice : TileFacePreset.values()) {
+            presets.add(addRenderableWidget(MahjongButton.create(Component.translatable(choice.translationKey()), ignored -> {
+                preset = choice;
+                for (var candidate : TileFacePreset.values()) presets.get(candidate.ordinal()).selected(candidate == preset);
+                print.active = menu.canEngrave(preset);
+            }).bounds(leftPos + 196, topPos + 122 + choice.ordinal() * 24, 94, 20).build().selected(choice == preset)));
+        }
         print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, TileFacePreset.KANSAI.ordinal()))
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, preset.ordinal()))
             .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
-        print.active = menu.canEngrave(TileFacePreset.KANSAI);
+        print.active = menu.canEngrave(preset);
     }
 
     @Override protected void containerTick() {
         super.containerTick();
-        print.active = menu.canEngrave(TileFacePreset.KANSAI);
+        print.active = menu.canEngrave(preset);
     }
 
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

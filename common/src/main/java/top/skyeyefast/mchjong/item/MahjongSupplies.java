@@ -75,7 +75,7 @@ public final class MahjongSupplies {
 
     /** Preview a complete transaction; callers own committing it and consuming the reagent. */
     public static List<ItemStack> engravedContents(List<ItemStack> input, TileFacePreset preset) {
-        if (!preset.available() || input.size() != BOX_SLOTS) return List.of();
+        if (input.size() != BOX_SLOTS) return List.of();
         int total = tileCount(input);
         if (total != SET_SIZE && total != SET_SIZE + TileData.FLOWER_COUNT) return List.of();
         var tiles = input.subList(0, TILE_SLOTS).stream().filter(stack -> !stack.isEmpty()).toList();
@@ -167,10 +167,10 @@ public final class MahjongSupplies {
             boolean five = face == 4 || face == 13 || face == 22;
             if (normal[face] != (five ? 3 : 4) || red[face] != (five ? 1 : 0)) return null;
         }
-        return preset != null && preset.available() ? new Deck(material, back) : null;
+        return preset != null ? new Deck(material, back, preset) : null;
     }
 
-    public record Deck(TileMaterial material, DyeColor back) {
+    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset) {
         public List<Integer> tiles(boolean sanma) { return List.copyOf(Tile.set(sanma)); }
     }
 

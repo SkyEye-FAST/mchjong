@@ -1,115 +1,81 @@
 package top.skyeyefast.mchjong.art;
 
-import com.github.weisj.jsvg.SVGDocument;
-import com.github.weisj.jsvg.parser.SVGLoader;
-import com.github.weisj.jsvg.view.ViewBox;
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
 import java.io.IOException;
-import java.net.URI;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
-import java.util.HexFormat;
-import java.util.zip.ZipFile;
+import java.util.List;
+import javax.imageio.ImageIO;
 
-/** Rasterizes FluffyStuff's CC0 glyphs; JSVG and the source archive never ship in the mod. */
-final class TileArtwork implements AutoCloseable {
-    static final int WIDTH = 256;
-    static final int HEIGHT = 384;
-    static final int ATLAS_WIDTH = 2048;
-    static final int ATLAS_HEIGHT = 4096;
-    static final int FACE_COUNT = 45;
-    static final int FACE_WHITE = 0xffffffff;
-    static final int BACK = 0xffffffff;
-    private static final String SOURCE_ROOT = "riichi-mahjong-tiles-26e127ba2117f45cdce5ea0225748cc0cfad3169/";
-    private static final String SHA256 = "79f892bfde6e9450b359cabe939db69a4217ff539518018967a30947c295e276";
-    private static final String[] SUITS = {"Man", "Pin", "Sou"};
-    private static final String[] HONORS = {"Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun"};
-    private final Path archive;
-    private final ZipFile source;
-    private final SVGLoader loader = new SVGLoader();
-    private final FlowerTileArtwork flowers;
+/** Packs the supplied transparent engravings into the shared runtime atlas layout. */
+final class TileArtwork {
+    static final List<String> PRESETS = List.of("kansai", "kanto");
+    static final int WIDTH = 256, HEIGHT = 384, ATLAS_WIDTH = 2048, ATLAS_HEIGHT = 4096;
+    static final int FACE_COUNT = 45, BACK = 0xffffffff;
+    private final BufferedImage source;
+    private final boolean kanto;
+    private final String notice;
 
-    TileArtwork(Path archive, Path flowerArchive) throws IOException {
-        try {
-            String actual = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(Files.readAllBytes(archive)));
-            if (!SHA256.equals(actual)) throw new IOException("Tile artwork SHA-256 mismatch: " + actual);
-        } catch (NoSuchAlgorithmException impossible) {
-            throw new IllegalStateException("Java must provide SHA-256", impossible);
-        }
-        this.archive = archive.toAbsolutePath();
-        flowers = new FlowerTileArtwork(flowerArchive);
-        source = new ZipFile(archive.toFile());
+    TileArtwork(Path presets, String preset) throws IOException {
+        kanto = preset.equals("kanto");
+        String folder = switch (preset) {
+            case "kansai" -> "kanto_fluffystuff";
+            case "kanto" -> "kansai_mizuno";
+            default -> throw new IllegalArgumentException("Unknown face preset: " + preset);
+        };
+        Path directory = presets.resolve(folder);
+        // Supplied folder names are reversed; Mizuno with 福禄寿貴 is Kanto.
+        source = readAtlas(directory.resolve("atlas/" + (kanto ? "mizuno" : "default") + ".png"));
+        notice = Files.readString(directory.resolve("theme_metadata.json"));
     }
 
-    static String sourceName(int face) {
+    private static BufferedImage readAtlas(Path path) throws IOException {
+        var atlas = ImageIO.read(path.toFile());
+        if (atlas == null || atlas.getWidth() != 1500 || atlas.getHeight() != 1000)
+            throw new IOException("Expected a 1500 x 1000 face atlas: " + path);
+        return atlas;
+    }
+
+    static int sourceCell(int face, boolean kanto) {
         if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
-        if (face >= 37) return new String[]{"Spring", "Summer", "Autumn", "Winter", "Plum", "Orchid", "Bamboo", "Chrysanthemum"}[face - 37];
-        if (face >= 34) return SUITS[face - 34] + "5-Dora";
-        return face < 27 ? SUITS[face / 9] + (face % 9 + 1) : HONORS[face - 27];
+        if (face < 27) return face / 9 * 10 + face % 9 + 1;
+        if (face < 34) return face + 3;
+        if (face < 37) return (face - 34) * 10;
+        // The botanical source ends 梅蘭菊竹; public numbering ends 梅蘭竹菊.
+        return !kanto && face >= 43 ? 87 - face : face;
     }
 
-    BufferedImage face(int face) throws IOException {
-        return renderFace(face, false);
-    }
+    BufferedImage face(int face) { return render(face, false); }
+    BufferedImage glyph(int face) { return render(face, true); }
 
-    BufferedImage glyph(int face) throws IOException {
-        return renderFace(face, true);
-    }
-
-    private BufferedImage renderFace(int face, boolean transparent) throws IOException {
-        String name = sourceName(face);
-        BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        Graphics2D g = image.createGraphics();
+    private BufferedImage render(int face, boolean transparent) {
+        if (face < 0 || face >= FACE_COUNT) throw new IllegalArgumentException("Tile face: " + face);
+        var image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        var g = image.createGraphics();
         try {
-            int border = WIDTH / 64;
             if (!transparent) {
                 g.setColor(new Color(0xcbd0d4)); g.fillRect(0, 0, WIDTH, HEIGHT);
-                g.setColor(new Color(FACE_WHITE, true)); g.fillRect(border, border, WIDTH - 2 * border, HEIGHT - 2 * border);
-                g.setColor(Color.WHITE);
-                g.drawLine(2 * border, border, WIDTH - 3 * border, border);
-                g.drawLine(border, 2 * border, border, HEIGHT - 3 * border);
+                g.setColor(Color.WHITE); g.fillRect(4, 4, WIDTH - 8, HEIGHT - 8);
             }
-            // White dragons remain genuinely blank; no imported tile frame or lettering.
-            if (face >= 37) flowers.draw(g, face - 37, WIDTH, HEIGHT);
-            else if (face != 31) {
-                String entry = SOURCE_ROOT + "Regular/" + name + ".svg";
-                if (source.getEntry(entry) == null) throw new IOException("Missing artwork: " + entry);
-                SVGDocument document = loader.load(URI.create("jar:" + archive.toUri() + "!/" + entry).toURL());
-                if (document == null) throw new IOException("Could not parse artwork: " + entry);
-                g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-                g.setRenderingHint(RenderingHints.KEY_RENDERING, RenderingHints.VALUE_RENDER_QUALITY);
-                g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-                document.render(null, g, new ViewBox(WIDTH / 16f, HEIGHT / 12f, WIDTH * 7f / 8f, HEIGHT * 5f / 6f));
+            if (face != 31) {
+                int cell = sourceCell(face, kanto), x = cell % 10 * 150, y = cell / 10 * 200;
+                g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
+                // Preserve the source 3:4 proportions on the 2:3 tile with a clear margin.
+                g.drawImage(source.getSubimage(x, y, 150, 200), 16, 43, 224, 298, null);
             }
-        } finally {
-            g.dispose();
-        }
+        } finally { g.dispose(); }
         return image;
     }
 
     static BufferedImage back() {
-        BufferedImage image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        for (int y = 0; y < HEIGHT; y++) for (int x = 0; x < WIDTH; x++) {
-            image.setRGB(x, y, BACK);
-        }
+        var image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
+        var g = image.createGraphics();
+        try { g.setColor(Color.WHITE); g.fillRect(0, 0, WIDTH, HEIGHT); }
+        finally { g.dispose(); }
         return image;
     }
 
-    String license() throws IOException {
-        var entry = source.getEntry(SOURCE_ROOT + "LICENSE.md");
-        if (entry == null) throw new IOException("Tile artwork license missing");
-        try (var stream = source.getInputStream(entry)) {
-            return new String(stream.readAllBytes(), StandardCharsets.UTF_8);
-        }
-    }
-
-    String flowerLicense() { return flowers.license(); }
-
-    @Override public void close() throws IOException { source.close(); }
+    String notice() { return notice; }
 }

@@ -17,6 +17,14 @@ public final class TileMesh {
     public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
+    private static final ResourceLocation KANTO_ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/kanto/tiles.png");
+    private static final ResourceLocation KANTO_GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/kanto/tile_glyphs.png");
+    public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
+        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_ATLAS : ATLAS;
+    }
+    public static ResourceLocation glyphs(top.skyeyefast.mchjong.item.TileFacePreset preset) {
+        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_GLYPHS : GLYPHS;
+    }
     public static final int TILE_WIDTH = 256;
     public static final int TILE_HEIGHT = 384;
     public static final int ATLAS_WIDTH = 2048;

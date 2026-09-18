@@ -22,7 +22,6 @@ class AssetContractTest {
     private final Path data = Path.of(System.getProperty("mchjong.data"));
     private final Path languages = Path.of(System.getProperty("mchjong.languages"));
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
-    private final Path flowers = Path.of(System.getProperty("mchjong.flowerArtwork"));
 
     @Test void audioEventsHaveTranslatedSubtitlesAndSeparateCustomVoices() throws Exception {
         JsonObject sounds = JsonParser.parseString(Files.readString(languages.getParent().resolve("sounds.json"))).getAsJsonObject();
@@ -73,43 +72,48 @@ class AssetContractTest {
     }
 
     @Test void atlasContainsEveryDistinctFaceAtItsDeclaredCoordinates() throws Exception {
-        BufferedImage atlas = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile());
-        assertEquals(2048, atlas.getWidth()); assertEquals(4096, atlas.getHeight());
-        Set<String> hashes = new HashSet<>();
-        try (var reference = new TileArtwork(artwork, flowers)) {
+        Set<String> designs = new HashSet<>();
+        for (String preset : TileArtwork.PRESETS) {
+            String prefix = preset.equals("kanto") ? "kanto/" : "";
+            BufferedImage atlas = ImageIO.read(resources.resolve("assets/mchjong/textures/" + prefix + "tiles.png").toFile());
+            assertEquals(2048, atlas.getWidth()); assertEquals(4096, atlas.getHeight());
+            Set<String> hashes = new HashSet<>();
+            var reference = new TileArtwork(artwork, preset);
             for (int i = 0; i < 45; i++) {
                 assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/" + i + ".png")), "Unused individual face shipped");
                 BufferedImage tile = reference.face(i);
                 assertEquals(256, tile.getWidth()); assertEquals(384, tile.getHeight());
-                var pixels = java.nio.ByteBuffer.allocate(TileArtwork.WIDTH * TileArtwork.HEIGHT * Integer.BYTES);
-                for (int y = 0; y < TileArtwork.HEIGHT; y++) for (int x = 0; x < TileArtwork.WIDTH; x++) {
-                    int pixel = atlas.getRGB(i % 8 * TileArtwork.WIDTH + x, i / 8 * TileArtwork.HEIGHT + y);
-                    assertEquals(255, pixel >>> 24, "Transparent face " + i);
-                    assertEquals(tile.getRGB(x, y), pixel, "Source artwork differs from atlas cell " + i);
-                    pixels.putInt(pixel);
-                }
-                hashes.add(HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(pixels.array())));
+                int[] actual = atlas.getRGB(i % 8 * 256, i / 8 * 384, 256, 384, null, 0, 256);
+                assertArrayEquals(tile.getRGB(0, 0, 256, 384, null, 0, 256), actual, preset + ": " + i);
+                assertTrue(Arrays.stream(actual).allMatch(pixel -> pixel >>> 24 == 255), "Opaque face " + i);
+                var pixels = java.nio.ByteBuffer.allocate(actual.length * Integer.BYTES);
+                pixels.asIntBuffer().put(actual);
+                String hash = HexFormat.of().formatHex(MessageDigest.getInstance("SHA-256").digest(pixels.array()));
+                hashes.add(hash);
+                if (i == 0) designs.add(hash);
+                if (i == 31) assertTrue(Arrays.stream(tile.getRGB(8, 8, 240, 368, null, 0, 240))
+                    .allMatch(pixel -> pixel == 0xffffffff), "White dragon remains blank");
             }
+            assertEquals(45, hashes.size(), "Distinct numbered, honor, red and flower faces");
+            assertTrue(Arrays.stream(atlas.getRGB(2016, 4064, 32, 32, null, 0, 32))
+                .allMatch(pixel -> pixel == 0xffffffff), "Neutral material swatch");
         }
-        assertEquals(45, hashes.size(), "A numbered, honor, red or flower face was duplicated");
-        assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/37.png")));
+        assertEquals(2, designs.size(), "The presets must not render the same ordinary faces");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
-        for (int y = 4064; y < 4096; y++) for (int x = 2016; x < 2048; x++)
-            assertEquals(0xffffffff, atlas.getRGB(x, y), "Neutral material swatch");
     }
 
     @Test void sourceOrderIncludesTheThreeRedFivesAndBlankWhiteDragon() throws Exception {
         for (int suit = 0; suit < 3; suit++) for (int number = 1; number <= 9; number++)
-            assertEquals(List.of("Man", "Pin", "Sou").get(suit) + number, TileArtwork.sourceName(suit * 9 + number - 1));
-        assertEquals(List.of("Ton", "Nan", "Shaa", "Pei", "Haku", "Hatsu", "Chun", "Man5-Dora", "Pin5-Dora", "Sou5-Dora"),
-            java.util.stream.IntStream.range(27, 37).mapToObj(TileArtwork::sourceName).toList());
-        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(-1));
-        assertEquals(List.of("Spring", "Summer", "Autumn", "Winter", "Plum", "Orchid", "Bamboo", "Chrysanthemum"),
-            java.util.stream.IntStream.range(37, 45).mapToObj(TileArtwork::sourceName).toList());
-        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceName(45));
-        BufferedImage white = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
-            .getSubimage(31 % 8 * TileArtwork.WIDTH, 31 / 8 * TileArtwork.HEIGHT, TileArtwork.WIDTH, TileArtwork.HEIGHT);
-        for (int y = 8; y < 376; y++) for (int x = 8; x < 248; x++) assertEquals(0xffffffff, white.getRGB(x, y));
+            assertEquals(suit * 10 + number, TileArtwork.sourceCell(suit * 9 + number - 1, false));
+        assertEquals(List.of(30, 31, 32, 33, 34, 35, 36, 0, 10, 20),
+            java.util.stream.IntStream.range(27, 37).map(face -> TileArtwork.sourceCell(face, false)).boxed().toList());
+        assertEquals(List.of(37, 38, 39, 40, 41, 42, 44, 43),
+            java.util.stream.IntStream.range(37, 45).map(face -> TileArtwork.sourceCell(face, false)).boxed().toList());
+        assertEquals(List.of(37, 38, 39, 40, 41, 42, 43, 44),
+            java.util.stream.IntStream.range(37, 45).map(face -> TileArtwork.sourceCell(face, true)).boxed().toList());
+        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceCell(-1, false));
+        assertThrows(IllegalArgumentException.class, () -> TileArtwork.sourceCell(45, false));
+        assertThrows(IllegalArgumentException.class, () -> new TileArtwork(artwork, "unknown"));
     }
 
     @Test void defaultBackIsSolidAndNoBuiltinPackShips() throws Exception {
@@ -129,14 +133,8 @@ class AssetContractTest {
                 .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())
                 .collect(java.util.stream.Collectors.toSet()), "Only textures referenced at runtime should ship");
         }
-        assertTrue(Files.readString(resources.resolve("META-INF/licenses/riichi-mahjong-tiles-LICENSE.txt")).contains("public domain"));
-    }
-
-    @Test void changedSourceArtworkIsRejected(@TempDir Path directory) throws Exception {
-        Path corrupt = directory.resolve("corrupt.zip");
-        Files.writeString(corrupt, "Not the pinned artwork");
-        assertTrue(assertThrows(java.io.IOException.class, () -> new TileArtwork(corrupt, flowers)).getMessage().contains("SHA-256 mismatch"));
-        assertTrue(assertThrows(java.io.IOException.class, () -> new TileArtwork(artwork, corrupt)).getMessage().contains("SHA-256 mismatch"));
+        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
+        assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("FluffyStuff"));
     }
 
     @Test void modelsUseFewCuboidsAndOnlyAvailableTextures() throws Exception {
@@ -157,7 +155,7 @@ class AssetContractTest {
     }
 
     @Test void generationIsByteForByteReproducible(@TempDir Path second) throws Exception {
-        GenerateAssets.main(new String[]{second.toString(), artwork.toString(), flowers.toString()});
+        GenerateAssets.main(new String[]{second.toString(), artwork.toString()});
         assertFalse(Files.exists(second.resolve("data")), "Artwork must not generate server data");
         GenerateData.main(new String[]{second.resolve("server").toString()});
         try (var files = Files.walk(data)) {

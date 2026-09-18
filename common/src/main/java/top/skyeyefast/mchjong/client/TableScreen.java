@@ -20,6 +20,7 @@ import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.network.TableActionPayload;
@@ -101,6 +102,10 @@ public final class TableScreen extends Screen {
     TableView view() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientView() : null;
+    }
+
+    private TileFacePreset facePreset() {
+        return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().preset();
     }
 
     private TableAnimation animation() {
@@ -274,7 +279,7 @@ public final class TableScreen extends Screen {
                     addRenderableWidget(button);
                 }
                 int panelTop = view.exitVote() == null ? 58 : 82;
-                results = addRenderableWidget(new TableResults(font, view, 10, panelTop, width - 20, height - panelTop - 54,
+                results = addRenderableWidget(new TableResults(font, view, facePreset(), 10, panelTop, width - 20, height - panelTop - 54,
                     selectedWinner, resultPage, resultPageStarted));
             }
         }
@@ -587,7 +592,7 @@ public final class TableScreen extends Screen {
             super.render(graphics, mouseX, mouseY, partialTick);
             return;
         }
-        if (!TableResults.available(view)) information.render(font, graphics, view, width);
+        if (!TableResults.available(view)) information.render(font, graphics, view, width, facePreset());
         hoveredTile = pick(mouseX, mouseY);
         renderHandling(graphics, view, mouseX, mouseY);
         informationTooltip = information.tooltip(mouseX, mouseY);
@@ -617,7 +622,7 @@ public final class TableScreen extends Screen {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        });
+        }, facePreset());
         super.render(graphics, mouseX, mouseY, partialTick);
         boolean footerClock = false;
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
@@ -900,9 +905,9 @@ public final class TableScreen extends Screen {
             if (icons > 0 && view != null) {
                 ActionPreview preview = ActionPreview.of(view, action);
                 int x = getX() + width - icons + 3;
-                if (preview.meld() != null) TileGui.meld(graphics, preview.meld(), view.viewerSeat(), x, getY() + 4, 9);
+                if (preview.meld() != null) TileGui.meld(graphics, preview.meld(), view.viewerSeat(), x, getY() + 4, 9, facePreset());
                 else for (int i = 0; i < preview.tiles().size(); i++)
-                    TileGui.tile(graphics, preview.tiles().get(i), x + i * 13, getY() + 4, 9, false, false, false);
+                    TileGui.tile(graphics, preview.tiles().get(i), x + i * 13, getY() + 4, 9, false, false, false, facePreset());
             }
         }
     }

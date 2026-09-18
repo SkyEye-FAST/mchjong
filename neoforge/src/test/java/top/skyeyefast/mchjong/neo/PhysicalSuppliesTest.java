@@ -136,8 +136,9 @@ class PhysicalSuppliesTest {
                 var stack = MahjongSupplies.tile(data, DyeColor.BLUE, 1);
                 assertTrue(data.flower());
                 assertEquals((flower + 1) + "q", data.notation());
-                assertEquals(data.notation(), data.label(true).getString());
-                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum").get(flower), data.flowerKey());
+                assertEquals(data.notation(), data.label(true, TileFacePreset.KANSAI).getString());
+                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum").get(flower), data.flowerKey(TileFacePreset.KANSAI));
+                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "fortune", "prosperity", "longevity", "nobility").get(flower), data.flowerKey(TileFacePreset.KANTO));
                 assertEquals(data, TileData.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,
                     TileData.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, data).getOrThrow()).getOrThrow());
                 contents.set(37 + flower, stack);
@@ -187,9 +188,13 @@ class PhysicalSuppliesTest {
                 && MahjongSupplies.tile(s).flower()).mapToInt(ItemStack::getCount).sum());
             assertEquals(12, MahjongSupplies.contents(engraved).stream().filter(s -> s.is(MahjongContent.POINT_STICK)).mapToInt(ItemStack::getCount).sum());
             assertTrue(MahjongSupplies.engrave(engraved, TileFacePreset.KANSAI).isEmpty(), "An unchanged preset is not a paid operation");
-            assertTrue(MahjongSupplies.engrave(source, TileFacePreset.KANTO).isEmpty(), "Kanto artwork is not available");
-            var otherPreset = MahjongSupplies.contents(engraved);
-            for (var stack : otherPreset) if (stack.is(MahjongContent.TILE_ITEM)) stack.set(MahjongComponents.FACE_PRESET, TileFacePreset.KANTO);
+            var kanto = MahjongSupplies.engrave(engraved, TileFacePreset.KANTO);
+            assertEquals(TileFacePreset.KANTO, MahjongSupplies.deck(kanto).preset());
+            assertTrue(ItemStack.matches(kanto, MahjongSupplies.engrave(source, TileFacePreset.KANTO)));
+            var otherPreset = MahjongSupplies.contents(kanto);
+            assertTrue(ItemStack.matches(engraved, MahjongSupplies.engrave(box(otherPreset), TileFacePreset.KANSAI)));
+            otherPreset.getFirst().set(MahjongComponents.FACE_PRESET, TileFacePreset.KANSAI);
+            assertNull(MahjongSupplies.deck(box(otherPreset)), "Mixed face presets do not form a uniform set");
             assertTrue(ItemStack.matches(engraved, MahjongSupplies.engrave(box(otherPreset), TileFacePreset.KANSAI)));
             for (DyeColor color : DyeColor.values()) {
                 ItemStack dyed = craft(server, "dye", 2, 1, List.of(engraved, new ItemStack(vanilla(color.getName() + "_dye"))));
@@ -246,7 +251,7 @@ class PhysicalSuppliesTest {
         assertEquals(9, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
-        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back"), publicData.getAllKeys());
+        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.getAllKeys());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
         assertFalse(saved.contains("game"));

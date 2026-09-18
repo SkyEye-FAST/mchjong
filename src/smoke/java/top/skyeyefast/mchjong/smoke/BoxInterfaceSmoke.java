@@ -15,6 +15,7 @@ final class BoxInterfaceSmoke {
     private int sample = -1, settled, scale, windowWidth, windowHeight;
     private String language;
     private CompletableFuture<Void> reload;
+    private boolean printing;
 
     boolean tick(Minecraft client, Path output) {
         if (sample == -1) {
@@ -37,6 +38,17 @@ final class BoxInterfaceSmoke {
         require(client.screen.width == 320 && client.screen.height == 240, "Small-box fixture is not a 320x240 logical viewport");
         UiControlsSmoke.verify(client);
         var menu = (MahjongBoxMenu) client.player.containerMenu;
+        var preset = top.skyeyefast.mchjong.item.TileFacePreset.values()[sample % 2];
+        if (top.skyeyefast.mchjong.item.MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
+            if (!printing) {
+                press(client, preset.translationKey());
+                require(menu.canEngrave(preset), "Preset fixture cannot be printed");
+                press(client, "box.mchjong.print");
+                printing = true;
+            }
+            return false;
+        }
+        if (printing) { printing = false; settled = 0; return false; }
         int boxSlots = top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS;
         require(menu.ownerSlot() == 0 && menu.slots.size() == boxSlots + 36, "Box menu lost its synchronized layout or carrier index");
         require(!menu.slots.get(boxSlots + 27).mayPickup(client.player), "Client allows moving the open carrier");
@@ -60,13 +72,14 @@ final class BoxInterfaceSmoke {
         var settings = top.skyeyefast.mchjong.client.TableSettings.get();
         var previous = settings.tileLabels;
         try {
-            for (int face : new int[]{0, 4, 27, 34, 41}) {
+            for (var preset : top.skyeyefast.mchjong.item.TileFacePreset.values()) for (int face : new int[]{0, 4, 27, 34, 38, 39, 40, 41}) {
                 var data = new top.skyeyefast.mchjong.item.TileData(face, top.skyeyefast.mchjong.item.TileMaterial.BONE, face == 4);
                 var stack = top.skyeyefast.mchjong.item.MahjongSupplies.tile(data, net.minecraft.world.item.DyeColor.BLUE, 1);
+                stack.set(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET, preset);
                 for (var style : top.skyeyefast.mchjong.client.TableSettings.TileLabels.values()) {
                     settings.tileLabels = style;
                     var lines = net.minecraft.client.gui.screens.Screen.getTooltipFromItem(client, stack).stream().map(Component::getString).toList();
-                    require(lines.contains(data.label(style == top.skyeyefast.mchjong.client.TableSettings.TileLabels.MPSZ).getString()), "Client tooltip ignores the tile-label preference");
+                    require(lines.contains(data.label(style == top.skyeyefast.mchjong.client.TableSettings.TileLabels.MPSZ, preset).getString()), "Client tooltip ignores the tile-label preference or preset");
                     require(lines.getFirst().equals(Component.translatable("item.mchjong.mahjong_tile").getString()), "Flowers use a different item-name layout");
                 }
             }
@@ -77,6 +90,17 @@ final class BoxInterfaceSmoke {
         client.getLanguageManager().setSelected(language);
         reload = client.reloadResourcePacks();
         settled = 0;
+        printing = false;
+    }
+
+    private static void press(Minecraft client, String key) {
+        var button = client.screen.children().stream()
+            .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
+            .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
+            .filter(child -> child.getMessage().getString().equals(Component.translatable(key).getString()))
+            .findFirst().orElseThrow();
+        require(button.active, "Inactive preset control: " + key);
+        button.onPress();
     }
 
     private static void require(boolean condition, String message) {

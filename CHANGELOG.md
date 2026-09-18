@@ -9,8 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Tile-name and mpsz tooltip preferences, defaulting to localized names; flower tiles use 1q-8q in spring, summer, autumn, winter, plum, orchid, bamboo and chrysanthemum order.
-- Craftable mahjong dye, reusable creative mahjong dye, separate box compartments and atomic 136/144-tile Kansai face printing, with Kanto reserved for future artwork.
+- Tile-name and mpsz tooltip preferences, defaulting to localized names; flowers use 1q-8q, with four seasons followed by plum/orchid/bamboo/chrysanthemum in Kansai or fortune/prosperity/longevity/nobility in Kanto.
+- Craftable mahjong dye, reusable creative mahjong dye, separate box compartments and atomic 136/144-tile face printing with built-in Kansai and Kanto designs.
 
 ### Changed
 

@@ -13,8 +13,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TileArtworkQualityTest {
     private final Path resources = Path.of(System.getProperty("mchjong.resources"));
 
-    @Test void vectorFacesRetainHighResolutionAndAntialiasedEdges() throws Exception {
-        // A single-color source glyph should still have many edge-coverage shades.
+    @Test void importedFacesRetainAntialiasedEdges() throws Exception {
         BufferedImage tile = ImageIO.read(resources.resolve("assets/mchjong/textures/tiles.png").toFile())
             .getSubimage(0, 0, TileArtwork.WIDTH, TileArtwork.HEIGHT);
         assertEquals(256, tile.getWidth());
@@ -22,11 +21,11 @@ class TileArtworkQualityTest {
         Set<Integer> shades = new HashSet<>();
         for (int y = 16; y < tile.getHeight() - 16; y++)
             for (int x = 16; x < tile.getWidth() - 16; x++) shades.add(tile.getRGB(x, y));
-        assertTrue(shades.size() > 64, "SVG outlines must not regress to hard-edged pixel art");
+        assertTrue(shades.size() > 64, "Engravings retain antialiased edge coverage");
     }
 
     @Test void highResolutionTexturesUseLinearFilteringAndClamping() throws Exception {
-        for (String texture : new String[]{"tiles", "tile_glyphs", "tile/back"}) {
+        for (String texture : new String[]{"tiles", "tile_glyphs", "kanto/tiles", "kanto/tile_glyphs", "tile/back"}) {
             var metadata = JsonParser.parseString(Files.readString(resources.resolve(
                 "assets/mchjong/textures/" + texture + ".png.mcmeta"))).getAsJsonObject().getAsJsonObject("texture");
             assertTrue(metadata.get("blur").getAsBoolean(), "Smooth oblique and UI sampling");

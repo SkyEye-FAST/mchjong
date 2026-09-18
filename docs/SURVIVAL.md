@@ -49,14 +49,15 @@ The two tables share the `mchjong:mahjong_table` block entity type. Stools use
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
-| `mchjong:face_preset` | `kansai`, `kanto` | Tile-face design; only Kansai currently applies |
+| `mchjong:face_preset` | `kansai`, `kanto` | Built-in tile-face design |
 | `mchjong:points` | `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
 | `minecraft:container` | Native item-stack container | Mahjong boxes |
 
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
 are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
-autumn, winter, plum, orchid, bamboo and chrysanthemum, written `1q..8q`.
+autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
+Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
 Only faces `4`, `13`, `22` can have
 `red = true`. Material is one of `wood`, `bone`, `quartz`, `calcite`, `glass`,
@@ -113,12 +114,13 @@ suit; 144 additionally includes one of each of the eight flowers. These sets
 occupy 37 and 45 stacks respectively. One ordinary dye is consumed per successful
 operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
-blanks, unavailable presets and unchanged presets do not consume anything.
+blanks, invalid selections and unchanged presets do not consume anything.
 
-The current face preset is **Kansai**. **Kanto** is reserved in the component
-schema and shown disabled until its artwork is supplied. Reprinting an existing
-complete set changes only its face preset, retaining face identities and red
-fives. Tile-back recoloring remains the separate vanilla-grid dye recipe.
+Choose **Kansai** or **Kanto** in the box. Both designs are built into the mod;
+the selection applies to inventory items, the world table, overhead hands,
+action previews and settlement. Reprinting an existing complete set changes
+only its face preset, retaining face identities and red fives. Tile-back
+recoloring remains the separate vanilla-grid dye recipe.
 
 One to eight unmarked point sticks, each in its own crafting slot, plus one
 marking material produce the same number of marked sticks:

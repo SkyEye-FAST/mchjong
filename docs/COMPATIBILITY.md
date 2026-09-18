@@ -25,7 +25,7 @@ The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete
 100, 1,000, 5,000 and 10,000 point-stick denominations. Tile faces, including
 flowers, share the blank-tile item and are printed through the box menu.
 
-Recipe identity distinguishes wood, material, back color, face, red markings,
+Recipe identity distinguishes wood, material, back color, face preset, face, red markings,
 denomination and complete container components. A custom outer item name is
 cosmetic for lookup; crafting still applies the source recipe's name-preservation
 rules. Examples are built from the recipes in the currently loaded datapack.
@@ -69,14 +69,14 @@ their timestamps against the run log and inspect the new screenshots.
 
 `RecipeBrowserDataSmoke` checks the finite examples and cycling alternatives in
 the integrated server world, including retention of spare tiles and point sticks.
-The viewer smoke queries flower engraving, red-five engraving and table upgrades,
+The viewer smoke queries component-preserving back dyeing and table upgrades,
 checks catalogue order and denominations, and captures one recipe page and one
 server-backed case at 320 x 240. Settings use Simplified Chinese and one English
 layout; held items and deposits use representative screenshots.
 
-For the September 17 handoff, test and runtime smoke execution was explicitly
-skipped. Source/API review and Java compilation do not establish installed-viewer,
-absent-viewer, dedicated-server or visual acceptance.
+Source/API review and Java compilation alone do not establish installed-viewer,
+absent-viewer, dedicated-server or visual acceptance. Use the fresh completion
+markers and screenshots for the specific loader and profile being checked.
 
 `gradlew.bat :runSmokeServer :neoforge:runSmokeServer --console=plain` exercises
 the dedicated-server bootstrap with Minecraft's `--initSettings` mode in

@@ -5,6 +5,7 @@ import java.util.function.IntUnaryOperator;
 import net.minecraft.client.gui.GuiGraphics;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** The recipient's own hand, using the same tile identities, artwork and decisions as the world. */
 final class TableHand {
@@ -45,11 +46,11 @@ final class TableHand {
         return Tile.ABSENT;
     }
 
-    void render(GuiGraphics graphics, int selected, IntUnaryOperator highlight) {
+    void render(GuiGraphics graphics, int selected, IntUnaryOperator highlight, TileFacePreset preset) {
         MahjongUi.panel(graphics, left - 5, top(), span + 10, tileHeight + 12);
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(tile, selected), color = highlight.applyAsInt(tile);
-            TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false);
+            TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
             if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
         }
     }

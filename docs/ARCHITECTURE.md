@@ -13,9 +13,9 @@ allows it.
   Both loaders for that profile compile these sources.
 * root `src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
-* `art`: deterministic rasterization of pinned riichi vectors and flower engravings,
-  client model descriptors, plus a separate server-data generator. SVG rendering
-  and source-font outline extraction run at build time.
+* `art`: deterministic packing of native face-preset images, client model
+  descriptors, plus a separate server-data generator. Source-image resampling
+  runs at build time; each supplied atlas includes its eight flower designs.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
@@ -48,7 +48,8 @@ Face printing uses native menu-button packets. The server validates the complete
 136/144-tile input and selected preset, then commits all tile slots and dye
 consumption together. Tile, point-stick and dye compartments have distinct
 native insertion ranges. `TileFacePreset` is a separate immutable component;
-only presets with available artwork may be applied or supply an active game.
+both built-in presets may be applied or supply an active game. The deck's preset
+is synchronized as public appearance, independently of private container contents.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
 shows the selected complete set and cloth readiness without changing equipment.

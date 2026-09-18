@@ -15,6 +15,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** A single-screen settlement, with a winner selector for multiple ron and no scroll viewport. */
 public final class TableResults extends AbstractWidget {
@@ -22,6 +23,7 @@ public final class TableResults extends AbstractWidget {
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
     private final TableView view;
+    private final TileFacePreset preset;
     private final Page page;
     private final long started;
     private int winner;
@@ -30,10 +32,11 @@ public final class TableResults extends AbstractWidget {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
 
-    public TableResults(Font font, TableView view, int x, int y, int width, int height, int winner, Page page, long started) {
+    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height, int winner, Page page, long started) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
+        this.preset = preset;
         this.page = page;
         this.started = started;
         this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
@@ -113,12 +116,12 @@ public final class TableResults extends AbstractWidget {
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
                 if (i == hand.size() - 1) x += 4;
-                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1);
+                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, preset);
                 x += tileWidth + 1;
             }
             for (var meld : player.melds()) {
                 x += 5;
-                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth);
+                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset);
                 x += TileGui.meldWidth(meld, win.seat(), tileWidth);
             }
             y += tileWidth * 2 + 5;
@@ -164,7 +167,7 @@ public final class TableResults extends AbstractWidget {
         text(graphics, label, x, y + (compact ? 4 : 0), labelWidth, MUTED);
         for (int i = 0; i < tiles.size(); i++) if (graphics != null)
             TileGui.tile(graphics, tiles.get(i), x + (compact ? labelWidth : 0) + i * (compact ? 12 : 14),
-                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false);
+                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false, preset);
         return compact ? 17 : 31;
     }
 
@@ -181,7 +184,7 @@ public final class TableResults extends AbstractWidget {
             if (player.exposed()) {
                 int tileWidth = Math.max(4, Math.min(14, Math.min((cardWidth - 8) / Math.max(1, player.hand().size()) - 1, (cardHeight - 27) * 2 / 3)));
                 for (int i = 0; i < player.hand().size(); i++)
-                    TileGui.tile(graphics, player.hand().get(i), cx + i * (tileWidth + 1), cy + 24, tileWidth, false, false, false);
+                    TileGui.tile(graphics, player.hand().get(i), cx + i * (tileWidth + 1), cy + 24, tileWidth, false, false, false, preset);
             }
         }
     }

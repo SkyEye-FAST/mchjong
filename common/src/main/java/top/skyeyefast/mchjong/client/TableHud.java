@@ -7,6 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class TableHud {
@@ -21,7 +22,7 @@ final class TableHud {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, int width) {
+    void render(Font font, GuiGraphics graphics, TableView view, int width, TileFacePreset preset) {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
@@ -92,7 +93,7 @@ final class TableHud {
             for (int i = 0; i < 5; i++) {
                 int index = view.wall().size() - 5 - 2 * i;
                 if (index < 0 || view.wall().get(index) < 0) continue;
-                TileGui.tile(graphics, view.wall().get(index), x, tileY, tileWidth, false, false, false);
+                TileGui.tile(graphics, view.wall().get(index), x, tileY, tileWidth, false, false, false, preset);
                 x += tileWidth + 2;
             }
             if (x > 8) regions.add(new Region(8, tileY, x - 8, compact ? 12 : 16, Component.translatable("ui.mchjong.result_indicators")));
@@ -103,7 +104,7 @@ final class TableHud {
             int x = width - 8 - span;
             MahjongUi.panel(graphics, x, 67, span, 17);
             text(font, graphics, focus, x + 4, 72, span - 22, MahjongUi.ACCENT);
-            TileGui.tile(graphics, view.focus().tile(), width - 23, 68, 9, false, false, false);
+            TileGui.tile(graphics, view.focus().tile(), width - 23, 68, 9, false, false, false, preset);
             regions.add(new Region(x, 67, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append(" · ").append(focus)));
         }
     }

@@ -22,8 +22,10 @@ public record TileData(int face, TileMaterial material, boolean red) {
     public TileData { Objects.requireNonNull(material); }
     public boolean blank() { return face == -1; }
     public boolean flower() { return face >= FIRST_FLOWER && face < FIRST_FLOWER + FLOWER_COUNT; }
-    public String flowerKey() {
+    public String flowerKey(TileFacePreset preset) {
         if (!flower()) throw new IllegalStateException("Not a flower tile");
+        if (preset == TileFacePreset.KANTO && face >= FIRST_FLOWER + 4)
+            return "flower.mchjong." + java.util.List.of("fortune", "prosperity", "longevity", "nobility").get(face - FIRST_FLOWER - 4);
         return "flower.mchjong." + FLOWERS.get(face - FIRST_FLOWER);
     }
     public String notation() {
@@ -31,10 +33,10 @@ public record TileData(int face, TileMaterial material, boolean red) {
         return flower() ? (face - FIRST_FLOWER + 1) + "q"
             : red ? "0" + "mps".charAt(face / 9) : top.skyeyefast.mchjong.engine.Tile.notation(face);
     }
-    public net.minecraft.network.chat.Component label(boolean notation) {
+    public net.minecraft.network.chat.Component label(boolean notation, TileFacePreset preset) {
         if (blank()) return net.minecraft.network.chat.Component.translatable("item.mchjong.blank");
         if (notation) return net.minecraft.network.chat.Component.literal(notation());
-        var name = net.minecraft.network.chat.Component.translatable(flower() ? flowerKey()
+        var name = net.minecraft.network.chat.Component.translatable(flower() ? flowerKey(preset)
             : "tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(face));
         return red ? net.minecraft.network.chat.Component.translatable("tile.mchjong.red", name) : name;
     }
