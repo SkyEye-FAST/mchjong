@@ -225,8 +225,6 @@
   "message.mchjong.invite_declined": "%sが招待を辞退しました。",
   "message.mchjong.invite_dismissed": "招待を辞退しました。",
   "message.mchjong.invite_joined": "%sが招待を承諾して着席しました。",
-  "ui.mchjong.tsumogiri": "ツモ切り",
-  "ui.mchjong.tedashi": "手出し",
   "ui.mchjong.new_match": "次の対局に準備",
   "ui.mchjong.result_page.0": "局の詳細",
   "ui.mchjong.result_page.1": "点数の移動",

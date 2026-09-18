@@ -225,8 +225,6 @@
   "message.mchjong.invite_declined": "%s拒絕了邀請。",
   "message.mchjong.invite_dismissed": "已拒絕邀請。",
   "message.mchjong.invite_joined": "%s已接受邀請並入座。",
-  "ui.mchjong.tsumogiri": "摸切",
-  "ui.mchjong.tedashi": "手切",
   "ui.mchjong.new_match": "準備新對局",
   "ui.mchjong.result_page.0": "本局詳情",
   "ui.mchjong.result_page.1": "點數變化",

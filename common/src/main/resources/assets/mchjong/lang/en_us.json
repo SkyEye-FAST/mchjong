@@ -225,8 +225,6 @@
   "message.mchjong.invite_declined": "%s declined the invitation.",
   "message.mchjong.invite_dismissed": "Invitation declined.",
   "message.mchjong.invite_joined": "%s accepted the invitation and joined the table.",
-  "ui.mchjong.tsumogiri": "Drawn-tile discard",
-  "ui.mchjong.tedashi": "Hand discard",
   "ui.mchjong.new_match": "Ready for new match",
   "ui.mchjong.result_page.0": "Hand details",
   "ui.mchjong.result_page.1": "Point changes",

@@ -70,6 +70,8 @@ class TableAnimationTest {
             var start = animation.sample(100).stream().filter(frame -> frame.piece().area() == TableScene.Area.RIVER).findFirst().orElseThrow();
             assertEquals(source.piece().position(), start.piece().position());
             assertEquals(Tile.HIDDEN, start.piece().tile());
+            assertTrue(animation.cues(100).isEmpty());
+            assertNotEquals(animation.settled(), animation.sample(350));
             assertEquals(tsumogiri, animation.sample(450).equals(animation.settled()));
             assertTrue(animation.sample(300).stream().filter(frame -> frame.piece().area() == TableScene.Area.HAND
                 && frame.piece().seat() == 1).allMatch(frame -> frame.piece().tile() == Tile.HIDDEN));

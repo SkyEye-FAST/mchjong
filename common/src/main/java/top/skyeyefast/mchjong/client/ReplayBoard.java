@@ -36,7 +36,7 @@ public final class ReplayBoard extends AbstractWidget {
         var event = frame.event();
         String key = switch (event.kind()) {
             case DRAW -> "replay.mchjong.draw";
-            case DISCARD -> event.riichi() ? "action.mchjong.riichi" : event.tsumogiri() ? "ui.mchjong.tsumogiri" : "ui.mchjong.tedashi";
+            case DISCARD -> event.riichi() ? "action.mchjong.riichi" : "action.mchjong.discard";
             case NUKI -> "action.mchjong.nuki";
             case MELD -> "action.mchjong." + event.meld().type().name().toLowerCase(Locale.ROOT);
             case RIICHI -> "replay.mchjong.deposit";

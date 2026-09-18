@@ -194,7 +194,7 @@ public final class TableAnimation {
             }
             if (source == null) source = target;
             boolean moving = source.piece().position().distanceToSqr(target.piece().position()) > 0.0025;
-            long duration = source.equals(target) ? 0 : discard != null ? discard.tsumogiri() ? 220 : 380
+            long duration = source.equals(target) ? 0 : discard != null ? discard.tsumogiri() ? 300 : 480
                 : target.piece().area() == TableScene.Area.MELD ? 440 : 300;
             double arc = discard != null ? discard.tsumogiri() ? 0.045 : 0.16 : 0.10;
             Motion motion = new Motion(source, target, now, duration, moving ? arc : 0, -1);
@@ -215,9 +215,6 @@ public final class TableAnimation {
             if (player.riichi() && !old.riichi()) riichiStarted[seat] = now;
             if (player.river().size() > old.river().size() && player.river().getLast().riichi())
                 announcements.add(new Cue(seat, "action.mchjong.riichi", now));
-            else if (player.river().size() > old.river().size())
-                announcements.add(new Cue(seat, player.river().getLast().tsumogiri()
-                    ? "ui.mchjong.tsumogiri" : "ui.mchjong.tedashi", now));
             for (int i = 0; i < player.melds().size(); i++) {
                 var meld = player.melds().get(i);
                 if (i >= old.melds().size() || meld.type() != old.melds().get(i).type())
