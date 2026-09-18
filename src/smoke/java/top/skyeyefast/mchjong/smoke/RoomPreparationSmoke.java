@@ -22,6 +22,8 @@ final class RoomPreparationSmoke {
     private boolean capturedPositioning;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
+        var view = table.clientView();
+        if (view != null && view.phase() != Game.Phase.LOBBY) return true;
         if (++ticks > 400) throw new IllegalStateException("Seat preparation timed out: " + table.clientRoom());
         if (serverWork != null) {
             if (!serverWork.isDone()) return false;
@@ -29,10 +31,8 @@ final class RoomPreparationSmoke {
             if (value >= 0) windSlot = value;
             serverWork = null;
         }
-        var view = table.clientView();
         var room = table.clientRoom();
         if (view == null || room == null) return false;
-        if (view.phase() != Game.Phase.LOBBY) return true;
         if (!(client.screen instanceof TableScreen) || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             click(client, view.actions().stream().anyMatch(action -> action.type() == Action.Type.FILL_BOTS)

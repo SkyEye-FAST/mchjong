@@ -185,10 +185,14 @@ Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
 and does not change game rules or replay records.
 
-During an automatic-table match, **Auto play** at the lower left expands four
-quick controls: auto sort, auto win, no calls and auto discard. **Collapse** hides
-them again without changing their values. Each change waits for the server's
-acknowledgement; sorting starts enabled and the other options start disabled.
+During an automatic-table match, the lower-left quick controls offer auto sort,
+auto win, no calls and auto discard, plus auto kita in three-player games.
+The side arrow switches between localized initials and full labels; each option
+remains clickable and keyboard-accessible in either presentation. Filled or
+outlined state marks and hover labels identify the current setting. Each change
+waits for the server's acknowledgement; sorting starts enabled and the other
+options start disabled. Auto kita uses legal north extractions before automatic
+discards, while a possible win always takes priority.
 
 Results show each player's point movement, winning hands and melds, yaku, and
 revealed dora/ura indicators without a scroll viewport. Select a winner's tab

@@ -1,38 +1,49 @@
 package top.skyeyefast.mchjong.smoke;
 
 import java.nio.file.Path;
+import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.AutoPlay;
+import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Exercise every preference through its real button, C2S packet and authoritative S2C snapshot. */
 final class AutomationControlsSmoke {
     private static final String[] KEYS = {"ui.mchjong.auto_sort", "ui.mchjong.auto_win",
-        "ui.mchjong.no_calls", "ui.mchjong.auto_discard"};
+        "ui.mchjong.no_calls", "ui.mchjong.auto_discard", "ui.mchjong.auto_kita"};
     private int stage, ticks, totalTicks, toggle;
     private long decision;
     private AutoPlay initial, expected;
     private final SettingsLanguageSmoke languages = new SettingsLanguageSmoke();
+    private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
+    private CompletableFuture<Void> reseated;
+    private boolean sanma;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
-        require(++totalTicks < 1400, "Automatic controls timed out at stage " + stage + ", toggle " + toggle);
+        require(++totalTicks < 2400, "Automatic controls timed out at stage " + stage + ", toggle " + toggle);
         ticks++;
         var view = table.clientView();
-        require(view != null && view.autoPlay() != null, "Seated automatic-table preferences are missing");
+        require(view != null, "Automatic controls lost their table view");
+        if (stage < 8) require(view.autoPlay() != null, "Seated automatic-table preferences are missing");
         if (stage == 0) {
             initial = view.autoPlay();
             var parent = new TableScreen(table.getBlockPos());
             client.setScreen(parent);
             parent.resetView();
-            click(client, Component.translatable("ui.mchjong.automation_show").getString());
             next(1);
         } else if (stage == 1 && ticks > 12) {
             checkBounds(client);
-            Screenshot.grab(output.toFile(), "52-automatic-controls.png", client.getMainRenderTarget(), ignored -> {});
+            checkOptions(client, sanma ? 5 : 4);
+            capture(client, output, "52", "collapsed");
+            click(client, Component.translatable("ui.mchjong.automation_show").getString());
+            next(6);
+        } else if (stage == 6 && ticks > 12) {
+            checkBounds(client);
+            capture(client, output, "52", "expanded");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
@@ -42,16 +53,21 @@ final class AutomationControlsSmoke {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reflow to 320x240");
             require(((TableScreen) client.screen).overhead(), "Small controls did not retain the overhead hand");
-            Screenshot.grab(output.toFile(), "53-automatic-controls-small.png", client.getMainRenderTarget(), ignored -> {});
+            capture(client, output, "53", "expanded-small");
             next(3);
         } else if (stage == 3 && ticks > 2) {
             var option = AutoPlay.Option.values()[toggle / 2];
             boolean enabled = view.autoPlay().enabled(option);
-            String label = Component.translatable("settings.mchjong.toggle", Component.translatable(KEYS[toggle / 2]),
-                Component.translatable(enabled ? "options.on" : "options.off")).getString();
             expected = view.autoPlay().with(option, !enabled);
             decision = view.decision();
-            click(client, label);
+            var button = optionButton(client, option);
+            require((button.getWidth() == 28) == (toggle % 2 == 1), "Wrong automatic control presentation");
+            if (toggle % 2 == 0) click(client, button.getMessage().getString());
+            else {
+                if (toggle == 3) capture(client, output, "53", "collapsed-small");
+                client.screen.setFocused(button);
+                require(client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0), "Compact option rejected keyboard activation");
+            }
             next(4);
         } else if (stage == 4 && ticks > 2) {
             if (!expected.equals(view.autoPlay())) {
@@ -60,26 +76,73 @@ final class AutomationControlsSmoke {
                 return false;
             }
             checkBounds(client);
-            if (++toggle == 8) {
+            require(client.screen.getFocused() == optionButton(client, AutoPlay.Option.values()[toggle / 2]),
+                "Automatic option lost keyboard focus on server acknowledgement");
+            if (++toggle == (sanma ? 10 : 8)) {
                 require(initial.equals(view.autoPlay()), "Preference round-trip changed another option");
-                next(5);
+                click(client, Component.translatable(sanma ? "ui.mchjong.automation_show" : "ui.mchjong.exit").getString());
+                next(sanma ? 5 : 8);
                 return false;
             }
+            click(client, Component.translatable(toggle % 2 == 0 ? "ui.mchjong.automation_show" : "ui.mchjong.automation_hide").getString());
             next(3);
         } else if (stage == 5 && languages.tick(client, output)) {
             click(client, Component.translatable("ui.mchjong.automation_hide").getString());
-            require(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .noneMatch(widget -> widget.getMessage().getString().contains(Component.translatable(KEYS[0]).getString())),
-                "Collapsed controls still expose the option buttons");
+            next(7);
+        } else if (stage == 7 && ticks > 3) {
+            checkOptions(client, 5);
+            checkBounds(client);
             client.screen.onClose();
             return true;
+        } else if (stage == 8 && view.phase() == Game.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+            client.setScreen(new TableScreen(table.getBlockPos()));
+            checkOptions(client, 0);
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).sit(player, 0);
+            });
+            next(9);
+        } else if (stage == 9 && reseated.isDone() && view.viewerSeat() == 0 && ticks > 5) {
+            reseated.join();
+            checkOptions(client, 0);
+            click(client, Component.translatable("ui.mchjong.players.3").getString());
+            next(10);
+        } else if (stage == 10 && view.rules().sanma() && preparation.tick(client, table, output, "53-sanma-controls")) {
+            sanma = true;
+            toggle = 0;
+            client.getWindow().setWindowed(1280, 800);
+            client.options.guiScale().set(2);
+            client.resizeDisplay();
+            next(0);
         }
         return false;
     }
 
     private void next(int value) { stage = value; ticks = 0; }
 
-    private static void click(Minecraft client, String label) {
+    private void capture(Minecraft client, Path output, String prefix, String mode) {
+        Screenshot.grab(output.toFile(), prefix + "-automatic-controls-" + (sanma ? "3p-" : "4p-") + mode + ".png",
+            client.getMainRenderTarget(), ignored -> {});
+    }
+
+    static AbstractWidget optionButton(Minecraft client, AutoPlay.Option option) {
+        String name = Component.translatable(KEYS[option.ordinal()]).getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().startsWith(name)).findFirst().orElseThrow();
+    }
+
+    static void checkOptions(Minecraft client, int count) {
+        for (int i = 0; i < KEYS.length; i++) {
+            String name = Component.translatable(KEYS[i]).getString();
+            boolean present = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .anyMatch(widget -> widget.getMessage().getString().startsWith(name));
+            require(present == (i < count), "Incorrect automatic option visibility: " + name);
+        }
+    }
+
+    static void click(Minecraft client, String label) {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance)
             .map(AbstractWidget.class::cast).filter(widget -> widget.getMessage().getString().equals(label))
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing automatic control: " + label));

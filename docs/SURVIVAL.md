@@ -252,10 +252,13 @@ survive saves. The referee checks rules, furiten, calls, yaku, han/fu and settle
 
 The automatic table uses the same installed physical set and referee but
 performs shuffle, wall construction, packet dealing and draws automatically.
-Its collapsible in-match controls store each player's sorting, win, call and
-drawn-tile discard preferences with their seat. Sorting starts enabled. Automatic wins use
+Its in-match controls store each player's sorting, win, call, drawn-tile discard
+and three-player north-extraction preferences with their seat. Compact and
+expanded buttons both toggle their settings directly. Sorting starts enabled. Automatic wins use
 the referee's legal tsumo and ron actions, including declaration-robbery responses.
-Wins take priority over skipped calls or automatic discards. Preferences remain
+Wins take priority over north extraction, skipped calls or automatic discards.
+Auto kita uses the referee's legal declarations, including riichi restrictions
+and opponents' robbery responses, before considering an automatic discard. Preferences remain
 with the player across hands and saves and reset when their seat is released.
 For three-player rules, the engine uses the appropriate 108 tiles. The omitted
 28 tiles are optional stock and remain in the box when present. No stored tiles

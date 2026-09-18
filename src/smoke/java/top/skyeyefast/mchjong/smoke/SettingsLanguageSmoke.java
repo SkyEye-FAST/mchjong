@@ -7,8 +7,9 @@ import net.minecraft.client.Screenshot;
 
 /** Render the live table controls at both acceptance sizes with native language reloads. */
 final class SettingsLanguageSmoke {
-    private static final String[] LANGUAGES = {"zh_cn", "en_us"};
+    private static final String[] LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
     private int sample = -1, size, ticks, width, height, scale;
+    private boolean collapsed;
     private String original;
     private CompletableFuture<Void> reload;
 
@@ -27,13 +28,18 @@ final class SettingsLanguageSmoke {
         if (++ticks < 10) return false;
         if (sample == LANGUAGES.length) return true;
         AutomationControlsSmoke.checkBounds(client);
+        AutomationControlsSmoke.checkOptions(client, 5);
         int logicalWidth = size == 0 ? 640 : 320, logicalHeight = size == 0 ? 400 : 240;
         if (client.screen.width != logicalWidth || client.screen.height != logicalHeight)
             throw new IllegalStateException("Table controls language viewport mismatch");
         Screenshot.grab(output.toFile(), "54-table-options-" + LANGUAGES[sample] + "-" + logicalWidth + "x"
-            + logicalHeight + "-automatic.png", client.getMainRenderTarget(), ignored -> {});
+            + logicalHeight + (collapsed ? "-collapsed.png" : "-expanded.png"), client.getMainRenderTarget(), ignored -> {});
         ticks = 0;
-        if (++size == 2 || sample == 1) {
+        AutomationControlsSmoke.click(client, net.minecraft.network.chat.Component.translatable(
+            collapsed ? "ui.mchjong.automation_show" : "ui.mchjong.automation_hide").getString());
+        collapsed = !collapsed;
+        if (collapsed) return false;
+        if (++size == 2) {
             size = 0;
             sample++;
             select(client, sample == LANGUAGES.length ? original : LANGUAGES[sample]);
