@@ -14,7 +14,7 @@ three or four players. It supports both Fabric and NeoForge.
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
 - Single-screen settlement panels with winning hands, yaku, indicators, and point changes
-- Unanimous table-exit voting and host-controlled open-hand games
+- Unanimous table-exit voting, transferable room ownership and world-controlled open-hand games
 - Configurable per-hand reserve and per-decision clocks, with distinct discard animations
 - Player invitations, table sound effects and custom recorded voice packs
 - Two-case table storage, with a tablecloth required for play
@@ -149,9 +149,11 @@ them for the next hand. Drawer contents persist with the table and are returned
 with its equipment when the table is removed.
 
 In the lobby, select **Four-player mahjong** or **Three-player mahjong**, then
-choose the rule preset for that player count. The host can enable **Show
-opponents' hands** before starting. This setting reveals hands to seated
-participants, not spectators, and changing it clears the players' ready votes.
+choose the rule preset for that player count. **Settings** separates world,
+room and personal controls. Administrators control **Show opponents' hands**
+for the entire world; it reveals hands to seated participants, not spectators.
+Hosts can transfer room ownership to another participant. See
+[Rooms and permissions](docs/ROOMS.md) for configuration and commands.
 
 **Exit** ends the table immediately when only one human is registered, even
 with bots present. With multiple humans, all must agree in a 30-second vote.
@@ -209,8 +211,9 @@ Drawn-tile discards and hand discards have distinct animation paths and cues.
 In a waiting table, **Invite player** lists online players. `/mchjong invite <player>`
 does the same. The recipient receives clickable Accept/Decline actions. Invitations
 expire after 60 seconds, are bound to the recipient and table identity, and are
-revalidated when accepted. Approach within six blocks before accepting; invitations
-do not teleport players or load distant chunks. Senders may invite once per five seconds.
+revalidated when accepted. By default, approach within six blocks before accepting.
+Administrators can enable safe invitation teleportation beside loaded tables;
+after travelling, sit down to join. Senders may invite once per five seconds.
 
 The Audio settings include positional table effects, countdown warnings and
 custom resource-pack recordings. See [Audio customization](docs/AUDIO.md)

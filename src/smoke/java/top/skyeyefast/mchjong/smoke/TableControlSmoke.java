@@ -34,6 +34,7 @@ final class TableControlSmoke {
     private int ruleLanguage;
     private String originalLanguage;
     private CompletableFuture<Void> languageReload;
+    private top.skyeyefast.mchjong.world.WorldSettings.Policy originalWorldPolicy;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
@@ -237,11 +238,44 @@ final class TableControlSmoke {
             next(19);
         } else if (stage == 19 && client.screen instanceof TableScreen && ticks > 5) {
             require(view.rules().startingPoints() == 32100, "Cancel changed server rules");
+            click(client, "settings.mchjong.scopes");
+            click(client, "settings.mchjong.scope.world");
+            next(26);
+        } else if (stage == 26 && ticks > 10) {
             String label = Component.translatable("ui.mchjong.open_hands").getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            require(button.active, "Host could not change hand visibility");
-            client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+            require(!button.active, "A room control can change world hand visibility");
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "25k-world-settings.png");
+            client.screen.onClose();
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var server = client.getSingleplayerServer();
+                var player = server.getPlayerList().getPlayer(id);
+                var commands = server.getCommands().getDispatcher();
+                try {
+                    var policy = top.skyeyefast.mchjong.world.WorldSettings.of(server);
+                    var before = policy.policy();
+                    originalWorldPolicy = before;
+                    var low = commands.parse("mchjong world openHands true", player.createCommandSourceStack().withPermission(0));
+                    try { commands.execute(low); throw new IllegalStateException("Non-admin changed world settings"); }
+                    catch (com.mojang.brigadier.exceptions.CommandSyntaxException expected) { /* Permission denied. */ }
+                    require(before.equals(policy.policy()), "Denied command mutated world settings");
+                    commands.execute("mchjong world openHands true", server.createCommandSourceStack());
+                    commands.execute("mchjong world invitationTeleport true", server.createCommandSourceStack());
+                    commands.execute("mchjong world reload", server.createCommandSourceStack());
+                    require(policy.policy().openHands() && policy.policy().invitationTeleport(), "World policy did not persist");
+                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                    var game = serverTable.participantGame(player);
+                    require(game.view(id).openHands(), "Table did not adopt world policy");
+                    require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
+                    require(game.view(id).openHands() && game.roomView().invitationTeleport(), "Room setting replaced world policy");
+                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException failure) {
+                    throw new IllegalStateException(failure);
+                }
+            });
             next(6);
         } else if (stage == 6 && view.openHands()) {
             click(client, "ui.mchjong.practice_short");
@@ -253,6 +287,15 @@ final class TableControlSmoke {
             capture(client, output, "26-open-hands.png");
             settings.showRiver = true;
             if (!remainingHidden) settings.toggle(TableSettings.Information.REMAINING);
+            reseated = client.getSingleplayerServer().submit(() -> {
+                try {
+                    var policy = top.skyeyefast.mchjong.world.WorldSettings.of(client.getSingleplayerServer());
+                    policy.set("openHands", originalWorldPolicy.openHands());
+                    policy.set("invitationTeleport", originalWorldPolicy.invitationTeleport());
+                } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+            });
+            next(27);
+        } else if (stage == 27 && reseated.isDone() && view.openHands() == originalWorldPolicy.openHands()) {
             return true;
         }
         return false;

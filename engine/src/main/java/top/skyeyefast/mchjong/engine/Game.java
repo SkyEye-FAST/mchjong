@@ -58,7 +58,9 @@ public final class Game {
     TimeControl timeControl = TimeControl.DEFAULT;
     int[] moveTicks = new int[4];
     int[] reserveTicks = new int[4];
-    boolean openHands;
+    UUID hostId;
+    transient boolean openHands;
+    transient boolean invitationTeleport;
     ExitVote exitVote;
     long exitVoteSequence;
     int exitCooldown;
@@ -140,11 +142,22 @@ public final class Game {
         }
     }
 
-    public boolean configureOpenHands(UUID actor, long expectedDecision, boolean enabled) {
-        if (phase != Phase.LOBBY || exitVote != null || !isHost(actor) || expectedDecision != decision || openHands == enabled) return false;
-        openHands = enabled;
-        for (PlayerState player : players) player.ready = player.bot;
-        newDecision(Phase.LOBBY);
+    /** Called only by the server's world-policy adapter, never by a room control. */
+    public void configureWorld(boolean openHands, boolean invitationTeleport) {
+        if (this.openHands == openHands && this.invitationTeleport == invitationTeleport) return;
+        this.openHands = openHands;
+        this.invitationTeleport = invitationTeleport;
+        revision++;
+    }
+
+    public RoomView roomView() { return new RoomView(host(), invitationTeleport); }
+
+    public boolean transferHost(UUID actor, UUID successor) {
+        int seat = seatOf(successor);
+        if (!isHost(actor) || actor.equals(successor) || seat < 0 || players[seat].bot || exitVote != null) return false;
+        hostId = successor;
+        decision++;
+        revision++;
         return true;
     }
 
@@ -192,6 +205,7 @@ public final class Game {
         exitVote = null;
         handling = new ManualHandling();
         exitCooldown = 0;
+        hostId = null;
         for (int i = 0; i < players.length; i++) {
             players[i] = new PlayerState();
             players[i].points = rules.startingPoints();
@@ -239,6 +253,7 @@ public final class Game {
         if (phase != Phase.LOBBY || exitVote != null || players[seat].id != null) return false;
         players[seat].id = player;
         players[seat].name = name.length() > 32 ? name.substring(0, 32) : name;
+        if (hostId == null) hostId = player;
         revision++;
         return true;
     }
@@ -249,6 +264,13 @@ public final class Game {
         if (seat >= 0 && phase == Phase.LOBBY && exitVote == null) {
             players[seat] = new PlayerState();
             players[seat].points = rules.startingPoints();
+            if (player.equals(hostId)) {
+                hostId = null;
+                for (PlayerState remaining : players) if (remaining.id != null && !remaining.bot) {
+                    hostId = remaining.id;
+                    break;
+                }
+            }
             for (PlayerState remaining : players) remaining.ready = remaining.bot;
             decision++;
             revision++;
@@ -256,8 +278,7 @@ public final class Game {
     }
 
     int host() {
-        for (int i = 0; i < rules.players(); i++) if (players[i].id != null && !players[i].bot) return i;
-        return -1;
+        return seatOf(hostId);
     }
 
     List<Action> actions(int seat) {
@@ -679,7 +700,7 @@ public final class Game {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
-                    act(players[seat].id, decision, TrainingBot.choose(this, seat, actions));
+                    act(players[seat].id, decision, TrainingBot.choose(view(players[seat].id), players[seat].botDifficulty));
                     return;
                 }
             }

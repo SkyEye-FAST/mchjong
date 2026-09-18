@@ -21,7 +21,7 @@ class ExitVotingTest {
     void singleHumanExitsWithBotsAndReleasesTheEntireTable(RuleSet rules) {
         var game = new Game(UUID.randomUUID(), rules, 71);
         assertTrue(game.join(HOST, "Host", 0));
-        assertTrue(game.configureOpenHands(HOST, game.view(HOST).decision(), true));
+        game.configureWorld(true, false);
         action(game, HOST, Action.Type.PRACTICE);
         assertEquals(Game.Phase.TURN, game.phase());
         assertTrue(game.requestExit(HOST));
@@ -102,28 +102,25 @@ class ExitVotingTest {
         assertEquals(1, game.seatOf(GUEST));
         assertFalse(game.join(UUID.randomUUID(), "Late join", 2));
         assertFalse(game.configureClock(HOST, new TimeControl(30, 10)));
-        assertFalse(game.configureOpenHands(HOST, game.view(HOST).decision(), true));
+        assertFalse(game.transferHost(HOST, GUEST));
         assertTrue(game.answerExit(GUEST, vote.id(), true));
         game.validate();
     }
 
-    @Test void openHandsIsHostControlledAndNeverLeaksToSpectators() {
+    @Test void hostOwnershipIsIndependentOfSeatOrderAndSurvivesReload() {
         var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_3, 106);
-        game.join(HOST, "Host", 0);
-        game.join(GUEST, "Guest", 1);
-        action(game, GUEST, Action.Type.READY);
-        long decision = game.view(HOST).decision();
-        assertFalse(game.configureOpenHands(GUEST, decision, true));
-        assertFalse(game.configureOpenHands(HOST, decision - 1, true));
-        assertTrue(game.configureOpenHands(HOST, decision, true));
-        assertFalse(game.view(GUEST).seats().get(1).ready());
-        action(game, GUEST, Action.Type.READY);
-        action(game, HOST, Action.Type.PRACTICE);
-        assertTrue(game.view(HOST).seats().stream().flatMap(s -> s.hand().stream()).allMatch(t -> t >= 0));
-        assertTrue(game.view(GUEST).seats().stream().flatMap(s -> s.hand().stream()).allMatch(t -> t >= 0));
-        assertTrue(game.view(null).seats().stream().flatMap(s -> s.hand().stream()).allMatch(t -> t == Tile.HIDDEN));
-        assertTrue(game.view(UUID.randomUUID()).actions().isEmpty());
-        assertFalse(game.configureOpenHands(HOST, game.view(HOST).decision(), false));
+        game.join(HOST, "Host", 2);
+        game.join(GUEST, "Guest", 0);
+        assertTrue(game.isHost(HOST));
+        assertFalse(game.transferHost(GUEST, HOST));
+        assertFalse(game.transferHost(HOST, UUID.randomUUID()));
+        assertTrue(game.transferHost(HOST, GUEST));
+        assertFalse(game.configureClock(HOST, TimeControl.DEFAULT));
+        assertTrue(game.configureClock(GUEST, TimeControl.DEFAULT));
+        game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        assertTrue(game.isHost(GUEST));
+        game.leave(GUEST);
+        assertTrue(game.isHost(HOST));
         game.validate();
     }
 }

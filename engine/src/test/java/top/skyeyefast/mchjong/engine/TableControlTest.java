@@ -61,7 +61,7 @@ class TableControlTest {
     private static Game game(int humans, RuleSet rules, boolean open) {
         Game game = new Game(UUID.randomUUID(), rules, 123);
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));
-        if (open) assertTrue(game.configureOpenHands(id(0), game.decision, true));
+        game.configureWorld(open, false);
         for (int seat = 1; seat < humans; seat++)
             assertTrue(game.act(id(seat), game.decision, GameLifecycleTest.index(game.view(id(seat)), Action.Type.READY)));
         assertTrue(game.act(id(0), game.decision, GameLifecycleTest.index(game.view(id(0)), Action.Type.PRACTICE)));
@@ -130,17 +130,21 @@ class TableControlTest {
         game.validate();
     }
 
-    @Test void openHandsIsHostControlledBeforePlayAndNeverRevealsToSpectators() {
+    @Test void worldPolicyDoesNotChangeReadinessOrRoomRulesAndNeverRevealsToSpectators() {
         Game lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
         lobby.players[1].ready = true;
-        assertFalse(lobby.configureOpenHands(id(1), lobby.decision, true));
-        assertFalse(lobby.configureOpenHands(id(0), lobby.decision - 1, true));
-        assertTrue(lobby.configureOpenHands(id(0), lobby.decision, true));
-        assertFalse(lobby.players[1].ready);
+        long token = lobby.decision;
+        lobby.configureWorld(true, true);
+        assertTrue(lobby.players[1].ready);
+        assertEquals(token, lobby.decision);
+        assertTrue(lobby.configureRules(id(0), token, RuleSet.WRC.config()));
+        assertTrue(lobby.openHands);
+        assertTrue(lobby.roomView().invitationTeleport());
         for (boolean open : new boolean[]{false, true}) {
             Game game = game(2, RuleSet.MAHJONG_SOUL_3, open);
-            assertFalse(game.configureOpenHands(id(0), game.decision, !open));
+            game.configureWorld(!open, true);
+            game.configureWorld(open, false);
             for (int seat = 0; seat < game.rules.players(); seat++) {
                 assertTrue(game.view(null).seats().get(seat).hand().stream().allMatch(tile -> tile == Tile.HIDDEN));
                 assertEquals(open || seat == 0, game.view(id(0)).seats().get(seat).hand().stream().allMatch(tile -> tile >= 0));
@@ -156,7 +160,7 @@ class TableControlTest {
         game.requestExit(id(0));
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
-        assertTrue(game.openHands);
+        assertFalse(game.openHands, "Table saves cannot override world policy");
         assertTrue(game.answerExit(id(1), game.exitVote.id(), true));
         assertEquals(replays, game.pendingReplays());
         game.validate();

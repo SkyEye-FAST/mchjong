@@ -9,6 +9,7 @@ final class PlayerState {
     UUID id;
     String name = "";
     boolean bot;
+    BotDifficulty botDifficulty = BotDifficulty.NORMAL;
     boolean ready;
     AutoPlay autoPlay = AutoPlay.DEFAULT;
     int points;

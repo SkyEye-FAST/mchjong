@@ -165,8 +165,20 @@ final class InterfaceSmoke {
             checkBounds(client);
             capture(client, output, "35-invite-small.png");
             client.screen.onClose();
-            restoreWindow(client);
-            settingsStage = 9; settingsTicks = 0;
+            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(settingsParent));
+            settingsStage = 11; settingsTicks = 0;
+        } else if (settingsStage >= 11 && settingsStage <= 13 && settingsTicks > 10) {
+            checkBounds(client);
+            capture(client, output, "35-scope-" + (settingsStage - 11) + "-320x240.png");
+            if (settingsStage == 11) click(client, "settings.mchjong.scope.world");
+            else if (settingsStage == 12) click(client, "settings.mchjong.scope.personal");
+            else {
+                client.screen.onClose();
+                restoreWindow(client);
+                settingsStage = 9; settingsTicks = 0;
+                return false;
+            }
+            settingsStage++; settingsTicks = 0;
         } else if (settingsStage == 9 && settingsTicks > 10 && automation.tick(client, table, output)) {
             restoreWindow(client);
             settingsStage = 10;

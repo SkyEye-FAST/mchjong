@@ -38,7 +38,7 @@ class ServerIntegrationTest {
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_stool")).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
         assertNotNull(commands);
-        for (String name : java.util.List.of("clock", "invite", "accept", "decline", "replays", "replay"))
+        for (String name : java.util.List.of("world", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
             assertNotNull(commands.getChild(name), "Missing command: " + name);
     }
 
@@ -117,7 +117,7 @@ class ServerIntegrationTest {
                 assertEquals(proposal, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.decode(buffer));
             }
             Game game = startedGame();
-            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, 63);
+            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, 63, game.roomView());
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
             TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);

@@ -31,6 +31,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private int ticks;
     private long sentRevision = -1;
     private TableView clientView;
+    private top.skyeyefast.mchjong.engine.RoomView clientRoom;
     private int clientRedOptions;
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
@@ -46,6 +47,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (unreadableSave != null) return null;
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
+        var policy = WorldSettings.of(level.getServer()).policy();
+        game.configureWorld(policy.openHands(), policy.invitationTeleport());
         if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
             game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles());
@@ -54,6 +57,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public TableView clientView() { return clientView; }
+    public top.skyeyefast.mchjong.engine.RoomView clientRoom() { return clientRoom; }
+    public void acceptRoom(top.skyeyefast.mchjong.engine.RoomView room) {
+        if (level == null || !level.isClientSide) throw new IllegalStateException("Client room state on server");
+        clientRoom = java.util.Objects.requireNonNull(room);
+    }
     public int clientRedOptions() { return clientRedOptions; }
     public void acceptRedOptions(int options) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client supply state on server");
@@ -102,7 +110,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         TableView snapshot = game.view(authorizedViewer(player));
         player.connection.send(new ClientboundCustomPayloadPacket(
-            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply, equipment.redOptions())));
+            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply, equipment.redOptions(), game.roomView())));
     }
 
     public void open(ServerPlayer player) { sendView(player, true, false); }
@@ -304,7 +312,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         boolean changed = switch (payload.operation()) {
             case REQUEST_EXIT -> payload.token() == game.view(player.getUUID()).decision() && game.requestExit(player.getUUID());
             case ANSWER_EXIT -> game.answerExit(player.getUUID(), payload.token(), payload.enabled());
-            case OPEN_HANDS -> game.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
             case AUTO_SORT -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.SORT, payload.enabled());
             case AUTO_WIN -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.WIN, payload.enabled());
             case NO_CALLS -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.NO_CALLS, payload.enabled());

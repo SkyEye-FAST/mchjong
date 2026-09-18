@@ -25,6 +25,9 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.server.ServerStartingEvent event) ->
+                top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
         DeferredRegister<net.minecraft.core.component.DataComponentType<?>> components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) -> components.register(name, () -> type));
         components.register(bus);

@@ -16,7 +16,7 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
 import top.skyeyefast.mchjong.engine.Game;
 
-/** Short-lived, recipient-bound requests. Acceptance never teleports or force-loads a chunk. */
+/** Recipient-bound requests; only world policy can permit safe, explicit invitation teleportation. */
 public final class TableInvitations {
     private static final Map<MinecraftServer, TableInvitations> SERVERS = new WeakHashMap<>();
     private static final long LIFETIME = 60 * 20;
@@ -65,6 +65,8 @@ public final class TableInvitations {
             .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mchjong decline " + token)));
         recipient.sendSystemMessage(Component.translatable("message.mchjong.invitation", sender.getDisplayName(),
             pos.getX(), pos.getY(), pos.getZ(), sender.serverLevel().dimension().location().toString())
+            .append(" ").append(Component.translatable(WorldSettings.of(server).policy().invitationTeleport()
+                ? "message.mchjong.invite_teleport_enabled" : "message.mchjong.invite_teleport_disabled"))
             .append(" ").append(accept).append(" · ").append(decline));
         sender.sendSystemMessage(Component.translatable("message.mchjong.invite_sent", recipient.getDisplayName()));
         return 1;
@@ -94,14 +96,26 @@ public final class TableInvitations {
         }
         if (!recipient.isAlive() || recipient.isSpectator() || recipient.isPassenger())
             throw TableCommands.error("message.mchjong.invite_unavailable");
-        if (recipient.serverLevel() != level || recipient.distanceToSqr(pos.getX() + 0.5, pos.getY() + 0.5, pos.getZ() + 0.5) > 36)
-            throw TableCommands.error("message.mchjong.invite_approach");
         var view = table.participantGame(sender).view(null);
+        boolean remote = recipient.serverLevel() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
+        if (remote && !WorldSettings.of(server).policy().invitationTeleport())
+            throw TableCommands.error("message.mchjong.invite_approach");
         int nearest = TableGeometry.nearestSide(recipient.position().subtract(pos.getCenter()));
         for (int offset = 0; offset < 4; offset++) {
             int seat = (nearest + offset) % 4;
             if (seat >= view.seats().size() || view.seats().get(seat).occupied()
                 || !level.getBlockState(TableGeometry.stool(pos, seat)).is(MahjongContent.STOOL)) continue;
+            if (remote) {
+                var safe = safeArrival(level, pos, seat, recipient);
+                if (safe == null) continue;
+                // Acceptance grants travel only. Joining still requires actually sitting down.
+                recipient.teleportTo(level, safe.x, safe.y, safe.z, TableGeometry.yaw(seat), 0);
+                recipient.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
+                recipient.fallDistance = 0;
+                inbox.pending.remove(token);
+                recipient.sendSystemMessage(Component.translatable("message.mchjong.invite_arrived"));
+                return 1;
+            }
             table.sit(recipient, seat);
             if (table.participantGame(recipient) != null) {
                 inbox.pending.remove(token);
@@ -110,5 +124,26 @@ public final class TableInvitations {
             }
         }
         throw TableCommands.error("message.mchjong.invite_unavailable");
+    }
+
+    private static net.minecraft.world.phys.Vec3 safeArrival(ServerLevel level, BlockPos table, int seat, ServerPlayer player) {
+        BlockPos outward = table.relative(TableGeometry.SIDES[seat], TableGeometry.STOOL_DISTANCE + 1);
+        for (BlockPos candidate : new BlockPos[]{outward, outward.above(),
+                outward.relative(TableGeometry.SIDES[seat].getClockWise()), outward.relative(TableGeometry.SIDES[seat].getCounterClockWise())}) {
+            if (!loadedAround(level, candidate)
+                || !level.getWorldBorder().isWithinBounds(candidate)) continue;
+            var safe = net.minecraft.world.entity.vehicle.DismountHelper.findSafeDismountLocation(player.getType(), level, candidate, true);
+            if (safe != null && level.getWorldBorder().isWithinBounds(player.getBoundingBox().move(safe.subtract(player.position())))
+                && level.noCollision(player, player.getBoundingBox().move(safe.subtract(player.position())))
+                && !level.containsAnyLiquid(player.getBoundingBox().move(safe.subtract(player.position())))) return safe;
+        }
+        return null;
+    }
+
+    private static boolean loadedAround(ServerLevel level, BlockPos pos) {
+        for (int x = (pos.getX() - 1) >> 4; x <= (pos.getX() + 1) >> 4; x++)
+            for (int z = (pos.getZ() - 1) >> 4; z <= (pos.getZ() + 1) >> 4; z++)
+                if (!level.getChunkSource().hasChunk(x, z)) return false;
+        return true;
     }
 }

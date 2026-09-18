@@ -82,6 +82,7 @@ public final class TableScreen extends Screen {
 
     public static TableScreen active(Screen screen) {
         if (screen instanceof TableScreen table) return table;
+        if (screen instanceof TableOptionsScreen options) return options.tableScreen();
         if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
         if (screen instanceof TableClockScreen clock) return clock.tableScreen();
         if (screen instanceof TableRulesScreen rules) return rules.tableScreen();
@@ -102,6 +103,11 @@ public final class TableScreen extends Screen {
     TableView view() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientView() : null;
+    }
+
+    top.skyeyefast.mchjong.engine.RoomView room() {
+        return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
+            ? table.clientRoom() : null;
     }
 
     boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
@@ -301,8 +307,8 @@ public final class TableScreen extends Screen {
 
     private void buildToolbar(TableView view) {
         int right = width - 8;
-        addRenderableWidget(MahjongButton.create(Component.literal("…"), ignored -> minecraft.setScreen(new TableSettingsScreen(this)))
-            .bounds(right - 22, 8, 22, 20).tooltip(Tooltip.create(Component.translatable("settings.mchjong.title"))).build());
+        addRenderableWidget(MahjongButton.create(Component.literal("…"), ignored -> minecraft.setScreen(new TableOptionsScreen(this)))
+            .bounds(right - 22, 8, 22, 20).tooltip(Tooltip.create(Component.translatable("settings.mchjong.scopes"))).build());
         right -= 26;
         if (view.viewerSeat() >= 0) {
             var exit = MahjongButton.create(Component.translatable("ui.mchjong.exit"), ignored ->
@@ -375,13 +381,8 @@ public final class TableScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.title"), ignored ->
             minecraft.setScreen(new TableRulesScreen(this, view)))
             .bounds(left + half + 4, y, half, 20).build().selected(view.rules().custom()));
-        var visible = MahjongButton.create(Component.translatable("settings.mchjong.toggle", Component.translatable("ui.mchjong.open_hands"),
-            Component.translatable(view.openHands() ? "options.on" : "options.off")), ignored ->
-                control(view, TableControlPayload.Operation.OPEN_HANDS, view.decision(), !view.openHands()))
-            .bounds(left, y, half, 20).build();
-        visible.active = host;
-        visible.selected(view.openHands());
-        addRenderableWidget(visible);
+        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.scopes"), ignored ->
+            minecraft.setScreen(new TableOptionsScreen(this))).bounds(left, y, half, 20).build());
         y += 24;
         var clock = MahjongButton.create(Component.translatable("ui.mchjong.clock_settings"), ignored ->
             minecraft.setScreen(new TableClockScreen(this, view.timeControl()))).bounds(left, y, half, 20).build();

@@ -16,6 +16,7 @@ import mahjongutils.shanten.ShantenWithGot
 import mahjongutils.shanten.ShantenWithoutGot
 import mahjongutils.shanten.shanten
 import mahjongutils.shanten.UnionShantenResult
+import mahjongutils.shanten.furoChanceShanten
 import mahjongutils.yaku.Yakus
 
 /** The only boundary to mahjong-utils. No Minecraft or network types are accepted here. */
@@ -80,6 +81,40 @@ object HandAnalyzer {
         if (result !is ShantenWithGot || result.discardToAdvance.isEmpty()) return emptySet()
         val minimum = result.discardToAdvance.values.minOf { it.shantenNum }
         return result.discardToAdvance.filterValues { it.shantenNum == minimum }.keys.map(::kind).toSet()
+    }
+
+    private fun efficiency(result: ShantenWithoutGot) = TileEfficiency(result.shantenNum,
+        result.advance.map(::kind).toSet(), result.goodShapeAdvance.orEmpty().map(::kind).toSet())
+
+    @JvmStatic
+    fun discardEfficiency(hand: List<Int>, melds: List<Meld>): Map<Int, TileEfficiency> {
+        val result = analyze(hand, melds, false).shantenInfo as? ShantenWithGot ?: return emptyMap()
+        return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
+    }
+
+    @JvmStatic
+    fun handEfficiency(hand: List<Int>, melds: List<Meld>): TileEfficiency =
+        efficiency(analyze(hand, melds, false).shantenInfo as ShantenWithoutGot)
+
+    @JvmStatic
+    fun callEfficiency(hand: List<Int>, claimed: Int, actions: List<Action>): Map<Action, Map<Int, TileEfficiency>> {
+        val result = furoChanceShanten(tiles(hand), tiles(listOf(claimed)).first(), allowKuikae = false).shantenInfo
+        return actions.mapNotNull { action ->
+            val after = when (action.type()) {
+                Action.Type.PON -> result.pon
+                Action.Type.CHI -> result.chi.entries.firstOrNull { (shape, _) ->
+                    listOf(kind(shape.first), kind(shape.second)).sorted() == action.tiles().map(Tile::kind).sorted()
+                }?.value
+                else -> null
+            }
+            when {
+                after != null -> action to after.discardToAdvance.filterKeys { kind(it) != Tile.kind(claimed) }
+                    .mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
+                action.type() == Action.Type.OPEN_KAN && result.minkan != null ->
+                    action to mapOf(Tile.ABSENT to efficiency(result.minkan!!))
+                else -> null
+            }
+        }.toMap()
     }
 
     @JvmStatic

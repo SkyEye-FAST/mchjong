@@ -79,6 +79,10 @@ Retain existing no-scroll settlement navigation and replay keyboard controls.
 
 ## Table rules
 
+The settings hub has World, Room and Personal tabs. World-policy values remain
+visible but read-only, with a short administrator-only explanation. Room controls
+and ownership transfer are paginated separately from local presentation options.
+
 The rule screen separates preset options, read-only rule details and custom
 settings. Preset-supported options retain the preset identity. Red compositions
 use three separate choices; unavailable choices remain visible, disabled and

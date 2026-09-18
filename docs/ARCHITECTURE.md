@@ -80,9 +80,12 @@ Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual chec
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced
-with hidden sentinels **before serialization**. The host can enable open hands in
-the lobby; this reveals opponents only to seated participants, never spectators.
-Changing that setting invalidates readiness and is forbidden after play starts.
+with hidden sentinels **before serialization**. `WorldSettings` supplies one
+administrator-controlled policy per world save, across dimensions. Open hands
+reveals opponents only to seated participants, never spectators. World policy
+is transient in `Game`, independently of saved room rules and readiness.
+`RoomView` publishes room ownership and world capabilities separately from tile
+state. Ownership follows a UUID, not the lowest numbered human seat.
 Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
