@@ -21,12 +21,11 @@ final class TileArtwork {
     TileArtwork(Path presets, String preset) throws IOException {
         kanto = preset.equals("kanto");
         String folder = switch (preset) {
-            case "kansai" -> "kanto_fluffystuff";
-            case "kanto" -> "kansai_mizuno";
+            case "kansai" -> "kansai_fluffystuff";
+            case "kanto" -> "kanto_mizuno";
             default -> throw new IllegalArgumentException("Unknown face preset: " + preset);
         };
         Path directory = presets.resolve(folder);
-        // Supplied folder names are reversed; Mizuno with 福禄寿貴 is Kanto.
         source = readAtlas(directory.resolve("atlas/" + (kanto ? "mizuno" : "default") + ".png"));
         notice = Files.readString(directory.resolve("theme_metadata.json"));
     }
