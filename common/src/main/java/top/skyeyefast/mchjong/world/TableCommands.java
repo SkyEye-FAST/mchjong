@@ -46,9 +46,18 @@ public final class TableCommands {
                     table.open(player);
                     return 1;
                 })))
-            .then(Commands.literal("invite").then(Commands.argument("player", net.minecraft.commands.arguments.EntityArgument.player())
-                .executes(context -> TableInvitations.invite(context.getSource().getPlayerOrException(),
-                    net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player")))))
+            .then(Commands.literal("invite").then(Commands.argument("player", com.mojang.brigadier.arguments.StringArgumentType.word())
+                .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
+                    context.getSource().getServer().getPlayerNames(), builder))
+                .executes(context -> {
+                    String name = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "player");
+                    var players = context.getSource().getServer().getPlayerList();
+                    ServerPlayer target;
+                    try { target = players.getPlayer(java.util.UUID.fromString(name)); }
+                    catch (IllegalArgumentException ignored) { target = players.getPlayerByName(name); }
+                    if (target == null) throw error("message.mchjong.invite_unavailable");
+                    return TableInvitations.invite(context.getSource().getPlayerOrException(), target);
+                })))
             .then(Commands.literal("accept").then(Commands.argument("invitation", net.minecraft.commands.arguments.UuidArgument.uuid())
                 .executes(context -> TableInvitations.respond(context.getSource().getPlayerOrException(),
                     net.minecraft.commands.arguments.UuidArgument.getUuid(context, "invitation"), true))))
