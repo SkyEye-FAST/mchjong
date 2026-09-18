@@ -264,6 +264,18 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, false);
     }
 
+    public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.TableRulesPayload payload) {
+        var current = participantGame(player);
+        if (current != null && current.tableId().equals(payload.tableId())
+            && current.configureRules(player.getUUID(), payload.decision(), payload.rules())) {
+            serverGame(); // Recheck both physical boxes against the accepted rules before publishing readiness.
+            setChanged();
+            sentRevision = -1;
+            refreshParticipants(false);
+        }
+        sendView(player, false, true);
+    }
+
     public void control(ServerPlayer player, TableControlPayload payload) {
         Game game = participantGame(player);
         if (game == null || !game.tableId().equals(payload.tableId())) {

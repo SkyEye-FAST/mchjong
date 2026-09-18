@@ -84,6 +84,7 @@ public final class TableScreen extends Screen {
         if (screen instanceof TableScreen table) return table;
         if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
         if (screen instanceof TableClockScreen clock) return clock.tableScreen();
+        if (screen instanceof TableRulesScreen rules) return rules.tableScreen();
         if (screen instanceof TableInviteScreen invite) return invite.tableScreen();
         return null;
     }
@@ -135,7 +136,10 @@ public final class TableScreen extends Screen {
         lastRevision = -1;
     }
 
-    public void receivedControlReply() { automation.receivedControlReply(); }
+    public void receivedControlReply() {
+        automation.receivedControlReply();
+        if (minecraft.screen instanceof TableRulesScreen rules && rules.tableScreen() == this) rules.receivedReply();
+    }
 
     private void refreshDecision(TableView view) {
         if (handlingDrag != null && (view == null || !handlingDrag.tableId().equals(view.tableId())
@@ -334,7 +338,7 @@ public final class TableScreen extends Screen {
         int half = (span - 4) / 2;
         boolean host = view.actions().stream().anyMatch(action -> action.type() == Action.Type.CHANGE_RULE);
         for (int players : new int[]{4, 3}) {
-            RuleSet rule = view.rules().tenhou() ? players == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
+            RuleSet rule = view.rules().preset().tenhou() ? players == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
                 : players == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;
             int action = ruleAction(view, rule);
             var mode = MahjongButton.create(Component.translatable("ui.mchjong.players." + players), ignored -> send(view, action))
@@ -353,14 +357,17 @@ public final class TableScreen extends Screen {
                 .bounds(left + i % columns * (presetWidth + 4), 88 + i / columns * 24, presetWidth, 20)
                 .tooltip(Tooltip.create(Component.translatable(rule.translationKey()))).build();
             preset.active = host && action >= 0;
-            preset.selected(view.rules() == rule);
+            preset.selected(view.rules().equals(rule.config()));
             addRenderableWidget(preset);
         }
         int y = 88 + (presets.size() + columns - 1) / columns * 24;
+        addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.title"), ignored ->
+            minecraft.setScreen(new TableRulesScreen(this, view)))
+            .bounds(left + half + 4, y, half, 20).build().selected(view.rules().custom()));
         var visible = MahjongButton.create(Component.translatable("settings.mchjong.toggle", Component.translatable("ui.mchjong.open_hands"),
             Component.translatable(view.openHands() ? "options.on" : "options.off")), ignored ->
                 control(view, TableControlPayload.Operation.OPEN_HANDS, view.decision(), !view.openHands()))
-            .bounds(left, y, span, 20).build();
+            .bounds(left, y, half, 20).build();
         visible.active = host;
         visible.selected(view.openHands());
         addRenderableWidget(visible);

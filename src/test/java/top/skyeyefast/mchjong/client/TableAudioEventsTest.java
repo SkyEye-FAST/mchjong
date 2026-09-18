@@ -20,7 +20,7 @@ class TableAudioEventsTest {
             List.of(), -2, melds, river, norths, false, false);
     }
     private static TableView view(long revision, int hand, Game.Phase phase, List<TableView.Seat> seats, String result) {
-        return new TableView(TABLE, revision, 1, hand, RuleSet.TENHOU_4, phase, 0,
+        return new TableView(TABLE, revision, 1, hand, RuleSet.TENHOU_4.config(), phase, 0,
             0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(),
             TimeControl.DEFAULT, List.of(), List.of(), false, null, null, null);
     }

@@ -1,4 +1,28 @@
-# Riichi rule presets
+# Riichi rules and presets
+
+## Custom rules
+
+The lobby's Mahjong Soul, Tenhou, M.League, League A and WRC choices are presets.
+Open **Custom rules** to edit their settings; choosing a preset loads all its
+defaults into the draft. Six paginated categories cover points/ranks, placement,
+scoring, match flow, riichi/calls and responsibility payments. Apply commits the
+draft; Cancel leaves the table unchanged. Reload discards the draft and reads the
+current server settings. Only the seated host may apply rules in the lobby, and
+all players must ready again after a change. Stale decisions are rejected.
+
+Point fields use raw points in increments of 100. A placement bonus of 15000 means
++15.0 in the final standings. Starting points, return points and extension target
+are independent; oka is derived from the return-minus-start difference and player
+count. Fixed placement bonuses and every floating-player table entry are editable.
+The floating count is the number of players at or above the return threshold.
+Custom scoring, draw, furiten, kan, liability and ending options no longer inherit
+hidden behavior from the preset name. Unchanged presets retain the defaults below.
+
+Red-five settings restrict accepted physical boxes to none, three, four or any
+supported composition. They do not manufacture or remove red tiles. Saves and
+native replays contain the entire validated rule snapshot, not just a preset ID.
+
+## Preset reference
 
 Checked on 18 September 2026. Presets describe hanchan scoring and automated
 play. Physical tournament administration (referees, fouls and tournament clocks)

@@ -60,7 +60,7 @@ final class Settlement {
         }
         int honbaTotal = honba * 100 * (game.rules.players() - 1);
         if (!liable.isEmpty() && !(from >= 0 && game.rules.paoRonHonbaByDiscarder())
-            && !(from < 0 && game.rules == RuleSet.WRC && normalUnits > 0))
+            && !(from < 0 && game.rules.paoTsumoHonbaShared() && normalUnits > 0))
             transfer(game, liable.keySet().iterator().next(), winner, honbaTotal);
         else if (from >= 0) transfer(game, from, winner, honbaTotal);
         else for (int payer = 0; payer < game.rules.players(); payer++) if (payer != winner) {
@@ -81,6 +81,15 @@ final class Settlement {
             int payer = liable.keySet().iterator().next();
             liable.clear();
             liable.put(payer, score.yakuman());
+        } else if (!game.rules.compoundYakuman()) {
+            int remaining = score.yakuman();
+            for (var entries = liable.entrySet().iterator(); entries.hasNext();) {
+                var entry = entries.next();
+                int units = Math.min(remaining, entry.getValue());
+                if (units == 0) entries.remove();
+                else entry.setValue(units);
+                remaining -= units;
+            }
         }
         return liable;
     }
@@ -179,8 +188,8 @@ final class Settlement {
             game.riichiSticks = 0;
         }
         int floating = (int) ranking.stream().filter(seat -> game.players[seat].points >= game.rules.returnPoints()).count();
-        int[] bonus = game.rules.placementBonus(floating);
-        bonus[0] += (game.rules.returnPoints() - game.rules.startingPoints()) * game.rules.players() / 1000;
+        int[] bonus = game.rules.placementPoints(floating);
+        bonus[0] += (game.rules.returnPoints() - game.rules.startingPoints()) * game.rules.players();
         game.finalScores = new ArrayList<>(Collections.nCopies(game.rules.players(), 0.0));
         game.finalRanks = new ArrayList<>(Collections.nCopies(game.rules.players(), 0));
         int place = 0;
@@ -190,9 +199,9 @@ final class Settlement {
             for (int i = 0; i < group.size(); i++) placement += bonus[place++];
             for (int i = 0; i < group.size(); i++) {
                 int seat = group.get(i);
-                double share = game.rules.mLeague()
-                    ? (Math.floorDiv(placement * 10, group.size()) + (i < Math.floorMod(placement * 10, group.size()) ? 1 : 0)) / 10.0
-                    : placement / (double) group.size();
+                double share = game.rules.roundSharedPlacement()
+                    ? (Math.floorDiv(placement / 100, group.size()) + (i < Math.floorMod(placement / 100, group.size()) ? 1 : 0)) / 10.0
+                    : placement / (1000.0 * group.size());
                 game.finalRanks.set(seat, rank);
                 game.finalScores.set(seat, (game.players[seat].points - game.rules.returnPoints()) / 1000.0 + share);
             }

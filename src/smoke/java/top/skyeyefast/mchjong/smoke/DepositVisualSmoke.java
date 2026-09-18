@@ -26,7 +26,7 @@ final class DepositVisualSmoke {
         if (sample == 1) return true;
         if (ticks == 0) {
             var base = table.clientView();
-            var rules = RuleSet.MAHJONG_SOUL_4;
+            var rules = RuleSet.MAHJONG_SOUL_4.config();
             int count = 8;
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {

@@ -8,6 +8,53 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableControlTest {
     private static UUID id(int seat) { return new UUID(42, seat); }
 
+    @Test void customRulesAreAtomicHostOnlyAndPersistWithCompletedHands() {
+        var json = new Gson();
+        for (var preset : RuleSet.values()) {
+            var rules = preset.config();
+            assertFalse(rules.custom());
+            assertEquals(rules, json.fromJson(json.toJson(rules), RuleConfig.class));
+        }
+        var custom = RuleSet.M_LEAGUE.config().with(RuleOption.STARTING_POINTS, 28000)
+            .with(RuleOption.RETURN_POINTS, 35000).with(RuleOption.TARGET_POINTS, 40000)
+            .with(RuleOption.UMA_1, 25600).with(RuleOption.IPPATSU, 0).with(RuleOption.RED_FIVES, 1);
+        assertTrue(custom.custom());
+        assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.IPPATSU, 2));
+        assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.STARTING_POINTS, 28001));
+        assertThrows(IllegalArgumentException.class, () -> new RuleConfig(RuleSet.WRC, java.util.Map.of()));
+        assertThrows(UnsupportedOperationException.class, () -> custom.settings().put(RuleOption.IPPATSU, 1));
+        Game lobby = new Game(UUID.randomUUID(), RuleSet.M_LEAGUE, 1);
+        lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
+        lobby.players[1].ready = true;
+        long token = lobby.decision;
+        var before = json.toJson(lobby);
+        assertFalse(lobby.configureRules(id(1), token, custom));
+        assertFalse(lobby.configureRules(id(3), token, custom));
+        assertFalse(lobby.configureRules(id(0), token - 1, custom));
+        assertEquals(before, json.toJson(lobby));
+        assertTrue(lobby.configureRules(id(0), token, custom));
+        assertFalse(lobby.players[1].ready);
+        assertEquals(28000, lobby.points(0));
+        assertEquals(28000, lobby.points(1));
+        assertFalse(lobby.equipped(), "Changing rules cannot recolor the physical tiles");
+        assertFalse(lobby.configureRules(id(0), token, RuleSet.M_LEAGUE.config()));
+        lobby = json.fromJson(json.toJson(lobby), Game.class);
+        lobby.validate();
+        assertEquals(custom, lobby.rules());
+        assertTrue(lobby.join(id(3), "Fourth seat", 3));
+        assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.TENHOU_3.config()));
+        lobby.leave(id(3));
+        assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
+        assertTrue(lobby.act(id(1), lobby.decision, GameLifecycleTest.index(lobby.view(id(1)), Action.Type.READY)));
+        assertTrue(lobby.act(id(0), lobby.decision, GameLifecycleTest.index(lobby.view(id(0)), Action.Type.PRACTICE)));
+        assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.M_LEAGUE.config()));
+        assertEquals(custom, lobby.replay.rules());
+        Settlement.abort(lobby, "nine_terminals");
+        var replay = lobby.pendingReplays().getFirst();
+        assertEquals(custom, json.fromJson(json.toJson(replay), ReplayMatch.class).rules());
+        lobby.validate();
+    }
+
     private static Game game(int humans, RuleSet rules, boolean open) {
         Game game = new Game(UUID.randomUUID(), rules, 123);
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));

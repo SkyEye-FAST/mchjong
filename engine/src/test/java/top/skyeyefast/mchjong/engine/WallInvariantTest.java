@@ -12,10 +12,10 @@ class WallInvariantTest {
             var supplied = Tile.set(false, composition);
             assertTrue(Tile.validSet(supplied));
             if (!rules.allows(composition)) {
-                assertThrows(IllegalArgumentException.class, () -> new Wall(rules, 12, supplied));
+                assertThrows(IllegalArgumentException.class, () -> new Wall(rules.config(), 12, supplied));
                 continue;
             }
-            Wall wall = new Wall(rules, 12, supplied);
+            Wall wall = new Wall(rules.config(), 12, supplied);
             var taken = new HashSet<Integer>();
             for (int i = 0; i < rules.players() * 13 + 1; i++) assertTrue(taken.add(wall.draw()));
             assertEquals(rules.sanma() ? 54 : 69, wall.remaining());
@@ -34,7 +34,7 @@ class WallInvariantTest {
 
     @ParameterizedTest @EnumSource(RuleSet.class)
     void publicWallOnlyExposesDeclaredIndicators(RuleSet rules) {
-        Wall wall = new Wall(rules, 123);
+        Wall wall = new Wall(rules.config(), 123);
         assertEquals(1, wall.publicTiles(false).stream().filter(t -> t >= 0).count());
         for (int i = 0; i < 4; i++) wall.reveal();
         assertEquals(5, wall.publicTiles(false).stream().filter(t -> t >= 0).count());

@@ -168,20 +168,26 @@ class GameLifecycleTest {
             {40000,35000,25000,20000}, {40000,30000,30000,20000}, {29900,29900,29900,29300}};
         double[][] expected = {{0,0,0,0}, {42,-6,-13,-23}, {18,9,-9,-18}, {18,2,2,-22}, {-.1,-.1,-.1,-.7}};
         for (int i = 0; i < scores.length; i++) {
-            Game game = finish(RuleSet.JPML_A, scores[i], i == 4 ? 1 : 0);
+            Game game = finish(RuleSet.JPML_A.config(), scores[i], i == 4 ? 1 : 0);
             assertArrayEquals(expected[i], game.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
             assertEquals(i == 4 ? 1 : 0, game.riichiSticks);
         }
-        Game league = finish(RuleSet.M_LEAGUE, new int[]{30000,30000,30000,8000}, 2);
+        Game league = finish(RuleSet.M_LEAGUE.config(), new int[]{30000,30000,30000,8000}, 2);
         assertEquals(List.of(30800,30600,30600,8000), Arrays.stream(league.players).map(p -> p.points).toList());
         assertArrayEquals(new double[]{17.5,17.3,17.2,-52.0}, league.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
-        Game wrc = finish(RuleSet.WRC, new int[]{35000,35000,35000,14000}, 1);
+        Game wrc = finish(RuleSet.WRC.config(), new int[]{35000,35000,35000,14000}, 1);
         assertEquals(1, wrc.riichiSticks);
         assertEquals(List.of(10.0,10.0,10.0,-31.0), wrc.finalScores);
+        var custom = RuleSet.WRC.config().with(RuleOption.STARTING_POINTS, 25100).with(RuleOption.RETURN_POINTS, 30200)
+            .with(RuleOption.UMA_1, 15300).with(RuleOption.UMA_4, -15300);
+        Game fractional = finish(custom, new int[]{40100,30100,20100,10100}, 0);
+        assertArrayEquals(new double[]{45.6,4.9,-15.1,-35.4},
+            fractional.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
     }
 
-    private static Game finish(RuleSet rules, int[] scores, int deposits) {
-        Game game = new Game(UUID.randomUUID(), rules, 1);
+    private static Game finish(RuleConfig rules, int[] scores, int deposits) {
+        Game game = new Game(UUID.randomUUID(), rules.preset(), 1);
+        game.rules = rules;
         game.round = 7;
         game.riichiSticks = deposits;
         for (int seat = 0; seat < 4; seat++) game.players[seat].points = scores[seat];

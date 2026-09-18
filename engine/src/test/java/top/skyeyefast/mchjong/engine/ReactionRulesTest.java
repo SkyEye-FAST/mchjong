@@ -13,7 +13,7 @@ class ReactionRulesTest {
         final Set<Integer> owned = new HashSet<>();
         Fixture(RuleSet rules) {
             game = new Game(UUID.randomUUID(), rules, 5566);
-            game.wall = new Wall(rules, 7788);
+            game.wall = new Wall(rules.config(), 7788);
             for (int s = 0; s < rules.players(); s++) {
                 PlayerState p = game.players[s];
                 p.id = new UUID(40, s); p.name = "Player " + s;

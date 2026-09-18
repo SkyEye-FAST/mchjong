@@ -21,7 +21,7 @@ public final class Game {
     public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
-    RuleSet rules;
+    RuleConfig rules;
     long seed;
     long revision = 1;
     long decision = 1;
@@ -68,7 +68,7 @@ public final class Game {
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
-        this.rules = Objects.requireNonNull(rules);
+        this.rules = Objects.requireNonNull(rules).config();
         suppliedTiles = Tile.set(false, rules.defaultRedFives());
         this.seed = seed;
         for (int i = 0; i < 4; i++) {
@@ -81,7 +81,7 @@ public final class Game {
     public UUID tableId() { return tableId; }
     public long revision() { return revision; }
     public Phase phase() { return phase; }
-    public RuleSet rules() { return rules; }
+    public RuleConfig rules() { return rules; }
     public boolean manual() { return manual; }
     public int points(int seat) { return players[seat].points; }
     public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
@@ -116,6 +116,23 @@ public final class Game {
         recorder = null;
     }
     public boolean isHost(UUID player) { return seatOf(player) >= 0 && seatOf(player) == host(); }
+
+    public boolean configureRules(UUID actor, long expectedDecision, RuleConfig config) {
+        if (config == null || phase != Phase.LOBBY || exitVote != null || !isHost(actor)
+            || expectedDecision != decision || rules.equals(config) || config.players() == 3 && players[3].id != null) return false;
+        applyRules(config);
+        newDecision(Phase.LOBBY);
+        return true;
+    }
+
+    private void applyRules(RuleConfig config) {
+        rules = config;
+        handling = new ManualHandling();
+        for (PlayerState player : players) {
+            player.points = rules.startingPoints();
+            player.ready = false;
+        }
+    }
 
     public boolean configureOpenHands(UUID actor, long expectedDecision, boolean enabled) {
         if (phase != Phase.LOBBY || exitVote != null || !isHost(actor) || expectedDecision != decision || openHands == enabled) return false;
@@ -245,7 +262,7 @@ public final class Game {
             if (seat == host()) {
                 if (equipped()) actions.add(new Action(PRACTICE));
                 for (RuleSet preset : RuleSet.values()) {
-                    if (preset != rules && (preset.players() == 4 || players[3].id == null)) {
+                    if (!preset.config().equals(rules) && (preset.players() == 4 || players[3].id == null)) {
                         actions.add(new Action(CHANGE_RULE, preset.ordinal()));
                     }
                 }
@@ -282,14 +299,7 @@ public final class Game {
                     }
                     players[seat].ready = true;
                 }
-                case CHANGE_RULE -> {
-                    rules = RuleSet.values()[action.tiles().getFirst()];
-                    handling = new ManualHandling();
-                    for (PlayerState player : players) {
-                        player.points = rules.startingPoints();
-                        player.ready = player.bot;
-                    }
-                }
+                case CHANGE_RULE -> applyRules(RuleSet.values()[action.tiles().getFirst()].config());
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
             revision++;
@@ -420,7 +430,7 @@ public final class Game {
     void drawNow(int seat, boolean replacement, boolean kan) {
         turn = seat;
         PlayerState player = players[seat];
-        if (rules == RuleSet.WRC) player.temporaryFuriten = false;
+        if (rules.callsClearFuriten()) player.temporaryFuriten = false;
         player.drawn = replacement ? wall.replace() : wall.draw();
         player.hand.add(player.drawn);
         if (recorder != null) recorder.draw(seat, player.drawn);
@@ -461,7 +471,7 @@ public final class Game {
         newDecision(Phase.REACTION);
         for (int i = 0; i < rules.players(); i++) if (i != lastFrom) {
             options.set(i, LegalActions.onReaction(this, i));
-            if (rules == RuleSet.WRC && (pending == null || pending.type() == ADDED_KAN)
+            if (rules.yakulessFuriten() && (pending == null || pending.type() == ADDED_KAN)
                 && options.get(i).stream().noneMatch(action -> action.type() == RON)
                 && HandAnalyzer.waits(players[i].hand, players[i].melds).contains(Tile.kind(lastTile))) {
                 players[i].temporaryFuriten = true;
@@ -528,7 +538,7 @@ public final class Game {
 
     private void completeCall(int seat, Action action) {
         PlayerState player = players[seat];
-        if (rules == RuleSet.WRC) player.temporaryFuriten = false;
+        if (rules.callsClearFuriten()) player.temporaryFuriten = false;
         PlayerState source = players[lastFrom];
         Discard discarded = source.river.getLast();
         source.river.set(source.river.size() - 1, discarded.markCalled());

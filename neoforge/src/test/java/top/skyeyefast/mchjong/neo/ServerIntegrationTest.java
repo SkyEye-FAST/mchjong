@@ -108,6 +108,14 @@ class ServerIntegrationTest {
                 TableControlPayload.CODEC.encode(buffer, control);
                 assertEquals(control, TableControlPayload.CODEC.decode(buffer));
             }
+            for (boolean maximum : new boolean[]{false, true}) {
+                var rules = RuleSet.WRC.config();
+                for (var option : top.skyeyefast.mchjong.engine.RuleOption.values())
+                    rules = rules.with(option, maximum ? option.max() : option.min());
+                var proposal = new top.skyeyefast.mchjong.network.TableRulesPayload(request.pos(), request.tableId(), Long.MAX_VALUE, rules);
+                top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.encode(buffer, proposal);
+                assertEquals(proposal, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.decode(buffer));
+            }
             Game game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true);
             TableViewPayload.CODEC.encode(buffer, payload);

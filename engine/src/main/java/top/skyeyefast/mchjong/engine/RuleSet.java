@@ -9,6 +9,7 @@ public enum RuleSet {
     private final int players;
 
     RuleSet(int players) { this.players = players; }
+    public RuleConfig config() { return RuleConfig.from(this); }
     public int players() { return players; }
     public boolean sanma() { return players == 3; }
     public boolean mLeague() { return this == M_LEAGUE; }

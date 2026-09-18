@@ -10,6 +10,7 @@ import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
+import top.skyeyefast.mchjong.engine.RuleConfig;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -23,7 +24,8 @@ class TableAnimationTest {
         return new TableView.Seat("Player", true, false, false, 25000, hand, drawn, melds, river, List.of(), riichi, false);
     }
 
-    private static TableView playing(RuleSet rules) {
+    private static TableView playing(RuleSet preset) {
+        var rules = preset.config();
         var wall = new ArrayList<>(Collections.nCopies(rules.sanma() ? 108 : 136, Tile.HIDDEN));
         for (int i = 0; i < rules.players() * 13 + 1; i++) wall.set(i, Tile.ABSENT);
         var seats = new ArrayList<TableView.Seat>();
@@ -35,7 +37,7 @@ class TableAnimationTest {
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), false, null, null, null);
     }
 
-    private static TableView lobby(RuleSet rules) {
+    private static TableView lobby(RuleConfig rules) {
         return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(),
@@ -88,7 +90,7 @@ class TableAnimationTest {
     @Test void fullWallsRiseAndDealWithoutRevealingOpponentsForBothPlayerCounts() {
         for (var rules : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
             var animation = new TableAnimation();
-            animation.accept(lobby(rules), 0);
+            animation.accept(lobby(rules.config()), 0);
             animation.accept(playing(rules), 100);
             assertTrue(animation.dealing(100));
             assertEquals(rules.sanma() ? 108 : 136, animation.sample(100).size());
@@ -214,7 +216,7 @@ class TableAnimationTest {
     @Test void openingHasOneHiddenTilePerWallSlotAndDealsEarlierPacketsFirst() {
         for (var rules : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
             var animation = new TableAnimation();
-            animation.accept(lobby(rules), 0);
+            animation.accept(lobby(rules.config()), 0);
             animation.accept(playing(rules), 100);
             var wall = animation.sample(100);
             assertEquals(wall.size(), wall.stream().map(frame -> frame.piece().position()).distinct().count());

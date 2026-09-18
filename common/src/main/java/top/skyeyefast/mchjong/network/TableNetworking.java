@@ -22,6 +22,12 @@ public final class TableNetworking {
             table.control(player, payload);
     }
 
+    public static void receive(ServerPlayer player, TableRulesPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.configureRules(player, payload);
+    }
+
     private static boolean canReach(ServerPlayer player, net.minecraft.core.BlockPos pos) {
         return player.isAlive() && !player.isSpectator()
             && player.serverLevel().getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)

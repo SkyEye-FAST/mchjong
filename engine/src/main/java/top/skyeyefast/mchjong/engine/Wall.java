@@ -18,11 +18,11 @@ final class Wall {
     int pendingIndicators;
     int breakOffset;
 
-    Wall(RuleSet rules, long seed) {
+    Wall(RuleConfig rules, long seed) {
         this(rules, seed, Tile.set(false, rules.defaultRedFives()));
     }
 
-    Wall(RuleSet rules, long seed, List<Integer> supplied) {
+    Wall(RuleConfig rules, long seed, List<Integer> supplied) {
         if (!Tile.validSet(supplied) || !rules.allows(RedFives.of(supplied)))
             throw new IllegalArgumentException("A wall requires one complete supplied set");
         tiles = new ArrayList<>(supplied.stream().filter(tile -> !rules.sanma() || Tile.kind(tile) == 0 || Tile.kind(tile) >= 8).toList());
@@ -32,13 +32,12 @@ final class Wall {
         breakOffset = random.nextInt(tiles.size() / 2) * 2;
         int end = tiles.size();
         // Replacement tiles are paired so the upper tile of each stack is taken first.
-        for (int i = 0; i < 4; i++) replacements.add(end - 1 - i);
+        for (int i = 0; i < rules.replacementCapacity(); i++) replacements.add(end - 1 - i % 4);
         for (int i = 0; i < 5; i++) {
             dora.add(end - 5 - i * 2);
             ura.add(end - 6 - i * 2);
         }
-        // Extra sanma replacements use the replenished reserve, never future dora/ura slots.
-        if (rules.sanma()) for (int i = 0; i < 4; i++) replacements.add(end - 1 - i);
+        // Additional replacements reuse replenished positions, never indicator slots.
     }
 
     int remaining() { return Math.max(0, liveEnd - cursor); }

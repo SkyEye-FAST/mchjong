@@ -37,7 +37,7 @@ class ReplayStoreTest {
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,
             List.of(35000,35000,35000), dealt, List.of(132), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
-        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3, 0, players, records, false,
+        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3.config(), 0, players, records, false,
             top.skyeyefast.mchjong.engine.RedFives.THREE);
     }
 

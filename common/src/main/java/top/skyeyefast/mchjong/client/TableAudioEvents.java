@@ -13,7 +13,7 @@ public final class TableAudioEvents {
 
     public static List<Cue> between(TableView before, TableView after) {
         if (before == null || after == null || !before.tableId().equals(after.tableId())
-            || before.viewerSeat() != after.viewerSeat() || before.rules() != after.rules()
+            || before.viewerSeat() != after.viewerSeat() || !before.rules().equals(after.rules())
             || after.revision() <= before.revision()) return List.of();
         var cues = new ArrayList<Cue>();
         if (before.handNumber() != after.handNumber()) {

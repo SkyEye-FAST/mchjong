@@ -60,7 +60,7 @@ final class LegalActions {
         var waits = HandAnalyzer.waits(before, player.melds);
         if (!waits.equals(HandAnalyzer.waits(after, melds))) return false;
         if (game.rules.riichiKanKeepsMelds() && !HandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false;
-        if (game.rules == RuleSet.JPML_A) for (int wait : waits) for (boolean tsumo : new boolean[]{false, true}) {
+        if (game.rules.riichiKanKeepsYaku()) for (int wait : waits) for (boolean tsumo : new boolean[]{false, true}) {
             var previous = HandAnalyzer.score(before, player.melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
                 0, List.of("Richi"), game.rules);
             var next = HandAnalyzer.score(after, melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
@@ -151,6 +151,6 @@ final class LegalActions {
 
     static boolean formalTenpai(Game game, int seat) {
         PlayerState player = game.players[seat];
-        return !HandAnalyzer.waits(player.hand, game.rules.tenhou() ? List.of() : player.melds).isEmpty();
+        return !HandAnalyzer.waits(player.hand, game.rules.formalTenpaiIgnoresMelds() ? List.of() : player.melds).isEmpty();
     }
 }

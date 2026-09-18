@@ -35,7 +35,8 @@ final class TableHud {
             : settings.show(TableSettings.Information.ROUND) ? Component.translatable("ui.mchjong.round_short",
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / view.rules().players())]),
                 view.round() % view.rules().players() + 1)
-            : settings.show(TableSettings.Information.RULES) ? Component.translatable(view.rules().presetKey()) : Component.empty();
+            : settings.show(TableSettings.Information.RULES) ? Component.translatable(view.rules().custom()
+                ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
         Component remaining = !lobby && settings.show(TableSettings.Information.REMAINING)
             ? Component.translatable("ui.mchjong.remaining", view.remaining()) : Component.empty();
         if (!title.getString().isEmpty() || !remaining.getString().isEmpty()) {

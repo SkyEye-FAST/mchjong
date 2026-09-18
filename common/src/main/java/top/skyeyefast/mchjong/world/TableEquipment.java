@@ -18,7 +18,7 @@ public final class TableEquipment {
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
-    private top.skyeyefast.mchjong.engine.RuleSet rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4;
+    private top.skyeyefast.mchjong.engine.RuleConfig rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config();
     private int activeBox = -1;
     private boolean loading;
     private int clothColor = -1;
@@ -47,8 +47,8 @@ public final class TableEquipment {
     public MahjongSupplies.Deck deck() { return deck; }
     public int activeBox() { return activeBox; }
 
-    public boolean selectRules(top.skyeyefast.mchjong.engine.RuleSet rules) {
-        if (this.rules == rules) return false;
+    public boolean selectRules(top.skyeyefast.mchjong.engine.RuleConfig rules) {
+        if (this.rules.equals(rules)) return false;
         this.rules = rules;
         var previous = deck;
         refreshDeck();

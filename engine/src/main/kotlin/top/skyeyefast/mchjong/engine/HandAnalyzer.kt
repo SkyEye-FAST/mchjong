@@ -20,12 +20,12 @@ import mahjongutils.yaku.Yakus
 
 /** The only boundary to mahjong-utils. No Minecraft or network types are accepted here. */
 object HandAnalyzer {
-    private fun options(rules: RuleSet) = HoraOptions(aotenjou = false, allowKuitan = true,
+    private fun options(rules: RuleConfig) = HoraOptions(aotenjou = false, allowKuitan = rules.kuitan(),
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
-        hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = true)
+        hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())
 
     @JvmStatic
-    fun yakuValues(names: List<String>, closed: Boolean, rules: RuleSet): List<ReplayHand.Yaku> {
+    fun yakuValues(names: List<String>, closed: Boolean, rules: RuleConfig): List<ReplayHand.Yaku> {
         val yakus = Yakus(options(rules))
         return names.map { name ->
             if (name == "Renhou" && rules.renhouMangan()) return@map ReplayHand.Yaku(name, 5, false)
@@ -97,7 +97,7 @@ object HandAnalyzer {
 
     @JvmStatic
     fun score(hand: List<Int>, melds: List<Meld>, winningTile: Int, tsumo: Boolean,
-              selfWind: Int, roundWind: Int, dora: Int, extra: List<String>, rules: RuleSet): HandScore? {
+              selfWind: Int, roundWind: Int, dora: Int, extra: List<String>, rules: RuleConfig): HandScore? {
         val complete = if (hand.size + melds.size * 3 == 13) hand + winningTile else hand
         val analysis = analyze(complete, melds, true)
         if (analysis.shantenInfo.shantenNum != -1) return null

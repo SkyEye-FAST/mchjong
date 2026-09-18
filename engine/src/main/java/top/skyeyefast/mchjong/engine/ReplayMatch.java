@@ -6,7 +6,7 @@ import java.util.Objects;
 import java.util.UUID;
 
 /** Contains completed hands only. No RNG seed, future wall, or active hand is exported. */
-public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt, RuleSet rules,
+public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt, RuleConfig rules,
                           int initialDealer, List<Participant> participants, List<ReplayHand> hands, boolean complete, RedFives redFives) {
     public record Participant(UUID id, String name, boolean bot) {
         public Participant {
@@ -14,7 +14,7 @@ public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt,
             if (name.isBlank() || name.length() > 128) throw new IllegalArgumentException("Invalid replay player name");
         }
     }
-    public record Header(UUID id, long updatedAt, RuleSet rules, int hands, boolean complete, List<String> names) {
+    public record Header(UUID id, long updatedAt, RuleConfig rules, int hands, boolean complete, List<String> names) {
         public Header {
             Objects.requireNonNull(id); Objects.requireNonNull(rules); names = List.copyOf(names);
             if (hands < 1 || hands > 1024 || names.size() != rules.players()

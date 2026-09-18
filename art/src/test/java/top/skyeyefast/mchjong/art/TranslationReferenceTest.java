@@ -30,6 +30,8 @@ class TranslationReferenceTest {
             }
         }
         for (RuleSet rules : RuleSet.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
+        for (var option : top.skyeyefast.mchjong.engine.RuleOption.values()) used.add(option.translationKey());
+        for (var group : top.skyeyefast.mchjong.engine.RuleOption.Group.values()) used.add(group.translationKey());
         // Registry-derived names can appear in Jade even when no source uses a literal translation key.
         for (String block : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"))
             used.add("block.mchjong." + block);

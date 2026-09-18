@@ -4,7 +4,7 @@ import java.util.List;
 import java.util.UUID;
 
 /** The live S2C view. Private hands are redacted; completed replays use a separate authorized channel. */
-public record TableView(UUID tableId, long revision, long decision, int handNumber, RuleSet rules, Game.Phase phase,
+public record TableView(UUID tableId, long revision, long decision, int handNumber, RuleConfig rules, Game.Phase phase,
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,

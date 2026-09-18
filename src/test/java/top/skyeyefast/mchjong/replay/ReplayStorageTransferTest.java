@@ -99,7 +99,7 @@ class ReplayStorageTransferTest {
         }
         var hand = new ReplayHand(1,0,0,0,0,Collections.nCopies(3,35000),hands,List.of(132),List.of(),seats,
             List.of(),"exhaustive",Collections.nCopies(3,0),List.of(132),List.of(),List.of(),List.of());
-        return new ReplayMatch(UUID.randomUUID(),UUID.randomUUID(),1,2,RuleSet.TENHOU_3,0,players,List.of(hand),false,
+        return new ReplayMatch(UUID.randomUUID(),UUID.randomUUID(),1,2,RuleSet.TENHOU_3.config(),0,players,List.of(hand),false,
             top.skyeyefast.mchjong.engine.RedFives.THREE);
     }
 }

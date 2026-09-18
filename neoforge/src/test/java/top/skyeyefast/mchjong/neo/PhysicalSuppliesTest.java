@@ -175,6 +175,8 @@ class PhysicalSuppliesTest {
             var updated = box(contents);
             if (++converted < 3) {
                 assertNull(MahjongSupplies.deck(updated));
+                assertEquals(top.skyeyefast.mchjong.engine.RedFives.THREE,
+                    MahjongSupplies.deck(MahjongSupplies.engrave(updated, TileFacePreset.KANSAI)).redFives());
                 continue;
             }
             var deck = MahjongSupplies.deck(updated);
@@ -183,9 +185,9 @@ class PhysicalSuppliesTest {
             assertEquals(converted, deck.tiles(false).stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
             assertEquals(136, new java.util.HashSet<>(deck.tiles(false)).size());
             equipment.boxes().setItem(1, updated);
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.M_LEAGUE);
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.M_LEAGUE.config());
             assertEquals(converted == 3 ? 1 : -1, equipment.activeBox());
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC);
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC.config());
             assertEquals(0, equipment.activeBox());
             if (converted == 4) {
                 var restored = MahjongSupplies.engrave(updated, TileFacePreset.KANSAI);

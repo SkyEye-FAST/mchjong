@@ -93,6 +93,6 @@ class TenhouFormatTest {
         }
         ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),events,seats,
             List.of(),result,Collections.nCopies(count,0),List.of(132),List.of(),List.of(),List.of());
-        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1,2,rules,dealer,participants,List.of(hand),false,rules.defaultRedFives());
+        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1,2,rules.config(),dealer,participants,List.of(hand),false,rules.defaultRedFives());
     }
 }

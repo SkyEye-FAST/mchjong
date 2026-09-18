@@ -17,6 +17,14 @@ allows it.
   descriptors, plus a separate server-data generator. Source-image resampling
   runs at build time; each supplied atlas includes its eight flower designs.
 
+`RuleSet` defines named presets; `RuleConfig` is the complete immutable, validated
+snapshot used by the engine, public views, saves and native replays. `RuleOption`
+defines field bounds, translation keys, categories and preset defaults. Runtime
+logic reads individual settings instead of branching on a preset identity.
+`TableRulesPayload` carries a bounded proposal and the current table identity and
+decision. Only the seated host can apply it before play; clients retain a draft
+until server acknowledgement. Rule changes clear all readiness and recheck boxes.
+
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
 slots, removable cloth and four nine-slot point-stick drawers. Its public projection
