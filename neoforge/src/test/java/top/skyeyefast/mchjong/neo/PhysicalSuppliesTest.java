@@ -172,6 +172,8 @@ class PhysicalSuppliesTest {
             var deck = MahjongSupplies.deck(updated);
             assertNotNull(deck);
             assertEquals(converted, deck.redFives().total());
+            assertTrue(MahjongSupplies.canSupplyReds(updated, false, top.skyeyefast.mchjong.engine.RedFives.THREE));
+            assertEquals(converted == 4, MahjongSupplies.canSupplyReds(updated, false, top.skyeyefast.mchjong.engine.RedFives.FOUR));
             assertEquals(converted, deck.tiles().stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
             assertEquals(136, new java.util.HashSet<>(deck.tiles()).size());
             equipment.boxes().setItem(1, updated);

@@ -257,9 +257,9 @@ drawn-tile discard preferences with their seat. Sorting starts enabled. Automati
 the referee's legal tsumo and ron actions, including declaration-robbery responses.
 Wins take priority over skipped calls or automatic discards. Preferences remain
 with the player across hands and saves and reset when their seat is released.
-For three-player rules, the engine uses the appropriate 108 tiles; the unused
-28 remain part of the installed, recoverable 136-tile set. Tiles are not
-consumed by playing. Completed hands use the existing replay archive.
+For three-player rules, the engine uses the appropriate 108 tiles. The omitted
+28 tiles are optional stock and remain in the box when present. No stored tiles
+are consumed by playing. Completed hands use the existing replay archive.
 
 ## Glass, backs and physical point sticks
 

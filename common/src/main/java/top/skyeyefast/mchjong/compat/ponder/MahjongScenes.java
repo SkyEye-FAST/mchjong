@@ -49,7 +49,7 @@ final class MahjongScenes {
         scene.world().showSection(util.select().fromTo(1, 1, 1, 5, 1, 5), Direction.DOWN);
         ItemStack box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick().withItem(box);
-        say(scene, "Prepare a complete 136-tile set in a mahjong box, with matching material and back color.", FELT);
+        say(scene, "Prepare the tiles required by the rules: 136 for four players or 108 for three, with matching material, backs and face design. Spare tiles may stay in the box.", FELT);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().boxes().setItem(0, box.copy()));
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick();

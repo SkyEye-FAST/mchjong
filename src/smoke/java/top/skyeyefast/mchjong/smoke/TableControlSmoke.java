@@ -13,8 +13,13 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TableRulesScreen;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RedFives;
+import top.skyeyefast.mchjong.engine.RuleOption;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.item.MahjongComponents;
+import top.skyeyefast.mchjong.item.MahjongSupplies;
+import top.skyeyefast.mchjong.network.TableRulesPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Uses the live integrated server and real control packets before any display-only fixtures. */
@@ -25,6 +30,10 @@ final class TableControlSmoke {
     private boolean remainingHidden;
     private CompletableFuture<Void> reseated;
     private int originalWidth, originalHeight, originalScale;
+    private static final String[] RULE_LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
+    private int ruleLanguage;
+    private String originalLanguage;
+    private CompletableFuture<Void> languageReload;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
@@ -79,20 +88,107 @@ final class TableControlSmoke {
             click(client, "preset.mchjong.wrc");
             next(9);
         } else if (stage == 9 && view.rules().equals(RuleSet.WRC.config()) && ticks > 5) {
-            require(view.actions().stream().noneMatch(action -> action.type() == Action.Type.PRACTICE || action.type() == Action.Type.READY),
-                "WRC accepted a three-red box");
+            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "WRC rejected the default no-red box");
+            require(!widget(client, "preset.mchjong.m_league").active, "M.League could select missing red fives");
             capture(client, output, "25b-wrc-lobby.png");
-            click(client, "preset.mchjong.m_league");
-            next(10);
-        } else if (stage == 10 && view.rules().equals(RuleSet.M_LEAGUE.config()) && ticks > 5) {
-            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "M.League rejected a three-red box");
-            capture(client, output, "25c-m-league-lobby.png");
             click(client, "preset.mchjong.mahjong_soul");
             next(11);
-        } else if (stage == 11 && view.rules().equals(RuleSet.MAHJONG_SOUL_4.config()) && ticks > 5) {
+        } else if (stage == 11 && view.rules().preset() == RuleSet.MAHJONG_SOUL_4 && ticks > 5) {
             click(client, "rules.mchjong.title");
             next(12);
         } else if (stage == 12 && client.screen instanceof TableRulesScreen && ticks > 5) {
+            require(!widget(client, RedFives.THREE.translationKey()).active && !widget(client, RedFives.FOUR.translationKey()).active,
+                "Unavailable red choices are enabled");
+            require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Preset options exposed fixed numeric editors");
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "25c-preset-options.png");
+            originalWidth = client.getWindow().getScreenWidth(); originalHeight = client.getWindow().getScreenHeight();
+            originalScale = client.options.guiScale().get();
+            originalLanguage = client.getLanguageManager().getSelected();
+            selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+            next(20);
+        } else if (stage == 20 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
+            languageReload.join();
+            require(client.screen.width == 320 && client.screen.height == 240, "Preset options minimum viewport");
+            AutomationControlsSmoke.checkBounds(client);
+            var unavailable = widget(client, RedFives.THREE.translationKey());
+            double scale = client.getWindow().getGuiScale();
+            long window = client.getWindow().getWindow();
+            // Drive the installed callback without moving or capturing the user's desktop cursor.
+            var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
+            require(cursor != null, "Missing native cursor callback");
+            try { cursor.invoke(window, (unavailable.getX() + 5) * scale, (unavailable.getY() + 5) * scale); }
+            finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
+            next(21);
+        } else if (stage == 21 && ticks > 10) {
+            require(widget(client, RedFives.THREE.translationKey()).isHovered(), "Disabled red choice was not hovered");
+            capture(client, output, "25h-insufficient-reds-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
+            if (++ruleLanguage < RULE_LANGUAGES.length) {
+                selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
+                next(20);
+                return false;
+            }
+            selectRuleLanguage(client, originalLanguage);
+            client.getWindow().setWindowed(originalWidth, originalHeight);
+            client.options.guiScale().set(originalScale);
+            client.resizeDisplay();
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                var game = serverTable.participantGame(player);
+                var original = game.rules();
+                long decision = game.view(id).decision();
+                serverTable.configureRules(player, new TableRulesPayload(pos, game.tableId(), decision,
+                    original.with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
+                require(game.rules().equals(original) && game.view(id).decision() == decision,
+                    "Forged red selection bypassed physical stock checks");
+                var box = serverTable.equipment().boxes().getItem(0).copy();
+                var items = MahjongSupplies.contents(box);
+                for (int suit = 0; suit < 3; suit++) {
+                    int face = suit * 9 + 4;
+                    var normal = items.stream().filter(stack -> !stack.isEmpty() && MahjongSupplies.tile(stack).face() == face)
+                        .findFirst().orElseThrow();
+                    var red = normal.copyWithCount(suit == 1 ? 2 : 1);
+                    red.set(MahjongComponents.TILE, MahjongSupplies.tile(normal).engraved(face, true));
+                    items.set(34 + suit, red);
+                }
+                box.set(net.minecraft.core.component.DataComponents.CONTAINER,
+                    net.minecraft.world.item.component.ItemContainerContents.fromItems(items));
+                serverTable.equipment().boxes().setItem(0, box);
+                require(MahjongSupplies.tileCount(MahjongSupplies.contents(box)) == 140, "Surplus fixture count");
+            });
+            next(22);
+        } else if (stage == 22 && table.clientRedOptions() == 63 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
+            languageReload.join();
+            require(widget(client, RedFives.THREE.translationKey()).active, "Red stock change was not synchronized");
+            click(client, RedFives.FOUR.translationKey());
+            var label = Component.translatable("rules.mchjong.option.kuitan").getString();
+            var kuitan = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
+            client.screen.mouseClicked(kuitan.getX() + 5, kuitan.getY() + 5, 0);
+            capture(client, output, "25i-red-stock-options.png");
+            click(client, "rules.mchjong.apply");
+            next(23);
+        } else if (stage == 23 && client.screen instanceof TableScreen && view.rules().redFives() == RedFives.FOUR && ticks > 5) {
+            require(!view.rules().custom() && !view.rules().kuitan(), "Preset variants were classified as custom");
+            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "Surplus box cannot start play");
+            click(client, "rules.mchjong.title");
+            click(client, "rules.mchjong.mode.details");
+            click(client, "rules.mchjong.group.scoring");
+            next(25);
+        } else if (stage == 25 && ticks > 5) {
+            require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Rule details exposed numeric editors");
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, "25j-rule-details.png");
+            click(client, "rules.mchjong.mode.custom");
+            click(client, "rules.mchjong.group.points");
+            next(24);
+        } else if (stage == 24 && client.screen instanceof TableRulesScreen && ticks > 5) {
             var start = field(client, "rules.mchjong.option.starting_points");
             start.setValue("32101");
             client.screen.tick();
@@ -162,6 +258,10 @@ final class TableControlSmoke {
         return false;
     }
 
+    private void selectRuleLanguage(Minecraft client, String language) {
+        client.getLanguageManager().setSelected(language);
+        languageReload = client.reloadResourcePacks();
+    }
     private void next(int value) { stage = value; ticks = 0; }
     private static EditBox field(Minecraft client, String key) { return (EditBox) widget(client, key); }
     private static AbstractWidget widget(Minecraft client, String key) {
