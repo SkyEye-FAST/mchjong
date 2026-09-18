@@ -7,7 +7,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** A table-facing overhead camera; closing the controls restores the seated eye. */
 public final class TableCamera {
-    private static final double OVERHEAD_RISE = 2.4;
+    static final double OVERHEAD_RISE = 6;
 
     private TableCamera() {}
 
@@ -21,9 +21,10 @@ public final class TableCamera {
     }
 
     public static Vec3 position(SeatEntity seat) {
+        var window = Minecraft.getInstance().getWindow();
         return overhead()
             ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE,
-                .44, seat.seat()))
+                overheadOffset((double) window.getWidth() / window.getHeight(), window.getGuiScaledHeight()), seat.seat()))
             : TableSettings.get().cameraPosition(seat);
     }
 
@@ -32,14 +33,20 @@ public final class TableCamera {
         return overheadFov(aspectRatio, Minecraft.getInstance().getWindow().getGuiScaledHeight());
     }
 
-    private static double viewportRoom(int height) {
-        return Math.clamp((height - 240) / 160.0, 0, 1);
+    private static double overheadHalfSpan(double aspectRatio, int height) {
+        int width = Math.max(1, (int) Math.round(height * aspectRatio));
+        double availableHeight = Math.max(1, TableHand.top(width, height) - 8 - 56);
+        return TableGeometry.OUTER_HALF_WIDTH * Math.max(height / availableHeight, height / Math.max(1.0, width - 16));
+    }
+
+    static double overheadOffset(double aspectRatio, int height) {
+        int width = Math.max(1, (int) Math.round(height * aspectRatio));
+        double center = (56 + TableHand.top(width, height) - 8) / 2.0;
+        return (1 - 2 * center / height) * overheadHalfSpan(aspectRatio, height);
     }
 
     static double overheadFov(double aspectRatio, int height) {
-        double depth = OVERHEAD_RISE - (0.081 + TileMesh.HEIGHT / 2.0) * TableScene.TILE_SCALE;
-        // Larger viewports can zoom further without moving the near meld rail into the private hand.
-        double fill = .80 + .10 * viewportRoom(height);
-        return Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH / (depth * Math.min(fill, aspectRatio * .95))));
+        // Fit the complete table between the HUD and private hand. A higher eye reduces perspective distortion.
+        return Math.toDegrees(2 * Math.atan(overheadHalfSpan(aspectRatio, height) / OVERHEAD_RISE));
     }
 }

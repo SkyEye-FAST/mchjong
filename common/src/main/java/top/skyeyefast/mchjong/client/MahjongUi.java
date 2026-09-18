@@ -44,13 +44,18 @@ public final class MahjongUi {
     }
 
     public static void text(GuiGraphics g, Font font, Component message, int x, int y, int width, int color, boolean centered) {
+        text(g, font, message, x, y, width, color, centered, false);
+    }
+
+    public static void text(GuiGraphics g, Font font, Component message, int x, int y, int width, int color,
+                            boolean centered, boolean shadow) {
         String text = message.getString();
         int available = Math.max(0, width);
         if (font.width(text) > available) {
             String ellipsis = "…";
             text = available < font.width(ellipsis) ? "" : font.plainSubstrByWidth(text, available - font.width(ellipsis)) + ellipsis;
         }
-        g.drawString(font, text, centered ? x + (width - font.width(text)) / 2 : x, y, color, false);
+        g.drawString(font, text, centered ? x + (width - font.width(text)) / 2 : x, y, color, shadow);
     }
 
     public static void slot(GuiGraphics g, int x, int y, boolean locked) {
