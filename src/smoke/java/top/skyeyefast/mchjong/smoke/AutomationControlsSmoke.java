@@ -52,7 +52,7 @@ final class AutomationControlsSmoke {
         } else if (stage == 2 && ticks > 12) {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reflow to 320x240");
-            require(((TableScreen) client.screen).overhead(), "Small controls did not retain the overhead hand");
+            require(!((TableScreen) client.screen).immersive(), "Small controls bypassed the minimum immersive viewport");
             capture(client, output, "53", "expanded-small");
             next(3);
         } else if (stage == 3 && ticks > 2) {

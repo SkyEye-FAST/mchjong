@@ -6,13 +6,12 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Per-seat ownership and bot controls. Every lobby choice is a server-issued action. */
+/** Participant presence and ownership. Bot controls live on the room's seat cards. */
 public final class TableSeatsScreen extends Screen {
     private final TableScreen parent;
     private long revision = -1;
@@ -50,19 +49,11 @@ public final class TableSeatsScreen extends Screen {
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
-                BotDifficulty next = !player.bot() ? BotDifficulty.EASY : switch (state.difficulty()) {
-                    case EASY -> BotDifficulty.NORMAL;
-                    case NORMAL -> BotDifficulty.HARD;
-                    case HARD -> null;
-                };
                 label = Component.translatable(player.bot() ? state.difficulty().translationKey()
-                    : player.occupied() ? "room.mchjong.absent" : "room.mchjong.empty").append(" ›");
-                hint = Component.translatable("room.mchjong.bot_next", next == null ? Component.translatable("room.mchjong.empty")
-                    : Component.translatable(next.translationKey()));
-                int index = next == null ? find(view, Action.Type.REMOVE_BOT, List.of(seat))
-                    : find(view, Action.Type.SET_BOT, List.of(seat, next.ordinal()));
-                enabled = host && view.phase() == Game.Phase.LOBBY && index >= 0;
-                action = () -> parent.send(view, index);
+                    : player.occupied() ? "room.mchjong.absent" : "room.mchjong.empty");
+                hint = label;
+                enabled = false;
+                action = () -> {};
             }
             var button = MahjongButton.create(label, ignored -> action.run())
                 .bounds(left + span - 100, 42 + seat * 37, 100, 22).tooltip(Tooltip.create(hint)).build();

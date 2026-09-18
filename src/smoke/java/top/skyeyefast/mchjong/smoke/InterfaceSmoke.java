@@ -29,6 +29,7 @@ final class InterfaceSmoke {
     private int boxStage, boxTicks, settingsStage, settingsTicks, storageStage, storageTicks;
     private int windowWidth, windowHeight, guiScale, originalTiles;
     private ItemStack moved = ItemStack.EMPTY;
+    private boolean originalTeleport;
 
     boolean box(Minecraft client, Path output) {
         boxTicks++;
@@ -171,7 +172,12 @@ final class InterfaceSmoke {
             checkBounds(client);
             capture(client, output, "35-scope-" + (settingsStage - 11) + "-320x240.png");
             if (settingsStage == 11) click(client, "settings.mchjong.scope.world");
-            else if (settingsStage == 12) click(client, "settings.mchjong.scope.personal");
+            else if (settingsStage == 12) {
+                originalTeleport = table.clientRoom().invitationTeleport();
+                clickWorldTeleport(client, originalTeleport);
+                settingsStage = 15; settingsTicks = 0;
+                return false;
+            }
             else {
                 client.screen.onClose();
                 client.setScreen(new top.skyeyefast.mchjong.client.TableSeatsScreen(settingsParent));
@@ -179,6 +185,19 @@ final class InterfaceSmoke {
                 return false;
             }
             settingsStage++; settingsTicks = 0;
+        } else if (settingsStage == 15) {
+            require(settingsTicks < 100, "World UI change was not acknowledged by the server");
+            if (table.clientRoom().invitationTeleport() != originalTeleport && settingsTicks > 10) {
+                capture(client, output, "35-world-admin-edited-320x240.png");
+                clickWorldTeleport(client, !originalTeleport);
+                settingsStage = 16; settingsTicks = 0;
+            }
+        } else if (settingsStage == 16) {
+            require(settingsTicks < 100, "World UI could not restore the saved policy");
+            if (table.clientRoom().invitationTeleport() == originalTeleport && settingsTicks > 10) {
+                click(client, "settings.mchjong.scope.personal");
+                settingsStage = 13; settingsTicks = 0;
+            }
         } else if (settingsStage == 14 && settingsTicks > 10) {
             checkBounds(client);
             capture(client, output, "35-seats-320x240.png");
@@ -197,6 +216,15 @@ final class InterfaceSmoke {
         client.getWindow().setWindowed(windowWidth, windowHeight);
         client.options.guiScale().set(guiScale);
         client.resizeDisplay();
+    }
+
+    private static void clickWorldTeleport(Minecraft client, boolean enabled) {
+        String label = Component.translatable("settings.mchjong.toggle", Component.translatable("settings.mchjong.invitation_teleport"),
+            Component.translatable(enabled ? "options.on" : "options.off")).getString();
+        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+        require(button.active, "Administrator world setting is read-only");
+        client.screen.mouseClicked(button.getX() + 3, button.getY() + 3, 0);
     }
 
     private static AbstractWidget button(Minecraft client, String key) {

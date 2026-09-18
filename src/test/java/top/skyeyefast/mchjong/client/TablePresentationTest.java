@@ -7,6 +7,13 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TablePresentationTest {
+    @Test void immersiveRequiresEnoughLogicalPixelsForReadableSideRivers() {
+        assertFalse(TableScreen.supportsImmersive(320, 240));
+        assertFalse(TableScreen.supportsImmersive(479, 400));
+        assertFalse(TableScreen.supportsImmersive(640, 299));
+        assertTrue(TableScreen.supportsImmersive(480, 300));
+        assertTrue(TableScreen.supportsImmersive(640, 400));
+    }
     @Test void handPitchIsExactlyTheTileWidthWithoutChangingTheDrawGap() {
         assertEquals((double) TileMesh.WIDTH * TableScene.TILE_SCALE, TableScene.HAND_STEP);
         assertEquals(TableScene.RIVER_STEP, TableScene.HAND_STEP);
@@ -35,26 +42,42 @@ class TablePresentationTest {
         assertEquals(110, settings.cameraFov(110, 4.0 / 3));
     }
 
-    @Test void overheadFitsTheCompleteTableBetweenHudAndHand() {
-        for (int height : new int[] {240, 400, 600}) for (double aspect : new double[] {.75, 4.0 / 3, 16.0 / 10, 21.0 / 9}) {
-            int width = (int) Math.round(height * aspect);
-            double fov = TableCamera.overheadFov(aspect, height);
-            assertTrue(fov > 0 && fov < 90);
-            double scale = height / (2 * TableCamera.OVERHEAD_RISE * Math.tan(Math.toRadians(fov / 2)));
-            double center = height / 2.0 - TableCamera.overheadOffset(aspect, height) * scale;
-            double radius = TableGeometry.OUTER_HALF_WIDTH * scale;
-            assertTrue(center - radius >= 56 - 1e-6);
-            assertTrue(center + radius <= TableHand.top(width, height) - 8 + 1e-6);
-            assertTrue(width / 2.0 - radius >= 8 - 1e-6);
-            assertTrue(width / 2.0 + radius <= width - 8 + 1e-6);
+    @Test void immersiveSeatsFollowTheViewerAndSanmaLeavesNoEmptyOpponent() {
+        for (int players : new int[]{3, 4}) for (int viewer = 0; viewer < players; viewer++) {
+            assertEquals(0, TableBoard.side(viewer, viewer, players));
+            assertEquals(1, TableBoard.side((viewer + 1) % players, viewer, players));
+            assertEquals(3, TableBoard.side((viewer + players - 1) % players, viewer, players));
+            if (players == 4) assertEquals(2, TableBoard.side((viewer + 2) % players, viewer, players));
         }
-        assertTrue(TableCamera.overheadFov(4.0 / 3, 400) < TableCamera.overheadFov(4.0 / 3, 240));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
         assertEquals(List.of(TableSettings.VoiceSource.RESOURCE_PACK, TableSettings.VoiceSource.OFF),
             List.of(TableSettings.VoiceSource.values()));
         assertEquals(TableSettings.VoiceSource.RESOURCE_PACK, new TableSettings().voiceSource);
+    }
+
+    @Test void immersiveViewerCardStaysOutsideTheRiverAtBothViewportSizes() {
+        for (var rules : List.of(top.skyeyefast.mchjong.engine.RuleSet.TENHOU_4, top.skyeyefast.mchjong.engine.RuleSet.TENHOU_3)) {
+            var id = java.util.UUID.randomUUID();
+            var game = new top.skyeyefast.mchjong.engine.Game(java.util.UUID.randomUUID(), rules, 15);
+            assertTrue(game.join(id, "Viewer", 0));
+            var view = game.view(id);
+            for (int width : new int[]{480, 640}) {
+                int bottom = width == 480 ? 203 : 303;
+                var board = new TableBoard(view, 8, width - 8, 38, bottom, bottom);
+                var card = board.card(0);
+                var river = board.area(0);
+                assertTrue(card.right() < river.x(), "The local card must not cover its river");
+                for (int seat = 0; seat < rules.players(); seat++) {
+                    var area = board.area(seat);
+                    assertTrue(area.x() >= 8 && area.right() <= width - 8);
+                    assertTrue(area.y() >= 38 && area.bottom() <= bottom);
+                }
+                if (rules.players() == 4) assertTrue(board.area(2).height() > board.area(0).height(),
+                    "The upper sector must also accommodate the opponent's card and hand");
+            }
+        }
     }
 
     @Test void machineDigitsAreDistinctAndSupportNegativeScores() {

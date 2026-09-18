@@ -11,8 +11,13 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 final class TableHand {
     private final List<Integer> tiles;
     private final int drawn, left, y, tileWidth, tileHeight, gap, span;
+    private final List<top.skyeyefast.mchjong.engine.Meld> melds;
+    private final int right, owner;
 
-    TableHand(TableView.Seat player, int width, int height) {
+    TableHand(TableView.Seat player, int owner, int width, int height) {
+        this.owner = owner;
+        this.melds = player.melds();
+        right = width - 8;
         tiles = player.hand();
         drawn = player.drawn();
         tileWidth = tileWidth(width);
@@ -27,10 +32,6 @@ final class TableHand {
     int top() { return y - 7; }
 
     private static int tileWidth(int width) { return Math.max(1, Math.min(26, (width - 36) / 14)); }
-
-    static int top(int width, int height) {
-        return height - 27 - Math.round(tileWidth(width) * TileMesh.HEIGHT / TileMesh.WIDTH);
-    }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);
@@ -59,5 +60,15 @@ final class TableHand {
             TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
             if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
         }
+        int meldTileWidth = tileWidth;
+        while (meldTileWidth > 2 && meldWidth(meldTileWidth) > right - left - span - 8) meldTileWidth--;
+        int meldX = right - meldWidth(meldTileWidth);
+        int meldY = y + tileHeight - Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        for (var meld : melds) {
+            TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
+            meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
+        }
     }
+
+    private int meldWidth(int width) { return melds.stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, width)).sum(); }
 }

@@ -93,15 +93,26 @@ administrator-controlled policy per world save, across dimensions. Open hands
 reveals opponents only to seated participants, never spectators. World policy
 is transient in `Game`, independently of saved room rules and readiness.
 `RoomView` publishes room ownership and world capabilities separately from tile
-state. Ownership follows a UUID, not the lowest numbered human seat.
+state. The World settings UI uses the server-advertised administrator command
+tree to enable controls and submits the existing permission-checked commands;
+only synchronized table snapshots update the displayed policy values.
+Ownership follows a UUID, not the lowest numbered human seat.
 Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
-Both seated and overhead cameras remain in the Minecraft world. The interaction
-overlay projects the actual 3D table. In overhead mode, `TableHand` adds a bottom
-strip of the recipient's own synchronized hand, using the same tile identities,
-artwork and legal-action requests. `TableCamera` supplies the matching eye and
-FOV to world rendering and picking. Rendering is read-only and cannot advance play.
+The seated overlay projects the actual 3D table, with `TableSettings` supplying
+the matching eye and FOV to world rendering and picking. Immersive play uses an
+opaque GUI surface: `TableBoard` lays out recipient-safe hands, rivers and public
+melds in screen space, while `TableHand` supplies the private clickable hand and
+its meld rail. Neither world visibility nor camera orientation controls this
+layout. Guide anchors and input use GUI coordinates. Ordinary-table handling
+uses the existing server-issued action buttons; seated play retains physical
+gestures. Rendering is read-only and cannot advance play.
+
+`PlayerPortrait` draws Minecraft's cached player-list skins before names in table,
+room and settlement views. Missing player-list entries use the native default
+skin and practice bots use a distinct shared-palette robot. Portrait rendering
+does not add network requests or store skin data in engine snapshots.
 
 `TenpaiHints` caches structural waits per concealed hand, meld set and discard
 kind, separately from snapshot-based availability. `VisibleTiles` deduplicates

@@ -35,8 +35,8 @@ final class RoomPreparationSmoke {
         if (view == null || room == null) return false;
         if (!(client.screen instanceof TableScreen) || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
-            click(client, view.actions().stream().anyMatch(action -> action.type() == Action.Type.FILL_BOTS)
-                ? "action.mchjong.fill_bots" : "action.mchjong.begin_seating");
+            click(client, view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING)
+                ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "room.mchjong.start_bots");
         } else if (room.seating() == RoomSeating.Stage.DRAWING) {
             if (!capturedDrawing) {
                 AutomationControlsSmoke.checkBounds(client);

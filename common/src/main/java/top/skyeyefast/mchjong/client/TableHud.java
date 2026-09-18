@@ -22,12 +22,11 @@ final class TableHud {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, int width, TileFacePreset preset) {
+    void render(Font font, GuiGraphics graphics, TableView view, int width, TileFacePreset preset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
-        boolean compact = !lobby && TableCamera.overhead();
-        int headerWidth = Math.max(100, width - 208);
+        int headerWidth = Math.max(84, width - 224);
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
             .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
         if (view.openHands()) details = details.copy().append("\n").append(Component.translatable("ui.mchjong.open_hands"));
@@ -39,9 +38,14 @@ final class TableHud {
                 ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
         Component remaining = !lobby && settings.show(TableSettings.Information.REMAINING)
             ? Component.translatable("ui.mchjong.remaining", view.remaining()) : Component.empty();
+        var indicators = new ArrayList<Integer>();
+        if (!lobby && settings.show(TableSettings.Information.DORA)) for (int i = 0; i < 5; i++) {
+            int index = view.wall().size() - 5 - 2 * i;
+            if (index >= 0 && view.wall().get(index) >= 0) indicators.add(view.wall().get(index));
+        }
         if (!title.getString().isEmpty() || !remaining.getString().isEmpty()) {
             MahjongUi.panel(graphics, 8, 7, headerWidth, lobby ? 21 : 26);
-            text(font, graphics, title, 12, 10, headerWidth - 8, MahjongUi.TEXT);
+            text(font, graphics, title, 12, 10, headerWidth - 8 - (board == null ? 0 : indicators.size() * 10), MahjongUi.TEXT);
             text(font, graphics, remaining, 12, 22, headerWidth - 8, MahjongUi.MUTED);
             regions.add(new Region(8, 7, headerWidth, lobby ? 21 : 26, details));
         }
@@ -58,7 +62,12 @@ final class TableHud {
                 ? player.bot() ? Component.translatable("ui.mchjong.bot_short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
             Component hover = TableScreen.playerName(view, seat).copy();
-            if (settings.show(TableSettings.Information.WINDS)) { shortLine = wind.copy(); hover = hover.copy().append(" · ").append(wind); }
+            if (settings.show(TableSettings.Information.WINDS)) {
+                shortLine = board != null
+                    ? Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())] + ".short")
+                    : wind.copy();
+                hover = hover.copy().append(" · ").append(wind);
+            }
             if (settings.show(TableSettings.Information.POINTS)) {
                 shortLine = shortLine.copy().append(" " + player.points());
                 hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.points", player.points()));
@@ -67,7 +76,7 @@ final class TableHud {
                 long rank = 1 + view.seats().stream().filter(other -> other.points() > player.points()).count();
                 hover = hover.copy().append(" · ").append(Component.translatable("ui.mchjong.rank", rank));
             }
-            if (lobby) shortLine = Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready");
+            if (lobby) shortLine = wind.copy().append(" · ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
             if (settings.show(TableSettings.Information.STATUS)) {
                 if (seat == view.dealer()) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.dealer"));
                 if (seat == view.turn() && !lobby) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.current_turn"));
@@ -79,34 +88,45 @@ final class TableHud {
             if (settings.show(TableSettings.Information.MELDS)) for (var meld : player.melds()) hover = hover.copy().append("\n")
                 .append(Component.translatable("action.mchjong." + meld.type().name().toLowerCase(java.util.Locale.ROOT)));
             int x = 8 + seat * (cardWidth + 4);
-            int cardHeight = compact ? 14 : 24;
+            int cardHeight = 24;
+            if (board != null) {
+                var card = board.card(seat);
+                x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
+            }
             graphics.fill(x, top, x + cardWidth, top + cardHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
             boolean turn = !lobby && seat == view.turn() && settings.show(TableSettings.Information.TURN);
             if (turn || lobby && player.ready()) graphics.fill(x, top, x + 2, top + cardHeight, MahjongUi.ACCENT);
-            if (!compact) text(font, graphics, name, x + 5, top + 3, cardWidth - 10, MahjongUi.TEXT);
-            text(font, graphics, shortLine, x + 5, top + (compact ? 3 : 14), cardWidth - 10, turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
+            int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
+            text(font, graphics, name, x + 5 + inset, top + 3, cardWidth - 10 - inset, MahjongUi.TEXT);
+            text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10, turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
             regions.add(new Region(x, top, cardWidth, cardHeight, hover));
         }
         if (lobby) return;
-        if (settings.show(TableSettings.Information.DORA)) {
-            int x = 8;
-            int tileWidth = compact ? 8 : 10, tileY = compact ? 54 : 67;
-            for (int i = 0; i < 5; i++) {
-                int index = view.wall().size() - 5 - 2 * i;
-                if (index < 0 || view.wall().get(index) < 0) continue;
-                TileGui.tile(graphics, view.wall().get(index), x, tileY, tileWidth, false, false, false, preset);
+        if (!indicators.isEmpty()) {
+            int start = board == null ? 8 : headerWidth + 4 - indicators.size() * 10;
+            int x = start, tileWidth = board != null ? 8 : 10, tileY = board != null ? 9 : 67;
+            for (int tile : indicators) {
+                TileGui.tile(graphics, tile, x, tileY, tileWidth, false, false, false, preset);
                 x += tileWidth + 2;
             }
-            if (x > 8) regions.add(new Region(8, tileY, x - 8, compact ? 12 : 16, Component.translatable("ui.mchjong.result_indicators")));
+            regions.addFirst(new Region(start, tileY, x - start, board != null ? 12 : 16,
+                Component.translatable("ui.mchjong.result_indicators")));
         }
         if (view.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {
             Component focus = Component.translatable("ui.mchjong.focus");
             int span = Math.min(width / 2 - 8, font.width(focus) + 27);
             int x = width - 8 - span;
-            MahjongUi.panel(graphics, x, 67, span, 17);
-            text(font, graphics, focus, x + 4, 72, span - 22, MahjongUi.ACCENT);
-            TileGui.tile(graphics, view.focus().tile(), width - 23, 68, 9, false, false, false, preset);
-            regions.add(new Region(x, 67, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append(" · ").append(focus)));
+            int y = board == null ? 67 : 35;
+            if (board != null) {
+                var card = board.card(view.viewerSeat());
+                x = card.right() + 4;
+                y = card.y();
+                span = Math.min(span, Math.max(20, board.area(view.viewerSeat()).x() - x - 4));
+            }
+            MahjongUi.panel(graphics, x, y, span, 17);
+            if (span > 28) text(font, graphics, focus, x + 4, y + 5, span - 22, MahjongUi.ACCENT);
+            TileGui.tile(graphics, view.focus().tile(), x + span - 15, y + 1, 9, false, false, false, preset);
+            regions.add(new Region(x, y, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append(" · ").append(focus)));
         }
     }
 

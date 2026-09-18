@@ -52,7 +52,7 @@ final class TenpaiHintsSmoke {
         if (table.clientView() != fixture) throw new IllegalStateException("Hint fixture was replaced before capture");
         AutomationControlsSmoke.checkBounds(client);
         Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 2]
-            + (sample % 2 == 0 ? "-640x400-seated.png" : "-320x240-overhead-preview.png"), client.getMainRenderTarget(), ignored -> {});
+            + (sample % 2 == 0 ? "-640x400-seated.png" : "-480x300-immersive-preview.png"), client.getMainRenderTarget(), ignored -> {});
         if (++sample < 8) show(client, table);
         else {
             settings.convenienceHints = enabled; settings.animations = animations; settings.discardMode = discardMode;
@@ -71,8 +71,8 @@ final class TenpaiHintsSmoke {
 
     private void show(Minecraft client, MahjongTableBlockEntity table) {
         boolean preview = sample % 2 == 1;
-        client.getWindow().setWindowed(preview ? 960 : 1280, preview ? 720 : 800);
-        client.options.guiScale().set(preview ? 3 : 2); client.resizeDisplay();
+        client.getWindow().setWindowed(preview ? 960 : 1280, preview ? 600 : 800);
+        client.options.guiScale().set(2); client.resizeDisplay();
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());

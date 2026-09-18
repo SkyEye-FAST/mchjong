@@ -124,7 +124,7 @@ final class ManualTableSmoke {
             }
             case 17 -> {
                 if (!(client.screen instanceof TableScreen) || ticks < 10) return false;
-                click(client, "action.mchjong.fill_bots");
+                click(client, "room.mchjong.start_bots");
                 next(19);
             }
             case 19 -> {

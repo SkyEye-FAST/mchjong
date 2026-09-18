@@ -253,7 +253,7 @@ public final class TableClientSmoke {
                 }
                 capture(client, "01-lobby.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
-                    net.minecraft.network.chat.Component.translatable("action.mchjong.fill_bots").getString())) {
+                    net.minecraft.network.chat.Component.translatable("room.mchjong.start_bots").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     step = 4; entered = ticks;
                     return;
@@ -286,12 +286,20 @@ public final class TableClientSmoke {
                 }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-                client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 28, 0);
+                client.getSingleplayerServer().execute(() -> {
+                    var level = client.getSingleplayerServer().overworld();
+                    for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)
+                        level.setBlockAndUpdate(CENTER.offset(x, 3, z), Blocks.STONE.defaultBlockState());
+                });
+                client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 52, 0);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
-                require(((TableScreen) client.screen).overhead() && Math.abs(client.gameRenderer.getMainCamera().getXRot() - 90) < .01,
-                    "Overhead hand selection did not use the top-down camera");
-                capture(client, "03-overhead-discard-confirm.png");
+                require(((TableScreen) client.screen).immersive(), "Immersive hand selection was not enabled");
+                require(client.level.getBlockState(CENTER.above(3)).is(Blocks.STONE), "Occluding roof did not reach the client");
+                var seat = (top.skyeyefast.mchjong.world.SeatEntity) client.player.getVehicle();
+                require(client.gameRenderer.getMainCamera().getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
+                    "Immersive view moved the world camera");
+                capture(client, "03-immersive-discard-under-roof.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                     && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
@@ -304,9 +312,14 @@ public final class TableClientSmoke {
             } else if (step == 6 && ticks - entered > 20) {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
                 require(view.seats().get(view.viewerSeat()).river().size() == 1, "Discard confirmation did not reach the server");
-                capture(client, "04-overhead-river.png");
+                capture(client, "04-immersive-river-under-roof.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-                require(!((TableScreen) client.screen).overhead(), "Cannot return to the seated view");
+                require(!((TableScreen) client.screen).immersive(), "Cannot return to the seated view");
+                client.getSingleplayerServer().execute(() -> {
+                    var level = client.getSingleplayerServer().overworld();
+                    for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)
+                        level.setBlockAndUpdate(CENTER.offset(x, 3, z), Blocks.AIR.defaultBlockState());
+                });
                 client.screen.onClose();
                 client.player.setYRot(210); client.player.setXRot(35);
                 step = 7; entered = ticks;
@@ -364,7 +377,7 @@ public final class TableClientSmoke {
                 step = 27; entered = ticks;
             } else if (step == 27 && ticks - entered > 20) {
                 capture(client, "04-cushion-third-person.png");
-                Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, overhead rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, immersive rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
                 LOG.info("MCJHONG_SEATING_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {

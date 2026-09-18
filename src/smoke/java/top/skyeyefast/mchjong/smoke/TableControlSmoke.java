@@ -266,7 +266,7 @@ final class TableControlSmoke {
             String label = Component.translatable("ui.mchjong.open_hands").getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            require(!button.active, "A room control can change world hand visibility");
+            require(button.active, "Administrator cannot edit world hand visibility in the World tab");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, "25k-world-settings.png");
             client.screen.onClose();
@@ -300,7 +300,7 @@ final class TableControlSmoke {
             });
             next(6);
         } else if (stage == 6 && view.openHands()) {
-            click(client, "action.mchjong.fill_bots");
+            click(client, "room.mchjong.start_bots");
             next(28);
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);

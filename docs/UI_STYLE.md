@@ -78,17 +78,24 @@ the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
+Immersive play requires at least 480 x 300 logical GUI pixels so side rivers remain
+readable. At smaller sizes its button is disabled with a localized explanation,
+V cannot enter it, and resizing an immersive screen returns to the seated view.
 
 ## Table rules
 
-The settings hub has World, Room and Personal tabs. World-policy values remain
-visible but read-only, with a short administrator-only explanation. Room controls
+The settings hub has World, Room and Personal tabs. Administrators edit world policy
+in the World tab through permission-checked server commands; other players see
+read-only values with a short administrator-only explanation. Room controls
 and ownership transfer are paginated separately from local presentation options.
 
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
 who are absent, and keeps wind assignments separate from world-direction coordinates.
-Per-seat bot controls and ownership actions stay available throughout preparation;
+Per-seat bot controls live directly beneath the top seat cards throughout preparation;
+ownership actions remain in the participant screen. The centered brass primary
+button advances filling seats, the table-specific assignment, then readiness.
+Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
 
 The rule screen separates preset options, read-only rule details and custom
@@ -110,13 +117,20 @@ shows structural waits and unseen-copy counts, including exhausted waits at zero
 hovering or keyboard-selecting a legal discard previews the resulting waits.
 Counts combine red and ordinary fives and never claim to reveal the actual wall.
 In the seated view the rail sits below the header, leaving the physical hand clear.
-In the overhead view it sits above decisions, outside the expanded automation column.
+In the immersive view the hint popup uses the width below the toolbar and stays
+above decisions; it does not squeeze a long wait list into the action gutter.
 Closed settings persist locally and reset disables hints.
 
-The overhead camera looks straight down from an elevated eye to reduce perspective
-distortion. Its field of view and offset fit the complete table into the space
-between the top HUD and the independent private-hand strip, adapting to viewport
-size. World rendering and picking use the same camera transform.
+Immersive play uses an opaque screen-space surface, independent of world lighting,
+ceilings and camera orientation. Reflow opponents, rivers and melds into the available
+rectangle rather than projecting the physical square furniture. Put the viewer's
+interactive hand and melds along the bottom. Place immersive automation in a
+horizontal strip below the hand, with action buttons above it. Seated automation
+keeps its side column. Three-player layouts place both opponents at the sides.
+Use the same resource-pack tile faces and server-issued actions as seated play.
+Player names have a small skin portrait immediately before them; practice bots
+use a distinct robot portrait. Keep native font sizes and ellipsize long names,
+retaining the complete name in the card's hover details.
 
 ## Mahjong box
 
@@ -176,24 +190,26 @@ Native first-person picking uses that same eye position.
 The seated world FOV expands as needed for the near playing-surface corners and
 window aspect ratio, while preserving wider player FOV settings. It stays stable
 while freely looking around; table projection and picking use the rendered FOV.
-Minecraft controls third-person views. Camera sliders immediately re-aim at the
+Holding C narrows the rendered and picking FOV together. Right-drag moves the eye
+forward/back vertically and turns horizontally; Shift-right-drag changes pitch.
+Home restores position and orientation. Eye movement is limited to 0.8 blocks
+from the configured seating position. Minecraft controls third-person views. Camera sliders immediately re-aim at the
 table; saved personal adjustments remain adjustable, and Restore defaults applies
-the current elevated seating view. The top-bar view button or V switches to a
-seat-oriented, straight-down camera. `TableHand` displays only the recipient's
-own hand along the bottom, retaining the drawn-tile gap and normal selection,
-discard and riichi controls. Its left edge stays on a fourteen-tile rail so a
-short hand does not cover the right-corner melds. Action buttons stay above it. Closing the overlay
-restores the seated camera; third-person remains under Minecraft's control.
-In overhead mode the seat cards use a single-line wind/score summary, with names
-in their hover details. Keep the near meld rail above the private hand panel.
-The active overhead clock replaces the footer help line instead of covering melds.
+the current elevated seating view. The top-bar view button or V switches to the
+immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
+retaining the drawn-tile gap and normal selection, discard and riichi controls.
+Its left edge stays on a fourteen-tile rail, with exposed melds fitted to its right.
+Action buttons stay above it. Switching views preserves world camera orientation;
+closing the overlay reveals the seated world. Third-person remains under Minecraft's
+control. Seat cards retain names, wind and scores in both presentations.
+The active immersive clock replaces the footer help line instead of covering melds.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
 For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and
 `:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
 and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
-and overhead rivers with the hand and expanded automatic controls. They then
+and immersive rivers with the hand and expanded automatic controls. They then
 inspect the camera with controls closed and the third-person stool pose.
 Evidence goes to each loader's `build/smoke/seating-evidence`.
 
@@ -207,7 +223,7 @@ single-character labels, while expanded rows show full names on up to two lines.
 Filled/hollow indicators distinguish states alongside the shared selected surface.
 Tooltips and narration always contain the full option name and its on/off state.
 Keep a clear gutter between these controls and the action buttons, including at
-320 x 240 with the overhead hand visible. These preferences belong to the server's
+320 x 240 seated and 480 x 300 immersive. These preferences belong to the server's
 seated player and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
 text stay in the action-side gutter. Sorting starts enabled; the other options start
@@ -254,7 +270,7 @@ The shared smoke captures compact and expanded match controls in all four locale
 at 640 x 400 and 320 x 240. The live four-player match toggles each option once in
 each presentation, using both pointer and keyboard activation. A live three-player
 match verifies the additional north button and its server acknowledgements at
-320 x 240 with the overhead hand visible. Lobby controls are checked separately.
+320 x 240 seated. Immersive captures use 480 x 300 or larger. Lobby controls are checked separately.
 Native first-person screenshots cover a right-hand tile and point stick. Each
 table has one carried-deposit fixture.
 

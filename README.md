@@ -171,14 +171,21 @@ double-click, or select-and-confirm discards. Shift-click selects without
 discarding. Left/Right selects tiles and Enter confirms; R opens riichi selection
 and P passes a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
-overlay. Right-drag looks around in the seated view; Home centers it again.
-Use the top-bar view button or V to switch between the elevated seated view and
-the overhead view. The overhead view keeps your hand in a clickable strip along
-the bottom, with the same discard modes and keyboard controls. Closing the
-overlay returns to the seated view.
+overlay. Hold C to zoom in the seated view. Right-drag moves forward/back and turns;
+hold Shift while dragging to adjust pitch. Home restores the view.
+Use the top-bar view button or V to switch between the seated and immersive
+views. Immersive play fills the screen with a responsive mahjong layout: your
+clickable hand and melds along the bottom, opponents and their rivers around it.
+It requires at least 480 × 300 logical GUI pixels. Enlarge the window or reduce
+GUI scale to enable it; shrinking below this size returns to the seated view.
+It remains usable under ceilings and other world obstructions, with the same
+discard modes and keyboard controls. Closing the overlay reveals the world again.
+Ordinary-table handling actions are available as buttons in immersive view;
+E opens your point-stick drawer.
 
 The compact top bar shows points and essential table information; hover over a
-player card for detailed status. The concealed run stays centered, with a separate
+player card for detailed status. Player names have skin portraits; practice bots
+use a distinct robot portrait. The concealed run stays centered, with a separate
 drawn-tile slot. Melds extend left from your right corner at hand depth; the hand
 shifts left only when the actual tiles need room. The Camera settings include **Show discards on the table**.
 Hiding the rivers always keeps the remaining wall count visible, even when that
