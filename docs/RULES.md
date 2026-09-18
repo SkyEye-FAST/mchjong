@@ -4,8 +4,9 @@
 
 The lobby's Mahjong Soul, Tenhou, M.League, League A and WRC choices are presets.
 Open **Table rules** for three sections: **Preset options**, **Rule details** and
-**Custom rules**. Mahjong Soul and Tenhou allow open tanyao and no/three/four red
-fives within the named preset. Changing those options retains the preset label;
+**Custom rules**. Mahjong Soul and Tenhou allow open tanyao, no/three/four red
+fives, a one/two/four-yaku-han minimum and East-only or East–South matches within
+the named preset. The defaults are one han and East–South. Changing those options retains the preset label;
 changing other settings marks the rules as custom. Switching presets retains
 supported table options and loads the remaining defaults. Rule details show all
 current draft values, including enabled and disabled features, without editing.
@@ -28,6 +29,26 @@ choice with insufficient red fives is disabled and shows a shortage tooltip.
 The server rechecks stock when applying a proposal. These settings do not
 manufacture, recolor or remove stored tiles. Saves and
 native replays contain the entire validated rule snapshot, not just a preset ID.
+
+The minimum applies to every winning interpretation before selecting its payment.
+Dora, ura dora, red fives and extracted-north bonuses do not satisfy it; natural
+yakuman always qualify. Tenhou also excludes ippatsu from this minimum, as its
+official manual specifies for bonus awards. The custom scoring section exposes
+that distinction independently. A wait that cannot meet a higher minimum still
+counts for furiten and formal tenpai; riichi does not guarantee an eligible ron.
+
+East-only matches schedule one wind and East–South matches schedule two, using
+three hands per wind in sanma and four in four-player play. The existing dealer
+repeat and agari-yame rules apply at the selected last hand. When enabled,
+extension adds at most one further wind (South or West); dealer repeats retain
+priority over another player's reaching the target. Starting points, return
+points and placement bonuses do not change with match length.
+
+**End on bankruptcy** is editable in **Custom rules → Match flow**, and appears
+in the preset overview. Mahjong Soul and Tenhou enable it; M.League, League A and
+WRC disable it. The check is strictly below zero, after hand settlement: zero
+points remain playable and negative scores remain recorded. Changing this switch
+away from its preset default marks the rules as custom.
 
 ## Preset reference
 
@@ -95,7 +116,8 @@ independent of its return points.
 | Compound natural yakuman | Yes | Yes | Yes | Yes | Yes |
 | Double-wind pair | 4 fu | 4 fu | 2 fu | 2 fu | 2 fu |
 | Renhou | No | No | No | No | Alternative mangan |
-| Abortive draws / bankruptcy / extension / agari-yame | Yes | Yes | No | No | No |
+| Bankruptcy (strictly negative points) | Yes | Yes | No | No | No |
+| Abortive draws / extension / agari-yame | Yes | Yes | No | No | No |
 | Multiple ron | Yes | Yes; triple ron aborts | Head bump | Head bump | Head bump |
 
 WRC renhou is compared with the ordinary hand and the higher payment wins; it

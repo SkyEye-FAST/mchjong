@@ -29,8 +29,9 @@ public final class TenhouReplay {
         root.put("dan", Collections.nCopies(4, ""));
         root.put("rate", Collections.nCopies(4, 0));
         root.put("sx", Collections.nCopies(4, ""));
-        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + "南" + (match.rules().kuitan() ? "喰" : "")
-            + (match.redFives() == RedFives.NONE ? "" : "赤") + " · " + match.rules().name(),
+        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + (match.rules().matchLength() == 1 ? "東" : "南")
+            + (match.rules().kuitan() ? "喰" : "")
+            + (match.redFives() == RedFives.NONE ? "" : "赤") + " · " + match.rules().minHan() + "飜縛り · " + match.rules().name(),
             "aka51", match.rules().sanma() ? 0 : match.redFives().count(0),
             "aka52", match.redFives().count(1), "aka53", match.redFives().count(2)));
         root.put("log", match.hands().stream().map(hand -> hand(match, hand)).toList());

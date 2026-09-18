@@ -28,6 +28,7 @@ public final class TableRulesScreen extends Screen {
         String key() { return "rules.mchjong.mode." + name().toLowerCase(java.util.Locale.ROOT); }
     }
     private static final List<RuleOption> OVERVIEW = List.of(RuleOption.KUITAN, RuleOption.RED_FIVES,
+        RuleOption.MIN_HAN, RuleOption.MATCH_LENGTH, RuleOption.BANKRUPTCY,
         RuleOption.STARTING_POINTS, RuleOption.RETURN_POINTS, RuleOption.IPPATSU, RuleOption.URA_DORA,
         RuleOption.KAN_DORA, RuleOption.KAZOE_YAKUMAN, RuleOption.KIRIAGE_MANGAN, RuleOption.DOUBLE_YAKUMAN,
         RuleOption.HEAD_BUMP, RuleOption.UMA_1, RuleOption.UMA_2, RuleOption.UMA_3, RuleOption.UMA_4);
@@ -121,6 +122,7 @@ public final class TableRulesScreen extends Screen {
             if (!editable) {
                 Component value = option.toggle() ? Component.translatable(draft.enabled(option) ? "rules.mchjong.yes" : "rules.mchjong.no")
                     : option == RuleOption.RED_FIVES ? Component.translatable(draft.redFives().translationKey())
+                    : !option.choices().isEmpty() ? Component.translatable(option.translationKey() + "." + draft.get(option))
                     : Component.literal(Integer.toString(draft.get(option)));
                 labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), left, y + 6, span));
             } else if (option == RuleOption.RED_FIVES) {
@@ -136,6 +138,19 @@ public final class TableRulesScreen extends Screen {
                         .build().selected(draft.redFives() == reds));
                     redButtons.put(reds, choice);
                 }
+            } else if (!option.choices().isEmpty()) {
+                var choices = option.choices();
+                int caption = Math.min(92, span / 4), choiceWidth = (span - caption - (choices.size() - 1) * 4) / choices.size();
+                labels.add(new Label(label, left, y + 6, caption - 4));
+                for (int index = 0; index < choices.size(); index++) {
+                    int value = choices.get(index);
+                    var text = Component.translatable(option.translationKey() + "." + value);
+                    editors.add(addRenderableWidget(MahjongButton.create(text, ignored -> {
+                        draft = draft.with(option, value); rejected = false; init();
+                    }).bounds(left + caption + index * (choiceWidth + 4), y, choiceWidth, 20)
+                        .tooltip(Tooltip.create(Component.translatable("settings.mchjong.toggle", label, text)))
+                        .build().selected(draft.get(option) == value)));
+                }
             } else if (option.toggle()) {
                 var value = Component.translatable(draft.enabled(option) ? "rules.mchjong.yes" : "rules.mchjong.no");
                 var text = Component.translatable("settings.mchjong.toggle", label, value);
@@ -143,6 +158,8 @@ public final class TableRulesScreen extends Screen {
                     draft = draft.with(option, (draft.get(option) + 1) % (option.max() + 1));
                     rejected = false; init();
                 }).bounds(left, y, span, 20).tooltip(Tooltip.create(text)).build().selected(draft.enabled(option)));
+                if (option == RuleOption.BANKRUPTCY)
+                    toggle.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.bankruptcy_help")));
                 editors.add(toggle);
             } else {
                 labels.add(new Label(label, left, y + 6, span - 116));

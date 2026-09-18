@@ -149,7 +149,10 @@ object HandAnalyzer {
         // interpretation can beat 4-han 30-fu, so compare actual payments instead.
         val candidates = analysis.hand.patterns.flatMap {
             HoraHandPattern.build(it, agari, tsumo, self, round)
-        }.map { MahjongUtilsInterop.withPattern(baseline, it) }.filter { it.yaku.isNotEmpty() }.map { result ->
+        }.map { MahjongUtilsInterop.withPattern(baseline, it) }.filter {
+            val excludedIppatsu = if (!rules.ippatsuCountsTowardMinimum() && it.yaku.any { yaku -> yaku.name == "Ippatsu" }) 1 else 0
+            it.yaku.isNotEmpty() && (it.hasYakuman || it.han - dora - excludedIppatsu >= rules.minHan())
+        }.map { result ->
             // 0.7.7 omits 3-han 60-fu kiriage and applies the kazoe switch to natural
             // yakuman payments. Keep its yaku/fu analysis and correct the point-table inputs.
             val yakuman = if (result.hasYakuman) result.han / 13 else 0
