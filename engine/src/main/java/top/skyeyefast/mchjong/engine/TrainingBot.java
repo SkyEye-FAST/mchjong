@@ -13,26 +13,17 @@ final class TrainingBot {
     private final TableView view;
     private final TableView.Seat self;
     private final BotDifficulty difficulty;
-    private final int[] known = new int[34];
+    private final int[] known;
     private final Set<Integer> dora = new HashSet<>();
 
     private TrainingBot(TableView view, BotDifficulty difficulty) {
         this.view = view;
         this.self = view.seats().get(view.viewerSeat());
         this.difficulty = difficulty;
-        Set<Integer> visible = new HashSet<>(self.hand());
-        // Even when the administrator permits open hands, ignore opponents' concealed tiles.
-        for (var seat : view.seats()) {
-            seat.river().forEach(discard -> visible.add(discard.tile()));
-            seat.melds().forEach(meld -> visible.addAll(meld.tiles()));
-            visible.addAll(seat.norths());
-        }
+        known = VisibleTiles.counts(view);
         for (int tile : view.wall()) if (tile >= 0) {
-            visible.add(tile);
             dora.add(Tile.doraAfter(Tile.kind(tile), view.rules().sanma()));
         }
-        if (view.focus() != null) visible.add(view.focus().tile());
-        for (int tile : visible) if (tile >= 0) known[Tile.kind(tile)]++;
     }
 
     static int choose(TableView view, BotDifficulty difficulty) {

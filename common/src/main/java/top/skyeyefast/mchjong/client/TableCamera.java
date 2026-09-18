@@ -22,18 +22,24 @@ public final class TableCamera {
 
     public static Vec3 position(SeatEntity seat) {
         return overhead()
-            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE, .40, seat.seat()))
+            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE,
+                .44, seat.seat()))
             : TableSettings.get().cameraPosition(seat);
     }
 
     public static double fov(double requested, double aspectRatio) {
         if (!overhead()) return TableSettings.get().cameraFov(requested, aspectRatio);
-        return overheadFov(aspectRatio);
+        return overheadFov(aspectRatio, Minecraft.getInstance().getWindow().getGuiScaledHeight());
     }
 
-    static double overheadFov(double aspectRatio) {
+    private static double viewportRoom(int height) {
+        return Math.clamp((height - 240) / 160.0, 0, 1);
+    }
+
+    static double overheadFov(double aspectRatio, int height) {
         double depth = OVERHEAD_RISE - (0.081 + TileMesh.HEIGHT / 2.0) * TableScene.TILE_SCALE;
-        // Leave room for the compact HUD and private hand without covering the near meld rail.
-        return Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH / (depth * Math.min(.75, aspectRatio * .95))));
+        // Larger viewports can zoom further without moving the near meld rail into the private hand.
+        double fill = .80 + .10 * viewportRoom(height);
+        return Math.toDegrees(2 * Math.atan(TableGeometry.FELT_HALF_WIDTH / (depth * Math.min(fill, aspectRatio * .95))));
     }
 }

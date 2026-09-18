@@ -33,8 +33,10 @@ class TablePresentationTest {
         var settings = new TableSettings();
         assertTrue(settings.cameraFov(70, 4.0 / 3) > settings.cameraFov(70, 16.0 / 10));
         assertEquals(110, settings.cameraFov(110, 4.0 / 3));
-        assertTrue(TableCamera.overheadFov(4.0 / 3) > 0 && TableCamera.overheadFov(4.0 / 3) < 180);
-        assertEquals(TableCamera.overheadFov(4.0 / 3), TableCamera.overheadFov(16.0 / 10));
+        assertTrue(TableCamera.overheadFov(4.0 / 3, 240) > 0 && TableCamera.overheadFov(4.0 / 3, 240) < 180);
+        assertEquals(TableCamera.overheadFov(4.0 / 3, 240), TableCamera.overheadFov(16.0 / 10, 240));
+        assertTrue(TableCamera.overheadFov(4.0 / 3, 400) < TableCamera.overheadFov(4.0 / 3, 240));
+        assertEquals(TableCamera.overheadFov(4.0 / 3, 400), TableCamera.overheadFov(4.0 / 3, 600));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
