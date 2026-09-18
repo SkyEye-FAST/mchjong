@@ -252,6 +252,30 @@ class TableLayoutTest {
         }
     }
 
+    @Test void wallDrawsRunClockwiseWhileSeatsAdvanceCounterclockwiseAndTopTilesComeFirst() {
+        for (RuleSet rules : RuleSet.values()) {
+            var view = start(rules);
+            int size = view.wall().size();
+            for (int i = 0; i < size; i += 2) {
+                var first = TableScene.wallPiece(view, i, true);
+                var second = TableScene.wallPiece(view, i + 1, true);
+                var next = TableScene.wallPiece(view, (i + 2) % size, true);
+                assertEquals(first.position().x, second.position().x);
+                assertEquals(first.position().z, second.position().z);
+                assertEquals(TileMesh.DEPTH * TableScene.TILE_SCALE * (i < size - 14 ? 1 : -1),
+                    first.position().y - second.position().y, 1e-7);
+                if (first.seat() == next.seat()) {
+                    var step = top.skyeyefast.mchjong.world.TableGeometry.orient(-TableScene.WALL_STEP, 0, 0, first.seat());
+                    assertEquals(step.x, next.position().x - first.position().x, 1e-7);
+                    assertEquals(step.z, next.position().z - first.position().z, 1e-7);
+                } else assertEquals(Math.floorMod(first.seat() - 1, rules.players()), next.seat());
+            }
+        }
+        var from = top.skyeyefast.mchjong.world.TableGeometry.orient(0, 0, 1, 0);
+        var to = top.skyeyefast.mchjong.world.TableGeometry.orient(0, 0, 1, 1);
+        assertTrue(from.z * to.x - from.x * to.z > 0, "Seat 0 to 1 is counterclockwise viewed from above");
+    }
+
     @Test void normalRiverRowsTouchAndRiichiAtEveryColumnPreservesEdgeContact() {
         for (int riichi = 0; riichi < 12; riichi++) {
             var discards = new ArrayList<Discard>();

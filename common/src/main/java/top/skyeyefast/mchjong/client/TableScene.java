@@ -8,6 +8,7 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** One geometric description drives both the 3D meshes and the interaction anchors. */
@@ -39,7 +40,7 @@ public final class TableScene {
             || view.phase() == Game.Phase.BUILD_WALL)) {
             int size = view.rules().sanma() ? 108 : 136;
             for (int index = 0; index < size; index++) {
-                int side = ((index + view.wallBreak()) % size) / (size / view.rules().players());
+                int side = WallLayout.side(index, view.wallBreak(), size, view.rules().players());
                 if ((view.handling().builtWalls() & 1 << side) == 0) result.add(loosePiece(view, index, side));
             }
         }
@@ -141,16 +142,18 @@ public final class TableScene {
     public static Piece wallPiece(TableView view, int index, boolean complete) {
         int size = view.wall().size();
         int stacksPerSide = size / (view.rules().sanma() ? 6 : 8);
-        int display = (index + view.wallBreak()) % size;
-        int seat = display / 2 / stacksPerSide;
-        int column = display / 2 % stacksPerSide;
+        int stack = WallLayout.stack(index, view.wallBreak(), size);
+        int seat = stack / stacksPerSide;
+        int column = stack % stacksPerSide;
         int tile = view.wall().get(index);
         int mate = view.wall().get(index ^ 1);
         if (complete) {
             if (tile == Tile.ABSENT) tile = Tile.HIDDEN;
             if (mate == Tile.ABSENT) mate = Tile.HIDDEN;
         }
-        boolean upper = mate != Tile.ABSENT && (tile >= 0 || mate < 0 && index % 2 == 0);
+        // Live draws advance from the front; replacements and indicators count from the back.
+        // Visibility must not change layers (in particular when both dora and ura are shown).
+        boolean upper = mate != Tile.ABSENT && index % 2 == (index < size - 14 ? 0 : 1);
         return piece(tile, seat, Area.WALL, index, (column - (stacksPerSide - 1) / 2.0) * WALL_STEP - 0.08,
             TableGeometry.FELT_Y + (FLAT_CENTER + (upper ? TileMesh.DEPTH : 0)) * TILE_SCALE, WALL_Z, 0, true, tile < 0);
     }

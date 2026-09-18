@@ -89,6 +89,13 @@ the gesture. Keyboard focus is anchored to the same physical source. Collected
 tiles turn face down toward the center as each participant acknowledges the
 settlement. Rendering and drag previews remain read-only.
 
+`WallLayout` maps logical draw indices to clockwise physical stacks, shared by
+manual wall ownership, rendering, picking and animation. Players advance in the
+opposite, counterclockwise seat order. Live draws take the upper tile before the
+lower; the dead wall is indexed from its opposite end. Revealing dora or ura
+does not change their physical layers. This follows the deal in the
+[EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).
+
 `TableResults` is a separate, narrated single-screen receipt widget. It uses compact
 hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
 winners have a mouse/keyboard selector. It displays server-authored deltas and final scores without recalculating settlement or

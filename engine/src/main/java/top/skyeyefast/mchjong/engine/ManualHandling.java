@@ -74,9 +74,8 @@ final class ManualHandling {
     List<Integer> wallView(Game game, boolean ura) {
         var view = game.wall.publicTiles(ura);
         if (game.phase == Game.Phase.BUILD_WALL || game.phase == Game.Phase.DEAL) {
-            int sideSize = view.size() / game.rules.players();
             for (int i = 0; i < view.size(); i++) {
-                int side = (i + game.wall.breakOffset) % view.size() / sideSize;
+                int side = WallLayout.side(i, game.wall.breakOffset, view.size(), game.rules.players());
                 if (game.phase == Game.Phase.BUILD_WALL && (builtWalls & 1 << side) == 0) view.set(i, Tile.ABSENT);
                 else if (view.get(i) >= 0) view.set(i, Tile.HIDDEN);
             }
