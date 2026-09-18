@@ -8,12 +8,14 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import org.lwjgl.opengl.GL11;
 import top.skyeyefast.mchjong.client.TileMesh;
+import top.skyeyefast.mchjong.client.FurnitureMesh;
 
 /** Checks resolved resources and the texture sampling state after real world rendering. */
 final class TileResourceSmoke {
     private static byte[] originalAtlas;
     private static byte[] originalBack;
     private static byte[] originalGlyphs;
+    private static byte[] originalSticks;
     private static final java.util.Map<ResourceLocation, byte[]> originalFurniture = new java.util.HashMap<>();
     private TileResourceSmoke() {}
 
@@ -41,17 +43,24 @@ final class TileResourceSmoke {
         byte[] atlasBytes;
         byte[] backBytes;
         byte[] glyphBytes;
+        byte[] stickBytes;
         try (var stream = client.getResourceManager().open(TileMesh.ATLAS)) { atlasBytes = stream.readAllBytes(); }
         try (var stream = client.getResourceManager().open(TileMesh.BACK)) { backBytes = stream.readAllBytes(); }
         try (var stream = client.getResourceManager().open(TileMesh.GLYPHS)) { glyphBytes = stream.readAllBytes(); }
+        try (var stream = client.getResourceManager().open(FurnitureMesh.STICK_TEXTURE)) { stickBytes = stream.readAllBytes(); }
         if (originalAtlas == null) {
             originalAtlas = atlasBytes;
             originalBack = backBytes;
             originalGlyphs = glyphBytes;
+            originalSticks = stickBytes;
         }
         require(Arrays.equals(originalAtlas, atlasBytes), "Back selection changed the face atlas");
         require(Arrays.equals(originalBack, backBytes), "Back bytes changed after reload");
         require(Arrays.equals(originalGlyphs, glyphBytes), "Glyph bytes changed after reload");
+        require(Arrays.equals(originalSticks, stickBytes), "Point-stick bytes changed after reload");
+        try (var sticks = NativeImage.read(new ByteArrayInputStream(stickBytes))) {
+            require(sticks.getWidth() == 384 && sticks.getHeight() == 160, "Point-stick atlas dimensions changed");
+        }
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
             require(atlas.getWidth() == 2048 && atlas.getHeight() == 4096, "High-resolution atlas did not reach the client");
             require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_WIDTH == 2048 && TileMesh.ATLAS_HEIGHT == 4096,
@@ -73,7 +82,7 @@ final class TileResourceSmoke {
                 printed |= (glyphs.getPixelRGBA(x, y) >>> 24) > 0;
             require(printed, "First tile lost its printed glyph");
         }
-        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS}) {
+        for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS, FurnitureMesh.STICK_TEXTURE}) {
             client.getTextureManager().getTexture(texture).bind();
             require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_LINEAR,
                 "World renderer disabled linear magnification for " + texture);

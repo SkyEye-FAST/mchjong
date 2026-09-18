@@ -29,6 +29,8 @@ public final class GenerateAssets {
         }
         for (var texture : TileMaterialArtwork.textures().entrySet())
             png("tile_material/" + texture.getKey(), texture.getValue());
+        png("point_sticks", PointStickArtwork.texture());
+        text("assets/mchjong/textures/point_sticks.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         models();
     }
 

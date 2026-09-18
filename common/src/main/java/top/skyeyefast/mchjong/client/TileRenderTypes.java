@@ -9,6 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 public final class TileRenderTypes extends RenderType {
     public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.GLYPHS);
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
+    public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
         new java.util.EnumMap<>(top.skyeyefast.mchjong.item.TileMaterial.class);
     static {

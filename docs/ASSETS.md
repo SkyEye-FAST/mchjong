@@ -110,10 +110,15 @@ buffers for each tile.
 
 ## Table and other resources
 
-Point-stick bodies use ivory for blank and 100-point sticks, light blue for
-1,000 points, yellow for 5,000 points and pink-red for 10,000 points. Contrasting
-denomination marks remain visible on their printed faces. `FurnitureMesh.stick`
-supplies the same colored geometry to inventory, held-item and table renders.
+`assets/mchjong/textures/point_sticks.png` is a 384 by 160 atlas of five 32-pixel
+strips: blank ivory, ivory with eight gray dots (100), blue with one white dot
+(1,000), yellow with five white dots (5,000), and red with nine white dots
+(10,000). Round markings, a subtle recessed panel and molded edge highlights
+follow the colored physical-stick style. `PointStickArtwork` generates the atlas
+deterministically. `FurnitureMesh.stick` uses it for both printed faces and the
+unmarked sides in inventory, held-item and table renders. Half-pixel UV insets
+and linear filtering keep the strips separate. Resource packs can replace the
+atlas, including body colors, without changing the existing denominations.
 
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and

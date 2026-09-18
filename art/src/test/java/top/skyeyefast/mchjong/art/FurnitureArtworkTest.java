@@ -104,6 +104,37 @@ class FurnitureArtworkTest {
         }
     }
 
+    @Test void pointStickStripsHaveTheReferenceColorsAndSeparateRoundMarks() throws Exception {
+        var image = ImageIO.read(textures.getParent().resolve("point_sticks.png").toFile());
+        assertEquals(384, image.getWidth());
+        assertEquals(160, image.getHeight());
+        int[] colors = {0xf4f4ef, 0xf4f4ef, 0x007cbe, 0xefc400, 0xd81427};
+        int[] dots = {0, 8, 1, 5, 9};
+        for (int row = 0; row < 5; row++) {
+            assertEquals(0xff000000 | colors[row], image.getRGB(0, row * 32 + 16));
+            int ink = 0xff000000 | (row == 1 ? 0xb5bbba : 0xe9eeed);
+            var pixels = new HashSet<Integer>();
+            for (int y = row * 32; y < (row + 1) * 32; y++) for (int x = 0; x < 384; x++) {
+                assertEquals(255, image.getRGB(x, y) >>> 24);
+                if (image.getRGB(x, y) == ink) pixels.add(y * 384 + x);
+            }
+            int components = 0;
+            var pending = new java.util.ArrayDeque<Integer>();
+            while (!pixels.isEmpty()) {
+                int first = pixels.iterator().next();
+                pixels.remove(first);
+                pending.add(first);
+                components++;
+                while (!pending.isEmpty()) {
+                    int pixel = pending.remove();
+                    for (int adjacent : new int[]{pixel - 1, pixel + 1, pixel - 384, pixel + 384})
+                        if (pixels.remove(adjacent)) pending.add(adjacent);
+                }
+            }
+            assertEquals(dots[row], components, "Separate printed dots in strip " + row);
+        }
+    }
+
     @Test void furnitureDoesNotReferenceVanillaTextureSurrogates() throws Exception {
         Path root = Path.of(System.getProperty("mchjong.sourceRoot"));
         String renderer = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/client/FurnitureMesh.java"));

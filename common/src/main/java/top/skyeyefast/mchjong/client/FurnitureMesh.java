@@ -1,9 +1,11 @@
 package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.item.FurnitureWood;
@@ -14,6 +16,7 @@ public final class FurnitureMesh {
     public static final float STICK_HALF_LENGTH = .35f;
     public static final float STICK_HALF_WIDTH = .03f;
     public static final float STICK_HEIGHT = .025f;
+    public static final ResourceLocation STICK_TEXTURE = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/point_sticks.png");
     private static final int WHITE = 0xffffffff;
     private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
@@ -164,22 +167,35 @@ public final class FurnitureMesh {
     }
 
     public static void stick(PoseStack pose, MultiBufferSource buffers, int light, int points) {
-        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
-        int body = switch (points) {
-            case 1000 -> 0xff80c5e8;
-            case 5000 -> 0xfff3d76b;
-            case 10000 -> 0xffee8d98;
-            default -> 0xffeee6d4;
+        int row = switch (points) {
+            case 0 -> 0;
+            case 100 -> 1;
+            case 1000 -> 2;
+            case 5000 -> 3;
+            case 10000 -> 4;
+            default -> throw new IllegalArgumentException("Unknown point-stick denomination: " + points);
         };
-        TileMesh.box(pose, vertices, -STICK_HALF_LENGTH, 0, -STICK_HALF_WIDTH,
-            STICK_HALF_LENGTH, STICK_HEIGHT, STICK_HALF_WIDTH, body, light);
-        if (points == 0) return;
-        int count = points == 100 ? 6 : points == 1000 ? 1 : points == 5000 ? 5 : 2;
-        int color = points == 1000 ? 0xffa52b35 : points == 5000 ? 0xff315bb8 : 0xff252525;
-        for (int i = 0; i < count; i++) {
-            float x = (i - (count - 1) / 2f) * .07f;
-            TileMesh.box(pose, vertices, x - .012f, STICK_HEIGHT, -.012f,
-                x + .012f, STICK_HEIGHT + .001f, .012f, color, light);
+        var out = buffers.getBuffer(TileRenderTypes.STICKS);
+        float x = STICK_HALF_LENGTH, z = STICK_HALF_WIDTH, y = STICK_HEIGHT;
+        stickFace(pose, out, light, row, 0, 1, 0, -x,y,z, x,y,z, x,y,-z, -x,y,-z);
+        stickFace(pose, out, light, row, 0,-1, 0, -x,0,-z, x,0,-z, x,0,z, -x,0,z);
+        stickFace(pose, out, light, row, 0, 0, 1, -x,0,z, x,0,z, x,y,z, -x,y,z);
+        stickFace(pose, out, light, row, 0, 0,-1, x,0,-z, -x,0,-z, -x,y,-z, x,y,-z);
+        stickFace(pose, out, light, row, 1, 0, 0, x,0,z, x,0,-z, x,y,-z, x,y,z);
+        stickFace(pose, out, light, row,-1, 0, 0, -x,0,-z, -x,0,z, -x,y,z, -x,y,-z);
+    }
+
+    private static void stickFace(PoseStack pose, VertexConsumer out, int light, int row,
+                                  float nx, float ny, float nz, float... corners) {
+        float u0 = .5f / 384, u1 = 1 - u0;
+        float v0 = (row * 32 + .5f) / 160, v1 = ((row + 1) * 32 - .5f) / 160;
+        for (int i = 0; i < 4; i++) {
+            float x = corners[3 * i], y = corners[3 * i + 1], z = corners[3 * i + 2];
+            // Both broad faces are printed; side faces sample the unmarked end of the same strip.
+            float u = ny == 0 ? u0 : u0 + (x + STICK_HALF_LENGTH) / (2 * STICK_HALF_LENGTH) * (u1 - u0);
+            float v = ny == 0 ? (v0 + v1) / 2 : v0 + (z + STICK_HALF_WIDTH) / (2 * STICK_HALF_WIDTH) * (v1 - v0);
+            out.addVertex(pose.last(), x, y, z).setColor(WHITE).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), nx, ny, nz);
         }
     }
 
