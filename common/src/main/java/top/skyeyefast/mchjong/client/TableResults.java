@@ -74,7 +74,7 @@ public final class TableResults extends AbstractWidget {
                 for (int i = 0; i < view.wins().size(); i++) {
                     int tabX = x + 10 + i * tabWidth;
                     graphics.fill(tabX, top - 2, tabX + tabWidth - 3, top + 12, i == winner ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                    line(graphics, TableScreen.playerName(view, view.wins().get(i).seat()), tabX + 4, top + 1, tabWidth - 10,
+                    name(graphics, view.wins().get(i).seat(), TableScreen.playerName(view, view.wins().get(i).seat()), tabX + 4, top + 1, tabWidth - 10,
                         i == winner ? GOLD : MUTED);
                 }
                 top += 18;
@@ -110,7 +110,7 @@ public final class TableResults extends AbstractWidget {
         Component score = win.score().yakuman() > 0 ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
             : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
         boolean named = view.wins().size() == 1;
-        if (named) text(graphics, TableScreen.playerName(view, win.seat()), 0, 0, span, GOLD);
+        if (named) name(graphics, win.seat(), TableScreen.playerName(view, win.seat()), 0, 0, span, GOLD);
         text(graphics, score.copy().append(" · ").append(source), 0, named ? 12 : 0, span, MUTED);
         int y = named ? 28 : 16;
         if (win.tile() >= 0 && player.exposed()) {
@@ -185,7 +185,7 @@ public final class TableResults extends AbstractWidget {
             int cx = x + seat % columns * cardWidth, cy = y + seat / columns * cardHeight;
             Component status = Component.translatable(view.result().equals("exhaustive")
                 ? player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten" : "ui.mchjong.no_winner");
-            line(graphics, TableScreen.playerName(view, seat), cx, cy, cardWidth - 8, TEXT);
+            name(graphics, seat, TableScreen.playerName(view, seat), cx, cy, cardWidth - 8, TEXT);
             line(graphics, status, cx, cy + 11, cardWidth - 8, player.exposed() ? GOLD : MUTED);
             if (player.exposed()) {
                 int tileWidth = Math.max(4, Math.min(14, Math.min((cardWidth - 8) / Math.max(1, player.hand().size()) - 1, (cardHeight - 27) * 2 / 3)));
@@ -218,7 +218,7 @@ public final class TableResults extends AbstractWidget {
             Component name = TableScreen.playerName(view, seat);
             if (standings && seat < view.finalRanks().size()) name = Component.literal(view.finalRanks().get(seat) + ". ").append(name);
             int textY = cy + Math.max(2, (rowHeight - 9) / 2);
-            line(graphics, name, x + 4, textY, ends[0] - 8, TEXT);
+            name(graphics, seat, name, x + 4, textY, ends[0] - 8, TEXT);
             int points = displayedPoints(seat);
             List<String> values = standings ? List.of(Integer.toString(player.points()),
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
@@ -248,7 +248,7 @@ public final class TableResults extends AbstractWidget {
             Component name = TableScreen.playerName(view, seat);
             if (page == Page.MATCH && seat < view.finalRanks().size())
                 name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat)).append(" · ").append(name);
-            line(graphics, name, cx + 4, cy + 3, cardWidth - 11, TEXT);
+            name(graphics, seat, name, cx + 4, cy + 3, cardWidth - 11, TEXT);
             String amount = horizontal ? Integer.toString(points) : player.points() - delta + " → " + points;
             text(graphics, Component.literal(amount), cx + 4, cy + 14, cardWidth - 11, TEXT);
             Component change = page == Page.MATCH && seat < view.finalScores().size()
@@ -258,6 +258,11 @@ public final class TableResults extends AbstractWidget {
             hits.add(new Hit(cx, cy, cardWidth - 3, cardHeight - 3, name.copy().append(" · ")
                 .append(Component.literal((player.points() - delta) + " → " + player.points() + " (" + String.format(Locale.ROOT, "%+d", delta) + ")"))));
         }
+    }
+
+    private void name(GuiGraphics graphics, int seat, Component name, int x, int y, int span, int color) {
+        int inset = PlayerPortrait.draw(graphics, view.seats().get(seat), x, y - 1, 10);
+        line(graphics, name, x + inset, y, span - inset, color);
     }
 
     private void text(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
