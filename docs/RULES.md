@@ -94,8 +94,10 @@ M.League accepts three reds only; A and WRC accept no reds only. In sanma the
 physical box remains a full set, while 2m through 8m stay outside the live game;
 the three/four-red box therefore supplies two/three playable red fives.
 
-Printing blank tiles produces the no-red set. One vanilla red dye crafts three
-red dora dyes; one red dora dye plus an ordinary five creates its red version.
+Printing blank tiles or reprinting a complete set restores three reds, one per suit.
+One vanilla red dye crafts four red dora dyes; one red dora dye plus an ordinary
+five creates its red version. One black dye crafts four undo dyes; one undo dye
+plus a red five restores its ordinary face while retaining its other components.
 The first compatible complete box supplies the table. Changing the rule preset
 rechecks both stored boxes before Ready or Practice is offered.
 

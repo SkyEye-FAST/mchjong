@@ -38,6 +38,7 @@ of the finite case examples.
 | Point stick, blank or marked | `mchjong:point_stick` | Item |
 | Mahjong dye | `mchjong:mahjong_dye` | Item, stacks to 64 |
 | Red dora dye | `mchjong:red_dora_dye` | Item, stacks to 64 |
+| Undo dye | `mchjong:undo_dye` | Item, stacks to 64 |
 | Creative mahjong dye | `mchjong:creative_mahjong_dye` | Creative-only item, stacks to 1 |
 | Table occupancy cell | `mchjong:table_space` | Internal block, no item or recipe |
 
@@ -110,26 +111,33 @@ through the creative catalogue, not survival crafting or loot.
 
 Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
 Insert mahjong dye into the dedicated dye slot and select **Apply faces**.
-The 136-tile set has four ordinary copies of each face; 144 additionally includes
-one of each of the eight flowers. These sets occupy 34 and 42 stacks respectively.
+The 136-tile set has four copies of each face, including one red five per suit;
+144 additionally includes one of each of the eight flowers. These sets occupy
+37 and 45 stacks respectively.
 One ordinary dye is consumed per successful
 operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
-blanks, invalid selections and unchanged presets do not consume anything.
+blanks, invalid selections and already-matching three-red sets do not consume anything.
 
 Choose **Kansai** or **Kanto** in the box. Both designs are built into the mod;
 the selection applies to inventory items, the world table, overhead hands,
-action previews and settlement. Reprinting an existing complete set changes
-only its face preset, retaining face identities and red fives. Tile-back
+action previews and settlement. Reprinting an existing complete set applies
+the face preset and restores the default three red fives, including when the
+selected face preset is already in use. Other tile components are preserved. Tile-back
 recoloring remains the separate vanilla-grid dye recipe.
 
-One vanilla red dye crafts **three red dora dyes**. Combine one red dora dye with
+One vanilla red dye crafts **four red dora dyes**. Combine one red dora dye with
 one ordinary 5m, 5p or 5s to make the corresponding red five. Material, back color,
 face preset and other tile components stay unchanged. Replace the ordinary fives
 in the box with those red copies: one of each makes three reds; one red 5m, two
 red 5p and one red 5s make four reds. A complete set still contains four copies of
 every face. Mahjong Soul and Tenhou accept no-red, three-red and four-red sets;
 M.League requires three reds, while League A and WRC require no reds.
+
+One vanilla black dye crafts **four undo dyes**. Combine one undo dye with one
+red five to restore its ordinary five, preserving its material, back color,
+face preset, custom name and other components. This recipe consumes one tile
+and one undo dye per craft, independently of the box's face-printing operation.
 
 One to eight unmarked point sticks, each in its own crafting slot, plus one
 marking material produce the same number of marked sticks:

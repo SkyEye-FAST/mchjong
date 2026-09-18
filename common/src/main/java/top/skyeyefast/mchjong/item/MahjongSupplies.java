@@ -92,24 +92,60 @@ public final class MahjongSupplies {
             for (int i = 0; i < TILE_SLOTS; i++) output.set(i, ItemStack.EMPTY);
             int slot = 0;
             for (int face = 0; face < 34; face++) {
-                output.set(slot++, printed(template, face, false, 4, preset));
+                boolean five = face == 4 || face == 13 || face == 22;
+                output.set(slot++, printed(template, face, false, five ? 3 : 4, preset));
+                if (five) output.set(slot++, printed(template, face, true, 1, preset));
             }
             if (total == SET_SIZE + TileData.FLOWER_COUNT)
                 for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
                     output.set(slot++, printed(template, TileData.FIRST_FLOWER + flower, false, 1, preset));
         } else {
-            if (tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++)
                 if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
-            if (deck(output) == null) return List.of();
+            var deck = deck(output);
+            if (deck == null || deck.redFives() == RedFives.THREE
+                && tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
             int[] flowers = new int[TileData.FLOWER_COUNT];
             for (var stack : tiles) {
                 if (tile(stack).material() != tile(template).material() || color(stack) != color(template)) return List.of();
                 if (tile(stack).flower()) flowers[tile(stack).face() - TileData.FIRST_FLOWER] += stack.getCount();
             }
             for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
+            for (int face : new int[]{4, 13, 22}) {
+                int reds = output.subList(0, TILE_SLOTS).stream()
+                    .filter(stack -> !stack.isEmpty() && tile(stack).face() == face && tile(stack).red())
+                    .mapToInt(ItemStack::getCount).sum();
+                int remaining = Math.abs(1 - reds);
+                boolean makeRed = reds == 0;
+                for (int i = 0; i < TILE_SLOTS && remaining > 0; i++) {
+                    var stack = output.get(i);
+                    if (stack.isEmpty() || tile(stack).face() != face || tile(stack).red() == makeRed) continue;
+                    int count = Math.min(remaining, stack.getCount());
+                    var converted = printed(stack, face, makeRed, count, preset);
+                    stack.shrink(count);
+                    if (!insertTile(output, converted)) return List.of();
+                    remaining -= count;
+                }
+                if (remaining != 0) return List.of();
+            }
         }
         return List.copyOf(output);
+    }
+
+    private static boolean insertTile(List<ItemStack> output, ItemStack tile) {
+        for (int i = 0; i < TILE_SLOTS; i++) {
+            var stack = output.get(i);
+            if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, tile)
+                && stack.getCount() + tile.getCount() <= stack.getMaxStackSize()) {
+                stack.grow(tile.getCount());
+                return true;
+            }
+        }
+        for (int i = 0; i < TILE_SLOTS; i++) if (output.get(i).isEmpty()) {
+            output.set(i, tile);
+            return true;
+        }
+        return false;
     }
 
     public static TileFacePreset facePreset(ItemStack stack) {

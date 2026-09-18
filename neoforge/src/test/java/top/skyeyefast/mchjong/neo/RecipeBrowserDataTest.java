@@ -24,7 +24,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RecipeBrowserDataTest {
     @Test void componentIdentityIsImmutableAndKeepsAllRecipeRelevantDifferences(MinecraftServer server) {
         var keys = MahjongCatalog.entries().stream().map(SupplySubtype::of).toList();
-        assertEquals(15, new HashSet<>(keys).size());
+        assertEquals(16, new HashSet<>(keys).size());
         var blank = new ItemStack(MahjongContent.TILE_ITEM);
         assertEquals(SupplySubtype.of(blank), SupplySubtype.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 1)));
         var named = blank.copy();

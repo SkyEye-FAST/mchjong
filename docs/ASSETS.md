@@ -55,7 +55,7 @@ and magnification filters after rendering, including after resource-pack reloads
 ## Mahjong dye items
 
 `MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at
-`assets/mchjong/textures/item/mahjong_dye.png`, `creative_mahjong_dye.png` and `red_dora_dye.png`.
+`assets/mchjong/textures/item/mahjong_dye.png`, `creative_mahjong_dye.png`, `red_dora_dye.png` and `undo_dye.png`.
 The reusable variant has a purple pouch and brass seal; red dora dye uses a red pouch and ink. All use vanilla
 generated-item models and can be replaced independently by resource packs.
 
