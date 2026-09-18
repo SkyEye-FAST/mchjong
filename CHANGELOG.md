@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.0] - 2026-09-18
+
 ### Added
 
 - Default-off personal tenpai hints show structural waits and unseen-copy counts, with legal-discard previews and shared public-tile accounting for training bots.
@@ -24,7 +26,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 ### Changed
 
 - Match automation controls remain directly interactive when compact or expanded, with localized short labels, full-name tooltips, visible state indicators and a separate collapse arrow.
-- Overhead view zooms further into the playing surface, adapting to viewport height while preserving the private hand and near meld rail.
+- Overhead view fits the complete table between the HUD and private hand, adapting to viewport size with reduced perspective distortion.
+- Localized room controls use natural opponent names, action captions are centered, and clocks and world-overlay prompts use text shadows for readability.
 - Tile-face printing is performed inside the box with mahjong dye; stonecutting prepares raw blanks and recipe viewers describe the surviving crafting operations.
 - Red dora dye and undo dye each yield four per craft; 136/144-tile box face printing produces and restores ordinary no-red sets.
 - Boxes may hold spare tiles and supply the exact matching 136/108-tile subset required by the selected rules. Rule screens distinguish preset options, rule details and custom settings; unavailable red compositions show a shortage tooltip.
@@ -32,6 +35,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Red dora options validate a complete matching set, including four ordinary fives per used suit for no-red play. The room home screen highlights a selected no-red configuration in red.
 - Settlement score changes play once per result and retain their progress across page navigation and screen rebuilds.
 - Ready bots retain their readiness while human players move to their assigned stools.
 - Waiting-room status distinguishes empty places from absent participants and displays the current preparation step.
@@ -75,6 +79,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.2.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.0...HEAD
+[0.3.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.0
 [0.2.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.2.0
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
