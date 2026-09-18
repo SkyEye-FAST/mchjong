@@ -125,7 +125,7 @@ class AssetContractTest {
         }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
-            "mahjong_dye.png", "creative_mahjong_dye.png"));
+            "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {

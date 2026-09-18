@@ -82,7 +82,7 @@ class GameLifecycleTest {
                 assertEquals(rules.players(), result.finalScores().size());
                 assertEquals(rules.players(), result.finalRanks().size());
                 assertTrue(result.finalRanks().stream().allMatch(rank -> rank >= 1 && rank <= rules.players()));
-                assertEquals(0, result.finalScores().stream().mapToDouble(Double::doubleValue).sum(), 0.00001);
+                assertEquals(-game.riichiSticks, result.finalScores().stream().mapToDouble(Double::doubleValue).sum(), 0.00001);
                 assertTrue(game.handNumber >= 1);
                 assertTrue(game.replay.complete());
                 assertEquals(game.handNumber, game.replay.hands().size());
@@ -161,5 +161,32 @@ class GameLifecycleTest {
         assertEquals(30000, RuleSet.TENHOU_4.returnPoints());
         assertEquals(40000, RuleSet.TENHOU_3.returnPoints());
         assertEquals(3, RuleSet.MAHJONG_SOUL_3.minRiichiWall());
+    }
+
+    @Test void leagueAFloatingBonusesAndCompetitiveTieSettlement() {
+        int[][] scores = {{30000,30000,30000,30000}, {60000,25000,20000,15000},
+            {40000,35000,25000,20000}, {40000,30000,30000,20000}, {29900,29900,29900,29300}};
+        double[][] expected = {{0,0,0,0}, {42,-6,-13,-23}, {18,9,-9,-18}, {18,2,2,-22}, {-.1,-.1,-.1,-.7}};
+        for (int i = 0; i < scores.length; i++) {
+            Game game = finish(RuleSet.JPML_A, scores[i], i == 4 ? 1 : 0);
+            assertArrayEquals(expected[i], game.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+            assertEquals(i == 4 ? 1 : 0, game.riichiSticks);
+        }
+        Game league = finish(RuleSet.M_LEAGUE, new int[]{30000,30000,30000,8000}, 2);
+        assertEquals(List.of(30800,30600,30600,8000), Arrays.stream(league.players).map(p -> p.points).toList());
+        assertArrayEquals(new double[]{17.5,17.3,17.2,-52.0}, league.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+        Game wrc = finish(RuleSet.WRC, new int[]{35000,35000,35000,14000}, 1);
+        assertEquals(1, wrc.riichiSticks);
+        assertEquals(List.of(10.0,10.0,10.0,-31.0), wrc.finalScores);
+    }
+
+    private static Game finish(RuleSet rules, int[] scores, int deposits) {
+        Game game = new Game(UUID.randomUUID(), rules, 1);
+        game.round = 7;
+        game.riichiSticks = deposits;
+        for (int seat = 0; seat < 4; seat++) game.players[seat].points = scores[seat];
+        Settlement.exhaustive(game);
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        return game;
     }
 }

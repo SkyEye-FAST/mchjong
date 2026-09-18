@@ -15,7 +15,7 @@ class TableHandlingTest {
     private static UUID player(int seat) { return new UUID(391, seat); }
     private static Game start(RuleSet rules) {
         Game game = new Game(UUID.randomUUID(), rules, 12);
-        game.configureEquipment(true, Tile.set(false));
+        game.configureEquipment(true, Tile.set(false, rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             game.join(player(seat), "Player " + seat, seat);
             act(game, seat, Action.Type.READY);

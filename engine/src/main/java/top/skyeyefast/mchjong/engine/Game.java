@@ -64,11 +64,12 @@ public final class Game {
     int exitCooldown;
     boolean manual;
     ManualHandling handling = new ManualHandling();
-    List<Integer> suppliedTiles = Tile.set(false);
+    List<Integer> suppliedTiles;
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
         this.rules = Objects.requireNonNull(rules);
+        suppliedTiles = Tile.set(false, rules.defaultRedFives());
         this.seed = seed;
         for (int i = 0; i < 4; i++) {
             players[i] = new PlayerState();
@@ -84,13 +85,13 @@ public final class Game {
     public boolean manual() { return manual; }
     public int points(int seat) { return players[seat].points; }
     public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
-    public boolean equipped() { return suppliedTiles.size() == 136; }
+    public boolean equipped() { return suppliedTiles.size() == 136 && rules.allows(RedFives.of(suppliedTiles)); }
 
     /** The Minecraft adapter supplies checked physical tiles, or an empty list for an empty table. */
     public boolean configureEquipment(boolean manual, List<Integer> tiles) {
         Objects.requireNonNull(tiles);
         if (phase != Phase.LOBBY || exitVote != null) return false;
-        if (!tiles.isEmpty() && (tiles.size() != 136 || !new HashSet<>(tiles).equals(new HashSet<>(Tile.set(false)))))
+        if (!tiles.isEmpty() && !Tile.validSet(tiles))
             throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
         if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
         if (this.manual != manual) {
@@ -338,6 +339,7 @@ public final class Game {
     }
 
     private boolean allReady() {
+        if (!equipped()) return false;
         for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
         return true;
     }
@@ -349,7 +351,7 @@ public final class Game {
         long now = System.currentTimeMillis();
         replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.id, player.name, player.bot)).toList(),
-            List.of(), false);
+            List.of(), false, RedFives.of(suppliedTiles));
         startHand();
     }
 
@@ -418,6 +420,7 @@ public final class Game {
     void drawNow(int seat, boolean replacement, boolean kan) {
         turn = seat;
         PlayerState player = players[seat];
+        if (rules == RuleSet.WRC) player.temporaryFuriten = false;
         player.drawn = replacement ? wall.replace() : wall.draw();
         player.hand.add(player.drawn);
         if (recorder != null) recorder.draw(seat, player.drawn);
@@ -458,6 +461,12 @@ public final class Game {
         newDecision(Phase.REACTION);
         for (int i = 0; i < rules.players(); i++) if (i != lastFrom) {
             options.set(i, LegalActions.onReaction(this, i));
+            if (rules == RuleSet.WRC && (pending == null || pending.type() == ADDED_KAN)
+                && options.get(i).stream().noneMatch(action -> action.type() == RON)
+                && HandAnalyzer.waits(players[i].hand, players[i].melds).contains(Tile.kind(lastTile))) {
+                players[i].temporaryFuriten = true;
+                if (players[i].riichi) players[i].riichiFuriten = true;
+            }
         }
         if (allReplied()) resolveReactions();
     }
@@ -489,7 +498,8 @@ public final class Game {
         PlayerState source = players[lastFrom];
         if (source.pendingRiichi) {
             source.pendingRiichi = false;
-            source.riichi = source.ippatsu = true;
+            source.riichi = true;
+            source.ippatsu = rules.ippatsu();
             source.points -= 1000;
             riichiSticks++;
             if (recorder != null) recorder.riichi(lastFrom);
@@ -518,6 +528,7 @@ public final class Game {
 
     private void completeCall(int seat, Action action) {
         PlayerState player = players[seat];
+        if (rules == RuleSet.WRC) player.temporaryFuriten = false;
         PlayerState source = players[lastFrom];
         Discard discarded = source.river.getLast();
         source.river.set(source.river.size() - 1, discarded.markCalled());
@@ -525,7 +536,7 @@ public final class Game {
         var tiles = new ArrayList<>(action.tiles());
         for (int tile : tiles) if (!player.hand.remove(Integer.valueOf(tile))) throw new IllegalStateException("Missing called tile");
         tiles.add(lastTile);
-        tiles.sort(Integer::compareTo);
+        tiles.sort(Tile.ORDER);
         Meld.Type type = switch (action.type()) {
             case CHI -> Meld.Type.CHI;
             case PON -> Meld.Type.PON;
@@ -586,8 +597,10 @@ public final class Game {
 
     private void completeKan(int seat, boolean closed) {
         wall.revealPending();
-        if (closed || !rules.delayedOpenKanDora()) wall.reveal();
-        else wall.pendingIndicators++;
+        if (rules.kanDora()) {
+            if (closed || !rules.delayedOpenKanDora()) wall.reveal();
+            else wall.pendingIndicators++;
+        }
         if (recorder != null) recorder.dora(this);
         fourKanAbort = rules.abortiveDraws() && kanCount() == 4 && Arrays.stream(players).filter(p -> p.melds.stream().anyMatch(Meld::kan)).count() > 1;
         draw(seat, true, true);
@@ -675,7 +688,7 @@ public final class Game {
             PlayerState player = players[seat];
             boolean visible = seat == viewer || exposed[seat] || openHands && viewer >= 0;
             List<Integer> hand = new ArrayList<>(player.hand);
-            if (manual || player.autoPlay.sort()) hand.sort(Comparator.comparingInt(Tile::kind).thenComparingInt(Integer::intValue));
+            if (manual || player.autoPlay.sort()) hand.sort(Tile.ORDER);
             if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
             if (phase == Phase.REACTION && seat == lastFrom)
                 focus = new TableView.Focus(seat, lastTile, pending != null,
@@ -685,7 +698,7 @@ public final class Game {
                 hand, player.drawn < 0 ? Tile.ABSENT : visible ? player.drawn : Tile.HIDDEN,
                 player.melds, player.river, player.norths, player.riichi, exposed[seat]));
         }
-        boolean ura = wins.stream().anyMatch(win -> players[win.seat()].riichi);
+        boolean ura = rules.uraDora() && wins.stream().anyMatch(win -> players[win.seat()].riichi);
         var clocks = new ArrayList<TimeControl.Clock>();
         for (int seat = 0; seat < rules.players(); seat++)
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
@@ -702,8 +715,7 @@ public final class Game {
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(archiveQueue);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
-        if (!suppliedTiles.isEmpty() && (suppliedTiles.size() != 136
-            || !new HashSet<>(suppliedTiles).equals(new HashSet<>(Tile.set(false))))) throw new IllegalStateException("Invalid physical set");
+        if (!suppliedTiles.isEmpty() && !Tile.validSet(suppliedTiles)) throw new IllegalStateException("Invalid physical set");
         handling.validate(this);
         if (exitCooldown < 0 || exitCooldown > ExitVote.DURATION_TICKS) throw new IllegalStateException("Invalid exit cooldown");
         if (exitVote != null && (exitVote.ticksLeft() < 1
@@ -737,7 +749,8 @@ public final class Game {
             player.river.stream().filter(discard -> !discard.called()).forEach(discard -> physical.add(discard.tile()));
             for (int tile : physical) if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
         }
-        if (!seen.equals(new HashSet<>(Tile.set(rules.sanma())))) throw new IllegalStateException("Tile conservation failed");
+        var supplied = suppliedTiles.stream().filter(tile -> !rules.sanma() || Tile.kind(tile) == 0 || Tile.kind(tile) >= 8).toList();
+        if (!seen.equals(new HashSet<>(supplied))) throw new IllegalStateException("Tile conservation failed");
         long points = riichiSticks * 1000L;
         for (int i = 0; i < rules.players(); i++) points += players[i].points;
         if (points != (long) rules.players() * rules.startingPoints()) throw new IllegalStateException("Point conservation failed");

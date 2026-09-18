@@ -12,7 +12,7 @@ class ManualHandlingTest {
 
     private static Game game(RuleSet rules, boolean manual) {
         Game game = new Game(UUID.randomUUID(), rules, 8192);
-        assertTrue(game.configureEquipment(manual, Tile.set(false)));
+        assertTrue(game.configureEquipment(manual, Tile.set(false, rules.defaultRedFives())));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
             act(game, seat, Action.Type.READY);

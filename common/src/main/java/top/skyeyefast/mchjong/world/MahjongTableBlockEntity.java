@@ -44,6 +44,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (level == null || level.isClientSide) throw new IllegalStateException("Private state accessed outside server");
         if (unreadableSave != null) return null;
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, SEEDS.nextLong());
+        if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
             game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles(false));
         else if (!equipment.hasCloth() || equipment.deck() == null) return null;

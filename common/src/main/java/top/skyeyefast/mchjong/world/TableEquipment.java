@@ -18,6 +18,8 @@ public final class TableEquipment {
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
+    private top.skyeyefast.mchjong.engine.RuleSet rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4;
+    private int activeBox = -1;
     private boolean loading;
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
@@ -43,10 +45,23 @@ public final class TableEquipment {
     public DyeColor back() { return back; }
     public TileFacePreset preset() { return preset; }
     public MahjongSupplies.Deck deck() { return deck; }
+    public int activeBox() { return activeBox; }
+
+    public boolean selectRules(top.skyeyefast.mchjong.engine.RuleSet rules) {
+        if (this.rules == rules) return false;
+        this.rules = rules;
+        var previous = deck;
+        refreshDeck();
+        return !java.util.Objects.equals(previous, deck);
+    }
 
     private void refreshDeck() {
         deck = null;
-        for (int slot = 0; slot < BOX_SLOTS && deck == null; slot++) deck = MahjongSupplies.deck(boxes.getItem(slot));
+        activeBox = -1;
+        for (int slot = 0; slot < BOX_SLOTS && deck == null; slot++) {
+            var candidate = MahjongSupplies.deck(boxes.getItem(slot));
+            if (candidate != null && rules.allows(candidate.redFives())) { deck = candidate; activeBox = slot; }
+        }
         material = deck == null ? TileMaterial.BONE : deck.material();
         back = deck == null ? DyeColor.BLUE : deck.back();
         preset = deck == null ? TileFacePreset.KANSAI : deck.preset();

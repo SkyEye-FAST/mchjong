@@ -16,7 +16,7 @@ final class LegalActions {
         var actions = new ArrayList<Action>();
         if (player.drawn >= 0 && score(game, seat, player.drawn, true) != null) actions.add(new Action(TSUMO, player.drawn));
         var ordered = new ArrayList<>(player.hand);
-        ordered.sort(Integer::compareTo);
+        ordered.sort(Tile.ORDER);
         for (int tile : ordered) {
             if (player.riichi && tile != player.drawn) continue;
             if (!player.forbiddenDiscards.contains(Tile.kind(tile))) actions.add(new Action(DISCARD, tile));
@@ -57,8 +57,17 @@ final class LegalActions {
         after.removeAll(quad);
         var melds = new ArrayList<>(player.melds);
         melds.add(new Meld(Meld.Type.CLOSED_KAN, quad, seat, Tile.ABSENT));
-        if (!HandAnalyzer.waits(before, player.melds).equals(HandAnalyzer.waits(after, melds))) return false;
-        return !game.rules.mLeague() || HandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind);
+        var waits = HandAnalyzer.waits(before, player.melds);
+        if (!waits.equals(HandAnalyzer.waits(after, melds))) return false;
+        if (game.rules.riichiKanKeepsMelds() && !HandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false;
+        if (game.rules == RuleSet.JPML_A) for (int wait : waits) for (boolean tsumo : new boolean[]{false, true}) {
+            var previous = HandAnalyzer.score(before, player.melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
+                0, List.of("Richi"), game.rules);
+            var next = HandAnalyzer.score(after, melds, wait * 4, tsumo, game.wind(seat), game.round / 4,
+                0, List.of("Richi"), game.rules);
+            if (previous != null && (next == null || !next.yaku().containsAll(previous.yaku()))) return false;
+        }
+        return true;
     }
 
     static List<Action> onReaction(Game game, int seat) {
@@ -117,7 +126,7 @@ final class LegalActions {
         var extra = new ArrayList<String>();
         if (player.riichi) {
             extra.add(player.doubleRiichi ? "WRichi" : "Richi");
-            if (player.ippatsu) extra.add("Ippatsu");
+            if (game.rules.ippatsu() && player.ippatsu) extra.add("Ippatsu");
         }
         if (tsumo) {
             if (player.rinshan) extra.add("Rinshan");
@@ -125,12 +134,14 @@ final class LegalActions {
             if (player.firstTurn && game.uninterrupted) extra.add(seat == game.dealer ? "Tenhou" : "Chihou");
         } else if (game.pending != null && game.pending.type() == ADDED_KAN) extra.add("Chankan");
         else if (game.pending == null && game.wall.remaining() == 0) extra.add("Houtei");
+        if (!tsumo && game.rules.renhouMangan() && seat != game.dealer && player.firstTurn && game.uninterrupted)
+            extra.add("Renhou");
         var all = new ArrayList<>(player.hand);
         if (all.size() + player.melds.size() * 3 == 13) all.add(tile);
         player.melds.forEach(meld -> all.addAll(meld.tiles()));
         all.addAll(player.norths);
         int dora = player.norths.size() + (int) all.stream().filter(Tile::red).count();
-        for (int indicator : game.wall.indicators(player.riichi)) {
+        for (int indicator : game.wall.indicators(game.rules.uraDora() && player.riichi)) {
             int kind = Tile.doraAfter(Tile.kind(indicator), game.rules.sanma());
             dora += (int) all.stream().filter(id -> Tile.kind(id) == kind).count();
         }

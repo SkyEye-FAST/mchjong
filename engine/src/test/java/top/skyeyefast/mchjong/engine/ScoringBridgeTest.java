@@ -31,21 +31,24 @@ class ScoringBridgeTest {
         assertNull(HandAnalyzer.score(hand.subList(0,10), List.of(meld), hand.getLast(), false, 2, 0, 8, List.of(), RuleSet.TENHOU_4));
     }
 
-    @Test void doubleWindPairChangesFuOnlyForMLeague() {
+    @Test void competitivePresetsUseTwoFuForTheDoubleWindPair() {
         var melds = List.of(TestHands.meld(Meld.Type.PON, "555z"), TestHands.meld(Meld.Type.PON, "555p"));
         var hand = TestHands.tiles("123m46s11z5s");
         var tenhou = HandAnalyzer.score(hand.subList(0,7), melds, hand.getLast(), false, 0, 0, 0, List.of(), RuleSet.TENHOU_4);
-        var league = HandAnalyzer.score(hand.subList(0,7), melds, hand.getLast(), false, 0, 0, 0, List.of(), RuleSet.M_LEAGUE);
-        assertNotNull(tenhou); assertNotNull(league);
-        assertEquals(40, tenhou.fu()); assertEquals(30, league.fu());
+        assertNotNull(tenhou); assertEquals(40, tenhou.fu());
+        for (var rules : List.of(RuleSet.M_LEAGUE, RuleSet.JPML_A, RuleSet.WRC)) {
+            var score = HandAnalyzer.score(hand.subList(0,7), melds, hand.getLast(), false, 0, 0, 0, List.of(), rules);
+            assertNotNull(score); assertEquals(30, score.fu());
+        }
     }
 
     @Test void specialDoubleYakumanIsMahjongSoulOnly() {
         var hand = TestHands.tiles("19m19p19s1234567z1m");
-        for (RuleSet rules : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.TENHOU_4, RuleSet.M_LEAGUE)) {
+        for (RuleSet rules : RuleSet.values()) {
             var score = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0, 9, List.of(), rules);
             assertNotNull(score);
             assertEquals(rules.mahjongSoul() ? 2 : 1, score.yakuman(), rules.name());
+            assertEquals(score.yakuman() * 32000, score.ron(), rules.name());
             assertEquals(0, score.dora(), "Yakuman must not also charge dora");
         }
     }
@@ -53,11 +56,37 @@ class ScoringBridgeTest {
     @Test void kiriageAndCountedYakumanAreSeparateOptions() {
         var hand = TestHands.tiles("123456m456p22s789s");
         for (int dora : new int[]{2,11}) {
-            var tenhou = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0, dora, List.of("Richi"), RuleSet.TENHOU_4);
-            var league = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0, dora, List.of("Richi"), RuleSet.M_LEAGUE);
-            assertNotNull(tenhou); assertNotNull(league);
-            assertEquals(dora == 2 ? 7700 : 32000, tenhou.ron());
-            assertEquals(dora == 2 ? 8000 : 24000, league.ron());
+            for (var rules : RuleSet.values()) {
+                var score = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0, dora, List.of("Richi"), rules);
+                assertNotNull(score);
+                int expected = dora == 2 ? rules.kiriageMangan() ? 8000 : 7700 : rules.mLeague() ? 24000 : 32000;
+                assertEquals(expected, score.ron(), rules.name());
+                assertEquals(0, score.yakuman(), "Counted limits do not invoke natural-yakuman responsibility");
+            }
+        }
+        var sixtyFu = TestHands.tiles("111m999p234s77z11s1s");
+        for (var rules : RuleSet.values()) {
+            var score = HandAnalyzer.score(sixtyFu.subList(0,13), List.of(), sixtyFu.getLast(), false, 1, 0,
+                2, List.of("Richi"), rules);
+            assertNotNull(score);
+            assertEquals(3, score.han());
+            assertEquals(60, score.fu());
+            assertEquals(rules.kiriageMangan() ? 8000 : 7700, score.ron(), rules.name());
+            var ippatsu = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0,
+                0, List.of("Richi", "Ippatsu"), rules);
+            assertEquals(rules.ippatsu(), ippatsu.yaku().contains("Ippatsu"));
+        }
+    }
+
+    @Test void wrcRenhouIsAnAlternativeManganNotAnAdditiveYaku() {
+        var hand = TestHands.tiles("123456m456p22s789s");
+        for (int dora : new int[]{0, 3, 7}) {
+            var score = HandAnalyzer.score(hand.subList(0,13), List.of(), hand.getLast(), false, 1, 0,
+                dora, List.of("Renhou"), RuleSet.WRC);
+            assertNotNull(score);
+            assertEquals(dora == 7 ? 16000 : 8000, score.ron());
+            assertEquals(dora != 7, score.yaku().contains("Renhou"));
+            if (dora != 7) assertEquals(0, score.dora());
         }
     }
 
@@ -73,5 +102,8 @@ class ScoringBridgeTest {
         var hand = TestHands.tiles("111222333m444p5z");
         assertFalse(HandAnalyzer.riichiKanKeepsMelds(hand, List.of(), 0));
         assertTrue(HandAnalyzer.riichiKanKeepsMelds(hand, List.of(), 12));
+        var quad = new Meld(Meld.Type.CLOSED_KAN, TestHands.tiles("2222s"), 0, Tile.ABSENT);
+        assertFalse(HandAnalyzer.riichiKanKeepsMelds(TestHands.tiles("123456p1113s"), List.of(quad), 18),
+            "WRC's fifth-copy example still has a pair and middle-wait interpretation");
     }
 }

@@ -84,7 +84,7 @@ public final class ReplayPlayback {
         var view = new ArrayList<TableView.Seat>();
         for (int i = 0; i < seats.size(); i++) {
             Seat seat = seats.get(i);
-            seat.hand.sort(Integer::compareTo);
+            seat.hand.sort(Tile.ORDER);
             if (seat.drawn >= 0 && seat.hand.remove(Integer.valueOf(seat.drawn))) seat.hand.add(seat.drawn);
             var player = match.participants().get(i);
             view.add(new TableView.Seat(player.name(), true, player.bot(), false, seat.points, seat.hand, seat.drawn,

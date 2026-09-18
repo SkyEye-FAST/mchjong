@@ -19,7 +19,7 @@ class PhysicalHandlingTest {
 
     private static Game manual(RuleSet rules) {
         var game = new Game(UUID.randomUUID(), rules, 4432);
-        game.configureEquipment(true, Tile.set(false));
+        game.configureEquipment(true, Tile.set(false, rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
             act(game, seat, Action.Type.READY);

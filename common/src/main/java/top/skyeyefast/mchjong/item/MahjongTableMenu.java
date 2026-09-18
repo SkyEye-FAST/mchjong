@@ -18,6 +18,7 @@ public final class MahjongTableMenu extends AbstractContainerMenu {
     private final Inventory inventory;
     private final MahjongTableBlockEntity table;
     private final DataSlot cloth = DataSlot.standalone();
+    private final DataSlot selectedBox = DataSlot.standalone();
     private boolean active = true;
 
     public MahjongTableMenu(int id, Inventory inventory) { this(id, inventory, null); }
@@ -28,6 +29,8 @@ public final class MahjongTableMenu extends AbstractContainerMenu {
         this.table = table;
         Container contents = table == null ? new SimpleContainer(TableEquipment.BOX_SLOTS) : table.equipment().boxes();
         addDataSlot(cloth);
+        selectedBox.set(-1);
+        addDataSlot(selectedBox);
         for (int slot = 0; slot < TableEquipment.BOX_SLOTS; slot++)
             addSlot(new Slot(contents, slot, 78 + slot * 58, 36) {
                 @Override public int getMaxStackSize() { return 1; }
@@ -40,14 +43,13 @@ public final class MahjongTableMenu extends AbstractContainerMenu {
     }
 
     public boolean hasCloth() { return cloth.get() != 0; }
-    public int activeBox() {
-        for (int slot = 0; slot < TableEquipment.BOX_SLOTS; slot++)
-            if (MahjongSupplies.deck(slots.get(slot).getItem()) != null) return slot;
-        return -1;
-    }
+    public int activeBox() { return selectedBox.get(); }
 
     @Override public void broadcastChanges() {
-        if (table != null) cloth.set(table.equipment().hasCloth() ? 1 : 0);
+        if (table != null) {
+            cloth.set(table.equipment().hasCloth() ? 1 : 0);
+            selectedBox.set(table.equipment().activeBox());
+        }
         super.broadcastChanges();
     }
 

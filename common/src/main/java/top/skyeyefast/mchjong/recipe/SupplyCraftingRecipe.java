@@ -18,7 +18,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Only component-dependent operations use code. Static recipes remain vanilla JSON. */
 public final class SupplyCraftingRecipe extends CustomRecipe {
-    public enum Operation { DYE, MARK_STICK, UPGRADE_TABLE }
+    public enum Operation { DYE, RED_FIVE, MARK_STICK, UPGRADE_TABLE }
     private final Operation operation;
 
     public Operation operation() { return operation; }
@@ -57,6 +57,16 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
             ItemStack target = order == 0 ? first : second;
             ItemStack reagent = order == 0 ? second : first;
             switch (operation) {
+                case RED_FIVE -> {
+                    var data = MahjongSupplies.tile(target);
+                    if (target.is(MahjongContent.TILE_ITEM) && MahjongSupplies.storable(target)
+                        && data.valid() && !data.red() && (data.face() == 4 || data.face() == 13 || data.face() == 22)
+                        && reagent.is(MahjongContent.RED_DORA_DYE)) {
+                        var result = target.copyWithCount(1);
+                        result.set(MahjongComponents.TILE, data.engraved(data.face(), true));
+                        return result;
+                    }
+                }
                 case DYE -> {
                     if ((target.is(MahjongContent.TILE_ITEM) || target.is(MahjongContent.CLOTH_ITEM)
                         || target.is(MahjongContent.BOX_ITEM) || target.is(MahjongContent.STOOL_ITEM))

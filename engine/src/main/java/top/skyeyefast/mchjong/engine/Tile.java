@@ -5,6 +5,9 @@ import java.util.List;
 
 /** A tile ID identifies one physical tile, not just its face. */
 public final class Tile {
+    private static final int RED_FLAG = 256;
+    public static final java.util.Comparator<Integer> ORDER = java.util.Comparator.comparingInt(Tile::kind)
+        .thenComparingInt(id -> id);
     public static final int HIDDEN = -1;
     public static final int ABSENT = -2;
     public static final int EAST = 27, SOUTH = 28, WEST = 29, NORTH = 30;
@@ -13,12 +16,35 @@ public final class Tile {
     private Tile() {}
 
     public static int kind(int id) {
-        if (id < 0 || id >= 136) throw new IllegalArgumentException("Invalid physical tile: " + id);
-        return id / 4;
+        int physical = id & ~RED_FLAG;
+        if (physical < 0 || physical >= 136 || (id & RED_FLAG) != 0 && physical / 4 != 4
+            && physical / 4 != 13 && physical / 4 != 22) throw new IllegalArgumentException("Invalid physical tile: " + id);
+        return physical / 4;
     }
 
     public static boolean red(int id) {
-        return id >= 0 && id % 4 == 0 && (kind(id) == 4 || kind(id) == 13 || kind(id) == 22);
+        return id >= 0 && (id & RED_FLAG) != 0;
+    }
+
+    public static int id(int kind, int copy, boolean red) {
+        if (kind < 0 || kind >= 34 || copy < 0 || copy >= 4) throw new IllegalArgumentException("Invalid tile identity");
+        int id = kind * 4 + copy | (red ? RED_FLAG : 0);
+        kind(id);
+        return id;
+    }
+
+    public static boolean validSet(List<Integer> tiles) {
+        if (tiles.size() != 136) return false;
+        boolean[] seen = new boolean[136];
+        try {
+            for (int tile : tiles) {
+                kind(tile);
+                int physical = tile & ~RED_FLAG;
+                if (seen[physical]) return false;
+                seen[physical] = true;
+            }
+            return RedFives.of(tiles) != null;
+        } catch (IllegalArgumentException invalid) { return false; }
     }
 
     public static boolean terminalOrHonor(int kind) {
@@ -49,9 +75,15 @@ public final class Tile {
     }
 
     public static List<Integer> set(boolean sanma) {
+        return set(sanma, RedFives.THREE);
+    }
+
+    public static List<Integer> set(boolean sanma, RedFives redFives) {
         var tiles = new ArrayList<Integer>(sanma ? 108 : 136);
-        for (int id = 0; id < 136; id++) {
-            if (!sanma || kind(id) == 0 || kind(id) >= 8) tiles.add(id);
+        for (int face = 0; face < 34; face++) {
+            if (sanma && face > 0 && face < 8) continue;
+            for (int copy = 0; copy < 4; copy++)
+                tiles.add(id(face, copy, face < 27 && face % 9 == 4 && copy < redFives.count(face / 9)));
         }
         return tiles;
     }

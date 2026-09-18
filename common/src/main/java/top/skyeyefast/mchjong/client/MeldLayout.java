@@ -3,6 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import top.skyeyefast.mchjong.engine.Meld;
+import top.skyeyefast.mchjong.engine.Tile;
 
 /** Shared ordering and geometry for the table mesh, HUD and action previews. */
 public record MeldLayout(List<Part> parts, double width) {
@@ -13,7 +14,7 @@ public record MeldLayout(List<Part> parts, double width) {
         var tiles = new ArrayList<>(meld.tiles());
         Integer added = meld.type() == Meld.Type.ADDED_KAN ? tiles.removeLast() : null;
         if (!meld.closed()) tiles.remove(Integer.valueOf(meld.calledTile()));
-        tiles.sort(Integer::compareTo);
+        tiles.sort(Tile.ORDER);
         int called = -1;
         if (!meld.closed()) {
             int relative = Math.floorMod(meld.fromSeat() - owner, 4);

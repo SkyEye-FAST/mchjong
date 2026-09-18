@@ -9,6 +9,8 @@ three or four players. It supports both Fabric and NeoForge.
 - Component-based wood furniture, removable 16-color cloth and six physical tile materials
 - Stonecut blanks, boxed bulk engraving and dyeing, and physical point sticks
 - Three- and four-player riichi mahjong gameplay
+- Mahjong Soul, Tenhou, M.League, League A and WRC [rule presets](docs/RULES.md)
+- Craftable red dora dye and box-selected no-red, three-red or four-red sets
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
 - Single-screen settlement panels with winning hands, yaku, indicators, and point changes

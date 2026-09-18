@@ -29,8 +29,10 @@ public final class TenhouReplay {
         root.put("dan", Collections.nCopies(4, ""));
         root.put("rate", Collections.nCopies(4, 0));
         root.put("sx", Collections.nCopies(4, ""));
-        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + "南喰赤 · " + match.rules().name(),
-            "aka51", match.rules().sanma() ? 0 : 1, "aka52", 1, "aka53", 1));
+        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + "南喰"
+            + (match.redFives() == RedFives.NONE ? "" : "赤") + " · " + match.rules().name(),
+            "aka51", match.rules().sanma() ? 0 : match.redFives().count(0),
+            "aka52", match.redFives().count(1), "aka53", match.redFives().count(2)));
         root.put("log", match.hands().stream().map(hand -> hand(match, hand)).toList());
         if (match.complete()) {
             var last = match.hands().getLast();
@@ -129,7 +131,7 @@ public final class TenhouReplay {
     static String call(Meld.Type type, int who, int from, List<Integer> tiles, int called) {
         var owned = new ArrayList<>(tiles);
         if (!owned.remove(Integer.valueOf(called))) throw new IllegalArgumentException("Missing called tile");
-        owned.sort(Integer::compareTo);
+        owned.sort(Tile.ORDER);
         var tokens = new ArrayList<>(owned.stream().map(id -> Integer.toString(tile(id))).toList());
         int direction = Math.floorMod(who - from - 1, 4);
         if (type != Meld.Type.CHI && direction > 2) throw new IllegalArgumentException("A meld cannot call from itself");
@@ -236,6 +238,7 @@ public final class TenhouReplay {
             case "WRichi" -> "ダブル立直";
             case "Tenhou" -> "天和";
             case "Chihou" -> "地和";
+            case "Renhou" -> "人和";
             default -> throw new IllegalArgumentException("Unknown scoring yaku: " + name);
         };
     }

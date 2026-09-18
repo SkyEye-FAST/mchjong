@@ -8,6 +8,7 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Pure stack transformations: callers commit the returned copy, never mutate recipe inputs. */
@@ -91,9 +92,7 @@ public final class MahjongSupplies {
             for (int i = 0; i < TILE_SLOTS; i++) output.set(i, ItemStack.EMPTY);
             int slot = 0;
             for (int face = 0; face < 34; face++) {
-                boolean five = face == 4 || face == 13 || face == 22;
-                output.set(slot++, printed(template, face, false, five ? 3 : 4, preset));
-                if (five) output.set(slot++, printed(template, face, true, 1, preset));
+                output.set(slot++, printed(template, face, false, 4, preset));
             }
             if (total == SET_SIZE + TileData.FLOWER_COUNT)
                 for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
@@ -139,7 +138,7 @@ public final class MahjongSupplies {
         return result;
     }
 
-    /** A set is one uniform, unmarked set with exactly three red fives. No tile order is exposed. */
+    /** A set is uniform and has no reds, one of each red five, or an additional red five of circles. */
     public static Deck deck(ItemStack box) {
         if (!validBox(box)) return null;
         return deck(contents(box));
@@ -164,14 +163,14 @@ public final class MahjongSupplies {
             (data.red() ? red : normal)[data.face()] += stack.getCount();
         }
         for (int face = 0; face < 34; face++) {
-            boolean five = face == 4 || face == 13 || face == 22;
-            if (normal[face] != (five ? 3 : 4) || red[face] != (five ? 1 : 0)) return null;
+            if (normal[face] + red[face] != 4) return null;
         }
-        return preset != null ? new Deck(material, back, preset) : null;
+        RedFives redFives = RedFives.of(red[4], red[13], red[22]);
+        return preset != null && redFives != null ? new Deck(material, back, preset, redFives) : null;
     }
 
-    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset) {
-        public List<Integer> tiles(boolean sanma) { return List.copyOf(Tile.set(sanma)); }
+    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset, RedFives redFives) {
+        public List<Integer> tiles(boolean sanma) { return List.copyOf(Tile.set(sanma, redFives)); }
     }
 
     /** Creative/test fixture assembled through the same physical blank engraving path. */

@@ -20,8 +20,8 @@ final class TestHands {
                 while (copy < 4 && used[kind * 4 + copy]) copy++;
                 if (copy == 4 && n != 0 && !used[kind * 4]) copy = 0;
                 if (copy >= 4 || used[kind * 4 + copy]) throw new IllegalArgumentException("Too many copies: " + text);
-                int tile = kind * 4 + copy;
-                used[tile] = true;
+                int tile = Tile.id(kind, copy, n == 0);
+                used[kind * 4 + copy] = true;
                 result.add(tile);
             }
             digits.setLength(0);

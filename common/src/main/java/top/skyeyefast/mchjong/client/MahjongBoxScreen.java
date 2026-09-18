@@ -65,10 +65,12 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         var items = menu.items();
         int tiles = MahjongSupplies.tileCount(items);
         int sticks = items.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).mapToInt(stack -> stack.getCount()).sum();
-        boolean ready = MahjongSupplies.deck(items) != null;
+        var deck = MahjongSupplies.deck(items);
+        boolean ready = deck != null;
         MahjongUi.text(graphics, font, Component.translatable("box.mchjong.tiles", tiles), 196, 18, 94, MahjongUi.TEXT, false);
         MahjongUi.text(graphics, font, Component.translatable("box.mchjong.sticks", sticks), 196, 34, 94, MahjongUi.MUTED, false);
-        MahjongUi.text(graphics, font, Component.translatable(ready ? "box.mchjong.ready" : "box.mchjong.incomplete"), 196, 50, 94,
+        MahjongUi.text(graphics, font, ready ? Component.translatable("box.mchjong.set", Component.translatable(deck.redFives().translationKey()))
+            : Component.translatable("box.mchjong.incomplete"), 196, 50, 94,
             ready ? MahjongUi.POSITIVE : MahjongUi.ACCENT, false);
         paragraph(graphics, Component.translatable("box.mchjong.dye_storage"), 70, MahjongUi.TEXT);
         MahjongUi.text(graphics, font, Component.translatable(items.get(MahjongSupplies.DYE_SLOT).is(MahjongContent.CREATIVE_MAHJONG_DYE)

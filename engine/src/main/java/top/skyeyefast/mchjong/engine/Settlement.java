@@ -59,7 +59,9 @@ final class Settlement {
             }
         }
         int honbaTotal = honba * 100 * (game.rules.players() - 1);
-        if (!liable.isEmpty()) transfer(game, liable.keySet().iterator().next(), winner, honbaTotal);
+        if (!liable.isEmpty() && !(from >= 0 && game.rules.paoRonHonbaByDiscarder())
+            && !(from < 0 && game.rules == RuleSet.WRC && normalUnits > 0))
+            transfer(game, liable.keySet().iterator().next(), winner, honbaTotal);
         else if (from >= 0) transfer(game, from, winner, honbaTotal);
         else for (int payer = 0; payer < game.rules.players(); payer++) if (payer != winner) {
             transfer(game, payer, winner, honba * 100);
@@ -166,29 +168,33 @@ final class Settlement {
         var ranking = ranking(game);
         var groups = new ArrayList<List<Integer>>();
         for (int seat : ranking) {
-            if (!groups.isEmpty() && game.rules.mLeague()
+            if (!groups.isEmpty() && game.rules.sharedRanks()
                 && game.players[groups.getLast().getFirst()].points == game.players[seat].points) groups.getLast().add(seat);
             else groups.add(new ArrayList<>(List.of(seat)));
         }
         List<Integer> top = groups.getFirst();
-        int hundreds = game.riichiSticks * 10;
-        for (int i = 0; i < top.size(); i++) {
-            game.players[top.get(i)].points += (hundreds / top.size() + (i < hundreds % top.size() ? 1 : 0)) * 100;
+        if (game.rules.awardFinalDeposits()) {
+            for (int i = 0; i < top.size(); i++)
+                game.players[top.get(i)].points += game.riichiSticks * (10 / top.size() + (i < 10 % top.size() ? 1 : 0)) * 100;
+            game.riichiSticks = 0;
         }
-        game.riichiSticks = 0;
-        int[] bonus = game.rules.placementBonus();
+        int floating = (int) ranking.stream().filter(seat -> game.players[seat].points >= game.rules.returnPoints()).count();
+        int[] bonus = game.rules.placementBonus(floating);
         bonus[0] += (game.rules.returnPoints() - game.rules.startingPoints()) * game.rules.players() / 1000;
         game.finalScores = new ArrayList<>(Collections.nCopies(game.rules.players(), 0.0));
         game.finalRanks = new ArrayList<>(Collections.nCopies(game.rules.players(), 0));
         int place = 0;
         for (List<Integer> group : groups) {
             int rank = place + 1;
-            double placement = 0;
+            int placement = 0;
             for (int i = 0; i < group.size(); i++) placement += bonus[place++];
-            placement /= group.size();
-            for (int seat : group) {
+            for (int i = 0; i < group.size(); i++) {
+                int seat = group.get(i);
+                double share = game.rules.mLeague()
+                    ? (Math.floorDiv(placement * 10, group.size()) + (i < Math.floorMod(placement * 10, group.size()) ? 1 : 0)) / 10.0
+                    : placement / (double) group.size();
                 game.finalRanks.set(seat, rank);
-                game.finalScores.set(seat, (game.players[seat].points - game.rules.returnPoints()) / 1000.0 + placement);
+                game.finalScores.set(seat, (game.players[seat].points - game.rules.returnPoints()) / 1000.0 + share);
             }
         }
     }

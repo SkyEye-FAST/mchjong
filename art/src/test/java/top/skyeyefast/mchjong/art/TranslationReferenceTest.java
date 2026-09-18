@@ -33,8 +33,10 @@ class TranslationReferenceTest {
         // Registry-derived names can appear in Jade even when no source uses a literal translation key.
         for (String block : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"))
             used.add("block.mchjong." + block);
-        for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth", "mahjong_dye", "creative_mahjong_dye"))
+        for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth", "mahjong_dye", "creative_mahjong_dye", "red_dora_dye"))
             used.add("item.mchjong." + item);
+        for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) used.add(composition.translationKey());
+        used.add("yaku.mchjong.renhou");
         for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
         for (int kind = 0; kind < 34; kind++) used.add("tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(kind));

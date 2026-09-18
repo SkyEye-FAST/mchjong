@@ -35,7 +35,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(14, entries.size());
+        assertEquals(15, entries.size());
         assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
         assertEquals(1, new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE).getMaxStackSize());
         assertTrue(entries.get(4).is(MahjongContent.BOX_ITEM));
@@ -127,6 +127,49 @@ class PhysicalSuppliesTest {
                 || recipe.value().getResultItem(server.registryAccess()).is(MahjongContent.CREATIVE_MAHJONG_DYE)));
     }
 
+    @Test void redDyeCraftingPreservesComponentsAndSelectsRuleCompatibleSets(MinecraftServer server) {
+        var dye = craft(server, "red_dora_dye", 1, 1, List.of(new ItemStack(Items.RED_DYE)));
+        assertTrue(dye.is(MahjongContent.RED_DORA_DYE));
+        assertEquals(3, dye.getCount());
+        assertEquals(64, dye.getMaxStackSize());
+        var emptyReds = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN);
+        var contents = MahjongSupplies.contents(emptyReds);
+        assertEquals(top.skyeyefast.mchjong.engine.RedFives.NONE, MahjongSupplies.deck(emptyReds).redFives());
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, emptyReds.copy());
+        int converted = 0;
+        for (int face : new int[]{4, 13, 22, 13}) {
+            var ordinary = contents.get(face);
+            var before = ordinary.copy();
+            var red = craft(server, "red_five", 2, 1, List.of(ordinary, dye));
+            var expected = before.copyWithCount(1);
+            expected.set(MahjongComponents.TILE, MahjongSupplies.tile(before).engraved(face, true));
+            assertTrue(ItemStack.matches(expected, red));
+            assertTrue(ItemStack.matches(before, ordinary), "Recipe previews cannot consume inputs");
+            assertFalse(crafting(server, "red_five").matches(CraftingInput.of(2, 1, List.of(red, dye)), server.overworld()));
+            ordinary.shrink(1);
+            int redSlot = 34 + face / 9;
+            if (contents.get(redSlot).isEmpty()) contents.set(redSlot, red); else contents.get(redSlot).grow(1);
+            var updated = box(contents);
+            if (++converted < 3) {
+                assertNull(MahjongSupplies.deck(updated));
+                continue;
+            }
+            var deck = MahjongSupplies.deck(updated);
+            assertNotNull(deck);
+            assertEquals(converted, deck.redFives().total());
+            assertEquals(converted, deck.tiles(false).stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
+            assertEquals(136, new java.util.HashSet<>(deck.tiles(false)).size());
+            equipment.boxes().setItem(1, updated);
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.M_LEAGUE);
+            assertEquals(converted == 3 ? 1 : -1, equipment.activeBox());
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC);
+            assertEquals(0, equipment.activeBox());
+        }
+        assertFalse(crafting(server, "red_five").matches(CraftingInput.of(2, 1,
+            List.of(contents.getFirst(), dye)), server.overworld()));
+    }
+
     @Test void eightFlowersRoundTripAndStayOutsideTheRiichiWall(MinecraftServer server) {
         for (TileMaterial material : TileMaterial.values()) {
             var original = MahjongSupplies.completeBox(material, DyeColor.BLUE);
@@ -206,7 +249,7 @@ class PhysicalSuppliesTest {
                 assertEquals(108, deck.tiles(true).size());
                 assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(dyed)));
                 assertEquals(DyeColor.BLUE, MahjongSupplies.deck(engraved).back());
-                assertEquals(3, MahjongSupplies.contents(dyed).stream().filter(s -> s.is(MahjongContent.TILE_ITEM)
+                assertEquals(0, MahjongSupplies.contents(dyed).stream().filter(s -> s.is(MahjongContent.TILE_ITEM)
                     && MahjongSupplies.tile(s).red()).mapToInt(ItemStack::getCount).sum());
             }
         }

@@ -44,7 +44,9 @@ final class SurvivalRecipes {
         output.write("data/mchjong/recipe/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye")),
             "result", stack("mahjong_dye", 1, Map.of())));
-        for (String operation : List.of("dye", "mark_stick", "upgrade_table"))
+        output.write("data/mchjong/recipe/red_dora_dye.json", Map.of("type", "minecraft:crafting_shapeless",
+            "category", "misc", "ingredients", List.of(item("red_dye")), "result", stack("red_dora_dye", 3, Map.of())));
+        for (String operation : List.of("dye", "red_five", "mark_stick", "upgrade_table"))
             output.write("data/mchjong/recipe/" + operation + ".json", Map.of("type", "mchjong:" + operation, "category", "misc"));
     }
 

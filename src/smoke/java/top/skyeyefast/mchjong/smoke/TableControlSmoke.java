@@ -11,6 +11,8 @@ import top.skyeyefast.mchjong.client.TableAnimation;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Uses the live integrated server and real control packets before any display-only fixtures. */
@@ -66,6 +68,25 @@ final class TableControlSmoke {
             click(client, "ui.mchjong.players.4");
             next(5);
         } else if (stage == 5 && view.rules().players() == 4) {
+            click(client, "preset.mchjong.jpml_a");
+            next(8);
+        } else if (stage == 8 && view.rules() == RuleSet.JPML_A && ticks > 5) {
+            require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "League A initial points");
+            capture(client, output, "25a-league-a-lobby.png");
+            click(client, "preset.mchjong.wrc");
+            next(9);
+        } else if (stage == 9 && view.rules() == RuleSet.WRC && ticks > 5) {
+            require(view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE), "WRC rejected a no-red box");
+            capture(client, output, "25b-wrc-lobby.png");
+            click(client, "preset.mchjong.m_league");
+            next(10);
+        } else if (stage == 10 && view.rules() == RuleSet.M_LEAGUE && ticks > 5) {
+            require(view.actions().stream().noneMatch(action -> action.type() == Action.Type.PRACTICE || action.type() == Action.Type.READY),
+                "M.League accepted a no-red box");
+            capture(client, output, "25c-incompatible-reds.png");
+            click(client, "preset.mchjong.mahjong_soul");
+            next(11);
+        } else if (stage == 11 && view.rules() == RuleSet.MAHJONG_SOUL_4 && ticks > 5) {
             String label = Component.translatable("ui.mchjong.open_hands").getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();

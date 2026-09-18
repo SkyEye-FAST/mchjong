@@ -37,6 +37,7 @@ of the finite case examples.
 | Mahjong box | `mchjong:mahjong_box` | Storage item |
 | Point stick, blank or marked | `mchjong:point_stick` | Item |
 | Mahjong dye | `mchjong:mahjong_dye` | Item, stacks to 64 |
+| Red dora dye | `mchjong:red_dora_dye` | Item, stacks to 64 |
 | Creative mahjong dye | `mchjong:creative_mahjong_dye` | Creative-only item, stacks to 1 |
 | Table occupancy cell | `mchjong:table_space` | Internal block, no item or recipe |
 
@@ -109,9 +110,9 @@ through the creative catalogue, not survival crafting or loot.
 
 Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
 Insert mahjong dye into the dedicated dye slot and select **Apply faces**.
-The 136-tile set has four of each ordinary face, including one red five in each
-suit; 144 additionally includes one of each of the eight flowers. These sets
-occupy 37 and 45 stacks respectively. One ordinary dye is consumed per successful
+The 136-tile set has four ordinary copies of each face; 144 additionally includes
+one of each of the eight flowers. These sets occupy 34 and 42 stacks respectively.
+One ordinary dye is consumed per successful
 operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
 blanks, invalid selections and unchanged presets do not consume anything.
@@ -121,6 +122,14 @@ the selection applies to inventory items, the world table, overhead hands,
 action previews and settlement. Reprinting an existing complete set changes
 only its face preset, retaining face identities and red fives. Tile-back
 recoloring remains the separate vanilla-grid dye recipe.
+
+One vanilla red dye crafts **three red dora dyes**. Combine one red dora dye with
+one ordinary 5m, 5p or 5s to make the corresponding red five. Material, back color,
+face preset and other tile components stay unchanged. Replace the ordinary fives
+in the box with those red copies: one of each makes three reds; one red 5m, two
+red 5p and one red 5s make four reds. A complete set still contains four copies of
+every face. Mahjong Soul and Tenhou accept no-red, three-red and four-red sets;
+M.League requires three reds, while League A and WRC require no reds.
 
 One to eight unmarked point sticks, each in its own crafting slot, plus one
 marking material produce the same number of marked sticks:
@@ -173,15 +182,16 @@ actual melds and any drawn tile, without reserving unused slots.
 
 Right-click either table, including any footprint cell, to open its two-case
 storage screen. Each slot holds one box inside the table, keeping the playing surface clear.
-Empty and incomplete boxes can be stored and retrieved. The first complete box,
-reading left to right, supplies the game; the second box is not combined with it.
+Empty and incomplete boxes can be stored and retrieved. The first complete box
+compatible with the selected rules, reading left to right, supplies the game;
+the second box is not combined with it. Changing rules rechecks the box selection.
 Use normal clicks, shift-clicks or number-key swaps to move cases. The server
 checks distance, table identity and match state on every transaction. Closing
 the screen, leaving range, breaking the table or starting a match permanently
 invalidates an old menu. Both cases are locked during a match.
 
 The table validates the physical
-136-tile multiset, three red fives, uniform material and uniform back color.
+136-tile multiset, rule-compatible red fives, uniform material and uniform back color.
 Spare unengraved tiles, flowers and point sticks are allowed in the box. A mixed-back,
 mixed-material, incomplete or duplicate-faced set cannot start a game. The box
 is transferred into table storage, not copied, including when using creative

@@ -65,10 +65,11 @@ final class ReplayRecorder {
         if (tile >= 0 && all.size() + player.melds.size() * 3 == 13) all.add(tile);
         player.melds.forEach(meld -> all.addAll(meld.tiles()));
         all.addAll(player.norths);
-        int red = score.yakuman() > 0 ? 0 : (int) all.stream().filter(Tile::red).count();
-        int north = score.yakuman() > 0 ? 0 : player.norths.size();
+        boolean bonuses = score.yakuman() == 0 && !score.yaku().contains("Renhou");
+        int red = bonuses ? (int) all.stream().filter(Tile::red).count() : 0;
+        int north = bonuses ? player.norths.size() : 0;
         int ura = 0;
-        if (player.riichi && score.yakuman() == 0) for (int i = 0; i < game.wall.revealed; i++) {
+        if (bonuses && game.rules.uraDora() && player.riichi) for (int i = 0; i < game.wall.revealed; i++) {
             int indicator = game.wall.tiles.get(game.wall.ura.get(i));
             int kind = Tile.doraAfter(Tile.kind(indicator), game.rules.sanma());
             ura += (int) all.stream().filter(id -> Tile.kind(id) == kind).count();
@@ -89,13 +90,13 @@ final class ReplayRecorder {
             TableView.Seat visible = publicSeats.get(i);
             var player = game.players[i];
             var hand = new ArrayList<>(player.hand);
-            hand.sort(Integer::compareTo);
+            hand.sort(Tile.ORDER);
             if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
             allSeats.add(new TableView.Seat(visible.name(), visible.occupied(), visible.bot(), visible.ready(), visible.points(),
                 hand, player.drawn, visible.melds(), visible.river(), visible.norths(), visible.riichi(), visible.exposed()));
         }
         var ura = new ArrayList<Integer>();
-        if (game.wins.stream().anyMatch(win -> game.players[win.seat()].riichi))
+        if (game.rules.uraDora() && game.wins.stream().anyMatch(win -> game.players[win.seat()].riichi))
             for (int i = 0; i < game.wall.revealed; i++) ura.add(game.wall.tiles.get(game.wall.ura.get(i)));
         return new ReplayHand(number, round, dealer, honba, sticks, initialPoints, initialHands, initialDora, events,
             allSeats, wins, game.result, game.deltas.subList(0, game.rules.players()), game.wall.indicators(false), ura,

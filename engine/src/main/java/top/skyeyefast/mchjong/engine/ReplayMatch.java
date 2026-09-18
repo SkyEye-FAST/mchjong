@@ -7,7 +7,7 @@ import java.util.UUID;
 
 /** Contains completed hands only. No RNG seed, future wall, or active hand is exported. */
 public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt, RuleSet rules,
-                          int initialDealer, List<Participant> participants, List<ReplayHand> hands, boolean complete) {
+                          int initialDealer, List<Participant> participants, List<ReplayHand> hands, boolean complete, RedFives redFives) {
     public record Participant(UUID id, String name, boolean bot) {
         public Participant {
             Objects.requireNonNull(id); Objects.requireNonNull(name);
@@ -33,6 +33,7 @@ public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt,
 
     public ReplayMatch {
         Objects.requireNonNull(id); Objects.requireNonNull(tableId); Objects.requireNonNull(rules);
+        if (!rules.allows(redFives)) throw new IllegalArgumentException("Invalid replay red-five composition");
         participants = List.copyOf(participants); hands = List.copyOf(hands);
         if (participants.size() != rules.players() || initialDealer < 0 || initialDealer >= participants.size()
             || hands.size() > 1024 || complete && hands.isEmpty()) throw new IllegalArgumentException("Invalid replay match");
@@ -50,6 +51,6 @@ public record ReplayMatch(UUID id, UUID tableId, long startedAt, long updatedAt,
     ReplayMatch append(ReplayHand hand, boolean ended) {
         var completed = new ArrayList<>(hands);
         completed.add(hand);
-        return new ReplayMatch(id, tableId, startedAt, System.currentTimeMillis(), rules, initialDealer, participants, completed, ended);
+        return new ReplayMatch(id, tableId, startedAt, System.currentTimeMillis(), rules, initialDealer, participants, completed, ended, redFives);
     }
 }

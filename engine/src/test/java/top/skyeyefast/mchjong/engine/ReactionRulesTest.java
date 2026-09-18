@@ -25,16 +25,15 @@ class ReactionRulesTest {
             var result = new ArrayList<Integer>();
             for (int parsed : TestHands.tiles(text)) {
                 int kind = Tile.kind(parsed);
-                int tile = kind * 4;
-                while (tile < kind * 4 + 4 && owned.contains(tile)) tile++;
-                if (tile >= kind * 4 + 4) throw new IllegalStateException("Fixture exceeds four copies: " + text);
+                int tile = Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream()
+                    .filter(candidate -> Tile.kind(candidate) == kind && !owned.contains(candidate)).findFirst().orElseThrow();
                 owned.add(tile); result.add(tile);
             }
             return result;
         }
         void hand(int seat, String text) { game.players[seat].hand.addAll(take(text)); }
         void start(int from, int drawn) {
-            var rest = new ArrayDeque<>(Tile.set(game.rules.sanma()).stream().filter(t -> !owned.contains(t)).toList());
+            var rest = new ArrayDeque<>(Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream().filter(t -> !owned.contains(t)).toList());
             for (int s = 0; s < game.rules.players(); s++) {
                 int count = s == from ? 14 : 13;
                 while (game.players[s].hand.size() < count) {
@@ -42,7 +41,7 @@ class ReactionRulesTest {
                 }
                 assertEquals(count, game.players[s].hand.size());
             }
-            var unowned = Tile.set(game.rules.sanma()).stream().filter(t -> !owned.contains(t)).toList();
+            var unowned = Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream().filter(t -> !owned.contains(t)).toList();
             game.wall.tiles = new ArrayList<>(Collections.nCopies(owned.size(), Tile.ABSENT));
             game.wall.tiles.addAll(unowned);
             game.wall.cursor = owned.size();
@@ -146,7 +145,7 @@ class ReactionRulesTest {
         assertTrue(f.game.players[0].hand.contains(drawn));
     }
 
-    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_4", "TENHOU_4", "M_LEAGUE"})
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_4", "TENHOU_4", "M_LEAGUE", "JPML_A", "WRC"})
     void simultaneousRonUsesRulesetPriorityRatherThanPacketArrival(RuleSet rules) {
         Fixture f = new Fixture(rules);
         f.hand(1, "123456789m111p5z");
@@ -170,7 +169,7 @@ class ReactionRulesTest {
             assertArrayEquals(before, Arrays.stream(f.game.players).mapToInt(p -> p.points).toArray());
         } else {
             var winners = f.game.view(null).wins();
-            assertEquals(rules.mLeague() ? List.of(1) : List.of(1,2,3), winners.stream().map(TableView.Win::seat).toList());
+            assertEquals(rules.headBump() ? List.of(1) : List.of(1,2,3), winners.stream().map(TableView.Win::seat).toList());
             for (var win : winners) {
                 int extra = win.seat() == 1 ? 3600 : 0;
                 assertEquals(win.score().ron() + extra, f.game.players[win.seat()].points - before[win.seat()]);
@@ -195,8 +194,9 @@ class ReactionRulesTest {
         assertTrue(f.game.players[1].melds.isEmpty()); assertTrue(f.game.players[3].melds.isEmpty());
     }
 
-    @Test void passingRonAndCallingPonDoesNotClearTemporaryFuriten() {
-        Fixture f = new Fixture(RuleSet.TENHOU_4);
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "WRC"})
+    void aCallClearsTemporaryFuritenOnlyUnderWrcRules(RuleSet rules) {
+        Fixture f = new Fixture(rules);
         f.hand(3, "123456m789p55z11s");
         int discarded = f.take("5z").getFirst();
         f.game.players[0].hand.add(discarded);
@@ -207,12 +207,12 @@ class ReactionRulesTest {
         f.passOthers();
         assertEquals(Game.Phase.TURN, f.game.phase());
         assertEquals(3, f.game.turn);
-        assertTrue(f.game.players[3].temporaryFuriten);
+        assertEquals(rules != RuleSet.WRC, f.game.players[3].temporaryFuriten);
         f.act(3, Action.Type.DISCARD);
-        assertTrue(f.game.players[3].temporaryFuriten, "A call is not the player's next natural draw turn");
+        assertEquals(rules != RuleSet.WRC, f.game.players[3].temporaryFuriten);
     }
 
-    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_4", "TENHOU_4", "M_LEAGUE"})
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_4", "TENHOU_4", "M_LEAGUE", "JPML_A", "WRC"})
     void concealedKanRobberyIsKokushiAndMahjongSoulOnly(RuleSet rules) {
         Fixture f = new Fixture(rules);
         f.hand(1, "11m19p19s1234567z");
@@ -233,8 +233,19 @@ class ReactionRulesTest {
             assertEquals(Game.Phase.TURN, f.game.phase());
             assertEquals(1, f.game.players[0].melds.size());
             assertEquals(1, f.game.wall.replacementIndex);
-            assertEquals(2, f.game.wall.revealed);
+            assertEquals(rules.kanDora() ? 2 : 1, f.game.wall.revealed);
         }
+    }
+
+    @Test void wrcYakulessPassStillCausesTemporaryFuriten() {
+        Fixture f = new Fixture(RuleSet.WRC);
+        f.hand(3, "123m456p789s44z45m");
+        int discarded = f.take("6m").getFirst();
+        f.game.players[0].hand.add(discarded);
+        f.start(0, discarded);
+        f.act(0, Action.Type.DISCARD, discarded);
+        assertTrue(f.game.players[3].temporaryFuriten);
+        assertTrue(f.game.view(f.game.players[3].id).actions().stream().noneMatch(a -> a.type() == Action.Type.RON));
     }
 
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})

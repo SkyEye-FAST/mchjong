@@ -32,6 +32,12 @@ public final class SupplyRecipeExamples {
         for (var holder : recipes) {
             if (holder.value() instanceof SupplyCraftingRecipe recipe) {
                 switch (recipe.operation()) {
+                    case RED_FIVE -> {
+                        for (var material : TileMaterial.values()) for (int face : new int[]{4, 13, 22})
+                            add(examples, level, holder, material.getSerializedName() + "/" + face,
+                                List.of(MahjongSupplies.tile(new TileData(face, material, false), DyeColor.BLUE, 1),
+                                    new ItemStack(MahjongContent.RED_DORA_DYE)));
+                    }
                     case MARK_STICK -> SupplyCraftingRecipe.markings().entrySet().stream()
                         .sorted(java.util.Map.Entry.comparingByValue()).forEach(mark -> {
                             for (int count : new int[]{1, 8}) {

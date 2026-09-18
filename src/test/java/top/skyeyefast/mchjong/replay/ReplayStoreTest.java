@@ -37,7 +37,8 @@ class ReplayStoreTest {
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,
             List.of(35000,35000,35000), dealt, List.of(132), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
-        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3, 0, players, records, false);
+        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3, 0, players, records, false,
+            top.skyeyefast.mchjong.engine.RedFives.THREE);
     }
 
     @Test void onlyHumanParticipantsAreIndexedAndAuthorizedEvenWithAForgedIndex() throws Exception {
@@ -125,7 +126,7 @@ class ReplayStoreTest {
         for (int number = 0; number < 14; number++) {
             var value = match(new UUID(7, number), 1);
             store.save(new ReplayMatch(value.id(), value.tableId(), 1, 20 + number, value.rules(), value.initialDealer(),
-                value.participants(), value.hands(), false));
+                value.participants(), value.hands(), false, value.redFives()));
         }
         assertEquals(new UUID(7, 13), store.list(owner, 0, "oWnEr", false).matches().getFirst().id());
         assertEquals(new UUID(7, 0), store.list(owner, 0, "  GUEST  ", true).matches().getFirst().id());

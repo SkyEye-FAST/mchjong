@@ -8,8 +8,14 @@ import static org.junit.jupiter.api.Assertions.*;
 class WallInvariantTest {
     @ParameterizedTest @EnumSource(RuleSet.class)
     void everyPhysicalTileIsAccountedForEvenAfterAllReplacements(RuleSet rules) {
-        for (int seed = 0; seed < 12; seed++) {
-            Wall wall = new Wall(rules, seed);
+        for (var composition : RedFives.values()) {
+            var supplied = Tile.set(false, composition);
+            assertTrue(Tile.validSet(supplied));
+            if (!rules.allows(composition)) {
+                assertThrows(IllegalArgumentException.class, () -> new Wall(rules, 12, supplied));
+                continue;
+            }
+            Wall wall = new Wall(rules, 12, supplied);
             var taken = new HashSet<Integer>();
             for (int i = 0; i < rules.players() * 13 + 1; i++) assertTrue(taken.add(wall.draw()));
             assertEquals(rules.sanma() ? 54 : 69, wall.remaining());
@@ -21,7 +27,8 @@ class WallInvariantTest {
             while (wall.remaining() > 0) assertTrue(taken.add(wall.draw()));
             assertEquals(14, wall.tiles.stream().filter(t -> t >= 0).count());
             for (int tile : wall.tiles) if (tile >= 0) assertTrue(taken.add(tile));
-            assertEquals(new HashSet<>(Tile.set(rules.sanma())), taken);
+            assertEquals(new HashSet<>(Tile.set(rules.sanma(), composition)), taken);
+            assertEquals(composition.total() - (rules.sanma() ? composition.count(0) : 0), taken.stream().filter(Tile::red).count());
         }
     }
 

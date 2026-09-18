@@ -332,7 +332,7 @@ public final class TableScreen extends Screen {
     private void buildLobby(TableView view) {
         int span = Math.min(400, width - 20), left = (width - span) / 2;
         int half = (span - 4) / 2;
-        boolean host = view.actions().stream().anyMatch(action -> action.type() == Action.Type.PRACTICE);
+        boolean host = view.actions().stream().anyMatch(action -> action.type() == Action.Type.CHANGE_RULE);
         for (int players : new int[]{4, 3}) {
             RuleSet rule = view.rules().tenhou() ? players == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
                 : players == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;
@@ -344,18 +344,19 @@ public final class TableScreen extends Screen {
             addRenderableWidget(mode);
         }
         var presets = java.util.Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == view.rules().players()).toList();
-        int presetWidth = (span - (presets.size() - 1) * 4) / presets.size();
+        int columns = Math.min(3, presets.size());
+        int presetWidth = (span - (columns - 1) * 4) / columns;
         for (int i = 0; i < presets.size(); i++) {
             RuleSet rule = presets.get(i);
             int action = ruleAction(view, rule);
             var preset = MahjongButton.create(Component.translatable(rule.presetKey()), ignored -> send(view, action))
-                .bounds(left + i * (presetWidth + 4), 88, presetWidth, 20)
+                .bounds(left + i % columns * (presetWidth + 4), 88 + i / columns * 24, presetWidth, 20)
                 .tooltip(Tooltip.create(Component.translatable(rule.translationKey()))).build();
             preset.active = host && action >= 0;
             preset.selected(view.rules() == rule);
             addRenderableWidget(preset);
         }
-        int y = 112;
+        int y = 88 + (presets.size() + columns - 1) / columns * 24;
         var visible = MahjongButton.create(Component.translatable("settings.mchjong.toggle", Component.translatable("ui.mchjong.open_hands"),
             Component.translatable(view.openHands() ? "options.on" : "options.off")), ignored ->
                 control(view, TableControlPayload.Operation.OPEN_HANDS, view.decision(), !view.openHands()))
@@ -385,8 +386,14 @@ public final class TableScreen extends Screen {
             column++;
         }
         if (column == 0 && view.viewerSeat() >= 0 && view.exitVote() == null) {
+            var compositions = Component.empty();
+            for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) if (view.rules().allows(composition)) {
+                if (!compositions.getSiblings().isEmpty()) compositions.append(" / ");
+                compositions.append(Component.translatable(composition.translationKey()));
+            }
             var missing = MahjongButton.create(Component.translatable("ui.mchjong.equipment_needed"), ignored -> {})
-                .bounds(left, y, span, 26).build();
+                .bounds(left, y, span, 26).tooltip(Tooltip.create(Component.translatable("ui.mchjong.red_fives_rule",
+                    compositions))).build();
             missing.active = false;
             addRenderableWidget(missing);
         }
