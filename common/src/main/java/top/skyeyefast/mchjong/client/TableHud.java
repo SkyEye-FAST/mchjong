@@ -26,7 +26,7 @@ final class TableHud {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
-        int headerWidth = Math.max(84, width - 224);
+        int headerWidth = board == null ? Math.max(84, width - 224) : Math.min(280, width - 224);
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
             .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
         if (view.openHands()) details = details.copy().append("\n").append(Component.translatable("ui.mchjong.open_hands"));
@@ -38,6 +38,12 @@ final class TableHud {
                 ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
         Component remaining = !lobby && settings.show(TableSettings.Information.REMAINING)
             ? Component.translatable("ui.mchjong.remaining", view.remaining()) : Component.empty();
+        if (board != null) {
+            title = settings.show(TableSettings.Information.RULES)
+                ? Component.translatable(view.rules().custom() ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
+            remaining = settings.show(TableSettings.Information.DEPOSITS)
+                ? Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()) : Component.empty();
+        }
         var indicators = new ArrayList<Integer>();
         if (!lobby && settings.show(TableSettings.Information.DORA)) for (int i = 0; i < 5; i++) {
             int index = view.wall().size() - 5 - 2 * i;
@@ -96,9 +102,16 @@ final class TableHud {
             graphics.fill(x, top, x + cardWidth, top + cardHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
             boolean turn = !lobby && seat == view.turn() && settings.show(TableSettings.Information.TURN);
             if (turn || lobby && player.ready()) graphics.fill(x, top, x + 2, top + cardHeight, MahjongUi.ACCENT);
-            int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
-            text(font, graphics, name, x + 5 + inset, top + 3, cardWidth - 10 - inset, MahjongUi.TEXT);
-            text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10, turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
+            if (board != null) {
+                int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 4, top + 3, 14);
+                Component label = name.getString().isEmpty() ? shortLine : name;
+                if (!name.getString().isEmpty() && player.riichi() && settings.show(TableSettings.Information.STATUS)) label = label.copy().append(" *");
+                text(font, graphics, label, x + 4 + inset, top + 6, cardWidth - 8 - inset, MahjongUi.TEXT);
+            } else {
+                int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
+                text(font, graphics, name, x + 5 + inset, top + 3, cardWidth - 10 - inset, MahjongUi.TEXT);
+                text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10, turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
+            }
             regions.add(new Region(x, top, cardWidth, cardHeight, hover));
         }
         if (lobby) return;
@@ -118,10 +131,10 @@ final class TableHud {
             int x = width - 8 - span;
             int y = board == null ? 67 : 35;
             if (board != null) {
-                var card = board.card(view.viewerSeat());
-                x = card.right() + 4;
-                y = card.y();
-                span = Math.min(span, Math.max(20, board.area(view.viewerSeat()).x() - x - 4));
+                var focusArea = board.focus();
+                x = focusArea.x();
+                y = focusArea.y();
+                span = focusArea.width();
             }
             MahjongUi.panel(graphics, x, y, span, 17);
             if (span > 28) text(font, graphics, focus, x + 4, y + 5, span - 22, MahjongUi.ACCENT);

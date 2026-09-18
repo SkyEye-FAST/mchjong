@@ -431,6 +431,7 @@
   "ui.mchjong.turn": "%s の手番",
   "ui.mchjong.round": "%1$s%2$s局 %3$s本場",
   "ui.mchjong.remaining": "残り%s枚",
+  "ui.mchjong.remaining_short": "残 %s",
   "ui.mchjong.sticks": "供託%s本",
   "ui.mchjong.points": "%s点",
   "ui.mchjong.han_fu": "%1$s翻 %2$s符",

@@ -431,6 +431,7 @@
   "ui.mchjong.turn": "轮到%s",
   "ui.mchjong.round": "%1$s%2$s局 %3$s本场",
   "ui.mchjong.remaining": "剩余%s张",
+  "ui.mchjong.remaining_short": "余 %s",
   "ui.mchjong.sticks": "供托%s根",
   "ui.mchjong.points": "%s点",
   "ui.mchjong.han_fu": "%1$s番 %2$s符",

@@ -54,7 +54,6 @@ final class TableHand {
     }
 
     void render(GuiGraphics graphics, int selected, IntUnaryOperator highlight, TileFacePreset preset) {
-        MahjongUi.panel(graphics, left - 5, top(), span + 10, tileHeight + 12);
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(tile, selected), color = highlight.applyAsInt(tile);
             TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
