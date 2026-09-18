@@ -18,7 +18,7 @@ final class TableHints {
         int step = Math.min(20, (width - leftBound - 22) / waits.size()), tileWidth = step - 4;
         int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         int span = Math.max(112, waits.size() * step + 12), height = tileHeight + 32;
-        int left = width - span - 10, top = overhead ? bottom - height : 58;
+        int left = width - span - 10, top = overhead ? bottom - height : 66;
         // Dense action choices take priority over the optional rail in a short viewport.
         if (top < 58 || top + height > bottom) return;
         int total = waits.stream().mapToInt(TenpaiHints.Wait::remaining).sum();
