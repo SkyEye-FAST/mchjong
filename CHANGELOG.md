@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Automatic north extraction in three-player matches, with server-validated legal declarations, win priority and normal robbery/replacement handling.
 - World, room and personal settings, administrator-controlled hand visibility and optional safe invitation teleportation, plus transferable room ownership.
 - Pregame wind drawing for ordinary tables and randomized seating for automatic tables, with server-verified mounts before readiness and a fresh assignment for each match.
 - Per-seat bot selection and difficulty controls throughout room preparation, with wind reservations and host ownership preserved during repositioning.
@@ -20,6 +21,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Match automation controls remain directly interactive when compact or expanded, with localized short labels, full-name tooltips, visible state indicators and a separate collapse arrow.
 - Tile-face printing is performed inside the box with mahjong dye; stonecutting prepares raw blanks and recipe viewers describe the surviving crafting operations.
 - Red dora dye and undo dye each yield four per craft; 136/144-tile box face printing produces and restores ordinary no-red sets.
 - Boxes may hold spare tiles and supply the exact matching 136/108-tile subset required by the selected rules. Rule screens distinguish preset options, rule details and custom settings; unavailable red compositions show a shortage tooltip.

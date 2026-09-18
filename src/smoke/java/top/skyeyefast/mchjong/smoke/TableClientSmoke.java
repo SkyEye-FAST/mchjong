@@ -266,10 +266,11 @@ public final class TableClientSmoke {
                 if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
-                // declining intervening calls through the actual UI rather than changing game state.
-                if (view.phase() == Game.Phase.REACTION) {
+                // declining calls and continuing early abortive draws through the actual UI.
+                if (view.phase() == Game.Phase.REACTION || view.phase() == Game.Phase.HAND_END) {
+                    var key = view.phase() == Game.Phase.HAND_END ? "action.mchjong.next" : "action.mchjong.pass";
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
-                            && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.pass").getString()) && widget.active) {
+                            && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()) && widget.active) {
                         client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                         break;
                     }

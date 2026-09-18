@@ -72,13 +72,14 @@ final class TableControlSmoke {
             });
             next(3);
         } else if (stage == 3 && client.screen instanceof TableScreen && view.viewerSeat() == 0 && ticks > 10) {
-            click(client, "ui.mchjong.players.3");
+            if (!view.rules().sanma()) click(client, "ui.mchjong.players.3");
             next(4);
         } else if (stage == 4 && view.rules().players() == 3) {
             require(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .noneMatch(widget -> widget.getMessage().getString().equals(Component.translatable("preset.mchjong.m_league").getString())),
                 "Four-player preset appeared in the three-player lobby");
             capture(client, output, "25-three-player-lobby.png");
+            AutomationControlsSmoke.checkOptions(client, 0);
             click(client, "ui.mchjong.players.4");
             next(5);
         } else if (stage == 5 && view.rules().players() == 4) {

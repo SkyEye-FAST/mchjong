@@ -178,16 +178,23 @@ Evidence goes to each loader's `build/smoke/seating-evidence`.
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
-The automatic table's match overlay includes collapsible controls at the lower
-left: sort hand, claim wins, skip calls, and discard drawn tiles. Keep a clear
-gutter between these controls and the action buttons, including at 320 x 240
-with the overhead hand visible. These preferences belong to the
-server's seated player and are acknowledged before another toggle is enabled.
-Long option labels use separate name/state lines; never truncate the on/off
-state. Countdown, riichi and animation text stay in the action-side gutter.
-Sorting starts enabled; the other options start disabled. A legal win takes
-priority over automatic discards and skipped calls. Without automatic wins, the
-win decision remains explicit. Riichi draws and ordinary discards advance after
+The automatic table's active-match overlay includes collapsible controls at the
+lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
+matches) extract norths. Both compact and expanded rows are individual toggle buttons;
+the separate side arrow changes only their presentation. Compact rows use localized
+single-character labels, while expanded rows show full names on up to two lines.
+Filled/hollow indicators distinguish states alongside the shared selected surface.
+Tooltips and narration always contain the full option name and its on/off state.
+Keep a clear gutter between these controls and the action buttons, including at
+320 x 240 with the overhead hand visible. These preferences belong to the server's
+seated player and are acknowledged before another toggle is enabled. Keep keyboard
+focus across snapshot updates and collapse/expand. Countdown, riichi and animation
+text stay in the action-side gutter. Sorting starts enabled; the other options start
+disabled. A legal win takes priority over automatic north extraction, discards and
+skipped calls. Without automatic wins, the win decision remains explicit. Automatic
+north extraction uses only legal server actions, independently of the skip-calls
+preference, and retains the normal robbery and replacement-draw flow.
+Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second
 hand reserve; lobby hosts can edit both values.
@@ -222,10 +229,13 @@ all four seats, standing/exposed tiles and waiting/drawn/post-call hands.
 Update this document and the shared tokens together when intentionally changing
 the style; do not establish a competing set of local widgets or palette values.
 
-The shared smoke captures the expanded match controls in Simplified Chinese at
-640 x 400 and 320 x 240, plus one English layout. Native first-person screenshots
-cover a right-hand tile and point stick. Each table has one carried-deposit
-fixture. Live preference buttons exercise the client/server acknowledgement path.
+The shared smoke captures compact and expanded match controls in all four locales
+at 640 x 400 and 320 x 240. The live four-player match toggles each option once in
+each presentation, using both pointer and keyboard activation. A live three-player
+match verifies the additional north button and its server acknowledgements at
+320 x 240 with the overhead hand visible. Lobby controls are checked separately.
+Native first-person screenshots cover a right-hand tile and point stick. Each
+table has one carried-deposit fixture.
 
 On Windows, `tools/Review-Smoke.ps1` creates labelled contact sheets from the
 original screenshots. Supply the evidence folder, filename pattern, run start

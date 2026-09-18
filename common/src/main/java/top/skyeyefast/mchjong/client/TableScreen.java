@@ -61,7 +61,7 @@ public final class TableScreen extends Screen {
     private boolean overhead;
     private boolean displayedOverhead;
     private TableHand hand;
-    private final TableAutomation automation = new TableAutomation(this, this::rebuild);
+    private final TableAutomation automation = new TableAutomation(this, () -> lastRevision = -1);
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
@@ -213,6 +213,7 @@ public final class TableScreen extends Screen {
     }
 
     private void rebuild() {
+        int automationFocus = automation.focusedIndex(getFocused());
         clearWidgets();
         callouts.clear();
         confirmButton = null;
@@ -239,6 +240,7 @@ public final class TableScreen extends Screen {
         buildToolbar(view);
         actionLeft = 10;
         automation.build(view, width, hand == null ? height - 17 : hand.top() - 8).forEach(this::addRenderableWidget);
+        automation.restoreFocus(automationFocus);
         if (view.exitVote() != null) { buildExitVote(view); return; }
         if (view.phase() == Game.Phase.LOBBY) { buildLobby(view); return; }
         int physical = TableHandling.action(view);
@@ -253,7 +255,7 @@ public final class TableScreen extends Screen {
         int discard = (choosingRiichi || TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM) && selectedTile >= 0
             ? tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD) : -1;
         int count = choices.size() + (riichi ? 1 : 0) + (discard >= 0 ? 1 : 0);
-        int actionWidth = width - 20 - (TableAutomation.available(view) ? TableAutomation.width(width) + 8 : 0);
+        int actionWidth = width - 20 - (TableAutomation.available(view) ? automation.width(width) + 8 : 0);
         actionLeft = width - 10 - actionWidth;
         int columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / 88)));
         int boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
