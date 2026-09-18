@@ -104,6 +104,12 @@ public final class TableScreen extends Screen {
             ? table.clientView() : null;
     }
 
+    boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
+        return reds == top.skyeyefast.mchjong.engine.RedFives.NONE || minecraft != null && minecraft.level != null
+            && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
+            && (table.clientRedOptions() & 1 << ((sanma ? 3 : 0) + reds.ordinal())) != 0;
+    }
+
     private TileFacePreset facePreset() {
         return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().preset();
     }
@@ -341,9 +347,12 @@ public final class TableScreen extends Screen {
             RuleSet rule = view.rules().preset().tenhou() ? players == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
                 : players == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;
             int action = ruleAction(view, rule);
+            var config = view.rules().withPreset(rule);
             var mode = MahjongButton.create(Component.translatable("ui.mchjong.players." + players), ignored -> send(view, action))
-                .bounds(left + (4 - players) * (half + 4), 64, half, 20).build();
-            mode.active = host && view.rules().players() != players && action >= 0;
+                .bounds(left + (4 - players) * (half + 4), 64, half, 20)
+                .tooltip(Tooltip.create(Component.translatable(canSupplyReds(config.sanma(), config.redFives())
+                    ? "ui.mchjong.players." + players : "rules.mchjong.insufficient_reds"))).build();
+            mode.active = host && view.rules().players() != players && action >= 0 && canSupplyReds(config.sanma(), config.redFives());
             mode.selected(view.rules().players() == players);
             addRenderableWidget(mode);
         }
@@ -353,11 +362,13 @@ public final class TableScreen extends Screen {
         for (int i = 0; i < presets.size(); i++) {
             RuleSet rule = presets.get(i);
             int action = ruleAction(view, rule);
+            var config = view.rules().withPreset(rule);
+            boolean available = canSupplyReds(config.sanma(), config.redFives());
             var preset = MahjongButton.create(Component.translatable(rule.presetKey()), ignored -> send(view, action))
                 .bounds(left + i % columns * (presetWidth + 4), 88 + i / columns * 24, presetWidth, 20)
-                .tooltip(Tooltip.create(Component.translatable(rule.translationKey()))).build();
-            preset.active = host && action >= 0;
-            preset.selected(view.rules().equals(rule.config()));
+                .tooltip(Tooltip.create(Component.translatable(available ? rule.translationKey() : "rules.mchjong.insufficient_reds"))).build();
+            preset.active = host && action >= 0 && available;
+            preset.selected(!view.rules().custom() && view.rules().preset() == rule);
             addRenderableWidget(preset);
         }
         int y = 88 + (presets.size() + columns - 1) / columns * 24;

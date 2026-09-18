@@ -32,7 +32,16 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
         return new RuleConfig(preset, values);
     }
     public boolean custom() {
-        return settings.entrySet().stream().anyMatch(entry -> entry.getValue() != entry.getKey().defaultValue(preset));
+        return settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
+            && entry.getValue() != entry.getKey().defaultValue(preset));
+    }
+
+    /** Retain supported table variants while replacing all fixed rules with the new preset. */
+    public RuleConfig withPreset(RuleSet next) {
+        var config = next.config();
+        for (var option : RuleOption.values())
+            if (next.adjustable(option)) config = config.with(option, get(option));
+        return config;
     }
     public String name() { return custom() ? "CUSTOM_" + preset.name() : preset.name(); }
     public String translationKey() { return custom() ? "rules.mchjong.custom" : preset.translationKey(); }
@@ -62,9 +71,9 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
     public boolean doubleWindPairFu() { return enabled(DOUBLE_WIND_PAIR_FU); }
     public boolean renhouMangan() { return enabled(RENHOU_MANGAN); }
     public boolean allows(RedFives reds) {
-        return reds != null && (get(RED_FIVES) == 0 || get(RED_FIVES) == reds.ordinal() + 1);
+        return reds == redFives();
     }
-    public RedFives defaultRedFives() { return get(RED_FIVES) == 0 ? RedFives.THREE : RedFives.values()[get(RED_FIVES) - 1]; }
+    public RedFives redFives() { return RedFives.values()[get(RED_FIVES)]; }
     public boolean headBump() { return enabled(HEAD_BUMP); }
     public boolean tripleRonDraw() { return enabled(TRIPLE_RON_DRAW); }
     public boolean bankruptcy() { return enabled(BANKRUPTCY); }

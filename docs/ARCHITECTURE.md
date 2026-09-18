@@ -24,6 +24,11 @@ logic reads individual settings instead of branching on a preset identity.
 `TableRulesPayload` carries a bounded proposal and the current table identity and
 decision. Only the seated host can apply it before play; clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
+Preset metadata distinguishes supported table options from custom changes; the
+editor shows options, read-only details and custom settings separately. The view
+payload adds six public red-stock capability bits (three compositions for each
+player count), not box contents. The server independently authorizes every
+proposed red composition against stock.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
@@ -66,7 +71,10 @@ authorized per player and practice-bot ownership. `PointStickScreen` shows store
 currency beside the referee's score; only ordinary inventory transactions move
 the physical sticks. Signed 32-bit reference scores use paired native data slots.
 Lifetime checks bind the menu to its player, current mount and exact table.
-Both manual and automatic tables require a cloth and complete set to begin.
+Both manual and automatic tables require a cloth and a box covering the selected
+set to begin. Surplus tiles remain untouched. Subset selection groups stock by
+appearance, counts ordinary and red faces separately and never combines boxes.
+The engine receives exactly 136 or 108 physical identities for the selected mode.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
 
 The server owns the wall, hands, legal actions and settlement. Requests contain an

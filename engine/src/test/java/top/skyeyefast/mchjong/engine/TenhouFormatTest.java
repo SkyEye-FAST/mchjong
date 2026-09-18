@@ -22,9 +22,11 @@ class TenhouFormatTest {
         var match = fixture(RuleSet.TENHOU_4, 0, 0, List.of(), "exhaustive");
         for (var reds : RedFives.values()) {
             var configured = new ReplayMatch(match.id(), match.tableId(), match.startedAt(), match.updatedAt(),
-                match.rules(), match.initialDealer(), match.participants(), match.hands(), false, reds);
+                match.rules().with(RuleOption.RED_FIVES, reds.ordinal()).with(RuleOption.KUITAN, 0),
+                match.initialDealer(), match.participants(), match.hands(), false, reds);
             var rule = (java.util.Map<?, ?>) TenhouReplay.export(configured).get("rule");
             for (int suit = 0; suit < 3; suit++) assertEquals(reds.count(suit), rule.get("aka5" + (suit + 1)));
+            assertFalse(rule.get("disp").toString().contains("喰"));
         }
     }
 

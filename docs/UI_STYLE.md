@@ -77,6 +77,16 @@ than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
 
+## Table rules
+
+The rule screen separates preset options, read-only rule details and custom
+settings. Preset-supported options retain the preset identity. Red compositions
+use three separate choices; unavailable choices remain visible, disabled and
+labelled with a shortage tooltip. Availability comes from synchronized server
+capabilities rather than access to box inventory. All rule pages paginate at
+320 x 240, with complete labels available on hover. The shared smoke captures
+the disabled-red tooltip in all four locales at that size.
+
 ## Mahjong box
 
 The box has its own registered menu type and `MahjongBoxScreen`. Never use the

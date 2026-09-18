@@ -1,11 +1,16 @@
 # Riichi rules and presets
 
-## Custom rules
+## Preset options and custom rules
 
 The lobby's Mahjong Soul, Tenhou, M.League, League A and WRC choices are presets.
-Open **Custom rules** to edit their settings; choosing a preset loads all its
-defaults into the draft. Six paginated categories cover points/ranks, placement,
-scoring, match flow, riichi/calls and responsibility payments. Apply commits the
+Open **Table rules** for three sections: **Preset options**, **Rule details** and
+**Custom rules**. Mahjong Soul and Tenhou allow open tanyao and no/three/four red
+fives within the named preset. Changing those options retains the preset label;
+changing other settings marks the rules as custom. Switching presets retains
+supported table options and loads the remaining defaults. Rule details show all
+current draft values, including enabled and disabled features, without editing.
+Six paginated categories cover points/ranks, placement, scoring, match flow,
+riichi/calls and responsibility payments. Apply commits the
 draft; Cancel leaves the table unchanged. Reload discards the draft and reads the
 current server settings. Only the seated host may apply rules in the lobby, and
 all players must ready again after a change. Stale decisions are rejected.
@@ -18,8 +23,10 @@ The floating count is the number of players at or above the return threshold.
 Custom scoring, draw, furiten, kan, liability and ending options no longer inherit
 hidden behavior from the preset name. Unchanged presets retain the defaults below.
 
-Red-five settings restrict accepted physical boxes to none, three, four or any
-supported composition. They do not manufacture or remove red tiles. Saves and
+Red-five settings select the exact composition taken from a physical box. A
+choice with insufficient red fives is disabled and shows a shortage tooltip.
+The server rechecks stock when applying a proposal. These settings do not
+manufacture, recolor or remove stored tiles. Saves and
 native replays contain the entire validated rule snapshot, not just a preset ID.
 
 ## Preset reference
@@ -104,8 +111,10 @@ Candidate interpretations are compared by actual payment rather than han alone.
 
 ## Physical red fives
 
-The box, not a virtual lobby toggle, determines the red-five composition. A valid
-set always contains four physical copies of each of the 34 faces:
+The selected rules specify the playing set; the first compatible box must cover
+every required ordinary and red tile. Surplus tiles stay in the box. The selected
+subset has matching material, back color and face design; different boxes never
+pool their contents. Four-player play uses four copies of each of the 34 faces:
 
 | Composition | Red 5m | Red 5p | Red 5s |
 | --- | ---: | ---: | ---: |
@@ -114,11 +123,15 @@ set always contains four physical copies of each of the 34 faces:
 | Four reds | 1 | 2 | 1 |
 
 Mahjong Soul and Tenhou accept all three compositions as table variants.
-M.League accepts three reds only; A and WRC accept no reds only. In sanma the
-physical box remains a full set, while 2m through 8m stay outside the live game;
-the three/four-red box therefore supplies two/three playable red fives.
+M.League uses three reds; A and WRC use no reds. Changing those fixed settings
+creates custom rules. Sanma requires only the 108 played tiles: 2m through 8m,
+including the red 5m, need not be present. The three/four-red options therefore
+select two/three playable red fives in sanma.
 
-Printing blank tiles or reprinting a complete set restores three reds, one per suit.
+Printing 136 or 144 blank tiles or reprinting a complete set produces no red
+fives. New tables start with the no-red Mahjong Soul variant. Spare red fives may
+be added alongside all four ordinary fives, allowing one box to cover multiple
+choices. An ordinary five cannot substitute for a required red five, or vice versa.
 One vanilla red dye crafts four red dora dyes; one red dora dye plus an ordinary
 five creates its red version. One black dye crafts four undo dyes; one undo dye
 plus a red five restores its ordinary face while retaining its other components.

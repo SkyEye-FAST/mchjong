@@ -67,9 +67,13 @@ public final class Game {
     List<Integer> suppliedTiles;
 
     public Game(UUID tableId, RuleSet rules, long seed) {
+        this(tableId, rules.config(), seed);
+    }
+
+    public Game(UUID tableId, RuleConfig rules, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
-        this.rules = Objects.requireNonNull(rules).config();
-        suppliedTiles = Tile.set(false, rules.defaultRedFives());
+        this.rules = Objects.requireNonNull(rules);
+        suppliedTiles = Tile.set(rules.sanma(), rules.redFives());
         this.seed = seed;
         for (int i = 0; i < 4; i++) {
             players[i] = new PlayerState();
@@ -85,13 +89,15 @@ public final class Game {
     public boolean manual() { return manual; }
     public int points(int seat) { return players[seat].points; }
     public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
-    public boolean equipped() { return suppliedTiles.size() == 136 && rules.allows(RedFives.of(suppliedTiles)); }
+    public boolean equipped() {
+        return suppliedTiles.size() == (rules.sanma() ? 108 : 136) && rules.allows(RedFives.of(suppliedTiles));
+    }
 
     /** The Minecraft adapter supplies checked physical tiles, or an empty list for an empty table. */
     public boolean configureEquipment(boolean manual, List<Integer> tiles) {
         Objects.requireNonNull(tiles);
         if (phase != Phase.LOBBY || exitVote != null) return false;
-        if (!tiles.isEmpty() && !Tile.validSet(tiles))
+        if (!tiles.isEmpty() && (!Tile.validSet(tiles) || tiles.size() != (rules.sanma() ? 108 : 136)))
             throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
         if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
         if (this.manual != manual) {
@@ -262,7 +268,7 @@ public final class Game {
             if (seat == host()) {
                 if (equipped()) actions.add(new Action(PRACTICE));
                 for (RuleSet preset : RuleSet.values()) {
-                    if (!preset.config().equals(rules) && (preset.players() == 4 || players[3].id == null)) {
+                    if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || players[3].id == null)) {
                         actions.add(new Action(CHANGE_RULE, preset.ordinal()));
                     }
                 }
@@ -299,7 +305,7 @@ public final class Game {
                     }
                     players[seat].ready = true;
                 }
-                case CHANGE_RULE -> applyRules(RuleSet.values()[action.tiles().getFirst()].config());
+                case CHANGE_RULE -> applyRules(rules.withPreset(RuleSet.values()[action.tiles().getFirst()]));
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
             revision++;
@@ -759,7 +765,7 @@ public final class Game {
             player.river.stream().filter(discard -> !discard.called()).forEach(discard -> physical.add(discard.tile()));
             for (int tile : physical) if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
         }
-        var supplied = suppliedTiles.stream().filter(tile -> !rules.sanma() || Tile.kind(tile) == 0 || Tile.kind(tile) >= 8).toList();
+        var supplied = suppliedTiles;
         if (!seen.equals(new HashSet<>(supplied))) throw new IllegalStateException("Tile conservation failed");
         long points = riichiSticks * 1000L;
         for (int i = 0; i < rules.players(); i++) points += players[i].points;

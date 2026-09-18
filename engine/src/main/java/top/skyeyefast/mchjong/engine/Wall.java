@@ -19,13 +19,13 @@ final class Wall {
     int breakOffset;
 
     Wall(RuleConfig rules, long seed) {
-        this(rules, seed, Tile.set(false, rules.defaultRedFives()));
+        this(rules, seed, Tile.set(rules.sanma(), rules.redFives()));
     }
 
     Wall(RuleConfig rules, long seed, List<Integer> supplied) {
-        if (!Tile.validSet(supplied) || !rules.allows(RedFives.of(supplied)))
+        if (!Tile.validSet(supplied) || supplied.size() != (rules.sanma() ? 108 : 136) || !rules.allows(RedFives.of(supplied)))
             throw new IllegalArgumentException("A wall requires one complete supplied set");
-        tiles = new ArrayList<>(supplied.stream().filter(tile -> !rules.sanma() || Tile.kind(tile) == 0 || Tile.kind(tile) >= 8).toList());
+        tiles = new ArrayList<>(supplied);
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
         liveEnd = tiles.size() - 14;

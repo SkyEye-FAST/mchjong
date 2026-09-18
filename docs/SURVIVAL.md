@@ -111,28 +111,33 @@ through the creative catalogue, not survival crafting or loot.
 
 Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
 Insert mahjong dye into the dedicated dye slot and select **Apply faces**.
-The 136-tile set has four copies of each face, including one red five per suit;
+The 136-tile set has four ordinary copies of each face and no red fives;
 144 additionally includes one of each of the eight flowers. These sets occupy
-37 and 45 stacks respectively.
+34 and 42 stacks respectively.
 One ordinary dye is consumed per successful
 operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
-blanks, invalid selections and already-matching three-red sets do not consume anything.
+blanks, invalid selections and already-matching no-red sets do not consume anything.
 
 Choose **Kansai** or **Kanto** in the box. Both designs are built into the mod;
 the selection applies to inventory items, the world table, overhead hands,
 action previews and settlement. Reprinting an existing complete set applies
-the face preset and restores the default three red fives, including when the
+the face preset and restores ordinary fives, including when the
 selected face preset is already in use. Other tile components are preserved. Tile-back
 recoloring remains the separate vanilla-grid dye recipe.
 
 One vanilla red dye crafts **four red dora dyes**. Combine one red dora dye with
 one ordinary 5m, 5p or 5s to make the corresponding red five. Material, back color,
-face preset and other tile components stay unchanged. Replace the ordinary fives
-in the box with those red copies: one of each makes three reds; one red 5m, two
-red 5p and one red 5s make four reds. A complete set still contains four copies of
-every face. Mahjong Soul and Tenhou accept no-red, three-red and four-red sets;
-M.League requires three reds, while League A and WRC require no reds.
+face preset and other tile components stay unchanged. Keep spare red fives in the
+box and choose no reds, three reds or four reds in the rule screen. Three reds
+use one of each suit; four reds use one red 5m, two red 5p and one red 5s. Every
+required face still has four playable copies, counting ordinary and red tiles
+separately. The box may contain more tiles than play requires. For example,
+136 ordinary tiles plus four spare reds cover all three compositions. Sanma
+requires only 108 tiles and ignores 2m through 8m. A single box must supply the
+entire matching subset; two boxes do not combine. Mahjong Soul and Tenhou retain
+their preset names for these options. M.League specifies three reds, while
+League A and WRC specify no reds. Unavailable red choices show a shortage tooltip.
 
 One vanilla black dye crafts **four undo dyes**. Combine one undo dye with one
 red five to restore its ordinary five, preserving its material, back color,
@@ -198,10 +203,12 @@ checks distance, table identity and match state on every transaction. Closing
 the screen, leaving range, breaking the table or starting a match permanently
 invalidates an old menu. Both cases are locked during a match.
 
-The table validates the physical
-136-tile multiset, rule-compatible red fives, uniform material and uniform back color.
-Spare unengraved tiles, flowers and point sticks are allowed in the box. A mixed-back,
-mixed-material, incomplete or duplicate-faced set cannot start a game. The box
+The table selects exactly 136 tiles for four-player play or 108 for sanma,
+with the chosen red-five composition and matching material, back color and face
+preset. Every required ordinary and red face must be sufficiently stocked in
+one box. Additional copies, unused faces, unengraved tiles, flowers and point
+sticks remain in storage. Surplus tiles with a different appearance do not
+invalidate an otherwise complete matching subset. The box
 is transferred into table storage, not copied, including when using creative
 inventory transfers. There is no free virtual set when a table is empty.
 

@@ -25,7 +25,7 @@ class ReactionRulesTest {
             var result = new ArrayList<Integer>();
             for (int parsed : TestHands.tiles(text)) {
                 int kind = Tile.kind(parsed);
-                int tile = Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream()
+                int tile = Tile.set(game.rules.sanma(), game.rules.redFives()).stream()
                     .filter(candidate -> Tile.kind(candidate) == kind && !owned.contains(candidate)).findFirst().orElseThrow();
                 owned.add(tile); result.add(tile);
             }
@@ -33,7 +33,7 @@ class ReactionRulesTest {
         }
         void hand(int seat, String text) { game.players[seat].hand.addAll(take(text)); }
         void start(int from, int drawn) {
-            var rest = new ArrayDeque<>(Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream().filter(t -> !owned.contains(t)).toList());
+            var rest = new ArrayDeque<>(Tile.set(game.rules.sanma(), game.rules.redFives()).stream().filter(t -> !owned.contains(t)).toList());
             for (int s = 0; s < game.rules.players(); s++) {
                 int count = s == from ? 14 : 13;
                 while (game.players[s].hand.size() < count) {
@@ -41,7 +41,7 @@ class ReactionRulesTest {
                 }
                 assertEquals(count, game.players[s].hand.size());
             }
-            var unowned = Tile.set(game.rules.sanma(), game.rules.defaultRedFives()).stream().filter(t -> !owned.contains(t)).toList();
+            var unowned = Tile.set(game.rules.sanma(), game.rules.redFives()).stream().filter(t -> !owned.contains(t)).toList();
             game.wall.tiles = new ArrayList<>(Collections.nCopies(owned.size(), Tile.ABSENT));
             game.wall.tiles.addAll(unowned);
             game.wall.cursor = owned.size();

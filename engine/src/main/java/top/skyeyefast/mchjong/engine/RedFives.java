@@ -21,6 +21,8 @@ public enum RedFives {
     public static RedFives of(List<Integer> tiles) {
         int[] counts = new int[3];
         for (int tile : tiles) if (Tile.red(tile)) counts[Tile.kind(tile) / 9]++;
+        // Three-player walls omit all middle characters, including the red five.
+        if (tiles.size() == 108 && counts[1] > 0 && counts[2] > 0) counts[0] = 1;
         return of(counts[0], counts[1], counts[2]);
     }
 }

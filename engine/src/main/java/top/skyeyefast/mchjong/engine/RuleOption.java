@@ -30,7 +30,7 @@ public enum RuleOption {
     COMPOUND_YAKUMAN(Group.SCORING, r -> true),
     DOUBLE_WIND_PAIR_FU(Group.SCORING, RuleSet::doubleWindPairFu),
     RENHOU_MANGAN(Group.SCORING, RuleSet::renhouMangan),
-    RED_FIVES(Group.SCORING, 0, 3, 1, r -> r.mahjongSoul() || r.tenhou() ? 0 : r.defaultRedFives().ordinal() + 1),
+    RED_FIVES(Group.SCORING, 0, 2, 1, r -> r.defaultRedFives().ordinal()),
 
     HEAD_BUMP(Group.FLOW, RuleSet::headBump),
     TRIPLE_RON_DRAW(Group.FLOW, RuleSet::tripleRonDraw),

@@ -265,8 +265,9 @@ final class ManualTableSmoke {
         // Pin only the server fixture's initial seed so the real human is the initial dealer.
         long seed = 0;
         while (new Random(seed).nextInt(4) != 0) seed++;
-        var game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, seed);
-        game.configureEquipment(true, table.equipment().deck().tiles(false));
+        var game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
+            .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), seed);
+        game.configureEquipment(true, table.equipment().deck().tiles());
         var saved = table.saveWithoutMetadata(level.registryAccess());
         saved.putString("game", TableNetworking.JSON.toJson(game));
         table.loadWithComponents(saved, level.registryAccess());

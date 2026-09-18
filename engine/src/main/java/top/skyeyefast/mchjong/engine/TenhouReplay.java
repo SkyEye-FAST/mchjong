@@ -29,7 +29,7 @@ public final class TenhouReplay {
         root.put("dan", Collections.nCopies(4, ""));
         root.put("rate", Collections.nCopies(4, 0));
         root.put("sx", Collections.nCopies(4, ""));
-        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + "南喰"
+        root.put("rule", Map.of("disp", (match.rules().sanma() ? "三" : "") + "南" + (match.rules().kuitan() ? "喰" : "")
             + (match.redFives() == RedFives.NONE ? "" : "赤") + " · " + match.rules().name(),
             "aka51", match.rules().sanma() ? 0 : match.redFives().count(0),
             "aka52", match.redFives().count(1), "aka53", match.redFives().count(2)));

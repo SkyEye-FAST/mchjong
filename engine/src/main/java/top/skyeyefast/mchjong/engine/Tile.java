@@ -34,11 +34,13 @@ public final class Tile {
     }
 
     public static boolean validSet(List<Integer> tiles) {
-        if (tiles.size() != 136) return false;
+        boolean sanma = tiles.size() == 108;
+        if (!sanma && tiles.size() != 136) return false;
         boolean[] seen = new boolean[136];
         try {
             for (int tile : tiles) {
-                kind(tile);
+                int face = kind(tile);
+                if (sanma && face > 0 && face < 8) return false;
                 int physical = tile & ~RED_FLAG;
                 if (seen[physical]) return false;
                 seen[physical] = true;

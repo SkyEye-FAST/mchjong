@@ -14,10 +14,13 @@ class TableControlTest {
             var rules = preset.config();
             assertFalse(rules.custom());
             assertEquals(rules, json.fromJson(json.toJson(rules), RuleConfig.class));
+            var variant = rules.with(RuleOption.KUITAN, 0).with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal());
+            assertEquals(!(preset.tenhou() || preset.mahjongSoul()), variant.custom());
+            assertTrue(variant.with(RuleOption.STARTING_POINTS, rules.startingPoints() + 100).custom());
         }
         var custom = RuleSet.M_LEAGUE.config().with(RuleOption.STARTING_POINTS, 28000)
             .with(RuleOption.RETURN_POINTS, 35000).with(RuleOption.TARGET_POINTS, 40000)
-            .with(RuleOption.UMA_1, 25600).with(RuleOption.IPPATSU, 0).with(RuleOption.RED_FIVES, 1);
+            .with(RuleOption.UMA_1, 25600).with(RuleOption.IPPATSU, 0).with(RuleOption.RED_FIVES, RedFives.NONE.ordinal());
         assertTrue(custom.custom());
         assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.IPPATSU, 2));
         assertThrows(IllegalArgumentException.class, () -> custom.with(RuleOption.STARTING_POINTS, 28001));

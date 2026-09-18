@@ -31,6 +31,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private int ticks;
     private long sentRevision = -1;
     private TableView clientView;
+    private int clientRedOptions;
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
     private final TableEquipment equipment = new TableEquipment(this::equipmentChanged);
@@ -43,15 +44,21 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private Game serverGame() {
         if (level == null || level.isClientSide) throw new IllegalStateException("Private state accessed outside server");
         if (unreadableSave != null) return null;
-        if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, SEEDS.nextLong());
+        if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
+            .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
-            game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles(false));
+            game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles());
         else if (!equipment.hasCloth() || equipment.deck() == null) return null;
         return game;
     }
 
     public TableView clientView() { return clientView; }
+    public int clientRedOptions() { return clientRedOptions; }
+    public void acceptRedOptions(int options) {
+        if (level == null || !level.isClientSide) throw new IllegalStateException("Client supply state on server");
+        clientRedOptions = options & 63;
+    }
     public long clientViewAgeMillis() { return Math.max(0, System.nanoTime() - clientViewReceivedNanos) / 1_000_000L; }
     public void acceptView(TableView view) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client snapshot on server");
@@ -95,7 +102,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         TableView snapshot = game.view(authorizedViewer(player));
         player.connection.send(new ClientboundCustomPayloadPacket(
-            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply)));
+            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply, equipment.redOptions())));
     }
 
     public void open(ServerPlayer player) { sendView(player, true, false); }
@@ -257,6 +264,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public void act(ServerPlayer player, TableActionPayload payload) {
         Game game = serverGame();
         if (game == null || !game.tableId().equals(payload.tableId()) || authorizedViewer(player) == null) return;
+        var actions = game.view(player.getUUID()).actions();
+        if (payload.action() >= 0 && payload.action() < actions.size()) {
+            var action = actions.get(payload.action());
+            if (action.type() == top.skyeyefast.mchjong.engine.Action.Type.CHANGE_RULE) {
+                var proposed = game.rules().withPreset(RuleSet.values()[action.tiles().getFirst()]);
+                if (!equipment.canSupplyReds(proposed.sanma(), proposed.redFives())) {
+                    sendView(player, false, false);
+                    return;
+                }
+            }
+        }
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
             setChanged();
             flushReplays();
@@ -267,6 +285,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.TableRulesPayload payload) {
         var current = participantGame(player);
         if (current != null && current.tableId().equals(payload.tableId())
+            && equipment.canSupplyReds(payload.rules().sanma(), payload.rules().redFives())
             && current.configureRules(player.getUUID(), payload.decision(), payload.rules())) {
             serverGame(); // Recheck both physical boxes against the accepted rules before publishing readiness.
             setChanged();

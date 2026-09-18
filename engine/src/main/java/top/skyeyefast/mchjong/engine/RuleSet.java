@@ -16,6 +16,9 @@ public enum RuleSet {
     public boolean tenhou() { return this == TENHOU_3 || this == TENHOU_4; }
     public boolean mahjongSoul() { return this == MAHJONG_SOUL_3 || this == MAHJONG_SOUL_4; }
     private boolean online() { return tenhou() || mahjongSoul(); }
+    public boolean adjustable(RuleOption option) {
+        return online() && (option == RuleOption.KUITAN || option == RuleOption.RED_FIVES);
+    }
     public int startingPoints() { return this == JPML_A || this == WRC ? 30000 : sanma() ? 35000 : 25000; }
     public int returnPoints() { return mahjongSoul() ? startingPoints() : sanma() ? 40000 : 30000; }
     public int targetPoints() { return sanma() ? 40000 : 30000; }

@@ -9,13 +9,13 @@ class WallInvariantTest {
     @ParameterizedTest @EnumSource(RuleSet.class)
     void everyPhysicalTileIsAccountedForEvenAfterAllReplacements(RuleSet rules) {
         for (var composition : RedFives.values()) {
-            var supplied = Tile.set(false, composition);
+            var supplied = Tile.set(rules.sanma(), composition);
             assertTrue(Tile.validSet(supplied));
             if (!rules.allows(composition)) {
                 assertThrows(IllegalArgumentException.class, () -> new Wall(rules.config(), 12, supplied));
                 continue;
             }
-            Wall wall = new Wall(rules.config(), 12, supplied);
+            Wall wall = new Wall(rules.config().with(RuleOption.RED_FIVES, composition.ordinal()), 12, supplied);
             var taken = new HashSet<Integer>();
             for (int i = 0; i < rules.players() * 13 + 1; i++) assertTrue(taken.add(wall.draw()));
             assertEquals(rules.sanma() ? 54 : 69, wall.remaining());

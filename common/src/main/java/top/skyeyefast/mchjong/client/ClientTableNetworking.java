@@ -19,6 +19,7 @@ public final class ClientTableNetworking {
         TableView previous = table.clientView();
         table.acceptView(view);
         if (table.clientView() != view) return;
+        table.acceptRedOptions(payload.redOptions());
         TableAudio.accept(table, view);
         TableAnimation.of(table).accept(view, Util.getMillis());
         TableScreen active = TableScreen.active(client.screen);

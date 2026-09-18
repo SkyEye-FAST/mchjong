@@ -92,9 +92,7 @@ public final class MahjongSupplies {
             for (int i = 0; i < TILE_SLOTS; i++) output.set(i, ItemStack.EMPTY);
             int slot = 0;
             for (int face = 0; face < 34; face++) {
-                boolean five = face == 4 || face == 13 || face == 22;
-                output.set(slot++, printed(template, face, false, five ? 3 : 4, preset));
-                if (five) output.set(slot++, printed(template, face, true, 1, preset));
+                output.set(slot++, printed(template, face, false, 4, preset));
             }
             if (total == SET_SIZE + TileData.FLOWER_COUNT)
                 for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
@@ -114,18 +112,17 @@ public final class MahjongSupplies {
             }
             for (int count : faces) if (count != 4) return List.of();
             for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
-            if (reds[4] == 1 && reds[13] == 1 && reds[22] == 1
+            if (reds[4] == 0 && reds[13] == 0 && reds[22] == 0
                 && tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++)
                 if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
             for (int face : new int[]{4, 13, 22}) {
-                int remaining = Math.abs(1 - reds[face]);
-                boolean makeRed = reds[face] == 0;
+                int remaining = reds[face];
                 for (int i = 0; i < TILE_SLOTS && remaining > 0; i++) {
                     var stack = output.get(i);
-                    if (stack.isEmpty() || tile(stack).face() != face || tile(stack).red() == makeRed) continue;
+                    if (stack.isEmpty() || tile(stack).face() != face || !tile(stack).red()) continue;
                     int count = Math.min(remaining, stack.getCount());
-                    var converted = printed(stack, face, makeRed, count, preset);
+                    var converted = printed(stack, face, false, count, preset);
                     stack.shrink(count);
                     if (!insertTile(output, converted)) return List.of();
                     remaining -= count;
@@ -178,18 +175,31 @@ public final class MahjongSupplies {
         return result;
     }
 
-    /** A set is uniform and has no reds, one of each red five, or an additional red five of circles. */
+    /** Inventory summaries prefer a four-player set, then a usable three-player subset. */
     public static Deck deck(ItemStack box) {
         if (!validBox(box)) return null;
         return deck(contents(box));
     }
 
     public static Deck deck(List<ItemStack> items) {
-        int[] normal = new int[34];
-        int[] red = new int[34];
-        TileMaterial material = null;
-        DyeColor back = null;
-        TileFacePreset preset = null;
+        for (boolean sanma : new boolean[]{false, true}) for (var reds : RedFives.values()) {
+            var deck = selectDeck(items, sanma, reds, false);
+            if (deck != null) return deck;
+        }
+        return null;
+    }
+
+    public static Deck deck(ItemStack box, boolean sanma, RedFives reds) {
+        return validBox(box) ? selectDeck(contents(box), sanma, reds, false) : null;
+    }
+
+    public static boolean canSupplyReds(ItemStack box, boolean sanma, RedFives reds) {
+        return reds == RedFives.NONE || validBox(box) && selectDeck(contents(box), sanma, reds, true) != null;
+    }
+
+    /** Select a uniform subset without consuming, recoloring, or combining physical boxes. */
+    private static Deck selectDeck(List<ItemStack> items, boolean sanma, RedFives reds, boolean onlyReds) {
+        var stocks = new java.util.LinkedHashMap<Deck, int[]>();
         for (ItemStack stack : items) {
             if (stack.isEmpty()) continue;
             if (mahjongDye(stack)) continue;
@@ -198,19 +208,24 @@ public final class MahjongSupplies {
             TileData data = tile(stack);
             if (!data.valid()) return null;
             if (data.blank() || data.flower()) continue;
-            if (material == null) { material = data.material(); back = color(stack); preset = facePreset(stack); }
-            if (data.material() != material || color(stack) != back || facePreset(stack) != preset) return null;
-            (data.red() ? red : normal)[data.face()] += stack.getCount();
+            var appearance = new Deck(data.material(), color(stack), facePreset(stack), reds, sanma);
+            stocks.computeIfAbsent(appearance, ignored -> new int[68])[data.face() * 2 + (data.red() ? 1 : 0)] += stack.getCount();
         }
-        for (int face = 0; face < 34; face++) {
-            if (normal[face] + red[face] != 4) return null;
+        for (var stock : stocks.entrySet()) {
+            boolean enough = true;
+            for (int face = 0; face < 34 && enough; face++) {
+                if (sanma && face > 0 && face < 8) continue;
+                int red = face < 27 && face % 9 == 4 ? reds.count(face / 9) : 0;
+                enough = stock.getValue()[face * 2 + 1] >= red
+                    && (onlyReds || stock.getValue()[face * 2] >= 4 - red);
+            }
+            if (enough) return stock.getKey();
         }
-        RedFives redFives = RedFives.of(red[4], red[13], red[22]);
-        return preset != null && redFives != null ? new Deck(material, back, preset, redFives) : null;
+        return null;
     }
 
-    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset, RedFives redFives) {
-        public List<Integer> tiles(boolean sanma) { return List.copyOf(Tile.set(sanma, redFives)); }
+    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset, RedFives redFives, boolean sanma) {
+        public List<Integer> tiles() { return List.copyOf(Tile.set(sanma, redFives)); }
     }
 
     /** Creative/test fixture assembled through the same physical blank engraving path. */
