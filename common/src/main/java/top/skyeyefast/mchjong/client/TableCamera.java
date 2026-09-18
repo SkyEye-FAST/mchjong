@@ -15,13 +15,14 @@ public final class TableCamera {
         var client = Minecraft.getInstance();
         var screen = TableScreen.active(client.screen);
         return screen != null && screen.overhead() && client.options.getCameraType().isFirstPerson()
+            && screen.view() != null && screen.view().viewerSeat() >= 0
             && client.player != null && client.player.getVehicle() instanceof SeatEntity seat
             && screen.tablePos().equals(seat.tablePos());
     }
 
     public static Vec3 position(SeatEntity seat) {
         return overhead()
-            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE, -.15, seat.seat()))
+            ? TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, TableGeometry.FELT_Y + OVERHEAD_RISE, .20, seat.seat()))
             : TableSettings.get().cameraPosition(seat);
     }
 

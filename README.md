@@ -178,6 +178,11 @@ Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
 and does not change game rules or replay records.
 
+During an automatic-table match, **Auto play** at the lower left expands four
+quick controls: auto sort, auto win, no calls and auto discard. **Collapse** hides
+them again without changing their values. Each change waits for the server's
+acknowledgement; sorting starts enabled and the other options start disabled.
+
 Results show each player's point movement, winning hands and melds, yaku, and
 revealed dora/ura indicators without a scroll viewport. Select a winner's tab
 when several players ron, or focus the result panel and use Left/Right.

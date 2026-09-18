@@ -24,6 +24,11 @@ final class TableHand {
 
     int top() { return y - 7; }
 
+    int centerX(int tile) {
+        int index = tiles.indexOf(tile);
+        return index < 0 ? -1 : x(index) + tileWidth / 2;
+    }
+
     private int x(int index) { return left + index * tileWidth + (gap > 0 && index == tiles.size() - 1 ? gap : 0); }
     private int y(int tile, int selected) { return y - (tile == selected ? 3 : 0); }
 

@@ -58,7 +58,9 @@ public final class TableScreen extends Screen {
     private Vec3 handlingStart;
     private Vec3 handlingPointer;
     private boolean overhead;
+    private boolean displayedOverhead;
     private TableHand hand;
+    private final TableAutomation automation = new TableAutomation(this, this::rebuild);
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
@@ -127,6 +129,8 @@ public final class TableScreen extends Screen {
         refreshDecision(view());
         lastRevision = -1;
     }
+
+    public void receivedControlReply() { automation.receivedControlReply(); }
 
     private void refreshDecision(TableView view) {
         if (handlingDrag != null && (view == null || !handlingDrag.tableId().equals(view.tableId())
@@ -205,12 +209,14 @@ public final class TableScreen extends Screen {
         lastPhase = view.phase();
         lastRevision = view.revision();
         updateScene();
-        hand = TableCamera.overhead() && view.viewerSeat() >= 0 && !TableResults.available(view)
+        displayedOverhead = TableCamera.overhead();
+        hand = displayedOverhead && view.viewerSeat() >= 0 && !TableResults.available(view)
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
             ? new TableHand(view.seats().get(view.viewerSeat()), width, height) : null;
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
+        automation.build(view, width, hand == null ? height - 17 : hand.top() - 8).forEach(this::addRenderableWidget);
         if (view.exitVote() != null) { buildExitVote(view); return; }
         if (view.phase() == Game.Phase.LOBBY) { buildLobby(view); return; }
         int physical = TableHandling.action(view);
@@ -225,8 +231,9 @@ public final class TableScreen extends Screen {
         int discard = (choosingRiichi || TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM) && selectedTile >= 0
             ? tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD) : -1;
         int count = choices.size() + (riichi ? 1 : 0) + (discard >= 0 ? 1 : 0);
-        int columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, (width - 20) / 100)));
-        int boxWidth = Math.min(132, (width - 20 - (columns - 1) * 4) / columns);
+        int actionWidth = width - 20 - (TableAutomation.available(view) ? TableAutomation.width(width) + 8 : 0);
+        int columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / 88)));
+        int boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
         int rows = Math.max(1, (count + columns - 1) / columns);
         actionTop = (hand == null ? height - 43 : hand.top() - 34) - (rows - 1) * 30;
         int startX = width - 10 - columns * (boxWidth + 4) + 4;
@@ -429,6 +436,12 @@ public final class TableScreen extends Screen {
 
     private record Projected(double x, double y, double scale) {}
 
+    private Projected projectHand(TableScene.Piece piece) {
+        if (hand != null && hand.centerX(piece.tile()) >= 0)
+            return new Projected(hand.centerX(piece.tile()), hand.top(), 1);
+        return project(piece.position());
+    }
+
     private Projected project(Vec3 relative) {
         Camera camera = minecraft.gameRenderer.getMainCamera();
         Vec3 delta = TableGeometry.world(pos, relative).subtract(camera.getPosition());
@@ -563,7 +576,7 @@ public final class TableScreen extends Screen {
         framePartial = partialTick;
         TableView view = view();
         if (view == null) return;
-        if (view.revision() != lastRevision) rebuild();
+        if (view.revision() != lastRevision || displayedOverhead != TableCamera.overhead()) rebuild();
         updateScene();
         information.clear();
         if (view.exitVote() != null) {
@@ -590,7 +603,7 @@ public final class TableScreen extends Screen {
             if (settings.highlightTiles && showsConsumed(button.action) && button.isHoveredOrFocused()) {
                 for (TableScene.Piece piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat()
                     && button.action.tiles().contains(piece.tile())) {
-                    Projected own = project(piece.position());
+                    Projected own = projectHand(piece);
                     if (own != null) elbow(graphics, own, button, 0xffdfc98e);
                 }
             }

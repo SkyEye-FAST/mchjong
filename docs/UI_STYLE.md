@@ -149,8 +149,10 @@ third-person cushion pose. Evidence goes to each loader's `build/smoke/seating-e
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
-The automatic table's settings include a per-seat Automatic page: sort hand,
-claim wins, skip calls, and discard drawn tiles. These preferences belong to the
+The automatic table's match overlay includes collapsible controls at the lower
+left: sort hand, claim wins, skip calls, and discard drawn tiles. Keep a clear
+gutter between these controls and the action buttons, including at 320 x 240
+with the overhead hand visible. These preferences belong to the
 server's seated player and are acknowledged before another toggle is enabled.
 Sorting starts enabled; the other options start disabled. A legal win takes
 priority over automatic discards and skipped calls. Without automatic wins, the
@@ -186,7 +188,7 @@ all four seats, standing/exposed tiles and waiting/drawn/post-call hands.
 Update this document and the shared tokens together when intentionally changing
 the style; do not establish a competing set of local widgets or palette values.
 
-The shared smoke captures the Automatic settings page in Simplified Chinese at
+The shared smoke captures the expanded match controls in Simplified Chinese at
 640 x 400 and 320 x 240, plus one English layout. Native first-person screenshots
 cover a right-hand tile and point stick. Each table has one carried-deposit
 fixture. Live preference buttons exercise the client/server acknowledgement path.
@@ -197,7 +199,7 @@ time and output name, for example:
 
 ```powershell
 ./tools/Review-Smoke.ps1 -Evidence build/smoke/evidence `
-    -Pattern '54-settings-*.png' -Since (Get-Date '2026-09-17T18:41:00') -Name settings
+    -Pattern '54-table-options-*.png' -Since (Get-Date '2026-09-18T11:30:00') -Name controls
 ```
 
 Use the actual start time of the run being reviewed. The tool checks source
