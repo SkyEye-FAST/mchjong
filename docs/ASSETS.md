@@ -11,21 +11,17 @@ Each output is synchronized independently with the current generator results.
 
 ## Tile faces
 
-The 45 faces use the supplied PNG source atlases under
-`presets/tile_faces/kanto_mizuno/atlas/mizuno.png` and
-`presets/tile_faces/kansai_fluffystuff/atlas/default.png`, assigned to Kanto and
+The 45 faces use the individual PNG source tiles under
+`presets/tile_faces/kanto/tiles/` and `presets/tile_faces/kansai/tiles/`, assigned to Kanto and
 Kansai respectively.
-`TileArtwork` maps their 10-column source layout to runtime
+`TileArtwork` maps their transparent engravings to runtime
 cells, including all three red fives, preserving proportions and antialiased
 edges. Both designs are ordinary mod resources selected in the mahjong box;
 there is no runtime pack installation or network access.
 
 Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
-under `META-INF/licenses/`. The Kanto source names Mizuno Maruichi as copyright
-holder and explicitly marks its permission status `unauthorized`; its inclusion
-does not grant redistribution rights. The supplied Kansai metadata identifies
-FluffyStuff and lietxia and marks the source public domain. Neither preset is
-relicensed under the repository's code license.
+under `META-INF/licenses/`. The supplied Kansai metadata identifies
+lietxia (M+ Fonts License). Neither preset is relicensed under the repository's code license.
 
 `assets/mchjong/textures/tiles.png` (Kansai) and `kanto/tiles.png` are 2048 by 4096
 atlases, eight cells per row, each with a matching `tile_glyphs.png` transparent
@@ -35,8 +31,7 @@ North, white, green and red dragon. Cells 34-36 are the three red fives in suit
 order. Cells 37-44 are numbered 1q-8q. Kansai uses spring, summer, autumn,
 winter, plum, orchid, bamboo and chrysanthemum; Kanto uses the four seasons
 followed by fortune, prosperity, longevity and nobility (福禄寿貴).
-The generator swaps the Kansai source's final bamboo/chrysanthemum cells to
-match this numbering. All faces preserve the supplied artwork and proportions.
+All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.

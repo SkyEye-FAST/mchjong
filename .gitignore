@@ -43,10 +43,3 @@ replay_*.log
 
 # NeoForge / Datagen cache
 src/generated/**/.cache/
-
-# Supplied reference exports; the native build uses the two PNG source atlases.
-/presets/tile_faces/*_tiles.zip
-/presets/tile_faces/mchjong_resourcepacks/
-/presets/tile_faces/*/tiles/
-/presets/tile_faces/*/atlas/*.webp
-/presets/tile_faces/*/preset.json
