@@ -183,22 +183,22 @@ public final class MahjongSupplies {
 
     public static Deck deck(List<ItemStack> items) {
         for (boolean sanma : new boolean[]{false, true}) for (var reds : RedFives.values()) {
-            var deck = selectDeck(items, sanma, reds, false);
+            var deck = selectDeck(items, sanma, reds);
             if (deck != null) return deck;
         }
         return null;
     }
 
     public static Deck deck(ItemStack box, boolean sanma, RedFives reds) {
-        return validBox(box) ? selectDeck(contents(box), sanma, reds, false) : null;
+        return validBox(box) ? selectDeck(contents(box), sanma, reds) : null;
     }
 
     public static boolean canSupplyReds(ItemStack box, boolean sanma, RedFives reds) {
-        return reds == RedFives.NONE || validBox(box) && selectDeck(contents(box), sanma, reds, true) != null;
+        return deck(box, sanma, reds) != null;
     }
 
     /** Select a uniform subset without consuming, recoloring, or combining physical boxes. */
-    private static Deck selectDeck(List<ItemStack> items, boolean sanma, RedFives reds, boolean onlyReds) {
+    private static Deck selectDeck(List<ItemStack> items, boolean sanma, RedFives reds) {
         var stocks = new java.util.LinkedHashMap<Deck, int[]>();
         for (ItemStack stack : items) {
             if (stack.isEmpty()) continue;
@@ -217,7 +217,7 @@ public final class MahjongSupplies {
                 if (sanma && face > 0 && face < 8) continue;
                 int red = face < 27 && face % 9 == 4 ? reds.count(face / 9) : 0;
                 enough = stock.getValue()[face * 2 + 1] >= red
-                    && (onlyReds || stock.getValue()[face * 2] >= 4 - red);
+                    && stock.getValue()[face * 2] >= 4 - red;
             }
             if (enough) return stock.getKey();
         }

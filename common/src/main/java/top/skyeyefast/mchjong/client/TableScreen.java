@@ -665,6 +665,14 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view)) information.render(font, graphics, view, width, facePreset());
+        if (view.phase() == Game.Phase.LOBBY && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
+            var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), width - 24);
+            int y = height - 6 - lines.size() * font.lineHeight;
+            for (var line : lines) {
+                graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.NEGATIVE);
+                y += font.lineHeight;
+            }
+        }
         hoveredTile = pick(mouseX, mouseY);
         renderHandling(graphics, view, mouseX, mouseY);
         informationTooltip = information.tooltip(mouseX, mouseY);

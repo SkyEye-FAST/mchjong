@@ -172,7 +172,7 @@ class PhysicalSuppliesTest {
             var deck = MahjongSupplies.deck(updated);
             assertNotNull(deck);
             assertEquals(converted, deck.redFives().total());
-            assertTrue(MahjongSupplies.canSupplyReds(updated, false, top.skyeyefast.mchjong.engine.RedFives.THREE));
+            assertEquals(converted == 3, MahjongSupplies.canSupplyReds(updated, false, top.skyeyefast.mchjong.engine.RedFives.THREE));
             assertEquals(converted == 4, MahjongSupplies.canSupplyReds(updated, false, top.skyeyefast.mchjong.engine.RedFives.FOUR));
             assertEquals(converted, deck.tiles().stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
             assertEquals(136, new java.util.HashSet<>(deck.tiles()).size());
@@ -233,6 +233,24 @@ class PhysicalSuppliesTest {
         assertFalse(new TileData(34, TileMaterial.BONE, true).valid());
     }
 
+    @Test void noRedCompositionRequiresFourOrdinaryFivesInEveryUsedSuit() {
+        var reds = top.skyeyefast.mchjong.engine.RedFives.NONE;
+        assertFalse(MahjongSupplies.canSupplyReds(ItemStack.EMPTY, false, reds));
+        for (int suit = 0; suit < 3; suit++) {
+            var original = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
+            assertTrue(MahjongSupplies.canSupplyReds(original, false, reds));
+            var items = MahjongSupplies.contents(original);
+            items.get(suit * 9 + 4).setCount(3);
+            items.set(34 + suit, MahjongSupplies.tile(new TileData(suit * 9 + 4, TileMaterial.BONE, true), DyeColor.BLUE, 1));
+            var incomplete = box(items);
+            assertFalse(MahjongSupplies.canSupplyReds(incomplete, false, reds));
+            assertEquals(suit == 0, MahjongSupplies.canSupplyReds(incomplete, true, reds));
+            var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+            equipment.boxes().setItem(0, incomplete);
+            assertEquals(0, equipment.redOptions() & 1);
+        }
+    }
+
     @Test void surplusStockCoversOnlyTheSelectedModeAndRedComposition() {
         var original = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var items = MahjongSupplies.contents(original);
@@ -250,6 +268,9 @@ class PhysicalSuppliesTest {
         }
         assertTrue(ItemStack.matches(before, surplus), "Selecting a subset must leave all spare tiles untouched");
         items.get(13).setCount(2);
+        assertFalse(MahjongSupplies.canSupplyReds(box(items), false, top.skyeyefast.mchjong.engine.RedFives.NONE));
+        assertFalse(MahjongSupplies.canSupplyReds(box(items), false, top.skyeyefast.mchjong.engine.RedFives.THREE));
+        assertTrue(MahjongSupplies.canSupplyReds(box(items), false, top.skyeyefast.mchjong.engine.RedFives.FOUR));
         assertNull(MahjongSupplies.deck(box(items), false, top.skyeyefast.mchjong.engine.RedFives.THREE));
         assertNotNull(MahjongSupplies.deck(box(items), false, top.skyeyefast.mchjong.engine.RedFives.FOUR));
         for (int face = 1; face <= 7; face++) items.set(face, ItemStack.EMPTY);
