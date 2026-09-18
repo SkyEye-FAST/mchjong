@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.3.2] - 2026-09-18
+
+### Fixed
+
+- Riichi discards align with river top edges across table-board and 3D views.
+
 ## [0.3.1] - 2026-09-18
 
 ### Added
@@ -97,7 +103,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.2...HEAD
+[0.3.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.2
 [0.3.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.1
 [0.3.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.0
 [0.2.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.2.0
