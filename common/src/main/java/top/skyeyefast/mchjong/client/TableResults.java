@@ -43,6 +43,12 @@ public final class TableResults extends AbstractWidget {
     }
 
     public int selectedWinner() { return winner; }
+    /** Every result page presents the same once-per-settlement score transition. */
+    public int displayedPoints(int seat) {
+        int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
+        double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
+        return view.seats().get(seat).points() - delta + (int) Math.round(delta * progress);
+    }
     public static boolean available(TableView view) {
         return view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END;
     }
@@ -213,8 +219,7 @@ public final class TableResults extends AbstractWidget {
             if (standings && seat < view.finalRanks().size()) name = Component.literal(view.finalRanks().get(seat) + ". ").append(name);
             int textY = cy + Math.max(2, (rowHeight - 9) / 2);
             line(graphics, name, x + 4, textY, ends[0] - 8, TEXT);
-            double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
-            int points = player.points() - delta + (int) Math.round(delta * progress);
+            int points = displayedPoints(seat);
             List<String> values = standings ? List.of(Integer.toString(player.points()),
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
                 : List.of(Integer.toString(player.points() - delta), String.format(Locale.ROOT, "%+d", delta), Integer.toString(points));
@@ -238,8 +243,7 @@ public final class TableResults extends AbstractWidget {
             var player = view.seats().get(seat);
             int cx = x + (horizontal ? index * cardWidth : 0), cy = y + (horizontal ? 0 : index * cardHeight);
             int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
-            double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
-            int points = player.points() - delta + (int) Math.round(delta * progress);
+            int points = displayedPoints(seat);
             graphics.fill(cx, cy, cx + cardWidth - 3, cy + cardHeight - 3, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             Component name = TableScreen.playerName(view, seat);
             if (page == Page.MATCH && seat < view.finalRanks().size())

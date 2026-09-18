@@ -19,9 +19,12 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 final class SettlementSmoke {
     private TableView fixture;
     private int ticks;
+    private boolean animations;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (fixture == null) {
+            animations = top.skyeyefast.mchjong.client.TableSettings.get().animations;
+            top.skyeyefast.mchjong.client.TableSettings.get().animations = true;
             fixture = fixture(table.clientView());
             table.acceptView(fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
@@ -60,8 +63,13 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
             click(client, "Point changes");
+            checkSettledPoints(client);
+            click(client, "Point changes");
+            checkSettledPoints(client);
+            ((TableScreen) client.screen).receivedView();
         } else if (ticks == 55) {
             checkBounds(client);
+            checkSettledPoints(client);
             capture(client, output, "16-settlement-smallest-points.png");
             click(client, "Final standings");
         } else if (ticks == 60) {
@@ -70,6 +78,7 @@ final class SettlementSmoke {
             client.options.guiScale().set(2);
             client.resizeDisplay();
             click(client, "Point changes");
+            checkSettledPoints(client);
         } else if (ticks == 70) {
             checkBounds(client);
             capture(client, output, "12-settlement-points.png");
@@ -88,6 +97,7 @@ final class SettlementSmoke {
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
+            top.skyeyefast.mchjong.client.TableSettings.get().animations = animations;
             return true;
         }
         return false;
@@ -96,6 +106,12 @@ final class SettlementSmoke {
     private static TableResults panel(Minecraft client) {
         return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
+    }
+
+    private void checkSettledPoints(Minecraft client) {
+        for (int seat = 0; seat < fixture.seats().size(); seat++)
+            if (panel(client).displayedPoints(seat) != fixture.seats().get(seat).points())
+                throw new IllegalStateException("Settlement score animation restarted after navigation or refresh");
     }
 
     private static void checkBounds(Minecraft client) {

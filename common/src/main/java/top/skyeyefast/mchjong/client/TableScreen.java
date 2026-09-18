@@ -51,7 +51,6 @@ public final class TableScreen extends Screen {
     private Game.Phase lastPhase;
     private TableResults.Page resultPage = TableResults.Page.HAND;
     private long resultStarted;
-    private long resultPageStarted;
     private Component informationTooltip;
     private final TableHud information = new TableHud();
     private int actionTop;
@@ -208,7 +207,6 @@ public final class TableScreen extends Screen {
             resultsExpanded = true;
             resultPage = TableResults.Page.HAND;
             resultStarted = Util.getMillis();
-            resultPageStarted = resultStarted;
         }
         int selectedWinner = results == null || newResult ? 0 : results.selectedWinner();
         results = null;
@@ -273,14 +271,14 @@ public final class TableScreen extends Screen {
                 for (int i = 0; i < tabs; i++) {
                     var page = TableResults.Page.values()[i];
                     var button = MahjongButton.create(Component.translatable("ui.mchjong.result_page." + i), ignored -> {
-                        resultPage = page; resultPageStarted = Util.getMillis(); results = null; rebuild();
+                        resultPage = page; results = null; rebuild();
                     }).bounds(10 + i * tabWidth, view.exitVote() == null ? 34 : 58, tabWidth - 3, 20).build();
                     button.selected(page == resultPage);
                     addRenderableWidget(button);
                 }
                 int panelTop = view.exitVote() == null ? 58 : 82;
                 results = addRenderableWidget(new TableResults(font, view, facePreset(), 10, panelTop, width - 20, height - panelTop - 54,
-                    selectedWinner, resultPage, resultPageStarted));
+                    selectedWinner, resultPage, resultStarted));
             }
         }
         if (discard >= 0) {
