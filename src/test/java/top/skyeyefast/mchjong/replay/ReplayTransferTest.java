@@ -14,6 +14,7 @@ class ReplayTransferTest {
         var chunks = ReplayPayload.split(ReplayPayload.Kind.MATCH, original);
         assertTrue(chunks.size() > 2);
         for (var chunk : chunks) {
+            assertFalse(Character.isHighSurrogate(chunk.text().charAt(chunk.text().length() - 1)));
             assertEquals(chunk.text(), new String(chunk.text().getBytes(StandardCharsets.UTF_8), StandardCharsets.UTF_8));
             completed = transfer.accept(chunk, 100);
             if (chunk.part() + 1 < chunks.size()) assertNull(completed);
@@ -32,6 +33,9 @@ class ReplayTransferTest {
         assertNull(transfer.accept(chunks.get(0), 0));
         var wrongKind = new ReplayPayload(chunks.getFirst().transfer(), ReplayPayload.Kind.INDEX, 1, 2, "x");
         assertThrows(IllegalArgumentException.class, () -> transfer.accept(wrongKind, 1));
+        assertNull(transfer.accept(chunks.get(0), 0));
+        transfer.expire(30_000);
+        assertThrows(IllegalArgumentException.class, () -> transfer.accept(chunks.get(1), 30_000));
         assertNull(transfer.accept(chunks.get(0), 0));
         transfer.reset();
         assertThrows(IllegalArgumentException.class, () -> transfer.accept(chunks.get(1), 1));

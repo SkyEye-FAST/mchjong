@@ -10,9 +10,9 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CompactTableLayoutTest {
-    private static TableView base() {
+    private static TableView base(RuleSet rules) {
         var id = new UUID(15, 20);
-        var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 15);
+        var game = new Game(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(id, "Test", 0));
         return game.view(id);
     }
@@ -21,7 +21,7 @@ class CompactTableLayoutTest {
         return IntStream.range(0, count).mapToObj(i -> {
             var tiles = type == Meld.Type.CHI ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
                 : IntStream.range(i * 4, i * 4 + (type == Meld.Type.PON ? 3 : 4)).boxed().toList();
-            return new Meld(type, tiles, type == Meld.Type.CLOSED_KAN ? owner : (owner + source) % 4,
+            return new Meld(type, tiles, type == Meld.Type.CLOSED_KAN ? owner : source,
                 type == Meld.Type.CLOSED_KAN ? Tile.ABSENT : tiles.getFirst());
         }).toList();
     }
@@ -52,19 +52,22 @@ class CompactTableLayoutTest {
             .mapToDouble(CompactTableLayoutTest::x).average().orElseThrow();
     }
 
-    @Test void everySeatAndCallTypeUsesTheClosestFeasibleHandCenterWithAndWithoutADraw() {
-        var v = base();
-        for (int owner = 0; owner < 4; owner++) for (Meld.Type type : Meld.Type.values())
-            for (int source = 1; source <= 3; source++) for (int count = 0; count <= 4; count++)
-                for (int state = 0; state < 3; state++) for (boolean exposed : new boolean[]{false, true}) {
+    @Test void openKanClearanceKeepsWaitingDrawnAndExposedHandsCenteredAndPickable() {
+        // Open kans occupy the widest corner. TableLayoutTest owns per-meld geometry.
+        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
+            var v = base(rules);
+            for (int owner = 0; owner < rules.players(); owner++) for (int count = 0; count <= 4; count++)
+                for (int state = 0; state < 4; state++) {
                     boolean drawn = state == 1;
+                    boolean exposed = state == 3;
                     int size = (state == 0 ? 13 : 14) - count * 3;
                     int concealed = size - (drawn ? 1 : 0);
-                    var pieces = scene(v, owner, melds(type, count, owner, source), size, drawn, exposed);
+                    var pieces = scene(v, owner, melds(Meld.Type.OPEN_KAN, count, owner, (owner + 1) % rules.players()), size, drawn, exposed);
                     var hand = pieces.stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
                     double shift = center(pieces, concealed);
-                    String context = "seat=" + owner + " " + type + " x" + count + " state=" + state + " exposed=" + exposed;
+                    String context = rules + " seat=" + owner + " kans=" + count + " state=" + state;
                     assertTrue(shift <= 1e-9, context);
+                    assertTrue(shift > -TableGeometry.FELT_HALF_WIDTH / 2, context);
                     if (count == 0) assertEquals(0, shift, 1e-9, context);
                     else {
                         double left = pieces.stream().filter(p -> p.area() == TableScene.Area.MELD)
@@ -77,30 +80,43 @@ class CompactTableLayoutTest {
                     }
                     for (int i = 1; i < size; i++) assertEquals(TableScene.HAND_STEP
                         + (drawn && i == size - 1 ? TableScene.DRAW_GAP : 0), x(hand.get(i)) - x(hand.get(i - 1)), 1e-9, context);
+                    var settings = new TableSettings();
+                    var camera = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, owner);
+                    for (var piece : hand) {
+                        assertEquals(80 + piece.index(), piece.tile(), context);
+                        assertTrue(Double.isFinite(TilePicking.distanceSquared(new TableAnimation.Frame(piece, 0),
+                            camera, piece.position().subtract(camera), false)), context);
+                    }
                 }
+        }
     }
 
     @Test void twoOpenKansDoNotMoveAWaitingHandForAnAbsentDraw() {
-        var v = base();
+        var v = base(RuleSet.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
-            var melds = melds(Meld.Type.OPEN_KAN, 2, owner, 1);
+            var melds = melds(Meld.Type.OPEN_KAN, 2, owner, (owner + 1) % 4);
             var waiting = scene(v, owner, melds, 7, false, false);
             var drawn = scene(v, owner, melds, 8, true, false);
             assertEquals(0, center(waiting, 7), 1e-9, "An absent draw must not force an otherwise centered hand left");
             assertTrue(center(drawn, 7) < 0);
             assertTrue(center(drawn, 7) > -TableScene.HAND_STEP - TableScene.DRAW_GAP);
+            var offset = TableGeometry.orient(center(drawn, 7) - center(waiting, 7), 0, 0, owner);
+            var before = waiting.stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
+            var after = drawn.stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
+            for (int i = 0; i < 7; i++) assertEquals(0,
+                before.get(i).position().add(offset).distanceTo(after.get(i).position()), 1e-9);
             assertEquals(waiting.stream().filter(p -> p.area() == TableScene.Area.MELD).toList(),
                 drawn.stream().filter(p -> p.area() == TableScene.Area.MELD).toList());
-            assertEquals(waiting, scene(v, owner, melds, 7, false, false), "Releasing the draw slot restores the preferred center");
         }
     }
 
     @Test void upgradingAPonOnlyMovesTheHandWhenTheKanReallyWidensTheCorner() {
-        var v = base();
+        var v = base(RuleSet.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
-            var pons = scene(v, owner, melds(Meld.Type.PON, 3, owner, 1), 5, true, false);
-            var added = scene(v, owner, melds(Meld.Type.ADDED_KAN, 3, owner, 1), 5, true, false);
-            var open = scene(v, owner, melds(Meld.Type.OPEN_KAN, 3, owner, 1), 5, true, false);
+            int source = (owner + 1) % 4;
+            var pons = scene(v, owner, melds(Meld.Type.PON, 3, owner, source), 5, true, false);
+            var added = scene(v, owner, melds(Meld.Type.ADDED_KAN, 3, owner, source), 5, true, false);
+            var open = scene(v, owner, melds(Meld.Type.OPEN_KAN, 3, owner, source), 5, true, false);
             assertEquals(center(pons, 4), center(added, 4), 1e-9, "Front-aligned added tiles must not reserve extra horizontal width");
             assertTrue(center(open, 4) < center(pons, 4), "A genuinely wider open kan needs more room");
         }

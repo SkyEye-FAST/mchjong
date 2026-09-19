@@ -55,6 +55,10 @@ class ReplayStoreTest {
         Files.copy(directory.resolve("by-player").resolve(owner.toString()).resolve(match.id() + ".json"), forged);
         assertThrows(IOException.class, () -> store.load(stranger, match.id()));
         assertThrows(IOException.class, () -> store.load(bot, match.id()));
+        assertThrows(IOException.class, () -> store.delete(stranger, match.id()));
+        assertThrows(IOException.class, () -> store.delete(bot, match.id()));
+        assertFalse(Files.exists(forged.resolveSibling(match.id() + ".deleted")));
+        assertEquals(match, store.load(owner, match.id()));
     }
 
     @Test void aLaterFinishedHandReplacesTheArchiveWithoutLeakingAnActiveHand() throws Exception {
@@ -77,6 +81,7 @@ class ReplayStoreTest {
     @Test void archiveListsArePaginatedAndEmptyMatchesAreNeverSaved() throws Exception {
         var store = new ReplayStore(directory, json);
         for (int i = 0; i < 13; i++) store.save(match(new UUID(3, i), 1));
+        store.save(match(new UUID(3, 0), 1));
         var first = store.list(owner, 0, "", false);
         var second = store.list(owner, 1, "", false);
         assertEquals(12, first.matches().size()); assertTrue(first.more());
@@ -107,20 +112,6 @@ class ReplayStoreTest {
         assertFalse(Files.exists(directory.resolve(original.id() + ".json")));
     }
 
-    @Test void forgedIndexesCannotAuthorizeDeletion() throws Exception {
-        var store = new ReplayStore(directory, json);
-        var original = match(UUID.randomUUID(), 1);
-        store.save(original);
-        UUID stranger = UUID.randomUUID();
-        Path forged = directory.resolve("by-player").resolve(stranger.toString()).resolve(original.id() + ".json");
-        Files.createDirectories(forged.getParent());
-        Files.copy(directory.resolve("by-player").resolve(owner.toString()).resolve(original.id() + ".json"), forged);
-        assertThrows(IOException.class, () -> store.delete(stranger, original.id()));
-        assertThrows(IOException.class, () -> store.delete(bot, original.id()));
-        assertFalse(Files.exists(forged.resolveSibling(original.id() + ".deleted")));
-        assertEquals(original, store.load(owner, original.id()));
-    }
-
     @Test void searchingAndSortingUseMatchMetadataBeforePagination() throws Exception {
         var store = new ReplayStore(directory, json);
         for (int number = 0; number < 14; number++) {
@@ -149,8 +140,10 @@ class ReplayStoreTest {
         var match = match(UUID.randomUUID(), 1);
         store.save(match);
         Path archive = directory.resolve("valid").resolve(match.id() + ".json");
-        Files.writeString(archive, "{broken");
-        assertThrows(IOException.class, () -> store.load(owner, match.id()));
+        for (String invalid : List.of("null", "{broken")) {
+            Files.writeString(archive, invalid);
+            assertThrows(IOException.class, () -> store.load(owner, match.id()));
+        }
         Files.write(archive, new byte[ReplayStore.MAX_BYTES + 1]);
         assertThrows(IOException.class, () -> store.load(owner, match.id()));
     }

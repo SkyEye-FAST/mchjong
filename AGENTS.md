@@ -62,6 +62,15 @@ operating requirements, permissions and privacy guarantees.
 
 ## Validation and delivery
 
+Keep regression tests short and deterministic, extending the existing suite that
+owns the behavior. Consolidate duplicate fixtures and assertions while preserving
+their distinct boundary cases. Exercise shared lifecycle paths once per player
+count; enumerate rule presets only where their behavior differs. Do not multiply
+geometry checks by texture, dye or scoring variants that leave geometry unchanged.
+Reserve client smokes for real loader, world, packet and UI boundaries rather than
+repeating domain assertions. Remove redundant tests instead of disabling them or
+adding alternate suites, fallback paths or new test frameworks.
+
 Use JDK 21 for the current profile and the checked-in Gradle wrapper. The examples
 below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 

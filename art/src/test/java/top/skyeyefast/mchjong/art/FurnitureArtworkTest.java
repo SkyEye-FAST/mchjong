@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.art;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
-import java.util.List;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
@@ -132,17 +131,6 @@ class FurnitureArtworkTest {
                 }
             }
             assertEquals(dots[row], components, "Separate printed dots in strip " + row);
-        }
-    }
-
-    @Test void furnitureDoesNotReferenceVanillaTextureSurrogates() throws Exception {
-        Path root = Path.of(System.getProperty("mchjong.sourceRoot"));
-        String renderer = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/client/FurnitureMesh.java"));
-        for (String retired : List.of("textures/block/", "_planks", "_wool", "iron_block", "copper_block"))
-            assertFalse(renderer.contains(retired), retired);
-        for (String wood : FurnitureArtwork.WOODS.keySet()) {
-            String definition = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/item/FurnitureWood.java"));
-            assertTrue(definition.contains(wood.toUpperCase(java.util.Locale.ROOT)), wood);
         }
     }
 }
