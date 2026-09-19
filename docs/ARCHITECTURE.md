@@ -143,7 +143,11 @@ settlement. Rendering and drag previews remain read-only.
 
 `WallLayout` maps logical draw indices to clockwise physical stacks, shared by
 manual wall ownership, rendering, picking and animation. Players advance in the
-opposite, counterclockwise seat order. Live draws take the upper tile before the
+opposite, counterclockwise seat order. Each hand uses two server-rolled dice to
+count a wall from the current dealer, then skips that many stacks from its owner's
+right end. The opening's left side starts the live wall; its right side holds the
+dead wall. Three-player tables use the same counting across their three walls.
+Live draws take the upper tile before the
 lower; the dead wall is indexed from its opposite end. Revealing dora or ura
 does not change their physical layers. This follows the deal in the
 [EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).

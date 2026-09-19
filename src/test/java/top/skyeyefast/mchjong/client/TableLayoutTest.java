@@ -265,6 +265,12 @@ class TableLayoutTest {
         for (RuleSet rules : RuleSet.values()) {
             var view = start(rules);
             int size = view.wall().size();
+            var live = TableScene.wallPiece(view, 0, true);
+            var reserve = TableScene.wallPiece(view, size - 1, true);
+            assertEquals(live.seat(), reserve.seat());
+            var right = top.skyeyefast.mchjong.world.TableGeometry.orient(TableScene.WALL_STEP, 0, 0, live.seat());
+            assertEquals(right.x, reserve.position().x - live.position().x, 1e-7);
+            assertEquals(right.z, reserve.position().z - live.position().z, 1e-7);
             for (int i = 0; i < size; i += 2) {
                 var first = TableScene.wallPiece(view, i, true);
                 var second = TableScene.wallPiece(view, i + 1, true);

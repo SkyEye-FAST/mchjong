@@ -18,18 +18,19 @@ final class Wall {
     int pendingIndicators;
     int breakOffset;
 
-    Wall(RuleConfig rules, long seed) {
-        this(rules, seed, Tile.set(rules.sanma(), rules.redFives()));
+    Wall(RuleConfig rules, long seed, int dealer) {
+        this(rules, seed, dealer, Tile.set(rules.sanma(), rules.redFives()));
     }
 
-    Wall(RuleConfig rules, long seed, List<Integer> supplied) {
+    Wall(RuleConfig rules, long seed, int dealer, List<Integer> supplied) {
         if (!Tile.validSet(supplied) || supplied.size() != (rules.sanma() ? 108 : 136) || !rules.allows(RedFives.of(supplied)))
             throw new IllegalArgumentException("A wall requires one complete supplied set");
         tiles = new ArrayList<>(supplied);
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
         liveEnd = tiles.size() - 14;
-        breakOffset = random.nextInt(tiles.size() / 2) * 2;
+        int diceSum = random.nextInt(6) + random.nextInt(6) + 2;
+        breakOffset = WallLayout.breakOffset(dealer, diceSum, tiles.size(), rules.players());
         int end = tiles.size();
         // Replacement tiles are paired so the upper tile of each stack is taken first.
         for (int i = 0; i < rules.replacementCapacity(); i++) replacements.add(end - 1 - i % 4);
