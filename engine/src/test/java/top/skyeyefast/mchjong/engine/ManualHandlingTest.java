@@ -135,6 +135,7 @@ class ManualHandlingTest {
             act(manual, manual.dealer, Action.Type.DRAW);
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(automatic.players[seat].hand, manual.players[seat].hand);
             assertEquals(automatic.wall.tiles, manual.wall.tiles);
+            assertEquals(automatic.wall.breakOffset, manual.wall.breakOffset);
             assertFalse(manual.configureEquipment(false, List.of()), "Cannot unload a set during a match");
         }
     }

@@ -12,7 +12,7 @@ class TrainingBotTest {
         for (int seat = 0; seat < 4; seat++) game.join(new UUID(2, seat + 1), "Player " + seat, seat);
         game.phase = Game.Phase.TURN;
         game.turn = 0;
-        game.wall = new Wall(game.rules(), 24);
+        game.wall = new Wall(game.rules(), 24, game.dealer);
         game.players[0].hand = new ArrayList<>(TestHands.tiles(text));
         game.players[0].drawn = game.players[0].hand.getLast();
         game.options.set(0, game.players[0].hand.stream().map(tile -> new Action(Action.Type.DISCARD, tile)).toList());
