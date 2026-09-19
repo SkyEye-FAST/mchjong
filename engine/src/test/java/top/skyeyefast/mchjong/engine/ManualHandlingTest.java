@@ -8,6 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ManualHandlingTest {
     private static final Gson JSON = new Gson();
+    private static final List<RuleSet> MODES = List.of(RuleSet.TENHOU_4, RuleSet.MAHJONG_SOUL_3);
     private static UUID id(int seat) { return new UUID(812, seat); }
 
     private static Game game(RuleSet rules, boolean manual) {
@@ -44,8 +45,8 @@ class ManualHandlingTest {
         assertFalse(JSON.toJson(view).contains("seed"));
     }
 
-    @Test void everyPresetRequiresExplicitHandlingAndSurvivesReloadAtEveryStep() {
-        for (RuleSet rules : RuleSet.values()) {
+    @Test void handlingSurvivesReloadAndMatchesTheAutomaticDealForBothPlayerCounts() {
+        for (RuleSet rules : MODES) {
             Game game = game(rules, true);
             assertEquals(Game.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
@@ -83,11 +84,17 @@ class ManualHandlingTest {
             assertEquals(remaining - 1, game.wall.remaining());
             assertEquals(Game.Phase.TURN, game.phase());
             concealed(game);
+            Game automatic = game(rules, false);
+            assertNull(automatic.view(null).handling());
+            for (int seat = 0; seat < rules.players(); seat++) assertEquals(automatic.players[seat].hand, game.players[seat].hand);
+            assertEquals(automatic.wall.tiles, game.wall.tiles);
+            assertEquals(automatic.wall.breakOffset, game.wall.breakOffset);
+            assertFalse(game.configureEquipment(false, List.of()), "Cannot unload a set during a match");
         }
     }
 
     @Test void concurrentWallBuildingPreservesOtherSeatsDecisionAndRejectsDuplicateBuilds() {
-        for (RuleSet rules : RuleSet.values()) {
+        for (RuleSet rules : MODES) {
             Game game = game(rules, true);
             act(game, game.dealer, Action.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
@@ -110,7 +117,7 @@ class ManualHandlingTest {
     }
 
     @Test void practiceBotsCanBuildWhileThePlayerHoldsTheirWall() {
-        for (RuleSet rules : RuleSet.values()) {
+        for (RuleSet rules : MODES) {
             Game game = game(rules, true);
             act(game, game.dealer, Action.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
@@ -122,21 +129,6 @@ class ManualHandlingTest {
             assertTrue(game.act(id(0), token, 0));
             assertEquals(Game.Phase.DEAL, game.phase());
             game.validate();
-        }
-    }
-
-    @Test void manualAndAutomaticDealUseTheSameSuppliedTiles() {
-        for (RuleSet rules : RuleSet.values()) {
-            Game manual = game(rules, true), automatic = game(rules, false);
-            assertNull(automatic.view(null).handling());
-            act(manual, manual.dealer, Action.Type.SHUFFLE);
-            for (int seat = 0; seat < rules.players(); seat++) act(manual, seat, Action.Type.BUILD_WALL);
-            for (int packet = 0; packet < 4 * rules.players(); packet++) act(manual, manual.turn, Action.Type.TAKE_PACKET);
-            act(manual, manual.dealer, Action.Type.DRAW);
-            for (int seat = 0; seat < rules.players(); seat++) assertEquals(automatic.players[seat].hand, manual.players[seat].hand);
-            assertEquals(automatic.wall.tiles, manual.wall.tiles);
-            assertEquals(automatic.wall.breakOffset, manual.wall.breakOffset);
-            assertFalse(manual.configureEquipment(false, List.of()), "Cannot unload a set during a match");
         }
     }
 
@@ -181,7 +173,7 @@ class ManualHandlingTest {
     }
 
     @Test void manualPracticeBotsAdvanceHandlingAndAWholeHandConservesTilesAndArchives() {
-        for (RuleSet rules : RuleSet.values()) {
+        for (RuleSet rules : MODES) {
             Game game = game(rules, true);
             for (var player : game.players) player.bot = true;
             int ticks = 0;

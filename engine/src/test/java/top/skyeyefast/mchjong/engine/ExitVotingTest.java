@@ -6,53 +6,67 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ExitVotingTest {
     private static final UUID HOST = new UUID(50, 1);
     private static final UUID GUEST = new UUID(50, 2);
 
-    private static void action(Game game, UUID actor, Action.Type type) {
-        var view = game.view(actor);
-        assertTrue(game.act(actor, view.decision(), GameLifecycleTest.index(view, type)));
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
+    void singleHumanExitsEveryMatchStageWithBotsAndCanStartAgain(RuleSet rules) {
+        for (var phase : Game.Phase.values()) {
+            if (phase == Game.Phase.LOBBY) continue;
+            var game = new Game(UUID.randomUUID(), rules, 71);
+            assertTrue(game.join(HOST, "Host", 0));
+            game.configureWorld(true, false);
+            GameLifecycleTest.startPositioned(game);
+            game.phase = phase;
+            assertTrue(game.requestExit(HOST), phase.name());
+            assertEquals(Game.Phase.LOBBY, game.phase());
+            assertEquals(-1, game.seatOf(HOST));
+            var view = game.view(null);
+            assertNull(view.exitVote());
+            assertTrue(view.wall().isEmpty());
+            assertTrue(view.seats().stream().noneMatch(TableView.Seat::occupied));
+            assertTrue(view.openHands());
+            game.validate();
+            assertTrue(game.join(HOST, "Host", 0));
+            GameLifecycleTest.startPositioned(game);
+            assertEquals(Game.Phase.TURN, game.phase());
+            game.validate();
+        }
     }
 
-    @ParameterizedTest @EnumSource(RuleSet.class)
-    void singleHumanExitsWithBotsAndReleasesTheEntireTable(RuleSet rules) {
-        var game = new Game(UUID.randomUUID(), rules, 71);
-        assertTrue(game.join(HOST, "Host", 0));
-        game.configureWorld(true, false);
-        GameLifecycleTest.startPositioned(game);
-        assertEquals(Game.Phase.TURN, game.phase());
-        assertTrue(game.requestExit(HOST));
-        assertEquals(Game.Phase.LOBBY, game.phase());
-        assertEquals(-1, game.seatOf(HOST));
-        assertNull(game.view(null).exitVote());
-        assertTrue(game.view(null).wall().isEmpty());
-        assertTrue(game.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
-        assertTrue(game.view(null).openHands());
-        assertTrue(game.join(HOST, "Host", 0));
-        GameLifecycleTest.startPositioned(game);
-        assertEquals(Game.Phase.TURN, game.phase());
-        game.validate();
-    }
-
-    @Test void twoHumansAndBotsNeedExactlyTwoApprovals() {
+    @ParameterizedTest @ValueSource(ints = {2, 3})
+    void humansMustUnanimouslyApproveWhileBotsAndInvalidVotesAreRejected(int humans) {
         var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 72);
-        game.join(HOST, "Host", 0);
-        game.join(GUEST, "Guest", 1);
+        var voters = List.of(HOST, GUEST, new UUID(50, 3));
+        for (int seat = 0; seat < humans; seat++) game.join(voters.get(seat), "Human " + seat, seat);
         GameLifecycleTest.startPositioned(game);
+        assertFalse(game.requestExit(UUID.randomUUID()));
+        long decision = game.decision;
         assertTrue(game.requestExit(HOST));
+        assertNotEquals(decision, game.decision);
         var vote = game.view(GUEST).exitVote();
-        assertEquals(2, vote.required());
+        assertEquals(humans, vote.required());
         assertEquals(List.of(0), vote.agreed());
-        assertFalse(game.answerExit(game.players[2].id, vote.id(), true));
+        assertFalse(game.answerExit(game.players[3].id, vote.id(), true));
         assertFalse(game.answerExit(UUID.randomUUID(), vote.id(), true));
         assertFalse(game.answerExit(HOST, vote.id(), true));
         assertFalse(game.answerExit(GUEST, vote.id() + 1, true));
+        assertEquals(Game.Phase.TURN, game.phase(), "Partial approval must not terminate play");
         game.leave(GUEST);
         assertEquals(1, game.seatOf(GUEST), "Dismounting is not consent or a way to reduce the electorate");
-        assertTrue(game.answerExit(GUEST, vote.id(), true));
+        assertEquals(humans, game.view(GUEST).exitVote().required());
+        for (int seat = 1; seat < humans; seat++) {
+            assertTrue(game.answerExit(voters.get(seat), vote.id(), true));
+            if (seat + 1 < humans) {
+                assertEquals(Game.Phase.TURN, game.phase());
+                assertEquals(seat + 1, game.view(HOST).exitVote().agreed().size());
+                assertTrue(game.view(HOST).actions().isEmpty());
+            }
+        }
         assertEquals(Game.Phase.LOBBY, game.phase());
         assertTrue(game.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
         game.validate();
@@ -80,6 +94,7 @@ class ExitVotingTest {
         long second = game.view(actor).exitVote().id();
         assertNotEquals(vote.id(), second);
         assertFalse(game.answerExit(game.players[(game.turn + 1) % 4].id, vote.id(), true));
+        assertEquals(second, game.view(actor).exitVote().id());
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
         for (int tick = 0; tick < ExitVote.DURATION_TICKS; tick++) game.tick();

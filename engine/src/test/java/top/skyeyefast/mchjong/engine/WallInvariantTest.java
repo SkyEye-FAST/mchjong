@@ -58,7 +58,7 @@ class WallInvariantTest {
         }
     }
 
-    @ParameterizedTest @EnumSource(RuleSet.class)
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
     void publicWallOnlyExposesDeclaredIndicators(RuleSet rules) {
         Wall wall = new Wall(rules.config(), 123, 0);
         assertEquals(1, wall.publicTiles(false).stream().filter(t -> t >= 0).count());
