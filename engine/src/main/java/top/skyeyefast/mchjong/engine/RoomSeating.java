@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashSet;
-import java.util.Random;
+import java.util.SplittableRandom;
 
 /** Pregame wind lottery. Unturned wind identities belong only to the persistent server state. */
 public final class RoomSeating {
@@ -17,7 +17,8 @@ public final class RoomSeating {
     void begin(int players, boolean manual, long seed) {
         var order = new ArrayList<Integer>();
         for (int wind = 0; wind < players; wind++) order.add(wind);
-        Collections.shuffle(order, new Random(seed));
+        // Nearby decision seeds must not pin a wind to the same concealed slot.
+        Collections.shuffle(order, new SplittableRandom(seed));
         concealed = order.stream().mapToInt(Integer::intValue).toArray();
         if (manual) {
             stage = Stage.DRAWING;

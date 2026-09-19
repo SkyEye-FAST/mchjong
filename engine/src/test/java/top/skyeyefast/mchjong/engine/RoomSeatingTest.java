@@ -28,6 +28,20 @@ class RoomSeatingTest {
         for (var human : humans) act(game, human, Action.Type.READY);
     }
 
+    @Test void neighboringLotterySeedsDoNotPinWindsToTheSameChoices() {
+        for (int players : new int[]{3, 4}) {
+            int[] seen = new int[players];
+            for (long decision = 0; decision < 64; decision++) {
+                var seating = new RoomSeating();
+                seating.begin(players, true, 17L ^ decision);
+                seating.validate(players);
+                for (int slot = 0; slot < players; slot++) seen[slot] |= 1 << seating.concealed[slot];
+            }
+            for (int winds : seen) assertEquals((1 << players) - 1, winds,
+                "Every concealed choice must vary across all winds when the decision counter changes");
+        }
+    }
+
     @Test void windDrawingSurvivesVacanciesAndCannotStartUntilAssignedPlayersActuallyArrive() {
         var game = room(true, 4);
         act(game, id(0), Action.Type.BEGIN_SEATING);
@@ -35,6 +49,12 @@ class RoomSeatingTest {
         assertFalse(new Gson().toJson(game.roomView()).contains("concealed"));
         act(game, id(0), Action.Type.DRAW_WIND, 0);
         act(game, id(1), Action.Type.DRAW_WIND, 1);
+        int available = game.roomView().availableWinds();
+        int[] concealed = game.seating.concealed.clone();
+        game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        game.validate();
+        assertEquals(available, game.roomView().availableWinds());
+        assertArrayEquals(concealed, game.seating.concealed, "Reloading must not reshuffle unturned winds");
         int inheritedWind = game.roomView().seats().get(1).wind();
         game.leave(id(1));
         act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
