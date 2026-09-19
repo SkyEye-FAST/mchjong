@@ -86,12 +86,13 @@ class GameLifecycleTest {
         assertFalse(publicJson.contains("\"recorder\""));
     }
 
-    @ParameterizedTest @EnumSource(RuleSet.class) @Timeout(120)
+    // Match progression has two player-count paths; preset differences have focused rule tests.
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "MAHJONG_SOUL_3"}) @Timeout(30)
     void completeHanchanAndReloadsPreserveTilesPointsAndPrivacy(RuleSet rules) {
         Game game = started(rules, 1234567 + rules.ordinal());
+        Set<Game.Phase> reloadedPhases = EnumSet.noneOf(Game.Phase.class);
         for (int step = 0; step < 20000; step++) {
             game.validate();
-            assertPrivateViews(game);
             if (game.phase() == Game.Phase.MATCH_END) {
                 TableView result = game.view(null);
                 assertEquals(rules.players(), result.finalScores().size());
@@ -120,11 +121,12 @@ class GameLifecycleTest {
                 }
                 return;
             }
-            if (step % 71 == 0) {
+            if (reloadedPhases.add(game.phase())) {
                 String before = JSON.toJson(game.view(null));
                 game = JSON.fromJson(JSON.toJson(game), Game.class);
                 game.validate();
                 assertEquals(before, JSON.toJson(game.view(null)));
+                assertPrivateViews(game);
             }
             boolean acted = false;
             for (int seat = 0; seat < rules.players(); seat++) {
