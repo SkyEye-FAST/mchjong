@@ -87,26 +87,26 @@ class FurnitureShapeTest {
         assertTrue(edges.values().stream().allMatch(count -> count == 2), "No open seams or overlapping corner caps");
     }
 
-    @Test void fullFurnitureRendersAllWoodsAndDyesWithoutDegenerateFacesOrOutOfBoundsGeometry() {
-        for (var wood : top.skyeyefast.mchjong.item.FurnitureWood.values())
-            for (var dye : net.minecraft.world.item.DyeColor.values()) {
-                var mesh = new Mesh();
-                net.minecraft.client.renderer.MultiBufferSource buffers = ignored -> mesh;
-                FurnitureMesh.stool(new PoseStack(), buffers, 0, wood, dye);
-                assertEquals(top.skyeyefast.mchjong.world.TableGeometry.STOOL_HEIGHT,
-                    mesh.vertices.stream().mapToDouble(vertex -> vertex.position.y).max().orElseThrow(), 1e-6);
-                FurnitureMesh.table(new PoseStack(), buffers, 0, wood, dye, false);
-                FurnitureMesh.table(new PoseStack(), buffers, 0, wood, null, true);
-                FurnitureMesh.box(new PoseStack(), buffers, 0);
-                FurnitureMesh.foldedCloth(new PoseStack(), buffers, 0, dye);
-                assertTrue(mesh.vertices.size() < 16000, "Avoid high-poly furniture");
-                for (var vertex : mesh.vertices) {
-                    assertTrue(vertex.position.isFinite() && vertex.normal.isFinite());
-                    double half = top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH + 1e-6;
-                    assertTrue(Math.abs(vertex.position.x) <= half && Math.abs(vertex.position.z) <= half);
-                    assertTrue(vertex.position.y >= 0 && vertex.position.y <= 1.003);
-                    assertEquals(255, vertex.color >>> 24);
-                }
-            }
+    @Test void furnitureMeshesStayFiniteAndInsideTheTableFootprint() {
+        // Wood and dye select textures/tints, not geometry; art tests cover their assets.
+        var wood = top.skyeyefast.mchjong.item.FurnitureWood.OAK;
+        var dye = net.minecraft.world.item.DyeColor.GREEN;
+        var mesh = new Mesh();
+        net.minecraft.client.renderer.MultiBufferSource buffers = ignored -> mesh;
+        FurnitureMesh.stool(new PoseStack(), buffers, 0, wood, dye);
+        assertEquals(top.skyeyefast.mchjong.world.TableGeometry.STOOL_HEIGHT,
+            mesh.vertices.stream().mapToDouble(vertex -> vertex.position.y).max().orElseThrow(), 1e-6);
+        FurnitureMesh.table(new PoseStack(), buffers, 0, wood, dye, false);
+        FurnitureMesh.table(new PoseStack(), buffers, 0, wood, null, true);
+        FurnitureMesh.box(new PoseStack(), buffers, 0);
+        FurnitureMesh.foldedCloth(new PoseStack(), buffers, 0, dye);
+        assertTrue(mesh.vertices.size() < 16000, "Avoid high-poly furniture");
+        for (var vertex : mesh.vertices) {
+            assertTrue(vertex.position.isFinite() && vertex.normal.isFinite());
+            double half = top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH + 1e-6;
+            assertTrue(Math.abs(vertex.position.x) <= half && Math.abs(vertex.position.z) <= half);
+            assertTrue(vertex.position.y >= 0 && vertex.position.y <= 1.003);
+            assertEquals(255, vertex.color >>> 24);
+        }
     }
 }

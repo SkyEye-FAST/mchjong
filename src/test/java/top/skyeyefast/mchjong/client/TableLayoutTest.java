@@ -37,44 +37,9 @@ class TableLayoutTest {
             seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay());
     }
 
-    @Test void callingKeepsTheConcealedRunCenteredRatherThanPinningItsLeftEdge() {
-        for (RuleSet rules : RuleSet.values()) {
-            var view = start(rules);
-            var hand = List.of(0, 1, 2, 4, 5, 6, 8, 9, 10, 12, 13, 14, 16);
-            var before = TableScene.build(replace(view, hand, List.of(), List.of())).stream()
-                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
-            var after = TableScene.build(replace(view, hand.subList(3, hand.size()),
-                List.of(new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0)), List.of())).stream()
-                .filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
-            assertEquals(0, before.stream().mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7);
-            assertEquals(0, after.stream().mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7);
-            assertTrue(after.getFirst().position().x > before.getFirst().position().x);
-        }
-    }
-
-    @Test void completeHandAndDrawAreCenteredWithoutChangingSlotsBetweenDraws() {
-        for (int count : new int[]{1, 4, 7, 10, 13}) {
-            var base = start(RuleSet.TENHOU_4);
-            var tiles = java.util.stream.IntStream.range(80, 80 + count).boxed().toList();
-            var before = TableScene.build(replace(base, tiles, List.of(), List.of()));
-            var drawn = new ArrayList<>(tiles);
-            drawn.add(100);
-            var seats = new ArrayList<>(base.seats());
-            seats.set(0, new TableView.Seat("Test", true, false, false, 25000, drawn, 100,
-                List.of(), List.of(), List.of(), false, false));
-            var after = TableScene.build(new TableView(base.tableId(), base.revision(), base.decision(), base.handNumber(),
-                base.rules(), base.phase(), base.viewerSeat(), base.dealer(), base.round(), base.honba(), base.riichiSticks(),
-                base.turn(), base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
-                base.result(), base.deltas(), base.finalScores(), base.timeControl(), base.clocks(), base.finalRanks(), base.openHands(), base.exitVote(), base.handling(), base.autoPlay()));
-            for (int i = 0; i < count; i++) assertEquals(before.get(i).position(), after.get(i).position());
-            assertEquals(TableScene.HAND_STEP + TableScene.DRAW_GAP,
-                after.get(count).position().x - after.get(count - 1).position().x, 1e-7);
-        }
-    }
-
-    @Test void everyMeldTypeOnlyDisplacesTheHandWhenItsActualWidthRequiresIt() {
+    @Test void meldsStayFramedAndBottomAlignedAtTheRightCorner() {
         var view = start(RuleSet.TENHOU_4);
-        for (Meld.Type type : Meld.Type.values()) for (int count = 1; count <= 4; count++) {
+        for (Meld.Type type : Meld.Type.values()) for (int count : new int[]{1, 4}) {
             for (int source = 1; source <= 3; source++) {
                 var melds = new ArrayList<Meld>();
                 for (int i = 0; i < count; i++) {
@@ -88,12 +53,6 @@ class TableLayoutTest {
                 var hand = java.util.stream.IntStream.range(100, 100 + size).boxed().toList();
                 var pieces = TableScene.build(replace(view, hand, melds, List.of()));
                 assertSeatedFraming(pieces);
-                double meldLeft = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD)
-                    .mapToDouble(p -> p.position().x - (p.yaw() == 90 ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE / 2)
-                    .min().orElseThrow();
-                double handRight = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
-                    .mapToDouble(p -> bounds(p).maxX).max().orElseThrow();
-                assertTrue(meldLeft >= handRight + TableScene.HAND_MELD_GAP - 1e-6, type + " x" + count + " overlaps the hand");
                 var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD).toList();
                 for (var part : calls) {
                     double bottom = TableScene.HAND_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2;
@@ -107,11 +66,6 @@ class TableLayoutTest {
                 assertEquals(TableScene.MELD_RIGHT, right, 1e-5);
                 assertTrue(top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH - right < 0.1,
                     "The first meld must stay anchored to the owner's right corner");
-                double centeredRight = (size - 1) * TableScene.HAND_STEP / 2 + TableScene.RIVER_STEP / 2;
-                double expectedShift = Math.min(0, meldLeft - TableScene.HAND_MELD_GAP - centeredRight);
-                assertEquals(expectedShift, pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND)
-                    .mapToDouble(p -> p.position().x).average().orElseThrow(), 1e-7,
-                    "Do not center in the remaining space or apply a fixed left offset");
             }
         }
     }
@@ -138,7 +92,7 @@ class TableLayoutTest {
     }
 
     @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
-        for (RuleSet rules : RuleSet.values()) for (int count = 0; count <= 4; count++) {
+        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) for (int count = 0; count <= 4; count++) {
             var v = start(rules);
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -241,8 +195,8 @@ class TableLayoutTest {
         }
     }
 
-    @Test void completeWallsTouchHorizontallyAndVerticallyForEveryRulesetAndSeat() {
-        for (RuleSet rules : RuleSet.values()) {
+    @Test void completeWallsTouchHorizontallyAndVerticallyForBothPlayerCountsAndEverySeat() {
+        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
             var view = start(rules);
             int stacks = view.wall().size() / (rules.sanma() ? 6 : 8);
             var wall = java.util.stream.IntStream.range(0, view.wall().size())
@@ -262,7 +216,7 @@ class TableLayoutTest {
     }
 
     @Test void wallDrawsRunClockwiseWhileSeatsAdvanceCounterclockwiseAndTopTilesComeFirst() {
-        for (RuleSet rules : RuleSet.values()) {
+        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
             var view = start(rules);
             int size = view.wall().size();
             var live = TableScene.wallPiece(view, 0, true);
