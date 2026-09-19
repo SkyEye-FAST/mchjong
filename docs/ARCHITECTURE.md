@@ -194,8 +194,13 @@ Build: `gradlew.bat buildAll`. Loader-specific development runs remain
 
 `gradlew.bat :test` covers deterministic presentation and pointer geometry.
 It also checks outward-facing tile winding, stable hand placement, compact rivers
-and the mandatory remaining count. Engine tests cover exits, ballots, save reloads
-and recipient privacy. Asset tests check all four language key sets, duplicate
+and the mandatory remaining count. `CompactTableLayoutTest` owns hand clearance
+and picking; `TableLayoutTest` owns meld, river and wall geometry. Replay storage
+and access control belong to `ReplayStoreTest`, while packet boundaries and
+reassembly belong to `ReplayTransferTest`. Engine tests cover exits, ballots, save
+reloads and recipient privacy. Full-match and manual-handling checks exercise both
+player counts; focused scoring and reaction tests cover preset differences.
+Asset tests check all four language key sets, duplicate
 keys, format arguments and literal translation references in production sources.
 `gradlew.bat :runSmokeClient` runs a real Fabric integrated client/server, exercises
 seating and discard packets, and captures settlement and animation screenshots in
