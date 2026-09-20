@@ -15,12 +15,14 @@ final class TrainingBot {
     private final BotDifficulty difficulty;
     private final int[] known;
     private final Set<Integer> dora = new HashSet<>();
+    private final BotAnalysis analysis;
 
     private TrainingBot(TableView view, BotDifficulty difficulty) {
         this.view = view;
         this.self = view.seats().get(view.viewerSeat());
         this.difficulty = difficulty;
         known = VisibleTiles.counts(view);
+        analysis = new BotAnalysis(view, difficulty);
         for (int tile : view.wall()) if (tile >= 0) {
             dora.add(Tile.doraAfter(Tile.kind(tile), view.rules().sanma()));
         }
@@ -49,21 +51,39 @@ final class TrainingBot {
         if (abort >= 0 && minimum >= 3) return abort;
         int best = -1;
         double bestScore = Double.NEGATIVE_INFINITY;
+        var evaluated = new ArrayList<DiscardChoice>();
+        var unique = new HashSet<String>();
         for (int i = 0; i < actions.size(); i++) {
             var action = actions.get(i);
             if (action.type() != DISCARD && action.type() != RIICHI) continue;
+            if (!unique.add(stable(action))) continue;
             int tile = action.tiles().getFirst();
             var shape = shapes.get(Tile.kind(tile));
             if (shape == null) continue;
-            double score = discardScore(tile, shape, minimum);
+            var state = analysis.initial().discard(tile, action.type() == RIICHI);
+            var evaluation = analysis.evaluate(state, shape, analysis.unseen);
+            double score = evaluation.utility() + discardScore(tile, shape, minimum);
             if (action.type() == RIICHI) {
-                int live = live(shape.improving());
-                boolean furiten = self.river().stream().anyMatch(discard -> shape.improving().contains(Tile.kind(discard.tile())))
-                    || shape.improving().contains(Tile.kind(tile));
-                if (live == 0 || furiten || difficulty == BotDifficulty.HARD && threats() > 0 && live < 4) continue;
-                score += difficulty == BotDifficulty.EASY ? 12 : 16 + Math.min(8, live);
+                if (evaluation.waits().quality() == 0) continue;
+                // Deposit and loss of flexible defence, paid only for a declaration.
+                score -= 5 + 18.0 / Math.max(1, view.remaining() / view.rules().players()) + threats() * 8;
             }
-            if (score > bestScore) { bestScore = score; best = i; }
+            evaluated.add(new DiscardChoice(i, state, evaluation, score, stable(action)));
+        }
+        evaluated.sort(java.util.Comparator.comparingDouble(DiscardChoice::score).reversed().thenComparing(DiscardChoice::key));
+        int searched = 0;
+        var searchedStates = new java.util.HashMap<BotAnalysis.State, Double>();
+        for (var candidate : evaluated) {
+            double score = candidate.score;
+            if (difficulty == BotDifficulty.HARD && !candidate.state.riichi() && candidate.evaluation.shanten() <= minimum + 1) {
+                Double forward = searchedStates.get(candidate.state);
+                if (forward == null && searched < BotAnalysis.SEARCH_ROOTS) {
+                    forward = analysis.forward(candidate.state, candidate.evaluation);
+                    searchedStates.put(candidate.state, forward); searched++;
+                }
+                if (forward != null) score += forward - candidate.evaluation.utility();
+            }
+            if (score > bestScore) { bestScore = score; best = candidate.index; }
         }
         if (threats() == 0) for (int i = 0; i < actions.size(); i++) {
             var action = actions.get(i);
@@ -90,12 +110,14 @@ final class TrainingBot {
         return best;
     }
 
+    private record DiscardChoice(int index, BotAnalysis.State state, BotAnalysis.Evaluation evaluation, double score, String key) {}
+    private static String stable(Action action) {
+        return action.type().name() + action.tiles().stream().map(BotAnalysis::face).sorted().toList();
+    }
+
     private double discardScore(int tile, TileEfficiency shape, int minimum) {
         int kind = Tile.kind(tile);
-        double score = -120 * shape.shanten();
-        if (difficulty != BotDifficulty.EASY) score += live(shape.improving()) * 1.5;
-        if (difficulty == BotDifficulty.HARD) score += live(shape.goodShape()) * .7;
-        score -= (Tile.red(tile) ? 5 : 0) + (dora.contains(kind) ? 5 : 0);
+        double score = 0;
         double danger = danger(kind);
         if (difficulty == BotDifficulty.EASY) {
             if (minimum >= 3 && threats() > 0) score -= danger * 30;

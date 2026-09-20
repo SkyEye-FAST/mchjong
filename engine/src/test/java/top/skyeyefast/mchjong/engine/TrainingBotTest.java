@@ -24,6 +24,69 @@ class TrainingBotTest {
         return view.actions().get(TrainingBot.choose(view, difficulty));
     }
 
+    @Test void analysisKeepsVisibleDiscardsAndSeparatesRedStockAndDuplicateDora() {
+        var game = hand("234m340p456678s2p");
+        game.wall.revealed = 2;
+        game.wall.tiles.set(game.wall.dora.get(0), Tile.id(12, 2, false));
+        game.wall.tiles.set(game.wall.dora.get(1), Tile.id(12, 3, false));
+        var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.NORMAL);
+        var state = analysis.initial();
+        assertEquals(0, analysis.unseen[13 + 34], "Owned red five cannot be drawn again");
+        assertEquals(3, analysis.unseen[13]);
+        assertEquals(3, analysis.value.bonus(state, Tile.ABSENT), "Two indicators plus the same tile's red bonus");
+        var waits = analysis.value.waits(state, HandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen);
+        assertTrue(waits.ronTiles() > 0);
+        assertTrue(waits.tsumoTiles() > 0);
+        var furiten = new BotAnalysis.State(state.hand(), state.melds(), state.norths(), 1L << 10, false);
+        assertEquals(0, analysis.value.waits(furiten, HandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen).ronTiles());
+        int discard = state.hand().getFirst();
+        int before = analysis.unseen[BotAnalysis.face(discard)];
+        game.players[0].hand.remove(Integer.valueOf(discard));
+        game.players[0].river.add(new Discard(discard, false, false, false));
+        assertEquals(before, new BotAnalysis(game.view(game.players[0].id), BotDifficulty.NORMAL).unseen[BotAnalysis.face(discard)]);
+    }
+
+    @Test void bonusesCannotMakeYakulessOrBelowMinimumWaitsLegal() {
+        var game = hand("123m456p789s23m55z");
+        // A structurally complete open hand with only dora has no winning value.
+        var meld = TestHands.meld(Meld.Type.CHI, "123m");
+        var state = new BotAnalysis.State(TestHands.tiles("456p789s23m55z"), List.of(meld), List.of(), 0, false);
+        var value = new BotValue(game.view(game.players[0].id));
+        value.dora[Tile.WHITE] = 3;
+        assertNull(value.score(state, Tile.id(3, 1, false), false));
+        game.rules = game.rules.with(RuleOption.MIN_HAN, 4);
+        value = new BotValue(game.view(game.players[0].id));
+        var closed = new BotAnalysis.State(TestHands.tiles("234m345p456s678s2p"), List.of(), List.of(), 0, true);
+        value.dora[13] = 4;
+        assertNull(value.score(closed, Tile.id(10, 1, false), false), "Dora do not satisfy four-yaku-han minimum");
+    }
+
+    @Test void hardTradesImmediateUkeireForWeightedDevelopmentDeterministically() {
+        var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74309);
+        var view = game.view(game.players[game.turn].id);
+        var normal = view.actions().get(TrainingBot.choose(view, BotDifficulty.NORMAL));
+        var hard = view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
+        assertEquals(10, Tile.kind(normal.tiles().getFirst()));
+        assertEquals(9, Tile.kind(hard.tiles().getFirst()));
+        var analysis = new BotAnalysis(view, BotDifficulty.HARD);
+        var start = analysis.initial();
+        var shapes = analysis.discards(start);
+        var n = start.discard(normal.tiles().getFirst(), false);
+        var h = start.discard(hard.tiles().getFirst(), false);
+        var ne = analysis.evaluate(n, shapes.get(10), analysis.unseen);
+        var he = analysis.evaluate(h, shapes.get(9), analysis.unseen);
+        assertEquals(ne.shanten(), he.shanten());
+        assertTrue(he.live() <= ne.live());
+        assertTrue(analysis.forward(h, he) > analysis.forward(n, ne));
+        assertTrue(analysis.drawNodes <= 2 * 37);
+        var actions = new ArrayList<>(game.options.get(game.turn));
+        java.util.Collections.reverse(actions);
+        game.options.set(game.turn, actions);
+        var reordered = game.view(game.players[game.turn].id);
+        assertEquals(BotAnalysis.face(hard.tiles().getFirst()),
+            BotAnalysis.face(reordered.actions().get(TrainingBot.choose(reordered, BotDifficulty.HARD)).tiles().getFirst()));
+    }
+
     @Test void tiersUseLiveEfficiencyAndHardBotNeverReadsHiddenHandsOrSeed() {
         var game = hand("123456m234p456s12z");
         var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of());

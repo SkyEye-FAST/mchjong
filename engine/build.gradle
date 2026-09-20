@@ -23,6 +23,16 @@ java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger()
 kotlin.jvmToolchain(java_version.toInteger())
 test { useJUnitPlatform(); maxHeapSize = '1G' }
 
+// Explicit experiment, never part of check/buildAll. Reuses the engine lifecycle fixtures.
+tasks.register('botCompare', JavaExec) {
+    dependsOn testClasses
+    classpath = sourceSets.test.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.engine.BotComparison'
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
+    maxHeapSize = '1G'
+    args providers.gradleProperty('botArgs').getOrElse('measure').split(' ')
+}
+
 shadowJar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     archiveClassifier = ''
