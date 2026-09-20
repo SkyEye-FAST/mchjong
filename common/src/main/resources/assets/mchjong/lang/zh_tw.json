@@ -461,6 +461,8 @@
   "settings.mchjong.title": "個人設定",
   "settings.mchjong.convenience_hints": "便捷提示",
   "settings.mchjong.convenience_hints_help": "顯示聽牌與未見枚數，不代表一定可以和牌。",
+  "hints.mchjong.button": "查看聽牌",
+  "ui.mchjong.meld_groups": "%s組副露",
   "hints.mchjong.waits": "聽牌 · 剩餘%s枚",
   "hints.mchjong.preview": "打出後 · 剩餘%s枚",
   "settings.mchjong.tab.0": "資訊",

@@ -29,7 +29,7 @@ final class TableAutomation {
             && (view.phase() == Game.Phase.TURN || view.phase() == Game.Phase.REACTION) && view.exitVote() == null;
     }
 
-    int width(int screenWidth) { return expanded ? Math.min(132, Math.max(104, (screenWidth - 28) / 3)) : 52; }
+    int width(int screenWidth) { return expanded ? Math.min(124, Math.max(96, (screenWidth - 28) / 3)) : 44; }
 
     int focusedIndex(GuiEventListener focused) { return focused == null ? -1 : buttons.indexOf(focused); }
 
@@ -47,9 +47,9 @@ final class TableAutomation {
         buttons = new ArrayList<>();
         if (!available(view)) { pending = false; return buttons; }
         int count = view.rules().sanma() ? 5 : 4;
-        int width = horizontal ? expanded ? (screenWidth - 40 - count * 4) / count : 28 : width(screenWidth) - 24;
+        int width = horizontal ? expanded ? (screenWidth - 40 - count * 4) / count : 28 : width(screenWidth) - 20;
         // Keep all five 20-pixel controls below the HUD and above the private hand at 320 x 240.
-        int gap = Math.min(4, Math.max(0, (bottom - 70 - count * 20) / (count - 1)));
+        int gap = horizontal ? 4 : 0;
         int height = horizontal ? 20 : count * 20 + (count - 1) * gap, top = bottom - height;
         for (var option : AutoPlay.Option.values()) {
             if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
@@ -80,10 +80,13 @@ final class TableAutomation {
             }) {
                 @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
                     var font = Minecraft.getInstance().font;
-                    renderSurface(graphics);
+                    if (horizontal) renderSurface(graphics);
+                    else MahjongUi.control(graphics, getX(), getY() + 2, getWidth(), 16,
+                        active, isHovered(), isFocused(), enabled, false);
                     int color = !active ? MahjongUi.DISABLED : enabled ? MahjongUi.POSITIVE : MahjongUi.MUTED;
-                    if (enabled) graphics.fill(getX() + 4, getY() + 8, getX() + 9, getY() + 13, color);
-                    else graphics.renderOutline(getX() + 4, getY() + 8, 5, 5, color);
+                    int markerX = getX() + (horizontal ? 4 : 2), markerSize = horizontal ? 5 : 4;
+                    if (enabled) graphics.fill(markerX, getY() + 8, markerX + markerSize, getY() + 8 + markerSize, color);
+                    else graphics.renderOutline(markerX, getY() + 8, markerSize, markerSize, color);
                     var caption = Component.translatable(expanded ? key : key + ".short");
                     if (expanded && font.width(caption) > getWidth() - 17) {
                         var lines = font.split(caption, getWidth() - 17);
@@ -91,20 +94,25 @@ final class TableAutomation {
                         for (int line = 0; line < count; line++)
                             graphics.drawString(font, lines.get(line), getX() + 13 + (getWidth() - 17 - font.width(lines.get(line))) / 2,
                                 getY() + (getHeight() - count * font.lineHeight) / 2 + line * font.lineHeight, color, false);
-                    } else MahjongUi.text(graphics, font, caption, getX() + 13, getY() + 6,
-                        getWidth() - 17, color, true);
+                    } else MahjongUi.text(graphics, font, caption, getX() + (horizontal ? 13 : 8), getY() + 6,
+                        getWidth() - (horizontal ? 17 : 10), color, true);
                 }
             }.selected(enabled);
             button.active = !pending;
             buttons.add(button);
         }
-        buttons.add(new MahjongButton(8 + (horizontal ? count : 1) * (width + 4), top + (height - 20) / 2, 20, 20,
+        buttons.add(new MahjongButton(8 + (horizontal ? count : 1) * (width + (horizontal ? 4 : 0)), top + (height - 20) / 2, 20, 20,
             Component.translatable(expanded ? "ui.mchjong.automation_hide" : "ui.mchjong.automation_show"),
             ignored -> { expanded = !expanded; rebuild.run(); }) {
                 @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-                    renderSurface(graphics);
+                    if (horizontal) renderSurface(graphics);
+                    else {
+                        graphics.fill(getX() + 6, getY() + 2, getX() + 14, getY() + 18,
+                            isHoveredOrFocused() ? MahjongUi.HOVER : MahjongUi.PANEL);
+                        if (isFocused()) graphics.renderOutline(getX() + 5, getY() + 1, 10, 18, MahjongUi.ACCENT);
+                    }
                     MahjongUi.text(graphics, Minecraft.getInstance().font, Component.literal(expanded ? "‹" : "›"),
-                        getX() + 4, getY() + 6, getWidth() - 8, MahjongUi.ACCENT, true);
+                        getX() + 4, getY() + 6, getWidth() - 8, isHoveredOrFocused() ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
                 }
             });
         return buttons;

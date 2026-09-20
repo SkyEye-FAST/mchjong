@@ -461,6 +461,8 @@
   "settings.mchjong.title": "Personal settings",
   "settings.mchjong.convenience_hints": "Tenpai hints",
   "settings.mchjong.convenience_hints_help": "Show waits and unseen copies; winning rules still apply.",
+  "hints.mchjong.button": "Show waits",
+  "ui.mchjong.meld_groups": "%s melds",
   "hints.mchjong.waits": "Waits · %s unseen",
   "hints.mchjong.preview": "After discard · %s unseen",
   "settings.mchjong.tab.0": "Information",

@@ -461,6 +461,8 @@
   "settings.mchjong.title": "個人設定",
   "settings.mchjong.convenience_hints": "便利表示",
   "settings.mchjong.convenience_hints_help": "待ち牌と未見の枚数を表示。アガリ可能とは限りません。",
+  "hints.mchjong.button": "待ち牌を表示",
+  "ui.mchjong.meld_groups": "%s組の副露",
   "hints.mchjong.waits": "待ち牌・残り%s枚",
   "hints.mchjong.preview": "打牌後・残り%s枚",
   "settings.mchjong.tab.0": "情報",

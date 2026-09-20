@@ -6,17 +6,20 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** The thirteen-wait rail at both viewports, with real fonts and pointer discard selection. */
+/** Dense HUDs and thirteen waits through pointer hover and native keyboard focus. */
 final class TenpaiHintsSmoke {
     private static final String[] LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
     private int sample = -1, ticks, width, height, scale;
@@ -40,25 +43,45 @@ final class TenpaiHintsSmoke {
         }
         if (!reload.isDone() || client.getOverlay() != null) return false;
         reload.join();
-        if (ticks == 0 && sample < 8) {
-            long window = client.getWindow().getWindow();
-            var cursor = GLFW.glfwSetCursorPosCallback(window, null);
-            if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
-            try { cursor.invoke(window, 4, 4); }
-            finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
+        if (sample == 12) return ++ticks >= 10;
+        if (ticks == 0) {
+            if (sample % 3 == 2) {
+                // Hover only: moving to the button must keep this discard without a selected tile.
+                int tileWidth = 20;
+                int x = (client.screen.width - 14 * tileWidth - 6) / 2 + 13 * tileWidth + 6 + tileWidth / 2;
+                pointer(client, x, client.screen.height - 24 - 20 - 15);
+            } else pointer(client, 4, 4);
         }
-        if (++ticks < 10) return false;
-        if (sample == 8) return true;
-        if (table.clientView() != fixture) throw new IllegalStateException("Hint fixture was replaced before capture");
-        AutomationControlsSmoke.checkBounds(client);
-        Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 2]
-            + (sample % 2 == 0 ? "-640x400-seated.png" : "-480x300-immersive-preview.png"), client.getMainRenderTarget(), ignored -> {});
-        if (++sample < 8) show(client, table);
+        if (ticks == 3) {
+            var button = hintButton(client);
+            pointer(client, button.getX() + 10, button.getY() + 10);
+        }
+        if (ticks == 10 || ticks == 20) {
+            var button = hintButton(client);
+            if (!button.visible || !button.active || !button.isHoveredOrFocused())
+                throw new IllegalStateException("Wait preview disappeared on hover/focus");
+            if (button.getMessage().getString().split("\n").length != 15)
+                throw new IllegalStateException("Thirteen waits are missing from native narration");
+            if (table.clientView() != fixture) throw new IllegalStateException("Hint fixture was replaced before capture");
+            AutomationControlsSmoke.checkBounds(client);
+            Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 3]
+                + switch (sample % 3) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }
+                + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), ignored -> {});
+            if (ticks == 10) {
+                pointer(client, 4, 4);
+                client.screen.setFocused(null);
+                for (int i = 0; i < 30 && client.screen.getFocused() != button; i++)
+                    client.screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
+                if (client.screen.getFocused() != button) throw new IllegalStateException("Tab cannot reach wait preview");
+            }
+        }
+        if (++ticks <= 20) return false;
+        if (++sample < 12) show(client, table);
         else {
             settings.convenienceHints = enabled; settings.animations = animations; settings.discardMode = discardMode;
             client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeDisplay();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
-            table.acceptView(new TableView(original.tableId(), original.revision() + 9, original.decision(),
+            table.acceptView(new TableView(original.tableId(), original.revision() + 13, original.decision(),
                 original.handNumber(), original.rules(), original.phase(), original.viewerSeat(), original.dealer(),
                 original.round(), original.honba(), original.riichiSticks(), original.turn(), original.remaining(),
                 original.wallBreak(), original.wall(), original.focus(), original.seats(), original.actions(), original.wins(),
@@ -70,28 +93,59 @@ final class TenpaiHintsSmoke {
     }
 
     private void show(Minecraft client, MahjongTableBlockEntity table) {
-        boolean preview = sample % 2 == 1;
-        client.getWindow().setWindowed(preview ? 960 : 1280, preview ? 600 : 800);
-        client.options.guiScale().set(2); client.resizeDisplay();
+        boolean preview = sample % 3 == 2, small = sample % 3 == 1;
+        client.getWindow().setWindowed(preview || small ? 960 : 1280, preview ? 600 : small ? 720 : 800);
+        client.options.guiScale().set(small ? 3 : 2); client.resizeDisplay();
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
         seats.set(0, new TableView.Seat("Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false));
+        for (int seat = 1; seat < seats.size(); seat++) {
+            int owner = seat;
+            var melds = java.util.stream.IntStream.range(0, seat == 1 ? 4 : 1).mapToObj(i -> {
+                int tile = 4 + i * 4;
+                return new Meld(seatType(owner), List.of(tile, tile + 1, tile + 2, tile + 3),
+                    owner >= 2 ? owner : 0, owner >= 2 ? Tile.ABSENT : tile);
+            }).toList();
+            seats.set(seat, new TableView.Seat("Long player name " + seat, true, false, false, 25000,
+                java.util.Collections.nCopies(13 - melds.size() * 3, Tile.HIDDEN), Tile.ABSENT,
+                melds, List.of(), List.of(), seat == seats.size() - 1, false));
+        }
+        var wall = new ArrayList<>(java.util.Collections.nCopies(136, Tile.HIDDEN));
+        for (int i = 0; i < 5; i++) wall.set(131 - i * 2, 40 + i * 4);
         // Advance the display snapshot so rendering updates while live lobby heartbeats stay stale.
         fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
-            original.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70,
-            original.wallBreak(), original.wall(), null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125)) : List.of(),
+            original.rules(), Game.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
+            original.wallBreak(), wall, null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125), new Action(Action.Type.DISCARD, 0)) : List.of(),
             List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), false, null, null, original.autoPlay(), false, 1);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         table.acceptView(fixture); client.setScreen(new TableScreen(table.getBlockPos()));
         if (preview) {
             client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-            AutomationControlsSmoke.click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString());
-            client.screen.setFocused(null);
-            InputSmoke.clickHand((TableScreen) client.screen, fixture, 125);
         }
-        client.getLanguageManager().setSelected(LANGUAGES[sample / 2]); reload = client.reloadResourcePacks(); ticks = 0;
+        AutomationControlsSmoke.click(client, Component.translatable("ui.mchjong.automation_show").getString());
+        client.screen.setFocused(null);
+        // Also cover a prior selection: the last hovered discard must win when entering the diamond.
+        if (preview && sample >= 6) InputSmoke.clickHand((TableScreen) client.screen, fixture, 0);
+        client.getLanguageManager().setSelected(LANGUAGES[sample / 3]); reload = client.reloadResourcePacks(); ticks = 0;
+    }
+
+    private static Meld.Type seatType(int seat) { return seat >= 2 ? Meld.Type.CLOSED_KAN : Meld.Type.OPEN_KAN; }
+
+    private static AbstractWidget hintButton(Minecraft client) {
+        String title = Component.translatable("hints.mchjong.button").getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().startsWith(title)).findFirst().orElseThrow();
+    }
+
+    private static void pointer(Minecraft client, double x, double y) {
+        long window = client.getWindow().getWindow();
+        var cursor = GLFW.glfwSetCursorPosCallback(window, null);
+        if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
+        try { cursor.invoke(window, x * client.getWindow().getScreenWidth() / client.screen.width,
+            y * client.getWindow().getScreenHeight() / client.screen.height); }
+        finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
     }
 }

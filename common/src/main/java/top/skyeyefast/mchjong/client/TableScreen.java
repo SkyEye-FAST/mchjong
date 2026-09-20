@@ -181,6 +181,7 @@ public final class TableScreen extends Screen {
             || handlingDrag.decision() != view.decision())) handlingDrag = null;
         if (decision.receive(view)) {
             selectedTile = lastClickedTile = hoveredTile = Tile.ABSENT;
+            hints.clearPreview();
             choosingRiichi = false;
         }
     }
@@ -241,6 +242,7 @@ public final class TableScreen extends Screen {
     }
 
     private void rebuild() {
+        boolean hintFocus = getFocused() == hints;
         int automationFocus = automation.focusedIndex(getFocused());
         clearWidgets();
         callouts.clear();
@@ -346,6 +348,8 @@ public final class TableScreen extends Screen {
                     .bounds(startX + slot % columns * (boxWidth + 4), actionTop + slot / columns * 30, boxWidth, 26).build().primary());
                 confirmButton.setTooltip(Tooltip.create(confirmButton.getMessage()));
         }
+        addRenderableWidget(hints);
+        if (hintFocus && hints.visible) setFocused(hints);
     }
 
     private void buildToolbar(TableView view) {
@@ -783,15 +787,13 @@ public final class TableScreen extends Screen {
             }
         }
         if (choosingRiichi) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.choose_riichi"),
-            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
+            actionLeft, actionTop - 14, width - actionLeft - (board == null && hints.visible ? 36 : 10), MahjongUi.ACCENT, true, true);
         if (hand != null && results == null) hand.render(graphics, selectedTile, tile -> {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
         }, facePreset());
-        if (settings.convenienceHints && !dealing() && !decision.pending())
-            hints.render(graphics, font, view, hoveredTile >= 0 ? hoveredTile : selectedTile,
-                width, actionLeft, actionTop - (choosingRiichi ? 32 : 18), hand != null, facePreset());
+        updateHints(view);
         super.render(graphics, mouseX, mouseY, partialTick);
         boolean footerClock = false;
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
@@ -802,7 +804,7 @@ public final class TableScreen extends Screen {
                 Component text = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());
                 MahjongUi.text(graphics, font, text, footerClock ? 10 : actionLeft,
                     footerClock ? height - 13 : actionTop - (choosingRiichi ? 28 : 14),
-                    footerClock ? width - 20 : width - actionLeft - 10,
+                    footerClock ? width - (hints.visible ? 48 : 20) : width - actionLeft - (hints.visible ? 36 : 10),
                     clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true, true);
             }
         }
@@ -829,10 +831,32 @@ public final class TableScreen extends Screen {
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
             if (view.handling() != null && view.viewerSeat() >= 0)
                 help = Component.translatable("sticks.mchjong.access", TableKeys.DRAWER.getTranslatedKeyMessage()).append(" · ").append(help);
-            graphics.drawString(font, font.plainSubstrByWidth(help.getString(), width - 20), 10, height - 13, 0xffe0deca, true);
+            graphics.drawString(font, font.plainSubstrByWidth(help.getString(), width - (hints.visible ? 48 : 20)), 10, height - 13, 0xffe0deca, true);
         }
         if (informationTooltip != null && !overWidget(mouseX, mouseY))
             graphics.renderTooltip(font, font.split(informationTooltip, Math.min(320, width - 24)), mouseX, mouseY);
+        hints.renderPopup(graphics, font, facePreset());
+    }
+
+    private void updateHints(TableView view) {
+        if (!TableSettings.get().convenienceHints || dealing() || decision.pending() || results != null) {
+            hints.clearPreview();
+            return;
+        }
+        int hintBottom = hand == null ? height - 52 : hand.top() - 6;
+        if (hand == null) for (var piece : scene) {
+            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()) continue;
+            var point = projectHand(piece);
+            if (point != null) hintBottom = Math.min(hintBottom, (int) point.y() - 12);
+        }
+        int hintLeft = TableAutomation.available(view) ? actionLeft : 8, hintRight = width - 10;
+        if (board != null) {
+            int players = view.rules().players(), viewer = view.viewerSeat();
+            hintLeft = board.card((viewer + players - 1) % players).right() + 4;
+            hintRight = board.card((viewer + 1) % players).x() - 4;
+        }
+        hints.update(view, hoveredTile, selectedTile, width, board == null ? actionTop - 22 : height - 16, hintLeft, hintRight,
+            Math.min(hintBottom, actionTop - 32), board == null ? 108 : 38);
     }
 
     private void renderHandling(GuiGraphics graphics, TableView view, int mouseX, int mouseY) {
@@ -1076,6 +1100,7 @@ public final class TableScreen extends Screen {
 
     private void cancelSelection() {
         choosingRiichi = false;
+        hints.clearPreview();
         selectedTile = lastClickedTile = Tile.ABSENT;
         rebuild();
         setFocused(null);

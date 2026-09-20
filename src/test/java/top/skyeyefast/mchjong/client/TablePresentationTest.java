@@ -7,6 +7,32 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TablePresentationTest {
+    @Test void thirteenWaitPopupClearsCardsAutomationAndDecisionsAtMinimumSizes() {
+        for (int[] bounds : new int[][]{{320, 116, 108, 165}, {640, 148, 108, 310}, {480, 8, 38, 176}}) {
+            var box = TableHints.layout(bounds[0] - 10, bounds[1], bounds[2], bounds[3], 13);
+            assertNotNull(box);
+            assertTrue(box.x() >= bounds[1]);
+            assertTrue(box.y() >= bounds[2]);
+            assertTrue(box.x() + box.width() <= bounds[0] - 10);
+            assertEquals(bounds[3], box.y() + box.height());
+            assertTrue(box.tileWidth() >= 5);
+            assertTrue(12 * box.step() + box.tileWidth() + 12 <= box.width());
+        }
+        assertNull(TableHints.layout(320, 116, 108, 165, 0));
+        assertNull(TableHints.layout(320, 116, 108, 130, 13));
+    }
+
+    @Test void seatedMeldSummaryPreservesTextAndFallsBackAtNarrowWidths() {
+        var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
+            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN,
+                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
+        assertEquals(0, TableHud.summaryTileWidth(melds, 0, 63));
+        int size = TableHud.summaryTileWidth(melds, 0, 143);
+        assertTrue(size >= 5);
+        assertTrue(melds.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, size) + 2).sum() - 2 <= 143);
+        assertTrue(TableHud.summaryTileWidth(melds.subList(0, 1), 0, 63) >= 5);
+    }
+
     @Test void immersiveRequiresEnoughLogicalPixelsForReadableSideRivers() {
         assertFalse(TableScreen.supportsImmersive(320, 240));
         assertFalse(TableScreen.supportsImmersive(479, 400));
@@ -68,6 +94,15 @@ class TablePresentationTest {
                 var board = new TableBoard(view, 8, width - 8, 38, bottom, bottom);
                 var card = board.card(0);
                 var river = board.riverArea(0);
+                var popup = TableHints.layout(board.card(1).x() - 4,
+                    board.card(rules.players() - 1).right() + 4, 38, bottom - 32, 13);
+                assertNotNull(popup);
+                for (int seat = 0; seat < rules.players(); seat++) {
+                    var other = board.card(seat);
+                    assertTrue(popup.x() + popup.width() <= other.x() || popup.x() >= other.right()
+                        || popup.y() + popup.height() <= other.y() || popup.y() >= other.bottom(),
+                        "Wait popup must clear player cards");
+                }
                 assertTrue(card.right() < river.x(), "The local card must not cover its river");
                 for (int seat = 0; seat < rules.players(); seat++) {
                     var area = board.riverArea(seat);

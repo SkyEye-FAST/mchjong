@@ -112,14 +112,27 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Personal interaction settings include default-off tenpai hints. The hint rail
-shows structural waits and unseen-copy counts, including exhausted waits at zero;
-hovering over or selecting a legal discard previews the resulting waits.
-Counts combine red and ordinary fives and never claim to reveal the actual wall.
-In the seated view the rail sits below the header, leaving the physical hand clear.
-In the immersive view the hint popup uses the width below the toolbar and stays
-above decisions; it does not squeeze a long wait list into the action gutter.
-Closed settings persist locally and reset disables hints.
+Personal interaction settings include default-off tenpai hints. A small diamond
+with an exclamation mark appears at the lower right when valid waits are available.
+Hover or native keyboard focus opens structural waits and unseen-copy counts,
+including exhausted waits at zero. The native narration includes every wait and count.
+Hovering over or selecting a legal discard previews the resulting waits; retain
+the last preview while the pointer travels to the diamond, and clear it on a new
+decision, cancellation or disabled hints. Counts combine red and ordinary fives
+and never claim to reveal the actual wall. Anchor the popup above the projected
+private hand in seated play and above `TableHand` in immersive play, leaving room
+for decisions, clocks and automation. Closed settings persist locally and reset
+disables hints.
+
+Seated HUDs place compact honba/riichi-stick counts and 14-pixel dora indicators
+between the header and player cards. Respect the independent DEPOSITS and DORA
+preferences. Names, winds and points keep their own rows. With MELDS enabled,
+an additional card row shows actual resource-pack meld faces at 5–8 pixels; use
+a localized group count when all melds cannot fit. Immersive cards retain their
+board positions and the board owns the full meld display. In both views, STATUS
+shows riichi as a small white stick with a red center and a persistent brass
+bottom rule, with the full status in hover details. The sideways river tile
+continues to identify the declaration discard.
 
 Immersive play uses an opaque screen-space surface, independent of world lighting,
 ceilings and camera orientation. Reflow opponents, rivers and melds into the available
@@ -238,7 +251,10 @@ or on the ordinary table's felt; carried deposits remain visible between hands.
 The automatic table's active-match overlay includes collapsible controls at the
 lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
 matches) extract norths. Both compact and expanded rows are individual toggle buttons;
-the separate side arrow changes only their presentation. Compact rows use localized
+seated rows retain 20-pixel hit areas with inset 16-pixel surfaces and no vertical
+gap. A quiet side handle changes their presentation, retaining a 20-pixel hit area
+and a visible keyboard focus outline. Immersive controls retain the horizontal strip.
+Compact rows use localized
 single-character labels, while expanded rows show full names on up to two lines.
 Filled/hollow indicators distinguish states alongside the shared selected surface.
 Tooltips and narration always contain the full option name and its on/off state.
@@ -293,6 +309,11 @@ match verifies the additional north button and its server acknowledgements at
 320 x 240 seated. Immersive captures use 480 x 300 or larger. Lobby controls are checked separately.
 Native first-person screenshots cover a right-hand tile and point stick. Each
 table has one carried-deposit fixture.
+The wait-preview smoke additionally captures pointer hover and keyboard focus
+at 640 x 400 and 320 x 240 seated and 480 x 300 immersive in all four languages,
+with thirteen waits, five indicators, carried sticks, riichi and four-kan summaries.
+The immersive preview begins with pointer-only discard hover to check that moving
+onto the diamond preserves the preview without selecting or submitting a tile.
 
 On Windows, `tools/Review-Smoke.ps1` creates labelled contact sheets from the
 original screenshots. Supply the evidence folder, filename pattern, run start
