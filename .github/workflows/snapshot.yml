@@ -31,7 +31,6 @@ jobs:
           fi
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
-          echo "short_sha=${GITHUB_SHA::7}" >> "${GITHUB_OUTPUT}"
 
       - name: Setup Java
         uses: actions/setup-java@v6
@@ -56,15 +55,15 @@ jobs:
           test -f "neoforge/build/libs/mchjong-neoforge-${version}.jar"
 
       - name: Upload Fabric snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: mchjong-fabric-${{ steps.version.outputs.version }}-run${{ github.run_number }}-${{ steps.version.outputs.short_sha }}
+          name: mchjong-fabric-${{ steps.version.outputs.version }}
           path: build/libs/mchjong-fabric-${{ steps.version.outputs.version }}.jar
           if-no-files-found: error
 
       - name: Upload NeoForge snapshot
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
-          name: mchjong-neoforge-${{ steps.version.outputs.version }}-run${{ github.run_number }}-${{ steps.version.outputs.short_sha }}
+          name: mchjong-neoforge-${{ steps.version.outputs.version }}
           path: neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.version }}.jar
           if-no-files-found: error
