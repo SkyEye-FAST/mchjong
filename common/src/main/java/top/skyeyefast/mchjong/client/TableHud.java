@@ -52,7 +52,7 @@ final class TableHud {
         }
         boolean seated = board == null && !lobby;
         boolean compactHeader = seated && headerWidth < 160;
-        int indicatorWidth = seated && !compactHeader ? 14 : 8;
+        int indicatorWidth = compactHeader ? 8 : 14;
         int indicatorSpan = indicators.size() * (indicatorWidth + 2);
         boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
@@ -61,7 +61,7 @@ final class TableHud {
         if (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty()) {
             MahjongUi.panel(graphics, 8, 7, headerWidth, lobby ? 21 : 26);
             text(font, graphics, title, 12, 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);
-            text(font, graphics, remaining, 12, 22, seated ? depositX - 12 - (deposits ? 4 : 0) : headerWidth - 8, MahjongUi.MUTED);
+            text(font, graphics, remaining, 12, 22, seated ? depositX - 12 - (deposits ? 4 : 0) : headerWidth - 8 - indicatorSpan, MahjongUi.MUTED);
             if (deposits) {
                 stick(graphics, depositX, 25, false);
                 int countX = depositX + 16;

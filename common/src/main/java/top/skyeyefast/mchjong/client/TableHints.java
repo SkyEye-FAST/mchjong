@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
@@ -63,7 +62,7 @@ final class TableHints extends MahjongButton {
         int height = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH) + 32;
         int span = Math.max(112, count * step + 12);
         if (span > rightBound - leftBound) return null;
-        return new Layout(rightBound - span, bottom - height, span, height, step, tileWidth);
+        return new Layout(leftBound + (rightBound - leftBound - span) / 2, bottom - height, span, height, step, tileWidth);
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -74,7 +73,8 @@ final class TableHints extends MahjongButton {
             graphics.fill(centerX - half, centerY + dy, centerX + half + 1, centerY + dy + 1, edge);
             if (half > 1) graphics.fill(centerX - half + 1, centerY + dy, centerX + half, centerY + dy + 1, MahjongUi.PANEL);
         }
-        MahjongUi.text(graphics, Minecraft.getInstance().font, Component.literal("!"), getX(), getY() + 4, 20, MahjongUi.ACCENT, true);
+        graphics.fill(centerX, centerY - 3, centerX + 1, centerY + 1, MahjongUi.ACCENT);
+        graphics.fill(centerX, centerY + 3, centerX + 1, centerY + 4, MahjongUi.ACCENT);
     }
 
     void renderPopup(GuiGraphics graphics, Font font, TileFacePreset preset) {

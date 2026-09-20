@@ -30,6 +30,7 @@ final class TableHand {
     }
 
     int top() { return y - 7; }
+    int centerX() { return left + span / 2; }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);

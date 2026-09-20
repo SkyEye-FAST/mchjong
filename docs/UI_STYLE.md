@@ -119,15 +119,18 @@ including exhausted waits at zero. The native narration includes every wait and 
 Hovering over or selecting a legal discard previews the resulting waits; retain
 the last preview while the pointer travels to the diamond, and clear it on a new
 decision, cancellation or disabled hints. Counts combine red and ordinary fives
-and never claim to reveal the actual wall. Anchor the popup above the projected
-private hand in seated play and above `TableHand` in immersive play, leaving room
-for decisions, clocks and automation. Closed settings persist locally and reset
+and never claim to reveal the actual wall. Center the popup on the actual private
+hand, directly above its projected top edge in seated play and `TableHand` in
+immersive play. Keep a small gap to the tiles instead of anchoring to the action
+rail. Draw the exclamation icon at the diamond's geometric center, independent
+of font glyph bearings. Closed settings persist locally and reset
 disables hints.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
 round/remaining header. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
-stick counts. Player cards begin at y=38 without a separate indicator row.
+stick counts. Immersive headers use 14-pixel indicators and reserve their width
+on both text lines. Player cards begin at y=38 without a separate indicator row.
 Respect the independent DEPOSITS and DORA preferences. Names, winds and points
 keep their own rows in 24-pixel cards. With MELDS enabled, only cards with melds
 grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for

@@ -843,20 +843,24 @@ public final class TableScreen extends Screen {
             hints.clearPreview();
             return;
         }
-        int hintBottom = hand == null ? height - 52 : hand.top() - 6;
+        int hintBottom = hand == null ? height - 52 : hand.top();
+        int hintCenter = hand == null ? width / 2 : hand.centerX();
+        double handLeft = Double.POSITIVE_INFINITY, handRight = Double.NEGATIVE_INFINITY;
         if (hand == null) for (var piece : scene) {
             if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()) continue;
-            var point = projectHand(piece);
-            if (point != null) hintBottom = Math.min(hintBottom, (int) point.y() - 12);
+            var point = project(piece.position().add(0,
+                (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2.0, 0));
+            if (point != null) {
+                hintBottom = handLeft == Double.POSITIVE_INFINITY ? (int) point.y() - 4 : Math.min(hintBottom, (int) point.y() - 4);
+                handLeft = Math.min(handLeft, point.x());
+                handRight = Math.max(handRight, point.x());
+            }
         }
-        int hintLeft = TableAutomation.available(view) ? actionLeft : 8, hintRight = width - 10;
-        if (board != null) {
-            int players = view.rules().players(), viewer = view.viewerSeat();
-            hintLeft = board.card((viewer + players - 1) % players).right() + 4;
-            hintRight = board.card((viewer + 1) % players).x() - 4;
-        }
+        if (handLeft != Double.POSITIVE_INFINITY) hintCenter = (int) Math.round((handLeft + handRight) / 2);
+        int halfWidth = Math.min(hintCenter - 8, width - 8 - hintCenter);
+        int hintLeft = hintCenter - halfWidth, hintRight = hintCenter + halfWidth;
         hints.update(view, hoveredTile, selectedTile, width, board == null ? actionTop - 22 : height - 16, hintLeft, hintRight,
-            Math.min(hintBottom, actionTop - 32), board == null ? 108 : 38);
+            hintBottom, board == null ? information.bottom() + 4 : 38);
     }
 
     private void renderHandling(GuiGraphics graphics, TableView view, int mouseX, int mouseY) {
