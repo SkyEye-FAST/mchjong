@@ -175,7 +175,11 @@ final class ManualTableSmoke {
                 check(view.seats().getFirst().hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
-                client.screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+                var piece = top.skyeyefast.mchjong.client.TableScene.build(view).stream()
+                    .filter(value -> value.area() == top.skyeyefast.mchjong.client.TableScene.Area.HAND && value.seat() == view.viewerSeat())
+                    .findFirst().orElseThrow();
+                var pointer = project(client, piece.position());
+                client.screen.mouseClicked(pointer.x, pointer.y, 0);
                 next(9);
             }
             case 9 -> {

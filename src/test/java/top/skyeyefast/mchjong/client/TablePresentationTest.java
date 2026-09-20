@@ -96,4 +96,52 @@ class TablePresentationTest {
         assertEquals(0x40, TableIndicator.segments('-'));
         assertThrows(IllegalArgumentException.class, () -> TableIndicator.segments('A'));
     }
+
+    @Test void denseRiversKeepReadablePixelsAndMeldsReflowBeforeShrinking() {
+        var rules = top.skyeyefast.mchjong.engine.RuleSet.TENHOU_4;
+        var id = java.util.UUID.randomUUID();
+        var game = new top.skyeyefast.mchjong.engine.Game(java.util.UUID.randomUUID(), rules, 15);
+        game.join(id, "Viewer", 0);
+        var base = game.view(id);
+        var seats = new java.util.ArrayList<>(base.seats());
+        for (int seat = 0; seat < 4; seat++) {
+            int rows = seat % 2 == 0 ? 4 : 2;
+            var river = java.util.stream.IntStream.range(0, rows * 6)
+                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.Discard(tile, tile == 3, false, false)).toList();
+            seats.set(seat, new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false,
+                25000, List.of(), -1, List.of(), river, List.of(), false, false));
+        }
+        var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
+            top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
+            base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
+            base.timeControl(), List.of(), List.of(), false, null, null, base.autoPlay(), false, 1);
+        for (int bottom : new int[]{178, 203}) {
+            var board = new TableBoard(view, 8, 472, 38, bottom, bottom);
+            assertTrue(board.riverTileWidth() >= 8);
+            assertEquals(bottom == 178, board.scoresOnCards());
+            for (int seat = 0; seat < 4; seat++) {
+                var area = board.riverArea(seat);
+                assertTrue(area.y() >= 38 && area.bottom() <= bottom, area.toString());
+                assertTrue(area.x() >= 8 && area.right() <= 472, area.toString());
+                for (int other = 0; other < 4; other++) {
+                    var card = board.card(other);
+                    assertTrue(card.right() <= area.x() || card.x() >= area.right()
+                        || card.bottom() <= area.y() || card.y() >= area.bottom(), "Dense score cards overlap rivers");
+                }
+            }
+        }
+        var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
+            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN,
+                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
+        var player = new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false, 25000,
+            List.of(80, 81), 81, melds, List.of(), List.of(), false, false);
+        int width = TableBoard.outerTileWidth(player, 0, 157);
+        assertEquals(10, width);
+        var rails = TableBoard.meldRails(player, 0, width, 157);
+        assertEquals(2, rails.size());
+        assertEquals(2, TableBoard.meldRails(player, 0, width, 195).size(),
+            "A wider rail must still reserve a visible concealed tile before fitting four kans");
+        assertEquals(4, rails.stream().mapToInt(List::size).sum());
+        for (var rail : rails) assertTrue(rail.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, width)).sum() <= 157);
+    }
 }

@@ -61,7 +61,11 @@ final class AutomationControlsSmoke {
             expected = view.autoPlay().with(option, !enabled);
             decision = view.decision();
             var button = optionButton(client, option);
-            require((button.getWidth() == 28) == (toggle % 2 == 1), "Wrong automatic control presentation");
+            if ((button.getWidth() == 28) != (toggle % 2 == 1)) {
+                // Catch-up client ticks can run before the next render rebuilds the controls.
+                require(ticks < 40, "Wrong automatic control presentation at toggle " + toggle);
+                return false;
+            }
             if (toggle % 2 == 0) click(client, button.getMessage().getString());
             else {
                 if (toggle == 3) capture(client, output, "53", "collapsed-small");

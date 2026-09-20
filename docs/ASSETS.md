@@ -41,11 +41,17 @@ including all 45 distinct faces, red fives, flowers, opacity and the declared or
 The bottom-right 32 by 32 pixels, beginning at (2016, 4064), are a solid white
 material swatch. Keep this swatch white when replacing the atlas: the renderer
 uses it for opaque face plates and table display colors, independently of the printed
-faces. Texture metadata enables linear filtering and clamping; the shared tile
-render types also retain linear filtering at draw time (vanilla entity render
-types override the metadata). Face UVs stop at half-pixel insets to avoid
-sampling neighboring cells. The client smoke checks the live OpenGL minification
-and magnification filters after rendering, including after resource-pack reloads.
+faces. Texture metadata enables linear filtering and clamping. GUI faces retain
+their independent linearly filtered atlas. World and item engravings use
+`TileFaceTexture`: it composites the resource-pack engraving over the white face
+plate before generating mipmaps with Minecraft's mip generator, preserving thin
+antialiased strokes without alpha-cutout loss. The shared face RenderType uses
+trilinear minification and linear magnification. The five mip levels of the native
+atlas retain exact cell and white-swatch boundaries; lower-resolution packs use
+fewer levels. Face UVs stop at half-pixel insets. The client smoke checks uploaded
+mip dimensions and live world/GUI filters, including after resource-pack reloads.
+The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
+proportions and the physical tile envelope.
 
 ## Mahjong dye items
 

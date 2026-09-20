@@ -20,8 +20,11 @@ final class TableBoard {
 
     private static final String[] WINDS = {"east", "south", "west", "north"};
     private static final int RIVER_GAP = 4;
+    static final int MIN_RIVER_WIDTH = 8;
+    static final int MIN_MELD_WIDTH = 10;
     private final Rect bounds, center;
-    private final int viewer, players, actionsTop, riverWidth, riverRows;
+    private final int viewer, players, actionsTop, riverWidth;
+    private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
 
     TableBoard(TableView view, int left, int right, int top, int bottom, int actionsTop) {
@@ -29,18 +32,34 @@ final class TableBoard {
         viewer = view.viewerSeat();
         players = view.rules().players();
         this.actionsTop = actionsTop;
-        riverRows = Math.max(2, view.seats().stream().mapToInt(player ->
-            ((int) player.river().stream().filter(discard -> !discard.called()).count() + 5) / 6).max().orElse(0));
+        for (int seat = 0; seat < players; seat++) riverRows[side(seat, viewer, players)] = Math.max(2,
+            ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
         int centerHeight = bounds.height() >= 200 ? 64 : 54;
-        int usableTop = top + 26;
+        int verticalRows = riverRows[0] + riverRows[2];
+        // Compress the score panel before sacrificing the face's logical pixels.
+        boolean compact = centerHeight + 2 * RIVER_GAP + verticalRows * tileHeight(12) > bottom - top - 22;
+        if (compact) centerHeight = 40;
+        int usableTop = top + (compact ? 20 : 22);
         int usableHeight = Math.max(1, bottom - usableTop);
+        if (centerHeight + verticalSpace(MIN_RIVER_WIDTH, centerHeight) > usableHeight) centerHeight = 16;
         int width = 20;
-        while (width > 3 && (centerHeight + 2 * RIVER_GAP + 2 * riverRows * tileHeight(width) > usableHeight
-            || riverSpan(width) + 2 * riverRows * tileHeight(width) + 160 > bounds.width())) width--;
+        while (width > MIN_RIVER_WIDTH && (centerHeight + verticalSpace(width, centerHeight) > usableHeight
+            || riverSpan(width) + (riverRows[1] + riverRows[3]) * tileHeight(width) + 160 > bounds.width())) width--;
         riverWidth = width;
         int centerWidth = Math.max(84, riverSpan(width));
         center = new Rect((left + right - centerWidth) / 2,
-            usableTop + (usableHeight - centerHeight) / 2, centerWidth, centerHeight);
+            usableTop + Math.max(riverRows[2] * tileHeight(width) + RIVER_GAP, (riverSpan(width) - centerHeight + 1) / 2)
+                + Math.max(0, usableHeight - centerHeight - verticalSpace(width, centerHeight)) / 2,
+            centerWidth, centerHeight);
+    }
+
+    int riverTileWidth() { return riverWidth; }
+    boolean scoresOnCards() { return center.height() == 16; }
+
+    private int verticalSpace(int width, int height) {
+        int side = (riverSpan(width) - height + 1) / 2;
+        return Math.max(riverRows[0] * tileHeight(width) + RIVER_GAP, side)
+            + Math.max(riverRows[2] * tileHeight(width) + RIVER_GAP, side);
     }
 
     static int side(int seat, int viewer, int players) {
@@ -49,18 +68,19 @@ final class TableBoard {
     }
 
     Rect card(int seat) {
-        int width = Math.min(108, Math.max(64, (bounds.width() - center.width()) / 2
-            - riverRows * tileHeight(riverWidth) - 50));
+        int width = Math.min(108, Math.max(48, (bounds.width() - center.width()) / 2
+            - Math.max(riverRows[1], riverRows[3]) * tileHeight(riverWidth) - 66));
+        int height = scoresOnCards() ? 32 : 20;
         return switch (side(seat, viewer, players)) {
-            case 1 -> new Rect(bounds.right() - 42 - width, center.y() + center.height() / 2 - 10, width, 20);
-            case 3 -> new Rect(bounds.x() + 42, center.y() + center.height() / 2 - 10, width, 20);
-            case 2 -> new Rect(bounds.right() - 42 - width, bounds.y() + 28, width, 20);
-            default -> new Rect(bounds.x() + 42, bounds.bottom() - 22, width, 20);
+            case 1 -> new Rect(bounds.right() - 58 - width, center.y() + center.height() / 2 - height / 2, width, height);
+            case 3 -> new Rect(bounds.x() + 58, center.y() + center.height() / 2 - height / 2, width, height);
+            case 2 -> new Rect(bounds.right() - 42 - width, bounds.y() + 28, width, height);
+            default -> new Rect(bounds.x() + 42, bounds.bottom() - height - 2, width, height);
         };
     }
 
     Rect riverArea(int seat) {
-        int span = riverSpan(riverWidth), depth = riverRows * tileHeight(riverWidth);
+        int span = riverSpan(riverWidth), depth = riverRows[side(seat, viewer, players)] * tileHeight(riverWidth);
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
         return switch (side(seat, viewer, players)) {
             case 1 -> new Rect(center.right() + RIVER_GAP, cy - span / 2, depth, span);
@@ -103,35 +123,43 @@ final class TableBoard {
         boolean vertical = side % 2 == 1;
         int bottom = side == 1 ? Math.min(bounds.bottom(), actionsTop) : bounds.bottom();
         int length = vertical ? bottom - bounds.y() - 8 : bounds.width() - 84;
-        int width = 14;
-        while (width > 3 && stripWidth(player, seat, width) > length) width--;
+        int width = Math.min(center.height() <= 40 && !vertical ? 12 : 14, outerTileWidth(player, seat, length));
+        var rails = meldRails(player, seat, width, length);
         boolean addedKan = player.melds().stream().anyMatch(meld -> meld.type() == Meld.Type.ADDED_KAN);
-        int thickness = tileHeight(width) + (addedKan ? width : 0);
+        int railDepth = tileHeight(width) + (addedKan ? width : 0);
+        int thickness = railDepth * rails.size();
         int cx = side == 3 ? bounds.x() + thickness / 2 : side == 1 ? bounds.right() - thickness / 2
             : bounds.x() + bounds.width() / 2;
         int cy = vertical ? (bounds.y() + bottom) / 2 : bounds.y() + thickness / 2;
         graphics.pose().pushPose();
         graphics.pose().translate(cx, cy, 0);
         graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
-        int y = -tileHeight(width) / 2 + (addedKan ? width / 2 : 0);
+        int y = thickness / 2 - tileHeight(width);
         int meldSpan = 0;
-        for (var meld : player.melds()) meldSpan += TileGui.meldWidth(meld, seat, width);
+        for (var meld : rails.getFirst()) meldSpan += TileGui.meldWidth(meld, seat, width);
         // The meld corner belongs to the owner's right, independently of the concealed hand.
         int corner = length / 2 - meldSpan;
-        int handSpan = player.hand().size() * width;
+        int handWidth = Math.min(width, Math.max(6, (length - meldSpan - player.norths().size() * width - 8)
+            / Math.max(1, player.hand().size())));
+        int handSpan = player.hand().size() * handWidth;
         int x = Math.max(-length / 2 + player.norths().size() * width + 4,
             Math.min(-handSpan / 2, corner - 4 - handSpan));
         for (int tile : player.hand()) {
-            TileGui.tile(graphics, tile, x, y, width, tile < 0, false, false, preset);
-            rememberRotated(tile, cx, cy, x + width / 2, y + tileHeight(width) / 2, side);
-            x += width;
+            TileGui.tile(graphics, tile, x, y, handWidth, tile < 0, false, false, preset);
+            rememberRotated(tile, cx, cy, x + handWidth / 2, y + tileHeight(handWidth) / 2, side);
+            x += handWidth;
         }
-        x = corner;
-        for (var meld : player.melds()) {
-            TileGui.meld(graphics, meld, seat, x, y, width, preset);
-            int span = TileGui.meldWidth(meld, seat, width);
-            for (int tile : meld.tiles()) rememberRotated(tile, cx, cy, x + span / 2, y + tileHeight(width) / 2, side);
-            x += span;
+        for (int row = 0; row < rails.size(); row++) {
+            int span = 0;
+            for (var meld : rails.get(row)) span += TileGui.meldWidth(meld, seat, width);
+            x = length / 2 - span;
+            int railY = y - row * railDepth;
+            for (var meld : rails.get(row)) {
+                TileGui.meld(graphics, meld, seat, x, railY, width, preset);
+                int occupied = TileGui.meldWidth(meld, seat, width);
+                for (int tile : meld.tiles()) rememberRotated(tile, cx, cy, x + occupied / 2, railY + tileHeight(width) / 2, side);
+                x += occupied;
+            }
         }
         x = -length / 2;
         for (int tile : player.norths()) {
@@ -146,6 +174,30 @@ final class TableBoard {
         return player.hand().size() * width + 8
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, seat, width)).sum()
             + player.norths().size() * width;
+    }
+
+    static int outerTileWidth(TableView.Seat player, int seat, int length) {
+        int width = 14;
+        while (width > MIN_MELD_WIDTH && stripWidth(player, seat, width) > length) width--;
+        return width;
+    }
+
+    static java.util.List<java.util.List<Meld>> meldRails(TableView.Seat player, int seat, int width, int length) {
+        var rails = new java.util.ArrayList<java.util.List<Meld>>();
+        java.util.List<Meld> row = new java.util.ArrayList<>();
+        rails.add(row);
+        int occupied = player.hand().size() * 6 + player.norths().size() * width + 8;
+        for (var meld : player.melds()) {
+            int span = TileGui.meldWidth(meld, seat, width);
+            if (!row.isEmpty() && occupied + span > length) {
+                row = new java.util.ArrayList<>();
+                rails.add(row);
+                occupied = 0;
+            }
+            row.add(meld);
+            occupied += span;
+        }
+        return rails;
     }
 
     private void river(GuiGraphics graphics, TableView view, int seat, TileFacePreset preset) {
@@ -186,7 +238,7 @@ final class TableBoard {
         var font = Minecraft.getInstance().font;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
         MahjongUi.panel(graphics, center.x(), center.y(), center.width(), center.height());
-        for (int seat = 0; seat < players; seat++) {
+        for (int seat = 0; !scoresOnCards() && seat < players; seat++) {
             int side = side(seat, viewer, players);
             int length = side % 2 == 0 ? center.width() : center.height();
             int depth = side % 2 == 0 ? center.height() : center.width();
@@ -202,6 +254,18 @@ final class TableBoard {
             MahjongUi.text(graphics, font, label, -length / 2 + 3, depth / 2 - 12, length - 6,
                 turn ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
             graphics.pose().popPose();
+        }
+        if (center.height() <= 40) {
+            var summary = Component.empty();
+            if (settings.show(TableSettings.Information.ROUND)) summary.append(Component.translatable("ui.mchjong.round_short",
+                Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / players)] + ".short"),
+                view.round() % players + 1));
+            if (settings.show(TableSettings.Information.REMAINING)) {
+                if (!summary.getString().isEmpty()) summary.append(" · ");
+                summary.append(Integer.toString(view.remaining()));
+            }
+            MahjongUi.text(graphics, font, summary, center.x() + 12, cy - 4, center.width() - 24, MahjongUi.TEXT, true);
+            return;
         }
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."

@@ -114,7 +114,7 @@ and is editable in custom match flow; its tooltip states the negative/zero bound
 
 Personal interaction settings include default-off tenpai hints. The hint rail
 shows structural waits and unseen-copy counts, including exhausted waits at zero;
-hovering or keyboard-selecting a legal discard previews the resulting waits.
+hovering over or selecting a legal discard previews the resulting waits.
 Counts combine red and ordinary fives and never claim to reveal the actual wall.
 In the seated view the rail sits below the header, leaving the physical hand clear.
 In the immersive view the hint popup uses the width below the toolbar and stays
@@ -133,6 +133,14 @@ round, remaining tiles, seat winds and scores facing each owner. Keep opponent
 hands on the outer rails and melds at each owner's right corner. Place compact
 portrait/name cards beside their seats; rules, deposits and dora stay at the top.
 Use the same resource-pack tile faces and server-issued actions as seated play.
+Reserve at least 8 × 12 logical pixels for river tiles and a 10-pixel width for
+opponent meld tiles. Allocate river depth per seat and compress the central score
+panel before reducing tile size; concealed outer hand rails can shrink to a 6-pixel
+width ahead of melds.
+Small immersive windows use a 20-pixel private hand and a single action row.
+When dense rivers need the central space, winds and scores move onto seat cards;
+the center retains a compact round and remaining-tile summary. Long opponent meld
+rails wrap inward at the owner's corner while retaining the minimum face width.
 Player names have a small skin portrait immediately before them; practice bots
 use a distinct robot portrait. Keep native font sizes and ellipsize long names,
 retaining the complete name in the card's hover details.
@@ -195,11 +203,15 @@ Native first-person picking uses that same eye position.
 The seated world FOV expands as needed for the near playing-surface corners and
 window aspect ratio, while preserving wider player FOV settings. It stays stable
 while freely looking around; table projection and picking use the rendered FOV.
-Holding C narrows the rendered and picking FOV together. Right-drag moves the eye
-forward/back vertically and turns horizontally; Shift-right-drag changes pitch.
-Home restores position and orientation. Eye movement is limited to 0.8 blocks
-from the configured seating position. Minecraft controls third-person views. Camera sliders immediately re-aim at the
-table; saved personal adjustments remain adjustable, and Restore defaults applies
+Holding the Inspect binding (C by default) smoothly moves the eye 0.28 blocks toward
+the table and narrows the FOV by a 1.45 tangent ratio. Rendering and picking share
+the sampled pose. Inspect reduces mouse and arrow sensitivity to 40% at full progress.
+Right-drag adjusts yaw and pitch after a four-logical-pixel deadzone; the wheel changes
+distance in 0.12-block steps. Shift-right-drag pans the target along the seat-local
+table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitch
+at 20 degrees per second. Home restores distance, height, direction, target and
+inspect progress. Minecraft controls third-person views. Camera sliders preserve
+the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
 the current elevated seating view. The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
@@ -207,6 +219,9 @@ Its left edge stays on a fourteen-tile rail, with exposed melds fitted to its ri
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.
+Inspect, view, reset, riichi, pass and drawer controls are registered Minecraft
+key mappings on both loaders. Help text displays the current bindings. Selection
+uses pointer clicks and the existing confirmation controls.
 The active immersive clock replaces the footer help line instead of covering melds.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.

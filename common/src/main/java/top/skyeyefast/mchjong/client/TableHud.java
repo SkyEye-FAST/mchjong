@@ -107,6 +107,8 @@ final class TableHud {
                 Component label = name.getString().isEmpty() ? shortLine : name;
                 if (!name.getString().isEmpty() && player.riichi() && settings.show(TableSettings.Information.STATUS)) label = label.copy().append(" *");
                 text(font, graphics, label, x + 4 + inset, top + 6, cardWidth - 8 - inset, MahjongUi.TEXT);
+                if (board.scoresOnCards() && !name.getString().isEmpty()) text(font, graphics, shortLine, x + 4, top + 20, cardWidth - 8,
+                    turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
             } else {
                 int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
                 text(font, graphics, name, x + 5 + inset, top + 3, cardWidth - 10 - inset, MahjongUi.TEXT);

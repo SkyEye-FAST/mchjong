@@ -23,8 +23,6 @@ public abstract class TableFovMixin {
         if (window.getWidth() <= 0 || window.getHeight() <= 0) return;
         double fov = TableSettings.get().cameraFov(callback.getReturnValue(),
             (double) window.getWidth() / window.getHeight());
-        boolean zoom = client.screen instanceof top.skyeyefast.mchjong.client.TableScreen table ? table.zooming()
-            : client.screen == null && com.mojang.blaze3d.platform.InputConstants.isKeyDown(window.getWindow(), org.lwjgl.glfw.GLFW.GLFW_KEY_C);
-        callback.setReturnValue(zoom ? Math.toDegrees(2 * Math.atan(Math.tan(Math.toRadians(fov) / 2) / 2.5)) : fov);
+        callback.setReturnValue(TableSettings.get().camera().fov(fov));
     }
 }

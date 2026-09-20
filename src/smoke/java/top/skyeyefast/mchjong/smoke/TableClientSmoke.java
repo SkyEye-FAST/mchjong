@@ -48,6 +48,7 @@ public final class TableClientSmoke {
     private CompletableFuture<Boolean> fixtureSeat;
     private final SettlementSmoke settlementSmoke = new SettlementSmoke();
     private final AnimationSmoke animationSmoke = new AnimationSmoke(seatingOnly);
+    private final CameraSmoke cameraSmoke = new CameraSmoke();
     private final TenpaiHintsSmoke hintsSmoke = new TenpaiHintsSmoke();
     private final ReplaySmoke replaySmoke = new ReplaySmoke();
     private final TableControlSmoke controlSmoke = new TableControlSmoke();
@@ -319,6 +320,8 @@ public final class TableClientSmoke {
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                step = 30; entered = ticks;
+            } else if (step == 30 && cameraSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 29; entered = ticks;
             } else if (step == 29 && hintsSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 if (seatingOnly) { client.screen.onClose(); step = 26; }

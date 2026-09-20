@@ -168,11 +168,15 @@ archive; an unfinished hand is not scored.
 
 Click tiles directly on the physical table. Settings offer single-click,
 double-click, or select-and-confirm discards. Shift-click selects without
-discarding. Left/Right selects tiles and Enter confirms; R opens riichi selection
+discarding. Enter confirms the selected tile; R opens riichi selection
 and P passes a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
-overlay. Hold C to zoom in the seated view. Right-drag moves forward/back and turns;
-hold Shift while dragging to adjust pitch. Home restores the view.
+overlay. Right-drag looks freely around the seated table; the wheel moves closer
+or farther away. Shift-right-drag pans across the table, and holding an arrow key
+finely adjusts yaw or pitch. Hold C to inspect with a smooth move toward the table,
+a narrower field of view and gentler controls. Home restores the complete seated
+view. Distance and height sliders preserve the current look direction.
+Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong table.
 Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play fills the screen with a responsive mahjong layout: your
 clickable hand and melds along the bottom, opponents and their rivers around it.

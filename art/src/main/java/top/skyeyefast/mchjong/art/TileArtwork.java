@@ -74,7 +74,7 @@ final class TileArtwork {
             if (face != 31 && engravings[face] != null) {
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 // Preserve the source proportions on the 2:3 tile with a clear margin.
-                g.drawImage(engravings[face], 16, 43, 224, 298, null);
+                g.drawImage(engravings[face], 8, 32, 240, 320, null);
             }
         } finally {
             g.dispose();

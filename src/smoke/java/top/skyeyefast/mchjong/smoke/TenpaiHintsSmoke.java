@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** The thirteen-wait rail at both viewports, with real fonts and keyboard discard selection. */
+/** The thirteen-wait rail at both viewports, with real fonts and pointer discard selection. */
 final class TenpaiHintsSmoke {
     private static final String[] LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
     private int sample = -1, ticks, width, height, scale;
@@ -90,7 +90,7 @@ final class TenpaiHintsSmoke {
             client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
             AutomationControlsSmoke.click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString());
             client.screen.setFocused(null);
-            client.screen.keyPressed(GLFW.GLFW_KEY_LEFT, 0, 0);
+            InputSmoke.clickHand((TableScreen) client.screen, fixture, 125);
         }
         client.getLanguageManager().setSelected(LANGUAGES[sample / 2]); reload = client.reloadResourcePacks(); ticks = 0;
     }

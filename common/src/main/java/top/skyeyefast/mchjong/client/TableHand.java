@@ -14,13 +14,13 @@ final class TableHand {
     private final List<top.skyeyefast.mchjong.engine.Meld> melds;
     private final int right, owner;
 
-    TableHand(TableView.Seat player, int owner, int width, int height) {
+    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth) {
         this.owner = owner;
         this.melds = player.melds();
         right = width - 8;
         tiles = player.hand();
         drawn = player.drawn();
-        tileWidth = tileWidth(width);
+        tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / 14));
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT ? 0 : Math.max(4, tileWidth / 3);
         span = tiles.size() * tileWidth + gap;
@@ -30,8 +30,6 @@ final class TableHand {
     }
 
     int top() { return y - 7; }
-
-    private static int tileWidth(int width) { return Math.max(1, Math.min(26, (width - 36) / 14)); }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);

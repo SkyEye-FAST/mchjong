@@ -166,7 +166,7 @@ public final class TableSettingsScreen extends Screen {
                 + value * (TableSettings.MAX_CAMERA_DISTANCE - TableSettings.MIN_CAMERA_DISTANCE);
             else settings.cameraHeight = TableSettings.MIN_CAMERA_HEIGHT
                 + value * (TableSettings.MAX_CAMERA_HEIGHT - TableSettings.MIN_CAMERA_HEIGHT);
-            parent.resetView();
+            settings.camera().configure(settings.cameraDistance, settings.cameraHeight);
         }
     }
 

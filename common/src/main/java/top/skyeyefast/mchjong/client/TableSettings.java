@@ -50,18 +50,15 @@ public final class TableSettings {
     public static final double CAMERA_TARGET_Z = .20;
     public double cameraDistance = TableGeometry.STOOL_DISTANCE;
     public double cameraHeight = 2.20;
-    private transient Vec3 cameraOffset = Vec3.ZERO;
+    private transient SeatedCameraState camera;
 
-    public void moveCamera(float yaw, double amount) {
-        double angle = Math.toRadians(yaw);
-        Vec3 next = cameraOffset.add(-Math.sin(angle) * amount, 0, Math.cos(angle) * amount);
-        cameraOffset = next.length() > .8 ? next.normalize().scale(.8) : next;
+    public SeatedCameraState camera() {
+        if (camera == null) camera = new SeatedCameraState(cameraDistance, cameraHeight);
+        return camera;
     }
 
-    public void resetCameraOffset() { cameraOffset = Vec3.ZERO; }
-
     public Vec3 cameraPosition(SeatEntity seat) {
-        return TableGeometry.world(seat.tablePos(), TableGeometry.orient(0, cameraHeight, cameraDistance, seat.seat())).add(cameraOffset);
+        return TableGeometry.world(seat.tablePos(), SeatedCamera.state(seat).eye(seat.seat()));
     }
 
     public float cameraPitch() {
@@ -149,6 +146,6 @@ public final class TableSettings {
         countdownSounds = defaults.countdownSounds;
         cameraDistance = defaults.cameraDistance;
         cameraHeight = defaults.cameraHeight;
-        resetCameraOffset();
+        camera().reset(cameraDistance, cameraHeight);
     }
 }

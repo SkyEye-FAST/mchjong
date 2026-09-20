@@ -46,10 +46,22 @@ public final class TileRenderTypes extends RenderType {
         return create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_ENTITY_CUTOUT_NO_CULL_SHADER)
-                .setTextureState(new TextureStateShard(texture, true, false))
+                .setTextureState(texture.equals(TileMesh.GLYPHS)
+                    || texture.equals(TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO))
+                    ? new FaceTextureState(texture) : new TextureStateShard(texture, true, false))
                 .setCullState(CULL)
                 .setLightmapState(LIGHTMAP)
                 .setOverlayState(OVERLAY)
                 .createCompositeState(false));
+    }
+
+    private static final class FaceTextureState extends TextureStateShard {
+        private final ResourceLocation location;
+        FaceTextureState(ResourceLocation location) { super(location, true, true); this.location = location; }
+        @Override public void setupRenderState() {
+            var textures = net.minecraft.client.Minecraft.getInstance().getTextureManager();
+            if (!(textures.getTexture(location) instanceof TileFaceTexture)) textures.register(location, new TileFaceTexture(location));
+            super.setupRenderState();
+        }
     }
 }

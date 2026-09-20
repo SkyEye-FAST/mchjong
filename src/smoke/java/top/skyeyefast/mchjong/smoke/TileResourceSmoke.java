@@ -96,11 +96,20 @@ final class TileResourceSmoke {
         }
         for (ResourceLocation texture : new ResourceLocation[]{TileMesh.ATLAS, TileMesh.BACK, TileMesh.GLYPHS,
                 TileMesh.atlas(kanto), TileMesh.glyphs(kanto), FurnitureMesh.STICK_TEXTURE}) {
+            boolean worldFace = texture.equals(TileMesh.GLYPHS) || texture.equals(TileMesh.glyphs(kanto));
+            if (worldFace) {
+                var renderType = top.skyeyefast.mchjong.client.TileRenderTypes.faces(texture.equals(TileMesh.GLYPHS)
+                    ? top.skyeyefast.mchjong.item.TileFacePreset.KANSAI : kanto);
+                renderType.setupRenderState();
+                renderType.clearRenderState();
+            }
             client.getTextureManager().getTexture(texture).bind();
             require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_LINEAR,
                 "World renderer disabled linear magnification for " + texture);
-            require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER) == GL11.GL_LINEAR,
-                "World renderer disabled linear minification for " + texture);
+            require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MIN_FILTER)
+                == (worldFace ? GL11.GL_LINEAR_MIPMAP_LINEAR : GL11.GL_LINEAR), "Incorrect world/GUI minification for " + texture);
+            if (worldFace) require(GL11.glGetTexLevelParameteri(GL11.GL_TEXTURE_2D, 5, GL11.GL_TEXTURE_WIDTH) == 64,
+                "World face mip chain was not uploaded: " + texture);
         }
     }
 

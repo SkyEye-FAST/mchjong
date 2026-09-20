@@ -11,6 +11,9 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 @EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private MchjongNeoForgeClient() {}
+    @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
+    }
     @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
         if (net.neoforged.fml.ModList.get().isLoaded("ponder"))
             event.enqueueWork(top.skyeyefast.mchjong.compat.ponder.MchjongPonder::register);
@@ -30,6 +33,7 @@ public final class MchjongNeoForgeClient {
     }
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
         top.skyeyefast.mchjong.client.TableAudio.tick();
+        top.skyeyefast.mchjong.client.SeatedCamera.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();
     }
     @SubscribeEvent public static void close(net.neoforged.neoforge.event.GameShuttingDownEvent event) {

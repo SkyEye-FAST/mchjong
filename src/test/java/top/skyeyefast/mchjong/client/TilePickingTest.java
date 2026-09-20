@@ -40,6 +40,27 @@ class TilePickingTest {
         assertEquals(Double.POSITIVE_INFINITY, TilePicking.distanceSquared(tile, new Vec3(0, 0, 2), new Vec3(0, 0, 1), false));
     }
 
+    @Test void pannedAndInspectingCamerasPickFarPublicFacesFromEverySeat() {
+        var camera = new SeatedCameraState(2, 2.2);
+        camera.pan(.2, -.15);
+        camera.scroll(1);
+        for (boolean inspect : new boolean[]{false, true}) {
+            for (int tick = 0; tick < 30; tick++) camera.tick(inspect);
+            camera.sample(1);
+            for (int seat = 0; seat < 4; seat++) for (TableScene.Area area :
+                new TableScene.Area[]{TableScene.Area.RIVER, TableScene.Area.MELD}) {
+                int opposite = (seat + 2) % 4;
+                var position = TableGeometry.orient(area == TableScene.Area.RIVER ? .25 : TableScene.MELD_RIGHT - .1,
+                    TableGeometry.FELT_Y + TileMesh.DEPTH * TableScene.TILE_SCALE / 2,
+                    area == TableScene.Area.RIVER ? .45 : TableScene.HAND_Z, opposite);
+                var piece = new TableScene.Piece(0, opposite, area, 0, position, opposite * 90, true, false);
+                var origin = camera.eye(seat);
+                assertTrue(Double.isFinite(TilePicking.distanceSquared(new TableAnimation.Frame(piece, -90),
+                    origin, position.subtract(origin), false)), seat + " " + area + " inspect=" + inspect);
+            }
+        }
+    }
+
     @Test void tracksRaisedSelectionAndReturnsNearestHitDistance() {
         var tile = tile(Vec3.ZERO, 0, 0);
         var origin = new Vec3(0, .09, 2);

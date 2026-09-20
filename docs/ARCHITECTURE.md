@@ -108,7 +108,10 @@ Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
 The seated overlay projects the actual 3D table, with `TableSettings` supplying
-the matching eye and FOV to world rendering and picking. Immersive play uses an
+the matching eye and FOV to world rendering and picking. `SeatedCameraState` owns
+seat-local distance, height, yaw/pitch, target translation and interpolated inspect
+progress. `SeatedCamera` bridges native free look and the loader tick lifecycle;
+`TableKeys` supplies registered, rebindable actions to both loaders. Immersive play uses an
 opaque GUI surface: `TableBoard` lays out recipient-safe hands, rivers and public
 melds in screen space, while `TableHand` supplies the private clickable hand and
 its meld rail. Neither world visibility nor camera orientation controls this
