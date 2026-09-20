@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -20,6 +21,8 @@ final class RoomPreparationSmoke {
     private boolean requestedWind;
     private boolean capturedDrawing;
     private boolean capturedPositioning;
+    private int botSeat = -1;
+    private int botCycle;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         var view = table.clientView();
@@ -35,7 +38,38 @@ final class RoomPreparationSmoke {
         if (view == null || room == null) return false;
         if (!(client.screen instanceof TableScreen) || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
-            click(client, view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING)
+            boolean full = view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING);
+            if (full && botCycle < 4) {
+                if (botSeat < 0) for (int seat = 0; seat < view.seats().size(); seat++)
+                    if (view.seats().get(seat).bot()) { botSeat = seat; break; }
+                if (botSeat >= 0) {
+                    var occupant = view.seats().get(botSeat);
+                    var difficulty = room.seats().get(botSeat).difficulty();
+                    if (botCycle == 0) {
+                        if (difficulty != BotDifficulty.EASY) throw new IllegalStateException("Fill must create Easy bots");
+                        click(client, BotDifficulty.EASY.translationKey());
+                        botCycle = 1;
+                    } else if (botCycle == 1 && difficulty == BotDifficulty.HARD) {
+                        capture(client, output, prefix + "-bot-hard.png");
+                        click(client, BotDifficulty.HARD.translationKey());
+                        botCycle = 2;
+                    } else if (botCycle == 3 && occupant.bot() && difficulty == BotDifficulty.EASY) {
+                        capture(client, output, prefix + "-bot-easy.png");
+                        botCycle = 4;
+                    }
+                    return false;
+                }
+                botCycle = 4;
+            }
+            if (botCycle == 2) {
+                if (!view.seats().get(botSeat).occupied()) {
+                    click(client, "room.mchjong.add_bot");
+                    botCycle = 3;
+                }
+                return false;
+            }
+            if (botCycle == 3 && !full) return false;
+            click(client, full
                 ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "room.mchjong.start_bots");
         } else if (room.seating() == RoomSeating.Stage.DRAWING) {
             if (!capturedDrawing) {
@@ -93,7 +127,7 @@ final class RoomPreparationSmoke {
     private static void click(Minecraft client, String key, Object... arguments) {
         String label = Component.translatable(key, arguments).getString();
         for (var child : client.screen.children()) if (child instanceof AbstractWidget button && button.active
-            && button.getMessage().getString().equals(label)) {
+            && (button.getMessage().getString().equals(label) || button.getMessage().getString().equals(label + " ›"))) {
             client.screen.mouseClicked(button.getX() + 3, button.getY() + 3, 0);
             return;
         }

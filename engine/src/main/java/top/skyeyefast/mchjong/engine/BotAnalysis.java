@@ -110,7 +110,6 @@ final class BotAnalysis {
         // Good-shape advances themselves enumerate another draw. At this horizon
         // use immediate leaves, and compare both endpoints with that same evaluator.
         double leafBaseline = evaluate(state, shape(state), unseen, false).utility;
-        boolean advancesOnly = level == BotDifficulty.NORMAL && !replacement;
         double sum = 0;
         int total = 0;
         for (int face = 0; face < unseen.length; face++) {
@@ -120,15 +119,6 @@ final class BotAnalysis {
             var remaining = unseen.clone(); remaining[face]--;
             int drawn = tile(face);
             var withDraw = state.draw(drawn);
-            if (advancesOnly && !shape(state).improving().contains(face % 34)) {
-                // NORMAL explores advancing draws. Other draws use the legal
-                // tsumogiri leaf, including its exposure and consumed availability.
-                var unchanged = withDraw.discard(drawn, false);
-                var leaf = evaluate(unchanged, shape(state), remaining, false);
-                sum += count * (leaf.utility - defence.penalty(drawn, defence.mode(leaf)) + defence.reserve(unchanged));
-                total += count;
-                continue;
-            }
             double best = Double.NEGATIVE_INFINITY;
             if (baseline.shanten == 0 && shape(state).improving().contains(Tile.kind(drawn))) {
                 var win = value.score(state, drawn, true, replacement);

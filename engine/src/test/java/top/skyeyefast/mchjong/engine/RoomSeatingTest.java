@@ -83,7 +83,9 @@ class RoomSeatingTest {
         var game = room(false, 2);
         assertTrue(game.view(id(1)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT));
         assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT && action.tiles().getFirst() == 1));
-        act(game, id(0), Action.Type.SET_BOT, 2, BotDifficulty.EASY.ordinal());
+        act(game, id(0), Action.Type.FILL_BOTS);
+        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() != null)
+            .allMatch(seat -> seat.difficulty() == BotDifficulty.EASY));
         act(game, id(0), Action.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
         act(game, id(0), Action.Type.BEGIN_SEATING);
         assertEquals(RoomSeating.Stage.POSITIONING, game.roomView().seating());
@@ -94,9 +96,9 @@ class RoomSeatingTest {
         int guest = game.seatOf(id(1));
         game.leave(id(1));
         assertEquals(guest, game.seatOf(id(1)), "Standing to relocate must retain room membership");
-        act(game, id(0), Action.Type.SET_BOT, guest, BotDifficulty.NORMAL.ordinal());
+        act(game, id(0), Action.Type.SET_BOT, guest, BotDifficulty.EASY.ordinal());
         assertEquals(-1, game.seatOf(id(1)));
-        assertEquals(BotDifficulty.NORMAL, game.roomView().seats().get(guest).difficulty());
+        assertEquals(BotDifficulty.EASY, game.roomView().seats().get(guest).difficulty());
         act(game, id(0), Action.Type.REMOVE_BOT, guest);
         assertTrue(game.join(id(4), "New human", guest));
         assertEquals(guest, game.roomView().seats().get(guest).wind());

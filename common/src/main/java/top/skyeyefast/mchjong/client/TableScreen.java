@@ -453,8 +453,7 @@ public final class TableScreen extends Screen {
             if (player.occupied() && !player.bot() && room.seats().get(seat).present()) continue;
             var difficulty = room.seats().get(seat).difficulty();
             var next = !player.bot() ? top.skyeyefast.mchjong.engine.BotDifficulty.EASY : switch (difficulty) {
-                case EASY -> top.skyeyefast.mchjong.engine.BotDifficulty.NORMAL;
-                case NORMAL -> top.skyeyefast.mchjong.engine.BotDifficulty.HARD;
+                case EASY -> top.skyeyefast.mchjong.engine.BotDifficulty.HARD;
                 case HARD -> null;
             };
             int index = next == null ? TableSeatsScreen.find(view, Action.Type.REMOVE_BOT, List.of(seat))

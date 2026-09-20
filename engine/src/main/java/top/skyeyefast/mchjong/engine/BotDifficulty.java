@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.engine;
 import java.util.Locale;
 
 public enum BotDifficulty {
-    EASY, NORMAL, HARD;
+    EASY, HARD;
 
     public String translationKey() { return "bot.mchjong." + name().toLowerCase(Locale.ROOT); }
 }

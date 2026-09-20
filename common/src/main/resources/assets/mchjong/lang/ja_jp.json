@@ -33,7 +33,6 @@
   "room.mchjong.wind_tile": "風牌 %s",
   "message.mchjong.assigned_seat": "あなたは%s家です。座標%s、%s、%sの席に着いて準備してください。",
   "bot.mchjong.easy": "かんたん",
-  "bot.mchjong.normal": "ふつう",
   "bot.mchjong.hard": "むずかしい",
   "settings.mchjong.scopes": "設定",
   "settings.mchjong.scope.world": "ワールド",

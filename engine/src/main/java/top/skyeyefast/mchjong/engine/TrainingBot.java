@@ -108,8 +108,7 @@ final class TrainingBot {
             if (retreat && viable(baseline) && baseline.evaluation.live() > 0
                 && (level != BotDifficulty.HARD || roots >= BotAnalysis.SEARCH_ROOTS)) continue;
             double score = score(candidate);
-            boolean expand = candidate != fold && (level == BotDifficulty.HARD || candidate.replacement
-                || level == BotDifficulty.NORMAL && candidate.evaluation.shanten() == 1);
+            boolean expand = candidate != fold && (level == BotDifficulty.HARD || candidate.replacement);
             if (expand && roots < BotAnalysis.SEARCH_ROOTS
                 && candidate.evaluation.shanten() <= minimum + 1) {
                 double forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement);

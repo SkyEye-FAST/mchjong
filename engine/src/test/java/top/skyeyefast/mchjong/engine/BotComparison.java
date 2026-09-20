@@ -23,8 +23,7 @@ public final class BotComparison {
         if (args[0].equals("suite")) {
             measure();
             for (var rules : new String[]{"TENHOU_4", "MAHJONG_SOUL_3"})
-                for (var pair : new String[][]{{"NORMAL", "EASY"}, {"HARD", "NORMAL"}})
-                    main(new String[]{args[rules.equals("TENHOU_4") ? 1 : 2], rules, pair[0], pair[1], args.length > 3 ? args[3] : "74291"});
+                main(new String[]{args[rules.equals("TENHOU_4") ? 1 : 2], rules, "HARD", "EASY", args.length > 3 ? args[3] : "74291"});
             return;
         }
         int seeds = Integer.parseInt(args[0]);

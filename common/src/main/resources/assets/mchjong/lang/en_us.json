@@ -33,7 +33,6 @@
   "room.mchjong.wind_tile": "Wind tile %s",
   "message.mchjong.assigned_seat": "Your seat is %s at %s, %s, %s. Sit there before readying up.",
   "bot.mchjong.easy": "Easy",
-  "bot.mchjong.normal": "Normal",
   "bot.mchjong.hard": "Hard",
   "settings.mchjong.scopes": "Settings",
   "settings.mchjong.scope.world": "World",

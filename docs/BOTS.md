@@ -1,6 +1,6 @@
 # Training opponent analysis
 
-The three levels share mahjong-utils 0.7.7 through `HandAnalyzer`. Its
+The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `HandAnalyzer`. Its
 `ShantenWithGot.discardToAdvance`, `ShantenWithoutGot.advance` and
 `goodShapeAdvance` provide structural efficiency; `waits` supplies structural
 tenpai and `score` supplies legal yaku, fu and actual payments under `RuleConfig`.
@@ -27,11 +27,10 @@ live-wall contents. Risk and action utilities are uncalibrated heuristics.
 
 EASY uses current shanten, live improving tiles, basic retention and capped
 winning value. It can call for a viable yaku and fold a distant hand against an
-obvious threat. NORMAL adds good-shape advances, viable yaku potential, weighted
-winning value and opponent evidence beyond riichi. At one shanten it also searches
-advancing draws and scores the resulting legal waits; other draws use a consumed
-draw/tsumogiri leaf. HARD searches development at other shanten counts and includes
-same-shanten improving draws, walls, combined-threat push/fold and safe reserves.
+obvious threat. HARD adds good-shape advances, viable yaku potential, weighted
+winning value and opponent evidence beyond riichi. Its bounded draw/discard search
+includes same-shanten improvements, with walls, combined-threat push/fold and safe
+reserves in the defense assessment.
 
 HARD expands at most three candidate actions, at most 37 draw categories each,
 and two valued continuations after each draw. All legal discard faces take part
@@ -39,15 +38,14 @@ in continuation ranking. Both advancing draws and same-shanten improvements
 participate; an offensive root can retreat at most one shanten. A completed
 legal tsumo is taken immediately. The horizon is one draw/discard, with at most
 111 draw nodes and 222 continuation leaves, each comparing dama/riichi where
-eligible. NORMAL's narrower advancing-draw search shares those limits. All levels
-use the same full draw search for replacement declarations.
+eligible. Both levels use the same full draw search for replacement declarations.
 Good-shape analysis is lazy at the root. Continuation leaves use immediate
 efficiency and legal wait value, without implicitly enumerating yet another draw
 inside good-shape analysis. Development is the difference between two evaluations
 at that same leaf depth, added to the root value. Unexpanded candidates retain
 their root value. Locked riichi uses its one forced discard directly.
 
-EASY/NORMAL preserve a viable advancing route instead of retreating merely for a
+EASY preserves a viable advancing route instead of retreating merely for a
 larger raw ukeire count. The speed term divides live advances by total unseen
 stock, so one exchangeable draw can contribute at most one shanten of progress,
 including in three-player play. A dead or yakuless route can still be reconsidered; HARD
@@ -132,12 +130,12 @@ empirical constants or assume their rule environments.
 ## Reproduction
 
 `./gradlew :engine:botCompare -PbotArgs=measure --console=plain` runs an explicit
-warm-up and decision timing experiment. `-PbotArgs='4 TENHOU_4 HARD NORMAL'`
+warm-up and decision timing experiment. `-PbotArgs='4 TENHOU_4 HARD EASY'`
 runs paired seeds 74291 onward, rotating the challenger through every seat
 against a homogeneous opponent field. Use `MAHJONG_SOUL_3` for three players.
-`-PbotArgs='suite 4 2'` runs timings, both adjacent-level comparisons with four
-seeds in four-player play and two seeds in three-player play (44 matches total).
-An optional final seed argument, e.g. `-PbotArgs='suite 8 8 95601'`, selects an
+`-PbotArgs='suite 4 2'` runs timings and HARD versus EASY with four seeds in
+four-player play and two seeds in three-player play (22 matches total).
+An optional final seed argument, e.g. `-PbotArgs='suite 8 8 106601'`, selects an
 independent seed range. `-PbotProfile` enables JDK Flight Recorder and saves the
 slowest recipient snapshots plus early unannounced retreats in `engine/build`.
 Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
@@ -162,7 +160,12 @@ after warm-up). The first bounded-search implementation measured HARD mean
 18.348 ms, p95 23.991 ms and max 30.437 ms on the same opening. These numbers
 describe one shape and are not worst-case guarantees.
 
-## Baseline validation, 20 September 2026
+## Historical three-level validation, 20 September 2026
+
+The following baseline and performance-follow-up records describe the three-level
+implementation through commit `6f48ea8`. Their NORMAL comparisons and old `suite`
+counts are historical; reproduce them from that revision. Current two-level
+validation is recorded after these measurements.
 
 Before the performance/valuation optimization, `suite 4 2` completed 44 matches / 461 hands with seeds 74291–74294
 for four players and 74291–74292 for three players. Each match has one challenger
@@ -345,3 +348,67 @@ batch's two loader smoke results are recorded above, not claimed as fresh runs.
 The internal mahjong-utils analysis switches remain an explicit dependency-upgrade
 review point. Custom rules retain deterministic boundary coverage but do not yet
 have match-scale strength comparisons.
+
+## Two-level consolidation
+
+The current product offers EASY and HARD, with EASY as the default for filling
+empty seats. The previous middle level added scoring/search cost without stable
+independent benefit in the measured outcomes. Its advancing-only search branch,
+enum value and UI/translation entries have been removed. EASY and HARD retain
+their decision algorithms; this consolidation simplifies the product rather than
+claiming a new strength gain. The room control cycles Empty → Easy → Hard → Empty.
+
+The deterministic development fixture now compares EASY directly with HARD: on
+seed 74318 both retain minimum shanten; EASY takes 20 immediate live tiles and
+HARD takes 19 with higher weighted continuation value. Other retained boundaries
+cover legal wins/calls, shared rule/scoring correctness, public-information
+invariance, weak-hand folding, strong-hand pushing, and north extraction. The
+expensive-riichi fixture confirms HARD can break cheap tenpai to discard genbutsu.
+
+Direct paired comparison uses fresh seeds 106601–106608, with HARD rotating
+through each seat against EASY. It completed 32 four-player matches / 346 hands
+and 24 three-player matches / 194 hands. No evaluator change was made in response
+to these results.
+
+| Rules | Role | Player-hands | Win rate | Deal-in rate | Mean win points | Mean rank | Mean net points |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| TENHOU_4 | HARD | 346 | 23.41% | 15.03% | 4400.0 | 2.594 | -2981.3 |
+| TENHOU_4 | EASY | 1038 | 23.51% | 13.87% | 4738.1 | 2.469 | +993.8 |
+| MAHJONG_SOUL_3 | HARD | 194 | 33.51% | 12.89% | 6816.9 | 1.667 | +3562.5 |
+| MAHJONG_SOUL_3 | EASY | 388 | 30.93% | 18.81% | 7446.7 | 2.167 | -1781.3 |
+
+| Rules / role | Decisions | Mean ms | p95 ms | Max ms |
+| --- | ---: | ---: | ---: | ---: |
+| 4p HARD | 5476 | 25.720 | 84.452 | 328.113 |
+| 4p EASY | 16513 | 0.422 | 1.821 | 105.538 |
+| 3p HARD | 2628 | 26.686 | 100.769 | 357.044 |
+| 3p EASY | 5396 | 1.612 | 7.015 | 99.569 |
+
+These 56 matches / 540 hands establish direct behavior/performance observations,
+not stable strength ordering. HARD leads the three-player sample but trails the
+four-player sample; only eight independent seeds per rule set were used, and seat
+rotations are correlated. Longer independent comparisons and four-player action
+evaluation remain outstanding. Synchronous decision latency remains subject to
+the limitations measured above. Logs: `build/bot-two-tier-4p.log` (2m 37s) and
+`build/bot-two-tier-3p.log` (1m 25s).
+
+### Validation
+
+Validation on JDK 21: all 104 engine tests and `buildAll --warning-mode fail`
+passed (30s initially, 8s final verification). Both client smokes produced fresh
+`MCJHONG_CLIENT_SMOKE_PASS` markers: Fabric 4m 35s, NeoForge 4m 37s. The existing
+room-preparation smoke now clicks the actual Easy → Hard → Empty → Easy controls
+and waits for server snapshots before proceeding. Fresh `01-room-bot-*.png`
+captures from both loaders and the NeoForge small-window three-player
+`53-sanma-controls-bot-easy.png` were inspected. Logs are
+`build/bot-two-tier-build-final.log`, `build/bot-two-tier-fabric-smoke.log`, and
+`build/bot-two-tier-neoforge-smoke.log`.
+
+### Compatibility
+
+Room saves encode difficulty by enum name and must contain current EASY/HARD
+values. As required by the repository's compatibility policy, NORMAL is not
+migrated or aliased. Validation rejects unknown difficulty values; the existing
+table loader retains the original unreadable save. Client and server must use
+matching builds. Lobby requests still select a server-issued action index with
+its decision token; clients do not submit a raw difficulty ordinal for execution.

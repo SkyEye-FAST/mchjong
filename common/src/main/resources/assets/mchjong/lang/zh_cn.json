@@ -33,7 +33,6 @@
   "room.mchjong.wind_tile": "第%s张风牌",
   "message.mchjong.assigned_seat": "你的座位为%s家，位于%s，%s，%s。请入座后准备。",
   "bot.mchjong.easy": "简单",
-  "bot.mchjong.normal": "普通",
   "bot.mchjong.hard": "困难",
   "settings.mchjong.scopes": "设置",
   "settings.mchjong.scope.world": "世界",

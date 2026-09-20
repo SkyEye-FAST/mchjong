@@ -412,7 +412,7 @@ public final class Game {
             switch (action.type()) {
                 case READY -> players[seat].ready = !players[seat].ready;
                 case FILL_BOTS -> {
-                    for (int i = 0; i < rules.players(); i++) if (players[i].id == null) setBot(i, BotDifficulty.NORMAL);
+                    for (int i = 0; i < rules.players(); i++) if (players[i].id == null) setBot(i, BotDifficulty.EASY);
                 }
                 case SET_BOT -> setBot(action.tiles().getFirst(), BotDifficulty.values()[action.tiles().get(1)]);
                 case REMOVE_BOT -> {
@@ -889,7 +889,10 @@ public final class Game {
             throw new IllegalStateException("Invalid saved table");
         }
         Set<UUID> ids = new HashSet<>();
-        for (PlayerState player : players) Objects.requireNonNull(player.autoPlay);
+        for (PlayerState player : players) {
+            Objects.requireNonNull(player.autoPlay);
+            Objects.requireNonNull(player.botDifficulty);
+        }
         for (PlayerState player : players) if (player.id != null && !ids.add(player.id)) throw new IllegalStateException("Duplicate occupant");
         if (wall == null) return;
         Set<Integer> seen = new HashSet<>();

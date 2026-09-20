@@ -72,22 +72,23 @@ up during repositioning preserves the reservation; Leave room releases it.
 
 ## Bot difficulties
 
-Each bot can be set to Easy, Normal or Hard during any waiting-room stage.
+Each bot can be set to Easy or Hard during any waiting-room stage.
 Changing the roster or difficulty clears human readiness. Bots remain ready while
 humans reposition themselves.
 
-The control in each empty or bot-occupied top seat card cycles through Empty, Easy,
-Normal and Hard. A physically seated human cannot be replaced; their control is
-reserved for transferring room ownership. Fill empty seats adds Normal bots.
+The control in each empty or bot-occupied top seat card cycles through Empty, Easy
+and Hard. A physically seated human cannot be replaced; their control is
+reserved for transferring room ownership. Fill empty seats adds Easy bots.
 
-Easy prioritizes shanten reduction and retaining valuable tiles, with basic
-defense. Normal additionally counts live improving tiles, makes productive calls
-with a guaranteed open-hand yaku, and folds toward safe discards under pressure.
-Hard also considers good-shape improvement, furiten, multiple threats, dealer
-risk, suji, visible tile exhaustion and closed sequence routes. Open calls still
-need a yaku and measurable progress.
+Easy prioritizes current shanten, live improving tiles and retaining value, with
+productive calls and basic defense against clear threats. Hard adds bounded
+draw/discard development, including same-shanten improvement, weighted legal
+winning value, and more detailed per-opponent attack/defense assessment. It can
+trade a little immediate efficiency for better development or retain safe tiles
+while advancing a valuable hand. Both compare legal calls, riichi, kans and north
+extraction under the table's rules.
 
-All three use only their own hand and public tiles. They do not read opponents'
+Both use only their own hand and public tiles. They do not read opponents'
 concealed tiles, even when world policy allows players to see those hands, and do
 not inspect the wall seed. These are deterministic heuristics, not a trained model
 or a claim of a benchmarked win rate.
