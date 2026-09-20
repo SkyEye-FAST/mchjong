@@ -271,10 +271,8 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         @JvmStatic
         fun face(tile: Int): Int = Tile.kind(tile) + if (Tile.red(tile)) 34 else 0
 
-        @JvmStatic
         fun tile(face: Int): Int = Tile.id(face % 34, 0, face >= 34)
 
-        @JvmStatic
         fun live(kinds: Set<Int>, remaining: IntArray): Int = kinds.sumOf { remaining[it] + remaining[it + 34] }
 
         private fun speed(shape: TileEfficiency, remaining: IntArray): Double {

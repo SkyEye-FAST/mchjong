@@ -23,7 +23,6 @@ object HandAnalyzer {
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
         hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())
 
-    @JvmStatic
     fun yakuValues(names: List<String>, closed: Boolean, rules: RuleConfig): List<ReplayHand.Yaku> {
         val yakus = Yakus(options(rules))
         return names.map { name ->
@@ -49,7 +48,6 @@ object HandAnalyzer {
         return result.copy(hand = regular.hand, regular = regular)
     }
 
-    @JvmStatic
     fun shantenNumber(hand: List<Int>, melds: List<Meld>): Int =
         analyze(hand, melds, true).shantenInfo.shantenNum
 
@@ -95,7 +93,6 @@ object HandAnalyzer {
         efficiency(analyze(hand, melds, false, goodShape).shantenInfo as ShantenWithoutGot)
 
     /** Hypothetical 30/40-fu payout scenarios, not a yaku or completed-hand claim. */
-    @JvmStatic
     fun estimatedPayment(han: Double, dealer: Boolean, ronOnly: Boolean, rules: RuleConfig): Double {
         val lower = kotlin.math.floor(han).toInt().coerceAtLeast(1)
         val fraction = (han - lower).coerceIn(0.0, 1.0)

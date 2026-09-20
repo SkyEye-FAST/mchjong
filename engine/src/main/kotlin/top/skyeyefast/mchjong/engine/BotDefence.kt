@@ -9,7 +9,6 @@ internal class BotDefence(
 ) {
     enum class Mode { PUSH, CAUTIOUS, FOLD }
 
-    @JvmRecord
     data class Threat(
         val seat: Int,
         val river: Long,

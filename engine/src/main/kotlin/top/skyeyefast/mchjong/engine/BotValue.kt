@@ -18,7 +18,6 @@ internal class BotValue(private val view: TableView) {
         val replacement: Boolean,
     )
 
-    @JvmRecord
     data class Potential(val viable: Boolean, val estimate: Double, val retention: Double)
 
     @JvmRecord
@@ -28,7 +27,6 @@ internal class BotValue(private val view: TableView) {
         fun average(): Double = (ron + tsumo) / maxOf(1, ronTiles + tsumoTiles)
 
         companion object {
-            @JvmField
             val EMPTY = Waits(0.0, 0.0, 0, 0)
         }
     }

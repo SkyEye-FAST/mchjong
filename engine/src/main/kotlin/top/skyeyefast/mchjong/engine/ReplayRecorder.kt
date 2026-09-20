@@ -166,7 +166,6 @@ internal class ReplayRecorder(game: Game) {
     }
 
     companion object {
-        @JvmStatic
         fun points(game: Game): List<Int> = List(game.rules.players()) { game.players[it].points }
     }
 }
