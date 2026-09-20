@@ -1,0 +1,16 @@
+version: 2
+updates:
+  # Dependabot is configured strictly for security alerts and automated security updates.
+  # Routine version update pull requests are disabled (open-pull-requests-limit: 0)
+  # because regular version lifecycle and gradle.properties management are handled by Renovate.
+  - package-ecosystem: "gradle"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 0

@@ -1,0 +1,197 @@
+{
+  "$schema": "https://docs.renovatebot.com/renovate-schema.json",
+  "extends": [
+    "config:recommended"
+  ],
+  "onboarding": false,
+  "timezone": "Asia/Shanghai",
+  "schedule": [
+    "before 6am on monday"
+  ],
+  "labels": [
+    "dependencies"
+  ],
+  "semanticCommits": "enabled",
+  "semanticCommitType": "chore",
+  "semanticCommitScope": "deps",
+  "automerge": false,
+  "prConcurrentLimit": 10,
+  "prHourlyLimit": 0,
+  "rebaseWhen": "behind-base-branch",
+  "packageRules": [
+    {
+      "description": "Never allow Renovate to modify project version or build metadata",
+      "matchPackageNames": [
+        "mod_version",
+        "top.skyeyefast.mchjong:*",
+        "mchjong*"
+      ],
+      "matchDepNames": [
+        "mod_version",
+        "top.skyeyefast.mchjong:*",
+        "mchjong*"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Do not automatically upgrade Minecraft target version, Java toolchain or loader constraints",
+      "matchPackageNames": [
+        "com.mojang:minecraft",
+        "minecraft",
+        "minecraft_version",
+        "java_version",
+        "fabric_loader_min_version",
+        "neo_loader_min_version"
+      ],
+      "matchDepNames": [
+        "com.mojang:minecraft",
+        "minecraft",
+        "minecraft_version",
+        "java_version",
+        "fabric_loader_min_version",
+        "neo_loader_min_version"
+      ],
+      "enabled": false
+    },
+    {
+      "description": "Track latest stable major versions for GitHub Actions",
+      "matchManagers": [
+        "github-actions"
+      ],
+      "groupName": "GitHub Actions",
+      "pinDigests": false,
+      "labels": [
+        "dependencies",
+        "ci"
+      ]
+    },
+    {
+      "description": "Gradle Wrapper updates",
+      "matchManagers": [
+        "gradle-wrapper"
+      ],
+      "groupName": "Gradle Wrapper"
+    },
+    {
+      "description": "Kotlin and kotlinx dependencies",
+      "matchPackageNames": [
+        "org.jetbrains.kotlin**",
+        "org.jetbrains.kotlinx**"
+      ],
+      "groupName": "Kotlin and kotlinx"
+    },
+    {
+      "description": "Test dependencies (JUnit and Gson)",
+      "matchPackageNames": [
+        "org.junit**",
+        "com.google.code.gson:gson"
+      ],
+      "groupName": "Test dependencies"
+    },
+    {
+      "description": "Build tools and plugins (Shadow and Spotless)",
+      "matchPackageNames": [
+        "com.gradleup.shadow**",
+        "com.diffplug.spotless**"
+      ],
+      "groupName": "Build tools and plugins"
+    },
+    {
+      "description": "Mahjong utilities domain library",
+      "matchPackageNames": [
+        "io.github.ssttkkl:mahjong-utils-jvm"
+      ],
+      "groupName": "mahjong-utils"
+    },
+    {
+      "description": "Fabric ecosystem dependencies constrained to Minecraft 1.21.1",
+      "matchPackageNames": [
+        "net.fabricmc:fabric-loader",
+        "net.fabricmc.fabric-loom-remap",
+        "fabric-loom"
+      ],
+      "registryUrls": [
+        "https://maven.fabricmc.net/",
+        "https://maven.aliyun.com/repository/public/",
+        "https://bmclapi2.bangbang93.com/maven/",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "Fabric ecosystem"
+    },
+    {
+      "description": "Fabric API constrained to Minecraft 1.21.1 builds",
+      "matchPackageNames": [
+        "net.fabricmc.fabric-api:fabric-api"
+      ],
+      "allowedVersions": "/\\+1\\.21\\.1$/",
+      "registryUrls": [
+        "https://maven.fabricmc.net/",
+        "https://maven.aliyun.com/repository/public/",
+        "https://bmclapi2.bangbang93.com/maven/",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "Fabric ecosystem"
+    },
+    {
+      "description": "NeoForge ecosystem dependencies constrained to 1.21.1 profile (21.1.x)",
+      "matchPackageNames": [
+        "net.neoforged:neoforge",
+        "net.neoforged:testframework"
+      ],
+      "allowedVersions": "/^21\\.1\\./",
+      "registryUrls": [
+        "https://maven.neoforged.net/releases",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "NeoForge ecosystem"
+    },
+    {
+      "description": "NeoForge ModDev plugin and mappings",
+      "matchPackageNames": [
+        "net.neoforged.moddev",
+        "org.parchmentmc.data**"
+      ],
+      "registryUrls": [
+        "https://maven.neoforged.net/releases",
+        "https://maven.parchmentmc.org/",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "NeoForge ecosystem"
+    },
+    {
+      "description": "JEI integration dependencies",
+      "matchPackageNames": [
+        "mezz.jei**",
+        "net.mezzdev.config**"
+      ],
+      "registryUrls": [
+        "https://maven.blamejared.com/",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "JEI integration"
+    },
+    {
+      "description": "EMI integration dependencies constrained to Minecraft 1.21.1 builds",
+      "matchPackageNames": [
+        "dev.emi**"
+      ],
+      "allowedVersions": "/\\+1\\.21\\.1$/",
+      "registryUrls": [
+        "https://repo.sleeping.town/",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "EMI integration"
+    },
+    {
+      "description": "Ponder integration dependencies",
+      "matchPackageNames": [
+        "net.createmod.ponder**"
+      ],
+      "registryUrls": [
+        "https://maven.createmod.net",
+        "https://repo.maven.apache.org/maven2"
+      ],
+      "groupName": "Ponder integration"
+    }
+  ]
+}

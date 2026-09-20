@@ -39,7 +39,14 @@ Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
 classes. Declare optional metadata and keep third-party implementations out of
 release bundles. Verify both installed and absent dependency configurations.
-Minecraft and dependency versions belong in `gradle.properties`.
+Minecraft and dependency versions belong in `gradle.properties`. Automated
+dependency updates (Renovate) manage routine tool, action and ecosystem version
+bumps on weekly schedules without auto-merge. Migrating the target Minecraft
+version (`minecraft_version`), Java toolchain (`java_version`), loader runtime
+floors and compatibility profiles is strictly manual. Automated bots must never
+modify `mod_version` or participate in project release/SemVer decisions.
+Dependabot is reserved for security alerts and automated vulnerability patches,
+with routine version update pull requests disabled to prevent duplication.
 
 ## Interface, resources and documentation
 
