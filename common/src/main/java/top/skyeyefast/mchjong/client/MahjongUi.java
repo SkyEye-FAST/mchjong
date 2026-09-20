@@ -19,6 +19,8 @@ public final class MahjongUi {
     public static final int SELECTED = 0xff365851;
     public static final int POSITIVE = 0xffa9d8b8;
     public static final int NEGATIVE = 0xfff0aaa4;
+    public static final int DANGER = 0xffa33232;
+    public static final int ON_DANGER = 0xffffffff;
 
     private MahjongUi() {}
 

@@ -455,6 +455,8 @@
   "ui.mchjong.dealer": "Dealer",
   "ui.mchjong.current_turn": "Turn",
   "ui.mchjong.riichi_status": "Riichi",
+  "ui.mchjong.furiten": "Furiten",
+  "ui.mchjong.furiten_hint": "Furiten: you cannot win by ron; tsumo remains possible.",
   "ui.mchjong.exposed": "Open hand",
   "ui.mchjong.counts": "Hand %1$s / River %2$s / North %3$s",
   "settings.mchjong.open": "⚙",

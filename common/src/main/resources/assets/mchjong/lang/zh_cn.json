@@ -455,6 +455,8 @@
   "ui.mchjong.dealer": "庄家",
   "ui.mchjong.current_turn": "当前手番",
   "ui.mchjong.riichi_status": "立直",
+  "ui.mchjong.furiten": "振听",
+  "ui.mchjong.furiten_hint": "振听：不能荣和，仍可自摸。",
   "ui.mchjong.exposed": "副露",
   "ui.mchjong.counts": "手牌 %1$s / 牌河 %2$s / 北 %3$s",
   "settings.mchjong.open": "⚙",

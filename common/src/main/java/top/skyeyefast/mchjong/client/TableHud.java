@@ -16,6 +16,8 @@ final class TableHud {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
     private final List<Region> regions = new ArrayList<>();
+    private TableView furitenView;
+    private boolean furiten;
     void clear() { regions.clear(); }
     int bottom() { return regions.stream().mapToInt(region -> region.y() + region.height()).max().orElse(34); }
     boolean contains(double x, double y) { return regions.stream().anyMatch(region -> region.contains(x, y)); }
@@ -150,6 +152,14 @@ final class TableHud {
                 }
             }
             regions.add(new Region(x, top, cardWidth, cardHeight, hover));
+            if (seat == view.viewerSeat() && settings.show(TableSettings.Information.STATUS) && furiten(view)) {
+                Component label = Component.translatable("ui.mchjong.furiten");
+                int badgeWidth = Math.min(cardWidth, font.width(label) + 8);
+                int badgeY = top + cardHeight + 2;
+                graphics.fill(x, badgeY, x + badgeWidth, badgeY + 12, MahjongUi.DANGER);
+                text(font, graphics, label, x + 4, badgeY + 2, badgeWidth - 8, MahjongUi.ON_DANGER);
+                regions.add(new Region(x, badgeY, badgeWidth, 12, Component.translatable("ui.mchjong.furiten_hint")));
+            }
         }
         if (lobby) return;
         if (!indicators.isEmpty()) {
@@ -181,6 +191,21 @@ final class TableHud {
     }
 
     static int seatedCardHeight(boolean summary, int tileWidth) { return 24 + (summary ? tileWidth == 0 ? 12 : 16 : 0); }
+
+    private boolean furiten(TableView view) {
+        if (furitenView == view) return furiten;
+        furitenView = view;
+        furiten = false;
+        if (view.viewerSeat() < 0 || view.viewerSeat() >= view.seats().size()
+            || view.phase() != Game.Phase.TURN && view.phase() != Game.Phase.REACTION && view.phase() != Game.Phase.DRAW) return false;
+        if (view.ronBlocked()) return furiten = true;
+        var self = view.seats().get(view.viewerSeat());
+        var concealed = new ArrayList<>(self.hand());
+        if (concealed.size() % 3 == 2 && self.drawn() >= 0) concealed.remove(Integer.valueOf(self.drawn()));
+        if (concealed.size() + self.melds().size() * 3 != 13 || concealed.stream().anyMatch(tile -> tile < 0)) return false;
+        var waits = top.skyeyefast.mchjong.engine.HandAnalyzer.waits(concealed, self.melds());
+        return furiten = self.river().stream().anyMatch(discard -> waits.contains(top.skyeyefast.mchjong.engine.Tile.kind(discard.tile())));
+    }
 
     static int summaryTileWidth(List<top.skyeyefast.mchjong.engine.Meld> melds, int owner, int available) {
         for (int size = 7; size >= 5; size--) {

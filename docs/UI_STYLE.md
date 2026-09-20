@@ -131,8 +131,12 @@ round/remaining header. Indicators use 14-pixel faces when space permits; compac
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
 on both text lines. Player cards begin at y=38 without a separate indicator row.
-Respect the independent DEPOSITS and DORA preferences. Names, winds and points
-keep their own rows in 24-pixel cards. With MELDS enabled, only cards with melds
+Respect the independent DEPOSITS and DORA preferences. Show a compact
+red-background, white-text furiten badge below
+the local player's card in either view. STATUS controls this recipient-only badge;
+it uses the synchronized ron restriction and the player's own waits/discard history,
+independently of optional wait previews. Its tooltip explains that tsumo is possible.
+Names, winds and points keep their own rows in 24-pixel cards. With MELDS enabled, only cards with melds
 grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for
 a localized group count when all melds cannot fit. Immersive cards retain their
 board positions and the board owns the full meld display. In both views, STATUS
