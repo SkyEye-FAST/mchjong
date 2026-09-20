@@ -98,13 +98,10 @@ final class LegalActions {
                 for (int low = Math.max(kind / 9 * 9, kind - 2); low <= Math.min(kind, kind / 9 * 9 + 6); low++) {
                     var others = new ArrayList<Integer>();
                     for (int tileKind = low; tileKind <= low + 2; tileKind++) if (tileKind != kind) others.add(tileKind);
-                    Set<Integer> forbidden = new HashSet<>();
-                    forbidden.add(kind);
-                    if (kind == low && low % 9 < 6) forbidden.add(low + 3);
-                    if (kind == low + 2 && low % 9 > 0) forbidden.add(low - 1);
                     for (int first : matching(player.hand, others.get(0))) for (int second : matching(player.hand, others.get(1))) {
                         var used = List.of(first, second);
-                        if (canDiscardAfter(player, used, forbidden)) actions.add(new Action(CHI, used));
+                        var action = new Action(CHI, used);
+                        if (canDiscardAfter(player, used, forbiddenAfterCall(action, game.lastTile))) actions.add(action);
                     }
                 }
             }
@@ -115,6 +112,19 @@ final class LegalActions {
 
     private static boolean canDiscardAfter(PlayerState player, List<Integer> used, Set<Integer> forbidden) {
         return player.hand.stream().anyMatch(tile -> !used.contains(tile) && !forbidden.contains(Tile.kind(tile)));
+    }
+
+    /** Shared by legal generation, call execution and bot simulation. */
+    static Set<Integer> forbiddenAfterCall(Action action, int claimed) {
+        int called = Tile.kind(claimed);
+        var forbidden = new HashSet<Integer>();
+        forbidden.add(called);
+        if (action.type() == CHI) {
+            int low = Math.min(called, action.tiles().stream().mapToInt(Tile::kind).min().orElseThrow());
+            if (called == low && low % 9 < 6) forbidden.add(low + 3);
+            if (called == low + 2 && low % 9 > 0) forbidden.add(low - 1);
+        }
+        return forbidden;
     }
 
     private static List<Integer> matching(List<Integer> hand, int kind) {
@@ -136,15 +146,8 @@ final class LegalActions {
         else if (game.pending == null && game.wall.remaining() == 0) extra.add("Houtei");
         if (!tsumo && game.rules.renhouMangan() && seat != game.dealer && player.firstTurn && game.uninterrupted)
             extra.add("Renhou");
-        var all = new ArrayList<>(player.hand);
-        if (all.size() + player.melds.size() * 3 == 13) all.add(tile);
-        player.melds.forEach(meld -> all.addAll(meld.tiles()));
-        all.addAll(player.norths);
-        int dora = player.norths.size() + (int) all.stream().filter(Tile::red).count();
-        for (int indicator : game.wall.indicators(game.rules.uraDora() && player.riichi)) {
-            int kind = Tile.doraAfter(Tile.kind(indicator), game.rules.sanma());
-            dora += (int) all.stream().filter(id -> Tile.kind(id) == kind).count();
-        }
+        int dora = HandBonuses.count(player.hand, player.melds, player.norths, tile,
+            HandBonuses.indicators(game.wall.indicators(game.rules.uraDora() && player.riichi), game.rules.sanma()));
         return HandAnalyzer.score(player.hand, player.melds, tile, tsumo, game.wind(seat),
             game.round / game.rules.players(), dora, extra, game.rules);
     }

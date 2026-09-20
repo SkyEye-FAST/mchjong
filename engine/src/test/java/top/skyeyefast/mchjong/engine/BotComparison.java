@@ -9,21 +9,18 @@ public final class BotComparison {
 
     public static void main(String[] args) {
         if (args[0].equals("measure")) { measure(); return; }
-        if (args[0].equals("positions")) {
-            for (int seed = 0; seed < 40; seed++) {
-                var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74291 + seed);
-                var view = game.view(game.players[game.turn].id);
-                var normal = view.actions().get(TrainingBot.choose(view, BotDifficulty.NORMAL));
-                var hard = view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
-                if (!normal.equals(hard)) System.out.printf("seed=%d hand=%s normal=%s hard=%s%n", 74291 + seed,
-                    Tile.notations(view.seats().get(view.viewerSeat()).hand()), normal, hard);
-            }
+        if (args[0].equals("suite")) {
+            measure();
+            for (var rules : new String[]{"TENHOU_4", "MAHJONG_SOUL_3"})
+                for (var pair : new String[][]{{"NORMAL", "EASY"}, {"HARD", "NORMAL"}})
+                    main(new String[]{args[rules.equals("TENHOU_4") ? 1 : 2], rules, pair[0], pair[1]});
             return;
         }
         int seeds = Integer.parseInt(args[0]);
         var rules = RuleSet.valueOf(args[1]);
         var a = BotDifficulty.valueOf(args[2]);
         var b = BotDifficulty.valueOf(args[3]);
+        System.out.printf("comparison rules=%s challenger=%s field=%s seeds=%d%n", rules, a, b, seeds);
         var stats = new Stats[]{new Stats(), new Stats()};
         for (int seed = 0; seed < seeds; seed++) for (int rotate = 0; rotate < rules.players(); rotate++) {
             var game = GameLifecycleTest.started(rules, 74291L + seed);
@@ -36,7 +33,9 @@ public final class BotComparison {
                     int group = seat == rotate ? 0 : 1;
                     long start = System.nanoTime();
                     int action = TrainingBot.choose(view, group == 0 ? a : b);
-                    stats[group].nanos += System.nanoTime() - start;
+                    long elapsed = System.nanoTime() - start;
+                    stats[group].nanos += elapsed;
+                    stats[group].times.add(elapsed);
                     stats[group].decisions++;
                     if (!game.act(game.players[seat].id, view.decision(), action)) throw new AssertionError("Rejected action");
                     acted = true;
@@ -88,11 +87,14 @@ public final class BotComparison {
 
     private static final class Stats {
         long hands, wins, deals, value, decisions, nanos, matches, rank, points;
+        final java.util.ArrayList<Long> times = new java.util.ArrayList<>();
         void print(BotDifficulty level) {
+            times.sort(Long::compare);
             System.out.printf(Locale.ROOT,
-                "%s seats=%d hands=%d win=%.4f deal=%.4f value=%.1f rank=%.3f points=%.1f decision_ms=%.3f decisions=%d%n",
+                "%s seats=%d hands=%d win=%.4f deal=%.4f value=%.1f rank=%.3f points=%.1f decision_ms=%.3f p95_ms=%.3f max_ms=%.3f decisions=%d%n",
                 level, matches, hands, wins / (double) hands, deals / (double) hands, value / (double) Math.max(1, wins),
-                rank / (double) matches, points / (double) matches, nanos / (double) decisions / 1e6, decisions);
+                rank / (double) matches, points / (double) matches, nanos / (double) decisions / 1e6,
+                times.get((int) (times.size() * .95)) / 1e6, times.getLast() / 1e6, decisions);
         }
     }
 }

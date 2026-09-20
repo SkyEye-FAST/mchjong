@@ -63,7 +63,7 @@ final class TenpaiHintsSmoke {
                 original.round(), original.honba(), original.riichiSticks(), original.turn(), original.remaining(),
                 original.wallBreak(), original.wall(), original.focus(), original.seats(), original.actions(), original.wins(),
                 original.result(), original.deltas(), original.finalScores(), original.timeControl(), original.clocks(),
-                original.finalRanks(), original.openHands(), original.exitVote(), original.handling(), original.autoPlay()));
+                original.finalRanks(), original.openHands(), original.exitVote(), original.handling(), original.autoPlay(), original.ronBlocked(), original.riichiHan()));
             client.setScreen(new TableScreen(table.getBlockPos()));
         }
         return false;
@@ -82,7 +82,7 @@ final class TenpaiHintsSmoke {
         fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
             original.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70,
             original.wallBreak(), original.wall(), null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125)) : List.of(),
-            List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), false, null, null, original.autoPlay());
+            List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), false, null, null, original.autoPlay(), false, 1);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         table.acceptView(fixture); client.setScreen(new TableScreen(table.getBlockPos()));

@@ -34,7 +34,7 @@ class TableLayoutTest {
             melds, river, List.of(), false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
     }
 
     @Test void meldsStayFramedAndBottomAlignedAtTheRightCorner() {
@@ -105,7 +105,7 @@ class TableLayoutTest {
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay());
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
             for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {

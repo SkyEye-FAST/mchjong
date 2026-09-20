@@ -10,7 +10,10 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         List<Seat> seats, List<Action> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
-                        boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay) {
+                        boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
+                        boolean ronBlocked, int riichiHan) {
+    // ronBlocked and riichiHan describe only the recipient. riichiHan is the
+    // established declaration, or the current declaration's one/two-han value.
     /** Public physical positions only: slot indices never reveal a concealed tile identity. */
     public record Handling(int builtWalls, int sourceSlot, int packetSize) {}
     public record Seat(String name, boolean occupied, boolean bot, boolean ready, int points,

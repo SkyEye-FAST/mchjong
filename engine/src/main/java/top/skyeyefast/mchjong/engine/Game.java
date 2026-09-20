@@ -704,13 +704,7 @@ public final class Game {
         if (action.type() == OPEN_KAN) { completeKan(seat, false); return; }
         player.drawn = Tile.ABSENT;
         player.rinshan = player.lastDraw = player.canDeclare = false;
-        player.forbiddenDiscards.add(Tile.kind(lastTile));
-        if (action.type() == CHI) {
-            int low = Tile.kind(tiles.getFirst());
-            int called = Tile.kind(lastTile);
-            if (called == low && low % 9 < 6) player.forbiddenDiscards.add(low + 3);
-            if (called == low + 2 && low % 9 > 0) player.forbiddenDiscards.add(low - 1);
-        }
+        player.forbiddenDiscards.addAll(LegalActions.forbiddenAfterCall(action, lastTile));
         newDecision(Phase.TURN);
         options.set(seat, LegalActions.onTurn(this, seat));
     }
@@ -862,7 +856,9 @@ public final class Game {
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
             timeControl, clocks, finalRanks, openHands, exitVote, manual ? handling.view(this) : null,
-            viewer < 0 || manual ? null : players[viewer].autoPlay);
+            viewer < 0 || manual ? null : players[viewer].autoPlay,
+            viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
+            viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */

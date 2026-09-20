@@ -9,9 +9,9 @@ import java.util.Set;
 /** Complete hands use the engine scorer. Incomplete hands have explicitly heuristic potential. */
 final class BotValue {
     private final TableView view;
-    final int[] dora = new int[34];
+    final int[] dora;
     private final Map<ScoreKey, HandScore> scores = new HashMap<>();
-    private record ScoreKey(List<Integer> hand, List<String> melds, int bonus, int winning, boolean tsumo, boolean riichi) {}
+    private record ScoreKey(List<Integer> hand, List<String> melds, int bonus, int winning, boolean tsumo, int riichiHan, boolean replacement) {}
     record Potential(boolean viable, double estimate, double retention) {}
     record Waits(double ron, double tsumo, int ronTiles, int tsumoTiles) {
         static final Waits EMPTY = new Waits(0, 0, 0, 0);
@@ -20,15 +20,11 @@ final class BotValue {
     }
     BotValue(TableView view) {
         this.view = view;
-        for (int indicator : view.wall()) if (indicator >= 0)
-            dora[Tile.doraAfter(Tile.kind(indicator), view.rules().sanma())]++;
+        dora = HandBonuses.indicators(view.wall(), view.rules().sanma());
     }
-    int bonus(int tile) { return dora[Tile.kind(tile)] + (Tile.red(tile) ? 1 : 0); }
+    int bonus(int tile) { return HandBonuses.tile(tile, dora); }
     int bonus(BotAnalysis.State state, int winning) {
-        int count = state.norths().size() + (winning < 0 ? 0 : bonus(winning));
-        for (int tile : all(state)) count += bonus(tile);
-        for (int tile : state.norths()) count += bonus(tile);
-        return count;
+        return HandBonuses.count(state.hand(), state.melds(), state.norths(), winning, dora);
     }
     private List<Integer> all(BotAnalysis.State state) {
         var all = new ArrayList<>(state.hand());
@@ -63,12 +59,16 @@ final class BotValue {
         double estimate = viable ? 1000 * (1 + han + bonuses) : 0;
         return new Potential(viable, estimate, Math.min(8, han) * 2 + bonuses * 3);
     }
-    HandScore score(BotAnalysis.State state, int winning, boolean tsumo) {
+    HandScore score(BotAnalysis.State state, int winning, boolean tsumo, boolean replacement) {
         int bonus = bonus(state, winning);
         var key = new ScoreKey(state.hand().stream().map(BotAnalysis::face).sorted().toList(),
-            state.melds().stream().map(Meld::libraryNotation).sorted().toList(), bonus, BotAnalysis.face(winning), tsumo, state.riichi());
+            state.melds().stream().map(Meld::libraryNotation).sorted().toList(), bonus, BotAnalysis.face(winning), tsumo,
+            state.riichi() ? state.riichiHan() : 0, replacement);
+        var extra = new ArrayList<String>();
+        if (state.riichi()) extra.add(state.riichiHan() == 2 ? "WRichi" : "Richi");
+        if (replacement && tsumo) extra.add("Rinshan");
         if (!scores.containsKey(key)) scores.put(key, HandAnalyzer.score(state.hand(), state.melds(), winning, tsumo,
-            wind(), view.round() / view.rules().players(), bonus, state.riichi() ? List.of("Richi") : List.of(), view.rules()));
+            wind(), view.round() / view.rules().players(), bonus, extra, view.rules()));
         return scores.get(key);
     }
     int payment(HandScore score) {
@@ -79,15 +79,15 @@ final class BotValue {
     Waits waits(BotAnalysis.State state, Set<Integer> kinds, int[] remaining) {
         // Any discarded structural wait makes the entire ron wait set furiten, including
         // waits that fail a custom yaku minimum. Tsumo is evaluated independently.
-        boolean furiten = kinds.stream().anyMatch(k -> (state.river() & 1L << k) != 0);
+        boolean furiten = state.ronBlocked() || kinds.stream().anyMatch(k -> (state.river() & 1L << k) != 0);
         double ron = 0, tsumo = 0;
         int ronTiles = 0, tsumoTiles = 0;
         for (int kind : kinds) for (int face : new int[]{kind, kind + 34}) {
             int count = remaining[face];
             if (count == 0) continue;
             int tile = BotAnalysis.tile(face);
-            var r = furiten ? null : score(state, tile, false);
-            var t = score(state, tile, true);
+            var r = furiten ? null : score(state, tile, false, false);
+            var t = score(state, tile, true, false);
             if (r != null) { ron += count * payment(r); ronTiles += count; }
             if (t != null) { tsumo += count * payment(t); tsumoTiles += count; }
         }

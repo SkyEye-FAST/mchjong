@@ -121,6 +121,12 @@ and pending declarations. Training bots share this accounting. Opponents' concea
 hands are ignored even under the world's open-hand policy. `TableHints` renders
 this information only when the local, default-off convenience preference is on;
 no private information or new request type is added to the protocol.
+Training decisions layer `BotAnalysis` (cached shape and bounded development),
+`BotValue` (legal scoring and potential), and `BotDefence` (public per-opponent
+evidence) beneath `TrainingBot` action selection. `HandBonuses` and call-discard
+restrictions are shared with engine execution. Recipient-only furiten and
+riichi-han fields support exact self-state simulation. See [BOTS.md](BOTS.md)
+for the search boundary and opt-in paired comparison command.
 
 `TableAnimation` tracks recipient-safe snapshots by table identity, hand number,
 and viewing permission. Visible physical tile identities follow hand/river/meld
