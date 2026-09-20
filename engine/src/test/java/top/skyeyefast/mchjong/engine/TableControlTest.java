@@ -54,7 +54,8 @@ class TableControlTest {
         assertEquals(custom, lobby.rules());
         assertTrue(lobby.join(id(3), "Fourth seat", 3));
         assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.TENHOU_3.config()));
-        lobby.leave(id(3));
+        int leave = GameLifecycleTest.index(lobby.view(id(3)), Action.Type.LEAVE_ROOM);
+        assertTrue(lobby.act(id(3), lobby.decision, leave));
         assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RuleSet.M_LEAGUE.config()));

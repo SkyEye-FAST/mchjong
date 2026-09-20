@@ -99,6 +99,42 @@ class AutoPlayTest {
         assertEquals(-1, all.action(Game.Phase.HAND_END, false, -1, List.of(new Action(NEXT))));
     }
 
+    @Test void disconnectedTrusteeUsesNetworkMahjongDefaultsWithoutChangingPreferencesOrClocks() {
+        assertEquals(1, Game.disconnectedAction(Game.Phase.TURN, 7,
+            List.of(new Action(CLOSED_KAN, List.of(4, 5, 6, 7)), new Action(TSUMO))));
+        assertEquals(2, Game.disconnectedAction(Game.Phase.REACTION, Tile.ABSENT,
+            List.of(new Action(PASS), new Action(PON, List.of(1, 2)), new Action(RON))));
+        assertEquals(0, Game.disconnectedAction(Game.Phase.REACTION, Tile.ABSENT,
+            List.of(new Action(PASS), new Action(PON, List.of(1, 2)))));
+        assertEquals(1, Game.disconnectedAction(Game.Phase.TURN, 7,
+            List.of(new Action(DISCARD, 3), new Action(DISCARD, 7), new Action(RIICHI, 3))));
+
+        Game game = GameLifecycleTest.started(RuleSet.TENHOU_4, 37);
+        int seat = game.turn, drawn = game.players[seat].drawn;
+        UUID actor = game.players[seat].id;
+        AutoPlay preference = game.players[seat].autoPlay;
+        var mounted = new java.util.HashMap<UUID, Integer>();
+        var connected = new java.util.HashSet<UUID>();
+        for (int other = 0; other < game.rules().players(); other++) if (other != seat) {
+            mounted.put(game.players[other].id, other);
+            connected.add(game.players[other].id);
+        }
+        game.synchronizeSeats(mounted, connected);
+        assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().get(seat).presence());
+        int move = game.moveTicks[seat], reserve = game.reserveTicks[seat];
+        ticks(game, Game.DEAL_TICKS + Game.AUTO_ACTION_TICKS);
+        assertEquals(drawn, game.players[seat].river.getLast().tile());
+        assertTrue(game.players[seat].river.getLast().tsumogiri());
+        assertEquals(move, game.moveTicks[seat]);
+        assertEquals(reserve, game.reserveTicks[seat]);
+        assertEquals(preference, game.players[seat].autoPlay);
+
+        game.join(actor, "Reconnected", seat);
+        assertEquals(PlayerPresence.SEATED, game.roomView().seats().get(seat).presence());
+        game.age = 1;
+        if (!game.actions(seat).isEmpty()) assertTrue(game.view(actor).clocks().get(seat).active());
+    }
+
     @Test void preferencesAreSeatPrivateAndDoNotResetClocksOrInvalidateOtherResponders() {
         Game game = GameLifecycleTest.started(RuleSet.TENHOU_4, 51);
         game.newDecision(Game.Phase.REACTION);
@@ -215,7 +251,9 @@ class AutoPlayTest {
         game = json.fromJson(json.toJson(game), Game.class);
         game.validate();
         assertEquals(expected, game.view(host).autoPlay());
-        game.leave(host);
+        game.wall = null;
+        game.newDecision(Game.Phase.LOBBY);
+        assertTrue(game.act(host, game.decision, Game.indexOf(game.actions(game.seatOf(host)), LEAVE_ROOM)));
         UUID replacement = UUID.randomUUID();
         assertTrue(game.join(replacement, "Replacement", 0));
         assertEquals(AutoPlay.DEFAULT, game.view(replacement).autoPlay());

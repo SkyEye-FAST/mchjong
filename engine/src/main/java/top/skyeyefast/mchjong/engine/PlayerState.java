@@ -10,7 +10,8 @@ final class PlayerState {
     String name = "";
     boolean bot;
     BotDifficulty botDifficulty = BotDifficulty.EASY;
-    transient boolean seated;
+    transient PlayerPresence presence = PlayerPresence.SEATED;
+    transient int awayTicks;
     boolean ready;
     AutoPlay autoPlay = AutoPlay.DEFAULT;
     int points;

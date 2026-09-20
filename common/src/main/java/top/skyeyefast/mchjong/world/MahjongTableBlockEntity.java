@@ -77,6 +77,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     private void synchronizeSeats() {
         var mounted = new java.util.HashMap<UUID, Integer>();
+        var connected = new java.util.HashSet<UUID>();
+        for (ServerPlayer player : ((ServerLevel) level).getServer().getPlayerList().getPlayers()) connected.add(player.getUUID());
         for (SeatEntity seat : level.getEntitiesOfClass(SeatEntity.class, new AABB(worldPosition).inflate(4))) {
             if (!seat.tablePos().equals(worldPosition) || seat.isRemoved()
                 || !(seat.getFirstPassenger() instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator()) continue;
@@ -92,7 +94,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             } else if (level.getBlockState(TableGeometry.stool(worldPosition, seat.seat())).is(MahjongContent.STOOL))
                 mounted.put(player.getUUID(), seat.seat());
         }
-        game.synchronizeSeats(mounted);
+        game.synchronizeSeats(mounted, connected);
     }
 
     public TableView clientView() { return clientView; }
@@ -295,8 +297,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             player.displayClientMessage(Component.translatable("message.mchjong.missing_stool"), true);
             return;
         }
-        if (!level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()
-            || !game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+        int membership = game.seatOf(player.getUUID());
+        if (membership >= 0 && membership != seat || membership < 0 && game.view(null).seats().get(seat).occupied()
+            || !level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()) {
             player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
             return;
         }
@@ -305,7 +308,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         level.addFreshEntity(mount);
         if (!player.startRiding(mount, true)) {
             mount.discard();
-            game.leave(player.getUUID());
+            return;
+        }
+        if (!game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+            player.stopRiding();
+            mount.discard();
+            player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
             return;
         }
         player.setYRot(TableGeometry.yaw(seat));
@@ -318,15 +326,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         Game game = serverGame();
         var current = ((ServerLevel) level).getServer().getPlayerList().getPlayer(player);
         if (current != null && current.serverLevel() == level && seatedViewer(current) != null) return;
-        if (game != null) { game.leave(player); setChanged(); sentRevision = -1; }
+        if (game != null) { game.unseat(player); setChanged(); sentRevision = -1; }
     }
 
     public void act(ServerPlayer player, TableActionPayload payload) {
         Game game = serverGame();
         if (game == null || !game.tableId().equals(payload.tableId()) || authorizedViewer(player) == null) return;
         var actions = game.view(player.getUUID()).actions();
+        top.skyeyefast.mchjong.engine.Action.Type requested = null;
         if (payload.action() >= 0 && payload.action() < actions.size()) {
             var action = actions.get(payload.action());
+            requested = action.type();
             if (action.type() == top.skyeyefast.mchjong.engine.Action.Type.CHANGE_RULE) {
                 var proposed = game.rules().withPreset(RuleSet.values()[action.tiles().getFirst()]);
                 if (!equipment.canSupplyReds(proposed.sanma(), proposed.redFives())) {
@@ -336,6 +346,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             }
         }
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
+            if (requested == top.skyeyefast.mchjong.engine.Action.Type.LEAVE_ROOM) refreshParticipants(false);
             setChanged();
             flushReplays();
         }

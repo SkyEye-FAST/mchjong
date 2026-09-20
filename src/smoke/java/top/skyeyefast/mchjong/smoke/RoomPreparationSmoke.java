@@ -99,7 +99,7 @@ final class RoomPreparationSmoke {
                 capture(client, output, prefix + "-assigned-seats.png");
                 capturedPositioning = true;
             }
-            if (!state.present()) {
+            if (state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
                 if (view.actions().stream().anyMatch(action -> action.type() == Action.Type.READY))
                     throw new IllegalStateException("Unseated player can ready up");
                 var id = client.player.getUUID();
@@ -111,7 +111,8 @@ final class RoomPreparationSmoke {
                     int seat = game.seatOf(id);
                     player.stopRiding();
                     serverTable.sit(player, seat);
-                    if (serverTable.participantGame(player) == null || !game.roomView().seats().get(seat).present())
+                    if (serverTable.participantGame(player) == null || game.roomView().seats().get(seat).presence()
+                        != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED)
                         throw new IllegalStateException("Could not occupy the assigned stool");
                     return -1;
                 });

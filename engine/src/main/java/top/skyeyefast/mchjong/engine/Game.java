@@ -18,6 +18,7 @@ import static top.skyeyefast.mchjong.engine.Action.Type.*;
 public final class Game {
     public static final int DEAL_TICKS = 56;
     public static final int AUTO_ACTION_TICKS = 12;
+    public static final int AWAY_GRACE_TICKS = 5 * 20;
     public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
@@ -155,22 +156,35 @@ public final class Game {
 
     public RoomView roomView() {
         var seats = new ArrayList<RoomView.Seat>();
-        for (int i = 0; i < rules.players(); i++) seats.add(new RoomView.Seat(players[i].bot || players[i].seated,
-            seating.winds[i], players[i].bot ? players[i].botDifficulty : null));
+        for (int i = 0; i < rules.players(); i++) {
+            var player = players[i];
+            seats.add(new RoomView.Seat(player.id == null ? null : player.bot ? PlayerPresence.SEATED : player.presence,
+                seating.winds[i], player.bot ? player.botDifficulty : null));
+        }
         return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats);
     }
 
-    /** Only the world adapter supplies actual mounts. Clients cannot confirm a seat through readiness. */
-    public void synchronizeSeats(Map<UUID, Integer> mounted) {
+    /** Only the world adapter supplies actual mounts and live connections. Clients cannot confirm presence. */
+    public void synchronizeSeats(Map<UUID, Integer> mounted, Set<UUID> connected) {
         boolean changed = false;
         for (int seat = 0; seat < rules.players(); seat++) {
             var player = players[seat];
             if (player.id == null || player.bot) continue;
-            boolean present = Objects.equals(mounted.get(player.id), seat);
-            if (player.seated == present) continue;
-            player.seated = present;
-            if (phase == Phase.LOBBY) player.ready = false;
-            changed = true;
+            PlayerPresence previous = player.presence;
+            if (!connected.contains(player.id)) {
+                player.presence = PlayerPresence.DISCONNECTED;
+                player.awayTicks = 0;
+            } else if (Objects.equals(mounted.get(player.id), seat)) {
+                player.presence = PlayerPresence.SEATED;
+                player.awayTicks = 0;
+            } else if (player.presence == PlayerPresence.SEATED) {
+                player.presence = PlayerPresence.AWAY;
+                player.awayTicks = AWAY_GRACE_TICKS;
+            }
+            if (player.presence != previous) {
+                if (phase == Phase.LOBBY) player.ready = false;
+                changed = true;
+            }
         }
         if (changed) {
             revision++;
@@ -279,8 +293,9 @@ public final class Game {
         int existing = seatOf(player);
         if (existing >= 0) {
             if (existing != seat) return false;
-            if (!players[seat].seated) {
-                players[seat].seated = true;
+            if (players[seat].presence != PlayerPresence.SEATED) {
+                players[seat].presence = PlayerPresence.SEATED;
+                players[seat].awayTicks = 0;
                 revision++;
                 if (phase == Phase.LOBBY) decision++;
             }
@@ -289,20 +304,25 @@ public final class Game {
         if (phase != Phase.LOBBY || exitVote != null || players[seat].id != null) return false;
         players[seat].id = player;
         players[seat].name = name.length() > 32 ? name.substring(0, 32) : name;
-        players[seat].seated = true;
+        players[seat].presence = PlayerPresence.SEATED;
+        players[seat].awayTicks = 0;
         if (hostId == null) hostId = player;
         decision++;
         revision++;
         return true;
     }
 
-    public void leave(UUID player) {
+    /** Physical dismount only. Room membership is released exclusively by LEAVE_ROOM. */
+    public void unseat(UUID player) {
         int seat = seatOf(player);
-        if (seat < 0) return;
-        players[seat].seated = false;
-        // Relocation retains membership; explicit Leave room or replacing an absent seat releases it.
-        if (phase == Phase.LOBBY && exitVote == null && seating.stage != RoomSeating.Stage.POSITIONING) removeMember(seat);
-        else if (phase == Phase.LOBBY) { players[seat].ready = false; decision++; revision++; }
+        if (seat < 0 || players[seat].bot || players[seat].presence != PlayerPresence.SEATED) return;
+        players[seat].presence = PlayerPresence.AWAY;
+        players[seat].awayTicks = AWAY_GRACE_TICKS;
+        if (phase == Phase.LOBBY) {
+            players[seat].ready = false;
+            decision++;
+        }
+        revision++;
     }
 
     private void removeMember(int seat) {
@@ -344,7 +364,10 @@ public final class Game {
         for (int i = 0; i < rules.players(); i++) {
             var player = players[i];
             int destination = seating.winds[i];
-            player.seated &= destination == i;
+            if (!player.bot && destination != i) {
+                player.presence = PlayerPresence.AWAY;
+                player.awayTicks = AWAY_GRACE_TICKS;
+            }
             player.ready = player.bot;
             if (player.bot) player.name = "Bot " + (destination + 1);
             assigned[destination] = player;
@@ -363,7 +386,7 @@ public final class Game {
         if (phase == Phase.LOBBY) {
             var actions = new ArrayList<Action>();
             if (!players[seat].bot) actions.add(new Action(LEAVE_ROOM));
-            if (seating.stage == RoomSeating.Stage.POSITIONING && (players[seat].bot || players[seat].seated)
+            if (seating.stage == RoomSeating.Stage.POSITIONING && (players[seat].bot || players[seat].presence == PlayerPresence.SEATED)
                 && (!players[seat].bot || !players[seat].ready) && equipped())
                 actions.add(new Action(READY));
             if (seating.stage == RoomSeating.Stage.DRAWING && seating.winds[seat] < 0)
@@ -374,7 +397,7 @@ public final class Game {
                 if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING) actions.add(new Action(BEGIN_SEATING));
                 for (int target = 0; target < rules.players(); target++) {
                     var player = players[target];
-                    if (target != seat && (!player.seated || player.bot)) {
+                    if (target != seat && (player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
                         for (var difficulty : BotDifficulty.values()) if (!player.bot || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
                         if (player.bot) actions.add(new Action(REMOVE_BOT, target));
@@ -492,7 +515,8 @@ public final class Game {
         if (!equipped()) return false;
         if (phase == Phase.LOBBY && seating.stage != RoomSeating.Stage.POSITIONING) return false;
         for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
-        if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++) if (!players[i].bot && !players[i].seated) return false;
+        if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++)
+            if (!players[i].bot && players[i].presence != PlayerPresence.SEATED) return false;
         return true;
     }
 
@@ -764,6 +788,7 @@ public final class Game {
 
     /** Server-owned automation and timeouts, paced independently from client animations. */
     public void tick() {
+        tickPresence();
         if (exitCooldown > 0) exitCooldown--;
         if (exitVote != null) {
             int remaining = exitVote.ticksLeft() - 1;
@@ -786,9 +811,14 @@ public final class Game {
                 PlayerState player = players[seat];
                 if (player.id == null || player.bot) continue;
                 var legal = actions(seat);
-                AutoPlay preference = manual ? AutoPlay.DEFAULT : player.autoPlay;
-                int index = manual && phase == Phase.DRAW && player.riichi ? indexOf(legal, DRAW)
-                    : preference.action(phase, player.riichi, player.drawn, legal);
+                int index;
+                if (player.presence == PlayerPresence.DISCONNECTED) {
+                    index = disconnectedAction(phase, player.drawn, legal);
+                } else {
+                    AutoPlay preference = manual ? AutoPlay.DEFAULT : player.autoPlay;
+                    index = manual && phase == Phase.DRAW && player.riichi ? indexOf(legal, DRAW)
+                        : preference.action(phase, player.riichi, player.drawn, legal);
+                }
                 if (index >= 0) {
                     act(player.id, token, index);
                     return;
@@ -820,9 +850,43 @@ public final class Game {
         }
     }
 
+    private void tickPresence() {
+        boolean changed = false;
+        for (int seat = 0; seat < rules.players(); seat++) {
+            PlayerState player = players[seat];
+            if (player.id == null || player.bot || player.presence != PlayerPresence.AWAY) continue;
+            if (--player.awayTicks > 0) continue;
+            player.awayTicks = 0;
+            player.presence = PlayerPresence.DISCONNECTED;
+            if (phase == Phase.LOBBY) player.ready = false;
+            changed = true;
+        }
+        if (changed) {
+            revision++;
+            if (phase == Phase.LOBBY) decision++;
+        }
+    }
+
     private boolean clockActive(int seat) {
-        return age >= 0 && !players[seat].bot && (phase == Phase.TURN || phase == Phase.REACTION)
+        return age >= 0 && !players[seat].bot && players[seat].presence != PlayerPresence.DISCONNECTED
+            && (phase == Phase.TURN || phase == Phase.REACTION)
             && !actions(seat).isEmpty();
+    }
+
+    static int disconnectedAction(Phase phase, int drawn, List<Action> legal) {
+        int win = indexOf(legal, phase == Phase.REACTION ? RON : TSUMO);
+        if (win >= 0) return win;
+        if (phase == Phase.REACTION) return indexOf(legal, PASS);
+        if (phase == Phase.TURN) {
+            for (int i = 0; i < legal.size(); i++) {
+                Action action = legal.get(i);
+                if (action.type() == DISCARD && action.tiles().getFirst() == drawn) return i;
+            }
+            int discard = indexOf(legal, DISCARD);
+            if (discard >= 0) return discard;
+        }
+        return ManualHandling.active(phase) || phase == Phase.HAND_END || phase == Phase.MATCH_END
+            ? legal.isEmpty() ? -1 : 0 : -1;
     }
 
     static int indexOf(List<Action> actions, Action.Type type) {
@@ -892,6 +956,8 @@ public final class Game {
         for (PlayerState player : players) {
             Objects.requireNonNull(player.autoPlay);
             Objects.requireNonNull(player.botDifficulty);
+            if (player.presence == null) player.presence = PlayerPresence.SEATED;
+            if (player.presence != PlayerPresence.AWAY) player.awayTicks = 0;
         }
         for (PlayerState player : players) if (player.id != null && !ids.add(player.id)) throw new IllegalStateException("Duplicate occupant");
         if (wall == null) return;

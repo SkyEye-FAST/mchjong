@@ -163,7 +163,7 @@ class GameLifecycleTest {
         Game game = started(RuleSet.MAHJONG_SOUL_3, 45);
         UUID owner = game.players[0].id;
         var before = game.view(owner).seats().getFirst().hand();
-        game.leave(owner);
+        game.unseat(owner);
         assertTrue(game.join(owner, "Reconnected", 0));
         assertFalse(game.join(UUID.randomUUID(), "Intruder", 0));
         assertFalse(game.join(owner, "Other seat", 1));

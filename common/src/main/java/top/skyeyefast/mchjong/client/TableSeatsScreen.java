@@ -7,6 +7,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -39,7 +40,7 @@ public final class TableSeatsScreen extends Screen {
             Component hint;
             Runnable action;
             boolean enabled;
-            if (seat == room.host() || player.occupied() && !player.bot() && state.present()) {
+            if (seat == room.host() || player.occupied() && !player.bot() && state.presence() == PlayerPresence.SEATED) {
                 label = Component.translatable(seat == room.host() ? "room.mchjong.host_short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
                 int index = find(view, Action.Type.TRANSFER_HOST, List.of(seat));
@@ -104,7 +105,7 @@ public final class TableSeatsScreen extends Screen {
                 Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(view, seat));
                 Component status = wind(state.wind()).copy().append(" · ").append(Component.translatable(!player.occupied()
                     ? "room.mchjong.empty" : player.bot() ? "room.mchjong.bot"
-                    : state.present() ? "room.mchjong.present" : "room.mchjong.absent"));
+                    : state.presence() == PlayerPresence.SEATED ? "room.mchjong.present" : "room.mchjong.absent"));
                 int inset = PlayerPortrait.draw(graphics, player, left, 42 + seat * 37, 10);
                 MahjongUi.text(graphics, font, label, left + inset, 43 + seat * 37, span - 108 - inset, MahjongUi.TEXT, false);
                 MahjongUi.text(graphics, font, status, left, 56 + seat * 37, span - 108, MahjongUi.MUTED, false);

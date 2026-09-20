@@ -56,7 +56,10 @@ class RoomSeatingTest {
         assertEquals(available, game.roomView().availableWinds());
         assertArrayEquals(concealed, game.seating.concealed, "Reloading must not reshuffle unturned winds");
         int inheritedWind = game.roomView().seats().get(1).wind();
-        game.leave(id(1));
+        game.unseat(id(1));
+        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT
+            && action.tiles().getFirst() == 1), "A player in the away grace period cannot be replaced");
+        game.synchronizeSeats(Map.of(id(0), 0, id(2), 2, id(3), 3), java.util.Set.of(id(0), id(2), id(3)));
         act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
         assertEquals(inheritedWind, game.roomView().seats().get(1).wind());
         assertTrue(game.actions(1).stream().noneMatch(action -> action.type() == Action.Type.DRAW_WIND));
@@ -65,14 +68,18 @@ class RoomSeatingTest {
         assertEquals(RoomSeating.Stage.POSITIONING, game.roomView().seating());
         assertTrue(game.isHost(id(0)), "Ownership must follow the human, not the old seat");
         for (int seat = 0; seat < 4; seat++) assertEquals(seat, game.roomView().seats().get(seat).wind());
-        game.synchronizeSeats(Map.of());
+        game.synchronizeSeats(Map.of(), java.util.Set.of(id(0), id(2), id(3)));
         for (UUID human : List.of(id(0), id(2), id(3))) {
             assertTrue(game.view(human).actions().stream().noneMatch(action -> action.type() == Action.Type.READY));
             assertFalse(game.join(human, "Human", (game.seatOf(human) + 1) % 4));
         }
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
-        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() == null).noneMatch(RoomView.Seat::present));
+        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() == null)
+            .allMatch(seat -> seat.presence() == PlayerPresence.SEATED));
+        game.synchronizeSeats(Map.of(), java.util.Set.of(id(0), id(2), id(3)));
+        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() == null)
+            .allMatch(seat -> seat.presence() == PlayerPresence.AWAY));
         arriveAndReady(game);
         assertEquals(Game.Phase.SHUFFLE, game.phase());
         assertEquals(0, game.dealer);
@@ -94,8 +101,17 @@ class RoomSeatingTest {
         assertTrue(Arrays.stream(game.players).filter(player -> player.bot).allMatch(player -> player.ready));
         assertEquals(Game.Phase.LOBBY, game.phase());
         int guest = game.seatOf(id(1));
-        game.leave(id(1));
+        game.unseat(id(1));
         assertEquals(guest, game.seatOf(id(1)), "Standing to relocate must retain room membership");
+        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT
+            && action.tiles().getFirst() == guest));
+        var mounted = Map.of(id(0), game.seatOf(id(0)));
+        var connected = java.util.Set.of(id(0), id(1));
+        for (int tick = 0; tick < Game.AWAY_GRACE_TICKS; tick++) {
+            game.synchronizeSeats(mounted, connected);
+            game.tick();
+        }
+        assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().get(guest).presence());
         act(game, id(0), Action.Type.SET_BOT, guest, BotDifficulty.EASY.ordinal());
         assertEquals(-1, game.seatOf(id(1)));
         assertEquals(BotDifficulty.EASY, game.roomView().seats().get(guest).difficulty());

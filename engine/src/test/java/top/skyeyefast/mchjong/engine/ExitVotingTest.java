@@ -56,7 +56,7 @@ class ExitVotingTest {
         assertFalse(game.answerExit(HOST, vote.id(), true));
         assertFalse(game.answerExit(GUEST, vote.id() + 1, true));
         assertEquals(Game.Phase.TURN, game.phase(), "Partial approval must not terminate play");
-        game.leave(GUEST);
+        game.unseat(GUEST);
         assertEquals(1, game.seatOf(GUEST), "Dismounting is not consent or a way to reduce the electorate");
         assertEquals(humans, game.view(GUEST).exitVote().required());
         for (int seat = 1; seat < humans; seat++) {
@@ -112,7 +112,7 @@ class ExitVotingTest {
         assertTrue(game.requestExit(HOST));
         var vote = game.view(HOST).exitVote();
         assertNotNull(vote);
-        game.leave(GUEST);
+        game.unseat(GUEST);
         assertEquals(1, game.seatOf(GUEST));
         assertFalse(game.join(UUID.randomUUID(), "Late join", 2));
         assertFalse(game.configureClock(HOST, new TimeControl(30, 10)));
@@ -133,7 +133,8 @@ class ExitVotingTest {
         assertTrue(game.configureClock(GUEST, TimeControl.DEFAULT));
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         assertTrue(game.isHost(GUEST));
-        game.leave(GUEST);
+        int leave = GameLifecycleTest.index(game.view(GUEST), Action.Type.LEAVE_ROOM);
+        assertTrue(game.act(GUEST, game.decision, leave));
         assertTrue(game.isHost(HOST));
         game.validate();
     }

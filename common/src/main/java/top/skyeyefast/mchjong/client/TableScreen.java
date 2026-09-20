@@ -492,7 +492,8 @@ public final class TableScreen extends Screen {
         int cardWidth = (width - 16 - (view.seats().size() - 1) * 4) / view.seats().size();
         for (int seat = 0; seat < view.seats().size(); seat++) {
             var player = view.seats().get(seat);
-            if (player.occupied() && !player.bot() && room.seats().get(seat).present()) continue;
+            if (player.occupied() && !player.bot()
+                && room.seats().get(seat).presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) continue;
             var difficulty = room.seats().get(seat).difficulty();
             var next = !player.bot() ? top.skyeyefast.mchjong.engine.BotDifficulty.EASY : switch (difficulty) {
                 case EASY -> top.skyeyefast.mchjong.engine.BotDifficulty.HARD;
@@ -521,7 +522,8 @@ public final class TableScreen extends Screen {
             var state = room.seats().get(seat);
             var player = view.seats().get(seat);
             Component status = drawing ? TableSeatsScreen.wind(state.wind())
-                : Component.translatable(player.ready() ? "ui.mchjong.ready" : state.present() ? "room.mchjong.present" : "room.mchjong.absent");
+                : Component.translatable(player.ready() ? "ui.mchjong.ready"
+                    : state.presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED ? "room.mchjong.present" : "room.mchjong.absent");
             Component label = Component.translatable("room.mchjong.seat_status", drawing ? Component.literal(Integer.toString(seat + 1))
                 : TableSeatsScreen.wind(seat), playerName(view, seat), status);
             var entry = MahjongButton.create(label, ignored -> {}).bounds(left, 106 + seat * 18, span, 16)
@@ -541,7 +543,8 @@ public final class TableScreen extends Screen {
             }
         } else {
             int ready = TableSeatsScreen.find(view, Action.Type.READY, List.of());
-            boolean present = view.viewerSeat() >= 0 && room.seats().get(view.viewerSeat()).present();
+            boolean present = view.viewerSeat() >= 0 && room.seats().get(view.viewerSeat()).presence()
+                == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED;
             var button = MahjongButton.create(Component.translatable(ready >= 0 ? "action.mchjong.ready"
                 : present ? automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed" : "room.mchjong.take_seats"), ignored -> send(view, ready))
                 .bounds(left, actionY, span, 22).build().primary();
