@@ -46,6 +46,8 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
 
     @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
+        // Sneak is also vanilla's dismount input; do not start riding while it is held.
+        if (player.isShiftKeyDown()) return InteractionResult.PASS;
         if (player instanceof ServerPlayer serverPlayer) {
             for (int seat = 0; seat < 4; seat++) {
                 BlockPos center = pos.relative(TableGeometry.SIDES[seat].getOpposite(), TableGeometry.STOOL_DISTANCE);

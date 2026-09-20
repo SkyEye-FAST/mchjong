@@ -56,6 +56,7 @@ public final class TableClientSmoke {
     private final InterfaceSmoke interfaceSmoke = new InterfaceSmoke();
     private final BoxInterfaceSmoke boxInterfaceSmoke = new BoxInterfaceSmoke();
     private final BrowserSmoke browserSmoke = new BrowserSmoke();
+    private final StoolInteractionSmoke stoolInteractionSmoke = new StoolInteractionSmoke();
 
     public void tick(Minecraft client) {
         if (step == 14) return;
@@ -169,19 +170,7 @@ public final class TableClientSmoke {
                     return;
                 }
                 if (seatingOnly) {
-                    client.setScreen(null);
-                    UUID id = client.player.getUUID();
-                    client.getSingleplayerServer().execute(() -> {
-                        try {
-                            var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                            var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
-                            table.sit(player, 0);
-                            require(player.isPassenger(), "Cushion did not seat the player");
-                            require(Math.abs(player.getVehicle().getY() - CENTER.getY() - TableGeometry.STOOL_HEIGHT) < 1e-6,
-                                "Seat anchor differs from cushion height");
-                        } catch (Throwable failure) { serverFailure.set(failure); }
-                    });
-                    step = 3; entered = ticks;
+                    step = 24; entered = ticks;
                     return;
                 }
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
@@ -226,22 +215,8 @@ public final class TableClientSmoke {
                 }
                 step = 23; entered = ticks;
             } else if (step == 23 && interfaceSmoke.storage(client, CENTER, output)) {
-                UUID id = client.player.getUUID();
-                client.getSingleplayerServer().execute(() -> {
-                    try {
-                        ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                        var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
-                        player.setShiftKeyDown(true);
-                        table.open(player);
-                        require(!player.isPassenger(), "Crouch-click must spectate without seating");
-                        player.setShiftKeyDown(false);
-                        table.sit(player, 0);
-                        require(player.isPassenger(), "Stool did not seat the player");
-                        var mount = player.getVehicle();
-                        table.sit(player, 0);
-                        require(player.getVehicle() == mount, "Reopening the stool created a duplicate mount");
-                    } catch (Throwable failure) { serverFailure.set(failure); }
-                });
+                step = 24; entered = ticks;
+            } else if (step == 24 && stoolInteractionSmoke.tick(client, CENTER, output)) {
                 step = 3; entered = ticks;
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
