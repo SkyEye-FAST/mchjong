@@ -38,6 +38,20 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Real world-space pointer gestures travel through the normal client/server action packets. */
 final class ManualTableSmoke {
+    private static AbstractWidget dice(Minecraft client, TableView view) {
+        String label = Component.translatable("ui.mchjong.dice_result", view.handling().diceOne(),
+            view.handling().diceTwo(), view.handling().diceOne() + view.handling().diceTwo()).getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.visible && widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+    }
+    private static void checkSeatedPreparation(Minecraft client) {
+        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().equals(Component.translatable("ui.mchjong.view_immersive").getString()))
+            .findFirst().orElseThrow();
+        check(!button.active, "Immersive button enabled before dealing completed");
+        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        check(!((TableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
+    }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;
     private CompletableFuture<Void> serverWork;
@@ -117,9 +131,10 @@ final class ManualTableSmoke {
                 if (!(client.screen instanceof top.skyeyefast.mchjong.client.PointStickScreen) || ticks < 10) return false;
                 if (!drawers.tick(client, output)) return false;
                 check(client.player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu menu
-                    && menu.totalPoints(0) == 3000 && menu.slots.size() == 72, "Native drawer screen did not synchronize all four rows");
+                    && menu.totalPoints(0) == 3000 && menu.slots.size() == 76, "Native drawer screen did not synchronize all four rows");
                 capture(client, output, "30a-point-drawers.png");
                 client.screen.onClose();
+                serverWork = onServer(client, player -> PointStickMenuSmoke.stockDrawers((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)));
                 next(17);
             }
             case 17 -> {
@@ -133,6 +148,7 @@ final class ManualTableSmoke {
             case 2 -> {
                 if (view.phase() != Game.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
                 check(view.wall().isEmpty() && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table shuffled itself");
+                checkSeatedPreparation(client);
                 capture(client, output, "31-manual-shuffle.png");
                 click(client, "action.mchjong.shuffle");
                 next(3);
@@ -140,8 +156,34 @@ final class ManualTableSmoke {
             case 3 -> {
                 if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table dealt before walls were built");
+                checkSeatedPreparation(client);
                 capture(client, output, "32-manual-build-wall.png");
                 click(client, "action.mchjong.build_wall");
+                next(20);
+            }
+            case 20 -> {
+                if (!offered(view, Action.Type.PICK_UP_DICE) || ticks < 10 || !hasControl(client, "action.mchjong.pick_up_dice")) return false;
+                check(view.handling().diceOne() == 0 && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Dice or dealing advanced before the dealer");
+                capture(client, output, "32a-dice-on-table.png");
+                click(client, "action.mchjong.pick_up_dice");
+                next(21);
+            }
+            case 21 -> {
+                if (!offered(view, Action.Type.ROLL_DICE) || ticks < 10 || !hasControl(client, "action.mchjong.roll_dice")) return false;
+                check(view.handling().diceHeld(), "Dealer did not pick up both dice");
+                click(client, "action.mchjong.roll_dice");
+                next(22);
+            }
+            case 22 -> {
+                if (view.phase() != Game.Phase.DEAL || ticks < 15) return false;
+                check(view.handling().diceOne() >= 1 && view.handling().diceOne() <= 6
+                    && view.handling().diceTwo() >= 1 && view.handling().diceTwo() <= 6 && !view.handling().diceHeld(), "Invalid public dice roll");
+                var dice = dice(client, view);
+                InputSmoke.pointer(client, dice.getX() + dice.getWidth() / 2, dice.getY() + dice.getHeight() / 2);
+                if (ticks < 20) return false;
+                check(dice.isHoveredOrFocused(), "Central dice tooltip was not reachable");
+                capture(client, output, "32b-dice-result.png");
+                checkSeatedPreparation(client);
                 next(4);
             }
             case 4 -> {
@@ -174,6 +216,22 @@ final class ManualTableSmoke {
                 if (view.phase() != Game.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
                 check(view.seats().getFirst().hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
+                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                check(((TableScreen) client.screen).immersive(), "Immersive view remained locked after dealing");
+                next(23);
+            }
+            case 23 -> {
+                if (ticks < 10) return false;
+                check(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                    .noneMatch(widget -> widget.visible && widget.getMessage().getString().equals(Component.translatable("ui.mchjong.dice_result",
+                        view.handling().diceOne(), view.handling().diceTwo(), view.handling().diceOne() + view.handling().diceTwo()).getString())),
+                    "Immersive view retained the dice hover target");
+                capture(client, output, "35a-manual-immersive.png");
+                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                next(24);
+            }
+            case 24 -> {
+                if (ticks < 5) return false;
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
                 var piece = top.skyeyefast.mchjong.client.TableScene.build(view).stream()
                     .filter(value -> value.area() == top.skyeyefast.mchjong.client.TableScene.Area.HAND && value.seat() == view.viewerSeat())
@@ -291,6 +349,7 @@ final class ManualTableSmoke {
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
         sticks.set(MahjongComponents.POINTS, 1000);
         PointStickMenuSmoke.put(player, table, 0, sticks);
+        table.equipment().drawer(0).setItem(top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT, PointStickMenuSmoke.stick(-10000, 1));
         check(sticks.isEmpty(), "Manual fixture did not transfer its physical drawer sticks");
     }
 

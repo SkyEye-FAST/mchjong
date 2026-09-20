@@ -22,6 +22,9 @@ public final class PointStickMenu extends AbstractContainerMenu {
     private boolean active = true;
     private final DataSlot withdrawal = DataSlot.standalone();
     private final DataSlot openedSide = DataSlot.standalone();
+    private final DataSlot locked = DataSlot.standalone();
+    private boolean internalCursor;
+    public boolean belongsTo(MahjongTableBlockEntity candidate) { return table == candidate; }
     private final DataSlot[] scores = new DataSlot[8];
 
     public PointStickMenu(int id, Inventory inventory) { this(id, inventory, null, 0); }
@@ -33,29 +36,45 @@ public final class PointStickMenu extends AbstractContainerMenu {
         this.side = side;
         addDataSlot(withdrawal);
         addDataSlot(openedSide);
+        addDataSlot(locked);
         for (int i = 0; i < scores.length; i++) addDataSlot(scores[i] = DataSlot.standalone());
         for (int row = 0; row < 4; row++) {
             int owner = row;
             Container contents = table == null ? new SimpleContainer(TableEquipment.STICK_SLOTS) : table.equipment().drawer(row);
-            for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++)
-                addSlot(new Slot(contents, slot, 113 + slot * 18, 22 + row * 24) {
-                    @Override public boolean mayPlace(ItemStack stack) { return stillValid(inventory.player) && validStick(stack); }
+            for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++) {
+                boolean reserve = slot == TableEquipment.BUST_SLOT;
+                addSlot(new Slot(contents, slot, 113 + slot * 18 + (reserve ? 4 : 0), 22 + row * 24) {
+                    @Override public int getMaxStackSize() { return reserve ? 1 : super.getMaxStackSize(); }
+                    @Override public boolean mayPlace(ItemStack stack) {
+                        return stillValid(inventory.player) && validStick(stack) && (!locked() || internalCursor)
+                            && (!reserve || stack.getOrDefault(MahjongComponents.POINTS, 0) == -10000);
+                    }
                     @Override public boolean mayPickup(Player player) { return stillValid(player) && canWithdraw(owner); }
                 });
+            }
         }
         for (int row = 0; row < 3; row++) for (int col = 0; col < 9; col++)
-            addSlot(new Slot(inventory, col + row * 9 + 9, 113 + col * 18, 128 + row * 18));
-        for (int col = 0; col < 9; col++) addSlot(new Slot(inventory, col, 113 + col * 18, 186));
+            playerSlot(col + row * 9 + 9, 113 + col * 18, 128 + row * 18);
+        for (int col = 0; col < 9; col++) playerSlot(col, 113 + col * 18, 186);
+    }
+
+    private boolean locked() { return table == null ? locked.get() != 0 : !table.equipmentEditable(); }
+
+    private void playerSlot(int index, int x, int y) {
+        addSlot(new Slot(inventory, index, x, y) {
+            @Override public boolean mayPlace(ItemStack stack) { return !locked(); }
+            @Override public boolean mayPickup(Player player) { return !locked(); }
+        });
     }
 
     public static boolean validStick(ItemStack stack) {
         return stack.is(MahjongContent.POINT_STICK) && MahjongSupplies.storable(stack)
-            && stack.getOrDefault(MahjongComponents.POINTS, 0) > 0;
+            && stack.getOrDefault(MahjongComponents.POINTS, 0) != 0;
     }
 
     public int totalPoints(int row) {
         int total = 0;
-        for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++) {
+        for (int slot = 0; slot < TableEquipment.BUST_SLOT; slot++) {
             ItemStack stack = slots.get(row * TableEquipment.STICK_SLOTS + slot).getItem();
             total += stack.getCount() * stack.getOrDefault(MahjongComponents.POINTS, 0);
         }
@@ -72,6 +91,7 @@ public final class PointStickMenu extends AbstractContainerMenu {
         if (table != null) {
             int mask = 0;
             openedSide.set(side);
+            locked.set(locked() ? 1 : 0);
             for (int row = 0; row < 4; row++) {
                 if (canWithdraw(row)) mask |= 1 << row;
                 int score = table.pointScore(row);
@@ -92,18 +112,28 @@ public final class PointStickMenu extends AbstractContainerMenu {
 
     @Override public void clicked(int slot, int button, ClickType type, Player player) {
         if (!stillValid(player) || slot >= slots.size()) return;
+        if (locked() && (slot >= DRAWER_SLOTS || type == ClickType.SWAP || type == ClickType.CLONE
+            || type == ClickType.QUICK_MOVE || type == ClickType.THROW || slot < 0 && type == ClickType.PICKUP
+            || !getCarried().isEmpty() && !internalCursor)) return;
+        boolean empty = getCarried().isEmpty();
         super.clicked(slot, button, type, player);
+        if (getCarried().isEmpty()) internalCursor = false;
+        else if (empty) internalCursor = slot >= 0 && slot < DRAWER_SLOTS;
     }
 
     @Override public ItemStack quickMoveStack(Player player, int index) {
-        if (!stillValid(player) || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
+        if (!stillValid(player) || locked() || index < 0 || index >= slots.size()) return ItemStack.EMPTY;
         Slot slot = slots.get(index);
         if (!slot.hasItem() || !slot.mayPickup(player)) return ItemStack.EMPTY;
         ItemStack source = slot.getItem(), original = source.copy();
         if (index < DRAWER_SLOTS) {
             if (!moveItemStackTo(source, DRAWER_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
-        } else if (!validStick(source) || !moveItemStackTo(source, side * TableEquipment.STICK_SLOTS,
-            (side + 1) * TableEquipment.STICK_SLOTS, false)) return ItemStack.EMPTY;
+        } else {
+            boolean reserve = source.getOrDefault(MahjongComponents.POINTS, 0) == -10000;
+            int start = side * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.BUST_SLOT : 0);
+            int end = side * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.STICK_SLOTS : TableEquipment.BUST_SLOT);
+            if (!validStick(source) || !moveItemStackTo(source, start, end, false)) return ItemStack.EMPTY;
+        }
         if (source.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);
         else slot.setChanged();
         slot.onTake(player, source);
@@ -111,6 +141,11 @@ public final class PointStickMenu extends AbstractContainerMenu {
     }
 
     @Override public void removed(Player player) {
+        if (table != null && internalCursor && (locked() || table.equipment().matchActive())) {
+            table.equipment().returnSticks(getCarried(), side);
+            setCarried(ItemStack.EMPTY);
+            internalCursor = false;
+        }
         active = false;
         resetQuickCraft();
         super.removed(player);

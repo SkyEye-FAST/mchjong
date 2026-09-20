@@ -27,7 +27,7 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         addDataSlot(ownerSlot);
         for (int index = 0; index < MahjongSupplies.BOX_SLOTS; index++) {
             int slot = index;
-            int x = slot == MahjongSupplies.DYE_SLOT ? 196 : 14 + (slot % 9) * 18;
+            int x = slot == MahjongSupplies.DYE_SLOT ? 196 : slot == MahjongSupplies.DICE_SLOT ? 176 : 14 + (slot % 9) * 18;
             int y = slot < MahjongSupplies.TILE_SLOTS ? 16 + slot / 9 * 18 : slot == MahjongSupplies.DYE_SLOT ? 83 : 114;
             addSlot(new Slot(contents, slot, x, y) {
                 @Override public boolean mayPlace(ItemStack stack) {
@@ -123,9 +123,10 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(source, MahjongSupplies.BOX_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
         } else {
             int start = source.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM) ? 0
-                : source.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) ? MahjongSupplies.TILE_SLOTS : MahjongSupplies.DYE_SLOT;
+                : source.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) ? MahjongSupplies.TILE_SLOTS
+                : source.is(top.skyeyefast.mchjong.world.MahjongContent.DICE) ? MahjongSupplies.DICE_SLOT : MahjongSupplies.DYE_SLOT;
             int end = start == 0 ? MahjongSupplies.TILE_SLOTS : start == MahjongSupplies.TILE_SLOTS
-                ? MahjongSupplies.DYE_SLOT : MahjongSupplies.BOX_SLOTS;
+                ? MahjongSupplies.DYE_SLOT : start + 1;
             if (!moveItemStackTo(source, start, end, false)) return ItemStack.EMPTY;
         }
         if (source.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);

@@ -113,7 +113,7 @@ final class BrowserSmoke {
         check(boxes.size() == 2 && boxes.get(1) == boxes.get(0) + 1, "Empty/full boxes are not adjacent");
         check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.getFirst()))) == 0, "Full box precedes empty box");
         check(entries.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.getOrDefault(MahjongComponents.POINTS, 0)).toList()
-            .equals(List.of(0, 100, 1000, 5000, 10000)), "Viewer merged or reordered point denominations");
+            .equals(List.of(-10000, 0, 100, 1000, 5000, 10000)), "Viewer merged or reordered point denominations");
     }
 
     private static SupplyRecipeExample pick(List<SupplyRecipeExample> examples, Predicate<SupplyRecipeExample> predicate) {

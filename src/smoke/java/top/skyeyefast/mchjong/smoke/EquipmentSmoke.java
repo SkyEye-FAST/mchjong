@@ -137,6 +137,7 @@ final class EquipmentSmoke {
                 && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
             if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RuleSet.MAHJONG_SOUL_3.ordinal());
             var staleMenu = TableStorageSmoke.open(player, table);
+            PointStickMenuSmoke.stockDrawers(table);
             SeatingFixtures.startPositioned(table.participantGame(player), player.getUUID());
             game = table.participantGame(player);
             check(game.phase() == (table.automatic() ? Game.Phase.TURN : Game.Phase.SHUFFLE), "Wrong table handling mode");
@@ -156,11 +157,10 @@ final class EquipmentSmoke {
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Locked storage changed equipment");
             var before = game.view(player.getUUID());
             if (!table.automatic()) {
-                PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(1));
-                check(table.equipment().drawer(0).getItem(0).getCount() == 1, "Active manual drawer did not receive its stick");
-                PointStickMenuSmoke.take(player, table, 0);
-                check(inventory.getItem(2).getCount() == 8 && table.equipment().drawer(0).isEmpty(),
-                    "Active manual drawer did not return its stick through the native container");
+                var menu = PointStickMenuSmoke.open(player, table, 0);
+                check(menu.quickMoveStack(player, top.skyeyefast.mchjong.item.PointStickMenu.DRAWER_SLOTS + 29).isEmpty(), "Active table accepted backpack sticks");
+                check(inventory.getItem(2).getCount() == 8, "Active table changed backpack stock");
+                player.closeContainer();
             }
             var after = game.view(player.getUUID());
             check(before.seats().stream().map(s -> s.points()).toList().equals(after.seats().stream().map(s -> s.points()).toList())
@@ -171,7 +171,10 @@ final class EquipmentSmoke {
                 && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,
                 "Exit lost the full set or unused sanma tiles");
             check(!staleMenu.stillValid(player) && staleMenu.quickMoveStack(player, 0).isEmpty(), "An invalidated storage menu became live again after exit");
-            if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(3));
+            if (!table.automatic()) {
+                for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);
+                PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(3));
+            }
             player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, 0, 0);
             if (destruction == 0) level.destroyBlock(POS, true);
             else if (destruction == 1) level.destroyBlock(POS.offset(TableGeometry.FOOTPRINT_RADIUS, 0, TableGeometry.FOOTPRINT_RADIUS), true);

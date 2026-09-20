@@ -39,11 +39,15 @@ proposed red composition against stock.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
-slots, removable cloth and four nine-slot point-stick drawers. Its public projection
+slots, removable cloth and four point-stick drawers, each with nine scoring slots
+and a tenth non-scoring bust-stick reserve. Ordinary matches
+reserve the initial drawer contents in private saves, constrain payments to table
+currency, and restore those positions on match completion or exit. Its public projection
 contains wood, cloth colors and tile appearance; inventory contents use authorized
 native container synchronization. The two tables share one block
 entity type and the referee. `engine/ManualHandling` adds explicit shuffle, wall,
-packet and draw phases without duplicating scoring or inventing client authority.
+packet and draw phases, with dealer-only dice pickup and roll after wall building,
+without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 `RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
@@ -87,7 +91,11 @@ currency beside the referee's score; only ordinary inventory transactions move
 the physical sticks. Signed 32-bit reference scores use paired native data slots.
 Lifetime checks bind the menu to its player, current mount and exact table.
 Both manual and automatic tables require a cloth and a box covering the selected
-set to begin. Surplus tiles remain untouched. Subset selection groups stock by
+set to begin. Ordinary tables additionally require two stored dice and each seat's
+fixed denomination kit. A dry-run stock plan validates all drawers and boxes;
+match start commits complete top-ups before snapshotting the resulting drawers.
+Rules without bankruptcy also require one reserved −10000 stick per player.
+Surplus tiles remain untouched. Subset selection groups stock by
 appearance, counts ordinary and red faces separately and never combines boxes.
 The engine receives exactly 136 or 108 physical identities for the selected mode.
 Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual checks.
@@ -149,7 +157,10 @@ client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
 
 `TableView.Handling` publishes wall-build bits, the next physical source slot
-and packet size. `TableHandling` derives legal physical targets and drop regions
+and packet size, plus the two public dice faces and dealer-held status. `TableDice`
+shares those faces across physical cubes, native pickup focus and compact hover
+equations. Dice randomness and wall opening remain server-owned.
+`TableHandling` derives legal physical targets and drop regions
 from this recipient-safe view. Pointer gestures grab scattered tiles or the
 source wall stack, preview their movement, and submit the existing action index
 and decision token on a valid release. A token change or cancellation discards

@@ -13,9 +13,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Pure stack transformations: callers commit the returned copy, never mutate recipe inputs. */
 public final class MahjongSupplies {
-    public static final int BOX_SLOTS = 55;
+    public static final int BOX_SLOTS = 56;
     public static final int TILE_SLOTS = 45;
-    public static final int DYE_SLOT = BOX_SLOTS - 1;
+    public static final int DYE_SLOT = 54;
+    public static final int DICE_SLOT = 55;
     public static final int SET_SIZE = 136;
     private MahjongSupplies() {}
 
@@ -36,7 +37,7 @@ public final class MahjongSupplies {
     }
 
     public static boolean storable(ItemStack stack) {
-        return (stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK))
+        return (stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.DICE))
             && !stack.has(DataComponents.CONTAINER) && !stack.has(DataComponents.BUNDLE_CONTENTS);
     }
 
@@ -47,7 +48,8 @@ public final class MahjongSupplies {
     public static boolean boxAccepts(int slot, ItemStack stack) {
         if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
         return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
-            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK) : mahjongDye(stack);
+            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK)
+            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : mahjongDye(stack);
     }
 
     /** Do not truncate oversized command-created containers when opening or crafting them. */
@@ -235,6 +237,10 @@ public final class MahjongSupplies {
             tile(new TileData(-1, material, false), color, 64),
             tile(new TileData(-1, material, false), color, 64),
             tile(new TileData(-1, material, false), color, 8))));
-        return engrave(box, TileFacePreset.KANSAI);
+        var result = engrave(box, TileFacePreset.KANSAI);
+        var items = contents(result);
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        return result;
     }
 }

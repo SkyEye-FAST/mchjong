@@ -111,10 +111,15 @@ buffers for each tile.
 
 ## Table and other resources
 
-`assets/mchjong/textures/point_sticks.png` is a 384 by 160 atlas of five 32-pixel
+Dice use six deterministic 16-pixel textures at `textures/item/dice_1.png`
+through `dice_6.png`, shared by a native cube item model and the central-roll
+tooltip. Opposite faces sum to seven; ones and fours use red pips.
+
+`assets/mchjong/textures/point_sticks.png` is a 384 by 192 atlas of six 32-pixel
 strips: blank ivory, ivory with eight gray dots (100), blue with one white dot
-(1,000), yellow with five white dots (5,000), and red with nine white dots
-(10,000). Round markings, a subtle recessed panel and molded edge highlights
+(1,000), yellow with five white dots (5,000), red with nine white dots
+(10,000), and black with the same nine white dots (−10,000). Round markings,
+a subtle recessed panel and molded edge highlights
 follow the colored physical-stick style. `PointStickArtwork` generates the atlas
 deterministically. `FurnitureMesh.stick` uses it for both printed faces and the
 unmarked sides in inventory, held-item and table renders. Half-pixel UV insets

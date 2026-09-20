@@ -54,6 +54,7 @@ public final class MchjongNeoForge {
         items.register("mahjong_tile", () -> MahjongContent.TILE_ITEM);
         items.register("mahjong_box", () -> MahjongContent.BOX_ITEM);
         items.register("point_stick", () -> MahjongContent.POINT_STICK);
+        items.register("dice", () -> MahjongContent.DICE);
         items.register("mahjong_dye", () -> MahjongContent.MAHJONG_DYE);
         items.register("red_dora_dye", () -> MahjongContent.RED_DORA_DYE);
         items.register("undo_dye", () -> MahjongContent.UNDO_DYE);

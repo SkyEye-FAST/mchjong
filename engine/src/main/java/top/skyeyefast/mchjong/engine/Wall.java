@@ -17,20 +17,26 @@ final class Wall {
     int revealed = 1;
     int pendingIndicators;
     int breakOffset;
+    long openingSeed;
+    int diceOne, diceTwo;
 
     Wall(RuleConfig rules, long seed, int dealer) {
         this(rules, seed, dealer, Tile.set(rules.sanma(), rules.redFives()));
     }
 
     Wall(RuleConfig rules, long seed, int dealer, List<Integer> supplied) {
+        this(rules, seed, dealer, supplied, true);
+    }
+
+    Wall(RuleConfig rules, long seed, int dealer, List<Integer> supplied, boolean open) {
         if (!Tile.validSet(supplied) || supplied.size() != (rules.sanma() ? 108 : 136) || !rules.allows(RedFives.of(supplied)))
             throw new IllegalArgumentException("A wall requires one complete supplied set");
         tiles = new ArrayList<>(supplied);
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
         liveEnd = tiles.size() - 14;
-        int diceSum = random.nextInt(6) + random.nextInt(6) + 2;
-        breakOffset = WallLayout.breakOffset(dealer, diceSum, tiles.size(), rules.players());
+        openingSeed = random.nextLong();
+        if (open) open(rules, dealer);
         int end = tiles.size();
         // Replacement tiles are paired so the upper tile of each stack is taken first.
         for (int i = 0; i < rules.replacementCapacity(); i++) replacements.add(end - 1 - i % 4);
@@ -42,6 +48,13 @@ final class Wall {
     }
 
     int remaining() { return Math.max(0, liveEnd - cursor); }
+    void open(RuleConfig rules, int dealer) {
+        if (diceOne != 0 || cursor != 0) throw new IllegalStateException("Wall already opened");
+        var random = new Random(openingSeed);
+        diceOne = random.nextInt(6) + 1;
+        diceTwo = random.nextInt(6) + 1;
+        breakOffset = WallLayout.breakOffset(dealer, diceOne + diceTwo, tiles.size(), rules.players());
+    }
     int draw() {
         if (remaining() == 0) throw new IllegalStateException("The live wall is empty");
         return take(cursor++);

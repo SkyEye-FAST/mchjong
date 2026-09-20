@@ -35,7 +35,11 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(16, entries.size());
+        assertEquals(18, entries.size());
+        assertEquals(2, MahjongSupplies.contents(entries.get(5)).get(MahjongSupplies.DICE_SLOT).getCount());
+        assertTrue(entries.get(7).is(MahjongContent.DICE));
+        assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.DICE)));
+        assertFalse(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.POINT_STICK)));
         assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
         assertEquals(1, new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE).getMaxStackSize());
         assertTrue(entries.get(4).is(MahjongContent.BOX_ITEM));
@@ -43,7 +47,7 @@ class PhysicalSuppliesTest {
         assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(4))));
         assertEquals(136, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(5))));
         assertNotNull(MahjongSupplies.deck(entries.get(5)));
-        assertEquals(List.of(0, 100, 1000, 5000, 10000), entries.stream()
+        assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
             .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
         assertEquals(1, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
         assertTrue(MahjongSupplies.tile(entries.get(6)).blank());
@@ -367,7 +371,7 @@ class PhysicalSuppliesTest {
         loaded.load(saved, server.registryAccess());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).getItem(0)));
         assertTrue(ItemStack.matches(small, loaded.drawer(2).getItem(1)));
-        assertEquals(9, loaded.drawer(2).getContainerSize());
+        assertEquals(10, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
         assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.getAllKeys());

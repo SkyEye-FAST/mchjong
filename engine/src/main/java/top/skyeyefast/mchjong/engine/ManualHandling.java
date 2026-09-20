@@ -9,6 +9,7 @@ final class ManualHandling {
     int packets;
     boolean replacement;
     boolean kan;
+    boolean diceHeld;
 
     static boolean active(Game.Phase phase) {
         return phase == Game.Phase.SHUFFLE || phase == Game.Phase.BUILD_WALL
@@ -18,6 +19,7 @@ final class ManualHandling {
     void begin(Game game) {
         builtWalls = packets = 0;
         replacement = kan = false;
+        diceHeld = false;
         game.wall = null;
         game.turn = game.dealer;
         game.newDecision(Game.Phase.SHUFFLE);
@@ -26,7 +28,9 @@ final class ManualHandling {
     List<Action> actions(Game game, int seat) {
         return switch (game.phase) {
             case SHUFFLE -> seat == game.dealer ? List.of(new Action(SHUFFLE)) : List.of();
-            case BUILD_WALL -> (builtWalls & 1 << seat) == 0 ? List.of(new Action(BUILD_WALL)) : List.of();
+            case BUILD_WALL -> builtWalls == (1 << game.rules.players()) - 1
+                ? seat == game.dealer ? List.of(new Action(diceHeld ? ROLL_DICE : PICK_UP_DICE)) : List.of()
+                : (builtWalls & 1 << seat) == 0 ? List.of(new Action(BUILD_WALL)) : List.of();
             case DEAL -> seat == game.turn ? List.of(new Action(TAKE_PACKET)) : List.of();
             case DRAW -> seat == game.turn ? List.of(new Action(DRAW)) : List.of();
             default -> List.of();
@@ -37,7 +41,8 @@ final class ManualHandling {
         int count = game.phase == Game.Phase.DEAL ? packetSize(game) : game.phase == Game.Phase.DRAW ? 1 : 0;
         int source = count == 0 ? -1 : game.phase == Game.Phase.DRAW && replacement
             ? game.wall.nextReplacementSlot() : game.wall.cursor;
-        return new TableView.Handling(builtWalls, source, count);
+        return new TableView.Handling(builtWalls, source, count,
+            game.wall == null ? 0 : game.wall.diceOne, game.wall == null ? 0 : game.wall.diceTwo, diceHeld);
     }
 
     private int packetSize(Game game) { return packets < 3 * game.rules.players() ? 4 : 1; }
@@ -50,9 +55,18 @@ final class ManualHandling {
             }
             case BUILD_WALL -> {
                 builtWalls |= 1 << seat;
-                if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(Game.Phase.DEAL);
+                if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(Game.Phase.BUILD_WALL);
                 // Each seat builds its own wall independently. Keep other players' held drags valid.
                 else game.revision++;
+            }
+            case ROLL_DICE -> {
+                game.wall.open(game.rules, game.dealer);
+                diceHeld = false;
+                game.newDecision(Game.Phase.DEAL);
+            }
+            case PICK_UP_DICE -> {
+                diceHeld = true;
+                game.newDecision(Game.Phase.BUILD_WALL);
             }
             case TAKE_PACKET -> {
                 int count = packetSize(game);
@@ -87,6 +101,12 @@ final class ManualHandling {
         if (builtWalls < 0 || builtWalls >= 1 << game.rules.players() || packets < 0 || packets > 4 * game.rules.players())
             throw new IllegalStateException("Invalid manual handling state");
         if (active(game.phase) && !game.manual) throw new IllegalStateException("Automatic table in manual phase");
+        if (game.manual && game.wall != null && (game.wall.diceOne < 0 || game.wall.diceOne > 6
+            || game.wall.diceTwo < 0 || game.wall.diceTwo > 6
+            || (game.wall.diceOne == 0) != (game.wall.diceTwo == 0)
+            || game.phase == Game.Phase.BUILD_WALL && game.wall.diceOne != 0
+            || game.phase != Game.Phase.BUILD_WALL && game.wall.diceOne == 0))
+            throw new IllegalStateException("Invalid wall opening dice");
         if (game.phase == Game.Phase.SHUFFLE && game.wall != null) throw new IllegalStateException("Unshuffled wall already exists");
         if ((game.phase == Game.Phase.BUILD_WALL || game.phase == Game.Phase.DEAL || game.phase == Game.Phase.DRAW) && game.wall == null)
             throw new IllegalStateException("Manual wall missing");

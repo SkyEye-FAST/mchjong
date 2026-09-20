@@ -159,6 +159,7 @@ class AssetContractTest {
                 "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
+        for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");
         try (var textures = Files.walk(resources.resolve("assets/mchjong/textures"))) {
             assertEquals(expectedTextures, textures.filter(Files::isRegularFile)
                     .filter(file -> file.toString().endsWith(".png")).map(file -> file.getFileName().toString())

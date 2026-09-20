@@ -60,7 +60,7 @@ final class TileResourceSmoke {
         require(Arrays.equals(originalGlyphs, glyphBytes), "Glyph bytes changed after reload");
         require(Arrays.equals(originalSticks, stickBytes), "Point-stick bytes changed after reload");
         try (var sticks = NativeImage.read(new ByteArrayInputStream(stickBytes))) {
-            require(sticks.getWidth() == 384 && sticks.getHeight() == 160, "Point-stick atlas dimensions changed");
+            require(sticks.getWidth() == 384 && sticks.getHeight() == 192, "Six point-stick atlas rows did not reach the client");
         }
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
             require(atlas.getWidth() == 2048 && atlas.getHeight() == 4096, "High-resolution atlas did not reach the client");

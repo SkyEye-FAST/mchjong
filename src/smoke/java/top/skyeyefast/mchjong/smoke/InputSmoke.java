@@ -21,6 +21,15 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 final class InputSmoke {
     private InputSmoke() {}
 
+    static void pointer(Minecraft client, double x, double y) {
+        long window = client.getWindow().getWindow();
+        var cursor = GLFW.glfwSetCursorPosCallback(window, null);
+        if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
+        try { cursor.invoke(window, x * client.getWindow().getScreenWidth() / client.screen.width,
+            y * client.getWindow().getScreenHeight() / client.screen.height); }
+        finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
+    }
+
     static void verify(Minecraft client, MahjongTableBlockEntity table) {
         boolean active = client.isWindowActive();
         client.setWindowActive(true);

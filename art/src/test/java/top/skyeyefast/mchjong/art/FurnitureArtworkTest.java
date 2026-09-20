@@ -106,10 +106,10 @@ class FurnitureArtworkTest {
     @Test void pointStickStripsHaveTheReferenceColorsAndSeparateRoundMarks() throws Exception {
         var image = ImageIO.read(textures.getParent().resolve("point_sticks.png").toFile());
         assertEquals(384, image.getWidth());
-        assertEquals(160, image.getHeight());
-        int[] colors = {0xf4f4ef, 0xf4f4ef, 0x007cbe, 0xefc400, 0xd81427};
-        int[] dots = {0, 8, 1, 5, 9};
-        for (int row = 0; row < 5; row++) {
+        assertEquals(192, image.getHeight());
+        int[] colors = {0xf4f4ef, 0xf4f4ef, 0x007cbe, 0xefc400, 0xd81427, 0x202326};
+        int[] dots = {0, 8, 1, 5, 9, 9};
+        for (int row = 0; row < 6; row++) {
             assertEquals(0xff000000 | colors[row], image.getRGB(0, row * 32 + 16));
             int ink = 0xff000000 | (row == 1 ? 0xb5bbba : 0xe9eeed);
             var pixels = new HashSet<Integer>();

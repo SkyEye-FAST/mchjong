@@ -54,13 +54,15 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
         MahjongUi.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         graphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + 3, MahjongUi.ACCENT);
-        graphics.fill(leftPos + 184, topPos + 16, leftPos + 185, topPos + imageHeight - 4, MahjongUi.EDGE);
+        graphics.fill(leftPos + 184, topPos + 16, leftPos + 185, topPos + 104, MahjongUi.EDGE);
+        graphics.fill(leftPos + 184, topPos + 134, leftPos + 185, topPos + imageHeight - 4, MahjongUi.EDGE);
         for (Slot slot : menu.slots) MahjongUi.slot(graphics, leftPos + slot.x, topPos + slot.y, carrier(slot));
     }
 
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 14, 5, 276, MahjongUi.TEXT, false);
         MahjongUi.text(graphics, font, Component.translatable("box.mchjong.stick_storage"), 14, 104, 160, MahjongUi.MUTED, false);
+        MahjongUi.text(graphics, font, Component.translatable("item.mchjong.dice"), 170, 104, 24, MahjongUi.MUTED, false);
         MahjongUi.text(graphics, font, playerInventoryTitle, 14, 132, 160, MahjongUi.MUTED, false);
         var items = menu.items();
         int tiles = MahjongSupplies.tileCount(items);

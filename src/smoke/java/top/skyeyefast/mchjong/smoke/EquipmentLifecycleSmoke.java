@@ -167,6 +167,7 @@ final class EquipmentLifecycleSmoke {
         table.useEquipment(player, red);
         check(green.isEmpty() && red.isEmpty() && countInventory(player, greenExpected) == 1, "Replacing cloth did not conserve items");
 
+        PointStickMenuSmoke.stockDrawers(table);
         game = table.participantGame(player);
         SeatingFixtures.startPositioned(game, player.getUUID());
         check(game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
@@ -187,8 +188,12 @@ final class EquipmentLifecycleSmoke {
         var expectedSticks = sticks.copy();
         String scoresBefore = TableNetworking.JSON.toJson(game);
         if (!table.automatic()) {
-            PointStickMenuSmoke.put(player, table, 0, sticks);
-            check(sticks.isEmpty() && table.equipment().drawer(0).getItem(0).getCount() == 3, "Physical point-stick storage failed");
+            var menu = PointStickMenuSmoke.open(player, table, 0);
+            menu.setCarried(sticks);
+            menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
+            check(menu.getCarried().getCount() == 3 && table.equipment().drawer(0).getItem(0).isEmpty(), "Running table accepted external sticks");
+            menu.setCarried(ItemStack.EMPTY);
+            player.closeContainer();
         } else {
             table.openSticks(player, 0);
             check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu), "Automatic table opened a manual drawer");
@@ -201,8 +206,9 @@ final class EquipmentLifecycleSmoke {
         check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
         if (!table.automatic()) {
-            PointStickMenuSmoke.take(player, table, 0);
-            check(countInventory(player, expectedSticks) == 3 && table.equipment().drawer(0).isEmpty(), "Drawer did not return its physical stack");
+            for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);
+            check(table.equipment().drawer(0).isEmpty(), "Drawers did not return their starting stocks");
+            player.getInventory().add(expectedSticks.copy());
         }
         TableStorageSmoke.emptyHand(player);
         player.setShiftKeyDown(true);
@@ -214,7 +220,7 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         TableStorageSmoke.put(player, table, 1, findInventory(player, firstExpected));
         table.useEquipment(player, findInventory(player, redExpected));
-        if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, findInventory(player, expectedSticks));
+        if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, findInventory(player, expectedSticks).split(3));
 
         var saved = table.saveWithoutMetadata(level.registryAccess());
         var loaded = new MahjongTableBlockEntity(CENTER, block.defaultBlockState());

@@ -6,9 +6,9 @@ import java.awt.RenderingHints;
 import java.awt.geom.Ellipse2D;
 import java.awt.image.BufferedImage;
 
-/** Colored physical sticks: blank, 100, 1,000, 5,000 and 10,000 points, in atlas order. */
+/** Colored physical sticks: blank, 100, 1,000, 5,000, 10,000 and -10,000 points, in atlas order. */
 final class PointStickArtwork {
-    static final int WIDTH = 384, ROW_HEIGHT = 32, ROWS = 5;
+    static final int WIDTH = 384, ROW_HEIGHT = 32, ROWS = 6;
     private PointStickArtwork() {}
 
     static BufferedImage texture() {
@@ -16,7 +16,7 @@ final class PointStickArtwork {
         var g = image.createGraphics();
         try {
             g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
-            int[] bodies = {0xf4f4ef, 0xf4f4ef, 0x007cbe, 0xefc400, 0xd81427};
+            int[] bodies = {0xf4f4ef, 0xf4f4ef, 0x007cbe, 0xefc400, 0xd81427, 0x202326};
             for (int row = 0; row < ROWS; row++) {
                 int y = row * ROW_HEIGHT;
                 var body = new Color(bodies[row]);
@@ -41,7 +41,7 @@ final class PointStickArtwork {
                         for (float x : new float[]{-11, 11})
                             for (float z : new float[]{-7, 7}) dot(g, y, x, z, 3.5f);
                     }
-                    case 4 -> {
+                    case 4, 5 -> {
                         dot(g, y, 0, 0, 5.5f);
                         for (int side : new int[]{-1, 1}) {
                             dot(g, y, side * 55, 0, 6.5f);

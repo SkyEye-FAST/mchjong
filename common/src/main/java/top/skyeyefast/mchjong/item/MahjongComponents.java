@@ -8,7 +8,7 @@ import net.minecraft.core.component.DataComponentType;
 
 /** Shared values, registered by the loaders before recipes and item stacks are decoded. */
 public final class MahjongComponents {
-    public static final Set<Integer> DENOMINATIONS = Set.of(0, 100, 1000, 5000, 10000);
+    public static final Set<Integer> DENOMINATIONS = Set.of(-10000, 0, 100, 1000, 5000, 10000);
     public static final DataComponentType<FurnitureWood> WOOD = type(FurnitureWood.CODEC);
     public static final DataComponentType<TileData> TILE = type(TileData.CODEC);
     public static final DataComponentType<TileFacePreset> FACE_PRESET = type(TileFacePreset.CODEC);

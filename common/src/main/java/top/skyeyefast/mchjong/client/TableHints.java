@@ -52,17 +52,21 @@ final class TableHints extends MahjongButton {
         }
     }
 
-    record Layout(int x, int y, int width, int height, int step, int tileWidth) {}
+    record Layout(int x, int y, int width, int height, int step, int tileWidth, int columns) {}
 
     static Layout layout(int rightBound, int leftBound, int topBound, int bottom, int count) {
         if (count == 0) return null;
-        int step = Math.min(20, (rightBound - leftBound - 12) / count);
-        int tileWidth = Math.min(step - 4, (int) ((bottom - topBound - 32) * TileMesh.WIDTH / TileMesh.HEIGHT));
+        int available = rightBound - leftBound;
+        int columns = Math.min(count, (available - 12) / 12);
+        if (columns < 1) return null;
+        int rows = (count + columns - 1) / columns;
+        int step = Math.min(20, (available - 12) / columns);
+        int tileWidth = Math.min(step - 4, (int) (((bottom - topBound - 20) / rows - 12) * TileMesh.WIDTH / TileMesh.HEIGHT));
         if (tileWidth < 5) return null;
-        int height = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH) + 32;
-        int span = Math.max(112, count * step + 12);
+        int height = rows * (Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH) + 12) + 20;
+        int span = Math.max(Math.min(112, available), columns * step + 12);
         if (span > rightBound - leftBound) return null;
-        return new Layout(leftBound + (rightBound - leftBound - span) / 2, bottom - height, span, height, step, tileWidth);
+        return new Layout(leftBound + (rightBound - leftBound - span) / 2, bottom - height, span, height, step, tileWidth, columns);
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -85,10 +89,11 @@ final class TableHints extends MahjongButton {
         int tileHeight = Math.round(box.tileWidth() * TileMesh.HEIGHT / TileMesh.WIDTH);
         for (int index = 0; index < waits.size(); index++) {
             var wait = waits.get(index);
-            int x = box.x() + 6 + index * box.step();
-            TileGui.tile(graphics, wait.kind() * 4, x, box.y() + 17, box.tileWidth(), false, false, false, preset);
+            int x = box.x() + 6 + index % box.columns() * box.step();
+            int y = box.y() + 17 + index / box.columns() * (tileHeight + 12);
+            TileGui.tile(graphics, wait.kind() * 4, x, y, box.tileWidth(), false, false, false, preset);
             graphics.drawCenteredString(font, Integer.toString(wait.remaining()), x + box.tileWidth() / 2,
-                box.y() + 20 + tileHeight, wait.remaining() == 0 ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
+                y + 3 + tileHeight, wait.remaining() == 0 ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
         }
     }
 }

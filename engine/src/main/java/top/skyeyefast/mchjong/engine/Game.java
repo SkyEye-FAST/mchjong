@@ -537,7 +537,7 @@ public final class Game {
 
     void createWall() {
         if (!equipped()) throw new IllegalStateException("Cannot deal without a physical set");
-        wall = new Wall(rules, seed + 0x9e3779b97f4a7c15L * handNumber, dealer, suppliedTiles);
+        wall = new Wall(rules, seed + 0x9e3779b97f4a7c15L * handNumber, dealer, suppliedTiles, !manual);
     }
 
     int next(int seat) { return (seat + 1) % rules.players(); }

@@ -128,6 +128,11 @@ final class TableStorageSmoke {
             player.getInventory().selected = slot;
             return;
         }
-        throw new IllegalStateException("Fixture needs an empty hotbar slot");
+        for (int slot = 9; slot < 36; slot++) if (player.getInventory().getItem(slot).isEmpty()) {
+            player.getInventory().setItem(slot, player.getInventory().removeItemNoUpdate(8));
+            player.getInventory().selected = 8;
+            return;
+        }
+        throw new IllegalStateException("Fixture inventory is full");
     }
 }

@@ -40,7 +40,7 @@ final class DepositVisualSmoke {
                 base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,
                 0, 0, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), false, null,
-                table.automatic() ? null : new TableView.Handling(15, -1, 0), base.autoPlay(), false, 1);
+                table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1);
             table.acceptView(fixture);
             var screen = new TableScreen(table.getBlockPos());
             client.setScreen(screen);

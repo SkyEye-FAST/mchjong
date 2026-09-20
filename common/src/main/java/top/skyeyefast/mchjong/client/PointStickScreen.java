@@ -14,7 +14,7 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
     public PointStickScreen(PointStickMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
         parent = TableScreen.active(net.minecraft.client.Minecraft.getInstance().screen);
-        imageWidth = 286;
+        imageWidth = 304;
         imageHeight = 216;
     }
 
@@ -60,7 +60,13 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         super.render(graphics, mouseX, mouseY, partialTick);
-        renderTooltip(graphics, mouseX, mouseY);
+        if (hoveredSlot != null && hoveredSlot.index < PointStickMenu.DRAWER_SLOTS
+            && hoveredSlot.index % top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT) {
+            var lines = new java.util.ArrayList<Component>();
+            if (hoveredSlot.hasItem()) lines.addAll(getTooltipFromItem(minecraft, hoveredSlot.getItem()));
+            lines.add(Component.translatable("sticks.mchjong.bust_reserve"));
+            graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
+        } else renderTooltip(graphics, mouseX, mouseY);
     }
 
     @Override public void onClose() {

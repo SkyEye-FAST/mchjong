@@ -49,12 +49,12 @@ final class TenpaiHintsSmoke {
                 // Hover only: moving to the button must keep this discard without a selected tile.
                 int tileWidth = 20;
                 int x = (client.screen.width - 14 * tileWidth - 6) / 2 + 13 * tileWidth + 6 + tileWidth / 2;
-                pointer(client, x, client.screen.height - 24 - 20 - 15);
-            } else pointer(client, 4, 4);
+                InputSmoke.pointer(client, x, client.screen.height - 24 - 20 - 15);
+            } else InputSmoke.pointer(client, 4, 4);
         }
         if (ticks == 3) {
             var button = hintButton(client);
-            pointer(client, button.getX() + 10, button.getY() + 10);
+            InputSmoke.pointer(client, button.getX() + 10, button.getY() + 10);
         }
         if (ticks == 10 || ticks == 20) {
             var button = hintButton(client);
@@ -68,7 +68,7 @@ final class TenpaiHintsSmoke {
                 + switch (sample % 3) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }
                 + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), ignored -> {});
             if (ticks == 10) {
-                pointer(client, 4, 4);
+                InputSmoke.pointer(client, 4, 4);
                 client.screen.setFocused(null);
                 for (int i = 0; i < 30 && client.screen.getFocused() != button; i++)
                     client.screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
@@ -118,7 +118,7 @@ final class TenpaiHintsSmoke {
         fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
             original.rules(), Game.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
             original.wallBreak(), wall, null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125), new Action(Action.Type.DISCARD, 0)) : List.of(),
-            List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), false, null, null, original.autoPlay(), false, 1);
+            List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), false, null, null, original.autoPlay(), true, 1);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         table.acceptView(fixture); client.setScreen(new TableScreen(table.getBlockPos()));
@@ -140,12 +140,4 @@ final class TenpaiHintsSmoke {
             .filter(widget -> widget.getMessage().getString().startsWith(title)).findFirst().orElseThrow();
     }
 
-    private static void pointer(Minecraft client, double x, double y) {
-        long window = client.getWindow().getWindow();
-        var cursor = GLFW.glfwSetCursorPosCallback(window, null);
-        if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
-        try { cursor.invoke(window, x * client.getWindow().getScreenWidth() / client.screen.width,
-            y * client.getWindow().getScreenHeight() / client.screen.height); }
-        finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
-    }
 }

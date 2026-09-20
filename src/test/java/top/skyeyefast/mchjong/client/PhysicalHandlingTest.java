@@ -32,6 +32,10 @@ class PhysicalHandlingTest {
         var view = game.view(id(seat));
         int index = IntStream.range(0, view.actions().size()).filter(i -> view.actions().get(i).type() == type).findFirst().orElseThrow();
         assertTrue(game.act(id(seat), view.decision(), index));
+        if (type == Action.Type.BUILD_WALL && game.view(null).handling().builtWalls() == (1 << game.rules().players()) - 1) {
+            act(game, game.view(null).dealer(), Action.Type.PICK_UP_DICE);
+            act(game, game.view(null).dealer(), Action.Type.ROLL_DICE);
+        }
     }
 
     private static void conserved(TableView view) {
@@ -143,7 +147,7 @@ class PhysicalHandlingTest {
         var base = game.view(id(dealer));
         int deadSlot = base.wall().size() - 1;
         var before = snapshot(base, base.revision() + 1, Game.Phase.DRAW, base.wall(), base.seats(),
-            new TableView.Handling(7, deadSlot, 1), List.of(new Action(Action.Type.DRAW)));
+            new TableView.Handling(7, deadSlot, 1, 1, 1, false), List.of(new Action(Action.Type.DRAW)));
         var wall = new ArrayList<>(before.wall());
         wall.set(wall.size() - 15, Tile.ABSENT);
         var seats = new ArrayList<>(before.seats());
@@ -153,7 +157,7 @@ class PhysicalHandlingTest {
         hand.add(drawn);
         seats.set(dealer, new TableView.Seat(player.name(), true, false, false, player.points(), hand, drawn,
             player.melds(), player.river(), player.norths(), false, false));
-        var after = snapshot(before, before.revision() + 1, Game.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0), List.of());
+        var after = snapshot(before, before.revision() + 1, Game.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
         var animation = new TableAnimation();
         animation.accept(before, 0);
         animation.accept(after, 1000);
@@ -170,7 +174,7 @@ class PhysicalHandlingTest {
         for (int packet = 0; packet < 16; packet++) act(game, game.view(null).turn(), Action.Type.TAKE_PACKET);
         var base = game.view(id(dealer));
         var receipt = snapshot(base, base.revision() + 1, Game.Phase.HAND_END, base.wall(), base.seats(),
-            new TableView.Handling(15, -1, 0), List.of(new Action(Action.Type.NEXT)));
+            new TableView.Handling(15, -1, 0, 1, 1, false), List.of(new Action(Action.Type.NEXT)));
         var before = TableScene.build(receipt);
         var source = TableHandling.source(receipt, before);
         assertNotNull(source);

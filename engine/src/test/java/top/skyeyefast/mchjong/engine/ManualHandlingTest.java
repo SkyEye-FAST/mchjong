@@ -50,7 +50,7 @@ class ManualHandlingTest {
             Game game = game(rules, true);
             assertEquals(Game.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
-            assertEquals(new TableView.Handling(0, -1, 0), game.view(null).handling());
+            assertEquals(new TableView.Handling(0, -1, 0, 0, 0, false), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(Game.Phase.SHUFFLE, game.phase());
             act(game, game.dealer, Action.Type.SHUFFLE);
@@ -62,6 +62,7 @@ class ManualHandlingTest {
                     game.view(null).wall().stream().filter(tile -> tile == Tile.HIDDEN).count());
                 game = reload(game);
             }
+            openWall(game);
             assertEquals(Game.Phase.DEAL, game.phase());
             for (int packet = 0; packet < 4 * rules.players(); packet++) {
                 assertTrue(game.view(id(game.next(game.turn))).actions().isEmpty());
@@ -76,7 +77,8 @@ class ManualHandlingTest {
             assertEquals(Game.Phase.DRAW, game.phase());
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(13, game.players[seat].hand.size());
             int remaining = game.wall.remaining();
-            assertEquals(new TableView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1), game.view(null).handling());
+            assertEquals(new TableView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1,
+                game.wall.diceOne, game.wall.diceTwo, false), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(remaining, game.wall.remaining(), "Human draw must not happen on a timeout");
             act(game, game.dealer, Action.Type.DRAW);
@@ -109,9 +111,10 @@ class ManualHandlingTest {
                 game = reload(game);
             }
             assertTrue(game.act(id(0), token, 0), "The original held wall action must remain valid");
-            assertEquals(Game.Phase.DEAL, game.phase());
+            assertEquals(Game.Phase.BUILD_WALL, game.phase());
             assertNotEquals(token, game.view(id(0)).decision());
             assertFalse(game.act(id(0), token, 0), "A wall action must not replay into packet dealing");
+            openWall(game);
             game.validate();
         }
     }
@@ -127,7 +130,7 @@ class ManualHandlingTest {
             assertEquals((1 << rules.players()) - 2, game.view(id(0)).handling().builtWalls());
             assertEquals(token, game.view(id(0)).decision());
             assertTrue(game.act(id(0), token, 0));
-            assertEquals(Game.Phase.DEAL, game.phase());
+            openWall(game);
             game.validate();
         }
     }
@@ -149,6 +152,7 @@ class ManualHandlingTest {
         Game game = game(RuleSet.MAHJONG_SOUL_3, true);
         act(game, game.dealer, Action.Type.SHUFFLE);
         for (int seat = 0; seat < game.rules.players(); seat++) act(game, seat, Action.Type.BUILD_WALL);
+        openWall(game);
         for (int packet = 0; packet < 4 * game.rules.players(); packet++) act(game, game.turn, Action.Type.TAKE_PACKET);
         game.draw(game.dealer, true, true);
         int remaining = game.wall.remaining();
@@ -186,5 +190,21 @@ class ManualHandlingTest {
             var replay = game.pendingReplays().getFirst();
             assertEquals(1, replay.hands().size());
         }
+    }
+
+    private static void openWall(Game game) {
+        assertEquals(0, game.wall.diceOne);
+        assertEquals(0, game.wall.cursor);
+        for (int seat = 0; seat < game.rules.players(); seat++) if (seat != game.dealer)
+            assertTrue(game.view(id(seat)).actions().isEmpty());
+        act(game, game.dealer, Action.Type.PICK_UP_DICE);
+        assertTrue(game.view(null).handling().diceHeld());
+        reload(game);
+        act(game, game.dealer, Action.Type.ROLL_DICE);
+        assertFalse(game.view(null).handling().diceHeld());
+        assertTrue(game.wall.diceOne >= 1 && game.wall.diceOne <= 6);
+        assertTrue(game.wall.diceTwo >= 1 && game.wall.diceTwo <= 6);
+        assertEquals(WallLayout.breakOffset(game.dealer, game.wall.diceOne + game.wall.diceTwo,
+            game.wall.tiles.size(), game.rules.players()), game.wall.breakOffset);
     }
 }

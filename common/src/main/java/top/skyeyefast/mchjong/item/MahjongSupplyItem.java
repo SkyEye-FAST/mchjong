@@ -14,6 +14,7 @@ public class MahjongSupplyItem extends Item {
 
     @Override public Component getName(ItemStack stack) {
         Integer points = stack.get(MahjongComponents.POINTS);
+        if (points != null && points == -10000) return Component.translatable("item.mchjong.bust_stick");
         if (points != null && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
         return super.getName(stack);
     }

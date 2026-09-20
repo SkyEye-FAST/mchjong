@@ -25,7 +25,7 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
 
     public static java.util.Map<net.minecraft.world.item.Item, Integer> markings() {
         return java.util.Map.of(Items.BLACK_DYE, 100, Items.REDSTONE, 1000,
-            Items.LAPIS_LAZULI, 5000, Items.GOLD_NUGGET, 10000);
+            Items.LAPIS_LAZULI, 5000, Items.GOLD_NUGGET, 10000, Items.CHARCOAL, -10000);
     }
 
     public static List<net.minecraft.world.item.Item> upgradePattern() {

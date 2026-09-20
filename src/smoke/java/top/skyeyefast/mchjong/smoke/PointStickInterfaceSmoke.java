@@ -24,13 +24,13 @@ final class PointStickInterfaceSmoke {
             next(1);
         } else if (stage == 1 && ticks >= 5) {
             check(menu(client).getCarried().getCount() == 2, "Native right-click did not split the chosen payment");
-            clickSlot(client, 9, 0);
+            clickSlot(client, 10, 0);
             next(2);
         } else if (stage == 2 && ticks >= 10) {
             var menu = menu(client);
             check(menu.totalPoints(0) == 1000 && menu.totalPoints(1) == 2000 && menu.getCarried().isEmpty(), "Native hand payment did not reach the recipient");
             capture(client, output, "53-drawer-payment.png");
-            clickSlot(client, 9, 0);
+            clickSlot(client, 10, 0);
             next(3);
         } else if (stage == 3 && ticks >= 5) {
             clickSlot(client, 0, 0);
@@ -50,7 +50,7 @@ final class PointStickInterfaceSmoke {
             reload.join();
             check(client.screen instanceof PointStickScreen && client.screen.width == 320 && client.screen.height == 240,
                 "Point-stick interface did not retain its 320x240 native layout");
-            check(menu(client).slots.size() == 72, "Drawer rows or player inventory changed during reload");
+            check(menu(client).slots.size() == 76, "Drawer rows or player inventory changed during reload");
             check(128 + client.font.split(Component.translatable("sticks.mchjong.deliver"), 94).size() * 10 <= 200,
                 "Point-stick instructions overlap the balance legend");
             capture(client, output, "54-drawer-" + LANGUAGES[languageIndex] + "-small.png");

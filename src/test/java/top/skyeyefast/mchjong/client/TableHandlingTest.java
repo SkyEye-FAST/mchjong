@@ -28,6 +28,10 @@ class TableHandlingTest {
         int index = -1;
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) index = i;
         assertTrue(index >= 0 && game.act(player(seat), view.decision(), index));
+        if (type == Action.Type.BUILD_WALL && game.view(null).handling().builtWalls() == (1 << game.rules().players()) - 1) {
+            act(game, game.view(null).dealer(), Action.Type.PICK_UP_DICE);
+            act(game, game.view(null).dealer(), Action.Type.ROLL_DICE);
+        }
         game.validate();
     }
 

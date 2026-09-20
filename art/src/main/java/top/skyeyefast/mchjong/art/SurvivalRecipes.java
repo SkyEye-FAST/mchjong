@@ -19,6 +19,9 @@ final class SurvivalRecipes {
     private SurvivalRecipes() {}
 
     static void generate(GenerateData output) throws IOException {
+        output.write("data/mchjong/recipe/dice.json", Map.of("type", "minecraft:crafting_shapeless",
+            "category", "misc", "ingredients", List.of(item("bone_meal"), item("white_dye"), item("black_dye")),
+            "result", stack("dice", 2, Map.of())));
         for (String wood : WOODS) {
             var key = Map.of("S", item(wood + "_slab"), "F", item(wood + "_fence"));
             String suffix = wood.equals("oak") ? "" : "_" + wood;

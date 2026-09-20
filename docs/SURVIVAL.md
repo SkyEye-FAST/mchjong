@@ -36,6 +36,7 @@ of the finite case examples.
 | Mahjong tile, blank or engraved | `mchjong:mahjong_tile` | Item |
 | Mahjong box | `mchjong:mahjong_box` | Storage item |
 | Point stick, blank or marked | `mchjong:point_stick` | Item |
+| Dice | `mchjong:dice` | Item |
 | Mahjong dye | `mchjong:mahjong_dye` | Item, stacks to 64 |
 | Red dora dye | `mchjong:red_dora_dye` | Item, stacks to 64 |
 | Undo dye | `mchjong:undo_dye` | Item, stacks to 64 |
@@ -52,7 +53,7 @@ The two tables share the `mchjong:mahjong_table` block entity type. Stools use
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
 | `mchjong:face_preset` | `kansai`, `kanto` | Built-in tile-face design |
-| `mchjong:points` | `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
+| `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
 | `minecraft:container` | Native item-stack container | Mahjong boxes |
 
@@ -177,7 +178,7 @@ stored safely inside the case during those games.
 ## Boxes, installation and removal
 
 Right-click a held box to open its dedicated supply-case screen. It has 45 tile
-slots, nine point-stick slots and one dye slot; shift-clicks route each supply to
+slots, nine point-stick slots, a dice slot beside the sticks and one dye slot; shift-clicks route each supply to
 its own compartment. The carried box slot is locked for ordinary clicks,
 shift-transfer, number keys, offhand swaps, dragging, double-click collection,
 throwing and creative cloning. Neither the carrier nor another box can be
@@ -227,15 +228,28 @@ Stored equipment is returned once by the removal callback.
 
 ## Ordinary and automatic table flows
 
+Prepare at least two dice in the installed cases and the fixed starting kit
+for each participating seat: 25000 points uses ten 100s, four 1000s, two 5000s
+and one 10000. A 30000-point start adds one 5000; 35000 adds one 10000.
+Custom starts retain the small payment denominations and adjust the remainder.
+Missing denominations are topped up from the installed cases in one transaction;
+insufficient combined stock prevents starting without moving any supplies.
+When bankruptcy is disabled, each seat also needs one −10000 bust stick.
+Bone meal, white dye and black dye craft two dice. The complete creative case
+includes two dice.
+
 An ordinary table offers these server-authorized actions:
 
 1. Ready the players; the dealer sweeps the face-down tiles across the felt to shuffle.
 2. Each participant drags their highlighted loose tiles toward their own wall.
-3. Participants pull starting packets from the highlighted wall stack toward
+3. Once every wall is built, the dealer picks up the two central dice and rolls
+   them to determine the opening. Hover the central dice to see both faces and
+   their total. Every new hand requires a new dealer roll.
+4. Participants pull starting packets from the highlighted wall stack toward
    their hands in turn: three rounds of four, then one.
-4. The dealer pulls the fourteenth tile into their hand. Subsequent normal and
+5. The dealer pulls the fourteenth tile into their hand. Subsequent normal and
    replacement draws use the same drag interaction at the appropriate wall stack.
-5. Discard, call and win with the existing rules controls. Hand over physical
+6. Discard, call and win with the existing rules controls. Hand over physical
    point sticks through the side drawers, close the result panel, and sweep
    your tiles to the center to collect them for the next hand.
 
@@ -279,14 +293,22 @@ See [ASSETS.md](ASSETS.md).
 Ordinary tables have four wooden drawers below their side rails. Open a drawer
 by interacting with its front, including from the seated overlay. The native
 inventory shortcut E also opens your own drawer while seated. The
-container exposes nine slots per player. Marked denominations share a drawer;
+container exposes nine scoring slots and a separate final reserve slot per player.
+The black −10000 bust stick shares the red 10000 stick's markings and is crafted
+from blank sticks and charcoal. It has no value in the reserve slot; moving it
+to a scoring slot subtracts 10000 from the physical balance.
+Marked denominations share a drawer;
 matching stacks use vanilla splitting, drag distribution and shift-click rules.
 
 Take sticks from your own row and place the chosen amount in the recipient's
 row to pay by hand. During a match, other human players' drawers accept deposits;
 their owners control withdrawals. The host handles bot drawers in practice.
-The opened drawer is highlighted and receives shift-clicked inventory stacks.
-Closing the container while seated returns to the table overlay.
+Before play, the highlighted drawer receives shift-clicked inventory stacks.
+During play, payments stay within the table: backpack insertion, removal and
+hotbar exchanges are locked. Closing returns any unpaid cursor sticks to the
+drawers and returns the player to the table overlay. Ending or abandoning the
+match restores the opening drawer contents and returns the two dice to their
+case. These reserved supplies are not consumed or duplicated by play.
 
 The screen pairs each physical total with the referee's signed game score.
 Scores provide the settlement reference; players handle the actual currency

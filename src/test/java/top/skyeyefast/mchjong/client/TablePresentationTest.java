@@ -15,11 +15,17 @@ class TablePresentationTest {
             assertTrue(box.y() >= bounds[2]);
             assertTrue(box.x() + box.width() <= bounds[0] - 10);
             assertEquals(bounds[3], box.y() + box.height());
+            assertTrue(Math.abs((bounds[0] - 10 + bounds[1]) / 2.0 - (box.x() + box.width() / 2.0)) <= .5);
             assertTrue(box.tileWidth() >= 5);
             assertTrue(12 * box.step() + box.tileWidth() + 12 <= box.width());
         }
         assertNull(TableHints.layout(320, 116, 108, 165, 0));
         assertNull(TableHints.layout(320, 116, 108, 130, 13));
+        var wrapped = TableHints.layout(208, 112, 80, 165, 13);
+        assertNotNull(wrapped);
+        assertTrue(wrapped.columns() < 13);
+        assertEquals(160, wrapped.x() + wrapped.width() / 2);
+        assertEquals(165, wrapped.y() + wrapped.height());
     }
 
     @Test void seatedMeldSummaryPreservesTextAndFallsBackAtNarrowWidths() {

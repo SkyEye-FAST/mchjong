@@ -39,6 +39,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         if (table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE))
             TableIndicator.render(view, pose, buffers, light);
         TableDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
+        TableDice.renderWorld(view, pose, buffers, light);
         if (glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
         tiles(table, frames, pose, buffers, light, Layer.OUTLINE);
         pose.popPose();

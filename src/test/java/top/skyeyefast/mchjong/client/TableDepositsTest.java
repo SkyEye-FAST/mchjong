@@ -19,7 +19,7 @@ class TableDepositsTest {
                 List.of(), List.of(), List.of(), (declared & 1 << seat) != 0, false));
         return new TableView(new UUID(0, 1), 1, 1, 1, rules.config(), Game.Phase.TURN, 0, 0, 0, 0, deposits,
             0, 50, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), false, null, manual ? new TableView.Handling(15, -1, 0) : null, null, false, 1);
+            TimeControl.DEFAULT, List.of(), List.of(), false, null, manual ? new TableView.Handling(15, -1, 0, 1, 1, false) : null, null, false, 1);
     }
 
     @Test void bothTablesDisplayTheEntirePotAndRetainCarriedDepositsForThreeAndFourPlayers() {

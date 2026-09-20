@@ -183,6 +183,7 @@ public final class FurnitureMesh {
             case 1000 -> 2;
             case 5000 -> 3;
             case 10000 -> 4;
+            case -10000 -> 5;
             default -> throw new IllegalArgumentException("Unknown point-stick denomination: " + points);
         };
         var out = buffers.getBuffer(TileRenderTypes.STICKS);
@@ -198,7 +199,7 @@ public final class FurnitureMesh {
     private static void stickFace(PoseStack pose, VertexConsumer out, int light, int row,
                                   float nx, float ny, float nz, float... corners) {
         float u0 = .5f / 384, u1 = 1 - u0;
-        float v0 = (row * 32 + .5f) / 160, v1 = ((row + 1) * 32 - .5f) / 160;
+        float v0 = (row * 32 + .5f) / 192, v1 = ((row + 1) * 32 - .5f) / 192;
         for (int i = 0; i < 4; i++) {
             float x = corners[3 * i], y = corners[3 * i + 1], z = corners[3 * i + 2];
             // Both broad faces are printed; side faces sample the unmarked end of the same strip.

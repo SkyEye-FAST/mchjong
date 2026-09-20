@@ -13,7 +13,8 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 /** Removable physical equipment and a strictly public appearance projection. Never holds game state. */
 public final class TableEquipment {
     public static final int BOX_SLOTS = 2;
-    public static final int STICK_SLOTS = 9;
+    public static final int STICK_SLOTS = 10;
+    public static final int BUST_SLOT = 9;
     private final net.minecraft.world.SimpleContainer boxes = new net.minecraft.world.SimpleContainer(BOX_SLOTS);
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
@@ -22,6 +23,7 @@ public final class TableEquipment {
         .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
     private int activeBox = -1;
     private boolean loading;
+    private java.util.List<ItemStack> matchSticks = java.util.List.of();
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back = DyeColor.BLUE;
@@ -47,6 +49,124 @@ public final class TableEquipment {
     public TileFacePreset preset() { return preset; }
     public MahjongSupplies.Deck deck() { return deck; }
     public int activeBox() { return activeBox; }
+    public boolean matchActive() { return !matchSticks.isEmpty(); }
+
+    public void beginMatch() {
+        matchSticks = java.util.stream.IntStream.range(0, 4 * STICK_SLOTS)
+            .mapToObj(index -> drawers[index / STICK_SLOTS].getItem(index % STICK_SLOTS).copy()).toList();
+    }
+
+    public void endMatch() {
+        if (!matchActive()) return;
+        for (int index = 0; index < matchSticks.size(); index++)
+            drawers[index / STICK_SLOTS].setItem(index % STICK_SLOTS, matchSticks.get(index).copy());
+        matchSticks = java.util.List.of();
+    }
+
+    public void returnSticks(ItemStack carried, int side) {
+        for (int pass = 0; pass < 2; pass++) for (int offset = 0; offset < 4; offset++) {
+            var drawer = drawers[(side + offset) % 4];
+            for (int slot = 0; slot < STICK_SLOTS && !carried.isEmpty(); slot++) {
+                if (slot == BUST_SLOT && carried.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) != -10000) continue;
+                var target = drawer.getItem(slot);
+                if (pass == 0 && ItemStack.isSameItemSameComponents(target, carried)) {
+                    int count = Math.min(carried.getCount(), (slot == BUST_SLOT ? 1 : target.getMaxStackSize()) - target.getCount());
+                    target.grow(count); carried.shrink(count); drawer.setChanged();
+                } else if (pass == 1 && target.isEmpty()) drawer.setItem(slot, carried.split(slot == BUST_SLOT ? 1 : carried.getMaxStackSize()));
+            }
+        }
+        if (!carried.isEmpty()) throw new IllegalStateException("Table payment no longer fits its drawers");
+    }
+
+    public boolean manualSuppliesReady() {
+        return preparedSupplies() != null;
+    }
+
+    public boolean prepareMatch() {
+        var prepared = preparedSupplies();
+        if (prepared == null) return false;
+        loading = true;
+        try {
+            for (int slot = 0; slot < BOX_SLOTS; slot++) boxes.setItem(slot, prepared.boxes().get(slot));
+            for (int seat = 0; seat < 4; seat++) for (int slot = 0; slot < STICK_SLOTS; slot++)
+                drawers[seat].setItem(slot, prepared.drawers().get(seat).get(slot));
+        } finally { loading = false; }
+        beginMatch();
+        return true;
+    }
+
+    /** Fixed starting kit, retaining small payment denominations before larger sticks. */
+    public static java.util.Map<Integer, Integer> startingKit(int points) {
+        var kit = new java.util.LinkedHashMap<Integer, Integer>();
+        for (int denomination : new int[]{100, 1000, 5000}) {
+            int count = Math.min(denomination == 100 ? 10 : denomination == 1000 ? 4 : 2, points / denomination);
+            kit.put(denomination, count);
+            points -= count * denomination;
+        }
+        for (int denomination : new int[]{10000, 5000, 1000, 100}) {
+            int count = points / denomination;
+            kit.merge(denomination, count, Integer::sum);
+            points -= count * denomination;
+        }
+        return java.util.Collections.unmodifiableMap(kit);
+    }
+
+    private record Supplies(java.util.List<ItemStack> boxes, java.util.List<java.util.List<ItemStack>> drawers) {}
+
+    private Supplies preparedSupplies() {
+        int dice = 0;
+        var boxCopies = new java.util.ArrayList<ItemStack>();
+        var contents = new java.util.ArrayList<java.util.List<ItemStack>>();
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var box = boxes.getItem(slot).copy();
+            boxCopies.add(box);
+            var items = MahjongSupplies.validBox(box) ? MahjongSupplies.contents(box).stream().map(ItemStack::copy).toList() : java.util.List.<ItemStack>of();
+            contents.add(items);
+            if (!items.isEmpty()) dice += items.get(MahjongSupplies.DICE_SLOT).getCount();
+        }
+        if (dice < 2) return null;
+        var copies = new java.util.ArrayList<java.util.List<ItemStack>>();
+        for (int seat = 0; seat < 4; seat++) {
+            var row = new java.util.ArrayList<ItemStack>();
+            for (int slot = 0; slot < STICK_SLOTS; slot++) row.add(drawers[seat].getItem(slot).copy());
+            copies.add(row);
+        }
+        var kit = new java.util.LinkedHashMap<>(startingKit(rules.startingPoints()));
+        if (!rules.bankruptcy()) kit.put(-10000, 1);
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var row = copies.get(seat);
+            for (var entry : kit.entrySet()) {
+                int denomination = entry.getKey(), missing = entry.getValue();
+                int start = denomination < 0 ? BUST_SLOT : 0, end = denomination < 0 ? STICK_SLOTS : BUST_SLOT;
+                for (int slot = start; slot < end; slot++) if (denomination(row.get(slot)) == denomination) missing -= row.get(slot).getCount();
+                for (var items : contents) for (int slot = MahjongSupplies.TILE_SLOTS; !items.isEmpty() && slot < MahjongSupplies.DYE_SLOT && missing > 0; slot++) {
+                    var source = items.get(slot);
+                    if (denomination(source) != denomination) continue;
+                    for (int pass = 0; pass < 2; pass++) for (int target = start; target < end && missing > 0 && !source.isEmpty(); target++) {
+                        var stack = row.get(target);
+                        if (pass == 0 && ItemStack.isSameItemSameComponents(source, stack)) {
+                            int count = Math.min(missing, Math.min(source.getCount(), stack.getMaxStackSize() - stack.getCount()));
+                            stack.grow(count); source.shrink(count); missing -= count;
+                        } else if (pass == 1 && stack.isEmpty()) {
+                            int count = Math.min(missing, Math.min(source.getCount(), source.getMaxStackSize()));
+                            row.set(target, source.split(count)); missing -= count;
+                        }
+                    }
+                }
+                if (missing > 0) return null;
+            }
+        }
+        for (int slot = 0; slot < BOX_SLOTS; slot++) if (!contents.get(slot).isEmpty())
+            boxCopies.get(slot).set(net.minecraft.core.component.DataComponents.CONTAINER,
+                net.minecraft.world.item.component.ItemContainerContents.fromItems(contents.get(slot)));
+        return new Supplies(boxCopies, copies);
+    }
+
+    private static int denomination(ItemStack stack) {
+        return stack.is(MahjongContent.POINT_STICK) ? stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) : 0;
+    }
+
+    public void abandonMatch() { matchSticks = java.util.List.of(); }
 
     public boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
         for (int slot = 0; slot < BOX_SLOTS; slot++)
@@ -107,9 +227,18 @@ public final class TableEquipment {
         for (var drawer : drawers) for (int slot = 0; slot < STICK_SLOTS; slot++)
             storedSticks.add(drawer.getItem(slot).saveOptional(registries));
         tag.put("stick_drawers", storedSticks);
+        ListTag initialSticks = new ListTag();
+        for (var stack : matchSticks) initialSticks.add(stack.saveOptional(registries));
+        tag.put("match_sticks", initialSticks);
     }
 
     public void load(CompoundTag tag, HolderLookup.Provider registries) {
+        if (tag.contains("match_sticks")) {
+            var stored = tag.getList("match_sticks", 10);
+            if (!stored.isEmpty() && stored.size() != 4 * STICK_SLOTS) throw new IllegalArgumentException("Invalid match drawers");
+            matchSticks = java.util.stream.IntStream.range(0, stored.size())
+                .mapToObj(index -> ItemStack.parseOptional(registries, stored.getCompound(index))).toList();
+        }
         // Update packets contain only the appearance fields, not either item stack.
         if (tag.contains("boxes")) {
             loading = true;

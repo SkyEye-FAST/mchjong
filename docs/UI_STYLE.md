@@ -29,6 +29,8 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 | `SELECTED` | `FF365851` | Selected fill |
 | `POSITIVE` | `FFA9D8B8` | Positive state, paired with a label |
 | `NEGATIVE` | `FFF0AAA4` | Errors/losses, paired with a label or sign |
+| `DANGER` | `FFA33232` | Persistent local furiten badge |
+| `ON_DANGER` | `FFFFFFFF` | White text on the furiten badge |
 
 Use these tokens rather than introducing almost-identical local colors. Tile
 artwork, felt dyes, suit colors and world materials are not interface tokens.
@@ -123,7 +125,9 @@ and never claim to reveal the actual wall. Center the popup on the actual privat
 hand, directly above its projected top edge in seated play and `TableHand` in
 immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
-of font glyph bearings. Closed settings persist locally and reset
+of language and font glyph bearings. Wrap waits into compact rows when side
+controls or player cards restrict the space, preserving the hand anchor and
+native text size. Closed settings persist locally and reset
 disables hints.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
@@ -172,7 +176,8 @@ retaining the complete name in the card's hover details.
 
 The box has its own registered menu type and `MahjongBoxScreen`. Never use the
 generic chest menu, title matching or a replacement of vanilla chest screens.
-The left side contains 45 tile slots, nine point-stick slots and 36 player slots.
+The left side contains 45 tile slots, nine point-stick slots, one adjacent dice
+slot and 36 player slots.
 The right side shows tile/stick counts, set readiness, a dedicated dye slot and
 face-preset controls. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
 has an accent border, a small lock mark and an explanatory tooltip.
@@ -183,6 +188,15 @@ The summary consumes synchronized menu contents. Client styling cannot move,
 sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
+
+Ordinary tables show two dice in the central felt area from match start. After
+wall building the dealer can focus/click the dice to pick them up, then roll via
+the native action control. Both faces use the item textures; hovering the region
+shows a compact face + face = total panel with native narrated numeric text.
+Immersive play becomes available after dealing completes, including its visible
+animation, and returns to seated play for the next hand's preparation. Dice and
+their hover target belong exclusively to seated play.
+The completed match returns dice and point-stick positions to storage.
 
 ## Physical table layout
 
@@ -338,8 +352,10 @@ Use the actual start time of the run being reviewed. The tool checks source
 timestamps and keeps the original screenshots alongside the contact sheets.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
-recipe-browser controls. The 55-slot box uses a 304 x 216 panel and the four-row
-point-stick drawer a 286 x 216 panel. Their slot pitch remains 18 pixels; compact
+recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row
+point-stick drawer a 304 x 216 panel. Each drawer has nine scoring slots and a
+separated final slot for inactive black bust sticks, with an explanatory tooltip.
+Their slot pitch remains 18 pixels; compact
 header and inventory gaps keep every native slot visible at 320 x 240. Screen
 bounds provide one source for viewer exclusion areas and native click tests.
 The JEI custom recipe categories reuse `MahjongUi` panel, slot and text tokens.

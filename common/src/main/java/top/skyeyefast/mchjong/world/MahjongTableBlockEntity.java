@@ -36,6 +36,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
     private final TableEquipment equipment = new TableEquipment(this::equipmentChanged);
+    private boolean syncingEquipment;
 
     public TableEquipment equipment() { return equipment; }
     public boolean automatic() { return getBlockState().is(MahjongContent.AUTO_TABLE); }
@@ -49,12 +50,29 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
         game.configureWorld(policy.openHands(), policy.invitationTeleport());
+        synchronizeEquipment();
         if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
-            game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null ? java.util.List.of() : equipment.deck().tiles());
+            game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null
+                || !automatic() && !equipment.manualSuppliesReady() ? java.util.List.of() : equipment.deck().tiles());
         else if (!equipment.hasCloth() || equipment.deck() == null) return null;
         synchronizeSeats();
         return game;
+    }
+
+    private void synchronizeEquipment() {
+        boolean active = game.phase() != Game.Phase.LOBBY && game.phase() != Game.Phase.MATCH_END;
+        if (automatic() || syncingEquipment || equipment.matchActive() == active) return;
+        syncingEquipment = true;
+        try {
+            for (var player : ((ServerLevel) level).players())
+                if (player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu menu && menu.belongsTo(this)) player.closeContainer();
+            if (active) {
+                if (!equipment.prepareMatch()) throw new IllegalStateException("Starting match without its reserved supplies");
+            }
+            else equipment.endMatch();
+            setChanged();
+        } finally { syncingEquipment = false; }
     }
 
     private void synchronizeSeats() {
@@ -100,6 +118,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         Game game = table.serverGame();
         if (game == null) return;
         game.tick();
+        table.synchronizeEquipment();
         table.ticks++;
         table.flushReplays();
         if (game.revision() != table.sentRevision || table.ticks % 40 == 0) {
@@ -233,6 +252,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public void dropEquipment() {
         if (level == null || level.isClientSide) return;
+        for (var player : ((ServerLevel) level).players())
+            if (player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu menu && menu.belongsTo(this)) player.closeContainer();
+        equipment.abandonMatch();
         // Clear before spawning: neighbor removal and explosions must never duplicate a loaded set.
         var boxes = java.util.stream.IntStream.range(0, TableEquipment.BOX_SLOTS)
             .mapToObj(slot -> equipment.boxes().removeItemNoUpdate(slot)).toList();
