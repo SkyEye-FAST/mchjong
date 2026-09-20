@@ -7,14 +7,16 @@ gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
-  stateful game orchestration, simple records/DTOs and the JVM interop shim for
-  mahjong-utils internals. Kotlin owns algorithmic code where its collection and
-  null-safety model materially reduces boilerplate, including hand analysis,
-  scoring, bot evaluation helpers and replay-format transformation. Kotlin APIs
-  called from Java keep ordinary JVM entry points (`@JvmStatic`, `@JvmRecord` or
-  explicit fields where required). The engine Shadow archive embeds and relocates
-  mahjong-utils, Kotlin and kotlinx, so neither loader requires a Kotlin language
-  mod at runtime.
+  stateful `Game` orchestration, simple records/DTOs and the JVM interop shim for
+  mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
+  where its collection and null-safety model materially reduces boilerplate,
+  including tile identity/set composition, wall layout, visible-tile accounting,
+  legal-action derivation, hand analysis, scoring, bot evaluation helpers and
+  replay-format transformation. Kotlin APIs called from Java keep ordinary JVM
+  entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
+  required), so Java orchestration does not need Kotlin-specific call shapes. The
+  engine Shadow archive embeds and relocates mahjong-utils, Kotlin and kotlinx,
+  so neither loader requires a Kotlin language mod at runtime.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
