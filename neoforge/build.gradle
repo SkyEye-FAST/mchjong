@@ -51,6 +51,7 @@ dependencies {
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
         runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
         runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-neoforge:${mezz_config_version}"
@@ -86,7 +87,8 @@ processResources {
         neo_loader_min_version: rootProject.neo_loader_min_version,
         ponder_version: rootProject.ponder_version,
         jei_version: rootProject.jei_version,
-        emi_version: rootProject.emi_version
+        emi_version: rootProject.emi_version,
+        rei_version: rootProject.rei_version
     ]
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }

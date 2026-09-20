@@ -17,6 +17,7 @@ import top.skyeyefast.mchjong.client.MahjongBoxScreen;
 import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExample;
 import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExamples;
 import top.skyeyefast.mchjong.compat.recipes.SupplySubtype;
+import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.MahjongCatalog;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -110,8 +111,13 @@ final class BrowserSmoke {
             check(entries.stream().anyMatch(actual -> SupplySubtype.of(actual).equals(SupplySubtype.of(stack))), "Missing catalogue subtype: " + stack);
         var boxes = new ArrayList<Integer>();
         for (int i = 0; i < entries.size(); i++) if (entries.get(i).is(MahjongContent.BOX_ITEM)) boxes.add(i);
-        check(boxes.size() == 2 && boxes.get(1) == boxes.get(0) + 1, "Empty/full boxes are not adjacent");
-        check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.getFirst()))) == 0, "Full box precedes empty box");
+        check(boxes.size() == 4 && boxes.get(1) == boxes.get(0) + 1 && boxes.get(2) == boxes.get(1) + 1
+            && boxes.get(3) == boxes.get(2) + 1, "Mahjong box variants are not adjacent");
+        check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.getFirst()))) == 0, "Stocked box precedes empty box");
+        check(java.util.stream.IntStream.range(1, boxes.size()).allMatch(index ->
+            MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.get(index)))) == 144), "Stocked box is not a 144-tile set");
+        check(java.util.stream.IntStream.range(1, boxes.size()).mapToObj(index -> entries.get(boxes.get(index)).get(MahjongComponents.BOX_PRESET)).toList()
+            .equals(List.of(RedFives.NONE, RedFives.THREE, RedFives.FOUR)), "Stocked red-five variants are missing or reordered");
         check(entries.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.getOrDefault(MahjongComponents.POINTS, 0)).toList()
             .equals(List.of(-10000, 0, 100, 1000, 5000, 10000)), "Viewer merged or reordered point denominations");
     }

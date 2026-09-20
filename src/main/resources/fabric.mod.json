@@ -22,6 +22,9 @@
     ],
     "jei_mod_plugin": [
       "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin"
+    ],
+    "rei_client": [
+      "top.skyeyefast.mchjong.compat.rei.MahjongReiPlugin"
     ]
   },
   "mixins": [
@@ -30,7 +33,8 @@
   "suggests": {
     "ponder": ">=${ponder_version}",
     "jei": ">=${jei_version}",
-    "emi": ">=${emi_version}"
+    "emi": ">=${emi_version}",
+    "roughlyenoughitems": ">=${rei_version}"
   },
   "depends": {
     "fabricloader": ">=${fabric_loader_min_version}",

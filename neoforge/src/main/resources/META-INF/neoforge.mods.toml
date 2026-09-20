@@ -47,3 +47,10 @@ type="optional"
 versionRange="[${emi_version},)"
 ordering="AFTER"
 side="CLIENT"
+
+[[dependencies.mchjong]]
+modId="roughlyenoughitems"
+type="optional"
+versionRange="[${rei_version},)"
+ordering="AFTER"
+side="CLIENT"
