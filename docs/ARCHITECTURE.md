@@ -6,11 +6,18 @@ than maintaining loader-specific branches. The root project builds Fabric;
 gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
-* `engine`: Minecraft-independent Java domain model, with one small, typed Kotlin
-  adapter to the MIT-licensed mahjong-utils scoring and hand-analysis library.
+* `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
+  stateful game orchestration, simple records/DTOs and the JVM interop shim for
+  mahjong-utils internals. Kotlin owns algorithmic code where its collection and
+  null-safety model materially reduces boilerplate, including hand analysis,
+  scoring, bot evaluation helpers and replay-format transformation. Kotlin APIs
+  called from Java keep ordinary JVM entry points (`@JvmStatic`, `@JvmRecord` or
+  explicit fields where required). The engine Shadow archive embeds and relocates
+  mahjong-utils, Kotlin and kotlinx, so neither loader requires a Kotlin language
+  mod at runtime.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
-  Both loaders for that profile compile these sources.
+  Both loaders for that profile compile these Java sources.
 * root `src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
 * `art`: deterministic packing of native face-preset images, client model
