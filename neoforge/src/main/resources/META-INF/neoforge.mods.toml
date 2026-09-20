@@ -5,7 +5,7 @@ license="Apache-2.0"
 [[mods]]
 modId="mchjong"
 version="${version}"
-displayName="MCjhong"
+displayName="MChjong"
 logoFile="assets/mchjong/icon.png"
 authors="SkyEye_FAST"
 description='''A seated, in-world riichi mahjong table for three or four players.'''

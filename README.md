@@ -1,6 +1,6 @@
-# MCjhong
+# MChjong
 
-MCjhong is a Minecraft mod that adds a seated, in-world riichi mahjong table for
+MChjong is a Minecraft mod that adds a seated, in-world riichi mahjong table for
 three or four players. It supports both Fabric and NeoForge.
 
 ## Features
@@ -71,7 +71,7 @@ by Ponder's tooltip. The **Mahjong** category groups the guides for placement,
 equipment and seated play. Tutorials follow the selected game language and use
 Ponder's playback, pause and replay controls.
 
-Ponder is an optional client integration. MCjhong's core gameplay works
+Ponder is an optional client integration. MChjong's core gameplay works
 independently, and each player can choose whether to install the guide.
 See [Ponder integration](docs/PONDER.md) for development and validation.
 
@@ -270,7 +270,7 @@ each preset. See [the artwork notice](presets/tile_faces/NOTICE.md) and
 
 ## License
 
-MCjhong's code is licensed under the [Apache License 2.0](LICENSE).
+MChjong's code is licensed under the [Apache License 2.0](LICENSE).
 Third-party artwork retains its separately documented rights and notices.
 
 Release history is maintained in [CHANGELOG.md](CHANGELOG.md).

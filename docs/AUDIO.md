@@ -17,7 +17,7 @@ Create a normal Minecraft resource pack for the selected game version. For the
 current build profile its `pack.mcmeta` is:
 
 ```json
-{"pack":{"pack_format":34,"description":"My MCjhong voices"}}
+{"pack":{"pack_format":34,"description":"My MChjong voices"}}
 ```
 
 Add a recording at `assets/mchjong/sounds/my_voice/ron.ogg`, and place this in

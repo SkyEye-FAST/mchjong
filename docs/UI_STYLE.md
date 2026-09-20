@@ -1,4 +1,4 @@
-# MCjhong interface style
+# MChjong interface style
 
 This is the shared visual contract for all project-owned screens, HUD cards,
 inventory panels and controls. Read it before adding or changing client UI.

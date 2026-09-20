@@ -1,7 +1,7 @@
 # Native tile-face artwork
 
 The individual tile images and their metadata in `presets/tile_faces` are build-time inputs.
-MCjhong composes all 45 faces into separate Kansai and Kanto texture atlases
+MChjong composes all 45 faces into separate Kansai and Kanto texture atlases
 inside the mod. Players select them in the mahjong box; no resource-pack
 installation, extraction or download occurs at runtime.
 

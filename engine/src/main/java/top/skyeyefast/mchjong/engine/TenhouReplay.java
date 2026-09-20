@@ -19,7 +19,7 @@ public final class TenhouReplay {
         var root = new LinkedHashMap<String, Object>();
         root.put("ver", "2.3");
         root.put("ref", match.id().toString());
-        root.put("title", List.of("MCjhong · " + match.rules().name(), Instant.ofEpochMilli(match.startedAt()).toString()));
+        root.put("title", List.of("MChjong · " + match.rules().name(), Instant.ofEpochMilli(match.startedAt()).toString()));
         var names = new ArrayList<String>();
         for (int i = 0; i < 4; i++) names.add(i < match.rules().players()
             ? match.participants().get(nativeSeat(match, i)).name() : "");

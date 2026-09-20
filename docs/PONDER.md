@@ -1,6 +1,6 @@
 # Ponder tutorials
 
-Ponder adds animated, client-side guides to MCjhong. Install the matching Ponder
+Ponder adds animated, client-side guides to MChjong. Install the matching Ponder
 release and its declared dependencies, hover over a supported item in an
 inventory, and hold the key displayed by Ponder. Its **Mahjong** category also
 groups the entries. Each player chooses this optional guide independently.
@@ -30,7 +30,7 @@ plugin after checking that Ponder is loaded. Ponder owns indexing and reloads.
 Both loader descriptors declare it as optional; gameplay runs independently.
 
 The scenes manipulate furniture and equipment in Ponder's isolated display
-world, using MCjhong's existing models and component types. Ponder's structure
+world, using MChjong's existing models and component types. Ponder's structure
 backup restores each scene on replay. The structure generator in
 `src/ponderData` uses Minecraft's native NBT encoder and runs as `generatePonder`
 before resource processing. Both loader JARs contain the same generated
@@ -38,7 +38,7 @@ before resource processing. Both loader JARs contain the same generated
 
 The compile-only dependencies expose the official Ponder API. The `withPonder`
 Gradle property adds Ponder and its declared dependencies to development runs.
-The release artifacts contain MCjhong's integration code and tutorial resources.
+The release artifacts contain MChjong's integration code and tutorial resources.
 
 ## Development and validation
 

@@ -223,7 +223,7 @@ The opt-in comparison completed successfully in 9m 58s and remains outside the
 routine build. Local raw logs are `build/bot-batch2-build.log` and
 `build/bot-comparison-final.log`; this document retains their measured results.
 Fabric `:runSmokeClient` (4m 34s) and NeoForge `:neoforge:runSmokeClient` (4m 33s)
-both completed with fresh `MCJHONG_CLIENT_SMOKE_PASS` markers. The newly generated
+both completed with fresh `MCHJONG_CLIENT_SMOKE_PASS` markers. The newly generated
 `02-dealt-table.png` screenshots in each loader's `build/smoke/evidence/screenshots`
 were inspected for the own-hand, opponent-back and public-table rendering after
 the recipient-view change. Their logs are `build/bot-fabric-smoke.log` and
@@ -396,7 +396,7 @@ the limitations measured above. Logs: `build/bot-two-tier-4p.log` (2m 37s) and
 
 Validation on JDK 21: all 104 engine tests and `buildAll --warning-mode fail`
 passed (30s initially, 8s final verification). Both client smokes produced fresh
-`MCJHONG_CLIENT_SMOKE_PASS` markers: Fabric 4m 35s, NeoForge 4m 37s. The existing
+`MCHJONG_CLIENT_SMOKE_PASS` markers: Fabric 4m 35s, NeoForge 4m 37s. The existing
 room-preparation smoke now clicks the actual Easy → Hard → Empty → Easy controls
 and waits for server snapshots before proceeding. Fresh `01-room-bot-*.png`
 captures from both loaders and the NeoForge small-window three-player

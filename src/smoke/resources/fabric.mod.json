@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "mchjong_smoke",
   "version": "1.0.0",
-  "name": "MCjhong client smoke tests",
+  "name": "MChjong client smoke tests",
   "environment": "client",
   "entrypoints": {"client": ["top.skyeyefast.mchjong.smoke.FabricSmoke"]},
   "mixins": ["mchjong.smoke.mixins.json"],

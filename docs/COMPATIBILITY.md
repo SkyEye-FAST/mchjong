@@ -16,7 +16,7 @@ compiled artifact and verification.
 
 All dependency versions live in `gradle.properties`. Viewer API dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
-distributed MCjhong jars contain the MCjhong adapters and the shared engine.
+distributed MChjong jars contain the MChjong adapters and the shared engine.
 
 ## Recipe and component coverage
 

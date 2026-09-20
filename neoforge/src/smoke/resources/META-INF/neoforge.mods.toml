@@ -5,7 +5,7 @@ license="Apache-2.0"
 [[mods]]
 modId="mchjong_smoke"
 version="1.0.0"
-displayName="MCjhong development smoke"
+displayName="MChjong development smoke"
 description='''Development-only client assertions. Never distributed in the mod artifact.'''
 
 [[mixins]]

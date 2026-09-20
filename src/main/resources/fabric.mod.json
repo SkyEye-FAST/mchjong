@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "mchjong",
   "version": "${version}",
-  "name": "MCjhong",
+  "name": "MChjong",
   "description": "A seated, in-world riichi mahjong mod.",
   "authors": [
     "SkyEye_FAST"

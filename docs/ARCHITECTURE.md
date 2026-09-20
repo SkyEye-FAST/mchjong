@@ -1,4 +1,4 @@
-# MCjhong architecture
+# MChjong architecture
 
 The repository keeps Fabric and NeoForge development together on `main` rather
 than maintaining loader-specific branches. The root project builds Fabric;

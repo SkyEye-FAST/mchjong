@@ -1,4 +1,4 @@
-# MCjhong contributor instructions
+# MChjong contributor instructions
 
 ## Working in this repository
 

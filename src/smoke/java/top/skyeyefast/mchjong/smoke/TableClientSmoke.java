@@ -90,7 +90,7 @@ public final class TableClientSmoke {
                 rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
                 rules.getRule(GameRules.RULE_SPAWN_CHUNK_RADIUS).set(0, null);
                 client.createWorldOpenFlows().createFreshLevel("table-smoke-" + System.currentTimeMillis(),
-                    new LevelSettings("MCjhong isolated smoke", GameType.CREATIVE, false, Difficulty.PEACEFUL,
+                    new LevelSettings("MChjong isolated smoke", GameType.CREATIVE, false, Difficulty.PEACEFUL,
                         true, rules, WorldDataConfiguration.DEFAULT), new WorldOptions(12345, false, false),
                     access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
                     new TitleScreen());
@@ -220,7 +220,7 @@ public final class TableClientSmoke {
                 if (!itemPresentationSmoke.tick(client, output)) return;
                 if (itemsOnly) {
                     Files.writeString(output.resolve("PASS.txt"), "Captured native tile and point-stick grips for right and left main hands.\n");
-                    LOG.info("MCJHONG_ITEM_PRESENTATION_PASS");
+                    LOG.info("MCHJONG_ITEM_PRESENTATION_PASS");
                     step = 13; entered = ticks;
                     return;
                 }
@@ -360,7 +360,7 @@ public final class TableClientSmoke {
                     Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
                 Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
-                LOG.info("MCJHONG_CLIENT_SMOKE_PASS");
+                LOG.info("MCHJONG_CLIENT_SMOKE_PASS");
                 entered = ticks;
                 step = 13;
             } else if (step == 26 && ticks - entered > 20) {
@@ -378,14 +378,14 @@ public final class TableClientSmoke {
             } else if (step == 27 && ticks - entered > 20) {
                 capture(client, "04-cushion-third-person.png");
                 Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, immersive rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
-                LOG.info("MCJHONG_SEATING_SMOKE_PASS");
+                LOG.info("MCHJONG_SEATING_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();
                 step = 14;
             }
         } catch (Throwable failure) {
-            LOG.error("MCJHONG_CLIENT_SMOKE_FAILED step={}", step, failure);
+            LOG.error("MCHJONG_CLIENT_SMOKE_FAILED step={}", step, failure);
             try {
                 var trace = new java.io.StringWriter();
                 failure.printStackTrace(new java.io.PrintWriter(trace));
