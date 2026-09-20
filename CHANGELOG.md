@@ -7,6 +7,31 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-09-20
+
+### Added
+
+- Physical 25,000-point point stick reserves in table side drawers, with interactive dealer dice rolling, dice-driven wall breaks, and manual drawer payments.
+- Presence lifecycle separating room membership from physical stool seating, with automatic stool remounting when returning to matches and non-blocking table exit flow.
+- Real-time private furiten indicators displayed on the local player card during seated play.
+- Interactive wait previews displaying winning tiles, remaining unseen counts, and han valuations centered above the private hand.
+- Hold-C seated camera zoom and right-drag table translation controls with configurable keybindings.
+- Bounded tile development search and push/fold defensive evaluation for training bots aligned with shared engine rules.
+
+### Changed
+
+- Training bot opponents consolidated into Easy and Hard difficulty presets.
+- Seated HUD uses compact player cards and integrates enlarged dora indicators into the central score panel header.
+- Immersive play arranges table action and opponent hands around a centralized round and score panel.
+- Engine settlement calculation, hand analysis helpers, replay recorder, and Tenhou export subsystems migrated to Kotlin.
+
+### Fixed
+
+- Stool interactions ignore right-clicks while sneaking, preventing accidental sitting when placing blocks or handling items near tables.
+- Wall break opening orientation follows dealer position and dice throw direction.
+- Pregame wind drawing lotteries generate uniform seat distributions without correlation bias.
+- Mod display name corrected from MCjhong to MChjong across manifests, documentation, and translations.
+
 ## [0.3.2] - 2026-09-18
 
 ### Fixed
@@ -103,7 +128,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.3.2...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.4.0...HEAD
+[0.4.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.0
 [0.3.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.2
 [0.3.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.1
 [0.3.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.0
