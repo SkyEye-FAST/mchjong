@@ -68,22 +68,29 @@ final class TrainingBot {
         }
         if (choices.isEmpty()) throw new IllegalStateException("No evaluated legal bot action");
         var baseline = choices.stream().filter(c -> view.actions().get(c.index).type() == DISCARD
-            || view.actions().get(c.index).type() == PASS).max(Comparator.comparingDouble(c -> c.evaluation.utility())).orElse(choices.getFirst());
+            || view.actions().get(c.index).type() == PASS).min(Comparator.<Choice>comparingInt(c -> c.evaluation.shanten())
+                .thenComparing(Comparator.comparingDouble((Choice c) -> c.evaluation.utility()).reversed())
+                .thenComparing(Choice::key)).orElse(choices.getFirst());
         int minimum = choices.stream().filter(c -> view.actions().get(c.index).type() == DISCARD
             || view.actions().get(c.index).type() == PASS).mapToInt(c -> c.evaluation.shanten()).min().orElse(baseline.evaluation.shanten());
         var mode = defence.mode(baseline.evaluation);
         int abort = index(view.actions(), ABORT_NINE);
         if (abort >= 0 && baseline.evaluation.shanten() >= 4 && baseline.evaluation.live() < 18) return abort;
+        Choice fold = null;
         if (mode == BotDefence.Mode.FOLD && !initial.riichi()) {
             int pass = index(view.actions(), PASS);
-            if (pass >= 0) return pass;
             // Safety can break completed groups and increase shanten.
-            return choices.stream().filter(c -> view.actions().get(c.index).type() == DISCARD)
+            fold = pass >= 0 ? baseline : choices.stream().filter(c -> view.actions().get(c.index).type() == DISCARD)
                 .min(Comparator.<Choice>comparingDouble(c -> defence.danger(c.discard))
                     .thenComparing(Comparator.comparingDouble((Choice c) -> c.evaluation.utility()).reversed())
-                    .thenComparing(Choice::key)).orElse(baseline).index;
+                    .thenComparing(Choice::key)).orElse(baseline);
+            var safe = fold;
+            // Judge a call by the resulting hand. A valuable, fast continuation
+            // can justify attacking even when the unchanged hand would fold.
+            choices.removeIf(c -> c != safe && (!viable(c) || defence.mode(c.evaluation) != BotDefence.Mode.PUSH));
+            if (choices.size() == 1) return safe.index;
         }
-        choices.sort(Comparator.<Choice>comparingDouble(c -> score(c, mode)).reversed().thenComparing(Choice::key));
+        choices.sort(Comparator.<Choice>comparingDouble(this::score).reversed().thenComparing(Choice::key));
         double bestScore = Double.NEGATIVE_INFINITY;
         Choice best = baseline;
         int roots = 0;
@@ -91,9 +98,18 @@ final class TrainingBot {
             var type = view.actions().get(candidate.index).type();
             if ((type == CHI || type == PON || type == OPEN_KAN) && !viable(candidate)) continue;
             if (type == RIICHI && candidate.evaluation.waits().quality() == 0) continue;
-            if (candidate.evaluation.shanten() > minimum + 1) continue;
-            double score = score(candidate, mode);
-            boolean expand = level == BotDifficulty.HARD || candidate.replacement;
+            if (candidate != fold && candidate.evaluation.shanten() > minimum + 1) continue;
+            // A larger raw ukeire count is not evidence that going backwards is
+            // faster. Basic evaluators preserve an available viable route; HARD
+            // must actually search a retreat, while dead/yakuless routes can escape.
+            boolean safer = candidate.discard >= 0 && baseline.discard >= 0
+                && defence.danger(candidate.discard) < defence.danger(baseline.discard);
+            boolean retreat = candidate.evaluation.shanten() > minimum && !candidate.replacement && candidate != fold && !safer;
+            if (retreat && viable(baseline) && baseline.evaluation.live() > 0
+                && (level != BotDifficulty.HARD || roots >= BotAnalysis.SEARCH_ROOTS)) continue;
+            double score = score(candidate);
+            boolean expand = candidate != fold && (level == BotDifficulty.HARD || candidate.replacement
+                || level == BotDifficulty.NORMAL && candidate.evaluation.shanten() == 1);
             if (expand && roots < BotAnalysis.SEARCH_ROOTS
                 && candidate.evaluation.shanten() <= minimum + 1) {
                 double forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement);
@@ -110,9 +126,9 @@ final class TrainingBot {
         return candidate.evaluation.shanten() == 0 ? candidate.evaluation.waits().quality() > 0
             : analysis.value.potential(candidate.state).viable();
     }
-    private double score(Choice candidate, BotDefence.Mode mode) {
+    private double score(Choice candidate) {
         double score = candidate.evaluation.utility() + candidate.adjustment;
-        if (candidate.discard >= 0) score -= defence.penalty(candidate.discard, mode);
+        if (candidate.discard >= 0) score -= defence.penalty(candidate.discard, defence.mode(candidate.evaluation));
         score += defence.reserve(candidate.state);
         var type = view.actions().get(candidate.index).type();
         if (type == RIICHI) score -= analysis.riichiCost(candidate.evaluation)

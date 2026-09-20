@@ -5,6 +5,12 @@ The three levels share mahjong-utils 0.7.7 through `HandAnalyzer`. Its
 `goodShapeAdvance` provide structural efficiency; `waits` supplies structural
 tenpai and `score` supplies legal yaku, fu and actual payments under `RuleConfig`.
 Incomplete hands use labelled yaku potential, never the complete-hand scorer.
+The existing Java interop boundary selects the pinned library's JVM-visible
+analysis switches: it keeps input validation, every discard and the existing
+decompositions, while omitting unused stock totals, kan suggestions and nested
+tenpai-improvement maps. Completed score interpretations are constructed once
+and compared by actual payment. Dependency upgrades must recheck this internal
+Kotlin API, even though its JVM entry points are callable from Java.
 
 `BotAnalysis` receives only a recipient view. Opponents' hand contents, physical
 copy numbers, wall order and seed do not enter evaluation. Physical identities
@@ -22,8 +28,10 @@ live-wall contents. Risk and action utilities are uncalibrated heuristics.
 EASY uses current shanten, live improving tiles, basic retention and capped
 winning value. It can call for a viable yaku and fold a distant hand against an
 obvious threat. NORMAL adds good-shape advances, viable yaku potential, weighted
-winning value and opponent evidence beyond riichi. HARD adds draw/discard
-development, walls, combined-threat push/fold assessment and safe-tile reserves.
+winning value and opponent evidence beyond riichi. At one shanten it also searches
+advancing draws and scores the resulting legal waits; other draws use a consumed
+draw/tsumogiri leaf. HARD searches development at other shanten counts and includes
+same-shanten improving draws, walls, combined-threat push/fold and safe reserves.
 
 HARD expands at most three candidate actions, at most 37 draw categories each,
 and two valued continuations after each draw. All legal discard faces take part
@@ -31,8 +39,21 @@ in continuation ranking. Both advancing draws and same-shanten improvements
 participate; an offensive root can retreat at most one shanten. A completed
 legal tsumo is taken immediately. The horizon is one draw/discard, with at most
 111 draw nodes and 222 continuation leaves, each comparing dama/riichi where
-eligible. Other levels use that same search for replacement declarations.
-Unexpanded candidates retain the same evaluator's leaf value.
+eligible. NORMAL's narrower advancing-draw search shares those limits. All levels
+use the same full draw search for replacement declarations.
+Good-shape analysis is lazy at the root. Continuation leaves use immediate
+efficiency and legal wait value, without implicitly enumerating yet another draw
+inside good-shape analysis. Development is the difference between two evaluations
+at that same leaf depth, added to the root value. Unexpanded candidates retain
+their root value. Locked riichi uses its one forced discard directly.
+
+EASY/NORMAL preserve a viable advancing route instead of retreating merely for a
+larger raw ukeire count. The speed term divides live advances by total unseen
+stock, so one exchangeable draw can contribute at most one shanten of progress,
+including in three-player play. A dead or yakuless route can still be reconsidered; HARD
+must actually expand an offensive retreat before accepting it. Full defence and
+replacement declarations have their own safety/shape comparisons. A lower-risk
+discard can retreat defensively without satisfying the offensive search gate.
 
 A decision owns its shape and scoring caches. Shape keys contain the concealed
 multiset and fixed melds. Scoring keys additionally contain bonus/red value,
@@ -59,15 +80,28 @@ after a real draw's discard, while calls follow `callsClearFuriten`. Already
 declared permanent furiten remains blocked. Double riichi retains its two han;
 ordinary continuation discards end eligibility for a first-turn declaration.
 
+Incomplete own hands and conditional opposing wins use the existing point tables
+for 30/40-fu scenarios, interpolating fractional estimated han. Own scenarios
+average ron and the actual player-count tsumo receipts; threat scenarios use ron.
+Visible opposing bonuses are counted, with concealed bonus content estimated from
+public unseen-face density and concealed hand size. This does not assert an
+opponent's yaku or tenpai: threat pressure is assessed separately. Fu assumptions,
+han interpolation and the ron/tsumo mixture are heuristics, not calibrated expected
+payments. Completed own waits continue to use legal scoring, not these estimates.
+
 `BotDefence` builds a separate threat and risk vector for every opponent using
 public riichi, meld/yakuhai content, exposed bonuses, dealer status and elapsed
 turns. Genbutsu is opponent-specific. Suji only reduces the sequence component;
 walls and visible honor counts retain residual pair/special-hand risk. These
-scores are not calibrated deal-in probabilities or monetary expectations.
+scores are not calibrated deal-in probabilities or monetary expectations. Several
+weak signals still increase discard risk, but their sum alone does not establish
+a threat sufficient for full folding while enough draws remain.
 
 Push/fold uses live waits, realizable/estimated value, remaining draw opportunities,
 opposing value, multiple threats and late-match score gaps. Full folding orders
 discards by safety before efficiency, allowing completed groups to be broken.
+Each candidate's resulting hand determines its attack/defence mode; a viable,
+fast, valuable call is compared before folding the unchanged hand.
 HARD can also keep safe reserves while continuing a valuable hand. An already
 declared hand still compares legal replacement actions with its forced discard.
 The search models a conditional next own turn and stops when the public remaining
@@ -103,6 +137,15 @@ runs paired seeds 74291 onward, rotating the challenger through every seat
 against a homogeneous opponent field. Use `MAHJONG_SOUL_3` for three players.
 `-PbotArgs='suite 4 2'` runs timings, both adjacent-level comparisons with four
 seeds in four-player play and two seeds in three-player play (44 matches total).
+An optional final seed argument, e.g. `-PbotArgs='suite 8 8 95601'`, selects an
+independent seed range. `-PbotProfile` enables JDK Flight Recorder and saves the
+slowest recipient snapshots plus early unannounced retreats in `engine/build`.
+Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
+or `inspect` in place of `position` to print candidate analysis.
+`-PbotArgs='tables 4 12000 MAHJONG_SOUL_3 HARD'` interleaves four actual `Game.tick()`
+loops on one thread, including their usual decision pacing. This measures the
+engine's aggregate tick cost, excluding Minecraft's rendering, networking and
+other server work; it is not a live-server TPS test.
 This reuses `GameLifecycleTest` startup and actual engine actions/settlements;
 the experiment is outside `check` and `buildAll`.
 
@@ -119,9 +162,9 @@ after warm-up). The first bounded-search implementation measured HARD mean
 18.348 ms, p95 23.991 ms and max 30.437 ms on the same opening. These numbers
 describe one shape and are not worst-case guarantees.
 
-## Recorded validation, 20 September 2026
+## Baseline validation, 20 September 2026
 
-The final `suite 4 2` run completed 44 matches / 461 hands with seeds 74291–74294
+Before the performance/valuation optimization, `suite 4 2` completed 44 matches / 461 hands with seeds 74291–74294
 for four players and 74291–74292 for three players. Each match has one challenger
 and three/two opponents of the indicated field level; every seed rotates the
 challenger through all seats. Rows report each role within that comparison,
@@ -182,3 +225,123 @@ both completed with fresh `MCJHONG_CLIENT_SMOKE_PASS` markers. The newly generat
 were inspected for the own-hand, opponent-back and public-table rendering after
 the recipient-view change. Their logs are `build/bot-fabric-smoke.log` and
 `build/bot-neoforge-smoke.log`.
+
+## Performance and valuation follow-up
+
+JDK Flight Recorder on one three-player HARD/NORMAL seed (three seat rotations)
+found 1,589 of 4,213 execution samples under the library's `fillImprovement` and
+1,945 under `getGoodShapeAdvance`; these overlapping counts are not additive.
+The bot did not consume the former's recursive improvement maps. The latter was
+being calculated inside continuation leaves, silently adding another draw depth.
+The follow-up disables the unused analysis, requests good-shape results only at
+eligible roots, and constructs each completed score interpretation once. It
+retains the library's shape decomposition and legal scoring algorithms.
+
+Seeds 84301–84308 were used diagnostically while correcting offensive retreats,
+premature folding and the linear payout estimate. On that reused three-player
+NORMAL/EASY diagnostic, NORMAL's mean net points moved from -8716.7 to -3825.0
+and deal-in rate from 18.88% to 14.15%; EASY's policy also changed through the
+shared efficiency fixes. These are development observations, not independent
+evidence of a strength gain. The frozen implementation is evaluated separately
+with seeds 95601–95608 below.
+
+| New-seed comparison | Role | Player-hands | Win rate | Deal-in rate | Mean win points | Mean rank | Mean net points |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4p NORMAL vs EASY | NORMAL | 374 | 20.86% | 15.51% | 4273.1 | 2.625 | -2868.8 |
+| 4p NORMAL vs EASY | EASY | 1122 | 24.24% | 15.69% | 4291.5 | 2.458 | +956.3 |
+| 4p HARD vs NORMAL | HARD | 365 | 24.93% | 12.88% | 4551.6 | 2.313 | +1821.9 |
+| 4p HARD vs NORMAL | NORMAL | 1095 | 22.01% | 15.43% | 4812.9 | 2.563 | -607.3 |
+| 3p NORMAL vs EASY | NORMAL | 211 | 34.60% | 14.69% | 6789.0 | 1.875 | +5900.0 |
+| 3p NORMAL vs EASY | EASY | 422 | 26.54% | 17.77% | 5876.8 | 2.063 | -2950.0 |
+| 3p HARD vs NORMAL | HARD | 184 | 28.80% | 17.39% | 6128.3 | 1.917 | +775.0 |
+| 3p HARD vs NORMAL | NORMAL | 368 | 30.16% | 17.93% | 6157.7 | 2.042 | -387.5 |
+
+This new-seed run completed 112 matches / 1,134 hands in 8m 41s. Four-player
+NORMAL remains behind EASY; three-player NORMAL and both HARD comparisons have
+better mean rank/net points. HARD's three-player win rate and mean winning value
+are lower than NORMAL's. There are only eight independent seeds per comparison,
+with correlated seat rotations and no confidence intervals. These mixed outcomes
+do not prove monotonic strength. No policy change was made after examining this
+new-seed run.
+
+| New-seed comparison / role | Decisions | Mean ms | p95 ms | Max ms |
+| --- | ---: | ---: | ---: | ---: |
+| 4p NORMAL vs EASY / NORMAL | 5903 | 6.943 | 34.204 | 201.347 |
+| 4p NORMAL vs EASY / EASY | 17877 | 0.458 | 1.923 | 36.578 |
+| 4p HARD vs NORMAL / HARD | 5918 | 28.221 | 90.231 | 265.149 |
+| 4p HARD vs NORMAL / NORMAL | 17537 | 7.028 | 34.797 | 406.723 |
+| 3p NORMAL vs EASY / NORMAL | 2927 | 10.585 | 47.359 | 398.744 |
+| 3p NORMAL vs EASY / EASY | 5861 | 1.351 | 6.002 | 114.757 |
+| 3p HARD vs NORMAL / HARD | 2563 | 25.967 | 94.203 | 355.890 |
+| 3p HARD vs NORMAL / NORMAL | 5182 | 9.218 | 42.907 | 355.142 |
+
+NORMAL now spends more time on legal-wait development than the baseline. The
+fixed opening is not representative of that one-shanten work. HARD's much shorter
+tails come from removing duplicate/nested library work, not a wall-clock cutoff
+or fewer legal draw categories. Timing comparisons include changed trajectories
+and are not an identical-position microbenchmark.
+
+The original seed ranges were rerun with the same frozen policy: 44 matches /
+431 hands in 3m 25s (baseline: 44 / 461, 9m 58s). Outcomes changed as decisions
+changed, so both outcome and timing tables are retained rather than treating the
+new sample as identical hands.
+
+| Original-seed rerun | Role | Player-hands | Win rate | Deal-in rate | Mean win points | Mean rank | Mean net points |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| 4p NORMAL vs EASY | NORMAL | 168 | 19.64% | 13.10% | 5142.4 | 2.813 | -356.3 |
+| 4p NORMAL vs EASY | EASY | 504 | 23.41% | 18.85% | 4692.4 | 2.396 | +118.8 |
+| 4p HARD vs NORMAL | HARD | 165 | 20.00% | 12.73% | 5760.6 | 2.188 | +1956.3 |
+| 4p HARD vs NORMAL | NORMAL | 495 | 21.82% | 15.96% | 4743.5 | 2.604 | -652.1 |
+| 3p NORMAL vs EASY | NORMAL | 52 | 28.85% | 28.85% | 8086.7 | 2.333 | -11950.0 |
+| 3p NORMAL vs EASY | EASY | 104 | 33.65% | 12.50% | 7834.3 | 1.833 | +5975.0 |
+| 3p HARD vs NORMAL | HARD | 46 | 30.43% | 8.70% | 6621.4 | 1.667 | +2300.0 |
+| 3p HARD vs NORMAL | NORMAL | 92 | 26.09% | 17.39% | 8283.3 | 2.167 | -1150.0 |
+
+NORMAL still loses in this small three-player sample, and its four-player result
+has regressed relative to the baseline. Thus the changes establish specific
+efficiency/defence behavior and reduce HARD latency, but do not establish a
+general strength improvement for NORMAL. Longer independent paired runs and
+further action-value validation remain necessary.
+
+| Original-seed rerun / role | Decisions | Mean ms | p95 ms | Max ms |
+| --- | ---: | ---: | ---: | ---: |
+| 4p NORMAL vs EASY / NORMAL | 2512 | 6.975 | 39.245 | 121.228 |
+| 4p NORMAL vs EASY / EASY | 7682 | 0.456 | 1.747 | 86.903 |
+| 4p HARD vs NORMAL / HARD | 2730 | 24.725 | 85.346 | 248.451 |
+| 4p HARD vs NORMAL / NORMAL | 8170 | 6.948 | 36.622 | 182.028 |
+| 3p NORMAL vs EASY / NORMAL | 775 | 11.181 | 45.239 | 269.644 |
+| 3p NORMAL vs EASY / EASY | 1554 | 1.967 | 7.394 | 244.451 |
+| 3p HARD vs NORMAL / HARD | 704 | 29.090 | 94.118 | 206.976 |
+| 3p HARD vs NORMAL / NORMAL | 1427 | 9.556 | 45.218 | 142.499 |
+
+Final fixed-opening mean/p95/max milliseconds: EASY 1.063/1.749/1.991,
+NORMAL 0.591/0.784/3.427, HARD 18.183/24.714/34.733; underlying discard analysis
+mean 0.344 ms. The opening cost is similar to the baseline; the meaningful
+reduction is in complete-match expensive shapes.
+
+The four-table HARD three-player `Game.tick()` workload completed all four
+matches (42 hands) after 8,192 aggregate ticks and 1,681 decision-version
+transitions. Aggregate tick mean/p95/max was 5.910/38.831/474.224 ms; 319 ticks
+(3.89%) exceeded 50 ms. This includes initial JVM warm-up and the engine's pacing
+but no Minecraft/network/world overhead. Decisions remain synchronous and can
+still stall a server tick. The improved sample tails are not a real-time bound;
+live-server multi-table TPS and long-run latency remain unverified.
+
+The comparison runs together cover 156 matches / 1,565 hands, plus the four-table
+workload. Raw local logs: `build/bot-final-holdout.log`,
+`build/bot-final-comparison.log`, `build/bot-final-tables.log`, and
+`build/bot-final-engine-test.log`. The 104 engine tests include ten consolidated
+bot cases: new boundaries cover uncertain combined threats, valuable calls before
+folding, lower-risk alternative waits, and a three-player offensive retreat
+observed in diagnostics. The HARD development witness keeps minimum shanten while
+trading 20 immediate live tiles for 19 and better weighted next-turn development;
+action-list reversal preserves the choice.
+
+JDK 21 `buildAll --warning-mode fail` passed in 25s, covering engine, shared
+presentation, generated resources and NeoForge dedicated-server tests; log:
+`build/bot-optimization-build.log`. This follow-up changes no UI, recipient-view
+contract or loader integration, so client smokes were not rerun. The preceding
+batch's two loader smoke results are recorded above, not claimed as fresh runs.
+The internal mahjong-utils analysis switches remain an explicit dependency-upgrade
+review point. Custom rules retain deterministic boundary coverage but do not yet
+have match-scale strength comparisons.

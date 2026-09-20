@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.engine
 
 import mahjongutils.hora.HoraHandPattern
 import mahjongutils.hora.HoraOptions
-import mahjongutils.hora.hora
 import mahjongutils.hanhu.HanHuOptions
 import mahjongutils.hanhu.getChildPointByHanHu
 import mahjongutils.hanhu.getParentPointByHanHu
@@ -14,7 +13,7 @@ import mahjongutils.models.hand.RegularHandPattern
 import mahjongutils.models.hand.Hand
 import mahjongutils.shanten.ShantenWithGot
 import mahjongutils.shanten.ShantenWithoutGot
-import mahjongutils.shanten.shanten
+import mahjongutils.shanten.CommonShantenArgs
 import mahjongutils.shanten.UnionShantenResult
 import mahjongutils.yaku.Yakus
 
@@ -41,8 +40,8 @@ object HandAnalyzer {
     // Shanten concerns only the concealed remainder. Passing declared quads to
     // upstream's move-suggestion API incorrectly suggests declaring those quads
     // again. Attach fixed melds to scoring patterns, not to the move search.
-    private fun analyze(hand: List<Int>, melds: List<Meld>, best: Boolean): UnionShantenResult {
-        val result = shanten(tiles(hand), bestShantenOnly = best)
+    private fun analyze(hand: List<Int>, melds: List<Meld>, best: Boolean, goodShape: Boolean = false): UnionShantenResult {
+        val result = MahjongUtilsInterop.analyze(CommonShantenArgs(tiles(hand), bestShantenOnly = best), goodShape)
         if (melds.isEmpty()) return result
         val declared = furo(melds)
         val patterns = result.regular.hand.patterns.map { it.copy(k = 4, furo = declared) }
@@ -85,15 +84,32 @@ object HandAnalyzer {
     private fun efficiency(result: ShantenWithoutGot) = TileEfficiency(result.shantenNum,
         result.advance.map(::kind).toSet(), result.goodShapeAdvance.orEmpty().map(::kind).toSet())
 
-    @JvmStatic
-    fun discardEfficiency(hand: List<Int>, melds: List<Meld>): Map<Int, TileEfficiency> {
-        val result = analyze(hand, melds, false).shantenInfo as? ShantenWithGot ?: return emptyMap()
+    @JvmStatic @JvmOverloads
+    fun discardEfficiency(hand: List<Int>, melds: List<Meld>, goodShape: Boolean = true): Map<Int, TileEfficiency> {
+        val result = analyze(hand, melds, false, goodShape).shantenInfo as? ShantenWithGot ?: return emptyMap()
         return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
     }
 
+    @JvmStatic @JvmOverloads
+    fun handEfficiency(hand: List<Int>, melds: List<Meld>, goodShape: Boolean = true): TileEfficiency =
+        efficiency(analyze(hand, melds, false, goodShape).shantenInfo as ShantenWithoutGot)
+
+    /** Hypothetical 30/40-fu payout scenarios, not a yaku or completed-hand claim. */
     @JvmStatic
-    fun handEfficiency(hand: List<Int>, melds: List<Meld>): TileEfficiency =
-        efficiency(analyze(hand, melds, false).shantenInfo as ShantenWithoutGot)
+    fun estimatedPayment(han: Double, dealer: Boolean, ronOnly: Boolean, rules: RuleConfig): Double {
+        val lower = kotlin.math.floor(han).toInt().coerceAtLeast(1)
+        val fraction = (han - lower).coerceIn(0.0, 1.0)
+        val pointOptions = HanHuOptions(hasKiriageMangan = rules.kiriageMangan(), hasKazoeYakuman = rules.kazoeYakuman())
+        fun payment(h: Int): Double = listOf(30, 40).map { fu ->
+            val parent = getParentPointByHanHu(h, fu, pointOptions)
+            val child = getChildPointByHanHu(h, fu, pointOptions)
+            val ron = if (dealer) parent.ron.toDouble() else child.ron.toDouble()
+            val tsumo = if (dealer) parent.tsumo.toDouble() * (rules.players() - 1)
+                else child.tsumoParent.toDouble() + child.tsumoChild.toDouble() * (rules.players() - 2)
+            if (ronOnly) ron else (ron + tsumo) / 2
+        }.average()
+        return payment(lower) * (1 - fraction) + payment(lower + 1) * fraction
+    }
 
     @JvmStatic
     fun riichiKanKeepsMelds(handBeforeDraw: List<Int>, melds: List<Meld>, kanKind: Int): Boolean {
@@ -121,13 +137,12 @@ object HandAnalyzer {
         val agari = LibraryTile[Tile.notation(Tile.kind(winningTile))]
         val self = Wind.entries[selfWind]
         val round = Wind.entries[roundWind]
-        val baseline = hora(analysis, agari, tsumo, dora, self, round, extraYaku, options)
 
         // The upstream convenience function compares han before fu. A 3-han 70-fu
         // interpretation can beat 4-han 30-fu, so compare actual payments instead.
         val candidates = analysis.hand.patterns.flatMap {
             HoraHandPattern.build(it, agari, tsumo, self, round)
-        }.map { MahjongUtilsInterop.withPattern(baseline, it) }.filter {
+        }.map { MahjongUtilsInterop.score(it, dora, extraYaku, options) }.filter {
             val excludedIppatsu = if (!rules.ippatsuCountsTowardMinimum() && it.yaku.any { yaku -> yaku.name == "Ippatsu" }) 1 else 0
             it.yaku.isNotEmpty() && (it.hasYakuman || it.han - dora - excludedIppatsu >= rules.minHan())
         }.map { result ->

@@ -17,6 +17,7 @@ final class BotAnalysis {
     final int[] unseen = new int[68];
     private final Map<ShapeKey, Map<Integer, TileEfficiency>> discards = new HashMap<>();
     private final Map<ShapeKey, TileEfficiency> hands = new HashMap<>();
+    private final Map<ShapeKey, TileEfficiency> goodShapes = new HashMap<>();
     private final Map<ShapeKey, Set<Integer>> waits = new HashMap<>();
     int drawNodes;
 
@@ -41,11 +42,11 @@ final class BotAnalysis {
 
     BotAnalysis(TableView view, BotDifficulty level) {
         this.view = view; this.level = level; value = new BotValue(view);
-        defence = new BotDefence(view, level, value);
         // The playing composition, not equipment stock or physical-copy identities.
         for (int tile : Tile.set(view.rules().sanma(), view.rules().redFives())) unseen[face(tile)]++;
         for (int tile : VisibleTiles.tiles(view)) unseen[face(tile)]--;
         for (int i = 0; i < unseen.length; i++) unseen[i] = Math.max(0, unseen[i]);
+        defence = new BotDefence(view, level, value, unseen);
     }
     static int face(int tile) { return Tile.kind(tile) + (Tile.red(tile) ? 34 : 0); }
     static int tile(int face) { return Tile.id(face % 34, 0, face >= 34); }
@@ -60,23 +61,34 @@ final class BotAnalysis {
         return new State(self.hand(), self.melds(), self.norths(), river, self.riichi(), blocked, view.riichiHan());
     }
     Map<Integer, TileEfficiency> discards(State state) {
-        return discards.computeIfAbsent(new ShapeKey(state), ignored -> HandAnalyzer.discardEfficiency(state.hand, state.melds));
+        return discards.computeIfAbsent(new ShapeKey(state), ignored -> HandAnalyzer.discardEfficiency(state.hand, state.melds, false));
     }
     TileEfficiency shape(State state) {
-        return hands.computeIfAbsent(new ShapeKey(state), ignored -> HandAnalyzer.handEfficiency(state.hand, state.melds));
+        return hands.computeIfAbsent(new ShapeKey(state), ignored -> HandAnalyzer.handEfficiency(state.hand, state.melds, false));
     }
     static int live(Set<Integer> kinds, int[] remaining) {
         return kinds.stream().mapToInt(k -> remaining[k] + remaining[k + 34]).sum();
     }
+    private static double speed(TileEfficiency shape, int[] remaining) {
+        // One exchangeable draw can advance at most one shanten. Raw ukeire
+        // must not be worth arbitrarily many steps in a smaller playing set.
+        double mass = Math.max(1, java.util.Arrays.stream(remaining).sum());
+        return 55 * (live(shape.improving(), remaining) / mass - shape.shanten());
+    }
     Evaluation evaluate(State state, TileEfficiency shape, int[] remaining) {
-        int live = live(shape.improving(), remaining), good = live(shape.goodShape(), remaining);
+        return evaluate(state, shape, remaining, true);
+    }
+    private Evaluation evaluate(State state, TileEfficiency shape, int[] remaining, boolean develop) {
+        int live = live(shape.improving(), remaining);
+        int good = develop && level != BotDifficulty.EASY && shape.shanten() == 1 ? live(goodShapes.computeIfAbsent(new ShapeKey(state),
+            ignored -> HandAnalyzer.handEfficiency(state.hand, state.melds)).goodShape(), remaining) : 0;
         var potential = value.potential(state);
         hands.putIfAbsent(new ShapeKey(state), shape);
         var waits = shape.shanten() == 0 ? value.waits(state, this.waits.computeIfAbsent(new ShapeKey(state),
             ignored -> HandAnalyzer.waits(state.hand, state.melds)), remaining) : BotValue.Waits.EMPTY;
         double points = shape.shanten() == 0 ? waits.average() : potential.estimate();
         // Ordinal utilities, not fitted win/deal-in probabilities or expected monetary returns.
-        double utility = -55 * shape.shanten() + live * 1.2 + potential.retention();
+        double utility = speed(shape, remaining) + potential.retention();
         if (shape.shanten() == 0) utility += waits.quality() * 2;
         if (level == BotDifficulty.EASY && shape.shanten() == 0) utility += Math.min(16, points / 500);
         if (level != BotDifficulty.EASY) {
@@ -95,6 +107,10 @@ final class BotAnalysis {
         if (!replacement && view.remaining() < Math.max(1, distance)) return baseline.utility;
         int branches = (int) java.util.Arrays.stream(unseen).filter(n -> n > 0).count();
         if (drawNodes + branches > SEARCH_ROOTS * 37) return baseline.utility;
+        // Good-shape advances themselves enumerate another draw. At this horizon
+        // use immediate leaves, and compare both endpoints with that same evaluator.
+        double leafBaseline = evaluate(state, shape(state), unseen, false).utility;
+        boolean advancesOnly = level == BotDifficulty.NORMAL && !replacement;
         double sum = 0;
         int total = 0;
         for (int face = 0; face < unseen.length; face++) {
@@ -104,6 +120,15 @@ final class BotAnalysis {
             var remaining = unseen.clone(); remaining[face]--;
             int drawn = tile(face);
             var withDraw = state.draw(drawn);
+            if (advancesOnly && !shape(state).improving().contains(face % 34)) {
+                // NORMAL explores advancing draws. Other draws use the legal
+                // tsumogiri leaf, including its exposure and consumed availability.
+                var unchanged = withDraw.discard(drawn, false);
+                var leaf = evaluate(unchanged, shape(state), remaining, false);
+                sum += count * (leaf.utility - defence.penalty(drawn, defence.mode(leaf)) + defence.reserve(unchanged));
+                total += count;
+                continue;
+            }
             double best = Double.NEGATIVE_INFINITY;
             if (baseline.shanten == 0 && shape(state).improving().contains(Tile.kind(drawn))) {
                 var win = value.score(state, drawn, true, replacement);
@@ -113,7 +138,7 @@ final class BotAnalysis {
                     continue;
                 }
             }
-            var shapes = discards(withDraw);
+            var shapes = state.riichi ? Map.of(Tile.kind(drawn), shape(state)) : discards(withDraw);
             // Evaluate all structural continuations; expensive scoring is restricted to the
             // two strongest continuations. Same-shanten improvements are included naturally.
             var candidates = new ArrayList<State>();
@@ -125,27 +150,27 @@ final class BotAnalysis {
             candidates.sort(Comparator.<State>comparingDouble(s -> {
                 int removed = removedFace(withDraw, s) % 34;
                 var sh = shapes.get(removed);
-                return -55 * sh.shanten() + live(sh.improving(), remaining) * 1.2 + value.potential(s).retention();
+                return speed(sh, remaining) + value.potential(s).retention();
             }).reversed().thenComparing(s -> s.hand.stream().map(BotAnalysis::face).sorted().toList().toString()));
             for (var next : candidates.subList(0, Math.min(2, candidates.size()))) {
                 var sh = shapes.get(removedFace(withDraw, next) % 34);
-                var evaluated = evaluate(next, sh, remaining);
+                var evaluated = evaluate(next, sh, remaining, false);
                 double utility = evaluated.utility;
                 if (sh.shanten() == 0 && !next.riichi && next.melds.stream().allMatch(Meld::closed)
                     && view.remaining() - (replacement ? 1 : Math.max(1, distance)) >= view.rules().minRiichiWall()
                     && (!view.rules().needsRiichiDeposit() || view.seats().get(view.viewerSeat()).points() >= 1000)) {
                     var declared = new State(next.hand, next.melds, next.norths, next.river, true, next.ronBlocked, withDraw.riichiHan);
-                    utility = Math.max(utility, evaluate(declared, sh, remaining).utility - riichiCost(evaluated));
+                    utility = Math.max(utility, evaluate(declared, sh, remaining, false).utility - riichiCost(evaluated));
                 }
                 int discard = tile(removedFace(withDraw, next));
                 utility -= defence.penalty(discard, defence.mode(evaluated));
                 utility += defence.reserve(next);
                 best = Math.max(best, utility);
             }
-            sum += count * (Double.isFinite(best) ? best : baseline.utility);
+            sum += count * (Double.isFinite(best) ? best : leafBaseline);
             total += count;
         }
-        return total == 0 ? baseline.utility : sum / total;
+        return total == 0 ? baseline.utility : baseline.utility + sum / total - leafBaseline;
     }
     double riichiCost(Evaluation hand) {
         double draws = Math.max(1, view.remaining() / (double) view.rules().players());

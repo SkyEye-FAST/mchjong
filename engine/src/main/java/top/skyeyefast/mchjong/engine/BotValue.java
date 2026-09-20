@@ -11,6 +11,7 @@ final class BotValue {
     private final TableView view;
     final int[] dora;
     private final Map<ScoreKey, HandScore> scores = new HashMap<>();
+    private final Map<Double, Double> potentialPayments = new HashMap<>();
     private record ScoreKey(List<Integer> hand, List<String> melds, int bonus, int winning, boolean tsumo, int riichiHan, boolean replacement) {}
     record Potential(boolean viable, double estimate, double retention) {}
     record Waits(double ron, double tsumo, int ronTiles, int tsumoTiles) {
@@ -56,7 +57,9 @@ final class BotValue {
         int bonuses = bonus(state, Tile.ABSENT);
         // Retained bonuses have value only alongside a plausible yaku path; none satisfy minHan.
         boolean viable = han + (closed ? 1 : 0) >= view.rules().minHan();
-        double estimate = viable ? 1000 * (1 + han + bonuses) : 0;
+        double potentialHan = han + (closed ? 1 : 0) + bonuses;
+        double estimate = viable ? potentialPayments.computeIfAbsent(potentialHan,
+            h -> HandAnalyzer.estimatedPayment(h, wind() == 0, false, view.rules())) : 0;
         return new Potential(viable, estimate, Math.min(8, han) * 2 + bonuses * 3);
     }
     HandScore score(BotAnalysis.State state, int winning, boolean tsumo, boolean replacement) {

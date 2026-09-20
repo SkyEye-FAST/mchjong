@@ -14,10 +14,14 @@ final class BotDefence {
     final List<Threat> threats = new ArrayList<>();
     private final double[][] risks;
 
-    BotDefence(TableView view, BotDifficulty level, BotValue value) {
+    BotDefence(TableView view, BotDifficulty level, BotValue value, int[] unseen) {
         this.view = view; this.level = level; this.value = value;
         known = VisibleTiles.counts(view);
         risks = new double[view.rules().players()][34];
+        double bonusMass = 0;
+        int total = java.util.Arrays.stream(unseen).sum();
+        for (int face = 0; face < unseen.length; face++) if (unseen[face] > 0)
+            bonusMass += unseen[face] * value.bonus(BotAnalysis.tile(face));
         for (int seat = 0; seat < view.seats().size(); seat++) {
             if (seat == view.viewerSeat()) continue;
             var opponent = view.seats().get(seat);
@@ -41,8 +45,12 @@ final class BotDefence {
             double pressure = opponent.riichi() ? 1 : open == 0 ? Math.max(0, progress - .65) * .5
                 : Math.min(.9, open * .14 + progress * .28 + (han > 0 ? .12 : 0) + Math.min(4, bonus) * .04);
             if (level == BotDifficulty.EASY && !opponent.riichi() && !(open >= 2 && han > 0 && bonus >= 2)) pressure = 0;
-            double estimate = (1000 + 1000 * Math.max(view.rules().minHan(), han) + 800 * bonus)
-                * (seat == view.dealer() ? 1.5 : 1);
+            // Conditional payout scenarios use actual point tables. Concealed
+            // bonuses are an exchangeable estimate from public remaining counts,
+            // never an inspection of concealed identities or an asserted han.
+            double hiddenBonus = opponent.hand().size() * bonusMass / Math.max(1, total);
+            double estimate = HandAnalyzer.estimatedPayment(Math.max(view.rules().minHan(), han) + bonus + hiddenBonus,
+                seat == view.dealer(), true, view.rules());
             var threat = new Threat(seat, river, pressure, estimate, open == 0, opponent.riichi());
             threats.add(threat);
             for (int kind = 0; kind < 34; kind++) risks[seat][kind] = risk(threat, kind);
@@ -90,6 +98,10 @@ final class BotDefence {
         boolean goodTenpai = hand.shanten() == 0 && hand.waits().quality() >= 3 && hand.points() * urgency >= strongestValue();
         boolean goodApproach = hand.shanten() == 1 && hand.live() >= 14 && hand.points() * urgency >= strongestValue() * 1.5 && draws >= 5;
         if (goodTenpai || goodApproach && pressure() < 1.5) return Mode.PUSH;
+        // Several weak signals still affect each discard's risk. Their sum alone
+        // must not turn uncertain opponents into an established tenpai threat.
+        boolean established = threats.stream().anyMatch(t -> t.pressure >= .65);
+        if (!established && draws > hand.shanten() + 1) return Mode.CAUTIOUS;
         if (hand.shanten() >= 2 || hand.live() == 0 || draws <= hand.shanten() + 1
             || level == BotDifficulty.HARD && hand.shanten() > 0 && (pressure() >= 1.5 || hand.points() * urgency < strongestValue())) return Mode.FOLD;
         return Mode.CAUTIOUS;

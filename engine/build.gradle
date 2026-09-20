@@ -31,6 +31,10 @@ tasks.register('botCompare', JavaExec) {
     javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
     maxHeapSize = '1G'
     args providers.gradleProperty('botArgs').getOrElse('measure').split(' ')
+    if (providers.gradleProperty('botProfile').isPresent()) {
+        jvmArgs '-XX:StartFlightRecording=filename=build/bot-profile.jfr,settings=profile,dumponexit=true'
+        systemProperty 'bot.profile', 'true'
+    }
 }
 
 shadowJar {

@@ -76,21 +76,22 @@ class TrainingBotTest {
     }
 
     @Test void hardTradesImmediateUkeireForWeightedDevelopmentDeterministically() {
-        var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74309);
+        var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74318);
         var view = game.view(game.players[game.turn].id);
         var normal = view.actions().get(TrainingBot.choose(view, BotDifficulty.NORMAL));
         var hard = view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
-        assertEquals(10, Tile.kind(normal.tiles().getFirst()));
-        assertEquals(9, Tile.kind(hard.tiles().getFirst()));
+        assertEquals(4, Tile.kind(normal.tiles().getFirst()));
+        assertEquals(18, Tile.kind(hard.tiles().getFirst()));
         var analysis = new BotAnalysis(view, BotDifficulty.HARD);
         var start = analysis.initial();
         var shapes = analysis.discards(start);
         var n = start.discard(normal.tiles().getFirst(), false);
         var h = start.discard(hard.tiles().getFirst(), false);
-        var ne = analysis.evaluate(n, shapes.get(10), analysis.unseen);
-        var he = analysis.evaluate(h, shapes.get(9), analysis.unseen);
+        var ne = analysis.evaluate(n, shapes.get(4), analysis.unseen);
+        var he = analysis.evaluate(h, shapes.get(18), analysis.unseen);
         assertEquals(ne.shanten(), he.shanten());
-        assertTrue(he.live() <= ne.live());
+        assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(), he.shanten());
+        assertTrue(he.live() < ne.live());
         assertTrue(analysis.forward(h, he, false) > analysis.forward(n, ne, false));
         assertTrue(analysis.drawNodes <= 2 * 37);
         var actions = new ArrayList<>(game.options.get(game.turn));
@@ -184,6 +185,46 @@ class TrainingBotTest {
         assertTrue(analysis.defence.riskAgainst(1, Tile.WHITE) > 0, "An honor without proof retains residual risk");
     }
 
+    @Test void uncertainThreatsAndValuableCallsDoNotForcePrematureFolding() {
+        var uncertain = hand("123568m2458p147s1z");
+        uncertain.players[1].melds.add(TestHands.meld(Meld.Type.PON, "555z"));
+        uncertain.players[2].melds.add(TestHands.meld(Meld.Type.PON, "666z"));
+        for (int seat = 1; seat <= 2; seat++)
+            uncertain.players[seat].river.add(new Discard(Tile.id(0, seat + 1, false), false, false, false));
+        var shapes = HandAnalyzer.discardEfficiency(uncertain.players[0].hand, List.of(), false);
+        int minimum = shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow();
+        assertEquals(minimum, shapes.get(Tile.kind(choice(uncertain, BotDifficulty.NORMAL).tiles().getFirst())).shanten(),
+            "Two early calls do not justify breaking a completed group for genbutsu");
+
+        var call = hand("234p2378s115566z");
+        call.phase = Game.Phase.REACTION; call.lastFrom = 1;
+        call.lastTile = Tile.id(Tile.WHITE, 3, false); call.players[0].drawn = Tile.ABSENT;
+        call.players[2].riichi = true;
+        call.wall.revealed = 2;
+        call.wall.tiles.set(call.wall.dora.get(0), Tile.id(Tile.NORTH, 0, false));
+        call.wall.tiles.set(call.wall.dora.get(1), Tile.id(Tile.NORTH, 1, false));
+        var pon = new Action(Action.Type.PON, call.players[0].hand.stream().filter(t -> Tile.kind(t) == Tile.WHITE).toList());
+        call.options.set(0, List.of(pon, new Action(Action.Type.PASS)));
+        assertEquals(2, HandAnalyzer.handEfficiency(call.players[0].hand, List.of(), false).shanten());
+        assertEquals(Action.Type.PON, choice(call, BotDifficulty.NORMAL).type(),
+            "Compare a valuable fast called hand before deciding to fold the unchanged hand");
+
+        var ready = hand("123789p123789s5z4p");
+        ready.rules = RuleSet.MAHJONG_SOUL_3.config();
+        ready.wall = new Wall(ready.rules, 24, 0);
+        ready.players[1].riichi = true;
+        ready.players[1].norths.addAll(List.of(Tile.id(Tile.NORTH, 0, false), Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 2, false)));
+        ready.players[2].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "1111z"));
+        ready.players[2].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "2222z"));
+        ready.wall.revealed = 3;
+        for (int i = 0; i < 3; i++) ready.wall.tiles.set(ready.wall.dora.get(i), Tile.id(Tile.WEST, i, false));
+        ready.players[1].river.add(new Discard(Tile.id(17, 3, false), true, false, false));
+        ready.players[2].river.add(new Discard(Tile.id(Tile.WHITE, 1, false), false, false, false));
+        ready.players[2].river.add(new Discard(Tile.id(Tile.WHITE, 2, false), false, false, false));
+        assertEquals(Tile.WHITE, Tile.kind(choice(ready, BotDifficulty.NORMAL).tiles().getFirst()),
+            "A third visible honor preserves an alternative wait at lower risk than the central four");
+    }
+
     @Test void riichiComparesLegalValueWithDamaAndOwnTemporaryFuritenStaysPrivate() {
         var game = hand("123m456p789s23m55z1z");
         game.players[0].firstTurn = false;
@@ -238,5 +279,16 @@ class TrainingBotTest {
         var evaluation = late.evaluate(after, late.shape(after), late.unseen);
         assertEquals(evaluation.utility(), late.forward(after, evaluation, false));
         assertEquals(0, late.drawNodes, "Do not invent another own draw after the live wall ends");
+
+        // From an observed opening: 62 tiles returning a three-shanten hand to
+        // two-shanten must not beat 16 tiles advancing two-shanten to one-shanten.
+        var speed = hand("123479p230s11226z");
+        speed.rules = RuleSet.MAHJONG_SOUL_3.config();
+        speed.wall = new Wall(speed.rules, 24, 0);
+        speed.players[0].norths.addAll(List.of(Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 3, false)));
+        var shapes = HandAnalyzer.discardEfficiency(speed.players[0].hand, List.of(), false);
+        for (var level : BotDifficulty.values())
+            assertEquals(2, shapes.get(Tile.kind(choice(speed, level).tiles().getFirst())).shanten(),
+                "Raw ukeire cannot justify an unsearched offensive retreat");
     }
 }
