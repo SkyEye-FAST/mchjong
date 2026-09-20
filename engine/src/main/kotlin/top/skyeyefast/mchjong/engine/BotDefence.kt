@@ -128,19 +128,19 @@ internal class BotDefence(
     fun mode(hand: BotAnalysis.Evaluation): Mode {
         if (pressure() < 0.5) return Mode.PUSH
         val draws = view.remaining() / view.rules().players()
-        if (level == BotDifficulty.EASY) return if (hand.shanten() >= 3) Mode.FOLD else Mode.CAUTIOUS
-        val urgency = placementUrgency(hand.points())
-        val goodTenpai = hand.shanten() == 0 && hand.waits().quality() >= 3 && hand.points() * urgency >= strongestValue()
-        val goodApproach = hand.shanten() == 1 && hand.live() >= 14 && hand.points() * urgency >= strongestValue() * 1.5 && draws >= 5
+        if (level == BotDifficulty.EASY) return if (hand.shanten >= 3) Mode.FOLD else Mode.CAUTIOUS
+        val urgency = placementUrgency(hand.points)
+        val goodTenpai = hand.shanten == 0 && hand.waits.quality() >= 3 && hand.points * urgency >= strongestValue()
+        val goodApproach = hand.shanten == 1 && hand.live >= 14 && hand.points * urgency >= strongestValue() * 1.5 && draws >= 5
         if (goodTenpai || goodApproach && pressure() < 1.5) return Mode.PUSH
         // Several weak signals still affect each discard's risk. Their sum alone
         // must not turn uncertain opponents into an established tenpai threat.
         val established = threats.any { it.pressure >= 0.65 }
-        if (!established && draws > hand.shanten() + 1) return Mode.CAUTIOUS
+        if (!established && draws > hand.shanten + 1) return Mode.CAUTIOUS
         if (
-            hand.shanten() >= 2 || hand.live() == 0 || draws <= hand.shanten() + 1 ||
-            level == BotDifficulty.HARD && hand.shanten() > 0 &&
-            (pressure() >= 1.5 || hand.points() * urgency < strongestValue())
+            hand.shanten >= 2 || hand.live == 0 || draws <= hand.shanten + 1 ||
+            level == BotDifficulty.HARD && hand.shanten > 0 &&
+            (pressure() >= 1.5 || hand.points * urgency < strongestValue())
         ) return Mode.FOLD
         return Mode.CAUTIOUS
     }
