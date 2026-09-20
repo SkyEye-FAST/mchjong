@@ -143,31 +143,31 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         evaluate(state, shape, remaining, true)
 
     private fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray, develop: Boolean): Evaluation {
-        val live = live(shape.improving(), remaining)
+        val live = live(shape.improving, remaining)
         val key = ShapeKey(state)
-        val good = if (develop && level != BotDifficulty.EASY && shape.shanten() == 1) {
-            live(goodShapes.getOrPut(key) { HandAnalyzer.handEfficiency(state.hand(), state.melds()) }.goodShape(), remaining)
+        val good = if (develop && level != BotDifficulty.EASY && shape.shanten == 1) {
+            live(goodShapes.getOrPut(key) { HandAnalyzer.handEfficiency(state.hand(), state.melds()) }.goodShape, remaining)
         } else {
             0
         }
         val potential = value.potential(state)
         hands.putIfAbsent(key, shape)
-        val waitValue = if (shape.shanten() == 0) {
+        val waitValue = if (shape.shanten == 0) {
             value.waits(state, waits.getOrPut(key) { HandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
         } else {
             BotValue.Waits.EMPTY
         }
-        val points = if (shape.shanten() == 0) waitValue.average() else potential.estimate
+        val points = if (shape.shanten == 0) waitValue.average() else potential.estimate
         // Ordinal utilities, not fitted win/deal-in probabilities or expected monetary returns.
         var utility = speed(shape, remaining) + potential.retention
-        if (shape.shanten() == 0) utility += waitValue.quality() * 2
-        if (level == BotDifficulty.EASY && shape.shanten() == 0) utility += minOf(16.0, points / 500)
+        if (shape.shanten == 0) utility += waitValue.quality() * 2
+        if (level == BotDifficulty.EASY && shape.shanten == 0) utility += minOf(16.0, points / 500)
         if (level != BotDifficulty.EASY) {
-            utility += good * .6 + ln1p(points / 1000) * if (shape.shanten() == 0) 16 else 6
-            if (!potential.viable && shape.shanten() > 0) utility -= 45
+            utility += good * .6 + ln1p(points / 1000) * if (shape.shanten == 0) 16 else 6
+            if (!potential.viable && shape.shanten > 0) utility -= 45
         }
-        if (shape.shanten() == 0 && waitValue.quality() == 0.0) utility -= 55
-        return Evaluation(shape.shanten(), live, good, points, utility, waitValue)
+        if (shape.shanten == 0 && waitValue.quality() == 0.0) utility -= 55
+        return Evaluation(shape.shanten, live, good, points, utility, waitValue)
     }
 
     /** One draw and best discard; unseen tiles are an exchangeable sampling approximation,
@@ -198,7 +198,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             val drawn = tile(face)
             val withDraw = state.draw(drawn)
             var best = Double.NEGATIVE_INFINITY
-            if (baseline.shanten == 0 && shape(state).improving().contains(Tile.kind(drawn))) {
+            if (baseline.shanten == 0 && Tile.kind(drawn) in shape(state).improving) {
                 val win = value.score(state, drawn, true, replacement)
                 if (win != null) {
                     sum += count * (120 + ln1p(value.payment(win) / 1000.0) * 16)
@@ -227,7 +227,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 val evaluated = evaluate(next, candidateShape, remaining, false)
                 var utility = evaluated.utility
                 if (
-                    candidateShape.shanten() == 0 &&
+                    candidateShape.shanten == 0 &&
                     !next.riichi() &&
                     next.melds().all { it.closed() } &&
                     view.remaining() - (if (replacement) 1 else maxOf(1, distance)) >= view.rules().minRiichiWall() &&
@@ -281,7 +281,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             // One exchangeable draw can advance at most one shanten. Raw ukeire
             // must not be worth arbitrarily many steps in a smaller playing set.
             val mass = maxOf(1, remaining.sum()).toDouble()
-            return 55 * (live(shape.improving(), remaining) / mass - shape.shanten())
+            return 55 * (live(shape.improving, remaining) / mass - shape.shanten)
         }
 
         private fun removedFace(before: State, after: State): Int =

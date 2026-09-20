@@ -79,7 +79,7 @@ internal class TrainingBot private constructor(
                     val next = declaration(action)
                     val shape = analysis.shape(next)
                     val cost = declarationCost(action, next)
-                    val opportunity = minOf(8.0, BotAnalysis.live(shape.improving(), analysis.unseen) * 0.25)
+                    val opportunity = minOf(8.0, BotAnalysis.live(shape.improving, analysis.unseen) * 0.25)
                     choices += choice(i, next, shape, Tile.ABSENT, true, opportunity - cost)
                 }
                 else -> Unit
