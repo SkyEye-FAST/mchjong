@@ -92,9 +92,13 @@ For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
 and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
 
-Use signed Git commits for each complete batch and push normally. Confirm that
-the configured Git signing mechanism is ready before committing. Use the
-contributor's existing signing setup; keep signing enabled and keep credentials
+Use signed Git commits for each complete batch and push normally. Every commit
+must follow the Conventional Commits specification (`<type>(<scope>): <description>`
+or `<type>: <description>`), using standard types (`feat`, `fix`, `docs`, `style`,
+`refactor`, `perf`, `test`, `build`, `ci`, `chore`, `revert` or `art`), with a
+concise, lowercase, imperative description and no trailing punctuation. Confirm that
+the configured Git signing mechanism is ready before committing (`git signing-agent status`).
+Use the contributor's existing signing setup; keep signing enabled and keep credentials
 and private keys out of the repository.
 Inspect the staged diff, use `git commit -S`, verify each resulting signature,
 then push and confirm the remote ref. Report commit IDs, tests and outstanding

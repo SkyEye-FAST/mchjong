@@ -163,7 +163,7 @@ describe one shape and are not worst-case guarantees.
 ## Historical three-level validation, 20 September 2026
 
 The following baseline and performance-follow-up records describe the three-level
-implementation through commit `6f48ea8`. Their NORMAL comparisons and old `suite`
+implementation through commit `9004fbf`. Their NORMAL comparisons and old `suite`
 counts are historical; reproduce them from that revision. Current two-level
 validation is recorded after these measurements.
 
