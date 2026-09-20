@@ -397,7 +397,7 @@ public final class Game {
                 if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING) actions.add(new Action(BEGIN_SEATING));
                 for (int target = 0; target < rules.players(); target++) {
                     var player = players[target];
-                    if (target != seat && (player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
+                    if (target != seat && (player.id == null || player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
                         for (var difficulty : BotDifficulty.values()) if (!player.bot || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
                         if (player.bot) actions.add(new Action(REMOVE_BOT, target));

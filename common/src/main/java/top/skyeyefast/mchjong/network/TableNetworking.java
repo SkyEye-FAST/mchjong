@@ -22,6 +22,12 @@ public final class TableNetworking {
             table.control(player, payload);
     }
 
+    public static void receive(ServerPlayer player, TableSeatPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.autoSeat(player, payload);
+    }
+
     public static void receive(ServerPlayer player, TableRulesPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

@@ -37,6 +37,7 @@ public final class TableSettings {
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
     public boolean convenienceHints = false;
+    public boolean autoSeat = true;
     public boolean animations = true;
     public boolean showRiver = true;
     public VoiceSource voiceSource = VoiceSource.RESOURCE_PACK;
@@ -138,6 +139,7 @@ public final class TableSettings {
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
         convenienceHints = defaults.convenienceHints;
+        autoSeat = defaults.autoSeat;
         animations = defaults.animations;
         showRiver = defaults.showRiver;
         voiceSource = defaults.voiceSource;

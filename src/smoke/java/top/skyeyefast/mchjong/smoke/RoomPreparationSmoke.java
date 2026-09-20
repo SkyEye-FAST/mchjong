@@ -6,9 +6,12 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.TableSeatsScreen;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -23,10 +26,22 @@ final class RoomPreparationSmoke {
     private boolean capturedPositioning;
     private int botSeat = -1;
     private int botCycle;
+    private Boolean originalAutoSeat;
+    private boolean checkedSeatRequests;
+    private int presenceStage;
+    private int presenceTicks;
+    private TableScreen presenceParent;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         var view = table.clientView();
-        if (view != null && view.phase() != Game.Phase.LOBBY) return true;
+        if (originalAutoSeat == null) {
+            originalAutoSeat = TableSettings.get().autoSeat;
+            TableSettings.get().autoSeat = table.automatic();
+        }
+        if (view != null && view.phase() != Game.Phase.LOBBY) {
+            TableSettings.get().autoSeat = originalAutoSeat;
+            return true;
+        }
         if (++ticks > 400) throw new IllegalStateException("Seat preparation timed out: " + table.clientRoom());
         if (serverWork != null) {
             if (!serverWork.isDone()) return false;
@@ -36,7 +51,35 @@ final class RoomPreparationSmoke {
         }
         var room = table.clientRoom();
         if (view == null || room == null) return false;
-        if (!(client.screen instanceof TableScreen) || ticks % 5 != 0) return false;
+        if (!checkedSeatRequests) {
+            checkedSeatRequests = true;
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            serverWork = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                var game = serverTable.participantGame(player);
+                int assigned = game.seatOf(id);
+                var preference = game.view(id).autoPlay();
+                player.stopRiding();
+                serverTable.stoodUp(id);
+                if (game.seatOf(id) != assigned || game.roomView().seats().get(assigned).presence()
+                    != top.skyeyefast.mchjong.engine.PlayerPresence.AWAY)
+                    throw new IllegalStateException("Dismount must retain the room member in the grace period");
+                serverTable.autoSeat(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos, java.util.UUID.randomUUID()));
+                serverTable.autoSeat(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos.above(), game.tableId()));
+                if (player.isPassenger()) throw new IllegalStateException("Invalid table identity accepted a seat request");
+                TableNetworking.receive(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos, game.tableId()));
+                if (!(player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat)
+                    || seat.seat() != assigned || !seat.tablePos().equals(pos)
+                    || game.roomView().seats().get(assigned).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED
+                    || !java.util.Objects.equals(preference, game.view(id).autoPlay()))
+                    throw new IllegalStateException("Automatic return must use the reserved seat and retain preferences");
+                return -1;
+            });
+            return false;
+        }
+        if (TableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             boolean full = view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING);
             if (full && botCycle < 4) {
@@ -94,6 +137,11 @@ final class RoomPreparationSmoke {
             } else if (windSlot >= 0) click(client, "room.mchjong.wind_tile", windSlot + 1);
         } else if (view.viewerSeat() >= 0) {
             var state = room.seats().get(view.viewerSeat());
+            if (table.automatic() && presenceStage < 4
+                && (presenceStage > 0 || state.presence() == PlayerPresence.SEATED)) {
+                checkPresence(client, table, output, prefix, state.presence());
+                return false;
+            }
             if (!capturedPositioning) {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-assigned-seats.png");
@@ -102,6 +150,7 @@ final class RoomPreparationSmoke {
             if (state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
                 if (view.actions().stream().anyMatch(action -> action.type() == Action.Type.READY))
                     throw new IllegalStateException("Unseated player can ready up");
+                if (table.automatic()) return false;
                 var id = client.player.getUUID();
                 var pos = table.getBlockPos();
                 serverWork = client.getSingleplayerServer().submit(() -> {
@@ -123,6 +172,42 @@ final class RoomPreparationSmoke {
             }
         }
         return false;
+    }
+
+    private void checkPresence(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix, PlayerPresence presence) {
+        presenceTicks += 5;
+        if (presenceStage == 0) {
+            presenceParent = TableScreen.active(client.screen);
+            client.setScreen(new TableSeatsScreen(presenceParent));
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            serverWork = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                player.stopRiding();
+                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).stoodUp(id);
+                return -1;
+            });
+            presenceStage = 1;
+            presenceTicks = 0;
+        } else if (presenceStage == 1 && presenceTicks >= 15) {
+            if (presence != PlayerPresence.AWAY || client.player.isPassenger())
+                throw new IllegalStateException("Ordinary positioning updates must not automatically remount an away player");
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, prefix + "-participants-away.png");
+            presenceStage = 2;
+        } else if (presenceStage == 2 && presence == PlayerPresence.DISCONNECTED) {
+            presenceStage = 3;
+            presenceTicks = 0;
+        } else if (presenceStage == 3 && presenceTicks >= 10) {
+            if (presence != PlayerPresence.DISCONNECTED || client.player.isPassenger())
+                throw new IllegalStateException("Disconnected membership must remain reserved until explicit return");
+            AutomationControlsSmoke.checkBounds(client);
+            capture(client, output, prefix + "-participants-disconnected.png");
+            client.setScreen(presenceParent);
+            client.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
+                new top.skyeyefast.mchjong.network.TableSeatPayload(table.getBlockPos(), table.clientView().tableId())));
+            presenceStage = 4;
+        }
     }
 
     private static void click(Minecraft client, String key, Object... arguments) {

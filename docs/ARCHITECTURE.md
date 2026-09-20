@@ -52,11 +52,20 @@ See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 `RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
 wind permutation is persisted server-side; `RoomView` sends only revealed winds,
-available choices, host seat, physical presence and bot difficulty. `PlayerState`
+available choices, host seat, seated/away/disconnected presence and bot difficulty. `PlayerState`
 follows a participant through seat reassignment. Mount presence is transient and
 is reconstructed from `SeatEntity` passengers; it is never accepted from a client
 or a saved room. Nearby room members retain preparation controls while relocating,
 but active-game actions and private hands require the correct physical seat.
+Physical dismount retains membership with a five-second grace period; expiry or
+a lost server connection enables temporary win/pass/tsumogiri automation without
+changing personal AutoPlay settings or spending the disconnected player's clock.
+Returning to the assigned stool restores control. Explicit lobby leave releases
+membership; hosts may replace disconnected guests with bots after the grace period.
+The default-on personal automatic seating option requests relocation after seat
+assignment or reopening a reserved table. Its payload contains only table position
+and identity; the server derives the destination from membership and validates
+the player, distance, stool and mount before moving them.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's

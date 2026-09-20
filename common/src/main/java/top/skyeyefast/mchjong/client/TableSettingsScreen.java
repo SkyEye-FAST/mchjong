@@ -79,7 +79,10 @@ public final class TableSettingsScreen extends Screen {
                 settings.tileLabels = settings.tileLabels == TableSettings.TileLabels.NAME
                     ? TableSettings.TileLabels.MPSZ : TableSettings.TileLabels.NAME;
                 init();
-            }).bounds(left, 169, span, 20).build());
+            }).bounds(left, 169, column, 20).build());
+            addToggle(left + column + 6, 169, column, "settings.mchjong.auto_seat", settings.autoSeat,
+                () -> settings.autoSeat = !settings.autoSeat)
+                .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.auto_seat_help")));
         } else if (tab == 2) {
             addRenderableWidget(new CameraSlider(left, 65, span, true));
             addRenderableWidget(new CameraSlider(left, 91, span, false));

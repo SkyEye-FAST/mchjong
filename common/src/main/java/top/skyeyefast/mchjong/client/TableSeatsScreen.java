@@ -51,7 +51,7 @@ public final class TableSeatsScreen extends Screen {
                 };
             } else {
                 label = Component.translatable(player.bot() ? state.difficulty().translationKey()
-                    : player.occupied() ? "room.mchjong.absent" : "room.mchjong.empty");
+                    : player.occupied() ? presenceKey(state.presence()) : "room.mchjong.empty");
                 hint = label;
                 enabled = false;
                 action = () -> {};
@@ -103,15 +103,32 @@ public final class TableSeatsScreen extends Screen {
                 var state = room.seats().get(seat);
                 var player = view.seats().get(seat);
                 Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(view, seat));
-                Component status = wind(state.wind()).copy().append(" · ").append(Component.translatable(!player.occupied()
-                    ? "room.mchjong.empty" : player.bot() ? "room.mchjong.bot"
-                    : state.presence() == PlayerPresence.SEATED ? "room.mchjong.present" : "room.mchjong.absent"));
+                Component status = wind(state.wind()).copy().append(" · ").append(!player.occupied()
+                    ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
+                    : presence(state.presence()));
                 int inset = PlayerPortrait.draw(graphics, player, left, 42 + seat * 37, 10);
-                MahjongUi.text(graphics, font, label, left + inset, 43 + seat * 37, span - 108 - inset, MahjongUi.TEXT, false);
+                int nameColor = !player.bot() && state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
+                MahjongUi.text(graphics, font, label, left + inset, 43 + seat * 37, span - 108 - inset, nameColor, false);
                 MahjongUi.text(graphics, font, status, left, 56 + seat * 37, span - 108, MahjongUi.MUTED, false);
             }
         }
         super.render(graphics, x, y, partialTick);
     }
+
+    static Component presence(PlayerPresence presence) {
+        if (presence == null) return Component.translatable("room.mchjong.empty");
+        Component state = Component.translatable(presenceKey(presence));
+        return presence == PlayerPresence.DISCONNECTED
+            ? state.copy().append(" · ").append(Component.translatable("room.mchjong.auto_managed")) : state;
+    }
+
+    private static String presenceKey(PlayerPresence presence) {
+        return switch (presence) {
+            case SEATED -> "room.mchjong.present";
+            case AWAY -> "room.mchjong.away";
+            case DISCONNECTED -> "room.mchjong.disconnected";
+        };
+    }
+
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 }

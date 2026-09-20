@@ -21,6 +21,7 @@ import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
+import top.skyeyefast.mchjong.network.TableSeatPayload;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 
 public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
@@ -303,23 +304,67 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
             return;
         }
-        SeatEntity mount = new SeatEntity(MahjongContent.SEAT_ENTITY, level);
-        mount.initialize(worldPosition, seat, player.getUUID());
-        level.addFreshEntity(mount);
-        if (!player.startRiding(mount, true)) {
-            mount.discard();
-            return;
-        }
+        SeatEntity mount = mount(player, seat);
+        if (mount == null) return;
         if (!game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
             player.stopRiding();
             mount.discard();
             player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
             return;
         }
-        player.setYRot(TableGeometry.yaw(seat));
-        player.setXRot(30);
         setChanged();
         sendView(player, true, false);
+    }
+
+    /** Moves a room member to the seat assigned by the authoritative game state. */
+    public void autoSeat(ServerPlayer player, TableSeatPayload payload) {
+        Game game = serverGame();
+        if (game == null || !worldPosition.equals(payload.pos()) || !game.tableId().equals(payload.tableId())
+            || player.serverLevel() != level || isRemoved() || level.getBlockEntity(worldPosition) != this
+            || !player.isAlive() || player.isRemoved() || player.isSpectator()
+            || player.distanceToSqr(worldPosition.getCenter()) > 36) return;
+        int seat = game.seatOf(player.getUUID());
+        if (seat < 0 || seat >= game.rules().players()) return;
+        BlockPos stool = TableGeometry.stool(worldPosition, seat);
+        if (!level.getBlockState(stool).is(MahjongContent.STOOL)) return;
+        if (player.getVehicle() instanceof SeatEntity current) {
+            if (current.isRemoved() || current.getFirstPassenger() != player || !current.tablePos().equals(worldPosition)) return;
+            if (current.seat() == seat) {
+                if (game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+                    setChanged();
+                    sentRevision = -1;
+                    sendView(player, false, false);
+                }
+                return;
+            }
+        } else if (player.isPassenger()) return;
+
+        if (!level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1),
+                entity -> !entity.isRemoved() && entity.isVehicle()).isEmpty()) return;
+        player.stopRiding();
+        SeatEntity mount = mount(player, seat);
+        if (mount == null) return;
+        if (!game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+            player.stopRiding();
+            mount.discard();
+            return;
+        }
+        setChanged();
+        sentRevision = -1;
+        sendView(player, false, false);
+    }
+
+    private SeatEntity mount(ServerPlayer player, int seat) {
+        SeatEntity mount = new SeatEntity(MahjongContent.SEAT_ENTITY, level);
+        mount.initialize(worldPosition, seat, player.getUUID());
+        level.addFreshEntity(mount);
+        if (!player.startRiding(mount, true)) {
+            mount.discard();
+            return null;
+        }
+        player.setYRot(TableGeometry.yaw(seat));
+        player.setXRot(30);
+        return mount;
     }
 
     public void stoodUp(UUID player) {

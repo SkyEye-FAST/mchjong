@@ -67,7 +67,8 @@ public final class TableClientSmoke {
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
-            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8000 : 6000))
+            // Presence checks wait through real server grace periods in each automatic room.
+            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8600 : 6600))
                 throw new IllegalStateException("Smoke timed out at step " + step + ", screen=" + client.screen);
             if (step == 0 && client.screen instanceof net.minecraft.client.gui.screens.AccessibilityOnboardingScreen onboarding) {
                 onboarding.onClose();

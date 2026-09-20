@@ -287,7 +287,9 @@ class TableLayoutTest {
         var settings = new TableSettings();
         assertEquals(TableSettings.TileLabels.NAME, settings.tileLabels);
         assertFalse(settings.convenienceHints);
+        assertTrue(settings.autoSeat);
         settings.convenienceHints = true;
+        settings.autoSeat = false;
         settings.tileLabels = TableSettings.TileLabels.MPSZ;
         settings.toggle(TableSettings.Information.REMAINING);
         settings.showRiver = false;
@@ -296,6 +298,7 @@ class TableLayoutTest {
         var restored = TableSettings.load(path);
         assertEquals(TableSettings.TileLabels.MPSZ, restored.tileLabels);
         assertTrue(restored.convenienceHints);
+        assertFalse(restored.autoSeat);
         assertFalse(restored.showRiver);
         assertTrue(restored.show(TableSettings.Information.REMAINING));
         restored.showRiver = true;
@@ -303,5 +306,6 @@ class TableLayoutTest {
         restored.reset();
         assertEquals(TableSettings.TileLabels.NAME, restored.tileLabels);
         assertFalse(restored.convenienceHints);
+        assertTrue(restored.autoSeat);
     }
 }

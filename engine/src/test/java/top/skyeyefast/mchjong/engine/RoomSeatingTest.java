@@ -86,13 +86,54 @@ class RoomSeatingTest {
         game.validate();
     }
 
-    @Test void automaticSeatingAllowsAllBotTiersAndReplacementOnlyForUnoccupiedPhysicalSeats() {
+    @Test void temporaryAbsenceResetsOnReturnAndOnlyExplicitLeaveReleasesMembership() {
+        for (var preset : List.of(RuleSet.TENHOU_3, RuleSet.TENHOU_4)) {
+            var game = new Game(new UUID(11, 18), preset, 17);
+            assertTrue(game.join(id(0), "Host", 0));
+            assertTrue(game.join(id(1), "Guest", 1));
+            var preference = new AutoPlay(false, true, false, false, false);
+            game.players[0].autoPlay = preference;
+            long revision = game.revision();
+            game.unseat(id(0));
+            assertTrue(game.revision() > revision);
+            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            for (int tick = 1; tick < Game.AWAY_GRACE_TICKS; tick++) game.tick();
+            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            assertFalse(game.join(id(0), "Host", 2));
+            game.synchronizeSeats(Map.of(id(0), 0, id(1), 1), java.util.Set.of(id(0), id(1)));
+            game.tick();
+            assertEquals(PlayerPresence.SEATED, game.roomView().seats().getFirst().presence());
+            assertEquals(preference, game.players[0].autoPlay);
+            assertTrue(game.isHost(id(0)));
+
+            game.unseat(id(0));
+            for (int tick = 1; tick < Game.AWAY_GRACE_TICKS; tick++) game.tick();
+            revision = game.revision();
+            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            game.tick();
+            assertTrue(game.revision() > revision);
+            assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().getFirst().presence());
+            assertEquals(0, game.seatOf(id(0)));
+            assertEquals(preference, game.players[0].autoPlay);
+            assertTrue(game.isHost(id(0)));
+            act(game, id(0), Action.Type.LEAVE_ROOM);
+            assertEquals(-1, game.seatOf(id(0)));
+            assertNull(game.roomView().seats().getFirst().presence());
+            assertTrue(game.isHost(id(1)));
+        }
+    }
+
+    @Test void automaticSeatingAllowsAllBotTiersAndReplacementOnlyForDisconnectedHumans() {
         var game = room(false, 2);
         assertTrue(game.view(id(1)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT));
         assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT && action.tiles().getFirst() == 1));
         act(game, id(0), Action.Type.FILL_BOTS);
         assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() != null)
             .allMatch(seat -> seat.difficulty() == BotDifficulty.EASY));
+        act(game, id(0), Action.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
+        assertEquals(BotDifficulty.HARD, game.roomView().seats().get(3).difficulty());
+        act(game, id(0), Action.Type.REMOVE_BOT, 3);
+        assertFalse(game.view(id(0)).seats().get(3).occupied());
         act(game, id(0), Action.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
         act(game, id(0), Action.Type.BEGIN_SEATING);
         assertEquals(RoomSeating.Stage.POSITIONING, game.roomView().seating());

@@ -135,6 +135,36 @@ class AutoPlayTest {
         if (!game.actions(seat).isEmpty()) assertTrue(game.view(actor).clocks().get(seat).active());
     }
 
+    @Test void disconnectedManualPlayersHandleDealingAndResumeTheirClockOnlyAfterRemount() {
+        Game game = new Game(new UUID(18, 19), RuleSet.TENHOU_3, 37);
+        game.configureEquipment(true, Tile.set(true));
+        for (int seat = 0; seat < 3; seat++) game.join(new UUID(81, seat), "Human " + seat, seat);
+        GameLifecycleTest.startPositioned(game);
+        game.synchronizeSeats(java.util.Map.of(), java.util.Set.of());
+        for (int tick = 0; game.phase != Game.Phase.TURN && tick < 500; tick++) game.tick();
+        assertEquals(Game.Phase.TURN, game.phase, "Trustees must complete physical dealing");
+        int seat = game.turn, drawn = game.players[seat].drawn;
+        UUID actor = game.players[seat].id;
+        int move = game.moveTicks[seat], reserve = game.reserveTicks[seat];
+        ticks(game, Game.AUTO_ACTION_TICKS);
+        assertEquals(drawn, game.players[seat].river.getLast().tile());
+        assertEquals(move, game.moveTicks[seat]);
+        assertEquals(reserve, game.reserveTicks[seat]);
+        for (int tick = 0; !(game.phase == Game.Phase.TURN && game.turn == seat) && tick < 500; tick++) game.tick();
+        assertEquals(Game.Phase.TURN, game.phase);
+        assertEquals(seat, game.turn);
+        assertTrue(game.join(actor, "Human", seat));
+        long decision = game.decision;
+        int discards = game.players[seat].river.size();
+        move = game.moveTicks[seat];
+        ticks(game, Game.AUTO_ACTION_TICKS + 1);
+        assertEquals(decision, game.decision, "Returning stops temporary automation immediately");
+        assertEquals(discards, game.players[seat].river.size());
+        assertEquals(move - Game.AUTO_ACTION_TICKS - 1, game.moveTicks[seat]);
+        assertEquals(AutoPlay.DEFAULT, game.players[seat].autoPlay);
+        game.validate();
+    }
+
     @Test void preferencesAreSeatPrivateAndDoNotResetClocksOrInvalidateOtherResponders() {
         Game game = GameLifecycleTest.started(RuleSet.TENHOU_4, 51);
         game.newDecision(Game.Phase.REACTION);

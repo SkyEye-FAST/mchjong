@@ -493,7 +493,7 @@ public final class TableScreen extends Screen {
         for (int seat = 0; seat < view.seats().size(); seat++) {
             var player = view.seats().get(seat);
             if (player.occupied() && !player.bot()
-                && room.seats().get(seat).presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) continue;
+                && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var difficulty = room.seats().get(seat).difficulty();
             var next = !player.bot() ? top.skyeyefast.mchjong.engine.BotDifficulty.EASY : switch (difficulty) {
                 case EASY -> top.skyeyefast.mchjong.engine.BotDifficulty.HARD;
@@ -522,8 +522,7 @@ public final class TableScreen extends Screen {
             var state = room.seats().get(seat);
             var player = view.seats().get(seat);
             Component status = drawing ? TableSeatsScreen.wind(state.wind())
-                : Component.translatable(player.ready() ? "ui.mchjong.ready"
-                    : state.presence() == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED ? "room.mchjong.present" : "room.mchjong.absent");
+                : player.ready() ? Component.translatable("ui.mchjong.ready") : TableSeatsScreen.presence(state.presence());
             Component label = Component.translatable("room.mchjong.seat_status", drawing ? Component.literal(Integer.toString(seat + 1))
                 : TableSeatsScreen.wind(seat), playerName(view, seat), status);
             var entry = MahjongButton.create(label, ignored -> {}).bounds(left, 106 + seat * 18, span, 16)
@@ -767,7 +766,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, width, facePreset(), board);
+            information.render(font, graphics, view, room(), width, facePreset(), board);
         if (view.phase() == Game.Phase.LOBBY && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), width - 24);
             int y = height - 6 - lines.size() * font.lineHeight;

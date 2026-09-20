@@ -97,6 +97,13 @@ who are absent, and keeps wind assignments separate from world-direction coordin
 Per-seat bot controls live directly beneath the top seat cards throughout preparation;
 ownership actions remain in the participant screen. The centered brass primary
 button advances filling seats, the table-specific assignment, then readiness.
+Participants distinguish temporary absence, disconnection with automatic play,
+and an empty/released place. Disconnected human names use the negative text color;
+HUD cards include their presence in the summary and hover details. Bot replacement
+becomes available only after the absence grace period or a server disconnection.
+The personal automatic seating option starts enabled and requests the assigned
+stool when allocation finishes. Turning it off keeps the coordinate-guided manual
+seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
 

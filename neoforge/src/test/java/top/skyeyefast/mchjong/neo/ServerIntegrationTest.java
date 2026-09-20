@@ -112,6 +112,9 @@ class ServerIntegrationTest {
             var request = new TableActionPayload(new BlockPos(-5, 72, 9), UUID.randomUUID(), 17, 3);
             TableActionPayload.CODEC.encode(buffer, request);
             assertEquals(request, TableActionPayload.CODEC.decode(buffer));
+            var seatRequest = new top.skyeyefast.mchjong.network.TableSeatPayload(request.pos(), request.tableId());
+            top.skyeyefast.mchjong.network.TableSeatPayload.CODEC.encode(buffer, seatRequest);
+            assertEquals(seatRequest, top.skyeyefast.mchjong.network.TableSeatPayload.CODEC.decode(buffer));
             for (var operation : TableControlPayload.Operation.values()) for (boolean enabled : new boolean[]{false, true}) {
                 var control = new TableControlPayload(new BlockPos(-6, 70, 20), UUID.randomUUID(), operation, Long.MAX_VALUE, enabled);
                 TableControlPayload.CODEC.encode(buffer, control);

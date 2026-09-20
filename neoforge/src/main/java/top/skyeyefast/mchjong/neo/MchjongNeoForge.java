@@ -17,6 +17,7 @@ import top.skyeyefast.mchjong.client.ClientTableNetworking;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
+import top.skyeyefast.mchjong.network.TableSeatPayload;
 import top.skyeyefast.mchjong.network.TableViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -81,11 +82,14 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("5");
+        var registrar = event.registrar("6");
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
         registrar.playToServer(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(TableSeatPayload.TYPE, TableSeatPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
         registrar.playToServer(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC, (payload, context) -> {
