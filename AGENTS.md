@@ -92,6 +92,36 @@ For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
 and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
 
+## Versioning and releases
+
+Keep `mod_version` in `gradle.properties` on a `-SNAPSHOT` version during normal
+development. The default development target is the next patch after the latest
+formal Release: for example, after `0.3.2`, use `0.3.3-SNAPSHOT`. The Snapshot's
+base SemVer must be greater than the latest formal Release. Do not recalculate or
+advance the version for ordinary commits; the current Snapshot identifies the
+version being developed.
+
+The default next-patch target is only a development placeholder, not a promise
+that the next Release will be a patch. When explicitly asked to prepare or publish
+a Release, review the actual changes since the previous formal Release and choose
+the SemVer level again: compatible fixes and small changes are normally patch,
+clear new functionality may require minor, and incompatible changes require
+major. Never publish `x.y.(z+1)` merely because the checkout currently says
+`x.y.(z+1)-SNAPSHOT`. An explicitly requested version or bump level overrides the
+default assessment.
+
+If the release assessment changes the target, first update `mod_version` to that
+target with `-SNAPSHOT` before releasing, such as `0.3.3-SNAPSHOT` to
+`0.4.0-SNAPSHOT`. Release tags are pure SemVer without a prefix, for example
+`0.4.0`. The Release workflow requires the tag to equal `mod_version` with the
+`-SNAPSHOT` suffix removed and supplies `-Pmod_version=$GITHUB_REF_NAME` so the
+published JARs contain the formal version rather than the Snapshot version.
+
+After a Release is complete, advance normal development to the released version's
+next patch Snapshot, for example `0.4.0` to `0.4.1-SNAPSHOT`. That new Snapshot is
+again only the default development target; reassess the SemVer level at the next
+release request.
+
 Use signed Git commits for each complete batch and push normally. Every commit
 must follow the Conventional Commits specification (`<type>(<scope>): <description>`
 or `<type>: <description>`), using standard types (`feat`, `fix`, `docs`, `style`,
