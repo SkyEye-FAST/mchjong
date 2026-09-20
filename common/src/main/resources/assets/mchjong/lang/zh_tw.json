@@ -72,6 +72,7 @@
   "item.mchjong.blank": "未刻印牌坯",
   "item.mchjong.box_count": "已存放%s張牌",
   "item.mchjong.box_incomplete": "尚未配齊同規格牌組",
+  "item.mchjong.box_red_fives": "赤寶牌：%s",
   "item.mchjong.box_ready": "可用的立直麻將牌組",
   "item.mchjong.bust_stick": "被飛點棒（−10000點）",
   "item.mchjong.creative_mahjong_dye": "創造麻將染料",

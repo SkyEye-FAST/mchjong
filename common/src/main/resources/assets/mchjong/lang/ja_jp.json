@@ -72,6 +72,7 @@
   "item.mchjong.blank": "未刻印の牌",
   "item.mchjong.box_count": "収納中の牌：%s枚",
   "item.mchjong.box_incomplete": "同じ仕様の牌が揃っていません",
+  "item.mchjong.box_red_fives": "赤牌：%s",
   "item.mchjong.box_ready": "使用可能な立直麻雀牌セット",
   "item.mchjong.bust_stick": "トビ点棒（−10000点）",
   "item.mchjong.creative_mahjong_dye": "クリエイティブ麻雀染料",

@@ -72,6 +72,7 @@
   "item.mchjong.blank": "Unengraved tile",
   "item.mchjong.box_count": "Tiles stored: %s",
   "item.mchjong.box_incomplete": "No complete matching set",
+  "item.mchjong.box_red_fives": "Red fives: %s",
   "item.mchjong.box_ready": "Playable riichi tile set",
   "item.mchjong.bust_stick": "Bust Stick (−10,000)",
   "item.mchjong.creative_mahjong_dye": "Creative Mahjong Dye",

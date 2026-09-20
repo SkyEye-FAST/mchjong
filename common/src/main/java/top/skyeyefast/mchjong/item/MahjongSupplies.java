@@ -31,9 +31,17 @@ public final class MahjongSupplies {
     }
 
     public static NonNullList<ItemStack> contents(ItemStack box) {
+        var preset = box.get(MahjongComponents.BOX_PRESET);
+        var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        if (preset != null && stored.nonEmptyStream().findAny().isEmpty()) return stockedContents(preset);
         NonNullList<ItemStack> result = NonNullList.withSize(BOX_SLOTS, ItemStack.EMPTY);
-        box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).copyInto(result);
+        stored.copyInto(result);
         return result;
+    }
+
+    public static void setContents(ItemStack box, List<ItemStack> items) {
+        box.remove(MahjongComponents.BOX_PRESET);
+        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
     }
 
     public static boolean storable(ItemStack stack) {
@@ -56,6 +64,7 @@ public final class MahjongSupplies {
     public static boolean validBox(ItemStack box) {
         if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1) return false;
         var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
+        if (box.has(MahjongComponents.BOX_PRESET)) return stored.nonEmptyStream().findAny().isEmpty();
         if (stored.stream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
         var items = contents(box);
         for (int i = 0; i < items.size(); i++)
@@ -72,7 +81,7 @@ public final class MahjongSupplies {
         var output = engravedContents(contents(box), preset);
         if (output.isEmpty()) return ItemStack.EMPTY;
         ItemStack result = box.copyWithCount(1);
-        result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(output));
+        setContents(result, output);
         return result;
     }
 
@@ -172,7 +181,7 @@ public final class MahjongSupplies {
                 if (stack.isEmpty()) continue;
                 if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
             }
-            result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+            setContents(result, items);
         } else result.set(DataComponents.BASE_COLOR, color);
         return result;
     }
@@ -230,17 +239,45 @@ public final class MahjongSupplies {
         public List<Integer> tiles() { return List.copyOf(Tile.set(sanma, redFives)); }
     }
 
+    /** Compact creative/browser stock. Contents are expanded only when gameplay needs the box inventory. */
+    public static ItemStack stockedBox(RedFives reds) {
+        var box = new ItemStack(MahjongContent.BOX_ITEM);
+        box.set(MahjongComponents.BOX_PRESET, reds);
+        return box;
+    }
+
+    private static NonNullList<ItemStack> stockedContents(RedFives reds) {
+        var items = NonNullList.withSize(BOX_SLOTS, ItemStack.EMPTY);
+        int slot = 0;
+        for (int face = 0; face < 34; face++) {
+            int red = face < 27 && face % 9 == 4 ? reds.count(face / 9) : 0;
+            if (red < 4) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, false), DyeColor.BLUE, 4 - red));
+            if (red > 0) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, true), DyeColor.BLUE, red));
+        }
+        for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
+            items.set(slot++, tile(new TileData(TileData.FIRST_FLOWER + flower, TileMaterial.BONE, false), DyeColor.BLUE, 1));
+        if (slot > TILE_SLOTS) throw new IllegalStateException("Stocked tile set exceeds mahjong box capacity");
+        int stickSlot = TILE_SLOTS;
+        for (int[] supply : new int[][]{{100, 40}, {1000, 16}, {5000, 8}, {10000, 4}, {-10000, 4}}) {
+            var stick = new ItemStack(MahjongContent.POINT_STICK, supply[1]);
+            stick.set(MahjongComponents.POINTS, supply[0]);
+            items.set(stickSlot++, stick);
+        }
+        items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
+        return items;
+    }
+
     /** Creative/test fixture assembled through the same physical blank engraving path. */
     public static ItemStack completeBox(TileMaterial material, DyeColor color) {
         ItemStack box = new ItemStack(MahjongContent.BOX_ITEM);
-        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(List.of(
+        setContents(box, List.of(
             tile(new TileData(-1, material, false), color, 64),
             tile(new TileData(-1, material, false), color, 64),
-            tile(new TileData(-1, material, false), color, 8))));
+            tile(new TileData(-1, material, false), color, 8)));
         var result = engrave(box, TileFacePreset.KANSAI);
         var items = contents(result);
         items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));
-        result.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        setContents(result, items);
         return result;
     }
 }

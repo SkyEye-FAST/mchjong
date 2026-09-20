@@ -157,8 +157,7 @@ public final class TableEquipment {
             }
         }
         for (int slot = 0; slot < BOX_SLOTS; slot++) if (!contents.get(slot).isEmpty())
-            boxCopies.get(slot).set(net.minecraft.core.component.DataComponents.CONTAINER,
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(contents.get(slot)));
+            MahjongSupplies.setContents(boxCopies.get(slot), contents.get(slot));
         return new Supplies(boxCopies, copies);
     }
 

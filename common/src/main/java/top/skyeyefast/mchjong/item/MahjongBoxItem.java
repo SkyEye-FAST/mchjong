@@ -27,6 +27,8 @@ public final class MahjongBoxItem extends Item {
 
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
         lines.add(Component.translatable("item.mchjong.box_count", MahjongSupplies.tileCount(MahjongSupplies.contents(stack))));
+        var preset = stack.get(MahjongComponents.BOX_PRESET);
+        if (preset != null) lines.add(Component.translatable("item.mchjong.box_red_fives", Component.translatable(preset.translationKey())));
         lines.add(Component.translatable(MahjongSupplies.deck(stack) == null ? "item.mchjong.box_incomplete" : "item.mchjong.box_ready"));
     }
 }

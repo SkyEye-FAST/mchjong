@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.item;
 
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
@@ -9,7 +8,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
 
 /** Server-owned carrier inventory with native slot synchronization and a dedicated client screen. */
 public final class MahjongBoxMenu extends AbstractContainerMenu {
@@ -53,7 +51,7 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     private void save() {
         if (updating || !stillValid(inventory.player)) return;
-        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items()));
+        MahjongSupplies.setContents(box, items());
         inventory.setChanged();
     }
 

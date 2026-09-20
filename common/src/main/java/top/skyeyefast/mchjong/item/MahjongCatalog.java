@@ -2,8 +2,8 @@ package top.skyeyefast.mchjong.item;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** One ordered catalogue for both loaders and recipe viewers. Each call owns its stacks. */
@@ -17,7 +17,7 @@ public final class MahjongCatalog {
         entries.add(new ItemStack(MahjongContent.STOOL_ITEM));
         entries.add(new ItemStack(MahjongContent.CLOTH_ITEM));
         entries.add(new ItemStack(MahjongContent.BOX_ITEM));
-        entries.add(MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE));
+        for (var reds : RedFives.values()) entries.add(MahjongSupplies.stockedBox(reds));
         entries.add(new ItemStack(MahjongContent.TILE_ITEM));
         entries.add(new ItemStack(MahjongContent.DICE));
         entries.add(new ItemStack(MahjongContent.MAHJONG_DYE));
