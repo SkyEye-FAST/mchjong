@@ -124,10 +124,13 @@ private hand in seated play and above `TableHand` in immersive play, leaving roo
 for decisions, clocks and automation. Closed settings persist locally and reset
 disables hints.
 
-Seated HUDs place compact honba/riichi-stick counts and 14-pixel dora indicators
-between the header and player cards. Respect the independent DEPOSITS and DORA
-preferences. Names, winds and points keep their own rows. With MELDS enabled,
-an additional card row shows actual resource-pack meld faces at 5–8 pixels; use
+Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
+round/remaining header. Indicators use 14-pixel faces when space permits; compact
+headers use 8-pixel faces beside the round and short remaining text beside the
+stick counts. Player cards begin at y=38 without a separate indicator row.
+Respect the independent DEPOSITS and DORA preferences. Names, winds and points
+keep their own rows in 24-pixel cards. With MELDS enabled, only cards with melds
+grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for
 a localized group count when all melds cannot fit. Immersive cards retain their
 board positions and the board owns the full meld display. In both views, STATUS
 shows riichi as a small white stick with a red center and a persistent brass

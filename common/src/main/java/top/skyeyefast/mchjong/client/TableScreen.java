@@ -816,7 +816,7 @@ public final class TableScreen extends Screen {
         if (dealing()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.dealing"),
             actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
-            int cueY = immersive ? actionTop - 14 : 88;
+            int cueY = immersive ? actionTop - 14 : information.bottom() + 4;
             for (var cue : animation().cues(Util.getMillis())) {
                 MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
                     actionLeft, cueY, width - actionLeft - 10, MahjongUi.ACCENT, true, true);

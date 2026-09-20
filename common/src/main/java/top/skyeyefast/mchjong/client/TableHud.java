@@ -17,6 +17,7 @@ final class TableHud {
     }
     private final List<Region> regions = new ArrayList<>();
     void clear() { regions.clear(); }
+    int bottom() { return regions.stream().mapToInt(region -> region.y() + region.height()).max().orElse(34); }
     boolean contains(double x, double y) { return regions.stream().anyMatch(region -> region.contains(x, y)); }
     Component tooltip(int x, int y) {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
@@ -26,7 +27,7 @@ final class TableHud {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
-        int headerWidth = board == null ? Math.max(84, width - 224) : Math.min(280, width - 224);
+        int headerWidth = Math.min(280, Math.max(84, width - 224));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
             .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
         if (view.openHands()) details = details.copy().append("\n").append(Component.translatable("ui.mchjong.open_hands"));
@@ -49,16 +50,30 @@ final class TableHud {
             int index = view.wall().size() - 5 - 2 * i;
             if (index >= 0 && view.wall().get(index) >= 0) indicators.add(view.wall().get(index));
         }
-        if (!title.getString().isEmpty() || !remaining.getString().isEmpty()) {
+        boolean seated = board == null && !lobby;
+        boolean compactHeader = seated && headerWidth < 160;
+        int indicatorWidth = seated && !compactHeader ? 14 : 8;
+        int indicatorSpan = indicators.size() * (indicatorWidth + 2);
+        boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
+        int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
+        int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
+        if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining_short", view.remaining());
+        if (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty()) {
             MahjongUi.panel(graphics, 8, 7, headerWidth, lobby ? 21 : 26);
-            text(font, graphics, title, 12, 10, headerWidth - 8 - (board == null ? 0 : indicators.size() * 10), MahjongUi.TEXT);
-            text(font, graphics, remaining, 12, 22, headerWidth - 8, MahjongUi.MUTED);
+            text(font, graphics, title, 12, 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);
+            text(font, graphics, remaining, 12, 22, seated ? depositX - 12 - (deposits ? 4 : 0) : headerWidth - 8, MahjongUi.MUTED);
+            if (deposits) {
+                stick(graphics, depositX, 25, false);
+                int countX = depositX + 16;
+                graphics.drawString(font, Integer.toString(view.honba()), countX, 22, MahjongUi.MUTED, false);
+                int riichiX = countX + font.width(Integer.toString(view.honba())) + 2;
+                stick(graphics, riichiX, 25, true);
+                graphics.drawString(font, Integer.toString(view.riichiSticks()), riichiX + 16, 22, MahjongUi.MUTED, false);
+            }
             regions.add(new Region(8, 7, headerWidth, lobby ? 21 : 26, details));
         }
         int cardWidth = (width - 16 - (view.seats().size() - 1) * 4) / view.seats().size();
-        int top = lobby ? 32 : 60;
-        boolean meldSummary = board == null && !lobby && settings.show(TableSettings.Information.MELDS)
-            && view.seats().stream().anyMatch(player -> !player.melds().isEmpty());
+        int top = lobby ? 32 : 38;
         boolean seatsVisible = lobby || settings.show(TableSettings.Information.NAMES) || settings.show(TableSettings.Information.WINDS)
             || settings.show(TableSettings.Information.POINTS) || settings.show(TableSettings.Information.RANKS)
             || settings.show(TableSettings.Information.STATUS) || settings.show(TableSettings.Information.COUNTS)
@@ -96,7 +111,9 @@ final class TableHud {
             if (settings.show(TableSettings.Information.MELDS)) for (var meld : player.melds()) hover = hover.copy().append("\n")
                 .append(Component.translatable("action.mchjong." + meld.type().name().toLowerCase(java.util.Locale.ROOT)));
             int x = 8 + seat * (cardWidth + 4);
-            int cardHeight = meldSummary ? 44 : 24;
+            boolean meldSummary = seated && settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty();
+            int summaryWidth = meldSummary ? summaryTileWidth(player.melds(), seat, cardWidth - 10) : 0;
+            int cardHeight = seatedCardHeight(meldSummary, summaryWidth);
             if (board != null) {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
@@ -119,10 +136,10 @@ final class TableHud {
                 int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
                 text(font, graphics, name, x + 5 + inset, top + 4, cardWidth - 10 - inset, MahjongUi.TEXT);
                 text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10, turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
-                if (meldSummary && !player.melds().isEmpty()) {
-                    int tileWidth = summaryTileWidth(player.melds(), seat, cardWidth - 10);
+                if (meldSummary) {
+                    int tileWidth = summaryWidth;
                     if (tileWidth == 0) text(font, graphics, Component.translatable("ui.mchjong.meld_groups", player.melds().size()),
-                        x + 5, top + 29, cardWidth - 10, MahjongUi.MUTED);
+                        x + 5, top + 25, cardWidth - 10, MahjongUi.MUTED);
                     else {
                         int meldX = x + 5;
                         for (var meld : player.melds()) {
@@ -135,37 +152,21 @@ final class TableHud {
             regions.add(new Region(x, top, cardWidth, cardHeight, hover));
         }
         if (lobby) return;
-        if (board == null && (settings.show(TableSettings.Information.DEPOSITS) || !indicators.isEmpty())) {
-            int span = (settings.show(TableSettings.Information.DEPOSITS) ? 98 : 0)
-                + (indicators.isEmpty() ? 0 : indicators.size() * 16 + 6);
-            graphics.fill(8, 35, 8 + span, 57, MahjongUi.PANEL);
-        }
-        if (board == null && settings.show(TableSettings.Information.DEPOSITS)) {
-            stick(graphics, 12, 42, false);
-            text(font, graphics, Component.literal(Integer.toString(view.honba())), 30, 39, 28, MahjongUi.MUTED);
-            stick(graphics, 60, 42, true);
-            text(font, graphics, Component.literal(Integer.toString(view.riichiSticks())), 78, 39, 28, MahjongUi.MUTED);
-            regions.add(new Region(8, 35, 98, 22, Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks())));
-        }
         if (!indicators.isEmpty()) {
-            int start = board == null ? settings.show(TableSettings.Information.DEPOSITS) ? 112 : 8 : headerWidth + 4 - indicators.size() * 10;
-            int x = start, tileWidth = board != null ? 8 : 14, tileY = board != null ? 9 : 35;
+            int start = headerWidth + 4 - indicatorSpan;
+            int x = start, tileWidth = indicatorWidth, tileY = 9;
             for (int tile : indicators) {
                 TileGui.tile(graphics, tile, x, tileY, tileWidth, false, false, false, preset);
                 x += tileWidth + 2;
             }
-            regions.addFirst(new Region(start, tileY, x - start, board != null ? 12 : 22,
+            regions.addFirst(new Region(start, tileY, x - start, Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH),
                 Component.translatable("ui.mchjong.result_indicators")));
         }
         if (view.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {
             Component focus = Component.translatable("ui.mchjong.focus");
             int span = Math.min(width / 2 - 8, font.width(focus) + 27);
-            if (board == null) {
-                int occupied = (settings.show(TableSettings.Information.DEPOSITS) ? 112 : 8) + indicators.size() * 16;
-                span = Math.min(span, width - occupied - 16);
-            }
             int x = width - 8 - span;
-            int y = 35;
+            int y = bottom() + 4;
             if (board != null) {
                 var focusArea = board.focus();
                 x = focusArea.x();
@@ -179,8 +180,10 @@ final class TableHud {
         }
     }
 
+    static int seatedCardHeight(boolean summary, int tileWidth) { return 24 + (summary ? tileWidth == 0 ? 12 : 16 : 0); }
+
     static int summaryTileWidth(List<top.skyeyefast.mchjong.engine.Meld> melds, int owner, int available) {
-        for (int size = 8; size >= 5; size--) {
+        for (int size = 7; size >= 5; size--) {
             int width = 0;
             for (var meld : melds) width += TileGui.meldWidth(meld, owner, size) + 2;
             if (width - 2 <= available) return size;

@@ -31,6 +31,17 @@ class TablePresentationTest {
         assertTrue(size >= 5);
         assertTrue(melds.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, size) + 2).sum() - 2 <= 143);
         assertTrue(TableHud.summaryTileWidth(melds.subList(0, 1), 0, 63) >= 5);
+        assertEquals(24, TableHud.seatedCardHeight(false, 0));
+        assertEquals(36, TableHud.seatedCardHeight(true, 0));
+        assertEquals(40, TableHud.seatedCardHeight(true, size));
+        var added = new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.ADDED_KAN,
+            List.of(4, 5, 6, 7), 1, 4);
+        for (var part : MeldLayout.of(added, 0).parts()) {
+            double depth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
+            int y = 27 + (int) Math.round((part.z() + TileMesh.HEIGHT / 2.0 - depth / 2) * 7 / TileMesh.WIDTH);
+            assertTrue(y >= 24, "Added kan must clear the wind/score row");
+            assertTrue(y + Math.round(depth * 7 / TileMesh.WIDTH) < TableHud.seatedCardHeight(true, 7));
+        }
     }
 
     @Test void immersiveRequiresEnoughLogicalPixelsForReadableSideRivers() {
