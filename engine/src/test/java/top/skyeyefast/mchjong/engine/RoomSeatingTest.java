@@ -86,7 +86,7 @@ class RoomSeatingTest {
         game.validate();
     }
 
-    @Test void temporaryAbsenceResetsOnReturnAndOnlyExplicitLeaveReleasesMembership() {
+    @Test void temporaryAbsenceRetainsMembershipWhileAnotherHumanRemains() {
         for (var preset : List.of(RuleSet.TENHOU_3, RuleSet.TENHOU_4)) {
             var game = new Game(new UUID(11, 18), preset, 17);
             assertTrue(game.join(id(0), "Host", 0));
@@ -120,6 +120,53 @@ class RoomSeatingTest {
             assertEquals(-1, game.seatOf(id(0)));
             assertNull(game.roomView().seats().getFirst().presence());
             assertTrue(game.isHost(id(1)));
+        }
+    }
+
+    @Test void abandonedLobbyClosesAfterTheLastHumansGracePeriod() {
+        for (var preset : List.of(RuleSet.TENHOU_3, RuleSet.TENHOU_4)) {
+            var game = new Game(new UUID(11, 18), preset, 17);
+            assertTrue(game.join(id(0), "Host", 0));
+            assertTrue(game.join(id(1), "Guest", 1));
+            act(game, id(0), Action.Type.FILL_BOTS);
+            act(game, id(0), Action.Type.BEGIN_SEATING);
+            game.synchronizeSeats(Map.of(), java.util.Set.of(id(1)));
+            for (int tick = 1; tick < Game.AWAY_GRACE_TICKS; tick++) game.tick();
+            assertTrue(game.isHost(id(0)));
+            assertEquals(PlayerPresence.AWAY, game.players[game.seatOf(id(1))].presence);
+            game.tick();
+            assertEquals(-1, game.host());
+            assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
+            assertTrue(Arrays.stream(game.players).allMatch(player -> player.id == null));
+            long revision = game.revision();
+            game.tick();
+            assertEquals(revision, game.revision(), "An empty lobby must not be repeatedly closed");
+            assertTrue(game.join(id(2), "New host", 0));
+            assertTrue(game.isHost(id(2)));
+            game.validate();
+        }
+    }
+
+    @Test void allConnectionsLostClosesLobbyButRetainsAnActiveMatch() {
+        for (boolean active : new boolean[]{false, true}) {
+            var game = room(false, 4);
+            if (active) {
+                act(game, id(0), Action.Type.BEGIN_SEATING);
+                arriveAndReady(game);
+            }
+            game.synchronizeSeats(Map.of(), java.util.Set.of());
+            game.tick();
+            if (active) {
+                assertNotEquals(Game.Phase.LOBBY, game.phase());
+                for (int seat = 0; seat < 4; seat++) {
+                    assertTrue(game.seatOf(id(seat)) >= 0);
+                    assertEquals(PlayerPresence.DISCONNECTED, game.players[seat].presence);
+                }
+            } else {
+                assertEquals(-1, game.host());
+                assertTrue(Arrays.stream(game.players).allMatch(player -> player.id == null));
+            }
+            game.validate();
         }
     }
 

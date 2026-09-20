@@ -312,7 +312,7 @@ public final class Game {
         return true;
     }
 
-    /** Physical dismount only. Room membership is released exclusively by LEAVE_ROOM. */
+    /** Physical dismount retains membership until explicit leave or an abandoned lobby is closed. */
     public void unseat(UUID player) {
         int seat = seatOf(player);
         if (seat < 0 || players[seat].bot || players[seat].presence != PlayerPresence.SEATED) return;
@@ -864,6 +864,11 @@ public final class Game {
         if (changed) {
             revision++;
             if (phase == Phase.LOBBY) decision++;
+        }
+        if (phase == Phase.LOBBY && hostId != null) {
+            for (PlayerState player : players)
+                if (player.id != null && !player.bot && player.presence != PlayerPresence.DISCONNECTED) return;
+            closeMatch();
         }
     }
 

@@ -62,6 +62,8 @@ a lost server connection enables temporary win/pass/tsumogiri automation without
 changing personal AutoPlay settings or spending the disconnected player's clock.
 Returning to the assigned stool restores control. Explicit lobby leave releases
 membership; hosts may replace disconnected guests with bots after the grace period.
+An idle lobby closes and releases all seats once every human is disconnected,
+including after the dismount grace period expires.
 The default-on personal automatic seating option requests relocation after seat
 assignment or reopening a reserved table. Its payload contains only table position
 and identity; the server derives the destination from membership and validates
