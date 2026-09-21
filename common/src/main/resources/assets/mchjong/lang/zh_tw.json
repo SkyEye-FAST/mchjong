@@ -402,7 +402,7 @@
   "sticks.mchjong.access": "%s：點棒盒",
   "sticks.mchjong.balance": "實物點棒合計與對局點數",
   "sticks.mchjong.bust_reserve": "備用槽內不計分，移入普通點棒槽後計 −10000 點。",
-  "sticks.mchjong.deliver": "將自己的點棒移至目標玩家所在列。Shift 點擊可快速存入標示列。",
+  "sticks.mchjong.deliver": "滾輪選擇接收玩家，將自己的點棒移至對應列。Shift 點擊也會存入標示列。",
   "sticks.mchjong.seat": "點棒盒 %s",
   "sticks.mchjong.title": "點棒盒（座位 %s）",
   "storage.mchjong.active": "使用中",

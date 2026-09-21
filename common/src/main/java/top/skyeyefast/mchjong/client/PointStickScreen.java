@@ -32,7 +32,7 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         MahjongUi.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         graphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + 3, MahjongUi.ACCENT);
         for (var slot : menu.slots) MahjongUi.slot(graphics, leftPos + slot.x, topPos + slot.y,
-            slot.index < PointStickMenu.DRAWER_SLOTS && slot.index / top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == menu.openedSide());
+            slot.index < PointStickMenu.DRAWER_SLOTS && slot.index / top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == menu.recipientSide());
     }
 
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
@@ -67,6 +67,19 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
             lines.add(Component.translatable("sticks.mchjong.bust_reserve"));
             graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
         } else renderTooltip(graphics, mouseX, mouseY);
+    }
+
+    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        if (vertical == 0 || mouseX < leftPos || mouseX >= leftPos + imageWidth
+            || mouseY < topPos || mouseY >= topPos + 118) return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+        int players = 4;
+        if (parent != null && minecraft.level != null
+            && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
+            && table.clientView() != null) players = table.clientView().seats().size();
+        int target = Math.floorMod(menu.recipientSide() + (vertical > 0 ? -1 : 1), players);
+        menu.clickMenuButton(minecraft.player, target);
+        minecraft.gameMode.handleInventoryButtonClick(menu.containerId, target);
+        return true;
     }
 
     @Override public void onClose() {

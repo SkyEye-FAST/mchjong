@@ -402,6 +402,8 @@ Native supply containers reserve a 24-pixel logical bottom strip for optional
 recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row
 point-stick drawer a 304 x 216 panel. Each drawer has nine scoring slots and a
 separated final slot for inactive black bust sticks, with an explanatory tooltip.
+The point-stick drawer highlights the receiving player; the mouse wheel cycles
+that recipient and Shift-click stores point sticks in the highlighted row.
 Their slot pitch remains 18 pixels; compact
 header and inventory gaps keep every native slot visible at 320 x 240. Screen
 bounds provide one source for viewer exclusion areas and native click tests.

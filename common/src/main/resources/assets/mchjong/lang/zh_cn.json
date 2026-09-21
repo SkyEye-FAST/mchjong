@@ -402,7 +402,7 @@
   "sticks.mchjong.access": "%s：点棒盒",
   "sticks.mchjong.balance": "实物点棒合计与对局点数",
   "sticks.mchjong.bust_reserve": "备用槽内不计分，移入普通点棒槽后计−10000点。",
-  "sticks.mchjong.deliver": "将自己的点棒移至目标玩家所在行。Shift点击存入高亮行。",
+  "sticks.mchjong.deliver": "滚轮选择接收玩家，将自己的点棒移至对应行。Shift点击也会存入高亮行。",
   "sticks.mchjong.seat": "点棒盒%s",
   "sticks.mchjong.title": "点棒盒（座位%s）",
   "storage.mchjong.active": "使用中",

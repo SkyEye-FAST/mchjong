@@ -20,9 +20,13 @@ final class PointStickInterfaceSmoke {
         if (++ticks > 600) throw new IllegalStateException("Point-stick interface timed out at stage " + stage);
         if (stage == 0 && ticks >= 10 && client.screen instanceof PointStickScreen) {
             check(menu(client).totalPoints(0) == 3000 && menu(client).totalPoints(1) == 0, "Drawer contents did not synchronize");
+            var bounds = ((PointStickScreen) client.screen).browserBounds();
+            client.screen.mouseScrolled(bounds.left() + 10, bounds.top() + 30, 0, -1);
+            check(menu(client).recipientSide() == 1, "Mouse wheel did not select the recipient row");
             clickSlot(client, 0, 1);
             next(1);
         } else if (stage == 1 && ticks >= 5) {
+            check(menu(client).recipientSide() == 1, "Recipient row selection did not synchronize");
             check(menu(client).getCarried().getCount() == 2, "Native right-click did not split the chosen payment");
             clickSlot(client, 10, 0);
             next(2);

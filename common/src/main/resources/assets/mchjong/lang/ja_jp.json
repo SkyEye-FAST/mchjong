@@ -402,7 +402,7 @@
   "sticks.mchjong.access": "%s：点棒箱",
   "sticks.mchjong.balance": "点棒の合計と対局の持ち点",
   "sticks.mchjong.bust_reserve": "予備スロットでは計上しません。通常スロットに移すと−10000点です。",
-  "sticks.mchjong.deliver": "自分の点棒を相手の行に移して渡します。Shiftクリックで選択中の行に収納します。",
+  "sticks.mchjong.deliver": "スクロールで受取人を選び、その行へ点棒を移します。Shiftクリックも選択行へ収納します。",
   "sticks.mchjong.seat": "点棒箱%s",
   "sticks.mchjong.title": "点棒入れ（席%s）",
   "storage.mchjong.active": "使用中",

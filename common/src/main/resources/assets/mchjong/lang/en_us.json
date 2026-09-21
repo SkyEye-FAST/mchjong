@@ -402,7 +402,7 @@
   "sticks.mchjong.access": "%s: point drawers",
   "sticks.mchjong.balance": "Physical sticks and game score",
   "sticks.mchjong.bust_reserve": "Reserve: does not count here; move to a normal slot to count −10,000.",
-  "sticks.mchjong.deliver": "Move your sticks to the recipient's row. Shift-click stores in the highlighted row.",
+  "sticks.mchjong.deliver": "Scroll to select the recipient. Move your sticks to that row; Shift-click stores there.",
   "sticks.mchjong.seat": "Drawer %s",
   "sticks.mchjong.title": "Point-stick drawer (Seat %s)",
   "storage.mchjong.active": "In use",

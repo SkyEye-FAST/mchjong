@@ -21,7 +21,7 @@ public final class PointStickMenu extends AbstractContainerMenu {
     private final int side;
     private boolean active = true;
     private final DataSlot withdrawal = DataSlot.standalone();
-    private final DataSlot openedSide = DataSlot.standalone();
+    private final DataSlot recipientSide = DataSlot.standalone();
     private final DataSlot locked = DataSlot.standalone();
     private boolean internalCursor;
     public boolean belongsTo(MahjongTableBlockEntity candidate) { return table == candidate; }
@@ -34,8 +34,9 @@ public final class PointStickMenu extends AbstractContainerMenu {
         this.inventory = inventory;
         this.table = table;
         this.side = side;
+        recipientSide.set(side);
         addDataSlot(withdrawal);
-        addDataSlot(openedSide);
+        addDataSlot(recipientSide);
         addDataSlot(locked);
         for (int i = 0; i < scores.length; i++) addDataSlot(scores[i] = DataSlot.standalone());
         for (int row = 0; row < 4; row++) {
@@ -81,7 +82,7 @@ public final class PointStickMenu extends AbstractContainerMenu {
         return total;
     }
 
-    public int openedSide() { return openedSide.get(); }
+    public int recipientSide() { return recipientSide.get(); }
     public int score(int row) { return scores[row * 2].get() & 0xffff | scores[row * 2 + 1].get() << 16; }
     public boolean canWithdraw(int row) {
         return table == null ? (withdrawal.get() & 1 << row) != 0 : table.canWithdrawSticks(inventory.player, row);
@@ -90,7 +91,6 @@ public final class PointStickMenu extends AbstractContainerMenu {
     @Override public void broadcastChanges() {
         if (table != null) {
             int mask = 0;
-            openedSide.set(side);
             locked.set(locked() ? 1 : 0);
             for (int row = 0; row < 4; row++) {
                 if (canWithdraw(row)) mask |= 1 << row;
@@ -115,10 +115,36 @@ public final class PointStickMenu extends AbstractContainerMenu {
         if (locked() && (slot >= DRAWER_SLOTS || type == ClickType.SWAP || type == ClickType.CLONE
             || type == ClickType.QUICK_MOVE || type == ClickType.THROW || slot < 0 && type == ClickType.PICKUP
             || !getCarried().isEmpty() && !internalCursor)) return;
+        if (slot >= 0 && slot < DRAWER_SLOTS && type == ClickType.PICKUP && internalCursor
+            && mergeDelivery(slots.get(slot), button)) return;
         boolean empty = getCarried().isEmpty();
         super.clicked(slot, button, type, player);
         if (getCarried().isEmpty()) internalCursor = false;
         else if (empty) internalCursor = slot >= 0 && slot < DRAWER_SLOTS;
+    }
+
+    private boolean mergeDelivery(Slot target, int button) {
+        ItemStack carried = getCarried(), stored = target.getItem();
+        if (carried.isEmpty() || stored.isEmpty() || !validStick(carried) || !validStick(stored)
+            || carried.getOrDefault(MahjongComponents.POINTS, 0).intValue()
+                != stored.getOrDefault(MahjongComponents.POINTS, 0).intValue()
+            || ItemStack.isSameItemSameComponents(carried, stored) || !target.mayPlace(carried)) return false;
+        int moved = Math.min(button == 1 ? 1 : carried.getCount(), target.getMaxStackSize() - stored.getCount());
+        if (moved <= 0) return false;
+        stored.grow(moved);
+        carried.shrink(moved);
+        target.setChanged();
+        if (carried.isEmpty()) {
+            setCarried(ItemStack.EMPTY);
+            internalCursor = false;
+        }
+        return true;
+    }
+
+    @Override public boolean clickMenuButton(Player player, int id) {
+        if (!stillValid(player) || id < 0 || id >= 4 || table != null && !table.canReceiveSticks(id)) return false;
+        recipientSide.set(id);
+        return true;
     }
 
     @Override public ItemStack quickMoveStack(Player player, int index) {
@@ -130,8 +156,8 @@ public final class PointStickMenu extends AbstractContainerMenu {
             if (!moveItemStackTo(source, DRAWER_SLOTS, slots.size(), true)) return ItemStack.EMPTY;
         } else {
             boolean reserve = source.getOrDefault(MahjongComponents.POINTS, 0) == -10000;
-            int start = side * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.BUST_SLOT : 0);
-            int end = side * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.STICK_SLOTS : TableEquipment.BUST_SLOT);
+            int start = recipientSide() * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.BUST_SLOT : 0);
+            int end = recipientSide() * TableEquipment.STICK_SLOTS + (reserve ? TableEquipment.STICK_SLOTS : TableEquipment.BUST_SLOT);
             if (!validStick(source) || !moveItemStackTo(source, start, end, false)) return ItemStack.EMPTY;
         }
         if (source.isEmpty()) slot.setByPlayer(ItemStack.EMPTY);

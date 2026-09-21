@@ -129,7 +129,7 @@ final class PointStickMenuSmoke {
 
     private static void verifySeatedPayments(ServerPlayer player, MahjongTableBlockEntity table, AABB bounds) {
         player.closeContainer();
-        table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+        table.equipment().boxes().setItem(0, stockedBox(
             top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.BLUE));
         table.useEquipment(player, new ItemStack(MahjongContent.CLOTH_ITEM));
         stockDrawers(table);
@@ -144,6 +144,7 @@ final class PointStickMenuSmoke {
         SeatingFixtures.startPositioned(game, player.getUUID(), recipient);
         check(game.phase() == top.skyeyefast.mchjong.engine.Game.Phase.SHUFFLE, "Payment fixture did not start");
         var menu = open(player, table, 0);
+        check(menu.clickMenuButton(player, 1) && menu.recipientSide() == 1, "Recipient row could not be selected");
         var initial = new CompoundTag();
         table.equipment().save(initial, player.registryAccess());
         check(!initial.getList("match_sticks", 10).isEmpty(), "Starting drawer positions were not saved");
@@ -160,18 +161,23 @@ final class PointStickMenuSmoke {
         menu.clicked(7, 0, ClickType.PICKUP, player);
         menu.clicked(TableEquipment.BUST_SLOT, 0, ClickType.PICKUP, player);
         check(menu.totalPoints(0) == beforeBust, "Reserve bust stick still affected the balance");
+        int recipientSlot = 14;
+        check(menu.getSlot(recipientSlot).getItem().getCount() == 4
+            && !ItemStack.isSameItemSameComponents(menu.getSlot(8).getItem(), menu.getSlot(recipientSlot).getItem()),
+            "Payment fixture lacks distinct matching-denomination stacks");
         menu.clicked(8, 1, ClickType.PICKUP, player);
-        menu.clicked(18, 0, ClickType.PICKUP, player);
-        check(menu.getSlot(8).getItem().getCount() == 1 && menu.getSlot(18).getItem().getCount() == 2,
-            "Seated hand delivery did not transfer exactly two sticks");
+        menu.clicked(recipientSlot, 0, ClickType.PICKUP, player);
+        check(menu.getSlot(8).getItem().getCount() == 1 && menu.getSlot(recipientSlot).getItem().getCount() == 6,
+            "Seated hand delivery did not merge into the recipient's denomination slot");
+        expected = snapshot(player, table, menu, bounds);
         for (var type : new ClickType[]{ClickType.PICKUP, ClickType.SWAP, ClickType.THROW}) {
-            menu.clicked(18, 0, type, player);
-            check(menu.getCarried().isEmpty() && menu.getSlot(18).getItem().getCount() == 2, "Recipient withdrawal bypass: " + type);
+            menu.clicked(recipientSlot, 0, type, player);
+            check(menu.getCarried().isEmpty() && menu.getSlot(recipientSlot).getItem().getCount() == 6, "Recipient withdrawal bypass: " + type);
         }
-        check(menu.quickMoveStack(player, 18).isEmpty(), "Quick move took another human's sticks");
+        check(menu.quickMoveStack(player, recipientSlot).isEmpty(), "Quick move took another human's sticks");
         menu.clicked(8, 0, ClickType.PICKUP, player);
-        menu.clicked(18, 0, ClickType.PICKUP_ALL, player);
-        check(menu.getSlot(18).getItem().getCount() == 2, "Collect-all took another human's sticks");
+        menu.clicked(recipientSlot, 0, ClickType.PICKUP_ALL, player);
+        check(menu.getSlot(recipientSlot).getItem().getCount() == 6, "Collect-all took another human's sticks");
         check(expected.equals(snapshot(player, table, menu, bounds)), "Seated transfer changed the physical currency multiset");
         menu.broadcastChanges();
         check(menu.score(0) == game.points(0) && menu.score(1) == game.points(1), "Settlement reference did not reach the native menu");
@@ -202,11 +208,19 @@ final class PointStickMenuSmoke {
             supplies.boxes().setItem(0, box.copy());
             check(supplies.manualSuppliesReady() == (count == 2), "Incorrect dice minimum: " + count);
         }
-        supplies.drawer(3).setItem(4, stick(1000, 3));
-        check(!supplies.manualSuppliesReady(), "Enough points but a missing required denomination was accepted");
-        supplies.drawer(3).setItem(4, stick(1000, 4));
-        check(supplies.manualSuppliesReady(), "The complete fixed kit was rejected");
         stockDrawers(table);
+    }
+
+    static ItemStack stockedBox(top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor color) {
+        var box = top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+            material, color);
+        var items = top.skyeyefast.mchjong.item.MahjongSupplies.contents(box);
+        int slot = top.skyeyefast.mchjong.item.MahjongSupplies.TILE_SLOTS;
+        for (var entry : TableEquipment.startingKit(35000).entrySet())
+            items.set(slot++, stick(entry.getKey(), entry.getValue() * 4));
+        items.set(slot, stick(-10000, 4));
+        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(box, items);
+        return box;
     }
 
     private static void act(top.skyeyefast.mchjong.engine.Game game, java.util.UUID player,

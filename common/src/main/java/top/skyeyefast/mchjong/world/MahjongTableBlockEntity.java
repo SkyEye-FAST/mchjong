@@ -201,6 +201,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         return game != null && (game.seatOf(player.getUUID()) == side || game.isHost(player.getUUID()) && game.trainingSeat(side));
     }
 
+    public boolean canReceiveSticks(int side) {
+        Game game = serverGame();
+        return side >= 0 && side < (game == null ? 4 : game.rules().players());
+    }
+
     public int pointScore(int side) {
         Game game = serverGame();
         return game == null || side >= game.rules().players() ? 0 : game.points(side);
