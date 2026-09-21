@@ -194,7 +194,15 @@ final class RoomPreparationSmoke {
                 throw new IllegalStateException("Ordinary positioning updates must not automatically remount an away player");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, prefix + "-participants-away.png");
-            presenceStage = 2;
+            // This smoke room has one human plus bots. Letting that sole human reach
+            // DISCONNECTED intentionally closes an abandoned lobby; disconnected-seat
+            // retention is covered by the multi-human engine tests instead.
+            if (!hasOtherHuman(table.clientRoom(), table.clientView().viewerSeat())) {
+                client.setScreen(presenceParent);
+                client.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
+                    new top.skyeyefast.mchjong.network.TableSeatPayload(table.getBlockPos(), table.clientView().tableId())));
+                presenceStage = 4;
+            } else presenceStage = 2;
         } else if (presenceStage == 2 && presence == PlayerPresence.DISCONNECTED) {
             presenceStage = 3;
             presenceTicks = 0;
@@ -208,6 +216,15 @@ final class RoomPreparationSmoke {
                 new top.skyeyefast.mchjong.network.TableSeatPayload(table.getBlockPos(), table.clientView().tableId())));
             presenceStage = 4;
         }
+    }
+
+    private static boolean hasOtherHuman(top.skyeyefast.mchjong.engine.RoomView room, int viewer) {
+        if (room == null) return false;
+        for (int seat = 0; seat < room.seats().size(); seat++) {
+            var value = room.seats().get(seat);
+            if (seat != viewer && value.presence() != null && value.difficulty() == null) return true;
+        }
+        return false;
     }
 
     private static void click(Minecraft client, String key, Object... arguments) {

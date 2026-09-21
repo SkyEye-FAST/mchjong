@@ -47,9 +47,7 @@ final class TenpaiHintsSmoke {
         if (ticks == 0) {
             if (sample % 3 == 2) {
                 // Hover only: moving to the button must keep this discard without a selected tile.
-                int tileWidth = 20;
-                int x = (client.screen.width - 14 * tileWidth - 6) / 2 + 13 * tileWidth + 6 + tileWidth / 2;
-                InputSmoke.pointer(client, x, client.screen.height - 24 - 20 - 15);
+                InputSmoke.pointerHand(client, (TableScreen) client.screen, fixture, 125);
             } else InputSmoke.pointer(client, 4, 4);
         }
         if (ticks == 3) {
@@ -58,11 +56,17 @@ final class TenpaiHintsSmoke {
         }
         if (ticks == 10 || ticks == 20) {
             var button = hintButton(client);
-            if (!button.visible || !button.active || !button.isHoveredOrFocused())
-                throw new IllegalStateException("Wait preview disappeared on hover/focus");
+            if (table.clientView() != fixture)
+                throw new IllegalStateException("Hint fixture was replaced before hover/focus verification");
+            if (!button.visible || !button.active) {
+                int waits = new TenpaiHints().waits(fixture, sample % 3 == 2 ? 125 : Tile.ABSENT).size();
+                throw new IllegalStateException("Wait preview became unavailable on hover/focus: waits=" + waits
+                    + " button=" + button.getX() + "," + button.getY() + " screen=" + client.screen.width + "x" + client.screen.height);
+            }
+            if (!button.isHoveredOrFocused())
+                throw new IllegalStateException("Wait preview lost hover/focus at " + button.getX() + "," + button.getY());
             if (button.getMessage().getString().split("\n").length != 15)
                 throw new IllegalStateException("Thirteen waits are missing from native narration");
-            if (table.clientView() != fixture) throw new IllegalStateException("Hint fixture was replaced before capture");
             AutomationControlsSmoke.checkBounds(client);
             Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 3]
                 + switch (sample % 3) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }

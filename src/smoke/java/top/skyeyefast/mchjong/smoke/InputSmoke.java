@@ -127,13 +127,24 @@ final class InputSmoke {
     }
 
     static void clickHand(TableScreen screen, TableView view, int tile) {
-        int tileWidth = Math.min(screen.height < 360 ? 20 : 26, (screen.width - 36) / 14);
+        var point = handPoint(screen, view, tile);
+        screen.mouseClicked(point.x(), point.y(), 0);
+    }
+
+    static void pointerHand(Minecraft client, TableScreen screen, TableView view, int tile) {
+        var point = handPoint(screen, view, tile);
+        pointer(client, point.x(), point.y());
+    }
+
+    private record HandPoint(double x, double y) {}
+    private static HandPoint handPoint(TableScreen screen, TableView view, int tile) {
+        int tileWidth = Math.min(screen.height < 360 ? 24 : 32, (screen.width - 36) / 14);
         var hand = view.seats().get(view.viewerSeat()).hand();
         int x = (screen.width - Math.max(14, hand.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2
             + hand.indexOf(tile) * tileWidth + tileWidth / 2;
         if (tile == view.seats().get(view.viewerSeat()).drawn()) x += Math.max(4, tileWidth / 3);
         int footer = view.autoPlay() != null ? 24 : 0;
-        screen.mouseClicked(x, screen.height - footer - 20 - Math.round(tileWidth * 1.53846f) / 2, 0);
+        return new HandPoint(x, screen.height - footer - 15 - Math.round(tileWidth * 1.53846f) / 2.0);
     }
 
     private static boolean selected(TableScreen screen, TableView view, int tile) {
