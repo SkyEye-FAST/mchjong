@@ -23,8 +23,8 @@ final class TableHud {
     void clear() { regions.clear(); }
     int bottom() { return regions.stream().mapToInt(region -> region.y() + region.height()).max().orElse(34); }
     boolean contains(double x, double y) { return regions.stream().anyMatch(region -> region.contains(x, y)); }
-    int hintHalfWidth(int center, int bottom, int halfWidth) {
-        for (var region : regions) if (region.y() < bottom && region.y() + region.height() > bottom - 57) {
+    int hintHalfWidth(int center, int bottom, int halfWidth, int height) {
+        for (var region : regions) if (region.y() < bottom && region.y() + region.height() > bottom - height) {
             if (region.x() > center) halfWidth = Math.min(halfWidth, region.x() - center - 4);
             else if (region.x() + region.width() < center)
                 halfWidth = Math.min(halfWidth, center - region.x() - region.width() - 4);

@@ -189,6 +189,10 @@ rails converge toward it, and the viewer's foreground stays full size. Animation
 anchors use the same projected centers as the tile faces. Player labels are compact
 translucent table-edge plaques. Use larger portrait and score type on the virtual
 canvas; toolbar, automation, score and status captions use twice the native font size.
+The bottom-left keyboard help and footer clock use that same enlarged size.
+Size immersive toolbar buttons from their translated captions at that scale, including padding.
+Wait previews use twice the seated size for their focus target, tile faces, counts
+and heading. Reserve the enlarged popup's height when avoiding player plaques and actions.
 Immersive play has exactly one 1280 × 800 virtual layout. Minecraft GUI scale, window
 size and window aspect ratio must never select another immersive layout, change tile
 sizes, move controls, hide controls or fall back to the seated renderer. Fit that

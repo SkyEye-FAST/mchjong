@@ -13,6 +13,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Immersive wait previews enlarge the hint target, tile faces and text for the fixed canvas.
+- Immersive toolbar buttons fit their full translated captions at the enlarged text size.
+- Immersive keyboard help and footer clocks use the enlarged caption size.
 - Added-kan tiles render from back to front so the rear tile's shadow keeps the called tile's face clear.
 
 ## [0.4.1] - 2026-09-20

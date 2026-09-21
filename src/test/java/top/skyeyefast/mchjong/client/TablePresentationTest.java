@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TablePresentationTest {
     @Test void thirteenWaitPopupClearsCardsAutomationAndDecisionsAtMinimumSizes() {
         for (int[] bounds : new int[][]{{320, 116, 108, 165}, {640, 148, 108, 310}, {480, 8, 38, 176}}) {
-            var box = TableHints.layout(bounds[0] - 10, bounds[1], bounds[2], bounds[3], 13);
+            var box = TableHints.layout(bounds[0] - 10, bounds[1], bounds[2], bounds[3], 13, 1);
             assertNotNull(box);
             assertTrue(box.x() >= bounds[1]);
             assertTrue(box.y() >= bounds[2]);
@@ -19,13 +19,19 @@ class TablePresentationTest {
             assertTrue(box.tileWidth() >= 5);
             assertTrue(12 * box.step() + box.tileWidth() + 12 <= box.width());
         }
-        assertNull(TableHints.layout(320, 116, 108, 165, 0));
-        assertNull(TableHints.layout(320, 116, 108, 130, 13));
-        var wrapped = TableHints.layout(208, 112, 80, 165, 13);
+        assertNull(TableHints.layout(320, 116, 108, 165, 0, 1));
+        assertNull(TableHints.layout(320, 116, 108, 130, 13, 1));
+        var wrapped = TableHints.layout(208, 112, 80, 165, 13, 1);
         assertNotNull(wrapped);
         assertTrue(wrapped.columns() < 13);
         assertEquals(160, wrapped.x() + wrapped.width() / 2);
         assertEquals(165, wrapped.y() + wrapped.height());
+        var immersive = TableHints.layout(1050, 230, 38, 620, 13, 2);
+        assertNotNull(immersive);
+        assertEquals(32, immersive.tileWidth());
+        assertEquals(13, immersive.columns());
+        assertEquals(640, immersive.x() + immersive.width() / 2);
+        assertEquals(620, immersive.y() + immersive.height());
     }
 
     @Test void seatedMeldSummaryPreservesTextAndFallsBackAtNarrowWidths() {

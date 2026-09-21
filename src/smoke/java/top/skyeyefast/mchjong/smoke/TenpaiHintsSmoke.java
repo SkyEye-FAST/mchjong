@@ -65,9 +65,15 @@ final class TenpaiHintsSmoke {
             }
             if (!button.isHoveredOrFocused())
                 throw new IllegalStateException("Wait preview lost hover/focus at " + button.getX() + "," + button.getY());
+            if (sample % 3 == 2 && (button.getWidth() != 40 || button.getHeight() != 32))
+                throw new IllegalStateException("Immersive wait preview must use the enlarged focus target");
             if (button.getMessage().getString().split("\n").length != 15)
                 throw new IllegalStateException("Thirteen waits are missing from native narration");
             AutomationControlsSmoke.checkBounds(client);
+            if (sample % 3 == 2) for (var child : client.screen.children())
+                if (child instanceof AbstractWidget widget && widget.visible && widget.getY() == 16
+                        && client.font.width(widget.getMessage()) * 2 > widget.getWidth() - 12)
+                    throw new IllegalStateException("Immersive toolbar caption is clipped: " + widget.getMessage().getString());
             Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 3]
                 + switch (sample % 3) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }
                 + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), ignored -> {});
