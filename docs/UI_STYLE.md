@@ -221,7 +221,9 @@ generic chest menu, title matching or a replacement of vanilla chest screens.
 The left side contains 45 tile slots, nine point-stick slots, one adjacent dice
 slot and 36 player slots.
 The right side shows tile/stick counts, set readiness, a dedicated dye slot and
-face-preset controls. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
+face-preset controls. Vanilla dyes in that slot recolor every stored tile back to one of the
+sixteen dye colors through the explicit Dye backs action; Mahjong dye remains the reagent for
+face printing. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
 has an accent border, a small lock mark and an explanatory tooltip.
 
 Set readiness must use `MahjongSupplies.deck`, including composition, material

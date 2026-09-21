@@ -3,51 +3,63 @@ package top.skyeyefast.mchjong.client;
 import com.mojang.math.Axis;
 import java.util.Comparator;
 import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** Tile faces use the same HD resource atlas as the physical tiles. */
 public final class TileGui {
     private TileGui() {}
 
     public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways, boolean marked, TileFacePreset preset) {
-        tile(graphics, tile, x, y, width, back, sideways, marked, false, preset);
+        tile(graphics, tile, x, y, width, back, sideways, marked, false, preset, TileMaterial.BONE, null);
     }
 
     public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                             boolean marked, boolean dimmed, TileFacePreset preset) {
-        drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, 0xffffffff);
+        tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, TileMaterial.BONE, null);
+    }
+
+    public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+                            boolean marked, boolean dimmed, TileFacePreset preset, TileMaterial material, DyeColor dye) {
+        drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, material, dye);
     }
 
     public static void tile3d(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
-                              boolean marked, boolean dimmed, int depth, TileFacePreset preset, int backColor) {
-        drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, Math.max(1, depth), preset, backColor);
+                              boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye) {
+        drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, Math.max(1, depth), preset, material, dye);
     }
 
     private static void drawTile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
-                                 boolean marked, boolean dimmed, int depth, TileFacePreset preset, int backColor) {
+                                 boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye) {
         int height = Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int bodyColor = TileMesh.bodyColor(material, dye);
+        int backColor = TileMesh.backColor(material, dye);
         graphics.pose().pushPose();
         graphics.pose().translate(x, y, 0);
         if (depth > 0) {
             int w = sideways ? height : width, h = sideways ? width : height;
             graphics.fill(depth + 1, depth + 2, w + depth + 1, h + depth + 2, 0x44000000);
-            graphics.fill(w, 2, w + depth, h + depth, 0xffb3b5ad);
-            graphics.fill(1, h, w + depth, h + depth, 0xffd5d7cd);
+            graphics.fill(w, 2, w + depth, h + depth, shade(bodyColor, .78));
+            graphics.fill(1, h, w + depth, h + depth, shade(bodyColor, .92));
             graphics.fill(1, h + depth - 2, w + depth, h + depth, backColor);
         }
         if (sideways) {
             graphics.pose().translate(height, 0, 0);
             graphics.pose().mulPose(Axis.ZP.rotationDegrees(90));
         }
-        graphics.fill(0, 0, width, height, 0xfff4eedb);
         if (back || tile < 0) {
-            if (depth > 0) graphics.setColor(((backColor >> 16) & 255) / 255f,
-                ((backColor >> 8) & 255) / 255f, (backColor & 255) / 255f, 1);
-            graphics.blit(TileMesh.BACK, 1, 1, width - 2, height - 2, 0, 0,
-                TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT);
-            if (depth > 0) graphics.setColor(1, 1, 1, 1);
+            var texture = TileRenderTypes.backTexture(material, dye);
+            int textureWidth = texture.equals(TileMesh.BACK) ? TileMesh.TILE_WIDTH : 64;
+            int textureHeight = texture.equals(TileMesh.BACK) ? TileMesh.TILE_HEIGHT : 64;
+            graphics.setColor(((backColor >> 16) & 255) / 255f, ((backColor >> 8) & 255) / 255f,
+                (backColor & 255) / 255f, ((backColor >>> 24) & 255) / 255f);
+            graphics.blit(texture, 1, 1, width - 2, height - 2, 0, 0,
+                textureWidth, textureHeight, textureWidth, textureHeight);
+            graphics.setColor(1, 1, 1, 1);
         } else {
+            graphics.fill(0, 0, width, height, 0xfff4eedb);
             int face = TileMesh.face(tile);
             graphics.blit(TileMesh.atlas(preset), 1, 1, width - 2, height - 2,
                 face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
@@ -64,19 +76,31 @@ public final class TileGui {
         graphics.pose().popPose();
     }
 
+    private static int shade(int color, double scale) {
+        return color & 0xff000000 | (int) (((color >> 16) & 255) * scale) << 16
+            | (int) (((color >> 8) & 255) * scale) << 8 | (int) ((color & 255) * scale);
+    }
+
     public static int meldWidth(Meld meld, int owner, int tileWidth) {
         return (int) Math.ceil(MeldLayout.of(meld, owner).width() * tileWidth / TileMesh.WIDTH);
     }
 
     public static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset) {
-        meld(graphics, meld, owner, x, y, tileWidth, 0, preset, 0xffffffff);
+        meld(graphics, meld, owner, x, y, tileWidth, 0, preset, TileMaterial.BONE, null);
     }
 
-    public static void meld3d(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth, TileFacePreset preset, int backColor) {
-        meld(graphics, meld, owner, x, y, tileWidth, Math.max(1, depth), preset, backColor);
+    public static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset,
+                            TileMaterial material, DyeColor dye) {
+        meld(graphics, meld, owner, x, y, tileWidth, 0, preset, material, dye);
     }
 
-    private static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth, TileFacePreset preset, int backColor) {
+    public static void meld3d(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
+                              TileFacePreset preset, TileMaterial material, DyeColor dye) {
+        meld(graphics, meld, owner, x, y, tileWidth, Math.max(1, depth), preset, material, dye);
+    }
+
+    private static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
+                             TileFacePreset preset, TileMaterial material, DyeColor dye) {
         double scale = tileWidth / (double) TileMesh.WIDTH;
         // Paint the rear added-kan tile first so its body and shadow stay behind the called tile.
         for (var part : MeldLayout.of(meld, owner).parts().stream()
@@ -85,8 +109,10 @@ public final class TileGui {
             double tileDepth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
             int px = x + (int) Math.round((part.x() - span / 2) * scale);
             int py = y + (int) Math.round((part.z() + TileMesh.HEIGHT / 2.0 - tileDepth / 2) * scale);
-            if (depth > 0) tile3d(graphics, part.tile(), px, py, tileWidth, part.back(), part.sideways(), part.sideways(), false, depth, preset, backColor);
-            else tile(graphics, part.tile(), px, py, tileWidth, part.back(), part.sideways(), part.sideways(), preset);
+            if (depth > 0) tile3d(graphics, part.tile(), px, py, tileWidth, part.back(), part.sideways(), part.sideways(), false,
+                depth, preset, material, dye);
+            else tile(graphics, part.tile(), px, py, tileWidth, part.back(), part.sideways(), part.sideways(), false,
+                preset, material, dye);
         }
     }
 }

@@ -10,6 +10,7 @@ import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** Screen-space play surface. It consumes only the recipient's view, never world geometry or camera rays. */
 final class TableBoard {
@@ -30,6 +31,8 @@ final class TableBoard {
     private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
     private final Map<Integer, Integer> tileWidths = new HashMap<>();
+    private TileMaterial material = TileMaterial.BONE;
+    private net.minecraft.world.item.DyeColor back;
 
     TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop) {
         this(view, left, right, top, bottom, actionsTop, false);
@@ -133,14 +136,17 @@ final class TableBoard {
     }
 
     void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
-        render(graphics, view, preset, Tile.ABSENT, net.minecraft.world.item.DyeColor.BLUE);
+        render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null);
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile, net.minecraft.world.item.DyeColor back) {
+    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
+                TileMaterial material, net.minecraft.world.item.DyeColor back) {
+        this.material = material;
+        this.back = back;
         tiles.clear();
         tileWidths.clear();
         if (immersive != null) {
-            immersive.render(graphics, view, preset, suppressedTile, 0xff000000 | back.getTextureDiffuseColor());
+            immersive.render(graphics, view, preset, suppressedTile, material, back);
             immersiveCenter(graphics, view);
             return;
         }
@@ -159,7 +165,7 @@ final class TableBoard {
             int width = Math.min(10, Math.max(2, (riverArea(seat).x() - x - 4) / 4));
             int y = bounds.bottom() - tileHeight(width) - 8;
             for (int tile : player.norths()) {
-                TileGui.tile(graphics, tile, x, y, width, false, false, false, preset);
+                TileGui.tile(graphics, tile, x, y, width, false, false, false, false, preset, material, back);
                 remember(tile, x + width / 2, y + tileHeight(width) / 2);
                 x += width;
             }
@@ -371,10 +377,10 @@ final class TableBoard {
     private static int tileHeight(int width) { return Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH); }
     private void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
-        TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset);
+        TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, material, this.back);
     }
     private void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
-        TileGui.meld(graphics, meld, owner, x, y, width, preset);
+        TileGui.meld(graphics, meld, owner, x, y, width, preset, material, back);
     }
     private void rememberRotated(int tile, int cx, int cy, int x, int y, int side) {
         rememberRotated(tile, cx, cy, x, y, side, 1);

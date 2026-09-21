@@ -14,11 +14,7 @@ public final class TileRenderTypes extends RenderType {
     }
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
-    private static final java.util.Map<ResourceLocation, RenderType> GUI = java.util.Map.of(
-        TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS),
-        TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO),
-            guiMaterial("mchjong_gui_kanto", TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO)),
-        TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK));
+    private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes();
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
         new java.util.EnumMap<>(top.skyeyefast.mchjong.item.TileMaterial.class);
     static {
@@ -38,15 +34,38 @@ public final class TileRenderTypes extends RenderType {
             1536, false, false, () -> {}, () -> {});
     }
 
-    private static ResourceLocation bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
+    public static ResourceLocation bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
         return ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile_material/" + material.getSerializedName() + ".png");
+    }
+
+    public static ResourceLocation backTexture(top.skyeyefast.mchjong.item.TileMaterial material,
+                                               net.minecraft.world.item.DyeColor dye) {
+        return TileMesh.usesMaterialBack(material, dye) ? bodyTexture(material) : TileMesh.BACK;
     }
 
     public static RenderType body(top.skyeyefast.mchjong.item.TileMaterial material) {
         return material == top.skyeyefast.mchjong.item.TileMaterial.GLASS ? GLASS : BODIES.get(material);
     }
 
+    public static RenderType back(top.skyeyefast.mchjong.item.TileMaterial material,
+                                  net.minecraft.world.item.DyeColor dye) {
+        return TileMesh.usesMaterialBack(material, dye) ? body(material) : BACKS;
+    }
+
     public static RenderType gui(ResourceLocation texture) { return GUI.get(texture); }
+
+    private static java.util.Map<ResourceLocation, RenderType> guiTypes() {
+        var result = new java.util.HashMap<ResourceLocation, RenderType>();
+        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS));
+        var kanto = TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
+        result.put(kanto, guiMaterial("mchjong_gui_kanto", kanto));
+        result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK));
+        for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
+            var texture = bodyTexture(material);
+            result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture));
+        }
+        return java.util.Map.copyOf(result);
+    }
 
     private static RenderType guiMaterial(String name, ResourceLocation texture) {
         return create(name, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS, 1536,

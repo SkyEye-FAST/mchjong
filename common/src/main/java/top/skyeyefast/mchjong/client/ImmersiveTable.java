@@ -10,12 +10,15 @@ import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** Recipient-safe miniature 3D scene, projected into the fixed immersive canvas. */
 final class ImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     private int backColor;
+    private int bodyColor;
+    private ResourceLocation backTexture;
     private record Vertex(double x, double z, double h) {}
     private record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color) {
         double depth() {
@@ -68,9 +71,12 @@ final class ImmersiveTable {
         };
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed, int backColor) {
+    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed,
+                TileMaterial material, net.minecraft.world.item.DyeColor dye) {
         this.preset = preset;
-        this.backColor = backColor;
+        backColor = TileMesh.backColor(material, dye);
+        bodyColor = TileMesh.bodyColor(material, dye);
+        backTexture = TileRenderTypes.backTexture(material, dye);
         points.clear(); widths.clear(); faces.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
@@ -188,7 +194,7 @@ final class ImmersiveTable {
     private void tile(int tile, int side, double x, double z, int width, boolean back, boolean sideways, boolean dim, double h) {
         double w = sideways ? width * RATIO : width, d = sideways ? width : width * RATIO;
         flat(side, x - w / 2 + 3, z - d / 2 + 4, x + w / 2 + 4, z + d / 2 + 5, h + .1, 0x44000000);
-        box(side, x, z, w - .7, d - .7, h, h + 3, backColor, backColor);
+        box(side, x, z, w - .7, d - .7, h, h + 3, bodyColor, bodyColor);
         box(side, x, z, w - .7, d - .7, h + 3, h + 10, dim ? 0xffa0a9a5 : 0xffe1ded0,
             dim ? 0xffb1b9b2 : 0xfff4f0e5);
         Vertex[] face = rectangle(side, x - w / 2 + 1, z - d / 2 + 1, x + w / 2 - 1, z + d / 2 - 1, h + 10.2);
@@ -200,7 +206,7 @@ final class ImmersiveTable {
     private void standing(int side, double x, double z, int w) {
         double d = 16, h = w * RATIO;
         flat(side, x - w / 2.0, z - d / 2, x + w / 2.0 + 8, z + d / 2 + 15, .1, 0x44000000);
-        box(side, x, z, w - .7, d, 0, h, 0xffece8db, 0xfff5f0e1);
+        box(side, x, z, w - .7, d, 0, h, bodyColor, bodyColor);
         artwork(new Vertex[]{vertex(side, x + w / 2.0 - 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, 2),
@@ -230,7 +236,7 @@ final class ImmersiveTable {
     }
     private void artwork(Vertex[] vertices, int tile, boolean back, boolean dim) {
         if (back || tile < 0) {
-            faces.add(new Face(vertices, TileMesh.BACK, 0, 0, 1, 1, backColor));
+            faces.add(new Face(vertices, backTexture, 0, 0, 1, 1, backColor));
             return;
         }
         int face = TileMesh.face(tile);

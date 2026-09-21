@@ -26,7 +26,7 @@ public final class TableEquipment {
     private java.util.List<ItemStack> matchSticks = java.util.List.of();
     private int clothColor = -1;
     private TileMaterial material = TileMaterial.BONE;
-    private DyeColor back = DyeColor.BLUE;
+    private DyeColor back;
     private TileFacePreset preset = TileFacePreset.KANSAI;
 
     public TableEquipment(Runnable changed) {
@@ -197,7 +197,7 @@ public final class TableEquipment {
             if (candidate != null) { deck = candidate; activeBox = slot; }
         }
         material = deck == null ? TileMaterial.BONE : deck.material();
-        back = deck == null ? DyeColor.BLUE : deck.back();
+        back = deck == null ? null : deck.back();
         preset = deck == null ? TileFacePreset.KANSAI : deck.preset();
     }
 
@@ -263,7 +263,10 @@ public final class TableEquipment {
             clothColor = cloth.isEmpty() ? -1 : MahjongSupplies.color(cloth).getId();
         }
         if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
-        if (tag.contains("tile_back")) back = DyeColor.byId(tag.getInt("tile_back"));
+        if (tag.contains("tile_back")) {
+            int id = tag.getInt("tile_back");
+            back = id < 0 ? null : DyeColor.byId(id);
+        }
         if (tag.contains("tile_preset")) for (TileFacePreset candidate : TileFacePreset.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_preset"))) preset = candidate;
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
@@ -273,7 +276,7 @@ public final class TableEquipment {
     public void writeAppearance(CompoundTag tag) {
         tag.putInt("cloth_color", clothColor);
         tag.putString("tile_material", material.getSerializedName());
-        tag.putInt("tile_back", back.getId());
+        tag.putInt("tile_back", back == null ? -1 : back.getId());
         tag.putString("tile_preset", preset.getSerializedName());
     }
 }

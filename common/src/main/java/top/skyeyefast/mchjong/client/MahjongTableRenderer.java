@@ -31,7 +31,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         var frames = animated ? animation.sample(now) : animation.settled();
         pose.pushPose();
         pose.translate(0.5, 0, 0.5);
-        // Opaque backs and furniture first; glass is sorted and blended after the opaque display.
+        // Opaque shells and furniture first; glass shells are sorted and blended with the glass body pass.
         boolean glass = table.equipment().material() == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         tiles(table, frames, pose, buffers, light, Layer.BACK);
         if (!glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
@@ -48,9 +48,10 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
     private static void tiles(MahjongTableBlockEntity table, java.util.List<TableAnimation.Frame> frames,
             PoseStack pose, MultiBufferSource buffers, int light, Layer layer) {
         var material = table.equipment().material();
+        var back = table.equipment().back();
         boolean glass = material == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         var vertices = buffers.getBuffer(switch (layer) {
-            case BACK -> TileRenderTypes.BACKS;
+            case BACK -> TileRenderTypes.back(material, back);
             case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.faces(table.equipment().preset());
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
@@ -70,8 +71,8 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
             switch (layer) {
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
-                case BODY -> TileMesh.drawBody(pose, vertices, light, material);
-                case BACK -> TileMesh.drawBack(pose, vertices, !glass && (piece.back() || piece.tile() < 0), light, table.equipment().back());
+                case BODY -> TileMesh.drawBody(pose, vertices, light, material, back);
+                case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, light, material, back);
                 case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();

@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Mahjong boxes accept any vanilla dye in their dye slot to recolor the stored tile backs to all sixteen Minecraft dye colors; undyed tiles use their material texture, while dyed glass uses translucent stained glass instead of an opaque back.
+
 ### Changed
 
 - Immersive play now uses a fixed 1280 × 800 virtual canvas with a unified perspective table, solid tiles, upright opponent hands, foreground hand rack, perimeter player plaques and a compact point-stick display. Larger captions and a separate action rail keep the hand and rivers readable; sideways riichi discards align to the top of their row. GUI scale and window size apply one uniform letterboxed scale.

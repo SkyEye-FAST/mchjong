@@ -182,8 +182,12 @@ public final class TableScreen extends Screen {
         return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().preset();
     }
 
-    private int backColor() {
-        return 0xff000000 | ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().back().getTextureDiffuseColor();
+    private top.skyeyefast.mchjong.item.TileMaterial tileMaterial() {
+        return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().material();
+    }
+
+    private net.minecraft.world.item.DyeColor tileBack() {
+        return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().back();
     }
 
     private TableAnimation animation() {
@@ -495,7 +499,7 @@ public final class TableScreen extends Screen {
         graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90 * side));
         boolean sideways = motion.riichi() && fraction > .82;
         TileGui.tile3d(graphics, motion.tile(), -tileWidth / 2, -tileHeight / 2, tileWidth, false, sideways,
-            false, motion.tsumogiri() && fraction > .86, Math.max(2, tileWidth / 7), facePreset(), backColor());
+            false, motion.tsumogiri() && fraction > .86, Math.max(2, tileWidth / 7), facePreset(), tileMaterial(), tileBack());
         graphics.pose().popPose();
     }
 
@@ -511,7 +515,7 @@ public final class TableScreen extends Screen {
         int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         TileGui.tile3d(graphics, motion.tile(), (int) Math.round(x) - tileWidth / 2,
             (int) Math.round(y) - tileHeight / 2, tileWidth, false, false, false, false,
-            Math.max(2, tileWidth / 7), facePreset(), backColor());
+            Math.max(2, tileWidth / 7), facePreset(), tileMaterial(), tileBack());
     }
 
     private void buildToolbar(TableView view) {
@@ -926,8 +930,7 @@ public final class TableScreen extends Screen {
             graphics.fill(0, 0, layoutWidth, layoutHeight, MahjongUi.INPUT);
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
-            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed,
-                ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().back());
+            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed, tileMaterial(), tileBack());
             renderImmersiveDiscard(graphics, view, now);
             renderImmersiveDraw(graphics, now);
         }
@@ -992,7 +995,7 @@ public final class TableScreen extends Screen {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), backColor());
+        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack());
         updateHints(view);
         super.render(graphics, drawMouseX, drawMouseY, partialTick);
         boolean footerClock = false;

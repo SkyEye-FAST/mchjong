@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import net.minecraft.world.item.DyeColor;
 
-/** A dyed back, material body and opaque white face share one physical tile envelope. */
+/** Material body, optional dyed back and opaque white face share one physical tile envelope. */
 public final class TileMesh {
     public static final float WIDTH = .104f;
     public static final float HEIGHT = .160f;
@@ -44,12 +44,26 @@ public final class TileMesh {
         return Tile.red(tile) ? 34 + kind / 9 : kind;
     }
 
-    public static void drawBody(PoseStack pose, VertexConsumer vertices, int light, TileMaterial material) {
-        band(pose, vertices, OUTLINE, CORE_BACK, OUTLINE, CORE_FRONT, material.color(), light, true, SWATCH_U, SWATCH_V);
+    public static int bodyColor(TileMaterial material, DyeColor dye) {
+        return material == TileMaterial.GLASS && dye != null
+            ? material.color() & 0xff000000 | dye.getTextureDiffuseColor() & 0x00ffffff : material.color();
+    }
+
+    public static int backColor(TileMaterial material, DyeColor dye) {
+        return dye != null && material != TileMaterial.GLASS
+            ? 0xff000000 | dye.getTextureDiffuseColor() : bodyColor(material, dye);
+    }
+
+    public static boolean usesMaterialBack(TileMaterial material, DyeColor dye) {
+        return dye == null || material == TileMaterial.GLASS;
+    }
+
+    public static void drawBody(PoseStack pose, VertexConsumer vertices, int light, TileMaterial material, DyeColor dye) {
+        band(pose, vertices, OUTLINE, CORE_BACK, OUTLINE, CORE_FRONT, bodyColor(material, dye), light, true, SWATCH_U, SWATCH_V);
     }
 
     public static void drawFace(PoseStack pose, VertexConsumer vertices, int tile, boolean concealed, int light) {
-        drawArtwork(pose, vertices, concealed || tile < 0 ? -1 : face(tile), light);
+        if (!concealed && tile >= 0) drawArtwork(pose, vertices, face(tile), light);
     }
 
     public static int artwork(top.skyeyefast.mchjong.item.TileData tile) {
@@ -73,17 +87,21 @@ public final class TileMesh {
         }
     }
 
-    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, int light) {
-        drawBack(pose, vertices, concealed, light, DyeColor.BLUE);
-    }
-
-    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, int light, DyeColor dye) {
-        int color = 0xff000000 | dye.getTextureDiffuseColor();
-        // Back artwork wraps the outer cap; edge colors sample its corner rather than a glyph atlas.
-        float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
-        band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, false, u, v);
-        band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
-        cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
+    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, int light,
+                                TileMaterial material, DyeColor dye) {
+        int color = backColor(material, dye);
+        boolean materialBack = usesMaterialBack(material, dye);
+        if (materialBack) {
+            band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, true, 0, 0);
+            band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, true, 0, 0);
+            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
+        } else {
+            // Dyed opaque backs use the independent resource-pack mask and sample its rim at the bevel.
+            float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
+            band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, false, u, v);
+            band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
+            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
+        }
         if (concealed) texturedFace(pose, vertices, 0, 0, 1, 1, 0.048f, 0.073f, DEPTH / 2, light, false, color);
     }
 

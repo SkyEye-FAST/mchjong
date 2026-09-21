@@ -62,13 +62,18 @@ generated-item models and can be replaced independently by resource packs.
 
 ## Tile backs and customization
 
-`assets/mchjong/textures/tile/back.png` is a separate 256 by 384 texture. Every
-pixel of the default back is opaque white, a neutral tint mask for the item's
-vanilla dye component. Defaults render solid blue.
-The material-colored body, opaque white face plate and shallow back shell supply
-the tile's physical shape; the back shell samples the top-left pixel and applies
-the same dye tint. Every material, including wood, amethyst and glass, has a white
-printed surface. Glass transparency is restricted to the body, not the face plate.
+Undyed tiles use their own material texture for the rear face and back shell, so
+wood, bone, quartz, calcite, glass and amethyst have no separate default back
+color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 opaque
+white tint mask used only after an opaque tile has been dyed. The tile's
+`BASE_COLOR` component selects one of Minecraft's sixteen dye colors without
+changing the material-colored body or opaque white printed surface.
+
+Glass never receives the opaque `back.png` layer. Dyeing a glass tile tints its
+translucent glass material instead, matching the stained-glass model while its
+rear face continues to use `textures/tile_material/glass.png`. Undyed glass keeps
+the neutral glass tint. Resource packs can replace the material textures and the
+dyed-back mask independently.
 
 The body uses original neutral relief textures under `textures/tile_material/`:
 `wood.png`, `bone.png`, `quartz.png`, `calcite.png`, `glass.png`, and `amethyst.png`.
@@ -98,14 +103,17 @@ side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulti
 screenshots for native-like hand placement, grip
 contact, readable printed faces and clearance above the hotbar.
 
-To supply a design, create a normal resource pack for your target Minecraft
-version containing that same texture
-path and the matching `pack_format`. Keep it opaque, preserve the 2:3 aspect ratio
-and use an unmarked, uniform rim so that the back shell matches. Selection,
-persistence and reloading use Minecraft's resource-pack system. Custom backs do
+To supply a dyed-back design, create a normal resource pack for your target
+Minecraft version containing the `textures/tile/back.png` path and matching
+`pack_format`. Keep it opaque, preserve the 2:3 aspect ratio and use an unmarked,
+uniform rim so that the back shell matches. To customize an undyed back, replace
+the corresponding `textures/tile_material/<material>.png` instead. Selection,
+persistence and reloading use Minecraft's resource-pack system. Back textures do
 not replace the face atlas or affect private game data.
 
-Concealed tiles and physical rear faces use the independent back texture.
+Concealed tiles and physical rear faces use the material texture while undyed,
+or the independent back texture after an opaque tile is dyed. Glass always uses
+its material texture and remains translucent.
 Front and back geometry is batched by material rather than switching render
 buffers for each tile.
 
@@ -184,7 +192,7 @@ code from that project or riichi_advanced is bundled.
 
 `gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source
 order, red fives, the blank white dragon, texture resolution and filtering,
-uniform default backs, resource-pack customization paths, language keys, original furniture
+the dyed-back mask, material-backed defaults, resource-pack customization paths, language keys, original furniture
 materials, source integrity and byte-for-byte reproducible generation. Client-side
 unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
 white face plates, picking and exact wall/river contact, including riichi discards.

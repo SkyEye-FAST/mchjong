@@ -6,6 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** The recipient's own hand, using the same tile identities, artwork and decisions as the world. */
 final class TableHand {
@@ -80,10 +81,11 @@ final class TableHand {
     }
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
-        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, 0xffffffff);
+        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, TileMaterial.BONE, null);
     }
 
-    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile, TileFacePreset preset, int backColor) {
+    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
+                TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
@@ -100,8 +102,8 @@ final class TableHand {
             int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
             if (tile != suppressedTile) {
                 if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
-                    Math.max(2, tileWidth / 8), preset, backColor);
-                else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
+                    Math.max(2, tileWidth / 8), preset, material, dye);
+                else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false, preset, material, dye);
                 if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
             }
         }
@@ -121,9 +123,9 @@ final class TableHand {
                 graphics.pose().translate(0, y + tileHeight, 0);
                 graphics.pose().scale(1, .72f, 1);
                 TileGui.meld3d(graphics, meld, owner, meldX, -meldHeight, meldTileWidth,
-                    Math.max(1, meldTileWidth / 8), preset, backColor);
+                    Math.max(1, meldTileWidth / 8), preset, material, dye);
                 graphics.pose().popPose();
-            } else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
+            } else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset, material, dye);
             meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
         }
     }

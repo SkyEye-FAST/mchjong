@@ -46,6 +46,8 @@ class PhysicalSuppliesTest {
         assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(4))));
         assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(5))));
         assertNotNull(MahjongSupplies.deck(entries.get(5)));
+        assertNull(MahjongSupplies.deck(entries.get(5)).back());
+        assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(Items.CYAN_DYE)));
         assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
             .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
         assertEquals(1, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
