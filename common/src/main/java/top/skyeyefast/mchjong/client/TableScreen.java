@@ -66,6 +66,12 @@ public final class TableScreen extends Screen {
     private boolean viewReady;
     private TableBoard board;
     private TableHand hand;
+    private TableView presentedView;
+    private ImmersiveDiscardMotion immersiveDiscard;
+    private ImmersiveDrawMotion immersiveDraw;
+    private record ImmersiveDiscardMotion(int tile, int seat, boolean tsumogiri, boolean riichi,
+                                          long started, long duration, TableHand.Point source, int sourceWidth) {}
+    private record ImmersiveDrawMotion(int tile, long started, long duration, TableHand.Point target, int targetWidth) {}
     private final TableHints hints = new TableHints();
     private final TableDice dice = new TableDice(() -> {
         var current = view();
@@ -262,6 +268,7 @@ public final class TableScreen extends Screen {
         confirmButton = null;
         TableView view = view();
         if (view == null) return;
+        TableView previous = presentedView;
         refreshDecision(view);
         viewReady = immersivePhase(view.phase()) && !dealing();
         if (!viewReady || view.viewerSeat() < 0 || !supportsImmersive(width, height)) immersive = false;
@@ -282,6 +289,8 @@ public final class TableScreen extends Screen {
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
             ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), width, handHeight,
                 height < 360 ? 24 : 32, true) : null;
+        prepareImmersiveMotion(previous, view, handHeight);
+        presentedView = view;
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
@@ -368,18 +377,119 @@ public final class TableScreen extends Screen {
         if (hintFocus && hints.visible) setFocused(hints);
     }
 
+    private void prepareImmersiveMotion(TableView previous, TableView next, int handHeight) {
+        if (!immersive || !TableSettings.get().animations || previous == null
+            || !previous.tableId().equals(next.tableId()) || previous.handNumber() != next.handNumber()
+            || next.revision() <= previous.revision()) return;
+        int viewer = next.viewerSeat();
+        if (viewer >= 0) {
+            var oldSeat = previous.seats().get(viewer);
+            var newSeat = next.seats().get(viewer);
+            if (newSeat.hand().size() == oldSeat.hand().size() + 1 && newSeat.drawn() != Tile.ABSENT && hand != null) {
+                var target = hand.point(newSeat.drawn());
+                if (target != null) immersiveDraw = new ImmersiveDrawMotion(newSeat.drawn(), Util.getMillis(), 340,
+                    target, hand.tileWidth());
+            }
+        }
+        for (int seat = 0; seat < next.seats().size(); seat++) {
+            var before = previous.seats().get(seat).river();
+            var after = next.seats().get(seat).river();
+            if (after.size() != before.size() + 1) continue;
+            var discard = after.getLast();
+            if (discard.called()) return;
+            TableHand.Point source = null;
+            int sourceWidth = 16;
+            if (seat == next.viewerSeat()) {
+                var oldHand = new TableHand(previous.seats().get(seat), seat, width, handHeight,
+                    height < 360 ? 24 : 32, true);
+                source = oldHand.point(discard.tile());
+                if (source == null && discard.tsumogiri() && previous.seats().get(seat).drawn() != Tile.ABSENT)
+                    source = oldHand.point(previous.seats().get(seat).drawn());
+                sourceWidth = oldHand.tileWidth();
+            }
+            long duration = discard.tsumogiri() ? 320 : 500;
+            immersiveDiscard = new ImmersiveDiscardMotion(discard.tile(), seat, discard.tsumogiri(), discard.riichi(),
+                Util.getMillis(), duration, source, sourceWidth);
+            return;
+        }
+    }
+
+    private boolean immersiveDiscardActive(long now) {
+        return immersiveDiscard != null && now < immersiveDiscard.started() + immersiveDiscard.duration();
+    }
+
+    private boolean immersiveDrawActive(long now) {
+        return immersiveDraw != null && now < immersiveDraw.started() + immersiveDraw.duration();
+    }
+
+    private static double smooth(double value) {
+        double t = Math.clamp(value, 0, 1);
+        return t * t * (3 - 2 * t);
+    }
+
+    private void renderImmersiveDiscard(GuiGraphics graphics, TableView view, long now) {
+        if (!immersiveDiscardActive(now) || board == null) return;
+        var motion = immersiveDiscard;
+        var destination = board.point(motion.tile());
+        if (destination == null) return;
+        double startX, startY;
+        if (motion.source() != null) {
+            startX = motion.source().x();
+            startY = motion.source().y();
+        } else {
+            var card = board.card(motion.seat());
+            startX = card.x() + card.width() / 2.0;
+            startY = card.y() + card.height() / 2.0;
+        }
+        double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
+        double progress = smooth(fraction);
+        double x = startX + (destination.x() - startX) * progress;
+        double y = startY + (destination.y() - startY) * progress
+            - Math.sin(Math.PI * fraction) * (motion.tsumogiri() ? 7 : 17);
+        int targetWidth = board.riverTileWidth(motion.seat());
+        int tileWidth = Math.max(8, (int) Math.round(motion.sourceWidth() + (targetWidth - motion.sourceWidth()) * progress));
+        int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int side = TableBoard.side(motion.seat(), view.viewerSeat(), view.rules().players());
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90 * side));
+        boolean sideways = motion.riichi() && fraction > .82;
+        TileGui.tile3d(graphics, motion.tile(), -tileWidth / 2, -tileHeight / 2, tileWidth, false, sideways,
+            false, motion.tsumogiri() && fraction > .86, Math.max(2, tileWidth / 7), facePreset());
+        graphics.pose().popPose();
+    }
+
+    private void renderImmersiveDraw(GuiGraphics graphics, long now) {
+        if (!immersiveDrawActive(now) || board == null || hand == null) return;
+        var motion = immersiveDraw;
+        var source = board.drawSource();
+        double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
+        double progress = smooth(fraction);
+        double x = source.x() + (motion.target().x() - source.x()) * progress;
+        double y = source.y() + (motion.target().y() - source.y()) * progress - Math.sin(Math.PI * fraction) * 11;
+        int tileWidth = Math.max(8, (int) Math.round(10 + (motion.targetWidth() - 10) * progress));
+        int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        TileGui.tile3d(graphics, motion.tile(), (int) Math.round(x) - tileWidth / 2,
+            (int) Math.round(y) - tileHeight / 2, tileWidth, false, false, false, false,
+            Math.max(2, tileWidth / 7), facePreset());
+    }
+
     private void buildToolbar(TableView view) {
         int right = width - 8;
+        int exitWidth = immersive ? 38 : 48;
+        int viewWidth = immersive ? 48 : 64;
+        int replayWidth = immersive ? 42 : 52;
         addRenderableWidget(MahjongButton.create(Component.literal("…"), ignored -> minecraft.setScreen(new TableOptionsScreen(this)))
             .bounds(right - 22, 8, 22, 20).tooltip(Tooltip.create(Component.translatable("settings.mchjong.scopes"))).build());
         right -= 26;
         if (view.viewerSeat() >= 0) {
             var exit = MahjongButton.create(Component.translatable("ui.mchjong.exit"), ignored ->
                 control(view, TableControlPayload.Operation.REQUEST_EXIT, view.decision(), false))
-                .bounds(right - 48, 8, 48, 20).build();
+                .bounds(right - exitWidth, 8, exitWidth, 20)
+                .tooltip(Tooltip.create(Component.translatable("ui.mchjong.exit"))).build();
             exit.active = view.exitVote() == null;
             addRenderableWidget(exit);
-            right -= 52;
+            right -= exitWidth + 4;
         }
         boolean fits = supportsImmersive(width, height);
         Component cameraHelp = !viewReady ? Component.translatable("ui.mchjong.immersive_after_deal")
@@ -388,12 +498,13 @@ public final class TableScreen extends Screen {
                 TableKeys.INSPECT.getTranslatedKeyMessage(), TableKeys.RESET.getTranslatedKeyMessage()))
             : Component.translatable("ui.mchjong.immersive_window_small", MIN_IMMERSIVE_WIDTH, MIN_IMMERSIVE_HEIGHT);
         var camera = MahjongButton.create(Component.translatable(immersive ? "ui.mchjong.view_seated" : "ui.mchjong.view_immersive"), ignored -> toggleView())
-            .bounds(right - 64, 8, 64, 20).tooltip(Tooltip.create(cameraHelp)).build();
+            .bounds(right - viewWidth, 8, viewWidth, 20).tooltip(Tooltip.create(cameraHelp)).build();
         camera.active = fits && view.viewerSeat() >= 0 && viewReady;
         addRenderableWidget(camera);
-        right -= 68;
+        right -= viewWidth + 4;
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.title"), ignored -> ClientReplays.list(0, "", false))
-            .bounds(right - 52, 8, 52, 20).build());
+            .bounds(right - replayWidth, 8, replayWidth, 20)
+            .tooltip(Tooltip.create(Component.translatable("replay.mchjong.title"))).build());
     }
 
     void control(TableView view, TableControlPayload.Operation operation, long token, boolean enabled) {
@@ -753,7 +864,11 @@ public final class TableScreen extends Screen {
         information.clear();
         if (immersive) {
             graphics.fill(0, 0, width, height, MahjongUi.INPUT);
-            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset());
+            long now = Util.getMillis();
+            int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
+            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed);
+            renderImmersiveDiscard(graphics, view, now);
+            renderImmersiveDraw(graphics, now);
         }
         if (view.phase() == Game.Phase.LOBBY && room() != null
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
@@ -812,11 +927,11 @@ public final class TableScreen extends Screen {
         }
         if (choosingRiichi) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.choose_riichi"),
             actionLeft, actionTop - 14, width - actionLeft - (board == null && hints.visible ? 36 : 10), MahjongUi.ACCENT, true, true);
-        if (hand != null && results == null) hand.render(graphics, selectedTile, tile -> {
+        if (hand != null && results == null) hand.render(graphics, selectedTile, hoveredTile, tile -> {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        }, facePreset());
+        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset());
         updateHints(view);
         super.render(graphics, mouseX, mouseY, partialTick);
         boolean footerClock = false;

@@ -181,7 +181,10 @@ Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play fills the screen with a responsive mahjong layout: your
 clickable foreground hand and melds along the bottom, opponents and their rivers
 around a shallow-perspective felt surface with public wall stacks and beveled tile
-depth. Tsumogiri is dimmed in the river while tedashi remains at normal brightness.
+depth. Opposite/side seats scale with distance, river rows retain subtle perspective,
+and draws/discards animate between the wall, hand and river. Tsumogiri is dimmed in
+the river while tedashi remains at normal brightness and follows a more pronounced
+discard arc.
 It requires at least 480 × 300 logical GUI pixels. Enlarge the window or reduce
 GUI scale to enable it; shrinking below this size returns to the seated view.
 It remains usable under ceilings and other world obstructions, with the same

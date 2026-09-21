@@ -8,7 +8,7 @@ import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 
 /** Immutable data needed by the screen-space table renderer. */
-record TableBoardState(int viewerSeat, int players, int dealer, int round, int turn, int remaining,
+record TableBoardState(int viewerSeat, int players, int dealer, int round, int honba, int riichiSticks, int turn, int remaining,
                        int wallBreak, List<Integer> wall, List<TableView.Seat> seats, TableView.Focus focus,
                        boolean markTedashi, boolean dimTsumogiri) {
     TableBoardState {
@@ -19,8 +19,8 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int t
     }
 
     static TableBoardState live(TableView view) {
-        return new TableBoardState(view.viewerSeat(), view.rules().players(), view.dealer(), view.round(), view.turn(),
-            view.remaining(), view.wallBreak(), view.wall(), view.seats(), view.focus(), false, true);
+        return new TableBoardState(view.viewerSeat(), view.rules().players(), view.dealer(), view.round(), view.honba(),
+            view.riichiSticks(), view.turn(), view.remaining(), view.wallBreak(), view.wall(), view.seats(), view.focus(), false, true);
     }
 
     static TableBoardState replay(ReplayMatch match, ReplayHand hand, ReplayPlayback.Frame frame, int viewerSeat) {
@@ -29,7 +29,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int t
         TableView.Focus focus = event != null && event.seat() >= 0 && event.tile() != Tile.ABSENT
             ? new TableView.Focus(event.seat(), event.tile(), event.kind() == ReplayHand.Kind.MELD || event.kind() == ReplayHand.Kind.NUKI, -1)
             : null;
-        return new TableBoardState(viewerSeat, match.rules().players(), hand.dealer(), hand.round(), turn, -1,
-            0, List.of(), frame.seats(), focus, true, true);
+        return new TableBoardState(viewerSeat, match.rules().players(), hand.dealer(), hand.round(), hand.honba(), hand.sticks(),
+            turn, -1, 0, List.of(), frame.seats(), focus, true, true);
     }
 }

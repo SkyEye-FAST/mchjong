@@ -9,6 +9,7 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** The recipient's own hand, using the same tile identities, artwork and decisions as the world. */
 final class TableHand {
+    record Point(int x, int y) {}
     private final List<Integer> tiles;
     private final int drawn, left, y, tileWidth, tileHeight, gap, span;
     private final List<top.skyeyefast.mchjong.engine.Meld> melds;
@@ -37,14 +38,30 @@ final class TableHand {
 
     int top() { return y - 7; }
     int centerX() { return left + span / 2; }
+    int tileWidth() { return tileWidth; }
 
     int centerX(int tile) {
         int index = tiles.indexOf(tile);
         return index < 0 ? -1 : x(index) + tileWidth / 2;
     }
 
+    Point point(int tile) {
+        int index = tiles.indexOf(tile);
+        if (index < 0) return null;
+        return new Point(x(index) + tileWidth / 2, y(index, tile, Tile.ABSENT, Tile.ABSENT) + tileHeight / 2);
+    }
+
     private int x(int index) { return left + index * tileWidth + (gap > 0 && index == tiles.size() - 1 ? gap : 0); }
-    private int y(int tile, int selected) { return y - (tile == selected ? 3 : 0); }
+    private int arc(int index) {
+        if (!perspective || tiles.size() <= 1) return 0;
+        double center = (tiles.size() - 1) / 2.0;
+        return (int) Math.round(Math.abs(index - center) * .18);
+    }
+
+    private int y(int index, int tile, int selected, int hovered) {
+        int lift = tile == selected ? 7 : tile == hovered ? 3 : 0;
+        return y + arc(index) - lift;
+    }
 
     boolean contains(double px, double py) {
         return px >= left - 5 && px < left + span + 5 && py >= top() && py < y + tileHeight + 5;
@@ -52,23 +69,31 @@ final class TableHand {
 
     int pick(double px, double py, int selected) {
         for (int i = 0; i < tiles.size(); i++) {
-            int tile = tiles.get(i), x = x(i), top = y(tile, selected);
+            int tile = tiles.get(i), x = x(i), top = y(i, tile, selected, Tile.ABSENT);
             if (tile >= 0 && px >= x && px < x + tileWidth && py >= top && py < top + tileHeight) return tile;
         }
         return Tile.ABSENT;
     }
 
-    void render(GuiGraphics graphics, int selected, IntUnaryOperator highlight, TileFacePreset preset) {
+    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
+        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset);
+    }
+
+    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile, TileFacePreset preset) {
         if (perspective) {
-            graphics.fill(Math.max(4, left - 10), y + tileHeight - 1, Math.min(right + 2, left + span + 12),
-                y + tileHeight + 7, 0x66000000);
+            int railLeft = Math.max(4, left - 12), railRight = Math.min(right + 4, left + span + 14);
+            graphics.fill(railLeft + 3, y + tileHeight + 1, railRight + 3, y + tileHeight + 8, 0x55000000);
+            graphics.fill(railLeft, y + tileHeight, railRight, y + tileHeight + 5, 0xff0b2325);
+            graphics.hLine(railLeft + 1, railRight - 2, y + tileHeight, 0xff456264);
         }
         for (int i = 0; i < tiles.size(); i++) {
-            int tile = tiles.get(i), top = y(tile, selected), color = highlight.applyAsInt(tile);
-            if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
-                Math.max(2, tileWidth / 8), preset);
-            else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
-            if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
+            int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
+            if (tile != suppressedTile) {
+                if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
+                    Math.max(2, tileWidth / 8), preset);
+                else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
+                if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
+            }
         }
         int meldTileWidth = tileWidth;
         while (meldTileWidth > 2 && meldWidth(meldTileWidth) > right - left - span - 8) meldTileWidth--;

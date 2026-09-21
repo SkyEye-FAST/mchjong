@@ -34,8 +34,12 @@ public final class TileGui {
         }
         if (depth > 0) {
             graphics.fill(depth + 1, depth + 2, width + depth + 1, height + depth + 2, 0x66000000);
-            graphics.fill(width, depth, width + depth, height + depth, 0xff9c8b6d);
-            graphics.fill(depth, height, width + depth, height + depth, 0xffc9b994);
+            graphics.fill(width, depth, width + depth, height + depth, 0xff8f8067);
+            graphics.fill(depth, height, width + depth, height + depth, 0xffc2b291);
+            if (depth > 1) {
+                graphics.fill(width + depth - 1, depth + 1, width + depth, height + depth - 1, 0xff665b4b);
+                graphics.fill(depth + 1, height + depth - 1, width + depth - 1, height + depth, 0xff8e8069);
+            }
         }
         graphics.fill(0, 0, width, height, 0xfff4eedb);
         if (back || tile < 0) {
@@ -46,6 +50,12 @@ public final class TileGui {
             graphics.blit(TileMesh.atlas(preset), 1, 1, width - 2, height - 2,
                 face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
                 TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.ATLAS_WIDTH, TileMesh.ATLAS_HEIGHT);
+        }
+        if (depth > 0 && !dimmed) {
+            graphics.fill(1, 1, width - 1, 2, 0x55ffffff);
+            graphics.fill(1, 2, 2, height - 1, 0x33ffffff);
+            graphics.fill(width - 2, 2, width - 1, height - 1, 0x33000000);
+            graphics.fill(2, height - 2, width - 1, height - 1, 0x44000000);
         }
         if (dimmed) graphics.fill(1, 1, width - 1, height - 1, 0x660b1418);
         graphics.renderOutline(0, 0, width, height, marked ? 0xffffbd51 : 0xffa99c80);

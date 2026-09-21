@@ -327,7 +327,7 @@ public final class ReplayScreen extends Screen {
         if (!frame().settled() && !wallOpen) {
             board.render(graphics, TableBoardState.replay(match, hand(), frame(), viewer), PRESET);
             renderPlayerCards(graphics);
-            viewerHand.render(graphics, Tile.ABSENT, ignored -> 0, PRESET);
+            viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, PRESET);
             renderDora(graphics);
         }
         super.render(graphics, mouseX, mouseY, partialTick);

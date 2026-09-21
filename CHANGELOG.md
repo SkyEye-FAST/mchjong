@@ -38,6 +38,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Seated HUD uses compact player cards and integrates enlarged dora indicators into the central score panel header.
 - Immersive play arranges table action and opponent hands around a shallow-perspective felt surface with public wall stacks, beveled tiles and a centralized round/score panel; tsumogiri is dimmed separately from tedashi.
 - Seated inspect zoom is stronger, and manual-table drag source/drop hit areas are more forgiving while remaining bounded to the owning side.
+- Immersive seat depth now scales the opposite and side players, river rows gain subtle perspective, the private hand has a shallow foreground arc, and player labels/automation controls occupy less of the table.
+- Immersive draws and discards animate through screen-space table coordinates; tsumogiri uses a shorter path, tedashi a higher arc, and riichi rotates as the tile lands.
 - Engine settlement calculation, hand analysis helpers, replay recorder, and Tenhou export subsystems migrated to Kotlin.
 
 ### Fixed

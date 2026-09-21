@@ -39,7 +39,8 @@ final class TableHud {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
-        int headerWidth = Math.min(280, Math.max(84, width - 224));
+        int headerWidth = board == null ? Math.min(280, Math.max(84, width - 224))
+            : Math.min(220, Math.max(110, width - 190));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
             .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
         if (view.openHands()) details = details.copy().append("\n").append(Component.translatable("ui.mchjong.open_hands"));
@@ -64,16 +65,18 @@ final class TableHud {
         }
         boolean seated = board == null && !lobby;
         boolean compactHeader = seated && headerWidth < 160;
-        int indicatorWidth = compactHeader ? 8 : 14;
+        int indicatorWidth = board != null ? 10 : compactHeader ? 8 : 14;
         int indicatorSpan = indicators.size() * (indicatorWidth + 2);
         boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
         if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining_short", view.remaining());
         if (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty()) {
-            MahjongUi.panel(graphics, 8, 7, headerWidth, lobby ? 21 : 26);
-            text(font, graphics, title, 12, 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);
-            text(font, graphics, remaining, 12, 22, seated ? depositX - 12 - (deposits ? 4 : 0) : headerWidth - 8 - indicatorSpan, MahjongUi.MUTED);
+            int headerHeight = board != null ? 20 : lobby ? 21 : 26;
+            MahjongUi.panel(graphics, 8, 7, headerWidth, headerHeight);
+            text(font, graphics, title, 12, board != null ? 12 : 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);
+            if (board == null) text(font, graphics, remaining, 12, 22,
+                seated ? depositX - 12 - (deposits ? 4 : 0) : headerWidth - 8 - indicatorSpan, MahjongUi.MUTED);
             if (deposits) {
                 stick(graphics, depositX, 25, false);
                 int countX = depositX + 16;
@@ -82,7 +85,7 @@ final class TableHud {
                 stick(graphics, riichiX, 25, true);
                 graphics.drawString(font, Integer.toString(view.riichiSticks()), riichiX + 16, 22, MahjongUi.MUTED, false);
             }
-            regions.add(new Region(8, 7, headerWidth, lobby ? 21 : 26, details));
+            regions.add(new Region(8, 7, headerWidth, headerHeight, details));
         }
         int cardWidth = (width - 16 - (view.seats().size() - 1) * 4) / view.seats().size();
         int top = lobby ? 32 : 38;
@@ -139,9 +142,14 @@ final class TableHud {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
             }
-            if (board != null && board.perspective())
-                graphics.fill(x + 3, top + 3, x + cardWidth + 3, top + cardHeight + 3, 0x55000000);
-            graphics.fill(x, top, x + cardWidth, top + cardHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
+            if (board != null && board.perspective()) {
+                graphics.fill(x + 3, top + 3, x + cardWidth + 3, top + cardHeight + 3, 0x44000000);
+                graphics.fill(x, top, x + cardWidth, top + cardHeight,
+                    seat == view.viewerSeat() ? 0xd832554f : 0xd20c2024);
+                graphics.renderOutline(x, top, cardWidth, cardHeight,
+                    seat == view.turn() ? MahjongUi.ACCENT : seat == view.viewerSeat() ? 0xff73938b : 0xff355257);
+            } else graphics.fill(x, top, x + cardWidth, top + cardHeight,
+                seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
             boolean turn = !lobby && seat == view.turn() && settings.show(TableSettings.Information.TURN);
             boolean riichi = !lobby && player.riichi() && settings.show(TableSettings.Information.STATUS);
             if (riichi) {

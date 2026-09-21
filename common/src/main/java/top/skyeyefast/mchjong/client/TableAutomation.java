@@ -47,10 +47,12 @@ final class TableAutomation {
         buttons = new ArrayList<>();
         if (!available(view)) { pending = false; return buttons; }
         int count = view.rules().sanma() ? 5 : 4;
-        int width = horizontal ? expanded ? (screenWidth - 40 - count * 4) / count : 28 : width(screenWidth) - 20;
+        int width = horizontal ? expanded ? Math.min(112, (screenWidth - 40 - count * 4) / count) : 26 : width(screenWidth) - 20;
         // Keep all five 20-pixel controls below the HUD and above the private hand at 320 x 240.
         int gap = horizontal ? 4 : 0;
         int height = horizontal ? 20 : count * 20 + (count - 1) * gap, top = bottom - height;
+        int horizontalSpan = count * width + count * 4 + 20;
+        int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8;
         for (var option : AutoPlay.Option.values()) {
             if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
             String key = switch (option) {
@@ -70,7 +72,7 @@ final class TableAutomation {
             boolean enabled = view.autoPlay().enabled(option);
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
                 Component.translatable(enabled ? "options.on" : "options.off"));
-            var button = new MahjongButton(8 + (horizontal ? option.ordinal() * (width + 4) : 0),
+            var button = new MahjongButton(origin + (horizontal ? option.ordinal() * (width + 4) : 0),
                 top + (horizontal ? 0 : option.ordinal() * (20 + gap)), width, 20, label, ignored -> {
                 var current = parent.view();
                 if (pending || !available(current)) return;
@@ -101,7 +103,7 @@ final class TableAutomation {
             button.active = !pending;
             buttons.add(button);
         }
-        buttons.add(new MahjongButton(8 + (horizontal ? count : 1) * (width + (horizontal ? 4 : 0)), top + (height - 20) / 2, 20, 20,
+        buttons.add(new MahjongButton(origin + (horizontal ? count : 1) * (width + (horizontal ? 4 : 0)), top + (height - 20) / 2, 20, 20,
             Component.translatable(expanded ? "ui.mchjong.automation_hide" : "ui.mchjong.automation_show"),
             ignored -> { expanded = !expanded; rebuild.run(); }) {
                 @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

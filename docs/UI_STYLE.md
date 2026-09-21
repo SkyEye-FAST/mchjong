@@ -162,7 +162,7 @@ mature digital mahjong table without depending on world-camera visibility. Reflo
 opponents, rivers and melds into the available rectangle rather than projecting the
 physical square furniture. Put the viewer's larger interactive hand and melds in the
 foreground along the bottom. Place immersive automation in a
-horizontal strip below the hand, with action buttons above it. Seated automation
+compact centered horizontal strip below the hand, with action buttons above it. Seated automation
 keeps its side column. Three-player layouts place both opponents at the sides.
 Anchor all rivers directly against one central score panel, with six tiles per
 row growing outward and a shared tile size across seats. The panel carries the
@@ -173,6 +173,16 @@ Use the same resource-pack tile faces and server-issued actions as seated play.
 Dim tsumogiri in the river while leaving tedashi at normal brightness; the sideways
 riichi discard remains an independent marker. Never replace this visual distinction
 with a text label.
+Perspective depth is seat-relative: the opposite seat is smallest, side seats use an
+intermediate scale, and the viewer's foreground stays full size. River rows may vary
+slightly in scale away from the center to reinforce depth without changing six-tile
+row semantics. Player labels are compact translucent table-edge plaques rather than
+opaque HUD cards.
+With animations enabled, a draw travels from the viewer-side wall toward the drawn-tile
+slot and keeps that target slot visually empty until arrival. Discards travel from the
+hand/seat edge to the river; tsumogiri uses a shorter, flatter path while tedashi uses a
+longer arc. Riichi rotation occurs near landing. These animations are presentation-only
+and never alter the authoritative action or tile identity.
 Reserve at least 8 × 12 logical pixels for river tiles and a 10-pixel width for
 opponent meld tiles. Allocate river depth per seat and compress the central score
 panel before reducing tile size; concealed outer hand rails can shrink to a 6-pixel
