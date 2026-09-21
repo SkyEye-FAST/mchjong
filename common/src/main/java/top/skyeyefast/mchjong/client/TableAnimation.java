@@ -139,8 +139,13 @@ public final class TableAnimation {
 
     private void transition(TableView next, List<Frame> before, List<Frame> targets, long now) {
         Map<Key, Frame> sources = new HashMap<>();
+        Map<Vec3, Frame> wallSlots = new HashMap<>();
         // The key must describe the authoritative tile, not the hidden face mid-flip.
-        for (int i = 0; i < settled.size(); i++) sources.put(key(settled.get(i).piece()), before.get(i));
+        for (int i = 0; i < settled.size(); i++) {
+            sources.put(key(settled.get(i).piece()), before.get(i));
+            if (view.wallBreak() != next.wallBreak() && settled.get(i).piece().area() == TableScene.Area.WALL)
+                wallSlots.put(settled.get(i).piece().position(), before.get(i));
+        }
         Set<Key> targetKeys = new HashSet<>();
         targets.forEach(target -> targetKeys.add(key(target.piece())));
         List<Frame> drawn = new ArrayList<>();
@@ -163,6 +168,11 @@ public final class TableAnimation {
                 continue;
             }
             Frame source = sources.get(key);
+            if (target.piece().area() == TableScene.Area.WALL && !wallSlots.isEmpty()) {
+                Frame physical = wallSlots.get(target.piece().position());
+                if (physical != null) source = moved(target, physical.piece().position(), physical.piece().yaw(), physical.pitch(),
+                    target.piece().tile(), target.piece().back());
+            }
             Discard discard = null;
             if (target.piece().area() == TableScene.Area.RIVER) {
                 int seat = target.piece().seat(), index = target.piece().index();

@@ -79,7 +79,7 @@ class TableHandlingTest {
                 var view = game.view(player(game.view(null).turn()));
                 assertEquals(packet < 3 * rules.players() ? 4 : 1, view.handling().packetSize());
                 for (var piece : TableScene.build(view)) if (piece.area() == TableScene.Area.WALL)
-                    assertEquals(piece.index() / 2 == view.handling().sourceSlot() / 2, TableHandling.source(view, piece));
+                    assertEquals(piece.index() == view.handling().sourceSlot(), TableHandling.source(view, piece));
                 assertTrue(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view)));
                 assertFalse(TableHandling.completes(view, Vec3.ZERO, Vec3.ZERO));
                 act(game, view.viewerSeat(), Action.Type.TAKE_PACKET);

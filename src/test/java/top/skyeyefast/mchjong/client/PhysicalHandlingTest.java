@@ -84,7 +84,7 @@ class PhysicalHandlingTest {
                 source = TableHandling.source(view, TableScene.build(view));
                 assertNotNull(source);
                 assertEquals(TableScene.Area.WALL, source.area());
-                assertEquals(view.handling().sourceSlot() / 2, source.index() / 2);
+                assertEquals(view.handling().sourceSlot(), source.index());
                 assertPickable(view);
                 assertTrue(TableHandling.completes(view, source.position(), TableHandling.destination(view)));
                 assertFalse(TableHandling.completes(view, source.position(), source.position()));
@@ -97,7 +97,7 @@ class PhysicalHandlingTest {
             assertEquals(Game.Phase.DRAW, view.phase());
             source = TableHandling.source(view, TableScene.build(view));
             assertNotNull(source);
-            assertEquals(view.handling().sourceSlot() / 2, source.index() / 2);
+            assertEquals(view.handling().sourceSlot(), source.index());
             assertPickable(view);
             act(game, dealer, Action.Type.DRAW);
             conserved(game.view(id(dealer)));

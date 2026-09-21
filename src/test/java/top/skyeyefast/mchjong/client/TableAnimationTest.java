@@ -229,4 +229,30 @@ class TableAnimationTest {
             assertEquals(90, last.pitch(), "Undealt tiles must keep their physical back facing up");
         }
     }
+
+    @Test void rollingDiceReindexesTheBuiltWallWithoutMovingIt() {
+        for (var preset : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
+            var base = lobby(preset.config());
+            int players = preset.players(), size = preset.sanma() ? 108 : 136;
+            var wall = Collections.nCopies(size, Tile.HIDDEN);
+            var handling = new TableView.Handling((1 << players) - 1, -1, 0, 0, 0, false);
+            var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), Game.Phase.BUILD_WALL, 0,
+                0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
+                Collections.nCopies(players, 0), List.of(), base.timeControl(), List.of(), List.of(), false, null,
+                handling, null, false, 1);
+            int wallBreak = 2 * (size / (2 * players) + 3);
+            var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), Game.Phase.DEAL, 0,
+                0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
+                Collections.nCopies(players, 0), List.of(), base.timeControl(), List.of(), List.of(), false, null,
+                new TableView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1);
+            var animation = new TableAnimation();
+            animation.accept(built, 0);
+            var positions = animation.sample(0).stream().filter(frame -> frame.piece().area() == TableScene.Area.WALL)
+                .map(frame -> frame.piece().position()).collect(java.util.stream.Collectors.toSet());
+            animation.accept(opened, 100);
+            assertEquals(positions, animation.sample(100).stream().filter(frame -> frame.piece().area() == TableScene.Area.WALL)
+                .map(frame -> frame.piece().position()).collect(java.util.stream.Collectors.toSet()));
+            assertFalse(animation.moving(101));
+        }
+    }
 }
