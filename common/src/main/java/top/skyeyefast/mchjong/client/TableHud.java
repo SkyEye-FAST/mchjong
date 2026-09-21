@@ -139,6 +139,8 @@ final class TableHud {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
             }
+            if (board != null && board.perspective())
+                graphics.fill(x + 3, top + 3, x + cardWidth + 3, top + cardHeight + 3, 0x55000000);
             graphics.fill(x, top, x + cardWidth, top + cardHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
             boolean turn = !lobby && seat == view.turn() && settings.show(TableSettings.Information.TURN);
             boolean riichi = !lobby && player.riichi() && settings.show(TableSettings.Information.STATUS);

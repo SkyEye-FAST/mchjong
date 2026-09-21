@@ -94,6 +94,18 @@ class TablePresentationTest {
         }
     }
 
+    @Test void immersivePresentationUsesPerspectiveAndMarksTsumogiri() {
+        var id = java.util.UUID.randomUUID();
+        var game = new top.skyeyefast.mchjong.engine.Game(java.util.UUID.randomUUID(),
+            top.skyeyefast.mchjong.engine.RuleSet.TENHOU_4, 19);
+        assertTrue(game.join(id, "Viewer", 0));
+        var state = TableBoardState.live(game.view(id));
+        assertTrue(state.dimTsumogiri());
+        assertFalse(state.markTedashi());
+        var board = new TableBoard(state, 8, 632, 38, 300, 300, true);
+        assertTrue(board.perspective());
+    }
+
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
         assertEquals(List.of(TableSettings.VoiceSource.RESOURCE_PACK, TableSettings.VoiceSource.OFF),
             List.of(TableSettings.VoiceSource.values()));

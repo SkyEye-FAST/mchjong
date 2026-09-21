@@ -280,7 +280,8 @@ public final class TableScreen extends Screen {
         int handHeight = height - (immersive ? TableResults.available(view) ? 54 : TableAutomation.available(view) ? 24 : 0 : 0);
         hand = immersive && view.viewerSeat() >= 0
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
-            ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), width, handHeight, height < 360 ? 20 : 26) : null;
+            ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), width, handHeight,
+                height < 360 ? 24 : 32, true) : null;
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
@@ -313,7 +314,7 @@ public final class TableScreen extends Screen {
         actionTop = (hand == null || TableResults.available(view) ? height - 43 : hand.top() - 34) - (rows - 1) * 30;
         if (immersive) board = new TableBoard(TableBoardState.live(view), 8, width - 8, 38,
             hand == null ? height - 56 : sideActions ? hand.top() - 6 : actionTop - 6,
-            sideActions && count > 0 ? actionTop - 4 : height);
+            sideActions && count > 0 ? actionTop - 4 : height, true);
         int startX = width - 10 - columns * (boxWidth + 4) + 4;
         int slot = 0;
         if (riichi) {
@@ -679,10 +680,11 @@ public final class TableScreen extends Screen {
         TableScene.Piece nearest = null;
         double distance = Double.POSITIVE_INFINITY;
         for (var frame : frames) {
-            double candidate = TilePicking.distanceSquared(frame, pointer.origin, pointer.ray, false);
+            if (!TableHandling.source(view, frame.piece())) continue;
+            double candidate = TilePicking.distanceSquared(frame, pointer.origin, pointer.ray, false, .018);
             if (candidate < distance) { distance = candidate; nearest = frame.piece(); }
         }
-        return TableHandling.source(view, nearest) ? nearest : null;
+        return nearest;
     }
 
     public Vec3 handlingOffset(BlockPos table, TableScene.Piece piece) {
@@ -751,7 +753,6 @@ public final class TableScreen extends Screen {
         information.clear();
         if (immersive) {
             graphics.fill(0, 0, width, height, MahjongUi.INPUT);
-            graphics.fill(4, 34, width - 4, height - 17, MahjongUi.SURFACE);
             if (board != null) board.render(graphics, TableBoardState.live(view), facePreset());
         }
         if (view.phase() == Game.Phase.LOBBY && room() != null
@@ -900,7 +901,12 @@ public final class TableScreen extends Screen {
         if (source != null) {
             Projected target = project(TableHandling.destination(view));
             if (target != null && handlingDrag != null) {
-                graphics.renderOutline((int) target.x - 12, (int) target.y - 6, 24, 12, MahjongUi.POSITIVE);
+                int halfWidth = Math.clamp((int) Math.round(target.scale * .45), 36, Math.max(36, Math.min(120, width / 4)));
+                int halfHeight = Math.clamp((int) Math.round(target.scale * .12), 12, 28);
+                graphics.fill((int) target.x - halfWidth, (int) target.y - halfHeight,
+                    (int) target.x + halfWidth, (int) target.y + halfHeight, 0x443c8c68);
+                graphics.renderOutline((int) target.x - halfWidth, (int) target.y - halfHeight,
+                    halfWidth * 2, halfHeight * 2, MahjongUi.POSITIVE);
                 graphics.hLine(Math.min(mouseX, (int) target.x), Math.max(mouseX, (int) target.x), mouseY, MahjongUi.POSITIVE);
                 graphics.vLine((int) target.x, Math.min(mouseY, (int) target.y), Math.max(mouseY, (int) target.y), MahjongUi.POSITIVE);
             }

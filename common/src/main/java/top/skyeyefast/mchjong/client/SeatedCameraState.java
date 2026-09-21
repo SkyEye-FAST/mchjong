@@ -8,6 +8,8 @@ public final class SeatedCameraState {
     private double distance, height, targetX, targetZ;
     private float yaw, pitch;
     private double inspect, previousInspect, renderedInspect;
+    private static final double INSPECT_TRAVEL = .45;
+    private static final double INSPECT_FOV = .90;
 
     public SeatedCameraState(double distance, double height) { reset(distance, height); }
 
@@ -58,7 +60,7 @@ public final class SeatedCameraState {
     }
     private Vec3 localEye(double progress) {
         // Inspect moves toward the table, independently of the current free-look direction.
-        double travel = .28 * progress;
+        double travel = INSPECT_TRAVEL * progress;
         return new Vec3(targetX, height - travel * .35, distance + targetZ - travel);
     }
     public Vec3 eye(int seat) {
@@ -71,6 +73,6 @@ public final class SeatedCameraState {
     }
     public double fov(double normal) {
         return Math.toDegrees(2 * Math.atan(Math.tan(Math.toRadians(normal) / 2)
-            / (1 + .45 * renderedInspect)));
+            / (1 + INSPECT_FOV * renderedInspect)));
     }
 }

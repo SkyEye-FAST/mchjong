@@ -71,6 +71,12 @@ class TableHandlingTest {
                 for (var piece : pieces) assertEquals(piece.area() == TableScene.Area.LOOSE && piece.seat() == seat,
                     TableHandling.source(view, piece));
                 assertTrue(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view)));
+                assertTrue(TableHandling.completes(view, Vec3.ZERO,
+                    TableGeometry.orient(1.0, TableGeometry.FELT_Y, TableScene.WALL_Z + .27, seat)),
+                    "Expanded wall target should tolerate an imprecise drop");
+                assertFalse(TableHandling.completes(view, Vec3.ZERO,
+                    TableGeometry.orient(1.16, TableGeometry.FELT_Y, TableScene.WALL_Z + .34, seat)),
+                    "Expanded wall target must remain bounded");
                 assertFalse(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view).scale(-1)));
                 assertFalse(TableHandling.completes(view, Vec3.ZERO, new Vec3(Double.NaN, 0, 0)));
                 act(game, seat, Action.Type.BUILD_WALL);

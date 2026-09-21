@@ -13,10 +13,16 @@ final class TableHand {
     private final int drawn, left, y, tileWidth, tileHeight, gap, span;
     private final List<top.skyeyefast.mchjong.engine.Meld> melds;
     private final int right, owner;
+    private final boolean perspective;
 
     TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth) {
+        this(player, owner, width, height, maxTileWidth, false);
+    }
+
+    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
         this.owner = owner;
         this.melds = player.melds();
+        this.perspective = perspective;
         right = width - 8;
         tiles = player.hand();
         drawn = player.drawn();
@@ -26,7 +32,7 @@ final class TableHand {
         span = tiles.size() * tileWidth + gap;
         // Keep a stable fourteen-tile rail; a short hand must not cover the right-corner melds.
         left = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2;
-        y = height - 20 - tileHeight;
+        y = height - (perspective ? 15 : 20) - tileHeight;
     }
 
     int top() { return y - 7; }
@@ -53,9 +59,15 @@ final class TableHand {
     }
 
     void render(GuiGraphics graphics, int selected, IntUnaryOperator highlight, TileFacePreset preset) {
+        if (perspective) {
+            graphics.fill(Math.max(4, left - 10), y + tileHeight - 1, Math.min(right + 2, left + span + 12),
+                y + tileHeight + 7, 0x66000000);
+        }
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(tile, selected), color = highlight.applyAsInt(tile);
-            TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
+            if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
+                Math.max(2, tileWidth / 8), preset);
+            else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
             if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
         }
         int meldTileWidth = tileWidth;
@@ -63,7 +75,9 @@ final class TableHand {
         int meldX = right - meldWidth(meldTileWidth);
         int meldY = y + tileHeight - Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         for (var meld : melds) {
-            TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
+            if (perspective) TileGui.meld3d(graphics, meld, owner, meldX, meldY, meldTileWidth,
+                Math.max(1, meldTileWidth / 8), preset);
+            else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
             meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
         }
     }

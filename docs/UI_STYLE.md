@@ -156,9 +156,12 @@ bottom rule, with the full status in hover details. The sideways river tile
 continues to identify the declaration discard.
 
 Immersive play uses an opaque screen-space surface, independent of world lighting,
-ceilings and camera orientation. Reflow opponents, rivers and melds into the available
-rectangle rather than projecting the physical square furniture. Put the viewer's
-interactive hand and melds along the bottom. Place immersive automation in a
+ceilings and camera orientation. Its play surface uses a shallow perspective trapezoid,
+beveled tile depth/shadows and the public wall stacks to retain the visual depth of a
+mature digital mahjong table without depending on world-camera visibility. Reflow
+opponents, rivers and melds into the available rectangle rather than projecting the
+physical square furniture. Put the viewer's larger interactive hand and melds in the
+foreground along the bottom. Place immersive automation in a
 horizontal strip below the hand, with action buttons above it. Seated automation
 keeps its side column. Three-player layouts place both opponents at the sides.
 Anchor all rivers directly against one central score panel, with six tiles per
@@ -167,11 +170,14 @@ round, remaining tiles, seat winds and scores facing each owner. Keep opponent
 hands on the outer rails and melds at each owner's right corner. Place compact
 portrait/name cards beside their seats; rules, deposits and dora stay at the top.
 Use the same resource-pack tile faces and server-issued actions as seated play.
+Dim tsumogiri in the river while leaving tedashi at normal brightness; the sideways
+riichi discard remains an independent marker. Never replace this visual distinction
+with a text label.
 Reserve at least 8 × 12 logical pixels for river tiles and a 10-pixel width for
 opponent meld tiles. Allocate river depth per seat and compress the central score
 panel before reducing tile size; concealed outer hand rails can shrink to a 6-pixel
 width ahead of melds.
-Small immersive windows use a 20-pixel private hand and a single action row.
+Small immersive windows use a 24-pixel private hand where space permits and a single action row.
 When dense rivers need the central space, winds and scores move onto seat cards;
 the center retains a compact round and remaining-tile summary. Long opponent meld
 rails wrap inward at the owner's corner while retaining the minimum face width.

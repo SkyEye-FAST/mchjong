@@ -36,7 +36,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Training bot opponents consolidated into Easy and Hard difficulty presets.
 - Seated HUD uses compact player cards and integrates enlarged dora indicators into the central score panel header.
-- Immersive play arranges table action and opponent hands around a centralized round and score panel.
+- Immersive play arranges table action and opponent hands around a shallow-perspective felt surface with public wall stacks, beveled tiles and a centralized round/score panel; tsumogiri is dimmed separately from tedashi.
+- Seated inspect zoom is stronger, and manual-table drag source/drop hit areas are more forgiving while remaining bounded to the owning side.
 - Engine settlement calculation, hand analysis helpers, replay recorder, and Tenhou export subsystems migrated to Kotlin.
 
 ### Fixed

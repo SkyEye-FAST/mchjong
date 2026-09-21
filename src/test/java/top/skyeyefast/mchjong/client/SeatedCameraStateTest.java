@@ -34,7 +34,7 @@ class SeatedCameraStateTest {
             assertEquals(2, camera.localEye().z);
             camera.sample(.5f);
             double halfway = camera.localEye().z;
-            assertTrue(halfway < 2 && halfway > 1.72);
+            assertTrue(halfway < 2 && halfway > 1.55);
             for (int seat = 0; seat < 4; seat++) {
                 assertEquals(camera.eye(seat), camera.eye(seat, .5f));
                 camera.eye(seat, 1);
@@ -45,7 +45,7 @@ class SeatedCameraStateTest {
             double intermediateFov = camera.fov(fov);
             for (int i = 0; i < 30; i++) camera.tick(true);
             camera.sample(1);
-            assertEquals(1.72, camera.localEye().z, 1e-6);
+            assertEquals(1.55, camera.localEye().z, 1e-6);
             assertTrue(camera.fov(fov) < intermediateFov && intermediateFov < fov);
             float pitch = camera.pitch();
             camera.look(10, 10);

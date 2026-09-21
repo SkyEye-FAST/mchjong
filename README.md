@@ -179,7 +179,9 @@ view. Distance and height sliders preserve the current look direction.
 Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong table.
 Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play fills the screen with a responsive mahjong layout: your
-clickable hand and melds along the bottom, opponents and their rivers around it.
+clickable foreground hand and melds along the bottom, opponents and their rivers
+around a shallow-perspective felt surface with public wall stacks and beveled tile
+depth. Tsumogiri is dimmed in the river while tedashi remains at normal brightness.
 It requires at least 480 × 300 logical GUI pixels. Enlarge the window or reduce
 GUI scale to enable it; shrinking below this size returns to the seated view.
 It remains usable under ceilings and other world obstructions, with the same

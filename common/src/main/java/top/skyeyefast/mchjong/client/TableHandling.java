@@ -73,7 +73,7 @@ public final class TableHandling {
         if (type == Action.Type.SHUFFLE)
             return Math.abs(end.x) < .8 && Math.abs(end.z) < .8 && start.distanceToSqr(end) >= .09;
         if (type == Action.Type.NEXT) return Math.abs(end.x) < .65 && Math.abs(end.z) < .65;
-        return Math.abs(local.x) <= .9 && Math.abs(local.z - destinationLocalZ(type)) <= .19;
+        return Math.abs(local.x) <= 1.05 && Math.abs(local.z - destinationLocalZ(type)) <= .30;
     }
 
     private static double destinationLocalZ(Action.Type type) {

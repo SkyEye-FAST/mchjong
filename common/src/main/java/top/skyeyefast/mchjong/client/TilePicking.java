@@ -12,6 +12,10 @@ public final class TilePicking {
     private TilePicking() {}
 
     public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(frame, origin, direction, lifted, 0);
+    }
+
+    public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var piece = frame.piece();
         var inverse = new Matrix4f().translation((float) piece.position().x,
             (float) (piece.position().y + (lifted ? 0.035 : 0)), (float) piece.position().z)
@@ -19,8 +23,9 @@ public final class TilePicking {
             .scale(TableScene.TILE_SCALE).invert();
         Vec3 start = local(inverse, origin);
         Vec3 end = local(inverse, origin.add(direction.normalize().scale(32)));
-        if (TILE.contains(start)) return 0;
-        return TILE.clip(start, end).map(hit -> start.distanceToSqr(hit) * TableScene.TILE_SCALE * TableScene.TILE_SCALE)
+        AABB target = padding > 0 ? TILE.inflate(padding) : TILE;
+        if (target.contains(start)) return 0;
+        return target.clip(start, end).map(hit -> start.distanceToSqr(hit) * TableScene.TILE_SCALE * TableScene.TILE_SCALE)
             .orElse(Double.POSITIVE_INFINITY);
     }
 
