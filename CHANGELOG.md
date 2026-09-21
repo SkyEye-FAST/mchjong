@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-09-21
+
 ### Added
 
 - Mahjong boxes accept any vanilla dye in their dye slot to recolor the stored tile backs to all sixteen Minecraft dye colors; undyed tiles use their material texture, while dyed glass uses translucent stained glass instead of an opaque back.
@@ -160,7 +162,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.4.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.0...HEAD
+[0.5.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.0
 [0.4.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.1
 [0.4.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.0
 [0.3.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.2
