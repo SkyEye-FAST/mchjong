@@ -12,6 +12,13 @@ object ReplayPlayback {
         val event: ReplayHand.Event?,
     )
 
+    @JvmRecord
+    data class Timeline(val frames: List<Frame>) {
+        init {
+            require(frames.size >= 2 && frames.first().cursor == 0 && frames.last().settled) { "Invalid replay timeline" }
+        }
+    }
+
     private class Seat(hand: List<Int>, var points: Int) {
         val hand = hand.toMutableList()
         val melds = mutableListOf<Meld>()
@@ -117,5 +124,32 @@ object ReplayPlayback {
             false,
             if (cursor == 0) null else hand.events[cursor - 1],
         )
+    }
+
+    /**
+     * Compiles raw recorder events into user-facing replay steps. Riichi payment and dora reveal events are folded into
+     * the action immediately before them, so navigation follows meaningful table actions instead of recorder internals.
+     */
+    @JvmStatic
+    fun timeline(match: ReplayMatch, handIndex: Int): Timeline {
+        val hand = match.hands[handIndex]
+        val frames = mutableListOf(at(match, handIndex, 0))
+        var eventIndex = 0
+        while (eventIndex < hand.events.size) {
+            val event = hand.events[eventIndex]
+            if (event.kind == ReplayHand.Kind.RIICHI || event.kind == ReplayHand.Kind.DORA) {
+                eventIndex++
+                continue
+            }
+            var rawCursor = eventIndex + 1
+            while (rawCursor < hand.events.size &&
+                (hand.events[rawCursor].kind == ReplayHand.Kind.RIICHI || hand.events[rawCursor].kind == ReplayHand.Kind.DORA)
+            ) rawCursor++
+            frames += at(match, handIndex, rawCursor).copy(event = event)
+            eventIndex = rawCursor
+        }
+        frames += at(match, handIndex, Int.MAX_VALUE)
+        val last = frames.lastIndex
+        return Timeline(java.util.List.copyOf(frames.mapIndexed { index, frame -> frame.copy(cursor = index, steps = last) }))
     }
 }

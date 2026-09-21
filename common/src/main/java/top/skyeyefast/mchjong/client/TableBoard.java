@@ -27,10 +27,10 @@ final class TableBoard {
     private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
 
-    TableBoard(TableView view, int left, int right, int top, int bottom, int actionsTop) {
+    TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop) {
         bounds = new Rect(left, top, Math.max(1, right - left), Math.max(1, bottom - top));
         viewer = view.viewerSeat();
-        players = view.rules().players();
+        players = view.players();
         this.actionsTop = actionsTop;
         for (int seat = 0; seat < players; seat++) riverRows[side(seat, viewer, players)] = Math.max(2,
             ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
@@ -97,7 +97,7 @@ final class TableBoard {
 
     Point point(int tile) { return tiles.get(tile); }
 
-    void render(GuiGraphics graphics, TableView view, TileFacePreset preset) {
+    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
         tiles.clear();
         for (int seat = 0; seat < players; seat++) {
             outerTiles(graphics, view, seat, preset);
@@ -106,7 +106,7 @@ final class TableBoard {
         center(graphics, view);
     }
 
-    private void outerTiles(GuiGraphics graphics, TableView view, int seat, TileFacePreset preset) {
+    private void outerTiles(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset) {
         var player = view.seats().get(seat);
         int side = side(seat, viewer, players);
         if (seat == viewer) {
@@ -200,7 +200,7 @@ final class TableBoard {
         return rails;
     }
 
-    private void river(GuiGraphics graphics, TableView view, int seat, TileFacePreset preset) {
+    private void river(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset) {
         var river = view.seats().get(seat).river().stream().filter(discard -> !discard.called()).toList();
         if (river.isEmpty()) return;
         int side = side(seat, viewer, players);
@@ -225,7 +225,8 @@ final class TableBoard {
             int occupiedWidth = discard.riichi() ? height : tileWidth;
             int occupiedHeight = discard.riichi() ? tileWidth : height;
             boolean focused = view.focus() != null && view.focus().tile() == discard.tile();
-            TileGui.tile(graphics, discard.tile(), x, y, tileWidth, false, discard.riichi(), focused, preset);
+            TileGui.tile(graphics, discard.tile(), x, y, tileWidth, false, discard.riichi(),
+                focused || view.markTedashi() && !discard.tsumogiri(), preset);
             if (focused) graphics.renderOutline(x, y, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
             rememberRotated(discard.tile(), cx, cy, x + occupiedWidth / 2, y + occupiedHeight / 2, side);
             x += occupiedWidth;
@@ -233,7 +234,7 @@ final class TableBoard {
         graphics.pose().popPose();
     }
 
-    private void center(GuiGraphics graphics, TableView view) {
+    private void center(GuiGraphics graphics, TableBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
@@ -260,7 +261,7 @@ final class TableBoard {
             if (settings.show(TableSettings.Information.ROUND)) summary.append(Component.translatable("ui.mchjong.round_short",
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / players)] + ".short"),
                 view.round() % players + 1));
-            if (settings.show(TableSettings.Information.REMAINING)) {
+            if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
                 if (!summary.getString().isEmpty()) summary.append(" · ");
                 summary.append(Integer.toString(view.remaining()));
             }
@@ -271,7 +272,7 @@ final class TableBoard {
             Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
                 + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1),
             center.x() + 14, cy - 10, center.width() - 28, MahjongUi.ACCENT, true);
-        if (settings.show(TableSettings.Information.REMAINING)) MahjongUi.text(graphics, font,
+        if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.remaining_short", view.remaining()), center.x() + 14, cy + 2,
             center.width() - 28, MahjongUi.TEXT, true);
     }

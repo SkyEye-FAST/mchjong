@@ -14,6 +14,7 @@ import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
+import top.skyeyefast.mchjong.engine.ReplayPlayback;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.replay.ReplayServer;
@@ -63,7 +64,7 @@ final class ReplaySmoke {
             replay.keyPressed(GLFW.GLFW_KEY_END,0,0);
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
-            require(replay.cursor() == match.hands().getFirst().events().size()+1, "Cannot seek to settlement");
+            require(replay.cursor() == ReplayPlayback.timeline(match, 0).frames().size() - 1, "Cannot seek to settlement");
             capture(client,output,"21-replay-settlement.png");
             client.options.guiScale().set(3); client.resizeDisplay();
             stage = 4; ticks = 0;

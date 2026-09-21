@@ -108,7 +108,7 @@ class TablePresentationTest {
             var view = game.view(id);
             for (int width : new int[]{480, 640}) {
                 int bottom = width == 480 ? 203 : 303;
-                var board = new TableBoard(view, 8, width - 8, 38, bottom, bottom);
+                var board = new TableBoard(TableBoardState.live(view), 8, width - 8, 38, bottom, bottom);
                 var card = board.card(0);
                 var river = board.riverArea(0);
                 var popup = TableHints.layout(board.card(1).x() - 4,
@@ -168,7 +168,7 @@ class TablePresentationTest {
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
             base.timeControl(), List.of(), List.of(), false, null, null, base.autoPlay(), false, 1);
         for (int bottom : new int[]{178, 203}) {
-            var board = new TableBoard(view, 8, 472, 38, bottom, bottom);
+            var board = new TableBoard(TableBoardState.live(view), 8, 472, 38, bottom, bottom);
             assertTrue(board.riverTileWidth() >= 8);
             assertEquals(bottom == 178, board.scoresOnCards());
             for (int seat = 0; seat < 4; seat++) {

@@ -42,9 +42,8 @@ public final class ClientReplays {
             } else {
                 var match = TableNetworking.JSON.fromJson(completed.text(), ReplayMatch.class);
                 if (match == null || match.hands().isEmpty()) throw new IllegalArgumentException("Empty replay");
-                // Validate the timeline once before user-controlled seeking can render it.
-                for (int hand = 0; hand < match.hands().size(); hand++)
-                    ReplayPlayback.at(match, hand, match.hands().get(hand).events().size());
+                // Compile and validate every completed hand before user-controlled seeking can render it.
+                for (int hand = 0; hand < match.hands().size(); hand++) ReplayPlayback.timeline(match, hand);
                 client.setScreen(new ReplayScreen(client.screen, match));
             }
         } catch (RuntimeException failure) {

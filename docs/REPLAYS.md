@@ -21,17 +21,21 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The viewer's upper arrows change hands. Its lower controls
-seek to the initial deal, step backward, play/pause at two steps per second,
-step forward, or seek to settlement. The timeline allows direct seeking.
-Left/Right step, Home/End seek and Space toggles playback. Wheel scrolling or
-focusing the board and using Up/Down or Page Up/Page Down reveals every seat.
+The viewer uses the same four-seat screen-space table layout as immersive play.
+The upper hand selector opens a scrollable list for direct hand selection; the
+viewpoint control rotates any participant to the bottom seat. Playback supports
+0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
+play/pause, step forward, or seek to settlement, and the timeline allows direct
+seeking. Left/Right step, Up/Down change hands, Home/End seek, Space toggles
+playback and V rotates the viewpoint.
 
-Each step shows all participants' recorded hands, draws, discards, calls,
-extracted norths, riichi payments and revealed dora. The settlement frame adds
-the original point changes, winning tile, yaku, relevant ura indicators and,
-when the match has finished, final standings. Gold river borders mark hand
-discards; sideways tiles mark riichi discards; dimmed tiles have been called.
+Playback steps are semantic table actions rather than raw recorder events. Riichi
+deposit acceptance and dora reveals are folded into the declaration, discard or
+kan that caused them. Every non-settlement frame keeps all participants visible at
+once, including hands, rivers, calls, extracted norths, points and revealed dora.
+Gold river borders distinguish hand discards from tsumogiri; sideways tiles mark
+riichi discards. Settlement uses a dedicated panel with the recorded point changes,
+winning tile, yaku, dora/ura indicators and final standings when the match ended.
 
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.

@@ -311,7 +311,7 @@ public final class TableScreen extends Screen {
         int boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
         int rows = Math.max(1, (count + columns - 1) / columns);
         actionTop = (hand == null || TableResults.available(view) ? height - 43 : hand.top() - 34) - (rows - 1) * 30;
-        if (immersive) board = new TableBoard(view, 8, width - 8, 38,
+        if (immersive) board = new TableBoard(TableBoardState.live(view), 8, width - 8, 38,
             hand == null ? height - 56 : sideActions ? hand.top() - 6 : actionTop - 6,
             sideActions && count > 0 ? actionTop - 4 : height);
         int startX = width - 10 - columns * (boxWidth + 4) + 4;
@@ -752,7 +752,7 @@ public final class TableScreen extends Screen {
         if (immersive) {
             graphics.fill(0, 0, width, height, MahjongUi.INPUT);
             graphics.fill(4, 34, width - 4, height - 17, MahjongUi.SURFACE);
-            if (board != null) board.render(graphics, view, facePreset());
+            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset());
         }
         if (view.phase() == Game.Phase.LOBBY && room() != null
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
