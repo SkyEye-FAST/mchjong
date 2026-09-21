@@ -102,13 +102,10 @@ final class InputSmoke {
         screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
         screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi selection is not discoverable");
-        clickHand(screen, fixture, 0);
-        require(selected(screen, fixture, 0), "Mouse did not select the first legal riichi discard");
-        require(button(screen, "ui.mchjong.confirm_riichi"), "Riichi has no explicit confirmation");
-        clickHand(screen, fixture, 4);
-        require(selected(screen, fixture, 4), "Mouse did not select another legal riichi discard");
+        clickHand(screen, fixture, 8);
+        require(!selected(screen, fixture, 8), "Riichi selection accepted an illegal discard");
         screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
-        require(client.screen == screen && !button(screen, "ui.mchjong.confirm_riichi"), "Esc closed the table instead of cancelling riichi");
+        require(client.screen == screen && !button(screen, "ui.mchjong.cancel_riichi"), "Esc closed the table instead of cancelling riichi");
         TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
         clickHand(screen, fixture, 13);
         require(selected(screen, fixture, 13), "Mouse did not select the drawn tile");
@@ -116,16 +113,16 @@ final class InputSmoke {
         screen.mouseReleased(screen.width / 2.0, screen.height - 19, 1);
         require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
         screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
-        clickHand(screen, fixture, 4);
-        require(button(screen, "ui.mchjong.confirm_riichi"), "Riichi could not be reopened after cancellation");
+        require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi could not be reopened after cancellation");
         screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        require(!screen.immersive() && selected(screen, fixture, 4), "Switching view lost the legal riichi selection");
+        require(!screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Switching view lost riichi selection mode");
         screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
         screen.tick();
         screen.keyReleased(GLFW.GLFW_KEY_RIGHT, 0, 0);
-        require(selected(screen, fixture, 4), "Camera arrow changed tile selection");
+        require(button(screen, "ui.mchjong.cancel_riichi"), "Camera arrow cancelled riichi selection mode");
         screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        require(screen.immersive() && selected(screen, fixture, 4), "Returning to immersive lost hand selection");
+        require(screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Returning to immersive lost riichi selection mode");
+        screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
         screen.resetView();
     }
 

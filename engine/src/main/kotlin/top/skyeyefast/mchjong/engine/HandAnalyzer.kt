@@ -63,12 +63,10 @@ object HandAnalyzer {
 
     @JvmStatic
     fun tenpaiDiscards(hand: List<Int>, melds: List<Meld>): Set<Int> {
-        val result = analyze(hand, melds, false).shantenInfo
-        return if (result is ShantenWithGot) {
-            result.discardToAdvance.filterValues { it.shantenNum == 0 }.keys.map(::kind).filter { discard ->
-                waits(hand - hand.first { Tile.kind(it) == discard }, melds).isNotEmpty()
-            }.toSet()
-        } else emptySet()
+        if (hand.size % 3 != 2) return emptySet()
+        return hand.asSequence().map(Tile::kind).distinct().filter { discard ->
+            waits(hand - hand.first { Tile.kind(it) == discard }, melds).isNotEmpty()
+        }.toSet()
     }
 
     @JvmStatic

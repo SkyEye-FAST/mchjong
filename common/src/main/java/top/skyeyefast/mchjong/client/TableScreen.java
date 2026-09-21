@@ -970,6 +970,14 @@ public final class TableScreen extends Screen {
                 return true;
             }
             int tile = pick(mouseX, mouseY);
+            if (tile >= 0 && choosingRiichi) {
+                TableView snapshot = view();
+                int action = tileAction(snapshot, tile, Action.Type.RIICHI);
+                if (action >= 0) {
+                    send(snapshot, action);
+                    return true;
+                }
+            }
             if (tile >= 0 && !choosingRiichi && !hasShiftDown() && discardFromClick(tile)) return true;
             selectedTile = tile;
             lastClickedTile = Tile.ABSENT;
