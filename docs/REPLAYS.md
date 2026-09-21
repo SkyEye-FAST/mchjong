@@ -44,7 +44,13 @@ current replay position, distinguishes the dead wall and indicators, and marks t
 next live draw. Decision frames show the server-issued legal choices and highlight
 the action that was actually taken. Forced one-option discards are skipped by the
 decision navigator, while calls, wins and other meaningful single actions remain
-reviewable.
+reviewable. Discard and riichi candidates also show their resulting shanten and
+live improving-tile count; hovering a candidate lists the improving tile kinds and
+remaining copies. These counts deliberately use only information visible to that
+player at the decision (their own hand, public discards/calls/norths and revealed
+indicators), even though an authorized replay can display every concealed hand.
+They are structural shape information, not an AI recommendation or expected-value
+estimate.
 
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.

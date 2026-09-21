@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
+import java.util.ArrayList;
+import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -8,6 +10,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.ReplayHand;
+import top.skyeyefast.mchjong.engine.ReplayDecisionAnalysis;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.Tile;
 
@@ -16,6 +19,11 @@ final class ReplayDecisionPanel extends AbstractWidget {
     private final Font font;
     private final ReplayMatch match;
     private ReplayHand.Decision decision;
+    private List<ReplayDecisionAnalysis.Candidate> analysis = List.of();
+    private final List<Hit> hits = new ArrayList<>();
+    private record Hit(int x, int y, int width, int height, Component tooltip) {
+        boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
+    }
 
     ReplayDecisionPanel(Font font, ReplayMatch match, int x, int y, int width, int height) {
         super(x, y, width, height, Component.translatable("replay.mchjong.decision"));
@@ -23,10 +31,14 @@ final class ReplayDecisionPanel extends AbstractWidget {
         this.match = match;
     }
 
-    void show(ReplayHand.Decision decision) { this.decision = decision; }
+    void show(ReplayHand.Decision decision, List<ReplayDecisionAnalysis.Candidate> analysis) {
+        this.decision = decision;
+        this.analysis = analysis == null ? List.of() : analysis;
+    }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         if (decision == null) return;
+        hits.clear();
         MahjongUi.panel(graphics, getX(), getY(), width, height);
         var title = Component.translatable("replay.mchjong.decision_for", match.participants().get(decision.seat()).name());
         MahjongUi.text(graphics, font, title, getX() + 7, getY() + 6, width - 14, MahjongUi.ACCENT, false);
@@ -40,9 +52,30 @@ final class ReplayDecisionPanel extends AbstractWidget {
             int x = getX() + 6 + col * colWidth, y = getY() + 20 + row * rowHeight;
             boolean selected = index == decision.selected();
             if (selected) graphics.fill(x, y, x + colWidth - 3, y + rowHeight - 1, MahjongUi.SELECTED);
-            MahjongUi.text(graphics, font, label(decision.options().get(index)), x + 3, y + 2, colWidth - 9,
+            var label = label(decision.options().get(index));
+            var candidate = index < analysis.size() ? analysis.get(index) : null;
+            if (candidate != null) label = label.copy().append(" · ").append(shape(candidate));
+            MahjongUi.text(graphics, font, label, x + 3, y + 2, colWidth - 9,
                 selected ? MahjongUi.ACCENT : MahjongUi.TEXT, false);
+            if (candidate != null && !candidate.improving().isEmpty()) hits.add(new Hit(x, y, colWidth - 3, rowHeight - 1, detail(candidate)));
         }
+        for (var hit : hits) if (hit.contains(mouseX, mouseY)) {
+            graphics.renderTooltip(font, font.split(hit.tooltip(), Math.min(300, graphics.guiWidth() - 24)), mouseX, mouseY);
+            break;
+        }
+    }
+
+    private Component shape(ReplayDecisionAnalysis.Candidate candidate) {
+        return candidate.shanten() == 0
+            ? Component.translatable("replay.mchjong.tenpai_live", candidate.live())
+            : Component.translatable("replay.mchjong.shanten_live", candidate.shanten(), candidate.live());
+    }
+
+    private Component detail(ReplayDecisionAnalysis.Candidate candidate) {
+        var text = Component.translatable("replay.mchjong.improving");
+        for (var improvement : candidate.improving()) text = text.copy().append(" ")
+            .append(Component.literal(Tile.notation(improvement.kind()) + "×" + improvement.remaining()));
+        return text;
     }
 
     private Component label(Action action) {

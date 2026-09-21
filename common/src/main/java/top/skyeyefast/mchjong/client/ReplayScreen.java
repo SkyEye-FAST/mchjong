@@ -10,6 +10,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
+import top.skyeyefast.mchjong.engine.ReplayDecisionAnalysis;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
@@ -145,7 +146,7 @@ public final class ReplayScreen extends Screen {
         result.visible = result.active = frame.settled() && !wallOpen;
         result.setViewer(viewer);
         var decision = currentDecision();
-        decisionPanel.show(decision);
+        decisionPanel.show(decision, decision == null ? java.util.List.of() : ReplayDecisionAnalysis.analyze(match, handIndex, decision));
         decisionPanel.visible = decisionPanel.active = decision != null && !wallOpen && !roundsOpen && !frame.settled();
         wallPanel.show(frame);
         wallPanel.visible = wallPanel.active = wallOpen;
