@@ -168,6 +168,9 @@ class PhysicalSuppliesTest {
             var expected = before.copyWithCount(1);
             expected.set(MahjongComponents.TILE, MahjongSupplies.tile(before).engraved(face, true));
             assertTrue(ItemStack.matches(expected, red));
+            var recolored = MahjongSupplies.dye(red, DyeColor.PURPLE);
+            assertTrue(MahjongSupplies.tile(recolored).red());
+            assertEquals(DyeColor.PURPLE, MahjongSupplies.back(recolored));
             assertTrue(ItemStack.matches(before, ordinary), "Recipe previews cannot consume inputs");
             assertFalse(crafting(server, "red_five").matches(CraftingInput.of(2, 1, List.of(red, dye)), server.overworld()));
             assertTrue(ItemStack.matches(before.copyWithCount(1), craft(server, "undo_red_five", 2, 1, List.of(undo, red))));
@@ -179,11 +182,17 @@ class PhysicalSuppliesTest {
                     .filter(i -> contents.get(i).isEmpty()).findFirst().orElseThrow());
             if (contents.get(redSlot).isEmpty()) contents.set(redSlot, red); else contents.get(redSlot).grow(1);
             var updated = box(contents);
-            if (++converted < 3) {
-                for (var reds : top.skyeyefast.mchjong.engine.RedFives.values())
+            converted++;
+            var printed = MahjongSupplies.engrave(updated, TileFacePreset.KANTO);
+            assertFalse(printed.isEmpty());
+            assertEquals(converted, MahjongSupplies.contents(printed).stream()
+                .filter(stack -> stack.is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(stack).red())
+                .mapToInt(ItemStack::getCount).sum());
+            if (converted < 3) {
+                for (var reds : top.skyeyefast.mchjong.engine.RedFives.values()) {
                     assertNull(MahjongSupplies.deck(updated, false, reds));
-                assertEquals(top.skyeyefast.mchjong.engine.RedFives.NONE,
-                    MahjongSupplies.deck(MahjongSupplies.engrave(updated, TileFacePreset.KANSAI)).redFives());
+                    assertNull(MahjongSupplies.deck(printed, false, reds));
+                }
                 continue;
             }
             var deck = MahjongSupplies.deck(updated);
@@ -199,9 +208,8 @@ class PhysicalSuppliesTest {
             equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC.config());
             assertEquals(0, equipment.activeBox());
             if (converted == 4) {
-                var restored = MahjongSupplies.engrave(updated, TileFacePreset.KANSAI);
-                assertEquals(top.skyeyefast.mchjong.engine.RedFives.NONE, MahjongSupplies.deck(restored).redFives());
-                assertEquals(136, MahjongSupplies.tileCount(MahjongSupplies.contents(restored)));
+                assertEquals(top.skyeyefast.mchjong.engine.RedFives.FOUR, MahjongSupplies.deck(printed).redFives());
+                assertEquals(136, MahjongSupplies.tileCount(MahjongSupplies.contents(printed)));
                 assertEquals(4, MahjongSupplies.deck(updated).redFives().total(), "Printing previews cannot modify their source");
             }
         }

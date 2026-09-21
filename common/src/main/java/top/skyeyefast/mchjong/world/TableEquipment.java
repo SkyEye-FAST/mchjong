@@ -133,6 +133,12 @@ public final class TableEquipment {
         }
         var kit = new java.util.LinkedHashMap<>(startingKit(rules.startingPoints()));
         if (!rules.bankruptcy()) kit.put(-10000, 1);
+        for (var entry : kit.entrySet()) {
+            int available = 0;
+            for (var items : contents) for (int slot = MahjongSupplies.TILE_SLOTS; !items.isEmpty() && slot < MahjongSupplies.DYE_SLOT; slot++)
+                if (denomination(items.get(slot)) == entry.getKey()) available += items.get(slot).getCount();
+            if (available < entry.getValue() * rules.players()) return null;
+        }
         for (int seat = 0; seat < rules.players(); seat++) {
             var row = copies.get(seat);
             for (var entry : kit.entrySet()) {

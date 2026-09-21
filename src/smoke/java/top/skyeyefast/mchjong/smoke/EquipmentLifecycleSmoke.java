@@ -126,7 +126,7 @@ final class EquipmentLifecycleSmoke {
         check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
             .noneMatch(action -> action.type() == Action.Type.READY), "Empty table could start a game");
 
-        var complete = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN);
+        var complete = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
         var shortSet = complete.copy();
         var contents = MahjongSupplies.contents(shortSet);
         contents.getFirst().shrink(1);

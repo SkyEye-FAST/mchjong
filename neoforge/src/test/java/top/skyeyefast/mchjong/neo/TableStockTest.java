@@ -61,6 +61,21 @@ class TableStockTest {
         assertFalse(table.manualSuppliesReady());
     }
 
+    @Test void drawerSticksCannotSubstituteForMissingBoxStock(MinecraftServer server) {
+        var table = new TableEquipment(() -> {});
+        table.selectRules(RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.BANKRUPTCY, 0));
+        var box = stock(15, 4);
+        var drawerStick = new ItemStack(MahjongContent.POINT_STICK);
+        drawerStick.set(MahjongComponents.POINTS, 1000);
+        table.boxes().setItem(0, box);
+        table.drawer(0).setItem(0, drawerStick);
+
+        assertFalse(table.manualSuppliesReady());
+        assertFalse(table.prepareMatch());
+        assertTrue(ItemStack.matches(box, table.boxes().getItem(0)));
+        assertTrue(ItemStack.matches(drawerStick, table.drawer(0).getItem(0)));
+    }
+
     private static ItemStack stock(int thousands, int busts) {
         var box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var contents = MahjongSupplies.contents(box);

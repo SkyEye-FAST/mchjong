@@ -117,54 +117,20 @@ public final class MahjongSupplies {
                     output.set(slot++, printed(template, TileData.FIRST_FLOWER + flower, false, 1, preset));
         } else {
             int[] faces = new int[34];
-            int[] reds = new int[34];
             int[] flowers = new int[TileData.FLOWER_COUNT];
             for (var stack : tiles) {
                 if (tile(stack).material() != tile(template).material() || back(stack) != back(template)) return List.of();
                 var data = tile(stack);
                 if (data.flower()) flowers[data.face() - TileData.FIRST_FLOWER] += stack.getCount();
-                else {
-                    faces[data.face()] += stack.getCount();
-                    if (data.red()) reds[data.face()] += stack.getCount();
-                }
+                else faces[data.face()] += stack.getCount();
             }
             for (int count : faces) if (count != 4) return List.of();
             for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
-            if (reds[4] == 0 && reds[13] == 0 && reds[22] == 0
-                && tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
+            if (tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++)
                 if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
-            for (int face : new int[]{4, 13, 22}) {
-                int remaining = reds[face];
-                for (int i = 0; i < TILE_SLOTS && remaining > 0; i++) {
-                    var stack = output.get(i);
-                    if (stack.isEmpty() || tile(stack).face() != face || !tile(stack).red()) continue;
-                    int count = Math.min(remaining, stack.getCount());
-                    var converted = printed(stack, face, false, count, preset);
-                    stack.shrink(count);
-                    if (!insertTile(output, converted)) return List.of();
-                    remaining -= count;
-                }
-                if (remaining != 0) return List.of();
-            }
         }
         return List.copyOf(output);
-    }
-
-    private static boolean insertTile(List<ItemStack> output, ItemStack tile) {
-        for (int i = 0; i < TILE_SLOTS; i++) {
-            var stack = output.get(i);
-            if (!stack.isEmpty() && ItemStack.isSameItemSameComponents(stack, tile)
-                && stack.getCount() + tile.getCount() <= stack.getMaxStackSize()) {
-                stack.grow(tile.getCount());
-                return true;
-            }
-        }
-        for (int i = 0; i < TILE_SLOTS; i++) if (output.get(i).isEmpty()) {
-            output.set(i, tile);
-            return true;
-        }
-        return false;
     }
 
     public static TileFacePreset facePreset(ItemStack stack) {

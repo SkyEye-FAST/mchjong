@@ -84,8 +84,8 @@ final class EquipmentSmoke {
             check(game != null && game.view(player.getUUID()).actions().stream().noneMatch(a ->
                 a.type() == Action.Type.READY), "Empty table offered a playable game");
 
-            var original = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.BLUE);
-            var replacement = MahjongSupplies.completeBox(TileMaterial.QUARTZ, DyeColor.CYAN);
+            var original = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.BLUE);
+            var replacement = PointStickMenuSmoke.stockedBox(TileMaterial.QUARTZ, DyeColor.CYAN);
             var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
             cloth.set(DataComponents.BASE_COLOR, DyeColor.LIME);
             var sticks = new ItemStack(MahjongContent.POINT_STICK, 8);
