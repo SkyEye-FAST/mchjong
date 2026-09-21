@@ -69,7 +69,7 @@ final class ReplayResultPanel extends AbstractWidget {
         Component score = win.score().yakuman() > 0 ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
             : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
         line(graphics, Component.literal(match.participants().get(win.seat()).name()), x, y, span, MahjongUi.ACCENT);
-        line(graphics, score.copy().append(" · ").append(source), x, y + 12, span, MahjongUi.MUTED);
+        line(graphics, score.copy().append("  ").append(source), x, y + 12, span, MahjongUi.MUTED);
         y += 29;
 
         var concealed = new ArrayList<>(player.hand());
@@ -152,7 +152,7 @@ final class ReplayResultPanel extends AbstractWidget {
                 span - 10, hand.deltas().get(seat) < 0 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT);
             Component points = Component.translatable("ui.mchjong.points", player.points());
             if (hand.finalScores().size() == hand.finalSeats().size())
-                points = points.copy().append(" · ").append(Component.translatable("ui.mchjong.final_score",
+                points = points.copy().append("  ").append(Component.translatable("ui.mchjong.final_score",
                     String.format(Locale.ROOT, "%+.1f", hand.finalScores().get(seat))));
             line(graphics, points, x + 5, cy + 29, span - 10, MahjongUi.MUTED);
         }

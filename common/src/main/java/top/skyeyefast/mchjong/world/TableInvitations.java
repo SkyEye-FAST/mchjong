@@ -67,7 +67,7 @@ public final class TableInvitations {
             pos.getX(), pos.getY(), pos.getZ(), sender.serverLevel().dimension().location().toString())
             .append(" ").append(Component.translatable(WorldSettings.of(server).policy().invitationTeleport()
                 ? "message.mchjong.invite_teleport_enabled" : "message.mchjong.invite_teleport_disabled"))
-            .append(" ").append(accept).append(" · ").append(decline));
+            .append(" ").append(accept).append("  ").append(decline));
         sender.sendSystemMessage(Component.translatable("message.mchjong.invite_sent", recipient.getDisplayName()));
         return 1;
     }

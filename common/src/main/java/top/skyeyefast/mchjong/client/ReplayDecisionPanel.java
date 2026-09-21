@@ -54,7 +54,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
             if (selected) graphics.fill(x, y, x + colWidth - 3, y + rowHeight - 1, MahjongUi.SELECTED);
             var label = label(decision.options().get(index));
             var candidate = index < analysis.size() ? analysis.get(index) : null;
-            if (candidate != null) label = label.copy().append(" · ").append(shape(candidate));
+            if (candidate != null) label = label.copy().append("  ").append(shape(candidate));
             MahjongUi.text(graphics, font, label, x + 3, y + 2, colWidth - 9,
                 selected ? MahjongUi.ACCENT : MahjongUi.TEXT, false);
             if (candidate != null && !candidate.improving().isEmpty()) hits.add(new Hit(x, y, colWidth - 3, rowHeight - 1, detail(candidate)));
@@ -88,7 +88,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
             if (Tile.red(tile) && kind < 27 && kind % 9 == 4) suffix.append('0').append("mps".charAt(kind / 9));
             else suffix.append(Tile.notation(kind));
         }
-        return text.copy().append(" · ").append(suffix.toString());
+        return text.copy().append("  ").append(suffix.toString());
     }
 
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {

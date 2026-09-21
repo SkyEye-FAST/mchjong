@@ -105,7 +105,7 @@ final class TableHud {
                 shortLine = !lobby
                     ? Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())] + ".short")
                     : wind.copy();
-                hover = hover.copy().append(" · ").append(wind);
+                hover = hover.copy().append("  ").append(wind);
             }
             if (settings.show(TableSettings.Information.POINTS)) {
                 shortLine = shortLine.copy().append(" " + player.points());
@@ -113,9 +113,9 @@ final class TableHud {
             }
             if (settings.show(TableSettings.Information.RANKS)) {
                 long rank = 1 + view.seats().stream().filter(other -> other.points() > player.points()).count();
-                hover = hover.copy().append(" · ").append(Component.translatable("ui.mchjong.rank", rank));
+                hover = hover.copy().append("  ").append(Component.translatable("ui.mchjong.rank", rank));
             }
-            if (lobby) shortLine = wind.copy().append(" · ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
+            if (lobby) shortLine = wind.copy().append("  ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
             if (player.occupied() && !player.bot() && presence == PlayerPresence.AWAY) {
                 if (board == null || !board.perspective())
                     shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away_short"));
@@ -234,12 +234,12 @@ final class TableHud {
             MahjongUi.panel(graphics, x, y, span, 17);
             if (span > 28) text(font, graphics, focus, x + 4, y + 5, span - 22, MahjongUi.ACCENT);
             TileGui.tile(graphics, view.focus().tile(), x + span - 15, y + 1, 9, false, false, false, preset);
-            regions.add(new Region(x, y, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append(" · ").append(focus)));
+            regions.add(new Region(x, y, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append("  ").append(focus)));
         }
     }
 
     private static Component appendStatus(Component line, Component status) {
-        return line.getString().isEmpty() ? status : line.copy().append(" · ").append(status);
+        return line.getString().isEmpty() ? status : line.copy().append("  ").append(status);
     }
 
     static int seatedCardHeight(boolean summary, int tileWidth) { return 24 + (summary ? tileWidth == 0 ? 12 : 16 : 0); }

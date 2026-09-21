@@ -111,7 +111,7 @@ public final class TableResults extends AbstractWidget {
             : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
         boolean named = view.wins().size() == 1;
         if (named) name(graphics, win.seat(), TableScreen.playerName(view, win.seat()), 0, 0, span, GOLD);
-        text(graphics, score.copy().append(" · ").append(source), 0, named ? 12 : 0, span, MUTED);
+        text(graphics, score.copy().append("  ").append(source), 0, named ? 12 : 0, span, MUTED);
         int y = named ? 28 : 16;
         if (win.tile() >= 0 && player.exposed()) {
             var hand = new ArrayList<>(player.hand());
@@ -228,7 +228,7 @@ public final class TableResults extends AbstractWidget {
                 int color = i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
                 graphics.drawString(font, value, x + ends[i + 1] - font.width(value) - 3, textY, color, false);
             }
-            hits.add(new Hit(x, cy, span, rowHeight, name.copy().append(" · ").append(Component.translatable("ui.mchjong.points", player.points()))));
+            hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(Component.translatable("ui.mchjong.points", player.points()))));
         }
     }
 
@@ -247,7 +247,7 @@ public final class TableResults extends AbstractWidget {
             graphics.fill(cx, cy, cx + cardWidth - 3, cy + cardHeight - 3, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             Component name = TableScreen.playerName(view, seat);
             if (page == Page.MATCH && seat < view.finalRanks().size())
-                name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat)).append(" · ").append(name);
+                name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat)).append("  ").append(name);
             name(graphics, seat, name, cx + 4, cy + 3, cardWidth - 11, TEXT);
             String amount = horizontal ? Integer.toString(points) : player.points() - delta + " → " + points;
             text(graphics, Component.literal(amount), cx + 4, cy + 14, cardWidth - 11, TEXT);
@@ -255,7 +255,7 @@ public final class TableResults extends AbstractWidget {
                 ? Component.translatable("ui.mchjong.final_score", String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)))
                 : Component.literal(String.format(Locale.ROOT, "%+d", delta));
             text(graphics, change, cx + 4, cy + 25, cardWidth - 11, delta < 0 ? MahjongUi.NEGATIVE : GOLD);
-            hits.add(new Hit(cx, cy, cardWidth - 3, cardHeight - 3, name.copy().append(" · ")
+            hits.add(new Hit(cx, cy, cardWidth - 3, cardHeight - 3, name.copy().append("  ")
                 .append(Component.literal((player.points() - delta) + " → " + player.points() + " (" + String.format(Locale.ROOT, "%+d", delta) + ")"))));
         }
     }
@@ -274,7 +274,7 @@ public final class TableResults extends AbstractWidget {
     }
     private Component winnerSummary(TableView.Win win) {
         var summary = TableScreen.playerName(view, win.seat()).copy();
-        for (String yaku : win.score().yaku()) summary.append(" · ").append(Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)));
+        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)));
         return summary;
     }
 

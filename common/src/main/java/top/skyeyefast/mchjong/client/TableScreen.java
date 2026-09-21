@@ -707,7 +707,9 @@ public final class TableScreen extends Screen {
             int ready = TableSeatsScreen.find(view, Action.Type.READY, List.of());
             boolean present = view.viewerSeat() >= 0 && room.seats().get(view.viewerSeat()).presence()
                 == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED;
-            var button = MahjongButton.create(Component.translatable(ready >= 0 ? "action.mchjong.ready"
+            boolean alreadyReady = view.viewerSeat() >= 0 && view.seats().get(view.viewerSeat()).ready();
+            var button = MahjongButton.create(Component.translatable(ready >= 0
+                ? alreadyReady ? "action.mchjong.unready" : "action.mchjong.ready"
                 : present ? automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed" : "room.mchjong.take_seats"), ignored -> send(view, ready))
                 .bounds(left, actionY, span, 22).build().primary();
             button.active = ready >= 0;
@@ -1021,7 +1023,7 @@ public final class TableScreen extends Screen {
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             int cueY = immersive ? actionTop - 14 : information.bottom() + 4;
             for (var cue : animation().cues(Util.getMillis())) {
-                MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
+                MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append("  ").append(Component.translatable(cue.key())),
                     actionLeft, cueY, layoutWidth - actionLeft - 10, MahjongUi.ACCENT, true, true);
                 cueY += 13;
             }
@@ -1033,7 +1035,7 @@ public final class TableScreen extends Screen {
                 ? Component.translatable(helpKey)
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
             if (view.handling() != null && view.viewerSeat() >= 0)
-                help = Component.translatable("sticks.mchjong.access", TableKeys.DRAWER.getTranslatedKeyMessage()).append(" · ").append(help);
+                help = Component.translatable("sticks.mchjong.access", TableKeys.DRAWER.getTranslatedKeyMessage()).append("  ").append(help);
             renderFooter(graphics, help, 0xffe0deca);
         }
         if (informationTooltip != null && !overWidget(drawMouseX, drawMouseY))

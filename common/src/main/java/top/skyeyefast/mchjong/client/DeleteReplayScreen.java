@@ -34,7 +34,7 @@ public final class DeleteReplayScreen extends Screen {
         int span = Math.min(440, width - 32), left = (width - span) / 2;
         MahjongUi.backdrop(graphics, width, height, 470);
         MahjongUi.text(graphics, font, title, left, 18, span, MahjongUi.TEXT, true);
-        MahjongUi.text(graphics, font, Component.literal(String.join(" · ", match.names())), left, 44, span, MahjongUi.ACCENT, true);
+        MahjongUi.text(graphics, font, Component.literal(String.join("  ", match.names())), left, 44, span, MahjongUi.ACCENT, true);
         MahjongUi.text(graphics, font, Component.literal(match.id().toString()), left, 60, span, MahjongUi.MUTED, true);
         int y = 86;
         for (var line : font.split(Component.translatable("replay.mchjong.delete_note"), span)) {

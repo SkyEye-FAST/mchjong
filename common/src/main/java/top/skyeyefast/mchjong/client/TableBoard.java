@@ -358,7 +358,7 @@ final class TableBoard {
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / players)] + ".short"),
                 view.round() % players + 1));
             if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
-                if (!summary.getString().isEmpty()) summary.append(" · ");
+                if (!summary.getString().isEmpty()) summary.append("  ");
                 summary.append(Integer.toString(view.remaining()));
             }
             MahjongUi.text(graphics, font, summary, center.x() + 12, cy - 4, center.width() - 24, MahjongUi.TEXT, true);

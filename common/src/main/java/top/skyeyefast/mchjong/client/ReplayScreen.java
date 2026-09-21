@@ -317,7 +317,7 @@ public final class ReplayScreen extends Screen {
             case DORA -> "ui.mchjong.result_indicators";
         };
         return event.seat() < 0 ? Component.translatable(key) : Component.literal(match.participants().get(event.seat()).name())
-            .append(" · ").append(Component.translatable(key));
+            .append("  ").append(Component.translatable(key));
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -423,7 +423,7 @@ public final class ReplayScreen extends Screen {
                 int y = getY() + i * ROW - scroll;
                 if (y + ROW < getY() || y > getY() + height) continue;
                 graphics.fill(getX() + 4, y + 3, getX() + width - 7, y + ROW - 2, i == handIndex ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                var label = roundLabel(i).copy().append(" · ").append(Component.translatable("result.mchjong." + match.hands().get(i).result()));
+                var label = roundLabel(i).copy().append("  ").append(Component.translatable("result.mchjong." + match.hands().get(i).result()));
                 MahjongUi.text(graphics, font, label, getX() + 9, y + 8, width - 20, i == handIndex ? MahjongUi.ACCENT : MahjongUi.TEXT, false);
             }
             graphics.disableScissor();

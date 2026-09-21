@@ -88,7 +88,7 @@ public final class ReplayBrowserScreen extends Screen {
         MatchList(int x, int y, int width, int height) { super(x, y, width, height, title); }
         private Component label(int entry) {
             var match = index.matches().get(entry);
-            return Component.literal(String.join(" · ", match.names()));
+            return Component.literal(String.join("  ", match.names()));
         }
         private Component standings(ReplayMatch.Header match) {
             if (match.finalRanks().isEmpty()) return Component.empty();
@@ -97,7 +97,7 @@ public final class ReplayBrowserScreen extends Screen {
             var text = Component.empty();
             for (int i = 0; i < seats.size(); i++) {
                 int seat = seats.get(i);
-                if (i > 0) text.append(" · ");
+                if (i > 0) text.append("  ");
                 text.append(Component.literal(match.finalRanks().get(seat) + ". " + match.names().get(seat) + " "
                     + String.format(java.util.Locale.ROOT, "%+.1f", match.finalScores().get(seat))));
             }

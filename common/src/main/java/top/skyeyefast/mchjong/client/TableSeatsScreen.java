@@ -103,7 +103,7 @@ public final class TableSeatsScreen extends Screen {
                 var state = room.seats().get(seat);
                 var player = view.seats().get(seat);
                 Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(view, seat));
-                Component status = wind(state.wind()).copy().append(" · ").append(!player.occupied()
+                Component status = wind(state.wind()).copy().append("  ").append(!player.occupied()
                     ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
                     : presence(state.presence()));
                 int inset = PlayerPortrait.draw(graphics, player, left, 42 + seat * 37, 10);
@@ -119,7 +119,7 @@ public final class TableSeatsScreen extends Screen {
         if (presence == null) return Component.translatable("room.mchjong.empty");
         Component state = Component.translatable(presenceKey(presence));
         return presence == PlayerPresence.DISCONNECTED
-            ? state.copy().append(" · ").append(Component.translatable("room.mchjong.auto_managed")) : state;
+            ? state.copy().append("  ").append(Component.translatable("room.mchjong.auto_managed")) : state;
     }
 
     private static String presenceKey(PlayerPresence presence) {
