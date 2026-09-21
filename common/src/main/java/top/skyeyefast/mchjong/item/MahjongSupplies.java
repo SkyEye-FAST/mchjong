@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
+import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -21,12 +22,14 @@ public final class MahjongSupplies {
     private MahjongSupplies() {}
 
     public static DyeColor color(ItemStack stack) { return stack.getOrDefault(DataComponents.BASE_COLOR, DyeColor.BLUE); }
+    public static DyeColor back(ItemStack stack) { return stack.get(DataComponents.BASE_COLOR); }
     public static TileData tile(ItemStack stack) { return stack.getOrDefault(MahjongComponents.TILE, TileData.BLANK); }
+    public static ItemStack tile(TileData data, int count) { return tile(data, null, count); }
     public static ItemStack tile(TileData data, DyeColor color, int count) {
         if (!data.valid()) throw new IllegalArgumentException("Invalid tile data");
         ItemStack stack = new ItemStack(MahjongContent.TILE_ITEM, count);
         stack.set(MahjongComponents.TILE, data);
-        stack.set(DataComponents.BASE_COLOR, color);
+        if (color != null) stack.set(DataComponents.BASE_COLOR, color);
         return stack;
     }
 
@@ -53,11 +56,15 @@ public final class MahjongSupplies {
         return stack.is(MahjongContent.MAHJONG_DYE) || stack.is(MahjongContent.CREATIVE_MAHJONG_DYE);
     }
 
+    public static boolean dyeSlotItem(ItemStack stack) {
+        return mahjongDye(stack) || stack.getItem() instanceof DyeItem;
+    }
+
     public static boolean boxAccepts(int slot, ItemStack stack) {
         if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
         return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
             : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK)
-            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : mahjongDye(stack);
+            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : dyeSlotItem(stack);
     }
 
     /** Do not truncate oversized command-created containers when opening or crafting them. */
@@ -113,7 +120,7 @@ public final class MahjongSupplies {
             int[] reds = new int[34];
             int[] flowers = new int[TileData.FLOWER_COUNT];
             for (var stack : tiles) {
-                if (tile(stack).material() != tile(template).material() || color(stack) != color(template)) return List.of();
+                if (tile(stack).material() != tile(template).material() || back(stack) != back(template)) return List.of();
                 var data = tile(stack);
                 if (data.flower()) flowers[data.face() - TileData.FIRST_FLOWER] += stack.getCount();
                 else {
@@ -175,15 +182,22 @@ public final class MahjongSupplies {
         ItemStack result = input.copyWithCount(1);
         if (input.is(MahjongContent.BOX_ITEM)) {
             if (!validBox(input)) return ItemStack.EMPTY;
-            var items = contents(input);
-            if (tileCount(items) == 0) return ItemStack.EMPTY;
-            for (ItemStack stack : items) {
-                if (stack.isEmpty()) continue;
-                if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
-            }
+            var items = dyedContents(contents(input), color);
+            if (items.isEmpty()) return ItemStack.EMPTY;
             setContents(result, items);
         } else result.set(DataComponents.BASE_COLOR, color);
         return result;
+    }
+
+    public static List<ItemStack> dyedContents(List<ItemStack> input, DyeColor color) {
+        if (input.size() != BOX_SLOTS || tileCount(input) == 0) return List.of();
+        var output = new ArrayList<>(input.stream().map(ItemStack::copy).toList());
+        for (int i = 0; i < output.size(); i++) {
+            var stack = output.get(i);
+            if (!stack.isEmpty() && (!boxAccepts(i, stack) || stack.getCount() > stack.getMaxStackSize())) return List.of();
+            if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
+        }
+        return List.copyOf(output);
     }
 
     /** Inventory summaries prefer a four-player set, then a usable three-player subset. */
@@ -213,13 +227,13 @@ public final class MahjongSupplies {
         var stocks = new java.util.LinkedHashMap<Deck, int[]>();
         for (ItemStack stack : items) {
             if (stack.isEmpty()) continue;
-            if (mahjongDye(stack)) continue;
+            if (dyeSlotItem(stack)) continue;
             if (!storable(stack)) return null;
             if (stack.is(MahjongContent.POINT_STICK)) continue;
             TileData data = tile(stack);
             if (!data.valid()) return null;
             if (data.blank() || data.flower()) continue;
-            var appearance = new Deck(data.material(), color(stack), facePreset(stack), reds, sanma);
+            var appearance = new Deck(data.material(), back(stack), facePreset(stack), reds, sanma);
             stocks.computeIfAbsent(appearance, ignored -> new int[68])[data.face() * 2 + (data.red() ? 1 : 0)] += stack.getCount();
         }
         for (var stock : stocks.entrySet()) {
@@ -251,11 +265,11 @@ public final class MahjongSupplies {
         int slot = 0;
         for (int face = 0; face < 34; face++) {
             int red = face < 27 && face % 9 == 4 ? reds.count(face / 9) : 0;
-            if (red < 4) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, false), DyeColor.BLUE, 4 - red));
-            if (red > 0) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, true), DyeColor.BLUE, red));
+            if (red < 4) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, false), 4 - red));
+            if (red > 0) items.set(slot++, tile(new TileData(face, TileMaterial.BONE, true), red));
         }
         for (int flower = 0; flower < TileData.FLOWER_COUNT; flower++)
-            items.set(slot++, tile(new TileData(TileData.FIRST_FLOWER + flower, TileMaterial.BONE, false), DyeColor.BLUE, 1));
+            items.set(slot++, tile(new TileData(TileData.FIRST_FLOWER + flower, TileMaterial.BONE, false), 1));
         if (slot > TILE_SLOTS) throw new IllegalStateException("Stocked tile set exceeds mahjong box capacity");
         int stickSlot = TILE_SLOTS;
         for (int[] supply : new int[][]{{100, 40}, {1000, 16}, {5000, 8}, {10000, 4}, {-10000, 4}}) {
@@ -268,6 +282,8 @@ public final class MahjongSupplies {
     }
 
     /** Creative/test fixture assembled through the same physical blank engraving path. */
+    public static ItemStack completeBox(TileMaterial material) { return completeBox(material, null); }
+
     public static ItemStack completeBox(TileMaterial material, DyeColor color) {
         ItemStack box = new ItemStack(MahjongContent.BOX_ITEM);
         setContents(box, List.of(

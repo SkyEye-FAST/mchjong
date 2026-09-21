@@ -195,6 +195,23 @@ final class BoxMenuSmoke {
             player.closeContainer();
             check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "Closed menu printed stale contents");
         }
+
+        player.closeContainer();
+        var inventory = player.getInventory();
+        inventory.clearContent();
+        var box = MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.BONE);
+        inventory.setItem(0, box);
+        inventory.setItem(1, new ItemStack(Items.CYAN_DYE, 2));
+        var menu = open(player, 0);
+        menu.clicked(HOTBAR + 1, 0, ClickType.QUICK_MOVE, player);
+        check(menu.getSlot(MahjongSupplies.DYE_SLOT).getItem().is(Items.CYAN_DYE), "Vanilla dye missed the dye compartment");
+        check(menu.canDyeBack() && menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "Back dye action was rejected");
+        var dyed = MahjongSupplies.contents(box);
+        check(dyed.get(MahjongSupplies.DYE_SLOT).getCount() == 1, "Back dye consumed the wrong quantity");
+        check(dyed.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
+            .allMatch(stack -> MahjongSupplies.back(stack) == DyeColor.CYAN), "Back dye did not recolor the whole set");
+        check(!menu.canDyeBack() && !menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "No-op back dye consumed reagent");
+        player.closeContainer();
     }
 
     private static void verifyLifecycle(ServerPlayer player) {

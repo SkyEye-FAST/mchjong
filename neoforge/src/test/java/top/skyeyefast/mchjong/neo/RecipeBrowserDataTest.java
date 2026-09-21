@@ -44,7 +44,7 @@ class RecipeBrowserDataTest {
         assertEquals(4, stickCount(stock, 10000));
         assertEquals(4, stickCount(stock, -10000));
         var blank = new ItemStack(MahjongContent.TILE_ITEM);
-        assertEquals(SupplySubtype.of(blank), SupplySubtype.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 1)));
+        assertEquals(SupplySubtype.of(blank), SupplySubtype.of(MahjongSupplies.tile(TileData.BLANK, 1)));
         var named = blank.copy();
         named.set(DataComponents.CUSTOM_NAME, Component.literal("A named tile"));
         assertEquals(SupplySubtype.of(blank), SupplySubtype.of(named));

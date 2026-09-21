@@ -30,8 +30,7 @@ public final class MahjongContent {
     public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
     public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.GREEN));
     public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.TILE, TileData.BLANK)
-        .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI)
-        .component(DataComponents.BASE_COLOR, DyeColor.BLUE));
+        .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI));
     public static final Item POINT_STICK = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.POINTS, 0));
     public static final Item DICE = new Item(new Item.Properties());
     public static final Item BOX_ITEM = new MahjongBoxItem(new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));

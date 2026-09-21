@@ -11,6 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 /** Server-owned carrier inventory with native slot synchronization and a dedicated client screen. */
 public final class MahjongBoxMenu extends AbstractContainerMenu {
+    public static final int DYE_BACK_BUTTON = TileFacePreset.values().length;
     private final Inventory inventory;
     private final DataSlot ownerSlot = DataSlot.standalone();
     private ItemStack box = ItemStack.EMPTY;
@@ -60,13 +61,38 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
             && !MahjongSupplies.engravedContents(items(), preset).isEmpty();
     }
 
+    public boolean canDyeBack() {
+        var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye)) return false;
+        var color = dye.getDyeColor();
+        return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
+            .anyMatch(stack -> stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)
+                && MahjongSupplies.back(stack) != color);
+    }
+
     @Override public boolean clickMenuButton(Player player, int id) {
-        if (player.level().isClientSide || !stillValid(player) || id < 0 || id >= TileFacePreset.values().length) return false;
+        if (player.level().isClientSide || !stillValid(player) || id < 0 || id > DYE_BACK_BUTTON) return false;
+        if (id == DYE_BACK_BUTTON) return dyeBack();
         var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (!MahjongSupplies.mahjongDye(dye)) return false;
         var output = MahjongSupplies.engravedContents(items(), TileFacePreset.values()[id]);
         if (output.isEmpty()) return false;
         if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
+        updating = true;
+        try {
+            for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
+        } finally { updating = false; }
+        save();
+        broadcastChanges();
+        return true;
+    }
+
+    private boolean dyeBack() {
+        var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye) || !canDyeBack()) return false;
+        var output = MahjongSupplies.dyedContents(items(), dye.getDyeColor());
+        if (output.isEmpty()) return false;
+        output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;
         try {
             for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
@@ -115,7 +141,7 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         Slot slot = slots.get(index);
         if (!slot.mayPickup(player) || !slot.hasItem()) return ItemStack.EMPTY;
         ItemStack source = slot.getItem();
-        if (index >= MahjongSupplies.BOX_SLOTS && !MahjongSupplies.storable(source) && !MahjongSupplies.mahjongDye(source)) return ItemStack.EMPTY;
+        if (index >= MahjongSupplies.BOX_SLOTS && !MahjongSupplies.storable(source) && !MahjongSupplies.dyeSlotItem(source)) return ItemStack.EMPTY;
         ItemStack original = source.copy();
         if (index < MahjongSupplies.BOX_SLOTS) {
             if (!moveItemStackTo(source, MahjongSupplies.BOX_SLOTS, slots.size(), true)) return ItemStack.EMPTY;

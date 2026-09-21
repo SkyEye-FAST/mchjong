@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Dedicated compartments and server-authorized face printing over native inventory synchronization. */
 public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMenu> {
     private MahjongButton print;
+    private MahjongButton dyeBack;
     private TileFacePreset preset = TileFacePreset.KANSAI;
     private final java.util.List<MahjongButton> presets = new java.util.ArrayList<>();
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
@@ -33,16 +34,21 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
                 preset = choice;
                 for (var candidate : TileFacePreset.values()) presets.get(candidate.ordinal()).selected(candidate == preset);
                 print.active = menu.canEngrave(preset);
-            }).bounds(leftPos + 196, topPos + 122 + choice.ordinal() * 24, 94, 20).build().selected(choice == preset)));
+            }).bounds(leftPos + 196, topPos + 136 + choice.ordinal() * 24, 94, 20).build().selected(choice == preset)));
         }
+        dyeBack = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.dye_back"), ignored ->
+            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
+            .bounds(leftPos + 196, topPos + 104, 94, 20).build());
         print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, preset.ordinal()))
             .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
+        dyeBack.active = menu.canDyeBack();
         print.active = menu.canEngrave(preset);
     }
 
     @Override protected void containerTick() {
         super.containerTick();
+        dyeBack.active = menu.canDyeBack();
         print.active = menu.canEngrave(preset);
     }
 
@@ -77,7 +83,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         paragraph(graphics, Component.translatable("box.mchjong.dye_storage"), 70, MahjongUi.TEXT);
         MahjongUi.text(graphics, font, Component.translatable(items.get(MahjongSupplies.DYE_SLOT).is(MahjongContent.CREATIVE_MAHJONG_DYE)
             ? "box.mchjong.unlimited" : "box.mchjong.dye_cost"), 218, 87, 72, MahjongUi.MUTED, false);
-        paragraph(graphics, Component.translatable("box.mchjong.preset"), 110, MahjongUi.TEXT);
+        paragraph(graphics, Component.translatable("box.mchjong.preset"), 126, MahjongUi.TEXT);
     }
 
     private int paragraph(GuiGraphics graphics, Component text, int y, int color) {
