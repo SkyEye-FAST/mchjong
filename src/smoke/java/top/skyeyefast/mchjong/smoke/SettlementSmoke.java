@@ -11,6 +11,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.HandScore;
+import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -94,6 +95,12 @@ final class SettlementSmoke {
                 fixture.timeControl(), fixture.clocks(), List.of(), false, null, null, fixture.autoPlay(), false, 1);
             table.acceptView(fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
+        } else if (ticks == 100) {
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
+        } else if (ticks == 105) {
+            capture(client, output, "14-settlement-draw-immersive.png");
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
@@ -138,8 +145,14 @@ final class SettlementSmoke {
             var original = base.seats().get(seat);
             List<Integer> hand = seat < 2 ? List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125)
                 : java.util.Collections.nCopies(13, Tile.HIDDEN);
+            List<Meld> melds = switch (seat) {
+                case 0 -> List.of(new Meld(Meld.Type.PON, List.of(16, 17, 18), 1, 16));
+                case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52));
+                case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
+                default -> List.of();
+            };
             seats.add(new TableView.Seat(seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
-                true, false, false, points[seat], hand, Tile.ABSENT, List.of(), original.river(), List.of(), seat < 2, seat < 2));
+                true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat < 2, seat < 2));
         }
         var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(8, 40, 0, 24000, 8000, 8000,
                 List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),

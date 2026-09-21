@@ -207,7 +207,7 @@ final class AnimationSmoke {
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
             seats.set(1, new TableView.Seat(right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
                 List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false));
-            update(table, seats, fixture.wall());
+            update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
@@ -250,8 +250,12 @@ final class AnimationSmoke {
     }
 
     private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall) {
+        update(table, seats, wall, 0);
+    }
+
+    private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall, int turn) {
         fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
-            Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, 0, 70, fixture.wallBreak(), wall, null,
+            Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
             seats, List.of(), List.of(), "playing", List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), false, null, null, fixture.autoPlay(), false, 1);
         table.acceptView(fixture);
     }

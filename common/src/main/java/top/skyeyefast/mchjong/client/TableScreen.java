@@ -404,7 +404,7 @@ public final class TableScreen extends Screen {
                 }
                 int panelTop = view.exitVote() == null ? 58 : 82;
                 results = addRenderableWidget(new TableResults(font, view, facePreset(), 10, panelTop, layoutWidth - 20, layoutHeight - panelTop - 54,
-                    selectedWinner, resultPage, resultStarted));
+                    selectedWinner, resultPage, resultStarted, immersive ? 2 : 1));
             }
         }
         if (discard >= 0) {
@@ -1015,8 +1015,12 @@ public final class TableScreen extends Screen {
         }
         if (TableResults.available(view)) {
             long ready = view.seats().stream().filter(TableView.Seat::ready).count();
-            graphics.drawString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()),
-                10, 14, 0xffd1e4d9);
+            int scale = immersive ? 2 : 1;
+            graphics.pose().pushPose();
+            graphics.pose().translate(10, 14, 0);
+            graphics.pose().scale(scale, scale, 1);
+            graphics.drawString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()), 0, 0, 0xffd1e4d9);
+            graphics.pose().popPose();
         }
         if (dealing()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.dealing"),
             actionLeft, actionTop - 14, layoutWidth - actionLeft - 10, MahjongUi.ACCENT, true, true);

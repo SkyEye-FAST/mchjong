@@ -13,6 +13,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
@@ -120,12 +121,27 @@ final class ReplayResultPanel extends AbstractWidget {
                 ? player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten" : "ui.mchjong.no_winner");
             line(graphics, Component.literal(match.participants().get(seat).name()), cx, cy, cardWidth - 8, MahjongUi.TEXT);
             line(graphics, status, cx, cy + 11, cardWidth - 8, player.exposed() ? MahjongUi.ACCENT : MahjongUi.MUTED);
-            if (player.exposed()) {
-                int tw = Math.max(5, Math.min(14, (cardWidth - 8) / Math.max(1, player.hand().size()) - 1));
-                for (int i = 0; i < player.hand().size(); i++)
-                    TileGui.tile(graphics, player.hand().get(i), cx + i * (tw + 1), cy + 24, tw, false, false, false, preset);
+            int concealed = player.exposed() ? player.hand().size() : 0;
+            if (concealed > 0 || !player.melds().isEmpty()) {
+                int tw = Math.max(5, Math.min(14, (cardHeight - 27) / 2));
+                while (tw > 5 && handWidth(player, seat, concealed, tw) > cardWidth - 8) tw--;
+                int tx = cx, tileY = cy + 24 + tw / 2;
+                if (player.exposed()) for (int tile : player.hand()) {
+                    TileGui.tile(graphics, tile, tx, tileY, tw, false, false, false, preset);
+                    tx += tw + 1;
+                }
+                for (var meld : player.melds()) {
+                    tx += 5;
+                    TileGui.meld(graphics, meld, seat, tx, tileY, tw, preset);
+                    tx += TileGui.meldWidth(meld, seat, tw);
+                }
             }
         }
+    }
+
+    private static int handWidth(TableView.Seat player, int owner, int concealed, int tileWidth) {
+        return concealed * (tileWidth + 1)
+            + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }
 
     private int indicators(GuiGraphics graphics, Component label, java.util.List<Integer> tiles, int x, int y, int span) {

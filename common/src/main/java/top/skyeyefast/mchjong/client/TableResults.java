@@ -26,19 +26,22 @@ public final class TableResults extends AbstractWidget {
     private final TileFacePreset preset;
     private final Page page;
     private final long started;
+    private final int contentScale;
     private int winner;
     private final List<Hit> hits = new ArrayList<>();
     private record Hit(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
 
-    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height, int winner, Page page, long started) {
+    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height,
+                        int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
         this.preset = preset;
         this.page = page;
         this.started = started;
+        this.contentScale = contentScale;
         this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
     }
 
@@ -58,6 +61,22 @@ public final class TableResults extends AbstractWidget {
         int x = getX(), y = getY();
         MahjongUi.panel(graphics, x, y, width, height);
         if (isFocused()) graphics.renderOutline(x, y, width, height, GOLD);
+        int contentWidth = width / contentScale, contentHeight = height / contentScale;
+        int contentMouseX = Math.floorDiv(mouseX - x, contentScale);
+        int contentMouseY = Math.floorDiv(mouseY - y, contentScale);
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().scale(contentScale, contentScale, 1);
+        renderContent(graphics, contentMouseX, contentMouseY, contentWidth, contentHeight);
+        for (Hit hit : hits) if (hit.contains(contentMouseX, contentMouseY)) {
+            graphics.renderTooltip(font, font.split(hit.text(), Math.min(360, contentWidth - 24)), contentMouseX, contentMouseY);
+            break;
+        }
+        graphics.pose().popPose();
+    }
+
+    private void renderContent(GuiGraphics graphics, int mouseX, int mouseY, int width, int height) {
+        int x = 0, y = 0;
         Component heading = page == Page.HAND ? getMessage() : Component.translatable(
             page == Page.POINTS ? "ui.mchjong.point_changes" : "ui.mchjong.match_complete");
         line(graphics, heading, x + 9, y + 7, width - 18, GOLD);
@@ -96,10 +115,6 @@ public final class TableResults extends AbstractWidget {
             if (sidebar) scores(graphics, x + width - 156, y + 23, 148, bottom - y - 23, false);
             else if (strip) scores(graphics, x + 8, bottom - 36, width - 16, 36, true);
         }
-        for (Hit hit : hits) if (hit.contains(mouseX, mouseY)) {
-            graphics.renderTooltip(font, font.split(hit.text(), Math.min(360, graphics.guiWidth() - 24)), mouseX, mouseY);
-            break;
-        }
     }
 
     private int winningHand(GuiGraphics graphics, int span, boolean compact) {
@@ -118,7 +133,7 @@ public final class TableResults extends AbstractWidget {
             hand.remove(Integer.valueOf(win.tile()));
             hand.add(win.tile());
             int tileWidth = compact ? 16 : 22;
-            while (tileWidth > 5 && handWidth(hand.size(), player, win.seat(), tileWidth) > span) tileWidth--;
+            while (tileWidth > 5 && handWidth(hand.size(), player, win.seat(), tileWidth, 4) > span) tileWidth--;
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
                 if (i == hand.size() - 1) x += 4;
@@ -156,8 +171,9 @@ public final class TableResults extends AbstractWidget {
         return y + 2;
     }
 
-    private int handWidth(int tiles, TableView.Seat player, int owner, int tileWidth) {
-        return tiles * (tileWidth + 1) + 4 + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
+    private int handWidth(int tiles, TableView.Seat player, int owner, int tileWidth, int handGap) {
+        return tiles * (tileWidth + 1) + handGap
+            + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }
 
     private int indicators(GuiGraphics graphics, int x, int y, int span, boolean ura, boolean compact) {
@@ -187,10 +203,20 @@ public final class TableResults extends AbstractWidget {
                 ? player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten" : "ui.mchjong.no_winner");
             name(graphics, seat, TableScreen.playerName(view, seat), cx, cy, cardWidth - 8, TEXT);
             line(graphics, status, cx, cy + 11, cardWidth - 8, player.exposed() ? GOLD : MUTED);
-            if (player.exposed()) {
-                int tileWidth = Math.max(4, Math.min(14, Math.min((cardWidth - 8) / Math.max(1, player.hand().size()) - 1, (cardHeight - 27) * 2 / 3)));
-                for (int i = 0; i < player.hand().size(); i++)
-                    TileGui.tile(graphics, player.hand().get(i), cx + i * (tileWidth + 1), cy + 24, tileWidth, false, false, false, preset);
+            int concealed = player.exposed() ? player.hand().size() : 0;
+            if (concealed > 0 || !player.melds().isEmpty()) {
+                int tileWidth = Math.max(4, Math.min(14, (cardHeight - 27) / 2));
+                while (tileWidth > 4 && handWidth(concealed, player, seat, tileWidth, 0) > cardWidth - 8) tileWidth--;
+                int tx = cx, tileY = cy + 24 + tileWidth / 2;
+                if (player.exposed()) for (int tile : player.hand()) {
+                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, preset);
+                    tx += tileWidth + 1;
+                }
+                for (var meld : player.melds()) {
+                    tx += 5;
+                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset);
+                    tx += TileGui.meldWidth(meld, seat, tileWidth);
+                }
             }
         }
     }
@@ -279,10 +305,12 @@ public final class TableResults extends AbstractWidget {
     }
 
     @Override public boolean mouseClicked(double x, double y, int button) {
-        if (button == 0 && page == Page.HAND && view.wins().size() > 1 && y >= getY() + 21 && y < getY() + 36) {
-            int span = width - 20 - (width >= 500 ? 156 : 0);
-            if (x >= getX() + 10 && x < getX() + 10 + span) {
-                winner = Math.min(view.wins().size() - 1, (int) (x - getX() - 10) / (span / view.wins().size()));
+        double localX = (x - getX()) / contentScale, localY = (y - getY()) / contentScale;
+        int contentWidth = width / contentScale;
+        if (button == 0 && page == Page.HAND && view.wins().size() > 1 && localY >= 21 && localY < 36) {
+            int span = contentWidth - 20 - (contentWidth >= 500 ? 156 : 0);
+            if (localX >= 10 && localX < 10 + span) {
+                winner = Math.min(view.wins().size() - 1, (int) (localX - 10) / (span / view.wins().size()));
                 return true;
             }
         }

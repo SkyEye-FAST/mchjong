@@ -87,6 +87,7 @@ final class ImmersiveTable {
         box(0, 0, 0, 190, 192, 0, 8, 0xff101d23, 0xff52666b);
         flat(0, -87, -88, 87, 88, 8.1, 0xff30464c);
         flat(0, -72, -69, 72, 69, 8.2, 0xff101f29);
+        paint(graphics);
         if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
             flat(side(view.turn()), -57, 81, 57, 88, 8.5, MahjongUi.ACCENT);
         for (int seat = 0; seat < players; seat++) {
@@ -129,16 +130,16 @@ final class ImmersiveTable {
             handX += w;
         }
         for (int row = 0; row < rails.size(); row++) {
-            double span = rails.get(row).stream().mapToDouble(m -> TileGui.meldWidth(m, seat, w) + 5).sum();
-            double x = halfLength - span;
+            double x = halfLength;
             // The inner corner keeps wrapped melds clear of the adjacent river.
             double z = row == 0 ? rail : 285;
             for (var meld : rails.get(row)) {
+                x -= TileGui.meldWidth(meld, seat, w);
                 for (var part : MeldLayout.of(meld, seat).parts()) {
                     double scale = w / (double) TileMesh.WIDTH;
                     tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
                 }
-                x += TileGui.meldWidth(meld, seat, w) + 5;
+                x -= 5;
             }
         }
         double x = -halfLength;
