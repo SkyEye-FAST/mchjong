@@ -16,6 +16,7 @@ import static top.skyeyefast.mchjong.engine.Action.Type.*;
 
 /** One server-owned table. All methods are called on the server thread. */
 public final class Game {
+    private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     public static final int DEAL_TICKS = 56;
     public static final int AUTO_ACTION_TICKS = 12;
     public static final int AWAY_GRACE_TICKS = 5 * 20;
@@ -483,6 +484,7 @@ public final class Game {
             }
             return true;
         }
+        if (recorder != null) recorder.decision(seat, legal, actionIndex);
         if (phase == Phase.REACTION) {
             // Revision changes are cosmetic here. Every responder keeps the SAME decision token.
             replies[seat] = actionIndex;
@@ -561,8 +563,10 @@ public final class Game {
 
     void createWall() {
         if (!equipped()) throw new IllegalStateException("Cannot deal without a physical set");
-        wall = new Wall(rules, seed + 0x9e3779b97f4a7c15L * handNumber, dealer, suppliedTiles, !manual);
+        wall = new Wall(rules, wallSeed(handNumber), dealer, suppliedTiles, !manual);
     }
+
+    long wallSeed(int hand) { return seed + WALL_SEED_STEP * hand; }
 
     int next(int seat) { return (seat + 1) % rules.players(); }
     int wind(int seat) { return Math.floorMod(seat - dealer, rules.players()); }

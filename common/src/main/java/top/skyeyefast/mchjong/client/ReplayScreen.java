@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import java.util.ArrayList;
 import java.util.Locale;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -29,6 +30,7 @@ public final class ReplayScreen extends Screen {
     private double playbackClock;
     private boolean playing;
     private boolean roundsOpen;
+    private boolean wallOpen;
     private ReplayPlayback.Timeline playback;
     private TableBoard board;
     private TableHand viewerHand;
@@ -37,8 +39,13 @@ public final class ReplayScreen extends Screen {
     private Button viewerButton;
     private Button speedButton;
     private Button roundButton;
+    private Button previousDecision;
+    private Button nextDecision;
     private RoundList rounds;
     private ReplayResultPanel result;
+    private ReplayWallPanel wallPanel;
+    private ReplayDecisionPanel decisionPanel;
+    private final java.util.List<AbstractWidget> playbackControls = new ArrayList<>();
     private Component status = Component.empty();
 
     public ReplayScreen(Screen parent, ReplayMatch match) {
@@ -57,6 +64,7 @@ public final class ReplayScreen extends Screen {
     private int steps() { return playback.frames().size() - 1; }
 
     @Override protected void init() {
+        playbackControls.clear();
         if (viewer < 0) viewer = localViewer();
         playback = ReplayPlayback.timeline(match, handIndex);
         cursor = Math.clamp(cursor, 0, steps());
@@ -79,20 +87,41 @@ public final class ReplayScreen extends Screen {
         viewerButton = addRenderableWidget(MahjongButton.create(Component.empty(), ignored -> cycleViewer(1))
             .bounds(width - 14 - speedWidth - viewWidth, 29, viewWidth, 20).build());
 
-        timeline = addRenderableWidget(new Timeline());
+        int decisionWidth = width < 420 ? 58 : 82;
+        previousDecision = addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.previous_decision"), ignored -> jumpDecision(-1))
+            .bounds(10, height - 78, decisionWidth, 20).build());
+        playbackControls.add(previousDecision);
+        timeline = addRenderableWidget(new Timeline(14 + decisionWidth, width - 28 - decisionWidth * 2));
+        playbackControls.add(timeline);
+        nextDecision = addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.next_decision"), ignored -> jumpDecision(1))
+            .bounds(width - 10 - decisionWidth, height - 78, decisionWidth, 20).build());
+        playbackControls.add(nextDecision);
         int span = (width - 36) / 5;
-        addRenderableWidget(MahjongButton.create(Component.literal("|<"), ignored -> seek(0)).bounds(10, height - 52, span, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> seek(cursor - 1)).bounds(14 + span, height - 52, span, 20).build());
+        var first = addRenderableWidget(MahjongButton.create(Component.literal("|<"), ignored -> seek(0)).bounds(10, height - 52, span, 20).build());
+        playbackControls.add(first);
+        var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> seek(cursor - 1)).bounds(14 + span, height - 52, span, 20).build());
+        playbackControls.add(previous);
         play = addRenderableWidget(MahjongButton.create(Component.empty(), ignored -> togglePlay()).bounds(18 + span * 2, height - 52, span, 20).build().primary());
-        addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> seek(cursor + 1)).bounds(22 + span * 3, height - 52, span, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.literal(">|"), ignored -> seek(steps())).bounds(26 + span * 4, height - 52, span, 20).build());
+        playbackControls.add(play);
+        var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> seek(cursor + 1)).bounds(22 + span * 3, height - 52, span, 20).build());
+        playbackControls.add(next);
+        var last = addRenderableWidget(MahjongButton.create(Component.literal(">|"), ignored -> seek(steps())).bounds(26 + span * 4, height - 52, span, 20).build());
+        playbackControls.add(last);
+        int bottomSpan = (width - 28) / 3;
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.back"), ignored -> onClose())
-            .bounds(10, height - 28, width / 2 - 14, 20).build());
+            .bounds(10, height - 28, bottomSpan, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.wall"), ignored -> toggleWall())
+            .bounds(14 + bottomSpan, height - 28, bottomSpan, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.export"), ignored -> export())
-            .bounds(width / 2 + 4, height - 28, width / 2 - 14, 20).build());
+            .bounds(18 + bottomSpan * 2, height - 28, bottomSpan, 20).build());
 
         result = addRenderableWidget(new ReplayResultPanel(font, match, hand(), PRESET, 10, 67, width - 20,
             Math.max(72, height - 151), viewer));
+        int decisionPanelWidth = Math.min(220, Math.max(140, width / 3));
+        decisionPanel = addRenderableWidget(new ReplayDecisionPanel(font, match, width - decisionPanelWidth - 12, 78,
+            decisionPanelWidth, Math.min(126, Math.max(70, height / 3))));
+        wallPanel = addRenderableWidget(new ReplayWallPanel(font, match, hand(), PRESET, 10, 54, width - 20,
+            Math.max(96, height - 90)));
         int listWidth = Math.min(240, width - 28);
         rounds = addRenderableWidget(new RoundList((width - listWidth) / 2, 54, listWidth, Math.min(190, Math.max(70, height - 146))));
         refresh();
@@ -113,8 +142,13 @@ public final class ReplayScreen extends Screen {
         viewerHand = new TableHand(frame.seats().get(viewer), viewer, width, controlsTop, height < 360 ? 17 : 21);
         int boardBottom = Math.max(120, viewerHand.top() - 5);
         board = new TableBoard(TableBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
-        result.visible = result.active = frame.settled();
+        result.visible = result.active = frame.settled() && !wallOpen;
         result.setViewer(viewer);
+        var decision = currentDecision();
+        decisionPanel.show(decision);
+        decisionPanel.visible = decisionPanel.active = decision != null && !wallOpen && !roundsOpen && !frame.settled();
+        wallPanel.show(frame);
+        wallPanel.visible = wallPanel.active = wallOpen;
     }
 
     private void refresh() {
@@ -125,6 +159,56 @@ public final class ReplayScreen extends Screen {
         speedButton.setMessage(Component.translatable("replay.mchjong.speed", speedText()));
         roundButton.setMessage(roundLabel(handIndex));
         rounds.visible = rounds.active = roundsOpen;
+        for (var control : playbackControls) {
+            control.visible = !wallOpen;
+            control.active = !wallOpen;
+        }
+        previousDecision.active = !wallOpen && hasDecision(-1);
+        nextDecision.active = !wallOpen && hasDecision(1);
+    }
+
+    private boolean reviewable(ReplayHand.Decision decision) {
+        if (decision.seat() != viewer) return false;
+        if (decision.options().size() > 1) return true;
+        var type = decision.options().get(decision.selected()).type();
+        return type != top.skyeyefast.mchjong.engine.Action.Type.DISCARD && type != top.skyeyefast.mchjong.engine.Action.Type.PASS;
+    }
+
+    private int decisionCursor(ReplayHand.Decision decision) {
+        int target = 0;
+        for (int i = 0; i < playback.frames().size(); i++) {
+            if (playback.frames().get(i).rawCursor() > decision.eventCursor()) break;
+            target = i;
+        }
+        return target;
+    }
+
+    private ReplayHand.Decision currentDecision() {
+        for (var decision : hand().decisions())
+            if (reviewable(decision) && decisionCursor(decision) == cursor) return decision;
+        return null;
+    }
+
+    private boolean hasDecision(int direction) {
+        for (var decision : hand().decisions()) if (reviewable(decision)) {
+            int target = decisionCursor(decision);
+            if (direction < 0 ? target < cursor : target > cursor) return true;
+        }
+        return false;
+    }
+
+    private void jumpDecision(int direction) {
+        int target = direction < 0 ? -1 : Integer.MAX_VALUE;
+        for (var decision : hand().decisions()) if (reviewable(decision)) {
+            int candidate = decisionCursor(decision);
+            if (direction < 0 && candidate < cursor) target = Math.max(target, candidate);
+            if (direction > 0 && candidate > cursor) target = Math.min(target, candidate);
+        }
+        if (target < 0 || target == Integer.MAX_VALUE) return;
+        wallOpen = roundsOpen = playing = false;
+        playbackClock = 0;
+        cursor = target;
+        refresh();
     }
 
     public void seek(int step) {
@@ -150,13 +234,23 @@ public final class ReplayScreen extends Screen {
         playing = false;
         playbackClock = 0;
         roundsOpen = false;
+        wallOpen = false;
         rebuildWidgets();
     }
 
     private void toggleRounds() {
+        wallOpen = false;
         roundsOpen = !roundsOpen;
-        rounds.visible = rounds.active = roundsOpen;
-        if (frame().settled()) result.active = !roundsOpen;
+        refresh();
+    }
+
+    private void toggleWall() {
+        roundsOpen = false;
+        rounds.visible = rounds.active = false;
+        wallOpen = !wallOpen;
+        playing = false;
+        playbackClock = 0;
+        refresh();
     }
 
     private void cycleViewer(int offset) {
@@ -229,7 +323,7 @@ public final class ReplayScreen extends Screen {
         MahjongUi.backdrop(graphics, width, height, width - 24);
         MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 11, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, eventName(), 12, 54, width - 24, MahjongUi.ACCENT, true);
-        if (!frame().settled()) {
+        if (!frame().settled() && !wallOpen) {
             board.render(graphics, TableBoardState.replay(match, hand(), frame(), viewer), PRESET);
             renderPlayerCards(graphics);
             viewerHand.render(graphics, Tile.ABSENT, ignored -> 0, PRESET);
@@ -292,6 +386,9 @@ public final class ReplayScreen extends Screen {
             case GLFW.GLFW_KEY_END -> seek(steps());
             case GLFW.GLFW_KEY_SPACE -> togglePlay();
             case GLFW.GLFW_KEY_V -> cycleViewer(1);
+            case GLFW.GLFW_KEY_W -> toggleWall();
+            case GLFW.GLFW_KEY_LEFT_BRACKET -> jumpDecision(-1);
+            case GLFW.GLFW_KEY_RIGHT_BRACKET -> jumpDecision(1);
             default -> { return super.keyPressed(key, scan, modifiers); }
         }
         return true;
@@ -300,16 +397,14 @@ public final class ReplayScreen extends Screen {
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 
     private final class Timeline extends MahjongSlider {
-        Timeline() { super(10, ReplayScreen.this.height - 78, ReplayScreen.this.width - 20, 20, Component.empty(), 0); }
+        Timeline(int x, int width) { super(x, ReplayScreen.this.height - 78, width, 20, Component.empty(), 0); }
         void sync() { value = steps() == 0 ? 0 : (double) cursor / steps(); updateMessage(); }
         @Override protected void updateMessage() { setMessage(Component.translatable("replay.mchjong.step", cursor, steps())); }
         @Override protected void applyValue() {
             cursor = (int) Math.round(value * steps());
             playing = false;
             playbackClock = 0;
-            layoutFrame();
-            if (play != null) play.setMessage(Component.translatable("replay.mchjong.play"));
-            updateMessage();
+            refresh();
         }
     }
 

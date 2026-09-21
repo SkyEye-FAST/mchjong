@@ -118,4 +118,10 @@ final class Wall {
         }
         return result;
     }
+
+    static ReplayWall replay(RuleConfig rules, long seed, int dealer, List<Integer> supplied) {
+        Wall wall = new Wall(rules, seed, dealer, supplied, true);
+        return new ReplayWall(List.copyOf(wall.tiles), wall.breakOffset, List.copyOf(wall.replacements),
+            List.copyOf(wall.dora), List.copyOf(wall.ura));
+    }
 }

@@ -18,6 +18,7 @@ internal class ReplayRecorder(game: Game) {
     private val initialHands = game.players.take(game.rules.players()).map { java.util.List.copyOf(it.hand) }
     private val initialDora = java.util.List.copyOf(game.wall.indicators(false))
     private val events = mutableListOf<ReplayHand.Event>()
+    private val decisions = mutableListOf<ReplayHand.Decision>()
     private val wins = mutableListOf<ReplayHand.Win>()
     private var pendingDeclaration = -1
     private var indicators = 1
@@ -66,6 +67,10 @@ internal class ReplayRecorder(game: Game) {
         while (indicators < revealed.size) {
             events += ReplayHand.Event(DORA, -1, revealed[indicators++], null, false, false, true)
         }
+    }
+
+    fun decision(seat: Int, options: List<Action>, selected: Int) {
+        decisions += ReplayHand.Decision(seat, events.size, java.util.List.copyOf(options), selected)
     }
 
     fun win(
@@ -153,7 +158,9 @@ internal class ReplayRecorder(game: Game) {
             initialPoints,
             initialHands,
             initialDora,
+            Wall.replay(game.rules, game.wallSeed(number), dealer, game.suppliedTiles),
             java.util.List.copyOf(events),
+            java.util.List.copyOf(decisions),
             java.util.List.copyOf(allSeats),
             java.util.List.copyOf(wins),
             game.result,

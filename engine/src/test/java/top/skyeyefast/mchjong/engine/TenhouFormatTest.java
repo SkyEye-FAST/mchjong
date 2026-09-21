@@ -96,8 +96,18 @@ class TenhouFormatTest {
             hands.add(tiles); points.add(rules.startingPoints() + seat);
             seats.add(new TableView.Seat("Player " + seat, true,false,false,points.get(seat),tiles,-2,List.of(),List.of(),List.of(),false,false));
         }
-        ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),events,seats,
+        ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),wall(rules),events,List.of(),seats,
             List.of(),result,Collections.nCopies(count,0),List.of(132),List.of(),List.of(),List.of());
         return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1,2,rules.config(),dealer,participants,List.of(hand),false,rules.defaultRedFives());
+    }
+
+    private static ReplayWall wall(RuleSet rules) {
+        var tiles = Tile.set(rules.sanma(), rules.defaultRedFives());
+        int end = tiles.size();
+        var replacements = new ArrayList<Integer>();
+        for (int i = 0; i < rules.replacementCapacity(); i++) replacements.add(end - 1 - i % 4);
+        return new ReplayWall(tiles, 0, replacements,
+            List.of(end - 5, end - 7, end - 9, end - 11, end - 13),
+            List.of(end - 6, end - 8, end - 10, end - 12, end - 14));
     }
 }

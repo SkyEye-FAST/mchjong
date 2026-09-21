@@ -12,6 +12,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
+import top.skyeyefast.mchjong.engine.ReplayWall;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -34,11 +35,21 @@ class ReplayStoreTest {
             seats.add(new TableView.Seat(players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false));
         }
+        var wall = wall();
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,
-            List.of(35000,35000,35000), dealt, List.of(132), List.of(), seats, List.of(), "nine_terminals",
+            List.of(35000,35000,35000), dealt, List.of(132), wall, List.of(), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
         return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3.config(), 0, players, records, false,
             top.skyeyefast.mchjong.engine.RedFives.THREE);
+    }
+
+    private ReplayWall wall() {
+        var tiles = Tile.set(true);
+        int end = tiles.size();
+        return new ReplayWall(tiles, 0, IntStream.range(0, RuleSet.TENHOU_3.replacementCapacity())
+            .map(i -> end - 1 - i % 4).boxed().toList(),
+            List.of(end - 5, end - 7, end - 9, end - 11, end - 13),
+            List.of(end - 6, end - 8, end - 10, end - 12, end - 14));
     }
 
     @Test void onlyHumanParticipantsAreIndexedAndAuthorizedEvenWithAForgedIndex() throws Exception {
@@ -72,7 +83,7 @@ class ReplayStoreTest {
         assertEquals(2, store.list(owner, 0, "", false).matches().getFirst().hands());
         String text = Files.readString(directory.resolve(id + ".json"));
         assertFalse(text.contains("\"seed\""));
-        assertFalse(text.contains("\"wall\""));
+        assertTrue(text.contains("\"wall\""), "Completed hands retain their sealed physical wall");
         assertFalse(text.contains("\"recorder\""));
         assertFalse(text.contains("\"options\""));
         try (var files = Files.walk(directory)) { assertTrue(files.noneMatch(path -> path.toString().endsWith(".tmp"))); }

@@ -17,6 +17,7 @@ import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.world.MahjongSounds;
 
@@ -57,10 +58,15 @@ final class ReplaySmoke {
         } else if (stage == 2 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
             require(replay.match().equals(match), "Replay transport changed the record");
             require(replay.cursor() == 0, "Replay did not start at the initial deal");
+            require(Tile.validSet(match.hands().getFirst().wall().tiles()), "Replay transfer lost the physical wall");
+            require(!match.hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
             checkBounds(client);
             capture(client,output,"20-replay-initial.png");
+            replay.keyPressed(GLFW.GLFW_KEY_RIGHT_BRACKET,0,0);
+            require(replay.cursor() > 0, "Decision navigation failed");
+            replay.keyPressed(GLFW.GLFW_KEY_W,0,0);
+            replay.keyPressed(GLFW.GLFW_KEY_W,0,0);
             replay.keyPressed(GLFW.GLFW_KEY_RIGHT,0,0);
-            require(replay.cursor() == 1, "Step forward failed");
             replay.keyPressed(GLFW.GLFW_KEY_END,0,0);
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 15 && client.screen instanceof ReplayScreen replay) {

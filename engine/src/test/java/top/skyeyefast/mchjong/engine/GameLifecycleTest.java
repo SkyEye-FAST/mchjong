@@ -91,6 +91,7 @@ class GameLifecycleTest {
     void completeHanchanAndReloadsPreserveTilesPointsAndPrivacy(RuleSet rules) {
         Game game = started(rules, 1234567 + rules.ordinal());
         Set<Game.Phase> reloadedPhases = EnumSet.noneOf(Game.Phase.class);
+        var chosenActions = new ArrayList<Action>();
         for (int step = 0; step < 20000; step++) {
             game.validate();
             if (game.phase() == Game.Phase.MATCH_END) {
@@ -105,8 +106,14 @@ class GameLifecycleTest {
                 ReplayMatch restored = JSON.fromJson(JSON.toJson(game.replay), ReplayMatch.class);
                 assertEquals(game.replay, restored);
                 assertEquals(TenhouReplay.export(game.replay), TenhouReplay.export(restored));
+                assertFalse(JSON.toJson(restored).contains("\"seed\""), "Sealed replays must not retain RNG seeds");
+                var replayChoices = restored.hands().stream().flatMap(recorded -> recorded.decisions().stream())
+                    .map(decision -> decision.options().get(decision.selected())).toList();
+                assertEquals(chosenActions, replayChoices, "Replay decisions must preserve the server-issued choice");
                 for (int hand = 0; hand < restored.hands().size(); hand++) {
                     ReplayHand recorded = restored.hands().get(hand);
+                    assertTrue(Tile.validSet(recorded.wall().tiles()), "Replay wall must retain one complete physical set");
+                    assertTrue(recorded.initialHands().stream().flatMap(List::stream).allMatch(recorded.wall().tiles()::contains));
                     var replayed = ReplayPlayback.at(restored, hand, recorded.events().size());
                     for (int seat = 0; seat < rules.players(); seat++) {
                         var expected = recorded.finalSeats().get(seat);
@@ -133,7 +140,9 @@ class GameLifecycleTest {
                 UUID id = new UUID(1, seat + 1);
                 TableView view = game.view(id);
                 if (view.actions().isEmpty()) continue;
-                assertTrue(game.act(id, view.decision(), choose(view)), "Legal action rejected");
+                int choice = choose(view);
+                if (game.phase() == Game.Phase.TURN || game.phase() == Game.Phase.REACTION) chosenActions.add(view.actions().get(choice));
+                assertTrue(game.act(id, view.decision(), choice), "Legal action rejected");
                 acted = true;
                 break;
             }

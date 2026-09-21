@@ -11,7 +11,9 @@ data class ReplayHand(
     val initialPoints: List<Int>,
     val initialHands: List<List<Int>>,
     val initialDora: List<Int>,
+    val wall: ReplayWall,
     val events: List<Event>,
+    val decisions: List<Decision>,
     val finalSeats: List<TableView.Seat>,
     val wins: List<Win>,
     val result: String,
@@ -22,6 +24,27 @@ data class ReplayHand(
     val finalRanks: List<Int>,
 ) {
     enum class Kind { DRAW, DISCARD, MELD, NUKI, RIICHI, DORA }
+
+    @JvmRecord
+    data class Decision(
+        val seat: Int,
+        val eventCursor: Int,
+        val options: List<Action>,
+        val selected: Int,
+    ) {
+        init {
+            require(seat in 0..3 && eventCursor >= 0 && options.isNotEmpty() && options.size <= 64 && selected in options.indices) {
+                "Invalid replay decision"
+            }
+            val allowed = setOf(
+                Action.Type.DISCARD, Action.Type.RIICHI, Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN,
+                Action.Type.CLOSED_KAN, Action.Type.ADDED_KAN, Action.Type.NUKI, Action.Type.RON, Action.Type.TSUMO,
+                Action.Type.PASS, Action.Type.ABORT_NINE,
+            )
+            require(options.all { it.type() in allowed }) { "Non-game action in replay decision" }
+            options.flatMap { it.tiles() }.forEach(Tile::kind)
+        }
+    }
 
     /** Uncommitted kan/north declarations are retained when they are robbed. */
     @JvmRecord
@@ -78,8 +101,9 @@ data class ReplayHand(
         require(
             players in 3..4 && initialPoints.size == players && finalSeats.size == players &&
                 dealer in 0 until players && round >= 0 && honba >= 0 && sticks >= 0 &&
-                events.size <= 1024 && dora.size <= 5 && ura.size <= 5 && initialDora.size == 1,
+                events.size <= 1024 && decisions.size <= 1024 && dora.size <= 5 && ura.size <= 5 && initialDora.size == 1,
         ) { "Invalid replay hand" }
+        require(wall.tiles.size == if (players == 3) 108 else 136) { "Replay wall size does not match players" }
         for (hand in initialHands) {
             require(hand.size == 13) { "Initial hands need thirteen tiles" }
             hand.forEach(Tile::kind)
@@ -97,6 +121,7 @@ data class ReplayHand(
             require(event.seat < players) { "Inactive replay seat" }
             if (event.kind == Kind.MELD) validateMeld(event.meld!!, players)
         }
+        require(decisions.all { it.seat < players && it.eventCursor <= events.size }) { "Invalid replay decision position" }
         for (seat in finalSeats) {
             require(
                 seat.name().length <= 128 && seat.hand().size <= 14 && seat.melds().size <= 4 &&

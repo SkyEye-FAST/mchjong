@@ -29,7 +29,8 @@ viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
 play/pause, step forward, or seek to settlement, and the timeline allows direct
 seeking. Left/Right step, Up/Down change hands, Home/End seek, Space toggles
-playback and V rotates the viewpoint.
+playback, V rotates the viewpoint, W opens the initial physical wall, and [ / ]
+jump between reviewable decisions for the current viewpoint.
 
 Playback steps are semantic table actions rather than raw recorder events. Riichi
 deposit acceptance and dora reveals are folded into the declaration, discard or
@@ -38,6 +39,12 @@ once, including hands, rivers, calls, extracted norths, points and revealed dora
 Gold river borders distinguish hand discards from tsumogiri; sideways tiles mark
 riichi discards. Settlement uses a dedicated panel with the recorded point changes,
 winning tile, yaku, dora/ura indicators and final standings when the match ended.
+The wall view groups the original stacks by seat, dims tiles already used at the
+current replay position, distinguishes the dead wall and indicators, and marks the
+next live draw. Decision frames show the server-issued legal choices and highlight
+the action that was actually taken. Forced one-option discards are skipped by the
+decision navigator, while calls, wins and other meaningful single actions remain
+reviewable.
 
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.
@@ -51,9 +58,14 @@ and nothing is uploaded to an external service.
 ## Privacy and persistence
 
 The live table continues to send only recipient-redacted `TableView` snapshots.
-An independent server recorder stores initial hands and actual committed actions.
-Only when a hand settles is an immutable `ReplayHand` appended to its match.
-The archive never contains an active hand, RNG seed or future wall.
+An independent server recorder stores initial hands, actual committed actions and
+the legal choices selected at each game decision. Only when a hand settles is an
+immutable `ReplayHand` appended to its match. At that point the completed hand also
+seals its initial physical wall order, break position, replacement slots and
+indicator slots for post-game review. The replay archive never contains an active
+hand or RNG seed, and no complete future wall is sent through the live `TableView`
+channel. The server's normal private world save still retains the wall state needed
+to resume an unfinished game after a restart.
 
 Server records live at `<world>/data/mchjong/replays/<match UUID>.json`.
 Small `by-player/<player UUID>/` indexes support browsing without exposing other
@@ -107,6 +119,8 @@ settlement, not a second scoring pass. Dora, ura, red dora and extracted-north
 bonuses are distinct entries. Abortive draws and nagashi have their own labels.
 Final score pairs are emitted only for a completed match, with the original
 return-point, placement and tie policy already applied by the engine.
+Native wall and decision-review metadata are not added to the Tenhou JSON export;
+they remain MChjong replay features.
 
 Automated format tests cover tile codes, red fives, meld orientation, sanma padding,
 seat rotation, declarations and draw labels. Full matches for every supported

@@ -8,6 +8,7 @@ object ReplayPlayback {
         val dora: List<Int>,
         val cursor: Int,
         val steps: Int,
+        val rawCursor: Int,
         val settled: Boolean,
         val event: ReplayHand.Event?,
     )
@@ -39,7 +40,7 @@ object ReplayPlayback {
         val steps = hand.events.size + 1
         val cursor = requested.coerceIn(0, steps)
         if (cursor == steps) {
-            return Frame(java.util.List.copyOf(hand.finalSeats), java.util.List.copyOf(hand.dora), cursor, steps, true, null)
+            return Frame(java.util.List.copyOf(hand.finalSeats), java.util.List.copyOf(hand.dora), cursor, steps, hand.events.size, true, null)
         }
         val seats = MutableList(match.rules.players()) { Seat(hand.initialHands[it], hand.initialPoints[it]) }
         val dora = hand.initialDora.toMutableList()
@@ -121,6 +122,7 @@ object ReplayPlayback {
             java.util.List.copyOf(dora),
             cursor,
             steps,
+            cursor,
             false,
             if (cursor == 0) null else hand.events[cursor - 1],
         )
