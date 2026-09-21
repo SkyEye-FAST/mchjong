@@ -43,6 +43,12 @@ final class AutomationControlsSmoke {
             next(6);
         } else if (stage == 6 && ticks > 12) {
             checkBounds(client);
+            var immersiveButton = client.screen.children().stream().filter(AbstractWidget.class::isInstance)
+                .map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().equals(
+                    Component.translatable("ui.mchjong.view_immersive").getString()))
+                .findFirst().orElseThrow();
+            if (!immersiveButton.active) return false;
             capture(client, output, "52", "expanded");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);

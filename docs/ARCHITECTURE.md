@@ -133,10 +133,12 @@ the matching eye and FOV to world rendering and picking. `SeatedCameraState` own
 seat-local distance, height, yaw/pitch, target translation and interpolated inspect
 progress. `SeatedCamera` bridges native free look and the loader tick lifecycle;
 `TableKeys` supplies registered, rebindable actions to both loaders. Immersive play uses an
-opaque GUI surface: `TableBoard` lays out recipient-safe hands, rivers and public
-melds in screen space, while `TableHand` supplies the private clickable hand and
-its meld rail. Neither world visibility nor camera orientation controls this
-layout. Guide anchors and input use GUI coordinates. Ordinary-table handling
+opaque GUI surface: `ImmersiveTable` builds recipient-safe tile solids and projects
+the cloth, standing hands, walls, rivers and public melds through `TableProjection`.
+`TableBoard` supplies the information and animation anchors, while `TableHand`
+supplies the private clickable hand and its meld rail. The compact replay diagram
+retains its separate flat layout. Neither world visibility nor camera orientation
+controls the immersive camera. Guide anchors and input use GUI coordinates. Ordinary-table handling
 uses the existing server-issued action buttons; seated play retains physical
 gestures. Rendering is read-only and cannot advance play.
 

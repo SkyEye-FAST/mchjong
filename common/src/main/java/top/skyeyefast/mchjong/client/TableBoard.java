@@ -9,7 +9,6 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Screen-space play surface. It consumes only the recipient's view, never world geometry or camera rays. */
@@ -22,18 +21,15 @@ final class TableBoard {
 
     private static final String[] WINDS = {"east", "south", "west", "north"};
     private static final int RIVER_GAP = 4;
-    private static final int FRAME = 0xff09171a;
-    private static final int FRAME_EDGE = 0xff35555a;
-    private static final int FELT = 0xff174a43;
-    private static final int FELT_DARK = 0xff123c37;
-    private static final int FELT_LIGHT = 0xff1c5149;
     static final int MIN_RIVER_WIDTH = 8;
     static final int MIN_MELD_WIDTH = 10;
     private final Rect bounds, center;
     private final int viewer, players, actionsTop, riverWidth;
     private final boolean perspective;
+    private final ImmersiveTable immersive;
     private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
+    private final Map<Integer, Integer> tileWidths = new HashMap<>();
 
     TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop) {
         this(view, left, right, top, bottom, actionsTop, false);
@@ -45,30 +41,12 @@ final class TableBoard {
         players = view.players();
         this.actionsTop = actionsTop;
         this.perspective = perspective;
+        immersive = perspective ? new ImmersiveTable(view) : null;
         for (int seat = 0; seat < players; seat++) riverRows[side(seat, viewer, players)] = Math.max(2,
             ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
         if (perspective) {
-            int usableTop = top + 12;
-            int usableHeight = Math.max(1, bottom - usableTop - 6);
-            int width = Math.min(22, Math.max(14, bounds.height() / 12));
-            int centerWidth, centerHeight, coreWidth, coreHeight;
-            do {
-                centerWidth = Math.clamp(width * 5 + 8, 92, 116);
-                centerHeight = riverRows[0] + riverRows[2] >= 7
-                    ? Math.clamp(width * 3 + 6, 54, 72) : Math.clamp(width * 4, 68, 90);
-                int vertical = riverDepth(0, width) + riverDepth(2, width);
-                int horizontal = riverDepth(1, width) + riverDepth(3, width);
-                coreHeight = centerHeight + vertical + 2 * RIVER_GAP;
-                coreWidth = Math.max(centerWidth, riverSpan(width)) + horizontal + 2 * RIVER_GAP;
-                if ((coreHeight <= usableHeight && coreWidth <= bounds.width() - 80) || width <= 12) break;
-                width--;
-            } while (true);
-            riverWidth = width;
-            int topDepth = riverDepth(2, width);
-            int bottomDepth = riverDepth(0, width);
-            int spare = Math.max(0, usableHeight - centerHeight - topDepth - bottomDepth - 2 * RIVER_GAP);
-            center = new Rect((left + right - centerWidth) / 2,
-                usableTop + topDepth + RIVER_GAP + spare / 2, centerWidth, centerHeight);
+            riverWidth = ImmersiveTable.RIVER_WIDTH;
+            center = new Rect(568, 299, 144, 85);
             return;
         }
         int centerHeight = bounds.height() >= 200 ? 64 : 54;
@@ -92,7 +70,7 @@ final class TableBoard {
 
     int riverTileWidth() { return riverWidth; }
     int riverTileWidth(int seat) {
-        return Math.max(MIN_RIVER_WIDTH, (int) Math.round(riverWidth * seatScale(side(seat, viewer, players))));
+        return immersive == null ? riverWidth : immersive.riverWidth(seat, 0);
     }
     boolean scoresOnCards() { return center.height() == 16; }
     boolean perspective() { return perspective; }
@@ -110,15 +88,7 @@ final class TableBoard {
 
     Rect card(int seat) {
         if (perspective) {
-            int side = side(seat, viewer, players);
-            int width = side == 2 ? 92 : side == 0 ? 96 : 88;
-            int height = 28;
-            return switch (side) {
-                case 1 -> new Rect(bounds.right() - width - 18, center.y() + center.height() / 2 - height / 2, width, height);
-                case 3 -> new Rect(bounds.x() + 18, center.y() + center.height() / 2 - height / 2, width, height);
-                case 2 -> new Rect(center.x() + center.width() / 2 - width / 2, bounds.y() + 8, width, height);
-                default -> new Rect(bounds.x() + 18, bounds.bottom() - height - 7, width, height);
-            };
+            return ImmersiveTable.card(side(seat, viewer, players));
         }
         int width = Math.min(108, Math.max(48, (bounds.width() - center.width()) / 2
             - Math.max(riverRows[1], riverRows[3]) * tileHeight(riverWidth) - 66));
@@ -132,13 +102,17 @@ final class TableBoard {
     }
 
     Rect riverArea(int seat) {
-        int span = riverSpan(riverWidth), depth = riverRows[side(seat, viewer, players)] * tileHeight(riverWidth);
+        if (immersive != null) return immersive.riverArea(seat);
+        int side = side(seat, viewer, players);
+        int span = riverSpan(riverWidth);
+        int depth = riverRows[side] * tileHeight(riverWidth);
+        int gap = RIVER_GAP;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
-        return switch (side(seat, viewer, players)) {
-            case 1 -> new Rect(center.right() + RIVER_GAP, cy - span / 2, depth, span);
-            case 3 -> new Rect(center.x() - RIVER_GAP - depth, cy - span / 2, depth, span);
-            case 2 -> new Rect(cx - span / 2, center.y() - RIVER_GAP - depth, span, depth);
-            default -> new Rect(cx - span / 2, center.bottom() + RIVER_GAP, span, depth);
+        return switch (side) {
+            case 1 -> new Rect(center.right() + gap, cy - span / 2, depth, span);
+            case 3 -> new Rect(center.x() - gap - depth, cy - span / 2, depth, span);
+            case 2 -> new Rect(cx - span / 2, center.y() - gap - depth, span, depth);
+            default -> new Rect(cx - span / 2, center.bottom() + gap, span, depth);
         };
     }
 
@@ -147,20 +121,29 @@ final class TableBoard {
         return new Rect(card.x(), card.y() - 21, card.width(), 17);
     }
 
-    Point point(int tile) { return tiles.get(tile); }
+    Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }
+    int tileWidth(int tile, int fallback) { return immersive == null ? tileWidths.getOrDefault(tile, fallback) : immersive.width(tile, fallback); }
     Point drawSource() {
-        int offset = Math.min(120, Math.max(54, bounds.width() / 5));
-        return new Point(bounds.x() + bounds.width() / 2 + offset, bounds.bottom() - Math.max(42, bounds.height() / 6));
+        if (immersive != null) {
+            var p = TableProjection.seat(0, 170, 350, 20);
+            return new Point(Math.round(p.x()), Math.round(p.y()));
+        }
+        int offset = Math.min(240, Math.max(108, bounds.width() / 5));
+        return new Point(bounds.x() + bounds.width() / 2 + offset, bounds.bottom() - Math.max(84, bounds.height() / 6));
     }
 
     void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
-        render(graphics, view, preset, Tile.ABSENT);
+        render(graphics, view, preset, Tile.ABSENT, net.minecraft.world.item.DyeColor.BLUE);
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile) {
+    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile, net.minecraft.world.item.DyeColor back) {
         tiles.clear();
-        if (perspective) surface(graphics);
-        if (perspective) wall(graphics, view, preset);
+        tileWidths.clear();
+        if (immersive != null) {
+            immersive.render(graphics, view, preset, suppressedTile, 0xff000000 | back.getTextureDiffuseColor());
+            immersiveCenter(graphics, view);
+            return;
+        }
         for (int seat = 0; seat < players; seat++) {
             outerTiles(graphics, view, seat, preset);
             if (TableSettings.get().showRiver) river(graphics, view, seat, preset, suppressedTile);
@@ -168,85 +151,13 @@ final class TableBoard {
         center(graphics, view);
     }
 
-    private void surface(GuiGraphics graphics) {
-        graphics.fill(bounds.x(), bounds.y(), bounds.right(), bounds.bottom(), FRAME);
-        int topInset = Math.max(20, bounds.width() / 12);
-        int top = bounds.y() + 2, bottom = bounds.bottom() - 2;
-        for (int y = top; y <= bottom; y++) {
-            double progress = (y - top) / (double) Math.max(1, bottom - top);
-            int inset = (int) Math.round(topInset * (1 - progress));
-            int left = bounds.x() + 3 + inset, right = bounds.right() - 4 - inset;
-            int fill = progress < .16 ? FELT_DARK : progress > .82 ? FELT_LIGHT : FELT;
-            graphics.hLine(left, right, y, fill);
-            graphics.hLine(left - 2, left, y, progress < .12 ? FRAME_EDGE : 0xff213f42);
-            graphics.hLine(right, right + 2, y, progress < .12 ? FRAME_EDGE : 0xff213f42);
-            if (y == top) graphics.hLine(left, right, y, FRAME_EDGE);
-        }
-        int near = Math.max(5, bounds.height() / 34);
-        graphics.fill(bounds.x() + 3, bottom - near, bounds.right() - 3, bottom + 1, 0xff0d2526);
-        graphics.hLine(bounds.x() + 4, bounds.right() - 5, bottom - near, 0xff49666a);
-        graphics.hLine(bounds.x() + topInset + 4, bounds.right() - topInset - 5, top + 1, 0xff3d6961);
-    }
-
-    private double seatScale(int side) {
-        if (!perspective) return 1;
-        return switch (side) {
-            case 2 -> .76;
-            case 1, 3 -> .88;
-            default -> 1.0;
-        };
-    }
-
-    private void wall(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
-        int size = view.wall().size();
-        if (size == 0) return;
-        int stacksPerSide = size / (players * 2);
-        int[][][] slots = new int[players][stacksPerSide][2];
-        for (var seat : slots) for (var stack : seat) java.util.Arrays.fill(stack, -1);
-        for (int index = 0; index < size; index++) {
-            int stack = WallLayout.stack(index, view.wallBreak(), size);
-            int seat = stack / stacksPerSide, column = stack % stacksPerSide;
-            slots[seat][column][index & 1] = index;
-        }
-        for (int seat = 0; seat < players; seat++) {
-            int side = side(seat, viewer, players);
-            int available = side % 2 == 0 ? bounds.width() - 150 : bounds.height() - 105;
-            int width = Math.clamp(available / Math.max(1, stacksPerSide) - 1, 3, perspective ? 5 : 7);
-            int height = tileHeight(width), step = width + 1;
-            double scale = Math.max(.65, seatScale(side) - .08);
-            int cx = switch (side) {
-                case 1 -> bounds.right() - height * 2 - 5;
-                case 3 -> bounds.x() + height * 2 + 5;
-                default -> bounds.x() + bounds.width() / 2;
-            };
-            int cy = switch (side) {
-                case 0 -> bounds.bottom() - height * 2 - 4;
-                case 2 -> bounds.y() + height * 2 + 4;
-                default -> bounds.y() + bounds.height() / 2;
-            };
-            graphics.pose().pushPose();
-            graphics.pose().translate(cx, cy, 0);
-            graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
-            graphics.pose().scale((float) scale, (float) scale, 1);
-            int start = -stacksPerSide * step / 2;
-            for (int stack = 0; stack < stacksPerSide; stack++) for (int layer = 0; layer < 2; layer++) {
-                int index = slots[seat][stack][layer];
-                if (index < 0 || view.wall().get(index) == Tile.ABSENT) continue;
-                int tile = view.wall().get(index);
-                TileGui.tile3d(graphics, tile, start + stack * step, layer * 2, width, tile < 0,
-                    false, false, false, 1, preset);
-            }
-            graphics.pose().popPose();
-        }
-    }
-
     private void outerTiles(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset) {
         var player = view.seats().get(seat);
         int side = side(seat, viewer, players);
         if (seat == viewer) {
-            int x = card(seat).right() + 4;
+            int x = card(seat).right() + 12;
             int width = Math.min(10, Math.max(2, (riverArea(seat).x() - x - 4) / 4));
-            int y = bounds.bottom() - tileHeight(width);
+            int y = bounds.bottom() - tileHeight(width) - 8;
             for (int tile : player.norths()) {
                 TileGui.tile(graphics, tile, x, y, width, false, false, false, preset);
                 remember(tile, x + width / 2, y + tileHeight(width) / 2);
@@ -255,12 +166,11 @@ final class TableBoard {
             return;
         }
         boolean vertical = side % 2 == 1;
-        double scale = seatScale(side);
+        double scale = 1;
         int bottom = side == 1 ? Math.min(bounds.bottom(), actionsTop) : bounds.bottom();
         int length = (int) Math.floor((vertical ? bottom - bounds.y() - 8 : bounds.width() - 84) / scale);
         int maximum = center.height() <= 40 && !vertical ? 12 : 14;
-        if (perspective) maximum = side == 2 ? Math.min(maximum, 11) : side % 2 == 1 ? Math.min(maximum, 12) : maximum;
-        int width = Math.min(maximum, outerTileWidth(player, seat, length));
+        int width = Math.min(maximum, outerTileWidth(player, seat, length, maximum));
         var rails = meldRails(player, seat, width, length);
         boolean addedKan = player.melds().stream().anyMatch(meld -> meld.type() == Meld.Type.ADDED_KAN);
         int railDepth = tileHeight(width) + (addedKan ? width : 0);
@@ -268,11 +178,6 @@ final class TableBoard {
         int cx = side == 3 ? bounds.x() + thickness / 2 : side == 1 ? bounds.right() - thickness / 2
             : bounds.x() + bounds.width() / 2;
         int cy = vertical ? (bounds.y() + bottom) / 2 : bounds.y() + thickness / 2;
-        if (perspective) {
-            if (side == 1) cx -= 8;
-            else if (side == 3) cx += 8;
-            else if (side == 2) cy += 8;
-        }
         graphics.pose().pushPose();
         graphics.pose().translate(cx, cy, 0);
         graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
@@ -282,7 +187,7 @@ final class TableBoard {
         for (var meld : rails.getFirst()) meldSpan += TileGui.meldWidth(meld, seat, width);
         // The meld corner belongs to the owner's right, independently of the concealed hand.
         int corner = length / 2 - meldSpan;
-        int handWidth = Math.min(width, Math.max(6, (length - meldSpan - player.norths().size() * width - 8)
+        int handWidth = Math.min(width, Math.max(6, (length - meldSpan - player.norths().size() * width - 16)
             / Math.max(1, player.hand().size())));
         int handSpan = player.hand().size() * handWidth;
         int x = Math.max(-length / 2 + player.norths().size() * width + 4,
@@ -320,7 +225,11 @@ final class TableBoard {
     }
 
     static int outerTileWidth(TableView.Seat player, int seat, int length) {
-        int width = 14;
+        return outerTileWidth(player, seat, length, 14);
+    }
+
+    private static int outerTileWidth(TableView.Seat player, int seat, int length, int maximum) {
+        int width = maximum;
         while (width > MIN_MELD_WIDTH && stripWidth(player, seat, width) > length) width--;
         return width;
     }
@@ -329,7 +238,7 @@ final class TableBoard {
         var rails = new java.util.ArrayList<java.util.List<Meld>>();
         java.util.List<Meld> row = new java.util.ArrayList<>();
         rails.add(row);
-        int occupied = player.hand().size() * 6 + player.norths().size() * width + 8;
+        int occupied = player.hand().size() * Math.max(6, Math.min(width, 12)) + player.norths().size() * width + 8;
         for (var meld : player.melds()) {
             int span = TileGui.meldWidth(meld, seat, width);
             if (!row.isEmpty() && occupied + span > length) {
@@ -347,99 +256,78 @@ final class TableBoard {
         var river = view.seats().get(seat).river().stream().filter(discard -> !discard.called()).toList();
         if (river.isEmpty()) return;
         int side = side(seat, viewer, players);
-        int tileWidth = riverWidth;
-        int rotation = side * -90;
-        double scale = seatScale(side);
         Rect area = riverArea(seat);
-        int cx = area.x() + area.width() / 2, cy = area.y() + area.height() / 2;
-        // Rivers grow outward from the center-facing edge, keeping early discards together.
-        if (side == 0) cy = area.y();
-        if (side == 2) cy = area.bottom();
-        if (side == 1) cx = area.x();
-        if (side == 3) cx = area.right();
-        graphics.pose().pushPose();
-        graphics.pose().translate(cx, cy, 0);
-        graphics.pose().mulPose(Axis.ZP.rotationDegrees(rotation));
-        graphics.pose().scale((float) scale, (float) scale, 1);
-        int y = 0;
+        int depth = 0;
         for (int row = 0, start = 0; start < river.size(); row++, start += 6) {
             int end = Math.min(start + 6, river.size());
-            int rowWidth = riverWidthForRow(side, row);
+            int rowWidth = riverWidth;
             int rowHeight = tileHeight(rowWidth);
             int rowSpan = 0;
             for (int index = start; index < end; index++) rowSpan += river.get(index).riichi() ? rowHeight : rowWidth;
+            int cx = area.x() + area.width() / 2;
+            int cy = area.y() + area.height() / 2;
+            switch (side) {
+                case 0 -> cy = area.y() + depth;
+                case 1 -> cx = area.x() + depth;
+                case 2 -> cy = area.bottom() - depth;
+                case 3 -> cx = area.right() - depth;
+            }
+            graphics.pose().pushPose();
+            graphics.pose().translate(cx, cy, 0);
+            graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
             int x = -rowSpan / 2;
+            int shadow = Math.max(3, rowWidth / 8) + row;
+            graphics.fill(x - 5, 3, x + rowSpan + shadow + 5, rowHeight + shadow + 4,
+                0x22000000 + Math.min(0x22000000, row * 0x05000000));
+            graphics.hLine(x - 3, x + rowSpan + 3, -2, row == 0 ? 0x553f7168 : 0x332e5a53);
             for (int index = start; index < end; index++) {
                 var discard = river.get(index);
                 int occupiedWidth = discard.riichi() ? rowHeight : rowWidth;
                 int occupiedHeight = discard.riichi() ? rowWidth : rowHeight;
                 boolean focused = view.focus() != null && view.focus().tile() == discard.tile();
-                int drawY = y - (perspective && focused ? 2 : 0);
+                int drawY = focused ? -Math.max(4, rowWidth / 8) : 0;
                 if (discard.tile() != suppressedTile) {
                     tile(graphics, discard.tile(), x, drawY, rowWidth, false, discard.riichi(),
                         focused || view.markTedashi() && !discard.tsumogiri(), view.dimTsumogiri() && discard.tsumogiri(), preset);
                     if (focused) graphics.renderOutline(x, drawY, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
                 }
-                rememberRotated(discard.tile(), cx, cy, x + occupiedWidth / 2, drawY + occupiedHeight / 2, side, scale);
+                rememberRotated(discard.tile(), cx, cy, x + occupiedWidth / 2, drawY + occupiedHeight / 2, side);
+                if (discard.tile() >= 0) tileWidths.put(discard.tile(), rowWidth);
                 x += occupiedWidth;
             }
-            y += rowHeight + (perspective ? 1 : 0);
+            graphics.pose().popPose();
+            depth += rowHeight;
+        }
+    }
+
+    int riverRowWidth(int seat, int row) {
+        return immersive == null ? riverWidth : immersive.riverWidth(seat, row);
+    }
+
+    private void immersiveCenter(GuiGraphics graphics, TableBoardState view) {
+        var settings = TableSettings.get();
+        var font = Minecraft.getInstance().font;
+        graphics.pose().pushPose();
+        graphics.pose().translate(640, 299, 0);
+        graphics.pose().scale(2, 2, 1);
+        if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
+            Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
+                + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1), -42, 1, 84, MahjongUi.ACCENT, true);
+        if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
+            Component.translatable("ui.mchjong.remaining_short", view.remaining()), -42, 17, 84, MahjongUi.TEXT, true);
+        if (settings.show(TableSettings.Information.DEPOSITS)) {
+            TableHud.stick(graphics, -30, 39, false);
+            TableHud.stick(graphics, 5, 39, true);
+            graphics.drawString(font, Integer.toString(view.honba()), -12, 36, MahjongUi.MUTED, false);
+            graphics.drawString(font, Integer.toString(view.riichiSticks()), 23, 36, MahjongUi.MUTED, false);
         }
         graphics.pose().popPose();
-    }
-
-    private int riverWidthForRow(int side, int row) {
-        return riverWidthForRow(side, row, riverWidth);
-    }
-
-    private int riverWidthForRow(int side, int row, int baseWidth) {
-        if (!perspective || row == 0) return baseWidth;
-        int delta = Math.min(2, row);
-        return switch (side) {
-            case 0 -> baseWidth + delta;
-            case 2 -> Math.max(MIN_RIVER_WIDTH, baseWidth - delta);
-            default -> Math.max(MIN_RIVER_WIDTH, baseWidth - row / 2);
-        };
-    }
-
-    private int riverDepth(int side, int baseWidth) {
-        double depth = 0;
-        for (int row = 0; row < riverRows[side]; row++)
-            depth += tileHeight(riverWidthForRow(side, row, baseWidth)) + (row == 0 ? 0 : 1);
-        return (int) Math.ceil(depth * seatScale(side));
     }
 
     private void center(GuiGraphics graphics, TableBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
-        if (perspective) {
-            graphics.fill(center.x() + 4, center.y() + 5, center.right() + 4, center.bottom() + 5, 0x77000000);
-            graphics.fill(center.x() - 2, center.y() - 2, center.right() + 2, center.bottom() + 2, 0xff0a1a1d);
-            graphics.renderOutline(center.x() - 2, center.y() - 2, center.width() + 4, center.height() + 4, 0xff617276);
-            graphics.fill(center.x(), center.y(), center.right(), center.bottom(), 0xff12272b);
-            graphics.renderOutline(center.x(), center.y(), center.width(), center.height(), 0xff3a5559);
-            if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
-                Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
-                    + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1),
-                center.x() + 10, cy - 15, center.width() - 20, MahjongUi.ACCENT, true);
-            if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
-                Component.translatable("ui.mchjong.remaining_short", view.remaining()), center.x() + 10, cy - 2,
-                center.width() - 20, MahjongUi.TEXT, true);
-            if (settings.show(TableSettings.Information.DEPOSITS)) MahjongUi.text(graphics, font,
-                Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()), center.x() + 8,
-                cy + 11, center.width() - 16, MahjongUi.MUTED, true);
-            if (settings.show(TableSettings.Information.TURN) && view.turn() >= 0) {
-                int side = side(view.turn(), viewer, players);
-                switch (side) {
-                    case 0 -> graphics.fill(center.x() + 10, center.bottom() - 2, center.right() - 10, center.bottom(), MahjongUi.ACCENT);
-                    case 1 -> graphics.fill(center.right() - 2, center.y() + 10, center.right(), center.bottom() - 10, MahjongUi.ACCENT);
-                    case 2 -> graphics.fill(center.x() + 10, center.y(), center.right() - 10, center.y() + 2, MahjongUi.ACCENT);
-                    case 3 -> graphics.fill(center.x(), center.y() + 10, center.x() + 2, center.bottom() - 10, MahjongUi.ACCENT);
-                }
-            }
-            return;
-        }
         MahjongUi.panel(graphics, center.x(), center.y(), center.width(), center.height());
         for (int seat = 0; !scoresOnCards() && seat < players; seat++) {
             int side = side(seat, viewer, players);
@@ -483,13 +371,10 @@ final class TableBoard {
     private static int tileHeight(int width) { return Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH); }
     private void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
-        if (perspective) TileGui.tile3d(graphics, tile, x, y, width, back, sideways, marked, dimmed,
-            Math.max(1, width / 7), preset);
-        else TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset);
+        TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset);
     }
     private void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
-        if (perspective) TileGui.meld3d(graphics, meld, owner, x, y, width, Math.max(1, width / 7), preset);
-        else TileGui.meld(graphics, meld, owner, x, y, width, preset);
+        TileGui.meld(graphics, meld, owner, x, y, width, preset);
     }
     private void rememberRotated(int tile, int cx, int cy, int x, int y, int side) {
         rememberRotated(tile, cx, cy, x, y, side, 1);

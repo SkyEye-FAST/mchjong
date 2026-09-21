@@ -121,8 +121,10 @@ final class InputSmoke {
         TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
         clickHand(screen, fixture, 13);
         require(selected(screen, fixture, 13), "Mouse did not select the drawn tile");
-        screen.mouseClicked(screen.width / 2.0, screen.height - 19, 1);
-        screen.mouseReleased(screen.width / 2.0, screen.height - 19, 1);
+        var cancelPoint = screenPoint(screen, new HandPoint(TableScreen.IMMERSIVE_WIDTH / 2.0,
+            TableScreen.IMMERSIVE_HEIGHT - 19));
+        screen.mouseClicked(cancelPoint.x(), cancelPoint.y(), 1);
+        screen.mouseReleased(cancelPoint.x(), cancelPoint.y(), 1);
         require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
         screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi could not be reopened after cancellation");
@@ -152,12 +154,13 @@ final class InputSmoke {
     private static HandPoint handPoint(TableScreen screen, TableView view, int tile) {
         int layoutWidth = screen.immersive() ? TableScreen.IMMERSIVE_WIDTH : screen.width;
         int layoutHeight = screen.immersive() ? TableScreen.IMMERSIVE_HEIGHT : screen.height;
-        int tileWidth = Math.min(screen.immersive() ? 32 : layoutHeight < 360 ? 24 : 32, (layoutWidth - 36) / 14);
+        int tileWidth = Math.min(screen.immersive() ? 58 : layoutHeight < 360 ? 24 : 32, (layoutWidth - 36) / 14);
         var hand = view.seats().get(view.viewerSeat()).hand();
-        int x = (layoutWidth - Math.max(14, hand.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2
+        int drawGap = screen.immersive() ? Math.max(18, tileWidth / 2) : Math.max(4, tileWidth / 3);
+        int x = (layoutWidth - Math.max(14, hand.size()) * tileWidth - drawGap) / 2
             + hand.indexOf(tile) * tileWidth + tileWidth / 2;
-        if (tile == view.seats().get(view.viewerSeat()).drawn()) x += Math.max(4, tileWidth / 3);
-        int footer = view.autoPlay() != null ? 24 : 0;
+        if (tile == view.seats().get(view.viewerSeat()).drawn()) x += drawGap;
+        int footer = view.autoPlay() != null ? screen.immersive() ? 48 : 24 : 0;
         return new HandPoint(x, layoutHeight - footer - 15 - Math.round(tileWidth * 1.53846f) / 2.0);
     }
 

@@ -47,11 +47,12 @@ final class TableAutomation {
         buttons = new ArrayList<>();
         if (!available(view)) { pending = false; return buttons; }
         int count = view.rules().sanma() ? 5 : 4;
-        int width = horizontal ? expanded ? Math.min(112, (screenWidth - 40 - count * 4) / count) : 26 : width(screenWidth) - 20;
-        // Keep all five 20-pixel controls below the HUD and above the private hand at 320 x 240.
-        int gap = horizontal ? 4 : 0;
-        int height = horizontal ? 20 : count * 20 + (count - 1) * gap, top = bottom - height;
-        int horizontalSpan = count * width + count * 4 + 20;
+        int width = horizontal ? expanded ? Math.min(180, (screenWidth - 96 - count * 8) / count) : 46 : width(screenWidth) - 20;
+        int gap = horizontal ? 8 : 0;
+        int buttonHeight = horizontal ? 36 : 20;
+        int toggleWidth = horizontal ? 36 : 20;
+        int height = horizontal ? buttonHeight : count * 20 + (count - 1) * gap, top = bottom - height;
+        int horizontalSpan = count * width + count * gap + toggleWidth;
         int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8;
         for (var option : AutoPlay.Option.values()) {
             if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
@@ -72,8 +73,8 @@ final class TableAutomation {
             boolean enabled = view.autoPlay().enabled(option);
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
                 Component.translatable(enabled ? "options.on" : "options.off"));
-            var button = new MahjongButton(origin + (horizontal ? option.ordinal() * (width + 4) : 0),
-                top + (horizontal ? 0 : option.ordinal() * (20 + gap)), width, 20, label, ignored -> {
+            var button = new MahjongButton(origin + (horizontal ? option.ordinal() * (width + gap) : 0),
+                top + (horizontal ? 0 : option.ordinal() * (20 + gap)), width, buttonHeight, label, ignored -> {
                 var current = parent.view();
                 if (pending || !available(current)) return;
                 pending = true;
@@ -86,24 +87,32 @@ final class TableAutomation {
                     else MahjongUi.control(graphics, getX(), getY() + 2, getWidth(), 16,
                         active, isHovered(), isFocused(), enabled, false);
                     int color = !active ? MahjongUi.DISABLED : enabled ? MahjongUi.POSITIVE : MahjongUi.MUTED;
-                    int markerX = getX() + (horizontal ? 4 : 2), markerSize = horizontal ? 5 : 4;
-                    if (enabled) graphics.fill(markerX, getY() + 8, markerX + markerSize, getY() + 8 + markerSize, color);
-                    else graphics.renderOutline(markerX, getY() + 8, markerSize, markerSize, color);
+                    int markerX = getX() + (horizontal ? 8 : 2), markerSize = horizontal ? 8 : 4;
+                    int markerY = getY() + (getHeight() - markerSize) / 2;
+                    if (enabled) graphics.fill(markerX, markerY, markerX + markerSize, markerY + markerSize, color);
+                    else graphics.renderOutline(markerX, markerY, markerSize, markerSize, color);
                     var caption = Component.translatable(expanded ? key : key + ".short");
-                    if (expanded && font.width(caption) > getWidth() - 17) {
-                        var lines = font.split(caption, getWidth() - 17);
+                    int captionInset = horizontal ? 22 : expanded ? 13 : 8;
+                    float scale = horizontal ? 2 : 1;
+                    int captionWidth = (int) ((getWidth() - captionInset - (horizontal || expanded ? 6 : 2)) / scale);
+                    graphics.pose().pushPose();
+                    graphics.pose().translate(getX() + captionInset, getY() + getHeight() / 2f, 0);
+                    graphics.pose().scale(scale, scale, 1);
+                    if (expanded && font.width(caption) > captionWidth) {
+                        var lines = font.split(caption, captionWidth);
                         int count = Math.min(2, lines.size());
                         for (int line = 0; line < count; line++)
-                            graphics.drawString(font, lines.get(line), getX() + 13 + (getWidth() - 17 - font.width(lines.get(line))) / 2,
-                                getY() + (getHeight() - count * font.lineHeight) / 2 + line * font.lineHeight, color, false);
-                    } else MahjongUi.text(graphics, font, caption, getX() + (horizontal ? 13 : 8), getY() + 6,
-                        getWidth() - (horizontal ? 17 : 10), color, true);
+                            graphics.drawString(font, lines.get(line), (captionWidth - font.width(lines.get(line))) / 2,
+                                -count * font.lineHeight / 2 + line * font.lineHeight, color, false);
+                    } else MahjongUi.text(graphics, font, caption, 0, -font.lineHeight / 2, captionWidth, color, true);
+                    graphics.pose().popPose();
                 }
             }.selected(enabled);
             button.active = !pending;
             buttons.add(button);
         }
-        buttons.add(new MahjongButton(origin + (horizontal ? count : 1) * (width + (horizontal ? 4 : 0)), top + (height - 20) / 2, 20, 20,
+        buttons.add(new MahjongButton(origin + (horizontal ? count * (width + gap) : width),
+            top + (height - buttonHeight) / 2, toggleWidth, buttonHeight,
             Component.translatable(expanded ? "ui.mchjong.automation_hide" : "ui.mchjong.automation_show"),
             ignored -> { expanded = !expanded; rebuild.run(); }) {
                 @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -114,7 +123,8 @@ final class TableAutomation {
                         if (isFocused()) graphics.renderOutline(getX() + 5, getY() + 1, 10, 18, MahjongUi.ACCENT);
                     }
                     MahjongUi.text(graphics, Minecraft.getInstance().font, Component.literal(expanded ? "‹" : "›"),
-                        getX() + 4, getY() + 6, getWidth() - 8, isHoveredOrFocused() ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
+                        getX() + 4, getY() + (getHeight() - Minecraft.getInstance().font.lineHeight) / 2,
+                        getWidth() - 8, isHoveredOrFocused() ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
                 }
             });
         return buttons;

@@ -14,6 +14,11 @@ public final class TileRenderTypes extends RenderType {
     }
     public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
+    private static final java.util.Map<ResourceLocation, RenderType> GUI = java.util.Map.of(
+        TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS),
+        TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO),
+            guiMaterial("mchjong_gui_kanto", TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO)),
+        TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK));
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
         new java.util.EnumMap<>(top.skyeyefast.mchjong.item.TileMaterial.class);
     static {
@@ -39,6 +44,18 @@ public final class TileRenderTypes extends RenderType {
 
     public static RenderType body(top.skyeyefast.mchjong.item.TileMaterial material) {
         return material == top.skyeyefast.mchjong.item.TileMaterial.GLASS ? GLASS : BODIES.get(material);
+    }
+
+    public static RenderType gui(ResourceLocation texture) { return GUI.get(texture); }
+
+    private static RenderType guiMaterial(String name, ResourceLocation texture) {
+        return create(name, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS, 1536,
+            false, false, CompositeState.builder()
+                .setShaderState(RENDERTYPE_TEXT_SEE_THROUGH_SHADER)
+                .setTextureState(new TextureStateShard(texture, true, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
+                .setDepthTestState(NO_DEPTH_TEST).setWriteMaskState(COLOR_WRITE)
+                .setLightmapState(LIGHTMAP).createCompositeState(false));
     }
 
     private static RenderType material(String name, ResourceLocation texture) {

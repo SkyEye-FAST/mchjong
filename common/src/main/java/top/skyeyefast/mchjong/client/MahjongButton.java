@@ -10,6 +10,7 @@ import net.minecraft.network.chat.Component;
 public class MahjongButton extends Button {
     private boolean selected;
     private boolean primary;
+    private float textScale = 1;
 
     public MahjongButton(int x, int y, int width, int height, Component message, OnPress action) {
         super(x, y, width, height, message, action, DEFAULT_NARRATION);
@@ -18,6 +19,7 @@ public class MahjongButton extends Button {
 
     public MahjongButton selected(boolean value) { selected = value; return this; }
     public MahjongButton primary() { primary = true; return this; }
+    public MahjongButton textScale(float value) { textScale = value; return this; }
 
     @Override public void setMessage(Component message) {
         super.setMessage(message);
@@ -26,8 +28,13 @@ public class MahjongButton extends Button {
 
     @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderSurface(g);
-        MahjongUi.text(g, Minecraft.getInstance().font, getMessage(), getX() + 6, getY() + (height - 8) / 2,
-            width - 12, active || selected ? MahjongUi.TEXT : MahjongUi.DISABLED, true);
+        g.pose().pushPose();
+        g.pose().translate(getX() + width / 2f, getY() + height / 2f, 0);
+        g.pose().scale(textScale, textScale, 1);
+        int captionWidth = (int) ((width - 12) / textScale);
+        MahjongUi.text(g, Minecraft.getInstance().font, getMessage(), -captionWidth / 2, -4,
+            captionWidth, active || selected ? MahjongUi.TEXT : MahjongUi.DISABLED, true);
+        g.pose().popPose();
     }
 
     protected final void renderSurface(GuiGraphics g) {

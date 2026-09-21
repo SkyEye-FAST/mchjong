@@ -63,7 +63,7 @@ final class TableHud {
         }
         boolean seated = board == null && !lobby;
         boolean compactHeader = seated && headerWidth < 160;
-        int indicatorWidth = board != null ? 10 : compactHeader ? 8 : 14;
+        int indicatorWidth = board != null ? 28 : compactHeader ? 8 : 14;
         int indicatorSpan = indicators.size() * (indicatorWidth + 2);
         if (board != null) headerWidth = Math.max(36, indicatorSpan + 8);
         boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
@@ -71,7 +71,7 @@ final class TableHud {
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
         if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining_short", view.remaining());
         if (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty()) {
-            int headerHeight = board != null ? 20 : lobby ? 21 : 26;
+            int headerHeight = board != null ? 48 : lobby ? 21 : 26;
             MahjongUi.panel(graphics, 8, 7, headerWidth, headerHeight);
             text(font, graphics, title, 12, board != null ? 12 : 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);
             if (board == null) text(font, graphics, remaining, 12, 22,
@@ -117,10 +117,12 @@ final class TableHud {
             }
             if (lobby) shortLine = wind.copy().append(" · ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
             if (player.occupied() && !player.bot() && presence == PlayerPresence.AWAY) {
-                shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away_short"));
+                if (board == null || !board.perspective())
+                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away_short"));
                 hover = hover.copy().append("\n").append(Component.translatable("room.mchjong.away"));
             } else if (disconnected) {
-                shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected_short"));
+                if (board == null || !board.perspective())
+                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected_short"));
                 hover = hover.copy().append("\n").append(TableSeatsScreen.presence(presence));
             }
             if (settings.show(TableSettings.Information.STATUS)) {
@@ -142,9 +144,9 @@ final class TableHud {
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
             }
             if (board != null && board.perspective()) {
-                graphics.fill(x + 3, top + 3, x + cardWidth + 3, top + cardHeight + 3, 0x44000000);
+                graphics.fill(x + 5, top + 5, x + cardWidth + 5, top + cardHeight + 5, 0x44000000);
                 graphics.fill(x, top, x + cardWidth, top + cardHeight,
-                    seat == view.viewerSeat() ? 0xd832554f : 0xd20c2024);
+                    seat == view.viewerSeat() ? 0xc832554f : 0xb80c2024);
                 graphics.renderOutline(x, top, cardWidth, cardHeight,
                     seat == view.turn() ? MahjongUi.ACCENT : seat == view.viewerSeat() ? 0xff73938b : 0xff355257);
             } else graphics.fill(x, top, x + cardWidth, top + cardHeight,
@@ -157,12 +159,26 @@ final class TableHud {
             }
             if (turn || lobby && player.ready()) graphics.fill(x, top, x + 2, top + cardHeight, MahjongUi.ACCENT);
             if (board != null) {
-                int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 4, top + 3, 14);
-                Component label = name.getString().isEmpty() ? shortLine : name;
-                text(font, graphics, label, x + 4 + inset, top + 6, cardWidth - 8 - inset,
-                    disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
-                if ((board.perspective() || board.scoresOnCards()) && !name.getString().isEmpty()) text(font, graphics, shortLine, x + 4, top + 17, cardWidth - 8,
-                    disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
+                if (board.perspective()) {
+                    int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 8, top + 12, 38);
+                    Component label = name.getString().isEmpty() ? shortLine : name;
+                    textScaled(font, graphics, label, x + 8 + inset, top + 12, cardWidth - 18 - inset,
+                        disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT, 1.75f);
+                    if (!name.getString().isEmpty()) textScaled(font, graphics, shortLine, x + 8 + inset, top + 40,
+                        cardWidth - 18 - inset, disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED, 2);
+                    int markerX = x + cardWidth - 12, markerY = top + 8;
+                    if (turn) graphics.fill(markerX, markerY, markerX + 6, markerY + 6, MahjongUi.ACCENT);
+                    if (disconnected) graphics.fill(markerX, markerY + 12, markerX + 6, markerY + 18, MahjongUi.NEGATIVE);
+                    else if (presence == PlayerPresence.AWAY)
+                        graphics.renderOutline(markerX, markerY + 12, 6, 6, MahjongUi.MUTED);
+                } else {
+                    int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 4, top + 3, 14);
+                    Component label = name.getString().isEmpty() ? shortLine : name;
+                    text(font, graphics, label, x + 4 + inset, top + 6, cardWidth - 8 - inset,
+                        disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
+                    if (board.scoresOnCards() && !name.getString().isEmpty()) text(font, graphics, shortLine, x + 4, top + 17,
+                        cardWidth - 8, disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
+                }
             } else {
                 int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
                 text(font, graphics, name, x + 5 + inset, top + 4, cardWidth - 10 - inset,
@@ -185,11 +201,12 @@ final class TableHud {
             regions.add(new Region(x, top, cardWidth, cardHeight, hover));
             if (seat == view.viewerSeat() && settings.show(TableSettings.Information.STATUS) && furiten(view)) {
                 Component label = Component.translatable("ui.mchjong.furiten");
-                int badgeWidth = Math.min(cardWidth, font.width(label) + 8);
+                int scale = board != null && board.perspective() ? 2 : 1;
+                int badgeWidth = Math.min(cardWidth, (font.width(label) + 8) * scale);
                 int badgeY = top + cardHeight + 2;
-                graphics.fill(x, badgeY, x + badgeWidth, badgeY + 12, MahjongUi.DANGER);
-                text(font, graphics, label, x + 4, badgeY + 2, badgeWidth - 8, MahjongUi.ON_DANGER);
-                regions.add(new Region(x, badgeY, badgeWidth, 12, Component.translatable("ui.mchjong.furiten_hint")));
+                graphics.fill(x, badgeY, x + badgeWidth, badgeY + 12 * scale, MahjongUi.DANGER);
+                textScaled(font, graphics, label, x + 4 * scale, badgeY + 2 * scale, badgeWidth - 8 * scale, MahjongUi.ON_DANGER, scale);
+                regions.add(new Region(x, badgeY, badgeWidth, 12 * scale, Component.translatable("ui.mchjong.furiten_hint")));
             }
         }
         if (lobby) return;
@@ -251,13 +268,27 @@ final class TableHud {
         return 0;
     }
 
-    private static void stick(GuiGraphics graphics, int x, int y, boolean riichi) {
-        graphics.fill(x, y, x + 14, y + 4, MahjongUi.TEXT);
-        if (riichi) graphics.fill(x + 6, y + 1, x + 8, y + 3, MahjongUi.NEGATIVE);
-        else for (int dot = 3; dot <= 9; dot += 3) graphics.fill(x + dot, y + 1, x + dot + 1, y + 3, MahjongUi.INPUT);
+    static void stick(GuiGraphics graphics, int x, int y, boolean riichi) {
+        stick(graphics, x, y, riichi, 1);
+    }
+
+    static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
+        int width = 14 * scale, height = 4 * scale;
+        graphics.fill(x, y, x + width, y + height, MahjongUi.TEXT);
+        if (riichi) graphics.fill(x + 6 * scale, y + scale, x + 8 * scale, y + 3 * scale, MahjongUi.NEGATIVE);
+        else for (int dot = 3; dot <= 9; dot += 3)
+            graphics.fill(x + dot * scale, y + scale, x + (dot + 1) * scale, y + 3 * scale, MahjongUi.INPUT);
     }
 
     private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {
         MahjongUi.text(graphics, font, text, x, y, width, color, false);
+    }
+
+    private static void textScaled(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color, float scale) {
+        graphics.pose().pushPose();
+        graphics.pose().scale(scale, scale, 1);
+        MahjongUi.text(graphics, font, text, Math.round(x / scale), Math.round(y / scale),
+            Math.round(width / scale), color, false);
+        graphics.pose().popPose();
     }
 }

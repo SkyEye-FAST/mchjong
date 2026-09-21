@@ -156,32 +156,42 @@ bottom rule, with the full status in hover details. The sideways river tile
 continues to identify the declaration discard.
 
 Immersive play uses an opaque screen-space surface, independent of world lighting,
-ceilings and camera orientation. Its play surface uses a shallow perspective trapezoid,
-beveled tile depth/shadows and the public wall stacks to retain the visual depth of a
-mature digital mahjong table without depending on world-camera visibility. Reflow
-opponents, rivers and melds into the available rectangle rather than projecting the
-physical square furniture. Put the viewer's larger interactive hand and melds in the
-foreground along the bottom. Place immersive automation in a
-compact centered horizontal strip below the hand, with action buttons above it. Seated automation
-keeps its side column. Three-player layouts place both opponents at the sides.
-Anchor all rivers directly against one central score panel, with six tiles per
-row growing outward and a shared tile size across seats. The panel carries the
-round, remaining tiles, seat winds and scores facing each owner. Keep opponent
-hands on the outer rails and melds at each owner's right corner. Place compact
-portrait/name cards beside their seats; rules, deposits and dora stay at the top.
+ceilings and camera orientation. A single perspective camera projects the cloth,
+solid tile bodies, upright concealed opponent hands and two-layer public wall stacks.
+Tile faces and dyed resource-pack backs share that geometry and use fixed lighting.
+The viewer's
+large interactive hand and raised tile rack form the foreground along the bottom. Place
+the viewer's melds on the same bottom edge at the hand's right end, with a deliberate gap
+between concealed and open tiles. Apply the same owner-relative right-end rule to every seat.
+Place immersive automation in a compact centered horizontal strip below the hand, with
+action buttons above the right end of the hand, clear of the central rivers and meld rail. Seated automation keeps its
+side column. Three-player layouts place both opponents at the sides and do not reserve
+an empty opposite-seat region.
+
+Lay the four rivers on the same table plane around the compact central device. Retain
+six tiles per row and project each tile's corners, thickness and contact shadow through
+the table camera. The viewer's rows grow
+toward the foreground, the opposite rows recede toward the far rail, and the side rivers
+remain broad enough to read rather than becoming screen-edge strips. Keep opponent hands
+and melds on the same outer rail, with melds anchored at the owner's right-hand end. Place
+the local portrait plaque at the lower-left edge, side opponents along the side edges,
+and the opposite player at the upper-right edge. These plaques contain only portrait, name, wind
+and score; turn, riichi and presence use small marks. The central device carries the
+round, remaining tiles, turn direction and graphical honba/riichi point sticks with
+counts. It must not spell out honba or deposits.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 Dim tsumogiri in the river while leaving tedashi at normal brightness; the sideways
 riichi discard remains an independent marker. Never replace this visual distinction
 with a text label.
-Perspective depth is seat-relative: the opposite seat is smallest, side seats use an
-intermediate scale, and the viewer's foreground stays full size. River rows may vary
-slightly in scale away from the center to reinforce depth without changing six-tile
-row semantics. Player labels are compact translucent table-edge plaques rather than
-opaque HUD cards.
-Immersive play has exactly one 640 × 400 virtual layout. Minecraft GUI scale, window
+Perspective depth follows each tile's position: the far rail is smallest, the side
+rails converge toward it, and the viewer's foreground stays full size. Animation
+anchors use the same projected centers as the tile faces. Player labels are compact
+translucent table-edge plaques. Use larger portrait and score type on the virtual
+canvas; toolbar, automation, score and status captions use twice the native font size.
+Immersive play has exactly one 1280 × 800 virtual layout. Minecraft GUI scale, window
 size and window aspect ratio must never select another immersive layout, change tile
 sizes, move controls, hide controls or fall back to the seated renderer. Fit that
-canvas into the current screen with one uniform `min(width / 640, height / 400)` scale
+canvas into the current screen with one uniform `min(width / 1280, height / 800)` scale
 and center it; fill all unused space with solid black letterbox/pillarbox bars. A
 window smaller than the virtual canvas scales the complete image down instead of
 reflowing it. Pointer coordinates are transformed back into the same virtual canvas
@@ -192,16 +202,12 @@ slot and keeps that target slot visually empty until arrival. Discards travel fr
 hand/seat edge to the river; tsumogiri uses a shorter, flatter path while tedashi uses a
 longer arc. Riichi rotation occurs near landing. These animations are presentation-only
 and never alter the authoritative action or tile identity.
-Reserve at least 8 × 12 logical pixels for river tiles and a 10-pixel width for
-opponent meld tiles. Allocate river depth per seat and compress the central score
-panel before reducing tile size; concealed outer hand rails can shrink to a 6-pixel
-width ahead of melds.
-When dense rivers need the central space, winds and scores move onto seat cards;
-the center retains a compact round and remaining-tile summary. Long opponent meld
-rails wrap inward at the owner's corner while retaining the minimum face width.
-Player names have a small skin portrait immediately before them; practice bots
-use a distinct robot portrait. Keep native font sizes and ellipsize long names,
-retaining the complete name in the card's hover details.
+Reserve at least 18 logical pixels of face width for immersive river tiles and 20 pixels
+for opponent meld tiles. Allocate river depth per seat before reducing these sizes.
+Long opponent meld rails wrap inward at the owner's corner while retaining the minimum
+face width. Player names have a skin portrait immediately before them; practice bots use
+a distinct robot portrait. Immersive plaque text may scale above native size for the
+1280 × 800 canvas. Ellipsize long names and retain the complete name in hover details.
 
 ## Mahjong box
 
@@ -314,7 +320,7 @@ single-character labels, while expanded rows show full names on up to two lines.
 Filled/hollow indicators distinguish states alongside the shared selected surface.
 Tooltips and narration always contain the full option name and its on/off state.
 Keep a clear gutter between these controls and the action buttons. The seated layout
-is checked at 320 × 240; immersive controls always use the fixed 640 × 400 virtual
+is checked at 320 × 240; immersive controls always use the fixed 1280 × 800 virtual
 canvas and are only uniformly scaled by the outer letterbox transform. These preferences belong to the server's
 seated player and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
@@ -359,10 +365,10 @@ Update this document and the shared tokens together when intentionally changing
 the style; do not establish a competing set of local widgets or palette values.
 
 The shared smoke captures compact and expanded match controls in all four locales
-at 640 x 400 and 320 x 240. The live four-player match toggles each option once in
+through the 1280 × 800 immersive canvas at 640 x 400 and 320 x 240 output sizes. The live four-player match toggles each option once in
 each presentation, using both pointer and keyboard activation. A live three-player
 match verifies the additional north button and its server acknowledgements at
-320 x 240 seated. Immersive captures exercise the same 640 × 400 canvas through
+320 x 240 seated. Immersive captures exercise the same 1280 × 800 canvas through
 multiple window sizes, aspect ratios and GUI scales, including 320 × 240 with black
 bars. Lobby controls are checked separately.
 Native first-person screenshots cover a right-hand tile and point stick. Each

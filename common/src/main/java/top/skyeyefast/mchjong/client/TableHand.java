@@ -24,19 +24,19 @@ final class TableHand {
         this.owner = owner;
         this.melds = player.melds();
         this.perspective = perspective;
-        right = width - 8;
+        right = width - (perspective ? 24 : 8);
         tiles = player.hand();
         drawn = player.drawn();
         tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / 14));
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
-        gap = drawn == Tile.ABSENT ? 0 : Math.max(4, tileWidth / 3);
+        gap = drawn == Tile.ABSENT ? 0 : Math.max(18, tileWidth / 2);
         span = tiles.size() * tileWidth + gap;
         // Keep a stable fourteen-tile rail; a short hand must not cover the right-corner melds.
-        left = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2;
+        left = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(18, tileWidth / 2)) / 2;
         y = height - (perspective ? 15 : 20) - tileHeight;
     }
 
-    int top() { return y - 7; }
+    int top() { return y - (perspective ? Math.max(12, tileWidth / 5) + 2 : 7); }
     int centerX() { return left + span / 2; }
     int tileWidth() { return tileWidth; }
 
@@ -55,54 +55,75 @@ final class TableHand {
     private int arc(int index) {
         if (!perspective || tiles.size() <= 1) return 0;
         double center = (tiles.size() - 1) / 2.0;
-        return (int) Math.round(Math.abs(index - center) * .18);
+        return (int) Math.round(Math.abs(index - center) * .30);
     }
 
     private int y(int index, int tile, int selected, int hovered) {
-        int lift = tile == selected ? 7 : tile == hovered ? 3 : 0;
+        int lift = tile == selected ? Math.max(10, tileWidth / 5)
+            : tile == hovered ? Math.max(5, tileWidth / 10) : 0;
         return y + arc(index) - lift;
     }
 
     boolean contains(double px, double py) {
-        return px >= left - 5 && px < left + span + 5 && py >= top() && py < y + tileHeight + 5;
+        int depth = perspective ? Math.max(2, tileWidth / 8) : 0;
+        return px >= left - 5 && px < left + span + depth + 5 && py >= top()
+            && py < y + tileHeight + depth + 5;
     }
 
     int pick(double px, double py, int selected) {
-        for (int i = 0; i < tiles.size(); i++) {
+        int depth = perspective ? Math.max(2, tileWidth / 8) : 0;
+        for (int i = tiles.size() - 1; i >= 0; i--) {
             int tile = tiles.get(i), x = x(i), top = y(i, tile, selected, Tile.ABSENT);
-            if (tile >= 0 && px >= x && px < x + tileWidth && py >= top && py < top + tileHeight) return tile;
+            if (tile >= 0 && px >= x && px < x + tileWidth + depth && py >= top && py < top + tileHeight + depth) return tile;
         }
         return Tile.ABSENT;
     }
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
-        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset);
+        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, 0xffffffff);
     }
 
-    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile, TileFacePreset preset) {
+    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile, TileFacePreset preset, int backColor) {
         if (perspective) {
-            int railLeft = Math.max(4, left - 12), railRight = Math.min(right + 4, left + span + 14);
-            graphics.fill(railLeft + 3, y + tileHeight + 1, railRight + 3, y + tileHeight + 8, 0x55000000);
-            graphics.fill(railLeft, y + tileHeight, railRight, y + tileHeight + 5, 0xff0b2325);
-            graphics.hLine(railLeft + 1, railRight - 2, y + tileHeight, 0xff456264);
+            int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
+            graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
+            graphics.fill(railLeft, y + tileHeight - 1, railRight, y + tileHeight + 12, 0xff081d20);
+            graphics.fill(railLeft + 3, y + tileHeight - 1, railRight - 3, y + tileHeight + 3, 0xff31575a);
+            graphics.hLine(railLeft + 4, railRight - 5, y + tileHeight - 2, 0xff638083);
+            for (int i = 0; i < tiles.size(); i++) {
+                int tile = tiles.get(i), top = y(i, tile, selected, hovered);
+                graphics.fill(x(i) + 5, top + tileHeight - 3, x(i) + tileWidth + Math.max(7, tileWidth / 6),
+                    top + tileHeight + Math.max(6, tileWidth / 8), 0x55000000);
+            }
         }
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
             if (tile != suppressedTile) {
                 if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
-                    Math.max(2, tileWidth / 8), preset);
+                    Math.max(2, tileWidth / 8), preset, backColor);
                 else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, preset);
                 if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
             }
         }
-        int meldTileWidth = tileWidth;
-        while (meldTileWidth > 2 && meldWidth(meldTileWidth) > right - left - span - 8) meldTileWidth--;
+        int meldTileWidth = perspective ? Math.min(40, tileWidth) : tileWidth;
+        int meldAvailable = right - left - span - (perspective ? 18 : 8);
+        while (meldTileWidth > 2 && meldWidth(meldTileWidth) > meldAvailable) meldTileWidth--;
         int meldX = right - meldWidth(meldTileWidth);
-        int meldY = y + tileHeight - Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int meldHeight = Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+        int meldY = y + tileHeight - meldHeight;
+        if (perspective && !melds.isEmpty()) {
+            graphics.fill(meldX + 5, meldY + meldHeight + 3, right + 8, meldY + meldHeight + 10, 0x44000000);
+            graphics.hLine(meldX - 3, right + 3, meldY + meldHeight + 1, 0xff34585a);
+        }
         for (var meld : melds) {
-            if (perspective) TileGui.meld3d(graphics, meld, owner, meldX, meldY, meldTileWidth,
-                Math.max(1, meldTileWidth / 8), preset);
-            else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
+            if (perspective) {
+                graphics.pose().pushPose();
+                graphics.pose().translate(0, y + tileHeight, 0);
+                graphics.pose().scale(1, .72f, 1);
+                TileGui.meld3d(graphics, meld, owner, meldX, -meldHeight, meldTileWidth,
+                    Math.max(1, meldTileWidth / 8), preset, backColor);
+                graphics.pose().popPose();
+            } else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset);
             meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
         }
     }

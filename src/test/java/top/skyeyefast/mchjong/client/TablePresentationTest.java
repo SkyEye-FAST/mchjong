@@ -57,16 +57,23 @@ class TablePresentationTest {
         assertTrue(TableScreen.supportsImmersive(480, 300));
         assertTrue(TableScreen.supportsImmersive(640, 400));
         assertFalse(TableScreen.supportsImmersive(0, 400));
+        assertEquals(1280, TableScreen.IMMERSIVE_WIDTH);
+        assertEquals(800, TableScreen.IMMERSIVE_HEIGHT);
 
         var small = TableScreen.immersiveCanvas(320, 240);
-        assertEquals(.5, small.scale(), 1e-9);
+        assertEquals(.25, small.scale(), 1e-9);
         assertEquals(0, small.x(), 1e-9);
         assertEquals(20, small.y(), 1e-9);
 
         var wide = TableScreen.immersiveCanvas(800, 400);
-        assertEquals(1, wide.scale(), 1e-9);
+        assertEquals(.5, wide.scale(), 1e-9);
         assertEquals(80, wide.x(), 1e-9);
         assertEquals(0, wide.y(), 1e-9);
+
+        var large = TableScreen.immersiveCanvas(2560, 1600);
+        assertEquals(2, large.scale(), 1e-9);
+        assertEquals(0, large.x(), 1e-9);
+        assertEquals(0, large.y(), 1e-9);
     }
     @Test void handPitchIsExactlyTheTileWidthWithoutChangingTheDrawGap() {
         assertEquals((double) TileMesh.WIDTH * TableScene.TILE_SCALE, TableScene.HAND_STEP);
@@ -113,8 +120,24 @@ class TablePresentationTest {
         var state = TableBoardState.live(game.view(id));
         assertTrue(state.dimTsumogiri());
         assertFalse(state.markTedashi());
-        var board = new TableBoard(state, 8, 632, 38, 300, 300, true);
+        var board = new TableBoard(state, 20, 1260, 68, 620, 800, true);
         assertTrue(board.perspective());
+    }
+
+    @Test void foregroundPickingIncludesTileBodyAndKeepsTheDrawGapEmpty() {
+        var player = new top.skyeyefast.mchjong.engine.TableView.Seat("Viewer", true, false, false,
+            25000, List.of(0, 4, 8), 8, List.of(), List.of(), List.of(), false, false);
+        var hand = new TableHand(player, 0, 1280, 752, 58, true);
+        var drawn = hand.point(8);
+        int halfHeight = Math.round(hand.tileWidth() * TileMesh.HEIGHT / TileMesh.WIDTH) / 2;
+        assertEquals(8, hand.pick(drawn.x(), drawn.y() + halfHeight + 5, -1),
+            "The visible lower body belongs to the drawn tile");
+        assertTrue(hand.contains(drawn.x(), drawn.y() + halfHeight + 5));
+        var previous = hand.point(4);
+        assertEquals(top.skyeyefast.mchjong.engine.Tile.ABSENT, hand.pick(previous.x() + hand.tileWidth() / 2 + 15, previous.y(), -1),
+            "The deliberate draw gap must not submit a discard");
+        assertEquals(8, hand.pick(drawn.x(), drawn.y() - halfHeight - 8, 8),
+            "The raised selection remains clickable");
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
@@ -123,43 +146,33 @@ class TablePresentationTest {
         assertEquals(TableSettings.VoiceSource.RESOURCE_PACK, new TableSettings().voiceSource);
     }
 
-    @Test void immersiveViewerCardStaysOutsideTheRiverAtBothViewportSizes() {
+    @Test void immersiveCardsStayOnTheFixedCanvasPerimeterAndClearEveryRiver() {
         for (var rules : List.of(top.skyeyefast.mchjong.engine.RuleSet.TENHOU_4, top.skyeyefast.mchjong.engine.RuleSet.TENHOU_3)) {
             var id = java.util.UUID.randomUUID();
             var game = new top.skyeyefast.mchjong.engine.Game(java.util.UUID.randomUUID(), rules, 15);
             assertTrue(game.join(id, "Viewer", 0));
             var view = game.view(id);
-            for (int width : new int[]{480, 640}) {
-                int bottom = width == 480 ? 203 : 303;
-                var board = new TableBoard(TableBoardState.live(view), 8, width - 8, 38, bottom, bottom);
-                var card = board.card(0);
-                var river = board.riverArea(0);
-                var popup = TableHints.layout(board.card(1).x() - 4,
-                    board.card(rules.players() - 1).right() + 4, 38, bottom - 32, 13);
-                assertNotNull(popup);
-                for (int seat = 0; seat < rules.players(); seat++) {
-                    var other = board.card(seat);
-                    assertTrue(popup.x() + popup.width() <= other.x() || popup.x() >= other.right()
-                        || popup.y() + popup.height() <= other.y() || popup.y() >= other.bottom(),
-                        "Wait popup must clear player cards");
+            int left = 20, right = 1260, top = 68, bottom = 620;
+            var board = new TableBoard(TableBoardState.live(view), left, right, top, bottom, 800, true);
+            assertTrue(board.perspective());
+            var local = board.card(0);
+            assertTrue(local.x() < TableScreen.IMMERSIVE_WIDTH / 4, "Local plaque belongs on the lower-left perimeter");
+            assertTrue(local.y() > bottom - 80);
+            for (int seat = 0; seat < rules.players(); seat++) {
+                var area = board.riverArea(seat);
+                assertTrue(area.x() >= left && area.right() <= right, area.toString());
+                assertTrue(area.y() >= top && area.bottom() <= bottom, area.toString());
+                for (int other = 0; other < rules.players(); other++) {
+                    var seatCard = board.card(other);
+                    assertTrue(seatCard.right() <= area.x() || seatCard.x() >= area.right()
+                        || seatCard.bottom() <= area.y() || seatCard.y() >= area.bottom(),
+                        "Seat cards must clear all rivers: " + other + " " + seatCard + " / " + seat + " " + area);
+                    if (other == seat) continue;
+                    var otherRiver = board.riverArea(other);
+                    assertTrue(otherRiver.right() <= area.x() || otherRiver.x() >= area.right()
+                        || otherRiver.bottom() <= area.y() || otherRiver.y() >= area.bottom(),
+                        "Rivers must not overlap: " + seat + " " + area + " / " + other + " " + otherRiver);
                 }
-                assertTrue(card.right() < river.x(), "The local card must not cover its river");
-                for (int seat = 0; seat < rules.players(); seat++) {
-                    var area = board.riverArea(seat);
-                    assertTrue(area.x() >= 8 && area.right() <= width - 8);
-                    assertTrue(area.y() >= 38 && area.bottom() <= bottom);
-                    for (int other = 0; other < rules.players(); other++) {
-                        var seatCard = board.card(other);
-                        assertTrue(seatCard.right() <= area.x() || seatCard.x() >= area.right()
-                            || seatCard.bottom() <= area.y() || seatCard.y() >= area.bottom(), "Seat cards must clear all rivers");
-                        if (other == seat) continue;
-                        var otherRiver = board.riverArea(other);
-                        assertTrue(otherRiver.right() <= area.x() || otherRiver.x() >= area.right()
-                            || otherRiver.bottom() <= area.y() || otherRiver.y() >= area.bottom(), "Rivers must not overlap");
-                    }
-                }
-                if (rules.players() == 4) assertEquals(board.riverArea(2).height(), board.riverArea(0).height(),
-                    "Opposite rivers use the same tile size and row capacity");
             }
         }
     }
@@ -190,6 +203,13 @@ class TablePresentationTest {
             top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
             base.timeControl(), List.of(), List.of(), false, null, null, base.autoPlay(), false, 1);
+        var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
+        assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
+            "The local river grows subtly toward the foreground");
+        assertTrue(immersive.riverRowWidth(2, 3) < immersive.riverRowWidth(2, 0),
+            "The opposite river recedes toward the far rail");
+        assertTrue(immersive.riverRowWidth(1, 1) <= immersive.riverRowWidth(1, 0),
+            "Side rivers retain their own shallow depth plane");
         for (int bottom : new int[]{178, 203}) {
             var board = new TableBoard(TableBoardState.live(view), 8, 472, 38, bottom, bottom);
             assertTrue(board.riverTileWidth() >= 8);
@@ -210,6 +230,11 @@ class TablePresentationTest {
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
         var player = new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false);
+        var immersiveRails = ImmersiveTable.outerRails(player, 0);
+        assertEquals(2, immersiveRails.size());
+        assertEquals(4, immersiveRails.stream().mapToInt(List::size).sum());
+        assertTrue(60 + 18 + immersiveRails.getFirst().stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum() <= 600,
+            "Four kans wrap at the inner corner without shrinking or pushing the standing hand off its rail");
         int width = TableBoard.outerTileWidth(player, 0, 157);
         assertEquals(10, width);
         var rails = TableBoard.meldRails(player, 0, width, 157);
