@@ -12,13 +12,23 @@ public final class MahjongCatalog {
 
     public static List<ItemStack> entries() {
         var entries = new ArrayList<ItemStack>();
-        entries.add(new ItemStack(MahjongContent.TABLE_ITEM));
-        entries.add(new ItemStack(MahjongContent.AUTO_TABLE_ITEM));
+        for (var wood : FurnitureWood.values()) {
+            var table = new ItemStack(MahjongContent.TABLE_ITEM);
+            table.set(MahjongComponents.WOOD, wood);
+            entries.add(table);
+        }
+        for (var wood : FurnitureWood.values()) {
+            var autoTable = new ItemStack(MahjongContent.AUTO_TABLE_ITEM);
+            autoTable.set(MahjongComponents.WOOD, wood);
+            entries.add(autoTable);
+        }
         entries.add(new ItemStack(MahjongContent.STOOL_ITEM));
         entries.add(new ItemStack(MahjongContent.CLOTH_ITEM));
         entries.add(new ItemStack(MahjongContent.BOX_ITEM));
         for (var reds : RedFives.values()) entries.add(MahjongSupplies.stockedBox(reds));
-        entries.add(new ItemStack(MahjongContent.TILE_ITEM));
+        for (var material : TileMaterial.values()) {
+            entries.add(MahjongSupplies.tile(new TileData(-1, material, false), 1));
+        }
         entries.add(new ItemStack(MahjongContent.DICE));
         entries.add(new ItemStack(MahjongContent.MAHJONG_DYE));
         entries.add(new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE));

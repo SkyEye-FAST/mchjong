@@ -41,12 +41,10 @@ public final class SupplyRecipeExamples {
                     }
                     case MARK_STICK -> SupplyCraftingRecipe.markings().entrySet().stream()
                         .sorted(java.util.Map.Entry.comparingByValue()).forEach(mark -> {
-                            for (int count : new int[]{1, 8}) {
-                                var input = new ArrayList<ItemStack>();
-                                for (int i = 0; i < count; i++) input.add(new ItemStack(MahjongContent.POINT_STICK));
-                                input.add(new ItemStack(mark.getKey()));
-                                add(examples, level, holder, mark.getValue() + "/" + count, input);
-                            }
+                            var input = new ArrayList<ItemStack>();
+                            for (int i = 0; i < 8; i++) input.add(new ItemStack(MahjongContent.POINT_STICK));
+                            input.add(new ItemStack(mark.getKey()));
+                            add(examples, level, holder, mark.getValue() + "/8", input);
                         });
                     case UPGRADE_TABLE -> {
                         for (var wood : FurnitureWood.values()) {
@@ -56,7 +54,7 @@ public final class SupplyRecipeExamples {
                         }
                     }
                     case DYE -> {
-                        for (var color : List.of(DyeColor.RED, DyeColor.CYAN)) {
+                        for (var color : DyeColor.values()) {
                             var targets = new ArrayList<ItemStack>();
                             targets.add(new ItemStack(MahjongContent.CLOTH_ITEM));
                             for (var wood : FurnitureWood.values()) {

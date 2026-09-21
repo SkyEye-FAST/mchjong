@@ -145,15 +145,16 @@ red five to restore its ordinary five, preserving its material, back color,
 face preset, custom name and other components. This recipe consumes one tile
 and one undo dye per craft, independently of the box's face-printing operation.
 
-One to eight unmarked point sticks, each in its own crafting slot, plus one
-marking material produce the same number of marked sticks:
+Eight unmarked point sticks, each in its own crafting slot, plus one
+matching dye produce eight marked sticks:
 
-| Marking material | Denomination |
+| Dye | Denomination |
 | --- | ---: |
-| Black dye | 100 |
-| Redstone dust | 1,000 |
-| Lapis lazuli | 5,000 |
-| Gold nugget | 10,000 |
+| White dye | 100 |
+| Blue dye | 1,000 |
+| Yellow dye | 5,000 |
+| Red dye | 10,000 |
+| Black dye | −10,000 |
 
 Already marked sticks cannot be remarked. Component-preserving crafting operations
 use shared custom crafting serializers, not ingredients that accidentally
@@ -166,7 +167,7 @@ recipes. Face printing instead uses the box's server-authorized menu button.
 One plank of any vanilla wood, bone block, quartz block, calcite, glass block or
 amethyst block yields **16 unengraved tiles** of its corresponding material.
 All wooden blanks use the single `wood` material; furniture still retains its
-specific wood species. One bone block can alternatively yield **16 unmarked
+specific wood species. One bone block can alternatively yield **24 unmarked
 point sticks**.
 
 The eight flowers are physical tiles in all six materials and sixteen back colors.
@@ -295,7 +296,7 @@ by interacting with its front, including from the seated overlay. The native
 inventory shortcut E also opens your own drawer while seated. The
 container exposes nine scoring slots and a separate final reserve slot per player.
 The black −10000 bust stick shares the red 10000 stick's markings and is crafted
-from blank sticks and charcoal. It has no value in the reserve slot; moving it
+from eight blank sticks and black dye. It has no value in the reserve slot; moving it
 to a scoring slot subtracts 10000 from the physical balance.
 Marked denominations share a drawer;
 matching stacks use vanilla splitting, drag distribution and shift-click rules.

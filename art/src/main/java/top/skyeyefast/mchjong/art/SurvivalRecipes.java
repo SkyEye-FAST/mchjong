@@ -43,7 +43,7 @@ final class SurvivalRecipes {
                 "result", tile(-1, material.name, false, 16)));
         }
         output.write("data/mchjong/recipe/blank_point_sticks.json", Map.of("type", "minecraft:stonecutting",
-            "ingredient", item("bone_block"), "result", stack("point_stick", 16, Map.of("mchjong:points", 0))));
+            "ingredient", item("bone_block"), "result", stack("point_stick", 24, Map.of("mchjong:points", 0))));
         output.write("data/mchjong/recipe/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye")),
             "result", stack("mahjong_dye", 1, Map.of())));

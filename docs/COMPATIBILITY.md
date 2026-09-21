@@ -21,8 +21,9 @@ distributed MChjong jars contain the MChjong adapters and the shared engine.
 ## Recipe and component coverage
 
 The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete
-136-tile cases are consecutive. Blank tiles and both mahjong dyes precede blank,
-100, 1,000, 5,000 and 10,000 point-stick denominations. Tile faces, including
+136-tile cases are consecutive. Blank tiles in all six materials and both mahjong dyes precede blank,
+100, 1,000, 5,000 and 10,000 point-stick denominations. Tables and automatic tables list
+every wood species. Tile faces, including
 flowers, share the blank-tile item and are printed through the box menu.
 
 Recipe identity distinguishes wood, material, back color, face preset, face, red markings,
@@ -32,8 +33,8 @@ rules. Examples are built from the recipes in the currently loaded datapack.
 Every cycling ingredient is accepted only when the source recipe produces the
 displayed output with identical components and count.
 
-The finite crafting displays cover one/eight-stick marking batches, every table
-wood, and two back-dye colors on representative tiles, red fives and flowers.
+The finite crafting displays cover eight-stick marking batches, every table
+wood, and all sixteen back-dye colors on representative tiles, stools, cloth, boxes, red fives and flowers.
 Case back-dye examples cover each material with blue backs: a completed set,
 or 144 blanks with four 1,000-point sticks in the separate stick compartment.
 The ordinary four-color mahjong-dye recipe uses the viewers' vanilla crafting category.

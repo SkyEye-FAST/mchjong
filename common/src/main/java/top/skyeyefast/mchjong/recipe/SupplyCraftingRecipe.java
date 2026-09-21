@@ -24,8 +24,8 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
     public Operation operation() { return operation; }
 
     public static java.util.Map<net.minecraft.world.item.Item, Integer> markings() {
-        return java.util.Map.of(Items.BLACK_DYE, 100, Items.REDSTONE, 1000,
-            Items.LAPIS_LAZULI, 5000, Items.GOLD_NUGGET, 10000, Items.CHARCOAL, -10000);
+        return java.util.Map.of(Items.WHITE_DYE, 100, Items.BLUE_DYE, 1000,
+            Items.YELLOW_DYE, 5000, Items.RED_DYE, 10000, Items.BLACK_DYE, -10000);
     }
 
     public static List<net.minecraft.world.item.Item> upgradePattern() {
@@ -92,8 +92,8 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
                 if (points == 0) return ItemStack.EMPTY;
             }
         }
-        if (blanks < 1 || blanks > 8 || points == 0) return ItemStack.EMPTY;
-        ItemStack result = new ItemStack(MahjongContent.POINT_STICK, blanks);
+        if (blanks != 8 || points == 0) return ItemStack.EMPTY;
+        ItemStack result = new ItemStack(MahjongContent.POINT_STICK, 8);
         result.set(MahjongComponents.POINTS, points);
         return result;
     }
