@@ -40,8 +40,8 @@ final class ReplayInterfaceSmoke {
         if (sample == LANGUAGES.length) return true;
         if (stage == 0) {
             var matches = java.util.stream.IntStream.range(0, 12).mapToObj(i -> new ReplayMatch.Header(
-                new java.util.UUID(45, i), header.updatedAt() - i * 60_000L, header.rules(), header.hands(),
-                header.complete(), header.names())).toList();
+                new java.util.UUID(45, i), header.startedAt() - i * 60_000L, header.updatedAt() - i * 60_000L,
+                header.rules(), header.hands(), header.complete(), header.names(), header.finalScores(), header.finalRanks())).toList();
             browser = new ReplayBrowserScreen(null, new ReplayMatch.Index(0, "Replay player", false, matches, false));
             client.setScreen(browser);
             stage = 1; settled = 0;

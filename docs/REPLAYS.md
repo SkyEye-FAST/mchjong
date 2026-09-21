@@ -14,7 +14,9 @@ Open **Replays** from the table overlay, or use these server commands:
 
 The index contains twelve matches per page. Search player names or a replay UUID,
 and choose newest-first or oldest-first ordering. Search applies before pagination;
-timestamps come from the match rather than filesystem modification time. In the
+timestamps come from the match rather than filesystem modification time. Completed
+matches also show their recorded final placement and final score directly in the
+list. In the
 command form, `true` means oldest first and `false` means newest first. Select an
 entry with the mouse or Up/Down, then choose **View replay** or press Enter. A double
 click also opens it. **Delete** (or the Delete key while the list is focused) opens

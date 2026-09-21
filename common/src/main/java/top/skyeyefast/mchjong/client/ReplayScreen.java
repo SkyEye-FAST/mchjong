@@ -91,10 +91,10 @@ public final class ReplayScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.export"), ignored -> export())
             .bounds(width / 2 + 4, height - 28, width / 2 - 14, 20).build());
 
-        int listWidth = Math.min(240, width - 28);
-        rounds = addRenderableWidget(new RoundList((width - listWidth) / 2, 54, listWidth, Math.min(190, Math.max(70, height - 146))));
         result = addRenderableWidget(new ReplayResultPanel(font, match, hand(), PRESET, 10, 67, width - 20,
             Math.max(72, height - 151), viewer));
+        int listWidth = Math.min(240, width - 28);
+        rounds = addRenderableWidget(new RoundList((width - listWidth) / 2, 54, listWidth, Math.min(190, Math.max(70, height - 146))));
         refresh();
     }
 
@@ -156,7 +156,7 @@ public final class ReplayScreen extends Screen {
     private void toggleRounds() {
         roundsOpen = !roundsOpen;
         rounds.visible = rounds.active = roundsOpen;
-        if (roundsOpen) setFocused(rounds);
+        if (frame().settled()) result.active = !roundsOpen;
     }
 
     private void cycleViewer(int offset) {

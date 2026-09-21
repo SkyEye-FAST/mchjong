@@ -26,14 +26,24 @@ data class ReplayMatch(
     @JvmRecord
     data class Header(
         val id: UUID,
+        val startedAt: Long,
         val updatedAt: Long,
         val rules: RuleConfig,
         val hands: Int,
         val complete: Boolean,
         val names: List<String>,
+        val finalScores: List<Double>,
+        val finalRanks: List<Int>,
     ) {
         init {
-            require(hands in 1..1024 && names.size == rules.players() && names.none { it.isBlank() || it.length > 128 }) {
+            require(
+                startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 && names.size == rules.players() &&
+                    names.none { it.isBlank() || it.length > 128 } &&
+                    (finalScores.isEmpty() || finalScores.size == names.size) &&
+                    (finalRanks.isEmpty() || finalRanks.size == names.size) &&
+                    finalScores.none { !it.isFinite() } && finalRanks.none { it !in 1..names.size } &&
+                    (!complete || finalScores.size == names.size && finalRanks.size == names.size),
+            ) {
                 "Invalid replay header"
             }
         }
@@ -66,7 +76,20 @@ data class ReplayMatch(
         }
     }
 
-    fun header(): Header = Header(id, updatedAt, rules, hands.size, complete, java.util.List.copyOf(participants.map { it.name }))
+    fun header(): Header {
+        val last = hands.last()
+        return Header(
+            id,
+            startedAt,
+            updatedAt,
+            rules,
+            hands.size,
+            complete,
+            java.util.List.copyOf(participants.map { it.name }),
+            if (complete) java.util.List.copyOf(last.finalScores) else emptyList(),
+            if (complete) java.util.List.copyOf(last.finalRanks) else emptyList(),
+        )
+    }
 
     fun permits(player: UUID): Boolean = participants.any { !it.bot && it.id == player }
 

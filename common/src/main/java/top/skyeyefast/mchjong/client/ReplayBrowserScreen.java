@@ -82,13 +82,26 @@ public final class ReplayBrowserScreen extends Screen {
     }
 
     private final class MatchList extends AbstractWidget {
-        private static final int ROW = 48;
+        private static final int ROW = 60;
         private int scroll;
         private long lastClick;
         MatchList(int x, int y, int width, int height) { super(x, y, width, height, title); }
         private Component label(int entry) {
             var match = index.matches().get(entry);
             return Component.literal(String.join(" · ", match.names()));
+        }
+        private Component standings(ReplayMatch.Header match) {
+            if (match.finalRanks().isEmpty()) return Component.empty();
+            var seats = java.util.stream.IntStream.range(0, match.names().size()).boxed()
+                .sorted(java.util.Comparator.comparingInt(seat -> match.finalRanks().get(seat))).toList();
+            var text = Component.empty();
+            for (int i = 0; i < seats.size(); i++) {
+                int seat = seats.get(i);
+                if (i > 0) text.append(" · ");
+                text.append(Component.literal(match.finalRanks().get(seat) + ". " + match.names().get(seat) + " "
+                    + String.format(java.util.Locale.ROOT, "%+.1f", match.finalScores().get(seat))));
+            }
+            return text;
         }
         private void move(int delta) {
             selected = Math.clamp(selected + delta, 0, Math.max(0, index.matches().size() - 1));
@@ -108,11 +121,12 @@ public final class ReplayBrowserScreen extends Screen {
                 if (isFocused() && i == selected) graphics.renderOutline(getX() + 3, y + 2, width - 6, ROW - 4, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, label(i), getX() + 9, y + 7, width - 22, MahjongUi.TEXT, false);
                 String date = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withZone(ZoneId.systemDefault())
-                    .format(Instant.ofEpochMilli(match.updatedAt()));
+                    .format(Instant.ofEpochMilli(match.startedAt()));
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
                 MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
                 graphics.drawString(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
+                MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }
             graphics.disableScissor();
             int content = index.matches().size() * ROW;
