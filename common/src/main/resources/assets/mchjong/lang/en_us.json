@@ -473,7 +473,7 @@
   "ui.mchjong.counts": "Hand %1$s / River %2$s / North %3$s",
   "ui.mchjong.current_turn": "Turn",
   "ui.mchjong.dealer": "Dealer",
-  "ui.mchjong.dealing": "Building the wall and dealing…",
+  "ui.mchjong.dealing": "Building the wall and dealing...",
   "ui.mchjong.dice_result": "%1$s + %2$s = %3$s",
   "ui.mchjong.dora": "Dora: %s",
   "ui.mchjong.dora_indicators": "Dora indicators: %s",
