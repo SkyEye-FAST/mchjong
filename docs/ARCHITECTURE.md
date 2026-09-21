@@ -59,8 +59,9 @@ follows a participant through seat reassignment. Mount presence is transient and
 is reconstructed from `SeatEntity` passengers; it is never accepted from a client
 or a saved room. Nearby room members retain preparation controls while relocating,
 but active-game actions and private hands require the correct physical seat.
-Physical dismount retains membership with a five-second grace period; expiry or
-a lost server connection enables temporary win/pass/tsumogiri automation without
+Physical dismount in the lobby releases room membership immediately. During an
+active match it retains membership with a five-second grace period; expiry or a
+lost server connection enables temporary win/pass/tsumogiri automation without
 changing personal AutoPlay settings or spending the disconnected player's clock.
 Returning to the assigned stool restores control. Explicit lobby leave releases
 membership; hosts may replace disconnected guests with bots after the grace period.

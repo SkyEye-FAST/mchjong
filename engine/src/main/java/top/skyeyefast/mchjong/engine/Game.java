@@ -313,16 +313,18 @@ public final class Game {
         return true;
     }
 
-    /** Physical dismount retains membership until explicit leave or an abandoned lobby is closed. */
+    /** A lobby dismount leaves the room; active matches retain membership for reconnection. */
     public void unseat(UUID player) {
         int seat = seatOf(player);
-        if (seat < 0 || players[seat].bot || players[seat].presence != PlayerPresence.SEATED) return;
+        if (seat < 0 || players[seat].bot) return;
+        if (phase == Phase.LOBBY) {
+            if (exitVote != null) cancelExit();
+            removeMember(seat);
+            return;
+        }
+        if (players[seat].presence != PlayerPresence.SEATED) return;
         players[seat].presence = PlayerPresence.AWAY;
         players[seat].awayTicks = AWAY_GRACE_TICKS;
-        if (phase == Phase.LOBBY) {
-            players[seat].ready = false;
-            decision++;
-        }
         revision++;
     }
 

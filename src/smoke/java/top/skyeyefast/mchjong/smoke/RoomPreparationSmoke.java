@@ -27,7 +27,6 @@ final class RoomPreparationSmoke {
     private int botSeat = -1;
     private int botCycle;
     private Boolean originalAutoSeat;
-    private boolean checkedSeatRequests;
     private int presenceStage;
     private int presenceTicks;
     private TableScreen presenceParent;
@@ -51,34 +50,6 @@ final class RoomPreparationSmoke {
         }
         var room = table.clientRoom();
         if (view == null || room == null) return false;
-        if (!checkedSeatRequests) {
-            checkedSeatRequests = true;
-            var id = client.player.getUUID();
-            var pos = table.getBlockPos();
-            serverWork = client.getSingleplayerServer().submit(() -> {
-                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                var game = serverTable.participantGame(player);
-                int assigned = game.seatOf(id);
-                var preference = game.view(id).autoPlay();
-                player.stopRiding();
-                serverTable.stoodUp(id);
-                if (game.seatOf(id) != assigned || game.roomView().seats().get(assigned).presence()
-                    != top.skyeyefast.mchjong.engine.PlayerPresence.AWAY)
-                    throw new IllegalStateException("Dismount must retain the room member in the grace period");
-                serverTable.autoSeat(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos, java.util.UUID.randomUUID()));
-                serverTable.autoSeat(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos.above(), game.tableId()));
-                if (player.isPassenger()) throw new IllegalStateException("Invalid table identity accepted a seat request");
-                TableNetworking.receive(player, new top.skyeyefast.mchjong.network.TableSeatPayload(pos, game.tableId()));
-                if (!(player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat)
-                    || seat.seat() != assigned || !seat.tablePos().equals(pos)
-                    || game.roomView().seats().get(assigned).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED
-                    || !java.util.Objects.equals(preference, game.view(id).autoPlay()))
-                    throw new IllegalStateException("Automatic return must use the reserved seat and retain preferences");
-                return -1;
-            });
-            return false;
-        }
         if (TableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             boolean full = view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING);

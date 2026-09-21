@@ -105,7 +105,7 @@ class ExitVotingTest {
         game.validate();
     }
 
-    @Test void lobbyCannotChangeElectorateDuringAVote() {
+    @Test void lobbyDismountCancelsTheVoteAndLeavesTheRoom() {
         var game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, 93);
         game.join(HOST, "Host", 0);
         game.join(GUEST, "Guest", 1);
@@ -113,11 +113,12 @@ class ExitVotingTest {
         var vote = game.view(HOST).exitVote();
         assertNotNull(vote);
         game.unseat(GUEST);
-        assertEquals(1, game.seatOf(GUEST));
-        assertFalse(game.join(UUID.randomUUID(), "Late join", 2));
-        assertFalse(game.configureClock(HOST, new TimeControl(30, 10)));
+        assertEquals(-1, game.seatOf(GUEST));
+        assertNull(game.view(HOST).exitVote());
+        assertTrue(game.join(UUID.randomUUID(), "Late join", 2));
+        assertTrue(game.configureClock(HOST, new TimeControl(30, 10)));
         assertFalse(game.transferHost(HOST, GUEST));
-        assertTrue(game.answerExit(GUEST, vote.id(), true));
+        assertFalse(game.answerExit(GUEST, vote.id(), true));
         game.validate();
     }
 
