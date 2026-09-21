@@ -501,7 +501,6 @@
   "ui.mchjong.help_double_click": "ダブルクリック 打牌、クリック 選択、Enter 確定、%s リーチ、%s パス",
   "ui.mchjong.help_single_click": "クリック 打牌、Shift＋クリック 選択、%s リーチ、%s パス",
   "ui.mchjong.immersive_after_deal": "配牌完了後に没入視点へ切り替えられます",
-  "ui.mchjong.immersive_window_small": "没入表示には %s × %s 以上のGUIサイズが必要です。ウィンドウを広げるかGUIスケールを下げてください。",
   "ui.mchjong.invite": "プレイヤーを招待",
   "ui.mchjong.invite_accept": "承諾",
   "ui.mchjong.invite_decline": "辞退",

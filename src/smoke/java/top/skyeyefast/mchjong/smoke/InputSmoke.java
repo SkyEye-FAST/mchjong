@@ -30,6 +30,18 @@ final class InputSmoke {
         finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
     }
 
+    static void pointerWidget(Minecraft client, AbstractWidget widget) {
+        double x = widget.getX() + widget.getWidth() / 2.0;
+        double y = widget.getY() + widget.getHeight() / 2.0;
+        if (client.screen instanceof TableScreen table && table.immersive()) {
+            double scale = Math.min(client.screen.width / (double) TableScreen.IMMERSIVE_WIDTH,
+                client.screen.height / (double) TableScreen.IMMERSIVE_HEIGHT);
+            x = (client.screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + x * scale;
+            y = (client.screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + y * scale;
+        }
+        pointer(client, x, y);
+    }
+
     static void verify(Minecraft client, MahjongTableBlockEntity table) {
         boolean active = client.isWindowActive();
         client.setWindowActive(true);
@@ -127,24 +139,34 @@ final class InputSmoke {
     }
 
     static void clickHand(TableScreen screen, TableView view, int tile) {
-        var point = handPoint(screen, view, tile);
+        var point = screenPoint(screen, handPoint(screen, view, tile));
         screen.mouseClicked(point.x(), point.y(), 0);
     }
 
     static void pointerHand(Minecraft client, TableScreen screen, TableView view, int tile) {
-        var point = handPoint(screen, view, tile);
+        var point = screenPoint(screen, handPoint(screen, view, tile));
         pointer(client, point.x(), point.y());
     }
 
     private record HandPoint(double x, double y) {}
     private static HandPoint handPoint(TableScreen screen, TableView view, int tile) {
-        int tileWidth = Math.min(screen.height < 360 ? 24 : 32, (screen.width - 36) / 14);
+        int layoutWidth = screen.immersive() ? TableScreen.IMMERSIVE_WIDTH : screen.width;
+        int layoutHeight = screen.immersive() ? TableScreen.IMMERSIVE_HEIGHT : screen.height;
+        int tileWidth = Math.min(screen.immersive() ? 32 : layoutHeight < 360 ? 24 : 32, (layoutWidth - 36) / 14);
         var hand = view.seats().get(view.viewerSeat()).hand();
-        int x = (screen.width - Math.max(14, hand.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2
+        int x = (layoutWidth - Math.max(14, hand.size()) * tileWidth - Math.max(4, tileWidth / 3)) / 2
             + hand.indexOf(tile) * tileWidth + tileWidth / 2;
         if (tile == view.seats().get(view.viewerSeat()).drawn()) x += Math.max(4, tileWidth / 3);
         int footer = view.autoPlay() != null ? 24 : 0;
-        return new HandPoint(x, screen.height - footer - 15 - Math.round(tileWidth * 1.53846f) / 2.0);
+        return new HandPoint(x, layoutHeight - footer - 15 - Math.round(tileWidth * 1.53846f) / 2.0);
+    }
+
+    private static HandPoint screenPoint(TableScreen screen, HandPoint point) {
+        if (!screen.immersive()) return point;
+        double scale = Math.min(screen.width / (double) TableScreen.IMMERSIVE_WIDTH,
+            screen.height / (double) TableScreen.IMMERSIVE_HEIGHT);
+        return new HandPoint((screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + point.x() * scale,
+            (screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + point.y() * scale);
     }
 
     private static boolean selected(TableScreen screen, TableView view, int tile) {

@@ -29,8 +29,8 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Non-pausing table controls with seated world interaction and an independent immersive play surface. */
 public final class TableScreen extends Screen {
-    public static final int MIN_IMMERSIVE_WIDTH = 480;
-    public static final int MIN_IMMERSIVE_HEIGHT = 300;
+    public static final int IMMERSIVE_WIDTH = 640;
+    public static final int IMMERSIVE_HEIGHT = 400;
     private static final String[] WINDS = {"east", "south", "west", "north"};
     private final BlockPos pos;
     private final List<CalloutButton> callouts = new ArrayList<>();
@@ -103,7 +103,28 @@ public final class TableScreen extends Screen {
     public boolean immersive() { return immersive; }
 
     public static boolean supportsImmersive(int width, int height) {
-        return width >= MIN_IMMERSIVE_WIDTH && height >= MIN_IMMERSIVE_HEIGHT;
+        return width > 0 && height > 0;
+    }
+
+    record ImmersiveCanvas(double scale, double x, double y) {}
+    static ImmersiveCanvas immersiveCanvas(int width, int height) {
+        double scale = Math.min(width / (double) IMMERSIVE_WIDTH, height / (double) IMMERSIVE_HEIGHT);
+        return new ImmersiveCanvas(scale, (width - IMMERSIVE_WIDTH * scale) / 2.0,
+            (height - IMMERSIVE_HEIGHT * scale) / 2.0);
+    }
+
+    private int uiWidth() { return immersive ? IMMERSIVE_WIDTH : width; }
+    private int uiHeight() { return immersive ? IMMERSIVE_HEIGHT : height; }
+    private ImmersiveCanvas canvas() { return immersiveCanvas(width, height); }
+    private double immersiveScale() { return canvas().scale(); }
+    private double immersiveOffsetX() { return canvas().x(); }
+    private double immersiveOffsetY() { return canvas().y(); }
+    private double canvasX(double x) { return immersive ? (x - immersiveOffsetX()) / immersiveScale() : x; }
+    private double canvasY(double y) { return immersive ? (y - immersiveOffsetY()) / immersiveScale() : y; }
+    private boolean insideImmersiveCanvas(double x, double y) {
+        if (!immersive) return true;
+        double cx = canvasX(x), cy = canvasY(y);
+        return cx >= 0 && cx < IMMERSIVE_WIDTH && cy >= 0 && cy < IMMERSIVE_HEIGHT;
     }
 
     private static boolean immersivePhase(Game.Phase phase) {
@@ -114,7 +135,6 @@ public final class TableScreen extends Screen {
     private void toggleView() {
         TableView view = view();
         if (view == null || view.viewerSeat() < 0 || !immersivePhase(view.phase()) || dealing()) return;
-        if (!immersive && !supportsImmersive(width, height)) return;
         immersive = !immersive;
         clearCameraInput();
         handlingDrag = null;
@@ -271,7 +291,7 @@ public final class TableScreen extends Screen {
         TableView previous = presentedView;
         refreshDecision(view);
         viewReady = immersivePhase(view.phase()) && !dealing();
-        if (!viewReady || view.viewerSeat() < 0 || !supportsImmersive(width, height)) immersive = false;
+        if (!viewReady || view.viewerSeat() < 0) immersive = false;
         boolean newResult = lastPhase != view.phase() && TableResults.available(view);
         if (newResult) {
             resultsExpanded = true;
@@ -284,18 +304,18 @@ public final class TableScreen extends Screen {
         lastRevision = view.revision();
         updateScene();
         board = null;
-        int handHeight = height - (immersive ? TableResults.available(view) ? 54 : TableAutomation.available(view) ? 24 : 0 : 0);
+        int layoutWidth = uiWidth(), layoutHeight = uiHeight();
+        int handHeight = layoutHeight - (immersive ? TableResults.available(view) ? 54 : TableAutomation.available(view) ? 24 : 0 : 0);
         hand = immersive && view.viewerSeat() >= 0
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
-            ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), width, handHeight,
-                height < 360 ? 24 : 32, true) : null;
+            ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), layoutWidth, handHeight, 32, true) : null;
         prepareImmersiveMotion(previous, view, handHeight);
         presentedView = view;
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
         actionLeft = 10;
-        automation.build(view, width, immersive || hand == null ? height - 17 : hand.top() - 8, immersive).forEach(this::addRenderableWidget);
+        automation.build(view, layoutWidth, immersive || hand == null ? layoutHeight - 17 : hand.top() - 8, immersive).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         if (view.exitVote() != null) { buildExitVote(view); return; }
         if (view.phase() == Game.Phase.LOBBY) { buildLobby(view); return; }
@@ -312,23 +332,36 @@ public final class TableScreen extends Screen {
         int discard = (choosingRiichi || TableSettings.get().discardMode == TableSettings.DiscardMode.CONFIRM) && selectedTile >= 0
             ? tileAction(view, selectedTile, choosingRiichi ? Action.Type.RIICHI : Action.Type.DISCARD) : -1;
         int count = choices.size() + (riichi ? 1 : 0) + (discard >= 0 ? 1 : 0);
-        boolean sideActions = immersive && (count <= 1 || count <= 3 && height >= 360);
-        int actionWidth = sideActions ? Math.min(132, (width - 28) / 3)
-            : width - 20 - (!immersive && TableAutomation.available(view) ? automation.width(width) + 8 : 0);
-        actionLeft = width - 10 - actionWidth;
-        int columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / 88)));
-        if (immersive && !sideActions && !TableResults.available(view)) columns = Math.max(1, count);
-        int boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
-        int rows = Math.max(1, (count + columns - 1) / columns);
-        actionTop = (hand == null || TableResults.available(view) ? height - 43 : hand.top() - 34) - (rows - 1) * 30;
-        if (immersive) board = new TableBoard(TableBoardState.live(view), 8, width - 8, 38,
-            hand == null ? height - 56 : sideActions ? hand.top() - 6 : actionTop - 6,
-            sideActions && count > 0 ? actionTop - 4 : height, true);
-        int startX = width - 10 - columns * (boxWidth + 4) + 4;
+        boolean compactActions = immersive && !TableResults.available(view);
+        int columns, boxWidth, rows, startX, buttonHeight, buttonGap;
+        if (compactActions) {
+            columns = Math.max(1, Math.min(3, count));
+            rows = Math.max(1, (count + columns - 1) / columns);
+            int maxStrip = Math.min(264, Math.max(164, layoutWidth / 2));
+            boxWidth = Math.clamp((maxStrip - (columns - 1) * 4) / columns, 54, 86);
+            buttonHeight = 22;
+            buttonGap = 4;
+            int stripWidth = columns * boxWidth + (columns - 1) * buttonGap;
+            startX = layoutWidth - 12 - stripWidth;
+            actionTop = (hand == null ? layoutHeight - 48 : hand.top() - 5) - rows * (buttonHeight + buttonGap);
+            actionLeft = startX;
+        } else {
+            int actionWidth = layoutWidth - 20 - (!immersive && TableAutomation.available(view) ? automation.width(layoutWidth) + 8 : 0);
+            actionLeft = layoutWidth - 10 - actionWidth;
+            columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / 88)));
+            boxWidth = Math.min(132, (actionWidth - (columns - 1) * 4) / columns);
+            rows = Math.max(1, (count + columns - 1) / columns);
+            buttonHeight = 26;
+            buttonGap = 4;
+            actionTop = (hand == null || TableResults.available(view) ? layoutHeight - 43 : hand.top() - 34) - (rows - 1) * 30;
+            startX = layoutWidth - 10 - columns * (boxWidth + 4) + 4;
+        }
+        if (immersive) board = new TableBoard(TableBoardState.live(view), 8, layoutWidth - 8, 34,
+            hand == null ? layoutHeight - 52 : hand.top() - 4, layoutHeight, true);
         int slot = 0;
         if (riichi) {
             var button = MahjongButton.create(Component.translatable(choosingRiichi ? "ui.mchjong.cancel_riichi" : "action.mchjong.riichi"),
-                ignored -> toggleRiichi()).bounds(startX, actionTop, boxWidth, 26).build();
+                ignored -> toggleRiichi()).bounds(startX, actionTop, boxWidth, buttonHeight).build();
             button.setTooltip(Tooltip.create(button.getMessage()));
             addRenderableWidget(button);
             slot++;
@@ -338,8 +371,8 @@ public final class TableScreen extends Screen {
             Component label = Component.translatable(action.type() == Action.Type.NEXT && view.phase() == Game.Phase.MATCH_END
                     ? "ui.mchjong.new_match" : action.translationKey());
             final TableView snapshot = view;
-            CalloutButton button = new CalloutButton(startX + slot % columns * (boxWidth + 4), actionTop + slot / columns * 30,
-                boxWidth, 26, label, action, index,
+            CalloutButton button = new CalloutButton(startX + slot % columns * (boxWidth + buttonGap),
+                actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight, label, action, index,
                 () -> send(snapshot, index));
             button.setTooltip(Tooltip.create(label));
             addRenderableWidget(button);
@@ -348,10 +381,10 @@ public final class TableScreen extends Screen {
         }
         if (TableResults.available(view) && TableSettings.get().show(TableSettings.Information.RESULTS)) {
             addRenderableWidget(MahjongButton.create(Component.translatable(resultsExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"),
-                ignored -> { resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10, height - 48, boxWidth, 20).build());
+                ignored -> { resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10, uiHeight() - 48, boxWidth, 20).build());
             if (resultsExpanded) {
                 int tabs = view.phase() == Game.Phase.MATCH_END ? 3 : 2;
-                int tabWidth = (width - 20) / tabs;
+                int tabWidth = (layoutWidth - 20) / tabs;
                 for (int i = 0; i < tabs; i++) {
                     var page = TableResults.Page.values()[i];
                     var button = MahjongButton.create(Component.translatable("ui.mchjong.result_page." + i), ignored -> {
@@ -361,7 +394,7 @@ public final class TableScreen extends Screen {
                     addRenderableWidget(button);
                 }
                 int panelTop = view.exitVote() == null ? 58 : 82;
-                results = addRenderableWidget(new TableResults(font, view, facePreset(), 10, panelTop, width - 20, height - panelTop - 54,
+                results = addRenderableWidget(new TableResults(font, view, facePreset(), 10, panelTop, layoutWidth - 20, layoutHeight - panelTop - 54,
                     selectedWinner, resultPage, resultStarted));
             }
         }
@@ -369,7 +402,8 @@ public final class TableScreen extends Screen {
                 final TableView snapshot = view;
                 final int actionIndex = discard;
                 confirmButton = addRenderableWidget(MahjongButton.create(Component.translatable(choosingRiichi ? "ui.mchjong.confirm_riichi" : "action.mchjong.discard"), ignored -> send(snapshot, actionIndex))
-                    .bounds(startX + slot % columns * (boxWidth + 4), actionTop + slot / columns * 30, boxWidth, 26).build().primary());
+                    .bounds(startX + slot % columns * (boxWidth + buttonGap),
+                        actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight).build().primary());
                 confirmButton.setTooltip(Tooltip.create(confirmButton.getMessage()));
         }
         addRenderableWidget(hints);
@@ -400,8 +434,7 @@ public final class TableScreen extends Screen {
             TableHand.Point source = null;
             int sourceWidth = 16;
             if (seat == next.viewerSeat()) {
-                var oldHand = new TableHand(previous.seats().get(seat), seat, width, handHeight,
-                    height < 360 ? 24 : 32, true);
+                var oldHand = new TableHand(previous.seats().get(seat), seat, IMMERSIVE_WIDTH, handHeight, 32, true);
                 source = oldHand.point(discard.tile());
                 if (source == null && discard.tsumogiri() && previous.seats().get(seat).drawn() != Tile.ABSENT)
                     source = oldHand.point(previous.seats().get(seat).drawn());
@@ -475,7 +508,8 @@ public final class TableScreen extends Screen {
     }
 
     private void buildToolbar(TableView view) {
-        int right = width - 8;
+        int layoutWidth = uiWidth();
+        int right = layoutWidth - 8;
         int exitWidth = immersive ? 38 : 48;
         int viewWidth = immersive ? 48 : 64;
         int replayWidth = immersive ? 42 : 52;
@@ -491,15 +525,13 @@ public final class TableScreen extends Screen {
             addRenderableWidget(exit);
             right -= exitWidth + 4;
         }
-        boolean fits = supportsImmersive(width, height);
         Component cameraHelp = !viewReady ? Component.translatable("ui.mchjong.immersive_after_deal")
-            : fits ? Component.translatable("ui.mchjong.switch_view", TableKeys.VIEW.getTranslatedKeyMessage())
+            : Component.translatable("ui.mchjong.switch_view", TableKeys.VIEW.getTranslatedKeyMessage())
             .append("\n").append(Component.translatable("ui.mchjong.camera_help",
-                TableKeys.INSPECT.getTranslatedKeyMessage(), TableKeys.RESET.getTranslatedKeyMessage()))
-            : Component.translatable("ui.mchjong.immersive_window_small", MIN_IMMERSIVE_WIDTH, MIN_IMMERSIVE_HEIGHT);
+                TableKeys.INSPECT.getTranslatedKeyMessage(), TableKeys.RESET.getTranslatedKeyMessage()));
         var camera = MahjongButton.create(Component.translatable(immersive ? "ui.mchjong.view_seated" : "ui.mchjong.view_immersive"), ignored -> toggleView())
             .bounds(right - viewWidth, 8, viewWidth, 20).tooltip(Tooltip.create(cameraHelp)).build();
-        camera.active = fits && view.viewerSeat() >= 0 && viewReady;
+        camera.active = view.viewerSeat() >= 0 && viewReady;
         addRenderableWidget(camera);
         right -= viewWidth + 4;
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.title"), ignored -> ClientReplays.list(0, "", false))
@@ -515,8 +547,9 @@ public final class TableScreen extends Screen {
     private void buildExitVote(TableView view) {
         var vote = view.exitVote();
         if (vote == null || view.viewerSeat() < 0) return;
-        int span = Math.min(360, width - 24), left = (width - span) / 2;
-        int y = height / 2 + 30;
+        int layoutWidth = uiWidth(), layoutHeight = uiHeight();
+        int span = Math.min(360, layoutWidth - 24), left = (layoutWidth - span) / 2;
+        int y = layoutHeight / 2 + 30;
         var agree = MahjongButton.create(Component.translatable("ui.mchjong.exit_agree"), ignored ->
             control(view, TableControlPayload.Operation.ANSWER_EXIT, vote.id(), true)).bounds(left, y, (span - 4) / 2, 20).build();
         agree.active = !vote.agreed().contains(view.viewerSeat());
@@ -862,8 +895,21 @@ public final class TableScreen extends Screen {
         if (view.revision() != lastRevision || viewReady != (immersivePhase(view.phase()) && !dealing())) rebuild();
         updateScene();
         information.clear();
+        boolean canvas = immersive;
+        int drawMouseX = mouseX, drawMouseY = mouseY;
+        if (canvas) {
+            graphics.fill(0, 0, width, height, 0xff000000);
+            double scale = immersiveScale();
+            drawMouseX = (int) Math.floor(canvasX(mouseX));
+            drawMouseY = (int) Math.floor(canvasY(mouseY));
+            graphics.pose().pushPose();
+            graphics.pose().translate((float) immersiveOffsetX(), (float) immersiveOffsetY(), 0);
+            graphics.pose().scale((float) scale, (float) scale, 1);
+        }
+        int layoutWidth = uiWidth(), layoutHeight = uiHeight();
+        try {
         if (immersive) {
-            graphics.fill(0, 0, width, height, MahjongUi.INPUT);
+            graphics.fill(0, 0, layoutWidth, layoutHeight, MahjongUi.INPUT);
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
             if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed);
@@ -878,11 +924,11 @@ public final class TableScreen extends Screen {
         }
         if (view.exitVote() != null) {
             renderExitVote(graphics, view);
-            super.render(graphics, mouseX, mouseY, partialTick);
+            super.render(graphics, drawMouseX, drawMouseY, partialTick);
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, room(), width, facePreset(), board);
+            information.render(font, graphics, view, room(), layoutWidth, facePreset(), board);
         if (view.phase() == Game.Phase.LOBBY && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), width - 24);
             int y = height - 6 - lines.size() * font.lineHeight;
@@ -902,9 +948,9 @@ public final class TableScreen extends Screen {
         int diceY = dicePoint == null ? -100 : (int) dicePoint.y();
         int diceWidth = dicePoint == null ? 24 : Math.max(24, (int) (dicePoint.scale() * .24));
         dice.update(view, diceX - diceWidth / 2, diceY - 10, diceWidth, 20, !immersive, decision.pending());
-        hoveredTile = pick(mouseX, mouseY);
-        renderHandling(graphics, view, mouseX, mouseY);
-        informationTooltip = information.tooltip(mouseX, mouseY);
+        hoveredTile = pick(drawMouseX, drawMouseY);
+        renderHandling(graphics, view, drawMouseX, drawMouseY);
+        informationTooltip = information.tooltip(drawMouseX, drawMouseY);
         TableSettings settings = TableSettings.get();
         boolean inputEnabled = !decision.pending() && !dealing()
             && (!TableResults.available(view) || Util.getMillis() - resultStarted >= 500);
@@ -926,14 +972,14 @@ public final class TableScreen extends Screen {
             }
         }
         if (choosingRiichi) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.choose_riichi"),
-            actionLeft, actionTop - 14, width - actionLeft - (board == null && hints.visible ? 36 : 10), MahjongUi.ACCENT, true, true);
+            actionLeft, actionTop - 14, layoutWidth - actionLeft - (board == null && hints.visible ? 36 : 10), MahjongUi.ACCENT, true, true);
         if (hand != null && results == null) hand.render(graphics, selectedTile, hoveredTile, tile -> {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
         }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset());
         updateHints(view);
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.render(graphics, drawMouseX, drawMouseY, partialTick);
         boolean footerClock = false;
         if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
             var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
@@ -942,8 +988,8 @@ public final class TableScreen extends Screen {
                 footerClock = hand != null;
                 Component text = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());
                 MahjongUi.text(graphics, font, text, footerClock ? 10 : actionLeft,
-                    footerClock ? height - 13 : actionTop - (choosingRiichi ? 28 : 14),
-                    footerClock ? width - (hints.visible ? 48 : 20) : width - actionLeft - (hints.visible ? 36 : 10),
+                    footerClock ? layoutHeight - 13 : actionTop - (choosingRiichi ? 28 : 14),
+                    footerClock ? layoutWidth - (hints.visible ? 48 : 20) : layoutWidth - actionLeft - (hints.visible ? 36 : 10),
                     clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT, true, true);
             }
         }
@@ -953,12 +999,12 @@ public final class TableScreen extends Screen {
                 10, 14, 0xffd1e4d9);
         }
         if (dealing()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.dealing"),
-            actionLeft, actionTop - 14, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
+            actionLeft, actionTop - 14, layoutWidth - actionLeft - 10, MahjongUi.ACCENT, true, true);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             int cueY = immersive ? actionTop - 14 : information.bottom() + 4;
             for (var cue : animation().cues(Util.getMillis())) {
                 MahjongUi.text(graphics, font, playerName(view, cue.seat()).copy().append(" · ").append(Component.translatable(cue.key())),
-                    actionLeft, cueY, width - actionLeft - 10, MahjongUi.ACCENT, true, true);
+                    actionLeft, cueY, layoutWidth - actionLeft - 10, MahjongUi.ACCENT, true, true);
                 cueY += 13;
             }
         }
@@ -970,12 +1016,16 @@ public final class TableScreen extends Screen {
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
             if (view.handling() != null && view.viewerSeat() >= 0)
                 help = Component.translatable("sticks.mchjong.access", TableKeys.DRAWER.getTranslatedKeyMessage()).append(" · ").append(help);
-            graphics.drawString(font, font.plainSubstrByWidth(help.getString(), width - (hints.visible ? 48 : 20)), 10, height - 13, 0xffe0deca, true);
+            graphics.drawString(font, font.plainSubstrByWidth(help.getString(), layoutWidth - (hints.visible ? 48 : 20)),
+                10, layoutHeight - 13, 0xffe0deca, true);
         }
-        if (informationTooltip != null && !overWidget(mouseX, mouseY))
-            graphics.renderTooltip(font, font.split(informationTooltip, Math.min(320, width - 24)), mouseX, mouseY);
+        if (informationTooltip != null && !overWidget(drawMouseX, drawMouseY))
+            graphics.renderTooltip(font, font.split(informationTooltip, Math.min(320, layoutWidth - 24)), drawMouseX, drawMouseY);
         hints.renderPopup(graphics, font, facePreset());
-        dice.renderTooltip(graphics, mouseX, mouseY);
+        dice.renderTooltip(graphics, drawMouseX, drawMouseY);
+        } finally {
+            if (canvas) graphics.pose().popPose();
+        }
     }
 
     private void updateHints(TableView view) {
@@ -983,8 +1033,9 @@ public final class TableScreen extends Screen {
             hints.clearPreview();
             return;
         }
-        int hintBottom = hand == null ? height - 52 : hand.top();
-        int hintCenter = hand == null ? width / 2 : hand.centerX();
+        int layoutWidth = uiWidth(), layoutHeight = uiHeight();
+        int hintBottom = hand == null ? layoutHeight - 52 : hand.top();
+        int hintCenter = hand == null ? layoutWidth / 2 : hand.centerX();
         double handLeft = Double.POSITIVE_INFINITY, handRight = Double.NEGATIVE_INFINITY;
         if (hand == null) for (var piece : scene) {
             if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()) continue;
@@ -997,14 +1048,14 @@ public final class TableScreen extends Screen {
             }
         }
         if (handLeft != Double.POSITIVE_INFINITY) hintCenter = (int) Math.round((handLeft + handRight) / 2);
-        int halfWidth = information.hintHalfWidth(hintCenter, hintBottom, Math.min(hintCenter - 8, width - 8 - hintCenter));
+        int halfWidth = information.hintHalfWidth(hintCenter, hintBottom, Math.min(hintCenter - 8, layoutWidth - 8 - hintCenter));
         for (var child : children()) if (child instanceof AbstractWidget widget && widget != hints && widget != dice
             && widget.visible && widget.getY() < hintBottom && widget.getBottom() > hintBottom - 57) {
             if (widget.getX() > hintCenter) halfWidth = Math.min(halfWidth, widget.getX() - hintCenter - 4);
             else if (widget.getRight() < hintCenter) halfWidth = Math.min(halfWidth, hintCenter - widget.getRight() - 4);
         }
         int hintLeft = hintCenter - halfWidth, hintRight = hintCenter + halfWidth;
-        hints.update(view, hoveredTile, selectedTile, width, board == null ? actionTop - 22 : height - 16, hintLeft, hintRight,
+        hints.update(view, hoveredTile, selectedTile, layoutWidth, board == null ? actionTop - 22 : layoutHeight - 16, hintLeft, hintRight,
             hintBottom, board == null ? information.bottom() + 4 : 38);
     }
 
@@ -1037,21 +1088,22 @@ public final class TableScreen extends Screen {
 
     private void renderExitVote(GuiGraphics graphics, TableView view) {
         var vote = view.exitVote();
-        int span = Math.min(360, width - 24), left = (width - span) / 2, top = height / 2 - 64;
-        graphics.fill(left - 6, top, left + span + 6, height / 2 + 56, 0xf21a2a2e);
+        int layoutWidth = uiWidth(), layoutHeight = uiHeight();
+        int span = Math.min(360, layoutWidth - 24), left = (layoutWidth - span) / 2, top = layoutHeight / 2 - 64;
+        graphics.fill(left - 6, top, left + span + 6, layoutHeight / 2 + 56, 0xf21a2a2e);
         graphics.renderOutline(left - 6, top, span + 12, 120, 0xffc4a469);
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_title"), width / 2, top + 9, 0xffffd487);
+        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_title"), layoutWidth / 2, top + 9, 0xffffd487);
         int y = top + 25;
         Component requester = Component.translatable("ui.mchjong.exit_requester", playerName(view, vote.requester()));
         for (var line : font.split(requester, span - 12)) {
             if (y > top + 38) break;
-            graphics.drawCenteredString(font, line, width / 2, y, 0xffe0eade); y += 10;
+            graphics.drawCenteredString(font, line, layoutWidth / 2, y, 0xffe0eade); y += 10;
         }
         graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_status", vote.agreed().size(), vote.required(), vote.secondsLeft()),
-            width / 2, top + 50, 0xffffd487);
+            layoutWidth / 2, top + 50, 0xffffd487);
         y = top + 65;
         for (var line : font.split(Component.translatable("ui.mchjong.exit_paused"), span - 12)) {
-            graphics.drawCenteredString(font, line, width / 2, y, 0xffadd8c4); y += 10;
+            graphics.drawCenteredString(font, line, layoutWidth / 2, y, 0xffadd8c4); y += 10;
         }
     }
 
@@ -1073,6 +1125,11 @@ public final class TableScreen extends Screen {
 
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (mappedClick(button)) return true;
+        if (immersive) {
+            if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
+            mouseX = canvasX(mouseX);
+            mouseY = canvasY(mouseY);
+        }
         if (overWidget(mouseX, mouseY)) { super.mouseClicked(mouseX, mouseY, button); return true; }
         if (overInformation(mouseX, mouseY)) return true;
         if (button == 1) { dragging = true; dragDistance = 0; return true; }
@@ -1146,6 +1203,11 @@ public final class TableScreen extends Screen {
     }
     @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
         if (TableKeys.INSPECT.matchesMouse(button)) { inspecting = false; return true; }
+        if (immersive) {
+            if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
+            mouseX = canvasX(mouseX);
+            mouseY = canvasY(mouseY);
+        }
         if (button == 0 && handlingDrag != null) {
             TableView snapshot = handlingDrag;
             handlingDrag = null;
@@ -1164,6 +1226,14 @@ public final class TableScreen extends Screen {
         return super.mouseReleased(mouseX, mouseY, button);
     }
     @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+        if (immersive) {
+            if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
+            double scale = immersiveScale();
+            mouseX = canvasX(mouseX);
+            mouseY = canvasY(mouseY);
+            dx /= scale;
+            dy /= scale;
+        }
         if (button == 0 && handlingDrag != null) { handlingPointer = tablePoint(mouseX, mouseY); return true; }
         if (button == 1 && dragging && minecraft.player != null) {
             double previous = dragDistance;
@@ -1221,6 +1291,11 @@ public final class TableScreen extends Screen {
     }
 
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        if (immersive) {
+            if (!insideImmersiveCanvas(x, y)) return false;
+            x = canvasX(x);
+            y = canvasY(y);
+        }
         if (!cameraEnabled() || overWidget(x, y)) return super.mouseScrolled(x, y, horizontal, vertical);
         TableSettings.get().camera().scroll(vertical);
         return true;

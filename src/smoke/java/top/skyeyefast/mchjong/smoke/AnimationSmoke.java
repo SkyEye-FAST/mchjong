@@ -204,36 +204,28 @@ final class AnimationSmoke {
             }
             update(table, seats, fixture.wall());
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-            if (((TableScreen) client.screen).immersive()) throw new IllegalStateException("V bypassed the minimum immersive viewport");
-            String viewLabel = net.minecraft.network.chat.Component.translatable("ui.mchjong.view_immersive").getString();
-            var viewButton = client.screen.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
-                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals(viewLabel)).findFirst().orElseThrow();
-            if (viewButton.active) throw new IllegalStateException("Immersive button is enabled below the minimum viewport");
+            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
-            var toggle = client.screen.children().stream().filter(net.minecraft.client.gui.components.AbstractWidget.class::isInstance)
-                .map(net.minecraft.client.gui.components.AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-            client.screen.mouseClicked(toggle.getX() + 4, toggle.getY() + 4, 0);
+            AutomationControlsSmoke.click(client, label);
         }
         if (ticks == 324) {
-            capture(client, output, "57-immersive-unavailable-320x240.png");
+            capture(client, output, "57-immersive-rivers-melds-320x240-letterbox.png");
             client.getWindow().setWindowed(960, 600);
             client.options.guiScale().set(2);
             client.resizeDisplay();
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Minimum immersive viewport is unavailable");
+            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
         }
         if (ticks == 327) {
             capture(client, output, "57-immersive-rivers-melds-480x300.png");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            if (((TableScreen) client.screen).immersive()) throw new IllegalStateException("Shrinking the window retained an unreadable immersive view");
+            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
+            capture(client, output, "57-immersive-rivers-melds-320x240-gui3-letterbox.png");
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
         }
         if (ticks == 328) {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");

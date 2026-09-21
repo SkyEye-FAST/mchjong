@@ -80,9 +80,9 @@ the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
-Immersive play requires at least 480 x 300 logical GUI pixels so side rivers remain
-readable. At smaller sizes its button is disabled with a localized explanation,
-V cannot enter it, and resizing an immersive screen returns to the seated view.
+This responsive rule applies to ordinary screens and the seated overlay, not the
+immersive table. The immersive table is the fixed virtual canvas described below;
+small viewports scale that canvas uniformly rather than reflowing it.
 
 ## Table rules
 
@@ -178,6 +178,15 @@ intermediate scale, and the viewer's foreground stays full size. River rows may 
 slightly in scale away from the center to reinforce depth without changing six-tile
 row semantics. Player labels are compact translucent table-edge plaques rather than
 opaque HUD cards.
+Immersive play has exactly one 640 × 400 virtual layout. Minecraft GUI scale, window
+size and window aspect ratio must never select another immersive layout, change tile
+sizes, move controls, hide controls or fall back to the seated renderer. Fit that
+canvas into the current screen with one uniform `min(width / 640, height / 400)` scale
+and center it; fill all unused space with solid black letterbox/pillarbox bars. A
+window smaller than the virtual canvas scales the complete image down instead of
+reflowing it. Pointer coordinates are transformed back into the same virtual canvas
+before hit testing, so visual and interactive geometry remain identical at every GUI
+scale.
 With animations enabled, a draw travels from the viewer-side wall toward the drawn-tile
 slot and keeps that target slot visually empty until arrival. Discards travel from the
 hand/seat edge to the river; tsumogiri uses a shorter, flatter path while tedashi uses a
@@ -187,7 +196,6 @@ Reserve at least 8 × 12 logical pixels for river tiles and a 10-pixel width for
 opponent meld tiles. Allocate river depth per seat and compress the central score
 panel before reducing tile size; concealed outer hand rails can shrink to a 6-pixel
 width ahead of melds.
-Small immersive windows use a 24-pixel private hand where space permits and a single action row.
 When dense rivers need the central space, winds and scores move onto seat cards;
 the center retains a compact round and remaining-tile summary. Long opponent meld
 rails wrap inward at the owner's corner while retaining the minimum face width.
@@ -305,8 +313,9 @@ Compact rows use localized
 single-character labels, while expanded rows show full names on up to two lines.
 Filled/hollow indicators distinguish states alongside the shared selected surface.
 Tooltips and narration always contain the full option name and its on/off state.
-Keep a clear gutter between these controls and the action buttons, including at
-320 x 240 seated and 480 x 300 immersive. These preferences belong to the server's
+Keep a clear gutter between these controls and the action buttons. The seated layout
+is checked at 320 × 240; immersive controls always use the fixed 640 × 400 virtual
+canvas and are only uniformly scaled by the outer letterbox transform. These preferences belong to the server's
 seated player and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
 text stay in the action-side gutter. Sorting starts enabled; the other options start
@@ -353,11 +362,13 @@ The shared smoke captures compact and expanded match controls in all four locale
 at 640 x 400 and 320 x 240. The live four-player match toggles each option once in
 each presentation, using both pointer and keyboard activation. A live three-player
 match verifies the additional north button and its server acknowledgements at
-320 x 240 seated. Immersive captures use 480 x 300 or larger. Lobby controls are checked separately.
+320 x 240 seated. Immersive captures exercise the same 640 × 400 canvas through
+multiple window sizes, aspect ratios and GUI scales, including 320 × 240 with black
+bars. Lobby controls are checked separately.
 Native first-person screenshots cover a right-hand tile and point stick. Each
 table has one carried-deposit fixture.
 The wait-preview smoke additionally captures pointer hover and keyboard focus
-at 640 x 400 and 320 x 240 seated and 480 x 300 immersive in all four languages,
+at 640 x 400 and 320 x 240 seated and on the fixed immersive canvas in all four languages,
 with thirteen waits, five indicators, carried sticks, riichi and four-kan summaries.
 The immersive preview begins with pointer-only discard hover to check that moving
 onto the diamond preserves the preview without selecting or submitting a tile.

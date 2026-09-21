@@ -53,10 +53,8 @@ final class TableHud {
         Component remaining = !lobby && settings.show(TableSettings.Information.REMAINING)
             ? Component.translatable("ui.mchjong.remaining", view.remaining()) : Component.empty();
         if (board != null) {
-            title = settings.show(TableSettings.Information.RULES)
-                ? Component.translatable(view.rules().custom() ? "rules.mchjong.custom" : view.rules().preset().presetKey()) : Component.empty();
-            remaining = settings.show(TableSettings.Information.DEPOSITS)
-                ? Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()) : Component.empty();
+            title = Component.empty();
+            remaining = Component.empty();
         }
         var indicators = new ArrayList<Integer>();
         if (!lobby && settings.show(TableSettings.Information.DORA)) for (int i = 0; i < 5; i++) {
@@ -67,6 +65,7 @@ final class TableHud {
         boolean compactHeader = seated && headerWidth < 160;
         int indicatorWidth = board != null ? 10 : compactHeader ? 8 : 14;
         int indicatorSpan = indicators.size() * (indicatorWidth + 2);
+        if (board != null) headerWidth = Math.max(36, indicatorSpan + 8);
         boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
@@ -162,7 +161,7 @@ final class TableHud {
                 Component label = name.getString().isEmpty() ? shortLine : name;
                 text(font, graphics, label, x + 4 + inset, top + 6, cardWidth - 8 - inset,
                     disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
-                if (board.scoresOnCards() && !name.getString().isEmpty()) text(font, graphics, shortLine, x + 4, top + 20, cardWidth - 8,
+                if ((board.perspective() || board.scoresOnCards()) && !name.getString().isEmpty()) text(font, graphics, shortLine, x + 4, top + 17, cardWidth - 8,
                     disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
             } else {
                 int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);

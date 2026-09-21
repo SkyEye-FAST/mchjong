@@ -51,9 +51,10 @@ final class AutomationControlsSmoke {
             next(2);
         } else if (stage == 2 && ticks > 12) {
             checkBounds(client);
-            require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reflow to 320x240");
-            require(!((TableScreen) client.screen).immersive(), "Small controls bypassed the minimum immersive viewport");
-            capture(client, output, "53", "expanded-small");
+            require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reach 320x240");
+            require(((TableScreen) client.screen).immersive(), "Small viewport disabled the fixed immersive canvas");
+            capture(client, output, "53", "expanded-small-letterbox");
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             next(3);
         } else if (stage == 3 && ticks > 2) {
             var option = AutoPlay.Option.values()[toggle / 2];
@@ -151,17 +152,28 @@ final class AutomationControlsSmoke {
             .map(AbstractWidget.class::cast).filter(widget -> widget.getMessage().getString().equals(label))
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing automatic control: " + label));
         require(button.active, "Automatic control is disabled: " + label);
-        client.screen.mouseClicked(button.getX() + button.getWidth() / 2.0, button.getY() + 10, 0);
-        client.screen.mouseReleased(button.getX() + button.getWidth() / 2.0, button.getY() + 10, 0);
+        double x = button.getX() + button.getWidth() / 2.0, y = button.getY() + 10;
+        if (client.screen instanceof TableScreen table && table.immersive()) {
+            double scale = Math.min(client.screen.width / (double) TableScreen.IMMERSIVE_WIDTH,
+                client.screen.height / (double) TableScreen.IMMERSIVE_HEIGHT);
+            x = (client.screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + x * scale;
+            y = (client.screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + y * scale;
+        }
+        client.screen.mouseClicked(x, y, 0);
+        client.screen.mouseReleased(x, y, 0);
     }
 
     static void checkBounds(Minecraft client) {
         var widgets = client.screen.children().stream().filter(AbstractWidget.class::isInstance)
             .map(AbstractWidget.class::cast).filter(widget -> widget.visible).toList();
+        int boundWidth = client.screen instanceof TableScreen table && table.immersive()
+            ? TableScreen.IMMERSIVE_WIDTH : client.screen.width;
+        int boundHeight = client.screen instanceof TableScreen table && table.immersive()
+            ? TableScreen.IMMERSIVE_HEIGHT : client.screen.height;
         for (int i = 0; i < widgets.size(); i++) {
             var a = widgets.get(i);
-            require(a.getX() >= 0 && a.getY() >= 0 && a.getRight() <= client.screen.width
-                && a.getBottom() <= client.screen.height, "Automatic control exceeds viewport");
+            require(a.getX() >= 0 && a.getY() >= 0 && a.getRight() <= boundWidth
+                && a.getBottom() <= boundHeight, "Automatic control exceeds its layout canvas");
             for (int j = i + 1; j < widgets.size(); j++) {
                 var b = widgets.get(j);
                 require(a.getRight() <= b.getX() || b.getRight() <= a.getX()

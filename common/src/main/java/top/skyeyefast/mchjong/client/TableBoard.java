@@ -47,6 +47,30 @@ final class TableBoard {
         this.perspective = perspective;
         for (int seat = 0; seat < players; seat++) riverRows[side(seat, viewer, players)] = Math.max(2,
             ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
+        if (perspective) {
+            int usableTop = top + 12;
+            int usableHeight = Math.max(1, bottom - usableTop - 6);
+            int width = Math.min(22, Math.max(14, bounds.height() / 12));
+            int centerWidth, centerHeight, coreWidth, coreHeight;
+            do {
+                centerWidth = Math.clamp(width * 5 + 8, 92, 116);
+                centerHeight = riverRows[0] + riverRows[2] >= 7
+                    ? Math.clamp(width * 3 + 6, 54, 72) : Math.clamp(width * 4, 68, 90);
+                int vertical = riverDepth(0, width) + riverDepth(2, width);
+                int horizontal = riverDepth(1, width) + riverDepth(3, width);
+                coreHeight = centerHeight + vertical + 2 * RIVER_GAP;
+                coreWidth = Math.max(centerWidth, riverSpan(width)) + horizontal + 2 * RIVER_GAP;
+                if ((coreHeight <= usableHeight && coreWidth <= bounds.width() - 80) || width <= 12) break;
+                width--;
+            } while (true);
+            riverWidth = width;
+            int topDepth = riverDepth(2, width);
+            int bottomDepth = riverDepth(0, width);
+            int spare = Math.max(0, usableHeight - centerHeight - topDepth - bottomDepth - 2 * RIVER_GAP);
+            center = new Rect((left + right - centerWidth) / 2,
+                usableTop + topDepth + RIVER_GAP + spare / 2, centerWidth, centerHeight);
+            return;
+        }
         int centerHeight = bounds.height() >= 200 ? 64 : 54;
         int verticalRows = riverRows[0] + riverRows[2];
         // Compress the score panel before sacrificing the face's logical pixels.
@@ -87,8 +111,8 @@ final class TableBoard {
     Rect card(int seat) {
         if (perspective) {
             int side = side(seat, viewer, players);
-            int width = side == 2 ? 78 : side == 0 ? 88 : 82;
-            int height = scoresOnCards() ? 28 : 18;
+            int width = side == 2 ? 92 : side == 0 ? 96 : 88;
+            int height = 28;
             return switch (side) {
                 case 1 -> new Rect(bounds.right() - width - 18, center.y() + center.height() / 2 - height / 2, width, height);
                 case 3 -> new Rect(bounds.x() + 18, center.y() + center.height() / 2 - height / 2, width, height);
@@ -187,7 +211,7 @@ final class TableBoard {
         for (int seat = 0; seat < players; seat++) {
             int side = side(seat, viewer, players);
             int available = side % 2 == 0 ? bounds.width() - 150 : bounds.height() - 105;
-            int width = Math.clamp(available / Math.max(1, stacksPerSide) - 1, 4, 7);
+            int width = Math.clamp(available / Math.max(1, stacksPerSide) - 1, 3, perspective ? 5 : 7);
             int height = tileHeight(width), step = width + 1;
             double scale = Math.max(.65, seatScale(side) - .08);
             int cx = switch (side) {
@@ -365,13 +389,24 @@ final class TableBoard {
     }
 
     private int riverWidthForRow(int side, int row) {
-        if (!perspective || row == 0) return riverWidth;
+        return riverWidthForRow(side, row, riverWidth);
+    }
+
+    private int riverWidthForRow(int side, int row, int baseWidth) {
+        if (!perspective || row == 0) return baseWidth;
         int delta = Math.min(2, row);
         return switch (side) {
-            case 0 -> riverWidth + delta;
-            case 2 -> Math.max(MIN_RIVER_WIDTH, riverWidth - delta);
-            default -> Math.max(MIN_RIVER_WIDTH, riverWidth - row / 2);
+            case 0 -> baseWidth + delta;
+            case 2 -> Math.max(MIN_RIVER_WIDTH, baseWidth - delta);
+            default -> Math.max(MIN_RIVER_WIDTH, baseWidth - row / 2);
         };
+    }
+
+    private int riverDepth(int side, int baseWidth) {
+        double depth = 0;
+        for (int row = 0; row < riverRows[side]; row++)
+            depth += tileHeight(riverWidthForRow(side, row, baseWidth)) + (row == 0 ? 0 : 1);
+        return (int) Math.ceil(depth * seatScale(side));
     }
 
     private void center(GuiGraphics graphics, TableBoardState view) {
@@ -384,7 +419,28 @@ final class TableBoard {
             graphics.renderOutline(center.x() - 2, center.y() - 2, center.width() + 4, center.height() + 4, 0xff617276);
             graphics.fill(center.x(), center.y(), center.right(), center.bottom(), 0xff12272b);
             graphics.renderOutline(center.x(), center.y(), center.width(), center.height(), 0xff3a5559);
-        } else MahjongUi.panel(graphics, center.x(), center.y(), center.width(), center.height());
+            if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
+                Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
+                    + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1),
+                center.x() + 10, cy - 15, center.width() - 20, MahjongUi.ACCENT, true);
+            if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
+                Component.translatable("ui.mchjong.remaining_short", view.remaining()), center.x() + 10, cy - 2,
+                center.width() - 20, MahjongUi.TEXT, true);
+            if (settings.show(TableSettings.Information.DEPOSITS)) MahjongUi.text(graphics, font,
+                Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()), center.x() + 8,
+                cy + 11, center.width() - 16, MahjongUi.MUTED, true);
+            if (settings.show(TableSettings.Information.TURN) && view.turn() >= 0) {
+                int side = side(view.turn(), viewer, players);
+                switch (side) {
+                    case 0 -> graphics.fill(center.x() + 10, center.bottom() - 2, center.right() - 10, center.bottom(), MahjongUi.ACCENT);
+                    case 1 -> graphics.fill(center.right() - 2, center.y() + 10, center.right(), center.bottom() - 10, MahjongUi.ACCENT);
+                    case 2 -> graphics.fill(center.x() + 10, center.y(), center.right() - 10, center.y() + 2, MahjongUi.ACCENT);
+                    case 3 -> graphics.fill(center.x(), center.y() + 10, center.x() + 2, center.bottom() - 10, MahjongUi.ACCENT);
+                }
+            }
+            return;
+        }
+        MahjongUi.panel(graphics, center.x(), center.y(), center.width(), center.height());
         for (int seat = 0; !scoresOnCards() && seat < players; seat++) {
             int side = side(seat, viewer, players);
             int length = side % 2 == 0 ? center.width() : center.height();
@@ -421,9 +477,6 @@ final class TableBoard {
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.remaining_short", view.remaining()), center.x() + 14, cy + 2,
             center.width() - 28, MahjongUi.TEXT, true);
-        if (perspective && settings.show(TableSettings.Information.DEPOSITS)) MahjongUi.text(graphics, font,
-            Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()), center.x() + 10,
-            center.bottom() - 13, center.width() - 20, MahjongUi.MUTED, true);
     }
 
     private static int riverSpan(int width) { return 5 * width + tileHeight(width); }

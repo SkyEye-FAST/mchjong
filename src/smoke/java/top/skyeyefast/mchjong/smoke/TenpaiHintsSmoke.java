@@ -52,7 +52,7 @@ final class TenpaiHintsSmoke {
         }
         if (ticks == 3) {
             var button = hintButton(client);
-            InputSmoke.pointer(client, button.getX() + 10, button.getY() + 10);
+            InputSmoke.pointerWidget(client, button);
         }
         if (ticks == 10 || ticks == 20) {
             var button = hintButton(client);

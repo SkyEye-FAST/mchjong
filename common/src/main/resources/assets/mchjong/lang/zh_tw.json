@@ -501,7 +501,6 @@
   "ui.mchjong.help_double_click": "雙擊出牌，單擊選牌，Enter 確認，%s 立直，%s 跳過",
   "ui.mchjong.help_single_click": "單擊出牌，Shift＋單擊選牌，%s 立直，%s 跳過",
   "ui.mchjong.immersive_after_deal": "配牌完成後可進入沉浸視角",
-  "ui.mchjong.immersive_window_small": "沉浸視角至少需要 %s × %s 介面像素。請放大視窗或調低介面縮放。",
   "ui.mchjong.invite": "邀請玩家",
   "ui.mchjong.invite_accept": "接受",
   "ui.mchjong.invite_decline": "拒絕",

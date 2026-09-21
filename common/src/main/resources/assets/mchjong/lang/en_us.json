@@ -501,7 +501,6 @@
   "ui.mchjong.help_double_click": "Double-click Discard, Click Select, Enter Confirm, %s Riichi, %s Pass",
   "ui.mchjong.help_single_click": "Click Discard, Shift-click Select, %s Riichi, %s Pass",
   "ui.mchjong.immersive_after_deal": "Immersive view is available after dealing finishes",
-  "ui.mchjong.immersive_window_small": "Immersive view needs at least %s × %s GUI pixels. Enlarge the window or reduce GUI scale.",
   "ui.mchjong.invite": "Invite player",
   "ui.mchjong.invite_accept": "Accept",
   "ui.mchjong.invite_decline": "Decline",

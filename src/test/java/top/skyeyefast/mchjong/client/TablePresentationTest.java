@@ -50,12 +50,23 @@ class TablePresentationTest {
         }
     }
 
-    @Test void immersiveRequiresEnoughLogicalPixelsForReadableSideRivers() {
-        assertFalse(TableScreen.supportsImmersive(320, 240));
-        assertFalse(TableScreen.supportsImmersive(479, 400));
-        assertFalse(TableScreen.supportsImmersive(640, 299));
+    @Test void immersiveUsesOneFixedCanvasAtEveryPositiveViewportSize() {
+        assertTrue(TableScreen.supportsImmersive(320, 240));
+        assertTrue(TableScreen.supportsImmersive(479, 400));
+        assertTrue(TableScreen.supportsImmersive(640, 299));
         assertTrue(TableScreen.supportsImmersive(480, 300));
         assertTrue(TableScreen.supportsImmersive(640, 400));
+        assertFalse(TableScreen.supportsImmersive(0, 400));
+
+        var small = TableScreen.immersiveCanvas(320, 240);
+        assertEquals(.5, small.scale(), 1e-9);
+        assertEquals(0, small.x(), 1e-9);
+        assertEquals(20, small.y(), 1e-9);
+
+        var wide = TableScreen.immersiveCanvas(800, 400);
+        assertEquals(1, wide.scale(), 1e-9);
+        assertEquals(80, wide.x(), 1e-9);
+        assertEquals(0, wide.y(), 1e-9);
     }
     @Test void handPitchIsExactlyTheTileWidthWithoutChangingTheDrawGap() {
         assertEquals((double) TileMesh.WIDTH * TableScene.TILE_SCALE, TableScene.HAND_STEP);

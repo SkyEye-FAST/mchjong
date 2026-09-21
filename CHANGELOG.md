@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Immersive play now uses a fixed 640 × 400 virtual canvas independent of Minecraft GUI scale and window size; the complete interface is uniformly scaled with black letterbox/pillarbox bars instead of reflowing or disabling itself on small windows.
+
 ## [0.4.1] - 2026-09-20
 
 ### Added
