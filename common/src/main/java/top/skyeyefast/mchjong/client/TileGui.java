@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import com.mojang.math.Axis;
+import java.util.Comparator;
 import net.minecraft.client.gui.GuiGraphics;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -77,7 +78,9 @@ public final class TileGui {
 
     private static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth, TileFacePreset preset, int backColor) {
         double scale = tileWidth / (double) TileMesh.WIDTH;
-        for (var part : MeldLayout.of(meld, owner).parts()) {
+        // Paint the rear added-kan tile first so its body and shadow stay behind the called tile.
+        for (var part : MeldLayout.of(meld, owner).parts().stream()
+                .sorted(Comparator.comparingDouble(MeldLayout.Part::z).thenComparingDouble(MeldLayout.Part::x)).toList()) {
             double span = part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH;
             double tileDepth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
             int px = x + (int) Math.round((part.x() - span / 2) * scale);

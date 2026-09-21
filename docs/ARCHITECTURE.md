@@ -134,7 +134,7 @@ seat-local distance, height, yaw/pitch, target translation and interpolated insp
 progress. `SeatedCamera` bridges native free look and the loader tick lifecycle;
 `TableKeys` supplies registered, rebindable actions to both loaders. Immersive play uses an
 opaque GUI surface: `ImmersiveTable` builds recipient-safe tile solids and projects
-the cloth, standing hands, walls, rivers and public melds through `TableProjection`.
+the cloth, standing hands, rivers and public melds through `TableProjection`.
 `TableBoard` supplies the information and animation anchors, while `TableHand`
 supplies the private clickable hand and its meld rail. The compact replay diagram
 retains its separate flat layout. Neither world visibility nor camera orientation

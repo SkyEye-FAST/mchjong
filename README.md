@@ -181,10 +181,10 @@ Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
 clickable hand and raised rack form the foreground, melds anchor at each owner's right-hand
 end on the same outer hand rail, and four rivers surround the compact central table device.
-One perspective camera projects the cloth, solid tiles, upright opponent hands and stacked
-walls. Long melds wrap into the owner's inner corner. Compact player plaques remain at
-the table edges, and the rivers preserve six discards per row and sideways riichi.
-Draws and discards animate between the wall, hand and river. Tsumogiri is dimmed in the
+One perspective camera projects the cloth, solid tiles and upright opponent hands.
+Long melds wrap into the owner's inner corner. Compact player plaques remain at
+the table edges, and the rivers preserve six discards per row with sideways riichi
+tiles aligned to the row's top edge. Draws animate into the hand and discards into the river. Tsumogiri is dimmed in the
 river while tedashi remains at normal brightness and follows a more pronounced discard
 arc. The central device uses point-stick icons for honba and riichi deposits.
 Minecraft GUI scale and window dimensions do not reflow this layout. The complete

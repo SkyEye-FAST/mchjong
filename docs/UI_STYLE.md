@@ -157,7 +157,7 @@ continues to identify the declaration discard.
 
 Immersive play uses an opaque screen-space surface, independent of world lighting,
 ceilings and camera orientation. A single perspective camera projects the cloth,
-solid tile bodies, upright concealed opponent hands and two-layer public wall stacks.
+solid tile bodies and upright concealed opponent hands.
 Tile faces and dyed resource-pack backs share that geometry and use fixed lighting.
 The viewer's
 large interactive hand and raised tile rack form the foreground along the bottom. Place
@@ -170,7 +170,8 @@ an empty opposite-seat region.
 
 Lay the four rivers on the same table plane around the compact central device. Retain
 six tiles per row and project each tile's corners, thickness and contact shadow through
-the table camera. The viewer's rows grow
+the table camera. Align sideways riichi tiles to the same owner-relative top edge as
+the other tiles in their row, matching seated play. The viewer's rows grow
 toward the foreground, the opposite rows recede toward the far rail, and the side rivers
 remain broad enough to read rather than becoming screen-edge strips. Keep opponent hands
 and melds on the same outer rail, with melds anchored at the owner's right-hand end. Place

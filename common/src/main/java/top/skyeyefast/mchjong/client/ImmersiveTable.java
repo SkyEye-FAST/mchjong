@@ -9,8 +9,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Recipient-safe miniature 3D scene, projected into the fixed immersive canvas. */
@@ -85,7 +83,6 @@ final class ImmersiveTable {
         flat(0, -72, -69, 72, 69, 8.2, 0xff101f29);
         if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
             flat(side(view.turn()), -57, 81, 57, 88, 8.5, MahjongUi.ACCENT);
-        walls(view);
         for (int seat = 0; seat < players; seat++) {
             if (seat != viewer) outer(view.seats().get(seat), seat);
             else {
@@ -113,20 +110,6 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    private void walls(TableBoardState view) {
-        int count = view.wall().size();
-        if (count == 0) return;
-        int stacks = count / (players * 2);
-        for (int i = 0; i < count; i++) {
-            int tile = view.wall().get(i);
-            if (tile == Tile.ABSENT) continue;
-            int stack = WallLayout.stack(i, view.wallBreak(), count);
-            int side = side(stack / stacks), column = stack % stacks;
-            boolean upper = view.wall().get(i ^ 1) != Tile.ABSENT && i % 2 == (i < count - 14 ? 0 : 1);
-            tile(tile, side, (column - (stacks - 1) / 2.0) * 24, 350, 23, tile < 0, false, false, upper ? 10 : 0);
-        }
-    }
-
     private void outer(TableView.Seat player, int seat) {
         int side = side(seat), w = 30;
         double rail = 410, halfLength = 300;
@@ -142,7 +125,7 @@ final class ImmersiveTable {
         for (int row = 0; row < rails.size(); row++) {
             double span = rails.get(row).stream().mapToDouble(m -> TileGui.meldWidth(m, seat, w) + 5).sum();
             double x = halfLength - span;
-            // The inner corner is clear of both the wall lanes and the adjacent river.
+            // The inner corner keeps wrapped melds clear of the adjacent river.
             double z = row == 0 ? rail : 285;
             for (var meld : rails.get(row)) {
                 for (var part : MeldLayout.of(meld, seat).parts()) {
@@ -183,7 +166,7 @@ final class ImmersiveTable {
             var discard = river.get(i);
             double width = discard.riichi() ? RIVER_WIDTH * RATIO : RIVER_WIDTH;
             double depth = discard.riichi() ? RIVER_WIDTH : RIVER_WIDTH * RATIO;
-            double z = 124 + row * 50 + RIVER_WIDTH * RATIO - depth / 2;
+            double z = 124 + row * 50 + depth / 2;
             anchor(discard.tile(), side(seat), x + width / 2, z, 10, RIVER_WIDTH);
             if (discard.tile() == suppressed) continue;
             boolean focus = view.focus() != null && view.focus().tile() == discard.tile();

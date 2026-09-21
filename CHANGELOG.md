@@ -9,7 +9,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Immersive play now uses a fixed 1280 × 800 virtual canvas with a unified perspective table, solid tiles, upright opponent hands, stacked walls, foreground hand rack, perimeter player plaques and a compact point-stick display. Larger captions and a separate action rail keep the hand and rivers readable; GUI scale and window size apply one uniform letterboxed scale.
+- Immersive play now uses a fixed 1280 × 800 virtual canvas with a unified perspective table, solid tiles, upright opponent hands, foreground hand rack, perimeter player plaques and a compact point-stick display. Larger captions and a separate action rail keep the hand and rivers readable; sideways riichi discards align to the top of their row. GUI scale and window size apply one uniform letterboxed scale.
+
+### Fixed
+
+- Added-kan tiles render from back to front so the rear tile's shadow keeps the called tile's face clear.
 
 ## [0.4.1] - 2026-09-20
 
