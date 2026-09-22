@@ -15,8 +15,11 @@ compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
 | 1.21.1 and 1.20.1 | Quilt consumes the corresponding Fabric artifact | Quilt Loader 0.30.1 loads both packaged JARs to the title screen, using Java 21 and Java 17 respectively |
 
 The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
-Forge currently builds the base game integration. Optional Forge adapters require
-matching artifacts and their own installed-dependency validation before publication.
+Forge 1.21.1 also provides the shared JEI adapter and the `recipeBrowser=jei` profile.
+EMI and REI do not provide matching Forge 1.21.1 releases. The historical
+`Ponder-Forge-1.21.1:0.8.1` Maven artifact depends on NeoForge Catnip and Flywheel;
+it is not a Forge runtime profile. These integrations remain available on the
+loaders listed above and on both 1.20.1 loaders.
 
 ## Version synchronization and artifacts
 
@@ -89,6 +92,7 @@ gradlew.bat buildAll --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :neoforge:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeClient --console=plain
+gradlew.bat :forge:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :forge:runSmokeServer --console=plain
 gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=jei --console=plain
@@ -104,7 +108,8 @@ their timestamps against the run log and inspect the new screenshots.
 
 Forge's client command is a focused bootstrap check. It verifies the registered
 table, shared custom item renderers and additional riichi-stick model, and writes
-`forge/build/smoke/bootstrap-evidence/PASS.txt` with a title-screen capture. It does
+`forge/build/smoke/bootstrap-evidence/PASS.txt` with a title-screen capture
+(`jei-bootstrap-evidence` for the installed JEI profile). It does
 not establish multiplayer, inventory or gameplay acceptance. The Forge server
 command checks the dedicated launcher and settings path; it does not start a world.
 
@@ -134,6 +139,8 @@ require their own runtime acceptance.
 
 * [JEI setup for Minecraft 1.21 and 1.21.1](https://github.com/mezz/JustEnoughItems/wiki/Getting-Started-%5BMinecraft-1.21-and-1.21.1%5D)
 * [JEI 1.21.1 public API](https://github.com/mezz/JustEnoughItems/tree/1.21.1/CommonApi/src/main/java/mezz/jei/api)
+* [JEI Forge 1.21.1 artifact](https://maven.blamejared.com/mezz/jei/jei-1.21.1-forge/19.56.0.441/)
+* [Historical Ponder artifact dependencies](https://maven.createmod.net/net/createmod/ponder/Ponder-Forge-1.21.1/0.8.1/Ponder-Forge-1.21.1-0.8.1.pom)
 * [EMI 1.21 profile and dependencies](https://github.com/emilyploszaj/emi/tree/1.21)
 * [EMI public API](https://github.com/emilyploszaj/emi/tree/1.21/xplat/src/main/java/dev/emi/emi/api)
 * [NEI target profile](https://github.com/TheCBProject/NotEnoughItems/blob/master/build.properties)

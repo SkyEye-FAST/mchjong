@@ -11,6 +11,13 @@ authors="SkyEye_FAST"
 description='''Playable, in-world mahjong tables with configurable rules.'''
 
 [[dependencies.mchjong]]
+modId="jei"
+mandatory=false
+versionRange="[${jei_version},)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.mchjong]]
 modId="forge"
 mandatory=true
 versionRange="[${forge_loader_min_version},)"

@@ -8,6 +8,11 @@ version = rootProject.mod_version
 base.archivesName = "mchjong-forge-${minecraft_version}"
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
 
+def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('Forge recipeBrowser must be none or jei')
+def smokeProfile = recipeBrowser == 'jei' ? 'jei-bootstrap-' : 'bootstrap-'
+def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
+
 sourceSets {
     smoke {
         compileClasspath += sourceSets.main.output
@@ -34,9 +39,9 @@ minecraft {
         }
         register('client') {
             with(sourceSets.smoke) {
-                workingDir = layout.buildDirectory.dir('smoke/client')
+                workingDir = layout.buildDirectory.dir("smoke/${smokeProfile}run")
                 systemProperty 'mchjong.smoke.bootstrap', 'true'
-                systemProperty 'mchjong.smoke.output', layout.buildDirectory.dir('smoke/bootstrap-evidence').get().asFile.absolutePath
+                systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
                 args '--width', '1280', '--height', '800'
             }
         }
@@ -51,10 +56,10 @@ minecraft {
 }
 
 tasks.matching { it.name == 'runSmokeClient' }.configureEach {
-    doFirst { delete layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt') }
+    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
     doLast {
-        if (!layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt').get().asFile.isFile())
-            throw new GradleException('Forge client bootstrap did not finish; inspect smoke/client/logs/latest.log')
+        if (!smokeEvidence.get().file('PASS.txt').asFile.isFile() || smokeEvidence.get().file('FAIL.txt').asFile.exists())
+            throw new GradleException("Forge client smoke did not finish; inspect ${smokeEvidence.get().asFile}")
     }
 }
 
@@ -63,6 +68,12 @@ dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
+    compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
+    if (recipeBrowser == 'jei') {
+        runtimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
+        runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-forge:${mezz_config_version}"
+    }
 }
 
 sourceSets.main {
@@ -70,7 +81,6 @@ sourceSets.main {
     output.resourcesDir = layout.buildDirectory.dir('classes/java/main').get().asFile
     java.srcDir '../common/src/main/java'
     java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
-    java.exclude 'top/skyeyefast/mchjong/compat/jei/**'
     java.exclude 'top/skyeyefast/mchjong/compat/emi/**'
     java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     resources.srcDir '../common/src/main/resources'
@@ -80,7 +90,7 @@ sourceSets.main {
 
 processResources {
     dependsOn ':art:generateAssets', ':art:generateData'
-    def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version]
+    def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version, jei_version: jei_version]
     inputs.properties properties
     filesMatching('META-INF/mods.toml') { expand properties }
 }
