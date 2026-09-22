@@ -32,8 +32,8 @@ Both loader descriptors declare it as optional; gameplay runs independently.
 The scenes manipulate furniture and equipment in Ponder's isolated display
 world, using MChjong's existing models and component types. Ponder's structure
 backup restores each scene on replay. The structure generator in
-`src/ponderData` uses Minecraft's native NBT encoder and runs as `generatePonder`
-before resource processing. Both loader JARs contain the same generated
+`common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
+own `generatePonder` task before resource processing. Both loader JARs contain the same generated
 `assets/mchjong/ponder/table.nbt` resource.
 
 The compile-only dependencies expose the official Ponder API. The `withPonder`
@@ -46,29 +46,29 @@ Run the full build and the two ordinary client smoke tests:
 
 ```text
 gradlew.bat buildAll --warning-mode fail
-gradlew.bat :runSmokeClient --console=plain
+gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :neoforge:runSmokeClient --console=plain
 ```
 
 Enable Ponder for the corresponding client checks:
 
 ```text
-gradlew.bat :runSmokeClient -PwithPonder=true --console=plain
+gradlew.bat :fabric:runSmokeClient -PwithPonder=true --console=plain
 gradlew.bat :neoforge:runSmokeClient -PwithPonder=true --console=plain
 ```
 
-For interactive development, add `-PwithPonder=true` to `:runClient` or
+For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
 `:neoforge:runClient`.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
 four languages, plugin reload, full playback, replay restoration and native
 Ponder screens. They run after the same gameplay checks as the ordinary smoke.
-Evidence is saved in `build/smoke/ponder-evidence` and
+Evidence is saved in `fabric/build/smoke/ponder-evidence` and
 `neoforge/build/smoke/ponder-evidence`; each contains `PASS.txt`,
 `ponder-checks.txt` and language-specific screenshots under `screenshots`.
 Ordinary smoke evidence remains in each loader's `build/smoke/evidence`.
-Installed-Ponder runs use `build/smoke/ponder-run` for their game directory;
-base-client runs use `build/smoke/run`. Each profile keeps its own settings,
+Installed-Ponder runs use `fabric/build/smoke/ponder-run` for the Fabric game directory;
+base-client runs use `fabric/build/smoke/run`. Each profile keeps its own settings,
 resource-pack selection, logs and test worlds.
 
 `PonderStructureTest` verifies the generated structure's palette, bounds,

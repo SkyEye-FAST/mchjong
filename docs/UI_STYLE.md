@@ -307,7 +307,7 @@ The active immersive clock replaces the footer help line instead of covering mel
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
-For a focused seating check, use `:runSmokeClient -PsmokeSeating=true` and
+For a focused seating check, use `:fabric:runSmokeClient -PsmokeSeating=true` and
 `:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
 and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
 and immersive rivers with the hand and expanded automatic controls. They then
@@ -350,7 +350,7 @@ labels off the felt and the riichi-deposit lanes clear.
 
 ## Acceptance and future changes
 
-Run `gradlew.bat buildAll` and both `:runSmokeClient` and
+Run `gradlew.bat buildAll` and both `:fabric:runSmokeClient` and
 `:neoforge:runSmokeClient` after shared menu/widget changes. Check the resulting
 screenshots rather than treating compilation as visual verification. Cover
 small-window layout, keyboard focus, disabled/selected states, box carrier
@@ -391,7 +391,7 @@ original screenshots. Supply the evidence folder, filename pattern, run start
 time and output name, for example:
 
 ```powershell
-./tools/Review-Smoke.ps1 -Evidence build/smoke/evidence `
+./tools/Review-Smoke.ps1 -Evidence fabric/build/smoke/evidence `
     -Pattern '54-table-options-*.png' -Since (Get-Date '2026-09-18T11:30:00') -Name controls
 ```
 

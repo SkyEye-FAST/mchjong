@@ -93,10 +93,11 @@ same vanilla equip and swing pose as the item, while the arm retains player scal
 Both main-hand preferences and offhand supplies use the corresponding skin arm.
 Invisible players retain the vanilla hidden-arm presentation.
 
-For a focused grip check, run `gradlew.bat :runSmokeClient -PsmokeItems=true` or
+For a focused grip check, run `gradlew.bat :fabric:runSmokeClient -PsmokeItems=true` or
 `gradlew.bat :neoforge:runSmokeClient -PsmokeItems=true`. This reuses the item
-presentation captures and writes nine screenshots to each loader's
-`build/smoke/items-evidence/screenshots` directory, separately from full gameplay evidence.
+presentation captures and writes nine screenshots to
+`fabric/build/smoke/items-evidence/screenshots` or
+`neoforge/build/smoke/items-evidence/screenshots`, separately from full gameplay evidence.
 The shared item capture renders both supplies with each main-hand preference in
 the native first-person view at 1280 by 800, with an empty-hand reference for each
 side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulting
@@ -197,10 +198,10 @@ materials, source integrity and byte-for-byte reproducible generation. Client-si
 unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
 white face plates, picking and exact wall/river contact, including riichi discards.
 
-`gradlew.bat runSmokeClient` exercises placement, seating, a private deal and a
+`gradlew.bat :fabric:runSmokeClient` exercises placement, seating, a private deal and a
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
-Screenshots and the final result are written beneath `build/smoke/evidence`.
+Screenshots and the final result are written beneath `fabric/build/smoke/evidence`.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and screenshots under

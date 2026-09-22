@@ -222,7 +222,7 @@ multiple threats, riichi/dama, legal calls and three-player north extraction.
 The opt-in comparison completed successfully in 9m 58s and remains outside the
 routine build. Local raw logs are `build/bot-batch2-build.log` and
 `build/bot-comparison-final.log`; this document retains their measured results.
-Fabric `:runSmokeClient` (4m 34s) and NeoForge `:neoforge:runSmokeClient` (4m 33s)
+Fabric `:fabric:runSmokeClient` (4m 34s) and NeoForge `:neoforge:runSmokeClient` (4m 33s)
 both completed with fresh `MCHJONG_CLIENT_SMOKE_PASS` markers. The newly generated
 `02-dealt-table.png` screenshots in each loader's `build/smoke/evidence/screenshots`
 were inspected for the own-hand, opponent-back and public-table rendering after

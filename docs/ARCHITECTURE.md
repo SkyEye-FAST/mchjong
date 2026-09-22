@@ -1,8 +1,8 @@
 # MChjong architecture
 
 The repository keeps Fabric and NeoForge development together on `main` rather
-than maintaining loader-specific branches. The root project builds Fabric;
-`neoforge` is the NeoForge loader subproject. Both loaders share the same
+than maintaining loader-specific branches. The root project is an aggregator;
+`fabric` and `neoforge` are peer loader subprojects. Both loaders share the same
 gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
@@ -20,8 +20,12 @@ allows it.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
-* root `src/main/java`: Fabric registration/networking only.
+* `fabric/src/main/java`: Fabric registration/networking only.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
+* `common/src/smoke`: shared loader smoke harnesses; each loader keeps only its
+  lifecycle adapter and metadata in its own `src/smoke`.
+* `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
+  independently by both loader projects.
 * `art`: deterministic packing of native face-preset images, client model
   descriptors, plus a separate server-data generator. Source-image resampling
   runs at build time; each supplied atlas includes its eight flower designs.
@@ -233,9 +237,9 @@ cooldown. Completing the vote releases seats and clears the unfinished hand;
 already completed replay records remain available and no fake settlement is made.
 
 Build: `gradlew.bat buildAll`. Loader-specific development runs remain
-`gradlew.bat runClient` and `gradlew.bat :neoforge:runClient`.
+`gradlew.bat :fabric:runClient` and `gradlew.bat :neoforge:runClient`.
 
-`gradlew.bat :test` covers deterministic presentation and pointer geometry.
+`gradlew.bat :fabric:test` covers deterministic presentation and pointer geometry.
 It also checks outward-facing tile winding, stable hand placement, compact rivers
 and the mandatory remaining count. `CompactTableLayoutTest` owns hand clearance
 and picking; `TableLayoutTest` owns meld, river and wall geometry. Replay storage
@@ -245,9 +249,9 @@ reloads and recipient privacy. Full-match and manual-handling checks exercise bo
 player counts; focused scoring and reaction tests cover preset differences.
 Asset tests check all four language key sets, duplicate
 keys, format arguments and literal translation references in production sources.
-`gradlew.bat :runSmokeClient` runs a real Fabric integrated client/server, exercises
+`gradlew.bat :fabric:runSmokeClient` runs a real Fabric integrated client/server, exercises
 seating and discard packets, and captures settlement and animation screenshots in
-`build/smoke/evidence`. Rare multi-winner and animation states use display-only
+`fabric/build/smoke/evidence`. Rare multi-winner and animation states use display-only
 fixtures; they are not scoring-rule integration tests. The same harness runs with
 `gradlew.bat :neoforge:runSmokeClient` and stores evidence under
 `neoforge/build/smoke/evidence`. Both harnesses also create a real engine record,

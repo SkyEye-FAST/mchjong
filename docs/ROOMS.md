@@ -117,7 +117,7 @@ ownership, readiness, saved-room privacy, bot choices and both loader builds.
 The existing room tests exercise departures during wind drawing, replacements
 after assignment and fresh seating on a rematch.
 
-`gradlew.bat :runSmokeClient --console=plain` and
+`gradlew.bat :fabric:runSmokeClient --console=plain` and
 `gradlew.bat :neoforge:runSmokeClient --console=plain` drive the real preparation
 controls and physical remounts. The invitation checks cover administrator-only
 world commands, policy reload, revoked travel, safe arrival, single-use acceptance

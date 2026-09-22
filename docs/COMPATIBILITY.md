@@ -54,11 +54,11 @@ Use the repository wrapper with JDK 21:
 
 ```text
 gradlew.bat buildAll --warning-mode fail --console=plain
-gradlew.bat :runSmokeClient --console=plain
+gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :neoforge:runSmokeClient --console=plain
-gradlew.bat :runSmokeClient -PrecipeBrowser=jei --console=plain
+gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=jei --console=plain
-gradlew.bat :runSmokeClient -PrecipeBrowser=emi --console=plain
+gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=emi --console=plain
 gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=emi --console=plain
 ```
 

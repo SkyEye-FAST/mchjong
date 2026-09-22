@@ -358,10 +358,8 @@ It checks inventory counts and the synchronized dropped-item components while
 capturing their first-person and dropped appearances, without spawning visual
 copies of those items.
 
-Run `gradlew.bat :runSmokeClient --console=plain` for Fabric, then
-`gradlew.bat :neoforge:runSmokeClient --console=plain` for NeoForge. The leading
-colon selects only the root Fabric task. The unqualified `runSmokeClient` task
-selector includes both loaders, with an explicit ordering constraint so they
-never launch together. Each run clears old PASS/FAIL markers before launch;
+Run `gradlew.bat :fabric:runSmokeClient --console=plain` for Fabric, then
+`gradlew.bat :neoforge:runSmokeClient --console=plain` for NeoForge. Each run
+clears old PASS/FAIL markers before launch;
 only a fresh successful completion writes PASS. Inspect that run's logs and
-screenshots in `build/smoke/evidence` or `neoforge/build/smoke/evidence`.
+screenshots in `fabric/build/smoke/evidence` or `neoforge/build/smoke/evidence`.

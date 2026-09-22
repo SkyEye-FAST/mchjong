@@ -20,20 +20,22 @@ adding compatibility layers, migrations or speculative configuration.
 
 ## Ownership and architecture
 
-`main` contains both loader builds. The root Gradle project builds Fabric;
-`neoforge` builds NeoForge. Read [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the
-shared contracts.
+`main` contains both loader builds. The root Gradle project is an aggregator;
+`fabric` and `neoforge` are peer loader subprojects. Read
+[ARCHITECTURE.md](docs/ARCHITECTURE.md) for the shared contracts.
 
 - `engine`: Minecraft-independent rules, scoring adapters and replay records.
 - `common`: shared Minecraft gameplay, items, menus, networking, client rendering
   and translations. The server owns inventory authorization and game decisions;
   client screens display synchronized state and send validated requests.
-- `src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
+- `fabric/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
   adapters. Share gameplay and presentation implementations through `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
   Edit source generators rather than generated textures, models or recipes.
-- `src/smoke` and `neoforge/src/smoke`: development-only client/server checks.
-- `src/ponderData`: Minecraft-native build-time generation of Ponder structures.
+- `common/src/smoke`: shared development-only client/server checks, with
+  loader-specific adapters under `fabric/src/smoke` and `neoforge/src/smoke`.
+- `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
+  structures, compiled independently by both loader projects.
 
 Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
@@ -83,16 +85,16 @@ below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 
 ```text
 ./gradlew buildAll --warning-mode fail
-./gradlew :runSmokeClient --console=plain
+./gradlew :fabric:runSmokeClient --console=plain
 ./gradlew :neoforge:runSmokeClient --console=plain
 ```
 
 `buildAll` covers the engine, presentation, generated resources and NeoForge
 dedicated-server tests. Run targeted tests during development, then the complete
 build for a finished code batch. Shared visual or interaction changes require
-both client smokes and inspection of fresh screenshots in `build/smoke/evidence`
-and `neoforge/build/smoke/evidence`. The leading colon selects the root Fabric
-task explicitly. Check fresh PASS/FAIL markers and logs; compilation alone is
+both client smokes and inspection of fresh screenshots in
+`fabric/build/smoke/evidence` and `neoforge/build/smoke/evidence`. Check fresh
+PASS/FAIL markers and logs; compilation alone is
 not visual acceptance. Report any validation that could not be performed.
 
 For Ponder changes, also run both installed-dependency smoke commands in

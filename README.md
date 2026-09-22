@@ -57,7 +57,7 @@ dependencies, runtime profiles and test coverage.
 Build the JAR for your loader as described below, then copy it to the
 Minecraft `mods` folder:
 
-- Fabric: `build/libs/mchjong-fabric-*.jar`
+- Fabric: `fabric/build/libs/mchjong-fabric-*.jar`
 - NeoForge: `neoforge/build/libs/mchjong-neoforge-*.jar`
 
 Install the matching loader and its required dependencies before launching the
@@ -91,9 +91,9 @@ loader, mappings, and Java versions are selected by the build profile in
 ### Fabric
 
 ```bash
-./gradlew build
-./gradlew runClient   # optional development client
-./gradlew runServer   # optional dedicated server
+./gradlew :fabric:build
+./gradlew :fabric:runClient   # optional Fabric development client
+./gradlew :fabric:runServer   # optional dedicated server
 ```
 
 ### NeoForge
