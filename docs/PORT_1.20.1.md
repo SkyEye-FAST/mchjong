@@ -8,7 +8,7 @@ Quilt uses the Fabric artifact.
 ## Current validation
 
 The Fabric remapped JAR and Forge reobfuscated JAR build with the checked-in wrapper
-and JDK 21. Main mod classes target Java 17. Forge 47.4.23 reaches the title screen;
+and JDK 21. Main mod classes target Java 17. Fabric and Forge 47.4.23 reach the title screen;
 the bootstrap checks registration, the item renderer, the additional model, native
 NBT default normalization and generated recipe output. The generated asset contract
 checks pass. This is bootstrap coverage; multiplayer and complete gameplay acceptance
