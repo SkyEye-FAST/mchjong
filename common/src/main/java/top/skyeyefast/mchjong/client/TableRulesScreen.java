@@ -11,7 +11,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RedFives;
@@ -216,7 +216,7 @@ public final class TableRulesScreen extends Screen {
         if (!host() || stale() || invalid() || missingReds() || pending != null || minecraft.getConnection() == null) return;
         pending = draft;
         pendingTicks = 0;
-        minecraft.getConnection().send(new ServerboundCustomPayloadPacket(
+        minecraft.getConnection().send(PayloadPackets.serverbound(
             new TableRulesPayload(parent.tablePos(), baseline.tableId(), baseline.decision(), pending)));
         updateControls();
     }

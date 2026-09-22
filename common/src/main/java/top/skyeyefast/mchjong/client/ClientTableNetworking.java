@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.Minecraft;
 import net.minecraft.Util;
-import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -55,6 +55,6 @@ public final class ClientTableNetworking {
         if (!assigned && !payload.open()) return;
         if (client.player.getVehicle() instanceof SeatEntity seat
             && seat.tablePos().equals(payload.pos()) && seat.seat() == view.viewerSeat()) return;
-        client.getConnection().send(new ServerboundCustomPayloadPacket(new TableSeatPayload(payload.pos(), view.tableId())));
+        client.getConnection().send(PayloadPackets.serverbound(new TableSeatPayload(payload.pos(), view.tableId())));
     }
 }

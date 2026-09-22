@@ -4,7 +4,7 @@ plugins {
 
 version = rootProject.mod_version
 group = rootProject.maven_group
-base.archivesName = 'mchjong-fabric'
+base.archivesName = "mchjong-fabric-${minecraft_version}"
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"

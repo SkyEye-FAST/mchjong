@@ -20,15 +20,15 @@ adding compatibility layers, migrations or speculative configuration.
 
 ## Ownership and architecture
 
-`main` contains both loader builds. The root Gradle project is an aggregator;
-`fabric` and `neoforge` are peer loader subprojects. Read
+`main` is the sole feature development branch. The root Gradle project is an aggregator;
+`fabric`, `forge` and `neoforge` are peer 1.21.1 loader subprojects. Read
 [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the shared contracts.
 
 - `engine`: Minecraft-independent rules, scoring adapters and replay records.
 - `common`: shared Minecraft gameplay, items, menus, networking, client rendering
   and translations. The server owns inventory authorization and game decisions;
   client screens display synchronized state and send validated requests.
-- `fabric/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
+- `fabric/src/main`, `forge/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
   adapters. Share gameplay and presentation implementations through `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
   Edit source generators rather than generated textures, models or recipes.
@@ -41,6 +41,10 @@ Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
 classes. Declare optional metadata and keep third-party implementations out of
 release bundles. Verify both installed and absent dependency configurations.
+Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
+branch for Fabric and Forge; synchronize stable batches from `main`, preserving
+the engine and shared gameplay rather than developing a second feature line.
+Keep version differences limited to actual Minecraft and loader API boundaries.
 Minecraft and dependency versions belong in `gradle.properties`. Automated
 dependency updates (Renovate) manage routine tool, action and ecosystem version
 bumps on weekly schedules without auto-merge. Migrating the target Minecraft

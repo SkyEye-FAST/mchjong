@@ -47,7 +47,7 @@ allprojects {
 
 spotless {
     java {
-        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
+        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'forge/src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
         trimTrailingWhitespace()
         endWithNewline()
         leadingTabsToSpaces(4)
@@ -65,7 +65,7 @@ spotless {
         leadingTabsToSpaces(2)
     }
     format 'misc', {
-        target '*.gradle', 'fabric/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore'
+        target '*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore'
         targetExclude 'release-notes.md'
         trimTrailingWhitespace()
         endWithNewline()
@@ -74,6 +74,6 @@ spotless {
 
 tasks.register('buildAll') {
     group = 'build'
-    description = 'Test the shared engine and build both loader artifacts for the selected Minecraft profile.'
-    dependsOn ':fabric:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
+    description = 'Test the shared engine and build all loader artifacts for the selected Minecraft profile.'
+    dependsOn ':fabric:build', ':forge:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
 }

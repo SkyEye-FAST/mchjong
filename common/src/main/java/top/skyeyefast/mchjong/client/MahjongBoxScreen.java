@@ -38,7 +38,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build().primary());
         print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
-            minecraft.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
+            minecraft.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
                 new top.skyeyefast.mchjong.network.BoxPrintPayload(menu.containerId, preset))))
             .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
         updateActions();

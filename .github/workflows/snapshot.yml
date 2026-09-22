@@ -31,6 +31,7 @@ jobs:
           fi
 
           echo "version=${version}" >> "${GITHUB_OUTPUT}"
+          echo "minecraft=$(sed -n 's/^minecraft_version=//p' gradle.properties)" >> "${GITHUB_OUTPUT}"
 
       - name: Setup Java
         uses: actions/setup-java@v6
@@ -51,19 +52,28 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.version }}"
-          test -f "fabric/build/libs/mchjong-fabric-${version}.jar"
-          test -f "neoforge/build/libs/mchjong-neoforge-${version}.jar"
+          minecraft="${{ steps.version.outputs.minecraft }}"
+          for loader in fabric forge neoforge; do
+            test -f "${loader}/build/libs/mchjong-${loader}-${minecraft}-${version}.jar"
+          done
 
       - name: Upload Fabric snapshot
         uses: actions/upload-artifact@v7
         with:
-          name: mchjong-fabric-${{ steps.version.outputs.version }}
-          path: fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.version }}.jar
+          name: mchjong-fabric-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}
+          path: fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
           if-no-files-found: error
 
       - name: Upload NeoForge snapshot
         uses: actions/upload-artifact@v7
         with:
-          name: mchjong-neoforge-${{ steps.version.outputs.version }}
-          path: neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.version }}.jar
+          name: mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}
+          path: neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
+          if-no-files-found: error
+
+      - name: Upload Forge snapshot
+        uses: actions/upload-artifact@v7
+        with:
+          name: mchjong-forge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}
+          path: forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
           if-no-files-found: error

@@ -1,8 +1,8 @@
 # MChjong architecture
 
-The repository keeps Fabric and NeoForge development together on `main` rather
-than maintaining loader-specific branches. The root project is an aggregator;
-`fabric` and `neoforge` are peer loader subprojects. Both loaders share the same
+The repository keeps Fabric, Forge and NeoForge feature development together on
+`main`. The root project is an aggregator; `fabric`, `forge` and `neoforge` are
+peer loader subprojects. The loaders share the same
 gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
@@ -24,6 +24,7 @@ allows it.
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
 * `fabric/src/main/java`: Fabric registration/networking only.
+* `forge/src/main/java`: Forge registration/networking and client extension binding.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
 * `common/src/smoke`: shared loader smoke harnesses; each loader keeps only its
   lifecycle adapter and metadata in its own `src/smoke`.
@@ -32,6 +33,18 @@ allows it.
 * `art`: deterministic packing of native face-preset images, client model
   descriptors, plus a separate server-data generator. Source-image resampling
   runs at build time; each supplied atlas includes its eight flower designs.
+
+`compat/1.20.1` is a version-adaptation branch, synchronized from stable batches
+on `main`. It targets Fabric and Forge. Features and engine changes originate on
+`main`; the compatibility branch only changes Minecraft APIs, loader adapters,
+metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
+Artifact names include both loader and Minecraft version to keep releases distinct.
+
+`PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native
+custom payload packets; Forge wraps the same shared payloads with its registered
+channel encoder. All receivers dispatch to the existing authorized server handlers
+on the game thread. Forge's client-only item accessor binds the shared renderer to
+Forge's item extension field without importing loader types into shared items.
 
 `RuleSet` defines named presets; `RuleConfig` is the complete immutable, validated
 snapshot used by the engine, public views, saves and native replays. `RuleOption`

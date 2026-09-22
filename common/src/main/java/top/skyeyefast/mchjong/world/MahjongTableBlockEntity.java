@@ -6,7 +6,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
@@ -159,7 +159,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             return;
         }
         TableView snapshot = game.view(authorizedViewer(player));
-        player.connection.send(new ClientboundCustomPayloadPacket(
+        player.connection.send(PayloadPackets.clientbound(
             new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply, equipment.redOptions(), game.roomView())));
     }
 

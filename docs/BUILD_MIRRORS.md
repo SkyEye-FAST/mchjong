@@ -1,6 +1,6 @@
 # Build download mirrors
 
-The Fabric and NeoForge subprojects use the following download sources:
+The loader subprojects use the following download sources:
 
 | Downloads | Source | Configuration |
 | --- | --- | --- |
@@ -11,11 +11,19 @@ The Fabric and NeoForge subprojects use the following download sources:
 | Minecraft version manifest for both loaders | BMCLAPI | `loom_version_manifests` and `neoForge.neoFormRuntime.launcherManifestUrl` |
 | NeoForge main module, including userdev | BMCLAPI | Exclusive module repository in `neoforge/build.gradle` |
 | NeoForge test framework and build tooling | Official repositories | ModDevGradle and `neoforge/build.gradle` |
+| Forge runtime and ForgeGradle | Official Forge Maven | `forge/build.gradle` and `settings.gradle` |
 
 Version manifests can contain official URLs for individual version metadata,
 game JARs, mappings and asset indexes. Selecting a manifest mirror does not
 rewrite those embedded URLs. Optional mod integrations retain their own Maven
 repositories.
+
+ForgeGradle 7 runs Minecraft Mavenizer on a Java 25 toolchain. Gradle provisions
+that build toolchain through the Foojay resolver when it is not installed; the
+Minecraft 1.21.1 mod and development client still target Java 21. Forge's Mavenizer
+and Slime Launcher are separate Java processes, so any local proxy configuration
+must also reach those processes. Proxy credentials and machine-specific settings
+belong outside the repository.
 
 ## NeoForge client assets
 

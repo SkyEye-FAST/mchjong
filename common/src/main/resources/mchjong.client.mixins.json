@@ -1,5 +1,6 @@
 {
   "required": true,
+  "minVersion": "0.8",
   "package": "top.skyeyefast.mchjong.mixin",
   "compatibilityLevel": "JAVA_21",
   "client": ["GameRendererAccessor", "HeldSupplyArmMixin", "SeatedEyePositionMixin", "SeatedLookMixin", "TableCameraMixin", "TableFovMixin", "TableHudMixin", "TablePresentationMixin", "TileTooltipMixin"],

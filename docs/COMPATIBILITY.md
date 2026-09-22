@@ -6,7 +6,17 @@ Release artifacts follow their Minecraft build profile. The current recipe
 viewer adapters target Minecraft 1.21.1 with Java 21, Fabric Loader 0.19.5 and
 Fabric API 0.116.17+1.21.1, or NeoForge 21.1.250. The wider version roadmap remains
 mainstream releases from 1.20.1 onward; each release line requires its own
-compiled artifact and verification.
+compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
+
+| Minecraft | Loader artifacts | Validation scope |
+| --- | --- | --- |
+| 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
+| 1.20.1 | Fabric and Forge port on `compat/1.20.1` | In progress; not yet a release build |
+| Matching version | Quilt consumes the Fabric artifact | Quilt runtime acceptance is separate |
+
+The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
+Forge currently builds the base game integration. Optional Forge adapters require
+matching artifacts and their own installed-dependency validation before publication.
 
 | Optional viewer | Pinned version | Development runtime |
 | --- | --- | --- |
@@ -56,6 +66,8 @@ Use the repository wrapper with JDK 21:
 gradlew.bat buildAll --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :neoforge:runSmokeClient --console=plain
+gradlew.bat :forge:runSmokeClient --console=plain
+gradlew.bat :forge:runSmokeServer --console=plain
 gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=emi --console=plain
@@ -68,6 +80,12 @@ each loader's build directory, with corresponding isolated run directories.
 Each successful run writes a fresh `PASS.txt` and `browser-checks.txt`; check
 their timestamps against the run log and inspect the new screenshots.
 
+Forge's client command is a focused bootstrap check. It verifies the registered
+table, shared custom item renderers and additional riichi-stick model, and writes
+`forge/build/smoke/bootstrap-evidence/PASS.txt` with a title-screen capture. It does
+not establish multiplayer, inventory or gameplay acceptance. The Forge server
+command checks the dedicated launcher and settings path; it does not start a world.
+
 `RecipeBrowserDataSmoke` checks the finite examples and cycling alternatives in
 the integrated server world, including retention of spare tiles and point sticks.
 The viewer smoke queries component-preserving back dyeing and table upgrades,
@@ -79,7 +97,7 @@ Source/API review and Java compilation alone do not establish installed-viewer,
 absent-viewer, dedicated-server or visual acceptance. Use the fresh completion
 markers and screenshots for the specific loader and profile being checked.
 
-`gradlew.bat :runSmokeServer :neoforge:runSmokeServer --console=plain` exercises
+`gradlew.bat :fabric:runSmokeServer :neoforge:runSmokeServer --console=plain` exercises
 the dedicated-server bootstrap with Minecraft's `--initSettings` mode in
 isolated build directories. The same optional-viewer profile flag applies.
 This covers server-side entrypoint loading and settings initialization; world

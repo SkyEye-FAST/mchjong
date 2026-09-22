@@ -13,7 +13,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.Action;
@@ -596,13 +596,13 @@ public final class TableScreen extends Screen {
     void configureVisibility(top.skyeyefast.mchjong.engine.HandVisibility visibility) {
         var view = view();
         if (minecraft.getConnection() == null || view == null) return;
-        minecraft.getConnection().send(new ServerboundCustomPayloadPacket(
+        minecraft.getConnection().send(PayloadPackets.serverbound(
             new top.skyeyefast.mchjong.network.TableVisibilityPayload(pos, view.tableId(), view.decision(), visibility)));
     }
 
     void control(TableView view, TableControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
-        minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableControlPayload(pos, view.tableId(), operation, token, enabled)));
+        minecraft.getConnection().send(PayloadPackets.serverbound(new TableControlPayload(pos, view.tableId(), operation, token, enabled)));
     }
 
     private void buildExitVote(TableView view) {
@@ -719,7 +719,7 @@ public final class TableScreen extends Screen {
         refreshDecision(current);
         if (dealing() || TableResults.available(snapshot) && Util.getMillis() - resultStarted < 500
             || minecraft.getConnection() == null || !decision.submit(snapshot, index)) return;
-        minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
+        minecraft.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
         callouts.forEach(button -> button.active = false);
         selectedTile = lastClickedTile = Tile.ABSENT;
         choosingRiichi = false;

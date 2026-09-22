@@ -13,7 +13,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.UuidArgument;
 import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.common.ClientboundCustomPayloadPacket;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -79,7 +79,7 @@ public final class ReplayServer {
             Object value = match == null || remove ? state.store().list(player.getUUID(), page, search, oldestFirst)
                 : state.store().load(player.getUUID(), match);
             for (var chunk : ReplayPayload.split(match == null || remove ? ReplayPayload.Kind.INDEX : ReplayPayload.Kind.MATCH,
-                    TableNetworking.JSON.toJson(value))) player.connection.send(new ClientboundCustomPayloadPacket(chunk));
+                    TableNetworking.JSON.toJson(value))) player.connection.send(PayloadPackets.clientbound(chunk));
             return 1;
         } catch (IOException | RuntimeException failure) {
             LoggerFactory.getLogger("mchjong").warn("Cannot {} replay {} for {}", remove ? "delete" : "read", match, player.getUUID(), failure);

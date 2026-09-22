@@ -1,0 +1,8 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "top.skyeyefast.mchjong.forge.mixin",
+  "compatibilityLevel": "JAVA_21",
+  "client": ["ItemRenderProperties"],
+  "injectors": {"defaultRequire": 1}
+}

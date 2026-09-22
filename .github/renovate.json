@@ -41,7 +41,8 @@
         "minecraft_version",
         "java_version",
         "fabric_loader_min_version",
-        "neo_loader_min_version"
+        "neo_loader_min_version",
+        "forge_loader_min_version"
       ],
       "matchDepNames": [
         "com.mojang:minecraft",
@@ -49,7 +50,8 @@
         "minecraft_version",
         "java_version",
         "fabric_loader_min_version",
-        "neo_loader_min_version"
+        "neo_loader_min_version",
+        "forge_loader_min_version"
       ],
       "enabled": false
     },
@@ -131,6 +133,13 @@
         "https://repo.maven.apache.org/maven2"
       ],
       "groupName": "Fabric ecosystem"
+    },
+    {
+      "description": "Forge runtime constrained to Minecraft 1.21.1",
+      "matchPackageNames": ["net.minecraftforge:forge"],
+      "allowedVersions": "/^1\\.21\\.1-52\\./",
+      "registryUrls": ["https://maven.minecraftforge.net/"],
+      "groupName": "Forge ecosystem"
     },
     {
       "description": "NeoForge ecosystem dependencies constrained to 1.21.1 profile (21.1.x)",

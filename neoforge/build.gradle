@@ -5,7 +5,7 @@ plugins {
 
 group = rootProject.maven_group
 version = rootProject.mod_version
-base.archivesName = 'mchjong-neoforge'
+base.archivesName = "mchjong-neoforge-${minecraft_version}"
 repositories {
     exclusiveContent {
         forRepository { maven { name = 'BMCLAPINeoForge'; url = 'https://bmclapi2.bangbang93.com/maven/' } }

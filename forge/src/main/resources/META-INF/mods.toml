@@ -1,0 +1,25 @@
+modLoader="javafml"
+loaderVersion="[52,)"
+license="Apache-2.0"
+
+[[mods]]
+modId="mchjong"
+version="${version}"
+displayName="MChjong"
+logoFile="assets/mchjong/icon.png"
+authors="SkyEye_FAST"
+description='''Playable, in-world mahjong tables with configurable rules.'''
+
+[[dependencies.mchjong]]
+modId="forge"
+mandatory=true
+versionRange="[${forge_loader_min_version},)"
+ordering="NONE"
+side="BOTH"
+
+[[dependencies.mchjong]]
+modId="minecraft"
+mandatory=true
+versionRange="[${minecraft_version}]"
+ordering="NONE"
+side="BOTH"

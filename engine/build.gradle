@@ -48,6 +48,7 @@ shadowJar {
     relocate 'kotlinx', 'top.skyeyefast.mchjong.internal.kotlinx'
     exclude 'module-info.class', 'META-INF/versions/**/module-info.class'
     exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
+    exclude 'org/jetbrains/annotations/**', 'org/intellij/lang/annotations/**'
     mergeServiceFiles()
     manifest.attributes 'Automatic-Module-Name': 'top.skyeyefast.mchjong.engine', 'FMLModType': 'LIBRARY'
 }
