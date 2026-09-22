@@ -16,10 +16,10 @@ import top.skyeyefast.mchjong.client.PointStickScreen;
 import top.skyeyefast.mchjong.compat.recipes.SupplySubtype;
 import top.skyeyefast.mchjong.item.MahjongCatalog;
 
-/** REI entry catalogue, component discrimination and screen exclusion zones. */
+/** REI entry catalogue, NBT discrimination and screen exclusion zones. */
 public class MahjongReiPlugin implements REIClientPlugin {
     @Override public void registerItemComparators(ItemComparatorRegistry registry) {
-        SupplySubtype.items().forEach(registry::registerComponents);
+        SupplySubtype.items().forEach(registry::registerNbt);
     }
 
     @Override public void registerEntries(EntryRegistry registry) {

@@ -37,3 +37,10 @@ mandatory=false
 versionRange="[${emi_version},2)"
 ordering="AFTER"
 side="CLIENT"
+
+[[dependencies.mchjong]]
+modId="roughlyenoughitems"
+mandatory=false
+versionRange="[${rei_version},13)"
+ordering="AFTER"
+side="CLIENT"

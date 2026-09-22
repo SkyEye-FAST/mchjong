@@ -72,10 +72,18 @@ dependencies {
     modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
     modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}"
+    modCompileOnly "me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}"
+    modCompileOnly "dev.architectury:architectury-forge:${architectury_version}"
     def browser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-    if (!(browser in ['none', 'jei', 'emi'])) throw new GradleException('recipeBrowser must be none, jei or emi')
+    if (!(browser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
     if (browser == 'jei') modRuntimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
     if (browser == 'emi') modRuntimeOnly "dev.emi:emi-forge:${emi_version}"
+    if (browser == 'rei') {
+        modRuntimeOnly "me.shedaniel:RoughlyEnoughItems-forge:${rei_version}"
+        modRuntimeOnly "me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}"
+        modRuntimeOnly "dev.architectury:architectury-forge:${architectury_version}"
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
 }
@@ -83,7 +91,6 @@ dependencies {
 sourceSets.main {
     java.srcDir '../common/src/main/java'
     java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
-    java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
@@ -99,7 +106,7 @@ mixin {
 processResources {
     dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version,
-        jei_version: jei_version, emi_version: emi_version]
+        jei_version: jei_version, emi_version: emi_version, rei_version: rei_version]
     inputs.properties properties
     filesMatching('META-INF/mods.toml') { expand properties }
     filesMatching(['mchjong.client.mixins.json', 'mchjong.data.mixins.json']) {

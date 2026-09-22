@@ -25,27 +25,30 @@ Fabric and Forge share these implementations through `common`.
 
 ## Recipe viewers
 
-The shared JEI and EMI adapters compile against JEI 15.59.0.212 and EMI
-1.1.24+1.20.1 for both loaders. Their APIs are compile-only; the optional
-`-PrecipeBrowser=jei` and `-PrecipeBrowser=emi` development profiles load the
-corresponding runtime. The default `none` profile loads neither viewer.
+The shared adapters compile against JEI 15.59.0.212, EMI 1.1.24+1.20.1 and
+REI 12.0.684 for both loaders. Their APIs are compile-only; the optional
+`-PrecipeBrowser=jei`, `-PrecipeBrowser=emi` and `-PrecipeBrowser=rei` development
+profiles load the corresponding runtime. The default `none` profile loads no viewer.
+The REI profile includes Cloth Config and Architectury, while Forge discovers the
+shared plugin through a loader-specific annotation entry point.
 
 Forge uses ModDevGradle's native dependency remapping configurations. The adapters
 use 1.20.1 recipe objects and native NBT identity, preserving the existing shared
 recipe examples and server-authorized crafting behavior.
 
-Both Forge viewer profiles pass the bootstrap smoke. Fabric loads each viewer in
+All three Forge viewer profiles pass the bootstrap smoke. Fabric loads each viewer in
 a local world: JEI registers the supply recipes and displays its inventory overlay;
-EMI displays the material variants and the oak table crafting recipe. These checks
+EMI displays the material variants and the oak table crafting recipe. REI displays
+the shared catalog's material and color variants using native NBT comparison. These checks
 do not yet cover recipe transfer or inventory transactions.
 
 ## Remaining port work
 
 - Adapt the existing shared Fabric smoke sources to the 1.20.1 APIs and validate
   client/world/network interactions on both loaders.
-- Complete JEI recipe-page and both viewers' inventory interaction checks; port
-  REI and Ponder using their actual 1.20.1 artifacts. REI and Ponder adapters are
-  currently excluded, and the inherited Ponder development profile is not supported.
+- Complete JEI recipe-page and the viewers' inventory interaction checks.
+- Port Ponder using its actual 1.20.1 artifacts. Its adapter is currently excluded,
+  and the inherited Ponder development profile is not supported.
 - Advance the main workflow's reviewed compatibility pin after stable port batches.
   Main snapshot and release assembly already collects five artifacts.
 - Validate Quilt with the corresponding Fabric JAR and the Java 17 runtime.
