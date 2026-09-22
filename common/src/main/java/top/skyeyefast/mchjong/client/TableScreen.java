@@ -10,6 +10,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket;
@@ -34,6 +35,8 @@ public final class TableScreen extends Screen {
     private static final String[] WINDS = {"east", "south", "west", "north"};
     private final BlockPos pos;
     private final List<CalloutButton> callouts = new ArrayList<>();
+    private final List<AbstractWidget> decisionButtons = new ArrayList<>();
+    private final TableTurnClock turnClock = new TableTurnClock();
     private List<TableScene.Piece> scene = List.of();
     private List<TableAnimation.Frame> frames = List.of();
     private final TableDecision decision = new TableDecision();
@@ -59,6 +62,8 @@ public final class TableScreen extends Screen {
     private final TableHud information = new TableHud();
     private int actionTop;
     private int actionLeft;
+    private int actionHeight;
+    private ScreenRectangle privateHandBounds;
     private TableView handlingDrag;
     private Vec3 handlingStart;
     private Vec3 handlingPointer;
@@ -293,6 +298,9 @@ public final class TableScreen extends Screen {
         int automationFocus = automation.focusedIndex(getFocused());
         clearWidgets();
         callouts.clear();
+        decisionButtons.clear();
+        turnClock.visible = false;
+        privateHandBounds = null;
         confirmButton = null;
         TableView view = view();
         if (view == null) return;
@@ -369,12 +377,14 @@ public final class TableScreen extends Screen {
         }
         if (immersive) board = new TableBoard(TableBoardState.live(view), 20, layoutWidth - 20, 68,
             hand == null ? layoutHeight - 112 : hand.top() - 24, layoutHeight, true);
+        actionHeight = count == 0 ? 0 : rows * (buttonHeight + buttonGap) - buttonGap;
         int slot = 0;
         if (riichi) {
             var button = MahjongButton.create(Component.translatable(choosingRiichi ? "ui.mchjong.cancel_riichi" : "action.mchjong.riichi"),
                 ignored -> toggleRiichi()).bounds(startX, actionTop, boxWidth, buttonHeight).build();
             button.setTooltip(Tooltip.create(button.getMessage()));
             addRenderableWidget(button);
+            decisionButtons.add(button);
             slot++;
         }
         for (int index : choices) {
@@ -388,6 +398,7 @@ public final class TableScreen extends Screen {
             button.setTooltip(Tooltip.create(label));
             addRenderableWidget(button);
             callouts.add(button);
+            decisionButtons.add(button);
             slot++;
         }
         if (TableResults.available(view) && TableSettings.get().show(TableSettings.Information.RESULTS)) {
@@ -417,7 +428,9 @@ public final class TableScreen extends Screen {
                     .bounds(startX + slot % columns * (boxWidth + buttonGap),
                         actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight).build().primary());
                 confirmButton.setTooltip(Tooltip.create(confirmButton.getMessage()));
+                decisionButtons.add(confirmButton);
         }
+        addRenderableWidget(turnClock);
         addRenderableWidget(hints);
         addRenderableWidget(dice);
         if (immersive) for (var child : children())
@@ -954,6 +967,7 @@ public final class TableScreen extends Screen {
         int diceY = dicePoint == null ? -100 : (int) dicePoint.y();
         int diceWidth = dicePoint == null ? 24 : Math.max(24, (int) (dicePoint.scale() * .24));
         dice.update(view, diceX - diceWidth / 2, diceY - 10, diceWidth, 20, !immersive, decision.pending());
+        layoutTurnControls(view);
         hoveredTile = pick(drawMouseX, drawMouseY);
         renderHandling(graphics, view, drawMouseX, drawMouseY);
         informationTooltip = information.tooltip(drawMouseX, drawMouseY);
@@ -987,18 +1001,6 @@ public final class TableScreen extends Screen {
         }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack());
         updateHints(view);
         super.render(graphics, drawMouseX, drawMouseY, partialTick);
-        boolean footerClock = false;
-        if (!TableResults.available(view) && view.viewerSeat() >= 0 && view.viewerSeat() < view.clocks().size()) {
-            var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
-            var clock = view.clocks().get(view.viewerSeat()).after(table.clientViewAgeMillis());
-            if (clock.active()) {
-                footerClock = hand != null;
-                Component text = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());
-                int color = clock.moveTicks() + clock.reserveTicks() <= 100 ? MahjongUi.NEGATIVE : MahjongUi.ACCENT;
-                if (footerClock) renderFooter(graphics, text, color);
-                else renderStatus(graphics, text, actionTop - (choosingRiichi ? 28 : 14) * statusScale, color);
-            }
-        }
         if (TableResults.available(view)) {
             long ready = view.seats().stream().filter(TableView.Seat::ready).count();
             int scale = immersive ? 2 : 1;
@@ -1012,14 +1014,14 @@ public final class TableScreen extends Screen {
             actionTop - 14 * statusScale, MahjongUi.ACCENT);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             var cues = animation().cues(Util.getMillis());
-            int cueY = immersive ? actionTop - ((choosingRiichi ? 14 : 0) + cues.size() * 13 + 1) * statusScale : information.bottom() + 4;
+            int cueY = actionTop - ((choosingRiichi ? 14 : 0) + cues.size() * 13 + 1) * statusScale;
             for (var cue : cues) {
                 renderStatus(graphics, playerName(view, cue.seat()).copy().append("  ").append(Component.translatable(cue.key())),
                     cueY, MahjongUi.ACCENT);
                 cueY += 13 * statusScale;
             }
         }
-        if (view.phase() != Game.Phase.LOBBY && !footerClock && settings.show(TableSettings.Information.HELP)) {
+        if (view.phase() != Game.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
@@ -1043,6 +1045,62 @@ public final class TableScreen extends Screen {
         } finally {
             if (canvas) graphics.pose().popPose();
         }
+    }
+
+    private void layoutTurnControls(TableView view) {
+        if (TableResults.available(view) || view.phase() == Game.Phase.LOBBY || view.viewerSeat() < 0) return;
+        int scale = immersive ? 2 : 1;
+        privateHandBounds = privateHandBounds(view);
+        int bottom = privateHandBounds.top() - 6 * scale;
+        // Keep a stable clock lane even between turns, so controls never jump as time expires.
+        int captions = (choosingRiichi ? 14 : 0) + (dealing() ? 14
+            : TableSettings.get().animations && animation() != null ? animation().cues(Util.getMillis()).size() * 13 : 0);
+        if (!immersive && bottom - 28 - actionHeight - captions < information.bottom() + 4
+            && privateHandBounds.bottom() + 6 + captions + actionHeight + 28 <= uiHeight() - 24)
+            bottom = uiHeight() - 24;
+        int top = bottom - 28 * scale - actionHeight;
+        int shift = top - actionTop;
+        for (var button : decisionButtons) button.setY(button.getY() + shift);
+        actionTop = top;
+        if (view.viewerSeat() < view.clocks().size()) {
+            var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
+            turnClock.update(view.clocks().get(view.viewerSeat()).after(table.clientViewAgeMillis()),
+                uiWidth() - 16 * scale, bottom, scale);
+        }
+    }
+
+    private ScreenRectangle privateHandBounds(TableView view) {
+        if (hand != null) return new ScreenRectangle(0, hand.top(), uiWidth(), uiHeight() - hand.top());
+        double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
+        double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
+        for (var frame : frames) {
+            var piece = frame.piece();
+            if (piece.seat() != view.viewerSeat() || (piece.area() != TableScene.Area.HAND
+                && piece.area() != TableScene.Area.MELD && piece.area() != TableScene.Area.NORTH)) continue;
+            // Project the actual animated box, reserving the maximum selection lift for every hand tile.
+            var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
+                (float) piece.position().y, (float) piece.position().z)
+                .rotateY((float) Math.toRadians(piece.yaw())).rotateX((float) Math.toRadians(frame.pitch()))
+                .scale(TableScene.TILE_SCALE);
+            for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
+                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                for (int lift = 0; lift <= (piece.area() == TableScene.Area.HAND ? 1 : 0); lift++) {
+                    var point = project(new Vec3(corner.x, corner.y + lift * .035, corner.z));
+                    if (point != null) {
+                        top = Math.min(top, point.y());
+                        bottom = Math.max(bottom, point.y());
+                        left = Math.min(left, point.x());
+                        right = Math.max(right, point.x());
+                    }
+                }
+            }
+        }
+        if (top >= uiHeight() || bottom <= 0 || left >= uiWidth() || right <= 0)
+            return new ScreenRectangle(0, uiHeight() - 24, uiWidth(), 0);
+        int x = (int) Math.max(0, Math.floor(left)), y = (int) Math.max(0, Math.floor(top));
+        return new ScreenRectangle(x, y, (int) Math.min(uiWidth(), Math.ceil(right)) - x,
+            (int) Math.min(uiHeight(), Math.ceil(bottom)) - y);
     }
 
     private void renderStatus(GuiGraphics graphics, Component text, int y, int color) {
@@ -1072,7 +1130,7 @@ public final class TableScreen extends Screen {
             return;
         }
         int layoutWidth = uiWidth(), layoutHeight = uiHeight();
-        int hintBottom = hand == null ? layoutHeight - 52 : hand.top();
+        int hintBottom = privateHandBounds == null ? layoutHeight - 52 : privateHandBounds.top();
         int hintCenter = hand == null ? layoutWidth / 2 : hand.centerX();
         double handLeft = Double.POSITIVE_INFINITY, handRight = Double.NEGATIVE_INFINITY;
         if (hand == null) for (var piece : scene) {
@@ -1080,7 +1138,6 @@ public final class TableScreen extends Screen {
             var point = project(piece.position().add(0,
                 (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2.0, 0));
             if (point != null) {
-                hintBottom = handLeft == Double.POSITIVE_INFINITY ? (int) point.y() - 4 : Math.min(hintBottom, (int) point.y() - 4);
                 handLeft = Math.min(handLeft, point.x());
                 handRight = Math.max(handRight, point.x());
             }

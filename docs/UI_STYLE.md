@@ -189,7 +189,16 @@ rails converge toward it, and the viewer's foreground stays full size. Animation
 anchors use the same projected centers as the tile faces. Player labels are compact
 translucent table-edge plaques. Use larger portrait and score type on the virtual
 canvas; toolbar, automation, score and status captions use twice the native font size.
-The bottom-left keyboard help and footer clock use that same enlarged size.
+The bottom-left keyboard help uses that same enlarged size. In both views, show
+the move allowance as large warm-white digits with a smaller brass `+reserve`,
+right-aligned above the private hand. Reserve a separate clock lane below the
+action buttons; riichi prompts and animation cues grow upward above the buttons.
+Seated placement follows the animated tile-box projection, including melds and
+selection lift. Immersive placement uses the raised hand's top edge. Clock labels
+remain localized in hover details and narration, and the last five total seconds
+use the warning color. When the move allowance expires, promote the remaining
+reserve to the large digits. In seated free look, use the space below the hand
+when its projection leaves insufficient room above and sufficient room below.
 Size immersive toolbar buttons from their translated captions at that scale, including padding.
 Riichi and animation captions, exit-vote panels and controls, settlement navigation
 and player-information tooltips use the same 2x content scale. Reserve matching
@@ -312,7 +321,8 @@ control. Seat cards retain names, wind and scores in both presentations.
 Inspect, view, reset, riichi, pass and drawer controls are registered Minecraft
 key mappings on both loaders. Help text displays the current bindings. Selection
 uses pointer clicks and the existing confirmation controls.
-The active immersive clock replaces the footer help line instead of covering melds.
+An active turn clock suppresses the footer help line, keeping attention on the
+decision controls and the separate clock lane above the hand.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
