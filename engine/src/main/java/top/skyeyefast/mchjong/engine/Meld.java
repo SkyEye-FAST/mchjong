@@ -8,7 +8,7 @@ public record Meld(Type type, List<Integer> tiles, int fromSeat, int calledTile)
     public Meld { tiles = List.copyOf(tiles); }
     public boolean closed() { return type == Type.CLOSED_KAN; }
     public boolean kan() { return tiles.size() == 4; }
-    public int kind() { return Tile.kind(tiles.getFirst()); }
+    public int kind() { return Tile.kind(tiles.get(0)); }
 
     public String libraryNotation() {
         StringBuilder text = new StringBuilder();

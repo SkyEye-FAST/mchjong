@@ -459,23 +459,23 @@ public final class Game {
                 case FILL_BOTS -> {
                     for (int i = 0; i < rules.players(); i++) if (players[i].id == null) setBot(i, BotDifficulty.EASY);
                 }
-                case SET_BOT -> setBot(action.tiles().getFirst(), BotDifficulty.values()[action.tiles().get(1)]);
+                case SET_BOT -> setBot(action.tiles().get(0), BotDifficulty.values()[action.tiles().get(1)]);
                 case REMOVE_BOT -> {
-                    int target = action.tiles().getFirst();
+                    int target = action.tiles().get(0);
                     players[target] = new PlayerState();
                     players[target].points = rules.startingPoints();
                 }
-                case TRANSFER_HOST -> transferHost(actor, players[action.tiles().getFirst()].id);
+                case TRANSFER_HOST -> transferHost(actor, players[action.tiles().get(0)].id);
                 case LEAVE_ROOM -> removeMember(seat);
                 case BEGIN_SEATING -> {
                     seating.begin(rules.players(), manual, seed ^ decision);
                     if (!manual) assignSeats();
                 }
                 case DRAW_WIND -> {
-                    seating.draw(seat, action.tiles().getFirst());
+                    seating.draw(seat, action.tiles().get(0));
                     if (seating.complete(rules.players())) assignSeats();
                 }
-                case CHANGE_RULE -> applyRules(rules.withPreset(RuleSet.values()[action.tiles().getFirst()]));
+                case CHANGE_RULE -> applyRules(rules.withPreset(RuleSet.values()[action.tiles().get(0)]));
                 default -> throw new IllegalStateException("Invalid lobby action");
             }
             if (action.type() == SET_BOT || action.type() == REMOVE_BOT || action.type() == FILL_BOTS)
@@ -508,7 +508,7 @@ public final class Game {
             case CLOSED_KAN, ADDED_KAN, NUKI -> {
                 pending = action;
                 lastTile = action.type() == CLOSED_KAN && action.tiles().contains(players[seat].drawn)
-                    ? players[seat].drawn : action.tiles().getFirst();
+                    ? players[seat].drawn : action.tiles().get(0);
                 lastFrom = seat;
                 if (recorder != null) recorder.declare(this, seat, action);
                 beginReactions();
@@ -634,7 +634,7 @@ public final class Game {
 
     private void discard(int seat, Action action) {
         PlayerState player = players[seat];
-        int tile = action.tiles().getFirst();
+        int tile = action.tiles().get(0);
         boolean declare = action.type() == RIICHI;
         if (!player.hand.remove(Integer.valueOf(tile))) throw new IllegalStateException("Missing discarded tile");
         boolean sideways = declare || player.nextDiscardSideways;
@@ -693,7 +693,7 @@ public final class Game {
         }
         if (!winners.isEmpty()) {
             if (rules.tripleRonDraw() && winners.size() == 3) Settlement.abort(this, "triple_ron");
-            else Settlement.win(this, rules.headBump() ? List.of(winners.getFirst()) : winners, lastFrom, lastTile);
+            else Settlement.win(this, rules.headBump() ? List.of(winners.get(0)) : winners, lastFrom, lastTile);
             return;
         }
         if (pending != null) { completeDeclaration(); return; }
@@ -712,9 +712,9 @@ public final class Game {
                 Settlement.abort(this, "four_riichi"); return;
             }
             if (!rules.sanma() && uninterrupted && Arrays.stream(players).allMatch(p -> p.river.size() == 1)) {
-                int kind = Tile.kind(players[0].river.getFirst().tile());
+                int kind = Tile.kind(players[0].river.get(0).tile());
                 if (kind >= Tile.EAST && kind <= Tile.NORTH && Arrays.stream(players)
-                    .allMatch(p -> Tile.kind(p.river.getFirst().tile()) == kind)) {
+                    .allMatch(p -> Tile.kind(p.river.get(0).tile()) == kind)) {
                     Settlement.abort(this, "four_winds"); return;
                 }
             }
@@ -732,7 +732,7 @@ public final class Game {
         PlayerState player = players[seat];
         if (rules.callsClearFuriten()) player.temporaryFuriten = false;
         PlayerState source = players[lastFrom];
-        Discard discarded = source.river.getLast();
+        Discard discarded = source.river.get(source.river.size() - 1);
         source.river.set(source.river.size() - 1, discarded.markCalled());
         if (discarded.riichi()) source.nextDiscardSideways = true;
         var tiles = new ArrayList<>(action.tiles());
@@ -746,7 +746,7 @@ public final class Game {
             default -> throw new IllegalStateException("Not a call");
         };
         player.melds.add(new Meld(type, tiles, lastFrom, lastTile));
-        if (recorder != null) recorder.call(seat, player.melds.getLast());
+        if (recorder != null) recorder.call(seat, player.melds.get(player.melds.size() - 1));
         recordPao(seat, lastFrom, type == Meld.Type.OPEN_KAN);
         interrupt();
         turn = seat;
@@ -766,7 +766,7 @@ public final class Game {
         if (recorder != null) recorder.confirmDeclaration();
         interrupt();
         if (action.type() == NUKI) {
-            int tile = action.tiles().getFirst();
+            int tile = action.tiles().get(0);
             player.hand.remove(Integer.valueOf(tile));
             player.norths.add(tile);
             draw(seat, true, true);
@@ -776,7 +776,7 @@ public final class Game {
             player.hand.removeAll(action.tiles());
             player.melds.add(new Meld(Meld.Type.CLOSED_KAN, action.tiles(), seat, Tile.ABSENT));
         } else {
-            int tile = action.tiles().getFirst();
+            int tile = action.tiles().get(0);
             player.hand.remove(Integer.valueOf(tile));
             for (int i = 0; i < player.melds.size(); i++) {
                 Meld meld = player.melds.get(i);
@@ -861,7 +861,7 @@ public final class Game {
             var legal = actions(seat);
             int index = indexOf(legal, phase == Phase.REACTION ? PASS : DISCARD);
             if (phase == Phase.TURN) for (int i = 0; i < legal.size(); i++) {
-                if (legal.get(i).type() == DISCARD && legal.get(i).tiles().getFirst() == players[seat].drawn) index = i;
+                if (legal.get(i).type() == DISCARD && legal.get(i).tiles().get(0) == players[seat].drawn) index = i;
             }
             if (index >= 0) act(players[seat].id, token, index);
         }
@@ -915,7 +915,7 @@ public final class Game {
         if (phase == Phase.TURN) {
             for (int i = 0; i < legal.size(); i++) {
                 Action action = legal.get(i);
-                if (action.type() == DISCARD && action.tiles().getFirst() == drawn) return i;
+                if (action.type() == DISCARD && action.tiles().get(0) == drawn) return i;
             }
             int discard = indexOf(legal, DISCARD);
             if (discard >= 0) return discard;

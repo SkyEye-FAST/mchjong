@@ -16,7 +16,10 @@ allows it.
   entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
   required), so Java orchestration does not need Kotlin-specific call shapes. The
   engine Shadow archive embeds and relocates mahjong-utils, Kotlin and kotlinx,
-  so neither loader requires a Kotlin language mod at runtime.
+  so neither loader requires a Kotlin language mod at runtime. Engine production
+  Java and Kotlin bytecode targets Java 17, allowing the same domain artifact to
+  serve the 1.20.1 and 1.21.1 Minecraft profiles. The build and existing test suite
+  use the project's Java 21 toolchain.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.

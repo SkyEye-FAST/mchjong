@@ -18,7 +18,9 @@ public final class RoomSeating {
         var order = new ArrayList<Integer>();
         for (int wind = 0; wind < players; wind++) order.add(wind);
         // Nearby decision seeds must not pin a wind to the same concealed slot.
-        Collections.shuffle(order, new SplittableRandom(seed));
+        var random = new SplittableRandom(seed);
+        for (int remaining = order.size(); remaining > 1; remaining--)
+            Collections.swap(order, remaining - 1, random.nextInt(remaining));
         concealed = order.stream().mapToInt(Integer::intValue).toArray();
         if (manual) {
             stage = Stage.DRAWING;

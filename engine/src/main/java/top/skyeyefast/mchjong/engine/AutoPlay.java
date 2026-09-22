@@ -38,7 +38,7 @@ public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean disca
         if (riichi && legal.stream().anyMatch(action -> action.type() == NUKI
             || !noCalls && action.type() == CLOSED_KAN)) return -1;
         for (int i = 0; i < legal.size(); i++)
-            if (legal.get(i).type() == DISCARD && legal.get(i).tiles().getFirst() == drawn) return i;
+            if (legal.get(i).type() == DISCARD && legal.get(i).tiles().get(0) == drawn) return i;
         return -1;
     }
 }
