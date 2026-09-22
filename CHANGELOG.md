@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.3] - 2026-09-22
+
 ### Added
 
 - Room hand visibility choices: open hands, visible to all players, visible to riichi players, and visible only to self.
@@ -216,7 +218,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.2...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.3...HEAD
+[0.5.3]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.3
 [0.5.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.2
 [0.5.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.1
 [0.5.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.0
