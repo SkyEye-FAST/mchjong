@@ -81,10 +81,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Stool interactions ignore right-clicks while sneaking, preventing accidental sitting when placing blocks or handling items near tables.
+- Stool interactions ignore right-clicks while sneaking, preventing accidental sitting when placing blocks or handling items near tables ([#1]).
 - Wall break opening orientation follows dealer position and dice throw direction.
 - Pregame wind drawing lotteries generate uniform seat distributions without correlation bias.
-- Mod display name corrected from MCjhong to MChjong across manifests, documentation, and translations.
+- Mod display name corrected from MCjhong to MChjong across manifests, documentation, and translations ([#2]).
 
 ## [0.3.2] - 2026-09-18
 
@@ -192,3 +192,5 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 [0.3.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.3.0
 [0.2.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.2.0
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
+[#1]: https://github.com/SkyEye-FAST/mchjong/issues/1
+[#2]: https://github.com/SkyEye-FAST/mchjong/issues/2
