@@ -69,6 +69,13 @@ tasks.named('runSmokeClient') {
 configurations { embeddedEngine }
 dependencies {
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
+    modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
+    modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
+    def browser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+    if (!(browser in ['none', 'jei', 'emi'])) throw new GradleException('recipeBrowser must be none, jei or emi')
+    if (browser == 'jei') modRuntimeOnly "mezz.jei:jei-${minecraft_version}-forge:${jei_version}"
+    if (browser == 'emi') modRuntimeOnly "dev.emi:emi-forge:${emi_version}"
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
 }
@@ -76,8 +83,6 @@ dependencies {
 sourceSets.main {
     java.srcDir '../common/src/main/java'
     java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
-    java.exclude 'top/skyeyefast/mchjong/compat/jei/**'
-    java.exclude 'top/skyeyefast/mchjong/compat/emi/**'
     java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
@@ -93,7 +98,8 @@ mixin {
 
 processResources {
     dependsOn ':art:generateAssets', ':art:generateData'
-    def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version]
+    def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version,
+        jei_version: jei_version, emi_version: emi_version]
     inputs.properties properties
     filesMatching('META-INF/mods.toml') { expand properties }
     filesMatching(['mchjong.client.mixins.json', 'mchjong.data.mixins.json']) {

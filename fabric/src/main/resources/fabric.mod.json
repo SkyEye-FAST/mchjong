@@ -16,12 +16,22 @@
     ],
     "client": [
       "top.skyeyefast.mchjong.MchjongClient"
+    ],
+    "jei_mod_plugin": [
+      "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin"
+    ],
+    "emi": [
+      "top.skyeyefast.mchjong.compat.emi.MahjongEmiPlugin"
     ]
   },
   "mixins": [
     "mchjong.data.mixins.json",
     "mchjong.client.mixins.json"
   ],
+  "suggests": {
+    "jei": "${jei_version}",
+    "emi": "${emi_version}"
+  },
   "depends": {
     "fabricloader": ">=${fabric_loader_min_version}",
     "minecraft": "${minecraft_version}",

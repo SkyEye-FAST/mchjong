@@ -32,13 +32,12 @@ public final class MahjongJeiPlugin implements IModPlugin {
     private static IJeiRuntime runtime;
 
     public static IJeiRuntime runtime() { return runtime; }
-    // NeoForge discovers plugin IDs before block registration opens.
-    @Override public ResourceLocation getPluginUid() { return ResourceLocation.fromNamespaceAndPath("mchjong", "supplies"); }
+    @Override public ResourceLocation getPluginUid() { return new ResourceLocation("mchjong", "supplies"); }
 
     @Override public void registerItemSubtypes(ISubtypeRegistration registration) {
         var interpreter = new ISubtypeInterpreter<ItemStack>() {
             @Override public Object getSubtypeData(ItemStack stack, UidContext context) { return SupplySubtype.of(stack); }
-            // Required by this JEI API; current component identity uses getSubtypeData exclusively.
+            // Required by this JEI API; stack identity uses getSubtypeData exclusively.
             @SuppressWarnings("deprecation")
             @Override public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) { return ""; }
         };
@@ -65,7 +64,7 @@ public final class MahjongJeiPlugin implements IModPlugin {
         runtime = available;
         var recipes = runtime.getRecipeManager();
         recipes.hideRecipes(RecipeTypes.CRAFTING, recipes.createRecipeLookup(RecipeTypes.CRAFTING).get()
-            .filter(holder -> holder.value() instanceof SupplyCraftingRecipe).toList());
+            .filter(recipe -> recipe instanceof SupplyCraftingRecipe).toList());
     }
 
     @Override public void onRuntimeUnavailable() { runtime = null; }
