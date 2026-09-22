@@ -114,11 +114,11 @@ jobs:
           version="${{ steps.version.outputs.version }}"
 
           gh release create "${GITHUB_REF_NAME}" \
-            "fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${version}.jar#Fabric / Quilt" \
-            "forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${version}.jar#Forge" \
-            "neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${version}.jar#NeoForge" \
-            "compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${version}.jar#Minecraft 1.20.1 Fabric / Quilt" \
-            "compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${version}.jar#Minecraft 1.20.1 Forge" \
+            "fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} Fabric / Quilt" \
+            "forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} Forge" \
+            "neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} NeoForge" \
+            "compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${version}.jar#1.20.1 Fabric / Quilt" \
+            "compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${version}.jar#1.20.1 Forge" \
             --verify-tag \
             --notes-file release-notes.md \
             --title "mchjong ${GITHUB_REF_NAME}"
