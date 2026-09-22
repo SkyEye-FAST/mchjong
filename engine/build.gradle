@@ -41,6 +41,7 @@ tasks.register('botCompare', JavaExec) {
 }
 
 shadowJar {
+    addMultiReleaseAttribute = false
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     archiveClassifier = ''
     relocate 'mahjongutils', 'top.skyeyefast.mchjong.internal.mahjongutils'
