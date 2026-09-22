@@ -50,7 +50,7 @@ public final class TableSettings {
     public static final double MAX_CAMERA_HEIGHT = 2.5;
     public static final double CAMERA_TARGET_Z = .20;
     public double cameraDistance = TableGeometry.STOOL_DISTANCE;
-    public double cameraHeight = 2.20;
+    public double cameraHeight = 2.10;
     private transient SeatedCameraState camera;
 
     public SeatedCameraState camera() {

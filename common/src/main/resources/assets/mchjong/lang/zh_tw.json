@@ -502,7 +502,7 @@
   "ui.mchjong.before": "結算前",
   "ui.mchjong.bot": "電腦 %s",
   "ui.mchjong.bot_short": "電腦 %s",
-  "ui.mchjong.camera_help": "按住 %s：觀察；右拖：環視；滾輪：調整距離；Shift＋右拖：平移；方向鍵：微調；%s：復位",
+  "ui.mchjong.camera_help": "按住 %s：觀察；右拖：環視；滾輪：距離；Shift＋滾輪：高度；Shift＋右拖：平移；方向鍵：微調；%s：復位",
   "ui.mchjong.cancel_riichi": "取消立直",
   "ui.mchjong.center_short": "回正",
   "ui.mchjong.center_view": "視角歸位",

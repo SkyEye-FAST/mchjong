@@ -24,6 +24,30 @@ class SeatedCameraStateTest {
         assertEquals(TableSettings.MAX_CAMERA_DISTANCE, camera.distance());
     }
 
+    @Test void heightAdjustmentPreservesLookAndDistanceAndRespectsLimits() {
+        var camera = new SeatedCameraState(2, 2.1);
+        camera.look(25, -12);
+        float pitch = camera.pitch();
+        camera.raise(2);
+        assertEquals(2.2, camera.localEye().y, 1e-6);
+        assertEquals(2, camera.distance());
+        assertEquals(pitch, camera.pitch());
+        for (int seat = 0; seat < 4; seat++) {
+            assertEquals(2.2, camera.eye(seat).y, 1e-6);
+            assertEquals(TableGeometry.yaw(seat) + 25, camera.yaw(seat), 1e-6);
+        }
+        camera.raise(-100);
+        assertEquals(TableSettings.MIN_CAMERA_HEIGHT, camera.localEye().y);
+        camera.raise(100);
+        assertEquals(TableSettings.MAX_CAMERA_HEIGHT, camera.localEye().y);
+        camera.reset(2, 2.1);
+        for (int i = 0; i < 30; i++) camera.tick(true);
+        camera.raise(1);
+        assertEquals(2.12, camera.localEye().y, 1e-6);
+        camera.reset(2, 2.1);
+        assertEquals(new Vec3(0, 2.1, 2), camera.localEye());
+    }
+
     @Test void inspectSmoothlyCombinesDollyAndFovAndReducesBothLookAxes() {
         var camera = new SeatedCameraState(2, 2.2);
         for (double fov : new double[]{30, 70, 110}) {

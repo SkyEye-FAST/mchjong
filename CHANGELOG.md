@@ -9,12 +9,14 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Shift-wheel height adjustment for the seated camera.
 - Resource packs can add and override tile-face presets, with namespaced identities retained on printed tiles and synchronized tables.
 - Transparent pattern layers for tile backs and table cloths, shared by world, item and immersive rendering.
 - Resource-pack JSON models and textures for riichi deposits.
 
 ### Changed
 
+- Slightly lower default seated camera height for a closer table-level view.
 - Riichi stick icons and physical deposits share a blue, white-dot design matching the 1,000-point stick.
 
 ## [0.5.3] - 2026-09-22

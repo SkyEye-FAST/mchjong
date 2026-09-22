@@ -502,7 +502,7 @@
   "ui.mchjong.before": "精算前",
   "ui.mchjong.bot": "CPU %s",
   "ui.mchjong.bot_short": "CPU %s",
-  "ui.mchjong.camera_help": "%s長押し：観察、右ドラッグ：見回す、ホイール：距離、Shift＋右ドラッグ：平行移動、矢印：微調整、%s：リセット",
+  "ui.mchjong.camera_help": "%s長押し：観察、右ドラッグ：見回す、ホイール：距離、Shift＋ホイール：高さ、Shift＋右ドラッグ：平行移動、矢印：微調整、%s：リセット",
   "ui.mchjong.cancel_riichi": "立直を取り消す",
   "ui.mchjong.center_short": "視点戻す",
   "ui.mchjong.center_view": "視点を戻す",

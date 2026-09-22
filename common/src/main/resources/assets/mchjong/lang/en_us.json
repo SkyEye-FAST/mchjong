@@ -502,7 +502,7 @@
   "ui.mchjong.before": "Before",
   "ui.mchjong.bot": "Bot %s",
   "ui.mchjong.bot_short": "Bot %s",
-  "ui.mchjong.camera_help": "Hold %s: inspect; Right-drag: look; Wheel: distance; Shift-right-drag: pan; Arrows: fine look; %s: reset",
+  "ui.mchjong.camera_help": "Hold %s: inspect; Right-drag: look; Wheel: distance; Shift-wheel: height; Shift-right-drag: pan; Arrows: fine look; %s: reset",
   "ui.mchjong.cancel_riichi": "Cancel riichi",
   "ui.mchjong.center_short": "Center",
   "ui.mchjong.center_view": "Center view",

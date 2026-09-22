@@ -41,6 +41,10 @@ public final class SeatedCameraState {
         distance = Math.clamp(distance - steps * .12 * sensitivity(),
             TableSettings.MIN_CAMERA_DISTANCE, TableSettings.MAX_CAMERA_DISTANCE);
     }
+    public void raise(double steps) {
+        height = Math.clamp(height + steps * .05 * sensitivity(),
+            TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
+    }
     public void tick(boolean inspecting) {
         previousInspect = inspect;
         inspect += ((inspecting ? 1 : 0) - inspect) * .35;

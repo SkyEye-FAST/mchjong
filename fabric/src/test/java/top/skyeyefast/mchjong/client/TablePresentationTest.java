@@ -90,7 +90,7 @@ class TablePresentationTest {
     @Test void defaultViewLooksOverTheHandFromTheStoolAndAimsAtTheFelt() {
         var settings = new TableSettings();
         assertEquals(TableGeometry.STOOL_DISTANCE, settings.cameraDistance);
-        assertEquals(2.20, settings.cameraHeight);
+        assertEquals(2.10, settings.cameraHeight);
         double pitch = Math.toRadians(settings.cameraPitch());
         assertEquals(TableGeometry.FELT_Y, settings.cameraHeight
             - Math.tan(pitch) * (settings.cameraDistance - TableSettings.CAMERA_TARGET_Z), 1e-6);

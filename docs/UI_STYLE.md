@@ -307,7 +307,7 @@ density rather than stretching the whole furniture mesh. Camera limits and
 defaults must keep the compact table and its right corner usable from the seated view.
 
 The default first-person seated camera is 2 blocks from the center and
-2.20 blocks above the table's base, aiming at the felt 0.20 blocks toward the
+2.10 blocks above the table's base, aiming at the felt 0.20 blocks toward the
 viewer so the hand does not obscure the rivers and central display. It retains
 the same position with the controls open or closed, and permits free looking.
 Native first-person picking uses that same eye position.
@@ -318,7 +318,9 @@ Holding the Inspect binding (C by default) smoothly moves the eye 0.28 blocks to
 the table and narrows the FOV by a 1.45 tangent ratio. Rendering and picking share
 the sampled pose. Inspect reduces mouse and arrow sensitivity to 40% at full progress.
 Right-drag adjusts yaw and pitch after a four-logical-pixel deadzone; the wheel changes
-distance in 0.12-block steps. Shift-right-drag pans the target along the seat-local
+distance in 0.12-block steps. Shift-wheel raises or lowers the eye in 0.05-block
+steps, preserving the look direction and bounded by the personal height slider's
+1.35–2.50-block range. Shift-right-drag pans the target along the seat-local
 table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitch
 at 20 degrees per second. Home restores distance, height, direction, target and
 inspect progress. Minecraft controls third-person views. Camera sliders preserve

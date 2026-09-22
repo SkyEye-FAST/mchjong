@@ -1377,7 +1377,9 @@ public final class TableScreen extends Screen {
             y = canvasY(y);
         }
         if (!cameraEnabled() || overWidget(x, y)) return super.mouseScrolled(x, y, horizontal, vertical);
-        TableSettings.get().camera().scroll(vertical);
+        var camera = TableSettings.get().camera();
+        if (hasShiftDown()) camera.raise(vertical);
+        else camera.scroll(vertical);
         return true;
     }
 
