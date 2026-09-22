@@ -13,7 +13,7 @@ three or four players. It supports both Fabric and NeoForge.
 - Craftable red dora dye and box-selected no-red, three-red or four-red sets
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
-- Single-screen settlement panels with winning hands, yaku, indicators, and point changes
+- Settlement panels with winning hands, yaku, indicators, point changes and timed progression back to the room lobby
 - Unanimous table-exit voting, transferable room ownership and per-room hand visibility
 - Wind drawing on ordinary tables, randomized automatic-table seating and verified physical seat assignments
 - Individually configurable Easy, Normal and Hard bots for vacant pregame seats

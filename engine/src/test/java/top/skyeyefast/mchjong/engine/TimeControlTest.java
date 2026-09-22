@@ -69,7 +69,7 @@ class TimeControlTest {
         assertEquals(40, game.reserveTicks[0]);
     }
 
-    @Test void resultsDoNotCountDownAndReloadPreservesTheRemainingTime() {
+    @Test void settlementCountsDownWithoutChargingClocksAndReloadPreservesTime() {
         Game game = game(2, 1);
         tick(game, Game.DEAL_TICKS + 27);
         Game restored = new Gson().fromJson(new Gson().toJson(game), Game.class);
@@ -78,10 +78,31 @@ class TimeControlTest {
         restored.validate();
         Settlement.abort(restored, "nine_terminals");
         int[] reserve = restored.reserveTicks.clone();
-        tick(restored, 1000);
+        tick(restored, 99);
+        restored = new Gson().fromJson(new Gson().toJson(restored), Game.class);
+        assertEquals(101, restored.roomView().settlementTicks());
+        tick(restored, 100);
         assertArrayEquals(reserve, restored.reserveTicks);
         assertEquals(Game.Phase.HAND_END, restored.phase());
         assertTrue(restored.view(null).clocks().stream().noneMatch(TimeControl.Clock::active));
+        restored.tick();
+        assertEquals(Game.Phase.TURN, restored.phase());
+        assertEquals(0, restored.roomView().settlementTicks());
+    }
+
+    @Test void manualCollectionCannotSkipSettlementAndUncollectedHandsStillAdvance() {
+        Game game = game(2, 1);
+        game.manual = true;
+        Settlement.abort(game, "nine_terminals");
+        for (var player : game.players) assertTrue(game.act(player.id, game.decision, 0));
+        assertEquals(Game.Phase.HAND_END, game.phase());
+        tick(game, Game.SETTLEMENT_TICKS - 1);
+        assertEquals(Game.Phase.HAND_END, game.phase());
+        game.tick();
+        assertEquals(Game.Phase.SHUFFLE, game.phase());
+        Settlement.abort(game, "nine_terminals");
+        tick(game, Game.SETTLEMENT_TICKS);
+        assertEquals(Game.Phase.SHUFFLE, game.phase());
     }
 
     @Test void onlyLobbyHostCanConfigureAndChangingSettingsClearsReadiness() {

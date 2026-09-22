@@ -20,6 +20,7 @@ public final class Game {
     public static final int DEAL_TICKS = 56;
     public static final int AUTO_ACTION_TICKS = 12;
     public static final int AWAY_GRACE_TICKS = 5 * 20;
+    public static final int SETTLEMENT_TICKS = 10 * 20;
     public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     UUID tableId;
@@ -170,7 +171,12 @@ public final class Game {
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot ? PlayerPresence.SEATED : player.presence,
                 seating.winds[i], player.bot ? player.botDifficulty : null));
         }
-        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats);
+        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks());
+    }
+
+    private int settlementTicks() {
+        int duration = phase == Phase.MATCH_END ? SETTLEMENT_TICKS * 2 : phase == Phase.HAND_END ? SETTLEMENT_TICKS : 0;
+        return Math.max(0, duration - Math.max(0, age));
     }
 
     /** Only the world adapter supplies actual mounts and live connections. Clients cannot confirm presence. */
@@ -212,7 +218,12 @@ public final class Game {
 
     public boolean requestExit(UUID actor) {
         int seat = seatOf(actor);
-        if (seat < 0 || players[seat].bot || exitVote != null) return false;
+        if (seat < 0 || players[seat].bot || exitVote != null || phase == Phase.MATCH_END) return false;
+        if (phase == Phase.LOBBY) {
+            if (!isHost(actor)) return false;
+            closeMatch();
+            return true;
+        }
         int humans = 0;
         for (int i = 0; i < rules.players(); i++) if (players[i].id != null && !players[i].bot) humans++;
         if (humans == 1) { closeMatch(); return true; }
@@ -425,7 +436,7 @@ public final class Game {
         }
         if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            return players[seat].ready ? List.of() : List.of(new Action(NEXT));
+            return manual && !players[seat].ready ? List.of(new Action(NEXT)) : List.of();
         }
         if (phase == Phase.REACTION && replies[seat] >= 0) return List.of();
         return options.get(seat);
@@ -477,21 +488,6 @@ public final class Game {
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             players[seat].ready = true;
             revision++;
-            if (allReady()) {
-                if (phase == Phase.MATCH_END) {
-                    var roster = players.clone();
-                    UUID host = hostId;
-                    closeMatch();
-                    players = roster;
-                    hostId = host;
-                    for (var player : players) { player.resetHand(); player.points = rules.startingPoints(); }
-                }
-                else {
-                    if (!dealerRepeats) { dealer = next(dealer); round++; }
-                    honba = drawResult || dealerRepeats ? honba + 1 : 0;
-                    startHand();
-                }
-            }
             return true;
         }
         if (recorder != null) recorder.decision(seat, legal, actionIndex);
@@ -521,6 +517,21 @@ public final class Game {
             default -> throw new IllegalStateException("Invalid turn action");
         }
         return true;
+    }
+
+    private void finishSettlement() {
+        if (phase == Phase.MATCH_END) {
+            var roster = players.clone();
+            UUID host = hostId;
+            closeMatch();
+            players = roster;
+            hostId = host;
+            for (var player : players) { player.resetHand(); player.points = rules.startingPoints(); }
+        } else {
+            if (!dealerRepeats) { dealer = next(dealer); round++; }
+            honba = drawResult || dealerRepeats ? honba + 1 : 0;
+            startHand();
+        }
     }
 
     private boolean allReady() {
@@ -813,6 +824,11 @@ public final class Game {
         }
         age++;
         if (age <= 0) return;
+        if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
+            if (settlementTicks() == 0) finishSettlement();
+            else if (age % 20 == 0) revision++;
+            return;
+        }
         long token = decision;
         // Charge every eligible seat before processing any response, including bot responses.
         // Otherwise a bot acting first would grant all humans a free tick.

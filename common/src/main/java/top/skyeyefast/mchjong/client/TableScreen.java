@@ -58,6 +58,7 @@ public final class TableScreen extends Screen {
     private Game.Phase lastPhase;
     private TableResults.Page resultPage = TableResults.Page.HAND;
     private long resultStarted;
+    private boolean finalSummaryShown;
     private Component informationTooltip;
     private final TableHud information = new TableHud();
     private int actionTop;
@@ -314,6 +315,13 @@ public final class TableScreen extends Screen {
             resultsExpanded = true;
             resultPage = TableResults.Page.HAND;
             resultStarted = Util.getMillis();
+            finalSummaryShown = false;
+        }
+        if (view.phase() == Game.Phase.MATCH_END && room() != null
+            && room().settlementTicks() <= Game.SETTLEMENT_TICKS && !finalSummaryShown) {
+            resultPage = TableResults.Page.MATCH;
+            resultsExpanded = true;
+            finalSummaryShown = true;
         }
         int selectedWinner = results == null || newResult ? 0 : results.selectedWinner();
         results = null;
@@ -342,7 +350,7 @@ public final class TableScreen extends Screen {
         List<Integer> choices = new ArrayList<>();
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
-            if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI
+            if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI || action.type() == Action.Type.NEXT
                 || !immersive && TableHandling.physical(view, action)) continue;
             choices.add(i);
         }
@@ -389,8 +397,7 @@ public final class TableScreen extends Screen {
         }
         for (int index : choices) {
             Action action = view.actions().get(index);
-            Component label = Component.translatable(action.type() == Action.Type.NEXT && view.phase() == Game.Phase.MATCH_END
-                    ? "ui.mchjong.new_match" : action.translationKey());
+            Component label = Component.translatable(action.translationKey());
             final TableView snapshot = view;
             CalloutButton button = new CalloutButton(startX + slot % columns * (boxWidth + buttonGap),
                 actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight, label, action, index,
@@ -515,6 +522,37 @@ public final class TableScreen extends Screen {
     }
 
     private void buildToolbar(TableView view) {
+        if (view.phase() == Game.Phase.LOBBY) {
+            int cell = (width - 28) / 4;
+            String[] labels = {"replay.mchjong.title", "settings.mchjong.scopes", "action.mchjong.leave_room", "room.mchjong.dissolve"};
+            int leave = TableSeatsScreen.find(view, Action.Type.LEAVE_ROOM, List.of());
+            Runnable[] actions = {() -> ClientReplays.list(0, "", false),
+                () -> minecraft.setScreen(new TableOptionsScreen(this)), () -> send(view, leave),
+                () -> control(view, TableControlPayload.Operation.REQUEST_EXIT, view.decision(), false)};
+            for (int i = 0; i < labels.length; i++) {
+                int index = i;
+                var button = MahjongButton.create(Component.translatable(labels[i]), ignored -> actions[index].run())
+                    .bounds(8 + i * (cell + 4), 8, cell, 20)
+                    .tooltip(Tooltip.create(Component.translatable(labels[i]))).build();
+                if (i == 2) button.active = leave >= 0;
+                if (i == 3) button.active = room() != null && view.viewerSeat() >= 0 && view.viewerSeat() == room().host() && view.exitVote() == null;
+                addRenderableWidget(button);
+            }
+            return;
+        }
+        if (TableResults.available(view)) {
+            int ticks = room() == null ? 0 : room().settlementTicks();
+            boolean standings = view.phase() == Game.Phase.MATCH_END && ticks > Game.SETTLEMENT_TICKS;
+            int seconds = (Math.max(0, ticks - (standings ? Game.SETTLEMENT_TICKS : 0)) + 19) / 20;
+            String key = view.phase() == Game.Phase.HAND_END ? "ui.mchjong.next_hand_in"
+                : standings ? "ui.mchjong.final_scores_in" : "ui.mchjong.lobby_in";
+            int scale = immersive ? 2 : 1;
+            var countdown = MahjongButton.create(Component.translatable(key, seconds), ignored -> {})
+                .bounds(10 * scale, 8 * scale, uiWidth() - 20 * scale, 20 * scale).build().textScale(scale).selected(true);
+            countdown.active = false;
+            addRenderableWidget(countdown);
+            return;
+        }
         int layoutWidth = uiWidth();
         int right = layoutWidth - (immersive ? 20 : 8);
         Component exitLabel = Component.translatable("ui.mchjong.exit");
@@ -589,66 +627,8 @@ public final class TableScreen extends Screen {
             buildSeating(view, room);
             return;
         }
-        int span = Math.min(400, width - 20), left = (width - span) / 2;
-        int half = (span - 4) / 2;
-        int bodyTop = height < 300 ? 82 : 94;
-        boolean host = view.actions().stream().anyMatch(action -> action.type() == Action.Type.CHANGE_RULE);
-        for (int players : new int[]{4, 3}) {
-            RuleSet rule = view.rules().preset().tenhou() ? players == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
-                : players == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;
-            int action = ruleAction(view, rule);
-            var config = view.rules().withPreset(rule);
-            var mode = MahjongButton.create(Component.translatable("ui.mchjong.players." + players), ignored -> send(view, action))
-                .bounds(left + (4 - players) * (half + 4), bodyTop, half, 20)
-                .tooltip(Tooltip.create(Component.translatable(canSupplyReds(config.sanma(), config.redFives())
-                    ? "ui.mchjong.players." + players : "rules.mchjong.insufficient_reds"))).build();
-            mode.active = host && view.rules().players() != players && action >= 0 && canSupplyReds(config.sanma(), config.redFives());
-            mode.selected(view.rules().players() == players);
-            addRenderableWidget(mode);
-        }
-        var presets = java.util.Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == view.rules().players()).toList();
-        int columns = Math.min(3, presets.size());
-        int presetWidth = (span - (columns - 1) * 4) / columns;
-        for (int i = 0; i < presets.size(); i++) {
-            RuleSet rule = presets.get(i);
-            int action = ruleAction(view, rule);
-            var config = view.rules().withPreset(rule);
-            boolean available = canSupplyReds(config.sanma(), config.redFives());
-            var preset = MahjongButton.create(Component.translatable(rule.presetKey()), ignored -> send(view, action))
-                .bounds(left + i % columns * (presetWidth + 4), bodyTop + 24 + i / columns * 24, presetWidth, 20)
-                .tooltip(Tooltip.create(Component.translatable(available ? rule.translationKey() : "rules.mchjong.insufficient_reds"))).build();
-            preset.active = host && action >= 0 && available;
-            preset.selected(!view.rules().custom() && view.rules().preset() == rule);
-            addRenderableWidget(preset);
-        }
-        int y = bodyTop + 24 + (presets.size() + columns - 1) / columns * 24;
-        addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.title"), ignored ->
-            minecraft.setScreen(new TableRulesScreen(this, view)))
-            .bounds(left + half + 4, y, half, 20).build().selected(view.rules().custom()));
-        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.scopes"), ignored ->
-            minecraft.setScreen(new TableOptionsScreen(this))).bounds(left, y, half, 20).build());
-        y += 32;
-        int primary = TableSeatsScreen.find(view, Action.Type.BEGIN_SEATING, List.of());
-        if (primary < 0) primary = TableSeatsScreen.find(view, Action.Type.FILL_BOTS, List.of());
-        for (int i = 0; i < view.actions().size(); i++) {
-            var action = view.actions().get(i);
-            if (i != primary) continue;
-            int index = i;
-            int buttonWidth = Math.min(260, span);
-            var button = new CalloutButton((width - buttonWidth) / 2, y, buttonWidth, 26,
-                Component.translatable(action.type() == Action.Type.FILL_BOTS ? "room.mchjong.start_bots"
-                    : automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual"),
-                action, i, () -> send(view, index));
-            button.primary();
-            addRenderableWidget(button); callouts.add(button);
-        }
-        if (primary < 0 && view.viewerSeat() >= 0 && view.exitVote() == null) {
-            var waiting = MahjongButton.create(Component.translatable("room.mchjong.wait_host"), ignored -> {})
-                .bounds(left, y, span, 26).build();
-            waiting.active = false;
-            addRenderableWidget(waiting);
-        }
-        actionTop = y;
+        TableLobby.controls(this, view, width, height).forEach(this::addRenderableWidget);
+        actionTop = TableLobby.primaryY(height);
     }
 
     boolean automatic() {
@@ -726,7 +706,7 @@ public final class TableScreen extends Screen {
         actionTop = actionY;
     }
 
-    private static int ruleAction(TableView view, RuleSet rule) {
+    static int ruleAction(TableView view, RuleSet rule) {
         for (int i = 0; i < view.actions().size(); i++) {
             var action = view.actions().get(i);
             if (action.type() == Action.Type.CHANGE_RULE && action.tiles().getFirst() == rule.ordinal()) return i;
@@ -944,7 +924,7 @@ public final class TableScreen extends Screen {
         }
         if (view.phase() == Game.Phase.LOBBY && room() != null
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
-            int span = Math.min(400, layoutWidth - 20), left = (layoutWidth - span) / 2;
+            int span = Math.min(440, layoutWidth - 20), left = (layoutWidth - span) / 2;
             int top = 78;
             MahjongUi.panel(graphics, left - 4, top, span + 8, actionTop + 32 - top);
         }
@@ -955,7 +935,9 @@ public final class TableScreen extends Screen {
         }
         if (!TableResults.available(view) || immersive && results == null)
             information.render(font, graphics, view, room(), layoutWidth, facePreset(), board);
-        if (view.phase() == Game.Phase.LOBBY && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
+        if (view.phase() == Game.Phase.LOBBY && room() != null
+            && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
+            && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), layoutWidth - 24);
             int y = layoutHeight - 6 - lines.size() * font.lineHeight;
             for (var line : lines) {
@@ -1008,15 +990,6 @@ public final class TableScreen extends Screen {
         }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack());
         updateHints(view);
         super.render(graphics, drawMouseX, drawMouseY, partialTick);
-        if (TableResults.available(view)) {
-            long ready = view.seats().stream().filter(TableView.Seat::ready).count();
-            int scale = immersive ? 2 : 1;
-            graphics.pose().pushPose();
-            graphics.pose().translate(10, 14, 0);
-            graphics.pose().scale(scale, scale, 1);
-            graphics.drawString(font, Component.translatable("ui.mchjong.ready_count", ready, view.seats().size()), 0, 0, 0xffd1e4d9);
-            graphics.pose().popPose();
-        }
         if (dealing()) renderStatus(graphics, Component.translatable("ui.mchjong.dealing"),
             actionTop - 14 * statusScale, MahjongUi.ACCENT);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {

@@ -228,9 +228,16 @@ class RoomSeatingTest {
         act(game, id(2), Action.Type.BEGIN_SEATING);
         arriveAndReady(game);
         var roster = Arrays.stream(game.players).map(player -> player.id).toList();
-        game.phase = Game.Phase.MATCH_END;
+        game.newDecision(Game.Phase.MATCH_END);
         for (var player : game.players) player.ready = false;
-        for (UUID human : roster) act(game, human, Action.Type.NEXT);
+        for (UUID human : roster) assertTrue(game.view(human).actions().isEmpty());
+        assertFalse(game.requestExit(id(2)));
+        for (int tick = 0; tick < Game.SETTLEMENT_TICKS; tick++) game.tick();
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        for (int tick = 0; tick < Game.SETTLEMENT_TICKS - 1; tick++) game.tick();
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        game.tick();
         assertEquals(Game.Phase.LOBBY, game.phase());
         assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
         assertEquals(roster, Arrays.stream(game.players).map(player -> player.id).toList());

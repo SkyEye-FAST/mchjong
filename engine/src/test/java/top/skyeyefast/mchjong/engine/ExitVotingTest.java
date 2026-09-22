@@ -16,7 +16,7 @@ class ExitVotingTest {
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
     void singleHumanExitsEveryMatchStageWithBotsAndCanStartAgain(RuleSet rules) {
         for (var phase : Game.Phase.values()) {
-            if (phase == Game.Phase.LOBBY) continue;
+            if (phase == Game.Phase.LOBBY || phase == Game.Phase.MATCH_END) continue;
             var game = new Game(UUID.randomUUID(), rules, 71);
             assertTrue(game.join(HOST, "Host", 0));
             assertTrue(game.configureHandVisibility(HOST, game.decision, HandVisibility.OPEN));
@@ -105,20 +105,19 @@ class ExitVotingTest {
         game.validate();
     }
 
-    @Test void lobbyDismountCancelsTheVoteAndLeavesTheRoom() {
+    @Test void lobbyGuestsLeaveIndividuallyAndOnlyHostCanDissolve() {
         var game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, 93);
         game.join(HOST, "Host", 0);
         game.join(GUEST, "Guest", 1);
-        assertTrue(game.requestExit(HOST));
-        var vote = game.view(HOST).exitVote();
-        assertNotNull(vote);
+        assertFalse(game.requestExit(GUEST));
         game.unseat(GUEST);
         assertEquals(-1, game.seatOf(GUEST));
         assertNull(game.view(HOST).exitVote());
         assertTrue(game.join(UUID.randomUUID(), "Late join", 2));
         assertTrue(game.configureClock(HOST, new TimeControl(30, 10)));
         assertFalse(game.transferHost(HOST, GUEST));
-        assertFalse(game.answerExit(GUEST, vote.id(), true));
+        assertTrue(game.requestExit(HOST));
+        assertTrue(game.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
         game.validate();
     }
 

@@ -135,6 +135,10 @@ class GameLifecycleTest {
                 assertEquals(before, JSON.toJson(game.view(null)));
                 assertPrivateViews(game);
             }
+            if (game.phase() == Game.Phase.HAND_END) {
+                for (int tick = 0; tick < Game.SETTLEMENT_TICKS; tick++) game.tick();
+                continue;
+            }
             boolean acted = false;
             for (int seat = 0; seat < rules.players(); seat++) {
                 UUID id = new UUID(1, seat + 1);

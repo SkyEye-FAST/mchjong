@@ -1,6 +1,9 @@
 # Rooms, permissions and settings
 
-The table's Settings button groups controls into World, Room and Personal.
+The lobby directly exposes player count, rule preset, rule details, hand visibility,
+time allowances, invitations and participants. The primary button fills empty seats
+and starts seat preparation. Leave room and the host's Close room control stay
+in the top toolbar. The Settings button groups additional controls into World, Room and Personal.
 Administrators can edit world values in the World tab; other players can inspect them. Personal
 display, input, camera and audio settings remain local to each player. Automatic
 play preferences belong to the individual seated player and remain accessible
@@ -33,7 +36,7 @@ rules or readiness.
 
 ## Hand visibility
 
-The host chooses Hand visibility in Settings → Room before play. The choice is
+The host chooses Hand visibility directly in the lobby before play. The choice is
 saved with that table, and changing it clears readiness:
 
 - **Open hands:** everyone sees the hands laid face up.
@@ -108,7 +111,7 @@ or a claim of a benchmarked win rate.
 
 ## Invitations
 
-Use Settings → Room → Invite player or `/mchjong invite <player>`, with an online
+Use Invite player in the lobby or `/mchjong invite <player>`, with an online
 player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.
@@ -122,6 +125,19 @@ whether teleportation is enabled; after travelling, sit on a free stool to join.
 Travel must have been offered in that invitation and must still be enabled when
 accepted. Enabling travel later does not silently change an older local-only
 invitation into a teleport. Arrival clears movement velocity and fall distance.
+
+## Settlement and returning to the lobby
+
+Each hand's settlement displays a server-controlled 10-second countdown before
+the next hand begins. At the end of a match, the hand settlement advances to final
+standings after 10 seconds; those standings remain for another 10 seconds before
+everyone returns to the lobby. Reopening the interface or reconnecting shows the
+remaining server time. Saved tables preserve that time.
+
+The lobby retains its members, host, bots and room settings. Players can leave
+individually, the host can dissolve the room, or the group can prepare fresh seats
+for another match. During a running match, ending play still uses unanimous human
+approval when more than one human participates.
 
 ## Verification
 
@@ -137,3 +153,8 @@ world commands, policy reload, revoked travel, safe arrival, single-use acceptan
 and joining by sitting. Each loader records its settings and participant screens
 at 320 x 240 logical pixels, alongside ordinary-table wind drawing and automatic
 seat assignment, under its `build/smoke/evidence` directory.
+
+Add `-PsmokeRoom=true` to either loader's client smoke command for focused lobby
+navigation, four-language normal/small screenshots, server settlement countdowns,
+automatic final standings, retained membership and leave/dissolve packets. Evidence
+is written under that loader's `build/smoke/room-evidence` directory.

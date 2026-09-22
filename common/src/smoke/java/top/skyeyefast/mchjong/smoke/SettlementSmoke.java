@@ -8,7 +8,6 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.HandScore;
 import top.skyeyefast.mchjong.engine.Meld;
@@ -27,10 +26,10 @@ final class SettlementSmoke {
             animations = top.skyeyefast.mchjong.client.TableSettings.get().animations;
             top.skyeyefast.mchjong.client.TableSettings.get().animations = true;
             fixture = fixture(table.clientView());
-            table.acceptView(fixture);
+            acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         }
-        table.acceptView(fixture);
+        acceptFixture(table, fixture);
         ticks++;
         if (ticks == 10) {
             checkBounds(client);
@@ -90,10 +89,10 @@ final class SettlementSmoke {
             fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
                 fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.NEXT)),
+                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
                 fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, fixture.autoPlay(), false, 1);
-            table.acceptView(fixture);
+            acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -138,6 +137,14 @@ final class SettlementSmoke {
         Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 
+    static void acceptFixture(MahjongTableBlockEntity table, TableView view) {
+        table.acceptView(view);
+        var room = table.clientRoom();
+        table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.invitationTeleport(),
+            room.seating(), room.availableWinds(), room.seats(), view.phase() == Game.Phase.MATCH_END
+                ? Game.SETTLEMENT_TICKS * 2 : view.phase() == Game.Phase.HAND_END ? Game.SETTLEMENT_TICKS : 0));
+    }
+
     static TableView fixture(TableView base) {
         var seats = new ArrayList<TableView.Seat>();
         int[] points = {49000, 33000, -7000, 25000};
@@ -159,7 +166,7 @@ final class SettlementSmoke {
             new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Richi", "Chanta", "Haku"), 1)));
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
-            List.of(new Action(Action.Type.NEXT)), wins, "ron",
+            List.of(), wins, "ron",
             List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
     }
 }

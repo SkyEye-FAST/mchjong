@@ -71,7 +71,8 @@ final class TableHud {
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
         if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining_short", view.remaining());
-        if (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty()) {
+        if (!lobby && !TableResults.available(view)
+            && (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty())) {
             int headerHeight = board != null ? 48 : lobby ? 21 : 26;
             MahjongUi.panel(graphics, 8, 7, headerWidth, headerHeight);
             text(font, graphics, title, 12, board != null ? 12 : 10, headerWidth - 8 - indicatorSpan, MahjongUi.TEXT);

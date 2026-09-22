@@ -80,6 +80,12 @@ the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
+The lobby keeps player count, presets, detailed rules, visibility, clock settings,
+invitations and participants on its first page. Keep leave and host dissolution
+distinct in the toolbar, with one prominent seat-preparation action below the settings.
+Settlement dedicates the top strip to the server's countdown and automatically
+opens final standings at the match's second stage. The roster returns to the lobby
+after that stage, with leave and dissolution available there.
 This responsive rule applies to ordinary screens and the seated overlay, not the
 immersive table. The immersive table is the fixed virtual canvas described below;
 small viewports scale that canvas uniformly rather than reflowing it.

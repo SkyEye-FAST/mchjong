@@ -39,7 +39,9 @@ public final class TableClientSmoke {
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
-    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly;
+    private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
+    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
+    private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
     private int step;
@@ -175,7 +177,7 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                if (seatingOnly || visibilityOnly) {
+                if (seatingOnly || visibilityOnly || roomOnly) {
                     step = 24; entered = ticks;
                     return;
                 }
@@ -248,6 +250,7 @@ public final class TableClientSmoke {
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
                 if (visibilityOnly) { step = 33; entered = ticks; return; }
+                if (roomOnly) { step = 34; entered = ticks; return; }
                 if (seatingOnly) {
                     var settings = TableSettings.get();
                     var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
@@ -271,8 +274,9 @@ public final class TableClientSmoke {
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining calls and continuing early abortive draws through the actual UI.
-                if (view.phase() == Game.Phase.REACTION || view.phase() == Game.Phase.HAND_END) {
-                    var key = view.phase() == Game.Phase.HAND_END ? "action.mchjong.next" : "action.mchjong.pass";
+                if (view.phase() == Game.Phase.HAND_END) return;
+                if (view.phase() == Game.Phase.REACTION) {
+                    var key = "action.mchjong.pass";
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                             && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()) && widget.active) {
                         client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
@@ -388,6 +392,10 @@ public final class TableClientSmoke {
             } else if (step == 33 && visibilitySmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Four room visibility modes, host proposals, four-language small-window controls, seated and unmounted spectator snapshots and normal/small world captures passed.\n");
                 LOG.info("MCHJONG_VISIBILITY_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 34 && roomSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Four-language lobby controls at normal and small sizes; direct room navigation and proposals; server settlement countdown, automatic final standings and retained lobby; leave and dissolve packets passed.\n");
+                LOG.info("MCHJONG_ROOM_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

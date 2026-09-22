@@ -256,8 +256,9 @@ An ordinary table offers these server-authorized actions:
 
 The gesture completes when released over its destination. Escape cancels a
 held gesture; Tab focuses the physical source and Enter or Space activates it.
-The server validates the current action and decision token. Human handling
-waits for player input; training bots perform their own steps. Normal decision
+The server validates the current action and decision token. Human preparation and drawing
+wait for player input; training bots perform their own steps. Settlement advances
+after 10 seconds, allowing collection gestures during that interval. Normal decision
 clocks govern discards and claim responses, starting with 30 seconds per decision
 and a 120-second reserve per hand. The lobby host can edit both allowances.
 After riichi, normal draws and drawn-tile discards advance after a short server-paced

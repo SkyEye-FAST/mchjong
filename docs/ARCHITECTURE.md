@@ -209,8 +209,15 @@ inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
 
-The lobby selects four-player or three-player mahjong before offering matching
-rule presets. `TableHud` keeps player summaries along the screen edge and puts
+`Game` advances hand settlement after 200 ticks. Match settlement uses two 200-tick
+stages: hand results and final standings, then restores the roster to the lobby.
+`RoomView.settlementTicks` synchronizes the remaining duration; the saved decision
+age preserves it across reloads. `TableScreen` switches to final standings at the
+stage boundary, including when opened partway through settlement.
+
+`TableLobby` groups player count, matching rule presets, rule details, visibility,
+clocks, invitations and participants on one page. The top toolbar offers individual
+leave and host-only dissolution. `TableHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
 the lower edge rather than covering the table center. The concealed run stays
 centered whenever the right-corner melds leave enough space; otherwise it shifts
@@ -231,8 +238,9 @@ current claimed-tile preview to remain visible, without changing game records.
 
 `TableControlPayload` carries administrative controls separately from tile-action
 indices. Both loaders use the same server authorization: loaded table, physical
-seat, table identity and current decision or vote token. One human can end the
-table immediately. Otherwise every human must agree, including reserved seats;
+seat, table identity and current decision or vote token. In the lobby only the host
+can dissolve the room. During play, one human can end the table immediately.
+Otherwise every human must agree, including reserved seats;
 bots, spectators, duplicate replies and stale ballots cannot supply approvals.
 Voting pauses play and its clocks without replenishing either time allowance.
 A rejection or 30-second timeout resumes play, followed by a 30-second ballot

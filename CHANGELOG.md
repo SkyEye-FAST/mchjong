@@ -12,6 +12,11 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Room hand visibility choices: open hands, visible to all players, visible to riichi players, and visible only to self.
 - Table-side spectators can see upright hand faces when the room permits all players to view them.
 
+### Changed
+
+- Lobby controls provide direct access to player count, rules, hand visibility, clocks, invitations and participants.
+- Settlement screens advance after a 10-second countdown; completed matches show final standings and return the group to the lobby, where players can leave or the host can dissolve the room.
+
 ### Fixed
 
 - Concealed tile fronts form a complete beveled shell without gaps around the face covering.

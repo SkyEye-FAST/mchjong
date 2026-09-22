@@ -57,7 +57,7 @@ final class TableInterfaceSmoke {
             client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
             client.options.guiScale().set(small ? 3 : 2);
             client.resizeDisplay();
-            table.acceptView(snapshot(state));
+            SettlementSmoke.acceptFixture(table, snapshot(state));
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
