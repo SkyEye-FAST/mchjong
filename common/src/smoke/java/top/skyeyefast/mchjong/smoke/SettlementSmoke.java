@@ -138,7 +138,7 @@ final class SettlementSmoke {
         Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 
-    private static TableView fixture(TableView base) {
+    static TableView fixture(TableView base) {
         var seats = new ArrayList<TableView.Seat>();
         int[] points = {49000, 33000, -7000, 25000};
         for (int seat = 0; seat < 4; seat++) {

@@ -17,6 +17,8 @@ final class BoxInterfaceSmoke {
     private String language;
     private CompletableFuture<Void> reload;
     private boolean printing;
+    private int reagentStage;
+    private CompletableFuture<Void> reagentUpdate;
 
     boolean tick(Minecraft client, Path output) {
         if (sample == -1) {
@@ -39,13 +41,26 @@ final class BoxInterfaceSmoke {
         require(client.screen.width == 320 && client.screen.height == 240, "Small-box fixture is not a 320x240 logical viewport");
         if (settled == 10) UiControlsSmoke.verify(client);
         var menu = (MahjongBoxMenu) client.player.containerMenu;
-        var preset = top.skyeyefast.mchjong.item.TileFacePreset.values()[sample % 2];
+        if (reagentStage > 0) return reagents(client, output, menu);
+        var choices = top.skyeyefast.mchjong.item.TileFacePreset.values();
+        var preset = choices[sample % choices.length];
         if (MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
             require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
                 + ", menu=" + menu.containerId + ", printing=" + printing);
             if (!printing) {
-                press(client, preset.translationKey());
+                var selector = client.screen.children().stream()
+                    .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
+                    .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
+                    .filter(child -> child.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+                        && text.getKey().equals("box.mchjong.preset_choice")).findFirst().orElseThrow();
+                String requested = Component.translatable("box.mchjong.preset_choice", Component.translatable(preset.translationKey())).getString();
+                for (int i = 0; i < choices.length && !selector.getMessage().getString().equals(requested); i++) {
+                    client.screen.setFocused(selector);
+                    selector.setFocused(true);
+                    client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                }
+                require(selector.getMessage().getString().equals(requested), "Preset selector did not cycle with keyboard");
                 require(menu.canEngrave(preset), "Preset fixture cannot be printed");
                 press(client, "box.mchjong.print");
                 printing = true;
@@ -63,6 +78,35 @@ final class BoxInterfaceSmoke {
         for (var slot : menu.slots)
             require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 < bounds.width() && slot.y + 16 < bounds.height(), "Slot outside the box panel");
         Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+        reagentStage = 1;
+        reagent(client, net.minecraft.world.item.ItemStack.EMPTY);
+        return false;
+    }
+
+    private boolean reagents(Minecraft client, Path output, MahjongBoxMenu menu) {
+        if (!reagentUpdate.isDone() || settled < 10) return false;
+        reagentUpdate.join();
+        var dye = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
+        if (reagentStage == 1) {
+            require(dye.isEmpty(), "Empty reagent fixture was not synchronized");
+            require(!visible(client, "box.mchjong.print") && !visible(client, "box.mchjong.dye_back"), "Empty slot exposes actions");
+            capture(client, output, "empty");
+            reagentStage = 2;
+            reagent(client, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_DYE, 2));
+            return false;
+        }
+        if (reagentStage == 2) {
+            require(dye.is(net.minecraft.world.item.Items.RED_DYE), "Vanilla dye fixture was not synchronized");
+            require(visible(client, "box.mchjong.dye_back") && !visible(client, "box.mchjong.print"), "Wrong vanilla-dye actions");
+            capture(client, output, "back");
+            if (menu.canDyeBack()) press(client, "box.mchjong.dye_back");
+            reagentStage = 3; settled = 0;
+            return false;
+        }
+        require(!menu.canDyeBack(), "Back-dye action did not acknowledge matching color");
+        capture(client, output, "back-applied");
+        reagentStage = 0;
+        reagent(client, new net.minecraft.world.item.ItemStack(top.skyeyefast.mchjong.world.MahjongContent.CREATIVE_MAHJONG_DYE));
         sample++;
         if (sample == LANGUAGES.length) {
             client.options.guiScale().set(scale);
@@ -71,6 +115,26 @@ final class BoxInterfaceSmoke {
             select(client, language);
         } else select(client, LANGUAGES[sample]);
         return false;
+    }
+
+    private void reagent(Minecraft client, net.minecraft.world.item.ItemStack stack) {
+        var id = client.player.getUUID();
+        reagentUpdate = client.getSingleplayerServer().submit(() -> {
+            var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+            require(player.containerMenu instanceof MahjongBoxMenu, "Reagent fixture lost its real menu");
+            player.containerMenu.getSlot(MahjongSupplies.DYE_SLOT).set(stack);
+            player.containerMenu.broadcastChanges();
+        });
+        settled = 0;
+    }
+
+    private static boolean visible(Minecraft client, String key) {
+        return client.screen.children().stream().anyMatch(child -> child instanceof net.minecraft.client.gui.components.AbstractWidget widget
+            && widget.visible && widget.getMessage().getString().equals(Component.translatable(key).getString()));
+    }
+
+    private void capture(Minecraft client, Path output, String state) {
+        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
     }
 
     private static void verifyTileLabels(Minecraft client) {
@@ -104,7 +168,7 @@ final class BoxInterfaceSmoke {
             .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
             .filter(child -> child.getMessage().getString().equals(Component.translatable(key).getString()))
             .findFirst().orElseThrow();
-        require(button.active, "Inactive preset control: " + key);
+        require(button.active && button.visible, "Inactive preset control: " + key);
         button.onPress();
     }
 

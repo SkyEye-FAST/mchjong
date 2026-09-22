@@ -37,7 +37,8 @@ public final class TableClientSmoke {
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
-    private final boolean visualOnly = itemsOnly || seatingOnly;
+    private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
+    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly;
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
     private int step;
     private int ticks;
@@ -56,6 +57,7 @@ public final class TableClientSmoke {
     private final ItemPresentationSmoke itemPresentationSmoke = new ItemPresentationSmoke();
     private final InterfaceSmoke interfaceSmoke = new InterfaceSmoke();
     private final BoxInterfaceSmoke boxInterfaceSmoke = new BoxInterfaceSmoke();
+    private final ImmersiveInterfaceSmoke immersiveInterfaceSmoke = new ImmersiveInterfaceSmoke();
     private final BrowserSmoke browserSmoke = new BrowserSmoke();
     private final StoolInteractionSmoke stoolInteractionSmoke = new StoolInteractionSmoke();
 
@@ -210,7 +212,24 @@ public final class TableClientSmoke {
                 step = 22; entered = ticks;
             } else if (step == 22 && boxInterfaceSmoke.tick(client, output)) {
                 client.screen.onClose();
+                if (interfaceOnly) {
+                    var id = client.player.getUUID();
+                    fixtureSeat = client.getSingleplayerServer().submit(() -> {
+                        var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                        var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                        table.sit(player, 0);
+                        return player.isPassenger();
+                    });
+                    step = 32; entered = ticks;
+                    return;
+                }
                 step = 18; entered = ticks;
+            } else if (step == 32 && fixtureSeat.isDone() && ticks - entered > 20) {
+                require(fixtureSeat.join(), "Interface fixture did not obtain a physical seat");
+                if (!immersiveInterfaceSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) return;
+                Files.writeString(output.resolve("PASS.txt"), "Box transfers, keyboard preset selection, dye-dependent actions and synchronized recoloring in four locales; immersive riichi, exit vote and settlement controls at normal and small viewports.\n");
+                LOG.info("MCHJONG_INTERFACE_SMOKE_PASS");
+                step = 13; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
                 if (!itemPresentationSmoke.tick(client, output)) return;
                 if (itemsOnly) {

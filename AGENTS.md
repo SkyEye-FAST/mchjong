@@ -90,12 +90,15 @@ below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 ```
 
 `buildAll` covers the engine, presentation, generated resources and NeoForge
-dedicated-server tests. Run targeted tests during development, then the complete
-build for a finished code batch. Shared visual or interaction changes require
-both client smokes and inspection of fresh screenshots in
-`fabric/build/smoke/evidence` and `neoforge/build/smoke/evidence`. Check fresh
-PASS/FAIL markers and logs; compilation alone is
-not visual acceptance. Report any validation that could not be performed.
+dedicated-server tests. Choose validation by the changed behavior: run the owning
+unit tests, compilation tasks and focused client smoke modes. Do not default to
+the complete build or full client smoke suites for every change or repeat them
+after each small adjustment. Reserve full suites for releases, broad cross-module
+changes, or failures whose scope cannot be isolated. Shared visual or interaction
+changes need fresh screenshots of the affected flows on both loaders; prefer
+focused captures over unrelated gameplay checks. Inspect those screenshots and
+fresh PASS/FAIL markers and logs; compilation alone is not visual acceptance.
+Report exactly which checks ran and any outstanding failures or coverage limits.
 
 For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal

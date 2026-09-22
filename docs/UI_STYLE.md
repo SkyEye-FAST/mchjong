@@ -191,6 +191,9 @@ translucent table-edge plaques. Use larger portrait and score type on the virtua
 canvas; toolbar, automation, score and status captions use twice the native font size.
 The bottom-left keyboard help and footer clock use that same enlarged size.
 Size immersive toolbar buttons from their translated captions at that scale, including padding.
+Riichi and animation captions, exit-vote panels and controls, settlement navigation
+and player-information tooltips use the same 2x content scale. Reserve matching
+line spacing above the action rail; multiple animation cues grow upward.
 Wait previews use twice the seated size for their focus target, tile faces, counts
 and heading. Reserve the enlarged popup's height when avoiding player plaques and actions.
 Immersive play has exactly one 1280 × 800 virtual layout. Minecraft GUI scale, window
@@ -220,8 +223,14 @@ The box has its own registered menu type and `MahjongBoxScreen`. Never use the
 generic chest menu, title matching or a replacement of vanilla chest screens.
 The left side contains 45 tile slots, nine point-stick slots, one adjacent dice
 slot and 36 player slots.
-The right side shows tile/stick counts, set readiness, a dedicated dye slot and
-face-preset controls. Vanilla dyes in that slot recolor every stored tile back to one of the
+The right side shows tile/stick counts, set readiness and a dedicated dye slot.
+An empty dye slot shows a short insertion hint. Vanilla dye reveals only the
+back-color action; Mahjong dye reveals a single cycling preset selector, three
+sample faces and the print action. The selector cycles the complete preset list
+with mouse or keyboard activation (Shift reverses direction), so additional
+presets do not change the layout. Keep action visibility synchronized with the
+actual slot contents and clear focus when its control disappears.
+Vanilla dyes in that slot recolor every stored tile back to one of the
 sixteen dye colors through the explicit Dye backs action; Mahjong dye remains the reagent for
 face printing. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
 has an accent border, a small lock mark and an explanatory tooltip.
@@ -350,8 +359,12 @@ labels off the felt and the riichi-deposit lanes clear.
 
 ## Acceptance and future changes
 
-Run `gradlew.bat buildAll` and both `:fabric:runSmokeClient` and
-`:neoforge:runSmokeClient` after shared menu/widget changes. Check the resulting
+Select checks for the affected menu/widget behavior rather than running complete
+suites after each adjustment. For box and immersive controls, use
+`:fabric:runSmokeClient -PsmokeInterface=true` and
+`:neoforge:runSmokeClient -PsmokeInterface=true`; these reuse native box checks
+and capture the affected immersive controls in four languages at normal and small
+viewports under each loader's `build/smoke/interface-evidence`. Check the resulting
 screenshots rather than treating compilation as visual verification. Cover
 small-window layout, keyboard focus, disabled/selected states, box carrier
 synchronization and real inventory transactions. Keep geometric regression
