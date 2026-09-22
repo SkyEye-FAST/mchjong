@@ -112,6 +112,9 @@ To build both loaders and run the shared checks:
 
 On Windows, use `gradlew.bat` instead of `./gradlew`.
 
+See [Build download mirrors](docs/BUILD_MIRRORS.md) for the configured Fabric and
+NeoForge repositories and the NeoForge client asset mirror environment variable.
+
 ## Playing at a table
 
 Build an ordinary table from matching wooden slabs and fences. Cut material

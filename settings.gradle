@@ -9,12 +9,8 @@ pluginManagement {
 			url = 'https://maven.aliyun.com/repository/public/'
 		}
 		maven {
-			name = 'BMCLAPI'
-			url = 'https://bmclapi2.bangbang93.com/maven/'
-		}
-		maven {
-			name = 'Fabric'
-			url = 'https://maven.fabricmc.net/'
+			name = 'FabricMirror'
+			url = 'https://repository.hanbings.io/proxy/'
 		}
 		mavenCentral()
 		gradlePluginPortal()
