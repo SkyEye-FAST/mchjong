@@ -47,27 +47,25 @@ final class TableHand {
     }
 
     Point point(int tile) {
+        return point(tile, Tile.ABSENT, Tile.ABSENT);
+    }
+
+    Point point(int tile, int selected, int hovered) {
         int index = tiles.indexOf(tile);
         if (index < 0) return null;
-        return new Point(x(index) + tileWidth / 2, y(index, tile, Tile.ABSENT, Tile.ABSENT) + tileHeight / 2);
+        return new Point(x(index) + tileWidth / 2, y(index, tile, selected, hovered) + tileHeight / 2);
     }
 
     private int x(int index) { return left + index * tileWidth + (gap > 0 && index == tiles.size() - 1 ? gap : 0); }
-    private int arc(int index) {
-        if (!perspective || tiles.size() <= 1) return 0;
-        double center = (tiles.size() - 1) / 2.0;
-        return (int) Math.round(Math.abs(index - center) * .30);
-    }
-
     private int y(int index, int tile, int selected, int hovered) {
         int lift = tile == selected ? Math.max(10, tileWidth / 5)
             : tile == hovered ? Math.max(5, tileWidth / 10) : 0;
-        return y + arc(index) - lift;
+        return y - lift;
     }
 
     boolean contains(double px, double py) {
         int depth = perspective ? Math.max(2, tileWidth / 8) : 0;
-        return px >= left - 5 && px < left + span + depth + 5 && py >= top()
+        return px >= left - 5 && px < left + span + 5 && py >= top()
             && py < y + tileHeight + depth + 5;
     }
 
@@ -75,7 +73,7 @@ final class TableHand {
         int depth = perspective ? Math.max(2, tileWidth / 8) : 0;
         for (int i = tiles.size() - 1; i >= 0; i--) {
             int tile = tiles.get(i), x = x(i), top = y(i, tile, selected, Tile.ABSENT);
-            if (tile >= 0 && px >= x && px < x + tileWidth + depth && py >= top && py < top + tileHeight + depth) return tile;
+            if (tile >= 0 && px >= x && px < x + tileWidth && py >= top && py < top + tileHeight + depth) return tile;
         }
         return Tile.ABSENT;
     }
@@ -92,11 +90,6 @@ final class TableHand {
             graphics.fill(railLeft, y + tileHeight - 1, railRight, y + tileHeight + 12, 0xff081d20);
             graphics.fill(railLeft + 3, y + tileHeight - 1, railRight - 3, y + tileHeight + 3, 0xff31575a);
             graphics.hLine(railLeft + 4, railRight - 5, y + tileHeight - 2, 0xff638083);
-            for (int i = 0; i < tiles.size(); i++) {
-                int tile = tiles.get(i), top = y(i, tile, selected, hovered);
-                graphics.fill(x(i) + 5, top + tileHeight - 3, x(i) + tileWidth + Math.max(7, tileWidth / 6),
-                    top + tileHeight + Math.max(6, tileWidth / 8), 0x55000000);
-            }
         }
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
@@ -119,12 +112,8 @@ final class TableHand {
         }
         for (var meld : melds) {
             if (perspective) {
-                graphics.pose().pushPose();
-                graphics.pose().translate(0, y + tileHeight, 0);
-                graphics.pose().scale(1, .72f, 1);
-                TileGui.meld3d(graphics, meld, owner, meldX, -meldHeight, meldTileWidth,
+                TileGui.meld3d(graphics, meld, owner, meldX, meldY, meldTileWidth,
                     Math.max(1, meldTileWidth / 8), preset, material, dye);
-                graphics.pose().popPose();
             } else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset, material, dye);
             meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
         }

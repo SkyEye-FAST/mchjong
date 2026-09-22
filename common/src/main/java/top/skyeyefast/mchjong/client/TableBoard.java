@@ -125,6 +125,10 @@ final class TableBoard {
     }
 
     Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }
+    void discard(GuiGraphics graphics, int tile, TableHand.Point source, int sourceWidth, double opponentX,
+                 boolean tsumogiri, boolean riichi, double fraction) {
+        if (immersive != null) immersive.discard(graphics, tile, source, sourceWidth, opponentX, tsumogiri, riichi, fraction);
+    }
     int tileWidth(int tile, int fallback) { return immersive == null ? tileWidths.getOrDefault(tile, fallback) : immersive.width(tile, fallback); }
     Point drawSource() {
         if (immersive != null) {

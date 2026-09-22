@@ -181,9 +181,9 @@ and score; turn, riichi and presence use small marks. The central device carries
 round, remaining tiles, turn direction and graphical honba/riichi point sticks with
 counts. It must not spell out honba or deposits.
 Use the same resource-pack tile faces and server-issued actions as seated play.
-Dim tsumogiri in the river while leaving tedashi at normal brightness; the sideways
-riichi discard remains an independent marker. Never replace this visual distinction
-with a text label.
+In replay diagrams, dim tsumogiri and mark tedashi. Live play keeps both at normal
+brightness and distinguishes their movement by animation. The sideways riichi discard
+remains an independent marker.
 Perspective depth follows each tile's position: the far rail is smallest, the side
 rails converge toward it, and the viewer's foreground stays full size. Animation
 anchors use the same projected centers as the tile faces. Player labels are compact

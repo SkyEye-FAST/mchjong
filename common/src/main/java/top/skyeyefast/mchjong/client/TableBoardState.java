@@ -19,7 +19,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
 
     static TableBoardState live(TableView view) {
         return new TableBoardState(view.viewerSeat(), view.rules().players(), view.dealer(), view.round(), view.honba(),
-            view.riichiSticks(), view.turn(), view.remaining(), view.seats(), view.focus(), false, true);
+            view.riichiSticks(), view.turn(), view.remaining(), view.seats(), view.focus(), false, false);
     }
 
     static TableBoardState replay(ReplayMatch match, ReplayHand hand, ReplayPlayback.Frame frame, int viewerSeat) {

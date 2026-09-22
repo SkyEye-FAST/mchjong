@@ -118,13 +118,13 @@ class TablePresentationTest {
         }
     }
 
-    @Test void immersivePresentationUsesPerspectiveAndMarksTsumogiri() {
+    @Test void livePresentationUsesPerspectiveWithoutReplayDiscardColors() {
         var id = java.util.UUID.randomUUID();
         var game = new top.skyeyefast.mchjong.engine.Game(java.util.UUID.randomUUID(),
             top.skyeyefast.mchjong.engine.RuleSet.TENHOU_4, 19);
         assertTrue(game.join(id, "Viewer", 0));
         var state = TableBoardState.live(game.view(id));
-        assertTrue(state.dimTsumogiri());
+        assertFalse(state.dimTsumogiri());
         assertFalse(state.markTedashi());
         var board = new TableBoard(state, 20, 1260, 68, 620, 800, true);
         assertTrue(board.perspective());
@@ -144,6 +144,30 @@ class TablePresentationTest {
             "The deliberate draw gap must not submit a discard");
         assertEquals(8, hand.pick(drawn.x(), drawn.y() - halfHeight - 8, 8),
             "The raised selection remains clickable");
+        assertEquals(hand.point(0).y(), previous.y(), "Resting hand tiles share one baseline");
+        assertEquals(previous.y(), drawn.y(), "The drawn slot uses the same tile height");
+        assertEquals(drawn.y() - 11, hand.point(8, 8, -1).y(), "Discard starts at the selected tile's raised pose");
+        assertEquals(top.skyeyefast.mchjong.engine.Tile.ABSENT,
+            hand.pick(drawn.x() + hand.tileWidth() / 2 + 1, drawn.y(), -1), "No invisible side extrusion is clickable");
+    }
+
+    @Test void immersiveDiscardsLandExactlyAndKeepDistinctUncoloredTrajectories() {
+        var start = new TableProjection.Point(600, 680);
+        var end = TableProjection.seat(0, -80, 165, ImmersiveTable.thickness(32));
+        for (boolean tsumogiri : new boolean[]{false, true}) {
+            assertEquals(start, ImmersiveMotion.interpolate(start, end, ImmersiveMotion.smooth(0), 0, tsumogiri));
+            assertEquals(end, ImmersiveMotion.interpolate(start, end, ImmersiveMotion.smooth(1), 1, tsumogiri));
+        }
+        var tedashi = ImmersiveMotion.interpolate(start, end, .5, .5, false);
+        var tsumogiri = ImmersiveMotion.interpolate(start, end, .5, .5, true);
+        assertTrue(tedashi.y() < tsumogiri.y(), "Tedashi has a higher arc");
+        assertTrue(ImmersiveMotion.duration(true) < ImmersiveMotion.duration(false));
+        assertEquals(TileMesh.DEPTH / TileMesh.WIDTH, ImmersiveTable.thickness(32) / 32, 1e-6);
+        var hidden = new top.skyeyefast.mchjong.engine.TableView.Seat("Opponent", true, false, false,
+            25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
+            top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false);
+        assertEquals(195, ImmersiveTable.discardSourceX(hidden, 1, 60, true));
+        assertEquals(0, ImmersiveTable.discardSourceX(hidden, 1, 60, false));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {

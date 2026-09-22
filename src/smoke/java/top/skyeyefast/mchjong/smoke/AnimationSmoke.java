@@ -236,7 +236,7 @@ final class AnimationSmoke {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         }
-        if (layoutsOnly && ticks >= 328) return true;
+        if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
         if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
             var calls = new Action.Type[]{Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN};
@@ -245,7 +245,44 @@ final class AnimationSmoke {
         if (ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
             capture(client, output, "56-highlight-" + new String[]{"chi", "pon", "kan"}[(ticks - 334) / 12] + "-focus.png");
         if (ticks == 359) TableSettings.get().highlightTiles = originalHighlight;
-        if (ticks >= 370) return deposits.tick(client, table, output);
+        if (ticks == 360) {
+            var seats = new ArrayList<>(fixture.seats());
+            for (int seat = 0; seat < seats.size(); seat++) seats.set(seat, seat(seat == 0
+                ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(14, Tile.HIDDEN), List.of(), List.of(), false));
+            update(table, seats, fixture.wall());
+            TableSettings.get().animations = true;
+            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        }
+        if (ticks == 364 || ticks == 384 || ticks == 404) {
+            int owner = ticks == 404 ? 1 : 0;
+            boolean tsumogiri = ticks != 364;
+            int tile = ticks == 364 ? 4 : ticks == 384 ? 14 : 60;
+            var seats = new ArrayList<>(fixture.seats());
+            var player = seats.get(owner);
+            var hand = new ArrayList<>(player.hand());
+            if (owner == 0) hand.remove(Integer.valueOf(tile));
+            else hand.removeLast();
+            var river = new ArrayList<>(player.river());
+            river.add(new Discard(tile, ticks == 364, false, tsumogiri));
+            seats.set(owner, seat(hand, player.melds(), river, player.riichi() || ticks == 364));
+            update(table, seats, fixture.wall(), owner);
+        }
+        if (ticks == 367 || ticks == 387 || ticks == 407)
+            capture(client, output, "58-immersive-" + (ticks == 367 ? "tedashi-riichi" : ticks == 387 ? "tsumogiri" : "opponent-tsumogiri") + "-moving.png");
+        if (ticks == 378 || ticks == 398 || ticks == 418)
+            capture(client, output, "58-immersive-" + (ticks == 378 ? "tedashi-riichi" : ticks == 398 ? "tsumogiri" : "opponent-tsumogiri") + "-landed.png");
+        if (ticks == 380) {
+            var seats = new ArrayList<>(fixture.seats());
+            var player = seats.getFirst();
+            var hand = new ArrayList<>(player.hand());
+            hand.add(14);
+            seats.set(0, seat(hand, player.melds(), player.river(), player.riichi()));
+            update(table, seats, fixture.wall());
+        }
+        if (ticks == 420) client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        if (layoutsOnly && ticks >= 420) return true;
+        if (ticks >= 422) return deposits.tick(client, table, output);
         return false;
     }
 

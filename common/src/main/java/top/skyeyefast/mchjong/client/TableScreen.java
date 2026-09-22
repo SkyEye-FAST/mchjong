@@ -70,7 +70,7 @@ public final class TableScreen extends Screen {
     private ImmersiveDiscardMotion immersiveDiscard;
     private ImmersiveDrawMotion immersiveDraw;
     private record ImmersiveDiscardMotion(int tile, int seat, boolean tsumogiri, boolean riichi,
-                                          long started, long duration, TableHand.Point source, int sourceWidth) {}
+                                          long started, long duration, TableHand.Point source, int sourceWidth, double opponentX) {}
     private record ImmersiveDrawMotion(int tile, long started, long duration, TableHand.Point target, int targetWidth) {}
     private final TableHints hints = new TableHints();
     private final TableDice dice = new TableDice(() -> {
@@ -297,6 +297,7 @@ public final class TableScreen extends Screen {
         TableView view = view();
         if (view == null) return;
         TableView previous = presentedView;
+        int oldSelected = selectedTile, oldHovered = hoveredTile;
         refreshDecision(view);
         viewReady = immersivePhase(view.phase()) && !dealing();
         if (!viewReady || view.viewerSeat() < 0) immersive = false;
@@ -317,7 +318,7 @@ public final class TableScreen extends Screen {
         hand = immersive && view.viewerSeat() >= 0
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
             ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), layoutWidth, handHeight, 58, true) : null;
-        prepareImmersiveMotion(previous, view, handHeight);
+        prepareImmersiveMotion(previous, view, handHeight, oldSelected, oldHovered);
         presentedView = view;
         if (view.viewerSeat() < 0 || !view.seats().get(view.viewerSeat()).hand().contains(selectedTile)) selectedTile = Tile.ABSENT;
         if (view.actions().stream().noneMatch(action -> action.type() == Action.Type.RIICHI)) choosingRiichi = false;
@@ -422,10 +423,18 @@ public final class TableScreen extends Screen {
         if (hintFocus && hints.visible) setFocused(hints);
     }
 
-    private void prepareImmersiveMotion(TableView previous, TableView next, int handHeight) {
+    private void prepareImmersiveMotion(TableView previous, TableView next, int handHeight, int oldSelected, int oldHovered) {
         if (!immersive || !TableSettings.get().animations || previous == null
             || !previous.tableId().equals(next.tableId()) || previous.handNumber() != next.handNumber()
-            || next.revision() <= previous.revision()) return;
+            || previous.viewerSeat() != next.viewerSeat()) {
+            immersiveDiscard = null;
+            immersiveDraw = null;
+            return;
+        }
+        if (next.revision() <= previous.revision()) return;
+        if (immersiveDiscard != null && next.seats().get(immersiveDiscard.seat()).river().stream()
+            .noneMatch(d -> d.tile() == immersiveDiscard.tile() && !d.called())) immersiveDiscard = null;
+        if (immersiveDraw != null && !next.seats().get(next.viewerSeat()).hand().contains(immersiveDraw.tile())) immersiveDraw = null;
         int viewer = next.viewerSeat();
         if (viewer >= 0) {
             var oldSeat = previous.seats().get(viewer);
@@ -441,66 +450,38 @@ public final class TableScreen extends Screen {
             var after = next.seats().get(seat).river();
             if (after.size() != before.size() + 1) continue;
             var discard = after.getLast();
-            if (discard.called()) return;
+            if (discard.called()) continue;
             TableHand.Point source = null;
             int sourceWidth = 16;
             if (seat == next.viewerSeat()) {
                 var oldHand = new TableHand(previous.seats().get(seat), seat, IMMERSIVE_WIDTH, handHeight, 58, true);
-                source = oldHand.point(discard.tile());
+                source = oldHand.point(discard.tile(), oldSelected, oldHovered);
                 if (source == null && discard.tsumogiri() && previous.seats().get(seat).drawn() != Tile.ABSENT)
                     source = oldHand.point(previous.seats().get(seat).drawn());
                 sourceWidth = oldHand.tileWidth();
             }
-            long duration = discard.tsumogiri() ? 320 : 500;
+            double opponentX = ImmersiveTable.discardSourceX(previous.seats().get(seat), seat, discard.tile(), discard.tsumogiri());
+            long duration = ImmersiveMotion.duration(discard.tsumogiri());
             immersiveDiscard = new ImmersiveDiscardMotion(discard.tile(), seat, discard.tsumogiri(), discard.riichi(),
-                Util.getMillis(), duration, source, sourceWidth);
+                Util.getMillis(), duration, source, sourceWidth, opponentX);
             return;
         }
     }
 
     private boolean immersiveDiscardActive(long now) {
-        return immersiveDiscard != null && now < immersiveDiscard.started() + immersiveDiscard.duration();
+        return TableSettings.get().animations && immersiveDiscard != null && now < immersiveDiscard.started() + immersiveDiscard.duration();
     }
 
     private boolean immersiveDrawActive(long now) {
-        return immersiveDraw != null && now < immersiveDraw.started() + immersiveDraw.duration();
+        return TableSettings.get().animations && immersiveDraw != null && now < immersiveDraw.started() + immersiveDraw.duration();
     }
 
-    private static double smooth(double value) {
-        double t = Math.clamp(value, 0, 1);
-        return t * t * (3 - 2 * t);
-    }
-
-    private void renderImmersiveDiscard(GuiGraphics graphics, TableView view, long now) {
+    private void renderImmersiveDiscard(GuiGraphics graphics, long now) {
         if (!immersiveDiscardActive(now) || board == null) return;
         var motion = immersiveDiscard;
-        var destination = board.point(motion.tile());
-        if (destination == null) return;
-        double startX, startY;
-        if (motion.source() != null) {
-            startX = motion.source().x();
-            startY = motion.source().y();
-        } else {
-            var card = board.card(motion.seat());
-            startX = card.x() + card.width() / 2.0;
-            startY = card.y() + card.height() / 2.0;
-        }
         double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
-        double progress = smooth(fraction);
-        double x = startX + (destination.x() - startX) * progress;
-        double y = startY + (destination.y() - startY) * progress
-            - Math.sin(Math.PI * fraction) * (motion.tsumogiri() ? 14 : 34);
-        int targetWidth = board.tileWidth(motion.tile(), board.riverTileWidth(motion.seat()));
-        int tileWidth = Math.max(8, (int) Math.round(motion.sourceWidth() + (targetWidth - motion.sourceWidth()) * progress));
-        int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
-        int side = TableBoard.side(motion.seat(), view.viewerSeat(), view.rules().players());
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0);
-        graphics.pose().mulPose(com.mojang.math.Axis.ZP.rotationDegrees(-90 * side));
-        boolean sideways = motion.riichi() && fraction > .82;
-        TileGui.tile3d(graphics, motion.tile(), -tileWidth / 2, -tileHeight / 2, tileWidth, false, sideways,
-            false, motion.tsumogiri() && fraction > .86, Math.max(2, tileWidth / 7), facePreset(), tileMaterial(), tileBack());
-        graphics.pose().popPose();
+        board.discard(graphics, motion.tile(), motion.source(), motion.sourceWidth(), motion.opponentX(),
+            motion.tsumogiri(), motion.riichi(), fraction);
     }
 
     private void renderImmersiveDraw(GuiGraphics graphics, long now) {
@@ -508,14 +489,14 @@ public final class TableScreen extends Screen {
         var motion = immersiveDraw;
         var source = board.drawSource();
         double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
-        double progress = smooth(fraction);
+        double progress = ImmersiveMotion.smooth(fraction);
         double x = source.x() + (motion.target().x() - source.x()) * progress;
         double y = source.y() + (motion.target().y() - source.y()) * progress - Math.sin(Math.PI * fraction) * 22;
         int tileWidth = Math.max(16, (int) Math.round(20 + (motion.targetWidth() - 20) * progress));
         int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         TileGui.tile3d(graphics, motion.tile(), (int) Math.round(x) - tileWidth / 2,
             (int) Math.round(y) - tileHeight / 2, tileWidth, false, false, false, false,
-            Math.max(2, tileWidth / 7), facePreset(), tileMaterial(), tileBack());
+            Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack());
     }
 
     private void buildToolbar(TableView view) {
@@ -933,7 +914,7 @@ public final class TableScreen extends Screen {
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
             if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed, tileMaterial(), tileBack());
-            renderImmersiveDiscard(graphics, view, now);
+            renderImmersiveDiscard(graphics, now);
             renderImmersiveDraw(graphics, now);
         }
         if (view.phase() == Game.Phase.LOBBY && room() != null

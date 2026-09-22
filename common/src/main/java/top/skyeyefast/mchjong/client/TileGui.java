@@ -40,10 +40,8 @@ public final class TileGui {
         graphics.pose().translate(x, y, 0);
         if (depth > 0) {
             int w = sideways ? height : width, h = sideways ? width : height;
-            graphics.fill(depth + 1, depth + 2, w + depth + 1, h + depth + 2, 0x44000000);
-            graphics.fill(w, 2, w + depth, h + depth, shade(bodyColor, .78));
-            graphics.fill(1, h, w + depth, h + depth, shade(bodyColor, .92));
-            graphics.fill(1, h + depth - 2, w + depth, h + depth, backColor);
+            graphics.fill(0, h, w, h + depth, shade(bodyColor, .92));
+            graphics.fill(0, h + depth - Math.max(1, depth / 3), w, h + depth, backColor);
         }
         if (sideways) {
             graphics.pose().translate(height, 0, 0);
