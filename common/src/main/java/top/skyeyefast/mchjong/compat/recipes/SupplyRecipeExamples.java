@@ -64,7 +64,7 @@ public final class SupplyRecipeExamples {
                             }
                             for (var material : TileMaterial.values()) {
                                 for (int face : new int[]{-1, 4, TileData.FIRST_FLOWER + TileData.FLOWER_COUNT - 1})
-                                    targets.add(MahjongSupplies.tile(new TileData(face, material, face == 4), DyeColor.BLUE, 1));
+                                    targets.add(MahjongSupplies.tile(new TileData(face, material, face == 4), face == -1 ? null : DyeColor.BLUE, 1));
                                 targets.add(MahjongSupplies.completeBox(material, DyeColor.BLUE));
                                 targets.add(blanks(material, DyeColor.BLUE, true));
                             }

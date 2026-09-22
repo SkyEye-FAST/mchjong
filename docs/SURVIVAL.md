@@ -66,7 +66,7 @@ Only faces `4`, `13`, `22` can have
 `red = true`. Material is one of `wood`, `bone`, `quartz`, `calcite`, `glass`,
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Undyed tile backs use
-their material texture; default cloth is green and stool cushions are white.
+their material texture; default cloth is cyan and stool cushions are white.
 
 All custom components are immutable codec values with persistence and network
 serialization. No item IDs are generated for particular faces, back colors, woods or

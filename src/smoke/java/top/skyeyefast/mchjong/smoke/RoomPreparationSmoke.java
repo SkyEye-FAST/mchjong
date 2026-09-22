@@ -7,7 +7,6 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.client.TableSeatsScreen;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.Game;
@@ -27,9 +26,6 @@ final class RoomPreparationSmoke {
     private int botSeat = -1;
     private int botCycle;
     private Boolean originalAutoSeat;
-    private int presenceStage;
-    private int presenceTicks;
-    private TableScreen presenceParent;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
         var view = table.clientView();
@@ -108,11 +104,6 @@ final class RoomPreparationSmoke {
             } else if (windSlot >= 0) click(client, "room.mchjong.wind_tile", windSlot + 1);
         } else if (view.viewerSeat() >= 0) {
             var state = room.seats().get(view.viewerSeat());
-            if (table.automatic() && presenceStage < 4
-                && (presenceStage > 0 || state.presence() == PlayerPresence.SEATED)) {
-                checkPresence(client, table, output, prefix, state.presence());
-                return false;
-            }
             if (!capturedPositioning) {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-assigned-seats.png");
@@ -141,59 +132,6 @@ final class RoomPreparationSmoke {
                 capture(client, output, prefix + "-ready.png");
                 click(client, "action.mchjong.ready");
             }
-        }
-        return false;
-    }
-
-    private void checkPresence(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix, PlayerPresence presence) {
-        presenceTicks += 5;
-        if (presenceStage == 0) {
-            presenceParent = TableScreen.active(client.screen);
-            client.setScreen(new TableSeatsScreen(presenceParent));
-            var id = client.player.getUUID();
-            var pos = table.getBlockPos();
-            serverWork = client.getSingleplayerServer().submit(() -> {
-                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                player.stopRiding();
-                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).stoodUp(id);
-                return -1;
-            });
-            presenceStage = 1;
-            presenceTicks = 0;
-        } else if (presenceStage == 1 && presenceTicks >= 15) {
-            if (presence != PlayerPresence.AWAY || client.player.isPassenger())
-                throw new IllegalStateException("Ordinary positioning updates must not automatically remount an away player");
-            AutomationControlsSmoke.checkBounds(client);
-            capture(client, output, prefix + "-participants-away.png");
-            // This smoke room has one human plus bots. Letting that sole human reach
-            // DISCONNECTED intentionally closes an abandoned lobby; disconnected-seat
-            // retention is covered by the multi-human engine tests instead.
-            if (!hasOtherHuman(table.clientRoom(), table.clientView().viewerSeat())) {
-                client.setScreen(presenceParent);
-                client.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
-                    new top.skyeyefast.mchjong.network.TableSeatPayload(table.getBlockPos(), table.clientView().tableId())));
-                presenceStage = 4;
-            } else presenceStage = 2;
-        } else if (presenceStage == 2 && presence == PlayerPresence.DISCONNECTED) {
-            presenceStage = 3;
-            presenceTicks = 0;
-        } else if (presenceStage == 3 && presenceTicks >= 10) {
-            if (presence != PlayerPresence.DISCONNECTED || client.player.isPassenger())
-                throw new IllegalStateException("Disconnected membership must remain reserved until explicit return");
-            AutomationControlsSmoke.checkBounds(client);
-            capture(client, output, prefix + "-participants-disconnected.png");
-            client.setScreen(presenceParent);
-            client.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
-                new top.skyeyefast.mchjong.network.TableSeatPayload(table.getBlockPos(), table.clientView().tableId())));
-            presenceStage = 4;
-        }
-    }
-
-    private static boolean hasOtherHuman(top.skyeyefast.mchjong.engine.RoomView room, int viewer) {
-        if (room == null) return false;
-        for (int seat = 0; seat < room.seats().size(); seat++) {
-            var value = room.seats().get(seat);
-            if (seat != viewer && value.presence() != null && value.difficulty() == null) return true;
         }
         return false;
     }

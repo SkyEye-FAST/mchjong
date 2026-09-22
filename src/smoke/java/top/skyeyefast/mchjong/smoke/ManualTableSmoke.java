@@ -319,7 +319,7 @@ final class ManualTableSmoke {
         furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
         MahjongContent.TABLE.setPlacedBy(level, CENTER, MahjongContent.TABLE.defaultBlockState(), player, furniture);
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
-        installedBox = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN);
+        installedBox = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
         var box = installedBox.copy();
         player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
         TableStorageSmoke.put(player, table, 0, box);

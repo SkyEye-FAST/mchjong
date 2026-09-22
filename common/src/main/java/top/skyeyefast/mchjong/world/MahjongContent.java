@@ -10,6 +10,9 @@ import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
 import net.minecraft.core.component.DataComponents;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.item.FurnitureWood;
@@ -21,6 +24,7 @@ import top.skyeyefast.mchjong.item.TileData;
 /** Object creation is shared; each loader registers these exact instances. */
 public final class MahjongContent {
     public static final String MOD_ID = "mchjong";
+    public static final ResourceKey<CreativeModeTab> TAB_KEY = ResourceKey.create(Registries.CREATIVE_MODE_TAB, id("mchjong"));
     public static final MahjongTableBlock TABLE = new MahjongTableBlock(properties().noOcclusion());
     public static final MahjongTableBlock AUTO_TABLE = new MahjongTableBlock(properties().noOcclusion().sound(SoundType.METAL));
     public static final TableSpaceBlock SPACE = new TableSpaceBlock(properties().noOcclusion().noLootTable());
@@ -28,7 +32,7 @@ public final class MahjongContent {
     public static final Item TABLE_ITEM = new MahjongTableItem(TABLE, furniture());
     public static final Item AUTO_TABLE_ITEM = new MahjongTableItem(AUTO_TABLE, furniture());
     public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
-    public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.GREEN));
+    public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.CYAN));
     public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.TILE, TileData.BLANK)
         .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI));
     public static final Item POINT_STICK = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.POINTS, 0));

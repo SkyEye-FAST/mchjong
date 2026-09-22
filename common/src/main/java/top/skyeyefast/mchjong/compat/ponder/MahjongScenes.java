@@ -55,7 +55,7 @@ final class MahjongScenes {
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick();
         say(scene, "Right-click the table to open its storage. It holds up to two mahjong boxes inside.", FELT);
         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-        cloth.set(DataComponents.BASE_COLOR, DyeColor.GREEN);
+        cloth.set(DataComponents.BASE_COLOR, DyeColor.CYAN);
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick().withItem(cloth);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().installCloth(cloth));

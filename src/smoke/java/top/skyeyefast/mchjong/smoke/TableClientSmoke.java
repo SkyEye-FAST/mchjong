@@ -129,7 +129,7 @@ public final class TableClientSmoke {
                             top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.GLASS,
                                 net.minecraft.world.item.DyeColor.BLUE), top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-                        cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.GREEN);
+                        cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.CYAN);
                         table.useEquipment(player, cloth);
                         player.getInventory().selected = 0;
                         player.getInventory().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(

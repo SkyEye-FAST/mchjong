@@ -62,8 +62,7 @@ final class SurvivalRecipes {
     }
     private static Map<String, String> item(String id) { return Map.of("item", "minecraft:" + id); }
     private static Map<String, Object> tile(int face, String material, boolean red, int count) {
-        return stack("mahjong_tile", count, Map.of("mchjong:tile", Map.of("face", face, "material", material, "red", red),
-            "minecraft:base_color", "blue"));
+        return stack("mahjong_tile", count, Map.of("mchjong:tile", Map.of("face", face, "material", material, "red", red)));
     }
     private static Map<String, Object> stack(String id, int count, Map<String, ?> components) {
         Map<String, Object> result = new LinkedHashMap<>();

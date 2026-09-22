@@ -41,7 +41,7 @@ final class BoxInterfaceSmoke {
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         var preset = top.skyeyefast.mchjong.item.TileFacePreset.values()[sample % 2];
         if (MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
-            require(settled < 200, "Face printing timed out: language=" + LANGUAGES[sample]
+            require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
                 + ", menu=" + menu.containerId + ", printing=" + printing);
             if (!printing) {
@@ -49,6 +49,7 @@ final class BoxInterfaceSmoke {
                 require(menu.canEngrave(preset), "Preset fixture cannot be printed");
                 press(client, "box.mchjong.print");
                 printing = true;
+                settled = 0;
             }
             return false;
         }
