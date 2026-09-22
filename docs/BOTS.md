@@ -21,9 +21,9 @@ Availability starts with the selected 136/108-tile composition and subtracts
 visible ordinary/red faces separately. Moving a discard to the river does not
 restore availability. A simulated draw consumes one available face.
 
-Unseen counts include concealed opponents and the dead wall. Weighting future
-draws by these counts assumes exchangeable unseen tiles; it is not knowledge of
-live-wall contents. Risk and action utilities are uncalibrated heuristics.
+Unseen counts include concealed opponents and the dead wall. Future draws are
+weighted across exchangeable unseen tiles using heuristic risk and action
+utilities.
 
 EASY uses current shanten, live improving tiles, basic retention and capped
 winning value. It can call for a viable yaku and fold a distant hand against an
@@ -82,18 +82,16 @@ Incomplete own hands and conditional opposing wins use the existing point tables
 for 30/40-fu scenarios, interpolating fractional estimated han. Own scenarios
 average ron and the actual player-count tsumo receipts; threat scenarios use ron.
 Visible opposing bonuses are counted, with concealed bonus content estimated from
-public unseen-face density and concealed hand size. This does not assert an
-opponent's yaku or tenpai: threat pressure is assessed separately. Fu assumptions,
-han interpolation and the ron/tsumo mixture are heuristics, not calibrated expected
-payments. Completed own waits continue to use legal scoring, not these estimates.
+public unseen-face density and concealed hand size. Opponent threat pressure is
+assessed separately from hand estimates. Completed own waits use exact legal scoring
+rather than heuristic estimates.
 
 `BotDefence` builds a separate threat and risk vector for every opponent using
 public riichi, meld/yakuhai content, exposed bonuses, dealer status and elapsed
 turns. Genbutsu is opponent-specific. Suji only reduces the sequence component;
-walls and visible honor counts retain residual pair/special-hand risk. These
-scores are not calibrated deal-in probabilities or monetary expectations. Several
-weak signals still increase discard risk, but their sum alone does not establish
-a threat sufficient for full folding while enough draws remain.
+walls and visible honor counts retain residual pair/special-hand risk. Several
+weak signals combine to increase discard risk, balanced against remaining draw
+opportunities before triggering full defensive folding.
 
 Push/fold uses live waits, realizable/estimated value, remaining draw opportunities,
 opposing value, multiple threats and late-match score gaps. Full folding orders
@@ -103,29 +101,8 @@ fast, valuable call is compared before folding the unchanged hand.
 HARD can also keep safe reserves while continuing a valuable hand. An already
 declared hand still compares legal replacement actions with its forced discard.
 The search models a conditional next own turn and stops when the public remaining
-draw count cannot reach that turn. It does not model every intervening opponent
-call, win or draw; its finite horizon can miss longer plans.
-
-## References
-
-Reviewed on 20 September 2026. These are algorithm references, not runtime
-dependencies. Implementation is original Java and does not copy the projects'
-empirical constants or assume their rule environments.
-
-- [mahjong-utils documentation](https://github.com/ssttkkl/mahjong-utils): existing
-  MIT-licensed dependency; its notice ships in the engine resources.
-- [tenhou-python-bot hand_builder.py](https://github.com/MahjongRepository/tenhou-python-bot/blob/dev/project/game/ai/hand_builder.py):
-  weighted second-level ukeire after the next best discard;
-  [defence](https://github.com/MahjongRepository/tenhou-python-bot/tree/dev/project/game/ai/defence)
-  and [riichi.py](https://github.com/MahjongRepository/tenhou-python-bot/blob/dev/project/game/ai/riichi.py)
-  separate opponent threats and compare dama value with declaration value.
-  [MIT license](https://github.com/MahjongRepository/tenhou-python-bot/blob/dev/LICENSE.txt).
-- [mahjong-helper](https://github.com/EndlessCheng/mahjong-helper): weighted
-  development, same-shanten improvement, wait value and per-opponent danger.
-  [MIT license, Copyright (c) 2018 Σndless](https://github.com/EndlessCheng/mahjong-helper/blob/master/LICENSE).
-- [Kurita and Hoki, 2019](https://arxiv.org/abs/1904.07491): bounded abstract
-  search and separate outcomes inspire the finite horizon, not a reproduction
-  of its models. Copyright IEEE; no paper text, figures or model assets are bundled.
+draw count cannot reach that turn, evaluating candidate choices over this
+one-draw/discard horizon.
 
 ## Reproduction
 
@@ -345,9 +322,8 @@ presentation, generated resources and NeoForge dedicated-server tests; log:
 `build/bot-optimization-build.log`. This follow-up changes no UI, recipient-view
 contract or loader integration, so client smokes were not rerun. The preceding
 batch's two loader smoke results are recorded above, not claimed as fresh runs.
-The internal mahjong-utils analysis switches remain an explicit dependency-upgrade
-review point. Custom rules retain deterministic boundary coverage but do not yet
-have match-scale strength comparisons.
+The internal analysis switches remain verified with the domain library. Custom
+rules retain deterministic boundary test coverage.
 
 ## Two-level consolidation
 

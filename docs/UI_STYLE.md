@@ -386,7 +386,7 @@ values. Each score display faces its owner, with glyph tops pointing toward the
 table center. The wind characters use the resource-pack font, keeping explanatory
 labels off the felt and the riichi-deposit lanes clear.
 
-## Acceptance and future changes
+## Visual acceptance and verification
 
 Select checks for the affected menu/widget behavior rather than running complete
 suites after each adjustment. For box and immersive controls, use

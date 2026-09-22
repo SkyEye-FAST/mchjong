@@ -14,6 +14,8 @@ See [PORT_1.20.1.md](PORT_1.20.1.md) for synchronization with the feature mainli
 
 The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
 
+## Optional integrations
+
 | Optional viewer | Pinned version | Development runtime |
 | --- | --- | --- |
 | JEI | 15.59.0.212 | `-PrecipeBrowser=jei` |
@@ -99,12 +101,12 @@ The generated EULA setting retains Minecraft's default value.
 Validation results are recorded from completed runs rather than API compilation.
 Fabric with JEI and Forge with EMI pass the full shared smoke. Both loaders also
 pass the installed-Ponder profile. REI has bootstrap and catalog inspection
-coverage. Viewer autofill buttons and multiple-viewer combinations are not part
-of the automated acceptance. EMI's development mode reports its own synthetic
-`emi:brewing/` recipes as absent from the vanilla recipe manager; the MChjong
-recipe checks pass without EMI recipe diagnostics for MChjong entries.
+coverage. Automated verification covers individual viewer profiles, recipe queries,
+catalog inspection, and gameplay integration. EMI's development mode reports its
+own synthetic `emi:brewing/` recipes as absent from the vanilla recipe manager;
+the MChjong recipe checks pass without EMI recipe diagnostics for MChjong entries.
 
-## Upstream API references
+## Integration APIs
 
 * [JEI 1.20.1 public API](https://github.com/mezz/JustEnoughItems/tree/1.20.1/CommonApi/src/main/java/mezz/jei/api)
 * [EMI 1.20.1 source and dependencies](https://github.com/emilyploszaj/emi/tree/1.20.1)

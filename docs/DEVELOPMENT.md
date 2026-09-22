@@ -11,7 +11,7 @@ git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
-The default `main` branch contains both Fabric and NeoForge support. Minecraft,
+The default `main` branch contains Fabric, Forge and NeoForge support. Minecraft,
 loader, mappings, and Java versions are selected by the build profile in
 `gradle.properties`.
 
@@ -31,7 +31,15 @@ loader, mappings, and Java versions are selected by the build profile in
 ./gradlew :neoforge:runServer   # optional dedicated server
 ```
 
-To build both loaders and run the shared checks:
+### Forge
+
+```bash
+./gradlew :forge:build
+./gradlew :forge:runClient   # optional development client
+./gradlew :forge:runServer   # optional dedicated server
+```
+
+To build all loaders and run the shared checks:
 
 ```bash
 ./gradlew buildAll
@@ -49,7 +57,7 @@ for broad changes and releases. See [Compatibility and verification](COMPATIBILI
 for loader smoke tests and dependency profiles, and [Ponder integration](PONDER.md)
 for tutorial validation. Shared visual changes require fresh screenshots from both loaders.
 
-## Contributor references
+## Contributor guides
 
 Read [the contributor instructions](../AGENTS.md) before editing.
 [Architecture](ARCHITECTURE.md) describes module ownership and shared contracts;

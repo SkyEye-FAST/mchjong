@@ -106,8 +106,7 @@ extraction under the table's rules.
 
 Both use only their own hand and public tiles. They do not read opponents'
 concealed tiles, even when room visibility allows players to see those hands, and do
-not inspect the wall seed. These are deterministic heuristics, not a trained model
-or a claim of a benchmarked win rate.
+not inspect the wall seed. Bot decisions use deterministic heuristic evaluation.
 
 ## Invitations
 

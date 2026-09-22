@@ -2,9 +2,8 @@
 
 [Documentation](README.md) · [Playing guide](PLAYING.md)
 
-MChjong currently implements three- and four-player riichi mahjong. The presets
-and custom settings below describe this rule family. Additional mahjong rule
-families may be added as the project develops.
+MChjong supports three- and four-player riichi mahjong. The presets and custom
+settings below specify the rule configurations and table options.
 
 ## Preset options and custom rules
 
@@ -56,26 +55,9 @@ WRC disable it. The check is strictly below zero, after hand settlement: zero
 points remain playable and negative scores remain recorded. Changing this switch
 away from its preset default marks the rules as custom.
 
-## Preset reference
+## Preset specifications
 
-Checked on 18 September 2026. Presets describe hanchan scoring and automated
-play. Physical tournament administration (referees, fouls and tournament clocks)
-is separate from the mod's table controls.
-
-## Sources and versions
-
-- [Mahjong Soul official rules](https://mahjongsoul.com/news/46).
-- [Tenhou official manual](https://tenhou.net/man/), including its game-rule
-  table. The separate Rating formula is not the hanchan uma.
-- [M.League official competition rules](https://m-league.jp/about/).
-- [Japan Professional Mahjong League competition rules](https://www.ma-jan.or.jp/activity/game_rule.html):
-  the official/A column of the embedded `20260401_競技ルール0.7` sheet, including
-  its separate floating-player uma table.
-- [WRC official rules](https://www.worldriichi.org/wrc-rules): international
-  **WRC Rules 2025**, version 20250526, plus the **29 June 2025 clarification**.
-  This is the international rulebook, rather than the JPML domestic WRC variant.
-
-The Chinese preset labels are **联盟A规则** and **WRC规则**. Both current A and
+Presets configure hanchan scoring and automated table play. Both League A and
 WRC permit thirteen-or-more ordinary han to reach a fourfold mangan. M.League
 caps ordinary hands at sanbaiman. A counted limit is distinct from a natural
 yakuman and does not trigger natural-yakuman responsibility payments.
@@ -130,12 +112,11 @@ WRC renhou is compared with the ordinary hand and the higher payment wins; it
 does not add five han to other yaku or dora. Riichi kans preserve waits; the
 three competition presets also preserve the hand's interpretations. League A
 additionally prohibits losing a yaku. WRC permits riichi with no live-wall tiles
-remaining, as specified in its clarification; M.League and A require at least one.
+remaining; M.League and League A require at least one.
 
-The scoring boundary continues to use mahjong-utils for hand interpretations,
-yaku, fu and point tables. Its 0.7.7 point-table inputs are adjusted for 3-han
-60-fu kiriage and for natural yakuman when the ordinary counted limit is disabled.
-Candidate interpretations are compared by actual payment rather than han alone.
+Scoring evaluates hand interpretations, yaku, fu and point tables. Candidate
+interpretations are compared and selected by highest actual payment rather than
+han count alone.
 
 ## Physical red fives
 

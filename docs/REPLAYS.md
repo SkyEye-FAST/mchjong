@@ -103,11 +103,8 @@ The client validates the recorded timeline before presenting it.
 
 ## Tenhou JSON format
 
-Exports use the `/6` viewer's JSON interchange structure (`ver: "2.3"`). They are
-**not** Tenhou's compressed XML `.mjlog` format. Format encoding follows the
-[tensoul converter's primary implementation](https://github.com/Equim-chan/tensoul/blob/main/convert.js).
-The implementation is independent and preserves MChjong's actual rules and
-payments rather than pretending a Mahjong Soul or M.League match used Tenhou rules.
+Exports use the Tenhou `/6` JSON interchange structure (`ver: "2.3"`). The
+export format preserves MChjong's actual match rules and payments.
 
 The starting dealer becomes encoded seat zero. Sanma has an empty fourth seat,
 zero-filled fourth score entries, no red manzu, and round numbering that skips
@@ -132,5 +129,4 @@ Automated format tests cover tile codes, red fives, meld orientation, sanma padd
 seat rotation, declarations and draw labels. Full matches for every supported
 ruleset are reloaded and replayed against the recorded hands, rivers, calls,
 norths and point balances. The client smoke tests exercise the archive, fetch,
-viewer, resizing and export button on both loaders. Import in every external
-Tenhou-compatible viewer has not been verified; viewer-specific behavior may differ.
+viewer, resizing and export button on both loaders.

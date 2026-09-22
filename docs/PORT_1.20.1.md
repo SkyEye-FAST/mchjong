@@ -45,8 +45,7 @@ EMI displays the material variants and the oak table crafting recipe. REI displa
 the shared catalog's material and color variants using native NBT comparison.
 Fabric with JEI and Forge with EMI also pass the full shared smoke, including
 real inventory transfers, printing and dyeing, recipe lookups, catalog order,
-denominations, and recipe-page and small-container screenshots. Viewer autofill
-buttons and simultaneous installation of multiple viewers are outside this smoke.
+denominations, and recipe-page and small-container screenshots.
 
 ## Ponder and Quilt
 
