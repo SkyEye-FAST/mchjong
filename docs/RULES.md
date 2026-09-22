@@ -1,4 +1,10 @@
-# Riichi rules and presets
+# Rules and presets
+
+[Documentation](README.md) · [Playing guide](PLAYING.md)
+
+MChjong currently implements three- and four-player riichi mahjong. The presets
+and custom settings below describe this rule family. Additional mahjong rule
+families may be added as the project develops.
 
 ## Preset options and custom rules
 

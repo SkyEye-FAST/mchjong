@@ -8,7 +8,7 @@ version="${version}"
 displayName="MChjong"
 logoFile="assets/mchjong/icon.png"
 authors="SkyEye_FAST"
-description='''A seated, in-world riichi mahjong table for three or four players.'''
+description='''Playable, in-world mahjong tables with configurable rules.'''
 
 [[mixins]]
 config="mchjong.client.mixins.json"

@@ -3,7 +3,7 @@
   "id": "mchjong",
   "version": "${version}",
   "name": "MChjong",
-  "description": "A seated, in-world riichi mahjong mod.",
+  "description": "Playable, in-world mahjong tables with configurable rules.",
   "authors": [
     "SkyEye_FAST"
   ],
