@@ -7,6 +7,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.2] - 2026-09-22
+
+### Added
+
+- Dedicated creative mode tab featuring a Hatsu tile icon, cataloging mahjong supplies and all sixteen colored table cloths.
+- Localized names for all wood table variants and sixteen table cloth colors across English, Japanese, Simplified Chinese, and Traditional Chinese.
+
+### Changed
+
+- Default table cloth crafting recipe and standard table finish updated to cyan wool and carpet.
+- Low-resolution tile materials, dice faces, and dyed table cloths enriched for sharper contrast and visual detail.
+- Loader builds separated into dedicated Fabric and NeoForge subprojects under an aggregator root Gradle project.
+- Verified download mirrors configured for Fabric Loom and NeoForm runtime manifests.
+
+### Fixed
+
+- Immersive turn clocks and action buttons repositioned to prevent overlapping player hands and maintain clear discard visibility.
+- Immersive game controls scale consistently across GUI scales, and mahjong box interaction simplified for item insertion.
+- Blank tile stonecutting recipes updated to reliably accept bone blocks and smooth stone.
+
 ## [0.5.1] - 2026-09-22
 
 ### Added
@@ -182,7 +202,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.2...HEAD
+[0.5.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.2
 [0.5.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.1
 [0.5.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.0
 [0.4.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.1
