@@ -42,6 +42,15 @@ class TranslationReferenceTest {
         used.add("yaku.mchjong.renhou");
         for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
+        used.add("itemGroup.mchjong");
+        for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped")) {
+            used.add("block.mchjong.mahjong_table." + wood);
+            used.add("block.mchjong.automatic_mahjong_table." + wood);
+        }
+        for (String color : List.of("white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+            "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black")) {
+            used.add("item.mchjong.table_cloth." + color);
+        }
         for (int kind = 0; kind < 34; kind++) used.add("tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(kind));
         for (String style : List.of("name", "mpsz")) used.add("settings.mchjong.tile_labels." + style);
         for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {

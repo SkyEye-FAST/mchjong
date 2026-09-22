@@ -60,6 +60,10 @@ class PhysicalSuppliesTest {
         for (int i = 43; i <= 48; i++) {
             assertTrue(entries.get(i).is(MahjongContent.TILE_ITEM));
             assertTrue(MahjongSupplies.tile(entries.get(i)).blank());
+        }
+        assertEquals(Component.translatable("block.mchjong.mahjong_table.oak"), entries.get(0).getHoverName());
+        assertEquals(Component.translatable("block.mchjong.automatic_mahjong_table.oak"), entries.get(11).getHoverName());
+        assertEquals(Component.translatable("item.mchjong.table_cloth.white"), entries.get(23).getHoverName());
         for (int i = 0; i < entries.size(); i++) for (int j = i + 1; j < entries.size(); j++)
             assertFalse(ItemStack.isSameItemSameComponents(entries.get(i), entries.get(j)));
         entries.getFirst().shrink(1);

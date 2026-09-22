@@ -12,9 +12,9 @@ import net.minecraft.world.level.block.Block;
 public final class MahjongTableItem extends BlockItem {
     public MahjongTableItem(Block block, Properties properties) { super(block, properties); }
 
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, java.util.List<Component> lines, net.minecraft.world.item.TooltipFlag flag) {
+    @Override public Component getName(ItemStack stack) {
         var wood = stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.OAK);
-        lines.add(Component.translatable("block.minecraft." + wood.getSerializedName() + "_planks"));
+        return Component.translatable(getDescriptionId(stack) + "." + wood.getSerializedName());
     }
 
     @Override public InteractionResult place(BlockPlaceContext context) {
