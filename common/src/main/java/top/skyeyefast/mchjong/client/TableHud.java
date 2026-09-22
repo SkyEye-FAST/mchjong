@@ -276,10 +276,8 @@ final class TableHud {
 
     static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        graphics.fill(x, y, x + width, y + height, MahjongUi.TEXT);
-        if (riichi) graphics.fill(x + 6 * scale, y + scale, x + 8 * scale, y + 3 * scale, MahjongUi.NEGATIVE);
-        else for (int dot = 3; dot <= 9; dot += 3)
-            graphics.fill(x + dot * scale, y + scale, x + (dot + 1) * scale, y + 3 * scale, MahjongUi.INPUT);
+        if (riichi) graphics.blit(RiichiStickModel.TEXTURE, x, y, width, height, 0, 0, 384, 32, 384, 32);
+        else graphics.blit(FurnitureMesh.STICK_TEXTURE, x, y, width, height, 0, 32, 384, 32, 384, 192);
     }
 
     private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {

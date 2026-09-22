@@ -16,7 +16,7 @@ import javax.imageio.ImageIO;
 final class TileArtwork {
     static final List<String> PRESETS = List.of("kansai", "kanto");
     static final int WIDTH = 256, HEIGHT = 384, ATLAS_WIDTH = 2048, ATLAS_HEIGHT = 4096;
-    static final int FACE_COUNT = 45, BACK = 0xffffffff;
+    static final int FACE_COUNT = 45, BACK = 0;
     static final List<String> FACE_KEYS = List.of(
             "1m", "2m", "3m", "4m", "5m", "6m", "7m", "8m", "9m",
             "1p", "2p", "3p", "4p", "5p", "6p", "7p", "8p", "9p",
@@ -83,15 +83,7 @@ final class TileArtwork {
     }
 
     static BufferedImage back() {
-        var image = new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
-        var g = image.createGraphics();
-        try {
-            g.setColor(Color.WHITE);
-            g.fillRect(0, 0, WIDTH, HEIGHT);
-        } finally {
-            g.dispose();
-        }
-        return image;
+        return new BufferedImage(WIDTH, HEIGHT, BufferedImage.TYPE_INT_ARGB);
     }
 
     String notice() {

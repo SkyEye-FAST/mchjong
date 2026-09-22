@@ -7,6 +7,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Resource packs can add and override tile-face presets, with namespaced identities retained on printed tiles and synchronized tables.
+- Transparent pattern layers for tile backs and table cloths, shared by world, item and immersive rendering.
+- Resource-pack JSON models and textures for riichi deposits.
+
+### Changed
+
+- Riichi stick icons and physical deposits share a blue, white-dot design matching the 1,000-point stick.
+
 ## [0.5.3] - 2026-09-22
 
 ### Added

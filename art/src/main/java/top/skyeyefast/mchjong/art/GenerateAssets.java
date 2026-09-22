@@ -24,6 +24,10 @@ public final class GenerateAssets {
         for (String preset : TileArtwork.PRESETS) tiles(artwork, preset);
         text("META-INF/licenses/tile-face-presets-NOTICE.md", Files.readString(artwork.resolve("NOTICE.md")));
         png("tile/back", TileArtwork.back());
+        png("furniture/cloth_pattern", new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB));
+        var plain = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
+        for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) plain.setRGB(x, y, 0xffffffff);
+        png("tile/plain", plain);
         text("assets/mchjong/textures/tile/back.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         for (var texture : FurnitureArtwork.textures().entrySet()) {
             png("furniture/" + texture.getKey(), texture.getValue());
@@ -33,6 +37,14 @@ public final class GenerateAssets {
         for (var texture : TileMaterialArtwork.textures().entrySet())
             png("tile_material/" + texture.getKey(), texture.getValue());
         png("point_sticks", PointStickArtwork.texture());
+        png("item/riichi_stick", PointStickArtwork.texture().getSubimage(0, 64, 384, 32));
+        text("assets/mchjong/models/item/riichi_stick.json", """
+            {"textures":{"stick":"mchjong:item/riichi_stick","particle":"mchjong:item/riichi_stick"},
+             "elements":[{"from":[2.4,0,7.52],"to":[13.6,0.4,8.48],"shade":false,"faces":{
+              "up":{"texture":"#stick","uv":[0,0,16,16]},"down":{"texture":"#stick","uv":[0,0,16,16]},
+              "north":{"texture":"#stick","uv":[0,8,0,8]},"south":{"texture":"#stick","uv":[0,8,0,8]},
+              "east":{"texture":"#stick","uv":[0,8,0,8]},"west":{"texture":"#stick","uv":[0,8,0,8]}}}]}
+            """);
         text("assets/mchjong/textures/point_sticks.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         models();
         dice();
@@ -79,6 +91,8 @@ public final class GenerateAssets {
             glyphGraphics.dispose();
         }
         String path = preset.equals("kanto") ? "kanto/" : "";
+        text("assets/mchjong/tile_face_presets/" + preset + ".json",
+            "{\"atlas\":\"mchjong:textures/" + path + "tiles.png\",\"glyphs\":\"mchjong:textures/" + path + "tile_glyphs.png\"}");
         png(path + "tiles", atlas);
         png(path + "tile_glyphs", glyphs);
         String filtering = "{\"texture\":{\"blur\":true,\"clamp\":true}}";

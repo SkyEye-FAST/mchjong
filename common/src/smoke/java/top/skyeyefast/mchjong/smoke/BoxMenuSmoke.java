@@ -158,7 +158,7 @@ final class BoxMenuSmoke {
             var dye = new ItemStack(creative ? MahjongContent.CREATIVE_MAHJONG_DYE : MahjongContent.MAHJONG_DYE, creative ? 1 : 2);
             inventory.setItem(1, dye);
             var menu = open(player, 0);
-            check(!menu.clickMenuButton(player, 0), "Printing without dye was accepted");
+            check(!menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI), "Printing without dye was accepted");
             menu.clicked(HOTBAR + 1, 0, ClickType.QUICK_MOVE, player);
             check(inventory.getItem(1).isEmpty() && menu.getSlot(MahjongSupplies.DYE_SLOT).hasItem(), "Dye shift transfer missed its compartment");
             check(!menu.getSlot(0).mayPlace(dye) && !menu.getSlot(MahjongSupplies.TILE_SLOTS).mayPlace(dye)
@@ -167,9 +167,9 @@ final class BoxMenuSmoke {
             check(!menu.clickMenuButton(player, -1) && !menu.clickMenuButton(player, 2), "Invalid print action accepted");
             check(ItemStack.matches(before, box), "Rejected printing changed the carrier");
             menu.getSlot(2).getItem().shrink(1);
-            check(!menu.clickMenuButton(player, 0), "Incomplete tile count was printed");
+            check(!menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI), "Incomplete tile count was printed");
             menu.getSlot(2).getItem().grow(1);
-            check(menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI.ordinal()), "Valid printing rejected");
+            check(menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI), "Valid printing rejected");
             var items = MahjongSupplies.contents(box);
             check(ItemStack.matches(MahjongSupplies.contents(before).get(MahjongSupplies.TILE_SLOTS), items.get(MahjongSupplies.TILE_SLOTS)),
                 "Printing changed point sticks");
@@ -180,8 +180,8 @@ final class BoxMenuSmoke {
             check(items.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
                 .allMatch(stack -> MahjongSupplies.color(stack) == DyeColor.PURPLE && !MahjongSupplies.tile(stack).blank()), "Printing altered backs or left blanks");
             var printed = box.copy();
-            check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "No-op printing consumed dye");
-            check(menu.clickMenuButton(player, top.skyeyefast.mchjong.item.TileFacePreset.KANTO.ordinal()), "Preset change rejected");
+            check(!menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI) && ItemStack.matches(printed, box), "No-op printing consumed dye");
+            check(menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Preset change rejected");
             var changed = MahjongSupplies.contents(box);
             for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
                 var expected = items.get(slot).copy();
@@ -190,10 +190,10 @@ final class BoxMenuSmoke {
                 check(ItemStack.matches(expected, changed.get(slot)), "Preset change altered tile identity, material or back");
             }
             check(changed.get(MahjongSupplies.DYE_SLOT).getCount() == (creative ? 1 : 0), "Preset change consumed the wrong dye quantity");
-            check(MahjongSupplies.deck(box).preset() == top.skyeyefast.mchjong.item.TileFacePreset.KANTO, "Table ignored the printed preset");
+            check(MahjongSupplies.deck(box).preset().equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Table ignored the printed preset");
             printed = box.copy();
             player.closeContainer();
-            check(!menu.clickMenuButton(player, 0) && ItemStack.matches(printed, box), "Closed menu printed stale contents");
+            check(!menu.print(player, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI) && ItemStack.matches(printed, box), "Closed menu printed stale contents");
         }
 
         player.closeContainer();

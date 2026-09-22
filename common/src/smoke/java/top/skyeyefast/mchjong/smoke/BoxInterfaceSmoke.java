@@ -42,9 +42,9 @@ final class BoxInterfaceSmoke {
         if (settled == 10) UiControlsSmoke.verify(client);
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         if (reagentStage > 0) return reagents(client, output, menu);
-        var choices = top.skyeyefast.mchjong.item.TileFacePreset.values();
-        var preset = choices[sample % choices.length];
-        if (MahjongSupplies.facePreset(menu.getSlot(0).getItem()) != preset) {
+        var choices = top.skyeyefast.mchjong.client.TileFacePresets.choices();
+        var preset = choices.get(sample % choices.size());
+        if (!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset)) {
             require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
                 + ", menu=" + menu.containerId + ", printing=" + printing);
@@ -55,7 +55,7 @@ final class BoxInterfaceSmoke {
                     .filter(child -> child.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
                         && text.getKey().equals("box.mchjong.preset_choice")).findFirst().orElseThrow();
                 String requested = Component.translatable("box.mchjong.preset_choice", Component.translatable(preset.translationKey())).getString();
-                for (int i = 0; i < choices.length && !selector.getMessage().getString().equals(requested); i++) {
+                for (int i = 0; i < choices.size() && !selector.getMessage().getString().equals(requested); i++) {
                     client.screen.setFocused(selector);
                     selector.setFocused(true);
                     client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
@@ -141,7 +141,7 @@ final class BoxInterfaceSmoke {
         var settings = top.skyeyefast.mchjong.client.TableSettings.get();
         var previous = settings.tileLabels;
         try {
-            for (var preset : top.skyeyefast.mchjong.item.TileFacePreset.values()) for (int face : new int[]{0, 4, 27, 34, 38, 39, 40, 41}) {
+            for (var preset : top.skyeyefast.mchjong.client.TileFacePresets.choices()) for (int face : new int[]{0, 4, 27, 34, 38, 39, 40, 41}) {
                 var data = new top.skyeyefast.mchjong.item.TileData(face, top.skyeyefast.mchjong.item.TileMaterial.BONE, face == 4);
                 var stack = top.skyeyefast.mchjong.item.MahjongSupplies.tile(data, net.minecraft.world.item.DyeColor.BLUE, 1);
                 stack.set(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET, preset);

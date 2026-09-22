@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTableBlockEntity> {
-    private enum Layer { BACK, BODY, FACE, OUTLINE }
+    private enum Layer { BACK, BODY, FACE, PATTERN, OUTLINE }
     public MahjongTableRenderer(BlockEntityRendererProvider.Context context) {}
 
     @Override public void render(MahjongTableBlockEntity table, float partialTick, PoseStack pose,
@@ -41,6 +41,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         TableDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
         TableDice.renderWorld(view, pose, buffers, light);
         if (glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
+        tiles(table, frames, pose, buffers, light, Layer.PATTERN);
         tiles(table, frames, pose, buffers, light, Layer.OUTLINE);
         pose.popPose();
     }
@@ -54,6 +55,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             case BACK -> TileRenderTypes.back(material, back);
             case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.faces(table.equipment().preset());
+            case PATTERN -> TileRenderTypes.BACK_PATTERN;
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
@@ -73,6 +75,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 case BODY -> TileMesh.drawBody(pose, vertices, light, material, back);
                 case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, light, material, back);
+                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, piece.back() || piece.tile() < 0, light);
                 case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();

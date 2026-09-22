@@ -93,7 +93,7 @@ final class TileResourceSmoke {
             boolean different = false;
             for (int y = 0; y < back.getHeight(); y++) for (int x = 0; x < back.getWidth(); x++)
                 different |= back.getPixelRGBA(x, y) != corner;
-            require(!different, "Default back must be solid");
+            require(!different && corner == 0, "Default back pattern must be transparent");
         }
         try (var glyphs = NativeImage.read(new ByteArrayInputStream(glyphBytes))) {
             require(glyphs.getWidth() == 2048 && glyphs.getHeight() == 4096, "Glyph atlas dimensions changed");

@@ -94,11 +94,11 @@ project's presentation vocabulary without replacing native input machinery.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
 and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
 inventory wells and a packing summary; it never writes stored components.
-Face printing uses native menu-button packets. The server validates the complete
-136/144-tile input and selected preset, then commits all tile slots and dye
+Face printing uses a bounded cosmetic-ID payload tied to the current menu. The server validates the complete
+136/144-tile input, then commits all tile slots and dye
 consumption together. Tile, point-stick and dye compartments have distinct
-native insertion ranges. `TileFacePreset` is a separate immutable component;
-both built-in presets may be applied or supply an active game. The deck's preset
+native insertion ranges. `TileFacePreset` is an immutable resource-ID component;
+resource-pack definitions supply the client selector and atlas pair. The deck's preset
 is synchronized as public appearance, independently of private container contents.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`

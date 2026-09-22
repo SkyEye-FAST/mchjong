@@ -145,18 +145,23 @@ class AssetContractTest {
     }
 
     @Test
-    void defaultBackIsSolidAndNoBuiltinPackShips() throws Exception {
+    void defaultPatternsAreTransparentAndResourcesAreComplete() throws Exception {
         String backPath = "assets/mchjong/textures/tile/back.png";
         BufferedImage solid = ImageIO.read(resources.resolve(backPath).toFile());
         assertEquals(256, solid.getWidth());
         assertEquals(384, solid.getHeight());
         for (int y = 0; y < TileArtwork.HEIGHT; y++)
             for (int x = 0; x < TileArtwork.WIDTH; x++) {
-                assertEquals(TileArtwork.BACK, solid.getRGB(x, y));
+                assertEquals(0, solid.getRGB(x, y));
             }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
+        var cloth = ImageIO.read(resources.resolve("assets/mchjong/textures/furniture/cloth_pattern.png").toFile());
+        assertTrue(Arrays.stream(cloth.getRGB(0, 0, cloth.getWidth(), cloth.getHeight(), null, 0, cloth.getWidth())).allMatch(pixel -> pixel == 0));
+        var sticks = ImageIO.read(resources.resolve("assets/mchjong/textures/point_sticks.png").toFile());
+        var riichi = ImageIO.read(resources.resolve("assets/mchjong/textures/item/riichi_stick.png").toFile());
+        assertArrayEquals(sticks.getRGB(0, 64, 384, 32, null, 0, 384), riichi.getRGB(0, 0, 384, 32, null, 0, 384));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
-                "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png"));
+                "plain.png", "cloth_pattern.png", "riichi_stick.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");

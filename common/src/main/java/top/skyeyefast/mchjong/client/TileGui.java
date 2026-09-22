@@ -49,13 +49,15 @@ public final class TileGui {
         }
         if (back || tile < 0) {
             var texture = TileRenderTypes.backTexture(material, dye);
-            int textureWidth = texture.equals(TileMesh.BACK) ? TileMesh.TILE_WIDTH : 16;
-            int textureHeight = texture.equals(TileMesh.BACK) ? TileMesh.TILE_HEIGHT : 16;
+            int textureWidth = 16;
+            int textureHeight = 16;
             graphics.setColor(((backColor >> 16) & 255) / 255f, ((backColor >> 8) & 255) / 255f,
                 (backColor & 255) / 255f, ((backColor >>> 24) & 255) / 255f);
             graphics.blit(texture, 1, 1, width - 2, height - 2, 0, 0,
                 textureWidth, textureHeight, textureWidth, textureHeight);
             graphics.setColor(1, 1, 1, 1);
+            graphics.blit(TileMesh.BACK, 1, 1, width - 2, height - 2, 0, 0,
+                TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT);
         } else {
             graphics.fill(0, 0, width, height, 0xfff4eedb);
             int face = TileMesh.face(tile);

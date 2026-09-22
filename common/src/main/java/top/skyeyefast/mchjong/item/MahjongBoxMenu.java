@@ -11,7 +11,7 @@ import net.minecraft.world.item.ItemStack;
 
 /** Server-owned carrier inventory with native slot synchronization and a dedicated client screen. */
 public final class MahjongBoxMenu extends AbstractContainerMenu {
-    public static final int DYE_BACK_BUTTON = TileFacePreset.values().length;
+    public static final int DYE_BACK_BUTTON = 0;
     private final Inventory inventory;
     private final DataSlot ownerSlot = DataSlot.standalone();
     private ItemStack box = ItemStack.EMPTY;
@@ -71,11 +71,14 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
     }
 
     @Override public boolean clickMenuButton(Player player, int id) {
-        if (player.level().isClientSide || !stillValid(player) || id < 0 || id > DYE_BACK_BUTTON) return false;
-        if (id == DYE_BACK_BUTTON) return dyeBack();
+        return !player.level().isClientSide && stillValid(player) && id == DYE_BACK_BUTTON && dyeBack();
+    }
+
+    public boolean print(Player player, TileFacePreset preset) {
+        if (player.level().isClientSide || !stillValid(player)) return false;
         var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (!MahjongSupplies.mahjongDye(dye)) return false;
-        var output = MahjongSupplies.engravedContents(items(), TileFacePreset.values()[id]);
+        var output = MahjongSupplies.engravedContents(items(), preset);
         if (output.isEmpty()) return false;
         if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;

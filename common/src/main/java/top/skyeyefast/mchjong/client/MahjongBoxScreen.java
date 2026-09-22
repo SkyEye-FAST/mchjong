@@ -29,8 +29,8 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         super.init();
         topPos = Math.min(topPos, height - imageHeight - 24);
         presetChoice = addRenderableWidget(MahjongButton.create(presetLabel(), ignored -> {
-            var choices = TileFacePreset.values();
-            preset = choices[Math.floorMod(preset.ordinal() + (hasShiftDown() ? -1 : 1), choices.length)];
+            var choices = TileFacePresets.choices();
+            preset = choices.get(Math.floorMod(choices.indexOf(preset) + (hasShiftDown() ? -1 : 1), choices.size()));
             presetChoice.setMessage(presetLabel());
             updateActions();
         }).bounds(leftPos + 196, topPos + 136, 94, 20).build());
@@ -38,7 +38,8 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build().primary());
         print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
-            minecraft.gameMode.handleInventoryButtonClick(menu.containerId, preset.ordinal()))
+            minecraft.getConnection().send(new net.minecraft.network.protocol.common.ServerboundCustomPayloadPacket(
+                new top.skyeyefast.mchjong.network.BoxPrintPayload(menu.containerId, preset))))
             .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
         updateActions();
     }
@@ -53,11 +54,14 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     }
 
     private void updateActions() {
+        var choices = TileFacePresets.choices();
+        if (!choices.isEmpty() && !choices.contains(preset)) preset = choices.getFirst();
+        presetChoice.setMessage(presetLabel());
         var reagent = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         boolean printing = MahjongSupplies.mahjongDye(reagent);
         presetChoice.visible = print.visible = printing;
-        presetChoice.active = printing && TileFacePreset.values().length > 1;
-        print.active = printing && menu.canEngrave(preset);
+        presetChoice.active = printing && choices.size() > 1;
+        print.active = printing && choices.contains(preset) && menu.canEngrave(preset);
         dyeBack.visible = reagent.getItem() instanceof net.minecraft.world.item.DyeItem;
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
         if (getFocused() instanceof net.minecraft.client.gui.components.AbstractWidget widget && !widget.visible)

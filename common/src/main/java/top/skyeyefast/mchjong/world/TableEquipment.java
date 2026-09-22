@@ -273,8 +273,7 @@ public final class TableEquipment {
             int id = tag.getInt("tile_back");
             back = id < 0 ? null : DyeColor.byId(id);
         }
-        if (tag.contains("tile_preset")) for (TileFacePreset candidate : TileFacePreset.values())
-            if (candidate.getSerializedName().equals(tag.getString("tile_preset"))) preset = candidate;
+        if (tag.contains("tile_preset")) preset = new TileFacePreset(net.minecraft.resources.ResourceLocation.parse(tag.getString("tile_preset")));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
     }

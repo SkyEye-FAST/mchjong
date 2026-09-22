@@ -24,7 +24,7 @@ public record TileData(int face, TileMaterial material, boolean red) {
     public boolean flower() { return face >= FIRST_FLOWER && face < FIRST_FLOWER + FLOWER_COUNT; }
     public String flowerKey(TileFacePreset preset) {
         if (!flower()) throw new IllegalStateException("Not a flower tile");
-        if (preset == TileFacePreset.KANTO && face >= FIRST_FLOWER + 4)
+        if (preset.equals(TileFacePreset.KANTO) && face >= FIRST_FLOWER + 4)
             return "flower.mchjong." + java.util.List.of("fortune", "prosperity", "longevity", "nobility").get(face - FIRST_FLOWER - 4);
         return "flower.mchjong." + FLOWERS.get(face - FIRST_FLOWER);
     }

@@ -1,13 +1,17 @@
 package top.skyeyefast.mchjong.item;
 
 import com.mojang.serialization.Codec;
-import net.minecraft.util.StringRepresentable;
+import net.minecraft.resources.ResourceLocation;
 
-/** Built-in face designs, independent of tile material and back color. */
-public enum TileFacePreset implements StringRepresentable {
-    KANSAI, KANTO;
-
-    public static final Codec<TileFacePreset> CODEC = StringRepresentable.fromEnum(TileFacePreset::values);
-    @Override public String getSerializedName() { return name().toLowerCase(java.util.Locale.ROOT); }
-    public String translationKey() { return "preset.mchjong." + getSerializedName(); }
+/** Persistent cosmetic identity; resource-pack definitions belong exclusively to the client. */
+public record TileFacePreset(ResourceLocation id) {
+    public static final TileFacePreset KANSAI = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kansai"));
+    public static final TileFacePreset KANTO = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kanto"));
+    public static final Codec<TileFacePreset> CODEC = ResourceLocation.CODEC.xmap(TileFacePreset::new, TileFacePreset::id);
+    public TileFacePreset {
+        java.util.Objects.requireNonNull(id);
+        if (id.toString().length() > 128) throw new IllegalArgumentException("Preset ID exceeds 128 characters");
+    }
+    public String getSerializedName() { return id.toString(); }
+    public String translationKey() { return "preset." + id.getNamespace() + "." + id.getPath().replace('/', '.'); }
 }

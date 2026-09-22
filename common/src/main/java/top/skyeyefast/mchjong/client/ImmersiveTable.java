@@ -85,6 +85,7 @@ final class ImmersiveTable {
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
         flat(0, -510, -425, 510, 425, 0, 0xff20584f);
+        faces.add(new Face(rectangle(0, -510, -425, 510, 425, .05), FurnitureMesh.CLOTH_PATTERN, 0, 0, 1, 1, 0xffffffff, false));
         flat(0, -508, -423, 508, -420, .1, 0xff54857a);
         flat(0, -508, 420, 508, 423, .1, 0xff102f30);
         paint(graphics);
@@ -317,6 +318,7 @@ final class ImmersiveTable {
     private void artwork(Vertex[] vertices, int tile, boolean back, boolean dim) {
         if (back || tile < 0) {
             faces.add(new Face(vertices, backTexture, 0, 0, 1, 1, backColor, false));
+            faces.add(new Face(vertices, TileMesh.BACK, 0, 0, 1, 1, 0xffffffff, false));
             return;
         }
         int face = TileMesh.face(tile);

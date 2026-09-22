@@ -62,6 +62,7 @@ public final class TableClientSmoke {
     private final InterfaceSmoke interfaceSmoke = new InterfaceSmoke();
     private final BoxInterfaceSmoke boxInterfaceSmoke = new BoxInterfaceSmoke();
     private final TableInterfaceSmoke tableInterfaceSmoke = new TableInterfaceSmoke();
+    private final ResourcePackSmoke resourcePackSmoke = new ResourcePackSmoke();
     private final BrowserSmoke browserSmoke = new BrowserSmoke();
     private final StoolInteractionSmoke stoolInteractionSmoke = new StoolInteractionSmoke();
 
@@ -171,7 +172,7 @@ public final class TableClientSmoke {
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
-                    == top.skyeyefast.mchjong.item.TileFacePreset.KANTO, "Client table lost its synchronized face preset");
+                    .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
                 if (itemsOnly) {
                     client.setScreen(null);
                     step = 18; entered = ticks;
@@ -231,6 +232,8 @@ public final class TableClientSmoke {
             } else if (step == 32 && fixtureSeat.isDone() && ticks - entered > 20) {
                 require(fixtureSeat.join(), "Interface fixture did not obtain a physical seat");
                 if (!tableInterfaceSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) return;
+                step = 35; entered = ticks;
+            } else if (step == 35 && resourcePackSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Box transfers, keyboard presets and dye actions in four locales; immersive localized controls; seated and immersive turn/reserve clocks, riichi, meld and reaction layouts at normal and small viewports.\n");
                 LOG.info("MCHJONG_INTERFACE_SMOKE_PASS");
                 step = 13; entered = ticks;

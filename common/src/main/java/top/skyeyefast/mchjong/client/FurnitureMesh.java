@@ -17,6 +17,7 @@ public final class FurnitureMesh {
     public static final float STICK_HALF_WIDTH = .03f;
     public static final float STICK_HEIGHT = .025f;
     public static final ResourceLocation STICK_TEXTURE = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/point_sticks.png");
+    public static final ResourceLocation CLOTH_PATTERN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/cloth_pattern.png");
     private static final int WHITE = 0xffffffff;
     private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
@@ -108,6 +109,7 @@ public final class FurnitureMesh {
                 half - .03125f, .938f, half - .03125f, tint(color, .82f), light);
             pose.popPose();
         }
+        clothPattern(pose, buffers, light, half, half, .9381f);
     }
 
     public static void stool(PoseStack pose, MultiBufferSource buffers, int light, FurnitureWood wood, DyeColor color) {
@@ -168,6 +170,16 @@ public final class FurnitureMesh {
         FurnitureShape.bevel(pose, felt, -.3125f, .1875f, -.28125f, .3125f, .24375f, .28125f, .015625f, tint(color, .78f), light);
         FurnitureShape.bevel(pose, felt, -.3f, .235f, -.28125f, .3f, .3f, .28125f, .015625f, tint(color, 1), light);
         FurnitureShape.box(pose, felt, -.27f, .3f, .22f, .27f, .301f, .23f, tint(color, .72f), light);
+        clothPattern(pose, buffers, light, .284f, .265f, .3011f);
+    }
+
+    private static void clothPattern(PoseStack pose, MultiBufferSource buffers, int light, float x, float z, float y) {
+        var out = buffers.getBuffer(RenderType.entityTranslucent(CLOTH_PATTERN));
+        for (int i = 0; i < 4; i++) {
+            float u = i == 1 || i == 2 ? 1 : 0, v = i < 2 ? 1 : 0;
+            out.addVertex(pose.last(), (u * 2 - 1) * x, y, (v * 2 - 1) * z).setColor(WHITE).setUv(u, v)
+                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), 0, 1, 0);
+        }
     }
 
     private static int tint(DyeColor dye, float brightness) {

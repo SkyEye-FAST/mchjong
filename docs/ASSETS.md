@@ -35,6 +35,28 @@ All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.
+Resource packs can override or add definitions at
+`assets/<namespace>/tile_face_presets/<name>.json`. The file path defines the
+persistent preset ID `<namespace>:<name>`, for example:
+
+```json
+{"atlas":"example:textures/ink/tiles.png","glyphs":"example:textures/ink/tile_glyphs.png"}
+```
+
+Supply both PNGs using this atlas layout. The box selector discovers definitions
+on every resource reload, ordered by namespaced ID. Override
+`assets/mchjong/tile_face_presets/kansai.json` or `kanto.json` to redirect a built-in
+design, or replace its PNGs directly. Pack priority follows Minecraft's normal
+resource selection. Add `preset.<namespace>.<name>` to the pack's language files
+(replace `/` in nested names with `.`), including `en_us`, `ja_jp`, `zh_cn` and
+`zh_tw`. The built-in flower labels remain associated with the stored preset.
+
+Printing stores only the preset ID on tiles and synchronizes it with table
+appearance. A client resource pack is sufficient to print a new design; the
+server validates the physical set, carrier, menu and dye transaction. Other
+players need the same resources to display the design. Removing the pack keeps
+stored IDs intact and removes its selector entries; unavailable designs display
+Minecraft's missing texture until their resources are installed.
 The asset test compares every atlas cell directly against its generated design,
 including all 45 distinct faces, red fives, flowers, opacity and the declared order.
 
@@ -65,16 +87,18 @@ generated-item models and can be replaced independently by resource packs.
 
 Undyed tiles use their own material texture for the rear face and back shell, so
 wood, bone, quartz, calcite, glass and amethyst have no separate default back
-color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 opaque
-white tint mask used only after an opaque tile has been dyed. The tile's
+color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 transparent
+pattern layer applied to every rear face, including undyed and glass tiles and
+concealed face covers. Its default pixels are fully transparent. The tile's
 `BASE_COLOR` component selects one of Minecraft's sixteen dye colors without
 changing the material-colored body or opaque white printed surface.
 
-Glass never receives the opaque `back.png` layer. Dyeing a glass tile tints its
+The pattern preserves its own colors and alpha independently of dye. Dyeing a glass tile tints its
 translucent glass material instead, matching the stained-glass model while its
 rear face continues to use `textures/tile_material/glass.png`. Undyed glass keeps
 the neutral glass tint. Resource packs can replace the material textures and the
-dyed-back mask independently.
+back pattern independently. Dyed opaque shells use the solid white
+`textures/tile/plain.png` tinted by the dye, beneath the pattern.
 
 The body uses original neutral relief textures under `textures/tile_material/`:
 `wood.png`, `bone.png`, `quartz.png`, `calcite.png`, `glass.png`, and `amethyst.png`.
@@ -108,17 +132,17 @@ side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulti
 screenshots for native-like hand placement, grip
 contact, readable printed faces and clearance above the hotbar.
 
-To supply a dyed-back design, create a normal resource pack for your target
+To supply a back design, create a normal resource pack for your target
 Minecraft version containing the `textures/tile/back.png` path and matching
-`pack_format`. Keep it opaque, preserve the 2:3 aspect ratio and use an unmarked,
-uniform rim so that the back shell matches. To customize an undyed back, replace
-the corresponding `textures/tile_material/<material>.png` instead. Selection,
+`pack_format` (34 for Minecraft 1.21.1). Preserve the 2:3 aspect ratio; transparent
+pixels reveal the tile material or dye beneath, and partial alpha is supported.
+The pattern covers the flat cap while the bevel retains its material or dye.
+To customize the body, replace `textures/tile_material/<material>.png`. Selection,
 persistence and reloading use Minecraft's resource-pack system. Back textures do
 not replace the face atlas or affect private game data.
 
-Concealed tiles and physical rear faces use the material texture while undyed,
-or the independent back texture after an opaque tile is dyed. Glass always uses
-its material texture and remains translucent.
+Concealed tiles and physical rear faces combine the material or dyed shell with
+the independent back pattern. Glass keeps its translucent material below that pattern.
 Front and back geometry is batched by material rather than switching render
 buffers for each tile.
 
@@ -140,6 +164,14 @@ unmarked sides in inventory, held-item and table renders. Half-pixel UV insets
 and linear filtering keep the strips separate. Resource packs can replace the
 atlas, including body colors, without changing the existing denominations.
 
+Riichi deposits use the native JSON model `assets/mchjong/models/item/riichi_stick.json`
+and `assets/mchjong/textures/item/riichi_stick.png` (384 × 32). The default texture
+is exactly the 1,000-point strip: blue with one white dot. The model uses ordinary
+Minecraft `elements`, face UVs, parents and texture references, so packs can
+replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
+`[13.6,0.4,8.48]` in model pixels; the table applies the lane scale and orientation.
+Interface riichi icons use the same texture.
+
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
 `felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
@@ -151,6 +183,12 @@ deterministically with small, discrete palettes and nearest-neighbor sampling.
 the restrained material separation and pixel scale. The patterns are original.
 Wood components select the finish; neutral fabric is tinted by the existing dye
 component. Resource packs can replace these paths directly.
+`assets/mchjong/textures/furniture/cloth_pattern.png` is a separate, fully
+transparent 256 × 256 default image. Replace it with an RGBA design to add a
+single pattern across the table's whole cloth, its folded item and the immersive
+table. Pattern colors are independent of the dyed fabric beneath; transparent
+pixels preserve the fabric. This layer is separate from the repeating `felt.png`
+material shared with stool upholstery.
 The block atlas explicitly stitches the wooden particle sprite through
 `assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
 Tile inventory icons use front lighting so their white faces remain readable.
@@ -199,7 +237,7 @@ code from that project or riichi_advanced is bundled.
 
 `gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source
 order, red fives, the blank white dragon, texture resolution and filtering,
-the dyed-back mask, material-backed defaults, resource-pack customization paths, language keys, original furniture
+transparent default patterns, material-backed defaults, resource-pack customization paths, language keys, original furniture
 materials, source integrity and byte-for-byte reproducible generation. Client-side
 unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
 white face plates, picking and exact wall/river contact, including riichi discards.
@@ -215,3 +253,10 @@ additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and screenshots under
 `neoforge/build/smoke/evidence`. Resource reload checks include all furniture and
 tile-body textures, including their live pixel sampling state.
+
+Both `:fabric:runSmokeClient -PsmokeInterface=true` and its NeoForge equivalent
+also install a generated test resource pack, discover and print a new preset
+through the real packet, override a built-in definition, verify replacement
+riichi geometry, capture default/custom table patterns, then remove the pack
+and check the reloaded preset list. Captures are under
+`build/smoke/interface-evidence/resource-default` and `resource-custom`.

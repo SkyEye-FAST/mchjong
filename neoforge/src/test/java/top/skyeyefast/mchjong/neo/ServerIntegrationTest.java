@@ -88,7 +88,7 @@ class ServerIntegrationTest {
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
         assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset"), appearance.getAllKeys());
         assertEquals("glass", appearance.getString("tile_material"));
-        assertEquals("kanto", appearance.getString("tile_preset"));
+        assertEquals("mchjong:kanto", appearance.getString("tile_preset"));
         table.loadWithComponents(appearance, server.registryAccess());
         CompoundTag afterPublicUpdate = table.saveWithoutMetadata(server.registryAccess());
         assertEquals(restored.getString("game"), afterPublicUpdate.getString("game"));

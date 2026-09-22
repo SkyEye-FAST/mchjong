@@ -7,12 +7,22 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Lit tile surfaces: smooth printed faces and crisp low-resolution body materials. */
 public final class TileRenderTypes extends RenderType {
-    public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.GLYPHS);
-    private static final RenderType KANTO_FACES = material("mchjong_kanto_faces", TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
+    public static final RenderType FACES = faceMaterial(TileMesh.GLYPHS);
+    private static final java.util.Map<ResourceLocation, RenderType> FACE_TYPES = new java.util.HashMap<>();
     public static RenderType faces(top.skyeyefast.mchjong.item.TileFacePreset preset) {
-        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_FACES : FACES;
+        var texture = TileMesh.glyphs(preset);
+        if (texture.equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()))
+            return RenderType.entityCutout(texture);
+        return FACE_TYPES.computeIfAbsent(texture, TileRenderTypes::faceMaterial);
     }
-    public static final RenderType BACKS = material("mchjong_tile_backs", TileMesh.BACK);
+    public static final ResourceLocation PLAIN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile/plain.png");
+    public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);
+    public static final RenderType BACK_PATTERN = create("mchjong_back_pattern", DefaultVertexFormat.NEW_ENTITY,
+        VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
+            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+            .setTextureState(new TextureStateShard(TileMesh.BACK, true, false))
+            .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
+            .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false));
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
     private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes();
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
@@ -40,7 +50,7 @@ public final class TileRenderTypes extends RenderType {
 
     public static ResourceLocation backTexture(top.skyeyefast.mchjong.item.TileMaterial material,
                                                net.minecraft.world.item.DyeColor dye) {
-        return TileMesh.usesMaterialBack(material, dye) ? bodyTexture(material) : TileMesh.BACK;
+        return TileMesh.usesMaterialBack(material, dye) ? bodyTexture(material) : PLAIN;
     }
 
     public static RenderType body(top.skyeyefast.mchjong.item.TileMaterial material) {
@@ -52,19 +62,20 @@ public final class TileRenderTypes extends RenderType {
         return TileMesh.usesMaterialBack(material, dye) ? body(material) : BACKS;
     }
 
-    public static RenderType gui(ResourceLocation texture) { return GUI.get(texture); }
+    public static RenderType gui(ResourceLocation texture) {
+        return GUI.computeIfAbsent(texture, key -> guiMaterial("mchjong_gui", key, true));
+    }
+    public static void reload() { FACE_TYPES.clear(); GUI.clear(); GUI.putAll(guiTypes()); }
 
     private static java.util.Map<ResourceLocation, RenderType> guiTypes() {
         var result = new java.util.HashMap<ResourceLocation, RenderType>();
         result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS, true));
-        var kanto = TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
-        result.put(kanto, guiMaterial("mchjong_gui_kanto", kanto, true));
         result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK, true));
         for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
             var texture = bodyTexture(material);
             result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture, false));
         }
-        return java.util.Map.copyOf(result);
+        return result;
     }
 
     private static RenderType guiMaterial(String name, ResourceLocation texture, boolean blur) {
@@ -82,13 +93,19 @@ public final class TileRenderTypes extends RenderType {
     }
 
     private static RenderType material(String name, ResourceLocation texture, boolean blur) {
+        return material(name, new TextureStateShard(texture, blur, false));
+    }
+
+    private static RenderType faceMaterial(ResourceLocation texture) {
+        return material("mchjong_tile_faces", new FaceTextureState(texture));
+    }
+
+    private static RenderType material(String name, TextureStateShard texture) {
         // Vanilla entityCutoutNoCull (including entitySmoothCutout) forces nearest sampling.
         return create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_ENTITY_CUTOUT_NO_CULL_SHADER)
-                .setTextureState(texture.equals(TileMesh.GLYPHS)
-                    || texture.equals(TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO))
-                    ? new FaceTextureState(texture) : new TextureStateShard(texture, blur, false))
+                .setTextureState(texture)
                 .setCullState(CULL)
                 .setLightmapState(LIGHTMAP)
                 .setOverlayState(OVERLAY)

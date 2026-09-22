@@ -17,13 +17,11 @@ public final class TileMesh {
     public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
     public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
     public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
-    private static final ResourceLocation KANTO_ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/kanto/tiles.png");
-    private static final ResourceLocation KANTO_GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/kanto/tile_glyphs.png");
     public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
-        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_ATLAS : ATLAS;
+        return TileFacePresets.definition(preset).atlas();
     }
     public static ResourceLocation glyphs(top.skyeyefast.mchjong.item.TileFacePreset preset) {
-        return preset == top.skyeyefast.mchjong.item.TileFacePreset.KANTO ? KANTO_GLYPHS : GLYPHS;
+        return TileFacePresets.definition(preset).glyphs();
     }
     public static final int TILE_WIDTH = 256;
     public static final int TILE_HEIGHT = 384;
@@ -96,7 +94,7 @@ public final class TileMesh {
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, true, 0, 0);
             cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
         } else {
-            // Dyed opaque backs use the independent resource-pack mask and sample its rim at the bevel.
+            // The dyed shell stays solid independently of the transparent decorative layer.
             float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
             band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, false, u, v);
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
@@ -108,6 +106,11 @@ public final class TileMesh {
             band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, DEPTH / 2, color, light, false, u, v);
             cap(pose, vertices, CAP_OUTLINE, DEPTH / 2, false, true, color, light);
         }
+    }
+
+    public static void drawBackPattern(PoseStack pose, VertexConsumer vertices, boolean concealed, int light) {
+        cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2 - .0001f, true, true, 0xffffffff, light);
+        if (concealed) cap(pose, vertices, CAP_OUTLINE, DEPTH / 2 + .0001f, false, true, 0xffffffff, light);
     }
 
     private static float[] outline(float w, float h, float r) {

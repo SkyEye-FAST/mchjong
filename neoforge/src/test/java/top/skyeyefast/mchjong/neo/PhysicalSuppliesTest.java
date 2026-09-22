@@ -330,6 +330,23 @@ class PhysicalSuppliesTest {
         assertFalse(equipment.canSupplyReds(false, top.skyeyefast.mchjong.engine.RedFives.THREE), "Separate boxes cannot pool red suits");
     }
 
+    @Test void customPresetIdentitySurvivesPrintingAndPersistence(MinecraftServer server) {
+        var preset = new TileFacePreset(net.minecraft.resources.ResourceLocation.parse("example:ink/night"));
+        var source = MahjongSupplies.completeBox(TileMaterial.BONE);
+        var printed = MahjongSupplies.engrave(source, preset);
+        assertEquals(preset, MahjongSupplies.deck(printed).preset());
+        var restored = ItemStack.parseOptional(server.registryAccess(), (net.minecraft.nbt.CompoundTag) printed.save(server.registryAccess()));
+        assertTrue(ItemStack.matches(printed, restored));
+        assertTrue(MahjongSupplies.engrave(restored, new TileFacePreset(preset.id())).isEmpty());
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, restored);
+        var tag = new net.minecraft.nbt.CompoundTag();
+        equipment.writeAppearance(tag);
+        var copy = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        copy.load(tag, server.registryAccess());
+        assertEquals(preset, copy.preset());
+    }
+
     @Test void engravingAndBulkDyeAreAtomicAndKeepFlowersAndPhysicalSticks(MinecraftServer server) {
         for (TileMaterial material : TileMaterial.values()) {
             var blank = new TileData(-1, material, false);

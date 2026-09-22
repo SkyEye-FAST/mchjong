@@ -126,7 +126,7 @@ public final class MahjongSupplies {
             }
             for (int count : faces) if (count != 4) return List.of();
             for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
-            if (tiles.stream().allMatch(stack -> facePreset(stack) == preset)) return List.of();
+            if (tiles.stream().allMatch(stack -> facePreset(stack).equals(preset))) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++)
                 if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
         }

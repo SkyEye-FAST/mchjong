@@ -12,6 +12,17 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
+            context.addModels(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
+        top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()
+            .getModelManager().getModel(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
+        net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)
+            .registerReloadListener(new net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener() {
+                @Override public net.minecraft.resources.ResourceLocation getFabricId() { return MahjongContent.id("tile_face_presets"); }
+                @Override public void onResourceManagerReload(net.minecraft.server.packs.resources.ResourceManager resources) {
+                    top.skyeyefast.mchjong.client.TileFacePresets.reload(resources);
+                }
+            });
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper::registerKeyBinding);
         top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
             model.getTransforms().getTransform(context).apply(leftHand, pose));
