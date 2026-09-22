@@ -11,12 +11,29 @@ compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
 | Minecraft | Loader artifacts | Validation scope |
 | --- | --- | --- |
 | 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
-| 1.20.1 | Fabric and Forge port on `compat/1.20.1` | In progress; not yet a release build |
+| 1.20.1 | Fabric and Forge port on `compat/1.20.1` | Both base JARs build and reach the title screen; world/network acceptance and optional integrations remain in progress |
 | Matching version | Quilt consumes the Fabric artifact | Quilt runtime acceptance is separate |
 
 The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
 Forge currently builds the base game integration. Optional Forge adapters require
 matching artifacts and their own installed-dependency validation before publication.
+
+## Version synchronization and artifacts
+
+`main` is the sole feature development line. Synchronize stable batches into
+`compat/1.20.1`, resolve only the Minecraft and loader adaptation differences, then
+validate the port. Engine and shared gameplay changes travel through this Git
+history rather than a separate feature implementation.
+
+The snapshot and release workflows on `main` build its three loader artifacts and
+the two 1.20.1 artifacts from the exact commit in `.github/compat-1.20.1-ref`.
+Update that pin only after reviewing and validating a stable port batch. Both
+checkouts receive the same mod version during assembly; the filenames include
+Minecraft version and loader. A main commit does not automatically advance the
+compatibility pin. Review feature parity and outstanding port acceptance before
+publishing a release. Quilt uses the corresponding Fabric JAR.
+
+## Optional integrations
 
 | Optional viewer | Pinned version | Development runtime |
 | --- | --- | --- |

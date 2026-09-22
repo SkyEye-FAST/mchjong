@@ -44,6 +44,9 @@ jobs:
 
           echo "version=${tag}" >> "${GITHUB_OUTPUT}"
           echo "minecraft=$(sed -n 's/^minecraft_version=//p' gradle.properties)" >> "${GITHUB_OUTPUT}"
+          compat_ref="$(tr -d '\r\n' < .github/compat-1.20.1-ref)"
+          [[ "${compat_ref}" =~ ^[0-9a-f]{40}$ ]]
+          echo "compat_ref=${compat_ref}" >> "${GITHUB_OUTPUT}"
 
       - name: Prepare release notes from changelog
         shell: bash
@@ -77,6 +80,16 @@ jobs:
       - name: Build release artifacts
         run: bash gradlew clean buildAll --no-daemon -Pmod_version="${GITHUB_REF_NAME}"
 
+      - name: Checkout reviewed Minecraft 1.20.1 port
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.version.outputs.compat_ref }}
+          path: compat-1.20.1
+
+      - name: Build Minecraft 1.20.1 release artifacts
+        working-directory: compat-1.20.1
+        run: bash gradlew buildAll --no-daemon -Pmod_version="${GITHUB_REF_NAME}"
+
       - name: Verify release artifacts
         shell: bash
         run: |
@@ -85,6 +98,9 @@ jobs:
           minecraft="${{ steps.version.outputs.minecraft }}"
           for loader in fabric forge neoforge; do
             test -f "${loader}/build/libs/mchjong-${loader}-${minecraft}-${version}.jar"
+          done
+          for loader in fabric forge; do
+            test -f "compat-1.20.1/${loader}/build/libs/mchjong-${loader}-1.20.1-${version}.jar"
           done
 
       - name: Publish GitHub Release
@@ -99,6 +115,8 @@ jobs:
             "fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${version}.jar#Fabric / Quilt" \
             "forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${version}.jar#Forge" \
             "neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${version}.jar#NeoForge" \
+            "compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${version}.jar#Minecraft 1.20.1 Fabric / Quilt" \
+            "compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${version}.jar#Minecraft 1.20.1 Forge" \
             --verify-tag \
             --notes-file release-notes.md \
             --title "mchjong ${GITHUB_REF_NAME}"
