@@ -7,6 +7,7 @@ import java.util.Map;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.network.chat.Component;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -35,32 +36,44 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(45, entries.size());
-        assertEquals(2, MahjongSupplies.contents(entries.get(25)).get(MahjongSupplies.DICE_SLOT).getCount());
-        assertTrue(entries.get(34).is(MahjongContent.DICE));
+        assertEquals(60, entries.size());
+        assertEquals(16, entries.stream().filter(stack -> stack.is(MahjongContent.CLOTH_ITEM)).count());
+        for (int i = 23; i <= 38; i++) assertTrue(entries.get(i).is(MahjongContent.CLOTH_ITEM));
+        assertEquals(List.of(DyeColor.values()), entries.subList(23, 39).stream().map(MahjongSupplies::color).toList());
+        for (int i = 39; i <= 42; i++) assertTrue(entries.get(i).is(MahjongContent.BOX_ITEM));
+        assertEquals(2, MahjongSupplies.contents(entries.get(40)).get(MahjongSupplies.DICE_SLOT).getCount());
+        assertTrue(entries.get(49).is(MahjongContent.DICE));
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.DICE)));
         assertFalse(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.POINT_STICK)));
         assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
         assertEquals(1, new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE).getMaxStackSize());
-        for (int i = 24; i <= 27; i++) assertTrue(entries.get(i).is(MahjongContent.BOX_ITEM));
-        assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(24))));
-        assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(25))));
-        assertNotNull(MahjongSupplies.deck(entries.get(25)));
-        assertNull(MahjongSupplies.deck(entries.get(25)).back());
+        assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(39))));
+        assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(40))));
+        assertNotNull(MahjongSupplies.deck(entries.get(40)));
+        assertNull(MahjongSupplies.deck(entries.get(40)).back());
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(Items.CYAN_DYE)));
         assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
             .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
         assertEquals(6, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.TABLE_ITEM)).count());
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.AUTO_TABLE_ITEM)).count());
-        for (int i = 28; i <= 33; i++) {
+        for (int i = 43; i <= 48; i++) {
             assertTrue(entries.get(i).is(MahjongContent.TILE_ITEM));
             assertTrue(MahjongSupplies.tile(entries.get(i)).blank());
-        }
         for (int i = 0; i < entries.size(); i++) for (int j = i + 1; j < entries.size(); j++)
             assertFalse(ItemStack.isSameItemSameComponents(entries.get(i), entries.get(j)));
         entries.getFirst().shrink(1);
         assertEquals(1, top.skyeyefast.mchjong.item.MahjongCatalog.entries().getFirst().getCount());
+    }
+
+    @Test void creativeTabUsesHatsuTileIconAndListsAllCatalogueEntries() {
+        var tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(MahjongContent.id("mchjong"));
+        assertNotNull(tab);
+        var icon = tab.getIconItem();
+        assertTrue(icon.is(MahjongContent.TILE_ITEM));
+        assertEquals(32, MahjongSupplies.tile(icon).face());
+        assertEquals(TileMaterial.BONE, MahjongSupplies.tile(icon).material());
+        assertFalse(MahjongSupplies.tile(icon).red());
     }
 
     private static Item vanilla(String name) {
@@ -126,6 +139,7 @@ class PhysicalSuppliesTest {
             assertTrue(blanks.is(MahjongContent.TILE_ITEM));
             assertEquals(16, blanks.getCount());
             assertEquals(new TileData(-1, material, false), blanks.get(MahjongComponents.TILE));
+            assertNull(blanks.get(DataComponents.BASE_COLOR));
         }
         var stickCutting = (StonecutterRecipe) server.getRecipeManager().byKey(MahjongContent.id("blank_point_sticks")).orElseThrow().value();
         var boneInput = new SingleRecipeInput(new ItemStack(Items.BONE_BLOCK));

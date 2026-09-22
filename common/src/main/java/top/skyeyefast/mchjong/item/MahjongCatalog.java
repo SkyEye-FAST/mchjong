@@ -2,6 +2,8 @@ package top.skyeyefast.mchjong.item;
 
 import java.util.ArrayList;
 import java.util.List;
+import net.minecraft.core.component.DataComponents;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -23,7 +25,11 @@ public final class MahjongCatalog {
             entries.add(autoTable);
         }
         entries.add(new ItemStack(MahjongContent.STOOL_ITEM));
-        entries.add(new ItemStack(MahjongContent.CLOTH_ITEM));
+        for (var color : DyeColor.values()) {
+            var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
+            cloth.set(DataComponents.BASE_COLOR, color);
+            entries.add(cloth);
+        }
         entries.add(new ItemStack(MahjongContent.BOX_ITEM));
         for (var reds : RedFives.values()) entries.add(MahjongSupplies.stockedBox(reds));
         for (var material : TileMaterial.values()) {

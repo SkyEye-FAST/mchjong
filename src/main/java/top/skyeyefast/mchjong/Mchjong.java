@@ -2,17 +2,23 @@ package top.skyeyefast.mchjong;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import top.skyeyefast.mchjong.item.MahjongSupplies;
+import top.skyeyefast.mchjong.item.TileData;
+import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -25,6 +31,11 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public class Mchjong implements ModInitializer {
     public static final String MOD_ID = "mchjong";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+    public static final CreativeModeTab TAB = FabricItemGroup.builder()
+        .icon(() -> MahjongSupplies.tile(new TileData(32, TileMaterial.BONE, false), 1))
+        .title(Component.translatable("itemGroup.mchjong"))
+        .displayItems((params, output) -> top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(output::accept))
+        .build();
 
     @Override
     public void onInitialize() {
@@ -56,6 +67,7 @@ public class Mchjong implements ModInitializer {
         MahjongContent.SEAT_ENTITY = Registry.register(BuiltInRegistries.ENTITY_TYPE, MahjongContent.id("seat"),
             EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
                 .clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
+        Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MahjongContent.TAB_KEY, TAB);
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });

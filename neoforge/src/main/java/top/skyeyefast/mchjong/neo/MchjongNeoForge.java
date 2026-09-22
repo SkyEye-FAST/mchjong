@@ -2,8 +2,10 @@ package top.skyeyefast.mchjong.neo;
 
 import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
+import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.CreativeModeTabs;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -14,6 +16,9 @@ import net.neoforged.neoforge.event.BuildCreativeModeTabContentsEvent;
 import net.neoforged.neoforge.network.event.RegisterPayloadHandlersEvent;
 import net.neoforged.neoforge.registries.DeferredRegister;
 import top.skyeyefast.mchjong.client.ClientTableNetworking;
+import top.skyeyefast.mchjong.item.MahjongSupplies;
+import top.skyeyefast.mchjong.item.TileData;
+import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -77,6 +82,13 @@ public final class MchjongNeoForge {
         entities.register("seat", () -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
             .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         entities.register(bus);
+        DeferredRegister<CreativeModeTab> tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MahjongContent.MOD_ID);
+        tabs.register("mchjong", () -> CreativeModeTab.builder()
+            .icon(() -> MahjongSupplies.tile(new TileData(32, TileMaterial.BONE, false), 1))
+            .title(Component.translatable("itemGroup.mchjong"))
+            .displayItems((params, output) -> top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(output::accept))
+            .build());
+        tabs.register(bus);
         bus.addListener(this::payloads);
         bus.addListener(this::creativeTab);
     }
