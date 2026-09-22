@@ -7,6 +7,26 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.5.1] - 2026-09-22
+
+### Added
+
+- Roughly Enough Items (REI) integration displaying table variants, blank tile materials, and point-stick crafting recipes.
+- Point-stick drawer recipient cycling via mouse wheel or direct row selection, with Shift-click shortcut delivery directly into the selected recipient's row.
+
+### Changed
+
+- Stonecutting bone blocks yields 24 unmarked point sticks, and point-stick marking requires eight blank sticks and one dye per craft.
+- Live immersive play keeps river discards at normal brightness and distinguishes tedashi from tsumogiri through motion arcs and trajectory timing, reserving dimmed discards for replay diagrams.
+
+### Fixed
+
+- Dismounting or standing from a stool in an unstarted game lobby immediately vacates the seat and transfers room hosting when applicable.
+- Manual match preparation requires point sticks to be fully stocked in the mahjong box before starting.
+- Red fives are preserved across tile face preset engravings and back recoloring.
+- Immersive settlement and exhaustive draw score panels scale to the fixed 1280 × 800 canvas with aligned click targets and meld displays.
+- Immersive hand tiles align to a uniform baseline with raised selection offsets.
+
 ## [0.5.0] - 2026-09-21
 
 ### Added
@@ -162,7 +182,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.1...HEAD
+[0.5.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.1
 [0.5.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.0
 [0.4.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.1
 [0.4.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.4.0
