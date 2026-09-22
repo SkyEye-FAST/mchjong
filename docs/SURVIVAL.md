@@ -282,8 +282,8 @@ are consumed by playing. Completed hands use the existing replay archive.
 
 ## Glass, backs and physical point sticks
 
-Glass bodies use a genuinely alpha-blended render pass and a transparent glyph
-atlas; they are not merely painted pale blue. Colored backs remain opaque.
+Glass bodies use an alpha-blended render pass and a transparent glyph
+atlas. Colored backs remain opaque.
 Hidden hands reach unauthorized clients only as hidden sentinels, and the
 renderer never resolves a face texture for such a sentinel. Moving a camera
 behind a glass tile therefore cannot reveal an opponent's printed face.

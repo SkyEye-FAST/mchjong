@@ -42,7 +42,6 @@ Voice suffixes: `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`, `tsumo`, `draw_end
 
 Effect suffixes: `wall`, `deal`, `draw`, `tsumogiri`, `tedashi`, `riichi`, `chi`,
 `pon`, `kan`, `nuki`, `ron`, `tsumo`, `draw_end`, `match_end`, `countdown`, `turn`.
-Prefix each with `table.` to replace the corresponding effect. The distributed
-effects reference Minecraft's own sound events rather than redistributing audio
-from another mahjong game. Mono Ogg Vorbis is recommended for positional effects;
+Prefix each with `table.` to replace the corresponding effect. Built-in table
+effects use Minecraft's native sound events. Mono Ogg Vorbis is recommended for positional effects;
 use Minecraft's standard `sounds.json` format for variations, volume and pitch.

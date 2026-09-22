@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-The current game modes use three- and four-player riichi rules. See
+MChjong features three- and four-player riichi mahjong. See
 [Rules and presets](RULES.md) for available presets and custom settings.
 
 ## Equipment and seating

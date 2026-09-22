@@ -4,9 +4,9 @@
 
 Release artifacts follow their Minecraft build profile. The current recipe
 viewer adapters target Minecraft 1.21.1 with Java 21, Fabric Loader 0.19.5 and
-Fabric API 0.116.17+1.21.1, or NeoForge 21.1.250. The wider version roadmap remains
-mainstream releases from 1.20.1 onward; each release line requires its own
-compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
+Fabric API 0.116.17+1.21.1, or NeoForge 21.1.250. Forge 1.21.1 pins Forge 52.1.16.
+Dedicated release artifacts and validation coverage are provided for each
+supported Minecraft version.
 
 | Minecraft | Loader artifacts | Validation scope |
 | --- | --- | --- |
@@ -14,12 +14,11 @@ compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
 | 1.20.1 | Fabric and Forge on `compat/1.20.1` | Shared integrated-server/client gameplay and Ponder smokes pass |
 | 1.21.1 and 1.20.1 | Quilt consumes the corresponding Fabric artifact | Quilt Loader 0.30.1 loads both packaged JARs to the title screen, using Java 21 and Java 17 respectively |
 
-The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
-Forge 1.21.1 also provides the shared JEI adapter and the `recipeBrowser=jei` profile.
-EMI and REI do not provide matching Forge 1.21.1 releases. The historical
-`Ponder-Forge-1.21.1:0.8.1` Maven artifact depends on NeoForge Catnip and Flywheel;
-it is not a Forge runtime profile. These integrations remain available on the
-loaders listed above and on both 1.20.1 loaders.
+Viewer integrations are available across the supported loaders: JEI is available
+on Fabric, Forge and NeoForge 1.21.1, while EMI is available on Fabric and
+NeoForge 1.21.1. On Minecraft 1.20.1, JEI, EMI and REI are available on Fabric
+and Forge. Optional Ponder tutorials cover Fabric and NeoForge 1.21.1 and both
+1.20.1 loaders.
 
 ## Version synchronization and artifacts
 
@@ -79,10 +78,6 @@ named container contents retain exact identities; their survival operations are
 governed by the same server recipes, while these particular container layouts
 are outside the pre-enumerated viewer examples.
 
-The source reviewed for NEI is TheCBProject's archived branch targeting Minecraft
-1.12.2 and Forge 14.23.5.2768. Its target belongs to that legacy profile. The
-1.21.1 integration described here is specifically JEI and EMI.
-
 ## Verification commands
 
 Use the repository wrapper with JDK 21:
@@ -135,12 +130,10 @@ Validation results are recorded from completed runs rather than API compilation.
 Simultaneous installation of multiple viewers and additional Minecraft profiles
 require their own runtime acceptance.
 
-## Upstream API references
+## Integration APIs
 
 * [JEI setup for Minecraft 1.21 and 1.21.1](https://github.com/mezz/JustEnoughItems/wiki/Getting-Started-%5BMinecraft-1.21-and-1.21.1%5D)
 * [JEI 1.21.1 public API](https://github.com/mezz/JustEnoughItems/tree/1.21.1/CommonApi/src/main/java/mezz/jei/api)
 * [JEI Forge 1.21.1 artifact](https://maven.blamejared.com/mezz/jei/jei-1.21.1-forge/19.56.0.441/)
-* [Historical Ponder artifact dependencies](https://maven.createmod.net/net/createmod/ponder/Ponder-Forge-1.21.1/0.8.1/Ponder-Forge-1.21.1-0.8.1.pom)
 * [EMI 1.21 profile and dependencies](https://github.com/emilyploszaj/emi/tree/1.21)
 * [EMI public API](https://github.com/emilyploszaj/emi/tree/1.21/xplat/src/main/java/dev/emi/emi/api)
-* [NEI target profile](https://github.com/TheCBProject/NotEnoughItems/blob/master/build.properties)

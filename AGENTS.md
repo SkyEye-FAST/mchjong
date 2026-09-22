@@ -68,10 +68,18 @@ Keep translation keys, placeholders and tutorial content consistent across all
 four languages. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md)
 for resource-pack paths and deterministic generation.
 
-Describe current capabilities and supported workflows positively. Omit retired
-features and negative feature lists from player documentation, introductions
-and changelog prose. Keep version support details in Compatibility sections and
-state only what the available builds and validation establish. Preserve useful
+Describe current capabilities and supported workflows positively and definitively.
+Omit retired features, negative feature lists, unimplemented caveats, and speculative
+future roadmap promises from player documentation, introductions, technical guides and
+changelog prose. Do not introduce unnecessary comparisons or references to external
+projects, third-party games, historical predecessors, or unadopted algorithms (such as
+"参考了xxx" or "未实现xxx"). Do not explain what terms or presets are named in Chinese
+or other languages within documentation prose (such as stating "The Chinese preset labels are..."),
+while preserving standard feature descriptions of multilingual support across English, Japanese,
+Simplified Chinese and Traditional Chinese. Isolate mandatory third-party copyright and asset
+attributions strictly to `NOTICE.md` and dedicated license notices rather than embedding
+casual references across general documentation. Keep version support details in Compatibility
+sections and state only what the available builds and validation establish. Preserve useful
 operating requirements, permissions and privacy guarantees.
 
 ## Validation and delivery

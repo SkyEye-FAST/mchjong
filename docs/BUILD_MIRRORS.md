@@ -66,7 +66,7 @@ Mirrors can lag upstream releases; inspect the exact version and artifact before
 changing a repository URL. BMCLAPI's Maven mirror does not cover every development
 dependency, so its NeoForge routing is limited to the main module.
 
-References:
+## Upstream resources
 
 * [Fabric Wiki: development setup and mirrors](https://wiki.fabricmc.net/zh_cn:tutorial:setup)
 * [Loom mirror properties](https://github.com/FabricMC/fabric-loom/blob/dev/1.17/src/main/java/net/fabricmc/loom/util/MirrorUtil.java)

@@ -230,9 +230,6 @@ The four source language files live in `common/src/main/resources`. Their engine
 action and ruleset keys match the corresponding names in lowercase. Upstream
 yaku names are lowercased only when constructing translation keys.
 
-Yet Another Bingo is a visual reference, not an asset dependency. No artwork or
-code from that project or riichi_advanced is bundled.
-
 ## Verification
 
 `gradlew.bat :art:check` verifies atlas coordinates and distinct faces, source

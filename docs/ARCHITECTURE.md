@@ -315,10 +315,10 @@ appearance update cannot clear a server's box, game or private wall. Loading a
 private empty save does clear those values. Loot copies only furniture
 appearance components; removable equipment is dropped once by the server.
 
-Minecraft-facing artifacts are version-scoped. The project targets mainstream
-releases from 1.20.1 onward, but does not declare one binary compatible with an
-API range it was not compiled against. Version differences stay at the
-Minecraft/loader boundary while the `engine` remains independent of Minecraft.
+Minecraft-facing artifacts are version-scoped. The project provides dedicated
+builds for targeted Minecraft releases, ensuring API compatibility at compile
+time. Version differences stay at the Minecraft/loader boundary while the
+`engine` remains independent of Minecraft.
 The selected Minecraft, Java, loader, mapping and dependency versions live in
 `gradle.properties`, and resource processing writes the matching compatibility
 metadata into each artifact.

@@ -4,12 +4,11 @@
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
 MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
-presentation on Fabric and NeoForge.
+presentation on Fabric, Forge and NeoForge.
 
-The current rules support **three- and four-player riichi mahjong**, including
+MChjong supports **three- and four-player riichi mahjong**, featuring
 Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
-options. The project's broader scope is mahjong; additional rule families may be
-added in the future. See [Rules and presets](docs/RULES.md) for current support.
+options. See [Rules and presets](docs/RULES.md) for details.
 
 ## Features
 
@@ -70,11 +69,10 @@ Release history is maintained in [CHANGELOG.md](CHANGELOG.md).
 
 ## Credits
 
-The built-in tile presets include Kansai and Kanto designs. Kansai uses the
-artwork created by lietxia (mahjong_graphic). Kansai includes the seasons and
-botanical flowers; Kanto includes the seasons and 福禄寿貴, with names matching
-each preset. See [the artwork notice](presets/tile_faces/NOTICE.md) and
-[docs/ASSETS.md](docs/ASSETS.md) for preset details and the asset generation contract.
+The built-in tile presets include Kansai and Kanto designs. Kansai includes the
+seasons and botanical flowers; Kanto includes the seasons and civil flowers. Built-in
+artwork and license notices are documented in [the artwork notice](presets/tile_faces/NOTICE.md)
+and [docs/ASSETS.md](docs/ASSETS.md).
 
 ## License
 
