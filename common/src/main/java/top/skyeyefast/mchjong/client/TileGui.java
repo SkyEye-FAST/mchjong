@@ -49,8 +49,8 @@ public final class TileGui {
         }
         if (back || tile < 0) {
             var texture = TileRenderTypes.backTexture(material, dye);
-            int textureWidth = texture.equals(TileMesh.BACK) ? TileMesh.TILE_WIDTH : 64;
-            int textureHeight = texture.equals(TileMesh.BACK) ? TileMesh.TILE_HEIGHT : 64;
+            int textureWidth = texture.equals(TileMesh.BACK) ? TileMesh.TILE_WIDTH : 16;
+            int textureHeight = texture.equals(TileMesh.BACK) ? TileMesh.TILE_HEIGHT : 16;
             graphics.setColor(((backColor >> 16) & 255) / 255f, ((backColor >> 8) & 255) / 255f,
                 (backColor & 255) / 255f, ((backColor >>> 24) & 255) / 255f);
             graphics.blit(texture, 1, 1, width - 2, height - 2, 0, 0,

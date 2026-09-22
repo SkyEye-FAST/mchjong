@@ -44,20 +44,7 @@ public final class GenerateAssets {
     }
 
     private void dice() throws IOException {
-        for (int face = 1; face <= 6; face++) {
-            var image = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
-            var g = image.createGraphics();
-            try {
-                g.setColor(new Color(0xbcb6a6)); g.fillRect(0, 0, 16, 16);
-                g.setColor(new Color(0xf8f5e9)); g.fillRect(1, 1, 14, 14);
-                g.setColor(new Color(face == 1 || face == 4 ? 0xb52d32 : 0x293238));
-                if (face % 2 == 1) g.fillOval(6, 6, 4, 4);
-                if (face >= 2) { g.fillOval(3, 3, 3, 3); g.fillOval(10, 10, 3, 3); }
-                if (face >= 4) { g.fillOval(10, 3, 3, 3); g.fillOval(3, 10, 3, 3); }
-                if (face == 6) { g.fillOval(3, 6, 3, 3); g.fillOval(10, 6, 3, 3); }
-            } finally { g.dispose(); }
-            png("item/dice_" + face, image);
-        }
+        for (int face = 1; face <= 6; face++) png("item/dice_" + face, DiceArtwork.texture(face));
         text("assets/mchjong/models/item/dice.json", """
             {"parent":"minecraft:block/block","textures":{
               "particle":"mchjong:item/dice_1","1":"mchjong:item/dice_1","2":"mchjong:item/dice_2",

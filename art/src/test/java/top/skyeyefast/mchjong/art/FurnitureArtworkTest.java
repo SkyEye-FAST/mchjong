@@ -32,7 +32,9 @@ class FurnitureArtworkTest {
             assertTrue(colors.size() <= 5, "A restrained pixel palette: " + entry.getKey());
             int contrast = colors.stream().mapToInt(color -> color & 255).max().orElseThrow()
                 - colors.stream().mapToInt(color -> color & 255).min().orElseThrow();
-            assertTrue(contrast >= (entry.getKey().equals("edge") ? 8 : 15), "Visible material relief: " + entry.getKey());
+            assertTrue(contrast >= (entry.getKey().equals("felt") ? 6 : entry.getKey().equals("edge") ? 8 : 15),
+                "Visible material relief: " + entry.getKey());
+            if (entry.getKey().equals("felt")) assertTrue(contrast <= 10, "Cloth must stay quiet behind the tiles");
             var metadata = com.google.gson.JsonParser.parseString(Files.readString(textures.resolve(entry.getKey() + ".png.mcmeta")))
                 .getAsJsonObject().getAsJsonObject("texture");
             assertFalse(metadata.get("blur").getAsBoolean(), "Crisp furniture pixels");
@@ -57,9 +59,13 @@ class FurnitureArtworkTest {
         var signatures = new HashSet<Integer>();
         for (var entry : TileMaterialArtwork.textures().entrySet()) {
             var texture = ImageIO.read(textures.getParent().resolve("tile_material/" + entry.getKey() + ".png").toFile());
+            assertEquals(16, texture.getWidth());
+            assertEquals(16, texture.getHeight());
             int min = 255, max = 0, signature = 1;
-            for (int y = 0; y < 64; y++) for (int x = 0; x < 64; x++) {
+            var colors = new HashSet<Integer>();
+            for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++) {
                 int color = texture.getRGB(x, y), v = color & 255;
+                colors.add(color);
                 assertEquals(v, color >> 8 & 255);
                 assertEquals(v, color >> 16 & 255);
                 assertEquals(255, color >>> 24);
@@ -67,6 +73,7 @@ class FurnitureArtworkTest {
                 signature = 31 * signature + color;
             }
             assertTrue(max - min >= 12, entry.getKey());
+            assertTrue(colors.size() <= 5, "Discrete material palette: " + entry.getKey());
             assertTrue(signatures.add(signature));
         }
         var model = com.google.gson.JsonParser.parseString(Files.readString(textures.getParent().getParent()

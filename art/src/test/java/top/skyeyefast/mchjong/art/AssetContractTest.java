@@ -197,6 +197,39 @@ class AssetContractTest {
     }
 
     @Test
+    void diceKeepSixReadableFacesAndTraditionalPipColors() throws Exception {
+        for (int face = 1; face <= 6; face++) {
+            var image = ImageIO.read(resources.resolve("assets/mchjong/textures/item/dice_" + face + ".png").toFile());
+            assertEquals(32, image.getWidth());
+            assertEquals(32, image.getHeight());
+            var marks = new HashSet<Integer>();
+            boolean red = face == 1 || face == 4;
+            for (int y = 0; y < 32; y++) for (int x = 0; x < 32; x++) {
+                int color = image.getRGB(x, y);
+                assertEquals(255, color >>> 24);
+                if ((color >> 8 & 255) < 150) {
+                    assertEquals(red, (color >> 16 & 255) > (color & 255), "Pip hue on face " + face);
+                    marks.add(y * 32 + x);
+                }
+            }
+            int count = 0;
+            var pending = new ArrayDeque<Integer>();
+            while (!marks.isEmpty()) {
+                int start = marks.iterator().next();
+                marks.remove(start);
+                pending.add(start);
+                count++;
+                while (!pending.isEmpty()) {
+                    int pixel = pending.remove();
+                    for (int next : new int[]{pixel - 1, pixel + 1, pixel - 32, pixel + 32})
+                        if (marks.remove(next)) pending.add(next);
+                }
+            }
+            assertEquals(face, count, "Separate pips on face " + face);
+        }
+    }
+
+    @Test
     void generationIsByteForByteReproducible(@TempDir Path second) throws Exception {
         GenerateAssets.main(new String[] { second.toString(), artwork.toString() });
         assertFalse(Files.exists(second.resolve("data")), "Artwork must not generate server data");

@@ -57,6 +57,7 @@ proportions and the physical tile envelope.
 
 `MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at
 `assets/mchjong/textures/item/mahjong_dye.png`, `creative_mahjong_dye.png`, `red_dora_dye.png` and `undo_dye.png`.
+Gathered folds, a lit cloth edge, a tied cord and a sewn label keep the small silhouettes readable.
 The reusable variant has a purple pouch and brass seal; red dora dye uses a red pouch and ink. All use vanilla
 generated-item models and can be replaced independently by resource packs.
 
@@ -77,8 +78,11 @@ dyed-back mask independently.
 
 The body uses original neutral relief textures under `textures/tile_material/`:
 `wood.png`, `bone.png`, `quartz.png`, `calcite.png`, `glass.png`, and `amethyst.png`.
-`TileMaterialArtwork` generates their grain, pores, veins, reflections and facets
+`TileMaterialArtwork` generates original 16 by 16, limited-palette grain, pores,
+chalk veins, stepped glass reflections and crystal facets
 without borrowing game textures; the material component supplies their tint.
+World, item and immersive body surfaces use nearest-neighbor sampling to retain
+the pixel clusters independently of the smoothly filtered printed faces.
 The body and the beveled white and colored shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
 First-person supplies sit beside the native outstretched hand rather than shifting
@@ -120,9 +124,10 @@ buffers for each tile.
 
 ## Table and other resources
 
-Dice use six deterministic 16-pixel textures at `textures/item/dice_1.png`
+Dice use six deterministic 32-pixel textures at `textures/item/dice_1.png`
 through `dice_6.png`, shared by a native cube item model and the central-roll
-tooltip. Opposite faces sum to seven; ones and fours use red pips.
+tooltip. Warm ivory edge bands and shaded recesses give the pips depth; the single
+pip is larger. Opposite faces sum to seven; ones and fours use red pips.
 
 `assets/mchjong/textures/point_sticks.png` is a 384 by 192 atlas of six 32-pixel
 strips: blank ivory, ivory with eight gray dots (100), blue with one white dot
@@ -138,7 +143,8 @@ atlas, including body colors, without changing the existing denominations.
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
 `felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
-clustered wood grain, neutral felt, broad metal highlights and dark edge material
+broken wood grain with small knots, subdued neutral woven felt, stepped metal highlights
+with sparse tooling marks and clustered wear on dark edge material
 deterministically with small, discrete palettes and nearest-neighbor sampling.
 [Create's framed machinery](https://github.com/Creators-of-Create/Create) and
 [Farmer's Delight's crafted wooden utensils](https://github.com/vectorwing/FarmersDelight) inform
@@ -202,7 +208,10 @@ white face plates, picking and exact wall/river contact, including riichi discar
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
 Screenshots and the final result are written beneath `fabric/build/smoke/evidence`.
+`00-material-palette.png` shows all six tile materials, four dyes, furniture item
+models and six dice faces together through the real client resource and item pipelines.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and screenshots under
-`neoforge/build/smoke/evidence`. Resource reload checks include all furniture textures.
+`neoforge/build/smoke/evidence`. Resource reload checks include all furniture and
+tile-body textures, including their live pixel sampling state.

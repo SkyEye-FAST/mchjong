@@ -175,6 +175,10 @@ public final class TableClientSmoke {
                     step = 24; entered = ticks;
                     return;
                 }
+                client.setScreen(new MaterialPaletteSmoke());
+                step = 31; entered = ticks;
+            } else if (step == 31 && ticks - entered > 15) {
+                capture(client, "00-material-palette.png");
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {

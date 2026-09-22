@@ -18,6 +18,7 @@ final class TileResourceSmoke {
     private static byte[] originalSticks;
     private static final java.util.Map<ResourceLocation, byte[]> originalKanto = new java.util.HashMap<>();
     private static final java.util.Map<ResourceLocation, byte[]> originalFurniture = new java.util.HashMap<>();
+    private static final java.util.Map<ResourceLocation, byte[]> originalMaterials = new java.util.HashMap<>();
     private TileResourceSmoke() {}
 
     static void verify(Minecraft client) throws IOException {
@@ -38,6 +39,25 @@ final class TileResourceSmoke {
             client.getTextureManager().getTexture(texture).bind();
             require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_NEAREST,
                 "Furniture pixels were blurred: " + name);
+        }
+        for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
+            var texture = top.skyeyefast.mchjong.client.TileRenderTypes.bodyTexture(material);
+            byte[] bytes;
+            try (var stream = client.getResourceManager().open(texture)) { bytes = stream.readAllBytes(); }
+            byte[] previous = originalMaterials.putIfAbsent(texture, bytes);
+            require(previous == null || Arrays.equals(previous, bytes), "Tile material changed after reload: " + material);
+            try (var image = NativeImage.read(new ByteArrayInputStream(bytes))) {
+                require(image.getWidth() == 16 && image.getHeight() == 16, "Low-resolution tile material missing: " + material);
+            }
+            for (var type : new net.minecraft.client.renderer.RenderType[]{
+                    top.skyeyefast.mchjong.client.TileRenderTypes.body(material),
+                    top.skyeyefast.mchjong.client.TileRenderTypes.gui(texture)}) {
+                type.setupRenderState();
+                client.getTextureManager().getTexture(texture).bind();
+                require(GL11.glGetTexParameteri(GL11.GL_TEXTURE_2D, GL11.GL_TEXTURE_MAG_FILTER) == GL11.GL_NEAREST,
+                    "Tile material pixels were blurred: " + material);
+                type.clearRenderState();
+            }
         }
         require(client.getResourcePackRepository().getAvailableIds().stream().noneMatch(id -> id.endsWith("patterned_backs")),
             "Retired built-in pack is still registered");

@@ -5,7 +5,7 @@ import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
 import net.minecraft.resources.ResourceLocation;
 
-/** Lit, outward-facing tile materials which retain linear filtering at draw time. */
+/** Lit tile surfaces: smooth printed faces and crisp low-resolution body materials. */
 public final class TileRenderTypes extends RenderType {
     public static final RenderType FACES = material("mchjong_tile_faces", TileMesh.GLYPHS);
     private static final RenderType KANTO_FACES = material("mchjong_kanto_faces", TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
@@ -20,12 +20,12 @@ public final class TileRenderTypes extends RenderType {
     static {
         for (var tile : top.skyeyefast.mchjong.item.TileMaterial.values())
             if (tile != top.skyeyefast.mchjong.item.TileMaterial.GLASS)
-                BODIES.put(tile, material("mchjong_tile_" + tile.getSerializedName(), bodyTexture(tile)));
+                BODIES.put(tile, material("mchjong_tile_" + tile.getSerializedName(), bodyTexture(tile), false));
     }
     public static final RenderType GLASS = create("mchjong_glass_tiles", DefaultVertexFormat.NEW_ENTITY,
         VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
             .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
-            .setTextureState(new TextureStateShard(bodyTexture(top.skyeyefast.mchjong.item.TileMaterial.GLASS), true, false))
+            .setTextureState(new TextureStateShard(bodyTexture(top.skyeyefast.mchjong.item.TileMaterial.GLASS), false, false))
             .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
             .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false));
 
@@ -56,35 +56,39 @@ public final class TileRenderTypes extends RenderType {
 
     private static java.util.Map<ResourceLocation, RenderType> guiTypes() {
         var result = new java.util.HashMap<ResourceLocation, RenderType>();
-        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS));
+        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS, true));
         var kanto = TileMesh.atlas(top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
-        result.put(kanto, guiMaterial("mchjong_gui_kanto", kanto));
-        result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK));
+        result.put(kanto, guiMaterial("mchjong_gui_kanto", kanto, true));
+        result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK, true));
         for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
             var texture = bodyTexture(material);
-            result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture));
+            result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture, false));
         }
         return java.util.Map.copyOf(result);
     }
 
-    private static RenderType guiMaterial(String name, ResourceLocation texture) {
+    private static RenderType guiMaterial(String name, ResourceLocation texture, boolean blur) {
         return create(name, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS, 1536,
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_TEXT_SEE_THROUGH_SHADER)
-                .setTextureState(new TextureStateShard(texture, true, false))
+                .setTextureState(new TextureStateShard(texture, blur, false))
                 .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
                 .setDepthTestState(NO_DEPTH_TEST).setWriteMaskState(COLOR_WRITE)
                 .setLightmapState(LIGHTMAP).createCompositeState(false));
     }
 
     private static RenderType material(String name, ResourceLocation texture) {
+        return material(name, texture, true);
+    }
+
+    private static RenderType material(String name, ResourceLocation texture, boolean blur) {
         // Vanilla entityCutoutNoCull (including entitySmoothCutout) forces nearest sampling.
         return create(name, DefaultVertexFormat.NEW_ENTITY, VertexFormat.Mode.QUADS, 1536,
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_ENTITY_CUTOUT_NO_CULL_SHADER)
                 .setTextureState(texture.equals(TileMesh.GLYPHS)
                     || texture.equals(TileMesh.glyphs(top.skyeyefast.mchjong.item.TileFacePreset.KANTO))
-                    ? new FaceTextureState(texture) : new TextureStateShard(texture, true, false))
+                    ? new FaceTextureState(texture) : new TextureStateShard(texture, blur, false))
                 .setCullState(CULL)
                 .setLightmapState(LIGHTMAP)
                 .setOverlayState(OVERLAY)

@@ -67,7 +67,7 @@ final class TableDice extends MahjongButton {
     }
 
     private static void face(GuiGraphics graphics, int face, int x, int y) {
-        graphics.blit(MahjongContent.id("textures/item/dice_" + face + ".png"), x, y, 0, 0, 16, 16, 16, 16);
+        graphics.blit(MahjongContent.id("textures/item/dice_" + face + ".png"), x, y, 16, 16, 0, 0, 32, 32, 32, 32);
     }
 
     static void renderWorld(TableView view, PoseStack pose, MultiBufferSource buffers, int light) {
