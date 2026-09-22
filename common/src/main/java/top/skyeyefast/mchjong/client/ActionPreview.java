@@ -29,7 +29,7 @@ public record ActionPreview(List<Integer> tiles, Meld meld) {
             case ADDED_KAN -> {
                 if (view.viewerSeat() >= 0) {
                     for (Meld pon : view.seats().get(view.viewerSeat()).melds()) {
-                        if (pon.type() == Meld.Type.PON && pon.kind() == Tile.kind(action.tiles().getFirst())) {
+                        if (pon.type() == Meld.Type.PON && pon.kind() == Tile.kind(action.tiles().get(0))) {
                             tiles.addAll(pon.tiles());
                             tiles.addAll(action.tiles());
                             meld = new Meld(Meld.Type.ADDED_KAN, tiles, pon.fromSeat(), pon.calledTile());

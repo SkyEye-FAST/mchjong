@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.world;
 
-import com.mojang.serialization.MapCodec;
 import net.minecraft.core.BlockPos;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionResult;
@@ -21,22 +20,20 @@ import net.minecraft.world.phys.shapes.Shapes;
 import net.minecraft.world.phys.shapes.VoxelShape;
 
 public final class MahjongTableBlock extends BaseEntityBlock {
-    private static final MapCodec<MahjongTableBlock> CODEC = simpleCodec(MahjongTableBlock::new);
     private static final VoxelShape SHAPE = Shapes.or(box(0, 12, 0, 16, 16, 16), box(2, 0, 2, 14, 12, 14));
     public MahjongTableBlock(Properties properties) { super(properties); }
-    @Override protected MapCodec<? extends BaseEntityBlock> codec() { return CODEC; }
-    @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.ENTITYBLOCK_ANIMATED; }
-    @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
+    @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.ENTITYBLOCK_ANIMATED; }
+    @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.is(MahjongContent.AUTO_TABLE) ? SHAPE : box(0, 12, 0, 16, 16, 16);
     }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new MahjongTableBlockEntity(pos, state); }
 
     // This is the vanilla/Fabric hook. NeoForge's extended hook delegates to it in this profile.
     @SuppressWarnings("deprecation")
-    @Override public ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+    @Override public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         ItemStack stack = new ItemStack(this);
         if (level.getBlockEntity(pos) instanceof FurnitureBlockEntity furniture)
-            stack.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, furniture.wood());
+            top.skyeyefast.mchjong.item.MahjongComponents.wood(stack, furniture.wood());
         return stack;
     }
 
@@ -46,8 +43,7 @@ public final class MahjongTableBlock extends BaseEntityBlock {
 
     @Override public void setPlacedBy(Level level, BlockPos center, BlockState state, LivingEntity placer, ItemStack stack) {
         if (level.getBlockEntity(center) instanceof MahjongTableBlockEntity table) {
-            table.applyComponentsFromItemStack(stack);
-            table.appearanceChanged();
+            table.applyItem(stack);
         }
         int radius = TableGeometry.FOOTPRINT_RADIUS;
         for (int x = -radius; x <= radius; x++) for (int z = -radius; z <= radius; z++) if (x != 0 || z != 0) {
@@ -56,30 +52,26 @@ public final class MahjongTableBlock extends BaseEntityBlock {
         }
     }
 
-    @Override protected InteractionResult useWithoutItem(BlockState state, Level level, BlockPos pos, Player player, BlockHitResult hit) {
-        if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
-            table.use(serverPlayer, hit);
-        }
-        return InteractionResult.sidedSuccess(level.isClientSide);
-    }
-
-    @Override protected net.minecraft.world.ItemInteractionResult useItemOn(ItemStack stack, BlockState state, Level level,
+    @Override public InteractionResult use(BlockState state, Level level,
             BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
+        ItemStack stack = player.getItemInHand(hand);
         if (level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table && table.drawerAt(hit) >= 0) {
             if (player instanceof ServerPlayer server) table.openSticks(server, table.drawerAt(hit));
-            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
         if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM)) {
             if (player instanceof ServerPlayer server && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
                 if (stack.is(MahjongContent.BOX_ITEM)) table.openStorage(server);
                 else table.useEquipment(server, stack);
             }
-            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return InteractionResult.sidedSuccess(level.isClientSide);
         }
-        return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table)
+            table.use(serverPlayer, hit);
+        return InteractionResult.sidedSuccess(level.isClientSide);
     }
 
-    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
+    @Override public void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
         if (!state.is(replacement.getBlock())) {
             if (level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) table.dropEquipment();
             int radius = TableGeometry.FOOTPRINT_RADIUS;

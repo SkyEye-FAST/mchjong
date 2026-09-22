@@ -21,7 +21,7 @@ public final class TableSettingsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -41,7 +41,7 @@ public final class TableSettingsScreen extends Screen {
         if (tab == 0) {
             var values = TableSettings.Information.values();
             int perPage = rows * 2;
-            page = Math.clamp(page, 0, (values.length - 1) / perPage);
+            page = net.minecraft.util.Mth.clamp(page, 0, (values.length - 1) / perPage);
             for (int n = 0; n < perPage && page * perPage + n < values.length; n++) {
                 var information = values[page * perPage + n];
                 var toggle = addToggle(left + (n % 2) * (column + 6), 65 + (n / 2) * 26, column,

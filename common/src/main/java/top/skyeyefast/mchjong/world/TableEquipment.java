@@ -67,9 +67,9 @@ public final class TableEquipment {
         for (int pass = 0; pass < 2; pass++) for (int offset = 0; offset < 4; offset++) {
             var drawer = drawers[(side + offset) % 4];
             for (int slot = 0; slot < STICK_SLOTS && !carried.isEmpty(); slot++) {
-                if (slot == BUST_SLOT && carried.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) != -10000) continue;
+                if (slot == BUST_SLOT && top.skyeyefast.mchjong.item.MahjongComponents.points(carried) != -10000) continue;
                 var target = drawer.getItem(slot);
-                if (pass == 0 && ItemStack.isSameItemSameComponents(target, carried)) {
+                if (pass == 0 && ItemStack.isSameItemSameTags(target, carried)) {
                     int count = Math.min(carried.getCount(), (slot == BUST_SLOT ? 1 : target.getMaxStackSize()) - target.getCount());
                     target.grow(count); carried.shrink(count); drawer.setChanged();
                 } else if (pass == 1 && target.isEmpty()) drawer.setItem(slot, carried.split(slot == BUST_SLOT ? 1 : carried.getMaxStackSize()));
@@ -150,7 +150,7 @@ public final class TableEquipment {
                     if (denomination(source) != denomination) continue;
                     for (int pass = 0; pass < 2; pass++) for (int target = start; target < end && missing > 0 && !source.isEmpty(); target++) {
                         var stack = row.get(target);
-                        if (pass == 0 && ItemStack.isSameItemSameComponents(source, stack)) {
+                        if (pass == 0 && ItemStack.isSameItemSameTags(source, stack)) {
                             int count = Math.min(missing, Math.min(source.getCount(), stack.getMaxStackSize() - stack.getCount()));
                             stack.grow(count); source.shrink(count); missing -= count;
                         } else if (pass == 1 && stack.isEmpty()) {
@@ -168,7 +168,7 @@ public final class TableEquipment {
     }
 
     private static int denomination(ItemStack stack) {
-        return stack.is(MahjongContent.POINT_STICK) ? stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 0) : 0;
+        return stack.is(MahjongContent.POINT_STICK) ? top.skyeyefast.mchjong.item.MahjongComponents.points(stack) : 0;
     }
 
     public void abandonMatch() { matchSticks = java.util.List.of(); }
@@ -222,27 +222,27 @@ public final class TableEquipment {
         return previous;
     }
 
-    public void save(CompoundTag tag, HolderLookup.Provider registries) {
+    public void save(CompoundTag tag) {
         // Empty slots are explicit in a private save, but absent from public appearance packets.
         ListTag storedBoxes = new ListTag();
-        for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot).saveOptional(registries));
+        for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot).save(new CompoundTag()));
         tag.put("boxes", storedBoxes);
-        tag.put("cloth", cloth.saveOptional(registries));
+        tag.put("cloth", cloth.save(new CompoundTag()));
         ListTag storedSticks = new ListTag();
         for (var drawer : drawers) for (int slot = 0; slot < STICK_SLOTS; slot++)
-            storedSticks.add(drawer.getItem(slot).saveOptional(registries));
+            storedSticks.add(drawer.getItem(slot).save(new CompoundTag()));
         tag.put("stick_drawers", storedSticks);
         ListTag initialSticks = new ListTag();
-        for (var stack : matchSticks) initialSticks.add(stack.saveOptional(registries));
+        for (var stack : matchSticks) initialSticks.add(stack.save(new CompoundTag()));
         tag.put("match_sticks", initialSticks);
     }
 
-    public void load(CompoundTag tag, HolderLookup.Provider registries) {
+    public void load(CompoundTag tag) {
         if (tag.contains("match_sticks")) {
             var stored = tag.getList("match_sticks", 10);
             if (!stored.isEmpty() && stored.size() != 4 * STICK_SLOTS) throw new IllegalArgumentException("Invalid match drawers");
             matchSticks = java.util.stream.IntStream.range(0, stored.size())
-                .mapToObj(index -> ItemStack.parseOptional(registries, stored.getCompound(index))).toList();
+                .mapToObj(index -> ItemStack.of(stored.getCompound(index))).toList();
         }
         // Update packets contain only the appearance fields, not either item stack.
         if (tag.contains("boxes")) {
@@ -250,7 +250,7 @@ public final class TableEquipment {
             try {
                 ListTag stored = tag.getList("boxes", 10);
                 for (int slot = 0; slot < BOX_SLOTS; slot++)
-                    boxes.setItem(slot, slot < stored.size() ? ItemStack.parseOptional(registries, stored.getCompound(slot)) : ItemStack.EMPTY);
+                    boxes.setItem(slot, slot < stored.size() ? ItemStack.of(stored.getCompound(slot)) : ItemStack.EMPTY);
             } finally { loading = false; }
         }
         if (tag.contains("stick_drawers")) {
@@ -260,12 +260,12 @@ public final class TableEquipment {
                 for (int side = 0; side < drawers.length; side++) for (int slot = 0; slot < STICK_SLOTS; slot++) {
                     int index = side * STICK_SLOTS + slot;
                     drawers[side].setItem(slot, index < stored.size()
-                        ? ItemStack.parseOptional(registries, stored.getCompound(index)) : ItemStack.EMPTY);
+                        ? ItemStack.of(stored.getCompound(index)) : ItemStack.EMPTY);
                 }
             } finally { loading = false; }
         }
         if (tag.contains("cloth")) {
-            cloth = ItemStack.parseOptional(registries, tag.getCompound("cloth"));
+            cloth = ItemStack.of(tag.getCompound("cloth"));
             clothColor = cloth.isEmpty() ? -1 : MahjongSupplies.color(cloth).getId();
         }
         if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
@@ -273,7 +273,7 @@ public final class TableEquipment {
             int id = tag.getInt("tile_back");
             back = id < 0 ? null : DyeColor.byId(id);
         }
-        if (tag.contains("tile_preset")) preset = new TileFacePreset(net.minecraft.resources.ResourceLocation.parse(tag.getString("tile_preset")));
+        if (tag.contains("tile_preset")) preset = new TileFacePreset(new net.minecraft.resources.ResourceLocation(tag.getString("tile_preset")));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
     }

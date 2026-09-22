@@ -16,8 +16,11 @@ public record TileData(int face, TileMaterial material, boolean red) {
         Codec.intRange(-1, FIRST_FLOWER + FLOWER_COUNT - 1).fieldOf("face").forGetter(TileData::face),
         TileMaterial.CODEC.fieldOf("material").forGetter(TileData::material),
         Codec.BOOL.optionalFieldOf("red", false).forGetter(TileData::red)
-    ).apply(instance, TileData::new)).validate(data -> data.valid()
-        ? DataResult.success(data) : DataResult.error(() -> "Only a numbered five may be red"));
+    ).apply(instance, TileData::new)).flatXmap(TileData::validate, TileData::validate);
+
+    private static DataResult<TileData> validate(TileData data) {
+        return data.valid() ? DataResult.success(data) : DataResult.error(() -> "Only a numbered five may be red");
+    }
 
     public TileData { Objects.requireNonNull(material); }
     public boolean blank() { return face == -1; }

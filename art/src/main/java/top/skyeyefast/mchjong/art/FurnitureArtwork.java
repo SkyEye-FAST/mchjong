@@ -76,5 +76,5 @@ final class FurnitureArtwork {
             | clamp((rgb >>> 8 & 255) + amount) << 8 | clamp((rgb & 255) + amount);
     }
 
-    private static int clamp(int value) { return Math.clamp(value, 0, 255); }
+    private static int clamp(int value) { return Math.max(0, Math.min(255, value)); }
 }

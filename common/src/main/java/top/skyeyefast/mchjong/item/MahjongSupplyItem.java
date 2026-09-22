@@ -13,26 +13,26 @@ public class MahjongSupplyItem extends Item {
     private static Component tileLabel(TileData tile, TileFacePreset preset) { return tile.label(false, preset); }
 
     @Override public Component getName(ItemStack stack) {
-        Integer points = stack.get(MahjongComponents.POINTS);
-        if (points != null && points == -10000) return Component.translatable("item.mchjong.bust_stick");
-        if (points != null && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
+        int points = MahjongComponents.points(stack);
+        if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) && points == -10000) return Component.translatable("item.mchjong.bust_stick");
+        if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK) && points > 0) return Component.translatable("item.mchjong.point_stick_value", points);
         if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM)) {
             return Component.translatable("item.mchjong.table_cloth." + MahjongSupplies.color(stack).getName());
         }
         return super.getName(stack);
     }
 
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
-        TileData tile = stack.get(MahjongComponents.TILE);
-        if (tile != null) {
+    @Override public void appendHoverText(ItemStack stack, net.minecraft.world.level.Level level, List<Component> lines, TooltipFlag flag) {
+        TileData tile = MahjongSupplies.tile(stack);
+        if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)) {
             lines.add(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
             lines.add(tileLabel(tile, MahjongSupplies.facePreset(stack)));
         }
-        Integer points = stack.get(MahjongComponents.POINTS);
-        if (points != null) {
+        int points = MahjongComponents.points(stack);
+        if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.POINT_STICK)) {
             lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : Component.translatable("item.mchjong.denomination", points));
         }
-        if (stack.has(net.minecraft.core.component.DataComponents.BASE_COLOR) && !stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM))
+        if (MahjongSupplies.back(stack) != null && !stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM))
             lines.add(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));
     }
 }

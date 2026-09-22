@@ -22,7 +22,7 @@ public final class TableClockScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         String reserveValue = reserve == null ? Integer.toString(initial.reserveSeconds()) : reserve.getValue();

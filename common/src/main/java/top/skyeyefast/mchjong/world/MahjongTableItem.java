@@ -13,7 +13,7 @@ public final class MahjongTableItem extends BlockItem {
     public MahjongTableItem(Block block, Properties properties) { super(block, properties); }
 
     @Override public Component getName(ItemStack stack) {
-        var wood = stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.OAK);
+        var wood = top.skyeyefast.mchjong.item.MahjongComponents.wood(stack);
         return Component.translatable(getDescriptionId(stack) + "." + wood.getSerializedName());
     }
 

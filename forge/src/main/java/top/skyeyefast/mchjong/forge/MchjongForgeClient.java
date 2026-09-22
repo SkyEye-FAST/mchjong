@@ -63,7 +63,8 @@ public final class MchjongForgeClient {
     public static final class Lifecycle {
         private Lifecycle() {}
 
-        @SubscribeEvent public static void tick(TickEvent.ClientTickEvent.Post event) {
+        @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
+            if (event.phase != TickEvent.Phase.END) return;
             TableAudio.tick();
             SeatedCamera.tick();
             ClientReplays.tick();

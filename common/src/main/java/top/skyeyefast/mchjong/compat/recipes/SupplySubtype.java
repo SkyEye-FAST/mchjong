@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.compat.recipes;
 
 import java.util.List;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -14,8 +13,8 @@ public final class SupplySubtype {
 
     private SupplySubtype(ItemStack input) {
         stack = input.copyWithCount(1);
-        stack.remove(DataComponents.CUSTOM_NAME);
-        hash = ItemStack.hashItemAndComponents(stack);
+        stack.resetHoverName();
+        hash = java.util.Objects.hash(stack.getItem(), stack.getTag());
     }
 
     public static SupplySubtype of(ItemStack stack) { return new SupplySubtype(stack); }
@@ -28,7 +27,7 @@ public final class SupplySubtype {
     }
 
     @Override public boolean equals(Object other) {
-        return other instanceof SupplySubtype key && ItemStack.isSameItemSameComponents(stack, key.stack);
+        return other instanceof SupplySubtype key && ItemStack.isSameItemSameTags(stack, key.stack);
     }
 
     @Override public int hashCode() { return hash; }

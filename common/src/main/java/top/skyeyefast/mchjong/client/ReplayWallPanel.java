@@ -63,7 +63,7 @@ final class ReplayWallPanel extends AbstractWidget {
             graphics.fill(x, y, x + cardWidth, y + cardHeight, MahjongUi.SURFACE);
             MahjongUi.text(graphics, font, Component.literal(match.participants().get(side).name()), x + 4, y + 4,
                 cardWidth - 8, MahjongUi.TEXT, false);
-            int tileWidth = Math.clamp((cardWidth - 8) / stacksPerSide - 1, 4, 12);
+            int tileWidth = net.minecraft.util.Mth.clamp((cardWidth - 8) / stacksPerSide - 1, 4, 12);
             int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
             int rowSpan = stacksPerSide * (tileWidth + 1) - 1;
             int startX = x + (cardWidth - rowSpan) / 2;

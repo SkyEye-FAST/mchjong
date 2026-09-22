@@ -5,7 +5,7 @@ final class ImmersiveMotion {
     private ImmersiveMotion() {}
 
     static double smooth(double value) {
-        double t = Math.clamp(value, 0, 1);
+        double t = net.minecraft.util.Mth.clamp(value, 0, 1);
         return t * t * (3 - 2 * t);
     }
 
@@ -15,6 +15,6 @@ final class ImmersiveMotion {
                                              double progress, double fraction, boolean tsumogiri) {
         return new TableProjection.Point((float) (start.x() + (end.x() - start.x()) * progress),
             (float) (start.y() + (end.y() - start.y()) * progress
-                - Math.sin(Math.PI * Math.clamp(fraction, 0, 1)) * (tsumogiri ? 14 : 34)));
+                - Math.sin(Math.PI * net.minecraft.util.Mth.clamp(fraction, 0, 1)) * (tsumogiri ? 14 : 34)));
     }
 }

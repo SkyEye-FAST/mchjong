@@ -16,26 +16,12 @@
     ],
     "client": [
       "top.skyeyefast.mchjong.MchjongClient"
-    ],
-    "emi": [
-      "top.skyeyefast.mchjong.compat.emi.MahjongEmiPlugin"
-    ],
-    "jei_mod_plugin": [
-      "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin"
-    ],
-    "rei_client": [
-      "top.skyeyefast.mchjong.compat.rei.MahjongReiPlugin"
     ]
   },
   "mixins": [
+    "mchjong.data.mixins.json",
     "mchjong.client.mixins.json"
   ],
-  "suggests": {
-    "ponder": ">=${ponder_version}",
-    "jei": ">=${jei_version}",
-    "emi": ">=${emi_version}",
-    "roughlyenoughitems": ">=${rei_version}"
-  },
   "depends": {
     "fabricloader": ">=${fabric_loader_min_version}",
     "minecraft": "${minecraft_version}",

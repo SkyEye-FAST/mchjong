@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.mixin;
 
-import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Gui;
 import net.minecraft.client.gui.GuiGraphics;
@@ -14,7 +13,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 @Mixin(Gui.class)
 public abstract class TableHudMixin {
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
-    private void mchjong$tableHud(GuiGraphics graphics, DeltaTracker delta, CallbackInfo callback) {
+    private void mchjong$tableHud(GuiGraphics graphics, float partialTick, CallbackInfo callback) {
         if (TableScreen.active(Minecraft.getInstance().screen) != null) callback.cancel();
     }
 }

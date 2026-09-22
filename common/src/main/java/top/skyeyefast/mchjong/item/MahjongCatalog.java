@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.item;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.engine.RedFives;
@@ -16,18 +15,18 @@ public final class MahjongCatalog {
         var entries = new ArrayList<ItemStack>();
         for (var wood : FurnitureWood.values()) {
             var table = new ItemStack(MahjongContent.TABLE_ITEM);
-            table.set(MahjongComponents.WOOD, wood);
+            MahjongComponents.wood(table, wood);
             entries.add(table);
         }
         for (var wood : FurnitureWood.values()) {
             var autoTable = new ItemStack(MahjongContent.AUTO_TABLE_ITEM);
-            autoTable.set(MahjongComponents.WOOD, wood);
+            MahjongComponents.wood(autoTable, wood);
             entries.add(autoTable);
         }
         entries.add(new ItemStack(MahjongContent.STOOL_ITEM));
         for (var color : DyeColor.values()) {
             var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-            cloth.set(DataComponents.BASE_COLOR, color);
+            MahjongComponents.color(cloth, color);
             entries.add(cloth);
         }
         entries.add(new ItemStack(MahjongContent.BOX_ITEM));
@@ -42,7 +41,7 @@ public final class MahjongCatalog {
         entries.add(new ItemStack(MahjongContent.UNDO_DYE));
         MahjongComponents.DENOMINATIONS.stream().sorted().forEach(points -> {
             var stick = new ItemStack(MahjongContent.POINT_STICK);
-            stick.set(MahjongComponents.POINTS, points);
+            MahjongComponents.points(stick, points);
             entries.add(stick);
         });
         return List.copyOf(entries);

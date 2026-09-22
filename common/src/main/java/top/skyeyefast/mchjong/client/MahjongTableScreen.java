@@ -17,9 +17,8 @@ public final class MahjongTableScreen extends AbstractContainerScreen<MahjongTab
         imageHeight = 192;
     }
 
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void renderBackground(GuiGraphics graphics) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        renderBg(graphics, partialTick, mouseX, mouseY);
     }
 
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {

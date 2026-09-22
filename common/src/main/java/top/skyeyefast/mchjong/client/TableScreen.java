@@ -90,7 +90,7 @@ public final class TableScreen extends Screen {
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
     @Override public void removed() { clearCameraInput(); }
     private void clearCameraInput() {
         inspecting = false;
@@ -364,7 +364,7 @@ public final class TableScreen extends Screen {
             columns = Math.max(1, Math.min(3, count));
             rows = Math.max(1, (count + columns - 1) / columns);
             int maxStrip = 416;
-            boxWidth = Math.clamp((maxStrip - (columns - 1) * 8) / columns, 104, 168);
+            boxWidth = net.minecraft.util.Mth.clamp((maxStrip - (columns - 1) * 8) / columns, 104, 168);
             buttonHeight = 40;
             buttonGap = 8;
             int stripWidth = columns * boxWidth + (columns - 1) * buttonGap;
@@ -471,7 +471,7 @@ public final class TableScreen extends Screen {
             var before = previous.seats().get(seat).river();
             var after = next.seats().get(seat).river();
             if (after.size() != before.size() + 1) continue;
-            var discard = after.getLast();
+            var discard = after.get(after.size() - 1);
             if (discard.called()) continue;
             TableHand.Point source = null;
             int sourceWidth = 16;
@@ -501,7 +501,7 @@ public final class TableScreen extends Screen {
     private void renderImmersiveDiscard(GuiGraphics graphics, long now) {
         if (!immersiveDiscardActive(now) || board == null) return;
         var motion = immersiveDiscard;
-        double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
+        double fraction = net.minecraft.util.Mth.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
         board.discard(graphics, motion.tile(), motion.source(), motion.sourceWidth(), motion.opponentX(),
             motion.tsumogiri(), motion.riichi(), fraction);
     }
@@ -510,7 +510,7 @@ public final class TableScreen extends Screen {
         if (!immersiveDrawActive(now) || board == null || hand == null) return;
         var motion = immersiveDraw;
         var source = board.drawSource();
-        double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
+        double fraction = net.minecraft.util.Mth.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
         double progress = ImmersiveMotion.smooth(fraction);
         double x = source.x() + (motion.target().x() - source.x()) * progress;
         double y = source.y() + (motion.target().y() - source.y()) * progress - Math.sin(Math.PI * fraction) * 22;
@@ -709,7 +709,7 @@ public final class TableScreen extends Screen {
     static int ruleAction(TableView view, RuleSet rule) {
         for (int i = 0; i < view.actions().size(); i++) {
             var action = view.actions().get(i);
-            if (action.type() == Action.Type.CHANGE_RULE && action.tiles().getFirst() == rule.ordinal()) return i;
+            if (action.type() == Action.Type.CHANGE_RULE && action.tiles().get(0) == rule.ordinal()) return i;
         }
         return -1;
     }
@@ -887,7 +887,8 @@ public final class TableScreen extends Screen {
     private boolean overWidget(double x, double y) {
         return children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> !(widget instanceof PhysicalHandle))
-            .anyMatch(widget -> widget.visible && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
+            .anyMatch(widget -> widget.visible && x >= widget.getX() && x < widget.getX() + widget.getWidth()
+                && y >= widget.getY() && y < widget.getY() + widget.getHeight());
     }
 
     private boolean overInformation(double x, double y) {
@@ -1126,9 +1127,10 @@ public final class TableScreen extends Screen {
         int hintScale = immersive ? 2 : 1;
         int halfWidth = information.hintHalfWidth(hintCenter, hintBottom, Math.min(hintCenter - 8, layoutWidth - 8 - hintCenter), 57 * hintScale);
         for (var child : children()) if (child instanceof AbstractWidget widget && widget != hints && widget != dice
-            && widget.visible && widget.getY() < hintBottom && widget.getBottom() > hintBottom - 57 * hintScale) {
+            && widget.visible && widget.getY() < hintBottom && widget.getY() + widget.getHeight() > hintBottom - 57 * hintScale) {
             if (widget.getX() > hintCenter) halfWidth = Math.min(halfWidth, widget.getX() - hintCenter - 4);
-            else if (widget.getRight() < hintCenter) halfWidth = Math.min(halfWidth, hintCenter - widget.getRight() - 4);
+            else if (widget.getX() + widget.getWidth() < hintCenter)
+                halfWidth = Math.min(halfWidth, hintCenter - widget.getX() - widget.getWidth() - 4);
         }
         int hintLeft = hintCenter - halfWidth, hintRight = hintCenter + halfWidth;
         hints.update(view, hoveredTile, selectedTile, layoutWidth, board == null ? actionTop - 22 : layoutHeight - 16 * hintScale, hintLeft, hintRight,
@@ -1143,8 +1145,8 @@ public final class TableScreen extends Screen {
         if (source != null) {
             Projected target = project(TableHandling.destination(view));
             if (target != null && handlingDrag != null) {
-                int halfWidth = Math.clamp((int) Math.round(target.scale * .45), 36, Math.max(36, Math.min(120, width / 4)));
-                int halfHeight = Math.clamp((int) Math.round(target.scale * .12), 12, 28);
+                int halfWidth = net.minecraft.util.Mth.clamp((int) Math.round(target.scale * .45), 36, Math.max(36, Math.min(120, width / 4)));
+                int halfHeight = net.minecraft.util.Mth.clamp((int) Math.round(target.scale * .12), 12, 28);
                 graphics.fill((int) target.x - halfWidth, (int) target.y - halfHeight,
                     (int) target.x + halfWidth, (int) target.y + halfHeight, 0x443c8c68);
                 graphics.renderOutline((int) target.x - halfWidth, (int) target.y - halfHeight,
@@ -1370,13 +1372,13 @@ public final class TableScreen extends Screen {
         };
     }
 
-    @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+    @Override public boolean mouseScrolled(double x, double y, double vertical) {
         if (immersive) {
             if (!insideImmersiveCanvas(x, y)) return false;
             x = canvasX(x);
             y = canvasY(y);
         }
-        if (!cameraEnabled() || overWidget(x, y)) return super.mouseScrolled(x, y, horizontal, vertical);
+        if (!cameraEnabled() || overWidget(x, y)) return super.mouseScrolled(x, y, vertical);
         var camera = TableSettings.get().camera();
         if (hasShiftDown()) camera.raise(vertical);
         else camera.scroll(vertical);
@@ -1411,7 +1413,7 @@ public final class TableScreen extends Screen {
 
     private Projected actionPoint(TableView view, Action action) {
         if (!immersive) return project(anchor(view, action));
-        int tile = view.focus() == null ? action.tiles().isEmpty() ? Tile.ABSENT : action.tiles().getFirst() : view.focus().tile();
+        int tile = view.focus() == null ? action.tiles().isEmpty() ? Tile.ABSENT : action.tiles().get(0) : view.focus().tile();
         if (hand != null && hand.centerX(tile) >= 0) return new Projected(hand.centerX(tile), hand.top(), 1);
         var point = board == null ? null : board.point(tile);
         return point == null ? null : new Projected(point.x(), point.y(), 1);

@@ -23,9 +23,8 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         topPos = Math.min(topPos, height - imageHeight - 24);
     }
 
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void renderBackground(GuiGraphics graphics) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        renderBg(graphics, partialTick, mouseX, mouseY);
     }
 
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
@@ -69,9 +68,9 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         } else renderTooltip(graphics, mouseX, mouseY);
     }
 
-    @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+    @Override public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
         if (vertical == 0 || mouseX < leftPos || mouseX >= leftPos + imageWidth
-            || mouseY < topPos || mouseY >= topPos + 118) return super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
+            || mouseY < topPos || mouseY >= topPos + 118) return super.mouseScrolled(mouseX, mouseY, vertical);
         int players = 4;
         if (parent != null && minecraft.level != null
             && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table

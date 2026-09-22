@@ -24,25 +24,25 @@ public final class SeatedCameraState {
 
     /** Changing the preferred eye position does not overwrite the current look direction. */
     public void configure(double distance, double height) {
-        this.distance = Math.clamp(distance, TableSettings.MIN_CAMERA_DISTANCE, TableSettings.MAX_CAMERA_DISTANCE);
-        this.height = Math.clamp(height, TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
+        this.distance = net.minecraft.util.Mth.clamp(distance, TableSettings.MIN_CAMERA_DISTANCE, TableSettings.MAX_CAMERA_DISTANCE);
+        this.height = net.minecraft.util.Mth.clamp(height, TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
     }
 
     public double sensitivity() { return 1 - .6 * inspect; }
     public void look(double horizontal, double vertical) {
         yaw = (float) Math.IEEEremainder(yaw + horizontal * sensitivity(), 360);
-        pitch = (float) Math.clamp(pitch + vertical * sensitivity(), -25, 85);
+        pitch = (float) net.minecraft.util.Mth.clamp(pitch + vertical * sensitivity(), -25, 85);
     }
     public void pan(double x, double z) {
-        targetX = Math.clamp(targetX + x * sensitivity(), -.55, .55);
-        targetZ = Math.clamp(targetZ + z * sensitivity(), -.55, .55);
+        targetX = net.minecraft.util.Mth.clamp(targetX + x * sensitivity(), -.55, .55);
+        targetZ = net.minecraft.util.Mth.clamp(targetZ + z * sensitivity(), -.55, .55);
     }
     public void scroll(double steps) {
-        distance = Math.clamp(distance - steps * .12 * sensitivity(),
+        distance = net.minecraft.util.Mth.clamp(distance - steps * .12 * sensitivity(),
             TableSettings.MIN_CAMERA_DISTANCE, TableSettings.MAX_CAMERA_DISTANCE);
     }
     public void raise(double steps) {
-        height = Math.clamp(height + steps * .05 * sensitivity(),
+        height = net.minecraft.util.Mth.clamp(height + steps * .05 * sensitivity(),
             TableSettings.MIN_CAMERA_HEIGHT, TableSettings.MAX_CAMERA_HEIGHT);
     }
     public void tick(boolean inspecting) {
@@ -54,7 +54,7 @@ public final class SeatedCameraState {
         renderedInspect = progress(partialTick);
     }
     private double progress(float partialTick) {
-        return previousInspect + (inspect - previousInspect) * Math.clamp(partialTick, 0, 1);
+        return previousInspect + (inspect - previousInspect) * net.minecraft.util.Mth.clamp(partialTick, 0, 1);
     }
     public float yaw(int seat) { return TableGeometry.yaw(seat) + yaw; }
     public float pitch() { return pitch; }

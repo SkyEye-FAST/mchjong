@@ -27,9 +27,9 @@ public final class TileFacePresets {
             try (var reader = resource.openAsReader()) {
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
-                var id = new TileFacePreset(ResourceLocation.fromNamespaceAndPath(path.getNamespace(), name));
-                var definition = new Definition(ResourceLocation.parse(json.get("atlas").getAsString()),
-                    ResourceLocation.parse(json.get("glyphs").getAsString()));
+                var id = new TileFacePreset(new ResourceLocation(path.getNamespace(), name));
+                var definition = new Definition(new ResourceLocation(json.get("atlas").getAsString()),
+                    new ResourceLocation(json.get("glyphs").getAsString()));
                 if (resources.getResource(definition.atlas()).isEmpty() || resources.getResource(definition.glyphs()).isEmpty())
                     throw new IllegalArgumentException("Missing atlas or glyph texture");
                 loaded.put(id, definition);

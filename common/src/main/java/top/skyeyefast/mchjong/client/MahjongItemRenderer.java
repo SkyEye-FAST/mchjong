@@ -27,7 +27,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
                                        MultiBufferSource buffers, int light, int overlay) {
         pose.pushPose();
         pose.translate(.5, .15, .5);
-        var wood = stack.getOrDefault(MahjongComponents.WOOD, FurnitureWood.OAK);
+        var wood = MahjongComponents.wood(stack);
         if (stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM)) {
             pose.translate(0, .18, 0);
             float scale = (float) (.9 / (2 * top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH));
@@ -42,7 +42,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             FurnitureMesh.foldedCloth(pose, buffers, light, MahjongSupplies.color(stack));
         } else if (stack.is(MahjongContent.POINT_STICK)) {
             pose.translate(0, .3, 0);
-            FurnitureMesh.stick(pose, buffers, light, stack.getOrDefault(MahjongComponents.POINTS, 0));
+            FurnitureMesh.stick(pose, buffers, light, MahjongComponents.points(stack));
         } else if (stack.is(MahjongContent.TILE_ITEM)) {
             var data = MahjongSupplies.tile(stack);
             var back = MahjongSupplies.back(stack);

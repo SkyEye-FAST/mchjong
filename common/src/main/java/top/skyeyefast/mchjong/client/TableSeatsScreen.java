@@ -23,7 +23,7 @@ public final class TableSeatsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         clearWidgets();

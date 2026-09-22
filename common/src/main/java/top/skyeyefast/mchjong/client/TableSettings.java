@@ -105,12 +105,12 @@ public final class TableSettings {
             Objects.requireNonNull(settings.voiceSource, "Unknown voice source");
             if (!Double.isFinite(settings.effectsVolume) || !Double.isFinite(settings.voiceVolume))
                 throw new IllegalArgumentException("Sound volumes must be finite");
-            settings.effectsVolume = Math.clamp(settings.effectsVolume, 0, 1);
-            settings.voiceVolume = Math.clamp(settings.voiceVolume, 0, 1);
+            settings.effectsVolume = net.minecraft.util.Mth.clamp(settings.effectsVolume, 0, 1);
+            settings.voiceVolume = net.minecraft.util.Mth.clamp(settings.voiceVolume, 0, 1);
             if (!Double.isFinite(settings.cameraDistance) || !Double.isFinite(settings.cameraHeight))
                 throw new IllegalArgumentException("Camera settings must be finite");
-            settings.cameraDistance = Math.clamp(settings.cameraDistance, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
-            settings.cameraHeight = Math.clamp(settings.cameraHeight, MIN_CAMERA_HEIGHT, MAX_CAMERA_HEIGHT);
+            settings.cameraDistance = net.minecraft.util.Mth.clamp(settings.cameraDistance, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
+            settings.cameraHeight = net.minecraft.util.Mth.clamp(settings.cameraHeight, MIN_CAMERA_HEIGHT, MAX_CAMERA_HEIGHT);
             return settings;
         }
     }

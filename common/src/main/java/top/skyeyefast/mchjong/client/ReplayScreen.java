@@ -58,7 +58,7 @@ public final class ReplayScreen extends Screen {
     public ReplayMatch match() { return match; }
     public int cursor() { return cursor; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     private ReplayHand hand() { return match.hands().get(handIndex); }
     private ReplayPlayback.Frame frame() { return playback.frames().get(cursor); }
@@ -68,14 +68,14 @@ public final class ReplayScreen extends Screen {
         playbackControls.clear();
         if (viewer < 0) viewer = localViewer();
         playback = ReplayPlayback.timeline(match, handIndex);
-        cursor = Math.clamp(cursor, 0, steps());
+        cursor = net.minecraft.util.Mth.clamp(cursor, 0, steps());
 
         var previousHand = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> changeHand(-1))
             .bounds(10, 29, 30, 20).build());
         previousHand.active = handIndex > 0;
         int speedWidth = width < 420 ? 58 : 72;
         int viewWidth = width < 420 ? 78 : Math.min(150, Math.max(92, width / 4));
-        int roundWidth = Math.clamp(width - 104 - speedWidth - viewWidth, 64, 150);
+        int roundWidth = net.minecraft.util.Mth.clamp(width - 104 - speedWidth - viewWidth, 64, 150);
         roundButton = addRenderableWidget(MahjongButton.create(roundLabel(handIndex), ignored -> toggleRounds())
             .bounds(44, 29, roundWidth, 20).build());
         int nextX = 48 + roundButton.getWidth();
@@ -134,7 +134,7 @@ public final class ReplayScreen extends Screen {
             for (int seat = 0; seat < match.participants().size(); seat++)
                 if (match.participants().get(seat).id().equals(id)) return seat;
         }
-        return Math.clamp(match.initialDealer(), 0, match.rules().players() - 1);
+        return net.minecraft.util.Mth.clamp(match.initialDealer(), 0, match.rules().players() - 1);
     }
 
     private void layoutFrame() {
@@ -215,7 +215,7 @@ public final class ReplayScreen extends Screen {
     public void seek(int step) {
         playing = false;
         playbackClock = 0;
-        cursor = Math.clamp(step, 0, steps());
+        cursor = net.minecraft.util.Mth.clamp(step, 0, steps());
         refresh();
     }
 
@@ -228,7 +228,7 @@ public final class ReplayScreen extends Screen {
     private void changeHand(int offset) { changeHandTo(handIndex + offset); }
 
     private void changeHandTo(int index) {
-        int next = Math.clamp(index, 0, match.hands().size() - 1);
+        int next = net.minecraft.util.Mth.clamp(index, 0, match.hands().size() - 1);
         if (next == handIndex && playback != null) { roundsOpen = false; refresh(); return; }
         handIndex = next;
         cursor = 0;
@@ -443,9 +443,9 @@ public final class ReplayScreen extends Screen {
             return true;
         }
 
-        @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        @Override public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
             if (!isMouseOver(mouseX, mouseY)) return false;
-            scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.hands().size() * ROW - height));
+            scroll = net.minecraft.util.Mth.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.hands().size() * ROW - height));
             return true;
         }
 

@@ -1,9 +1,6 @@
 package top.skyeyefast.mchjong.world;
 
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.core.component.DataComponentMap;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.protocol.game.ClientboundBlockEntityDataPacket;
 import net.minecraft.world.item.DyeColor;
@@ -23,22 +20,18 @@ public class FurnitureBlockEntity extends BlockEntity {
     public FurnitureWood wood() { return wood; }
     public DyeColor color() { return color; }
 
-    @Override protected void applyImplicitComponents(DataComponentInput input) {
-        super.applyImplicitComponents(input);
-        wood = input.getOrDefault(MahjongComponents.WOOD, FurnitureWood.OAK);
-        color = input.getOrDefault(DataComponents.BASE_COLOR, DyeColor.WHITE);
+    public void applyItem(net.minecraft.world.item.ItemStack stack) {
+        wood = MahjongComponents.wood(stack);
+        var value = MahjongComponents.color(stack);
+        color = value == null ? DyeColor.WHITE : value;
+        appearanceChanged();
     }
-    @Override protected void collectImplicitComponents(DataComponentMap.Builder builder) {
-        super.collectImplicitComponents(builder);
-        builder.set(MahjongComponents.WOOD, wood);
-        builder.set(DataComponents.BASE_COLOR, color);
-    }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
+    @Override protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
         writeAppearance(tag);
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
+    @Override public void load(CompoundTag tag) {
+        super.load(tag);
         for (FurnitureWood candidate : FurnitureWood.values()) if (candidate.getSerializedName().equals(tag.getString("wood"))) wood = candidate;
         if (tag.contains("color")) color = DyeColor.byId(tag.getInt("color"));
     }
@@ -50,7 +43,7 @@ public class FurnitureBlockEntity extends BlockEntity {
         setChanged();
         if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
-    @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
+    @Override public CompoundTag getUpdateTag() {
         CompoundTag tag = new CompoundTag();
         writeAppearance(tag);
         return tag;

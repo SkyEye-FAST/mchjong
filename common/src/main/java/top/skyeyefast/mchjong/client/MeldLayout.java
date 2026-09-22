@@ -12,7 +12,7 @@ public record MeldLayout(List<Part> parts, double width) {
 
     public static MeldLayout of(Meld meld, int owner) {
         var tiles = new ArrayList<>(meld.tiles());
-        Integer added = meld.type() == Meld.Type.ADDED_KAN ? tiles.removeLast() : null;
+        Integer added = meld.type() == Meld.Type.ADDED_KAN ? tiles.remove(tiles.size() - 1) : null;
         if (!meld.closed()) tiles.remove(Integer.valueOf(meld.calledTile()));
         tiles.sort(Tile.ORDER);
         int called = -1;

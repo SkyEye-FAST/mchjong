@@ -11,10 +11,6 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modCompileOnly "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
-    modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
-    modCompileOnly "dev.emi:emi-fabric:${emi_version}:api"
-    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
         modLocalRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
         modLocalRuntime "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}"
@@ -41,6 +37,10 @@ test {
 
 sourceSets.main {
     java.srcDir '../common/src/main/java'
+    java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
+    java.exclude 'top/skyeyefast/mchjong/compat/jei/**'
+    java.exclude 'top/skyeyefast/mchjong/compat/emi/**'
+    java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
@@ -72,7 +72,7 @@ processResources {
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
-        java_version: java_version,
+        java_version: minecraft_java_version,
         fabric_loader_min_version: fabric_loader_min_version,
         ponder_version: ponder_version,
         jei_version: jei_version,
@@ -89,7 +89,7 @@ java {
 }
 
 tasks.withType(JavaCompile).configureEach {
-    options.release = java_version.toInteger()
+    if (name == 'compileJava') options.release = minecraft_java_version.toInteger()
 }
 
 tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }

@@ -113,10 +113,10 @@ public final class FurnitureShape {
             float h = p[3*i + (sideX ? 2 : 0)], y = p[3*i+1];
             float u = horizontal ? p[3*i] : maxH - minH > maxY - minY ? y : h;
             float v = horizontal ? p[3*i+2] : maxH - minH > maxY - minY ? h : y;
-            out.addVertex(pose.last(), p[3*i], p[3*i+1], p[3*i+2]).setColor(color)
-                .setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light)
-                .setNormal(pose.last(), normal.x, normal.y, normal.z);
+            out.vertex(pose.last().pose(), p[3*i], p[3*i+1], p[3*i+2]).color(color)
+                .uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light)
+                .normal(pose.last().normal(), normal.x, normal.y, normal.z).endVertex();
         }
     }
 }

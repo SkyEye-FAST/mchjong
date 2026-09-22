@@ -119,8 +119,8 @@ final class ImmersiveTable {
             for (int i = 3; i >= 0; i--) {
                 var v = face.vertices()[i];
                 var p = projection.apply(v);
-                out.addVertex(graphics.pose().last().pose(), p.x(), p.y(), 0).setColor(face.color())
-                    .setUv(i == 0 || i == 3 ? face.u0() : face.u1(), i < 2 ? face.v0() : face.v1()).setLight(0xf000f0);
+                out.vertex(graphics.pose().last().pose(), p.x(), p.y(), 0).color(face.color())
+                    .uv(i == 0 || i == 3 ? face.u0() : face.u1(), i < 2 ? face.v0() : face.v1()).uv2(0xf000f0).endVertex();
             }
         }
         graphics.flush();
@@ -158,7 +158,7 @@ final class ImmersiveTable {
     }
 
     private static double handLeft(TableView.Seat player, int seat) {
-        double meldSpan = outerRails(player, seat).getFirst().stream().mapToDouble(m -> TileGui.meldWidth(m, seat, 30) + 5).sum();
+        double meldSpan = outerRails(player, seat).get(0).stream().mapToDouble(m -> TileGui.meldWidth(m, seat, 30) + 5).sum();
         double handSpan = player.hand().size() * 30;
         return Math.min(-handSpan / 2, 300 - meldSpan - 18 - handSpan);
     }

@@ -42,14 +42,14 @@ public final class TableResults extends AbstractWidget {
         this.page = page;
         this.started = started;
         this.contentScale = contentScale;
-        this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
+        this.winner = net.minecraft.util.Mth.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
     }
 
     public int selectedWinner() { return winner; }
     /** Every result page presents the same once-per-settlement score transition. */
     public int displayedPoints(int seat) {
         int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
-        double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
+        double progress = TableSettings.get().animations ? net.minecraft.util.Mth.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
         return view.seats().get(seat).points() - delta + (int) Math.round(delta * progress);
     }
     public static boolean available(TableView view) {

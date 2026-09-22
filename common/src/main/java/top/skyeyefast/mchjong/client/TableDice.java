@@ -35,7 +35,10 @@ final class TableDice extends MahjongButton {
         active = visible && !pending && view.actions().stream().anyMatch(action -> action.type() == Action.Type.PICK_UP_DICE);
         first = view.handling() == null ? 0 : view.handling().diceOne();
         second = view.handling() == null ? 0 : view.handling().diceTwo();
-        setRectangle(width, height, x, y);
+        this.width = width;
+        this.height = height;
+        setX(x);
+        setY(y);
         setMessage(first == 0 ? Component.translatable("action.mchjong.pick_up_dice")
             : Component.translatable("ui.mchjong.dice_result", first, second, first + second));
         setTooltip(null);

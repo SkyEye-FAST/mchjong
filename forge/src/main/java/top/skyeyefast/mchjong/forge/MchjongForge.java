@@ -26,15 +26,12 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongForge {
-    public MchjongForge(FMLJavaModLoadingContext context) {
-        var bus = context.getModEventBus();
+    public MchjongForge() {
+        var bus = FMLJavaModLoadingContext.get().getModEventBus();
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) ->
             top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->
             top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));
-        var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);
-        top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) -> components.register(name, () -> type));
-        components.register(bus);
         var recipes = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MahjongContent.MOD_ID);
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) -> recipes.register(name, () -> serializer));
         recipes.register(bus);

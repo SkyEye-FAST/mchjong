@@ -76,8 +76,8 @@ final class TableLobby {
         int index = start;
         String label = index < 0 ? "room.mchjong.wait_host" : view.actions().get(index).type() == Action.Type.FILL_BOTS
             ? "room.mchjong.start_bots" : parent.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual";
-        var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.send(view, index)).primary();
-        primary.setHeight(26);
+        var primary = MahjongButton.create(Component.translatable(label), ignored -> parent.send(view, index))
+            .bounds(left, primaryY(height), span, 26).build().primary();
         primary.active = index >= 0;
         buttons.add(primary);
         return buttons;

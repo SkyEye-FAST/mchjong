@@ -24,7 +24,7 @@ final class TableTurnClock extends AbstractWidget {
         this.scale = scale;
         visible = clock.active();
         setWidth(96 * scale);
-        setHeight(24 * scale);
+        height = 24 * scale;
         setX(right - getWidth());
         setY(bottom - getHeight());
         Component label = Component.translatable("ui.mchjong.clock", clock.moveSeconds(), clock.reserveSeconds());

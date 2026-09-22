@@ -23,4 +23,4 @@ plugins {
 }
 
 rootProject.name = 'mchjong'
-include 'engine', 'fabric', 'forge', 'neoforge', 'art'
+include 'engine', 'fabric', 'forge', 'art'

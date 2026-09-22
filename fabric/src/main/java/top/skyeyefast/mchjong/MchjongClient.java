@@ -26,8 +26,6 @@ public final class MchjongClient implements ClientModInitializer {
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper::registerKeyBinding);
         top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
             model.getTransforms().getTransform(context).apply(leftHand, pose));
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
-            top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
@@ -45,8 +43,14 @@ public final class MchjongClient implements ClientModInitializer {
             net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
-            (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));
+            (client, listener, buffer, sender) -> {
+                var payload = TableViewPayload.decode(buffer);
+                client.execute(() -> ClientTableNetworking.receive(payload));
+            });
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.ReplayPayload.TYPE,
-            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)));
+            (client, listener, buffer, sender) -> {
+                var payload = top.skyeyefast.mchjong.network.ReplayPayload.decode(buffer);
+                client.execute(() -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
+            });
     }
 }

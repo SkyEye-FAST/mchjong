@@ -75,5 +75,5 @@ spotless {
 tasks.register('buildAll') {
     group = 'build'
     description = 'Test the shared engine and build all loader artifacts for the selected Minecraft profile.'
-    dependsOn ':fabric:build', ':forge:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
+    dependsOn ':fabric:build', ':forge:build', ':engine:check', ':art:check', 'spotlessCheck'
 }

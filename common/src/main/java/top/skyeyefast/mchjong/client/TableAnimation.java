@@ -30,7 +30,7 @@ public final class TableAnimation {
                 return moved(to, from.piece().position().add(0, -0.32 * (1 - rise), 0), from.piece().yaw(),
                     from.pitch(), Tile.HIDDEN, true);
             }
-            double fraction = Math.clamp((now - start) / (double) duration, 0, 1);
+            double fraction = net.minecraft.util.Mth.clamp((now - start) / (double) duration, 0, 1);
             double progress = ease(fraction);
             Vec3 position = from.piece().position().lerp(to.piece().position(), progress).add(0, Math.sin(Math.PI * fraction) * arc, 0);
             float yaw = from.piece().yaw() + (float) (angle(to.piece().yaw() - from.piece().yaw()) * progress);
@@ -68,7 +68,7 @@ public final class TableAnimation {
         return new Frame(new TableScene.Piece(tile, piece.seat(), piece.area(), piece.index(), position, yaw, piece.flat(), back), pitch);
     }
     private static double ease(double value) {
-        double t = Math.clamp(value, 0, 1);
+        double t = net.minecraft.util.Mth.clamp(value, 0, 1);
         return t * t * (3 - 2 * t);
     }
     private static double angle(double degrees) { return degrees - Math.floor((degrees + 180) / 360) * 360; }
@@ -197,7 +197,7 @@ public final class TableAnimation {
                     if (source != null) drawn.remove(source);
                 }
             }
-            if (source == null && target.piece().area() == TableScene.Area.HAND && !drawn.isEmpty()) source = drawn.removeFirst();
+            if (source == null && target.piece().area() == TableScene.Area.HAND && !drawn.isEmpty()) source = drawn.remove(0);
             if (source == null && target.piece().area() != TableScene.Area.WALL) {
                 int owner = target.piece().seat();
                 for (int i = concealed.size() - 1; i >= 0; i--) if (concealed.get(i).piece().seat() == owner) {
@@ -226,7 +226,7 @@ public final class TableAnimation {
             var old = view.seats().get(seat);
             var player = next.seats().get(seat);
             if (player.riichi() && !old.riichi()) riichiStarted[seat] = now;
-            if (player.river().size() > old.river().size() && player.river().getLast().riichi())
+            if (player.river().size() > old.river().size() && player.river().get(player.river().size() - 1).riichi())
                 announcements.add(new Cue(seat, "action.mchjong.riichi", now));
             for (int i = 0; i < player.melds().size(); i++) {
                 var meld = player.melds().get(i);

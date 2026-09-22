@@ -27,7 +27,7 @@ final class PlayerPortrait {
             } else {
                 var connection = Minecraft.getInstance().getConnection();
                 var info = connection == null ? null : connection.getPlayerInfo(player.name());
-                PlayerFaceRenderer.draw(graphics, info == null ? DefaultPlayerSkin.getDefaultTexture() : info.getSkin().texture(), x, y, size);
+                PlayerFaceRenderer.draw(graphics, info == null ? DefaultPlayerSkin.getDefaultSkin() : info.getSkinLocation(), x, y, size);
             }
         }
         return size + 4;

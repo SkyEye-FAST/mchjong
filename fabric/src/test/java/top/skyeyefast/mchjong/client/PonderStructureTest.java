@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.client;
 import static org.junit.jupiter.api.Assertions.*;
 import java.util.HashSet;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.NbtAccounter;
 import net.minecraft.nbt.NbtIo;
 import org.junit.jupiter.api.Test;
 
@@ -11,7 +10,7 @@ class PonderStructureTest {
     @Test void generatedStructureContainsTheCompactTableAndFourSeats() throws Exception {
         try (var input = getClass().getResourceAsStream("/assets/mchjong/ponder/table.nbt")) {
             assertNotNull(input, "Ponder structure must be packaged on both loaders");
-            CompoundTag structure = NbtIo.readCompressed(input, NbtAccounter.create(65536));
+            CompoundTag structure = NbtIo.readCompressed(input);
             var size = structure.getList("size", 3);
             assertEquals(7, size.getInt(0));
             assertEquals(3, size.getInt(1));

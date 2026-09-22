@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.entity.player.PlayerRenderer;
-import net.minecraft.client.resources.PlayerSkin;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
@@ -42,7 +41,7 @@ public final class HeldSupplyArm {
         grip.mulPosition(transform.last().pose());
 
         float side = leftHand ? -1 : 1;
-        boolean slim = player.getSkin().model() == PlayerSkin.Model.SLIM;
+        boolean slim = player.getModelName().equals("slim");
         pose.pushPose();
         pose.translate(grip.x(), grip.y(), grip.z());
         // Keep the arm at player scale; only the grip follows the resource-pack item transform.

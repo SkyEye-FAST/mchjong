@@ -37,8 +37,8 @@ public final class SeatEntity extends Entity {
 
     public BlockPos tablePos() { return entityData.get(TABLE); }
     public int seat() { return entityData.get(SEAT); }
-    @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TABLE, BlockPos.ZERO); builder.define(SEAT, 0);
+    @Override protected void defineSynchedData() {
+        entityData.define(TABLE, BlockPos.ZERO); entityData.define(SEAT, 0);
     }
     @Override protected boolean canAddPassenger(Entity passenger) { return getPassengers().isEmpty(); }
     @Override protected void positionRider(Entity passenger, MoveFunction position) {
@@ -67,7 +67,7 @@ public final class SeatEntity extends Entity {
     }
     @Override protected void readAdditionalSaveData(CompoundTag tag) {
         entityData.set(TABLE, BlockPos.of(tag.getLong("table")));
-        entityData.set(SEAT, Math.clamp(tag.getInt("seat"), 0, 3));
+        entityData.set(SEAT, net.minecraft.util.Mth.clamp(tag.getInt("seat"), 0, 3));
         rider = tag.hasUUID("rider") ? tag.getUUID("rider") : null;
     }
     @Override protected void addAdditionalSaveData(CompoundTag tag) {

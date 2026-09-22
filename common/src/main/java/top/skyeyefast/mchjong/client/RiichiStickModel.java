@@ -10,8 +10,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Vanilla resource-pack elements and textures, baked by each loader's native model pipeline. */
 public final class RiichiStickModel {
-    public static final ResourceLocation ID = ResourceLocation.fromNamespaceAndPath("mchjong", "item/riichi_stick");
-    public static final ResourceLocation TEXTURE = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/item/riichi_stick.png");
+    public static final ResourceLocation ID = new ResourceLocation("mchjong", "item/riichi_stick");
+    public static final ResourceLocation TEXTURE = new ResourceLocation("mchjong", "textures/item/riichi_stick.png");
     private static java.util.function.Supplier<BakedModel> model;
     private RiichiStickModel() {}
     public static void initialize(java.util.function.Supplier<BakedModel> lookup) { model = lookup; }

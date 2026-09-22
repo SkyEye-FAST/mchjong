@@ -15,7 +15,7 @@ public final class TileRenderTypes extends RenderType {
             return RenderType.entityCutout(texture);
         return FACE_TYPES.computeIfAbsent(texture, TileRenderTypes::faceMaterial);
     }
-    public static final ResourceLocation PLAIN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile/plain.png");
+    public static final ResourceLocation PLAIN = new ResourceLocation("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);
     public static final RenderType BACK_PATTERN = create("mchjong_back_pattern", DefaultVertexFormat.NEW_ENTITY,
         VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
@@ -45,7 +45,7 @@ public final class TileRenderTypes extends RenderType {
     }
 
     public static ResourceLocation bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
-        return ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile_material/" + material.getSerializedName() + ".png");
+        return new ResourceLocation("mchjong", "textures/tile_material/" + material.getSerializedName() + ".png");
     }
 
     public static ResourceLocation backTexture(top.skyeyefast.mchjong.item.TileMaterial material,

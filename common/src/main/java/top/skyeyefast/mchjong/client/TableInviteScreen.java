@@ -19,7 +19,7 @@ public final class TableInviteScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -29,7 +29,7 @@ public final class TableInviteScreen extends Screen {
             .sorted(Comparator.comparing(info -> info.getProfile().getName(), String.CASE_INSENSITIVE_ORDER)).toList();
         int rows = Math.max(1, (height - 116) / 24);
         pages = Math.max(1, (players.size() + rows - 1) / rows);
-        page = Math.clamp(page, 0, pages - 1);
+        page = net.minecraft.util.Mth.clamp(page, 0, pages - 1);
         int span = Math.min(320, width - 24), left = (width - span) / 2;
         for (int index = page * rows; index < Math.min(players.size(), (page + 1) * rows); index++) {
             var profile = players.get(index).getProfile();

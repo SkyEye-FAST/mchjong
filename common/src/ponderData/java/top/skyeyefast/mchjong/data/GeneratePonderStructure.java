@@ -33,7 +33,7 @@ public final class GeneratePonderStructure {
         blocks.add(block(5, 1, 3, 2));
         structure.put("blocks", blocks);
         structure.put("entities", new ListTag());
-        NbtIo.writeCompressed(structure, path);
+        NbtIo.writeCompressed(structure, path.toFile());
     }
 
     private static CompoundTag block(int x, int y, int z, int state) {

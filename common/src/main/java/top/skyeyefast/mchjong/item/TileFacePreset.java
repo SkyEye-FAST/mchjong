@@ -5,8 +5,8 @@ import net.minecraft.resources.ResourceLocation;
 
 /** Persistent cosmetic identity; resource-pack definitions belong exclusively to the client. */
 public record TileFacePreset(ResourceLocation id) {
-    public static final TileFacePreset KANSAI = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kansai"));
-    public static final TileFacePreset KANTO = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kanto"));
+    public static final TileFacePreset KANSAI = new TileFacePreset(new ResourceLocation("mchjong", "kansai"));
+    public static final TileFacePreset KANTO = new TileFacePreset(new ResourceLocation("mchjong", "kanto"));
     public static final Codec<TileFacePreset> CODEC = ResourceLocation.CODEC.xmap(TileFacePreset::new, TileFacePreset::id);
     public TileFacePreset {
         java.util.Objects.requireNonNull(id);

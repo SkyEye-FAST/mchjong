@@ -9,12 +9,10 @@ import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockBehaviour;
 import net.minecraft.world.level.material.MapColor;
 import net.minecraft.world.level.material.PushReaction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplyItem;
@@ -31,13 +29,12 @@ public final class MahjongContent {
     public static final MahjongStoolBlock STOOL = new MahjongStoolBlock(properties().noOcclusion());
     public static final Item TABLE_ITEM = new MahjongTableItem(TABLE, furniture());
     public static final Item AUTO_TABLE_ITEM = new MahjongTableItem(AUTO_TABLE, furniture());
-    public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
-    public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.CYAN));
-    public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.TILE, TileData.BLANK)
-        .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI));
-    public static final Item POINT_STICK = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.POINTS, 0));
+    public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture());
+    public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties());
+    public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties());
+    public static final Item POINT_STICK = new MahjongSupplyItem(new Item.Properties());
     public static final Item DICE = new Item(new Item.Properties());
-    public static final Item BOX_ITEM = new MahjongBoxItem(new Item.Properties().stacksTo(1).component(DataComponents.CONTAINER, ItemContainerContents.EMPTY));
+    public static final Item BOX_ITEM = new MahjongBoxItem(new Item.Properties().stacksTo(1));
     public static final Item MAHJONG_DYE = new Item(new Item.Properties().stacksTo(64));
     public static final Item RED_DORA_DYE = new Item(new Item.Properties().stacksTo(64));
     public static final Item UNDO_DYE = new Item(new Item.Properties().stacksTo(64));
@@ -58,12 +55,12 @@ public final class MahjongContent {
 
     private MahjongContent() {}
 
-    private static Item.Properties furniture() { return new Item.Properties().component(MahjongComponents.WOOD, FurnitureWood.OAK); }
+    private static Item.Properties furniture() { return new Item.Properties(); }
 
     private static BlockBehaviour.Properties properties() {
         return BlockBehaviour.Properties.of().mapColor(MapColor.WOOD).strength(2.5f).sound(SoundType.WOOD)
             .pushReaction(PushReaction.BLOCK);
     }
 
-    public static ResourceLocation id(String path) { return ResourceLocation.fromNamespaceAndPath(MOD_ID, path); }
+    public static ResourceLocation id(String path) { return new ResourceLocation(MOD_ID, path); }
 }

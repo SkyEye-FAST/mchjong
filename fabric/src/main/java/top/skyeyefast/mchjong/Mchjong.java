@@ -4,7 +4,6 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
 import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -41,8 +40,6 @@ public class Mchjong implements ModInitializer {
     public void onInitialize() {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
             top.skyeyefast.mchjong.world.WorldSettings::of);
-        top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->
-            Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, MahjongContent.id(name), type));
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->
             Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MahjongContent.id(name), serializer));
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) ->
@@ -71,26 +68,24 @@ public class Mchjong implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
-        PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(TableSeatPayload.TYPE, TableSeatPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
-        PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
-        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
-        ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        ServerPlayNetworking.registerGlobalReceiver(TableSeatPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        receiver(TableActionPayload.TYPE, TableActionPayload::decode, TableNetworking::receive);
+        receiver(TableControlPayload.TYPE, TableControlPayload::decode, TableNetworking::receive);
+        receiver(TableSeatPayload.TYPE, TableSeatPayload::decode, TableNetworking::receive);
+        receiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload::decode,
+            (player, payload) -> payload.handle(player));
+        receiver(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload::decode,
+            TableNetworking::receive);
+        receiver(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload::decode,
+            TableNetworking::receive);
         LOGGER.info("Initializing {} for Fabric", MOD_ID);
+    }
+
+    private static <T> void receiver(net.minecraft.resources.ResourceLocation id,
+            java.util.function.Function<net.minecraft.network.FriendlyByteBuf, T> decoder,
+            java.util.function.BiConsumer<net.minecraft.server.level.ServerPlayer, T> handler) {
+        ServerPlayNetworking.registerGlobalReceiver(id, (server, player, listener, buffer, sender) -> {
+            T payload = decoder.apply(buffer);
+            server.execute(() -> handler.accept(player, payload));
+        });
     }
 }

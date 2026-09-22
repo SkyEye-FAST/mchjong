@@ -25,7 +25,7 @@ public final class ReplayBrowserScreen extends Screen {
     }
     public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
     @Override protected void init() {
         int span = Math.min(650, width - 20), left = (width - span) / 2;
         String text = search == null ? index.search() : search.getValue();
@@ -39,7 +39,7 @@ public final class ReplayBrowserScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable(index.oldestFirst()
                 ? "replay.mchjong.oldest" : "replay.mchjong.newest"), ignored -> refresh(0, !index.oldestFirst()))
             .bounds(left + span - 74, 42, 74, 20).build());
-        selected = Math.clamp(selected, 0, Math.max(0, index.matches().size() - 1));
+        selected = net.minecraft.util.Mth.clamp(selected, 0, Math.max(0, index.matches().size() - 1));
         matches = addRenderableWidget(new MatchList(left, 68, span, height - 132));
         matches.move(0);
         setInitialFocus(matches);
@@ -104,8 +104,8 @@ public final class ReplayBrowserScreen extends Screen {
             return text;
         }
         private void move(int delta) {
-            selected = Math.clamp(selected + delta, 0, Math.max(0, index.matches().size() - 1));
-            scroll = Math.clamp(scroll, Math.max(0, (selected + 1) * ROW - height), selected * ROW);
+            selected = net.minecraft.util.Mth.clamp(selected + delta, 0, Math.max(0, index.matches().size() - 1));
+            scroll = net.minecraft.util.Mth.clamp(scroll, Math.max(0, (selected + 1) * ROW - height), selected * ROW);
         }
         private void activate() { if (!index.matches().isEmpty()) ClientReplays.open(index.matches().get(selected).id()); }
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -149,9 +149,9 @@ public final class ReplayBrowserScreen extends Screen {
             }
             return true;
         }
-        @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
+        @Override public boolean mouseScrolled(double x, double y, double vertical) {
             if (!isMouseOver(x, y)) return false;
-            scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, index.matches().size() * ROW - height));
+            scroll = net.minecraft.util.Mth.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, index.matches().size() * ROW - height));
             return true;
         }
         @Override public boolean keyPressed(int key, int scan, int modifiers) {

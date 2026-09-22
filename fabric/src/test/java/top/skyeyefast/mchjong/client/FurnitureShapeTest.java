@@ -25,12 +25,15 @@ class FurnitureShapeTest {
 
     private static final class Mesh implements VertexConsumer {
         final List<Vertex> vertices = new ArrayList<>();
-        @Override public VertexConsumer addVertex(float x, float y, float z) { vertices.add(new Vertex(x, y, z)); return this; }
-        @Override public VertexConsumer setColor(int r, int g, int b, int a) { vertices.getLast().color = a << 24 | r << 16 | g << 8 | b; return this; }
-        @Override public VertexConsumer setUv(float u, float v) { vertices.getLast().u = u; vertices.getLast().v = v; return this; }
-        @Override public VertexConsumer setUv1(int u, int v) { return this; }
-        @Override public VertexConsumer setUv2(int u, int v) { return this; }
-        @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
+        @Override public VertexConsumer vertex(double x, double y, double z) { vertices.add(new Vertex((float) x, (float) y, (float) z)); return this; }
+        @Override public VertexConsumer color(int r, int g, int b, int a) { vertices.getLast().color = a << 24 | r << 16 | g << 8 | b; return this; }
+        @Override public VertexConsumer uv(float u, float v) { vertices.getLast().u = u; vertices.getLast().v = v; return this; }
+        @Override public VertexConsumer overlayCoords(int u, int v) { return this; }
+        @Override public VertexConsumer uv2(int u, int v) { return this; }
+        @Override public VertexConsumer normal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
+        @Override public void endVertex() {}
+        @Override public void defaultColor(int r, int g, int b, int a) { throw new UnsupportedOperationException(); }
+        @Override public void unsetDefaultColor() {}
     }
 
     @Test void textureDensityAndComponentTintSurviveLongRails() {

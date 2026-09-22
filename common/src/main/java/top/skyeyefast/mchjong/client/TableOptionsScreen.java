@@ -23,7 +23,7 @@ public final class TableOptionsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -67,7 +67,7 @@ public final class TableOptionsScreen extends Screen {
         }
         int rows = Math.max(1, (height - 154) / 24);
         pages = Math.max(1, (entries.size() + rows - 1) / rows);
-        page = Math.clamp(page, 0, pages - 1);
+        page = net.minecraft.util.Mth.clamp(page, 0, pages - 1);
         for (int row = 0; row < rows && page * rows + row < entries.size(); row++) {
             var entry = entries.get(page * rows + row);
             var button = MahjongButton.create(entry.label(), ignored -> entry.action().run())

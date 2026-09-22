@@ -3,11 +3,11 @@ package top.skyeyefast.mchjong.item;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.component.DataComponents;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -21,35 +21,40 @@ public final class MahjongSupplies {
     public static final int SET_SIZE = 136;
     private MahjongSupplies() {}
 
-    public static DyeColor color(ItemStack stack) { return stack.getOrDefault(DataComponents.BASE_COLOR, DyeColor.BLUE); }
-    public static DyeColor back(ItemStack stack) { return stack.get(DataComponents.BASE_COLOR); }
-    public static TileData tile(ItemStack stack) { return stack.getOrDefault(MahjongComponents.TILE, TileData.BLANK); }
+    public static DyeColor color(ItemStack stack) { var color = back(stack); return color == null ? DyeColor.BLUE : color; }
+    public static DyeColor back(ItemStack stack) { return MahjongComponents.color(stack); }
+    public static TileData tile(ItemStack stack) { return MahjongComponents.tile(stack); }
     public static ItemStack tile(TileData data, int count) { return tile(data, null, count); }
     public static ItemStack tile(TileData data, DyeColor color, int count) {
         if (!data.valid()) throw new IllegalArgumentException("Invalid tile data");
         ItemStack stack = new ItemStack(MahjongContent.TILE_ITEM, count);
-        stack.set(MahjongComponents.TILE, data);
-        if (color != null) stack.set(DataComponents.BASE_COLOR, color);
+        MahjongComponents.tile(stack, data);
+        if (color != null) MahjongComponents.color(stack, color);
         return stack;
     }
 
     public static NonNullList<ItemStack> contents(ItemStack box) {
-        var preset = box.get(MahjongComponents.BOX_PRESET);
-        var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        if (preset != null && stored.nonEmptyStream().findAny().isEmpty()) return stockedContents(preset);
+        var preset = MahjongComponents.boxPreset(box);
+        var stored = box.getTagElement("mchjong");
+        if (preset != null && (stored == null || stored.getList("Items", 10).isEmpty())) return stockedContents(preset);
         NonNullList<ItemStack> result = NonNullList.withSize(BOX_SLOTS, ItemStack.EMPTY);
-        stored.copyInto(result);
+        if (stored != null) ContainerHelper.loadAllItems(stored, result);
         return result;
     }
 
     public static void setContents(ItemStack box, List<ItemStack> items) {
-        box.remove(MahjongComponents.BOX_PRESET);
-        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(items));
+        var data = box.getOrCreateTagElement("mchjong");
+        data.remove("box_preset");
+        var stored = NonNullList.withSize(items.size(), ItemStack.EMPTY);
+        for (int i = 0; i < items.size(); i++) stored.set(i, items.get(i).copy());
+        ContainerHelper.saveAllItems(data, stored);
+        MahjongComponents.normalize(box.getItem(), box.getTag());
+        if (box.getTag().isEmpty()) box.setTag(null);
     }
 
     public static boolean storable(ItemStack stack) {
         return (stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.DICE))
-            && !stack.has(DataComponents.CONTAINER) && !stack.has(DataComponents.BUNDLE_CONTENTS);
+            && !hasStorage(stack) && MahjongComponents.valid(stack);
     }
 
     public static boolean mahjongDye(ItemStack stack) {
@@ -61,7 +66,7 @@ public final class MahjongSupplies {
     }
 
     public static boolean boxAccepts(int slot, ItemStack stack) {
-        if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
+        if (slot < 0 || slot >= BOX_SLOTS || hasStorage(stack) || !MahjongComponents.valid(stack)) return false;
         return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
             : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK)
             : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : dyeSlotItem(stack);
@@ -69,14 +74,31 @@ public final class MahjongSupplies {
 
     /** Do not truncate oversized command-created containers when opening or crafting them. */
     public static boolean validBox(ItemStack box) {
-        if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1) return false;
-        var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        if (box.has(MahjongComponents.BOX_PRESET)) return stored.nonEmptyStream().findAny().isEmpty();
-        if (stored.stream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
+        if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1 || !MahjongComponents.valid(box)) return false;
+        var data = box.getTagElement("mchjong");
+        if (data != null && data.contains("Items") && (!data.contains("Items", 9)
+            || data.get("Items") instanceof net.minecraft.nbt.ListTag list && !list.isEmpty() && list.getElementType() != 10)) return false;
+        var stored = data == null ? new net.minecraft.nbt.ListTag() : data.getList("Items", 10);
+        if (MahjongComponents.boxPreset(box) != null) return stored.isEmpty();
+        if (stored.size() > BOX_SLOTS) return false;
+        var occupied = new java.util.HashSet<Integer>();
+        for (var entry : stored) {
+            var item = (CompoundTag) entry;
+            if (!item.contains("Slot", 1) || !item.contains("id", 8) || !item.contains("Count", 1)
+                || item.getByte("Count") <= 0 || ItemStack.of(item).isEmpty()) return false;
+            int slot = item.getByte("Slot") & 255;
+            if (slot >= BOX_SLOTS || !occupied.add(slot)) return false;
+        }
         var items = contents(box);
         for (int i = 0; i < items.size(); i++)
             if (!items.get(i).isEmpty() && (!boxAccepts(i, items.get(i)) || items.get(i).getCount() > items.get(i).getMaxStackSize())) return false;
         return true;
+    }
+
+    public static boolean hasStorage(ItemStack stack) {
+        var data = stack.getTagElement("mchjong");
+        return data != null && data.contains("Items") || stack.hasTag()
+            && (stack.getTag().contains("Items") || stack.getTag().contains("BlockEntityTag"));
     }
 
     public static int tileCount(List<ItemStack> items) {
@@ -101,12 +123,12 @@ public final class MahjongSupplies {
         if (tiles.isEmpty()) return List.of();
         for (int i = 0; i < input.size(); i++)
             if (!input.get(i).isEmpty() && (!boxAccepts(i, input.get(i)) || input.get(i).getCount() > input.get(i).getMaxStackSize())) return List.of();
-        ItemStack template = tiles.getFirst();
+        ItemStack template = tiles.get(0);
         boolean blanks = tile(template).blank();
         if (tiles.stream().anyMatch(stack -> !tile(stack).valid() || tile(stack).blank() != blanks)) return List.of();
         var output = new ArrayList<>(input.stream().map(ItemStack::copy).toList());
         if (blanks) {
-            if (tiles.stream().anyMatch(stack -> !ItemStack.isSameItemSameComponents(template, stack))) return List.of();
+            if (tiles.stream().anyMatch(stack -> !ItemStack.isSameItemSameTags(template, stack))) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++) output.set(i, ItemStack.EMPTY);
             int slot = 0;
             for (int face = 0; face < 34; face++) {
@@ -128,19 +150,19 @@ public final class MahjongSupplies {
             for (int count : flowers) if (count != (total == SET_SIZE ? 0 : 1)) return List.of();
             if (tiles.stream().allMatch(stack -> facePreset(stack).equals(preset))) return List.of();
             for (int i = 0; i < TILE_SLOTS; i++)
-                if (!output.get(i).isEmpty()) output.get(i).set(MahjongComponents.FACE_PRESET, preset);
+                if (!output.get(i).isEmpty()) MahjongComponents.facePreset(output.get(i), preset);
         }
         return List.copyOf(output);
     }
 
     public static TileFacePreset facePreset(ItemStack stack) {
-        return stack.getOrDefault(MahjongComponents.FACE_PRESET, TileFacePreset.KANSAI);
+        return MahjongComponents.facePreset(stack);
     }
 
     private static ItemStack printed(ItemStack template, int face, boolean red, int count, TileFacePreset preset) {
         var result = template.copyWithCount(count);
-        result.set(MahjongComponents.TILE, tile(template).engraved(face, red));
-        result.set(MahjongComponents.FACE_PRESET, preset);
+        MahjongComponents.tile(result, tile(template).engraved(face, red));
+        MahjongComponents.facePreset(result, preset);
         return result;
     }
 
@@ -151,7 +173,7 @@ public final class MahjongSupplies {
             var items = dyedContents(contents(input), color);
             if (items.isEmpty()) return ItemStack.EMPTY;
             setContents(result, items);
-        } else result.set(DataComponents.BASE_COLOR, color);
+        } else MahjongComponents.color(result, color);
         return result;
     }
 
@@ -161,7 +183,7 @@ public final class MahjongSupplies {
         for (int i = 0; i < output.size(); i++) {
             var stack = output.get(i);
             if (!stack.isEmpty() && (!boxAccepts(i, stack) || stack.getCount() > stack.getMaxStackSize())) return List.of();
-            if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
+            if (stack.is(MahjongContent.TILE_ITEM)) MahjongComponents.color(stack, color);
         }
         return List.copyOf(output);
     }
@@ -222,7 +244,7 @@ public final class MahjongSupplies {
     /** Compact creative/browser stock. Contents are expanded only when gameplay needs the box inventory. */
     public static ItemStack stockedBox(RedFives reds) {
         var box = new ItemStack(MahjongContent.BOX_ITEM);
-        box.set(MahjongComponents.BOX_PRESET, reds);
+        MahjongComponents.boxPreset(box, reds);
         return box;
     }
 
@@ -240,7 +262,7 @@ public final class MahjongSupplies {
         int stickSlot = TILE_SLOTS;
         for (int[] supply : new int[][]{{100, 40}, {1000, 16}, {5000, 8}, {10000, 4}, {-10000, 4}}) {
             var stick = new ItemStack(MahjongContent.POINT_STICK, supply[1]);
-            stick.set(MahjongComponents.POINTS, supply[0]);
+            MahjongComponents.points(stick, supply[0]);
             items.set(stickSlot++, stick);
         }
         items.set(DICE_SLOT, new ItemStack(MahjongContent.DICE, 2));

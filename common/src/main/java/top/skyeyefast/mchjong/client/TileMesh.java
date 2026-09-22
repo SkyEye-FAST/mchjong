@@ -14,9 +14,9 @@ public final class TileMesh {
     public static final float WIDTH = .104f;
     public static final float HEIGHT = .160f;
     public static final float DEPTH = .0726f;
-    public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
-    public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
-    public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
+    public static final ResourceLocation ATLAS = new ResourceLocation(MahjongContent.MOD_ID, "textures/tiles.png");
+    public static final ResourceLocation BACK = new ResourceLocation(MahjongContent.MOD_ID, "textures/tile/back.png");
+    public static final ResourceLocation GLYPHS = new ResourceLocation(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
     public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         return TileFacePresets.definition(preset).atlas();
     }
@@ -44,12 +44,17 @@ public final class TileMesh {
 
     public static int bodyColor(TileMaterial material, DyeColor dye) {
         return material == TileMaterial.GLASS && dye != null
-            ? material.color() & 0xff000000 | dye.getTextureDiffuseColor() & 0x00ffffff : material.color();
+            ? material.color() & 0xff000000 | dyeColor(dye) : material.color();
     }
 
     public static int backColor(TileMaterial material, DyeColor dye) {
         return dye != null && material != TileMaterial.GLASS
-            ? 0xff000000 | dye.getTextureDiffuseColor() : bodyColor(material, dye);
+            ? 0xff000000 | dyeColor(dye) : bodyColor(material, dye);
+    }
+
+    private static int dyeColor(DyeColor dye) {
+        float[] rgb = dye.getTextureDiffuseColors();
+        return (int) (rgb[0] * 255) << 16 | (int) (rgb[1] * 255) << 8 | (int) (rgb[2] * 255);
     }
 
     public static boolean usesMaterialBack(TileMaterial material, DyeColor dye) {
@@ -140,8 +145,9 @@ public final class TileMesh {
                              float x1, float y1, float z1, int color) {
         float dx = x1 - x0, dy = y1 - y0, dz = z1 - z0;
         float length = (float) Math.sqrt(dx * dx + dy * dy + dz * dz);
-        out.addVertex(pose.last(), x0, y0, z0).setColor(color).setNormal(pose.last(), dx / length, dy / length, dz / length);
-        out.addVertex(pose.last(), x1, y1, z1).setColor(color).setNormal(pose.last(), dx / length, dy / length, dz / length);
+        var normal = new org.joml.Vector3f(dx / length, dy / length, dz / length).mul(pose.last().normal()).normalize();
+        out.vertex(pose.last().pose(), x0, y0, z0).color(color).normal(normal.x, normal.y, normal.z).endVertex();
+        out.vertex(pose.last().pose(), x1, y1, z1).color(color).normal(normal.x, normal.y, normal.z).endVertex();
     }
 
     private static void band(PoseStack pose, VertexConsumer out, float[] a, float z0, float[] b, float z1,
@@ -214,7 +220,7 @@ public final class TileMesh {
 
     private static void vertex(PoseStack pose, VertexConsumer out, float x, float y, float z, float u, float v,
             int color, float nx, float ny, float nz, int light) {
-        out.addVertex(pose.last(), x, y, z).setColor(color).setUv(u, v).setOverlay(OverlayTexture.NO_OVERLAY)
-            .setLight(light).setNormal(pose.last(), nx, ny, nz);
+        out.vertex(pose.last().pose(), x, y, z).color(color).uv(u, v).overlayCoords(OverlayTexture.NO_OVERLAY)
+            .uv2(light).normal(pose.last().normal(), nx, ny, nz).endVertex();
     }
 }

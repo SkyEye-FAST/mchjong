@@ -219,7 +219,7 @@ final class TableHud {
                 TileGui.tile(graphics, tile, x, tileY, tileWidth, false, false, false, preset);
                 x += tileWidth + 2;
             }
-            regions.addFirst(new Region(start, tileY, x - start, Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH),
+            regions.add(0, new Region(start, tileY, x - start, Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH),
                 Component.translatable("ui.mchjong.result_indicators")));
         }
         if (view.focus() != null && (settings.show(TableSettings.Information.FOCUS) || !settings.showRiver)) {

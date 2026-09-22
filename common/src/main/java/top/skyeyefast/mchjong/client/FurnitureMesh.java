@@ -16,8 +16,8 @@ public final class FurnitureMesh {
     public static final float STICK_HALF_LENGTH = .35f;
     public static final float STICK_HALF_WIDTH = .03f;
     public static final float STICK_HEIGHT = .025f;
-    public static final ResourceLocation STICK_TEXTURE = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/point_sticks.png");
-    public static final ResourceLocation CLOTH_PATTERN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/cloth_pattern.png");
+    public static final ResourceLocation STICK_TEXTURE = new ResourceLocation("mchjong", "textures/point_sticks.png");
+    public static final ResourceLocation CLOTH_PATTERN = new ResourceLocation("mchjong", "textures/furniture/cloth_pattern.png");
     private static final int WHITE = 0xffffffff;
     private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
@@ -177,15 +177,15 @@ public final class FurnitureMesh {
         var out = buffers.getBuffer(RenderType.entityTranslucent(CLOTH_PATTERN));
         for (int i = 0; i < 4; i++) {
             float u = i == 1 || i == 2 ? 1 : 0, v = i < 2 ? 1 : 0;
-            out.addVertex(pose.last(), (u * 2 - 1) * x, y, (v * 2 - 1) * z).setColor(WHITE).setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), 0, 1, 0);
+            out.vertex(pose.last().pose(), (u * 2 - 1) * x, y, (v * 2 - 1) * z).color(WHITE).uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(pose.last().normal(), 0, 1, 0).endVertex();
         }
     }
 
     private static int tint(DyeColor dye, float brightness) {
-        int rgb = dye.getTextureDiffuseColor();
-        return 0xff000000 | (int) ((rgb >> 16 & 255) * brightness) << 16
-            | (int) ((rgb >> 8 & 255) * brightness) << 8 | (int) ((rgb & 255) * brightness);
+        float[] rgb = dye.getTextureDiffuseColors();
+        return 0xff000000 | (int) (rgb[0] * 255 * brightness) << 16
+            | (int) (rgb[1] * 255 * brightness) << 8 | (int) (rgb[2] * 255 * brightness);
     }
 
     public static void stick(PoseStack pose, MultiBufferSource buffers, int light, int points) {
@@ -217,12 +217,12 @@ public final class FurnitureMesh {
             // Both broad faces are printed; side faces sample the unmarked end of the same strip.
             float u = ny == 0 ? u0 : u0 + (x + STICK_HALF_LENGTH) / (2 * STICK_HALF_LENGTH) * (u1 - u0);
             float v = ny == 0 ? (v0 + v1) / 2 : v0 + (z + STICK_HALF_WIDTH) / (2 * STICK_HALF_WIDTH) * (v1 - v0);
-            out.addVertex(pose.last(), x, y, z).setColor(WHITE).setUv(u, v)
-                .setOverlay(OverlayTexture.NO_OVERLAY).setLight(light).setNormal(pose.last(), nx, ny, nz);
+            out.vertex(pose.last().pose(), x, y, z).color(WHITE).uv(u, v)
+                .overlayCoords(OverlayTexture.NO_OVERLAY).uv2(light).normal(pose.last().normal(), nx, ny, nz).endVertex();
         }
     }
 
     public static RenderType texture(String texture) {
-        return RenderType.entityCutout(ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/" + texture + ".png"));
+        return RenderType.entityCutout(new ResourceLocation("mchjong", "textures/furniture/" + texture + ".png"));
     }
 }

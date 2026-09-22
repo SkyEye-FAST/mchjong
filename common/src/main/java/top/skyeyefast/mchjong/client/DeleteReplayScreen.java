@@ -17,7 +17,7 @@ public final class DeleteReplayScreen extends Screen {
     }
 
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     @Override protected void init() {
         int span = Math.min(440, width - 32), left = (width - span) / 2;

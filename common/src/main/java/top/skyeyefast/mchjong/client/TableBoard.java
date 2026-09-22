@@ -194,7 +194,7 @@ final class TableBoard {
         graphics.pose().scale((float) scale, (float) scale, 1);
         int y = thickness / 2 - tileHeight(width);
         int meldSpan = 0;
-        for (var meld : rails.getFirst()) meldSpan += TileGui.meldWidth(meld, seat, width);
+        for (var meld : rails.get(0)) meldSpan += TileGui.meldWidth(meld, seat, width);
         // The meld corner belongs to the owner's right, independently of the concealed hand.
         int corner = length / 2 - meldSpan;
         int handWidth = Math.min(width, Math.max(6, (length - meldSpan - player.norths().size() * width - 16)

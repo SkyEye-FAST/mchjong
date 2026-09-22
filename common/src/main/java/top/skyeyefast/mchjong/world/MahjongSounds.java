@@ -15,9 +15,9 @@ public final class MahjongSounds {
     static {
         var events = new LinkedHashMap<String, SoundEvent>();
         EFFECTS.forEach(name -> events.put("table." + name, SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "table." + name))));
+            new ResourceLocation(MahjongContent.MOD_ID, "table." + name))));
         VOICES.forEach(name -> events.put("voice." + name, SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "voice." + name))));
+            new ResourceLocation(MahjongContent.MOD_ID, "voice." + name))));
         EVENTS = java.util.Collections.unmodifiableMap(events);
     }
     private MahjongSounds() {}

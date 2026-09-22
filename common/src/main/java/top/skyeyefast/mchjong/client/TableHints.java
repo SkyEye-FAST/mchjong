@@ -39,7 +39,7 @@ final class TableHints extends MahjongButton {
         visible = active = !waits.isEmpty() && popup != null;
         if (!visible) setFocused(false);
         setWidth(20 * scale);
-        setHeight(16 * scale);
+        height = 16 * scale;
         setX(screenWidth - 30 * scale);
         setY(buttonTop);
         if (visible && narrated != waits) {

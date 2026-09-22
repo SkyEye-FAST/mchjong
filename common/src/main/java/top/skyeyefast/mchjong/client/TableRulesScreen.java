@@ -58,7 +58,7 @@ public final class TableRulesScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void renderBackground(GuiGraphics graphics) {}
 
     private boolean host() {
         var view = parent.view();
@@ -112,7 +112,7 @@ public final class TableRulesScreen extends Screen {
             .filter(option -> option.visible(draft)).toList();
         int rows = Math.max(1, (height - 182) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
-        page = Math.clamp(page, 0, pages - 1);
+        page = net.minecraft.util.Mth.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
             int y = 108 + i * 24;

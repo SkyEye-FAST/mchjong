@@ -196,8 +196,8 @@ class AssetContractTest {
                         assertTrue(coordinate.getAsDouble() >= -16 && coordinate.getAsDouble() <= 32,
                                 "Minecraft model bounds");
             assertTrue(Files.isRegularFile(resources.resolve("assets/mchjong/blockstates/" + name + ".json")));
-            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" + name + ".json")));
-            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/loot_table/blocks/" + name + ".json")));
+            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipes/" + name + ".json")));
+            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/loot_tables/blocks/" + name + ".json")));
         }
     }
 

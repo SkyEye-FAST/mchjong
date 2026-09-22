@@ -388,7 +388,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             var action = actions.get(payload.action());
             requested = action.type();
             if (action.type() == top.skyeyefast.mchjong.engine.Action.Type.CHANGE_RULE) {
-                var proposed = game.rules().withPreset(RuleSet.values()[action.tiles().getFirst()]);
+                var proposed = game.rules().withPreset(RuleSet.values()[action.tiles().get(0)]);
                 if (!equipment.canSupplyReds(proposed.sanma(), proposed.redFives())) {
                     sendView(player, false, false);
                     return;
@@ -461,16 +461,16 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
     }
 
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        equipment.save(tag, registries);
+    @Override protected void saveAdditional(CompoundTag tag) {
+        super.saveAdditional(tag);
+        equipment.save(tag);
         if (unreadableSave != null) tag.putString("game", unreadableSave);
         else if (game != null) tag.putString("game", TableNetworking.JSON.toJson(game));
     }
 
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        equipment.load(tag, registries);
+    @Override public void load(CompoundTag tag) {
+        super.load(tag);
+        equipment.load(tag);
         if (tag.contains("boxes")) {
             game = null;
             unreadableSave = null;

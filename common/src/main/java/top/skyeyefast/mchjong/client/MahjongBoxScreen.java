@@ -55,7 +55,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
 
     private void updateActions() {
         var choices = TileFacePresets.choices();
-        if (!choices.isEmpty() && !choices.contains(preset)) preset = choices.getFirst();
+        if (!choices.isEmpty() && !choices.contains(preset)) preset = choices.get(0);
         presetChoice.setMessage(presetLabel());
         var reagent = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         boolean printing = MahjongSupplies.mahjongDye(reagent);
@@ -68,9 +68,8 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
             setFocused(null);
     }
 
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void renderBackground(GuiGraphics graphics) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        renderBg(graphics, partialTick, mouseX, mouseY);
     }
 
     @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
