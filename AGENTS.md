@@ -34,6 +34,7 @@ adding compatibility layers, migrations or speculative configuration.
   Edit source generators rather than generated textures, models or recipes.
 - `common/src/smoke`: shared development-only client/server checks, with
   loader-specific adapters under `fabric/src/smoke` and `neoforge/src/smoke`.
+  `forge/src/smoke` owns the focused Forge bootstrap checks.
 - `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
   structures, compiled independently by both loader projects.
 

@@ -8,6 +8,18 @@ version = rootProject.mod_version
 base.archivesName = "mchjong-forge-${minecraft_version}"
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
 
+sourceSets {
+    smoke {
+        compileClasspath += sourceSets.main.output
+        runtimeClasspath += sourceSets.main.output
+        output.resourcesDir = layout.buildDirectory.dir('classes/java/smoke').get().asFile
+    }
+}
+configurations {
+    smokeImplementation.extendsFrom implementation
+    smokeRuntimeOnly.extendsFrom runtimeOnly
+}
+
 repositories {
     minecraft.mavenizer(it)
     maven fg.forgeMaven
@@ -21,7 +33,7 @@ minecraft {
             args '--mixin.config=mchjong.client.mixins.json', '--mixin.config=mchjong.forge.mixins.json'
         }
         register('client') {
-            with(sourceSets.test) {
+            with(sourceSets.smoke) {
                 workingDir = layout.buildDirectory.dir('smoke/client')
                 systemProperty 'mchjong.smoke.bootstrap', 'true'
                 systemProperty 'mchjong.smoke.output', layout.buildDirectory.dir('smoke/bootstrap-evidence').get().asFile.absolutePath
@@ -30,7 +42,7 @@ minecraft {
         }
         register('server') {
             args '--nogui'
-            with(sourceSets.test) {
+            with(sourceSets.smoke) {
                 args '--initSettings'
                 workingDir = layout.buildDirectory.dir('smoke/server')
             }
@@ -38,27 +50,15 @@ minecraft {
     }
 }
 
-tasks.register('runSmokeServer') {
-    group = 'verification'
-    description = 'Load Forge and initialize dedicated-server settings in an isolated directory.'
-    dependsOn 'runTestServer'
-}
-
-tasks.register('runSmokeClient') {
-    group = 'verification'
-    description = 'Check Forge client registration, shared renderers and model loading.'
-    dependsOn 'runTestClient'
+tasks.matching { it.name == 'runSmokeClient' }.configureEach {
+    doFirst { delete layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt') }
     doLast {
         if (!layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt').get().asFile.isFile())
             throw new GradleException('Forge client bootstrap did not finish; inspect smoke/client/logs/latest.log')
     }
 }
-tasks.matching { it.name == 'runTestClient' }.configureEach {
-    doFirst { delete layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt') }
-}
 
 configurations { embeddedEngine }
-sourceSets.test.output.resourcesDir = layout.buildDirectory.dir('classes/java/test').get().asFile
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     implementation project(path: ':engine', configuration: 'embeddedEngine')
