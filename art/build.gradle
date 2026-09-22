@@ -71,7 +71,7 @@ test {
     systemProperty 'mchjong.data', rootProject.layout.buildDirectory.dir('generated/data').get().asFile.absolutePath
     systemProperty 'mchjong.languages', rootProject.file('common/src/main/resources/assets/mchjong/lang').absolutePath
     systemProperty 'mchjong.sourceRoot', rootProject.projectDir.absolutePath
-    ['common/src/main', 'engine/src/main', 'src/main', 'neoforge/src/main'].each { source ->
+    ['common/src/main', 'engine/src/main', 'fabric/src/main', 'neoforge/src/main'].each { source ->
         inputs.files rootProject.fileTree(source) { include '**/*.java', '**/*.kt' }
     }
     inputs.dir rootProject.file('common/src/main/resources/assets/mchjong/lang')

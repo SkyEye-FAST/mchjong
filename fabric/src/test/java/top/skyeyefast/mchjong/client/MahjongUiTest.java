@@ -16,7 +16,8 @@ class MahjongUiTest {
     }
 
     @Test void projectScreensCannotQuietlyReturnToStockControlsOrChestMenus() throws Exception {
-        Path client = Path.of("common/src/main/java/top/skyeyefast/mchjong/client");
+        Path root = Path.of("..");
+        Path client = root.resolve("common/src/main/java/top/skyeyefast/mchjong/client");
         try (var paths = Files.list(client)) {
             for (Path path : paths.filter(p -> p.getFileName().toString().endsWith("Screen.java")).toList()) {
                 String source = Files.readString(path);
@@ -25,10 +26,10 @@ class MahjongUiTest {
                     assertFalse(source.contains(stock), path + " must use the project controls, not " + stock);
             }
         }
-        String menu = Files.readString(Path.of("common/src/main/java/top/skyeyefast/mchjong/item/MahjongBoxMenu.java"));
+        String menu = Files.readString(root.resolve("common/src/main/java/top/skyeyefast/mchjong/item/MahjongBoxMenu.java"));
         assertFalse(menu.contains("GENERIC_9x6"));
         assertTrue(menu.contains("MahjongContent.BOX_MENU"));
-        assertTrue(Files.readString(Path.of("AGENTS.md")).contains("docs/UI_STYLE.md"));
+        assertTrue(Files.readString(root.resolve("AGENTS.md")).contains("docs/UI_STYLE.md"));
     }
 
     private static double luminance(int color) {

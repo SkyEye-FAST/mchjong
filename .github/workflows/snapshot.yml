@@ -51,14 +51,14 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.version }}"
-          test -f "build/libs/mchjong-fabric-${version}.jar"
+          test -f "fabric/build/libs/mchjong-fabric-${version}.jar"
           test -f "neoforge/build/libs/mchjong-neoforge-${version}.jar"
 
       - name: Upload Fabric snapshot
         uses: actions/upload-artifact@v7
         with:
           name: mchjong-fabric-${{ steps.version.outputs.version }}
-          path: build/libs/mchjong-fabric-${{ steps.version.outputs.version }}.jar
+          path: fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.version }}.jar
           if-no-files-found: error
 
       - name: Upload NeoForge snapshot

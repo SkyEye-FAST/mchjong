@@ -18,4 +18,4 @@ pluginManagement {
 }
 
 rootProject.name = 'mchjong'
-include 'engine', 'neoforge', 'art'
+include 'engine', 'fabric', 'neoforge', 'art'

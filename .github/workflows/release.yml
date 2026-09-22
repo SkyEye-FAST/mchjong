@@ -81,7 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           version="${{ steps.version.outputs.version }}"
-          test -f "build/libs/mchjong-fabric-${version}.jar"
+          test -f "fabric/build/libs/mchjong-fabric-${version}.jar"
           test -f "neoforge/build/libs/mchjong-neoforge-${version}.jar"
 
       - name: Publish GitHub Release
@@ -93,7 +93,7 @@ jobs:
           version="${{ steps.version.outputs.version }}"
 
           gh release create "${GITHUB_REF_NAME}" \
-            "build/libs/mchjong-fabric-${version}.jar#Fabric" \
+            "fabric/build/libs/mchjong-fabric-${version}.jar#Fabric" \
             "neoforge/build/libs/mchjong-neoforge-${version}.jar#NeoForge" \
             --verify-tag \
             --notes-file release-notes.md \
