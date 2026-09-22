@@ -36,7 +36,11 @@ final class BoxInterfaceSmoke {
         if (!reload.isDone() || client.getOverlay() != null) return false;
         reload.join();
         if (++settled < 10) return false;
-        if (sample == LANGUAGES.length) return true;
+        if (sample == LANGUAGES.length) {
+            if (!reagentUpdate.isDone()) return false;
+            reagentUpdate.join();
+            return true;
+        }
         require(client.screen instanceof MahjongBoxScreen, "Language reload replaced the box screen");
         require(client.screen.width == 320 && client.screen.height == 240, "Small-box fixture is not a 320x240 logical viewport");
         if (settled == 10) UiControlsSmoke.verify(client);
