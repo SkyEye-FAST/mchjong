@@ -11,8 +11,8 @@ compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
 | Minecraft | Loader artifacts | Validation scope |
 | --- | --- | --- |
 | 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
-| 1.20.1 | Fabric and Forge port on `compat/1.20.1` | Both base JARs build and reach the title screen; world/network acceptance and optional integrations remain in progress |
-| Matching version | Quilt consumes the Fabric artifact | Quilt runtime acceptance is separate |
+| 1.20.1 | Fabric and Forge on `compat/1.20.1` | Shared integrated-server/client gameplay and Ponder smokes pass |
+| 1.21.1 and 1.20.1 | Quilt consumes the corresponding Fabric artifact | Quilt Loader 0.30.1 loads both packaged JARs to the title screen, using Java 21 and Java 17 respectively |
 
 The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
 Forge currently builds the base game integration. Optional Forge adapters require
@@ -32,6 +32,11 @@ checkouts receive the same mod version during assembly; the filenames include
 Minecraft version and loader. A main commit does not automatically advance the
 compatibility pin. Review feature parity and outstanding port acceptance before
 publishing a release. Quilt uses the corresponding Fabric JAR.
+
+The 1.20.1 port uses native ItemStack NBT, recipe serializers, packet buffers and
+client APIs. JEI 15.59.0.212, EMI 1.1.24+1.20.1, REI 12.0.684 and Ponder 1.0.92
+have loader-specific development profiles; optional dependencies stay outside
+MChjong's release bundles. The port's `docs/PORT_1.20.1.md` records its validation.
 
 ## Optional integrations
 
