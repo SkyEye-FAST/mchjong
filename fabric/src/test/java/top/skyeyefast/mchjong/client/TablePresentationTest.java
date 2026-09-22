@@ -232,7 +232,7 @@ class TablePresentationTest {
         var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
             top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
-            base.timeControl(), List.of(), List.of(), false, null, null, base.autoPlay(), false, 1);
+            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
         var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
         assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
             "The local river grows subtly toward the foreground");

@@ -34,7 +34,26 @@ class TableLayoutTest {
             melds, river, List.of(), false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.handVisibility(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
+    }
+
+    @Test void roomVisibilityOnlyLaysHandsFlatInOpenMode() {
+        var id = new UUID(10, 15);
+        for (var mode : HandVisibility.values()) {
+            var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 15);
+            assertTrue(game.join(id, "Host", 0));
+            if (mode != HandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.view(id).decision(), mode));
+            act(game, id, Action.Type.FILL_BOTS);
+            act(game, id, Action.Type.BEGIN_SEATING);
+            assertTrue(game.join(id, "Host", game.seatOf(id)));
+            act(game, id, Action.Type.READY);
+            assertEquals(mode == HandVisibility.OPEN, TableBoardState.live(game.view(id)).layHandsOpen());
+            for (var viewer : new UUID[]{null, id}) {
+                var pieces = TableScene.build(game.view(viewer)).stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
+                assertFalse(pieces.isEmpty());
+                assertTrue(pieces.stream().allMatch(p -> p.flat() == (mode == HandVisibility.OPEN)));
+            }
+        }
     }
 
     @Test void meldsStayFramedAndBottomAlignedAtTheRightCorner() {
@@ -105,7 +124,7 @@ class TableLayoutTest {
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.handVisibility(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
             for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {

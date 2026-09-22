@@ -62,7 +62,7 @@ public final class Game {
     int[] reserveTicks = new int[4];
     UUID hostId;
     RoomSeating seating = new RoomSeating();
-    transient boolean openHands;
+    HandVisibility handVisibility = HandVisibility.SELF;
     transient boolean invitationTeleport;
     ExitVote exitVote;
     long exitVoteSequence;
@@ -148,11 +148,19 @@ public final class Game {
     }
 
     /** Called only by the server's world-policy adapter, never by a room control. */
-    public void configureWorld(boolean openHands, boolean invitationTeleport) {
-        if (this.openHands == openHands && this.invitationTeleport == invitationTeleport) return;
-        this.openHands = openHands;
+    public void configureWorld(boolean invitationTeleport) {
+        if (this.invitationTeleport == invitationTeleport) return;
         this.invitationTeleport = invitationTeleport;
         revision++;
+    }
+
+    public boolean configureHandVisibility(UUID actor, long expectedDecision, HandVisibility visibility) {
+        if (visibility == null || visibility == handVisibility || phase != Phase.LOBBY || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        handVisibility = visibility;
+        for (PlayerState player : players) player.ready = false;
+        newDecision(Phase.LOBBY);
+        return true;
     }
 
     public RoomView roomView() {
@@ -911,7 +919,8 @@ public final class Game {
         TableView.Focus focus = null;
         for (int seat = 0; seat < rules.players(); seat++) {
             PlayerState player = players[seat];
-            boolean visible = seat == viewer || exposed[seat] || openHands && viewer >= 0;
+            boolean visible = seat == viewer || exposed[seat]
+                || handVisibility.reveals(viewer >= 0 && players[viewer].riichi);
             List<Integer> hand = new ArrayList<>(player.hand);
             if (manual || player.autoPlay.sort()) hand.sort(Tile.ORDER);
             if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
@@ -930,7 +939,7 @@ public final class Game {
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
-            timeControl, clocks, finalRanks, openHands, exitVote, manual ? handling.view(this) : null,
+            timeControl, clocks, finalRanks, handVisibility, exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1);
@@ -942,6 +951,7 @@ public final class Game {
         Objects.requireNonNull(seating).validate(rules.players());
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(archiveQueue);
+        Objects.requireNonNull(handVisibility);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
         if (!suppliedTiles.isEmpty() && !Tile.validSet(suppliedTiles)) throw new IllegalStateException("Invalid physical set");
         handling.validate(this);

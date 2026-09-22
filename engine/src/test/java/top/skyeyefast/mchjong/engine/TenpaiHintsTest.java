@@ -15,7 +15,7 @@ class TenpaiHintsTest {
         game.players[1].river.add(new Discard(six, false, false, true));
         game.players[2].melds.add(TestHands.meld(Meld.Type.PON, "666s"));
         game.players[1].hand.add(Tile.id(23, 3, false));
-        game.openHands = true;
+        game.handVisibility = HandVisibility.ALL;
         var view = game.view(OWNER);
         var waits = hints.waits(view, Tile.ABSENT);
         assertEquals(List.of(new TenpaiHints.Wait(23, 1), new TenpaiHints.Wait(26, 4)), waits);

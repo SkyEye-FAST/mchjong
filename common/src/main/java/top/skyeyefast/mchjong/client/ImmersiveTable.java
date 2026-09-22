@@ -95,7 +95,7 @@ final class ImmersiveTable {
         if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
             flat(side(view.turn()), -57, 81, 57, 88, 8.5, MahjongUi.ACCENT);
         for (int seat = 0; seat < players; seat++) {
-            if (seat != viewer) outer(view.seats().get(seat), seat);
+            if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen());
             else {
                 int n = 0;
                 for (int tile : view.seats().get(seat).norths()) tile(tile, 0, -270 + n++ * 29, 340, 27, false, false, false, 0);
@@ -126,14 +126,14 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    private void outer(TableView.Seat player, int seat) {
+    private void outer(TableView.Seat player, int seat, boolean layHandsOpen) {
         int side = side(seat), w = 30;
         double rail = 410, halfLength = 300;
         var rails = outerRails(player, seat);
         double handX = handLeft(player, seat);
         for (int tile : player.hand()) {
-            if (tile < 0) standing(side, handX + w / 2.0, rail, w);
-            else tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
+            if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
+            else standing(tile, side, handX + w / 2.0, rail, w);
             handX += w;
         }
         for (int row = 0; row < rails.size(); row++) {
@@ -226,7 +226,7 @@ final class ImmersiveTable {
         anchor(tile, side, x, z, top, width);
     }
 
-    private void standing(int side, double x, double z, int w) {
+    private void standing(int tile, int side, double x, double z, int w) {
         double d = thickness(w), h = w * RATIO;
         contact(side, x, z, w, d);
         box(side, x, z, w, d, 0, h, bodyColor, bodyColor);
@@ -234,6 +234,18 @@ final class ImmersiveTable {
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, 2),
             vertex(side, x + w / 2.0 - 1, z - d / 2 - .1, 2)}, -1, true, false);
+        var front = new Vertex[]{vertex(side, x - w / 2.0, z + d / 2 + .1, h),
+            vertex(side, x + w / 2.0, z + d / 2 + .1, h),
+            vertex(side, x + w / 2.0, z + d / 2 + .1, 0),
+            vertex(side, x - w / 2.0, z + d / 2 + .1, 0)};
+        if (tile < 0) artwork(front, tile, true, false);
+        else {
+            solid(front, 0xfff4f0e5);
+            artwork(new Vertex[]{vertex(side, x - w / 2.0 + 1, z + d / 2 + .2, h - 2),
+                vertex(side, x + w / 2.0 - 1, z + d / 2 + .2, h - 2),
+                vertex(side, x + w / 2.0 - 1, z + d / 2 + .2, 2),
+                vertex(side, x - w / 2.0 + 1, z + d / 2 + .2, 2)}, tile, false, false);
+        }
     }
 
     /** The moving tile lands using exactly the river's solid, camera and material. */

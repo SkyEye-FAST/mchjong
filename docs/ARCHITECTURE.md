@@ -72,7 +72,7 @@ membership; hosts may replace disconnected guests with bots after the grace peri
 An idle lobby closes and releases all seats once every human is disconnected,
 including after the dismount grace period expires.
 The default-on personal automatic seating option requests relocation after seat
-assignment or reopening a reserved table. Its payload contains only table position
+assignment or reopening a reserved table during preparation. Its payload contains only table position
 and identity; the server derives the destination from membership and validates
 the player, distance, stool and mount before moving them.
 
@@ -121,10 +121,13 @@ Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual chec
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced
-with hidden sentinels **before serialization**. `WorldSettings` supplies one
-administrator-controlled policy per world save, across dimensions. Open hands
-reveals opponents only to seated participants, never spectators. World policy
-is transient in `Game`, independently of saved room rules and readiness.
+with hidden sentinels **before serialization**. `HandVisibility` is saved per room;
+the host can change it during preparation, clearing readiness. OPEN reveals and
+lays down hands, ALL reveals upright faces to everyone including unseated viewers,
+RIICHI reveals upright faces to viewers who have declared riichi, and SELF keeps
+concealed faces private. Settlement exposure remains public in every mode.
+`WorldSettings` supplies the administrator-controlled invitation teleport policy
+per world save, across dimensions. That world policy is transient in `Game`.
 `RoomView` publishes room ownership and world capabilities separately from tile
 state. The World settings UI uses the server-advertised administrator command
 tree to enable controls and submits the existing permission-checked commands;
@@ -156,7 +159,7 @@ does not add network requests or store skin data in engine snapshots.
 kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
 physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
 and pending declarations. Training bots share this accounting. Opponents' concealed
-hands are ignored even under the world's open-hand policy. `TableHints` renders
+hands are ignored even when room hand visibility reveals them. `TableHints` renders
 this information only when the local, default-off convenience preference is on;
 no private information or new request type is added to the protocol.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),

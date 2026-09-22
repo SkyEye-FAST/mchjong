@@ -43,7 +43,8 @@ final class TableHud {
             : Math.min(220, Math.max(110, width - 190));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
             .append("\n").append(Component.translatable("ui.mchjong.table_deposits", view.honba(), view.riichiSticks()));
-        if (view.openHands()) details = details.copy().append("\n").append(Component.translatable("ui.mchjong.open_hands"));
+        details = details.copy().append("\n").append(Component.translatable("settings.mchjong.hand_visibility",
+            Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))));
         Component title = lobby ? Component.translatable("ui.mchjong.title")
             : settings.show(TableSettings.Information.ROUND) ? Component.translatable("ui.mchjong.round_short",
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / view.rules().players())]),

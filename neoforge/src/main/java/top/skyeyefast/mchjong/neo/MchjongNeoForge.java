@@ -94,7 +94,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("6");
+        var registrar = event.registrar("7");
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
@@ -105,6 +105,9 @@ public final class MchjongNeoForge {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
         registrar.playToServer(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
         registrar.playToClient(TableViewPayload.TYPE, TableViewPayload.CODEC,

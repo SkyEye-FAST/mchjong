@@ -131,8 +131,9 @@ def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBo
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
+def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-def smokeProfile = interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -156,6 +157,7 @@ neoForge {
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
+            systemProperty 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath

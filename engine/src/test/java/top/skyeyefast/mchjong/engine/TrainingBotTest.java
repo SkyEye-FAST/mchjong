@@ -113,7 +113,7 @@ class TrainingBotTest {
         game.players[1].hand = TestHands.tiles("111222333m45677p");
         game.players[2].hand = TestHands.tiles("789m123456p11122z");
         assertEquals(first, choice(game, BotDifficulty.HARD));
-        game.configureWorld(true, true);
+        game.handVisibility = HandVisibility.ALL;
         assertEquals(first, choice(game, BotDifficulty.HARD), "Open-hand permission cannot improve a bot's information");
     }
 

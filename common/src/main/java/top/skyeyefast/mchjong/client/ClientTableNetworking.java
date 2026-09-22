@@ -51,9 +51,9 @@ public final class ClientTableNetworking {
     }
 
     private static void requestAssignedSeat(Minecraft client, TableViewPayload payload, TableView view, boolean assigned) {
-        if (!TableSettings.get().autoSeat || client.player == null || client.getConnection() == null) return;
-        if (!(assigned && view.viewerSeat() >= 0) && !payload.open()) return;
-        if (view.viewerSeat() >= 0 && client.player.getVehicle() instanceof SeatEntity seat
+        if (!TableSettings.get().autoSeat || view.viewerSeat() < 0 || client.player == null || client.getConnection() == null) return;
+        if (!assigned && !payload.open()) return;
+        if (client.player.getVehicle() instanceof SeatEntity seat
             && seat.tablePos().equals(payload.pos()) && seat.seat() == view.viewerSeat()) return;
         client.getConnection().send(new ServerboundCustomPayloadPacket(new TableSeatPayload(payload.pos(), view.tableId())));
     }

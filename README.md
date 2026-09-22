@@ -14,7 +14,7 @@ three or four players. It supports both Fabric and NeoForge.
 - In-world drawing, discarding, melds, and action previews
 - Animated wall assembly, packet dealing, calls, kans, and riichi sticks
 - Single-screen settlement panels with winning hands, yaku, indicators, and point changes
-- Unanimous table-exit voting, transferable room ownership and world-controlled open-hand games
+- Unanimous table-exit voting, transferable room ownership and per-room hand visibility
 - Wind drawing on ordinary tables, randomized automatic-table seating and verified physical seat assignments
 - Individually configurable Easy, Normal and Hard bots for vacant pregame seats
 - Configurable per-hand reserve and per-decision clocks, with distinct discard animations
@@ -155,9 +155,10 @@ with its equipment when the table is removed.
 
 In the lobby, select **Four-player mahjong** or **Three-player mahjong**, then
 choose the rule preset for that player count. **Settings** separates world,
-room and personal controls. Administrators control **Show opponents' hands**
-for the entire world; it reveals hands to seated participants, not spectators.
-Hosts can transfer room ownership to another participant. See
+room and personal controls. Hosts choose **Hand visibility** for their room:
+open hands, visible to all players, visible to riichi players, or visible only
+to self. Nearby spectators can see upright hand faces in the all-players mode
+while standing beside the table. Hosts can transfer room ownership to another participant. See
 [Rooms and permissions](docs/ROOMS.md) for configuration and commands.
 
 **Exit** ends the table immediately when only one human is registered, even

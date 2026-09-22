@@ -555,6 +555,13 @@ public final class TableScreen extends Screen {
             if (child instanceof MahjongButton button) button.textScale(2);
     }
 
+    void configureVisibility(top.skyeyefast.mchjong.engine.HandVisibility visibility) {
+        var view = view();
+        if (minecraft.getConnection() == null || view == null) return;
+        minecraft.getConnection().send(new ServerboundCustomPayloadPacket(
+            new top.skyeyefast.mchjong.network.TableVisibilityPayload(pos, view.tableId(), view.decision(), visibility)));
+    }
+
     void control(TableView view, TableControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
         minecraft.getConnection().send(new ServerboundCustomPayloadPacket(new TableControlPayload(pos, view.tableId(), operation, token, enabled)));

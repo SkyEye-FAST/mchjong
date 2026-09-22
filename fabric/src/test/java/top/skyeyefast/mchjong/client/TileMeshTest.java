@@ -101,6 +101,21 @@ class TileMeshTest {
         }
     }
 
+    @Test void concealedTileShellHasNoOpenEdges() {
+        var mesh = new Mesh();
+        var pose = new PoseStack();
+        var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
+        TileMesh.drawBody(pose, mesh, 0, material, null);
+        TileMesh.drawBack(pose, mesh, true, 0, material, null);
+        var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
+        for (int quad = 0; quad < mesh.vertices.size(); quad += 4) for (int corner = 0; corner < 4; corner++) {
+            var a = mesh.vertices.get(quad + corner).position;
+            var b = mesh.vertices.get(quad + (corner + 1) % 4).position;
+            edges.merge(java.util.Set.of(a, b), 1, Integer::sum);
+        }
+        assertTrue(edges.values().stream().allMatch(count -> count == 2), "Every shell edge must meet exactly one neighboring face");
+    }
+
     @Test void glassBodyIsTranslucentAndHiddenFacesEmitNoGlyphGeometry() {
         var hidden = new Mesh();
         var shown = new Mesh();

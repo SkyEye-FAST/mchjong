@@ -39,7 +39,7 @@ final class DepositVisualSmoke {
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
                 base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,
                 0, 0, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
-                base.timeControl(), List.of(), List.of(), false, null,
+                base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
                 table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1);
             table.acceptView(fixture);
             var screen = new TableScreen(table.getBlockPos());

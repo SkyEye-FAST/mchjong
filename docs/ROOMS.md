@@ -13,7 +13,6 @@ tables in that save. Its initial contents are:
 
 ```json
 {
-  "openHands": false,
   "invitationTeleport": false
 }
 ```
@@ -24,15 +23,29 @@ permission-checked commands available below:
 
 ```text
 /mchjong world
-/mchjong world openHands true
 /mchjong world invitationTeleport true
 /mchjong world reload
 ```
 
 Changes made by commands are saved atomically. Reload applies file edits. World
 policy applies to active tables as well as new rooms; it does not reset room
-rules or readiness. Open hands reveals opponents' concealed hands only to
-seated participants. Spectators still receive hidden tile identities.
+rules or readiness.
+
+## Hand visibility
+
+The host chooses Hand visibility in Settings → Room before play. The choice is
+saved with that table, and changing it clears readiness:
+
+- **Open hands:** everyone sees the hands laid face up.
+- **Visible to all players:** everyone, including nearby spectators, sees the
+  ordinary upright tile faces from their physical viewing angle.
+- **Visible to riichi players:** a player who has declared riichi can see other
+  players' upright tile faces. Other viewers see concealed faces.
+- **Visible only to self:** each seated player sees their own hand. This is the default.
+
+Hands revealed at settlement remain public. Spectators can stand beside the table
+and inspect its world rendering, or interact with an active table to open its
+overview. Spectating leaves participant seats available and grants no game actions.
 
 ## Room ownership
 
@@ -89,7 +102,7 @@ while advancing a valuable hand. Both compare legal calls, riichi, kans and nort
 extraction under the table's rules.
 
 Both use only their own hand and public tiles. They do not read opponents'
-concealed tiles, even when world policy allows players to see those hands, and do
+concealed tiles, even when room visibility allows players to see those hands, and do
 not inspect the wall seed. These are deterministic heuristics, not a trained model
 or a claim of a benchmarked win rate.
 

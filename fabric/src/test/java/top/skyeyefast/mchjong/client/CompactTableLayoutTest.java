@@ -34,7 +34,7 @@ class CompactTableLayoutTest {
             drawn ? hand.getLast() : Tile.ABSENT, melds, List.of(), List.of(), false, exposed));
         var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.handVisibility(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
         return TableScene.build(view).stream().filter(p -> p.seat() == owner).toList();
     }
 

@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Room hand visibility choices: open hands, visible to all players, visible to riichi players, and visible only to self.
+- Table-side spectators can see upright hand faces when the room permits all players to view them.
+
+### Fixed
+
+- Concealed tile fronts form a complete beveled shell without gaps around the face covering.
+
 ## [0.5.2] - 2026-09-22
 
 ### Added

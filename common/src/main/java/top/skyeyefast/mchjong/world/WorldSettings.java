@@ -13,7 +13,7 @@ import net.minecraft.world.level.storage.LevelResource;
 
 /** One policy per world save, shared by every table and dimension. Server thread only. */
 public final class WorldSettings {
-    public record Policy(boolean openHands, boolean invitationTeleport) {}
+    public record Policy(boolean invitationTeleport) {}
     private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static final Map<MinecraftServer, WorldSettings> WORLDS = new WeakHashMap<>();
     private final Path path;
@@ -24,7 +24,7 @@ public final class WorldSettings {
         try {
             if (Files.exists(path)) reload();
             else {
-                policy = new Policy(false, false);
+                policy = new Policy(false);
                 write(policy);
             }
         } catch (IOException failure) {
@@ -42,8 +42,8 @@ public final class WorldSettings {
     public void reload() throws IOException {
         try {
             var object = com.google.gson.JsonParser.parseString(Files.readString(path)).getAsJsonObject();
-            if (!object.keySet().equals(java.util.Set.of("openHands", "invitationTeleport")))
-                throw new IllegalArgumentException("Expected openHands and invitationTeleport");
+            if (!object.keySet().equals(java.util.Set.of("invitationTeleport")))
+                throw new IllegalArgumentException("Expected invitationTeleport");
             for (var value : object.asMap().values())
                 if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean())
                     throw new IllegalArgumentException("World settings must be booleans");
@@ -55,8 +55,7 @@ public final class WorldSettings {
 
     public void set(String name, boolean enabled) throws IOException {
         Policy next = switch (name) {
-            case "openHands" -> new Policy(enabled, policy.invitationTeleport());
-            case "invitationTeleport" -> new Policy(policy.openHands(), enabled);
+            case "invitationTeleport" -> new Policy(enabled);
             default -> throw new IllegalArgumentException("Unknown world setting");
         };
         write(next);

@@ -43,11 +43,16 @@ public final class TableOptionsScreen extends Screen {
         boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
         boolean lobby = view.phase() == Game.Phase.LOBBY;
         if (tab == 0) {
-            entries.add(new Entry(toggle("ui.mchjong.open_hands", view.openHands()), canEditWorld(),
-                () -> setWorld("openHands", !view.openHands())));
             entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), canEditWorld(),
                 () -> setWorld("invitationTeleport", !room.invitationTeleport())));
         } else if (tab == 1) {
+            entries.add(new Entry(Component.translatable("settings.mchjong.hand_visibility",
+                Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))),
+                host && lobby, () -> {
+                    var modes = top.skyeyefast.mchjong.engine.HandVisibility.values();
+                    int direction = Screen.hasShiftDown() ? -1 : 1;
+                    parent.configureVisibility(modes[Math.floorMod(view.handVisibility().ordinal() + direction, modes.length)]);
+                }));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
                 () -> minecraft.setScreen(new TableSeatsScreen(parent))));
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,

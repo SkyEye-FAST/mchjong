@@ -19,7 +19,7 @@ class ExitVotingTest {
             if (phase == Game.Phase.LOBBY) continue;
             var game = new Game(UUID.randomUUID(), rules, 71);
             assertTrue(game.join(HOST, "Host", 0));
-            game.configureWorld(true, false);
+            assertTrue(game.configureHandVisibility(HOST, game.decision, HandVisibility.OPEN));
             GameLifecycleTest.startPositioned(game);
             game.phase = phase;
             assertTrue(game.requestExit(HOST), phase.name());
@@ -29,7 +29,7 @@ class ExitVotingTest {
             assertNull(view.exitVote());
             assertTrue(view.wall().isEmpty());
             assertTrue(view.seats().stream().noneMatch(TableView.Seat::occupied));
-            assertTrue(view.openHands());
+            assertEquals(HandVisibility.OPEN, view.handVisibility());
             game.validate();
             assertTrue(game.join(HOST, "Host", 0));
             GameLifecycleTest.startPositioned(game);

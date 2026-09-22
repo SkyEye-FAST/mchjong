@@ -106,6 +106,12 @@ stool when allocation finishes. Turning it off keeps the coordinate-guided manua
 seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
+The room Hand visibility control cycles through Open hands, Visible to all players,
+Visible to riichi players and Visible only to self; Shift cycles backward. Only
+the host can change it before play. Open hands lays tiles face up; the other
+modes retain standing hands and change access to faces. Concealed fronts use a
+complete cap and bevel joined to the body. Nearby spectators use the world view
+without occupying participant seats.
 
 The rule screen separates preset options, read-only rule details and custom
 settings. Preset-supported options retain the preset identity. Red compositions
@@ -332,6 +338,11 @@ and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
 and immersive rivers with the hand and expanded automatic controls. They then
 inspect the camera with controls closed and the third-person stool pose.
 Evidence goes to each loader's `build/smoke/seating-evidence`.
+
+For hand visibility, run `:fabric:runSmokeClient -PsmokeVisibility=true` and
+`:neoforge:runSmokeClient -PsmokeVisibility=true`. Inspect each loader's
+`build/smoke/visibility-evidence` for the four room choices in all four languages,
+live seated views and unmounted spectator views at normal and small sizes.
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.

@@ -69,31 +69,53 @@ class TableControlTest {
     private static Game game(int humans, RuleSet rules, boolean open) {
         Game game = new Game(UUID.randomUUID(), rules, 123);
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));
-        game.configureWorld(open, false);
+        if (open) assertTrue(game.configureHandVisibility(id(0), game.decision, HandVisibility.OPEN));
         GameLifecycleTest.startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         return game;
     }
 
-    @Test void worldPolicyDoesNotChangeReadinessOrRoomRulesAndNeverRevealsToSpectators() {
+    @Test void handVisibilityIsHostOnlyClearsReadinessAndPersistsPerRoom() {
         Game lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
         lobby.players[1].ready = true;
         long token = lobby.decision;
-        lobby.configureWorld(true, true);
+        assertFalse(lobby.configureHandVisibility(id(1), token, HandVisibility.ALL));
+        assertFalse(lobby.configureHandVisibility(null, token, HandVisibility.ALL));
+        assertFalse(lobby.configureHandVisibility(id(0), token - 1, HandVisibility.ALL));
         assertTrue(lobby.players[1].ready);
-        assertEquals(token, lobby.decision);
-        assertTrue(lobby.configureRules(id(0), token, RuleSet.WRC.config()));
-        assertTrue(lobby.openHands);
+        assertTrue(lobby.configureHandVisibility(id(0), token, HandVisibility.ALL));
+        assertFalse(lobby.players[1].ready);
+        assertNotEquals(token, lobby.decision);
+        lobby.configureWorld(true);
+        assertTrue(lobby.configureRules(id(0), lobby.decision, RuleSet.WRC.config()));
+        assertEquals(HandVisibility.ALL, lobby.handVisibility);
         assertTrue(lobby.roomView().invitationTeleport());
-        for (boolean open : new boolean[]{false, true}) {
-            Game game = game(2, RuleSet.MAHJONG_SOUL_3, open);
-            game.configureWorld(!open, true);
-            game.configureWorld(open, false);
-            for (int seat = 0; seat < game.rules.players(); seat++) {
-                assertTrue(game.view(null).seats().get(seat).hand().stream().allMatch(tile -> tile == Tile.HIDDEN));
-                assertEquals(open || seat == 0, game.view(id(0)).seats().get(seat).hand().stream().allMatch(tile -> tile >= 0));
+        var saved = new Gson().fromJson(new Gson().toJson(lobby), Game.class);
+        saved.validate();
+        assertEquals(HandVisibility.ALL, saved.handVisibility);
+        assertEquals(HandVisibility.SELF, new Game(UUID.randomUUID(), RuleSet.WRC, 2).handVisibility);
+    }
+
+    @Test void visibilityRedactsBeforeSerializationAndRiichiBelongsToTheViewer() {
+        for (var mode : HandVisibility.values()) {
+            Game game = game(2, RuleSet.MAHJONG_SOUL_3, false);
+            assertFalse(game.configureHandVisibility(id(0), game.decision, mode));
+            game.handVisibility = mode;
+            game.players[1].riichi = true;
+            for (int viewer : new int[]{-1, 0, 1}) {
+                var view = game.view(viewer < 0 ? null : id(viewer));
+                for (int seat = 0; seat < game.rules.players(); seat++) {
+                    boolean visible = seat == viewer || mode == HandVisibility.OPEN || mode == HandVisibility.ALL
+                        || mode == HandVisibility.RIICHI && viewer == 1;
+                    var hand = view.seats().get(seat);
+                    assertTrue(hand.hand().stream().allMatch(tile -> visible ? tile >= 0 : tile == Tile.HIDDEN));
+                    if (game.players[seat].drawn >= 0) assertEquals(visible ? game.players[seat].drawn : Tile.HIDDEN, hand.drawn());
+                }
+                if (viewer < 0) assertTrue(view.actions().isEmpty());
             }
+            game.exposed[2] = true;
+            assertTrue(game.view(null).seats().get(2).hand().stream().allMatch(tile -> tile >= 0));
         }
     }
 
@@ -105,7 +127,7 @@ class TableControlTest {
         game.requestExit(id(0));
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
-        assertFalse(game.openHands, "Table saves cannot override world policy");
+        assertEquals(HandVisibility.OPEN, game.handVisibility);
         assertTrue(game.answerExit(id(1), game.exitVote.id(), true));
         assertEquals(replays, game.pendingReplays());
         game.validate();

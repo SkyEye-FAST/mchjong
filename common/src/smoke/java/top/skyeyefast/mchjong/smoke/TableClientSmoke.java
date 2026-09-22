@@ -38,7 +38,9 @@ public final class TableClientSmoke {
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
-    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly;
+    private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
+    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly;
+    private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
     private int step;
     private int ticks;
@@ -173,7 +175,7 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                if (seatingOnly) {
+                if (seatingOnly || visibilityOnly) {
                     step = 24; entered = ticks;
                     return;
                 }
@@ -245,6 +247,7 @@ public final class TableClientSmoke {
                 step = 3; entered = ticks;
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
+                if (visibilityOnly) { step = 33; entered = ticks; return; }
                 if (seatingOnly) {
                     var settings = TableSettings.get();
                     var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
@@ -381,6 +384,10 @@ public final class TableClientSmoke {
                 capture(client, "04-cushion-third-person.png");
                 Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, immersive rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
                 LOG.info("MCHJONG_SEATING_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 33 && visibilitySmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Four room visibility modes, host proposals, four-language small-window controls, seated and unmounted spectator snapshots and normal/small world captures passed.\n");
+                LOG.info("MCHJONG_VISIBILITY_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

@@ -50,7 +50,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
-        game.configureWorld(policy.openHands(), policy.invitationTeleport());
+        game.configureWorld(policy.invitationTeleport());
         synchronizeEquipment();
         if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
@@ -222,7 +222,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         int side = drawerAt(hit);
         if (side >= 0) openSticks(player, side);
         else if (!removeEquipment(player, hit.getDirection())) {
-            if (player.isShiftKeyDown()) open(player);
+            if (player.isShiftKeyDown() || !equipmentEditable()) open(player);
             else openStorage(player);
         }
     }
@@ -409,6 +409,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             && equipment.canSupplyReds(payload.rules().sanma(), payload.rules().redFives())
             && current.configureRules(player.getUUID(), payload.decision(), payload.rules())) {
             serverGame(); // Recheck both physical boxes against the accepted rules before publishing readiness.
+            setChanged();
+            sentRevision = -1;
+            refreshParticipants(false);
+        }
+        sendView(player, false, true);
+    }
+
+    public void configureVisibility(ServerPlayer player, top.skyeyefast.mchjong.network.TableVisibilityPayload payload) {
+        var current = participantGame(player);
+        if (current != null && current.tableId().equals(payload.tableId())
+            && current.configureHandVisibility(player.getUUID(), payload.decision(), payload.visibility())) {
             setChanged();
             sentRevision = -1;
             refreshParticipants(false);

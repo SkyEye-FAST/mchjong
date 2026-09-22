@@ -88,7 +88,10 @@ public final class TableAnimation {
         if (next == null) return;
         if (view != null && view.tableId().equals(next.tableId()) && next.revision() < view.revision()) return;
         boolean sameViewer = view != null && view.tableId().equals(next.tableId())
-            && view.viewerSeat() == next.viewerSeat() && view.rules().equals(next.rules()) && view.openHands() == next.openHands();
+            && view.viewerSeat() == next.viewerSeat() && view.rules().equals(next.rules())
+            && view.handVisibility() == next.handVisibility()
+            && (view.handVisibility() != top.skyeyefast.mchjong.engine.HandVisibility.RIICHI || view.viewerSeat() < 0
+                || view.seats().get(view.viewerSeat()).riichi() == next.seats().get(next.viewerSeat()).riichi());
         if (sameViewer && next.revision() <= view.revision()) return;
         List<Frame> before = sample(now);
         List<Frame> targets = TableScene.build(next).stream().map(TableAnimation::frame).toList();

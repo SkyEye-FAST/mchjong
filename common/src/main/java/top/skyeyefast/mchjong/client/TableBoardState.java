@@ -10,7 +10,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 /** Immutable data needed by the screen-space table renderer. */
 record TableBoardState(int viewerSeat, int players, int dealer, int round, int honba, int riichiSticks, int turn, int remaining,
                        List<TableView.Seat> seats, TableView.Focus focus,
-                       boolean markTedashi, boolean dimTsumogiri) {
+                       boolean markTedashi, boolean dimTsumogiri, boolean layHandsOpen) {
     TableBoardState {
         seats = List.copyOf(seats);
         if (players < 3 || players > 4 || seats.size() != players) throw new IllegalArgumentException("Invalid table presentation");
@@ -19,7 +19,8 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
 
     static TableBoardState live(TableView view) {
         return new TableBoardState(view.viewerSeat(), view.rules().players(), view.dealer(), view.round(), view.honba(),
-            view.riichiSticks(), view.turn(), view.remaining(), view.seats(), view.focus(), false, false);
+            view.riichiSticks(), view.turn(), view.remaining(), view.seats(), view.focus(), false, false,
+            view.handVisibility() == top.skyeyefast.mchjong.engine.HandVisibility.OPEN);
     }
 
     static TableBoardState replay(ReplayMatch match, ReplayHand hand, ReplayPlayback.Frame frame, int viewerSeat) {
@@ -29,6 +30,6 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             ? new TableView.Focus(event.seat(), event.tile(), event.kind() == ReplayHand.Kind.MELD || event.kind() == ReplayHand.Kind.NUKI, -1)
             : null;
         return new TableBoardState(viewerSeat, match.rules().players(), hand.dealer(), hand.round(), hand.honba(), hand.sticks(),
-            turn, -1, frame.seats(), focus, true, true);
+            turn, -1, frame.seats(), focus, true, true, true);
     }
 }

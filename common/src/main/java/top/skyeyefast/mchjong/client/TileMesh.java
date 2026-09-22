@@ -102,7 +102,12 @@ public final class TileMesh {
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
             cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
         }
-        if (concealed) texturedFace(pose, vertices, 0, 0, 1, 1, 0.048f, 0.073f, DEPTH / 2, light, false, color);
+        if (concealed) {
+            float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
+            band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, color, light, false, u, v);
+            band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, DEPTH / 2, color, light, false, u, v);
+            cap(pose, vertices, CAP_OUTLINE, DEPTH / 2, false, true, color, light);
+        }
     }
 
     private static float[] outline(float w, float h, float r) {

@@ -75,6 +75,7 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(TableSeatPayload.TYPE, TableSeatPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
@@ -84,6 +85,8 @@ public class Mchjong implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(TableSeatPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         LOGGER.info("Initializing {} for Fabric", MOD_ID);
     }

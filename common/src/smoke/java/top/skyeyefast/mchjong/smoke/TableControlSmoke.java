@@ -263,10 +263,10 @@ final class TableControlSmoke {
             click(client, "settings.mchjong.scope.world");
             next(26);
         } else if (stage == 26 && ticks > 10) {
-            String label = Component.translatable("ui.mchjong.open_hands").getString();
+            String label = Component.translatable("settings.mchjong.invitation_teleport").getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            require(button.active, "Administrator cannot edit world hand visibility in the World tab");
+            require(button.active, "Administrator cannot edit invitation teleport in the World tab");
             AutomationControlsSmoke.checkBounds(client);
             capture(client, output, "25k-world-settings.png");
             client.screen.onClose();
@@ -280,26 +280,27 @@ final class TableControlSmoke {
                     var policy = top.skyeyefast.mchjong.world.WorldSettings.of(server);
                     var before = policy.policy();
                     originalWorldPolicy = before;
-                    var low = commands.parse("mchjong world openHands true", player.createCommandSourceStack().withPermission(0));
+                    var low = commands.parse("mchjong world invitationTeleport true", player.createCommandSourceStack().withPermission(0));
                     try { commands.execute(low); throw new IllegalStateException("Non-admin changed world settings"); }
                     catch (com.mojang.brigadier.exceptions.CommandSyntaxException expected) { /* Permission denied. */ }
                     require(before.equals(policy.policy()), "Denied command mutated world settings");
-                    commands.execute("mchjong world openHands true", server.createCommandSourceStack());
                     commands.execute("mchjong world invitationTeleport true", server.createCommandSourceStack());
                     commands.execute("mchjong world reload", server.createCommandSourceStack());
-                    require(policy.policy().openHands() && policy.policy().invitationTeleport(), "World policy did not persist");
+                    require(policy.policy().invitationTeleport(), "World policy did not persist");
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                     InvitationSmoke.verify(player, serverTable);
                     var game = serverTable.participantGame(player);
-                    require(game.view(id).openHands(), "Table did not adopt world policy");
+                    require(game.configureHandVisibility(id, game.view(id).decision(), top.skyeyefast.mchjong.engine.HandVisibility.OPEN),
+                        "Host cannot configure room hand visibility");
                     require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
-                    require(game.view(id).openHands() && game.roomView().invitationTeleport(), "Room setting replaced world policy");
+                    require(game.view(id).handVisibility() == top.skyeyefast.mchjong.engine.HandVisibility.OPEN
+                        && game.roomView().invitationTeleport(), "Room setting replaced world policy");
                 } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | java.io.IOException failure) {
                     throw new IllegalStateException(failure);
                 }
             });
             next(6);
-        } else if (stage == 6 && view.openHands()) {
+        } else if (stage == 6 && view.handVisibility() == top.skyeyefast.mchjong.engine.HandVisibility.OPEN) {
             click(client, "room.mchjong.start_bots");
             next(28);
         } else if (stage == 28) {
@@ -314,12 +315,11 @@ final class TableControlSmoke {
             reseated = client.getSingleplayerServer().submit(() -> {
                 try {
                     var policy = top.skyeyefast.mchjong.world.WorldSettings.of(client.getSingleplayerServer());
-                    policy.set("openHands", originalWorldPolicy.openHands());
                     policy.set("invitationTeleport", originalWorldPolicy.invitationTeleport());
                 } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
             });
             next(27);
-        } else if (stage == 27 && reseated.isDone() && view.openHands() == originalWorldPolicy.openHands()) {
+        } else if (stage == 27 && reseated.isDone() && table.clientRoom().invitationTeleport() == originalWorldPolicy.invitationTeleport()) {
             return true;
         }
         return false;

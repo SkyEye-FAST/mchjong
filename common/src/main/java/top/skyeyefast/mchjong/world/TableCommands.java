@@ -22,7 +22,7 @@ public final class TableCommands {
                 catch (java.io.IOException failure) { throw error("message.mchjong.world_settings_failed"); }
                 return showWorld(context.getSource());
             }));
-        for (String setting : new String[]{"openHands", "invitationTeleport"})
+        for (String setting : new String[]{"invitationTeleport"})
             world.then(Commands.literal(setting).then(Commands.argument("enabled", com.mojang.brigadier.arguments.BoolArgumentType.bool())
                 .executes(context -> {
                     try { WorldSettings.of(context.getSource().getServer()).set(setting,
@@ -81,7 +81,7 @@ public final class TableCommands {
     private static int showWorld(CommandSourceStack source) {
         var policy = WorldSettings.of(source.getServer()).policy();
         source.sendSuccess(() -> Component.translatable("message.mchjong.world_settings",
-            Boolean.toString(policy.openHands()), Boolean.toString(policy.invitationTeleport())), true);
+            Boolean.toString(policy.invitationTeleport())), true);
         return 1;
     }
 
