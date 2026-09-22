@@ -7,9 +7,7 @@ import net.minecraft.network.Connection;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableInvitations;
@@ -86,9 +84,8 @@ final class InvitationSmoke {
     private static final class Recipient extends ServerPlayer {
         UUID token;
         Recipient(ServerPlayer sender) {
-            super(sender.server, sender.serverLevel(), new GameProfile(UUID.randomUUID(), "InvitedTest"), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(sender.server, new Connection(PacketFlow.SERVERBOUND), this,
-                CommonListenerCookie.createInitial(getGameProfile(), false)) {
+            super(sender.server, sender.serverLevel(), new GameProfile(UUID.randomUUID(), "InvitedTest"));
+            connection = new ServerGamePacketListenerImpl(sender.server, new Connection(PacketFlow.SERVERBOUND), this) {
                 // The recipient exists only on the server; it has no client or negotiated payload channels.
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
             };

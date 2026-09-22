@@ -69,8 +69,8 @@ final class TableInterfaceSmoke {
         if (++ticks < 12) return false;
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.visible) {
             require(widget.getX() >= 0 && widget.getY() >= 0
-                && widget.getRight() <= (immersive ? 1280 : client.screen.width)
-                && widget.getBottom() <= (immersive ? 800 : client.screen.height),
+                && (widget.getX() + widget.getWidth()) <= (immersive ? 1280 : client.screen.width)
+                && (widget.getY() + widget.getHeight()) <= (immersive ? 800 : client.screen.height),
                 "Widget outside table viewport: " + widget.getMessage().getString());
             if (immersive && widget instanceof MahjongButton && widget.getHeight() >= 20)
                 require(widget.getHeight() >= 32, "Unscaled immersive button: " + widget.getMessage().getString());
@@ -82,7 +82,7 @@ final class TableInterfaceSmoke {
             require(clock.visible, "Active turn clock is missing");
             for (var child : client.screen.children()) if (child instanceof AbstractButton button && button.visible
                 && button.getY() > 70 * (immersive ? 2 : 1) && button.getHeight() >= (immersive ? 40 : 26))
-                require(button.getBottom() < clock.getY(), "Action overlaps turn clock");
+                require((button.getY() + button.getHeight()) < clock.getY(), "Action overlaps turn clock");
         }
         String stateName = switch (state) { case 0 -> "riichi"; case 1 -> "vote"; case 2 -> "results";
             case 3 -> "reserve"; case 4 -> "meld"; default -> "reaction"; };

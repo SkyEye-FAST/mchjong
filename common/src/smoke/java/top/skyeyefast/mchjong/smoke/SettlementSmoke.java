@@ -122,8 +122,8 @@ final class SettlementSmoke {
 
     private static void checkBounds(Minecraft client) {
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget)
-            if (widget.getX() < 0 || widget.getY() < 0 || widget.getRight() > client.screen.width
-                    || widget.getBottom() > client.screen.height)
+            if (widget.getX() < 0 || widget.getY() < 0 || (widget.getX() + widget.getWidth()) > client.screen.width
+                    || (widget.getY() + widget.getHeight()) > client.screen.height)
                 throw new IllegalStateException("Widget outside resized settlement: " + widget.getMessage().getString());
     }
 

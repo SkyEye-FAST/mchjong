@@ -22,13 +22,13 @@ final class TileResourceSmoke {
     private TileResourceSmoke() {}
 
     static void verify(Minecraft client) throws IOException {
-        var particleId = ResourceLocation.fromNamespaceAndPath("mchjong", "furniture/wood_oak");
+        var particleId = new ResourceLocation("mchjong", "furniture/wood_oak");
         var particle = client.getTextureAtlas(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS).apply(particleId);
         require(particle.contents().name().equals(particleId), "Furniture particle was not stitched into the block atlas");
         var furniture = new java.util.ArrayList<>(java.util.List.of("felt", "steel", "brass", "edge"));
         for (var wood : top.skyeyefast.mchjong.item.FurnitureWood.values()) furniture.add("wood_" + wood.getSerializedName());
         for (String name : furniture) {
-            var texture = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/" + name + ".png");
+            var texture = new ResourceLocation("mchjong", "textures/furniture/" + name + ".png");
             byte[] bytes;
             try (var stream = client.getResourceManager().open(texture)) { bytes = stream.readAllBytes(); }
             byte[] previous = originalFurniture.putIfAbsent(texture, bytes);

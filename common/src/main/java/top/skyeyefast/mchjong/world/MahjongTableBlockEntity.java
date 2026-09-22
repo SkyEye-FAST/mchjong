@@ -86,6 +86,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             int assigned = game.seatOf(player.getUUID());
             if (assigned != seat.seat()) {
                 player.stopRiding();
+                // Reassignment is not leaving the room; retire the old vehicle before its tick calls stoodUp.
+                seat.discard();
                 if (assigned >= 0) {
                     BlockPos destination = TableGeometry.stool(worldPosition, assigned);
                     player.sendSystemMessage(Component.translatable("message.mchjong.assigned_seat",

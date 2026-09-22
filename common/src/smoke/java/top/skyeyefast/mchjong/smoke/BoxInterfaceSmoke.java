@@ -36,7 +36,11 @@ final class BoxInterfaceSmoke {
         if (!reload.isDone() || client.getOverlay() != null) return false;
         reload.join();
         if (++settled < 10) return false;
-        if (sample == LANGUAGES.length) return true;
+        if (sample == LANGUAGES.length) {
+            if (!reagentUpdate.isDone()) return false;
+            reagentUpdate.join();
+            return true;
+        }
         require(client.screen instanceof MahjongBoxScreen, "Language reload replaced the box screen");
         require(client.screen.width == 320 && client.screen.height == 240, "Small-box fixture is not a 320x240 logical viewport");
         if (settled == 10) UiControlsSmoke.verify(client);
@@ -144,7 +148,7 @@ final class BoxInterfaceSmoke {
             for (var preset : top.skyeyefast.mchjong.client.TileFacePresets.choices()) for (int face : new int[]{0, 4, 27, 34, 38, 39, 40, 41}) {
                 var data = new top.skyeyefast.mchjong.item.TileData(face, top.skyeyefast.mchjong.item.TileMaterial.BONE, face == 4);
                 var stack = top.skyeyefast.mchjong.item.MahjongSupplies.tile(data, net.minecraft.world.item.DyeColor.BLUE, 1);
-                stack.set(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET, preset);
+                top.skyeyefast.mchjong.item.MahjongComponents.facePreset(stack, preset);
                 for (var style : top.skyeyefast.mchjong.client.TableSettings.TileLabels.values()) {
                     settings.tileLabels = style;
                     var lines = net.minecraft.client.gui.screens.Screen.getTooltipFromItem(client, stack).stream().map(Component::getString).toList();

@@ -32,6 +32,7 @@
     "mchjong.client.mixins.json"
   ],
   "suggests": {
+    "ponder": ">=${ponder_version}",
     "jei": "${jei_version}",
     "emi": "${emi_version}",
     "roughlyenoughitems": "${rei_version}"

@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Real pack selection, native model baking, cosmetic-ID packets and removal/reload. */
 final class ResourcePackSmoke {
-    private static final TileFacePreset CUSTOM = new TileFacePreset(ResourceLocation.parse("smoke:custom"));
+    private static final TileFacePreset CUSTOM = new TileFacePreset(new ResourceLocation("smoke:custom"));
     private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke();
     private CompletableFuture<Void> pending;
     private List<String> selected;

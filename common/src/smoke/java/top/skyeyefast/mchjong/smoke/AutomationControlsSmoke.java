@@ -178,12 +178,12 @@ final class AutomationControlsSmoke {
             ? TableScreen.IMMERSIVE_HEIGHT : client.screen.height;
         for (int i = 0; i < widgets.size(); i++) {
             var a = widgets.get(i);
-            require(a.getX() >= 0 && a.getY() >= 0 && a.getRight() <= boundWidth
-                && a.getBottom() <= boundHeight, "Automatic control exceeds its layout canvas");
+            require(a.getX() >= 0 && a.getY() >= 0 && (a.getX() + a.getWidth()) <= boundWidth
+                && (a.getY() + a.getHeight()) <= boundHeight, "Automatic control exceeds its layout canvas");
             for (int j = i + 1; j < widgets.size(); j++) {
                 var b = widgets.get(j);
-                require(a.getRight() <= b.getX() || b.getRight() <= a.getX()
-                    || a.getBottom() <= b.getY() || b.getBottom() <= a.getY(), "Automatic controls overlap");
+                require((a.getX() + a.getWidth()) <= b.getX() || (b.getX() + b.getWidth()) <= a.getX()
+                    || (a.getY() + a.getHeight()) <= b.getY() || (b.getY() + b.getHeight()) <= a.getY(), "Automatic controls overlap");
             }
         }
     }

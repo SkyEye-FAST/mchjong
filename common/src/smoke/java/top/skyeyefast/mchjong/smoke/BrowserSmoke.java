@@ -51,7 +51,7 @@ final class BrowserSmoke {
             var examples = SupplyRecipeExamples.create(client.level);
             flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
             var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());
-            var upgrade = pick(examples, e -> e.source().value() instanceof SupplyCraftingRecipe recipe
+            var upgrade = pick(examples, e -> e.source() instanceof SupplyCraftingRecipe recipe
                 && recipe.operation() == SupplyCraftingRecipe.Operation.UPGRADE_TABLE);
             for (var example : List.of(flower, red, upgrade)) {
                 check(driver.query(example.output(), true).contains(example.id()), "Missing output lookup: " + example.id());
@@ -116,9 +116,9 @@ final class BrowserSmoke {
         check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.getFirst()))) == 0, "Stocked box precedes empty box");
         check(java.util.stream.IntStream.range(1, boxes.size()).allMatch(index ->
             MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.get(index)))) == 144), "Stocked box is not a 144-tile set");
-        check(java.util.stream.IntStream.range(1, boxes.size()).mapToObj(index -> entries.get(boxes.get(index)).get(MahjongComponents.BOX_PRESET)).toList()
+        check(java.util.stream.IntStream.range(1, boxes.size()).mapToObj(index -> MahjongComponents.boxPreset(entries.get(boxes.get(index)))).toList()
             .equals(List.of(RedFives.NONE, RedFives.THREE, RedFives.FOUR)), "Stocked red-five variants are missing or reordered");
-        check(entries.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.getOrDefault(MahjongComponents.POINTS, 0)).toList()
+        check(entries.stream().filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(MahjongComponents::points).toList()
             .equals(List.of(-10000, 0, 100, 1000, 5000, 10000)), "Viewer merged or reordered point denominations");
     }
 

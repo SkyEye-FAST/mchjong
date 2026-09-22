@@ -48,7 +48,7 @@ final class PointStickMenuSmoke {
                 var hit = TableGeometry.world(pos, drawer.getCenter());
                 var block = BlockPos.containing(hit);
                 check(level.getBlockState(block).getShape(level, block).bounds().maxY >= .835, "Drawer collider missing");
-                level.getBlockState(block).useWithoutItem(level, player,
+                level.getBlockState(block).use(level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
                     new BlockHitResult(hit, TableGeometry.SIDES[side], block, false));
                 check(player.containerMenu instanceof PointStickMenu, "Side drawer did not open through world interaction");
                 player.closeContainer();
@@ -106,12 +106,12 @@ final class PointStickMenuSmoke {
             check(!menu.stillValid(player), "Reattached table revived a stale drawer menu");
             player.closeContainer();
             var beforeSave = new CompoundTag();
-            table.equipment().save(beforeSave, player.registryAccess());
-            var appearance = table.getUpdateTag(player.registryAccess());
+            table.equipment().save(beforeSave);
+            var appearance = table.getUpdateTag();
             check(!appearance.contains("stick_drawers"), "Public chunk updates leaked drawer contents");
-            table.loadWithComponents(appearance, player.registryAccess());
+            table.load(appearance);
             var afterSave = new CompoundTag();
-            table.equipment().save(afterSave, player.registryAccess());
+            table.equipment().save(afterSave);
             check(beforeSave.equals(afterSave), "Appearance update erased point sticks");
             verifySeatedPayments(player, table, bounds);
         } finally {
@@ -146,7 +146,7 @@ final class PointStickMenuSmoke {
         var menu = open(player, table, 0);
         check(menu.clickMenuButton(player, 1) && menu.recipientSide() == 1, "Recipient row could not be selected");
         var initial = new CompoundTag();
-        table.equipment().save(initial, player.registryAccess());
+        table.equipment().save(initial);
         check(!initial.getList("match_sticks", 10).isEmpty(), "Starting drawer positions were not saved");
         menu.setCarried(stick(1000, 2));
         for (var type : new ClickType[]{ClickType.PICKUP, ClickType.SWAP, ClickType.QUICK_CRAFT}) menu.clicked(7, 0, type, player);
@@ -163,7 +163,7 @@ final class PointStickMenuSmoke {
         check(menu.totalPoints(0) == beforeBust, "Reserve bust stick still affected the balance");
         int recipientSlot = 14;
         check(menu.getSlot(recipientSlot).getItem().getCount() == 4
-            && !ItemStack.isSameItemSameComponents(menu.getSlot(8).getItem(), menu.getSlot(recipientSlot).getItem()),
+            && !ItemStack.isSameItemSameTags(menu.getSlot(8).getItem(), menu.getSlot(recipientSlot).getItem()),
             "Payment fixture lacks distinct matching-denomination stacks");
         menu.clicked(8, 1, ClickType.PICKUP, player);
         menu.clicked(recipientSlot, 0, ClickType.PICKUP, player);
@@ -193,7 +193,7 @@ final class PointStickMenuSmoke {
         MahjongTableBlockEntity.serverTick(player.serverLevel(), table.getBlockPos(), table.getBlockState(), table);
         check(player.containerMenu != menu && menu.getCarried().isEmpty(), "Ending the match left a live payment cursor");
         var restored = new CompoundTag();
-        table.equipment().save(restored, player.registryAccess());
+        table.equipment().save(restored);
         check(initial.getList("stick_drawers", 10).equals(restored.getList("stick_drawers", 10)), "Ending the match did not restore original drawers");
         check(restored.getList("match_sticks", 10).isEmpty(), "Finished match retained a currency snapshot");
     }
@@ -204,7 +204,7 @@ final class PointStickMenuSmoke {
         var items = top.skyeyefast.mchjong.item.MahjongSupplies.contents(box);
         for (int count : new int[]{0, 1, 2}) {
             items.set(top.skyeyefast.mchjong.item.MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.DICE, count));
-            box.set(net.minecraft.core.component.DataComponents.CONTAINER, net.minecraft.world.item.component.ItemContainerContents.fromItems(items));
+            top.skyeyefast.mchjong.item.MahjongSupplies.setContents(box, items);
             supplies.boxes().setItem(0, box.copy());
             check(supplies.manualSuppliesReady() == (count == 2), "Incorrect dice minimum: " + count);
         }
@@ -233,7 +233,7 @@ final class PointStickMenuSmoke {
 
     static ItemStack stick(int points, int count) {
         var result = new ItemStack(MahjongContent.POINT_STICK, count);
-        result.set(MahjongComponents.POINTS, points);
+        top.skyeyefast.mchjong.item.MahjongComponents.points(result, points);
         return result;
     }
 
@@ -243,7 +243,7 @@ final class PointStickMenuSmoke {
             int slot = 3;
             for (var entry : TableEquipment.startingKit(35000).entrySet()) {
                 var stack = stick(entry.getKey(), entry.getValue());
-                stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, net.minecraft.network.chat.Component.literal("Starting stock"));
+                stack.setHoverName(net.minecraft.network.chat.Component.literal("Starting stock"));
                 table.equipment().drawer(seat).setItem(slot++, stack);
             }
             table.equipment().drawer(seat).setItem(TableEquipment.BUST_SLOT, stick(-10000, 1));
@@ -278,7 +278,7 @@ final class PointStickMenuSmoke {
             PointStickMenu menu, AABB bounds) {
         var result = new HashMap<CompoundTag, Integer>();
         java.util.function.Consumer<ItemStack> count = stack -> {
-            if (!stack.isEmpty()) result.merge((CompoundTag) stack.copyWithCount(1).save(player.registryAccess()), stack.getCount(), Integer::sum);
+            if (!stack.isEmpty()) result.merge((CompoundTag) stack.copyWithCount(1).save(new net.minecraft.nbt.CompoundTag()), stack.getCount(), Integer::sum);
         };
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) count.accept(player.getInventory().getItem(slot));
         for (int side = 0; side < 4; side++) for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++)

@@ -21,7 +21,7 @@ final class PointStickInterfaceSmoke {
         if (stage == 0 && ticks >= 10 && client.screen instanceof PointStickScreen) {
             check(menu(client).totalPoints(0) == 3000 && menu(client).totalPoints(1) == 0, "Drawer contents did not synchronize");
             var bounds = ((PointStickScreen) client.screen).browserBounds();
-            client.screen.mouseScrolled(bounds.left() + 10, bounds.top() + 30, 0, -1);
+            client.screen.mouseScrolled(bounds.left() + 10, bounds.top() + 30, -1);
             check(menu(client).recipientSide() == 1, "Mouse wheel did not select the recipient row");
             clickSlot(client, 0, 1);
             next(1);

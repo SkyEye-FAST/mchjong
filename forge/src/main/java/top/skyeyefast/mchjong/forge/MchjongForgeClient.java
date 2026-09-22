@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.forge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -22,11 +21,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 @Mod.EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MchjongForgeClient {
-    private static final ModelResourceLocation RIICHI = new ModelResourceLocation(RiichiStickModel.ID, "standalone");
     private MchjongForgeClient() {}
 
     @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event) {
-        event.register(RIICHI);
+        event.register(RiichiStickModel.ID);
     }
 
     @SubscribeEvent public static void resources(RegisterClientReloadListenersEvent event) {
@@ -39,8 +37,10 @@ public final class MchjongForgeClient {
 
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            if (net.minecraftforge.fml.ModList.get().isLoaded("ponder"))
+                top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
             RiichiStickModel.initialize(() -> Minecraft.getInstance().getModelManager()
-                .getModel(RIICHI));
+                .getModel(RiichiStickModel.ID));
             MenuScreens.register(MahjongContent.BOX_MENU, MahjongBoxScreen::new);
             MenuScreens.register(MahjongContent.TABLE_MENU, MahjongTableScreen::new);
             MenuScreens.register(MahjongContent.STICK_MENU, PointStickScreen::new);

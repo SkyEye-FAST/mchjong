@@ -80,7 +80,7 @@ final class InputSmoke {
             screen.mouseReleased(screen.width / 2.0, screen.height / 2.0 - 20, 1);
             require(TableSettings.get().camera().pitch() < pitch, "Right-drag did not tilt the view");
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Free look moved the eye");
-            screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, 2);
+            screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 2);
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) > .1, "Wheel did not move the eye");
             float yaw = TableSettings.get().camera().yaw(seat.seat());
             screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);

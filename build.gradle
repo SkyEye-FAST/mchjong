@@ -29,6 +29,14 @@ allprojects {
             }
         }
         exclusiveContent {
+            forRepository { maven { name = 'PortingLib'; url = 'https://mvn.devos.one/releases/' } }
+            filter { includeGroup 'io.github.fabricators_of_create.Porting-Lib' }
+        }
+        exclusiveContent {
+            forRepository { maven { name = 'ReachEntityAttributes'; url = 'https://maven.jamieswhiteshirt.com/libs-release/' } }
+            filter { includeGroup 'com.jamieswhiteshirt' }
+        }
+        exclusiveContent {
             forRepository { maven { name = 'ForgeConfigAPIPort'; url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
             filter { includeGroup 'fuzs.forgeconfigapiport' }
         }

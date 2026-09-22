@@ -6,7 +6,6 @@ import net.createmod.ponder.api.scene.SceneBuilder;
 import net.createmod.ponder.api.scene.SceneBuildingUtil;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.phys.AABB;
@@ -55,13 +54,13 @@ final class MahjongScenes {
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick();
         say(scene, "Right-click the table to open its storage. It holds up to two mahjong boxes inside.", FELT);
         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-        cloth.set(DataComponents.BASE_COLOR, DyeColor.CYAN);
+        MahjongComponents.color(cloth, DyeColor.CYAN);
         scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick().withItem(cloth);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().installCloth(cloth));
         say(scene, "Use a cloth on the table. A cloth and a complete set make the table ready for play.", FELT);
         ItemStack stick = new ItemStack(MahjongContent.POINT_STICK);
-        stick.set(MahjongComponents.POINTS, 1000);
+        MahjongComponents.points(stick, 1000);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().drawer(0).setItem(0, stick.copy()));
         Vec3 drawer = TableGeometry.world(TABLE, TableGeometry.drawerBounds(0).getCenter());

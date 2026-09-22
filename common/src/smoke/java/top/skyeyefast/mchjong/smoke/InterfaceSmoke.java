@@ -52,7 +52,7 @@ final class InterfaceSmoke {
             require(MahjongSupplies.deck(menu.items()) == null, "Incomplete set stayed ready");
             capture(client, output, "31-box-incomplete.png");
             var destination = menu.slots.stream().filter(slot -> slot.index >= MahjongSupplies.BOX_SLOTS
-                && ItemStack.isSameItemSameComponents(slot.getItem(), moved)).findFirst().orElseThrow();
+                && ItemStack.isSameItemSameTags(slot.getItem(), moved)).findFirst().orElseThrow();
             client.gameMode.handleInventoryMouseClick(menu.containerId, destination.index, 0, ClickType.QUICK_MOVE, client.player);
             boxStage = 2; boxTicks = 0;
         } else if (boxStage == 2 && boxTicks > 10) {
@@ -241,8 +241,8 @@ final class InterfaceSmoke {
 
     private static void checkBounds(Minecraft client) {
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget) {
-            require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getRight() <= client.screen.width
-                && widget.getBottom() <= client.screen.height, "Control exceeds viewport: " + widget.getMessage().getString());
+            require(widget.getX() >= 0 && widget.getY() >= 0 && (widget.getX() + widget.getWidth()) <= client.screen.width
+                && (widget.getY() + widget.getHeight()) <= client.screen.height, "Control exceeds viewport: " + widget.getMessage().getString());
             require(!(widget instanceof Button) || widget instanceof MahjongButton, "Stock button returned to a project screen");
             require(!(widget instanceof AbstractSliderButton) || widget instanceof MahjongSlider, "Stock slider returned to a project screen");
         }

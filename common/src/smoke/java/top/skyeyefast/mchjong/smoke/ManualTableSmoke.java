@@ -10,7 +10,6 @@ import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.DyeColor;
@@ -316,7 +315,7 @@ final class ManualTableSmoke {
             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         level.setBlock(CENTER, MahjongContent.TABLE.defaultBlockState(), 3);
         var furniture = new ItemStack(MahjongContent.TABLE_ITEM);
-        furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
+        top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, FurnitureWood.WARPED);
         MahjongContent.TABLE.setPlacedBy(level, CENTER, MahjongContent.TABLE.defaultBlockState(), player, furniture);
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         installedBox = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
@@ -325,7 +324,7 @@ final class ManualTableSmoke {
         TableStorageSmoke.put(player, table, 0, box);
         check(box.isEmpty(), "Storage transfer did not move the physical box");
         var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-        cloth.set(DataComponents.BASE_COLOR, DyeColor.RED);
+        top.skyeyefast.mchjong.item.MahjongComponents.color(cloth, DyeColor.RED);
         table.useEquipment(player, cloth);
         check(cloth.isEmpty(), "Survival installation did not consume the cloth");
         // Pin only the server fixture's initial seed so the real human is the initial dealer.
@@ -334,12 +333,12 @@ final class ManualTableSmoke {
         var game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), seed);
         game.configureEquipment(true, table.equipment().deck().tiles());
-        var saved = table.saveWithoutMetadata(level.registryAccess());
+        var saved = table.saveWithoutMetadata();
         saved.putString("game", TableNetworking.JSON.toJson(game));
-        table.loadWithComponents(saved, level.registryAccess());
+        table.load(saved);
         var stool = new ItemStack(MahjongContent.STOOL_ITEM);
-        stool.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
-        stool.set(DataComponents.BASE_COLOR, DyeColor.RED);
+        top.skyeyefast.mchjong.item.MahjongComponents.wood(stool, FurnitureWood.WARPED);
+        top.skyeyefast.mchjong.item.MahjongComponents.color(stool, DyeColor.RED);
         for (int side = 0; side < 4; side++) {
             var pos = TableGeometry.stool(CENTER, side);
             level.setBlock(pos, MahjongContent.STOOL.defaultBlockState(), 3);
@@ -347,7 +346,7 @@ final class ManualTableSmoke {
         }
         player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
-        sticks.set(MahjongComponents.POINTS, 1000);
+        top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
         PointStickMenuSmoke.put(player, table, 0, sticks);
         table.equipment().drawer(0).setItem(top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT, PointStickMenuSmoke.stick(-10000, 1));
         check(sticks.isEmpty(), "Manual fixture did not transfer its physical drawer sticks");
@@ -358,13 +357,13 @@ final class ManualTableSmoke {
         var game = table.participantGame(player);
         check(game != null && game.phase() == Game.Phase.DRAW && game.manual(), "Manual server was not waiting for the draw");
         game.validate();
-        var saved = table.saveWithoutMetadata(player.registryAccess());
+        var saved = table.saveWithoutMetadata();
         var loaded = new MahjongTableBlockEntity(pos, table.getBlockState());
         loaded.setLevel(player.serverLevel());
-        loaded.loadWithComponents(saved, player.registryAccess());
-        check(saved.equals(loaded.saveWithoutMetadata(player.registryAccess())), "Manual handling or equipment did not survive world serialization");
-        table.loadWithComponents(table.getUpdateTag(player.registryAccess()), player.registryAccess());
-        check(saved.equals(table.saveWithoutMetadata(player.registryAccess())), "Public appearance update erased private game/equipment state");
+        loaded.load(saved);
+        check(saved.equals(loaded.saveWithoutMetadata()), "Manual handling or equipment did not survive world serialization");
+        table.load(table.getUpdateTag());
+        check(saved.equals(table.saveWithoutMetadata()), "Public appearance update erased private game/equipment state");
         check(!TableNetworking.JSON.toJson(game.view(null)).contains("suppliedTiles"), "Physical/private wall leaked to spectators");
     }
 

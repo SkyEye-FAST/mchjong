@@ -24,7 +24,7 @@ final class UiControlsSmoke {
                 .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
             require(settings.mouseClicked(button.getX() + 5, button.getY() + 5, 0), "Themed tab is not clickable");
             for (var child : settings.children()) if (child instanceof AbstractWidget widget) {
-                require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getRight() <= 320 && widget.getBottom() <= 240,
+                require(widget.getX() >= 0 && widget.getY() >= 0 && (widget.getX() + widget.getWidth()) <= 320 && (widget.getY() + widget.getHeight()) <= 240,
                     "Settings control outside minimum viewport: " + widget.getMessage().getString());
                 require(!(widget instanceof Button) || widget instanceof MahjongButton, "Settings still uses a vanilla button");
             }

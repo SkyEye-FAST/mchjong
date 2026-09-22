@@ -168,8 +168,8 @@ final class ReplaySmoke {
     }
     private static void checkBounds(Minecraft client) {
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget)
-            require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getRight() <= client.screen.width
-                && widget.getBottom() <= client.screen.height, "Replay control exceeds the window: " + widget.getMessage().getString());
+            require(widget.getX() >= 0 && widget.getY() >= 0 && (widget.getX() + widget.getWidth()) <= client.screen.width
+                && (widget.getY() + widget.getHeight()) <= client.screen.height, "Replay control exceeds the window: " + widget.getMessage().getString());
     }
     private static AbstractWidget button(Minecraft client, String key) {
         String title = net.minecraft.network.chat.Component.translatable(key).getString();

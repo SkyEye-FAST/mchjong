@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
@@ -23,7 +22,16 @@ public final class ForgeClientBootstrap {
     private static boolean complete;
     private static int titleTicks;
 
-    public ForgeClientBootstrap() {}
+    public ForgeClientBootstrap() {
+        if (Boolean.getBoolean("mchjong.smoke")) {
+            if (net.minecraftforge.fml.ModList.get().isLoaded("ponder") != Boolean.getBoolean("mchjong.smoke.ponder"))
+                throw new IllegalStateException("Ponder availability differs from the requested smoke configuration");
+            var smoke = new top.skyeyefast.mchjong.smoke.TableClientSmoke();
+            net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {
+                if (event.phase == TickEvent.Phase.END) smoke.tick(Minecraft.getInstance());
+            });
+        }
+    }
 
     @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) throws Exception {
         if (event.phase != TickEvent.Phase.END) return;
@@ -41,7 +49,7 @@ public final class ForgeClientBootstrap {
             if (!(IClientItemExtensions.of(item).getCustomRenderer() instanceof MahjongItemRenderer))
                 throw new IllegalStateException("Forge item renderer is missing for " + BuiltInRegistries.ITEM.getKey(item));
         var models = client.getModelManager();
-        if (models.getModel(new ModelResourceLocation(RiichiStickModel.ID, "standalone")) == models.getMissingModel())
+        if (models.getModel(RiichiStickModel.ID) == models.getMissingModel())
             throw new IllegalStateException("Forge additional riichi-stick model is missing");
         Path output = Path.of(System.getProperty("mchjong.smoke.output"));
         verifyNativeStackData();

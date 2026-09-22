@@ -30,7 +30,7 @@ plugin after checking that Ponder is loaded. Ponder owns indexing and reloads.
 Both loader descriptors declare it as optional; gameplay runs independently.
 
 The scenes manipulate furniture and equipment in Ponder's isolated display
-world, using MChjong's existing models and component types. Ponder's structure
+world, using MChjong's existing models and item data. Ponder's structure
 backup restores each scene on replay. The structure generator in
 `common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
 own `generatePonder` task before resource processing. Both loader JARs contain the same generated
@@ -47,24 +47,24 @@ Run the full build and the two ordinary client smoke tests:
 ```text
 gradlew.bat buildAll --warning-mode fail
 gradlew.bat :fabric:runSmokeClient --console=plain
-gradlew.bat :neoforge:runSmokeClient --console=plain
+gradlew.bat :forge:runSmokeClient --console=plain
 ```
 
 Enable Ponder for the corresponding client checks:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PwithPonder=true --console=plain
-gradlew.bat :neoforge:runSmokeClient -PwithPonder=true --console=plain
+gradlew.bat :forge:runSmokeClient -PwithPonder=true --console=plain
 ```
 
 For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
-`:neoforge:runClient`.
+`:forge:runClient`.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
 four languages, plugin reload, full playback, replay restoration and native
 Ponder screens. They run after the same gameplay checks as the ordinary smoke.
 Evidence is saved in `fabric/build/smoke/ponder-evidence` and
-`neoforge/build/smoke/ponder-evidence`; each contains `PASS.txt`,
+`forge/build/smoke/ponder-evidence`; each contains `PASS.txt`,
 `ponder-checks.txt` and language-specific screenshots under `screenshots`.
 Ordinary smoke evidence remains in each loader's `build/smoke/evidence`.
 Installed-Ponder runs use `fabric/build/smoke/ponder-run` for the Fabric game directory;
@@ -77,6 +77,6 @@ translation key parity and reject duplicate keys.
 
 ## Compatibility
 
-The current build profile uses Ponder 1.0.87 for Minecraft 1.21.1 on Fabric and
-NeoForge. Dependency versions are selected in `gradle.properties`. Use the
+The current build profile uses Ponder 1.0.92 for Minecraft 1.20.1 on Fabric and
+Forge. Dependency versions are selected in `gradle.properties`. Use the
 loader-specific Ponder artifact for the same Minecraft release.

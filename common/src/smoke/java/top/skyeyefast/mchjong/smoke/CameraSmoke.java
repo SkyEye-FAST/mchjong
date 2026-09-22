@@ -51,7 +51,7 @@ final class CameraSmoke {
             require(camera.isDetached(), "Third-person camera was captured by seated controls");
             var pose = TableSettings.get().camera();
             double distance = pose.distance();
-            client.screen.mouseScrolled(300, 100, 0, 3);
+            client.screen.mouseScrolled(300, 100, 3);
             require(pose.distance() == distance, "Third-person wheel changed the seated camera");
             client.player.turn(20, 10);
             float yaw = client.player.getYRot(), pitch = client.player.getXRot();

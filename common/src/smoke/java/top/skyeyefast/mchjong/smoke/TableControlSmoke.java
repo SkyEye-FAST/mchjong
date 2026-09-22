@@ -75,26 +75,20 @@ final class TableControlSmoke {
             if (!view.rules().sanma()) click(client, "ui.mchjong.players.3");
             next(4);
         } else if (stage == 4 && view.rules().players() == 3) {
-            require(client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .noneMatch(widget -> widget.getMessage().getString().equals(Component.translatable("preset.mchjong.m_league").getString())),
-                "Four-player preset appeared in the three-player lobby");
+            require(view.rules().preset().players() == 3, "Four-player preset selected in the three-player lobby");
             capture(client, output, "25-three-player-lobby.png");
             AutomationControlsSmoke.checkOptions(client, 0);
             click(client, "ui.mchjong.players.4");
             next(5);
-        } else if (stage == 5 && view.rules().players() == 4) {
-            click(client, "preset.mchjong.jpml_a");
-            next(8);
-        } else if (stage == 8 && view.rules().equals(RuleSet.JPML_A.config()) && ticks > 5) {
+        } else if (stage == 5 && view.rules().players() == 4 && selectPreset(client, view, RuleSet.JPML_A)) {
             require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "League A initial points");
             capture(client, output, "25a-league-a-lobby.png");
-            click(client, "preset.mchjong.wrc");
-            next(9);
-        } else if (stage == 9 && view.rules().equals(RuleSet.WRC.config()) && ticks > 5) {
+            next(8);
+        } else if (stage == 8 && selectPreset(client, view, RuleSet.WRC)) {
             require((table.clientRedOptions() & 1) != 0, "WRC rejected the default no-red box");
-            require(!widget(client, "preset.mchjong.m_league").active, "M.League could select missing red fives");
             capture(client, output, "25b-wrc-lobby.png");
-            click(client, "preset.mchjong.mahjong_soul");
+            next(9);
+        } else if (stage == 9 && selectPreset(client, view, RuleSet.MAHJONG_SOUL_4)) {
             next(11);
         } else if (stage == 11 && view.rules().preset() == RuleSet.MAHJONG_SOUL_4 && ticks > 5) {
             click(client, "rules.mchjong.title");
@@ -169,11 +163,10 @@ final class TableControlSmoke {
                     var normal = items.stream().filter(stack -> !stack.isEmpty() && MahjongSupplies.tile(stack).face() == face)
                         .findFirst().orElseThrow();
                     var red = normal.copyWithCount(suit == 1 ? 2 : 1);
-                    red.set(MahjongComponents.TILE, MahjongSupplies.tile(normal).engraved(face, true));
+                    top.skyeyefast.mchjong.item.MahjongComponents.tile(red, MahjongSupplies.tile(normal).engraved(face, true));
                     items.set(34 + suit, red);
                 }
-                box.set(net.minecraft.core.component.DataComponents.CONTAINER,
-                    net.minecraft.world.item.component.ItemContainerContents.fromItems(items));
+                top.skyeyefast.mchjong.item.MahjongSupplies.setContents(box, items);
                 serverTable.equipment().boxes().setItem(0, box);
                 require(MahjongSupplies.tileCount(MahjongSupplies.contents(box)) == 140, "Surplus fixture count");
             });
@@ -330,6 +323,21 @@ final class TableControlSmoke {
         languageReload = client.reloadResourcePacks();
     }
     private void next(int value) { stage = value; ticks = 0; }
+    private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.TableView view, RuleSet target) {
+        require(view.rules().preset() != RuleSet.M_LEAGUE, "Preset cycle selected unavailable red fives");
+        require(view.rules().preset().players() == target.players(), "Preset cycle changed player count");
+        if (ticks < 10) return false;
+        if (view.rules().preset() == target) return true;
+        if (ticks % 10 == 0) {
+            String label = Component.translatable("rules.mchjong.preset",
+                Component.translatable(view.rules().preset().presetKey())).getString();
+            var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+            require(button.active, "Host preset cycle is disabled");
+            client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        }
+        return false;
+    }
     private static EditBox field(Minecraft client, String key) { return (EditBox) widget(client, key); }
     private static AbstractWidget widget(Minecraft client, String key) {
         String label = Component.translatable(key).getString();

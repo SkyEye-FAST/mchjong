@@ -32,9 +32,8 @@ final class TableStorageSmoke {
                     net.minecraft.world.item.DyeColor.BLUE));
             inventory.setItem(3, new ItemStack(net.minecraft.world.item.Items.STONE));
             var nested = new ItemStack(top.skyeyefast.mchjong.world.MahjongContent.BOX_ITEM);
-            nested.set(net.minecraft.core.component.DataComponents.CONTAINER,
-                net.minecraft.world.item.component.ItemContainerContents.fromItems(java.util.List.of(
-                    new ItemStack(top.skyeyefast.mchjong.world.MahjongContent.BOX_ITEM))));
+            top.skyeyefast.mchjong.item.MahjongSupplies.setContents(nested, java.util.List.of(
+                    new ItemStack(top.skyeyefast.mchjong.world.MahjongContent.BOX_ITEM)));
             inventory.setItem(4, nested);
             var menu = open(player, table);
             var expected = snapshot(player, table, menu, bounds);
@@ -88,7 +87,7 @@ final class TableStorageSmoke {
             MahjongTableMenu menu, net.minecraft.world.phys.AABB bounds) {
         var result = new java.util.HashMap<net.minecraft.nbt.CompoundTag, Integer>();
         java.util.function.Consumer<ItemStack> count = stack -> {
-            if (!stack.isEmpty()) result.merge((net.minecraft.nbt.CompoundTag) stack.copyWithCount(1).save(player.registryAccess()),
+            if (!stack.isEmpty()) result.merge((net.minecraft.nbt.CompoundTag) stack.copyWithCount(1).save(new net.minecraft.nbt.CompoundTag()),
                 stack.getCount(), Integer::sum);
         };
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) count.accept(player.getInventory().getItem(slot));

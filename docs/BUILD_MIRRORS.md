@@ -18,6 +18,11 @@ game JARs, mappings and asset indexes. Selecting a manifest mirror does not
 rewrite those embedded URLs. Optional mod integrations retain their own Maven
 repositories.
 
+GitHub-hosted CI uses Mojang's HTTPS launcher manifest for NeoForm Runtime via
+the existing Gradle property in `GRADLE_OPTS`. BMCLAPI can redirect that request
+to an HTTP mirror, which NeoForm Runtime's download client rejects. Local builds
+retain the sources configured in `gradle.properties`.
+
 ForgeGradle 7 runs Minecraft Mavenizer on a Java 25 toolchain. Gradle provisions
 that build toolchain through the Foojay resolver when it is not installed; the
 Minecraft 1.21.1 mod and development client still target Java 21. Forge's Mavenizer

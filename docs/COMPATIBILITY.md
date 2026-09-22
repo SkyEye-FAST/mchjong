@@ -3,25 +3,23 @@
 ## Development profile
 
 Release artifacts follow their Minecraft build profile. The current recipe
-viewer adapters target Minecraft 1.21.1 with Java 21, Fabric Loader 0.19.5 and
-Fabric API 0.116.17+1.21.1, or NeoForge 21.1.250. The wider version roadmap remains
-mainstream releases from 1.20.1 onward; each release line requires its own
-compiled artifact and verification. The Forge 1.21.1 build pins Forge 52.1.16.
+viewer adapters target Minecraft 1.20.1 with Java 17, Fabric Loader 0.19.5 and
+Fabric API 0.92.12+1.20.1, or Forge 47.4.23. Builds use JDK 21 and target Java 17.
+See [PORT_1.20.1.md](PORT_1.20.1.md) for synchronization with the feature mainline.
 
 | Minecraft | Loader artifacts | Validation scope |
 | --- | --- | --- |
-| 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
-| 1.20.1 | Fabric and Forge port on `compat/1.20.1` | In progress; not yet a release build |
-| Matching version | Quilt consumes the Fabric artifact | Quilt runtime acceptance is separate |
+| 1.20.1 | Fabric and Forge on `compat/1.20.1` | Shared integrated-server/client gameplay and Ponder smokes pass |
+| 1.20.1 | Quilt consumes the Fabric artifact | Quilt Loader 0.30.1 loads the packaged JAR on Java 17 to the title screen |
 
-The optional viewer and Ponder profiles below apply to Fabric and NeoForge 1.21.1.
-Forge currently builds the base game integration. Optional Forge adapters require
-matching artifacts and their own installed-dependency validation before publication.
+The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
 
 | Optional viewer | Pinned version | Development runtime |
 | --- | --- | --- |
-| JEI | 19.56.0.441 | `-PrecipeBrowser=jei`, with MezzConfig 0.5.6 |
-| EMI | 1.1.24+1.21.1 | `-PrecipeBrowser=emi` |
+| JEI | 15.59.0.212 | `-PrecipeBrowser=jei` |
+| EMI | 1.1.24+1.20.1 | `-PrecipeBrowser=emi` |
+| REI | 12.0.684 | `-PrecipeBrowser=rei`, with Cloth Config and Architectury |
+| Ponder | 1.0.92 | `-PwithPonder=true` |
 | Base installation | Current build profile | `-PrecipeBrowser=none` (default) |
 
 All dependency versions live in `gradle.properties`. Viewer API dependencies are
@@ -54,10 +52,6 @@ named container contents retain exact identities; their survival operations are
 governed by the same server recipes, while these particular container layouts
 are outside the pre-enumerated viewer examples.
 
-The source reviewed for NEI is TheCBProject's archived branch targeting Minecraft
-1.12.2 and Forge 14.23.5.2768. Its target belongs to that legacy profile. The
-1.21.1 integration described here is specifically JEI and EMI.
-
 ## Verification commands
 
 Use the repository wrapper with JDK 21:
@@ -65,13 +59,12 @@ Use the repository wrapper with JDK 21:
 ```text
 gradlew.bat buildAll --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient --console=plain
-gradlew.bat :neoforge:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeServer --console=plain
 gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=jei --console=plain
-gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=jei --console=plain
+gradlew.bat :forge:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=emi --console=plain
-gradlew.bat :neoforge:runSmokeClient -PrecipeBrowser=emi --console=plain
+gradlew.bat :forge:runSmokeClient -PrecipeBrowser=emi --console=plain
 ```
 
 `--no-parallel --max-workers=2` bounds Gradle workers. The profiles use separate
@@ -80,11 +73,10 @@ each loader's build directory, with corresponding isolated run directories.
 Each successful run writes a fresh `PASS.txt` and `browser-checks.txt`; check
 their timestamps against the run log and inspect the new screenshots.
 
-Forge's client command is a focused bootstrap check. It verifies the registered
-table, shared custom item renderers and additional riichi-stick model, and writes
-`forge/build/smoke/bootstrap-evidence/PASS.txt` with a title-screen capture. It does
-not establish multiplayer, inventory or gameplay acceptance. The Forge server
-command checks the dedicated launcher and settings path; it does not start a world.
+Both client commands run the shared gameplay checks. Add `-PsmokeBootstrap=true`
+to Forge for the focused registration, renderer and native NBT bootstrap check.
+The server command checks the dedicated launcher and settings path; integrated
+server runs exercise worlds and player transactions.
 
 `RecipeBrowserDataSmoke` checks the finite examples and cycling alternatives in
 the integrated server world, including retention of spare tiles and point sticks.
@@ -97,7 +89,7 @@ Source/API review and Java compilation alone do not establish installed-viewer,
 absent-viewer, dedicated-server or visual acceptance. Use the fresh completion
 markers and screenshots for the specific loader and profile being checked.
 
-`gradlew.bat :fabric:runSmokeServer :neoforge:runSmokeServer --console=plain` exercises
+`gradlew.bat :fabric:runSmokeServer :forge:runSmokeServer --console=plain` exercises
 the dedicated-server bootstrap with Minecraft's `--initSettings` mode in
 isolated build directories. The same optional-viewer profile flag applies.
 This covers server-side entrypoint loading and settings initialization; world
@@ -105,13 +97,14 @@ simulation and player transactions are exercised by the integrated-server smoke.
 The generated EULA setting retains Minecraft's default value.
 
 Validation results are recorded from completed runs rather than API compilation.
-Simultaneous installation of multiple viewers and additional Minecraft profiles
-require their own runtime acceptance.
+Fabric with JEI and Forge with EMI pass the full shared smoke. Both loaders also
+pass the installed-Ponder profile. REI has bootstrap and catalog inspection
+coverage. Viewer autofill buttons and multiple-viewer combinations are not part
+of the automated acceptance. EMI's development mode reports its own synthetic
+`emi:brewing/` recipes as absent from the vanilla recipe manager; the MChjong
+recipe checks pass without EMI recipe diagnostics for MChjong entries.
 
 ## Upstream API references
 
-* [JEI setup for Minecraft 1.21 and 1.21.1](https://github.com/mezz/JustEnoughItems/wiki/Getting-Started-%5BMinecraft-1.21-and-1.21.1%5D)
-* [JEI 1.21.1 public API](https://github.com/mezz/JustEnoughItems/tree/1.21.1/CommonApi/src/main/java/mezz/jei/api)
-* [EMI 1.21 profile and dependencies](https://github.com/emilyploszaj/emi/tree/1.21)
-* [EMI public API](https://github.com/emilyploszaj/emi/tree/1.21/xplat/src/main/java/dev/emi/emi/api)
-* [NEI target profile](https://github.com/TheCBProject/NotEnoughItems/blob/master/build.properties)
+* [JEI 1.20.1 public API](https://github.com/mezz/JustEnoughItems/tree/1.20.1/CommonApi/src/main/java/mezz/jei/api)
+* [EMI 1.20.1 source and dependencies](https://github.com/emilyploszaj/emi/tree/1.20.1)

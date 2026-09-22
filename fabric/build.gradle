@@ -11,6 +11,7 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    modCompileOnly("net.createmod.ponder:Ponder-Fabric-${minecraft_version}:${ponder_version}") { transitive = false }
     modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
     modCompileOnly "dev.emi:emi-fabric:${emi_version}:api"
@@ -35,7 +36,11 @@ dependencies {
         modLocalRuntime("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
     }
     if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
-        modLocalRuntime "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
+        modLocalRuntime("net.createmod.ponder:Ponder-Fabric-${minecraft_version}:${ponder_version}") {
+            exclude group: 'net.createmod.ponder', module: "Ponder-Common-${minecraft_version}"
+            exclude group: 'net.fabricmc'
+            exclude group: 'net.fabricmc.fabric-api'
+        }
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
@@ -53,7 +58,6 @@ test {
 
 sourceSets.main {
     java.srcDir '../common/src/main/java'
-    java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')

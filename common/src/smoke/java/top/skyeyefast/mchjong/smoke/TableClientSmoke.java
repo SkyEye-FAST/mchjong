@@ -98,12 +98,10 @@ public final class TableClientSmoke {
                 rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
                 rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
                 rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
-                rules.getRule(GameRules.RULE_SPAWN_CHUNK_RADIUS).set(0, null);
                 client.createWorldOpenFlows().createFreshLevel("table-smoke-" + System.currentTimeMillis(),
                     new LevelSettings("MChjong isolated smoke", GameType.CREATIVE, false, Difficulty.PEACEFUL,
                         true, rules, WorldDataConfiguration.DEFAULT), new WorldOptions(12345, false, false),
-                    access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
-                    new TitleScreen());
+                    access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions());
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
@@ -129,14 +127,14 @@ public final class TableClientSmoke {
                             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
                         level.setBlock(CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), 3);
                         ItemStack furniture = new ItemStack(MahjongContent.AUTO_TABLE_ITEM);
-                        furniture.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
+                        top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
                         MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
                         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
                         table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.engrave(
                             top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.GLASS,
                                 net.minecraft.world.item.DyeColor.BLUE), top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-                        cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.CYAN);
+                        top.skyeyefast.mchjong.item.MahjongComponents.color(cloth, net.minecraft.world.item.DyeColor.CYAN);
                         table.useEquipment(player, cloth);
                         player.getInventory().selected = 0;
                         player.getInventory().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
@@ -148,8 +146,7 @@ public final class TableClientSmoke {
                                 34 + flower, top.skyeyefast.mchjong.item.TileMaterial.GLASS, false), net.minecraft.world.item.DyeColor.BLUE, 1));
                         flowerContents.set(top.skyeyefast.mchjong.item.MahjongSupplies.DYE_SLOT,
                             new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE));
-                        flowerBox.set(net.minecraft.core.component.DataComponents.CONTAINER,
-                            net.minecraft.world.item.component.ItemContainerContents.fromItems(flowerContents));
+                        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(flowerBox, flowerContents);
                         player.getInventory().setItem(1, new ItemStack(MahjongContent.TABLE_ITEM));
                         player.getInventory().setItem(2, furniture.copy());
                         player.getInventory().setItem(3, cloth.copy());
@@ -157,7 +154,7 @@ public final class TableClientSmoke {
                             new top.skyeyefast.mchjong.item.TileData(4, top.skyeyefast.mchjong.item.TileMaterial.GLASS, true),
                             net.minecraft.world.item.DyeColor.BLUE, 1));
                         ItemStack sticks = new ItemStack(MahjongContent.POINT_STICK, 8);
-                        sticks.set(top.skyeyefast.mchjong.item.MahjongComponents.POINTS, 1000);
+                        top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
                         player.getInventory().setItem(5, sticks);
                         player.getInventory().setItem(6, new ItemStack(MahjongContent.STOOL_ITEM));
                         player.getInventory().setItem(7, top.skyeyefast.mchjong.item.MahjongSupplies.tile(

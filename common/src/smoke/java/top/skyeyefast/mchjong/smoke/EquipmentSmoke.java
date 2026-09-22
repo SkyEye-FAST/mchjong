@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
@@ -73,7 +72,7 @@ final class EquipmentSmoke {
             for (int x = -3; x <= 3; x++) for (int z = -3; z <= 3; z++)
                 level.setBlock(POS.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
             var furniture = new ItemStack(block);
-            furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
+            top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, FurnitureWood.WARPED);
             level.setBlock(POS, block.defaultBlockState(), 3);
             block.setPlacedBy(level, POS, block.defaultBlockState(), player, furniture);
             for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(POS, seat), MahjongContent.STOOL.defaultBlockState(), 3);
@@ -87,16 +86,16 @@ final class EquipmentSmoke {
             var original = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.BLUE);
             var replacement = PointStickMenuSmoke.stockedBox(TileMaterial.QUARTZ, DyeColor.CYAN);
             var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-            cloth.set(DataComponents.BASE_COLOR, DyeColor.LIME);
+            top.skyeyefast.mchjong.item.MahjongComponents.color(cloth, DyeColor.LIME);
             var sticks = new ItemStack(MahjongContent.POINT_STICK, 8);
-            sticks.set(MahjongComponents.POINTS, 1000);
+            top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
             inventory.setItem(0, original.copy());
             inventory.setItem(1, cloth.copy());
             inventory.setItem(2, sticks.copy());
             inventory.setItem(3, replacement.copy());
             inventory.selected = 0;
             var edge = POS.east();
-            level.getBlockState(edge).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND,
+            level.getBlockState(edge).use(level, player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(edge), Direction.UP, edge, false));
             check(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongTableMenu,
                 "Placeholder interaction did not open table storage");
@@ -121,16 +120,16 @@ final class EquipmentSmoke {
             TableStorageSmoke.put(player, table, 1, inventory.getItem(find(inventory, original)));
             table.useEquipment(player, inventory.getItem(find(inventory, cloth)));
 
-            var saved = table.saveWithoutMetadata(level.registryAccess());
+            var saved = table.saveWithoutMetadata();
             var appearance = table.getUpdatePacket().getTag();
             check(!appearance.contains("game") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
-            table.loadWithComponents(appearance, level.registryAccess());
-            check(saved.getString("game").equals(table.saveWithoutMetadata(level.registryAccess()).getString("game"))
+            table.load(appearance);
+            check(saved.getString("game").equals(table.saveWithoutMetadata().getString("game"))
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Public update destroyed private state");
             level.removeBlockEntity(POS);
             table = new MahjongTableBlockEntity(POS, block.defaultBlockState());
             table.setLevel(level);
-            table.loadWithComponents(saved, level.registryAccess());
+            table.load(saved);
             level.setBlockEntity(table);
             check(table.wood() == FurnitureWood.WARPED && table.equipment().clothColor() == DyeColor.LIME
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
@@ -182,8 +181,8 @@ final class EquipmentSmoke {
             table.dropEquipment();
             var drops = level.getEntitiesOfClass(ItemEntity.class, bounds).stream().filter(e -> !existing.contains(e)).map(ItemEntity::getItem).toList();
             check(count(drops, block.asItem()) == 1 && drops.stream().filter(s -> s.is(block.asItem()))
-                .allMatch(s -> s.get(MahjongComponents.WOOD) == FurnitureWood.WARPED), "Furniture drop was duplicated or lost its wood: "
-                    + block + " destruction=" + destruction + " drops=" + drops.stream().map(s -> s + " wood=" + s.get(MahjongComponents.WOOD)).toList());
+                .allMatch(s -> top.skyeyefast.mchjong.item.MahjongComponents.wood(s) == FurnitureWood.WARPED), "Furniture drop was duplicated or lost its wood: "
+                    + block + " destruction=" + destruction + " drops=" + drops.stream().map(s -> s + " wood=" + top.skyeyefast.mchjong.item.MahjongComponents.wood(s)).toList());
             check(count(drops, MahjongContent.BOX_ITEM) == 2 && drops.stream().anyMatch(s -> ItemStack.matches(s, replacement))
                 && drops.stream().anyMatch(s -> ItemStack.matches(s, original)), "Destroyed table did not return both complete boxes exactly once");
             check(count(drops, MahjongContent.CLOTH_ITEM) == 1 && drops.stream().anyMatch(s -> ItemStack.matches(s, cloth)), "Destroyed table lost its cloth");

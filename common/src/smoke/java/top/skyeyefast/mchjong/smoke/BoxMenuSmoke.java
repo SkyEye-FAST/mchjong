@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
@@ -13,7 +12,6 @@ import net.minecraft.world.inventory.ClickType;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.phys.AABB;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
@@ -71,7 +69,7 @@ final class BoxMenuSmoke {
         inventory.setItem(3, new ItemStack(MahjongContent.BOX_ITEM));
         inventory.setItem(9, MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 16));
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 8);
-        sticks.set(MahjongComponents.POINTS, 1000);
+        top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
         inventory.setItem(10, sticks);
         var menu = open(player, owner);
         var expected = snapshot(player, menu);
@@ -185,8 +183,7 @@ final class BoxMenuSmoke {
             var changed = MahjongSupplies.contents(box);
             for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
                 var expected = items.get(slot).copy();
-                if (!expected.isEmpty()) expected.set(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET,
-                    top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
+                if (!expected.isEmpty()) top.skyeyefast.mchjong.item.MahjongComponents.facePreset(expected, top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
                 check(ItemStack.matches(expected, changed.get(slot)), "Preset change altered tile identity, material or back");
             }
             check(changed.get(MahjongSupplies.DYE_SLOT).getCount() == (creative ? 1 : 0), "Preset change consumed the wrong dye quantity");
@@ -218,8 +215,8 @@ final class BoxMenuSmoke {
         var inventory = player.getInventory();
         inventory.clearContent();
         var box = new ItemStack(MahjongContent.BOX_ITEM);
-        box.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(java.util.List.of(
-            MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 32))));
+        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(box, java.util.List.of(
+            MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 32)));
         inventory.setItem(0, box);
         var menu = open(player, 0);
         var expected = snapshot(player, menu);
@@ -274,11 +271,11 @@ final class BoxMenuSmoke {
         if (stack.isEmpty()) return;
         ItemStack identity = stack.copyWithCount(1);
         if (stack.is(MahjongContent.BOX_ITEM)) {
-            identity.remove(DataComponents.CONTAINER);
-            stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyStream()
+            MahjongSupplies.setContents(identity, java.util.List.of());
+            MahjongSupplies.contents(stack).stream().filter(item -> !item.isEmpty())
                 .forEach(item -> count(player, result, item));
         }
-        result.merge((CompoundTag) identity.save(player.registryAccess()), stack.getCount(), Integer::sum);
+        result.merge((CompoundTag) identity.save(new net.minecraft.nbt.CompoundTag()), stack.getCount(), Integer::sum);
     }
 
     private static void conserved(ServerPlayer player, AbstractContainerMenu menu, Map<CompoundTag, Integer> expected) {

@@ -22,11 +22,24 @@ repositories {
 }
 
 sourceSets {
+    ponderData {
+        java.srcDir '../common/src/ponderData/java'
+        compileClasspath += sourceSets.main.compileClasspath
+    }
     smoke {
+        java.srcDir '../common/src/smoke/java'
+        resources.srcDir '../common/src/smoke/resources'
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
+
+def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def bootstrapSmoke = providers.gradleProperty('smokeBootstrap').getOrElse('false').toBoolean()
+def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+def smokeProfile = bootstrapSmoke ? 'bootstrap-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
+def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 
 legacyForge {
     enable {
@@ -43,9 +56,13 @@ legacyForge {
         smokeClient {
             client()
             sourceSet = sourceSets.smoke
-            gameDirectory = layout.buildDirectory.dir('smoke/client').get().asFile
-            systemProperty 'mchjong.smoke.bootstrap', 'true'
-            systemProperty 'mchjong.smoke.output', layout.buildDirectory.dir('smoke/bootstrap-evidence').get().asFile.absolutePath
+            gameDirectory = smokeRun.get().asFile
+            systemProperty 'mchjong.smoke.bootstrap', bootstrapSmoke.toString()
+            systemProperty 'mchjong.smoke', (!bootstrapSmoke).toString()
+            systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
+            systemProperty 'mchjong.smoke.browser', recipeBrowser
+            systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
+            programArguments.addAll('--mixin', 'mchjong.smoke.mixins.json')
             programArguments.addAll('--width', '1280', '--height', '800')
         }
         smokeServer {
@@ -57,17 +74,20 @@ legacyForge {
 }
 
 tasks.named('runSmokeClient') {
+    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
     doLast {
-        if (!layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt').get().asFile.isFile())
-            throw new GradleException('Forge client bootstrap did not finish; inspect smoke/client/logs/latest.log')
+        if (!smokeEvidence.get().file('PASS.txt').asFile.isFile() || smokeEvidence.get().file('FAIL.txt').asFile.exists())
+            throw new GradleException("Forge client smoke failed; inspect ${smokeRun.get().asFile}/logs/latest.log")
     }
-}
-tasks.named('runSmokeClient') {
-    doFirst { delete layout.buildDirectory.file('smoke/bootstrap-evidence/PASS.txt') }
 }
 
 configurations { embeddedEngine }
 dependencies {
+    modCompileOnly "net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"
+    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
+        modRuntimeOnly "net.createmod.ponder:Ponder-Forge-${minecraft_version}:${ponder_version}"
+        modRuntimeOnly "dev.engine-room.flywheel:flywheel-forge-${minecraft_version}:${flywheel_version}"
+    }
     annotationProcessor 'org.spongepowered:mixin:0.8.5:processor'
     modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
@@ -90,10 +110,23 @@ dependencies {
 
 sourceSets.main {
     java.srcDir '../common/src/main/java'
-    java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
+    resources.srcDir layout.buildDirectory.dir('generated/ponder')
+}
+
+sourceSets.ponderData.runtimeClasspath += sourceSets.ponderData.compileClasspath
+tasks.register('generatePonder', JavaExec) {
+    dependsOn tasks.named('ponderDataClasses')
+    classpath = sourceSets.ponderData.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
+    def output = layout.buildDirectory.dir('generated/ponder')
+    args output.get().asFile.absolutePath
+    inputs.files sourceSets.ponderData.allSource
+    outputs.dir output
+    doFirst { delete output }
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
 }
 
 mixin {
@@ -104,9 +137,9 @@ mixin {
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData'
+    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version,
-        jei_version: jei_version, emi_version: emi_version, rei_version: rei_version]
+        jei_version: jei_version, emi_version: emi_version, rei_version: rei_version, ponder_version: ponder_version]
     inputs.properties properties
     filesMatching('META-INF/mods.toml') { expand properties }
     filesMatching(['mchjong.client.mixins.json', 'mchjong.data.mixins.json']) {
