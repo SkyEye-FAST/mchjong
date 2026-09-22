@@ -7,17 +7,33 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.6.0] - 2026-09-22
+
 ### Added
 
 - Shift-wheel height adjustment for the seated camera.
 - Resource packs can add and override tile-face presets, with namespaced identities retained on printed tiles and synchronized tables.
 - Transparent pattern layers for tile backs and table cloths, shared by world, item and immersive rendering.
 - Resource-pack JSON models and textures for riichi deposits.
+- Minecraft 1.21.1 Forge support, including the shared JEI recipe integration.
+- Minecraft 1.20.1 Fabric and Forge builds with native item NBT, networking, rendering, and JEI, EMI, REI and Ponder integrations.
 
 ### Changed
 
 - Slightly lower default seated camera height for a closer table-level view.
 - Riichi stick icons and physical deposits share a blue, white-dot design matching the 1,000-point stick.
+
+### Fixed
+
+- Players retain their room membership while automatic seating moves them to their assigned wind.
+- Forge development launches discover the mod and its resource pack together, and additional riichi-stick models load correctly.
+
+### Compatibility
+
+- Minecraft 1.21.1: Fabric, Forge and NeoForge artifacts; Minecraft 1.20.1: Fabric and Forge artifacts. Quilt uses the corresponding Fabric JAR.
+- JEI is available on all five builds. EMI, REI and Ponder integrations target Fabric and NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
+- Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 artifacts target Java 17.
+- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
 
 ## [0.5.3] - 2026-09-22
 
@@ -230,7 +246,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.5.3...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.6.0...HEAD
+[0.6.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.6.0
 [0.5.3]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.3
 [0.5.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.2
 [0.5.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.1
