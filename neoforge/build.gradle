@@ -8,7 +8,7 @@ version = rootProject.mod_version
 base.archivesName = "mchjong-neoforge-${minecraft_version}"
 repositories {
     exclusiveContent {
-        forRepository { maven { name = 'BMCLAPINeoForge'; url = 'https://bmclapi2.bangbang93.com/maven/' } }
+        forRepository { maven { name = 'NeoForgeMain'; url = rootProject.neo_maven_url } }
         filter { includeModule 'net.neoforged', 'neoforge' }
     }
     exclusiveContent {

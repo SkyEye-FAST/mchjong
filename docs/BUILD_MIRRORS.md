@@ -9,7 +9,7 @@ The loader subprojects use the following download sources:
 | Fabric client assets | BMCLAPI | `loom_resources_base` |
 | Minecraft libraries | Official repositories | Loader plugin defaults |
 | Minecraft version manifest for both loaders | BMCLAPI | `loom_version_manifests` and `neoForge.neoFormRuntime.launcherManifestUrl` |
-| NeoForge main module, including userdev | BMCLAPI | Exclusive module repository in `neoforge/build.gradle` |
+| NeoForge main module, including userdev | BMCLAPI | `neo_maven_url` and the exclusive module repository in `neoforge/build.gradle` |
 | NeoForge test framework and build tooling | Official repositories | ModDevGradle and `neoforge/build.gradle` |
 | Forge runtime and ForgeGradle | Official Forge Maven | `forge/build.gradle` and `settings.gradle` |
 
@@ -18,10 +18,9 @@ game JARs, mappings and asset indexes. Selecting a manifest mirror does not
 rewrite those embedded URLs. Optional mod integrations retain their own Maven
 repositories.
 
-GitHub-hosted CI uses Mojang's HTTPS launcher manifest for NeoForm Runtime via
-the existing Gradle property in `GRADLE_OPTS`. BMCLAPI can redirect that request
-to an HTTP mirror, which NeoForm Runtime's download client rejects. Local builds
-retain the sources configured in `gradle.properties`.
+GitHub-hosted CI uses Mojang's HTTPS manifest and asset endpoints plus NeoForged's
+official Maven repository. Local builds retain the mirror sources configured in
+`gradle.properties`.
 
 ForgeGradle 7 runs Minecraft Mavenizer on a Java 25 toolchain. Gradle provisions
 that build toolchain through the Foojay resolver when it is not installed; the
