@@ -22,23 +22,47 @@ final class DiceArtwork {
             g.setColor(new Color(0xe2dbc9));
             g.fillRect(4, 29, 24, 1); g.fillRect(29, 4, 1, 24);
             boolean red = face == 1 || face == 4;
-            if (face % 2 == 1) pip(g, 16, 16, face == 1 ? 5 : 3, red);
-            if (face >= 2) { pip(g, 8, 8, 3, red); pip(g, 24, 24, 3, red); }
-            if (face >= 4) { pip(g, 24, 8, 3, red); pip(g, 8, 24, 3, red); }
-            if (face == 6) { pip(g, 8, 16, 3, red); pip(g, 24, 16, 3, red); }
+            if (face % 2 == 1) pip(image, 16, 16, face == 1 ? 5 : 3, red);
+            if (face >= 2) { pip(image, 8, 8, 3, red); pip(image, 24, 24, 3, red); }
+            if (face >= 4) { pip(image, 24, 8, 3, red); pip(image, 8, 24, 3, red); }
+            if (face == 6) { pip(image, 8, 16, 3, red); pip(image, 24, 16, 3, red); }
         } finally { g.dispose(); }
         return image;
     }
 
-    private static void pip(Graphics2D g, int x, int y, int radius, boolean red) {
-        // The bright lower lip and dark upper recess make the mark read as inset.
-        g.setColor(new Color(0xfffdf3));
-        g.fillOval(x - radius, y - radius + 1, radius * 2, radius * 2);
-        g.setColor(new Color(red ? 0x75262e : 0x20272d));
-        g.fillOval(x - radius, y - radius, radius * 2, radius * 2);
-        g.setColor(new Color(red ? 0xba3940 : 0x414b52));
-        g.fillOval(x - radius + 1, y - radius + 2, radius * 2 - 2, radius * 2 - 3);
-        g.setColor(new Color(red ? 0xdf6157 : 0x677379));
-        g.fillRect(x - 1, y + radius - 2, 2, 1);
+    private static void pip(BufferedImage image, int cx, int cy, int radius, boolean red) {
+        int rOuter = radius == 5 ? 4 : 2;
+        int thOuter = radius == 5 ? 20 : 5;
+        int rInner = radius == 5 ? 3 : 1;
+        int thInner = radius == 5 ? 12 : 2;
+
+        int cWhite = 0xfffffdf3;
+        int cDark = 0xff000000 | (red ? 0x75262e : 0x20272d);
+        int cMid = 0xff000000 | (red ? 0xba3940 : 0x414b52);
+        int cHigh = 0xff000000 | (red ? 0xdf6157 : 0x677379);
+
+        for (int dy = -rOuter; dy <= rOuter; dy++) {
+            for (int dx = -rOuter; dx <= rOuter; dx++) {
+                if (dx * dx + dy * dy <= thOuter) {
+                    image.setRGB(cx + dx, cy + dy + 1, cWhite);
+                }
+            }
+        }
+        for (int dy = -rOuter; dy <= rOuter; dy++) {
+            for (int dx = -rOuter; dx <= rOuter; dx++) {
+                if (dx * dx + dy * dy <= thOuter) {
+                    image.setRGB(cx + dx, cy + dy, cDark);
+                }
+            }
+        }
+        for (int dy = -rInner; dy <= rInner; dy++) {
+            for (int dx = -rInner; dx <= rInner; dx++) {
+                if (dx * dx + dy * dy <= thInner) {
+                    image.setRGB(cx + dx, cy + dy + (radius == 5 ? 1 : 0), cMid);
+                }
+            }
+        }
+        image.setRGB(cx - 1, cy + radius - 2, cHigh);
+        image.setRGB(cx, cy + radius - 2, cHigh);
     }
 }
