@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
 /** Shared visual vocabulary. Interaction remains in Minecraft's native widget/menu classes. */
@@ -24,32 +24,38 @@ public final class MahjongUi {
 
     private MahjongUi() {}
 
-    public static void panel(GuiGraphics g, int x, int y, int width, int height) {
-        g.fill(x, y, x + width, y + height, PANEL);
-        g.renderOutline(x, y, width, height, EDGE);
+    static boolean shiftDown() {
+        var window = net.minecraft.client.Minecraft.getInstance().getWindow();
+        return com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, com.mojang.blaze3d.platform.InputConstants.KEY_LSHIFT)
+            || com.mojang.blaze3d.platform.InputConstants.isKeyDown(window, com.mojang.blaze3d.platform.InputConstants.KEY_RSHIFT);
     }
 
-    public static void backdrop(GuiGraphics g, int width, int height, int contentWidth) {
+    public static void panel(GuiGraphicsExtractor g, int x, int y, int width, int height) {
+        g.fill(x, y, x + width, y + height, PANEL);
+        g.outline(x, y, width, height, EDGE);
+    }
+
+    public static void backdrop(GuiGraphicsExtractor g, int width, int height, int contentWidth) {
         g.fill(0, 0, width, height, BACKDROP);
         int span = Math.min(contentWidth, width - 24);
         panel(g, (width - span) / 2 - 8, 6, span + 16, height - 12);
         g.fill((width - span) / 2, 7, (width + span) / 2, 8, ACCENT);
     }
 
-    public static void control(GuiGraphics g, int x, int y, int width, int height,
+    public static void control(GuiGraphicsExtractor g, int x, int y, int width, int height,
                                boolean active, boolean hover, boolean focused, boolean selected, boolean primary) {
         int fill = selected ? SELECTED : !active ? INPUT : hover ? HOVER : SURFACE;
         g.fill(x, y, x + width, y + height, fill);
-        g.renderOutline(x, y, width, height, active && focused ? TEXT : selected || primary ? ACCENT : EDGE);
+        g.outline(x, y, width, height, active && focused ? TEXT : selected || primary ? ACCENT : EDGE);
         if (selected || primary && active) g.fill(x + 1, y + height - 3, x + width - 1, y + height - 1, ACCENT);
-        if (active && focused) g.renderOutline(x + 2, y + 2, width - 4, height - 4, ACCENT);
+        if (active && focused) g.outline(x + 2, y + 2, width - 4, height - 4, ACCENT);
     }
 
-    public static void text(GuiGraphics g, Font font, Component message, int x, int y, int width, int color, boolean centered) {
+    public static void text(GuiGraphicsExtractor g, Font font, Component message, int x, int y, int width, int color, boolean centered) {
         text(g, font, message, x, y, width, color, centered, false);
     }
 
-    public static void text(GuiGraphics g, Font font, Component message, int x, int y, int width, int color,
+    public static void text(GuiGraphicsExtractor g, Font font, Component message, int x, int y, int width, int color,
                             boolean centered, boolean shadow) {
         String text = message.getString();
         int available = Math.max(0, width);
@@ -57,12 +63,12 @@ public final class MahjongUi {
             String ellipsis = "…";
             text = available < font.width(ellipsis) ? "" : font.plainSubstrByWidth(text, available - font.width(ellipsis)) + ellipsis;
         }
-        g.drawString(font, text, centered ? x + (width - font.width(text)) / 2 : x, y, color, shadow);
+        g.text(font, text, centered ? x + (width - font.width(text)) / 2 : x, y, color, shadow);
     }
 
-    public static void slot(GuiGraphics g, int x, int y, boolean locked) {
+    public static void slot(GuiGraphicsExtractor g, int x, int y, boolean locked) {
         g.fill(x - 1, y - 1, x + 17, y + 17, INPUT);
-        g.renderOutline(x - 1, y - 1, 18, 18, locked ? ACCENT : EDGE);
+        g.outline(x - 1, y - 1, 18, 18, locked ? ACCENT : EDGE);
         if (locked) g.fill(x + 5, y + 15, x + 11, y + 17, ACCENT);
     }
 }

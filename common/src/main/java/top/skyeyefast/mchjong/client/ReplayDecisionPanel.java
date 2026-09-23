@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -36,7 +36,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
         this.analysis = analysis == null ? List.of() : analysis;
     }
 
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (decision == null) return;
         hits.clear();
         MahjongUi.panel(graphics, getX(), getY(), width, height);
@@ -60,7 +60,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
             if (candidate != null && !candidate.improving().isEmpty()) hits.add(new Hit(x, y, colWidth - 3, rowHeight - 1, detail(candidate)));
         }
         for (var hit : hits) if (hit.contains(mouseX, mouseY)) {
-            graphics.renderTooltip(font, font.split(hit.tooltip(), Math.min(300, graphics.guiWidth() - 24)), mouseX, mouseY);
+            graphics.setTooltipForNextFrame(font.split(hit.tooltip(), Math.min(300, graphics.guiWidth() - 24)), mouseX, mouseY);
             break;
         }
     }

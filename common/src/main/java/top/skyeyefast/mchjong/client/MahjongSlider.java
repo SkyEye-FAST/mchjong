@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.network.chat.Component;
 
@@ -10,7 +10,7 @@ public abstract class MahjongSlider extends AbstractSliderButton {
         super(x, y, width, height, message, value);
     }
 
-    @Override public void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractWidgetRenderState(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         MahjongUi.control(g, getX(), getY(), width, height, active, isHovered(), isFocused(), false, false);
         int start = getX() + 5, end = getX() + width - 5;
         int handle = start + (int) Math.round(value * (end - start));

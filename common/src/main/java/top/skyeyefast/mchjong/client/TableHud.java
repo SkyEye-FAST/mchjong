@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
@@ -35,7 +35,7 @@ final class TableHud {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
+    void render(Font font, GuiGraphicsExtractor graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
@@ -81,10 +81,10 @@ final class TableHud {
             if (deposits) {
                 stick(graphics, depositX, 25, false);
                 int countX = depositX + 16;
-                graphics.drawString(font, Integer.toString(view.honba()), countX, 22, MahjongUi.MUTED, false);
+                graphics.text(font, Integer.toString(view.honba()), countX, 22, MahjongUi.MUTED, false);
                 int riichiX = countX + font.width(Integer.toString(view.honba())) + 2;
                 stick(graphics, riichiX, 25, true);
-                graphics.drawString(font, Integer.toString(view.riichiSticks()), riichiX + 16, 22, MahjongUi.MUTED, false);
+                graphics.text(font, Integer.toString(view.riichiSticks()), riichiX + 16, 22, MahjongUi.MUTED, false);
             }
             regions.add(new Region(8, 7, headerWidth, headerHeight, details));
         }
@@ -149,7 +149,7 @@ final class TableHud {
                 graphics.fill(x + 5, top + 5, x + cardWidth + 5, top + cardHeight + 5, 0x44000000);
                 graphics.fill(x, top, x + cardWidth, top + cardHeight,
                     seat == view.viewerSeat() ? 0xc832554f : 0xb80c2024);
-                graphics.renderOutline(x, top, cardWidth, cardHeight,
+                graphics.outline(x, top, cardWidth, cardHeight,
                     seat == view.turn() ? MahjongUi.ACCENT : seat == view.viewerSeat() ? 0xff73938b : 0xff355257);
             } else graphics.fill(x, top, x + cardWidth, top + cardHeight,
                 seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
@@ -172,7 +172,7 @@ final class TableHud {
                     if (turn) graphics.fill(markerX, markerY, markerX + 6, markerY + 6, MahjongUi.ACCENT);
                     if (disconnected) graphics.fill(markerX, markerY + 12, markerX + 6, markerY + 18, MahjongUi.NEGATIVE);
                     else if (presence == PlayerPresence.AWAY)
-                        graphics.renderOutline(markerX, markerY + 12, 6, 6, MahjongUi.MUTED);
+                        graphics.outline(markerX, markerY + 12, 6, 6, MahjongUi.MUTED);
                 } else {
                     int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 4, top + 3, 14);
                     Component label = name.getString().isEmpty() ? shortLine : name;
@@ -270,25 +270,27 @@ final class TableHud {
         return 0;
     }
 
-    static void stick(GuiGraphics graphics, int x, int y, boolean riichi) {
+    static void stick(GuiGraphicsExtractor graphics, int x, int y, boolean riichi) {
         stick(graphics, x, y, riichi, 1);
     }
 
-    static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
+    static void stick(GuiGraphicsExtractor graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        if (riichi) graphics.blit(RiichiStickModel.TEXTURE, x, y, width, height, 0, 0, 384, 32, 384, 32);
-        else graphics.blit(FurnitureMesh.STICK_TEXTURE, x, y, width, height, 0, 32, 384, 32, 384, 192);
+        if (riichi) graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, RiichiStickModel.TEXTURE,
+            x, y, 0, 0, width, height, 384, 32, 384, 32);
+        else graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, FurnitureMesh.STICK_TEXTURE,
+            x, y, 0, 32, width, height, 384, 32, 384, 192);
     }
 
-    private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {
+    private static void text(Font font, GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color) {
         MahjongUi.text(graphics, font, text, x, y, width, color, false);
     }
 
-    private static void textScaled(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color, float scale) {
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1);
+    private static void textScaled(Font font, GuiGraphicsExtractor graphics, Component text, int x, int y, int width, int color, float scale) {
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
         MahjongUi.text(graphics, font, text, Math.round(x / scale), Math.round(y / scale),
             Math.round(width / scale), color, false);
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 }

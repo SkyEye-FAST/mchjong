@@ -26,15 +26,10 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
-    resources.srcDir layout.buildDirectory.dir('generated/ponder')
 }
 
 neoForge {
     version = rootProject.neo_version
-    parchment {
-        mappingsVersion = rootProject.parchment_version
-        minecraftVersion = rootProject.minecraft_version
-    }
     runs {
         client { client() }
         server { server(); programArgument '--nogui' }
@@ -51,23 +46,16 @@ neoForge {
 }
 
 dependencies {
-    compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
-    compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
-    compileOnly "me.shedaniel:RoughlyEnoughItems-api-neoforge:${rei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
+    compileOnly "dev.architectury:architectury-neoforge:${rei_architectury_version}"
+    compileOnly "me.shedaniel.cloth:basic-math:${rei_basic_math_version}"
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
         runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
         runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-neoforge:${mezz_config_version}"
     }
-    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'emi') {
-        runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
-    }
-    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
-        runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
-    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     jarJar project(path: ':engine', configuration: 'embeddedEngine')
-    additionalRuntimeClasspath project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
@@ -82,35 +70,13 @@ test {
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
 }
 
-// Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
-sourceSets {
-    ponderData {
-        java.srcDir '../common/src/ponderData/java'
-        compileClasspath += sourceSets.main.compileClasspath
-    }
-}
-sourceSets.ponderData.runtimeClasspath += sourceSets.ponderData.compileClasspath
-tasks.register('generatePonder', JavaExec) {
-    dependsOn tasks.named('ponderDataClasses')
-    classpath = sourceSets.ponderData.runtimeClasspath
-    mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
-    def output = layout.buildDirectory.dir('generated/ponder')
-    args output.get().asFile.absolutePath
-    inputs.files sourceSets.ponderData.allSource
-    outputs.dir output
-    doFirst { delete output }
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
-}
-
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
+    dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [
         version: project.version,
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
-        ponder_version: rootProject.ponder_version,
         jei_version: rootProject.jei_version,
-        emi_version: rootProject.emi_version,
         rei_version: rootProject.rei_version
     ]
     inputs.properties properties
@@ -127,14 +93,14 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-def smokeProfile = roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
+def smokeProfile = roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -160,7 +126,6 @@ neoForge {
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             systemProperty 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             systemProperty 'mchjong.smoke.roomOnly', roomSmoke.toString()
-            systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath

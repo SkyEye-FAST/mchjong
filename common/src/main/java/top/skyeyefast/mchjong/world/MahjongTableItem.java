@@ -14,7 +14,7 @@ public final class MahjongTableItem extends BlockItem {
 
     @Override public Component getName(ItemStack stack) {
         var wood = stack.getOrDefault(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.OAK);
-        return Component.translatable(getDescriptionId(stack) + "." + wood.getSerializedName());
+        return Component.translatable(getDescriptionId() + "." + wood.getSerializedName());
     }
 
     @Override public InteractionResult place(BlockPlaceContext context) {
@@ -29,8 +29,8 @@ public final class MahjongTableItem extends BlockItem {
                 && level.getBlockState(pos.above()).canBeReplaced() && level.getFluidState(pos.above()).isEmpty();
         }
         if (!clear) {
-            if (!level.isClientSide && context.getPlayer() != null)
-                context.getPlayer().displayClientMessage(Component.translatable("message.mchjong.space"), true);
+            if (!level.isClientSide() && context.getPlayer() != null)
+                context.getPlayer().sendOverlayMessage(Component.translatable("message.mchjong.space"));
             return InteractionResult.FAIL;
         }
         return super.place(context);

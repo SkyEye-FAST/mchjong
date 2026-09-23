@@ -74,13 +74,14 @@ public final class MchjongNeoForge {
         menus.register(bus);
         DeferredRegister<BlockEntityType<?>> blockEntities = DeferredRegister.create(Registries.BLOCK_ENTITY_TYPE, MahjongContent.MOD_ID);
         blockEntities.register("mahjong_table", () -> MahjongContent.TABLE_ENTITY =
-            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
+            new BlockEntityType<>(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE));
         blockEntities.register("mahjong_stool", () -> MahjongContent.STOOL_ENTITY =
-            BlockEntityType.Builder.of(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build(null));
+            new BlockEntityType<>(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL));
         blockEntities.register(bus);
         DeferredRegister<EntityType<?>> entities = DeferredRegister.create(Registries.ENTITY_TYPE, MahjongContent.MOD_ID);
-        entities.register("seat", () -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
-            .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
+        entities.register("seat", id -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
+            .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10)
+            .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, id)));
         entities.register(bus);
         DeferredRegister<CreativeModeTab> tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MahjongContent.MOD_ID);
         tabs.register("mchjong", () -> CreativeModeTab.builder()

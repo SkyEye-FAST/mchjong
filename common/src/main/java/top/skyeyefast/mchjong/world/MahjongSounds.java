@@ -4,7 +4,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import net.minecraft.sounds.SoundEvent;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 /** Resource-pack event names form the customization contract on both loaders. */
 public final class MahjongSounds {
@@ -15,9 +15,9 @@ public final class MahjongSounds {
     static {
         var events = new LinkedHashMap<String, SoundEvent>();
         EFFECTS.forEach(name -> events.put("table." + name, SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "table." + name))));
+            Identifier.fromNamespaceAndPath(MahjongContent.MOD_ID, "table." + name))));
         VOICES.forEach(name -> events.put("voice." + name, SoundEvent.createVariableRangeEvent(
-            ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "voice." + name))));
+            Identifier.fromNamespaceAndPath(MahjongContent.MOD_ID, "voice." + name))));
         EVENTS = java.util.Collections.unmodifiableMap(events);
     }
     private MahjongSounds() {}

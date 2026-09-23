@@ -6,7 +6,6 @@ import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
-import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
 import me.shedaniel.rei.api.common.util.EntryStacks;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
@@ -18,10 +17,6 @@ import top.skyeyefast.mchjong.item.MahjongCatalog;
 
 /** REI entry catalogue, component discrimination and screen exclusion zones. */
 public class MahjongReiPlugin implements REIClientPlugin {
-    @Override public void registerItemComparators(ItemComparatorRegistry registry) {
-        SupplySubtype.items().forEach(registry::registerComponents);
-    }
-
     @Override public void registerEntries(EntryRegistry registry) {
         MahjongCatalog.entries().forEach(stack -> {
             var entry = EntryStacks.of(stack);

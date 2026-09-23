@@ -17,7 +17,7 @@ public abstract class TableFovMixin {
     private void mchjong$tableFov(Camera camera, float partialTick, boolean changingFov,
             CallbackInfoReturnable<Double> callback) {
         var client = Minecraft.getInstance();
-        if (!changingFov || camera.isDetached() || camera.getEntity() != client.player
+        if (!changingFov || camera.isDetached() || camera.entity() != client.player
                 || client.player == null || !(client.player.getVehicle() instanceof SeatEntity)) return;
         var window = client.getWindow();
         if (window.getWidth() <= 0 || window.getHeight() <= 0) return;

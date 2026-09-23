@@ -4,7 +4,7 @@ import com.mojang.math.Axis;
 import java.util.HashMap;
 import java.util.Map;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -125,7 +125,7 @@ final class TableBoard {
     }
 
     Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }
-    void discard(GuiGraphics graphics, int tile, TableHand.Point source, int sourceWidth, double opponentX,
+    void discard(GuiGraphicsExtractor graphics, int tile, TableHand.Point source, int sourceWidth, double opponentX,
                  boolean tsumogiri, boolean riichi, double fraction) {
         if (immersive != null) immersive.discard(graphics, tile, source, sourceWidth, opponentX, tsumogiri, riichi, fraction);
     }
@@ -139,11 +139,11 @@ final class TableBoard {
         return new Point(bounds.x() + bounds.width() / 2 + offset, bounds.bottom() - Math.max(84, bounds.height() / 6));
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
+    void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset) {
         render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null);
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
+    void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
                 TileMaterial material, net.minecraft.world.item.DyeColor back) {
         this.material = material;
         this.back = back;
@@ -161,7 +161,7 @@ final class TableBoard {
         center(graphics, view);
     }
 
-    private void outerTiles(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset) {
+    private void outerTiles(GuiGraphicsExtractor graphics, TableBoardState view, int seat, TileFacePreset preset) {
         var player = view.seats().get(seat);
         int side = side(seat, viewer, players);
         if (seat == viewer) {
@@ -188,10 +188,10 @@ final class TableBoard {
         int cx = side == 3 ? bounds.x() + thickness / 2 : side == 1 ? bounds.right() - thickness / 2
             : bounds.x() + bounds.width() / 2;
         int cy = vertical ? (bounds.y() + bottom) / 2 : bounds.y() + thickness / 2;
-        graphics.pose().pushPose();
-        graphics.pose().translate(cx, cy, 0);
-        graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
-        graphics.pose().scale((float) scale, (float) scale, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(cx, cy);
+        graphics.pose().rotate((float) Math.toRadians(-90 * side));
+        graphics.pose().scale((float) scale, (float) scale);
         int y = thickness / 2 - tileHeight(width);
         int meldSpan = 0;
         for (var meld : rails.getFirst()) meldSpan += TileGui.meldWidth(meld, seat, width);
@@ -225,7 +225,7 @@ final class TableBoard {
             rememberRotated(tile, cx, cy, x + width / 2, y + tileHeight(width) / 2, side, scale);
             x += width;
         }
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
     private static int stripWidth(TableView.Seat player, int seat, int width) {
@@ -262,7 +262,7 @@ final class TableBoard {
         return rails;
     }
 
-    private void river(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset, int suppressedTile) {
+    private void river(GuiGraphicsExtractor graphics, TableBoardState view, int seat, TileFacePreset preset, int suppressedTile) {
         var river = view.seats().get(seat).river().stream().filter(discard -> !discard.called()).toList();
         if (river.isEmpty()) return;
         int side = side(seat, viewer, players);
@@ -282,14 +282,14 @@ final class TableBoard {
                 case 2 -> cy = area.bottom() - depth;
                 case 3 -> cx = area.right() - depth;
             }
-            graphics.pose().pushPose();
-            graphics.pose().translate(cx, cy, 0);
-            graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(cx, cy);
+            graphics.pose().rotate((float) Math.toRadians(-90 * side));
             int x = -rowSpan / 2;
             int shadow = Math.max(3, rowWidth / 8) + row;
             graphics.fill(x - 5, 3, x + rowSpan + shadow + 5, rowHeight + shadow + 4,
                 0x22000000 + Math.min(0x22000000, row * 0x05000000));
-            graphics.hLine(x - 3, x + rowSpan + 3, -2, row == 0 ? 0x553f7168 : 0x332e5a53);
+            graphics.horizontalLine(x - 3, x + rowSpan + 3, -2, row == 0 ? 0x553f7168 : 0x332e5a53);
             for (int index = start; index < end; index++) {
                 var discard = river.get(index);
                 int occupiedWidth = discard.riichi() ? rowHeight : rowWidth;
@@ -299,13 +299,13 @@ final class TableBoard {
                 if (discard.tile() != suppressedTile) {
                     tile(graphics, discard.tile(), x, drawY, rowWidth, false, discard.riichi(),
                         focused || view.markTedashi() && !discard.tsumogiri(), view.dimTsumogiri() && discard.tsumogiri(), preset);
-                    if (focused) graphics.renderOutline(x, drawY, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
+                    if (focused) graphics.outline(x, drawY, occupiedWidth, occupiedHeight, MahjongUi.ACCENT);
                 }
                 rememberRotated(discard.tile(), cx, cy, x + occupiedWidth / 2, drawY + occupiedHeight / 2, side);
                 if (discard.tile() >= 0) tileWidths.put(discard.tile(), rowWidth);
                 x += occupiedWidth;
             }
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
             depth += rowHeight;
         }
     }
@@ -314,12 +314,12 @@ final class TableBoard {
         return immersive == null ? riverWidth : immersive.riverWidth(seat, row);
     }
 
-    private void immersiveCenter(GuiGraphics graphics, TableBoardState view) {
+    private void immersiveCenter(GuiGraphicsExtractor graphics, TableBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
-        graphics.pose().pushPose();
-        graphics.pose().translate(640, 299, 0);
-        graphics.pose().scale(2, 2, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(640, 299);
+        graphics.pose().scale(2, 2);
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
                 + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1), -42, 1, 84, MahjongUi.ACCENT, true);
@@ -328,13 +328,13 @@ final class TableBoard {
         if (settings.show(TableSettings.Information.DEPOSITS)) {
             TableHud.stick(graphics, -30, 39, false);
             TableHud.stick(graphics, 5, 39, true);
-            graphics.drawString(font, Integer.toString(view.honba()), -12, 36, MahjongUi.MUTED, false);
-            graphics.drawString(font, Integer.toString(view.riichiSticks()), 23, 36, MahjongUi.MUTED, false);
+            graphics.text(font, Integer.toString(view.honba()), -12, 36, MahjongUi.MUTED, false);
+            graphics.text(font, Integer.toString(view.riichiSticks()), 23, 36, MahjongUi.MUTED, false);
         }
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
-    private void center(GuiGraphics graphics, TableBoardState view) {
+    private void center(GuiGraphicsExtractor graphics, TableBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
@@ -347,14 +347,14 @@ final class TableBoard {
             if (settings.show(TableSettings.Information.WINDS)) label = Component.translatable("wind.mchjong."
                 + WINDS[Math.floorMod(seat - view.dealer(), players)] + ".short");
             if (settings.show(TableSettings.Information.POINTS)) label = label.copy().append(" " + view.seats().get(seat).points());
-            graphics.pose().pushPose();
-            graphics.pose().translate(cx, cy, 0);
-            graphics.pose().mulPose(Axis.ZP.rotationDegrees(-90 * side));
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(cx, cy);
+            graphics.pose().rotate((float) Math.toRadians(-90 * side));
             boolean turn = seat == view.turn() && settings.show(TableSettings.Information.TURN);
             if (turn) graphics.fill(-length / 2 + 3, depth / 2 - 2, length / 2 - 3, depth / 2, MahjongUi.ACCENT);
             MahjongUi.text(graphics, font, label, -length / 2 + 3, depth / 2 - 12, length - 6,
                 turn ? MahjongUi.ACCENT : MahjongUi.MUTED, true);
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
         if (center.height() <= 40) {
             var summary = Component.empty();
@@ -379,11 +379,11 @@ final class TableBoard {
 
     private static int riverSpan(int width) { return 5 * width + tileHeight(width); }
     private static int tileHeight(int width) { return Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH); }
-    private void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+    private void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
         TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, material, this.back);
     }
-    private void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
+    private void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
         TileGui.meld(graphics, meld, owner, x, y, width, preset, material, back);
     }
     private void rememberRotated(int tile, int cx, int cy, int x, int y, int side) {

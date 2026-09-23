@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.inventory.Slot;
@@ -20,9 +20,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
     public MahjongBoxScreen(MahjongBoxMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
-        imageWidth = 304;
-        imageHeight = 216;
+        super(menu, inventory, title, 304, 216);
     }
 
     @Override protected void init() {
@@ -30,7 +28,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         topPos = Math.min(topPos, height - imageHeight - 24);
         presetChoice = addRenderableWidget(MahjongButton.create(presetLabel(), ignored -> {
             var choices = TileFacePresets.choices();
-            preset = choices.get(Math.floorMod(choices.indexOf(preset) + (hasShiftDown() ? -1 : 1), choices.size()));
+            preset = choices.get(Math.floorMod(choices.indexOf(preset) + (MahjongUi.shiftDown() ? -1 : 1), choices.size()));
             presetChoice.setMessage(presetLabel());
             updateActions();
         }).bounds(leftPos + 196, topPos + 136, 94, 20).build());
@@ -62,18 +60,18 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         presetChoice.visible = print.visible = printing;
         presetChoice.active = printing && choices.size() > 1;
         print.active = printing && choices.contains(preset) && menu.canEngrave(preset);
-        dyeBack.visible = reagent.getItem() instanceof net.minecraft.world.item.DyeItem;
+        dyeBack.visible = MahjongSupplies.dyeColor(reagent) != null;
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
         if (getFocused() instanceof net.minecraft.client.gui.components.AbstractWidget widget && !widget.visible)
             setFocused(null);
     }
 
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        renderBg(graphics, partialTick, mouseX, mouseY);
+        extractPanel(graphics, partialTick, mouseX, mouseY);
     }
 
-    @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+    private void extractPanel(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         MahjongUi.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         graphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + 3, MahjongUi.ACCENT);
         graphics.fill(leftPos + 189, topPos + 16, leftPos + 190, topPos + 104, MahjongUi.EDGE);
@@ -82,7 +80,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         for (Slot slot : menu.slots) MahjongUi.slot(graphics, leftPos + slot.x, topPos + slot.y, carrier(slot));
     }
 
-    @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    @Override protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 14, 5, 276, MahjongUi.TEXT, false);
         MahjongUi.text(graphics, font, Component.translatable("box.mchjong.stick_storage"), 14, 104, 136, MahjongUi.MUTED, false);
         MahjongUi.text(graphics, font, Component.translatable("item.mchjong.dice"), 154, 104, 40, MahjongUi.MUTED, true);
@@ -110,9 +108,9 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         } else paragraph(graphics, Component.translatable("box.mchjong.insert_dye"), 124, MahjongUi.MUTED);
     }
 
-    private int paragraph(GuiGraphics graphics, Component text, int y, int color) {
+    private int paragraph(GuiGraphicsExtractor graphics, Component text, int y, int color) {
         for (var line : font.split(text, 94)) {
-            graphics.drawString(font, line, 196, y, color, false);
+            graphics.text(font, line, 196, y, color, false);
             y += 10;
         }
         return y;
@@ -122,12 +120,12 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         return slot.container == minecraft.player.getInventory() && slot.getContainerSlot() == menu.ownerSlot();
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         if (hoveredSlot != null && carrier(hoveredSlot) && menu.getCarried().isEmpty()) {
             var lines = new java.util.ArrayList<>(getTooltipFromItem(minecraft, hoveredSlot.getItem()));
             lines.add(Component.translatable("box.mchjong.locked").withStyle(net.minecraft.ChatFormatting.GOLD));
-            graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
-        } else renderTooltip(graphics, mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
+        }
     }
 }

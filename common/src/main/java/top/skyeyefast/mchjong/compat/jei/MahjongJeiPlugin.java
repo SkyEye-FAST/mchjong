@@ -15,7 +15,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.client.renderer.Rect2i;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.client.MahjongBoxScreen;
@@ -33,14 +33,11 @@ public final class MahjongJeiPlugin implements IModPlugin {
 
     public static IJeiRuntime runtime() { return runtime; }
     // NeoForge discovers plugin IDs before block registration opens.
-    @Override public ResourceLocation getPluginUid() { return ResourceLocation.fromNamespaceAndPath("mchjong", "supplies"); }
+    @Override public Identifier getPluginUid() { return Identifier.fromNamespaceAndPath("mchjong", "supplies"); }
 
     @Override public void registerItemSubtypes(ISubtypeRegistration registration) {
         var interpreter = new ISubtypeInterpreter<ItemStack>() {
             @Override public Object getSubtypeData(ItemStack stack, UidContext context) { return SupplySubtype.of(stack); }
-            // Required by this JEI API; current component identity uses getSubtypeData exclusively.
-            @SuppressWarnings("deprecation")
-            @Override public String getLegacyStringSubtypeInfo(ItemStack stack, UidContext context) { return ""; }
         };
         SupplySubtype.items().forEach(item -> registration.registerSubtypeInterpreter(item, interpreter));
     }

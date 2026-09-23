@@ -15,7 +15,7 @@ public final class TableCommands {
     private TableCommands() {}
     public static void register(CommandDispatcher<CommandSourceStack> dispatcher) {
         top.skyeyefast.mchjong.replay.ReplayServer.register(dispatcher);
-        var world = Commands.literal("world").requires(source -> source.hasPermission(2))
+        var world = Commands.literal("world").requires(Commands.hasPermission(Commands.LEVEL_GAMEMASTERS))
             .executes(context -> showWorld(context.getSource()))
             .then(Commands.literal("reload").executes(context -> {
                 try { WorldSettings.of(context.getSource().getServer()).reload(); }
@@ -90,7 +90,7 @@ public final class TableCommands {
     }
     static MahjongTableBlockEntity table(ServerPlayer player) throws CommandSyntaxException {
         if (player.isAlive() && !player.isSpectator() && player.getVehicle() instanceof SeatEntity seat
-            && player.serverLevel().getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table
+            && player.level().getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table
             && table.participantGame(player) != null) return table;
         throw error("message.mchjong.seat_required");
     }

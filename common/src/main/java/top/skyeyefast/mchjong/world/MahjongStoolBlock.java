@@ -28,7 +28,8 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
 
     // This is the vanilla/Fabric hook. NeoForge's extended hook delegates to it in this profile.
     @SuppressWarnings("deprecation")
-    @Override public ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+    @Override public ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state,
+            boolean includeData) {
         ItemStack stack = new ItemStack(this);
         if (level.getBlockEntity(pos) instanceof FurnitureBlockEntity furniture) {
             stack.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, furniture.wood());
@@ -36,7 +37,7 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
         }
         return stack;
     }
-    @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.ENTITYBLOCK_ANIMATED; }
+    @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
     @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         if (level.getBlockEntity(pos) instanceof FurnitureBlockEntity furniture) {
             furniture.applyComponentsFromItemStack(stack);
@@ -56,8 +57,8 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
                     return InteractionResult.CONSUME;
                 }
             }
-            serverPlayer.displayClientMessage(Component.translatable("message.mchjong.no_table"), true);
+            serverPlayer.sendOverlayMessage(Component.translatable("message.mchjong.no_table"));
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
     }
 }

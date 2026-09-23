@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import com.mojang.math.Axis;
 import java.util.Comparator;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -12,58 +12,58 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 public final class TileGui {
     private TileGui() {}
 
-    public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways, boolean marked, TileFacePreset preset) {
+    public static void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways, boolean marked, TileFacePreset preset) {
         tile(graphics, tile, x, y, width, back, sideways, marked, false, preset, TileMaterial.BONE, null);
     }
 
-    public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+    public static void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                             boolean marked, boolean dimmed, TileFacePreset preset) {
         tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, TileMaterial.BONE, null);
     }
 
-    public static void tile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+    public static void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                             boolean marked, boolean dimmed, TileFacePreset preset, TileMaterial material, DyeColor dye) {
         drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, 0, preset, material, dye);
     }
 
-    public static void tile3d(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+    public static void tile3d(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                               boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye) {
         drawTile(graphics, tile, x, y, width, back, sideways, marked, dimmed, Math.max(1, depth), preset, material, dye);
     }
 
-    private static void drawTile(GuiGraphics graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
+    private static void drawTile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                                  boolean marked, boolean dimmed, int depth, TileFacePreset preset, TileMaterial material, DyeColor dye) {
         int height = Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH);
         int bodyColor = TileMesh.bodyColor(material, dye);
         int backColor = TileMesh.backColor(material, dye);
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y);
         if (depth > 0) {
             int w = sideways ? height : width, h = sideways ? width : height;
             graphics.fill(0, h, w, h + depth, shade(bodyColor, .92));
             graphics.fill(0, h + depth - Math.max(1, depth / 3), w, h + depth, backColor);
         }
         if (sideways) {
-            graphics.pose().translate(height, 0, 0);
-            graphics.pose().mulPose(Axis.ZP.rotationDegrees(90));
+            graphics.pose().translate(height, 0);
+            graphics.pose().rotate((float) Math.toRadians(90));
         }
         if (back || tile < 0) {
             var texture = TileRenderTypes.backTexture(material, dye);
             int textureWidth = 16;
             int textureHeight = 16;
-            graphics.setColor(((backColor >> 16) & 255) / 255f, ((backColor >> 8) & 255) / 255f,
-                (backColor & 255) / 255f, ((backColor >>> 24) & 255) / 255f);
-            graphics.blit(texture, 1, 1, width - 2, height - 2, 0, 0,
-                textureWidth, textureHeight, textureWidth, textureHeight);
-            graphics.setColor(1, 1, 1, 1);
-            graphics.blit(TileMesh.BACK, 1, 1, width - 2, height - 2, 0, 0,
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, texture,
+                1, 1, 0, 0, width - 2, height - 2,
+                textureWidth, textureHeight, textureWidth, textureHeight, backColor);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TileMesh.BACK,
+                1, 1, 0, 0, width - 2, height - 2,
                 TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT);
         } else {
             graphics.fill(0, 0, width, height, 0xfff4eedb);
             int face = TileMesh.face(tile);
-            graphics.blit(TileMesh.atlas(preset), 1, 1, width - 2, height - 2,
-                face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
-                TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT, TileMesh.ATLAS_WIDTH, TileMesh.ATLAS_HEIGHT);
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TileMesh.atlas(preset),
+                1, 1, face % 8 * TileMesh.TILE_WIDTH, face / 8 * TileMesh.TILE_HEIGHT,
+                width - 2, height - 2, TileMesh.TILE_WIDTH, TileMesh.TILE_HEIGHT,
+                TileMesh.ATLAS_WIDTH, TileMesh.ATLAS_HEIGHT);
         }
         if (depth > 0 && !dimmed) {
             graphics.fill(1, 1, width - 1, 2, 0x55ffffff);
@@ -72,8 +72,8 @@ public final class TileGui {
             graphics.fill(2, height - 2, width - 1, height - 1, 0x44000000);
         }
         if (dimmed) graphics.fill(1, 1, width - 1, height - 1, 0x660b1418);
-        graphics.renderOutline(0, 0, width, height, marked ? 0xffffbd51 : 0xffa99c80);
-        graphics.pose().popPose();
+        graphics.outline(0, 0, width, height, marked ? 0xffffbd51 : 0xffa99c80);
+        graphics.pose().popMatrix();
     }
 
     private static int shade(int color, double scale) {
@@ -85,21 +85,21 @@ public final class TileGui {
         return (int) Math.ceil(MeldLayout.of(meld, owner).width() * tileWidth / TileMesh.WIDTH);
     }
 
-    public static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset) {
+    public static void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset) {
         meld(graphics, meld, owner, x, y, tileWidth, 0, preset, TileMaterial.BONE, null);
     }
 
-    public static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset,
+    public static void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int tileWidth, TileFacePreset preset,
                             TileMaterial material, DyeColor dye) {
         meld(graphics, meld, owner, x, y, tileWidth, 0, preset, material, dye);
     }
 
-    public static void meld3d(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
+    public static void meld3d(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
                               TileFacePreset preset, TileMaterial material, DyeColor dye) {
         meld(graphics, meld, owner, x, y, tileWidth, Math.max(1, depth), preset, material, dye);
     }
 
-    private static void meld(GuiGraphics graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
+    private static void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int tileWidth, int depth,
                              TileFacePreset preset, TileMaterial material, DyeColor dye) {
         double scale = tileWidth / (double) TileMesh.WIDTH;
         // Paint the rear added-kan tile first so its body and shadow stay behind the called tile.

@@ -2,6 +2,7 @@ package top.skyeyefast.mchjong.world;
 
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.HolderLookup;
+import net.minecraft.core.component.DataComponentGetter;
 import net.minecraft.core.component.DataComponentMap;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.nbt.CompoundTag;
@@ -10,6 +11,8 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.level.block.entity.BlockEntity;
 import net.minecraft.world.level.block.entity.BlockEntityType;
 import net.minecraft.world.level.block.state.BlockState;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 
@@ -23,7 +26,7 @@ public class FurnitureBlockEntity extends BlockEntity {
     public FurnitureWood wood() { return wood; }
     public DyeColor color() { return color; }
 
-    @Override protected void applyImplicitComponents(DataComponentInput input) {
+    @Override protected void applyImplicitComponents(DataComponentGetter input) {
         super.applyImplicitComponents(input);
         wood = input.getOrDefault(MahjongComponents.WOOD, FurnitureWood.OAK);
         color = input.getOrDefault(DataComponents.BASE_COLOR, DyeColor.WHITE);
@@ -33,14 +36,19 @@ public class FurnitureBlockEntity extends BlockEntity {
         builder.set(MahjongComponents.WOOD, wood);
         builder.set(DataComponents.BASE_COLOR, color);
     }
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        writeAppearance(tag);
+    @Override protected void saveAdditional(ValueOutput output) {
+        super.saveAdditional(output);
+        writeAppearance(output);
     }
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        for (FurnitureWood candidate : FurnitureWood.values()) if (candidate.getSerializedName().equals(tag.getString("wood"))) wood = candidate;
-        if (tag.contains("color")) color = DyeColor.byId(tag.getInt("color"));
+    @Override protected void loadAdditional(ValueInput input) {
+        super.loadAdditional(input);
+        String savedWood = input.getStringOr("wood", FurnitureWood.OAK.getSerializedName());
+        for (FurnitureWood candidate : FurnitureWood.values()) if (candidate.getSerializedName().equals(savedWood)) wood = candidate;
+        color = DyeColor.byId(input.getIntOr("color", DyeColor.WHITE.getId()));
+    }
+    protected void writeAppearance(ValueOutput output) {
+        output.putString("wood", wood.getSerializedName());
+        output.putInt("color", color.getId());
     }
     protected void writeAppearance(CompoundTag tag) {
         tag.putString("wood", wood.getSerializedName());
@@ -48,7 +56,7 @@ public class FurnitureBlockEntity extends BlockEntity {
     }
     public void appearanceChanged() {
         setChanged();
-        if (level != null && !level.isClientSide) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
+        if (level != null && !level.isClientSide()) level.sendBlockUpdated(worldPosition, getBlockState(), getBlockState(), 3);
     }
     @Override public CompoundTag getUpdateTag(HolderLookup.Provider registries) {
         CompoundTag tag = new CompoundTag();

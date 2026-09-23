@@ -3,11 +3,13 @@ package top.skyeyefast.mchjong.client;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
@@ -25,7 +27,7 @@ public final class ReplayBrowserScreen extends Screen {
     }
     public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
     @Override protected void init() {
         int span = Math.min(650, width - 20), left = (width - span) / 2;
         String text = search == null ? index.search() : search.getValue();
@@ -57,11 +59,11 @@ public final class ReplayBrowserScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(width / 2 - 55, height - 30, 110, 20).build());
     }
-    @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 650);
         MahjongUi.text(graphics, font, title, 12, 11, width - 24, MahjongUi.TEXT, true);
-        graphics.drawCenteredString(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, MahjongUi.MUTED);
-        super.render(graphics, x, y, partialTick);
+        graphics.centeredText(font, Component.translatable("replay.mchjong.archive_note", index.page() + 1), width / 2, 25, MahjongUi.MUTED);
+        super.extractRenderState(graphics, x, y, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 
@@ -73,12 +75,13 @@ public final class ReplayBrowserScreen extends Screen {
 
     void delete(java.util.UUID id) { ClientReplays.delete(id, index.search(), index.oldestFirst()); }
 
-    @Override public boolean keyPressed(int key, int scan, int modifiers) {
+    @Override public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
         if (search.isFocused() && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER)) {
             refresh(0, index.oldestFirst());
             return true;
         }
-        return super.keyPressed(key, scan, modifiers);
+        return super.keyPressed(event);
     }
 
     private final class MatchList extends AbstractWidget {
@@ -108,24 +111,24 @@ public final class ReplayBrowserScreen extends Screen {
             scroll = Math.clamp(scroll, Math.max(0, (selected + 1) * ROW - height), selected * ROW);
         }
         private void activate() { if (!index.matches().isEmpty()) ClientReplays.open(index.matches().get(selected).id()); }
-        @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             MahjongUi.panel(graphics, getX(), getY(), width, height);
             graphics.enableScissor(getX(), getY(), getX() + width, getY() + height);
-            if (index.matches().isEmpty()) graphics.drawCenteredString(font, Component.translatable("replay.mchjong.empty"),
+            if (index.matches().isEmpty()) graphics.centeredText(font, Component.translatable("replay.mchjong.empty"),
                 getX() + width / 2, getY() + 18, MahjongUi.MUTED);
             for (int i = 0; i < index.matches().size(); i++) {
                 int y = getY() + i * ROW - scroll;
                 if (y + ROW < getY() || y > getY() + height) continue;
                 var match = index.matches().get(i);
                 graphics.fill(getX() + 3, y + 2, getX() + width - 3, y + ROW - 2, i == selected ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                if (isFocused() && i == selected) graphics.renderOutline(getX() + 3, y + 2, width - 6, ROW - 4, MahjongUi.ACCENT);
+                if (isFocused() && i == selected) graphics.outline(getX() + 3, y + 2, width - 6, ROW - 4, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, label(i), getX() + 9, y + 7, width - 22, MahjongUi.TEXT, false);
                 String date = DateTimeFormatter.ofPattern("uuuu-MM-dd HH:mm").withZone(ZoneId.systemDefault())
                     .format(Instant.ofEpochMilli(match.startedAt()));
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
                 MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
-                graphics.drawString(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
+                graphics.text(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }
             graphics.disableScissor();
@@ -137,11 +140,12 @@ public final class ReplayBrowserScreen extends Screen {
                 graphics.fill(getX() + width - 5, y, getX() + width - 3, y + thumb, MahjongUi.ACCENT);
             }
         }
-        @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-            if (!super.mouseClicked(mouseX, mouseY, button)) return false;
+        @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            double mouseY = event.y();
+            if (!super.mouseClicked(event, doubleClick)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
             if (entry >= 0 && entry < index.matches().size()) {
-                long now = net.minecraft.Util.getMillis();
+                long now = net.minecraft.util.Util.getMillis();
                 boolean open = entry == selected && now - lastClick < 250;
                 selected = entry;
                 lastClick = now;
@@ -154,14 +158,15 @@ public final class ReplayBrowserScreen extends Screen {
             scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, index.matches().size() * ROW - height));
             return true;
         }
-        @Override public boolean keyPressed(int key, int scan, int modifiers) {
+        @Override public boolean keyPressed(KeyEvent event) {
             if (!isFocused()) return false;
+            int key = event.key();
             switch (key) {
                 case GLFW.GLFW_KEY_UP -> move(-1);
                 case GLFW.GLFW_KEY_DOWN -> move(1);
                 case GLFW.GLFW_KEY_ENTER, GLFW.GLFW_KEY_SPACE -> activate();
                 case GLFW.GLFW_KEY_DELETE -> confirmDelete();
-                default -> { return super.keyPressed(key, scan, modifiers); }
+                default -> { return super.keyPressed(event); }
             }
             return true;
         }

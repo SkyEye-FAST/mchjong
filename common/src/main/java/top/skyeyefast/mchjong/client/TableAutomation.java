@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.AutoPlay;
@@ -81,7 +81,7 @@ final class TableAutomation {
                 parent.control(current, operation, current.decision(), !current.autoPlay().enabled(option));
                 rebuild.run();
             }) {
-                @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+                @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
                     var font = Minecraft.getInstance().font;
                     if (horizontal) renderSurface(graphics);
                     else MahjongUi.control(graphics, getX(), getY() + 2, getWidth(), 16,
@@ -90,22 +90,22 @@ final class TableAutomation {
                     int markerX = getX() + (horizontal ? 8 : 2), markerSize = horizontal ? 8 : 4;
                     int markerY = getY() + (getHeight() - markerSize) / 2;
                     if (enabled) graphics.fill(markerX, markerY, markerX + markerSize, markerY + markerSize, color);
-                    else graphics.renderOutline(markerX, markerY, markerSize, markerSize, color);
+                    else graphics.outline(markerX, markerY, markerSize, markerSize, color);
                     var caption = Component.translatable(expanded ? key : key + ".short");
                     int captionInset = horizontal ? 22 : expanded ? 13 : 8;
                     float scale = horizontal ? 2 : 1;
                     int captionWidth = (int) ((getWidth() - captionInset - (horizontal || expanded ? 6 : 2)) / scale);
-                    graphics.pose().pushPose();
-                    graphics.pose().translate(getX() + captionInset, getY() + getHeight() / 2f, 0);
-                    graphics.pose().scale(scale, scale, 1);
+                    graphics.pose().pushMatrix();
+                    graphics.pose().translate(getX() + captionInset, getY() + getHeight() / 2f);
+                    graphics.pose().scale(scale, scale);
                     if (expanded && font.width(caption) > captionWidth) {
                         var lines = font.split(caption, captionWidth);
                         int count = Math.min(2, lines.size());
                         for (int line = 0; line < count; line++)
-                            graphics.drawString(font, lines.get(line), (captionWidth - font.width(lines.get(line))) / 2,
+                            graphics.text(font, lines.get(line), (captionWidth - font.width(lines.get(line))) / 2,
                                 -count * font.lineHeight / 2 + line * font.lineHeight, color, false);
                     } else MahjongUi.text(graphics, font, caption, 0, -font.lineHeight / 2, captionWidth, color, true);
-                    graphics.pose().popPose();
+                    graphics.pose().popMatrix();
                 }
             }.selected(enabled);
             button.active = !pending;
@@ -115,12 +115,12 @@ final class TableAutomation {
             top + (height - buttonHeight) / 2, toggleWidth, buttonHeight,
             Component.translatable(expanded ? "ui.mchjong.automation_hide" : "ui.mchjong.automation_show"),
             ignored -> { expanded = !expanded; rebuild.run(); }) {
-                @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+                @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
                     if (horizontal) renderSurface(graphics);
                     else {
                         graphics.fill(getX() + 6, getY() + 2, getX() + 14, getY() + 18,
                             isHoveredOrFocused() ? MahjongUi.HOVER : MahjongUi.PANEL);
-                        if (isFocused()) graphics.renderOutline(getX() + 5, getY() + 1, 10, 18, MahjongUi.ACCENT);
+                        if (isFocused()) graphics.outline(getX() + 5, getY() + 1, 10, 18, MahjongUi.ACCENT);
                     }
                     MahjongUi.text(graphics, Minecraft.getInstance().font, Component.literal(expanded ? "‹" : "›"),
                         getX() + 4, getY() + (getHeight() - Minecraft.getInstance().font.lineHeight) / 2,

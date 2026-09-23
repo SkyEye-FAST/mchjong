@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.io.IOException;
 import java.util.Locale;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
@@ -21,7 +21,7 @@ public final class TableSettingsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -123,22 +123,22 @@ public final class TableSettingsScreen extends Screen {
             Component.translatable(key + "." + value.name().toLowerCase(Locale.ROOT)));
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 560);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         if (tab == 0) {
             int pages = (TableSettings.Information.values().length - 1) / (Math.max(1, (height - 130) / 26) * 2) + 1;
-            if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 55, MahjongUi.MUTED);
+            if (pages > 1) graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 55, MahjongUi.MUTED);
         }
-        if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
+        if (saveFailed) graphics.centeredText(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
         if (tab == 3) {
             int y = 145;
             for (var line : font.split(Component.translatable("settings.mchjong.pack_voice_note"), Math.min(540, width - 32))) {
-                graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.MUTED);
+                graphics.centeredText(font, line, width / 2, y, MahjongUi.MUTED);
                 y += 11;
             }
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override public void onClose() {

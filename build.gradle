@@ -10,27 +10,12 @@ allprojects {
             filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config' }
         }
         exclusiveContent {
-            forRepository { maven { name = 'EMI'; url = 'https://repo.sleeping.town/' } }
-            filter { includeGroup 'dev.emi' }
-        }
-        exclusiveContent {
             forRepository { maven { name = 'Shedaniel'; url = 'https://maven.shedaniel.me/' } }
             filter {
                 includeGroup 'me.shedaniel'
                 includeGroup 'me.shedaniel.cloth'
                 includeGroup 'dev.architectury'
             }
-        }
-        exclusiveContent {
-            forRepository { maven { name = 'Create'; url = 'https://maven.createmod.net' } }
-            filter {
-                includeGroup 'net.createmod.ponder'
-                includeGroup 'dev.engine-room.flywheel'
-            }
-        }
-        exclusiveContent {
-            forRepository { maven { name = 'ForgeConfigAPIPort'; url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
-            filter { includeGroup 'fuzs.forgeconfigapiport' }
         }
         maven {
             name = 'AliyunPublic'
@@ -47,7 +32,7 @@ allprojects {
 
 spotless {
     java {
-        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'forge/src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
+        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
         trimTrailingWhitespace()
         endWithNewline()
         leadingTabsToSpaces(4)
@@ -65,7 +50,7 @@ spotless {
         leadingTabsToSpaces(2)
     }
     format 'misc', {
-        target '*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore'
+        target '*.gradle', 'fabric/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore'
         targetExclude 'release-notes.md'
         trimTrailingWhitespace()
         endWithNewline()
@@ -75,5 +60,5 @@ spotless {
 tasks.register('buildAll') {
     group = 'build'
     description = 'Test the shared engine and build all loader artifacts for the selected Minecraft profile.'
-    dependsOn ':fabric:build', ':forge:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
+    dependsOn ':fabric:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
 }

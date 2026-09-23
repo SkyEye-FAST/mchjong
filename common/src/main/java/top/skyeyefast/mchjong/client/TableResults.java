@@ -5,12 +5,14 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 import java.util.stream.IntStream;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.Game;
@@ -56,26 +58,26 @@ public final class TableResults extends AbstractWidget {
         return view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END;
     }
 
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         hits.clear();
         int x = getX(), y = getY();
         MahjongUi.panel(graphics, x, y, width, height);
-        if (isFocused()) graphics.renderOutline(x, y, width, height, GOLD);
+        if (isFocused()) graphics.outline(x, y, width, height, GOLD);
         int contentWidth = width / contentScale, contentHeight = height / contentScale;
         int contentMouseX = Math.floorDiv(mouseX - x, contentScale);
         int contentMouseY = Math.floorDiv(mouseY - y, contentScale);
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0);
-        graphics.pose().scale(contentScale, contentScale, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y);
+        graphics.pose().scale(contentScale, contentScale);
         renderContent(graphics, contentMouseX, contentMouseY, contentWidth, contentHeight);
         for (Hit hit : hits) if (hit.contains(contentMouseX, contentMouseY)) {
-            graphics.renderTooltip(font, font.split(hit.text(), Math.min(360, contentWidth - 24)), contentMouseX, contentMouseY);
+            graphics.setTooltipForNextFrame(font.split(hit.text(), Math.min(360, contentWidth - 24)), contentMouseX, contentMouseY);
             break;
         }
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
-    private void renderContent(GuiGraphics graphics, int mouseX, int mouseY, int width, int height) {
+    private void renderContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, int width, int height) {
         int x = 0, y = 0;
         Component heading = page == Page.HAND ? getMessage() : Component.translatable(
             page == Page.POINTS ? "ui.mchjong.point_changes" : "ui.mchjong.match_complete");
@@ -104,11 +106,11 @@ public final class TableResults extends AbstractWidget {
                 boolean compact = bodyHeight < 150;
                 int needed = winningHand(null, bodyWidth, compact);
                 float scale = Math.min(1f, bodyHeight / (float) Math.max(1, needed));
-                graphics.pose().pushPose();
-                graphics.pose().translate(x + 10 + (bodyWidth - bodyWidth * scale) / 2, top, 0);
-                graphics.pose().scale(scale, scale, 1);
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(x + 10 + (bodyWidth - bodyWidth * scale) / 2, top);
+                graphics.pose().scale(scale, scale);
                 winningHand(graphics, bodyWidth, compact);
-                graphics.pose().popPose();
+                graphics.pose().popMatrix();
                 // Keep the tile row clear when the mouse rests in the result panel.
                 hits.add(new Hit(x + 10, top, bodyWidth, 10, winnerSummary(view.wins().get(winner))));
             }
@@ -117,7 +119,7 @@ public final class TableResults extends AbstractWidget {
         }
     }
 
-    private int winningHand(GuiGraphics graphics, int span, boolean compact) {
+    private int winningHand(GuiGraphicsExtractor graphics, int span, boolean compact) {
         var win = view.wins().get(winner);
         var player = view.seats().get(win.seat());
         Component source = win.from() < 0 ? Component.translatable("result.mchjong." + view.result())
@@ -157,7 +159,7 @@ public final class TableResults extends AbstractWidget {
             for (int col = 0; col < columns && first + col < yaku.size(); col++) {
                 var lines = font.split(yaku.get(first + col), colWidth - 7);
                 for (int row = 0; row < lines.size(); row++) if (graphics != null)
-                    graphics.drawString(font, lines.get(row), col * colWidth, y + row * 10, TEXT, false);
+                    graphics.text(font, lines.get(row), col * colWidth, y + row * 10, TEXT, false);
                 rowHeight = Math.max(rowHeight, lines.size() * 10);
             }
             y += rowHeight + 2;
@@ -176,7 +178,7 @@ public final class TableResults extends AbstractWidget {
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }
 
-    private int indicators(GuiGraphics graphics, int x, int y, int span, boolean ura, boolean compact) {
+    private int indicators(GuiGraphicsExtractor graphics, int x, int y, int span, boolean ura, boolean compact) {
         var tiles = new ArrayList<Integer>();
         for (int i = 0; i < 5; i++) {
             int index = view.wall().size() - (ura ? 6 : 5) - 2 * i;
@@ -193,7 +195,7 @@ public final class TableResults extends AbstractWidget {
         return compact ? 17 : 31;
     }
 
-    private void drawHands(GuiGraphics graphics, int x, int y, int span, int available) {
+    private void drawHands(GuiGraphicsExtractor graphics, int x, int y, int span, int available) {
         int columns = 2, rows = (view.seats().size() + 1) / 2;
         int cardWidth = span / columns, cardHeight = available / rows;
         for (int seat = 0; seat < view.seats().size(); seat++) {
@@ -221,7 +223,7 @@ public final class TableResults extends AbstractWidget {
         }
     }
 
-    private void scoreTable(GuiGraphics graphics, int x, int y, int span, int available) {
+    private void scoreTable(GuiGraphicsExtractor graphics, int x, int y, int span, int available) {
         boolean standings = page == Page.MATCH;
         var order = IntStream.range(0, view.seats().size()).boxed().toList();
         if (standings && view.finalRanks().size() == view.seats().size())
@@ -252,13 +254,13 @@ public final class TableResults extends AbstractWidget {
             for (int i = 0; i < values.size(); i++) {
                 String value = values.get(i);
                 int color = i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
-                graphics.drawString(font, value, x + ends[i + 1] - font.width(value) - 3, textY, color, false);
+                graphics.text(font, value, x + ends[i + 1] - font.width(value) - 3, textY, color, false);
             }
             hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(Component.translatable("ui.mchjong.points", player.points()))));
         }
     }
 
-    private void scores(GuiGraphics graphics, int x, int y, int span, int available, boolean horizontal) {
+    private void scores(GuiGraphicsExtractor graphics, int x, int y, int span, int available, boolean horizontal) {
         var order = IntStream.range(0, view.seats().size()).boxed().toList();
         if (page == Page.MATCH && view.finalRanks().size() == view.seats().size())
             order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
@@ -286,15 +288,15 @@ public final class TableResults extends AbstractWidget {
         }
     }
 
-    private void name(GuiGraphics graphics, int seat, Component name, int x, int y, int span, int color) {
+    private void name(GuiGraphicsExtractor graphics, int seat, Component name, int x, int y, int span, int color) {
         int inset = PlayerPortrait.draw(graphics, view.seats().get(seat), x, y - 1, 10);
         line(graphics, name, x + inset, y, span - inset, color);
     }
 
-    private void text(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
-        if (graphics != null) graphics.drawString(font, font.plainSubstrByWidth(text.getString(), Math.max(1, span)), x, y, color, false);
+    private void text(GuiGraphicsExtractor graphics, Component text, int x, int y, int span, int color) {
+        if (graphics != null) graphics.text(font, font.plainSubstrByWidth(text.getString(), Math.max(1, span)), x, y, color, false);
     }
-    private void line(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
+    private void line(GuiGraphicsExtractor graphics, Component text, int x, int y, int span, int color) {
         text(graphics, text, x, y, span, color);
         if (font.width(text) > span) hits.add(new Hit(x, y, span, 10, text));
     }
@@ -304,7 +306,9 @@ public final class TableResults extends AbstractWidget {
         return summary;
     }
 
-    @Override public boolean mouseClicked(double x, double y, int button) {
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double x = event.x(), y = event.y();
+        int button = event.button();
         double localX = (x - getX()) / contentScale, localY = (y - getY()) / contentScale;
         int contentWidth = width / contentScale;
         if (button == 0 && page == Page.HAND && view.wins().size() > 1 && localY >= 21 && localY < 36) {
@@ -314,14 +318,15 @@ public final class TableResults extends AbstractWidget {
                 return true;
             }
         }
-        return super.mouseClicked(x, y, button);
+        return super.mouseClicked(event, doubleClick);
     }
-    @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+    @Override public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
         if (page == Page.HAND && view.wins().size() > 1 && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
             winner = Math.floorMod(winner + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), view.wins().size());
             return true;
         }
-        return super.keyPressed(key, scanCode, modifiers);
+        return super.keyPressed(event);
     }
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {
         var summary = getMessage().copy();

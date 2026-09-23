@@ -42,11 +42,12 @@ public final class TableSpaceBlock extends Block {
     public static BlockPos center(BlockPos pos, BlockState state) { return pos.offset(RADIUS - state.getValue(X), 0, RADIUS - state.getValue(Z)); }
     // Vanilla/Fabric hook; NeoForge's player-aware hook delegates to this method.
     @SuppressWarnings("deprecation")
-    @Override public net.minecraft.world.item.ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state) {
+    @Override public net.minecraft.world.item.ItemStack getCloneItemStack(net.minecraft.world.level.LevelReader level, BlockPos pos, BlockState state,
+            boolean includeData) {
         BlockPos center = center(pos, state);
         BlockState table = level.getBlockState(center);
         return table.getBlock() instanceof MahjongTableBlock
-            ? table.getBlock().getCloneItemStack(level, center, table) : net.minecraft.world.item.ItemStack.EMPTY;
+            ? table.getCloneItemStack(level, center, includeData) : net.minecraft.world.item.ItemStack.EMPTY;
     }
     @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
     @Override protected VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
@@ -66,36 +67,37 @@ public final class TableSpaceBlock extends Block {
         if (player instanceof ServerPlayer serverPlayer && level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table) {
             table.use(serverPlayer, hit);
         }
-        return InteractionResult.sidedSuccess(level.isClientSide);
+        return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
     }
 
-    @Override protected net.minecraft.world.ItemInteractionResult useItemOn(net.minecraft.world.item.ItemStack stack,
+    @Override protected InteractionResult useItemOn(net.minecraft.world.item.ItemStack stack,
             BlockState state, Level level, BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
         if (level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table && table.drawerAt(hit) >= 0) {
             if (player instanceof ServerPlayer server) table.openSticks(server, table.drawerAt(hit));
-            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
         }
         if (stack.is(MahjongContent.BOX_ITEM) || stack.is(MahjongContent.CLOTH_ITEM)) {
             if (player instanceof ServerPlayer server && level.getBlockEntity(center(pos, state)) instanceof MahjongTableBlockEntity table) {
                 if (stack.is(MahjongContent.BOX_ITEM)) table.openStorage(server);
                 else table.useEquipment(server, stack);
             }
-            return net.minecraft.world.ItemInteractionResult.sidedSuccess(level.isClientSide);
+            return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
         }
-        return net.minecraft.world.ItemInteractionResult.PASS_TO_DEFAULT_BLOCK_INTERACTION;
+        return InteractionResult.TRY_WITH_EMPTY_HAND;
     }
     @Override public BlockState playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
-        if (!level.isClientSide && player.isCreative()) {
+        if (!level.isClientSide() && player.isCreative()) {
             BlockPos center = center(pos, state);
             if (level.getBlockState(center).getBlock() instanceof MahjongTableBlock) level.destroyBlock(center, false);
         }
         return super.playerWillDestroy(level, pos, state, player);
     }
-    @Override protected void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
-        if (!level.isClientSide && !state.is(replacement.getBlock())) {
+    @Override protected void affectNeighborsAfterRemoval(BlockState state, net.minecraft.server.level.ServerLevel level,
+            BlockPos pos, boolean moving) {
+        if (!level.getBlockState(pos).is(state.getBlock())) {
             BlockPos center = center(pos, state);
             if (level.getBlockState(center).getBlock() instanceof MahjongTableBlock) level.destroyBlock(center, true);
         }
-        super.onRemove(state, level, pos, replacement, moving);
+        super.affectNeighborsAfterRemoval(state, level, pos, moving);
     }
 }

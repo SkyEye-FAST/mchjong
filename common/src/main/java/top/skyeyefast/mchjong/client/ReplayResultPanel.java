@@ -5,10 +5,12 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.stream.IntStream;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayHand;
@@ -38,7 +40,7 @@ final class ReplayResultPanel extends AbstractWidget {
 
     void setViewer(int viewer) { this.viewer = viewer; }
 
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.panel(graphics, getX(), getY(), width, height);
         line(graphics, getMessage(), getX() + 9, getY() + 7, width - 18, MahjongUi.ACCENT);
         int top = getY() + 24;
@@ -51,7 +53,7 @@ final class ReplayResultPanel extends AbstractWidget {
         else drawScoreStrip(graphics, getX() + 8, getY() + height - 39, width - 16, 34);
     }
 
-    private void drawWin(GuiGraphics graphics, int x, int y, int span, int available) {
+    private void drawWin(GuiGraphicsExtractor graphics, int x, int y, int span, int available) {
         if (hand.wins().size() > 1) {
             int tabWidth = Math.max(1, span / hand.wins().size());
             for (int i = 0; i < hand.wins().size(); i++) {
@@ -111,7 +113,7 @@ final class ReplayResultPanel extends AbstractWidget {
         if (!hand.ura().isEmpty()) indicators(graphics, Component.translatable("ui.mchjong.ura_indicators"), hand.ura(), x, y, span);
     }
 
-    private void drawNoWinner(GuiGraphics graphics, int x, int y, int span, int available) {
+    private void drawNoWinner(GuiGraphicsExtractor graphics, int x, int y, int span, int available) {
         int columns = 2, rows = (hand.finalSeats().size() + 1) / 2;
         int cardWidth = span / columns, cardHeight = Math.max(44, available / rows);
         for (int seat = 0; seat < hand.finalSeats().size(); seat++) {
@@ -144,7 +146,7 @@ final class ReplayResultPanel extends AbstractWidget {
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }
 
-    private int indicators(GuiGraphics graphics, Component label, java.util.List<Integer> tiles, int x, int y, int span) {
+    private int indicators(GuiGraphicsExtractor graphics, Component label, java.util.List<Integer> tiles, int x, int y, int span) {
         int labelWidth = Math.min(92, Math.max(40, font.width(label) + 5));
         line(graphics, label, x, y + 4, labelWidth, MahjongUi.MUTED);
         int tw = 10;
@@ -152,7 +154,7 @@ final class ReplayResultPanel extends AbstractWidget {
         return y + Math.round(tw * TileMesh.HEIGHT / TileMesh.WIDTH) + 4;
     }
 
-    private void drawScores(GuiGraphics graphics, int x, int y, int span, int available) {
+    private void drawScores(GuiGraphicsExtractor graphics, int x, int y, int span, int available) {
         var order = IntStream.range(0, hand.finalSeats().size()).boxed().toList();
         if (hand.finalRanks().size() == hand.finalSeats().size())
             order = order.stream().sorted(Comparator.comparingInt(seat -> hand.finalRanks().get(seat))).toList();
@@ -174,7 +176,7 @@ final class ReplayResultPanel extends AbstractWidget {
         }
     }
 
-    private void drawScoreStrip(GuiGraphics graphics, int x, int y, int span, int height) {
+    private void drawScoreStrip(GuiGraphicsExtractor graphics, int x, int y, int span, int height) {
         int cardWidth = span / hand.finalSeats().size();
         for (int seat = 0; seat < hand.finalSeats().size(); seat++) {
             int cx = x + seat * cardWidth;
@@ -186,11 +188,13 @@ final class ReplayResultPanel extends AbstractWidget {
         }
     }
 
-    private void line(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
-        graphics.drawString(font, font.plainSubstrByWidth(text.getString(), Math.max(1, span)), x, y, color, false);
+    private void line(GuiGraphicsExtractor graphics, Component text, int x, int y, int span, int color) {
+        graphics.text(font, font.plainSubstrByWidth(text.getString(), Math.max(1, span)), x, y, color, false);
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
         if (button == 0 && hand.wins().size() > 1 && mouseY >= getY() + 24 && mouseY < getY() + 39) {
             int span = width - 20 - (width >= 520 ? 170 : 0);
             if (mouseX >= getX() + 10 && mouseX < getX() + 10 + span) {
@@ -198,15 +202,16 @@ final class ReplayResultPanel extends AbstractWidget {
                 return true;
             }
         }
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, doubleClick);
     }
 
-    @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+    @Override public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
         if (hand.wins().size() > 1 && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
             winner = Math.floorMod(winner + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), hand.wins().size());
             return true;
         }
-        return super.keyPressed(key, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {

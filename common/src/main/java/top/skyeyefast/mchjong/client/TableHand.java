@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.List;
 import java.util.function.IntUnaryOperator;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -78,18 +78,18 @@ final class TableHand {
         return Tile.ABSENT;
     }
 
-    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
+    void render(GuiGraphicsExtractor graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
         render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, TileMaterial.BONE, null);
     }
 
-    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
+    void render(GuiGraphicsExtractor graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
                 TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
             graphics.fill(railLeft, y + tileHeight - 1, railRight, y + tileHeight + 12, 0xff081d20);
             graphics.fill(railLeft + 3, y + tileHeight - 1, railRight - 3, y + tileHeight + 3, 0xff31575a);
-            graphics.hLine(railLeft + 4, railRight - 5, y + tileHeight - 2, 0xff638083);
+            graphics.horizontalLine(railLeft + 4, railRight - 5, y + tileHeight - 2, 0xff638083);
         }
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
@@ -97,7 +97,7 @@ final class TableHand {
                 if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
                     Math.max(2, tileWidth / 8), preset, material, dye);
                 else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false, preset, material, dye);
-                if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
+                if (color != 0) graphics.outline(x(i), top, tileWidth, tileHeight, color);
             }
         }
         int meldTileWidth = perspective ? Math.min(40, tileWidth) : tileWidth;
@@ -108,7 +108,7 @@ final class TableHand {
         int meldY = y + tileHeight - meldHeight;
         if (perspective && !melds.isEmpty()) {
             graphics.fill(meldX + 5, meldY + meldHeight + 3, right + 8, meldY + meldHeight + 10, 0x44000000);
-            graphics.hLine(meldX - 3, right + 3, meldY + meldHeight + 1, 0xff34585a);
+            graphics.horizontalLine(meldX - 3, right + 3, meldY + meldHeight + 1, 0xff34585a);
         }
         for (var meld : melds) {
             if (perspective) {

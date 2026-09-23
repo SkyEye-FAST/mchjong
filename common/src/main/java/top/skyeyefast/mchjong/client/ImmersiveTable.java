@@ -1,16 +1,25 @@
 package top.skyeyefast.mchjong.client;
 
+import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.gui.render.TextureSetup;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.client.renderer.state.gui.GuiElementRenderState;
+import net.minecraft.resources.Identifier;
+import org.joml.Matrix3x2f;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
+import top.skyeyefast.mchjong.mixin.GuiGraphicsExtractorAccessor;
 
 /** Recipient-safe miniature 3D scene, projected into the fixed immersive canvas. */
 final class ImmersiveTable {
@@ -20,14 +29,27 @@ final class ImmersiveTable {
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
     private int bodyColor;
-    private ResourceLocation backTexture;
+    private Identifier backTexture;
     private record Vertex(double x, double z, double h) {}
-    private record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
+    private record Face(Vertex[] vertices, Identifier texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
             double sum = 0;
             for (var v : vertices) sum += .694 * v.z() + .72 * v.h();
             return sum / 4;
         }
+    }
+    private record ProjectedFace(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2f pose,
+                                 TableProjection.Point[] points, float u0, float v0, float u1, float v1,
+                                 int color, ScreenRectangle bounds) implements GuiElementRenderState {
+        @Override public void buildVertices(VertexConsumer out) {
+            for (int i = 3; i >= 0; i--) {
+                var p = points[i];
+                out.addVertexWith2DPose(pose, p.x(), p.y())
+                    .setUv(i == 0 || i == 3 ? u0 : u1, i < 2 ? v0 : v1)
+                    .setColor(color);
+            }
+        }
+        @Override public ScreenRectangle scissorArea() { return null; }
     }
     private final List<Face> faces = new ArrayList<>();
     private final Map<Integer, TableBoard.Point> points = new HashMap<>();
@@ -75,7 +97,7 @@ final class ImmersiveTable {
         };
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed,
+    void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressed,
                 TileMaterial material, net.minecraft.world.item.DyeColor dye) {
         this.preset = preset;
         backColor = TileMesh.backColor(material, dye);
@@ -106,24 +128,32 @@ final class ImmersiveTable {
         paint(graphics);
     }
 
-    private void paint(GuiGraphics graphics) {
+    private void paint(GuiGraphicsExtractor graphics) {
         paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth);
     }
 
-    private void paint(GuiGraphics graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
+    private void paint(GuiGraphicsExtractor graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
                        java.util.function.ToDoubleFunction<Face> depth) {
-        graphics.flush();
         faces.sort(Comparator.comparingInt((Face face) -> face.contact() ? 0 : 1).thenComparingDouble(depth));
         for (var face : faces) {
-            var out = graphics.bufferSource().getBuffer(TileRenderTypes.gui(face.texture()));
-            for (int i = 3; i >= 0; i--) {
-                var v = face.vertices()[i];
-                var p = projection.apply(v);
-                out.addVertex(graphics.pose().last().pose(), p.x(), p.y(), 0).setColor(face.color())
-                    .setUv(i == 0 || i == 3 ? face.u0() : face.u1(), i < 2 ? face.v0() : face.v1()).setLight(0xf000f0);
+            var points = new TableProjection.Point[4];
+            float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
+            for (int i = 0; i < 4; i++) {
+                points[i] = projection.apply(face.vertices()[i]);
+                minX = Math.min(minX, points[i].x()); minY = Math.min(minY, points[i].y());
+                maxX = Math.max(maxX, points[i].x()); maxY = Math.max(maxY, points[i].y());
             }
+            var texture = Minecraft.getInstance().getTextureManager().getTexture(face.texture());
+            var setup = TextureSetup.singleTexture(texture.getTextureView(), texture.getSampler());
+            var pose = new Matrix3x2f(graphics.pose());
+            int left = (int) Math.floor(minX), top = (int) Math.floor(minY);
+            var bounds = new ScreenRectangle(left, top, Math.max(1, (int) Math.ceil(maxX) - left),
+                Math.max(1, (int) Math.ceil(maxY) - top)).transformMaxBounds(pose);
+            ((GuiGraphicsExtractorAccessor) (Object) graphics).mchjong$guiRenderState().addGuiElement(
+                new ProjectedFace(RenderPipelines.GUI_TEXTURED, setup, pose, points, face.u0(), face.v0(),
+                    face.u1(), face.v1(), face.color(), bounds));
         }
-        graphics.flush();
+        if (!faces.isEmpty()) graphics.nextStratum();
         faces.clear();
     }
 
@@ -250,7 +280,7 @@ final class ImmersiveTable {
     }
 
     /** The moving tile lands using exactly the river's solid, camera and material. */
-    void discard(GuiGraphics graphics, int tile, TableHand.Point source, int sourceWidth,
+    void discard(GuiGraphicsExtractor graphics, int tile, TableHand.Point source, int sourceWidth,
                  double opponentX, boolean tsumogiri, boolean riichi, double fraction) {
         var target = rivers.get(tile);
         if (target == null) return;

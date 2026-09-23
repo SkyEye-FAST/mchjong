@@ -5,7 +5,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -105,17 +105,17 @@ public final class PointStickMenu extends AbstractContainerMenu {
 
     @Override public boolean stillValid(Player player) {
         if (player != inventory.player) return false;
-        if (player.level().isClientSide) return active;
+        if (player.level().isClientSide()) return active;
         active &= table != null && player.containerMenu == this && table.canUseSticks(player, side);
         return active;
     }
 
-    @Override public void clicked(int slot, int button, ClickType type, Player player) {
+    @Override public void clicked(int slot, int button, ContainerInput type, Player player) {
         if (!stillValid(player) || slot >= slots.size()) return;
-        if (locked() && (slot >= DRAWER_SLOTS || type == ClickType.SWAP || type == ClickType.CLONE
-            || type == ClickType.QUICK_MOVE || type == ClickType.THROW || slot < 0 && type == ClickType.PICKUP
+        if (locked() && (slot >= DRAWER_SLOTS || type == ContainerInput.SWAP || type == ContainerInput.CLONE
+            || type == ContainerInput.QUICK_MOVE || type == ContainerInput.THROW || slot < 0 && type == ContainerInput.PICKUP
             || !getCarried().isEmpty() && !internalCursor)) return;
-        if (slot >= 0 && slot < DRAWER_SLOTS && type == ClickType.PICKUP && internalCursor
+        if (slot >= 0 && slot < DRAWER_SLOTS && type == ContainerInput.PICKUP && internalCursor
             && mergeDelivery(slots.get(slot), button)) return;
         boolean empty = getCarried().isEmpty();
         super.clicked(slot, button, type, player);

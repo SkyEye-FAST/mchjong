@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
@@ -22,7 +22,7 @@ public final class TableClockScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
 
     @Override protected void init() {
         String reserveValue = reserve == null ? Integer.toString(initial.reserveSeconds()) : reserve.getValue();
@@ -51,13 +51,13 @@ public final class TableClockScreen extends Screen {
         try { return new TimeControl(Integer.parseInt(reserve.getValue()), Integer.parseInt(move.getValue())); }
         catch (IllegalArgumentException failure) { return null; }
     }
-    @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 280);
         MahjongUi.text(graphics, font, title, 12, 20, width - 24, MahjongUi.TEXT, true);
-        graphics.drawString(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, 58, MahjongUi.MUTED);
-        graphics.drawString(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, 104, MahjongUi.MUTED);
+        graphics.text(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, 58, MahjongUi.MUTED);
+        graphics.text(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, 104, MahjongUi.MUTED);
         apply.active = control() != null;
-        super.render(graphics, x, y, partialTick);
+        super.extractRenderState(graphics, x, y, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 }

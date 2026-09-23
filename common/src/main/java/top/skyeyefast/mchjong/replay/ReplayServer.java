@@ -66,7 +66,7 @@ public final class ReplayServer {
     }
 
     private static int send(ServerPlayer player, UUID match, boolean remove, int page, String search, boolean oldestFirst) {
-        State state = state(player.server);
+        State state = state(player.level().getServer());
         long now = System.nanoTime();
         state.requests().values().removeIf(time -> now - time >= 500_000_000L);
         if (state.requests().putIfAbsent(player.getUUID(), now) != null) {

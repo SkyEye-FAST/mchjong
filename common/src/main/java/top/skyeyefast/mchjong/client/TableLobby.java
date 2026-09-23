@@ -46,7 +46,7 @@ final class TableLobby {
         var presets = Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == view.rules().players()).toList();
         var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(view.rules().preset().presetKey())),
             left, y + 24, half, () -> {
-                int step = Screen.hasShiftDown() ? -1 : 1;
+                int step = MahjongUi.shiftDown() ? -1 : 1;
                 for (int offset = 1; offset < presets.size(); offset++) {
                     var target = presets.get(Math.floorMod(presets.indexOf(view.rules().preset()) + step * offset, presets.size()));
                     var config = view.rules().withPreset(target);
@@ -62,7 +62,7 @@ final class TableLobby {
         var visibility = button(Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
             "settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
             () -> parent.configureVisibility(HandVisibility.values()[Math.floorMod(view.handVisibility().ordinal()
-                + (Screen.hasShiftDown() ? -1 : 1), HandVisibility.values().length)]));
+                + (MahjongUi.shiftDown() ? -1 : 1), HandVisibility.values().length)]));
         visibility.active = host;
         buttons.add(visibility);
         var invite = button(Component.translatable("ui.mchjong.invite"), left, y + 72, half,

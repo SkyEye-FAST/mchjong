@@ -13,7 +13,7 @@ public record ReplayPayload(UUID transfer, Kind kind, int part, int parts, Strin
     public enum Kind { INDEX, MATCH }
     public static final int CHUNK_SIZE = 16_384;
     public static final int MAX_PARTS = 512;
-    public static final Type<ReplayPayload> TYPE = new Type<>(net.minecraft.resources.ResourceLocation
+    public static final Type<ReplayPayload> TYPE = new Type<>(net.minecraft.resources.Identifier
         .fromNamespaceAndPath(MahjongContent.MOD_ID, "replay"));
     public static final StreamCodec<RegistryFriendlyByteBuf, ReplayPayload> CODEC = new StreamCodec<>() {
         @Override public ReplayPayload decode(RegistryFriendlyByteBuf buffer) {

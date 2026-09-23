@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -14,13 +14,13 @@ public final class TileMesh {
     public static final float WIDTH = .104f;
     public static final float HEIGHT = .160f;
     public static final float DEPTH = .0726f;
-    public static final ResourceLocation ATLAS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
-    public static final ResourceLocation BACK = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
-    public static final ResourceLocation GLYPHS = ResourceLocation.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
-    public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
+    public static final Identifier ATLAS = Identifier.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tiles.png");
+    public static final Identifier BACK = Identifier.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile/back.png");
+    public static final Identifier GLYPHS = Identifier.fromNamespaceAndPath(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
+    public static Identifier atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         return TileFacePresets.definition(preset).atlas();
     }
-    public static ResourceLocation glyphs(top.skyeyefast.mchjong.item.TileFacePreset preset) {
+    public static Identifier glyphs(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         return TileFacePresets.definition(preset).glyphs();
     }
     public static final int TILE_WIDTH = 256;

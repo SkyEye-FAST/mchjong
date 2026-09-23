@@ -2,12 +2,14 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.Locale;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayDecisionAnalysis;
@@ -58,7 +60,7 @@ public final class ReplayScreen extends Screen {
     public ReplayMatch match() { return match; }
     public int cursor() { return cursor; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
     private ReplayHand hand() { return match.hands().get(handIndex); }
     private ReplayPlayback.Frame frame() { return playback.frames().get(cursor); }
@@ -289,7 +291,7 @@ public final class ReplayScreen extends Screen {
         try {
             var path = ClientReplays.export(match);
             status = Component.translatable("replay.mchjong.exported");
-            minecraft.gui.getChat().addMessage(Component.translatable("replay.mchjong.export_path", path.toString()));
+            minecraft.gui.getChat().addClientSystemMessage(Component.translatable("replay.mchjong.export_path", path.toString()));
         } catch (java.io.IOException | RuntimeException failure) {
             org.slf4j.LoggerFactory.getLogger("mchjong").error("Cannot export replay {}", match.id(), failure);
             status = Component.translatable("replay.mchjong.export_failed");
@@ -320,7 +322,7 @@ public final class ReplayScreen extends Screen {
             .append("  ").append(Component.translatable(key));
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, width - 24);
         MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 11, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, eventName(), 12, 54, width - 24, MahjongUi.ACCENT, true);
@@ -330,15 +332,15 @@ public final class ReplayScreen extends Screen {
             viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, PRESET);
             renderDora(graphics);
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
-    private void renderPlayerCards(GuiGraphics graphics) {
+    private void renderPlayerCards(GuiGraphicsExtractor graphics) {
         for (int seat = 0; seat < match.rules().players(); seat++) {
             var card = board.card(seat);
             var player = frame().seats().get(seat);
             graphics.fill(card.x(), card.y(), card.right(), card.bottom(), seat == viewer ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-            if (seat == viewer) graphics.renderOutline(card.x(), card.y(), card.width(), card.height(), MahjongUi.ACCENT);
+            if (seat == viewer) graphics.outline(card.x(), card.y(), card.width(), card.height(), MahjongUi.ACCENT);
             int inset = PlayerPortrait.draw(graphics, player, card.x() + 4, card.y() + 3, 10);
             MahjongUi.text(graphics, font, Component.literal(player.name()), card.x() + 5 + inset, card.y() + 4,
                 card.width() - 9 - inset, MahjongUi.TEXT, false);
@@ -347,14 +349,14 @@ public final class ReplayScreen extends Screen {
         }
     }
 
-    private void renderDora(GuiGraphics graphics) {
+    private void renderDora(GuiGraphicsExtractor graphics) {
         var dora = frame().dora();
         if (dora.isEmpty()) return;
         Component label = Component.translatable("ui.mchjong.dora_short");
         int tileWidth = 9;
         int span = font.width(label) + 6 + dora.size() * (tileWidth + 2);
         int x = width - 14 - span;
-        graphics.drawString(font, label, x, 70, MahjongUi.MUTED, false);
+        graphics.text(font, label, x, 70, MahjongUi.MUTED, false);
         x += font.width(label) + 6;
         for (int tile : dora) {
             TileGui.tile(graphics, tile, x, 66, tileWidth, false, false, false, PRESET);
@@ -362,8 +364,10 @@ public final class ReplayScreen extends Screen {
         }
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (super.mouseClicked(mouseX, mouseY, button)) return true;
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
+        if (super.mouseClicked(event, doubleClick)) return true;
         if (button == 0 && !frame().settled() && board != null) {
             for (int seat = 0; seat < match.rules().players(); seat++) {
                 var card = board.card(seat);
@@ -377,7 +381,8 @@ public final class ReplayScreen extends Screen {
         return false;
     }
 
-    @Override public boolean keyPressed(int key, int scan, int modifiers) {
+    @Override public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
         switch (key) {
             case GLFW.GLFW_KEY_LEFT -> seek(cursor - 1);
             case GLFW.GLFW_KEY_RIGHT -> seek(cursor + 1);
@@ -390,7 +395,7 @@ public final class ReplayScreen extends Screen {
             case GLFW.GLFW_KEY_W -> toggleWall();
             case GLFW.GLFW_KEY_LEFT_BRACKET -> jumpDecision(-1);
             case GLFW.GLFW_KEY_RIGHT_BRACKET -> jumpDecision(1);
-            default -> { return super.keyPressed(key, scan, modifiers); }
+            default -> { return super.keyPressed(event); }
         }
         return true;
     }
@@ -416,7 +421,7 @@ public final class ReplayScreen extends Screen {
             super(x, y, width, height, Component.translatable("replay.mchjong.rounds"));
         }
 
-        @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             MahjongUi.panel(graphics, getX(), getY(), width, height);
             graphics.enableScissor(getX() + 2, getY() + 2, getX() + width - 2, getY() + height - 2);
             for (int i = 0; i < match.hands().size(); i++) {
@@ -436,7 +441,9 @@ public final class ReplayScreen extends Screen {
             }
         }
 
-        @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
+        @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+            double mouseX = event.x(), mouseY = event.y();
+            int button = event.button();
             if (button != 0 || !isMouseOver(mouseX, mouseY)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
             if (entry >= 0 && entry < match.hands().size()) changeHandTo(entry);

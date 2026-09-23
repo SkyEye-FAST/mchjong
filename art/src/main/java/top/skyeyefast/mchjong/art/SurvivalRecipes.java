@@ -37,7 +37,7 @@ final class SurvivalRecipes {
         output.write("data/mchjong/recipe/mahjong_box.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("chest"), item("string")), "result", stack("mahjong_box", 1, Map.of())));
         for (Material material : MATERIALS) {
-            var ingredient = Map.of(material.tag ? "tag" : "item", "minecraft:" + material.source);
+            var ingredient = material.tag ? "#minecraft:" + material.source : item(material.source);
             output.write("data/mchjong/recipe/blanks_" + material.name + ".json", Map.of(
                 "type", "minecraft:stonecutting", "ingredient", ingredient,
                 "result", tile(-1, material.name, false, 16)));
@@ -60,7 +60,7 @@ final class SurvivalRecipes {
         output.write("data/mchjong/recipe/" + name + ".json", Map.of("type", "minecraft:crafting_shaped",
             "category", "misc", "pattern", pattern, "key", key, "result", result));
     }
-    private static Map<String, String> item(String id) { return Map.of("item", "minecraft:" + id); }
+    private static String item(String id) { return "minecraft:" + id; }
     private static Map<String, Object> tile(int face, String material, boolean red, int count) {
         return stack("mahjong_tile", count, Map.of("mchjong:tile", Map.of("face", face, "material", material, "red", red)));
     }

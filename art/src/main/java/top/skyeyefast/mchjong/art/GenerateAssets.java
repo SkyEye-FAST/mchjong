@@ -38,13 +38,6 @@ public final class GenerateAssets {
             png("tile_material/" + texture.getKey(), texture.getValue());
         png("point_sticks", PointStickArtwork.texture());
         png("item/riichi_stick", PointStickArtwork.texture().getSubimage(0, 64, 384, 32));
-        text("assets/mchjong/models/item/riichi_stick.json", """
-            {"textures":{"stick":"mchjong:item/riichi_stick","particle":"mchjong:item/riichi_stick"},
-             "elements":[{"from":[2.4,0,7.52],"to":[13.6,0.4,8.48],"shade":false,"faces":{
-              "up":{"texture":"#stick","uv":[0,0,16,16]},"down":{"texture":"#stick","uv":[0,0,16,16]},
-              "north":{"texture":"#stick","uv":[0,8,0,8]},"south":{"texture":"#stick","uv":[0,8,0,8]},
-              "east":{"texture":"#stick","uv":[0,8,0,8]},"west":{"texture":"#stick","uv":[0,8,0,8]}}}]}
-            """);
         text("assets/mchjong/textures/point_sticks.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         models();
         dice();
@@ -121,14 +114,18 @@ public final class GenerateAssets {
                 case "point_stick" -> "{\"rotation\":[65,60,25],\"translation\":[1,6,-2],\"scale\":[0.7,0.7,0.7]}";
                 default -> "{\"rotation\":[0,30,0],\"scale\":[0.7,0.7,0.7]}";
             };
-            text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:builtin/entity\","
-                + "\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"" + lighting + "\",\"display\":{"
+            text("assets/mchjong/models/item/" + name + ".json", "{\"parent\":\"minecraft:item/generated\","
+                + "\"textures\":{\"layer0\":\"mchjong:furniture/wood_oak\",\"particle\":\"mchjong:furniture/wood_oak\"},"
+                + "\"gui_light\":\"" + lighting + "\",\"display\":{"
                 + "\"gui\":{\"rotation\":" + rotation + "},"
                 + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
                 + "\"firstperson_righthand\":" + held + ","
                 + "\"firstperson_lefthand\":" + held + ","
                 + "\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"scale\":[0.6,0.6,0.6]},"
                 + "\"thirdperson_lefthand\":{\"rotation\":[75,-45,0],\"scale\":[0.6,0.6,0.6]}}}");
+            text("assets/mchjong/items/" + name + ".json",
+                "{\"model\":{\"type\":\"minecraft:special\",\"base\":\"mchjong:item/" + name
+                    + "\",\"model\":{\"type\":\"mchjong:supply\"}}}");
         }
     }
 

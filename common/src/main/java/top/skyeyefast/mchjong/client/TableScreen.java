@@ -2,15 +2,17 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Camera;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
@@ -90,7 +92,7 @@ public final class TableScreen extends Screen {
 
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
     @Override public void removed() { clearCameraInput(); }
     private void clearCameraInput() {
         inspecting = false;
@@ -498,7 +500,7 @@ public final class TableScreen extends Screen {
         return TableSettings.get().animations && immersiveDraw != null && now < immersiveDraw.started() + immersiveDraw.duration();
     }
 
-    private void renderImmersiveDiscard(GuiGraphics graphics, long now) {
+    private void renderImmersiveDiscard(GuiGraphicsExtractor graphics, long now) {
         if (!immersiveDiscardActive(now) || board == null) return;
         var motion = immersiveDiscard;
         double fraction = Math.clamp((now - motion.started()) / (double) motion.duration(), 0, 1);
@@ -506,7 +508,7 @@ public final class TableScreen extends Screen {
             motion.tsumogiri(), motion.riichi(), fraction);
     }
 
-    private void renderImmersiveDraw(GuiGraphics graphics, long now) {
+    private void renderImmersiveDraw(GuiGraphicsExtractor graphics, long now) {
         if (!immersiveDrawActive(now) || board == null || hand == null) return;
         var motion = immersiveDraw;
         var source = board.drawSource();
@@ -764,8 +766,8 @@ public final class TableScreen extends Screen {
     private Projected project(Vec3 relative) {
         if (immersive) return null;
         Camera camera = minecraft.gameRenderer.getMainCamera();
-        Vec3 delta = TableGeometry.world(pos, relative).subtract(camera.getPosition());
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        Vec3 delta = TableGeometry.world(pos, relative).subtract(camera.position());
+        double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         Vec3 forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
         Vec3 up = right.cross(forward);
@@ -805,12 +807,12 @@ public final class TableScreen extends Screen {
 
     private Pointer pointer(double mouseX, double mouseY) {
         Camera camera = minecraft.gameRenderer.getMainCamera();
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         Vec3 forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
         double fov = ((GameRendererAccessor) minecraft.gameRenderer).mchjong$getFov(camera, framePartial, true);
         double focal = height / (2 * Math.tan(Math.toRadians(fov) / 2));
-        return new Pointer(camera.getPosition().subtract(TableGeometry.world(pos, Vec3.ZERO)),
+        return new Pointer(camera.position().subtract(TableGeometry.world(pos, Vec3.ZERO)),
             forward.add(right.scale((mouseX - width / 2.0) / focal))
                 .add(right.cross(forward).scale((height / 2.0 - mouseY) / focal)));
     }
@@ -880,7 +882,7 @@ public final class TableScreen extends Screen {
     }
 
     private Vec3 grip(TableScene.Piece piece) {
-        Vec3 eye = minecraft.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(pos, Vec3.ZERO));
+        Vec3 eye = minecraft.gameRenderer.getMainCamera().position().subtract(TableGeometry.world(pos, Vec3.ZERO));
         return TableHandling.grip(piece, eye);
     }
 
@@ -894,7 +896,7 @@ public final class TableScreen extends Screen {
         return information.contains(x, y);
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         framePartial = partialTick;
         TableView view = view();
         if (view == null) return;
@@ -908,9 +910,9 @@ public final class TableScreen extends Screen {
             double scale = immersiveScale();
             drawMouseX = (int) Math.floor(canvasX(mouseX));
             drawMouseY = (int) Math.floor(canvasY(mouseY));
-            graphics.pose().pushPose();
-            graphics.pose().translate((float) immersiveOffsetX(), (float) immersiveOffsetY(), 0);
-            graphics.pose().scale((float) scale, (float) scale, 1);
+            graphics.pose().pushMatrix();
+            graphics.pose().translate((float) immersiveOffsetX(), (float) immersiveOffsetY());
+            graphics.pose().scale((float) scale, (float) scale);
         }
         int layoutWidth = uiWidth(), layoutHeight = uiHeight();
         try {
@@ -930,7 +932,7 @@ public final class TableScreen extends Screen {
         }
         if (view.exitVote() != null) {
             renderExitVote(graphics, view);
-            super.render(graphics, drawMouseX, drawMouseY, partialTick);
+            super.extractRenderState(graphics, drawMouseX, drawMouseY, partialTick);
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
@@ -941,7 +943,7 @@ public final class TableScreen extends Screen {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), layoutWidth - 24);
             int y = layoutHeight - 6 - lines.size() * font.lineHeight;
             for (var line : lines) {
-                graphics.drawCenteredString(font, line, layoutWidth / 2, y, MahjongUi.NEGATIVE);
+                graphics.centeredText(font, line, layoutWidth / 2, y, MahjongUi.NEGATIVE);
                 y += font.lineHeight;
             }
         }
@@ -989,7 +991,7 @@ public final class TableScreen extends Screen {
             return 0;
         }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack());
         updateHints(view);
-        super.render(graphics, drawMouseX, drawMouseY, partialTick);
+        super.extractRenderState(graphics, drawMouseX, drawMouseY, partialTick);
         if (dealing()) renderStatus(graphics, Component.translatable("ui.mchjong.dealing"),
             actionTop - 14 * statusScale, MahjongUi.ACCENT);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
@@ -1012,18 +1014,18 @@ public final class TableScreen extends Screen {
             renderFooter(graphics, help, 0xffe0deca);
         }
         if (informationTooltip != null && !overWidget(drawMouseX, drawMouseY)) {
-            graphics.pose().pushPose();
-            graphics.pose().scale(statusScale, statusScale, 1);
-            graphics.renderTooltip(font, font.split(informationTooltip, Math.min(320, layoutWidth / statusScale - 24)),
+            graphics.pose().pushMatrix();
+            graphics.pose().scale(statusScale, statusScale);
+            graphics.setTooltipForNextFrame(font, font.split(informationTooltip, Math.min(320, layoutWidth / statusScale - 24)),
                 (screenWidth, screenHeight, x, y, w, h) -> net.minecraft.client.gui.screens.inventory.tooltip.DefaultTooltipPositioner.INSTANCE
                     .positionTooltip(layoutWidth / statusScale, layoutHeight / statusScale, x, y, w, h),
-                drawMouseX / statusScale, drawMouseY / statusScale);
-            graphics.pose().popPose();
+                drawMouseX / statusScale, drawMouseY / statusScale, false);
+            graphics.pose().popMatrix();
         }
         hints.renderPopup(graphics, font, facePreset());
         dice.renderTooltip(graphics, drawMouseX, drawMouseY);
         } finally {
-            if (canvas) graphics.pose().popPose();
+            if (canvas) graphics.pose().popMatrix();
         }
     }
 
@@ -1083,25 +1085,25 @@ public final class TableScreen extends Screen {
             (int) Math.min(uiHeight(), Math.ceil(bottom)) - y);
     }
 
-    private void renderStatus(GuiGraphics graphics, Component text, int y, int color) {
+    private void renderStatus(GuiGraphicsExtractor graphics, Component text, int y, int color) {
         int scale = immersive ? 2 : 1;
         int left = immersive ? Math.min(actionLeft, uiWidth() - 560) : actionLeft;
-        graphics.pose().pushPose();
-        graphics.pose().translate(left, y, 0);
-        graphics.pose().scale(scale, scale, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(left, y);
+        graphics.pose().scale(scale, scale);
         MahjongUi.text(graphics, font, text, 0, 0,
             (uiWidth() - left - (board == null && hints.visible ? 36 : 10)) / scale, color, true, true);
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
-    private void renderFooter(GuiGraphics graphics, Component text, int color) {
+    private void renderFooter(GuiGraphicsExtractor graphics, Component text, int color) {
         int scale = immersive ? 2 : 1;
-        graphics.pose().pushPose();
-        graphics.pose().translate(10, uiHeight() - 13 * scale, 0);
-        graphics.pose().scale(scale, scale, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(10, uiHeight() - 13 * scale);
+        graphics.pose().scale(scale, scale);
         int available = (uiWidth() - (hints.visible ? 48 * scale : 20)) / scale;
-        graphics.drawString(font, font.plainSubstrByWidth(text.getString(), available), 0, 0, color, true);
-        graphics.pose().popPose();
+        graphics.text(font, font.plainSubstrByWidth(text.getString(), available), 0, 0, color, true);
+        graphics.pose().popMatrix();
     }
 
     private void updateHints(TableView view) {
@@ -1135,7 +1137,7 @@ public final class TableScreen extends Screen {
             hintBottom, board == null ? information.bottom() + 4 : 38, hintScale);
     }
 
-    private void renderHandling(GuiGraphics graphics, TableView view, int mouseX, int mouseY) {
+    private void renderHandling(GuiGraphicsExtractor graphics, TableView view, int mouseX, int mouseY) {
         if (immersive) return;
         int index = TableHandling.action(view);
         if (index < 0 || results != null) return;
@@ -1147,44 +1149,44 @@ public final class TableScreen extends Screen {
                 int halfHeight = Math.clamp((int) Math.round(target.scale * .12), 12, 28);
                 graphics.fill((int) target.x - halfWidth, (int) target.y - halfHeight,
                     (int) target.x + halfWidth, (int) target.y + halfHeight, 0x443c8c68);
-                graphics.renderOutline((int) target.x - halfWidth, (int) target.y - halfHeight,
+                graphics.outline((int) target.x - halfWidth, (int) target.y - halfHeight,
                     halfWidth * 2, halfHeight * 2, MahjongUi.POSITIVE);
-                graphics.hLine(Math.min(mouseX, (int) target.x), Math.max(mouseX, (int) target.x), mouseY, MahjongUi.POSITIVE);
-                graphics.vLine((int) target.x, Math.min(mouseY, (int) target.y), Math.max(mouseY, (int) target.y), MahjongUi.POSITIVE);
+                graphics.horizontalLine(Math.min(mouseX, (int) target.x), Math.max(mouseX, (int) target.x), mouseY, MahjongUi.POSITIVE);
+                graphics.verticalLine((int) target.x, Math.min(mouseY, (int) target.y), Math.max(mouseY, (int) target.y), MahjongUi.POSITIVE);
             }
         }
         Component help = Component.translatable(TableHandling.help(view));
         var lines = font.split(help, width - 24);
         int y = height - 29 - lines.size() * 10;
         for (var line : lines) {
-            graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.ACCENT);
+            graphics.centeredText(font, line, width / 2, y, MahjongUi.ACCENT);
             y += 10;
         }
     }
 
-    private void renderExitVote(GuiGraphics graphics, TableView view) {
+    private void renderExitVote(GuiGraphicsExtractor graphics, TableView view) {
         var vote = view.exitVote();
         int scale = immersive ? 2 : 1;
-        graphics.pose().pushPose();
-        graphics.pose().scale(scale, scale, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().scale(scale, scale);
         int layoutWidth = uiWidth() / scale, layoutHeight = uiHeight() / scale;
         int span = Math.min(360, layoutWidth - 24), left = (layoutWidth - span) / 2, top = layoutHeight / 2 - 64;
         graphics.fill(left - 6, top, left + span + 6, layoutHeight / 2 + 56, 0xf21a2a2e);
-        graphics.renderOutline(left - 6, top, span + 12, 120, 0xffc4a469);
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_title"), layoutWidth / 2, top + 9, 0xffffd487);
+        graphics.outline(left - 6, top, span + 12, 120, 0xffc4a469);
+        graphics.centeredText(font, Component.translatable("ui.mchjong.exit_title"), layoutWidth / 2, top + 9, 0xffffd487);
         int y = top + 25;
         Component requester = Component.translatable("ui.mchjong.exit_requester", playerName(view, vote.requester()));
         for (var line : font.split(requester, span - 12)) {
             if (y > top + 38) break;
-            graphics.drawCenteredString(font, line, layoutWidth / 2, y, 0xffe0eade); y += 10;
+            graphics.centeredText(font, line, layoutWidth / 2, y, 0xffe0eade); y += 10;
         }
-        graphics.drawCenteredString(font, Component.translatable("ui.mchjong.exit_status", vote.agreed().size(), vote.required(), vote.secondsLeft()),
+        graphics.centeredText(font, Component.translatable("ui.mchjong.exit_status", vote.agreed().size(), vote.required(), vote.secondsLeft()),
             layoutWidth / 2, top + 50, 0xffffd487);
         y = top + 65;
         for (var line : font.split(Component.translatable("ui.mchjong.exit_paused"), span - 12)) {
-            graphics.drawCenteredString(font, line, layoutWidth / 2, y, 0xffadd8c4); y += 10;
+            graphics.centeredText(font, line, layoutWidth / 2, y, 0xffadd8c4); y += 10;
         }
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
     }
 
     public static Component playerName(TableView view, int seat) {
@@ -1193,27 +1195,30 @@ public final class TableScreen extends Screen {
         return player.bot() ? Component.translatable("ui.mchjong.bot", seat + 1) : Component.literal(player.name());
     }
 
-    private static void elbow(GuiGraphics graphics, Projected point, CalloutButton button, int color) {
+    private static void elbow(GuiGraphicsExtractor graphics, Projected point, CalloutButton button, int color) {
         int x = (int) point.x, y = (int) point.y;
         int endX = button.getX() - 4, endY = button.getY() + button.getHeight() / 2;
         int bendX = endX - 18;
-        graphics.hLine(Math.min(x, bendX), Math.max(x, bendX), y, color);
-        graphics.vLine(bendX, Math.min(y, endY), Math.max(y, endY), color);
-        graphics.hLine(bendX, endX, endY, color);
+        graphics.horizontalLine(Math.min(x, bendX), Math.max(x, bendX), y, color);
+        graphics.verticalLine(bendX, Math.min(y, endY), Math.max(y, endY), color);
+        graphics.horizontalLine(bendX, endX, endY, color);
         graphics.fill(x - 2, y - 2, x + 2, y + 2, color);
     }
 
-    @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (mappedClick(button)) return true;
+    @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
+        if (mappedClick(event)) return true;
         if (immersive) {
             if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
             mouseX = canvasX(mouseX);
             mouseY = canvasY(mouseY);
         }
-        if (overWidget(mouseX, mouseY)) { super.mouseClicked(mouseX, mouseY, button); return true; }
+        var mappedEvent = new MouseButtonEvent(mouseX, mouseY, event.buttonInfo());
+        if (overWidget(mouseX, mouseY)) { super.mouseClicked(mappedEvent, doubleClick); return true; }
         if (overInformation(mouseX, mouseY)) return true;
         if (button == 1) { dragging = true; dragDistance = 0; return true; }
-        if (super.mouseClicked(mouseX, mouseY, button)) return true;
+        if (super.mouseClicked(mappedEvent, doubleClick)) return true;
         if (button == 0) {
             if (decision.pending() || dealing()) return true;
             updateScene();
@@ -1236,7 +1241,7 @@ public final class TableScreen extends Screen {
                     return true;
                 }
             }
-            if (tile >= 0 && !choosingRiichi && !hasShiftDown() && discardFromClick(tile)) return true;
+            if (tile >= 0 && !choosingRiichi && !event.hasShiftDown() && discardFromClick(tile)) return true;
             selectedTile = tile;
             lastClickedTile = Tile.ABSENT;
             setFocused(null);
@@ -1281,8 +1286,10 @@ public final class TableScreen extends Screen {
         }
         return -1;
     }
-    @Override public boolean mouseReleased(double mouseX, double mouseY, int button) {
-        if (TableKeys.INSPECT.matchesMouse(button)) { inspecting = false; return true; }
+    @Override public boolean mouseReleased(MouseButtonEvent event) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
+        if (TableKeys.INSPECT.matchesMouse(event)) { inspecting = false; return true; }
         if (immersive) {
             if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
             mouseX = canvasX(mouseX);
@@ -1303,9 +1310,11 @@ public final class TableScreen extends Screen {
             if (dragDistance < 4) cancelSelection();
             return true;
         }
-        return super.mouseReleased(mouseX, mouseY, button);
+        return super.mouseReleased(new MouseButtonEvent(mouseX, mouseY, event.buttonInfo()));
     }
-    @Override public boolean mouseDragged(double mouseX, double mouseY, int button, double dx, double dy) {
+    @Override public boolean mouseDragged(MouseButtonEvent event, double dx, double dy) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
         if (immersive) {
             if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
             double scale = immersiveScale();
@@ -1321,26 +1330,27 @@ public final class TableScreen extends Screen {
             if (!cameraEnabled() || dragDistance <= 4) return true;
             double fraction = previous >= 4 ? 1 : (dragDistance - 4) / (dragDistance - previous);
             var camera = TableSettings.get().camera();
-            if (hasShiftDown()) camera.pan(-dx * fraction * .004, -dy * fraction * .004);
+            if (event.hasShiftDown()) camera.pan(-dx * fraction * .004, -dy * fraction * .004);
             else camera.look(dx * fraction * .35, dy * fraction * .35);
             syncCamera();
             return true;
         }
-        return super.mouseDragged(mouseX, mouseY, button, dx, dy);
+        return super.mouseDragged(new MouseButtonEvent(mouseX, mouseY, event.buttonInfo()), dx, dy);
     }
-    @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+    @Override public boolean keyPressed(KeyEvent event) {
+        int key = event.key();
         TableView view = view();
         if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { handlingDrag = null; handlingStart = null; return true; }
-        if (TableKeys.DRAWER.matches(key, scanCode) && openOwnDrawer()) return true;
-        if (results != null && results.isFocused() && results.keyPressed(key, scanCode, modifiers)) return true;
+        if (TableKeys.DRAWER.matches(event) && openOwnDrawer()) return true;
+        if (results != null && results.isFocused() && results.keyPressed(event)) return true;
         if (key == GLFW.GLFW_KEY_ESCAPE && (choosingRiichi || selectedTile >= 0)) { cancelSelection(); return true; }
-        if (TableKeys.RESET.matches(key, scanCode)) { resetView(); return true; }
-        if (TableKeys.VIEW.matches(key, scanCode)) { toggleView(); return true; }
-        if (TableKeys.INSPECT.matches(key, scanCode) && cameraEnabled()) { inspecting = true; return true; }
-        if (TableKeys.RIICHI.matches(key, scanCode) && view != null && view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
+        if (TableKeys.RESET.matches(event)) { resetView(); return true; }
+        if (TableKeys.VIEW.matches(event)) { toggleView(); return true; }
+        if (TableKeys.INSPECT.matches(event) && cameraEnabled()) { inspecting = true; return true; }
+        if (TableKeys.RIICHI.matches(event) && view != null && view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
             toggleRiichi(); return true;
         }
-        if (TableKeys.PASS.matches(key, scanCode) && view != null) {
+        if (TableKeys.PASS.matches(event) && view != null) {
             for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.PASS) { send(view, i); return true; }
         }
         int arrow = arrow(key);
@@ -1350,14 +1360,15 @@ public final class TableScreen extends Screen {
             if (action >= 0) send(view, action);
             return true;
         }
-        return super.keyPressed(key, scanCode, modifiers);
+        return super.keyPressed(event);
     }
 
-    @Override public boolean keyReleased(int key, int scanCode, int modifiers) {
-        if (TableKeys.INSPECT.matches(key, scanCode)) { inspecting = false; return true; }
+    @Override public boolean keyReleased(KeyEvent event) {
+        int key = event.key();
+        if (TableKeys.INSPECT.matches(event)) { inspecting = false; return true; }
         int arrow = arrow(key);
         if (arrow >= 0) { lookKeys[arrow] = false; return true; }
-        return super.keyReleased(key, scanCode, modifiers);
+        return super.keyReleased(event);
     }
 
     private static int arrow(int key) {
@@ -1378,22 +1389,22 @@ public final class TableScreen extends Screen {
         }
         if (!cameraEnabled() || overWidget(x, y)) return super.mouseScrolled(x, y, horizontal, vertical);
         var camera = TableSettings.get().camera();
-        if (hasShiftDown()) camera.raise(vertical);
+        if (MahjongUi.shiftDown()) camera.raise(vertical);
         else camera.scroll(vertical);
         return true;
     }
 
-    private boolean mappedClick(int button) {
-        if (TableKeys.INSPECT.matchesMouse(button) && cameraEnabled()) { inspecting = true; return true; }
-        if (TableKeys.RESET.matchesMouse(button)) { resetView(); return true; }
-        if (TableKeys.VIEW.matchesMouse(button)) { toggleView(); return true; }
-        if (TableKeys.DRAWER.matchesMouse(button)) return openOwnDrawer();
+    private boolean mappedClick(MouseButtonEvent event) {
+        if (TableKeys.INSPECT.matchesMouse(event) && cameraEnabled()) { inspecting = true; return true; }
+        if (TableKeys.RESET.matchesMouse(event)) { resetView(); return true; }
+        if (TableKeys.VIEW.matchesMouse(event)) { toggleView(); return true; }
+        if (TableKeys.DRAWER.matchesMouse(event)) return openOwnDrawer();
         var view = view();
         if (view == null) return false;
-        if (TableKeys.RIICHI.matchesMouse(button) && view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
+        if (TableKeys.RIICHI.matchesMouse(event) && view.actions().stream().anyMatch(action -> action.type() == Action.Type.RIICHI)) {
             toggleRiichi(); return true;
         }
-        if (TableKeys.PASS.matchesMouse(button)) {
+        if (TableKeys.PASS.matchesMouse(event)) {
             for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.PASS) {
                 send(view, i); return true;
             }
@@ -1433,15 +1444,15 @@ public final class TableScreen extends Screen {
             this.snapshot = snapshot;
             setTooltip(null);
         }
-        @Override protected boolean clicked(double mouseX, double mouseY) { return false; }
-        @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) { return false; }
+        @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             TableScene.Piece source = TableHandling.source(snapshot, scene);
             Projected point = source == null ? null : project(grip(source));
             active = point != null && !decision.pending() && !handlingMoving() && results == null;
             if (point == null) return;
             setX((int) point.x - 10); setY((int) point.y - 10);
             if (active && isFocused()) {
-                graphics.drawCenteredString(font, getMessage(), (int) point.x, (int) point.y - 22, MahjongUi.TEXT);
+                graphics.centeredText(font, getMessage(), (int) point.x, (int) point.y - 22, MahjongUi.TEXT);
             }
         }
     }
@@ -1454,7 +1465,7 @@ public final class TableScreen extends Screen {
             this.action = action; this.actionIndex = actionIndex;
             if (action.type() == Action.Type.RON || action.type() == Action.Type.TSUMO || action.type() == Action.Type.READY) primary();
         }
-        @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             renderSurface(graphics);
             TableView view = view();
             float scale = immersive ? 2 : 1;
@@ -1462,26 +1473,26 @@ public final class TableScreen extends Screen {
             boolean caption = icons == 0 || width >= icons + 36;
             int captionWidth = Math.max(16, (int) ((width - icons - 16) / scale));
             var lines = caption ? font.split(getMessage(), captionWidth).stream().limit(2).toList() : List.<net.minecraft.util.FormattedCharSequence>of();
-            graphics.pose().pushPose();
-            graphics.pose().translate(getX() + 8, getY() + height / 2f, 0);
-            graphics.pose().scale(scale, scale, 1);
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(getX() + 8, getY() + height / 2f);
+            graphics.pose().scale(scale, scale);
             int y = -lines.size() * font.lineHeight / 2;
             for (var line : lines) {
-                graphics.drawString(font, line, (captionWidth - font.width(line)) / 2,
+                graphics.text(font, line, (captionWidth - font.width(line)) / 2,
                     y, active ? MahjongUi.TEXT : MahjongUi.DISABLED, false);
                 y += font.lineHeight;
             }
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
             if (icons > 0 && view != null) {
                 ActionPreview preview = ActionPreview.of(view, action);
                 int x = getX() + (caption ? width - icons + 3 : (width - icons) / 2 + 3);
-                graphics.pose().pushPose();
-                graphics.pose().translate(x, getY() + (height - 14 * scale) / 2, 0);
-                graphics.pose().scale(scale, scale, 1);
+                graphics.pose().pushMatrix();
+                graphics.pose().translate(x, getY() + (height - 14 * scale) / 2);
+                graphics.pose().scale(scale, scale);
                 if (preview.meld() != null) TileGui.meld(graphics, preview.meld(), view.viewerSeat(), 0, 0, 9, facePreset());
                 else for (int i = 0; i < preview.tiles().size(); i++)
                     TileGui.tile(graphics, preview.tiles().get(i), i * 13, 0, 9, false, false, false, facePreset());
-                graphics.pose().popPose();
+                graphics.pose().popMatrix();
             }
         }
     }

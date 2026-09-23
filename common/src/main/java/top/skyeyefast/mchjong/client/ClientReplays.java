@@ -4,7 +4,7 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Path;
 import java.util.UUID;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -49,7 +49,7 @@ public final class ClientReplays {
         } catch (RuntimeException failure) {
             TRANSFER.reset();
             LoggerFactory.getLogger("mchjong").warn("Rejected invalid replay transfer", failure);
-            client.gui.getChat().addMessage(Component.translatable("message.mchjong.replay_unavailable"));
+            client.gui.getChat().addClientSystemMessage(Component.translatable("message.mchjong.replay_unavailable"));
         }
     }
 

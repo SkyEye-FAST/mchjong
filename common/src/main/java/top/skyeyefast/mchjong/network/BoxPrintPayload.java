@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.network;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerPlayer;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -14,7 +14,7 @@ public record BoxPrintPayload(int containerId, TileFacePreset preset) implements
     public static final Type<BoxPrintPayload> TYPE = new Type<>(MahjongContent.id("box_print"));
     public static final StreamCodec<RegistryFriendlyByteBuf, BoxPrintPayload> CODEC = new StreamCodec<>() {
         @Override public BoxPrintPayload decode(RegistryFriendlyByteBuf buffer) {
-            return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(ResourceLocation.parse(buffer.readUtf(128))));
+            return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(Identifier.parse(buffer.readUtf(128))));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, BoxPrintPayload value) {
             buffer.writeVarInt(value.containerId());

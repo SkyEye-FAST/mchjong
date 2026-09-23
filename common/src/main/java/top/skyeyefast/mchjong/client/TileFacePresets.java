@@ -3,13 +3,13 @@ package top.skyeyefast.mchjong.client;
 import com.google.gson.JsonParser;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.packs.resources.ResourceManager;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** The winning pack supplies each definition, just like any other Minecraft resource. */
 public final class TileFacePresets {
-    public record Definition(ResourceLocation atlas, ResourceLocation glyphs) {}
+    public record Definition(Identifier atlas, Identifier glyphs) {}
     private static Map<TileFacePreset, Definition> definitions = Map.of();
     private static List<TileFacePreset> choices = List.of();
     private static final Definition MISSING = new Definition(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation(),
@@ -27,9 +27,9 @@ public final class TileFacePresets {
             try (var reader = resource.openAsReader()) {
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
-                var id = new TileFacePreset(ResourceLocation.fromNamespaceAndPath(path.getNamespace(), name));
-                var definition = new Definition(ResourceLocation.parse(json.get("atlas").getAsString()),
-                    ResourceLocation.parse(json.get("glyphs").getAsString()));
+                var id = new TileFacePreset(Identifier.fromNamespaceAndPath(path.getNamespace(), name));
+                var definition = new Definition(Identifier.parse(json.get("atlas").getAsString()),
+                    Identifier.parse(json.get("glyphs").getAsString()));
                 if (resources.getResource(definition.atlas()).isEmpty() || resources.getResource(definition.glyphs()).isEmpty())
                     throw new IllegalArgumentException("Missing atlas or glyph texture");
                 loaded.put(id, definition);

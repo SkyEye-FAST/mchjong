@@ -103,7 +103,7 @@ public final class TableAudio {
     public static void settingsChanged() {
         SPEECH.clear();
         for (String name : MahjongSounds.VOICES)
-            Minecraft.getInstance().getSoundManager().stop(MahjongSounds.voice(name).getLocation(), null);
+            Minecraft.getInstance().getSoundManager().stop(MahjongSounds.voice(name).location(), null);
     }
 
     public static void preview() {

@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.world;
 import java.security.SecureRandom;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
@@ -45,7 +44,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public MahjongTableBlockEntity(BlockPos pos, BlockState state) { super(MahjongContent.TABLE_ENTITY, pos, state); }
 
     private Game serverGame() {
-        if (level == null || level.isClientSide) throw new IllegalStateException("Private state accessed outside server");
+        if (level == null || level.isClientSide()) throw new IllegalStateException("Private state accessed outside server");
         if (unreadableSave != null) return null;
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
@@ -103,17 +102,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public TableView clientView() { return clientView; }
     public top.skyeyefast.mchjong.engine.RoomView clientRoom() { return clientRoom; }
     public void acceptRoom(top.skyeyefast.mchjong.engine.RoomView room) {
-        if (level == null || !level.isClientSide) throw new IllegalStateException("Client room state on server");
+        if (level == null || !level.isClientSide()) throw new IllegalStateException("Client room state on server");
         clientRoom = java.util.Objects.requireNonNull(room);
     }
     public int clientRedOptions() { return clientRedOptions; }
     public void acceptRedOptions(int options) {
-        if (level == null || !level.isClientSide) throw new IllegalStateException("Client supply state on server");
+        if (level == null || !level.isClientSide()) throw new IllegalStateException("Client supply state on server");
         clientRedOptions = options & 63;
     }
     public long clientViewAgeMillis() { return Math.max(0, System.nanoTime() - clientViewReceivedNanos) / 1_000_000L; }
     public void acceptView(TableView view) {
-        if (level == null || !level.isClientSide) throw new IllegalStateException("Client snapshot on server");
+        if (level == null || !level.isClientSide()) throw new IllegalStateException("Client snapshot on server");
         if (clientView != null && clientView.tableId().equals(view.tableId()) && view.revision() < clientView.revision()) return;
         clientView = view;
         clientViewReceivedNanos = System.nanoTime();
@@ -138,7 +137,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     private UUID authorizedViewer(ServerPlayer player) {
         Game current = serverGame();
-        if (current == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()) return null;
+        if (current == null || player.level() != level || !player.isAlive() || player.isSpectator()) return null;
         if (current.phase() == Game.Phase.LOBBY && current.seatOf(player.getUUID()) >= 0
             && player.distanceToSqr(worldPosition.getCenter()) <= 64) return player.getUUID();
         return seatedViewer(player);
@@ -151,13 +150,13 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public Game participantGame(ServerPlayer player) {
-        return player.serverLevel() == level && authorizedViewer(player) != null ? serverGame() : null;
+        return player.level() == level && authorizedViewer(player) != null ? serverGame() : null;
     }
 
     private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
         Game game = serverGame();
         if (game == null) {
-            if (open) player.displayClientMessage(Component.translatable("message.mchjong.corrupt"), false);
+            if (open) player.sendSystemMessage(Component.translatable("message.mchjong.corrupt"));
             return;
         }
         TableView snapshot = game.view(authorizedViewer(player));
@@ -175,9 +174,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public void openStorage(ServerPlayer player) {
-        if (player.serverLevel() != level || isRemoved() || player.isSpectator() || !equipmentEditable()
+        if (player.level() != level || isRemoved() || player.isSpectator() || !equipmentEditable()
             || !player.isAlive() || player.distanceToSqr(worldPosition.getCenter()) > 64) {
-            player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.equipment_locked"));
             return;
         }
         player.openMenu(new net.minecraft.world.SimpleMenuProvider(
@@ -245,7 +244,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public boolean useEquipment(ServerPlayer player, net.minecraft.world.item.ItemStack stack) {
         if (!stack.is(MahjongContent.CLOTH_ITEM)) return false;
         if (player.isSpectator() || !equipmentEditable()) {
-            player.displayClientMessage(Component.translatable("message.mchjong.equipment_locked"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.equipment_locked"));
             return true;
         }
         var previous = equipment.installCloth(stack);
@@ -261,7 +260,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public void dropEquipment() {
-        if (level == null || level.isClientSide) return;
+        if (level == null || level.isClientSide()) return;
         for (var player : ((ServerLevel) level).players())
             if (player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu menu && menu.belongsTo(this)) player.closeContainer();
         equipment.abandonMatch();
@@ -296,27 +295,27 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) { open(player); return; }
         if (seatedViewer(player) != null) { open(player); return; }
         if (seat < 0 || seat >= game.rules().players()) {
-            player.displayClientMessage(Component.translatable("message.mchjong.inactive_seat"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.inactive_seat"));
             return;
         }
         if (player.isSpectator() || player.isPassenger()) return;
         BlockPos stool = TableGeometry.stool(worldPosition, seat);
         if (!level.getBlockState(stool).is(MahjongContent.STOOL)) {
-            player.displayClientMessage(Component.translatable("message.mchjong.missing_stool"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.missing_stool"));
             return;
         }
         int membership = game.seatOf(player.getUUID());
         if (membership >= 0 && membership != seat || membership < 0 && game.view(null).seats().get(seat).occupied()
             || !level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()) {
-            player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.occupied"));
             return;
         }
         SeatEntity mount = mount(player, seat);
         if (mount == null) return;
-        if (!game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+        if (!game.join(player.getUUID(), player.getGameProfile().name(), seat)) {
             player.stopRiding();
             mount.discard();
-            player.displayClientMessage(Component.translatable("message.mchjong.occupied"), true);
+            player.sendOverlayMessage(Component.translatable("message.mchjong.occupied"));
             return;
         }
         setChanged();
@@ -327,7 +326,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public void autoSeat(ServerPlayer player, TableSeatPayload payload) {
         Game game = serverGame();
         if (game == null || !worldPosition.equals(payload.pos()) || !game.tableId().equals(payload.tableId())
-            || player.serverLevel() != level || isRemoved() || level.getBlockEntity(worldPosition) != this
+            || player.level() != level || isRemoved() || level.getBlockEntity(worldPosition) != this
             || !player.isAlive() || player.isRemoved() || player.isSpectator()
             || player.distanceToSqr(worldPosition.getCenter()) > 36) return;
         int seat = game.seatOf(player.getUUID());
@@ -337,7 +336,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (player.getVehicle() instanceof SeatEntity current) {
             if (current.isRemoved() || current.getFirstPassenger() != player || !current.tablePos().equals(worldPosition)) return;
             if (current.seat() == seat) {
-                if (game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+                if (game.join(player.getUUID(), player.getGameProfile().name(), seat)) {
                     setChanged();
                     sentRevision = -1;
                     sendView(player, false, false);
@@ -351,7 +350,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         player.stopRiding();
         SeatEntity mount = mount(player, seat);
         if (mount == null) return;
-        if (!game.join(player.getUUID(), player.getGameProfile().getName(), seat)) {
+        if (!game.join(player.getUUID(), player.getGameProfile().name(), seat)) {
             player.stopRiding();
             mount.discard();
             return;
@@ -365,7 +364,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         SeatEntity mount = new SeatEntity(MahjongContent.SEAT_ENTITY, level);
         mount.initialize(worldPosition, seat, player.getUUID());
         level.addFreshEntity(mount);
-        if (!player.startRiding(mount, true)) {
+        if (!player.startRiding(mount, true, true)) {
             mount.discard();
             return null;
         }
@@ -377,7 +376,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public void stoodUp(UUID player) {
         Game game = serverGame();
         var current = ((ServerLevel) level).getServer().getPlayerList().getPlayer(player);
-        if (current != null && current.serverLevel() == level && seatedViewer(current) != null) return;
+        if (current != null && current.level() == level && seatedViewer(current) != null) return;
         if (game != null) { game.unseat(player); setChanged(); sentRevision = -1; }
     }
 
@@ -450,7 +449,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
             flushReplays();
         } else if (payload.operation() == TableControlPayload.Operation.REQUEST_EXIT) {
-            player.displayClientMessage(Component.translatable("message.mchjong.exit_unavailable"), false);
+            player.sendSystemMessage(Component.translatable("message.mchjong.exit_unavailable"));
         }
         sendView(player, false, true);
     }
@@ -463,23 +462,24 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
     }
 
-    @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.saveAdditional(tag, registries);
-        equipment.save(tag, registries);
-        if (unreadableSave != null) tag.putString("game", unreadableSave);
-        else if (game != null) tag.putString("game", TableNetworking.JSON.toJson(game));
+    @Override protected void saveAdditional(net.minecraft.world.level.storage.ValueOutput output) {
+        super.saveAdditional(output);
+        equipment.save(output);
+        if (unreadableSave != null) output.putString("game", unreadableSave);
+        else if (game != null) output.putString("game", TableNetworking.JSON.toJson(game));
     }
 
-    @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
-        super.loadAdditional(tag, registries);
-        equipment.load(tag, registries);
-        if (tag.contains("boxes")) {
+    @Override protected void loadAdditional(net.minecraft.world.level.storage.ValueInput input) {
+        super.loadAdditional(input);
+        equipment.load(input);
+        if (input.list("boxes", net.minecraft.world.item.ItemStack.OPTIONAL_CODEC).isPresent()) {
             game = null;
             unreadableSave = null;
             sentRevision = -1;
         }
-        if (!tag.contains("game")) return;
-        String saved = tag.getString("game");
+        var savedGame = input.getString("game");
+        if (savedGame.isEmpty()) return;
+        String saved = savedGame.orElseThrow();
         try {
             Game restored = TableNetworking.JSON.fromJson(saved, Game.class);
             restored.validate();

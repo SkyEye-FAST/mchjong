@@ -2,13 +2,15 @@ package top.skyeyefast.mchjong;
 
 import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
-import net.fabricmc.fabric.api.itemgroup.v1.FabricItemGroup;
-import net.fabricmc.fabric.api.itemgroup.v1.ItemGroupEvents;
+import net.fabricmc.fabric.api.creativetab.v1.CreativeModeTabEvents;
+import net.fabricmc.fabric.api.creativetab.v1.FabricCreativeModeTab;
 import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.fabricmc.fabric.api.object.builder.v1.block.entity.FabricBlockEntityTypeBuilder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.MobCategory;
 import net.minecraft.world.item.CreativeModeTab;
@@ -31,7 +33,7 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public class Mchjong implements ModInitializer {
     public static final String MOD_ID = "mchjong";
     public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
-    public static final CreativeModeTab TAB = FabricItemGroup.builder()
+    public static final CreativeModeTab TAB = FabricCreativeModeTab.builder()
         .icon(() -> MahjongSupplies.tile(new TileData(32, TileMaterial.BONE, false), 1))
         .title(Component.translatable("itemGroup.mchjong"))
         .displayItems((params, output) -> top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(output::accept))
@@ -61,26 +63,27 @@ public class Mchjong implements ModInitializer {
         Registry.register(BuiltInRegistries.MENU, MahjongContent.id("mahjong_table"), MahjongContent.TABLE_MENU);
         Registry.register(BuiltInRegistries.MENU, MahjongContent.id("point_sticks"), MahjongContent.STICK_MENU);
         MahjongContent.TABLE_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_table"),
-            BlockEntityType.Builder.of(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build(null));
+            FabricBlockEntityTypeBuilder.create(MahjongTableBlockEntity::new, MahjongContent.TABLE, MahjongContent.AUTO_TABLE).build());
         MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),
-            BlockEntityType.Builder.of(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build(null));
+            FabricBlockEntityTypeBuilder.create(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build());
         MahjongContent.SEAT_ENTITY = Registry.register(BuiltInRegistries.ENTITY_TYPE, MahjongContent.id("seat"),
             EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
-                .clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
+                .clientTrackingRange(10).updateInterval(10)
+                .build(ResourceKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, MahjongContent.id("seat"))));
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MahjongContent.TAB_KEY, TAB);
-        ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
+        CreativeModeTabEvents.modifyOutputEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
-        PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(TableControlPayload.TYPE, TableControlPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(TableSeatPayload.TYPE, TableSeatPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(TableControlPayload.TYPE, TableControlPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(TableSeatPayload.TYPE, TableSeatPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
-        PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
-        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,

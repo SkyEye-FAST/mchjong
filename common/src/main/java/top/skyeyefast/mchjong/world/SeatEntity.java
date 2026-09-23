@@ -2,15 +2,18 @@ package top.skyeyefast.mchjong.world;
 
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
+import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 
 /** A real vehicle gives players Minecraft's seated pose, without moving the world camera to a GUI. */
@@ -47,7 +50,7 @@ public final class SeatEntity extends Entity {
     }
     @Override public void tick() {
         super.tick();
-        if (level().isClientSide) return;
+        if (level().isClientSide()) return;
         BlockPos stool = TableGeometry.stool(tablePos(), seat());
         if (!isVehicle() || !level().getBlockState(stool).is(MahjongContent.STOOL)
             || !(level().getBlockEntity(tablePos()) instanceof MahjongTableBlockEntity)) {
@@ -65,13 +68,15 @@ public final class SeatEntity extends Entity {
         }
         return new Vec3(getX(), getY() + 0.5, getZ());
     }
-    @Override protected void readAdditionalSaveData(CompoundTag tag) {
-        entityData.set(TABLE, BlockPos.of(tag.getLong("table")));
-        entityData.set(SEAT, Math.clamp(tag.getInt("seat"), 0, 3));
-        rider = tag.hasUUID("rider") ? tag.getUUID("rider") : null;
+    @Override public boolean hurtServer(ServerLevel level, DamageSource source, float amount) { return false; }
+    @Override protected void readAdditionalSaveData(ValueInput input) {
+        entityData.set(TABLE, BlockPos.of(input.getLongOr("table", 0)));
+        entityData.set(SEAT, Math.clamp(input.getIntOr("seat", 0), 0, 3));
+        rider = input.getString("rider").map(UUID::fromString).orElse(null);
     }
-    @Override protected void addAdditionalSaveData(CompoundTag tag) {
-        tag.putLong("table", tablePos().asLong()); tag.putInt("seat", seat());
-        if (rider != null) tag.putUUID("rider", rider);
+    @Override protected void addAdditionalSaveData(ValueOutput output) {
+        output.putLong("table", tablePos().asLong());
+        output.putInt("seat", seat());
+        if (rider != null) output.putString("rider", rider.toString());
     }
 }

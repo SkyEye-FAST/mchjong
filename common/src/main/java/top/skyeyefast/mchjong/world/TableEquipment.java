@@ -1,11 +1,11 @@
 package top.skyeyefast.mchjong.world;
 
-import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
-import net.minecraft.nbt.ListTag;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -15,7 +15,7 @@ public final class TableEquipment {
     public static final int BOX_SLOTS = 2;
     public static final int STICK_SLOTS = 10;
     public static final int BUST_SLOT = 9;
-    private final net.minecraft.world.SimpleContainer boxes = new net.minecraft.world.SimpleContainer(BOX_SLOTS);
+    private final SimpleContainer boxes;
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
@@ -30,14 +30,22 @@ public final class TableEquipment {
     private TileFacePreset preset = TileFacePreset.KANSAI;
 
     public TableEquipment(Runnable changed) {
-        boxes.addListener(container -> {
+        boxes = trackedContainer(BOX_SLOTS, () -> {
             refreshDeck();
             if (!loading) changed.run();
         });
         for (int side = 0; side < drawers.length; side++) {
-            drawers[side] = new SimpleContainer(STICK_SLOTS);
-            drawers[side].addListener(container -> { if (!loading) changed.run(); });
+            drawers[side] = trackedContainer(STICK_SLOTS, () -> { if (!loading) changed.run(); });
         }
+    }
+
+    private static SimpleContainer trackedContainer(int size, Runnable changed) {
+        return new SimpleContainer(size) {
+            @Override public void setChanged() {
+                super.setChanged();
+                changed.run();
+            }
+        };
     }
 
     public net.minecraft.world.Container boxes() { return boxes; }
@@ -222,60 +230,60 @@ public final class TableEquipment {
         return previous;
     }
 
-    public void save(CompoundTag tag, HolderLookup.Provider registries) {
+    public void save(ValueOutput output) {
         // Empty slots are explicit in a private save, but absent from public appearance packets.
-        ListTag storedBoxes = new ListTag();
-        for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot).saveOptional(registries));
-        tag.put("boxes", storedBoxes);
-        tag.put("cloth", cloth.saveOptional(registries));
-        ListTag storedSticks = new ListTag();
+        var storedBoxes = output.list("boxes", ItemStack.OPTIONAL_CODEC);
+        for (int slot = 0; slot < BOX_SLOTS; slot++) storedBoxes.add(boxes.getItem(slot));
+        output.store("cloth", ItemStack.OPTIONAL_CODEC, cloth);
+        var storedSticks = output.list("stick_drawers", ItemStack.OPTIONAL_CODEC);
         for (var drawer : drawers) for (int slot = 0; slot < STICK_SLOTS; slot++)
-            storedSticks.add(drawer.getItem(slot).saveOptional(registries));
-        tag.put("stick_drawers", storedSticks);
-        ListTag initialSticks = new ListTag();
-        for (var stack : matchSticks) initialSticks.add(stack.saveOptional(registries));
-        tag.put("match_sticks", initialSticks);
+            storedSticks.add(drawer.getItem(slot));
+        var initialSticks = output.list("match_sticks", ItemStack.OPTIONAL_CODEC);
+        for (var stack : matchSticks) initialSticks.add(stack);
     }
 
-    public void load(CompoundTag tag, HolderLookup.Provider registries) {
-        if (tag.contains("match_sticks")) {
-            var stored = tag.getList("match_sticks", 10);
+    public void load(ValueInput input) {
+        var storedMatchSticks = input.list("match_sticks", ItemStack.OPTIONAL_CODEC);
+        if (storedMatchSticks.isPresent()) {
+            var stored = storedMatchSticks.orElseThrow().stream().toList();
             if (!stored.isEmpty() && stored.size() != 4 * STICK_SLOTS) throw new IllegalArgumentException("Invalid match drawers");
-            matchSticks = java.util.stream.IntStream.range(0, stored.size())
-                .mapToObj(index -> ItemStack.parseOptional(registries, stored.getCompound(index))).toList();
+            matchSticks = java.util.List.copyOf(stored);
         }
         // Update packets contain only the appearance fields, not either item stack.
-        if (tag.contains("boxes")) {
+        var storedBoxes = input.list("boxes", ItemStack.OPTIONAL_CODEC);
+        if (storedBoxes.isPresent()) {
             loading = true;
             try {
-                ListTag stored = tag.getList("boxes", 10);
+                var stored = storedBoxes.orElseThrow().stream().toList();
                 for (int slot = 0; slot < BOX_SLOTS; slot++)
-                    boxes.setItem(slot, slot < stored.size() ? ItemStack.parseOptional(registries, stored.getCompound(slot)) : ItemStack.EMPTY);
+                    boxes.setItem(slot, slot < stored.size() ? stored.get(slot) : ItemStack.EMPTY);
             } finally { loading = false; }
         }
-        if (tag.contains("stick_drawers")) {
+        var storedDrawers = input.list("stick_drawers", ItemStack.OPTIONAL_CODEC);
+        if (storedDrawers.isPresent()) {
             loading = true;
             try {
-                ListTag stored = tag.getList("stick_drawers", 10);
+                var stored = storedDrawers.orElseThrow().stream().toList();
                 for (int side = 0; side < drawers.length; side++) for (int slot = 0; slot < STICK_SLOTS; slot++) {
                     int index = side * STICK_SLOTS + slot;
-                    drawers[side].setItem(slot, index < stored.size()
-                        ? ItemStack.parseOptional(registries, stored.getCompound(index)) : ItemStack.EMPTY);
+                    drawers[side].setItem(slot, index < stored.size() ? stored.get(index) : ItemStack.EMPTY);
                 }
             } finally { loading = false; }
         }
-        if (tag.contains("cloth")) {
-            cloth = ItemStack.parseOptional(registries, tag.getCompound("cloth"));
+        input.read("cloth", ItemStack.OPTIONAL_CODEC).ifPresent(stack -> {
+            cloth = stack;
             clothColor = cloth.isEmpty() ? -1 : MahjongSupplies.color(cloth).getId();
-        }
-        if (tag.contains("cloth_color")) clothColor = tag.getInt("cloth_color");
-        if (tag.contains("tile_back")) {
-            int id = tag.getInt("tile_back");
+        });
+        input.getInt("cloth_color").ifPresent(value -> clothColor = value);
+        input.getInt("tile_back").ifPresent(id -> {
             back = id < 0 ? null : DyeColor.byId(id);
-        }
-        if (tag.contains("tile_preset")) preset = new TileFacePreset(net.minecraft.resources.ResourceLocation.parse(tag.getString("tile_preset")));
-        if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
-            if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
+        });
+        input.getString("tile_preset").ifPresent(value ->
+            preset = new TileFacePreset(net.minecraft.resources.Identifier.parse(value)));
+        input.getString("tile_material").ifPresent(value -> {
+            for (TileMaterial candidate : TileMaterial.values())
+                if (candidate.getSerializedName().equals(value)) material = candidate;
+        });
     }
 
     public void writeAppearance(CompoundTag tag) {

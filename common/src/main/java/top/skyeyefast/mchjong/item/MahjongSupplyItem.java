@@ -1,10 +1,11 @@
 package top.skyeyefast.mchjong.item;
 
-import java.util.List;
+import java.util.function.Consumer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.TooltipFlag;
+import net.minecraft.world.item.component.TooltipDisplay;
 
 public class MahjongSupplyItem extends Item {
     public MahjongSupplyItem(Properties properties) { super(properties); }
@@ -22,17 +23,18 @@ public class MahjongSupplyItem extends Item {
         return super.getName(stack);
     }
 
-    @Override public void appendHoverText(ItemStack stack, TooltipContext context, List<Component> lines, TooltipFlag flag) {
+    @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
+            Consumer<Component> tooltip, TooltipFlag flag) {
         TileData tile = stack.get(MahjongComponents.TILE);
         if (tile != null) {
-            lines.add(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
-            lines.add(tileLabel(tile, MahjongSupplies.facePreset(stack)));
+            tooltip.accept(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
+            tooltip.accept(tileLabel(tile, MahjongSupplies.facePreset(stack)));
         }
         Integer points = stack.get(MahjongComponents.POINTS);
         if (points != null) {
-            lines.add(points == 0 ? Component.translatable("item.mchjong.unmarked") : Component.translatable("item.mchjong.denomination", points));
+            tooltip.accept(points == 0 ? Component.translatable("item.mchjong.unmarked") : Component.translatable("item.mchjong.denomination", points));
         }
         if (stack.has(net.minecraft.core.component.DataComponents.BASE_COLOR) && !stack.is(top.skyeyefast.mchjong.world.MahjongContent.CLOTH_ITEM))
-            lines.add(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));
+            tooltip.accept(Component.translatable("color.minecraft." + MahjongSupplies.color(stack).getName()));
     }
 }

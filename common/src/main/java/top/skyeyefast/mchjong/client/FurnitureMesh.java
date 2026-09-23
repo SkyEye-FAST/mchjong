@@ -4,9 +4,10 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderType;
+import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.texture.OverlayTexture;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -16,8 +17,8 @@ public final class FurnitureMesh {
     public static final float STICK_HALF_LENGTH = .35f;
     public static final float STICK_HALF_WIDTH = .03f;
     public static final float STICK_HEIGHT = .025f;
-    public static final ResourceLocation STICK_TEXTURE = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/point_sticks.png");
-    public static final ResourceLocation CLOTH_PATTERN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/cloth_pattern.png");
+    public static final Identifier STICK_TEXTURE = Identifier.fromNamespaceAndPath("mchjong", "textures/point_sticks.png");
+    public static final Identifier CLOTH_PATTERN = Identifier.fromNamespaceAndPath("mchjong", "textures/furniture/cloth_pattern.png");
     private static final int WHITE = 0xffffffff;
     private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
@@ -174,7 +175,7 @@ public final class FurnitureMesh {
     }
 
     private static void clothPattern(PoseStack pose, MultiBufferSource buffers, int light, float x, float z, float y) {
-        var out = buffers.getBuffer(RenderType.entityTranslucent(CLOTH_PATTERN));
+        var out = buffers.getBuffer(RenderTypes.entityTranslucent(CLOTH_PATTERN));
         for (int i = 0; i < 4; i++) {
             float u = i == 1 || i == 2 ? 1 : 0, v = i < 2 ? 1 : 0;
             out.addVertex(pose.last(), (u * 2 - 1) * x, y, (v * 2 - 1) * z).setColor(WHITE).setUv(u, v)
@@ -223,6 +224,6 @@ public final class FurnitureMesh {
     }
 
     public static RenderType texture(String texture) {
-        return RenderType.entityCutout(ResourceLocation.fromNamespaceAndPath("mchjong", "textures/furniture/" + texture + ".png"));
+        return RenderTypes.entityCutout(Identifier.fromNamespaceAndPath("mchjong", "textures/furniture/" + texture + ".png"));
     }
 }

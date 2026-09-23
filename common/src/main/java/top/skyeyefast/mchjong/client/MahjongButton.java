@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.network.chat.Component;
@@ -26,18 +26,18 @@ public class MahjongButton extends Button {
         setTooltip(Tooltip.create(message));
     }
 
-    @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
+    @Override protected void extractContents(GuiGraphicsExtractor g, int mouseX, int mouseY, float partialTick) {
         renderSurface(g);
-        g.pose().pushPose();
-        g.pose().translate(getX() + width / 2f, getY() + height / 2f, 0);
-        g.pose().scale(textScale, textScale, 1);
+        g.pose().pushMatrix();
+        g.pose().translate(getX() + width / 2f, getY() + height / 2f);
+        g.pose().scale(textScale, textScale);
         int captionWidth = (int) ((width - 12) / textScale);
         MahjongUi.text(g, Minecraft.getInstance().font, getMessage(), -captionWidth / 2, -4,
             captionWidth, active || selected ? MahjongUi.TEXT : MahjongUi.DISABLED, true);
-        g.pose().popPose();
+        g.pose().popMatrix();
     }
 
-    protected final void renderSurface(GuiGraphics g) {
+    protected final void renderSurface(GuiGraphicsExtractor g) {
         MahjongUi.control(g, getX(), getY(), width, height, active, isHovered(), isFocused(), selected, primary);
     }
 

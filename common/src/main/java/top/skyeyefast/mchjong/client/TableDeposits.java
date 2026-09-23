@@ -42,7 +42,7 @@ public final class TableDeposits {
                 + Math.sin(progress * Math.PI) * .09, TableScene.HAND_Z + (LANE_Z - TableScene.HAND_Z) * progress);
             pose.scale(HALF_LENGTH / FurnitureMesh.STICK_HALF_LENGTH, HEIGHT / FurnitureMesh.STICK_HEIGHT,
                 HALF_WIDTH / FurnitureMesh.STICK_HALF_WIDTH);
-            RiichiStickModel.render(pose, buffers, light);
+            FurnitureMesh.stick(pose, buffers, light, 1000);
             pose.popPose();
         }
     }

@@ -2,11 +2,9 @@ package top.skyeyefast.mchjong.recipe;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.core.HolderLookup;
-import net.minecraft.world.item.DyeItem;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
@@ -34,17 +32,11 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
             Items.COPPER_INGOT, Items.HOPPER, Items.COPPER_INGOT);
     }
 
-    public SupplyCraftingRecipe(CraftingBookCategory category, Operation operation) {
-        super(category);
-        this.operation = operation;
-    }
+    public SupplyCraftingRecipe(Operation operation) { this.operation = operation; }
 
     @Override public boolean matches(CraftingInput input, Level level) { return !result(input).isEmpty(); }
-    @Override public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) { return result(input); }
-    @Override public boolean canCraftInDimensions(int width, int height) {
-        return operation == Operation.UPGRADE_TABLE ? width >= 3 && height >= 3 : width * height >= 2;
-    }
-    @Override public RecipeSerializer<?> getSerializer() { return MahjongRecipes.CRAFTING.get(operation); }
+    @Override public ItemStack assemble(CraftingInput input) { return result(input); }
+    @Override public RecipeSerializer<SupplyCraftingRecipe> getSerializer() { return MahjongRecipes.CRAFTING.get(operation); }
 
     private ItemStack result(CraftingInput input) {
         if (operation == Operation.UPGRADE_TABLE) return upgrade(input);
@@ -69,10 +61,11 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
                     }
                 }
                 case DYE -> {
+                    DyeColor color = MahjongSupplies.dyeColor(reagent);
                     if ((target.is(MahjongContent.TILE_ITEM) || target.is(MahjongContent.CLOTH_ITEM)
                         || target.is(MahjongContent.BOX_ITEM) || target.is(MahjongContent.STOOL_ITEM))
-                        && reagent.getItem() instanceof DyeItem dye)
-                        return MahjongSupplies.dye(target, dye.getDyeColor());
+                        && color != null)
+                        return MahjongSupplies.dye(target, color);
                 }
                 default -> throw new IllegalStateException("Unexpected operation");
             }

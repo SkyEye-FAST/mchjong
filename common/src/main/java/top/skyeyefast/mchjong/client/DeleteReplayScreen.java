@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
@@ -17,7 +17,7 @@ public final class DeleteReplayScreen extends Screen {
     }
 
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
     @Override protected void init() {
         int span = Math.min(440, width - 32), left = (width - span) / 2;
@@ -30,7 +30,7 @@ public final class DeleteReplayScreen extends Screen {
         setInitialFocus(cancel);
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         int span = Math.min(440, width - 32), left = (width - span) / 2;
         MahjongUi.backdrop(graphics, width, height, 470);
         MahjongUi.text(graphics, font, title, left, 18, span, MahjongUi.TEXT, true);
@@ -38,10 +38,10 @@ public final class DeleteReplayScreen extends Screen {
         MahjongUi.text(graphics, font, Component.literal(match.id().toString()), left, 60, span, MahjongUi.MUTED, true);
         int y = 86;
         for (var line : font.split(Component.translatable("replay.mchjong.delete_note"), span)) {
-            graphics.drawString(font, line, left, y, MahjongUi.TEXT, false);
+            graphics.text(font, line, left, y, MahjongUi.TEXT, false);
             y += 11;
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }

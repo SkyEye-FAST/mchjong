@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import java.util.List;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -23,7 +23,7 @@ public final class TableSeatsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -92,7 +92,7 @@ public final class TableSeatsScreen extends Screen {
         if (view.revision() != revision) init();
     }
 
-    @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 464);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         var view = parent.view();
@@ -112,7 +112,7 @@ public final class TableSeatsScreen extends Screen {
                 MahjongUi.text(graphics, font, status, left, 56 + seat * 37, span - 108, MahjongUi.MUTED, false);
             }
         }
-        super.render(graphics, x, y, partialTick);
+        super.extractRenderState(graphics, x, y, partialTick);
     }
 
     static Component presence(PlayerPresence presence) {

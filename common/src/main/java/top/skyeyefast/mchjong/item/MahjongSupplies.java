@@ -5,7 +5,6 @@ import java.util.List;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -36,7 +35,7 @@ public final class MahjongSupplies {
     public static NonNullList<ItemStack> contents(ItemStack box) {
         var preset = box.get(MahjongComponents.BOX_PRESET);
         var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        if (preset != null && stored.nonEmptyStream().findAny().isEmpty()) return stockedContents(preset);
+        if (preset != null && stored.nonEmptyItemCopyStream().findAny().isEmpty()) return stockedContents(preset);
         NonNullList<ItemStack> result = NonNullList.withSize(BOX_SLOTS, ItemStack.EMPTY);
         stored.copyInto(result);
         return result;
@@ -57,7 +56,17 @@ public final class MahjongSupplies {
     }
 
     public static boolean dyeSlotItem(ItemStack stack) {
-        return mahjongDye(stack) || stack.getItem() instanceof DyeItem;
+        return mahjongDye(stack) || stack.has(DataComponents.DYE);
+    }
+
+    public static DyeColor dyeColor(ItemStack stack) { return stack.get(DataComponents.DYE); }
+
+    public static ItemStack dyeItem(DyeColor color) {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.stream()
+            .map(ItemStack::new)
+            .filter(stack -> stack.get(DataComponents.DYE) == color)
+            .findFirst()
+            .orElseThrow(() -> new IllegalStateException("Missing vanilla dye for " + color));
     }
 
     public static boolean boxAccepts(int slot, ItemStack stack) {
@@ -71,8 +80,8 @@ public final class MahjongSupplies {
     public static boolean validBox(ItemStack box) {
         if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1) return false;
         var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        if (box.has(MahjongComponents.BOX_PRESET)) return stored.nonEmptyStream().findAny().isEmpty();
-        if (stored.stream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
+        if (box.has(MahjongComponents.BOX_PRESET)) return stored.nonEmptyItemCopyStream().findAny().isEmpty();
+        if (stored.allItemsCopyStream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
         var items = contents(box);
         for (int i = 0; i < items.size(); i++)
             if (!items.get(i).isEmpty() && (!boxAccepts(i, items.get(i)) || items.get(i).getCount() > items.get(i).getMaxStackSize())) return false;

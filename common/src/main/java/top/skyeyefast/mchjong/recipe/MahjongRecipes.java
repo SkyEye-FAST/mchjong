@@ -4,8 +4,9 @@ import java.util.EnumMap;
 import java.util.LinkedHashMap;
 import java.util.Locale;
 import java.util.Map;
+import com.mojang.serialization.MapCodec;
+import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 
 public final class MahjongRecipes {
     public static final Map<SupplyCraftingRecipe.Operation, RecipeSerializer<SupplyCraftingRecipe>> CRAFTING;
@@ -14,7 +15,9 @@ public final class MahjongRecipes {
         var crafting = new EnumMap<SupplyCraftingRecipe.Operation, RecipeSerializer<SupplyCraftingRecipe>>(SupplyCraftingRecipe.Operation.class);
         var serializers = new LinkedHashMap<String, RecipeSerializer<?>>();
         for (var operation : SupplyCraftingRecipe.Operation.values()) {
-            RecipeSerializer<SupplyCraftingRecipe> serializer = new SimpleCraftingRecipeSerializer<>(category -> new SupplyCraftingRecipe(category, operation));
+            var recipe = new SupplyCraftingRecipe(operation);
+            RecipeSerializer<SupplyCraftingRecipe> serializer =
+                new RecipeSerializer<>(MapCodec.unit(recipe), StreamCodec.unit(recipe));
             crafting.put(operation, serializer);
             serializers.put(operation.name().toLowerCase(Locale.ROOT), serializer);
         }

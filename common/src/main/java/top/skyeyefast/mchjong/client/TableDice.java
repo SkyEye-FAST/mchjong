@@ -3,8 +3,9 @@ package top.skyeyefast.mchjong.client;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.renderer.MultiBufferSource;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.SubmitNodeCollector;
+import net.minecraft.client.renderer.item.ItemStackRenderState;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
@@ -42,36 +43,36 @@ final class TableDice extends MahjongButton {
         if (!visible) setFocused(false);
     }
 
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        if (active && isHoveredOrFocused()) graphics.renderOutline(getX(), getY(), getWidth(), getHeight(), MahjongUi.ACCENT);
+    @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        if (active && isHoveredOrFocused()) graphics.outline(getX(), getY(), getWidth(), getHeight(), MahjongUi.ACCENT);
     }
 
-    void renderTooltip(GuiGraphics graphics, int mouseX, int mouseY) {
+    void renderTooltip(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         if (!visible || !isHoveredOrFocused()) return;
         var font = Minecraft.getInstance().font;
         if (first == 0) {
-            graphics.renderTooltip(font, getMessage(), mouseX, mouseY);
+            graphics.setTooltipForNextFrame(font, getMessage(), mouseX, mouseY);
             return;
         }
         int width = 66 + font.width(Integer.toString(first + second));
         int x = Math.max(4, Math.min(mouseX + 12, graphics.guiWidth() - width - 4));
         int y = Math.max(4, Math.min(mouseY - 28, graphics.guiHeight() - 28));
-        graphics.pose().pushPose();
-        graphics.pose().translate(0, 0, 400);
+        graphics.nextStratum();
         MahjongUi.panel(graphics, x, y, width, 24);
         face(graphics, first, x + 4, y + 4);
-        graphics.drawString(font, "+", x + 23, y + 8, MahjongUi.TEXT, false);
+        graphics.text(font, "+", x + 23, y + 8, MahjongUi.TEXT, false);
         face(graphics, second, x + 32, y + 4);
-        graphics.drawString(font, "= " + (first + second), x + 51, y + 8, MahjongUi.TEXT, false);
-        graphics.pose().popPose();
+        graphics.text(font, "= " + (first + second), x + 51, y + 8, MahjongUi.TEXT, false);
     }
 
-    private static void face(GuiGraphics graphics, int face, int x, int y) {
-        graphics.blit(MahjongContent.id("textures/item/dice_" + face + ".png"), x, y, 16, 16, 0, 0, 32, 32, 32, 32);
+    private static void face(GuiGraphicsExtractor graphics, int face, int x, int y) {
+        graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED,
+            MahjongContent.id("textures/item/dice_" + face + ".png"), x, y, 0, 0, 16, 16, 32, 32, 32, 32);
     }
 
-    static void renderWorld(TableView view, PoseStack pose, MultiBufferSource buffers, int light) {
+    static void renderWorld(TableView view, PoseStack pose, SubmitNodeCollector collector, int light) {
         if (!onTable(view)) return;
+        var client = Minecraft.getInstance();
         for (int index = 0; index < 2; index++) {
             int face = Math.max(1, index == 0 ? view.handling().diceOne() : view.handling().diceTwo());
             pose.pushPose();
@@ -82,8 +83,10 @@ final class TableDice extends MahjongButton {
             if (face == 2 || face == 5 || face == 6)
                 pose.mulPose(Axis.XP.rotationDegrees(face == 2 ? 90 : face == 5 ? -90 : 180));
             if (face == 3 || face == 4) pose.mulPose(Axis.ZP.rotationDegrees(face == 3 ? 90 : -90));
-            Minecraft.getInstance().getItemRenderer().renderStatic(new ItemStack(MahjongContent.DICE), ItemDisplayContext.NONE,
-                light, OverlayTexture.NO_OVERLAY, pose, buffers, Minecraft.getInstance().level, 0);
+            var renderState = new ItemStackRenderState();
+            client.getItemModelResolver().updateForTopItem(renderState, new ItemStack(MahjongContent.DICE),
+                ItemDisplayContext.NONE, client.level, client.player, index);
+            renderState.submit(pose, collector, light, OverlayTexture.NO_OVERLAY, 0);
             pose.popPose();
         }
     }

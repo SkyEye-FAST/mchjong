@@ -1,5 +1,5 @@
 plugins {
-    id 'net.fabricmc.fabric-loom-remap' version "${loom_version}"
+    id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
 
 version = rootProject.mod_version
@@ -8,22 +8,15 @@ base.archivesName = "mchjong-fabric-${minecraft_version}"
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
-    mappings loom.officialMojangMappings()
-    modImplementation "net.fabricmc:fabric-loader:${loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    modCompileOnly "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
-    modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
-    modCompileOnly "dev.emi:emi-fabric:${emi_version}:api"
-    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"
+    implementation "net.fabricmc:fabric-loader:${loader_version}"
+    implementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    compileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
+    compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"
+    compileOnly "dev.architectury:architectury-fabric:${rei_architectury_version}"
+    compileOnly "me.shedaniel.cloth:basic-math:${rei_basic_math_version}"
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
-        modLocalRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
-        modLocalRuntime "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}"
-    }
-    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'emi') {
-        modLocalRuntime "dev.emi:emi-fabric:${emi_version}"
-    }
-    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
-        modLocalRuntime "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
+        runtimeOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
+        runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}"
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
@@ -44,39 +37,16 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
-    resources.srcDir layout.buildDirectory.dir('generated/ponder')
-}
-
-// Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
-sourceSets {
-    ponderData {
-        java.srcDir '../common/src/ponderData/java'
-        compileClasspath += sourceSets.main.compileClasspath
-    }
-}
-sourceSets.ponderData.runtimeClasspath += sourceSets.ponderData.compileClasspath
-tasks.register('generatePonder', JavaExec) {
-    dependsOn tasks.named('ponderDataClasses')
-    classpath = sourceSets.ponderData.runtimeClasspath
-    mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
-    def output = layout.buildDirectory.dir('generated/ponder')
-    args output.get().asFile.absolutePath
-    inputs.files sourceSets.ponderData.allSource
-    outputs.dir output
-    doFirst { delete output }
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
+    dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
         java_version: java_version,
         fabric_loader_min_version: fabric_loader_min_version,
-        ponder_version: ponder_version,
         jei_version: jei_version,
-        emi_version: emi_version,
         rei_version: rei_version
     ]
     inputs.properties properties
@@ -92,7 +62,7 @@ tasks.withType(JavaCompile).configureEach {
     options.release = java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData' }
 jar { from(rootProject.file('LICENSE')) }
 
 // This mod is loaded only by the visual smoke run, never packaged for players.
@@ -104,15 +74,14 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-if (!(recipeBrowser in ['none', 'jei', 'emi'])) throw new GradleException('recipeBrowser must be none, jei or emi')
-def smokeProfile = roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
+def smokeProfile = roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -139,7 +108,6 @@ loom {
             property 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             property 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             property 'mchjong.smoke.roomOnly', roomSmoke.toString()
-            property 'mchjong.smoke.ponder', ponderSmoke.toString()
             property 'mchjong.smoke.browser', recipeBrowser
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath

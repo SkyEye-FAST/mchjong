@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -23,7 +23,7 @@ public final class TableOptionsScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
@@ -50,7 +50,7 @@ public final class TableOptionsScreen extends Screen {
                 Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))),
                 host && lobby, () -> {
                     var modes = top.skyeyefast.mchjong.engine.HandVisibility.values();
-                    int direction = Screen.hasShiftDown() ? -1 : 1;
+                    int direction = MahjongUi.shiftDown() ? -1 : 1;
                     parent.configureVisibility(modes[Math.floorMod(view.handVisibility().ordinal() + direction, modes.length)]);
                 }));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
@@ -111,7 +111,7 @@ public final class TableOptionsScreen extends Screen {
         if (revision != view.revision()) init();
     }
 
-    @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 464);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         var view = parent.view();
@@ -121,8 +121,8 @@ public final class TableOptionsScreen extends Screen {
         if (tab == 1 && view != null && room != null) note = Component.translatable("room.mchjong.host",
             room.host() < 0 ? "—" : view.seats().get(room.host()).name());
         MahjongUi.text(graphics, font, note, 16, 66, width - 32, MahjongUi.MUTED, true);
-        if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 54, MahjongUi.MUTED);
-        super.render(graphics, x, y, partialTick);
+        if (pages > 1) graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 54, MahjongUi.MUTED);
+        super.extractRenderState(graphics, x, y, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 }

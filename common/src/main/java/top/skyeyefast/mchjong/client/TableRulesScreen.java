@@ -5,7 +5,7 @@ import java.util.Arrays;
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -58,7 +58,7 @@ public final class TableRulesScreen extends Screen {
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
 
     private boolean host() {
         var view = parent.view();
@@ -233,7 +233,7 @@ public final class TableRulesScreen extends Screen {
         if (pending != null && ++pendingTicks > 200) { pending = null; rejected = true; }
         updateControls();
     }
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         updateControls();
         MahjongUi.backdrop(graphics, width, height, 580);
         MahjongUi.text(graphics, font, draft.custom() ? Component.translatable("rules.mchjong.custom") : title,
@@ -241,16 +241,16 @@ public final class TableRulesScreen extends Screen {
         for (var label : labels) {
             MahjongUi.text(graphics, font, label.text(), label.x(), label.y(), label.width(), MahjongUi.TEXT, false);
             if (mouseX >= label.x() && mouseX < label.x() + label.width() && mouseY >= label.y() - 4 && mouseY < label.y() + 12)
-                setTooltipForNextRenderPass(label.text());
+                graphics.setTooltipForNextFrame(label.text(), mouseX, mouseY);
         }
-        graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
+        graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
         String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"
             : !host() ? "rules.mchjong.read_only" : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid"
             : missingReds() ? "rules.mchjong.insufficient_reds" : mode == Mode.CUSTOM ? "rules.mchjong.custom_note"
             : mode == Mode.PRESET ? "rules.mchjong.apply_note" : "rules.mchjong.details_note";
         MahjongUi.text(graphics, font, Component.translatable(notice), 12, height - 75, width - 24,
             rejected || stale() || invalid() || missingReds() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, true);
-        super.render(graphics, mouseX, mouseY, partialTick);
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }
     @Override public void onClose() { minecraft.setScreen(minecraft.level == null ? null : parent); }
 }

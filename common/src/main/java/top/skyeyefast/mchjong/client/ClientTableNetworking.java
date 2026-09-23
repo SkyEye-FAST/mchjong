@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.client.Minecraft;
-import net.minecraft.Util;
+import net.minecraft.util.Util;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.RoomSeating;

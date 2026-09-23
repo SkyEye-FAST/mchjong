@@ -2,11 +2,11 @@ package top.skyeyefast.mchjong.compat.recipes;
 
 import java.util.ArrayList;
 import java.util.Collections;
-import java.util.Comparator;
 import java.util.List;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
-import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
@@ -27,8 +27,10 @@ public final class SupplyRecipeExamples {
 
     public static List<SupplyRecipeExample> create(Level level) {
         var examples = new ArrayList<SupplyRecipeExample>();
-        var recipes = level.getRecipeManager().getRecipes().stream()
-            .sorted(Comparator.comparing(holder -> holder.id().toString())).toList();
+        var recipes = java.util.Arrays.stream(SupplyCraftingRecipe.Operation.values())
+            .map(operation -> new RecipeHolder<>(ResourceKey.create(Registries.RECIPE,
+                MahjongContent.id(operation.name().toLowerCase(java.util.Locale.ROOT))), new SupplyCraftingRecipe(operation)))
+            .toList();
         for (var holder : recipes) {
             if (holder.value() instanceof SupplyCraftingRecipe recipe) {
                 switch (recipe.operation()) {
@@ -70,7 +72,7 @@ public final class SupplyRecipeExamples {
                             }
                             for (int i = 0; i < targets.size(); i++)
                                 add(examples, level, holder, color.getName() + "/" + i,
-                                    List.of(targets.get(i), new ItemStack(DyeItem.byColor(color))));
+                                    List.of(targets.get(i), MahjongSupplies.dyeItem(color)));
                         }
                     }
                 }
@@ -99,7 +101,8 @@ public final class SupplyRecipeExamples {
                             String variant, List<ItemStack> ingredients) {
         var input = new ArrayList<>(ingredients);
         input.addAll(Collections.nCopies(9 - input.size(), ItemStack.EMPTY));
-        var id = MahjongContent.id("/supplies/" + source.id().getNamespace() + "/" + source.id().getPath() + "/" + variant);
+        var sourceId = source.id().identifier();
+        var id = MahjongContent.id("supplies/" + sourceId.getNamespace() + "/" + sourceId.getPath() + "/" + variant);
         var candidate = new SupplyRecipeExample(id, source, List.copyOf(input), ItemStack.EMPTY, List.of(input.getFirst()));
         var output = candidate.assemble(level);
         // A datapack may restrict a vanilla ingredient. Only publish actual matches.

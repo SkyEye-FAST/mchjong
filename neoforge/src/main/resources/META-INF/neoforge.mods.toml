@@ -28,23 +28,9 @@ ordering="NONE"
 side="BOTH"
 
 [[dependencies.mchjong]]
-modId="ponder"
-type="optional"
-versionRange="[${ponder_version},)"
-ordering="AFTER"
-side="CLIENT"
-
-[[dependencies.mchjong]]
 modId="jei"
 type="optional"
 versionRange="[${jei_version},)"
-ordering="AFTER"
-side="CLIENT"
-
-[[dependencies.mchjong]]
-modId="emi"
-type="optional"
-versionRange="[${emi_version},)"
 ordering="AFTER"
 side="CLIENT"
 

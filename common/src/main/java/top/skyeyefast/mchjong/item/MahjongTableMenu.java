@@ -5,7 +5,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -55,14 +55,14 @@ public final class MahjongTableMenu extends AbstractContainerMenu {
 
     @Override public boolean stillValid(Player player) {
         if (player != inventory.player) return false;
-        if (player.level().isClientSide) return active;
+        if (player.level().isClientSide()) return active;
         active &= table != null && player.containerMenu == this && player.isAlive() && !player.isRemoved() && !player.isSpectator()
             && player.level() == table.getLevel() && !table.isRemoved() && table.equipmentEditable()
             && player.level().getBlockEntity(table.getBlockPos()) == table && player.distanceToSqr(table.getBlockPos().getCenter()) <= 64;
         return active;
     }
 
-    @Override public void clicked(int slot, int button, ClickType type, Player player) {
+    @Override public void clicked(int slot, int button, ContainerInput type, Player player) {
         if (!stillValid(player) || slot >= slots.size()) return;
         super.clicked(slot, button, type, player);
     }

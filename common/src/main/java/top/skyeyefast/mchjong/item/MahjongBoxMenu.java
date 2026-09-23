@@ -4,7 +4,7 @@ import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.DataSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.ItemStack;
@@ -15,7 +15,12 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
     private final Inventory inventory;
     private final DataSlot ownerSlot = DataSlot.standalone();
     private ItemStack box = ItemStack.EMPTY;
-    private final SimpleContainer contents = new SimpleContainer(MahjongSupplies.BOX_SLOTS);
+    private final SimpleContainer contents = new SimpleContainer(MahjongSupplies.BOX_SLOTS) {
+        @Override public void setChanged() {
+            super.setChanged();
+            save();
+        }
+    };
     private boolean active = true;
     private boolean updating;
 
@@ -46,8 +51,10 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         box = inventory.getItem(ownerSlot);
         if (!MahjongSupplies.validBox(box)) throw new IllegalArgumentException("Invalid mahjong box");
         var stored = MahjongSupplies.contents(box);
-        for (int i = 0; i < stored.size(); i++) contents.setItem(i, stored.get(i));
-        contents.addListener(container -> save());
+        updating = true;
+        try {
+            for (int i = 0; i < stored.size(); i++) contents.setItem(i, stored.get(i));
+        } finally { updating = false; }
     }
 
     private void save() {
@@ -63,19 +70,19 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     public boolean canDyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
-        if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye)) return false;
-        var color = dye.getDyeColor();
+        var color = MahjongSupplies.dyeColor(reagent);
+        if (color == null) return false;
         return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
             .anyMatch(stack -> stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)
                 && MahjongSupplies.back(stack) != color);
     }
 
     @Override public boolean clickMenuButton(Player player, int id) {
-        return !player.level().isClientSide && stillValid(player) && id == DYE_BACK_BUTTON && dyeBack();
+        return !player.level().isClientSide() && stillValid(player) && id == DYE_BACK_BUTTON && dyeBack();
     }
 
     public boolean print(Player player, TileFacePreset preset) {
-        if (player.level().isClientSide || !stillValid(player)) return false;
+        if (player.level().isClientSide() || !stillValid(player)) return false;
         var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (!MahjongSupplies.mahjongDye(dye)) return false;
         var output = MahjongSupplies.engravedContents(items(), preset);
@@ -92,8 +99,9 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     private boolean dyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
-        if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye) || !canDyeBack()) return false;
-        var output = MahjongSupplies.dyedContents(items(), dye.getDyeColor());
+        var color = MahjongSupplies.dyeColor(reagent);
+        if (color == null || !canDyeBack()) return false;
+        var output = MahjongSupplies.dyedContents(items(), color);
         if (output.isEmpty()) return false;
         output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;
@@ -119,15 +127,15 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     @Override public boolean stillValid(Player player) {
         if (player != inventory.player) return false;
-        if (player.level().isClientSide) return active && ownerSlot() >= 0;
+        if (player.level().isClientSide()) return active && ownerSlot() >= 0;
         // Once detached, dead or closed, this menu must never become live again.
         active &= player.containerMenu == this && player.isAlive() && !player.isRemoved() && !player.isSpectator()
             && inventory.getItem(ownerSlot()) == box && box.getCount() == 1;
         return active;
     }
 
-    @Override public void clicked(int slot, int button, ClickType type, Player player) {
-        if (!stillValid(player) || slot >= slots.size() || type == ClickType.SWAP && button == ownerSlot()) return;
+    @Override public void clicked(int slot, int button, ContainerInput type, Player player) {
+        if (!stillValid(player) || slot >= slots.size() || type == ContainerInput.SWAP && button == ownerSlot()) return;
         if (slot >= 0 && slots.get(slot).container == inventory && slots.get(slot).getContainerSlot() == ownerSlot()) return;
         super.clicked(slot, button, type, player);
     }

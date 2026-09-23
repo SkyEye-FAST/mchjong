@@ -10,9 +10,9 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExample;
@@ -32,7 +32,7 @@ final class SupplyJeiCategory implements IRecipeCategory<SupplyRecipeExample> {
     @Override public IDrawable getIcon() { return icon; }
     @Override public int getWidth() { return 134; }
     @Override public int getHeight() { return 78; }
-    @Override public ResourceLocation getRegistryName(SupplyRecipeExample example) { return example.id(); }
+    @Override public Identifier getRegistryName(SupplyRecipeExample example) { return example.id(); }
 
     @Override public void setRecipe(IRecipeLayoutBuilder builder, SupplyRecipeExample example, IFocusGroup focuses) {
         for (int i = 0; i < example.input().size(); i++)
@@ -42,13 +42,13 @@ final class SupplyJeiCategory implements IRecipeCategory<SupplyRecipeExample> {
         if (example.shapeless()) builder.setShapeless();
     }
 
-    @Override public void draw(SupplyRecipeExample example, IRecipeSlotsView slots, GuiGraphics graphics, double x, double y) {
+    @Override public void draw(SupplyRecipeExample example, IRecipeSlotsView slots, GuiGraphicsExtractor graphics, double x, double y) {
         var font = Minecraft.getInstance().font;
         MahjongUi.panel(graphics, 0, 0, getWidth(), getHeight());
         for (int i = 0; i < example.input().size(); i++)
             if (!example.input().get(i).isEmpty()) MahjongUi.slot(graphics, inputX(i), inputY(i), false);
         MahjongUi.slot(graphics, 100, 23, false);
-        graphics.drawString(font, "→", 71, 27, MahjongUi.ACCENT, false);
+        graphics.text(font, "→", 71, 27, MahjongUi.ACCENT, false);
         MahjongUi.text(graphics, font, Component.translatable("browser.mchjong.components"), 4, 64, 126, MahjongUi.MUTED, false);
     }
 

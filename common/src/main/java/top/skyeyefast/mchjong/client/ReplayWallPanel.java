@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.HashSet;
 import java.util.Set;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
@@ -33,7 +33,7 @@ final class ReplayWallPanel extends AbstractWidget {
 
     void show(ReplayPlayback.Frame frame) { this.frame = frame; }
 
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override protected void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         if (frame == null) return;
         MahjongUi.panel(graphics, getX(), getY(), width, height);
         MahjongUi.text(graphics, font, getMessage(), getX() + 9, getY() + 7, width - 18, MahjongUi.ACCENT, false);
@@ -77,9 +77,9 @@ final class ReplayWallPanel extends AbstractWidget {
                 TileGui.tile(graphics, wall.tiles().get(slot), tx, ty, tileWidth, false, false, false, preset);
                 if (used.contains(wall.tiles().get(slot))) graphics.fill(tx, ty, tx + tileWidth, ty + tileHeight, 0x990b1418);
                 int dora = wall.dora().indexOf(slot), ura = wall.ura().indexOf(slot);
-                if (dora >= 0 && dora < revealed) graphics.renderOutline(tx, ty, tileWidth, tileHeight, MahjongUi.ACCENT);
-                else if (ura >= 0 && ura < revealed) graphics.renderOutline(tx, ty, tileWidth, tileHeight, MahjongUi.MUTED);
-                else if (slot == nextLive) graphics.renderOutline(tx, ty, tileWidth, tileHeight, MahjongUi.POSITIVE);
+                if (dora >= 0 && dora < revealed) graphics.outline(tx, ty, tileWidth, tileHeight, MahjongUi.ACCENT);
+                else if (ura >= 0 && ura < revealed) graphics.outline(tx, ty, tileWidth, tileHeight, MahjongUi.MUTED);
+                else if (slot == nextLive) graphics.outline(tx, ty, tileWidth, tileHeight, MahjongUi.POSITIVE);
             }
         }
     }

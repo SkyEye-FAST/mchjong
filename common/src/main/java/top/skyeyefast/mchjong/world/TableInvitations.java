@@ -45,7 +45,7 @@ public final class TableInvitations {
         if (game.phase() != Game.Phase.LOBBY || recipient == sender || recipient.isSpectator()
             || game.seatOf(recipient.getUUID()) >= 0 || game.view(null).seats().stream().allMatch(seat -> seat.occupied()))
             throw TableCommands.error("message.mchjong.invite_unavailable");
-        var server = sender.server;
+        var server = sender.level().getServer();
         var inbox = of(server);
         if (inbox.lastSent.containsKey(sender.getUUID()) || inbox.pending.size() >= 1024)
             throw TableCommands.error("message.mchjong.invite_cooldown");
@@ -56,15 +56,15 @@ public final class TableInvitations {
         UUID token = UUID.randomUUID();
         BlockPos pos = table.getBlockPos();
         inbox.pending.put(token, new Invitation(sender.getUUID(), recipient.getUUID(), game.tableId(),
-            sender.serverLevel().dimension(), pos, now + LIFETIME, WorldSettings.of(server).policy().invitationTeleport()));
+            sender.level().dimension(), pos, now + LIFETIME, WorldSettings.of(server).policy().invitationTeleport()));
         Component accept = Component.translatable("ui.mchjong.invite_accept").withStyle(style -> style
             .withColor(ChatFormatting.GREEN).withUnderlined(true)
-            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mchjong accept " + token)));
+            .withClickEvent(new ClickEvent.RunCommand("/mchjong accept " + token)));
         Component decline = Component.translatable("ui.mchjong.invite_decline").withStyle(style -> style
             .withColor(ChatFormatting.GRAY).withUnderlined(true)
-            .withClickEvent(new ClickEvent(ClickEvent.Action.RUN_COMMAND, "/mchjong decline " + token)));
+            .withClickEvent(new ClickEvent.RunCommand("/mchjong decline " + token)));
         recipient.sendSystemMessage(Component.translatable("message.mchjong.invitation", sender.getDisplayName(),
-            pos.getX(), pos.getY(), pos.getZ(), sender.serverLevel().dimension().location().toString())
+            pos.getX(), pos.getY(), pos.getZ(), sender.level().dimension().identifier().toString())
             .append(" ").append(Component.translatable(WorldSettings.of(server).policy().invitationTeleport()
                 ? "message.mchjong.invite_teleport_enabled" : "message.mchjong.invite_teleport_disabled"))
             .append(" ").append(accept).append("  ").append(decline));
@@ -73,7 +73,7 @@ public final class TableInvitations {
     }
 
     public static int respond(ServerPlayer recipient, UUID token, boolean accept) throws CommandSyntaxException {
-        var server = recipient.server;
+        var server = recipient.level().getServer();
         var inbox = of(server);
         Invitation invitation = inbox.pending.get(token);
         if (invitation == null || !invitation.validFor(recipient.getUUID(), server.overworld().getGameTime()))
@@ -97,7 +97,7 @@ public final class TableInvitations {
         if (!recipient.isAlive() || recipient.isSpectator() || recipient.isPassenger())
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var view = table.participantGame(sender).view(null);
-        boolean remote = recipient.serverLevel() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
+        boolean remote = recipient.level() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
         if (remote && (!invitation.teleportOffered() || !WorldSettings.of(server).policy().invitationTeleport()))
             throw TableCommands.error("message.mchjong.invite_approach");
         int nearest = TableGeometry.nearestSide(recipient.position().subtract(pos.getCenter()));
@@ -109,7 +109,7 @@ public final class TableInvitations {
                 var safe = safeArrival(level, pos, seat, recipient);
                 if (safe == null) continue;
                 // Acceptance grants travel only. Joining still requires actually sitting down.
-                recipient.teleportTo(level, safe.x, safe.y, safe.z, TableGeometry.yaw(seat), 0);
+                recipient.teleportTo(level, safe.x, safe.y, safe.z, java.util.Set.of(), TableGeometry.yaw(seat), 0, false);
                 recipient.setDeltaMovement(net.minecraft.world.phys.Vec3.ZERO);
                 recipient.fallDistance = 0;
                 inbox.pending.remove(token);

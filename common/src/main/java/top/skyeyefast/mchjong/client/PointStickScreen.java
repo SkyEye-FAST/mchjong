@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.entity.player.Inventory;
@@ -12,10 +12,8 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
     }
     private final TableScreen parent;
     public PointStickScreen(PointStickMenu menu, Inventory inventory, Component title) {
-        super(menu, inventory, title);
+        super(menu, inventory, title, 304, 216);
         parent = TableScreen.active(net.minecraft.client.Minecraft.getInstance().screen);
-        imageWidth = 304;
-        imageHeight = 216;
     }
 
     @Override protected void init() {
@@ -23,19 +21,19 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         topPos = Math.min(topPos, height - imageHeight - 24);
     }
 
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+    @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        renderBg(graphics, partialTick, mouseX, mouseY);
+        extractPanel(graphics, partialTick, mouseX, mouseY);
     }
 
-    @Override protected void renderBg(GuiGraphics graphics, float partialTick, int mouseX, int mouseY) {
+    private void extractPanel(GuiGraphicsExtractor graphics, float partialTick, int mouseX, int mouseY) {
         MahjongUi.panel(graphics, leftPos, topPos, imageWidth, imageHeight);
         graphics.fill(leftPos + 1, topPos + 1, leftPos + imageWidth - 1, topPos + 3, MahjongUi.ACCENT);
         for (var slot : menu.slots) MahjongUi.slot(graphics, leftPos + slot.x, topPos + slot.y,
             slot.index < PointStickMenu.DRAWER_SLOTS && slot.index / top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == menu.recipientSide());
     }
 
-    @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
+    @Override protected void extractLabels(GuiGraphicsExtractor graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 10, 8, 266, MahjongUi.TEXT, true);
         top.skyeyefast.mchjong.engine.TableView view = parent != null && minecraft.level != null
             && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
@@ -52,21 +50,21 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
         MahjongUi.text(graphics, font, playerInventoryTitle, 113, 116, 162, MahjongUi.MUTED, false);
         int y = 128;
         for (var line : font.split(Component.translatable("sticks.mchjong.deliver"), 94)) {
-            graphics.drawString(font, line, 10, y, MahjongUi.MUTED, false);
+            graphics.text(font, line, 10, y, MahjongUi.MUTED, false);
             y += 10;
         }
         MahjongUi.text(graphics, font, Component.translatable("sticks.mchjong.balance"), 10, 204, 266, MahjongUi.MUTED, true);
     }
 
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        super.render(graphics, mouseX, mouseY, partialTick);
+    @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        super.extractRenderState(graphics, mouseX, mouseY, partialTick);
         if (hoveredSlot != null && hoveredSlot.index < PointStickMenu.DRAWER_SLOTS
             && hoveredSlot.index % top.skyeyefast.mchjong.world.TableEquipment.STICK_SLOTS == top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT) {
             var lines = new java.util.ArrayList<Component>();
             if (hoveredSlot.hasItem()) lines.addAll(getTooltipFromItem(minecraft, hoveredSlot.getItem()));
             lines.add(Component.translatable("sticks.mchjong.bust_reserve"));
-            graphics.renderComponentTooltip(font, lines, mouseX, mouseY);
-        } else renderTooltip(graphics, mouseX, mouseY);
+            graphics.setComponentTooltipForNextFrame(font, lines, mouseX, mouseY);
+        }
     }
 
     @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {

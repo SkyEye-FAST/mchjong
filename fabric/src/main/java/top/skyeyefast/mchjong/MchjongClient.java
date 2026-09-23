@@ -12,22 +12,17 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
-        net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
-            context.addModels(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
-        top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()
-            .getModelManager().getModel(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
+        top.skyeyefast.mchjong.fabric.mixin.SpecialModelRenderersAccessor.mchjong$idMapper().put(
+            top.skyeyefast.mchjong.client.MahjongItemRenderer.TYPE,
+            top.skyeyefast.mchjong.client.MahjongItemRenderer.MAP_CODEC);
         net.fabricmc.fabric.api.resource.ResourceManagerHelper.get(net.minecraft.server.packs.PackType.CLIENT_RESOURCES)
             .registerReloadListener(new net.fabricmc.fabric.api.resource.SimpleSynchronousResourceReloadListener() {
-                @Override public net.minecraft.resources.ResourceLocation getFabricId() { return MahjongContent.id("tile_face_presets"); }
+                @Override public net.minecraft.resources.Identifier getFabricId() { return MahjongContent.id("tile_face_presets"); }
                 @Override public void onResourceManagerReload(net.minecraft.server.packs.resources.ResourceManager resources) {
                     top.skyeyefast.mchjong.client.TileFacePresets.reload(resources);
                 }
             });
-        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper::registerKeyBinding);
-        top.skyeyefast.mchjong.client.HeldSupplyArm.initialize((model, context, pose, leftHand) ->
-            model.getTransforms().getTransform(context).apply(leftHand, pose));
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
-            top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
+        top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper::registerKeyMapping);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
@@ -40,9 +35,6 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.client.TableAudio.close());
         BlockEntityRenderers.register(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);
         BlockEntityRenderers.register(MahjongContent.STOOL_ENTITY, top.skyeyefast.mchjong.client.FurnitureRenderer::new);
-        var itemRenderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();
-        for (var item : top.skyeyefast.mchjong.client.MahjongItemRenderer.items())
-            net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
         ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));
