@@ -194,6 +194,44 @@ class ReactionRulesTest {
         assertTrue(f.game.players[1].melds.isEmpty()); assertTrue(f.game.players[3].melds.isEmpty());
     }
 
+    @Test void botRonSettlesBeforeHumanCallOnlyChoices() {
+        Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        f.hand(1, "45p1236789s55z19m");
+        f.hand(2, "123456789m55s78p");
+        f.hand(3, "66p123456s11z789m");
+        f.riichi(2);
+        f.game.players[2].bot = true;
+        int discarded = f.take("6p").getFirst();
+        f.game.players[0].hand.add(discarded);
+        f.start(0, discarded);
+
+        f.act(0, Action.Type.DISCARD, discarded);
+
+        assertEquals(List.of(2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertTrue(f.game.players[1].melds.isEmpty());
+        assertTrue(f.game.players[3].melds.isEmpty());
+        assertTrue(f.game.view(f.game.players[1].id).actions().isEmpty());
+    }
+
+    @Test void botRonStillWaitsForAnotherPlayersRon() {
+        Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        f.hand(1, "123456789m111p5z");
+        f.hand(2, "123456789p111s5z");
+        int discarded = f.take("5z").getFirst();
+        f.game.players[0].hand.add(discarded);
+        f.riichi(1);
+        f.riichi(2);
+        f.game.players[2].bot = true;
+        f.start(0, discarded);
+
+        f.act(0, Action.Type.DISCARD, discarded);
+        assertEquals(Game.Phase.REACTION, f.game.phase());
+        assertTrue(f.game.view(f.game.players[1].id).actions().stream().anyMatch(a -> a.type() == Action.Type.RON));
+        f.act(1, Action.Type.RON);
+
+        assertEquals(List.of(1, 2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+    }
+
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "WRC"})
     void aCallClearsTemporaryFuritenOnlyUnderWrcRules(RuleSet rules) {
         Fixture f = new Fixture(rules);
