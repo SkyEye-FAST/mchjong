@@ -138,7 +138,6 @@
   "key.mchjong.reset": "着席視点をリセット",
   "key.mchjong.riichi": "リーチ",
   "key.mchjong.view": "卓の表示切り替え",
-  "material.mchjong.wood": "木製",
   "mchjong.ponder.table_equipment.header": "対局の道具を準備する",
   "mchjong.ponder.table_equipment.text_1": "ルールに必要な牌を麻雀箱に入れます。四麻は136枚、三麻は108枚で、材質・背面・牌面デザインをそろえます。予備の牌も入れられます。",
   "mchjong.ponder.table_equipment.text_2": "卓を右クリックすると収納画面が開きます。卓の内部に麻雀箱を2個まで入れられます。",

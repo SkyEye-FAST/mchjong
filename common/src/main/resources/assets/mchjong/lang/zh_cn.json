@@ -138,7 +138,6 @@
   "key.mchjong.reset": "重置坐席镜头",
   "key.mchjong.riichi": "立直",
   "key.mchjong.view": "切换牌桌视图",
-  "material.mchjong.wood": "木质",
   "mchjong.ponder.table_equipment.header": "准备对局装备",
   "mchjong.ponder.table_equipment.text_1": "在麻将盒中备齐规则所需的牌：四麻136张，三麻108张。所用牌的材质、牌背和牌面预设须一致，盒中可以保留备用牌。",
   "mchjong.ponder.table_equipment.text_2": "右击牌桌打开存储界面，桌内最多可以放入两个麻将盒。",

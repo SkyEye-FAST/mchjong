@@ -9,7 +9,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
+
+### Changed
+
+- Tile inventory models show their thickness in 3D, and blank fronts use the same material finish as undyed backs.
 
 ### Fixed
 

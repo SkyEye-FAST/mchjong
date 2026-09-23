@@ -56,7 +56,7 @@ distributed MChjong jars contain the MChjong adapters and the shared engine.
 ## Recipe and component coverage
 
 The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete
-136-tile cases are consecutive. Blank tiles in all six materials and both mahjong dyes precede blank,
+136-tile cases are consecutive. Blank tiles in all sixteen materials and both mahjong dyes precede blank,
 100, 1,000, 5,000 and 10,000 point-stick denominations. Tables and automatic tables list
 every wood species. Tile faces, including
 flowers, share the blank-tile item and are printed through the box menu.

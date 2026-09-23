@@ -13,7 +13,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 ## Features
 
 - Ordinary tables with physical tile handling and automatic adjudication, plus upgradeable automatic tables
-- Craftable wooden furniture, removable cloth in 16 colors, six tile materials and physical point sticks
+- Craftable wooden furniture, removable cloth in 16 colors, sixteen tile materials and physical point sticks
 - In-world tile interaction, seated and immersive views, keyboard controls and narrated actions
 - Configurable rooms, invitations, hand visibility, time controls and training bots
 - Animated play and settlement panels with winning hands, scores and final standings

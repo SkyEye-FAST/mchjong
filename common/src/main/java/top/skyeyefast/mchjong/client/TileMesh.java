@@ -71,18 +71,24 @@ public final class TileMesh {
 
     /** Physical item designs include flowers without allocating riichi wall tile IDs to them. */
     public static void drawArtwork(PoseStack pose, VertexConsumer vertices, int face, int light) {
-        if (face < -1 || face >= 45) throw new IllegalArgumentException("Invalid tile artwork");
+        if (face < 0 || face >= 45) throw new IllegalArgumentException("Invalid tile artwork");
         // The three shells meet edge-to-edge. There are no overlapping side faces or internal caps.
         band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
         band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
         cap(pose, vertices, CAP_OUTLINE, .0359f, false, false, false, 0xffffffff, light);
-        if (face >= 0) {
-            float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_WIDTH;
-            float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_HEIGHT;
-            float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_WIDTH;
-            float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_HEIGHT;
-            texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
-        }
+        float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_WIDTH;
+        float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_HEIGHT;
+        float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_WIDTH;
+        float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_HEIGHT;
+        texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
+    }
+
+    /** Blank fronts use the same material and untinted color as the back. */
+    public static void drawBlankFront(PoseStack pose, VertexConsumer vertices, int light, TileMaterial material) {
+        int color = bodyColor(material, null);
+        band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, color, light, true, 0, 0);
+        band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, color, light, true, 0, 0);
+        cap(pose, vertices, CAP_OUTLINE, .0359f, false, true, false, color, light);
     }
 
     public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, boolean faceDown, int light,

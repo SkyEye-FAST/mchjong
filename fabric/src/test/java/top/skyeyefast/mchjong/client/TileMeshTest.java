@@ -183,7 +183,7 @@ class TileMeshTest {
         var pose = new PoseStack();
         var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
         TileMesh.drawBody(pose, mesh, 0, material, null);
-        TileMesh.drawArtwork(pose, mesh, -1, 0);
+        TileMesh.drawBlankFront(pose, mesh, 0, material);
         TileMesh.drawBack(pose, mesh, false, false, 0, material, null);
         var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
         for (int i = 0; i < mesh.vertices.size(); i += 4) for (int corner = 0; corner < 4; corner++) {
@@ -193,5 +193,18 @@ class TileMeshTest {
             edges.merge(java.util.Set.of(a, b), 1, Integer::sum);
         }
         assertTrue(edges.values().stream().allMatch(count -> count == 2), "Every edge has exactly two neighbors");
+    }
+
+    @Test void everyBlankFrontMatchesItsUndyedMaterialBack() {
+        for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
+            var front = new Mesh();
+            var back = new Mesh();
+            TileMesh.drawBlankFront(new PoseStack(), front, 0, material);
+            TileMesh.drawBack(new PoseStack(), back, false, false, 0, material, null);
+            assertFalse(front.vertices.isEmpty(), material.name());
+            assertTrue(front.vertices.stream().allMatch(vertex -> vertex.color == TileMesh.backColor(material, null)), material.name());
+            assertTrue(back.vertices.stream().allMatch(vertex -> vertex.color == TileMesh.backColor(material, null)), material.name());
+            assertTrue(front.vertices.stream().anyMatch(vertex -> vertex.u < .9f), "Blank front must sample its material texture");
+        }
     }
 }

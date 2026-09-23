@@ -211,6 +211,8 @@ final class BoxMenuSmoke {
         check(dyed.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
             .allMatch(stack -> MahjongSupplies.back(stack) == DyeColor.CYAN), "Back dye did not recolor the whole set");
         check(!menu.canDyeBack() && !menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "No-op back dye consumed reagent");
+        menu.clicked(MahjongSupplies.DYE_SLOT, 0, ClickType.QUICK_MOVE, player);
+        check(menu.getSlot(MahjongSupplies.DYE_SLOT).getItem().isEmpty(), "Previous dye stayed in the compartment");
         player.closeContainer();
 
         inventory.setItem(1, new ItemStack(MahjongContent.UNDO_DYE, 2));
