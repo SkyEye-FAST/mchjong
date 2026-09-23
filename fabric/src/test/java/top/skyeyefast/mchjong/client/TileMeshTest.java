@@ -88,7 +88,7 @@ class TileMeshTest {
             var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
             TileMesh.drawBody(pose, mesh, 0, material, null);
             TileMesh.drawFace(pose, mesh, 0, hidden, 0);
-            TileMesh.drawBack(pose, mesh, hidden, 0, material, null);
+            TileMesh.drawBack(pose, mesh, hidden, pitch > 0, 0, material, null);
             assertEquals(0, mesh.vertices.size() % 4);
             for (int i = 0; i < mesh.vertices.size(); i += 4) {
                 var a = mesh.vertices.get(i);
@@ -106,7 +106,7 @@ class TileMeshTest {
         var pose = new PoseStack();
         var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
         TileMesh.drawBody(pose, mesh, 0, material, null);
-        TileMesh.drawBack(pose, mesh, true, 0, material, null);
+        TileMesh.drawBack(pose, mesh, true, false, 0, material, null);
         var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
         for (int quad = 0; quad < mesh.vertices.size(); quad += 4) for (int corner = 0; corner < 4; corner++) {
             var a = mesh.vertices.get(quad + corner).position;
@@ -129,7 +129,7 @@ class TileMeshTest {
         assertEquals(32, body.vertices.size(), "Eight material sides, no overlapping internal caps");
         assertTrue(body.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255));
         var backs = new Mesh();
-        TileMesh.drawBack(new PoseStack(), backs, false, 0, glass, net.minecraft.world.item.DyeColor.RED);
+        TileMesh.drawBack(new PoseStack(), backs, false, false, 0, glass, net.minecraft.world.item.DyeColor.RED);
         assertTrue(backs.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255),
             "Dyed glass stays translucent instead of gaining an opaque back");
         assertTrue(TileMesh.usesMaterialBack(glass, net.minecraft.world.item.DyeColor.RED));
@@ -152,17 +152,29 @@ class TileMeshTest {
         }
     }
 
-    @Test void faceDownBackIsAboveTheBodyAndTextureKeepsItsOrientation() {
+    @Test void faceDownBackPatternPointsAwayFromItsOwner() {
         var pose = new PoseStack();
         pose.mulPose(Axis.XP.rotationDegrees(90));
         var mesh = new Mesh();
-        TileMesh.drawBack(pose, mesh, false, 0, top.skyeyefast.mchjong.item.TileMaterial.BONE,
+        TileMesh.drawBack(pose, mesh, false, true, 0, top.skyeyefast.mchjong.item.TileMaterial.BONE,
             net.minecraft.world.item.DyeColor.BLUE);
         var face = mesh.vertices.subList(mesh.vertices.size() - 12, mesh.vertices.size());
         assertTrue(face.stream().allMatch(vertex -> vertex.position.y > 0.036 && vertex.normal.y > 0.99));
         for (var vertex : face) {
+            assertEquals(.5f + vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
+            assertEquals(.5f + vertex.position.z / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
+        }
+        var pattern = new Mesh();
+        TileMesh.drawBackPattern(pose, pattern, false, true, 0);
+        for (int i = 0; i < face.size(); i++) {
+            assertEquals(face.get(i).u, pattern.vertices.get(i).u);
+            assertEquals(face.get(i).v, pattern.vertices.get(i).v);
+        }
+        var standing = new Mesh();
+        TileMesh.drawBackPattern(new PoseStack(), standing, false, false, 0);
+        for (var vertex : standing.vertices) {
             assertEquals(.5f - vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
-            assertEquals(.5f - vertex.position.z / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
+            assertEquals(.5f - vertex.position.y / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
         }
     }
 
@@ -172,7 +184,7 @@ class TileMeshTest {
         var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
         TileMesh.drawBody(pose, mesh, 0, material, null);
         TileMesh.drawArtwork(pose, mesh, -1, 0);
-        TileMesh.drawBack(pose, mesh, false, 0, material, null);
+        TileMesh.drawBack(pose, mesh, false, false, 0, material, null);
         var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
         for (int i = 0; i < mesh.vertices.size(); i += 4) for (int corner = 0; corner < 4; corner++) {
             var a = mesh.vertices.get(i + corner).position;

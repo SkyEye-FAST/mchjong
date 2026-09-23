@@ -136,6 +136,7 @@ To supply a back design, create a normal resource pack for your target
 Minecraft version containing the `textures/tile/back.png` path and matching
 `pack_format` (34 for Minecraft 1.21.1). Preserve the 2:3 aspect ratio; transparent
 pixels reveal the tile material or dye beneath, and partial alpha is supported.
+On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material>.png`. Selection,
 persistence and reloading use Minecraft's resource-pack system. Back textures do
