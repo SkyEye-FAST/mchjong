@@ -4,7 +4,7 @@
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
 MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
-presentation on Fabric, Forge and NeoForge.
+presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
 Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
@@ -19,7 +19,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 - Animated play and settlement panels with winning hands, scores and final standings
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
-- Resource-pack tile designs and recorded voices, with optional Ponder tutorials
+- Resource-pack tile designs and recorded voices
 
 ## Installation
 
@@ -33,20 +33,21 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 ## Compatibility
 
-Release artifacts support these Minecraft versions and loaders:
+Current build profiles support these Minecraft versions and loaders:
 
 | Minecraft | Java | Loader artifacts |
 | --- | --- | --- |
+| 26.1.2 | 25 | Fabric, NeoForge |
 | 1.21.1 | 21 or newer | Fabric, Forge, NeoForge |
 | 1.20.1 | 17 | Fabric, Forge |
 
-Quilt uses the Fabric artifact for the corresponding Minecraft version. The
-current 1.21.1 profile requires Fabric Loader 0.16.10 or newer with Fabric API,
-Forge 52.1.16 or newer, or NeoForge 21.1.250 or newer.
+The 26.1.2 development builds come from `compat/26.1.2`; 1.20.1 builds come
+from `compat/1.20.1`. Quilt has been validated with the 1.21.1 and 1.20.1
+Fabric artifacts. The 1.21.1 profile requires Fabric Loader 0.16.10 or newer
+with Fabric API, Forge 52.1.16 or newer, or NeoForge 21.1.250 or newer.
 
-Optional Ponder tutorials cover placement, equipment and seated play. This profile
-targets Ponder 1.0.87 or newer with its declared dependencies. Optional recipe
-viewers provide component-aware supply recipes. See
+On 1.21.1 and 1.20.1, optional Ponder tutorials cover placement, equipment and
+seated play. Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
 
@@ -59,8 +60,8 @@ preset in the lobby.
 
 Follow the [Playing guide](docs/PLAYING.md) for controls and table operation, and
 [Survival equipment and recipes](docs/SURVIVAL.md) for crafting and setup.
-With Ponder installed, hover over a table or supply item and hold the key shown
-in its tooltip to open an animated guide.
+On a Ponder enabled build, hover over a table or supply item and hold the key
+shown in its tooltip to open an animated guide.
 
 ## Documentation
 

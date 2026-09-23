@@ -2,44 +2,44 @@
 
 ## Development profile
 
-Release artifacts follow their Minecraft build profile. The current recipe
-viewer adapters target Minecraft 1.21.1 with Java 21, Fabric Loader 0.19.5 and
-Fabric API 0.116.17+1.21.1, or NeoForge 21.1.250. Forge 1.21.1 pins Forge 52.1.16.
-Dedicated release artifacts and validation coverage are provided for each
-supported Minecraft version.
+Artifacts follow their Minecraft build profile. `main` targets 1.21.1 with
+Java 21, Fabric Loader 0.19.5 and Fabric API 0.116.17+1.21.1, Forge 52.1.16,
+or NeoForge 21.1.250. Compatibility branches produce their own version-scoped
+artifacts.
 
 | Minecraft | Loader artifacts | Validation scope |
 | --- | --- | --- |
+| 26.1.2 | Fabric and NeoForge on `compat/26.1.2` | JDK 25 build, full integrated client smokes, palette captures, physical manual-table handling and installed JEI checks pass on both loaders |
 | 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
 | 1.20.1 | Fabric and Forge on `compat/1.20.1` | Shared integrated-server/client gameplay and Ponder smokes pass |
 | 1.21.1 and 1.20.1 | Quilt consumes the corresponding Fabric artifact | Quilt Loader 0.30.1 loads both packaged JARs to the title screen, using Java 21 and Java 17 respectively |
 
-Viewer integrations are available across the supported loaders: JEI is available
-on Fabric, Forge and NeoForge 1.21.1, while EMI is available on Fabric and
-NeoForge 1.21.1. On Minecraft 1.20.1, JEI, EMI and REI are available on Fabric
-and Forge. Optional Ponder tutorials cover Fabric and NeoForge 1.21.1 and both
-1.20.1 loaders.
+JEI profiles cover Fabric and NeoForge 26.1.2; Fabric, Forge and NeoForge
+1.21.1; and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1.
+On 1.20.1, EMI and REI cover Fabric and Forge. Optional Ponder tutorials cover
+Fabric and NeoForge 1.21.1 and both 1.20.1 loaders.
 
 ## Version synchronization and artifacts
 
 `main` is the sole feature development line. Synchronize stable batches into
-`compat/1.20.1`, resolve only the Minecraft and loader adaptation differences, then
-validate the port. Engine and shared gameplay changes travel through this Git
-history rather than a separate feature implementation.
+`compat/1.20.1` and `compat/26.1.2`, adapt Minecraft and loader APIs, then
+validate each port. Engine and shared gameplay changes travel through Git history.
 
-The release workflow on `main` builds its three loader artifacts and
-the two 1.20.1 artifacts from the exact commit in `.github/compat-1.20.1-ref`.
+The release workflow on `main` builds its three loader artifacts, the two
+1.20.1 artifacts from `.github/compat-1.20.1-ref`, and the two 26.1.2 artifacts
+from `.github/compat-26.1.2-ref`.
 Snapshot workflows build single-version development artifacts for their respective
-branch profile. Update that pin only after reviewing and validating a stable port batch. Both
+branch profile. Update each pin after reviewing and validating a stable port batch. All
 checkouts receive the same mod version during assembly; the filenames include
 Minecraft version and loader. A main commit does not automatically advance the
-compatibility pin. Review feature parity and outstanding port acceptance before
-publishing a release. Quilt uses the corresponding Fabric JAR.
+compatibility pins. Review feature parity and port acceptance before publishing
+a release. Quilt uses the validated 1.21.1 and 1.20.1 Fabric JARs.
 
 The 1.20.1 port uses native ItemStack NBT, recipe serializers, packet buffers and
 client APIs. JEI 15.59.0.212, EMI 1.1.24+1.20.1, REI 12.0.684 and Ponder 1.0.92
 have loader-specific development profiles; optional dependencies stay outside
-MChjong's release bundles. The port's `docs/PORT_1.20.1.md` records its validation.
+MChjong's release bundles. Each port branch records its validation in its own
+compatibility guide.
 
 ## Optional integrations
 

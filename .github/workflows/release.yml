@@ -46,9 +46,12 @@ jobs:
 
           echo "version=${tag}" >> "${GITHUB_OUTPUT}"
           echo "minecraft=$(sed -n 's/^minecraft_version=//p' gradle.properties)" >> "${GITHUB_OUTPUT}"
-          compat_ref="$(tr -d '\r\n' < .github/compat-1.20.1-ref)"
-          [[ "${compat_ref}" =~ ^[0-9a-f]{40}$ ]]
-          echo "compat_ref=${compat_ref}" >> "${GITHUB_OUTPUT}"
+          compat_1201_ref="$(tr -d '\r\n' < .github/compat-1.20.1-ref)"
+          compat_2612_ref="$(tr -d '\r\n' < .github/compat-26.1.2-ref)"
+          [[ "${compat_1201_ref}" =~ ^[0-9a-f]{40}$ ]]
+          [[ "${compat_2612_ref}" =~ ^[0-9a-f]{40}$ ]]
+          echo "compat_1201_ref=${compat_1201_ref}" >> "${GITHUB_OUTPUT}"
+          echo "compat_2612_ref=${compat_2612_ref}" >> "${GITHUB_OUTPUT}"
 
       - name: Prepare release notes from changelog
         shell: bash
@@ -85,11 +88,31 @@ jobs:
       - name: Checkout reviewed Minecraft 1.20.1 port
         uses: actions/checkout@v7
         with:
-          ref: ${{ steps.version.outputs.compat_ref }}
+          ref: ${{ steps.version.outputs.compat_1201_ref }}
           path: compat-1.20.1
 
       - name: Build Minecraft 1.20.1 release artifacts
         working-directory: compat-1.20.1
+        run: bash gradlew buildAll --no-daemon -Pmod_version="${GITHUB_REF_NAME}"
+
+      - name: Checkout reviewed Minecraft 26.1.2 port
+        uses: actions/checkout@v7
+        with:
+          ref: ${{ steps.version.outputs.compat_2612_ref }}
+          path: compat-26.1.2
+
+      - name: Setup Java 25
+        uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: "25"
+
+      - name: Build Minecraft 26.1.2 release artifacts
+        working-directory: compat-26.1.2
+        env:
+          ORG_GRADLE_PROJECT_neo_maven_url: https://maven.neoforged.net/releases
+          ORG_GRADLE_PROJECT_loom_resources_base: https://resources.download.minecraft.net/
+          ORG_GRADLE_PROJECT_loom_version_manifests: https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
         run: bash gradlew buildAll --no-daemon -Pmod_version="${GITHUB_REF_NAME}"
 
       - name: Verify release artifacts
@@ -103,6 +126,9 @@ jobs:
           done
           for loader in fabric forge; do
             test -f "compat-1.20.1/${loader}/build/libs/mchjong-${loader}-1.20.1-${version}.jar"
+          done
+          for loader in fabric neoforge; do
+            test -f "compat-26.1.2/${loader}/build/libs/mchjong-${loader}-26.1.2-${version}.jar"
           done
 
       - name: Publish GitHub Release
@@ -119,6 +145,8 @@ jobs:
             "neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} NeoForge" \
             "compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${version}.jar#1.20.1 Fabric / Quilt" \
             "compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${version}.jar#1.20.1 Forge" \
+            "compat-26.1.2/fabric/build/libs/mchjong-fabric-26.1.2-${version}.jar#26.1.2 Fabric" \
+            "compat-26.1.2/neoforge/build/libs/mchjong-neoforge-26.1.2-${version}.jar#26.1.2 NeoForge" \
             --verify-tag \
             --notes-file release-notes.md \
             --title "mchjong ${GITHUB_REF_NAME}"
