@@ -232,6 +232,44 @@ class ReactionRulesTest {
         assertEquals(List.of(1, 2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
     }
 
+    @Test void equivalentPhysicalCopiesYieldOnePonChoice() {
+        Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        f.hand(3, "666p");
+        int discarded = f.take("6p").getFirst();
+        f.game.players[0].hand.add(discarded);
+        f.start(0, discarded);
+        f.act(0, Action.Type.DISCARD, discarded);
+
+        assertEquals(1, f.game.view(f.game.players[3].id).actions().stream()
+            .filter(a -> a.type() == Action.Type.PON).count());
+    }
+
+    @Test void redFiveConsumptionRemainsASeparatePonAndChiChoice() {
+        Fixture pon = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        pon.hand(3, "555p");
+        int ponDiscard = pon.take("5p").getFirst();
+        pon.game.players[0].hand.add(ponDiscard);
+        pon.start(0, ponDiscard);
+        pon.act(0, Action.Type.DISCARD, ponDiscard);
+        var ponChoices = pon.game.view(pon.game.players[3].id).actions().stream()
+            .filter(a -> a.type() == Action.Type.PON).toList();
+        assertEquals(2, ponChoices.size());
+        assertEquals(Set.of(0L, 1L), ponChoices.stream()
+            .map(a -> a.tiles().stream().filter(Tile::red).count()).collect(java.util.stream.Collectors.toSet()));
+
+        Fixture chi = new Fixture(RuleSet.MAHJONG_SOUL_4);
+        chi.hand(1, "4455p");
+        int chiDiscard = chi.take("6p").getFirst();
+        chi.game.players[0].hand.add(chiDiscard);
+        chi.start(0, chiDiscard);
+        chi.act(0, Action.Type.DISCARD, chiDiscard);
+        var chiChoices = chi.game.view(chi.game.players[1].id).actions().stream()
+            .filter(a -> a.type() == Action.Type.CHI).toList();
+        assertEquals(2, chiChoices.size());
+        assertEquals(Set.of(0L, 1L), chiChoices.stream()
+            .map(a -> a.tiles().stream().filter(Tile::red).count()).collect(java.util.stream.Collectors.toSet()));
+    }
+
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "WRC"})
     void aCallClearsTemporaryFuritenOnlyUnderWrcRules(RuleSet rules) {
         Fixture f = new Fixture(rules);
