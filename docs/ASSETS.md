@@ -184,9 +184,7 @@ Furniture uses fifteen original 16 by 16 pixel textures under
 broken wood grain with small knots, subdued neutral woven felt, stepped metal highlights
 with sparse tooling marks and clustered wear on dark edge material
 deterministically with small, discrete palettes and nearest-neighbor sampling.
-[Create's framed machinery](https://github.com/Creators-of-Create/Create) and
-[Farmer's Delight's crafted wooden utensils](https://github.com/vectorwing/FarmersDelight) inform
-the restrained material separation and pixel scale. The patterns are original.
+The patterns are original.
 Wood components select the finish; neutral fabric is tinted by the existing dye
 component. Resource packs can replace these paths directly.
 `assets/mchjong/textures/furniture/cloth_pattern.png` is a separate, fully

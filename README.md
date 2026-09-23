@@ -33,9 +33,16 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 ## Compatibility
 
-The current build profile targets **Minecraft 1.21.1**, **Java 21 or newer**,
-**Fabric Loader 0.16.10 or newer with Fabric API**, or **NeoForge 21.1.250 or newer**.
-Choose an artifact built for your Minecraft version and loader.
+Release artifacts support these Minecraft versions and loaders:
+
+| Minecraft | Java | Loader artifacts |
+| --- | --- | --- |
+| 1.21.1 | 21 or newer | Fabric, Forge, NeoForge |
+| 1.20.1 | 17 | Fabric, Forge |
+
+Quilt uses the Fabric artifact for the corresponding Minecraft version. The
+current 1.21.1 profile requires Fabric Loader 0.16.10 or newer with Fabric API,
+Forge 52.1.16 or newer, or NeoForge 21.1.250 or newer.
 
 Optional Ponder tutorials cover placement, equipment and seated play. This profile
 targets Ponder 1.0.87 or newer with its declared dependencies. Optional recipe
