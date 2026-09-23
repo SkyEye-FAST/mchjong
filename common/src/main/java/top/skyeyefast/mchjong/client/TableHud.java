@@ -36,6 +36,11 @@ final class TableHud {
     }
 
     void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
+        render(font, graphics, view, room, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null, board);
+    }
+
+    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset,
+                top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
@@ -194,7 +199,7 @@ final class TableHud {
                     else {
                         int meldX = x + 5;
                         for (var meld : player.melds()) {
-                            TileGui.meld(graphics, meld, seat, meldX, top + 27, tileWidth, preset);
+                            TileGui.meld(graphics, meld, seat, meldX, top + 27, tileWidth, preset, material, dye);
                             meldX += TileGui.meldWidth(meld, seat, tileWidth) + 2;
                         }
                     }

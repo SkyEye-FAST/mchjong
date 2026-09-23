@@ -274,4 +274,20 @@ class TablePresentationTest {
         assertEquals(4, rails.stream().mapToInt(List::size).sum());
         for (var rail : rails) assertTrue(rail.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, width)).sum() <= 157);
     }
+
+    @Test void tableResultsRetainsMaterialAndBackDye() {
+        var rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config();
+        var seat = new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false, 25000,
+            List.of(), top.skyeyefast.mchjong.engine.Tile.ABSENT, List.of(), List.of(), List.of(), false, false);
+        var view = new top.skyeyefast.mchjong.engine.TableView(new java.util.UUID(1, 1), 1, 1, 1, rules,
+            top.skyeyefast.mchjong.engine.Game.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
+            List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(),
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
+            top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
+        var results = new TableResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
+            top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, net.minecraft.world.item.DyeColor.PURPLE,
+            0, 0, 300, 200, 0, TableResults.Page.HAND, 0L, 1);
+        assertEquals(top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, results.material());
+        assertEquals(net.minecraft.world.item.DyeColor.PURPLE, results.dye());
+    }
 }
