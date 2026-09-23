@@ -185,6 +185,8 @@ public final class TableClientSmoke {
             } else if (step == 16 && ticks - entered > 15) {
                 capture(client, "00-equipment-inventory.png");
                 client.screen.onClose();
+                step = 36; entered = ticks;
+            } else if (step == 36 && ticks - entered > 10) {
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {
                     try {

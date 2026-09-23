@@ -67,7 +67,7 @@ public class Mchjong implements ModInitializer {
         MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),
             FabricBlockEntityTypeBuilder.create(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build());
         MahjongContent.SEAT_ENTITY = Registry.register(BuiltInRegistries.ENTITY_TYPE, MahjongContent.id("seat"),
-            EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
+            EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f)
                 .clientTrackingRange(10).updateInterval(10)
                 .build(ResourceKey.create(net.minecraft.core.registries.Registries.ENTITY_TYPE, MahjongContent.id("seat"))));
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MahjongContent.TAB_KEY, TAB);

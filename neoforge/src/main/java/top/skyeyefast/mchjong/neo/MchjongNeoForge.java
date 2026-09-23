@@ -80,7 +80,7 @@ public final class MchjongNeoForge {
         blockEntities.register(bus);
         DeferredRegister<EntityType<?>> entities = DeferredRegister.create(Registries.ENTITY_TYPE, MahjongContent.MOD_ID);
         entities.register("seat", id -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
-            .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10)
+            .sized(0.3f, 0.1f).clientTrackingRange(10).updateInterval(10)
             .build(net.minecraft.resources.ResourceKey.create(Registries.ENTITY_TYPE, id)));
         entities.register(bus);
         DeferredRegister<CreativeModeTab> tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MahjongContent.MOD_ID);

@@ -3,6 +3,6 @@
   "minVersion": "0.8",
   "package": "top.skyeyefast.mchjong.mixin",
   "compatibilityLevel": "JAVA_21",
-  "client": ["GameRendererAccessor", "GuiGraphicsExtractorAccessor", "HeldSupplyArmMixin", "SeatedEyePositionMixin", "SeatedLookMixin", "TableCameraMixin", "TableFovMixin", "TableHudMixin", "TablePresentationMixin", "TileTooltipMixin"],
+  "client": ["GuiGraphicsExtractorAccessor", "HeldSupplyArmMixin", "SeatedEyePositionMixin", "SeatedLookMixin", "TableCameraMixin", "TableFovMixin", "TableHudMixin", "TablePresentationMixin", "TileTooltipMixin"],
   "injectors": {"defaultRequire": 1}
 }

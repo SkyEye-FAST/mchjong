@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 /** Hide only the ordinary HUD while the in-world table interaction layer is open. */
 @Mixin(Gui.class)
 public abstract class TableHudMixin {
-    @Inject(method = "render", at = @At("HEAD"), cancellable = true)
+    @Inject(method = "extractRenderState", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableHud(GuiGraphicsExtractor graphics, DeltaTracker delta, CallbackInfo callback) {
         if (TableScreen.active(Minecraft.getInstance().screen) != null) callback.cancel();
     }

@@ -1,9 +1,8 @@
 package top.skyeyefast.mchjong.mixin;
 
 import net.minecraft.client.Camera;
+import net.minecraft.client.DeltaTracker;
 import net.minecraft.client.Minecraft;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.level.BlockGetter;
 import net.minecraft.world.phys.Vec3;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Shadow;
@@ -18,12 +17,15 @@ public abstract class TableCameraMixin {
     @Shadow protected abstract void setPosition(double x, double y, double z);
     @Shadow protected abstract void setRotation(float yaw, float pitch);
 
-    @Inject(method = "setup", at = @At("TAIL"))
-    private void mchjong$tableCamera(BlockGetter level, Entity entity, boolean detached, boolean mirrored,
-            float partialTick, CallbackInfo callback) {
-        if (detached || entity != Minecraft.getInstance().player || !(entity.getVehicle() instanceof SeatEntity seat)) return;
+    @Inject(method = "update", at = @At(value = "INVOKE",
+        target = "Lnet/minecraft/client/Camera;alignWithEntity(F)V", shift = At.Shift.AFTER))
+    private void mchjong$tableCamera(DeltaTracker delta, CallbackInfo callback) {
+        Camera camera = (Camera) (Object) this;
+        var entity = camera.entity();
+        if (camera.isDetached() || entity != Minecraft.getInstance().player
+                || !(entity.getVehicle() instanceof SeatEntity seat)) return;
         var pose = top.skyeyefast.mchjong.client.SeatedCamera.state(seat);
-        pose.sample(partialTick);
+        pose.sample(camera.getCameraEntityPartialTicks(delta));
         Vec3 position = TableSettings.get().cameraPosition(seat);
         setPosition(position.x, position.y, position.z);
         setRotation(pose.yaw(seat.seat()), pose.pitch());

@@ -20,7 +20,6 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -309,7 +308,7 @@ final class AnimationSmoke {
         var forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         var right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
         var up = right.cross(forward);
-        double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        double fov = camera.getFov();
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
         for (var piece : TableScene.build(table.clientView())) {
             if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;

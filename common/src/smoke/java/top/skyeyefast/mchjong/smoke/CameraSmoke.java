@@ -6,7 +6,6 @@ import net.minecraft.client.Screenshot;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
@@ -32,7 +31,7 @@ final class CameraSmoke {
         if (sample < 6) {
             var seat = (SeatEntity) client.player.getVehicle();
             var pose = TableSettings.get().camera();
-            double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+            double fov = camera.getFov();
             double normal = TableSettings.get().cameraFov(client.options.fov().get(),
                 (double) client.getWindow().getWidth() / client.getWindow().getHeight());
             require(Math.abs(fov - pose.fov(normal)) < 1e-5, "Rendered inspect FOV differs from picking FOV");

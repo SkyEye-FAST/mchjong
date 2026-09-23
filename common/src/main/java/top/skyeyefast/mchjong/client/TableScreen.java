@@ -24,7 +24,6 @@ import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -52,7 +51,6 @@ public final class TableScreen extends Screen {
     private final boolean[] lookKeys = new boolean[4];
     public boolean inspecting() { return inspecting && cameraEnabled(); }
     private double dragDistance;
-    private float framePartial;
     private long lastClickAt;
     private int lastClickedTile = Tile.ABSENT;
     private TableResults results;
@@ -773,7 +771,7 @@ public final class TableScreen extends Screen {
         Vec3 up = right.cross(forward);
         double depth = delta.dot(forward);
         if (depth <= 0.05) return null;
-        double fov = ((GameRendererAccessor) minecraft.gameRenderer).mchjong$getFov(camera, framePartial, true);
+        double fov = camera.getFov();
         double scale = height / (2 * Math.tan(Math.toRadians(fov) / 2)) / depth;
         return new Projected(width / 2.0 + delta.dot(right) * scale, height / 2.0 - delta.dot(up) * scale, scale);
     }
@@ -810,7 +808,7 @@ public final class TableScreen extends Screen {
         double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         Vec3 forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         Vec3 right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
-        double fov = ((GameRendererAccessor) minecraft.gameRenderer).mchjong$getFov(camera, framePartial, true);
+        double fov = camera.getFov();
         double focal = height / (2 * Math.tan(Math.toRadians(fov) / 2));
         return new Pointer(camera.position().subtract(TableGeometry.world(pos, Vec3.ZERO)),
             forward.add(right.scale((mouseX - width / 2.0) / focal))
@@ -897,7 +895,6 @@ public final class TableScreen extends Screen {
     }
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
-        framePartial = partialTick;
         TableView view = view();
         if (view == null) return;
         if (view.revision() != lastRevision || viewReady != (immersivePhase(view.phase()) && !dealing())) rebuild();

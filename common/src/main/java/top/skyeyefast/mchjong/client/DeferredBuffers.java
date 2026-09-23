@@ -2,6 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
+import com.mojang.blaze3d.vertex.VertexFormatElement;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
@@ -46,7 +47,8 @@ final class DeferredBuffers implements MultiBufferSource {
                     if (vertex.normalPose == null) output.setNormal(vertex.nx, vertex.ny, vertex.nz);
                     else output.setNormal(vertex.normalPose, vertex.nx, vertex.ny, vertex.nz);
                 }
-                if (vertex.hasLineWidth) output.setLineWidth(vertex.lineWidth);
+                if (type.format().contains(VertexFormatElement.LINE_WIDTH))
+                    output.setLineWidth(vertex.hasLineWidth ? vertex.lineWidth : 1.0F);
             }
         }
     }
