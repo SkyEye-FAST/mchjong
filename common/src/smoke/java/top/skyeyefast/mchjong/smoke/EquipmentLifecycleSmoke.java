@@ -12,9 +12,9 @@ import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.context.BlockPlaceContext;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -47,34 +47,33 @@ final class EquipmentLifecycleSmoke {
         for (int i = 0; i < inventory.getContainerSize(); i++) saved.add(inventory.getItem(i).copy());
         var position = player.position();
         var mode = player.gameMode.getGameModeForPlayer();
-        int selected = inventory.selected;
-        var rule = player.serverLevel().getGameRules().getRule(GameRules.RULE_TNT_EXPLOSION_DROP_DECAY);
-        boolean decay = rule.get();
+        int selected = inventory.getSelectedSlot();
+        boolean decay = player.level().getGameRules().get(GameRules.TNT_EXPLOSION_DROP_DECAY);
         try {
             player.closeContainer();
             player.setGameMode(GameType.SURVIVAL);
-            rule.set(false, player.server);
+            player.level().getGameRules().set(GameRules.TNT_EXPLOSION_DROP_DECAY, false, player.level().getServer());
             for (var block : List.of(MahjongContent.TABLE, MahjongContent.AUTO_TABLE))
                 for (int destruction = 0; destruction < 3; destruction++) verifyTable(player, block, destruction);
         } finally {
             player.stopRiding();
             player.closeContainer();
             player.setShiftKeyDown(false);
-            for (var entity : player.serverLevel().getEntitiesOfClass(ItemEntity.class, AREA)) entity.discard();
+            for (var entity : player.level().getEntitiesOfClass(ItemEntity.class, AREA)) entity.discard();
             for (int i = 0; i < saved.size(); i++) inventory.setItem(i, saved.get(i));
-            inventory.selected = selected;
+            inventory.setSelectedSlot(selected);
             player.setGameMode(mode);
-            rule.set(decay, player.server);
-            player.teleportTo(player.serverLevel(), position.x, position.y, position.z, 0, 0);
+            player.level().getGameRules().set(GameRules.TNT_EXPLOSION_DROP_DECAY, decay, player.level().getServer());
+            player.teleportTo(player.level(), position.x, position.y, position.z, java.util.Set.of(), 0, 0, false);
         }
     }
 
     private static void verifyTable(ServerPlayer player, MahjongTableBlock block, int destruction) {
-        var level = player.serverLevel();
+        var level = player.level();
         var inventory = player.getInventory();
         inventory.clearContent();
-        inventory.selected = 0;
-        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
+        inventory.setSelectedSlot(0);
+        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, java.util.Set.of(), 180, 30, false);
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         ItemStack furniture = new ItemStack(block);
@@ -190,7 +189,7 @@ final class EquipmentLifecycleSmoke {
         if (!table.automatic()) {
             var menu = PointStickMenuSmoke.open(player, table, 0);
             menu.setCarried(sticks);
-            menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
+            menu.clicked(0, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
             check(menu.getCarried().getCount() == 3 && table.equipment().drawer(0).getItem(0).isEmpty(), "Running table accepted external sticks");
             menu.setCarried(ItemStack.EMPTY);
             player.closeContainer();
@@ -225,10 +224,11 @@ final class EquipmentLifecycleSmoke {
         var saved = table.saveWithoutMetadata(level.registryAccess());
         var loaded = new MahjongTableBlockEntity(CENTER, block.defaultBlockState());
         loaded.setLevel(level);
-        loaded.loadWithComponents(saved, level.registryAccess());
+        loaded.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+            net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         check(saved.equals(loaded.saveWithoutMetadata(level.registryAccess())), "Equipment did not survive save/load");
         level.setBlockEntity(loaded);
-        player.teleportTo(level, CENTER.getX() + 20, 64, .5, 0, 0);
+        player.teleportTo(level, CENTER.getX() + 20, 64, .5, java.util.Set.of(), 0, 0, false);
         if (destruction == 0) level.destroyBlock(CENTER, true);
         else if (destruction == 1) level.destroyBlock(CENTER.offset(radius, 0, radius), true);
         else level.explode(null, CENTER.getX() + .5, CENTER.getY() + .5, CENTER.getZ() + .5, 4, Level.ExplosionInteraction.TNT);

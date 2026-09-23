@@ -20,7 +20,7 @@ final class SurvivalSmoke {
     private SurvivalSmoke() {}
 
     static boolean ready(ServerPlayer player) {
-        var level = player.serverLevel();
+        var level = player.level();
         // A FULL chunk alone is insufficient: hidden entity sections cannot be queried for drops.
         level.setChunkForced(0, 0, true);
         level.setChunkForced(1, 0, true);
@@ -30,7 +30,7 @@ final class SurvivalSmoke {
     }
 
     static void verify(ServerPlayer player) {
-        var level = player.serverLevel();
+        var level = player.level();
         for (var block : List.of(MahjongContent.TABLE, MahjongContent.AUTO_TABLE)) {
             var table = new MahjongTableBlockEntity(BlockPos.ZERO, block.defaultBlockState());
             table.setLevel(level);
@@ -45,7 +45,7 @@ final class SurvivalSmoke {
             var packet = table.getUpdatePacket();
             check(packet != null && packet.getTag().equals(table.getUpdateTag(level.registryAccess())), "Wrong appearance packet");
             check(!packet.getTag().contains("game") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
-            check("glass".equals(packet.getTag().getString("tile_material")), "Missing glass appearance");
+            check("glass".equals(packet.getTag().getString("tile_material").orElseThrow()), "Missing glass appearance");
         }
         var stool = new FurnitureBlockEntity(BlockPos.ZERO, MahjongContent.STOOL.defaultBlockState());
         stool.setLevel(level);

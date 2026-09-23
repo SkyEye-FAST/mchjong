@@ -36,12 +36,13 @@ final class SettlementSmoke {
             capture(client, output, "08-settlement.png");
             TableResults panel = panel(client);
             int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
-            client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
         } else if (ticks == 20) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Second winner was not selectable");
             capture(client, output, "09-settlement-details.png");
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
         } else if (ticks == 30) {
             checkBounds(client);
             capture(client, output, "10-settlement-small.png");
@@ -52,13 +53,14 @@ final class SettlementSmoke {
             click(client, "Show results");
         } else if (ticks == 40) {
             TableResults panel = panel(client);
-            client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                panel.getX() + 20, panel.getY() + 60, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
         } else if (ticks == 45) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
             capture(client, output, "11-settlement-keyboard.png");
             client.options.guiScale().set(4);
-            client.resizeDisplay();
+            client.resizeGui();
         } else if (ticks == 50) {
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
@@ -76,7 +78,7 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "17-settlement-smallest-ranking.png");
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
             click(client, "Point changes");
             checkSettledPoints(client);
         } else if (ticks == 70) {
@@ -95,11 +97,11 @@ final class SettlementSmoke {
             acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
         } else if (ticks == 105) {
             capture(client, output, "14-settlement-draw-immersive.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
@@ -130,11 +132,12 @@ final class SettlementSmoke {
     private static void click(Minecraft client, String label) {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 
     static void acceptFixture(MahjongTableBlockEntity table, TableView view) {

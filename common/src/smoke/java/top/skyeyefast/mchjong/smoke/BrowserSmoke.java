@@ -42,7 +42,7 @@ final class BrowserSmoke {
             stage = 4;
             return true;
         }
-        if (driver == null) driver = browser.equals("jei") ? new JeiBrowserSmoke() : new EmiBrowserSmoke();
+        if (driver == null) driver = new JeiBrowserSmoke();
         if (client.getOverlay() != null) return false;
         check(++ticks < 600, "Browser smoke timed out at stage " + stage);
         if (!driver.ready()) return false;
@@ -70,17 +70,17 @@ final class BrowserSmoke {
             });
             stage = 1; ticks = 0;
         } else if (stage == 1) {
-            if (!serverWork.isDone() || client.gameMode.hasInfiniteItems()) return false;
+            if (!serverWork.isDone() || client.player.getAbilities().instabuild) return false;
             serverWork.join();
             client.getWindow().setWindowed(1280, 800);
-            client.options.guiScale().set(2); client.resizeDisplay();
+            client.options.guiScale().set(2); client.resizeGui();
             client.setScreen(new InventoryScreen(client.player));
             driver.showRecipe(flower.id());
             stage = 2; ticks = 0;
         } else if (stage == 2 && ticks >= 20) {
-            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), ignored -> {});
+            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.getWindow().setWindowed(960, 720);
-            client.options.guiScale().set(3); client.resizeDisplay();
+            client.options.guiScale().set(3); client.resizeGui();
             serverWork = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
                 player.openMenu(new SimpleMenuProvider((id, inventory, owner) -> new MahjongBoxMenu(id, inventory, 0),
@@ -94,11 +94,11 @@ final class BrowserSmoke {
             if (!(client.screen instanceof MahjongBoxScreen screen)) return false;
             var bounds = screen.browserBounds();
             check(bounds.top() >= 0 && bounds.bottom() <= screen.height - 24, "Container overlaps browser controls");
-            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-container.png", client.getMainRenderTarget(), ignored -> {});
+            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-container.png", client.getMainRenderTarget(), 1, ignored -> {});
             Files.writeString(output.resolve("browser-checks.txt"), browser + ": catalogue order, point denominations, flower/red back dyes, component-preserving upgrade lookups and native container bounds passed.\n");
             client.player.closeContainer();
             client.getWindow().setWindowed(width, height);
-            client.options.guiScale().set(scale); client.resizeDisplay();
+            client.options.guiScale().set(scale); client.resizeGui();
             stage = 4;
             return true;
         }

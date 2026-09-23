@@ -49,7 +49,7 @@ final class ManualTableSmoke {
             .filter(widget -> widget.getMessage().getString().equals(Component.translatable("ui.mchjong.view_immersive").getString()))
             .findFirst().orElseThrow();
         check(!button.active, "Immersive button enabled before dealing completed");
-        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
         check(!((TableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
     }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
@@ -91,7 +91,7 @@ final class ManualTableSmoke {
             // Seating produces the first authorized snapshot; do not wait for it before seating.
             if (ticks < 15 || client.player.distanceToSqr(CENTER.getX() + .5, CENTER.getY(), CENTER.getZ() + .5) > 36) return false;
             serverWork = onServer(client, player -> {
-                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(CENTER);
                 serverTable.sit(player, 0);
                 check(serverTable.participantGame(player) != null, "Manual fixture did not seat the real player");
             });
@@ -105,11 +105,12 @@ final class ManualTableSmoke {
             if (++dragTicks < 4) return false;
             check(client.screen == draggingScreen, "Physical drag lost its screen before release");
             capture(client, output, dragCapture);
-            var held = TableAnimation.of(table).sample(net.minecraft.Util.getMillis()).stream()
+            var held = TableAnimation.of(table).sample(net.minecraft.util.Util.getMillis()).stream()
                 .filter(frame -> draggingScreen.handlingOffset(CENTER, frame.piece()).lengthSqr() > 0).toList();
             check(!held.isEmpty() && held.stream().allMatch(frame -> draggingScreen.highlight(CENTER, frame.piece()) != 0),
                 "Held physical source lost its outline in " + view.phase() + ", decision=" + view.decision());
-            draggingScreen.mouseReleased(dragEnd.x, dragEnd.y, 0);
+            draggingScreen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(
+                dragEnd.x, dragEnd.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)));
             draggingScreen = null;
             return false;
         }
@@ -124,7 +125,7 @@ final class ManualTableSmoke {
                 check(table.equipment().drawer(0).isEmpty() && view.riichiSticks() == 0,
                     "Private drawer contents leaked through the appearance update");
                 capture(client, output, "30-manual-lobby.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_E, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_E, 0, 0));
                 next(16);
             }
             case 16 -> {
@@ -134,7 +135,7 @@ final class ManualTableSmoke {
                     && menu.totalPoints(0) == 3000 && menu.slots.size() == 76, "Native drawer screen did not synchronize all four rows");
                 capture(client, output, "30a-point-drawers.png");
                 client.screen.onClose();
-                serverWork = onServer(client, player -> PointStickMenuSmoke.stockDrawers((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)));
+                serverWork = onServer(client, player -> PointStickMenuSmoke.stockDrawers((MahjongTableBlockEntity) player.level().getBlockEntity(CENTER)));
                 next(17);
             }
             case 17 -> {
@@ -213,10 +214,10 @@ final class ManualTableSmoke {
                 next(8);
             }
             case 8 -> {
-                if (view.phase() != Game.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
+                if (view.phase() != Game.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())) return false;
                 check(view.seats().getFirst().hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
                 check(((TableScreen) client.screen).immersive(), "Immersive view remained locked after dealing");
                 next(23);
             }
@@ -227,7 +228,7 @@ final class ManualTableSmoke {
                         view.handling().diceOne(), view.handling().diceTwo(), view.handling().diceOne() + view.handling().diceTwo()).getString())),
                     "Immersive view retained the dice hover target");
                 capture(client, output, "35a-manual-immersive.png");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
                 next(24);
             }
             case 24 -> {
@@ -237,7 +238,8 @@ final class ManualTableSmoke {
                     .filter(value -> value.area() == top.skyeyefast.mchjong.client.TableScene.Area.HAND && value.seat() == view.viewerSeat())
                     .findFirst().orElseThrow();
                 var pointer = project(client, piece.position());
-                client.screen.mouseClicked(pointer.x, pointer.y, 0);
+                client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                    pointer.x, pointer.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
                 next(9);
             }
             case 9 -> {
@@ -272,7 +274,7 @@ final class ManualTableSmoke {
                 check(view.wall().isEmpty(), "Exiting left a playable manual wall behind");
                 capture(client, output, "38-manual-exited.png");
                 serverWork = onServer(client, player -> {
-                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                    var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(CENTER);
                     check(ItemStack.matches(installedBox, serverTable.equipment().boxes().getItem(0)), "Playing consumed or altered the physical set");
                     TableStorageSmoke.take(player, serverTable, 0);
                     check(serverTable.equipment().boxes().isEmpty(), "Removed box remained stored");
@@ -285,7 +287,7 @@ final class ManualTableSmoke {
             }
             case 14 -> {
                 serverWork = onServer(client, player ->
-                    ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER)).sit(player, 0));
+                    ((MahjongTableBlockEntity) player.level().getBlockEntity(CENTER)).sit(player, 0));
                 next(18);
             }
             case 18 -> {
@@ -301,7 +303,7 @@ final class ManualTableSmoke {
 
     private void prepare(ServerPlayer player) {
         if (player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat) {
-            var previous = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(seat.tablePos());
+            var previous = (MahjongTableBlockEntity) player.level().getBlockEntity(seat.tablePos());
             var game = previous.participantGame(player);
             if (game != null) previous.control(player, new TableControlPayload(previous.getBlockPos(), game.tableId(),
                 TableControlPayload.Operation.REQUEST_EXIT, game.view(player.getUUID()).decision(), false));
@@ -310,8 +312,8 @@ final class ManualTableSmoke {
         player.closeContainer();
         player.setGameMode(GameType.SURVIVAL);
         player.getInventory().clearContent();
-        player.getInventory().selected = 0;
-        var level = player.serverLevel();
+        player.getInventory().setSelectedSlot(0);
+        var level = player.level();
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         level.setBlock(CENTER, MahjongContent.TABLE.defaultBlockState(), 3);
@@ -321,7 +323,7 @@ final class ManualTableSmoke {
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         installedBox = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
         var box = installedBox.copy();
-        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
+        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, java.util.Set.of(), 180, 30, false);
         TableStorageSmoke.put(player, table, 0, box);
         check(box.isEmpty(), "Storage transfer did not move the physical box");
         var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
@@ -336,7 +338,8 @@ final class ManualTableSmoke {
         game.configureEquipment(true, table.equipment().deck().tiles());
         var saved = table.saveWithoutMetadata(level.registryAccess());
         saved.putString("game", TableNetworking.JSON.toJson(game));
-        table.loadWithComponents(saved, level.registryAccess());
+        table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+            net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
         var stool = new ItemStack(MahjongContent.STOOL_ITEM);
         stool.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
         stool.set(DataComponents.BASE_COLOR, DyeColor.RED);
@@ -345,7 +348,7 @@ final class ManualTableSmoke {
             level.setBlock(pos, MahjongContent.STOOL.defaultBlockState(), 3);
             MahjongContent.STOOL.setPlacedBy(level, pos, MahjongContent.STOOL.defaultBlockState(), player, stool);
         }
-        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
+        player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, java.util.Set.of(), 180, 30, false);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
         sticks.set(MahjongComponents.POINTS, 1000);
         PointStickMenuSmoke.put(player, table, 0, sticks);
@@ -354,16 +357,18 @@ final class ManualTableSmoke {
     }
 
     private static void verifySavedHandling(ServerPlayer player, BlockPos pos) {
-        var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+        var table = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
         var game = table.participantGame(player);
         check(game != null && game.phase() == Game.Phase.DRAW && game.manual(), "Manual server was not waiting for the draw");
         game.validate();
         var saved = table.saveWithoutMetadata(player.registryAccess());
         var loaded = new MahjongTableBlockEntity(pos, table.getBlockState());
-        loaded.setLevel(player.serverLevel());
-        loaded.loadWithComponents(saved, player.registryAccess());
+        loaded.setLevel(player.level());
+        loaded.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+            net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess(), saved));
         check(saved.equals(loaded.saveWithoutMetadata(player.registryAccess())), "Manual handling or equipment did not survive world serialization");
-        table.loadWithComponents(table.getUpdateTag(player.registryAccess()), player.registryAccess());
+        table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+            net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess(), table.getUpdateTag(player.registryAccess())));
         check(saved.equals(table.saveWithoutMetadata(player.registryAccess())), "Public appearance update erased private game/equipment state");
         check(!TableNetworking.JSON.toJson(game.view(null)).contains("suppliedTiles"), "Physical/private wall leaked to spectators");
     }
@@ -404,13 +409,14 @@ final class ManualTableSmoke {
         var widget = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(button -> button.getMessage().getString().equals(label) && button.active).findFirst()
             .orElseThrow(() -> new IllegalStateException("Missing live manual control: " + key));
-        client.screen.mouseClicked(widget.getX() + 5, widget.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            widget.getX() + 5, widget.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
         var screen = (TableScreen) client.screen;
-        var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
-        var camera = client.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
+        var frames = TableAnimation.of(table).sample(net.minecraft.util.Util.getMillis());
+        var camera = client.gameRenderer.getMainCamera().position().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
         for (var frame : frames) {
             var piece = frame.piece();
             if (!top.skyeyefast.mchjong.client.TableHandling.source(view, piece)) continue;
@@ -420,8 +426,10 @@ final class ManualTableSmoke {
             var start = project(client, top.skyeyefast.mchjong.client.TableHandling.grip(piece, camera));
             var end = project(client, destination);
             if (start.x < 0 || start.x >= screen.width || start.y < 0 || start.y >= screen.height) continue;
-            screen.mouseClicked(start.x, start.y, 0);
-            screen.mouseDragged(end.x, end.y, 0, end.x - start.x, end.y - start.y);
+            screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                start.x, start.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+            screen.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(
+                end.x, end.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), end.x - start.x, end.y - start.y);
             boolean holding = frames.stream().anyMatch(value -> screen.handlingOffset(CENTER, value.piece()).lengthSqr() > 0);
             if (holding) {
                 draggingScreen = screen;
@@ -430,7 +438,8 @@ final class ManualTableSmoke {
                 dragCapture = "56-highlight-drag-" + view.phase().name().toLowerCase(java.util.Locale.ROOT) + "-" + packets + ".png";
                 return;
             }
-            screen.mouseReleased(end.x, end.y, 0);
+            screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(
+                end.x, end.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)));
         }
         var sources = frames.stream().filter(frame -> top.skyeyefast.mchjong.client.TableHandling.source(view, frame.piece()))
             .map(frame -> {
@@ -440,22 +449,22 @@ final class ManualTableSmoke {
                 return frame.piece() + " screen=" + project(client, frame.piece().position()) + " nearest=" + nearest.piece();
             }).toList();
         throw new IllegalStateException("No physical source could be picked for " + view.phase() + " moving="
-            + TableAnimation.of(table).moving(net.minecraft.Util.getMillis()) + " sources=" + sources);
+            + TableAnimation.of(table).moving(net.minecraft.util.Util.getMillis()) + " sources=" + sources);
     }
 
     private static net.minecraft.world.phys.Vec3 project(Minecraft client, net.minecraft.world.phys.Vec3 point) {
         var camera = client.gameRenderer.getMainCamera();
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         var right = new net.minecraft.world.phys.Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
-        var delta = TableGeometry.world(CENTER, point).subtract(camera.getPosition());
+        var delta = TableGeometry.world(CENTER, point).subtract(camera.position());
         double fov = ((top.skyeyefast.mchjong.mixin.GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
         double scale = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2)) / delta.dot(forward);
         return new net.minecraft.world.phys.Vec3(client.screen.width / 2.0 + delta.dot(right) * scale,
             client.screen.height / 2.0 - delta.dot(right.cross(forward)) * scale, 0);
     }
     private static void capture(Minecraft client, Path output, String file) {
-        Screenshot.grab(output.toFile(), file, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), file, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void check(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

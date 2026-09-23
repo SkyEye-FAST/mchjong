@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.smoke;
 
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.item.MahjongTableMenu;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -15,8 +15,8 @@ final class TableStorageSmoke {
         var saved = java.util.stream.IntStream.range(0, inventory.getContainerSize()).mapToObj(i -> inventory.getItem(i).copy()).toList();
         var position = player.position();
         var mode = player.gameMode.getGameModeForPlayer();
-        int selected = inventory.selected;
-        var level = player.serverLevel();
+        int selected = inventory.getSelectedSlot();
+        var level = player.level();
         var pos = new net.minecraft.core.BlockPos(12, 64, 8);
         var bounds = new net.minecraft.world.phys.AABB(pos).inflate(8);
         var priorDrops = level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds);
@@ -26,7 +26,7 @@ final class TableStorageSmoke {
             inventory.clearContent();
             level.setBlock(pos, top.skyeyefast.mchjong.world.MahjongContent.TABLE.defaultBlockState(), 3);
             var table = (MahjongTableBlockEntity) level.getBlockEntity(pos);
-            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, 180, 30);
+            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, java.util.Set.of(), 180, 30, false);
             for (int slot = 0; slot < 3; slot++) inventory.setItem(slot,
                 top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.values()[slot],
                     net.minecraft.world.item.DyeColor.BLUE));
@@ -46,21 +46,21 @@ final class TableStorageSmoke {
                 "Table storage accepted a third case");
             check(menu.getSlot(0).getItem().getCount() == 1 && menu.getSlot(1).getItem().getCount() == 1,
                 "Case slots stacked cases");
-            menu.clicked(0, 2, ClickType.SWAP, player);
-            menu.clicked(0, 2, ClickType.SWAP, player);
-            menu.clicked(0, 0, ClickType.PICKUP, player);
-            menu.clicked(-999, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(0, 0), ClickType.QUICK_CRAFT, player);
+            menu.clicked(0, 2, ContainerInput.SWAP, player);
+            menu.clicked(0, 2, ContainerInput.SWAP, player);
+            menu.clicked(0, 0, ContainerInput.PICKUP, player);
+            menu.clicked(-999, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(0, 0), ContainerInput.QUICK_CRAFT, player);
             for (int slot : new int[]{0, 1})
-                menu.clicked(slot, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(1, 0), ClickType.QUICK_CRAFT, player);
-            menu.clicked(-999, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(2, 0), ClickType.QUICK_CRAFT, player);
-            menu.clicked(1, 0, ClickType.THROW, player);
+                menu.clicked(slot, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(1, 0), ContainerInput.QUICK_CRAFT, player);
+            menu.clicked(-999, net.minecraft.world.inventory.AbstractContainerMenu.getQuickcraftMask(2, 0), ContainerInput.QUICK_CRAFT, player);
+            menu.clicked(1, 0, ContainerInput.THROW, player);
             check(expected.equals(snapshot(player, table, menu, bounds)), "Table transfers changed the item/component multiset");
             player.closeContainer();
             check(!menu.stillValid(player) && menu.quickMoveStack(player, 0).isEmpty(), "Closed storage remained usable");
             menu = open(player, table);
-            player.teleportTo(level, pos.getX() + 10, pos.getY(), pos.getZ(), 0, 0);
+            player.teleportTo(level, pos.getX() + 10, pos.getY(), pos.getZ(), java.util.Set.of(), 0, 0, false);
             check(!menu.stillValid(player), "Remote player retained access to table storage");
-            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, 180, 30);
+            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, java.util.Set.of(), 180, 30, false);
             check(!menu.stillValid(player), "Returning to range revived an old storage menu");
             player.closeContainer();
             player.setGameMode(net.minecraft.world.level.GameType.SPECTATOR);
@@ -78,9 +78,9 @@ final class TableStorageSmoke {
             for (var drop : level.getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds))
                 if (!priorDrops.contains(drop)) drop.discard();
             for (int slot = 0; slot < saved.size(); slot++) inventory.setItem(slot, saved.get(slot));
-            inventory.selected = selected;
+            inventory.setSelectedSlot(selected);
             player.setGameMode(mode);
-            player.teleportTo(level, position.x, position.y, position.z, 0, 0);
+            player.teleportTo(level, position.x, position.y, position.z, java.util.Set.of(), 0, 0, false);
         }
     }
 
@@ -88,13 +88,14 @@ final class TableStorageSmoke {
             MahjongTableMenu menu, net.minecraft.world.phys.AABB bounds) {
         var result = new java.util.HashMap<net.minecraft.nbt.CompoundTag, Integer>();
         java.util.function.Consumer<ItemStack> count = stack -> {
-            if (!stack.isEmpty()) result.merge((net.minecraft.nbt.CompoundTag) stack.copyWithCount(1).save(player.registryAccess()),
-                stack.getCount(), Integer::sum);
+            if (!stack.isEmpty()) result.merge((net.minecraft.nbt.CompoundTag) ItemStack.CODEC.encodeStart(
+                net.minecraft.resources.RegistryOps.create(net.minecraft.nbt.NbtOps.INSTANCE, player.registryAccess()),
+                stack.copyWithCount(1)).getOrThrow(), stack.getCount(), Integer::sum);
         };
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) count.accept(player.getInventory().getItem(slot));
         for (int slot = 0; slot < 2; slot++) count.accept(table.equipment().boxes().getItem(slot));
         count.accept(menu.getCarried());
-        for (var drop : player.serverLevel().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds)) count.accept(drop.getItem());
+        for (var drop : player.level().getEntitiesOfClass(net.minecraft.world.entity.item.ItemEntity.class, bounds)) count.accept(drop.getItem());
         return result;
     }
 
@@ -111,7 +112,7 @@ final class TableStorageSmoke {
         var menu = open(player, table);
         if (menu.slots.get(slot).hasItem()) throw new IllegalStateException("Fixture storage slot is occupied");
         menu.setCarried(source);
-        menu.clicked(slot, 0, ClickType.PICKUP, player);
+        menu.clicked(slot, 0, ContainerInput.PICKUP, player);
         if (!menu.getCarried().isEmpty()) throw new IllegalStateException("Table did not accept the physical box");
         player.closeContainer();
         player.getInventory().setChanged();
@@ -125,12 +126,12 @@ final class TableStorageSmoke {
 
     static void emptyHand(ServerPlayer player) {
         for (int slot = 0; slot < 9; slot++) if (player.getInventory().getItem(slot).isEmpty()) {
-            player.getInventory().selected = slot;
+            player.getInventory().setSelectedSlot(slot);
             return;
         }
         for (int slot = 9; slot < 36; slot++) if (player.getInventory().getItem(slot).isEmpty()) {
             player.getInventory().setItem(slot, player.getInventory().removeItemNoUpdate(8));
-            player.getInventory().selected = 8;
+            player.getInventory().setSelectedSlot(8);
             return;
         }
         throw new IllegalStateException("Fixture inventory is full");

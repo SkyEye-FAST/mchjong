@@ -56,15 +56,15 @@ final class TableInterfaceSmoke {
         if (ticks == 1) {
             client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
             client.options.guiScale().set(small ? 3 : 2);
-            client.resizeDisplay();
+            client.resizeGui();
             SettlementSmoke.acceptFixture(table, snapshot(state));
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
             client.setScreen(new TableScreen(table.getBlockPos()));
-            if (immersive) client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+            if (immersive) client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
             require(((TableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
-            if (state == 0) button(client, "action.mchjong.riichi").onPress();
+            if (state == 0) button(client, "action.mchjong.riichi").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
         }
         if (++ticks < 12) return false;
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.visible) {
@@ -88,7 +88,7 @@ final class TableInterfaceSmoke {
             case 3 -> "reserve"; case 4 -> "meld"; default -> "reaction"; };
         Screenshot.grab(output.toFile(), (clockSample ? "61-" : "60-") + (immersive ? "immersive-" : "seated-")
             + (clockSample ? "zh_cn" : LANGUAGES[sample / 6]) + "-" + stateName
-            + (small ? "-small.png" : ".png"), client.getMainRenderTarget(), ignored -> {});
+            + (small ? "-small.png" : ".png"), client.getMainRenderTarget(), 1, ignored -> {});
         sample++; ticks = 0;
         return false;
     }

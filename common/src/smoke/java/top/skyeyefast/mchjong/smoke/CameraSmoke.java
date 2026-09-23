@@ -14,18 +14,15 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 final class CameraSmoke {
     private int sample = -1, ticks, originalFov;
     private net.minecraft.client.CameraType originalType;
-    private boolean originalActive;
     private int originalWidth, originalHeight, originalScale;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (sample < 0) {
             originalFov = client.options.fov().get();
             originalType = client.options.getCameraType();
-            originalActive = client.isWindowActive();
             originalWidth = client.getWindow().getScreenWidth();
             originalHeight = client.getWindow().getScreenHeight();
             originalScale = client.options.guiScale().get();
-            client.setWindowActive(true);
             readabilityFixture(table);
             sample = 0;
             show(client, table);
@@ -39,14 +36,14 @@ final class CameraSmoke {
             double normal = TableSettings.get().cameraFov(client.options.fov().get(),
                 (double) client.getWindow().getWidth() / client.getWindow().getHeight());
             require(Math.abs(fov - pose.fov(normal)) < 1e-5, "Rendered inspect FOV differs from picking FOV");
-            require(camera.getPosition().distanceTo(client.player.getEyePosition()) < 1e-6,
+            require(camera.position().distanceTo(client.player.getEyePosition()) < 1e-6,
                 "Native picking does not share the rendered inspect eye");
-            require(camera.getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
+            require(camera.position().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
                 "Overlay picking does not share the inspect eye");
             require(sample % 2 == 0 ? Math.abs(fov - normal) < 1e-5 : fov < normal - 10,
                 "Inspect transition did not reach its expected FOV");
             Screenshot.grab(output.toFile(), "59-camera-fov-" + client.options.fov().get()
-                + (sample % 2 == 0 ? "-normal.png" : "-inspect.png"), client.getMainRenderTarget(), ignored -> {});
+                + (sample % 2 == 0 ? "-normal.png" : "-inspect.png"), client.getMainRenderTarget(), 1, ignored -> {});
         } else if (sample == 6) {
             require(camera.isDetached(), "Third-person camera was captured by seated controls");
             var pose = TableSettings.get().camera();
@@ -58,19 +55,18 @@ final class CameraSmoke {
             ((TableScreen) client.screen).resetView();
             require(client.player.getYRot() == yaw && client.player.getXRot() == pitch,
                 "Resetting the seated pose overwrote native third-person rotation");
-            Screenshot.grab(output.toFile(), "59-camera-third-person.png", client.getMainRenderTarget(), ignored -> {});
+            Screenshot.grab(output.toFile(), "59-camera-third-person.png", client.getMainRenderTarget(), 1, ignored -> {});
         } else {
             require(((TableScreen) client.screen).immersive(), "Dense readability fixture lost immersive view");
             Screenshot.grab(output.toFile(), "59-readable-dense-" + client.screen.width + "x" + client.screen.height + ".png",
-                client.getMainRenderTarget(), ignored -> {});
+                client.getMainRenderTarget(), 1, ignored -> {});
         }
         if (++sample == 9) {
             client.options.fov().set(originalFov);
             client.options.setCameraType(originalType);
-            client.setWindowActive(originalActive);
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
-            client.resizeDisplay();
+            client.resizeGui();
             ((TableScreen) client.screen).resetView();
             return true;
         }
@@ -84,14 +80,14 @@ final class CameraSmoke {
         if (sample >= 7) {
             client.getWindow().setWindowed(sample == 7 ? 960 : 1280, sample == 7 ? 600 : 800);
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
         }
         var screen = new TableScreen(table.getBlockPos());
         client.setScreen(screen);
         screen.resetView();
-        if (sample >= 7) screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        else if (sample % 2 == 1) screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
-        long window = client.getWindow().getWindow();
+        if (sample >= 7) screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+        else if (sample % 2 == 1) screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_C, 0, 0));
+        long window = client.getWindow().handle();
         var cursor = GLFW.glfwSetCursorPosCallback(window, null);
         if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
         try { cursor.invoke(window, 4, 4); }

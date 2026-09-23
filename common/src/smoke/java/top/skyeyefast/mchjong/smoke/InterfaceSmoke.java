@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.AbstractSliderButton;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.MahjongBoxScreen;
@@ -45,7 +45,7 @@ final class InterfaceSmoke {
             originalTiles = MahjongSupplies.tileCount(menu.items());
             moved = menu.slots.getFirst().getItem().copy();
             capture(client, output, "30-box-complete.png");
-            client.gameMode.handleInventoryMouseClick(menu.containerId, 0, 0, ClickType.QUICK_MOVE, client.player);
+            client.gameMode.handleContainerInput(menu.containerId, 0, 0, ContainerInput.QUICK_MOVE, client.player);
             boxStage = 1; boxTicks = 0;
         } else if (boxStage == 1 && boxTicks > 10) {
             require(MahjongSupplies.tileCount(menu.items()) == originalTiles - moved.getCount(), "Client shift transfer lost items");
@@ -53,14 +53,14 @@ final class InterfaceSmoke {
             capture(client, output, "31-box-incomplete.png");
             var destination = menu.slots.stream().filter(slot -> slot.index >= MahjongSupplies.BOX_SLOTS
                 && ItemStack.isSameItemSameComponents(slot.getItem(), moved)).findFirst().orElseThrow();
-            client.gameMode.handleInventoryMouseClick(menu.containerId, destination.index, 0, ClickType.QUICK_MOVE, client.player);
+            client.gameMode.handleContainerInput(menu.containerId, destination.index, 0, ContainerInput.QUICK_MOVE, client.player);
             boxStage = 2; boxTicks = 0;
         } else if (boxStage == 2 && boxTicks > 10) {
             require(MahjongSupplies.tileCount(menu.items()) == originalTiles && MahjongSupplies.deck(menu.items()) != null,
                 "Returning a stack did not restore the complete set");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             boxStage = 3; boxTicks = 0;
         } else if (boxStage == 3 && boxTicks > 15) {
             require(client.screen.width == 320 && client.screen.height == 240, "Small case viewport was not 320x240");
@@ -79,7 +79,7 @@ final class InterfaceSmoke {
         storageTicks++;
         require(storageTicks < 400, "Table storage UI timed out at " + storageStage);
         if (storageStage == 0) {
-            client.player.getInventory().selected = 0;
+            client.player.getInventory().setSelectedSlot(0);
             var edge = table.south();
             client.gameMode.useItemOn(client.player, net.minecraft.world.InteractionHand.MAIN_HAND,
                 new net.minecraft.world.phys.BlockHitResult(net.minecraft.world.phys.Vec3.atCenterOf(edge),
@@ -92,7 +92,7 @@ final class InterfaceSmoke {
         if (storageStage == 1 && storageTicks > 10) {
             require(menu.slots.size() == 38 && menu.hasCloth() && menu.activeBox() == 0, "Storage menu state was not synchronized");
             require(menu.slots.get(0).hasItem() && !menu.slots.get(1).hasItem(), "Incorrect table fixture storage");
-            client.gameMode.handleInventoryMouseClick(menu.containerId, 29, 0, ClickType.QUICK_MOVE, client.player);
+            client.gameMode.handleContainerInput(menu.containerId, 29, 0, ContainerInput.QUICK_MOVE, client.player);
             storageStage = 2; storageTicks = 0;
         } else if (storageStage == 2 && storageTicks > 10) {
             require(menu.slots.get(0).getItem().getCount() == 1 && menu.slots.get(1).getItem().getCount() == 1
@@ -100,15 +100,15 @@ final class InterfaceSmoke {
             capture(client, output, "46-table-storage.png");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             storageStage = 3; storageTicks = 0;
         } else if (storageStage == 3 && storageTicks > 15) {
             require(client.screen.width == 320 && client.screen.height == 240, "Small storage viewport was not 320x240");
             for (var slot : menu.slots) require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 <= 230 && slot.y + 16 <= 192,
                 "Table storage slot exceeds its panel");
             capture(client, output, "47-table-storage-320x240.png");
-            client.gameMode.handleInventoryMouseClick(menu.containerId, 1, 0, ClickType.PICKUP, client.player);
-            client.gameMode.handleInventoryMouseClick(menu.containerId, 29, 0, ClickType.PICKUP, client.player);
+            client.gameMode.handleContainerInput(menu.containerId, 1, 0, ContainerInput.PICKUP, client.player);
+            client.gameMode.handleContainerInput(menu.containerId, 29, 0, ContainerInput.PICKUP, client.player);
             storageStage = 4; storageTicks = 0;
         } else if (storageStage == 4 && storageTicks > 10) {
             require(menu.getCarried().isEmpty() && !menu.slots.get(1).hasItem() && menu.activeBox() == 0
@@ -126,7 +126,7 @@ final class InterfaceSmoke {
         if (settingsStage == 0) {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             settingsParent = new TableScreen(table.getBlockPos());
             client.setScreen(settingsParent);
             client.setScreen(new TableSettingsScreen(settingsParent));
@@ -134,7 +134,7 @@ final class InterfaceSmoke {
         } else if (settingsStage >= 1 && settingsStage <= 4 && settingsTicks > 12) {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Settings viewport was not 320x240");
-            client.screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_TAB, 0, 0));
             require(client.screen.getFocused() != null, "Tab cannot focus a custom control");
             capture(client, output, "33-settings-tab-" + (settingsStage - 1) + ".png");
             if (settingsStage < 4) click(client, "settings.mchjong.tab." + settingsStage);
@@ -144,14 +144,15 @@ final class InterfaceSmoke {
             checkBounds(client);
             var field = client.screen.children().stream().filter(MahjongEditBox.class::isInstance)
                 .map(MahjongEditBox.class::cast).findFirst().orElseThrow();
-            client.screen.mouseClicked(field.getX() + 3, field.getY() + 3, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                field.getX() + 3, field.getY() + 3, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             require(field.isFocused(), "Padded field edge cannot receive focus");
             field.setValue("");
             settingsStage = 6; settingsTicks = 0;
         } else if (settingsStage == 6 && settingsTicks > 10) {
             require(!button(client, "gui.done").active, "Invalid numeric input leaves Apply enabled");
-            require(client.screen.charTyped('6', 0), "Native numeric text entry failed");
-            client.screen.charTyped('a', 0);
+            require(client.screen.charTyped(new net.minecraft.client.input.CharacterEvent('6')), "Native numeric text entry failed");
+            client.screen.charTyped(new net.minecraft.client.input.CharacterEvent('a'));
             var field = client.screen.children().stream().filter(MahjongEditBox.class::isInstance)
                 .map(MahjongEditBox.class::cast).findFirst().orElseThrow();
             require(field.getValue().equals("6"), "Numeric filter accepted a letter");
@@ -215,7 +216,7 @@ final class InterfaceSmoke {
     private void restoreWindow(Minecraft client) {
         client.getWindow().setWindowed(windowWidth, windowHeight);
         client.options.guiScale().set(guiScale);
-        client.resizeDisplay();
+        client.resizeGui();
     }
 
     private static void clickWorldTeleport(Minecraft client, boolean enabled) {
@@ -224,7 +225,8 @@ final class InterfaceSmoke {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
         require(button.active, "Administrator world setting is read-only");
-        client.screen.mouseClicked(button.getX() + 3, button.getY() + 3, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            button.getX() + 3, button.getY() + 3, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private static AbstractWidget button(Minecraft client, String key) {
@@ -236,7 +238,8 @@ final class InterfaceSmoke {
     private static void click(Minecraft client, String key) {
         var widget = button(client, key);
         require(widget.active, "Disabled control: " + key);
-        client.screen.mouseClicked(widget.getX() + 5, widget.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            widget.getX() + 5, widget.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private static void checkBounds(Minecraft client) {
@@ -249,7 +252,7 @@ final class InterfaceSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

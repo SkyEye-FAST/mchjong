@@ -97,13 +97,13 @@ final class RoomFlowSmoke {
             if (!capturedHand && remaining > Game.SETTLEMENT_TICKS && ticks > 10) {
                 check(client);
                 capture(client, output, "match-hand-countdown.png");
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 capturedHand = true;
             } else if (capturedHand && !capturedImmersive && remaining > Game.SETTLEMENT_TICKS && ticks > 25) {
                 require(((TableScreen) client.screen).immersive(), "Settlement cannot enter immersive view");
                 check(client);
                 capture(client, output, "match-hand-immersive.png");
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 resize(client, true);
                 capturedImmersive = true;
             } else if (capturedImmersive && !capturedFinal && remaining <= Game.SETTLEMENT_TICKS && remaining > 20) {
@@ -129,7 +129,7 @@ final class RoomFlowSmoke {
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                 serverTable.sit(player, 0);
             });
             next(13);
@@ -148,7 +148,7 @@ final class RoomFlowSmoke {
         var pos = table.getBlockPos();
         return client.getSingleplayerServer().submit(() -> {
             var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-            var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+            var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
             var game = serverTable.participantGame(player);
             require(game != null, "Settlement fixture has no participant");
             var saved = serverTable.saveWithoutMetadata(player.registryAccess());
@@ -163,7 +163,8 @@ final class RoomFlowSmoke {
             json.add("finalScores", TableNetworking.JSON.toJsonTree(end ? List.of(0.0, 0.0, 0.0, 0.0) : List.of()));
             json.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
             saved.putString("game", json.toString());
-            serverTable.loadWithComponents(saved, player.registryAccess());
+            serverTable.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+                net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess(), saved));
             require(serverTable.participantGame(player).phase() == (end ? Game.Phase.MATCH_END : Game.Phase.HAND_END),
                 "Saved settlement fixture did not load");
             serverTable.open(player);
@@ -174,7 +175,7 @@ final class RoomFlowSmoke {
     private static void resize(Minecraft client, boolean small) {
         client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
         client.options.guiScale().set(small ? 3 : 2);
-        client.resizeDisplay();
+        client.resizeGui();
     }
     private static AbstractButton buttonOrNull(Minecraft client, String key, Object... arguments) {
         String text = Component.translatable(key, arguments).getString();
@@ -184,7 +185,8 @@ final class RoomFlowSmoke {
     private static void click(Minecraft client, String key, Object... arguments) {
         var button = buttonOrNull(client, key, arguments);
         require(button != null && button.active, "Missing active lobby control: " + key);
-        client.screen.mouseClicked(button.getX() + 4, button.getY() + 4, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            button.getX() + 4, button.getY() + 4, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
     private static void check(Minecraft client) {
         AutomationControlsSmoke.checkBounds(client);
@@ -194,7 +196,7 @@ final class RoomFlowSmoke {
                 "Truncated room control: " + button.getMessage().getString());
     }
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean value, String message) { if (!value) throw new IllegalStateException(message); }
 }

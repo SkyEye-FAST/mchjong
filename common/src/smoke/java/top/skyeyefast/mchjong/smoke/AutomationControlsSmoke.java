@@ -52,15 +52,15 @@ final class AutomationControlsSmoke {
             capture(client, output, "52", "expanded");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.resizeGui();
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             next(2);
         } else if (stage == 2 && ticks > 12) {
             checkBounds(client);
             require(client.screen.width == 320 && client.screen.height == 240, "Automatic controls did not reach 320x240");
             require(((TableScreen) client.screen).immersive(), "Small viewport disabled the fixed immersive canvas");
             capture(client, output, "53", "expanded-small-letterbox");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             next(3);
         } else if (stage == 3 && ticks > 2) {
             var option = AutoPlay.Option.values()[toggle / 2];
@@ -77,7 +77,7 @@ final class AutomationControlsSmoke {
             else {
                 if (toggle == 3) capture(client, output, "53", "collapsed-small");
                 client.screen.setFocused(button);
-                require(client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0), "Compact option rejected keyboard activation");
+                require(client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0)), "Compact option rejected keyboard activation");
             }
             next(4);
         } else if (stage == 4 && ticks > 2) {
@@ -112,7 +112,7 @@ final class AutomationControlsSmoke {
             var pos = table.getBlockPos();
             reseated = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).sit(player, 0);
+                ((MahjongTableBlockEntity) player.level().getBlockEntity(pos)).sit(player, 0);
             });
             next(9);
         } else if (stage == 9 && reseated.isDone() && view.viewerSeat() == 0 && ticks > 5) {
@@ -125,7 +125,7 @@ final class AutomationControlsSmoke {
             toggle = 0;
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
             next(0);
         }
         return false;
@@ -135,7 +135,7 @@ final class AutomationControlsSmoke {
 
     private void capture(Minecraft client, Path output, String prefix, String mode) {
         Screenshot.grab(output.toFile(), prefix + "-automatic-controls-" + (sanma ? "3p-" : "4p-") + mode + ".png",
-            client.getMainRenderTarget(), ignored -> {});
+            client.getMainRenderTarget(), 1, ignored -> {});
     }
 
     static AbstractWidget optionButton(Minecraft client, AutoPlay.Option option) {
@@ -165,8 +165,10 @@ final class AutomationControlsSmoke {
             x = (client.screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + x * scale;
             y = (client.screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + y * scale;
         }
-        client.screen.mouseClicked(x, y, 0);
-        client.screen.mouseReleased(x, y, 0);
+        var event = new net.minecraft.client.input.MouseButtonEvent(
+            x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0));
+        client.screen.mouseClicked(event, false);
+        client.screen.mouseReleased(event);
     }
 
     static void checkBounds(Minecraft client) {

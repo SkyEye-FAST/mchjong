@@ -46,8 +46,8 @@ final class PointStickInterfaceSmoke {
             width = client.getWindow().getScreenWidth();
             height = client.getWindow().getScreenHeight();
             client.options.guiScale().set(3);
-            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), 960, 720);
-            client.resizeDisplay();
+            GLFW.glfwSetWindowSize(client.getWindow().handle(), 960, 720);
+            client.resizeGui();
             select(client, LANGUAGES[languageIndex]);
             next(5);
         } else if (stage == 5 && reload.isDone() && client.getOverlay() == null && ticks >= 15) {
@@ -61,8 +61,8 @@ final class PointStickInterfaceSmoke {
             if (++languageIndex < LANGUAGES.length) { select(client, LANGUAGES[languageIndex]); ticks = 0; }
             else {
                 client.options.guiScale().set(scale);
-                GLFW.glfwSetWindowSize(client.getWindow().getWindow(), width, height);
-                client.resizeDisplay();
+                GLFW.glfwSetWindowSize(client.getWindow().handle(), width, height);
+                client.resizeGui();
                 select(client, language);
                 next(6);
             }
@@ -83,8 +83,10 @@ final class PointStickInterfaceSmoke {
         var bounds = ((PointStickScreen) client.screen).browserBounds();
         double x = bounds.left() + slot.x + 8;
         double y = bounds.top() + slot.y + 8;
-        client.screen.mouseClicked(x, y, button);
-        client.screen.mouseReleased(x, y, button);
+        var event = new net.minecraft.client.input.MouseButtonEvent(
+            x, y, new net.minecraft.client.input.MouseButtonInfo(button, 0));
+        client.screen.mouseClicked(event, false);
+        client.screen.mouseReleased(event);
     }
 
     private void next(int value) { stage = value; ticks = 0; }
@@ -94,7 +96,7 @@ final class PointStickInterfaceSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void check(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

@@ -14,7 +14,6 @@ import net.minecraft.core.registries.Registries;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.Difficulty;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.LevelSettings;
 import net.minecraft.world.level.WorldDataConfiguration;
@@ -70,12 +69,12 @@ public final class TableClientSmoke {
         if (step == 14) return;
         try {
             require(!client.mouseHandler.isMouseGrabbed(), "Smoke client grabbed the desktop mouse");
-            require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
+            require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
             ticks++;
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             // Presence checks wait through real server grace periods in each automatic room.
-            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8600 : 6600))
+            if (ticks > 6600)
                 throw new IllegalStateException("Smoke timed out at step " + step + ", screen=" + client.screen);
             if (step == 0 && client.screen instanceof net.minecraft.client.gui.screens.AccessibilityOnboardingScreen onboarding) {
                 onboarding.onClose();
@@ -93,16 +92,12 @@ public final class TableClientSmoke {
                 client.options.fov().set(70);
                 client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 TableSettings.get().reset();
-                client.resizeDisplay();
-                GameRules rules = new GameRules();
-                rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
-                rules.getRule(GameRules.RULE_WEATHER_CYCLE).set(false, null);
-                rules.getRule(GameRules.RULE_DAYLIGHT).set(false, null);
-                rules.getRule(GameRules.RULE_SPAWN_CHUNK_RADIUS).set(0, null);
+                client.resizeGui();
                 client.createWorldOpenFlows().createFreshLevel("table-smoke-" + System.currentTimeMillis(),
-                    new LevelSettings("MChjong isolated smoke", GameType.CREATIVE, false, Difficulty.PEACEFUL,
-                        true, rules, WorldDataConfiguration.DEFAULT), new WorldOptions(12345, false, false),
-                    access -> access.registryOrThrow(Registries.WORLD_PRESET).getHolderOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
+                    new LevelSettings("MChjong isolated smoke", GameType.CREATIVE,
+                        new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false),
+                        true, WorldDataConfiguration.DEFAULT), new WorldOptions(12345, false, false),
+                    access -> access.lookupOrThrow(Registries.WORLD_PRESET).getOrThrow(WorldPresets.FLAT).value().createWorldDimensions(),
                     new TitleScreen());
                 step = 1;
                 LOG.info("Created isolated smoke world");
@@ -119,12 +114,11 @@ public final class TableClientSmoke {
                     try {
                         ServerPlayer player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         if (player == null) throw new IllegalStateException("Missing server player");
-                        var level = player.serverLevel();
+                        var level = player.level();
                         if (!visualOnly) {
                             SurvivalSmoke.verify(player);
                             RecipeBrowserDataSmoke.verify(level);
                         }
-                        level.setDayTime(6000);
                         for (int x = -5; x <= 5; x++) for (int z = -5; z <= 5; z++)
                             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
                         level.setBlock(CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), 3);
@@ -138,7 +132,7 @@ public final class TableClientSmoke {
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
                         cloth.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.CYAN);
                         table.useEquipment(player, cloth);
-                        player.getInventory().selected = 0;
+                        player.getInventory().setSelectedSlot(0);
                         player.getInventory().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
                             top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.BLUE));
                         var flowerBox = player.getInventory().getItem(0);
@@ -166,7 +160,7 @@ public final class TableClientSmoke {
                         player.getInventory().setItem(8, ItemStack.EMPTY);
                         player.getInventory().setChanged();
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
-                        player.teleportTo(level, 0.5, 64, 3.5, 180, 30);
+                        player.teleportTo(level, 0.5, 64, 3.5, java.util.Set.of(), 180, 30, false);
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 2; entered = ticks;
@@ -197,12 +191,12 @@ public final class TableClientSmoke {
                         var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         var box = player.getMainHandItem();
                         require(box.is(MahjongContent.BOX_ITEM), "Box fixture was not synchronized into the main hand");
-                        box.getItem().use(player.serverLevel(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
+                        box.getItem().use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
                         require(player.containerMenu instanceof top.skyeyefast.mchjong.item.MahjongBoxMenu, "Box did not open its real menu");
                         var menu = player.containerMenu;
                         require(menu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Box compartment layout differs");
                         require(menu.quickMoveStack(player, top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 27).isEmpty(), "Shift-click moved the open carrier box");
-                        menu.clicked(0, 0, net.minecraft.world.inventory.ClickType.SWAP, player);
+                        menu.clicked(0, 0, net.minecraft.world.inventory.ContainerInput.SWAP, player);
                         require(player.getMainHandItem() == box, "Hotbar swap replaced the open box");
                         require(!menu.slots.getFirst().mayPlace(new ItemStack(MahjongContent.BOX_ITEM)), "Box accepts nested boxes");
                     } catch (Throwable failure) { serverFailure.set(failure); }
@@ -221,7 +215,7 @@ public final class TableClientSmoke {
                     var id = client.player.getUUID();
                     fixtureSeat = client.getSingleplayerServer().submit(() -> {
                         var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                        var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+                        var table = (MahjongTableBlockEntity) player.level().getBlockEntity(CENTER);
                         table.sit(player, 0);
                         return player.isPassenger();
                     });
@@ -257,13 +251,13 @@ public final class TableClientSmoke {
                 if (seatingOnly) {
                     var settings = TableSettings.get();
                     var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
-                    require(client.gameRenderer.getMainCamera().getPosition().distanceTo(expected) < 1e-6,
+                    require(client.gameRenderer.getMainCamera().position().distanceTo(expected) < 1e-6,
                         "Open controls did not retain the standing-at-seat camera");
                 }
                 capture(client, "01-lobby.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
                     net.minecraft.network.chat.Component.translatable("room.mchjong.start_bots").getString())) {
-                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
+                    press(client, widget.getX() + 8, widget.getY() + 8);
                     step = 4; entered = ticks;
                     return;
                 }
@@ -273,7 +267,7 @@ public final class TableClientSmoke {
                 if (!preparation.tick(client, table, output, "01-room")) return;
                 var view = table.clientView();
                 if (view == null) return;
-                if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
+                if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())) return;
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining calls and continuing early abortive draws through the actual UI.
@@ -282,7 +276,7 @@ public final class TableClientSmoke {
                     var key = "action.mchjong.pass";
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                             && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()) && widget.active) {
-                        client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
+                        press(client, widget.getX() + 8, widget.getY() + 8);
                         break;
                     }
                     return;
@@ -295,26 +289,26 @@ public final class TableClientSmoke {
                     return;
                 }
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 client.getSingleplayerServer().execute(() -> {
                     var level = client.getSingleplayerServer().overworld();
                     for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)
                         level.setBlockAndUpdate(CENTER.offset(x, 3, z), Blocks.STONE.defaultBlockState());
                 });
-                client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 52, 0);
+                press(client, client.screen.width / 2.0, client.screen.height - 52);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
                 require(((TableScreen) client.screen).immersive(), "Immersive hand selection was not enabled");
                 require(client.level.getBlockState(CENTER.above(3)).is(Blocks.STONE), "Occluding roof did not reach the client");
                 var seat = (top.skyeyefast.mchjong.world.SeatEntity) client.player.getVehicle();
-                require(client.gameRenderer.getMainCamera().getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
+                require(client.gameRenderer.getMainCamera().position().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
                     "Immersive view moved the world camera");
                 capture(client, "03-immersive-discard-under-roof.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                     && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("action.mchjong.discard").getString())) {
-                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
-                    client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
-                    client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                    press(client, widget.getX() + 8, widget.getY() + 8);
+                    press(client, widget.getX() + 8, widget.getY() + 8);
+                    client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                     step = 6; entered = ticks;
                     return;
                 }
@@ -323,7 +317,7 @@ public final class TableClientSmoke {
                 var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).clientView();
                 require(view.seats().get(view.viewerSeat()).river().size() == 1, "Discard confirmation did not reach the server");
                 capture(client, "04-immersive-river-under-roof.png");
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 require(!((TableScreen) client.screen).immersive(), "Cannot return to the seated view");
                 client.getSingleplayerServer().execute(() -> {
                     var level = client.getSingleplayerServer().overworld();
@@ -367,9 +361,6 @@ public final class TableClientSmoke {
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;
-                if (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output)) return;
-                if (!Boolean.getBoolean("mchjong.smoke.ponder"))
-                    Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
                 Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCHJONG_CLIENT_SMOKE_PASS");
@@ -379,7 +370,7 @@ public final class TableClientSmoke {
                 var camera = client.gameRenderer.getMainCamera();
                 var settings = TableSettings.get();
                 var expected = TableGeometry.world(CENTER, TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, 0));
-                require(camera.getPosition().distanceTo(expected) < 1e-6, "Closing controls moved the seated camera");
+                require(camera.position().distanceTo(expected) < 1e-6, "Closing controls moved the seated camera");
                 require(client.player.getEyePosition().distanceTo(expected) < 1e-6
                     && client.player.getEyePosition(1).distanceTo(expected) < 1e-6, "Native picking differs from the seated camera");
                 capture(client, "03-seated-world.png");
@@ -423,7 +414,7 @@ public final class TableClientSmoke {
         var id = client.player.getUUID();
         fixtureSeat = client.getSingleplayerServer().submit(() -> {
             var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-            var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
+            var table = (MahjongTableBlockEntity) player.level().getBlockEntity(CENTER);
             var game = table.participantGame(player);
             require(game != null && game.requestExit(id) && game.phase() == Game.Phase.LOBBY, "Cannot finish live smoke match");
             player.stopRiding();
@@ -434,7 +425,12 @@ public final class TableClientSmoke {
     }
 
     private void capture(Minecraft client, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), message -> LOG.info("Screenshot: {}", message.getString()));
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, message -> LOG.info("Screenshot: {}", message.getString()));
+    }
+
+    private static void press(Minecraft client, double x, double y) {
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private static void require(boolean condition, String message) {

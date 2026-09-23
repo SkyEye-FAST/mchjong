@@ -7,7 +7,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-import net.minecraft.world.inventory.ClickType;
+import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.level.GameType;
@@ -29,16 +29,16 @@ final class PointStickMenuSmoke {
         var saved = java.util.stream.IntStream.range(0, inventory.getContainerSize()).mapToObj(i -> inventory.getItem(i).copy()).toList();
         var position = player.position();
         var mode = player.gameMode.getGameModeForPlayer();
-        var level = player.serverLevel();
+        var level = player.level();
         var pos = new BlockPos(14, 64, 12);
         var bounds = new AABB(pos).inflate(5);
         var priorDrops = level.getEntitiesOfClass(ItemEntity.class, bounds);
-        int selected = inventory.selected;
+        int selected = inventory.getSelectedSlot();
         try {
             player.closeContainer();
             player.setGameMode(GameType.SURVIVAL);
             inventory.clearContent();
-            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, 180, 30);
+            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, java.util.Set.of(), 180, 30, false);
             level.setBlock(pos, MahjongContent.TABLE.defaultBlockState(), 3);
             MahjongContent.TABLE.setPlacedBy(level, pos, MahjongContent.TABLE.defaultBlockState(), player, new ItemStack(MahjongContent.TABLE_ITEM));
             var table = (MahjongTableBlockEntity) level.getBlockEntity(pos);
@@ -63,7 +63,7 @@ final class PointStickMenuSmoke {
             check(menu.quickMoveStack(player, 70).isEmpty() && menu.quickMoveStack(player, 71).isEmpty(), "Drawer accepted stone or unmarked sticks");
             for (int index = 67; index <= 69; index++) menu.quickMoveStack(player, index);
             check(menu.totalPoints(0) == 33000, "Multiple denominations were not counted exactly");
-            menu.clicked(0, 1, ClickType.PICKUP, player);
+            menu.clicked(0, 1, ContainerInput.PICKUP, player);
             check(menu.getCarried().getCount() == 6, "Right-click did not split point sticks");
             player.closeContainer();
             check(!menu.stillValid(player) && menu.quickMoveStack(player, 0).isEmpty(), "Closed drawer retained authority");
@@ -74,25 +74,25 @@ final class PointStickMenuSmoke {
             menu.quickMoveStack(player, carriedSlot);
             check(table.equipment().drawer(0).getItem(0).getCount() == 6 && menu.totalPoints(1) == 6000,
                 "Hand delivery did not transfer the selected amount to the recipient drawer");
-            menu.clicked(10, 0, ClickType.PICKUP, player);
-            menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(0, 0), ClickType.QUICK_CRAFT, player);
-            for (int slot : new int[]{10, 11, 12}) menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(1, 0), ClickType.QUICK_CRAFT, player);
-            menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(2, 0), ClickType.QUICK_CRAFT, player);
-            menu.clicked(11, 0, ClickType.SWAP, player);
-            menu.clicked(11, 0, ClickType.SWAP, player);
-            menu.clicked(10, 0, ClickType.PICKUP, player);
-            menu.clicked(12, 0, ClickType.PICKUP_ALL, player);
-            menu.clicked(10, 0, ClickType.PICKUP, player);
-            menu.clicked(10, 0, ClickType.THROW, player);
+            menu.clicked(10, 0, ContainerInput.PICKUP, player);
+            menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(0, 0), ContainerInput.QUICK_CRAFT, player);
+            for (int slot : new int[]{10, 11, 12}) menu.clicked(slot, AbstractContainerMenu.getQuickcraftMask(1, 0), ContainerInput.QUICK_CRAFT, player);
+            menu.clicked(-999, AbstractContainerMenu.getQuickcraftMask(2, 0), ContainerInput.QUICK_CRAFT, player);
+            menu.clicked(11, 0, ContainerInput.SWAP, player);
+            menu.clicked(11, 0, ContainerInput.SWAP, player);
+            menu.clicked(10, 0, ContainerInput.PICKUP, player);
+            menu.clicked(12, 0, ContainerInput.PICKUP_ALL, player);
+            menu.clicked(10, 0, ContainerInput.PICKUP, player);
+            menu.clicked(10, 0, ContainerInput.THROW, player);
             check(expected.equals(snapshot(player, table, menu, bounds)), "Native drawer operations changed the item/component multiset");
             // Closing with a carried stack returns it through the vanilla inventory path.
-            menu.clicked(0, 0, ClickType.PICKUP, player);
+            menu.clicked(0, 0, ContainerInput.PICKUP, player);
             player.closeContainer();
             check(expected.equals(snapshot(player, table, menu, bounds)), "Closing lost or duplicated carried sticks");
             menu = open(player, table, 0);
-            player.teleportTo(level, pos.getX() + 12, pos.getY(), pos.getZ(), 0, 0);
+            player.teleportTo(level, pos.getX() + 12, pos.getY(), pos.getZ(), java.util.Set.of(), 0, 0, false);
             check(!menu.stillValid(player), "Remote player retained drawer access");
-            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, 180, 30);
+            player.teleportTo(level, pos.getX() + .5, pos.getY(), pos.getZ() + 3.5, java.util.Set.of(), 180, 30, false);
             check(!menu.stillValid(player), "Returning revived an expired drawer menu");
             player.closeContainer();
             player.setGameMode(GameType.SPECTATOR);
@@ -105,13 +105,18 @@ final class PointStickMenuSmoke {
             level.setBlockEntity(table);
             check(!menu.stillValid(player), "Reattached table revived a stale drawer menu");
             player.closeContainer();
-            var beforeSave = new CompoundTag();
-            table.equipment().save(beforeSave, player.registryAccess());
+            var beforeOutput = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+                net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess());
+            table.equipment().save(beforeOutput);
+            var beforeSave = beforeOutput.buildResult();
             var appearance = table.getUpdateTag(player.registryAccess());
             check(!appearance.contains("stick_drawers"), "Public chunk updates leaked drawer contents");
-            table.loadWithComponents(appearance, player.registryAccess());
-            var afterSave = new CompoundTag();
-            table.equipment().save(afterSave, player.registryAccess());
+            table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+                net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess(), appearance));
+            var afterOutput = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+                net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess());
+            table.equipment().save(afterOutput);
+            var afterSave = afterOutput.buildResult();
             check(beforeSave.equals(afterSave), "Appearance update erased point sticks");
             verifySeatedPayments(player, table, bounds);
         } finally {
@@ -121,9 +126,9 @@ final class PointStickMenuSmoke {
             level.removeBlock(TableGeometry.stool(pos, 0), false);
             for (var drop : level.getEntitiesOfClass(ItemEntity.class, bounds)) if (!priorDrops.contains(drop)) drop.discard();
             for (int slot = 0; slot < saved.size(); slot++) inventory.setItem(slot, saved.get(slot));
-            inventory.selected = selected;
+            inventory.setSelectedSlot(selected);
             player.setGameMode(mode);
-            player.teleportTo(level, position.x, position.y, position.z, 0, 0);
+            player.teleportTo(level, position.x, position.y, position.z, java.util.Set.of(), 0, 0, false);
         }
     }
 
@@ -134,7 +139,7 @@ final class PointStickMenuSmoke {
         table.useEquipment(player, new ItemStack(MahjongContent.CLOTH_ITEM));
         stockDrawers(table);
         verifySupplies(table);
-        player.serverLevel().setBlock(TableGeometry.stool(table.getBlockPos(), 0), MahjongContent.STOOL.defaultBlockState(), 3);
+        player.level().setBlock(TableGeometry.stool(table.getBlockPos(), 0), MahjongContent.STOOL.defaultBlockState(), 3);
         table.sit(player, 0);
         var game = table.participantGame(player);
         check(game != null, "Payment fixture did not obtain an authenticated seat");
@@ -145,38 +150,40 @@ final class PointStickMenuSmoke {
         check(game.phase() == top.skyeyefast.mchjong.engine.Game.Phase.SHUFFLE, "Payment fixture did not start");
         var menu = open(player, table, 0);
         check(menu.clickMenuButton(player, 1) && menu.recipientSide() == 1, "Recipient row could not be selected");
-        var initial = new CompoundTag();
-        table.equipment().save(initial, player.registryAccess());
-        check(!initial.getList("match_sticks", 10).isEmpty(), "Starting drawer positions were not saved");
+        var initialOutput = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+            net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess());
+        table.equipment().save(initialOutput);
+        var initial = initialOutput.buildResult();
+        check(!initial.getListOrEmpty("match_sticks").isEmpty(), "Starting drawer positions were not saved");
         menu.setCarried(stick(1000, 2));
-        for (var type : new ClickType[]{ClickType.PICKUP, ClickType.SWAP, ClickType.QUICK_CRAFT}) menu.clicked(7, 0, type, player);
+        for (var type : new ContainerInput[]{ContainerInput.PICKUP, ContainerInput.SWAP, ContainerInput.QUICK_CRAFT}) menu.clicked(7, 0, type, player);
         check(menu.getCarried().getCount() == 2 && menu.getSlot(7).getItem().isEmpty(), "External sticks entered a running table");
         menu.setCarried(ItemStack.EMPTY);
         var expected = snapshot(player, table, menu, bounds);
         check(menu.canWithdraw(0) && !menu.canWithdraw(1) && menu.canWithdraw(2), "Owner/recipient/practice withdrawal permissions differ from seats");
         int beforeBust = menu.totalPoints(0);
-        menu.clicked(TableEquipment.BUST_SLOT, 0, ClickType.PICKUP, player);
-        menu.clicked(7, 0, ClickType.PICKUP, player);
+        menu.clicked(TableEquipment.BUST_SLOT, 0, ContainerInput.PICKUP, player);
+        menu.clicked(7, 0, ContainerInput.PICKUP, player);
         check(menu.totalPoints(0) == beforeBust - 10000, "Bust stick did not count in a normal slot");
-        menu.clicked(7, 0, ClickType.PICKUP, player);
-        menu.clicked(TableEquipment.BUST_SLOT, 0, ClickType.PICKUP, player);
+        menu.clicked(7, 0, ContainerInput.PICKUP, player);
+        menu.clicked(TableEquipment.BUST_SLOT, 0, ContainerInput.PICKUP, player);
         check(menu.totalPoints(0) == beforeBust, "Reserve bust stick still affected the balance");
         int recipientSlot = 14;
         check(menu.getSlot(recipientSlot).getItem().getCount() == 4
             && !ItemStack.isSameItemSameComponents(menu.getSlot(8).getItem(), menu.getSlot(recipientSlot).getItem()),
             "Payment fixture lacks distinct matching-denomination stacks");
-        menu.clicked(8, 1, ClickType.PICKUP, player);
-        menu.clicked(recipientSlot, 0, ClickType.PICKUP, player);
+        menu.clicked(8, 1, ContainerInput.PICKUP, player);
+        menu.clicked(recipientSlot, 0, ContainerInput.PICKUP, player);
         check(menu.getSlot(8).getItem().getCount() == 1 && menu.getSlot(recipientSlot).getItem().getCount() == 6,
             "Seated hand delivery did not merge into the recipient's denomination slot");
         expected = snapshot(player, table, menu, bounds);
-        for (var type : new ClickType[]{ClickType.PICKUP, ClickType.SWAP, ClickType.THROW}) {
+        for (var type : new ContainerInput[]{ContainerInput.PICKUP, ContainerInput.SWAP, ContainerInput.THROW}) {
             menu.clicked(recipientSlot, 0, type, player);
             check(menu.getCarried().isEmpty() && menu.getSlot(recipientSlot).getItem().getCount() == 6, "Recipient withdrawal bypass: " + type);
         }
         check(menu.quickMoveStack(player, recipientSlot).isEmpty(), "Quick move took another human's sticks");
-        menu.clicked(8, 0, ClickType.PICKUP, player);
-        menu.clicked(recipientSlot, 0, ClickType.PICKUP_ALL, player);
+        menu.clicked(8, 0, ContainerInput.PICKUP, player);
+        menu.clicked(recipientSlot, 0, ContainerInput.PICKUP_ALL, player);
         check(menu.getSlot(recipientSlot).getItem().getCount() == 6, "Collect-all took another human's sticks");
         check(expected.equals(snapshot(player, table, menu, bounds)), "Seated transfer changed the physical currency multiset");
         menu.broadcastChanges();
@@ -190,12 +197,15 @@ final class PointStickMenuSmoke {
         check(receiver.score(0) == 100000 && receiver.score(1) == -10000, "Native menu truncated signed scores");
         check(game.requestExit(player.getUUID()), "Could not open exit ballot");
         check(game.answerExit(recipient, game.view(player.getUUID()).exitVote().id(), true), "Recipient could not end match");
-        MahjongTableBlockEntity.serverTick(player.serverLevel(), table.getBlockPos(), table.getBlockState(), table);
+        MahjongTableBlockEntity.serverTick(player.level(), table.getBlockPos(), table.getBlockState(), table);
         check(player.containerMenu != menu && menu.getCarried().isEmpty(), "Ending the match left a live payment cursor");
-        var restored = new CompoundTag();
-        table.equipment().save(restored, player.registryAccess());
-        check(initial.getList("stick_drawers", 10).equals(restored.getList("stick_drawers", 10)), "Ending the match did not restore original drawers");
-        check(restored.getList("match_sticks", 10).isEmpty(), "Finished match retained a currency snapshot");
+        var restoredOutput = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
+            net.minecraft.util.ProblemReporter.DISCARDING, player.registryAccess());
+        table.equipment().save(restoredOutput);
+        var restored = restoredOutput.buildResult();
+        check(initial.getListOrEmpty("stick_drawers").equals(restored.getListOrEmpty("stick_drawers")),
+            "Ending the match did not restore original drawers");
+        check(restored.getListOrEmpty("match_sticks").isEmpty(), "Finished match retained a currency snapshot");
     }
 
     private static void verifySupplies(MahjongTableBlockEntity table) {
@@ -261,7 +271,7 @@ final class PointStickMenuSmoke {
         var menu = open(player, table, side);
         menu.setCarried(source);
         for (int slot = side * TableEquipment.STICK_SLOTS; slot < (side + 1) * TableEquipment.STICK_SLOTS && !menu.getCarried().isEmpty(); slot++)
-            if (!menu.getSlot(slot).hasItem()) menu.clicked(slot, 0, ClickType.PICKUP, player);
+            if (!menu.getSlot(slot).hasItem()) menu.clicked(slot, 0, ContainerInput.PICKUP, player);
         check(menu.getCarried().isEmpty(), "Point-stick fixture did not fit");
         player.closeContainer();
         player.getInventory().setChanged();
@@ -278,13 +288,15 @@ final class PointStickMenuSmoke {
             PointStickMenu menu, AABB bounds) {
         var result = new HashMap<CompoundTag, Integer>();
         java.util.function.Consumer<ItemStack> count = stack -> {
-            if (!stack.isEmpty()) result.merge((CompoundTag) stack.copyWithCount(1).save(player.registryAccess()), stack.getCount(), Integer::sum);
+            if (!stack.isEmpty()) result.merge((CompoundTag) ItemStack.CODEC.encodeStart(
+                net.minecraft.resources.RegistryOps.create(net.minecraft.nbt.NbtOps.INSTANCE, player.registryAccess()),
+                stack.copyWithCount(1)).getOrThrow(), stack.getCount(), Integer::sum);
         };
         for (int slot = 0; slot < player.getInventory().getContainerSize(); slot++) count.accept(player.getInventory().getItem(slot));
         for (int side = 0; side < 4; side++) for (int slot = 0; slot < TableEquipment.STICK_SLOTS; slot++)
             count.accept(table.equipment().drawer(side).getItem(slot));
         count.accept(menu.getCarried());
-        for (var drop : player.serverLevel().getEntitiesOfClass(ItemEntity.class, bounds)) count.accept(drop.getItem());
+        for (var drop : player.level().getEntitiesOfClass(ItemEntity.class, bounds)) count.accept(drop.getItem());
         return result;
     }
 

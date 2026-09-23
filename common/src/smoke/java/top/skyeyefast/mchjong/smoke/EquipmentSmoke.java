@@ -11,9 +11,9 @@ import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
@@ -41,30 +41,30 @@ final class EquipmentSmoke {
         var inventory = player.getInventory();
         var saved = new ArrayList<ItemStack>();
         for (int slot = 0; slot < inventory.getContainerSize(); slot++) saved.add(inventory.getItem(slot).copy());
-        int selected = inventory.selected;
+        int selected = inventory.getSelectedSlot();
         var position = player.position();
         float yaw = player.getYRot(), pitch = player.getXRot();
         var mode = player.gameMode.getGameModeForPlayer();
-        boolean decay = player.level().getGameRules().getBoolean(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY);
+        boolean decay = player.level().getGameRules().get(GameRules.BLOCK_EXPLOSION_DROP_DECAY);
         try {
             player.closeContainer();
             player.setGameMode(GameType.SURVIVAL);
-            player.level().getGameRules().getRule(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY).set(false, player.getServer());
+            player.level().getGameRules().set(GameRules.BLOCK_EXPLOSION_DROP_DECAY, false, player.level().getServer());
             for (var block : List.of(MahjongContent.TABLE, MahjongContent.AUTO_TABLE))
                 for (int destruction = 0; destruction < 3; destruction++) verifyTable(player, block, destruction);
         } finally {
             player.stopRiding();
             player.setShiftKeyDown(false);
             for (int slot = 0; slot < saved.size(); slot++) inventory.setItem(slot, saved.get(slot));
-            inventory.selected = selected;
+            inventory.setSelectedSlot(selected);
             player.setGameMode(mode);
-            player.level().getGameRules().getRule(GameRules.RULE_BLOCK_EXPLOSION_DROP_DECAY).set(decay, player.getServer());
-            player.teleportTo(player.serverLevel(), position.x, position.y, position.z, yaw, pitch);
+            player.level().getGameRules().set(GameRules.BLOCK_EXPLOSION_DROP_DECAY, decay, player.level().getServer());
+            player.teleportTo(player.level(), position.x, position.y, position.z, java.util.Set.of(), yaw, pitch, false);
         }
     }
 
     private static void verifyTable(ServerPlayer player, MahjongTableBlock block, int destruction) {
-        var level = player.serverLevel();
+        var level = player.level();
         var bounds = new AABB(POS).inflate(8);
         var existing = level.getEntitiesOfClass(ItemEntity.class, bounds);
         var inventory = player.getInventory();
@@ -77,7 +77,7 @@ final class EquipmentSmoke {
             level.setBlock(POS, block.defaultBlockState(), 3);
             block.setPlacedBy(level, POS, block.defaultBlockState(), player, furniture);
             for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(POS, seat), MahjongContent.STOOL.defaultBlockState(), 3);
-            player.teleportTo(level, POS.getX() + .5, POS.getY(), POS.getZ() + 3.5, 180, 30);
+            player.teleportTo(level, POS.getX() + .5, POS.getY(), POS.getZ() + 3.5, java.util.Set.of(), 180, 30, false);
             var table = (MahjongTableBlockEntity) level.getBlockEntity(POS);
             table.sit(player, 0);
             var game = table.participantGame(player);
@@ -94,7 +94,7 @@ final class EquipmentSmoke {
             inventory.setItem(1, cloth.copy());
             inventory.setItem(2, sticks.copy());
             inventory.setItem(3, replacement.copy());
-            inventory.selected = 0;
+            inventory.setSelectedSlot(0);
             var edge = POS.east();
             level.getBlockState(edge).useItemOn(player.getMainHandItem(), level, player, InteractionHand.MAIN_HAND,
                 new BlockHitResult(Vec3.atCenterOf(edge), Direction.UP, edge, false));
@@ -124,13 +124,15 @@ final class EquipmentSmoke {
             var saved = table.saveWithoutMetadata(level.registryAccess());
             var appearance = table.getUpdatePacket().getTag();
             check(!appearance.contains("game") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
-            table.loadWithComponents(appearance, level.registryAccess());
+            table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+                net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), appearance));
             check(saved.getString("game").equals(table.saveWithoutMetadata(level.registryAccess()).getString("game"))
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Public update destroyed private state");
             level.removeBlockEntity(POS);
             table = new MahjongTableBlockEntity(POS, block.defaultBlockState());
             table.setLevel(level);
-            table.loadWithComponents(saved, level.registryAccess());
+            table.loadWithComponents(net.minecraft.world.level.storage.TagValueInput.create(
+                net.minecraft.util.ProblemReporter.DISCARDING, level.registryAccess(), saved));
             level.setBlockEntity(table);
             check(table.wood() == FurnitureWood.WARPED && table.equipment().clothColor() == DyeColor.LIME
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
@@ -142,7 +144,7 @@ final class EquipmentSmoke {
             game = table.participantGame(player);
             check(game.phase() == (table.automatic() ? Game.Phase.TURN : Game.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
-            staleMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
+            staleMenu.clicked(0, 0, net.minecraft.world.inventory.ContainerInput.PICKUP, player);
             check(staleMenu.getCarried().isEmpty() && staleMenu.quickMoveStack(player, 1).isEmpty(),
                 "A menu opened before the game bypassed the equipment lock");
             player.closeContainer();
@@ -175,7 +177,7 @@ final class EquipmentSmoke {
                 for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);
                 PointStickMenuSmoke.put(player, table, 0, inventory.getItem(2).split(3));
             }
-            player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, 0, 0);
+            player.teleportTo(level, POS.getX() + 12.5, POS.getY(), POS.getZ() + 12.5, java.util.Set.of(), 0, 0, false);
             if (destruction == 0) level.destroyBlock(POS, true);
             else if (destruction == 1) level.destroyBlock(POS.offset(TableGeometry.FOOTPRINT_RADIUS, 0, TableGeometry.FOOTPRINT_RADIUS), true);
             else level.explode(null, POS.getX() + .5, POS.getY() + .8, POS.getZ() + .5, 3, Level.ExplosionInteraction.BLOCK);

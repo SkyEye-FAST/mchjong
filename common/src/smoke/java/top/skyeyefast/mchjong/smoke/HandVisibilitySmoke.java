@@ -41,7 +41,7 @@ final class HandVisibilitySmoke {
             var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
                 .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
             require(button.active, "Host visibility control is disabled");
-            button.onPress();
+            button.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             next(1);
         } else if (stage == 1 && view.handVisibility() == visibility && ticks > 5) {
             client.getLanguageManager().setSelected(LANGUAGES[locale]);
@@ -68,23 +68,24 @@ final class HandVisibilitySmoke {
         } else if (stage == 4) {
             if (preparation.tick(client, table, output, "visibility-" + visibility)) next(5);
         } else if (stage == 5 && view.phase() == Game.Phase.TURN && ticks > 25
-            && !top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
+            && !top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())) {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");
             capture(client, output, "seated-" + visibility + ".png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             next(9);
         } else if (stage == 9 && ticks > 10) {
             require(client.screen instanceof TableScreen screen && screen.immersive(), "Missing immersive view");
             capture(client, output, "immersive-" + visibility + ".png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                 player.stopRiding();
-                player.teleportTo(player.serverLevel(), pos.getX() + .5, pos.getY() + .3, pos.getZ() + 2.6, 180, 35);
+                player.teleportTo(player.level(), pos.getX() + .5, pos.getY() + .3, pos.getZ() + 2.6,
+                    java.util.Set.of(), 180, 35, false);
                 require(serverTable.participantGame(player) == null, "Unmounted observer retained action authority");
                 serverTable.open(player);
             });
@@ -110,7 +111,7 @@ final class HandVisibilitySmoke {
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                 serverTable.sit(player, seat);
                 var game = serverTable.participantGame(player);
                 require(game != null && game.requestExit(id), "Cannot finish visibility fixture");
@@ -128,10 +129,10 @@ final class HandVisibilitySmoke {
     private static void resize(Minecraft client, boolean small) {
         client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
         client.options.guiScale().set(small ? 3 : 2);
-        client.resizeDisplay();
+        client.resizeGui();
     }
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean condition, String message) {
         if (!condition) throw new IllegalStateException(message);

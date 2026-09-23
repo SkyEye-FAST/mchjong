@@ -76,12 +76,12 @@ final class TenpaiHintsSmoke {
                     throw new IllegalStateException("Immersive toolbar caption is clipped: " + widget.getMessage().getString());
             Screenshot.grab(output.toFile(), "58-tenpai-" + LANGUAGES[sample / 3]
                 + switch (sample % 3) { case 0 -> "-640x400-seated"; case 1 -> "-320x240-seated"; default -> "-480x300-immersive-preview"; }
-                + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), ignored -> {});
+                + (ticks == 10 ? "-hover.png" : "-keyboard.png"), client.getMainRenderTarget(), 1, ignored -> {});
             if (ticks == 10) {
                 InputSmoke.pointer(client, 4, 4);
                 client.screen.setFocused(null);
                 for (int i = 0; i < 30 && client.screen.getFocused() != button; i++)
-                    client.screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
+                    client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_TAB, 0, 0));
                 if (client.screen.getFocused() != button) throw new IllegalStateException("Tab cannot reach wait preview");
             }
         }
@@ -89,7 +89,7 @@ final class TenpaiHintsSmoke {
         if (++sample < 12) show(client, table);
         else {
             settings.convenienceHints = enabled; settings.animations = animations; settings.discardMode = discardMode;
-            client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeDisplay();
+            client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeGui();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
             table.acceptView(new TableView(original.tableId(), original.revision() + 13, original.decision(),
                 original.handNumber(), original.rules(), original.phase(), original.viewerSeat(), original.dealer(),
@@ -105,7 +105,7 @@ final class TenpaiHintsSmoke {
     private void show(Minecraft client, MahjongTableBlockEntity table) {
         boolean preview = sample % 3 == 2, small = sample % 3 == 1;
         client.getWindow().setWindowed(preview || small ? 960 : 1280, preview ? 600 : small ? 720 : 800);
-        client.options.guiScale().set(small ? 3 : 2); client.resizeDisplay();
+        client.options.guiScale().set(small ? 3 : 2); client.resizeGui();
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
@@ -133,7 +133,7 @@ final class TenpaiHintsSmoke {
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         table.acceptView(fixture); client.setScreen(new TableScreen(table.getBlockPos()));
         if (preview) {
-            client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
         }
         AutomationControlsSmoke.click(client, Component.translatable("ui.mchjong.automation_show").getString());
         client.screen.setFocused(null);

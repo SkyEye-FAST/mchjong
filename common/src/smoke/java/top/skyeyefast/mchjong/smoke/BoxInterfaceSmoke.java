@@ -27,8 +27,8 @@ final class BoxInterfaceSmoke {
             windowWidth = client.getWindow().getScreenWidth();
             windowHeight = client.getWindow().getScreenHeight();
             client.options.guiScale().set(3);
-            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), 960, 720);
-            client.resizeDisplay();
+            GLFW.glfwSetWindowSize(client.getWindow().handle(), 960, 720);
+            client.resizeGui();
             sample = 0;
             select(client, LANGUAGES[sample]);
             return false;
@@ -62,7 +62,7 @@ final class BoxInterfaceSmoke {
                 for (int i = 0; i < choices.size() && !selector.getMessage().getString().equals(requested); i++) {
                     client.screen.setFocused(selector);
                     selector.setFocused(true);
-                    client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                    client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
                 }
                 require(selector.getMessage().getString().equals(requested), "Preset selector did not cycle with keyboard");
                 require(menu.canEngrave(preset), "Preset fixture cannot be printed");
@@ -81,7 +81,7 @@ final class BoxInterfaceSmoke {
         require(bounds.top() >= 0 && bounds.bottom() <= client.screen.height - 24, "Box overlaps recipe-browser controls");
         for (var slot : menu.slots)
             require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 < bounds.width() && slot.y + 16 < bounds.height(), "Slot outside the box panel");
-        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), 1, ignored -> {});
         reagentStage = 1;
         reagent(client, net.minecraft.world.item.ItemStack.EMPTY);
         return false;
@@ -114,8 +114,8 @@ final class BoxInterfaceSmoke {
         sample++;
         if (sample == LANGUAGES.length) {
             client.options.guiScale().set(scale);
-            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), windowWidth, windowHeight);
-            client.resizeDisplay();
+            GLFW.glfwSetWindowSize(client.getWindow().handle(), windowWidth, windowHeight);
+            client.resizeGui();
             select(client, language);
         } else select(client, LANGUAGES[sample]);
         return false;
@@ -138,7 +138,7 @@ final class BoxInterfaceSmoke {
     }
 
     private void capture(Minecraft client, Path output, String state) {
-        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
+        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), 1, ignored -> {});
     }
 
     private static void verifyTileLabels(Minecraft client) {
@@ -173,7 +173,7 @@ final class BoxInterfaceSmoke {
             .filter(child -> child.getMessage().getString().equals(Component.translatable(key).getString()))
             .findFirst().orElseThrow();
         require(button.active && button.visible, "Inactive preset control: " + key);
-        button.onPress();
+        button.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
     }
 
     private static void require(boolean condition, String message) {

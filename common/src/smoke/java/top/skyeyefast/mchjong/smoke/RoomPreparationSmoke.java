@@ -95,7 +95,7 @@ final class RoomPreparationSmoke {
                 // Choosing east keeps subsequent manual-dealing and drawer fixtures on seat zero.
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                    var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                     var game = serverTable.participantGame(player);
                     var bag = TableNetworking.JSON.toJsonTree(game).getAsJsonObject().getAsJsonObject("seating").getAsJsonArray("concealed");
                     for (int slot = 0; slot < bag.size(); slot++) if (bag.get(slot).getAsInt() == 0) return slot;
@@ -117,7 +117,7 @@ final class RoomPreparationSmoke {
                 var pos = table.getBlockPos();
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                    var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                     var game = serverTable.participantGame(player);
                     int seat = game.seatOf(id);
                     player.stopRiding();
@@ -140,12 +140,13 @@ final class RoomPreparationSmoke {
         String label = Component.translatable(key, arguments).getString();
         for (var child : client.screen.children()) if (child instanceof AbstractWidget button && button.active
             && (button.getMessage().getString().equals(label) || button.getMessage().getString().equals(label + " ›"))) {
-            client.screen.mouseClicked(button.getX() + 3, button.getY() + 3, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                button.getX() + 3, button.getY() + 3, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             return;
         }
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        net.minecraft.client.Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        net.minecraft.client.Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

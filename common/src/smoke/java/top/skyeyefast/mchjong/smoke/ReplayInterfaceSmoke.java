@@ -29,7 +29,7 @@ final class ReplayInterfaceSmoke {
             windowHeight = client.getWindow().getScreenHeight();
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             sample = 0;
             select(client, LANGUAGES[0]);
             return false;
@@ -50,19 +50,19 @@ final class ReplayInterfaceSmoke {
         require(client.screen.width == 320 && client.screen.height == 240, "Replay viewport is not 320x240");
         UiControlsSmoke.verify(client);
         if (stage == 1) {
-            Screenshot.grab(output.toFile(), "26-replay-manager-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+            Screenshot.grab(output.toFile(), "26-replay-manager-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.setScreen(new DeleteReplayScreen(browser, header));
             stage = 2; settled = 0;
         } else {
             require(86 + client.font.split(Component.translatable("replay.mchjong.delete_note"), 288).size() * 11 < 192,
                 "Translated deletion notice overlaps the buttons");
-            Screenshot.grab(output.toFile(), "27-replay-delete-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+            Screenshot.grab(output.toFile(), "27-replay-delete-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), 1, ignored -> {});
             sample++; stage = 0;
             if (sample == LANGUAGES.length) {
                 client.setScreen(null);
                 client.getWindow().setWindowed(windowWidth, windowHeight);
                 client.options.guiScale().set(scale);
-                client.resizeDisplay();
+                client.resizeGui();
                 select(client, language);
             } else select(client, LANGUAGES[sample]);
         }

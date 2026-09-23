@@ -33,7 +33,7 @@ final class SettingsLanguageSmoke {
         if (client.screen.width != logicalWidth || client.screen.height != logicalHeight)
             throw new IllegalStateException("Table controls language viewport mismatch");
         Screenshot.grab(output.toFile(), "54-table-options-" + LANGUAGES[sample] + "-" + logicalWidth + "x"
-            + logicalHeight + (collapsed ? "-collapsed.png" : "-expanded.png"), client.getMainRenderTarget(), ignored -> {});
+            + logicalHeight + (collapsed ? "-collapsed.png" : "-expanded.png"), client.getMainRenderTarget(), 1, ignored -> {});
         ticks = 0;
         AutomationControlsSmoke.click(client, net.minecraft.network.chat.Component.translatable(
             collapsed ? "ui.mchjong.automation_show" : "ui.mchjong.automation_hide").getString());
@@ -47,7 +47,7 @@ final class SettingsLanguageSmoke {
         if (sample == LANGUAGES.length) {
             client.getWindow().setWindowed(width, height);
             client.options.guiScale().set(scale);
-            client.resizeDisplay();
+            client.resizeGui();
         } else resize(client);
         return false;
     }
@@ -61,7 +61,7 @@ final class SettingsLanguageSmoke {
     private void resize(Minecraft client) {
         client.getWindow().setWindowed(size == 0 ? 1280 : 960, size == 0 ? 800 : 720);
         client.options.guiScale().set(size == 0 ? 2 : 3);
-        client.resizeDisplay();
+        client.resizeGui();
     }
 
 }

@@ -64,6 +64,6 @@ final class DepositVisualSmoke {
 
     private void capture(Minecraft client, MahjongTableBlockEntity table, Path output, String state) {
         Screenshot.grab(output.toFile(), "55-deposits-" + (table.automatic() ? "automatic" : "ordinary")
-            + "-" + fixture.rules().players() + "p-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
+            + "-" + fixture.rules().players() + "p-" + state + ".png", client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

@@ -23,7 +23,7 @@ final class StoolInteractionSmoke {
     boolean tick(Minecraft client, BlockPos center, Path output) throws java.io.IOException {
         if (step == 0) {
             client.setScreen(null);
-            client.player.getInventory().selected = 8;
+            client.player.getInventory().setSelectedSlot(8);
             require(client.player.getMainHandItem().isEmpty() && client.player.getOffhandItem().isEmpty(),
                 "Stool interaction needs empty hands to exercise vanilla sneaking block use");
             client.options.keyShift.setDown(true);
@@ -49,7 +49,7 @@ final class StoolInteractionSmoke {
             var id = client.player.getUUID();
             verification = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                var level = player.serverLevel();
+                var level = player.level();
                 require(!player.isPassenger(), "Sneak-click mounted the server player");
                 require(((MahjongTableBlockEntity) level.getBlockEntity(center)).participantGame(player) == null,
                     "Sneak-click joined the room");
@@ -60,7 +60,7 @@ final class StoolInteractionSmoke {
             step++;
         } else if (step == 5) {
             net.minecraft.client.Screenshot.grab(output.toFile(), "00-stool-sneak-momentum.png",
-                client.getMainRenderTarget(), ignored -> {});
+                client.getMainRenderTarget(), 1, ignored -> {});
             client.options.keyShift.setDown(false);
             step = 6;
         } else if (step == 6) {
@@ -79,7 +79,7 @@ final class StoolInteractionSmoke {
                 var mount = player.getVehicle();
                 require(Math.abs(mount.getY() - center.getY() - TableGeometry.STOOL_HEIGHT) < 1e-6,
                     "Seat anchor differs from cushion height");
-                ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(center)).sit(player, 0);
+                ((MahjongTableBlockEntity) player.level().getBlockEntity(center)).sit(player, 0);
                 require(player.getVehicle() == mount, "Reopening the stool created a duplicate mount");
             });
             step = 8;

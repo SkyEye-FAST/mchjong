@@ -33,7 +33,7 @@ final class ReplaySmoke {
         ticks++;
         if (fixture == null) {
             for (var sound : MahjongSounds.EVENTS.values())
-                require(client.getSoundManager().getSoundEvent(sound.getLocation()) != null, "Missing sound event " + sound.getLocation());
+                require(client.getSoundManager().getSoundEvent(sound.location()) != null, "Missing sound event " + sound.location());
             fixture = new CompletableFuture<>();
             UUID viewer = client.player.getUUID();
             client.getSingleplayerServer().execute(() -> {
@@ -62,24 +62,25 @@ final class ReplaySmoke {
             require(!match.hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
             checkBounds(client);
             capture(client,output,"20-replay-initial.png");
-            replay.keyPressed(GLFW.GLFW_KEY_RIGHT_BRACKET,0,0);
+            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT_BRACKET, 0, 0));
             require(replay.cursor() > 0, "Decision navigation failed");
-            replay.keyPressed(GLFW.GLFW_KEY_W,0,0);
-            replay.keyPressed(GLFW.GLFW_KEY_W,0,0);
-            replay.keyPressed(GLFW.GLFW_KEY_RIGHT,0,0);
-            replay.keyPressed(GLFW.GLFW_KEY_END,0,0);
+            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_W, 0, 0));
+            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_W, 0, 0));
+            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
+            replay.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_END, 0, 0));
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
             require(replay.cursor() == ReplayPlayback.timeline(match, 0).frames().size() - 1, "Cannot seek to settlement");
             capture(client,output,"21-replay-settlement.png");
-            client.options.guiScale().set(3); client.resizeDisplay();
+            client.options.guiScale().set(3); client.resizeGui();
             stage = 4; ticks = 0;
         } else if (stage == 4 && ticks > 10 && client.screen instanceof ReplayScreen) {
             checkBounds(client);
             capture(client,output,"22-replay-small.png");
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains("Tenhou")).findFirst().orElseThrow();
-            client.screen.mouseClicked(button.getX()+5,button.getY()+5,0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+                button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             stage = 5; ticks = 0;
         } else if (stage == 5 && ticks > 5) {
             Path file = client.gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id()+".json");
@@ -134,7 +135,7 @@ final class ReplaySmoke {
             stage = 10; ticks = 0;
         } else if (stage == 10) {
             if (!presentation.tick(client, output)) return false;
-            client.options.guiScale().set(2); client.resizeDisplay();
+            client.options.guiScale().set(2); client.resizeGui();
             return true;
         }
         if (ticks > 300) throw new IllegalStateException("Replay smoke timed out at stage " + stage);
@@ -179,10 +180,11 @@ final class ReplaySmoke {
     private static void click(Minecraft client, String key) {
         var button = button(client, key);
         require(button.active, "Replay control is disabled: " + key);
-        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
+            button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(),name,client.getMainRenderTarget(),ignored -> {});
+        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean value, String message) { if (!value) throw new IllegalStateException(message); }
 }

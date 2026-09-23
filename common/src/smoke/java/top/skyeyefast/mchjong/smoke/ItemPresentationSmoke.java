@@ -15,17 +15,17 @@ final class ItemPresentationSmoke {
         if (sample == 9) return true;
         if (originalArm == null) {
             originalArm = client.options.mainHand().get();
-            originalSlot = client.player.getInventory().selected;
+            originalSlot = client.player.getInventory().getSelectedSlot();
             windowWidth = client.getWindow().getScreenWidth();
             windowHeight = client.getWindow().getScreenHeight();
         }
         if (ticks == 0) {
             if (sample == 6) {
-                GLFW.glfwSetWindowSize(client.getWindow().getWindow(), 640, 480);
-                client.resizeDisplay();
+                GLFW.glfwSetWindowSize(client.getWindow().handle(), 640, 480);
+                client.resizeGui();
             }
             client.options.mainHand().set(sample < 3 || sample >= 6 ? HumanoidArm.RIGHT : HumanoidArm.LEFT);
-            client.player.getInventory().selected = switch (sample % 3) { case 0 -> 8; case 1 -> 4; default -> 5; };
+            client.player.getInventory().setSelectedSlot(switch (sample % 3) { case 0 -> 8; case 1 -> 4; default -> 5; });
             if (client.player.getMainHandItem().isEmpty() != (sample % 3 == 0))
                 throw new IllegalStateException("Incorrect held-item fixture");
         }
@@ -37,13 +37,13 @@ final class ItemPresentationSmoke {
         };
         String side = sample < 3 || sample >= 6 ? "-right" : "-left";
         Screenshot.grab(output.toFile(), name + side + (sample >= 6 ? "-small.png" : ".png"),
-            client.getMainRenderTarget(), ignored -> {});
+            client.getMainRenderTarget(), 1, ignored -> {});
         ticks = 0;
         if (++sample == 9) {
             client.options.mainHand().set(originalArm);
-            client.player.getInventory().selected = originalSlot;
-            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), windowWidth, windowHeight);
-            client.resizeDisplay();
+            client.player.getInventory().setSelectedSlot(originalSlot);
+            GLFW.glfwSetWindowSize(client.getWindow().handle(), windowWidth, windowHeight);
+            client.resizeGui();
             return true;
         }
         return false;
