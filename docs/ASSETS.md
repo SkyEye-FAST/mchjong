@@ -192,6 +192,9 @@ pixels preserve the fabric. This layer is separate from the repeating `felt.png`
 material shared with stool upholstery.
 The block atlas explicitly stitches the wooden particle sprite through
 `assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
+The table and stool block models contain opaque cuboids inside their visible meshes.
+These cuboids cast terrain shadows with shader packs while the block entity renderers
+draw the furniture materials and moving tiles.
 Tile inventory icons use front lighting so their white faces remain readable.
 
 `FurnitureShape` supplies small textured boxes, tapered legs, clipped-corner
