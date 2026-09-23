@@ -62,7 +62,7 @@ public final class MahjongSupplies {
     }
 
     public static boolean dyeSlotItem(ItemStack stack) {
-        return mahjongDye(stack) || stack.getItem() instanceof DyeItem;
+        return mahjongDye(stack) || stack.getItem() instanceof DyeItem || stack.is(MahjongContent.UNDO_DYE);
     }
 
     public static boolean boxAccepts(int slot, ItemStack stack) {

@@ -11,11 +11,10 @@ final class SurvivalRecipes {
         "mangrove", "cherry", "bamboo", "crimson", "warped");
     static final List<String> COLORS = List.of("white", "orange", "magenta", "light_blue", "yellow", "lime",
         "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
-    private record Material(String name, String source, boolean tag) {}
-    private static final List<Material> MATERIALS = List.of(new Material("wood", "planks", true),
-        new Material("bone", "bone_block", false), new Material("quartz", "quartz_block", false),
-        new Material("calcite", "calcite", false), new Material("glass", "glass", false),
-        new Material("amethyst", "amethyst_block", false));
+    private record Material(String name, String source) {}
+    private static final List<Material> MATERIALS = List.of(new Material("bone", "bone_block"),
+        new Material("quartz", "quartz_block"), new Material("calcite", "calcite"),
+        new Material("glass", "glass"), new Material("amethyst", "amethyst_block"));
     private SurvivalRecipes() {}
 
     static void generate(GenerateData output) throws IOException {
@@ -36,9 +35,10 @@ final class SurvivalRecipes {
                 stack("table_cloth", 1, Map.of("color", COLORS.indexOf(color))));
         output.write("data/mchjong/recipes/mahjong_box.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("chest"), item("string")), "result", stack("mahjong_box", 1, Map.of())));
+        for (String wood : WOODS)
+            stonecutting(output, "blanks_" + wood, item(wood + "_planks"), tile(-1, wood, false, 16));
         for (Material material : MATERIALS) {
-            var ingredient = Map.of(material.tag ? "tag" : "item", "minecraft:" + material.source);
-            stonecutting(output, "blanks_" + material.name, ingredient, tile(-1, material.name, false, 16));
+            stonecutting(output, "blanks_" + material.name, item(material.source), tile(-1, material.name, false, 16));
         }
         stonecutting(output, "blank_point_sticks", item("bone_block"), stack("point_stick", 24, Map.of()));
         output.write("data/mchjong/recipes/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",

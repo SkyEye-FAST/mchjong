@@ -13,9 +13,12 @@ import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
+import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** A single-screen settlement, with a winner selector for multiple ron and no scroll viewport. */
 public final class TableResults extends AbstractWidget {
@@ -24,6 +27,8 @@ public final class TableResults extends AbstractWidget {
     private final Font font;
     private final TableView view;
     private final TileFacePreset preset;
+    private final TileMaterial material;
+    private final DyeColor dye;
     private final Page page;
     private final long started;
     private final int contentScale;
@@ -33,19 +38,28 @@ public final class TableResults extends AbstractWidget {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
 
-    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height,
-                        int winner, Page page, long started, int contentScale) {
+    public TableResults(Font font, TableView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+                        int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
         this.preset = preset;
+        this.material = material;
+        this.dye = dye;
         this.page = page;
         this.started = started;
         this.contentScale = contentScale;
         this.winner = net.minecraft.util.Mth.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
     }
 
+    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height,
+                        int winner, Page page, long started, int contentScale) {
+        this(font, view, preset, TileMaterial.BONE, null, x, y, width, height, winner, page, started, contentScale);
+    }
+
     public int selectedWinner() { return winner; }
+    public TileMaterial material() { return material; }
+    public DyeColor dye() { return dye; }
     /** Every result page presents the same once-per-settlement score transition. */
     public int displayedPoints(int seat) {
         int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
@@ -137,18 +151,18 @@ public final class TableResults extends AbstractWidget {
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
                 if (i == hand.size() - 1) x += 4;
-                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, preset);
+                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, false, preset, material, dye);
                 x += tileWidth + 1;
             }
             for (var meld : player.melds()) {
                 x += 5;
-                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset);
+                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset, material, dye);
                 x += TileGui.meldWidth(meld, win.seat(), tileWidth);
             }
             y += tileWidth * 2 + 5;
         }
         var yaku = new ArrayList<Component>();
-        for (String key : win.score().yaku()) yaku.add(Component.translatable("yaku.mchjong." + key.toLowerCase(Locale.ROOT)));
+        for (String key : win.score().yaku()) yaku.add(Component.translatable(YakuCatalog.translationKey(key)));
         if (win.score().dora() > 0) yaku.add(Component.translatable("ui.mchjong.dora", win.score().dora()));
         int columns = span >= 280 ? 3 : 2;
         int colWidth = span / columns;
@@ -183,13 +197,13 @@ public final class TableResults extends AbstractWidget {
             if (index >= 0 && view.wall().get(index) >= 0) tiles.add(view.wall().get(index));
         }
         if (tiles.isEmpty()) return 0;
-        Component label = Component.translatable(compact ? ura ? "ui.mchjong.ura_short" : "ui.mchjong.dora_short"
+        Component label = Component.translatable(compact ? ura ? "ui.mchjong.ura.short" : "ui.mchjong.dora.short"
             : ura ? "ui.mchjong.ura_indicators" : "ui.mchjong.result_indicators");
         int labelWidth = compact ? Math.min(span - tiles.size() * 12 - 3, font.width(label) + 3) : span;
         text(graphics, label, x, y + (compact ? 4 : 0), labelWidth, MUTED);
         for (int i = 0; i < tiles.size(); i++) if (graphics != null)
             TileGui.tile(graphics, tiles.get(i), x + (compact ? labelWidth : 0) + i * (compact ? 12 : 14),
-                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false, preset);
+                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false, false, preset, material, dye);
         return compact ? 17 : 31;
     }
 
@@ -209,12 +223,12 @@ public final class TableResults extends AbstractWidget {
                 while (tileWidth > 4 && handWidth(concealed, player, seat, tileWidth, 0) > cardWidth - 8) tileWidth--;
                 int tx = cx, tileY = cy + 24 + tileWidth / 2;
                 if (player.exposed()) for (int tile : player.hand()) {
-                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, preset);
+                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, false, preset, material, dye);
                     tx += tileWidth + 1;
                 }
                 for (var meld : player.melds()) {
                     tx += 5;
-                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset);
+                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset, material, dye);
                     tx += TileGui.meldWidth(meld, seat, tileWidth);
                 }
             }
@@ -228,7 +242,7 @@ public final class TableResults extends AbstractWidget {
             order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
         int[] ends = standings ? new int[]{span * 52 / 100, span * 74 / 100, span - 4}
             : new int[]{span * 38 / 100, span * 59 / 100, span * 78 / 100, span - 4};
-        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points_short", "ui.mchjong.final_short"}
+        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.final.short"}
             : new String[]{"ui.mchjong.player", "ui.mchjong.before", "ui.mchjong.change", "ui.mchjong.after"};
         for (int i = 0; i < labels.length; i++) {
             Component label = Component.translatable(labels[i]);
@@ -300,7 +314,7 @@ public final class TableResults extends AbstractWidget {
     }
     private Component winnerSummary(TableView.Win win) {
         var summary = TableScreen.playerName(view, win.seat()).copy();
-        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)));
+        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable(YakuCatalog.translationKey(yaku)));
         return summary;
     }
 

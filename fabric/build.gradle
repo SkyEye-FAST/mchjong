@@ -123,13 +123,14 @@ sourceSets {
 }
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
+def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
-def smokeProfile = roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -152,6 +153,7 @@ loom {
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
             property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
+            property 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             property 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             property 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             property 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()

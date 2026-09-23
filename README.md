@@ -3,8 +3,8 @@
 [![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=main)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
-MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
-presentation on Fabric, Forge and NeoForge.
+MChjong brings playable mahjong tables into Minecraft. This branch builds for
+Minecraft 1.20.1 on Fabric and Forge.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
 Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
@@ -13,7 +13,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 ## Features
 
 - Ordinary tables with physical tile handling and automatic adjudication, plus upgradeable automatic tables
-- Craftable wooden furniture, removable cloth in 16 colors, six tile materials and physical point sticks
+- Craftable wooden furniture, removable cloth in 16 colors, sixteen tile materials and physical point sticks
 - In-world tile interaction, seated and immersive views, keyboard controls and narrated actions
 - Configurable rooms, invitations, hand visibility, time controls and training bots
 - Animated play and settlement panels with winning hands, scores and final standings
@@ -33,12 +33,12 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 ## Compatibility
 
-The current build profile targets **Minecraft 1.21.1**, **Java 21 or newer**,
-**Fabric Loader 0.16.10 or newer with Fabric API**, or **NeoForge 21.1.250 or newer**.
-Choose an artifact built for your Minecraft version and loader.
+The current build profile targets **Minecraft 1.20.1** and **Java 17**, using
+Fabric Loader 0.19.5 with Fabric API or Forge 47.4.23. Build with JDK 21.
+The Fabric artifact also loads on Quilt Loader 0.30.1.
 
 Optional Ponder tutorials cover placement, equipment and seated play. This profile
-targets Ponder 1.0.87 or newer with its declared dependencies. Optional recipe
+targets Ponder 1.0.92 with its declared dependencies. Optional recipe
 viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.

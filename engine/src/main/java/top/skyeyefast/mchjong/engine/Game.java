@@ -499,7 +499,7 @@ public final class Game {
                 if (players[seat].riichi) players[seat].riichiFuriten = true;
             }
             revision++;
-            if (allReplied()) resolveReactions();
+            if (reactionsReady()) resolveReactions();
             return true;
         }
         switch (action.type()) {
@@ -670,7 +670,26 @@ public final class Game {
                 if (players[i].riichi) players[i].riichiFuriten = true;
             }
         }
+        // A bot always takes a legal ron. Record it before publishing call-only
+        // choices so a lower-priority call cannot hold up the settlement.
+        for (int i = 0; i < rules.players(); i++) if (players[i].bot) {
+            int ron = indexOf(options.get(i), RON);
+            if (ron >= 0) {
+                act(players[i].id, decision, ron);
+                if (phase != Phase.REACTION) return;
+            }
+        }
         if (allReplied()) resolveReactions();
+    }
+
+    private boolean reactionsReady() {
+        boolean ronChosen = false;
+        for (int i = 0; i < rules.players(); i++) if (replies[i] >= 0
+            && options.get(i).get(replies[i]).type() == RON) ronChosen = true;
+        if (!ronChosen) return allReplied();
+        for (int i = 0; i < rules.players(); i++) if (replies[i] < 0
+            && indexOf(options.get(i), RON) >= 0) return false;
+        return true;
     }
 
     private boolean allReplied() {

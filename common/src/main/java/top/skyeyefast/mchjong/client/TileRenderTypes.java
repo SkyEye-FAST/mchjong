@@ -45,7 +45,7 @@ public final class TileRenderTypes extends RenderType {
     }
 
     public static ResourceLocation bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
-        return new ResourceLocation("mchjong", "textures/tile_material/" + material.getSerializedName() + ".png");
+        return new ResourceLocation("mchjong", "textures/tile_material/" + material.texture() + ".png");
     }
 
     public static ResourceLocation backTexture(top.skyeyefast.mchjong.item.TileMaterial material,

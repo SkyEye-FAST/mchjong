@@ -36,11 +36,12 @@ public final class TableClientSmoke {
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
+    private final boolean paletteOnly = Boolean.getBoolean("mchjong.smoke.paletteOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
-    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -170,6 +171,11 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (paletteOnly) {
+                    client.setScreen(new MaterialPaletteSmoke());
+                    step = 31; entered = ticks;
+                    return;
+                }
                 if (itemsOnly) {
                     client.setScreen(null);
                     step = 18; entered = ticks;
@@ -187,6 +193,12 @@ public final class TableClientSmoke {
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
                 capture(client, "00-equipment-inventory.png");
+                if (paletteOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "All sixteen printed and blank tile materials and native inventory items rendered.\n");
+                    LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 client.screen.onClose();
                 UUID id = client.player.getUUID();
                 client.getSingleplayerServer().execute(() -> {

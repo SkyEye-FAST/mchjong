@@ -40,7 +40,11 @@ public final class MahjongComponents {
         return null;
     }
     public static void color(ItemStack stack, DyeColor color) {
-        stack.getOrCreateTagElement("mchjong").putInt("color", color.getId());
+        if (color == null) {
+            var tag = stack.getTagElement("mchjong");
+            if (tag == null) return;
+            tag.remove("color");
+        } else stack.getOrCreateTagElement("mchjong").putInt("color", color.getId());
         normalize(stack.getItem(), stack.getTag());
         if (stack.getTag().isEmpty()) stack.setTag(null);
     }

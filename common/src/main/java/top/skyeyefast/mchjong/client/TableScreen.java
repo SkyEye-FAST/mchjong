@@ -424,7 +424,8 @@ public final class TableScreen extends Screen {
                     addRenderableWidget(button);
                 }
                 int panelTop = 58 * scale;
-                results = addRenderableWidget(new TableResults(font, view, facePreset(), 10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
+                results = addRenderableWidget(new TableResults(font, view, facePreset(), tileMaterial(), tileBack(),
+                    10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
                     selectedWinner, resultPage, resultStarted, immersive ? 2 : 1));
             }
         }
@@ -935,7 +936,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, room(), layoutWidth, facePreset(), board);
+            information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), board);
         if (view.phase() == Game.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
@@ -1004,7 +1005,7 @@ public final class TableScreen extends Screen {
         }
         if (view.phase() != Game.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
-                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
+                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
                 ? Component.translatable(helpKey)
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());

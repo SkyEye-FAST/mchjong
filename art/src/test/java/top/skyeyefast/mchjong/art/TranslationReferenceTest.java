@@ -30,7 +30,10 @@ class TranslationReferenceTest {
             }
         }
         for (RuleSet rules : RuleSet.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
-        for (var option : top.skyeyefast.mchjong.engine.RuleOption.values()) used.add(option.translationKey());
+        for (var option : top.skyeyefast.mchjong.engine.RuleOption.values()) {
+            used.add(option.translationKey());
+            used.add(option.descriptionKey());
+        }
         for (var group : top.skyeyefast.mchjong.engine.RuleOption.Group.values()) used.add(group.translationKey());
         for (String mode : List.of("preset", "details", "custom")) used.add("rules.mchjong.mode." + mode);
         // Registry-derived names can appear in Jade even when no source uses a literal translation key.
@@ -39,7 +42,7 @@ class TranslationReferenceTest {
         for (String item : List.of("mahjong_tile", "mahjong_box", "point_stick", "table_cloth", "mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye"))
             used.add("item.mchjong." + item);
         for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) used.add(composition.translationKey());
-        used.add("yaku.mchjong.renhou");
+        used.addAll(top.skyeyefast.mchjong.engine.YakuCatalog.allTranslationKeys());
         for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
         used.add("itemGroup.mchjong");
@@ -53,6 +56,7 @@ class TranslationReferenceTest {
         }
         for (int kind = 0; kind < 34; kind++) used.add("tile.mchjong." + top.skyeyefast.mchjong.engine.Tile.notation(kind));
         for (String style : List.of("name", "mpsz")) used.add("settings.mchjong.tile_labels." + style);
+        for (String discard : List.of("direct", "single_click", "double_click", "confirm")) used.add("ui.mchjong.help." + discard);
         for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw")) {
             JsonObject translated = JsonParser.parseString(Files.readString(languages.resolve(language + ".json"))).getAsJsonObject();
             var missing = new TreeSet<>(used);

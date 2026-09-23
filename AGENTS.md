@@ -21,19 +21,19 @@ adding compatibility layers, migrations or speculative configuration.
 ## Ownership and architecture
 
 `main` is the sole feature development branch. The root Gradle project is an aggregator;
-`fabric`, `forge` and `neoforge` are peer 1.21.1 loader subprojects. Read
+`fabric` and `forge` are peer 1.20.1 loader subprojects. Read
 [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the shared contracts.
 
 - `engine`: Minecraft-independent rules, scoring adapters and replay records.
 - `common`: shared Minecraft gameplay, items, menus, networking, client rendering
   and translations. The server owns inventory authorization and game decisions;
   client screens display synchronized state and send validated requests.
-- `fabric/src/main`, `forge/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
+- `fabric/src/main` and `forge/src/main`: loader-specific registration and lifecycle
   adapters. Share gameplay and presentation implementations through `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
   Edit source generators rather than generated textures, models or recipes.
 - `common/src/smoke`: shared development-only client/server checks, with
-  loader-specific adapters under `fabric/src/smoke` and `neoforge/src/smoke`.
+  loader-specific adapters under `fabric/src/smoke` and `forge/src/smoke`.
 - `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
   structures, compiled independently by both loader projects.
 
@@ -63,9 +63,16 @@ Keep the compact table footprint and shared render/picking geometry. Tooltips
 contain concise labels and state; tutorials belong in dedicated guides.
 
 Maintain English, Japanese, Simplified Chinese and Traditional Chinese together.
-Keep translation keys, placeholders and tutorial content consistent across all
-four languages. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md)
-for resource-pack paths and deterministic generation.
+Language JSON files (`en_us.json`, `ja_jp.json`, `zh_cn.json`, `zh_tw.json`) must
+maintain strict key parity, formatted with two-space indentation, LF line endings,
+and ascending alphabetical key order. Placeholders and format argument specifiers
+(`%s`, `%1$s`) must match across all four translations. Follow hierarchical
+snake_case namespaces with dot separation (e.g. `rules.mchjong.option.<name>`,
+`.description`, `yaku.mchjong.<name>`, and `.short` rather than `_short` suffixes).
+Rule option titles use standard Riichi Mahjong terminology, with detailed mechanics
+placed in `.description` tooltips. Keep terms and item names aligned with registered
+translations. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md) for
+resource-pack paths and deterministic generation.
 
 Describe current capabilities and supported workflows positively and definitively.
 Omit retired features, negative feature lists, unimplemented caveats, and speculative
@@ -92,17 +99,16 @@ Reserve client smokes for real loader, world, packet and UI boundaries rather th
 repeating domain assertions. Remove redundant tests instead of disabling them or
 adding alternate suites, fallback paths or new test frameworks.
 
-Use JDK 21 for the current profile and the checked-in Gradle wrapper. The examples
+Use JDK 21 to build the Java 17 profile with the checked-in Gradle wrapper. The examples
 below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 
 ```text
 ./gradlew buildAll --warning-mode fail
 ./gradlew :fabric:runSmokeClient --console=plain
-./gradlew :neoforge:runSmokeClient --console=plain
+./gradlew :forge:runSmokeClient --console=plain
 ```
 
-`buildAll` covers the engine, presentation, generated resources and NeoForge
-dedicated-server tests. Choose validation by the changed behavior: run the owning
+`buildAll` covers the engine, presentation and generated resources. Choose validation by the changed behavior: run the owning
 unit tests, compilation tasks and focused client smoke modes. Do not default to
 the complete build or full client smoke suites for every change or repeat them
 after each small adjustment. Reserve full suites for releases, broad cross-module

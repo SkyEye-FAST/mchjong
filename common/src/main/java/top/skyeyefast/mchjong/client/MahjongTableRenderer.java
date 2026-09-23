@@ -71,11 +71,13 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
             pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            // A face-down tile turns the back image toward the table center, including during a flip.
+            boolean faceDown = frame.pitch() > 0;
             switch (layer) {
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 case BODY -> TileMesh.drawBody(pose, vertices, light, material, back);
-                case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, light, material, back);
-                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, piece.back() || piece.tile() < 0, light);
+                case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, faceDown, light, material, back);
+                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, piece.back() || piece.tile() < 0, faceDown, light);
                 case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();

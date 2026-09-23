@@ -14,7 +14,7 @@ NBT default normalization and generated recipe output. The generated asset contr
 checks pass. Both loaders also pass the shared integrated-server/client gameplay
 smoke: inventory authorization, native NBT, placement and destruction, randomized
 seating, private hands, control packets, rules, replay export and four-language UI.
-The recipe contract checks 724 examples and 10,804 ingredient alternatives.
+The recipe contract checks 1,584 examples and 23,664 ingredient alternatives.
 
 ```text
 ./gradlew :fabric:remapJar :forge:reobfJar
@@ -59,6 +59,6 @@ screen. Gameplay and packet transactions are covered by the Fabric and Forge
 integrated-server smokes.
 
 Release tags and publication belong to `main`. Its pinned compatibility revision
-supplies both 1.20.1 JARs to the five-artifact snapshot and release workflows.
+supplies both 1.20.1 JARs to the release workflow.
 Advance that reviewed pin after stable port batches; a port batch need not follow
 every individual main commit.

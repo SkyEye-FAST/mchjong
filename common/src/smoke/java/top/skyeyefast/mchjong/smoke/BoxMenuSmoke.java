@@ -208,6 +208,20 @@ final class BoxMenuSmoke {
         check(dyed.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
             .allMatch(stack -> MahjongSupplies.back(stack) == DyeColor.CYAN), "Back dye did not recolor the whole set");
         check(!menu.canDyeBack() && !menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "No-op back dye consumed reagent");
+        menu.clicked(MahjongSupplies.DYE_SLOT, 0, ClickType.QUICK_MOVE, player);
+        check(menu.getSlot(MahjongSupplies.DYE_SLOT).getItem().isEmpty(), "Previous dye stayed in the compartment");
+        player.closeContainer();
+
+        inventory.setItem(1, new ItemStack(MahjongContent.UNDO_DYE, 2));
+        menu = open(player, 0);
+        menu.clicked(HOTBAR + 1, 0, ClickType.QUICK_MOVE, player);
+        check(menu.getSlot(MahjongSupplies.DYE_SLOT).getItem().is(MahjongContent.UNDO_DYE), "Undo dye missed the dye compartment");
+        check(menu.canDyeBack() && menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "Undo dye action was rejected");
+        var undyed = MahjongSupplies.contents(box);
+        check(undyed.get(MahjongSupplies.DYE_SLOT).getCount() == 1, "Undo dye consumed the wrong quantity");
+        check(undyed.subList(0, MahjongSupplies.TILE_SLOTS).stream().filter(stack -> !stack.isEmpty())
+            .allMatch(stack -> MahjongSupplies.back(stack) == null), "Undo dye did not clear the tile backs");
+        check(!menu.canDyeBack() && !menu.clickMenuButton(player, MahjongBoxMenu.DYE_BACK_BUTTON), "No-op undo dye consumed reagent");
         player.closeContainer();
     }
 

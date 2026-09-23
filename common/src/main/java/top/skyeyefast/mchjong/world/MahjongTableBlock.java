@@ -22,7 +22,7 @@ import net.minecraft.world.phys.shapes.VoxelShape;
 public final class MahjongTableBlock extends BaseEntityBlock {
     private static final VoxelShape SHAPE = Shapes.or(box(0, 12, 0, 16, 16, 16), box(2, 0, 2, 14, 12, 14));
     public MahjongTableBlock(Properties properties) { super(properties); }
-    @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.ENTITYBLOCK_ANIMATED; }
+    @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         return state.is(MahjongContent.AUTO_TABLE) ? SHAPE : box(0, 12, 0, 16, 16, 16);
     }

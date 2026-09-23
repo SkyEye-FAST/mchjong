@@ -25,7 +25,7 @@ public class MahjongSupplyItem extends Item {
     @Override public void appendHoverText(ItemStack stack, net.minecraft.world.level.Level level, List<Component> lines, TooltipFlag flag) {
         TileData tile = MahjongSupplies.tile(stack);
         if (stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)) {
-            lines.add(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
+            lines.add(Component.translatable("block.minecraft." + tile.material().source()));
             lines.add(tileLabel(tile, MahjongSupplies.facePreset(stack)));
         }
         int points = MahjongComponents.points(stack);

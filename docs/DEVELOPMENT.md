@@ -4,16 +4,15 @@
 
 ## Building from source
 
-Use JDK 21 for the current development profile.
+Use JDK 21 to build the Minecraft 1.20.1 profile, which targets Java 17.
 
 ```bash
 git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
-The default `main` branch contains Fabric, Forge and NeoForge support. Minecraft,
-loader, mappings, and Java versions are selected by the build profile in
-`gradle.properties`.
+Check out `compat/1.20.1` to build the Fabric and Forge profiles. Minecraft,
+loader, mappings, and Java versions are selected in `gradle.properties`.
 
 ### Fabric
 
@@ -21,14 +20,6 @@ loader, mappings, and Java versions are selected by the build profile in
 ./gradlew :fabric:build
 ./gradlew :fabric:runClient   # optional Fabric development client
 ./gradlew :fabric:runServer   # optional dedicated server
-```
-
-### NeoForge
-
-```bash
-./gradlew :neoforge:build
-./gradlew :neoforge:runClient   # optional development client
-./gradlew :neoforge:runServer   # optional dedicated server
 ```
 
 ### Forge
@@ -47,8 +38,8 @@ To build all loaders and run the shared checks:
 
 On Windows, use `gradlew.bat` instead of `./gradlew`.
 
-See [Build download mirrors](BUILD_MIRRORS.md) for the configured Fabric and
-NeoForge repositories and the NeoForge client asset mirror environment variable.
+See [Build download mirrors](BUILD_MIRRORS.md) for the configured dependency
+repositories and client asset mirror.
 
 ## Validation
 
@@ -68,7 +59,7 @@ Follow [Assets](ASSETS.md) and [Audio](AUDIO.md) when editing resource generator
 
 [Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
 runs `buildAll` on branch pushes and pull requests and uploads separate Fabric
-and NeoForge snapshot artifacts.
+and Forge snapshot artifacts.
 
 [Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 validates the tag against the development version, extracts notes from

@@ -1,10 +1,8 @@
 # MChjong architecture
 
-The repository keeps Fabric, Forge and NeoForge feature development together on
-`main`. The root project is an aggregator; `fabric`, `forge` and `neoforge` are
-peer loader subprojects. The loaders share the same
-gameplay, presentation, assets, and tests wherever their target Minecraft API
-allows it.
+`main` owns feature development. This Minecraft 1.20.1 port has Fabric and
+Forge loader subprojects under an aggregator root. They share gameplay,
+presentation, assets and tests at this Minecraft API level.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   stateful `Game` orchestration, simple records/DTOs and the JVM interop shim for
@@ -25,7 +23,6 @@ allows it.
   Both loaders for that profile compile these Java sources.
 * `fabric/src/main/java`: Fabric registration/networking only.
 * `forge/src/main/java`: Forge registration/networking and client extension binding.
-* `neoforge/src/main/java`: NeoForge registration/networking only.
 * `common/src/smoke`: shared loader smoke harnesses; each loader keeps only its
   lifecycle adapter and metadata in its own `src/smoke`.
 * `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
@@ -40,9 +37,8 @@ on `main`. It targets Fabric and Forge. Features and engine changes originate on
 metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
 
-`PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native
-custom payload packets; Forge wraps the same shared payloads with its registered
-channel encoder. All receivers dispatch to the existing authorized server handlers
+`PayloadPackets` is the outgoing wire boundary. Fabric and Forge bind shared
+payloads to their respective channels. All receivers dispatch to authorized server handlers
 on the game thread. Forge's client-only item accessor binds the shared renderer to
 Forge's item extension field without importing loader types into shared items.
 
@@ -96,11 +92,11 @@ the player, distance, stool and mount before moving them.
 manager. Every output and cycling input is checked through the source recipe's
 `matches` and `assemble` methods. Marking reagents and the table-upgrade pattern
 are shared with `SupplyCraftingRecipe`; `MahjongSupplies` remains responsible for
-component and container transformations. `SupplySubtype` uses an immutable stack
-snapshot and Minecraft component equality for recipe-relevant identity.
+NBT and container transformations. `SupplySubtype` uses an immutable stack
+snapshot and Minecraft NBT equality for recipe-relevant identity.
 
-The independent `compat/jei` and `compat/emi` packages contain the respective
-official plugin entrypoints and rendering adapters. Their APIs are compile-only;
+The independent `compat/jei`, `compat/emi` and `compat/rei` packages contain
+viewer entrypoints and rendering adapters. Their APIs are compile-only;
 the chosen development profile supplies the complete viewer at runtime. Screen
 boundaries come from the native container screens themselves. See
 [COMPATIBILITY.md](COMPATIBILITY.md) for profiles and validation coverage.
@@ -264,7 +260,7 @@ cooldown. Completing the vote releases seats and clears the unfinished hand;
 already completed replay records remain available and no fake settlement is made.
 
 Build: `gradlew.bat buildAll`. Loader-specific development runs remain
-`gradlew.bat :fabric:runClient` and `gradlew.bat :neoforge:runClient`.
+`gradlew.bat :fabric:runClient` and `gradlew.bat :forge:runClient`.
 
 `gradlew.bat :fabric:test` covers deterministic presentation and pointer geometry.
 It also checks outward-facing tile winding, stable hand placement, compact rivers
@@ -280,16 +276,14 @@ keys, format arguments and literal translation references in production sources.
 seating and discard packets, and captures settlement and animation screenshots in
 `fabric/build/smoke/evidence`. Rare multi-winner and animation states use display-only
 fixtures; they are not scoring-rule integration tests. The same harness runs with
-`gradlew.bat :neoforge:runSmokeClient` and stores evidence under
-`neoforge/build/smoke/evidence`. Both harnesses also create a real engine record,
+`gradlew.bat :forge:runSmokeClient` and stores evidence under
+`forge/build/smoke/evidence`. Both harnesses also create a real engine record,
 archive it on the integrated server, retrieve it through commands and chunked
 networking, render the replay timeline and click the Tenhou export button.
 Development-only source sets contain the smoke adapters.
 Both smoke clients leave the desktop cursor free, including when closing screens
 or entering the world. A smoke-only mouse mixin prevents capture and recentering;
 the harness checks the logical grab state and native cursor mode each tick.
-NeoForge's dedicated-server integration tests also run in `buildAll`.
-
 The optional client integration in `compat/ponder` registers three tutorials with
 Ponder after a loader presence check. The scenes share gameplay furniture models,
 component types and seating geometry inside Ponder's display worlds. Native NBT

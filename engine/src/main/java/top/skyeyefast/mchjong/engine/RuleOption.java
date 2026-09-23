@@ -108,8 +108,12 @@ public enum RuleOption {
             && (choices().isEmpty() || choices().contains(value));
     }
     public String translationKey() {
-        return group == Group.UMA ? floatingPlayers() < 0 ? "rules.mchjong.uma" : "rules.mchjong.floating_uma"
+        return group == Group.UMA ? floatingPlayers() < 0 ? "rules.mchjong.option.uma" : "rules.mchjong.option.floating_uma"
             : "rules.mchjong.option." + name().toLowerCase(Locale.ROOT);
+    }
+    public String descriptionKey() {
+        return group == Group.UMA ? floatingPlayers() < 0 ? "rules.mchjong.option.uma.description" : "rules.mchjong.option.floating_uma.description"
+            : "rules.mchjong.option." + name().toLowerCase(Locale.ROOT) + ".description";
     }
     public int placementRank() { return group == Group.UMA ? Character.digit(name().charAt(name().length() - 1), 10) : 0; }
     public int floatingPlayers() { return name().startsWith("FLOAT_") ? Character.digit(name().charAt(6), 10) : -1; }
