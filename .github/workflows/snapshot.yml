@@ -48,7 +48,18 @@ jobs:
           cache-provider: basic
 
       - name: Build snapshot artifacts
-        run: bash gradlew clean buildAll --no-daemon
+        shell: bash
+        run: |
+          set -o pipefail
+          log="${RUNNER_TEMP}/gradle-build.log"
+          if ! bash gradlew clean buildAll --no-daemon --console=plain --stacktrace 2>&1 | tee "${log}"; then
+            failure="$(tail -n 80 "${log}")"
+            failure="${failure//'%'/'%25'}"
+            failure="${failure//$'\r'/'%0D'}"
+            failure="${failure//$'\n'/'%0A'}"
+            echo "::error title=Gradle build failed::${failure}"
+            exit 1
+          fi
 
       - name: Verify snapshot artifacts
         shell: bash
