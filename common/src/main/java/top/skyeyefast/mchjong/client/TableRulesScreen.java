@@ -47,7 +47,9 @@ public final class TableRulesScreen extends Screen {
     private Button apply;
     private boolean rejected;
 
-    private record Label(Component text, int x, int y, int width) {}
+    private record Label(Component text, Component tooltip, int x, int y, int width) {
+        Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
+    }
 
     public TableRulesScreen(TableScreen parent, TableView initial) {
         super(Component.translatable("rules.mchjong.title"));
@@ -118,16 +120,18 @@ public final class TableRulesScreen extends Screen {
             int y = 108 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
+            var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())
+                : Component.translatable(option.descriptionKey(), option.floatingPlayers(), option.placementRank());
             boolean editable = mode == Mode.CUSTOM || mode == Mode.PRESET && draft.preset().adjustable(option);
             if (!editable) {
                 Component value = option.toggle() ? Component.translatable(draft.enabled(option) ? "rules.mchjong.yes" : "rules.mchjong.no")
                     : option == RuleOption.RED_FIVES ? Component.translatable(draft.redFives().translationKey())
                     : !option.choices().isEmpty() ? Component.translatable(option.translationKey() + "." + draft.get(option))
                     : Component.literal(Integer.toString(draft.get(option)));
-                labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), left, y + 6, span));
+                labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), description, left, y + 6, span));
             } else if (option == RuleOption.RED_FIVES) {
                 int caption = Math.min(92, span / 4), choiceWidth = (span - caption - 8) / 3;
-                labels.add(new Label(label, left, y + 6, caption - 4));
+                labels.add(new Label(label, description, left, y + 6, caption - 4));
                 for (var reds : RedFives.values()) {
                     var text = Component.translatable(reds.translationKey());
                     var choice = addRenderableWidget(MahjongButton.create(text, ignored -> {
@@ -141,7 +145,7 @@ public final class TableRulesScreen extends Screen {
             } else if (!option.choices().isEmpty()) {
                 var choices = option.choices();
                 int caption = Math.min(92, span / 4), choiceWidth = (span - caption - (choices.size() - 1) * 4) / choices.size();
-                labels.add(new Label(label, left, y + 6, caption - 4));
+                labels.add(new Label(label, description, left, y + 6, caption - 4));
                 for (int index = 0; index < choices.size(); index++) {
                     int value = choices.get(index);
                     var text = Component.translatable(option.translationKey() + "." + value);
@@ -157,12 +161,10 @@ public final class TableRulesScreen extends Screen {
                 var toggle = addRenderableWidget(MahjongButton.create(text, ignored -> {
                     draft = draft.with(option, (draft.get(option) + 1) % (option.max() + 1));
                     rejected = false; init();
-                }).bounds(left, y, span, 20).tooltip(Tooltip.create(text)).build().selected(draft.enabled(option)));
-                if (option == RuleOption.BANKRUPTCY)
-                    toggle.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.bankruptcy_help")));
+                }).bounds(left, y, span, 20).tooltip(Tooltip.create(description)).build().selected(draft.enabled(option)));
                 editors.add(toggle);
             } else {
-                labels.add(new Label(label, left, y + 6, span - 116));
+                labels.add(new Label(label, description, left, y + 6, span - 116));
                 var field = new MahjongEditBox(font, left + span - 108, y, 108, 20, label);
                 field.setMaxLength(8);
                 field.setFilter(value -> value.matches("-?[0-9]*"));
@@ -241,7 +243,7 @@ public final class TableRulesScreen extends Screen {
         for (var label : labels) {
             MahjongUi.text(graphics, font, label.text(), label.x(), label.y(), label.width(), MahjongUi.TEXT, false);
             if (mouseX >= label.x() && mouseX < label.x() + label.width() && mouseY >= label.y() - 4 && mouseY < label.y() + 12)
-                setTooltipForNextRenderPass(label.text());
+                setTooltipForNextRenderPass(label.tooltip());
         }
         graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
         String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"

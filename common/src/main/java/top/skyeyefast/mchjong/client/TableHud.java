@@ -51,7 +51,7 @@ final class TableHud {
         details = details.copy().append("\n").append(Component.translatable("settings.mchjong.hand_visibility",
             Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))));
         Component title = lobby ? Component.translatable("ui.mchjong.title")
-            : settings.show(TableSettings.Information.ROUND) ? Component.translatable("ui.mchjong.round_short",
+            : settings.show(TableSettings.Information.ROUND) ? Component.translatable("ui.mchjong.round.short",
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / view.rules().players())]),
                 view.round() % view.rules().players() + 1)
             : settings.show(TableSettings.Information.RULES) ? Component.translatable(view.rules().custom()
@@ -75,7 +75,7 @@ final class TableHud {
         boolean deposits = seated && settings.show(TableSettings.Information.DEPOSITS);
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
-        if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining_short", view.remaining());
+        if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining.short", view.remaining());
         if (!lobby && !TableResults.available(view)
             && (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty())) {
             int headerHeight = board != null ? 48 : lobby ? 21 : 26;
@@ -105,7 +105,7 @@ final class TableHud {
             boolean disconnected = player.occupied() && !player.bot() && presence == PlayerPresence.DISCONNECTED;
             Component wind = Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())]);
             Component name = settings.show(TableSettings.Information.NAMES) || lobby
-                ? player.bot() ? Component.translatable("ui.mchjong.bot_short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
+                ? player.bot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
             Component hover = TableScreen.playerName(view, seat).copy();
             if (settings.show(TableSettings.Information.WINDS)) {
@@ -125,11 +125,11 @@ final class TableHud {
             if (lobby) shortLine = wind.copy().append("  ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
             if (player.occupied() && !player.bot() && presence == PlayerPresence.AWAY) {
                 if (board == null || !board.perspective())
-                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away_short"));
+                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away.short"));
                 hover = hover.copy().append("\n").append(Component.translatable("room.mchjong.away"));
             } else if (disconnected) {
                 if (board == null || !board.perspective())
-                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected_short"));
+                    shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected.short"));
                 hover = hover.copy().append("\n").append(TableSeatsScreen.presence(presence));
             }
             if (settings.show(TableSettings.Information.STATUS)) {

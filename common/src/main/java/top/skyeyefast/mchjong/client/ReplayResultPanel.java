@@ -15,6 +15,7 @@ import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Replay-only settlement view backed by the immutable recorded result. */
@@ -95,7 +96,7 @@ final class ReplayResultPanel extends AbstractWidget {
         int columns = span >= 300 ? 3 : 2;
         int colWidth = span / columns;
         var yaku = new ArrayList<Component>();
-        for (var value : win.yaku()) yaku.add(Component.translatable("yaku.mchjong." + value.name().toLowerCase(Locale.ROOT))
+        for (var value : win.yaku()) yaku.add(Component.translatable(YakuCatalog.translationKey(value.name()))
             .append(value.yakuman() ? "" : " " + value.han()));
         if (win.dora() + win.ura() + win.redDora() + win.nukiDora() > 0)
             yaku.add(Component.translatable("ui.mchjong.dora", win.dora() + win.ura() + win.redDora() + win.nukiDora()));

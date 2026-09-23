@@ -1004,7 +1004,7 @@ public final class TableScreen extends Screen {
         }
         if (view.phase() != Game.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
-                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
+                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
                 ? Component.translatable(helpKey)
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());

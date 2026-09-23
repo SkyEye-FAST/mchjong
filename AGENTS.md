@@ -64,9 +64,16 @@ Keep the compact table footprint and shared render/picking geometry. Tooltips
 contain concise labels and state; tutorials belong in dedicated guides.
 
 Maintain English, Japanese, Simplified Chinese and Traditional Chinese together.
-Keep translation keys, placeholders and tutorial content consistent across all
-four languages. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md)
-for resource-pack paths and deterministic generation.
+Language JSON files (`en_us.json`, `ja_jp.json`, `zh_cn.json`, `zh_tw.json`) must
+maintain strict key parity, formatted with two-space indentation, LF line endings,
+and ascending alphabetical key order. Placeholders and format argument specifiers
+(`%s`, `%1$s`) must match across all four translations. Follow hierarchical
+snake_case namespaces with dot separation (e.g. `rules.mchjong.option.<name>`,
+`.description`, `yaku.mchjong.<name>`, and `.short` rather than `_short` suffixes).
+Rule option titles use standard Riichi Mahjong terminology, with detailed mechanics
+placed in `.description` tooltips. Keep terms and item names aligned with registered
+translations. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md) for
+resource-pack paths and deterministic generation.
 
 Describe current capabilities and supported workflows positively and definitively.
 Omit retired features, negative feature lists, unimplemented caveats, and speculative

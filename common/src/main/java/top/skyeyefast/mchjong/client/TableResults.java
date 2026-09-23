@@ -16,6 +16,7 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
@@ -161,7 +162,7 @@ public final class TableResults extends AbstractWidget {
             y += tileWidth * 2 + 5;
         }
         var yaku = new ArrayList<Component>();
-        for (String key : win.score().yaku()) yaku.add(Component.translatable("yaku.mchjong." + key.toLowerCase(Locale.ROOT)));
+        for (String key : win.score().yaku()) yaku.add(Component.translatable(YakuCatalog.translationKey(key)));
         if (win.score().dora() > 0) yaku.add(Component.translatable("ui.mchjong.dora", win.score().dora()));
         int columns = span >= 280 ? 3 : 2;
         int colWidth = span / columns;
@@ -196,7 +197,7 @@ public final class TableResults extends AbstractWidget {
             if (index >= 0 && view.wall().get(index) >= 0) tiles.add(view.wall().get(index));
         }
         if (tiles.isEmpty()) return 0;
-        Component label = Component.translatable(compact ? ura ? "ui.mchjong.ura_short" : "ui.mchjong.dora_short"
+        Component label = Component.translatable(compact ? ura ? "ui.mchjong.ura.short" : "ui.mchjong.dora.short"
             : ura ? "ui.mchjong.ura_indicators" : "ui.mchjong.result_indicators");
         int labelWidth = compact ? Math.min(span - tiles.size() * 12 - 3, font.width(label) + 3) : span;
         text(graphics, label, x, y + (compact ? 4 : 0), labelWidth, MUTED);
@@ -241,7 +242,7 @@ public final class TableResults extends AbstractWidget {
             order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
         int[] ends = standings ? new int[]{span * 52 / 100, span * 74 / 100, span - 4}
             : new int[]{span * 38 / 100, span * 59 / 100, span * 78 / 100, span - 4};
-        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points_short", "ui.mchjong.final_short"}
+        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.final.short"}
             : new String[]{"ui.mchjong.player", "ui.mchjong.before", "ui.mchjong.change", "ui.mchjong.after"};
         for (int i = 0; i < labels.length; i++) {
             Component label = Component.translatable(labels[i]);
@@ -313,7 +314,7 @@ public final class TableResults extends AbstractWidget {
     }
     private Component winnerSummary(TableView.Win win) {
         var summary = TableScreen.playerName(view, win.seat()).copy();
-        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable("yaku.mchjong." + yaku.toLowerCase(Locale.ROOT)));
+        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable(YakuCatalog.translationKey(yaku)));
         return summary;
     }
 
