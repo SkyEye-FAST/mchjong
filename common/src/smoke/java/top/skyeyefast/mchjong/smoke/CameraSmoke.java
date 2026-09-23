@@ -27,6 +27,11 @@ final class CameraSmoke {
             show(client, table);
         }
         if (++ticks < 24) return false;
+        if (sample < 6 && sample % 2 == 1 && !client.isWindowActive()) {
+            GLFW.glfwFocusWindow(client.getWindow().handle());
+            ticks = 0;
+            return false;
+        }
         var camera = client.gameRenderer.getMainCamera();
         if (sample < 6) {
             var seat = (SeatEntity) client.player.getVehicle();
@@ -40,7 +45,9 @@ final class CameraSmoke {
             require(camera.position().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
                 "Overlay picking does not share the inspect eye");
             require(sample % 2 == 0 ? Math.abs(fov - normal) < 1e-5 : fov < normal - 10,
-                "Inspect transition did not reach its expected FOV");
+                "Inspect transition did not reach its expected FOV: sample=" + sample + ", fov=" + fov
+                    + ", normal=" + normal + ", inspecting=" + ((TableScreen) client.screen).inspecting()
+                    + ", active=" + client.isWindowActive());
             Screenshot.grab(output.toFile(), "59-camera-fov-" + client.options.fov().get()
                 + (sample % 2 == 0 ? "-normal.png" : "-inspect.png"), client.getMainRenderTarget(), 1, ignored -> {});
         } else if (sample == 6) {
@@ -87,6 +94,7 @@ final class CameraSmoke {
         if (sample >= 7) screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
         else if (sample % 2 == 1) screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_C, 0, 0));
         long window = client.getWindow().handle();
+        GLFW.glfwFocusWindow(window);
         var cursor = GLFW.glfwSetCursorPosCallback(window, null);
         if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
         try { cursor.invoke(window, 4, 4); }

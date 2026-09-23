@@ -352,7 +352,7 @@ public final class ReplayScreen extends Screen {
     private void renderDora(GuiGraphicsExtractor graphics) {
         var dora = frame().dora();
         if (dora.isEmpty()) return;
-        Component label = Component.translatable("ui.mchjong.dora_short");
+        Component label = Component.translatable("ui.mchjong.dora.short");
         int tileWidth = 9;
         int span = font.width(label) + 6 + dora.size() * (tileWidth + 2);
         int x = width - 14 - span;

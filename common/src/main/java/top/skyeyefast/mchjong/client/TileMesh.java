@@ -71,46 +71,52 @@ public final class TileMesh {
 
     /** Physical item designs include flowers without allocating riichi wall tile IDs to them. */
     public static void drawArtwork(PoseStack pose, VertexConsumer vertices, int face, int light) {
-        if (face < -1 || face >= 45) throw new IllegalArgumentException("Invalid tile artwork");
+        if (face < 0 || face >= 45) throw new IllegalArgumentException("Invalid tile artwork");
         // The three shells meet edge-to-edge. There are no overlapping side faces or internal caps.
         band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
         band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
-        cap(pose, vertices, CAP_OUTLINE, .0359f, false, false, 0xffffffff, light);
-        if (face >= 0) {
-            float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_WIDTH;
-            float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_HEIGHT;
-            float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_WIDTH;
-            float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_HEIGHT;
-            texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
-        }
+        cap(pose, vertices, CAP_OUTLINE, .0359f, false, false, false, 0xffffffff, light);
+        float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_WIDTH;
+        float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_HEIGHT;
+        float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_WIDTH;
+        float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_HEIGHT;
+        texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
     }
 
-    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, int light,
+    /** Blank fronts use the same material and untinted color as the back. */
+    public static void drawBlankFront(PoseStack pose, VertexConsumer vertices, int light, TileMaterial material) {
+        int color = bodyColor(material, null);
+        band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, color, light, true, 0, 0);
+        band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, color, light, true, 0, 0);
+        cap(pose, vertices, CAP_OUTLINE, .0359f, false, true, false, color, light);
+    }
+
+    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, boolean faceDown, int light,
                                 TileMaterial material, DyeColor dye) {
         int color = backColor(material, dye);
         boolean materialBack = usesMaterialBack(material, dye);
         if (materialBack) {
             band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, true, 0, 0);
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, true, 0, 0);
-            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
+            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, faceDown, color, light);
         } else {
             // The dyed shell stays solid independently of the transparent decorative layer.
             float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
             band(pose, vertices, CAP_OUTLINE, -DEPTH / 2, OUTLINE, -.0343f, color, light, false, u, v);
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
-            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, color, light);
+            cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, faceDown, color, light);
         }
         if (concealed) {
             float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
             band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, color, light, false, u, v);
             band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, DEPTH / 2, color, light, false, u, v);
-            cap(pose, vertices, CAP_OUTLINE, DEPTH / 2, false, true, color, light);
+            cap(pose, vertices, CAP_OUTLINE, DEPTH / 2, false, true, false, color, light);
         }
     }
 
-    public static void drawBackPattern(PoseStack pose, VertexConsumer vertices, boolean concealed, int light) {
-        cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2 - .0001f, true, true, 0xffffffff, light);
-        if (concealed) cap(pose, vertices, CAP_OUTLINE, DEPTH / 2 + .0001f, false, true, 0xffffffff, light);
+    public static void drawBackPattern(PoseStack pose, VertexConsumer vertices, boolean concealed, boolean faceDown, int light) {
+        cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2 - .0001f, true, true, faceDown, 0xffffffff, light);
+        if (concealed) cap(pose, vertices, CAP_OUTLINE, DEPTH / 2 + .0001f, false, true, false, 0xffffffff, light);
     }
 
     private static float[] outline(float w, float h, float r) {
@@ -171,13 +177,13 @@ public final class TileMesh {
     }
 
     private static void cap(PoseStack pose, VertexConsumer out, float[] ring, float z, boolean back,
-                            boolean texture, int color, int light) {
+                            boolean texture, boolean rotateTexture, int color, int light) {
         float w = WIDTH / 2 - .0015f, h = HEIGHT / 2 - .0015f;
         for (int[] corners : CAP_QUADS) for (int i = 0; i < 4; i++) {
             int corner = corners[back ? 3 - i : i];
             float x = ring[2*corner], y = ring[2*corner+1];
-            float u = texture ? (w - x) / (2*w) : SWATCH_U;
-            float v = texture ? (h - y) / (2*h) : SWATCH_V;
+            float u = texture ? (w + (rotateTexture ? x : -x)) / (2*w) : SWATCH_U;
+            float v = texture ? (h + (rotateTexture ? y : -y)) / (2*h) : SWATCH_V;
             vertex(pose, out, x, y, z, u, v, color, 0, 0, back ? -1 : 1, light);
         }
     }

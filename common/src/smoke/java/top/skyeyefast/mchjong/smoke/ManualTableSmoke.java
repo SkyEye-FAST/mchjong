@@ -147,7 +147,9 @@ final class ManualTableSmoke {
                 if (preparation.tick(client, table, output, "30-room")) next(2);
             }
             case 2 -> {
-                if (view.phase() != Game.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
+                if (view.phase() != Game.Phase.SHUFFLE || ticks < 40
+                    || TableAnimation.of(table).moving(net.minecraft.util.Util.getMillis())
+                    || !hasControl(client, "action.mchjong.shuffle")) return false;
                 check(view.wall().isEmpty() && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table shuffled itself");
                 checkSeatedPreparation(client);
                 capture(client, output, "31-manual-shuffle.png");
@@ -155,7 +157,9 @@ final class ManualTableSmoke {
                 next(3);
             }
             case 3 -> {
-                if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
+                if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15
+                    || TableAnimation.of(table).moving(net.minecraft.util.Util.getMillis())
+                    || !hasControl(client, "action.mchjong.build_wall")) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table dealt before walls were built");
                 checkSeatedPreparation(client);
                 capture(client, output, "32-manual-build-wall.png");
@@ -188,7 +192,10 @@ final class ManualTableSmoke {
                 next(4);
             }
             case 4 -> {
-                if (!offered(view, Action.Type.TAKE_PACKET) || ticks < 10 || !hasControl(client, "action.mchjong.take_packet")) return false;
+                if (!offered(view, Action.Type.TAKE_PACKET) || ticks < 10
+                    || TableAnimation.of(table).moving(net.minecraft.util.Util.getMillis())
+                    || TableAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())
+                    || !hasControl(client, "action.mchjong.take_packet")) return false;
                 click(client, "action.mchjong.take_packet");
                 next(5);
             }

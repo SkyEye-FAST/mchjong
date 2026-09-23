@@ -19,8 +19,12 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 /** Display-only public fixtures on a real seated table, after its live input tests.
  * No action from these snapshots is ever sent to the server. */
 final class DepositVisualSmoke {
+    private final boolean showWall;
     private int sample, ticks;
     private TableView fixture;
+
+    DepositVisualSmoke() { this(false); }
+    DepositVisualSmoke(boolean showWall) { this.showWall = showWall; }
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (sample == 1) return true;
@@ -38,7 +42,7 @@ final class DepositVisualSmoke {
             }
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
                 base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,
-                0, 0, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
+                0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
                 table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1);
             table.acceptView(fixture);

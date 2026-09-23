@@ -31,7 +31,6 @@ gameplay.
 | [Interface style](UI_STYLE.md) | Widgets, layout, accessibility and visual acceptance |
 | [Compatibility and verification](COMPATIBILITY.md) | Dependency profiles and integration checks |
 | [Build download mirrors](BUILD_MIRRORS.md) | Repository and client asset downloads |
-| [Ponder integration](PONDER.md) | Tutorials and installed-dependency smokes |
 | [Training bots](BOTS.md) | Decision model, difficulty and comparison checks |
 
 Contribution and release requirements are in [AGENTS.md](../AGENTS.md).

@@ -82,11 +82,13 @@ proportions and the physical tile envelope.
 Gathered folds, a lit cloth edge, a tied cord and a sewn label keep the small silhouettes readable.
 The reusable variant has a purple pouch and brass seal; red dora dye uses a red pouch and ink. All use vanilla
 generated-item models and can be replaced independently by resource packs.
+Minecraft 26.1.2 also reads their `assets/mchjong/items/<name>.json` model
+definitions; the generator writes these alongside the item models.
 
 ## Tile backs and customization
 
 Undyed tiles use their own material texture for the rear face and back shell, so
-wood, bone, quartz, calcite, glass and amethyst have no separate default back
+all eleven woods, bone, quartz, calcite, glass and amethyst have no separate default back
 color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 transparent
 pattern layer applied to every rear face, including undyed and glass tiles and
 concealed face covers. Its default pixels are fully transparent. The tile's
@@ -105,9 +107,13 @@ The body uses original neutral relief textures under `textures/tile_material/`:
 `TileMaterialArtwork` generates original 16 by 16, limited-palette grain, pores,
 chalk veins, stepped glass reflections and crystal facets
 without borrowing game textures; the material component supplies their tint.
+Oak, spruce, birch, jungle, acacia, dark oak, mangrove, cherry, bamboo, crimson
+and warped tiles share the wood relief with individual material colors. Cutting
+each wood's planks yields its matching blank tiles. Blank fronts use the same
+material texture and color as that material's undyed back.
 World, item and immersive body surfaces use nearest-neighbor sampling to retain
 the pixel clusters independently of the smoothly filtered printed faces.
-The body and the beveled white and colored shells meet edge-to-edge without
+The body and the beveled printed and dyed shells meet edge-to-edge without
 internal caps or overlapping side polygons. Their combined surface is closed.
 First-person supplies sit beside the native outstretched hand rather than shifting
 the grip toward the screen center. Tiles are turned to expose their thickness. Their tops
@@ -134,11 +140,13 @@ contact, readable printed faces and clearance above the hotbar.
 
 To supply a back design, create a normal resource pack for your target
 Minecraft version containing the `textures/tile/back.png` path and matching
-`pack_format` (34 for Minecraft 1.21.1). Preserve the 2:3 aspect ratio; transparent
+resource-pack metadata for Minecraft 26.1.2. Preserve the 2:3 aspect ratio; transparent
 pixels reveal the tile material or dye beneath, and partial alpha is supported.
+On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
-To customize the body, replace `textures/tile_material/<material>.png`. Selection,
-persistence and reloading use Minecraft's resource-pack system. Back textures do
+To customize the body, replace `textures/tile_material/<material texture>.png`.
+All eleven woods use `wood.png`. Selection, persistence and reloading use
+Minecraft's resource-pack system. Back textures do
 not replace the face atlas or affect private game data.
 
 Concealed tiles and physical rear faces combine the material or dyed shell with
@@ -152,6 +160,8 @@ Dice use six deterministic 32-pixel textures at `textures/item/dice_1.png`
 through `dice_6.png`, shared by a native cube item model and the central-roll
 tooltip. Warm ivory edge bands and shaded recesses give the pips depth; the single
 pip is larger. Opposite faces sum to seven; ones and fours use red pips.
+The dice item definition points to `models/item/dice.json` so the cube renders
+in inventories and in hand.
 
 `assets/mchjong/textures/point_sticks.png` is a 384 by 192 atlas of six 32-pixel
 strips: blank ivory, ivory with eight gray dots (100), blue with one white dot
@@ -178,9 +188,7 @@ Furniture uses fifteen original 16 by 16 pixel textures under
 broken wood grain with small knots, subdued neutral woven felt, stepped metal highlights
 with sparse tooling marks and clustered wear on dark edge material
 deterministically with small, discrete palettes and nearest-neighbor sampling.
-[Create's framed machinery](https://github.com/Creators-of-Create/Create) and
-[Farmer's Delight's crafted wooden utensils](https://github.com/vectorwing/FarmersDelight) inform
-the restrained material separation and pixel scale. The patterns are original.
+The patterns are original.
 Wood components select the finish; neutral fabric is tinted by the existing dye
 component. Resource packs can replace these paths directly.
 `assets/mchjong/textures/furniture/cloth_pattern.png` is a separate, fully
@@ -191,7 +199,10 @@ pixels preserve the fabric. This layer is separate from the repeating `felt.png`
 material shared with stool upholstery.
 The block atlas explicitly stitches the wooden particle sprite through
 `assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
-Tile inventory icons use front lighting so their white faces remain readable.
+The table and stool block models contain opaque cuboids inside their visible meshes.
+These cuboids cast terrain shadows with shader packs while the block entity renderers
+draw the furniture materials and moving tiles.
+Tile inventory icons show a three-dimensional angled view with front lighting.
 
 `FurnitureShape` supplies small textured boxes, tapered legs, clipped-corner
 bevels and a continuous mitered table rim, with outward normals and consistent
@@ -237,14 +248,17 @@ order, red fives, the blank white dragon, texture resolution and filtering,
 transparent default patterns, material-backed defaults, resource-pack customization paths, language keys, original furniture
 materials, source integrity and byte-for-byte reproducible generation. Client-side
 unit tests cover bevel winding, tapered legs, all wood/dye combinations, mesh bounds,
-white face plates, picking and exact wall/river contact, including riichi discards.
+printed face plates, material-colored blank fronts, picking and exact wall/river contact, including riichi discards.
 
 `gradlew.bat :fabric:runSmokeClient` exercises placement, seating, a private deal and a
 discard in an isolated Fabric world, then reloads the resources. It checks that
 filtering and resource bytes survive reload.
 Screenshots and the final result are written beneath `fabric/build/smoke/evidence`.
-`00-material-palette.png` shows all six tile materials, four dyes, furniture item
+`00-material-palette.png` shows the sixteen tile materials, four dyes, furniture item
 models and six dice faces together through the real client resource and item pipelines.
+For a focused inventory check on both loaders, run `:fabric:runSmokeClient -PsmokePalette=true`
+and `:neoforge:runSmokeClient -PsmokePalette=true`. Their screenshots and pass markers
+are under each loader's `build/smoke/palette-evidence`.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
 `:neoforge:runSmokeClient` runs the same assertions and screenshots under

@@ -24,6 +24,17 @@ class AssetContractTest {
     private final Path artwork = Path.of(System.getProperty("mchjong.artwork"));
 
     @Test
+    void ordinaryItemsHaveDefinitionsForTheCurrentModelPipeline() throws Exception {
+        for (String name : List.of("dice", "mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye")) {
+            JsonObject definition = JsonParser.parseString(Files.readString(resources.resolve(
+                "assets/mchjong/items/" + name + ".json"))).getAsJsonObject();
+            assertEquals("minecraft:model", definition.getAsJsonObject("model").get("type").getAsString(), name);
+            assertEquals("mchjong:item/" + name, definition.getAsJsonObject("model").get("model").getAsString(), name);
+            assertTrue(Files.exists(resources.resolve("assets/mchjong/models/item/" + name + ".json")), name);
+        }
+    }
+
+    @Test
     void audioEventsHaveTranslatedSubtitlesAndSeparateCustomVoices() throws Exception {
         JsonObject sounds = JsonParser.parseString(Files.readString(languages.getParent().resolve("sounds.json")))
                 .getAsJsonObject();
@@ -178,10 +189,11 @@ class AssetContractTest {
 
     @Test
     void modelsUseFewCuboidsAndOnlyAvailableTextures() throws Exception {
-        for (String name : List.of("mahjong_table", "mahjong_stool")) {
+        for (String name : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool")) {
             JsonObject model = JsonParser
                     .parseString(Files.readString(resources.resolve("assets/mchjong/models/block/" + name + ".json")))
                     .getAsJsonObject();
+            assertFalse(model.getAsJsonArray("elements").isEmpty(), name + " must cast terrain shadows");
             assertTrue(model.getAsJsonArray("elements").size() <= 16);
             for (var texture : model.getAsJsonObject("textures").entrySet()) {
                 String[] id = texture.getValue().getAsString().split(":", 2);
@@ -190,13 +202,16 @@ class AssetContractTest {
                                 .isRegularFile(resources.resolve("assets/" + id[0] + "/textures/" + id[1] + ".png")),
                         texture.getKey());
             }
-            for (var element : model.getAsJsonArray("elements"))
+            for (var element : model.getAsJsonArray("elements")) {
+                assertEquals(6, element.getAsJsonObject().getAsJsonObject("faces").size(), name);
                 for (String edge : List.of("from", "to"))
                     for (var coordinate : element.getAsJsonObject().getAsJsonArray(edge))
                         assertTrue(coordinate.getAsDouble() >= -16 && coordinate.getAsDouble() <= 32,
                                 "Minecraft model bounds");
+            }
             assertTrue(Files.isRegularFile(resources.resolve("assets/mchjong/blockstates/" + name + ".json")));
-            assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" + name + ".json")));
+            if (!name.equals("automatic_mahjong_table"))
+                assertTrue(Files.isRegularFile(data.resolve("data/mchjong/recipe/" + name + ".json")));
             assertTrue(Files.isRegularFile(data.resolve("data/mchjong/loot_table/blocks/" + name + ".json")));
         }
     }

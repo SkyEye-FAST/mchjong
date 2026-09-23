@@ -19,7 +19,7 @@ public final class TileRenderTypes {
     }
 
     public static Identifier bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
-        return Identifier.fromNamespaceAndPath("mchjong", "textures/tile_material/" + material.getSerializedName() + ".png");
+        return Identifier.fromNamespaceAndPath("mchjong", "textures/tile_material/" + material.texture() + ".png");
     }
 
     public static Identifier backTexture(top.skyeyefast.mchjong.item.TileMaterial material,

@@ -252,7 +252,7 @@ with mouse or keyboard activation (Shift reverses direction), so additional
 presets do not change the layout. Keep action visibility synchronized with the
 actual slot contents and clear focus when its control disappears.
 Vanilla dyes in that slot recolor every stored tile back to one of the
-sixteen dye colors through the explicit Dye backs action; Mahjong dye remains the reagent for
+sixteen dye colors through the explicit Dye backs action, while Undo dye removes tile-back dyeing through the Remove dye action; Mahjong dye remains the reagent for
 face printing. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
 has an accent border, a small lock mark and an explanatory tooltip.
 

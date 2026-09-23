@@ -21,29 +21,25 @@ adding compatibility layers, migrations or speculative configuration.
 ## Ownership and architecture
 
 `main` is the sole feature development branch. The root Gradle project is an aggregator;
-`fabric`, `forge` and `neoforge` are peer 1.21.1 loader subprojects. Read
+`fabric` and `neoforge` are peer 26.1.2 loader subprojects. Read
 [ARCHITECTURE.md](docs/ARCHITECTURE.md) for the shared contracts.
 
 - `engine`: Minecraft-independent rules, scoring adapters and replay records.
 - `common`: shared Minecraft gameplay, items, menus, networking, client rendering
   and translations. The server owns inventory authorization and game decisions;
   client screens display synchronized state and send validated requests.
-- `fabric/src/main`, `forge/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
+- `fabric/src/main` and `neoforge/src/main`: loader-specific registration and lifecycle
   adapters. Share gameplay and presentation implementations through `common`.
 - `art`: deterministic asset and server-data generation, with separate outputs.
   Edit source generators rather than generated textures, models or recipes.
 - `common/src/smoke`: shared development-only client/server checks, with
   loader-specific adapters under `fabric/src/smoke` and `neoforge/src/smoke`.
-  `forge/src/smoke` owns the focused Forge bootstrap checks.
-- `common/src/ponderData`: shared Minecraft-native build-time generation of Ponder
-  structures, compiled independently by both loader projects.
 
 Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
 classes. Declare optional metadata and keep third-party implementations out of
 release bundles. Verify both installed and absent dependency configurations.
-Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
-branch for Fabric and Forge; synchronize stable batches from `main`, preserving
+`compat/26.1.2` is a port-only branch for Fabric and NeoForge; synchronize stable batches from `main`, preserving
 the engine and shared gameplay rather than developing a second feature line.
 Keep version differences limited to actual Minecraft and loader API boundaries.
 Minecraft and dependency versions belong in `gradle.properties`. Automated
@@ -64,9 +60,16 @@ Keep the compact table footprint and shared render/picking geometry. Tooltips
 contain concise labels and state; tutorials belong in dedicated guides.
 
 Maintain English, Japanese, Simplified Chinese and Traditional Chinese together.
-Keep translation keys, placeholders and tutorial content consistent across all
-four languages. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md)
-for resource-pack paths and deterministic generation.
+Language JSON files (`en_us.json`, `ja_jp.json`, `zh_cn.json`, `zh_tw.json`) must
+maintain strict key parity, formatted with two-space indentation, LF line endings,
+and ascending alphabetical key order. Placeholders and format argument specifiers
+(`%s`, `%1$s`) must match across all four translations. Follow hierarchical
+snake_case namespaces with dot separation (e.g. `rules.mchjong.option.<name>`,
+`.description`, `yaku.mchjong.<name>`, and `.short` rather than `_short` suffixes).
+Rule option titles use standard Riichi Mahjong terminology, with detailed mechanics
+placed in `.description` tooltips. Keep terms and item names aligned with registered
+translations. Follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md) for
+resource-pack paths and deterministic generation.
 
 Describe current capabilities and supported workflows positively and definitively.
 Omit retired features, negative feature lists, unimplemented caveats, and speculative
@@ -93,7 +96,7 @@ Reserve client smokes for real loader, world, packet and UI boundaries rather th
 repeating domain assertions. Remove redundant tests instead of disabling them or
 adding alternate suites, fallback paths or new test frameworks.
 
-Use JDK 21 for the current profile and the checked-in Gradle wrapper. The examples
+Use JDK 25 for the current profile and the checked-in Gradle wrapper. The examples
 below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 
 ```text
@@ -112,10 +115,6 @@ changes need fresh screenshots of the affected flows on both loaders; prefer
 focused captures over unrelated gameplay checks. Inspect those screenshots and
 fresh PASS/FAIL markers and logs; compilation alone is not visual acceptance.
 Report exactly which checks ran and any outstanding failures or coverage limits.
-
-For Ponder changes, also run both installed-dependency smoke commands in
-[PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
-and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
 
 ## Versioning and releases
 

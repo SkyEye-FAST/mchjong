@@ -4,16 +4,15 @@
 
 ## Building from source
 
-Use JDK 21 for the current development profile.
+Use JDK 25 for the Minecraft 26.1.2 development profile.
 
 ```bash
 git clone https://github.com/SkyEye-FAST/mchjong.git
 cd mchjong
 ```
 
-The default `main` branch contains Fabric, Forge and NeoForge support. Minecraft,
-loader, mappings, and Java versions are selected by the build profile in
-`gradle.properties`.
+Check out `compat/26.1.2` to build the Fabric and NeoForge profiles. Minecraft,
+loader, mappings, and Java versions are selected in `gradle.properties`.
 
 ### Fabric
 
@@ -31,14 +30,6 @@ loader, mappings, and Java versions are selected by the build profile in
 ./gradlew :neoforge:runServer   # optional dedicated server
 ```
 
-### Forge
-
-```bash
-./gradlew :forge:build
-./gradlew :forge:runClient   # optional development client
-./gradlew :forge:runServer   # optional dedicated server
-```
-
 To build all loaders and run the shared checks:
 
 ```bash
@@ -54,8 +45,8 @@ NeoForge repositories and the NeoForge client asset mirror environment variable.
 
 Choose checks for the changed behavior. Use `./gradlew buildAll --warning-mode fail`
 for broad changes and releases. See [Compatibility and verification](COMPATIBILITY.md)
-for loader smoke tests and dependency profiles, and [Ponder integration](PONDER.md)
-for tutorial validation. Shared visual changes require fresh screenshots from both loaders.
+for loader smoke tests and dependency profiles. Shared visual changes require
+fresh screenshots from both loaders.
 
 ## Contributor guides
 

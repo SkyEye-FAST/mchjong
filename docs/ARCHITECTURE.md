@@ -1,10 +1,8 @@
 # MChjong architecture
 
-The repository keeps Fabric, Forge and NeoForge feature development together on
-`main`. The root project is an aggregator; `fabric`, `forge` and `neoforge` are
-peer loader subprojects. The loaders share the same
-gameplay, presentation, assets, and tests wherever their target Minecraft API
-allows it.
+`main` owns feature development. This Minecraft 26.1.2 port has Fabric and
+NeoForge loader subprojects under an aggregator root. They share gameplay,
+presentation, assets and tests at this Minecraft API level.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   stateful `Game` orchestration, simple records/DTOs and the JVM interop shim for
@@ -18,33 +16,27 @@ allows it.
   engine Shadow archive embeds and relocates mahjong-utils, Kotlin and kotlinx,
   so neither loader requires a Kotlin language mod at runtime. Engine production
   Java and Kotlin bytecode targets Java 17, allowing the same domain artifact to
-  serve the 1.20.1 and 1.21.1 Minecraft profiles. The build and existing test suite
-  use the project's Java 21 toolchain.
+  serve multiple Minecraft profiles. This port builds with JDK 25; engine tests
+  run on Java 21.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
 * `fabric/src/main/java`: Fabric registration/networking only.
-* `forge/src/main/java`: Forge registration/networking and client extension binding.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
 * `common/src/smoke`: shared loader smoke harnesses; each loader keeps only its
   lifecycle adapter and metadata in its own `src/smoke`.
-* `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
-  independently by both loader projects.
 * `art`: deterministic packing of native face-preset images, client model
   descriptors, plus a separate server-data generator. Source-image resampling
   runs at build time; each supplied atlas includes its eight flower designs.
 
-`compat/1.20.1` is a version-adaptation branch, synchronized from stable batches
-on `main`. It targets Fabric and Forge. Features and engine changes originate on
-`main`; the compatibility branch only changes Minecraft APIs, loader adapters,
-metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
+`compat/26.1.2` is synchronized from stable batches on `main`. Features and
+engine changes originate on `main`; this branch adapts Minecraft APIs, loader
+adapters, metadata and version-specific resources.
 Artifact names include both loader and Minecraft version to keep releases distinct.
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native
-custom payload packets; Forge wraps the same shared payloads with its registered
-channel encoder. All receivers dispatch to the existing authorized server handlers
-on the game thread. Forge's client-only item accessor binds the shared renderer to
-Forge's item extension field without importing loader types into shared items.
+custom payload packets. All receivers dispatch to authorized server handlers
+on the game thread.
 
 `RuleSet` defines named presets; `RuleConfig` is the complete immutable, validated
 snapshot used by the engine, public views, saves and native replays. `RuleOption`
@@ -99,10 +91,9 @@ are shared with `SupplyCraftingRecipe`; `MahjongSupplies` remains responsible fo
 component and container transformations. `SupplySubtype` uses an immutable stack
 snapshot and Minecraft component equality for recipe-relevant identity.
 
-The independent `compat/jei` and `compat/emi` packages contain the respective
-official plugin entrypoints and rendering adapters. Their APIs are compile-only;
-the chosen development profile supplies the complete viewer at runtime. Screen
-boundaries come from the native container screens themselves. See
+`compat/jei` contains the optional viewer plugin and rendering adapter. Its API
+is compile-only; the JEI development profile supplies the viewer at runtime.
+Screen boundaries come from the native container screens themselves. See
 [COMPATIBILITY.md](COMPATIBILITY.md) for profiles and validation coverage.
 
 `MahjongUi`, `MahjongButton`, `MahjongSlider` and `MahjongEditBox` share the
@@ -289,12 +280,6 @@ Both smoke clients leave the desktop cursor free, including when closing screens
 or entering the world. A smoke-only mouse mixin prevents capture and recentering;
 the harness checks the logical grab state and native cursor mode each tick.
 NeoForge's dedicated-server integration tests also run in `buildAll`.
-
-The optional client integration in `compat/ponder` registers three tutorials with
-Ponder after a loader presence check. The scenes share gameplay furniture models,
-component types and seating geometry inside Ponder's display worlds. Native NBT
-generation supplies the same structure to both loader artifacts. See
-[Ponder integration](PONDER.md) for the installed and base-client checks.
 
 Survival checks use real server players, menus and levels in the shared smoke
 source set rather than introducing null-world behavior into production code.

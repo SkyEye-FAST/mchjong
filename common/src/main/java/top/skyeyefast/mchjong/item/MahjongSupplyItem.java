@@ -27,7 +27,7 @@ public class MahjongSupplyItem extends Item {
             Consumer<Component> tooltip, TooltipFlag flag) {
         TileData tile = stack.get(MahjongComponents.TILE);
         if (tile != null) {
-            tooltip.accept(Component.translatable(tile.material() == TileMaterial.WOOD ? "material.mchjong.wood" : "block.minecraft." + tile.material().source()));
+            tooltip.accept(Component.translatable("block.minecraft." + tile.material().source()));
             tooltip.accept(tileLabel(tile, MahjongSupplies.facePreset(stack)));
         }
         Integer points = stack.get(MahjongComponents.POINTS);

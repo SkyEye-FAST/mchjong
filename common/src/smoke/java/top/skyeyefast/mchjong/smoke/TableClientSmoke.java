@@ -35,11 +35,14 @@ public final class TableClientSmoke {
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
+    private final boolean paletteOnly = Boolean.getBoolean("mchjong.smoke.paletteOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
-    private final boolean visualOnly = itemsOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
+    private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
+    private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || browserOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -102,6 +105,8 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (manualOnly) { step = 19; entered = ticks; return; }
+                if (browserOnly) { step = 25; entered = ticks; return; }
                 UUID id = client.player.getUUID();
                 if (!visualOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
@@ -167,6 +172,11 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (paletteOnly) {
+                    client.setScreen(new MaterialPaletteSmoke());
+                    step = 31; entered = ticks;
+                    return;
+                }
                 if (itemsOnly) {
                     client.setScreen(null);
                     step = 18; entered = ticks;
@@ -184,6 +194,12 @@ public final class TableClientSmoke {
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
                 capture(client, "00-equipment-inventory.png");
+                if (paletteOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "All sixteen printed and blank tile materials and native inventory items rendered.\n");
+                    LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 client.screen.onClose();
                 step = 36; entered = ticks;
             } else if (step == 36 && ticks - entered > 10) {
@@ -360,9 +376,21 @@ public final class TableClientSmoke {
             } else if (step == 12 && replaySmoke.tick(client, output)) {
                 step = 19; entered = ticks;
             } else if (step == 19 && manualSmoke.tick(client, output)) {
+                if (manualOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Manual table handling and physical drag passed.\n");
+                    LOG.info("MCHJONG_MANUAL_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;
+                if (browserOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Recipe viewer catalogue, lookups and container passed.\n");
+                    LOG.info("MCHJONG_BROWSER_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
                 Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCHJONG_CLIENT_SMOKE_PASS");

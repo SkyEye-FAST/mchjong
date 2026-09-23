@@ -41,7 +41,7 @@ public final class TableSeatsScreen extends Screen {
             Runnable action;
             boolean enabled;
             if (seat == room.host() || player.occupied() && !player.bot() && state.presence() == PlayerPresence.SEATED) {
-                label = Component.translatable(seat == room.host() ? "room.mchjong.host_short" : "room.mchjong.transfer");
+                label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
                 int index = find(view, Action.Type.TRANSFER_HOST, List.of(seat));
                 enabled = host && seat != room.host() && (view.phase() != Game.Phase.LOBBY || index >= 0);

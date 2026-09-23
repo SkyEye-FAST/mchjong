@@ -70,6 +70,11 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     public boolean canDyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE)) {
+            return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
+                .anyMatch(stack -> stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)
+                    && MahjongSupplies.back(stack) != null);
+        }
         var color = MahjongSupplies.dyeColor(reagent);
         if (color == null) return false;
         return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
@@ -99,8 +104,9 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     private boolean dyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
-        var color = MahjongSupplies.dyeColor(reagent);
-        if (color == null || !canDyeBack()) return false;
+        boolean undo = reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE);
+        var color = undo ? null : MahjongSupplies.dyeColor(reagent);
+        if ((!undo && color == null) || !canDyeBack()) return false;
         var output = MahjongSupplies.dyedContents(items(), color);
         if (output.isEmpty()) return false;
         output.get(MahjongSupplies.DYE_SLOT).shrink(1);

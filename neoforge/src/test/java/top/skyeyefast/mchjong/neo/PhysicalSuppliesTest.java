@@ -42,13 +42,13 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(60, entries.size());
+        assertEquals(54 + TileMaterial.values().length, entries.size());
         assertEquals(16, entries.stream().filter(stack -> stack.is(MahjongContent.CLOTH_ITEM)).count());
         for (int i = 23; i <= 38; i++) assertTrue(entries.get(i).is(MahjongContent.CLOTH_ITEM));
         assertEquals(List.of(DyeColor.values()), entries.subList(23, 39).stream().map(MahjongSupplies::color).toList());
         for (int i = 39; i <= 42; i++) assertTrue(entries.get(i).is(MahjongContent.BOX_ITEM));
         assertEquals(2, MahjongSupplies.contents(entries.get(40)).get(MahjongSupplies.DICE_SLOT).getCount());
-        assertTrue(entries.get(49).is(MahjongContent.DICE));
+        assertTrue(entries.get(43 + TileMaterial.values().length).is(MahjongContent.DICE));
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.DICE)));
         assertFalse(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.POINT_STICK)));
         assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
@@ -58,14 +58,16 @@ class PhysicalSuppliesTest {
         assertNotNull(MahjongSupplies.deck(entries.get(40)));
         assertNull(MahjongSupplies.deck(entries.get(40)).back());
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(Items.CYAN_DYE)));
+        assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(MahjongContent.UNDO_DYE)));
         assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
             .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
-        assertEquals(6, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
+        assertEquals(TileMaterial.values().length, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.TABLE_ITEM)).count());
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.AUTO_TABLE_ITEM)).count());
-        for (int i = 43; i <= 48; i++) {
-            assertTrue(entries.get(i).is(MahjongContent.TILE_ITEM));
-            assertTrue(MahjongSupplies.tile(entries.get(i)).blank());
+        for (var material : TileMaterial.values()) {
+            var blank = entries.get(43 + material.ordinal());
+            assertTrue(blank.is(MahjongContent.TILE_ITEM));
+            assertEquals(new TileData(-1, material, false), MahjongSupplies.tile(blank));
         }
         assertEquals(Component.translatable("block.mchjong.mahjong_table.oak"), entries.get(0).getHoverName());
         assertEquals(Component.translatable("block.mchjong.automatic_mahjong_table.oak"), entries.get(11).getHoverName());
@@ -408,6 +410,9 @@ class PhysicalSuppliesTest {
                 assertEquals(0, MahjongSupplies.contents(dyed).stream().filter(s -> s.is(MahjongContent.TILE_ITEM)
                     && MahjongSupplies.tile(s).red()).mapToInt(ItemStack::getCount).sum());
             }
+            ItemStack undyed = MahjongSupplies.dye(engraved, null);
+            assertNull(MahjongSupplies.deck(undyed).back());
+            assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(undyed)));
         }
         var shortBox = box(List.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 64)));
         assertTrue(MahjongSupplies.engrave(shortBox, TileFacePreset.KANSAI).isEmpty());

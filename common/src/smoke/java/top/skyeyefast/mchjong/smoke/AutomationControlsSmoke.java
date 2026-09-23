@@ -185,9 +185,15 @@ final class AutomationControlsSmoke {
             for (int j = i + 1; j < widgets.size(); j++) {
                 var b = widgets.get(j);
                 require(a.getRight() <= b.getX() || b.getRight() <= a.getX()
-                    || a.getBottom() <= b.getY() || b.getBottom() <= a.getY(), "Automatic controls overlap");
+                    || a.getBottom() <= b.getY() || b.getBottom() <= a.getY(),
+                    "Automatic controls overlap: " + bounds(a) + " and " + bounds(b));
             }
         }
+    }
+
+    private static String bounds(AbstractWidget widget) {
+        return widget.getClass().getSimpleName() + "[" + widget.getMessage().getString() + "] at "
+            + widget.getX() + "," + widget.getY() + " " + widget.getWidth() + "x" + widget.getHeight();
     }
 
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }

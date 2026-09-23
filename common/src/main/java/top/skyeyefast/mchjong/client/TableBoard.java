@@ -321,10 +321,10 @@ final class TableBoard {
         graphics.pose().translate(640, 299);
         graphics.pose().scale(2, 2);
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
-            Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
+            Component.translatable("ui.mchjong.round.short", Component.translatable("wind.mchjong."
                 + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1), -42, 1, 84, MahjongUi.ACCENT, true);
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
-            Component.translatable("ui.mchjong.remaining_short", view.remaining()), -42, 17, 84, MahjongUi.TEXT, true);
+            Component.translatable("ui.mchjong.remaining.short", view.remaining()), -42, 17, 84, MahjongUi.TEXT, true);
         if (settings.show(TableSettings.Information.DEPOSITS)) {
             TableHud.stick(graphics, -30, 39, false);
             TableHud.stick(graphics, 5, 39, true);
@@ -358,7 +358,7 @@ final class TableBoard {
         }
         if (center.height() <= 40) {
             var summary = Component.empty();
-            if (settings.show(TableSettings.Information.ROUND)) summary.append(Component.translatable("ui.mchjong.round_short",
+            if (settings.show(TableSettings.Information.ROUND)) summary.append(Component.translatable("ui.mchjong.round.short",
                 Component.translatable("wind.mchjong." + WINDS[Math.min(3, view.round() / players)] + ".short"),
                 view.round() % players + 1));
             if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) {
@@ -369,11 +369,11 @@ final class TableBoard {
             return;
         }
         if (settings.show(TableSettings.Information.ROUND)) MahjongUi.text(graphics, font,
-            Component.translatable("ui.mchjong.round_short", Component.translatable("wind.mchjong."
+            Component.translatable("ui.mchjong.round.short", Component.translatable("wind.mchjong."
                 + WINDS[Math.min(3, view.round() / players)]), view.round() % players + 1),
             center.x() + 14, cy - 10, center.width() - 28, MahjongUi.ACCENT, true);
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
-            Component.translatable("ui.mchjong.remaining_short", view.remaining()), center.x() + 14, cy + 2,
+            Component.translatable("ui.mchjong.remaining.short", view.remaining()), center.x() + 14, cy + 2,
             center.width() - 28, MahjongUi.TEXT, true);
     }
 

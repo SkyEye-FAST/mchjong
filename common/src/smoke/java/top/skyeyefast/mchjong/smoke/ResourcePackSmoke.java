@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 /** Real pack selection, tile-face discovery, cosmetic-ID packets and removal/reload. */
 final class ResourcePackSmoke {
     private static final TileFacePreset CUSTOM = new TileFacePreset(Identifier.parse("smoke:custom"));
-    private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke();
+    private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke(true);
     private CompletableFuture<Void> pending;
     private List<String> selected;
     private int stage, ticks;
@@ -37,7 +37,7 @@ final class ResourcePackSmoke {
             for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw"))
                 write(pack, "assets/smoke/lang/" + language + ".json", "{\"preset.smoke.custom\":\"Resource Pack Test\"}");
             write(pack, "assets/mchjong/tile_face_presets/kanto.json", definition);
-            pattern(pack.resolve("assets/mchjong/textures/tile/back.png"), 256, 384);
+            backPattern(pack.resolve("assets/mchjong/textures/tile/back.png"));
             pattern(pack.resolve("assets/mchjong/textures/furniture/cloth_pattern.png"), 256, 256);
             pattern(pack.resolve("assets/mchjong/textures/item/riichi_stick.png"), 384, 32);
             client.getResourcePackRepository().reload();
@@ -85,6 +85,10 @@ final class ResourcePackSmoke {
             var screen = new top.skyeyefast.mchjong.client.TableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
+            stage = 8; ticks = 0;
+        } else if (stage == 8 && ticks > 20) {
+            Screenshot.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), 1, ignored -> {});
+            var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
             screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
@@ -128,6 +132,15 @@ final class ResourcePackSmoke {
         try (var image = new NativeImage(width, height, false)) {
             for (int y = 0; y < height; y++) for (int x = 0; x < width; x++)
                 image.setPixel(x, y, Math.abs(x - width / 2) < width / 12 || Math.abs(y - height / 2) < height / 12 ? 0xff20e040 : 0);
+            image.writeToFile(path);
+        }
+    }
+    private static void backPattern(Path path) throws java.io.IOException {
+        Files.createDirectories(path.getParent());
+        try (var image = new NativeImage(256, 384, false)) {
+            // Contrasting top and bottom halves expose a rotated wall back in the world capture.
+            for (int y = 0; y < 384; y++) for (int x = 0; x < 256; x++)
+                image.setPixel(x, y, y < 192 ? 0xff2040e0 : 0xffe04020);
             image.writeToFile(path);
         }
     }

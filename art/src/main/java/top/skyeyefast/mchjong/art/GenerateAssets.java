@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.art;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
@@ -7,6 +9,8 @@ import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.List;
 import javax.imageio.ImageIO;
 
 /** Reproducible build-time textures and models; no game-time downloads or platform fonts. */
@@ -45,11 +49,15 @@ public final class GenerateAssets {
             png("item/" + name, MahjongDyeArtwork.texture(name));
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
+            text("assets/mchjong/items/" + name + ".json",
+                "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"mchjong:item/" + name + "\"}}");
         }
     }
 
     private void dice() throws IOException {
         for (int face = 1; face <= 6; face++) png("item/dice_" + face, DiceArtwork.texture(face));
+        text("assets/mchjong/items/dice.json",
+            "{\"model\":{\"type\":\"minecraft:model\",\"model\":\"mchjong:item/dice\"}}");
         text("assets/mchjong/models/item/dice.json", """
             {"parent":"minecraft:block/block","textures":{
               "particle":"mchjong:item/dice_1","1":"mchjong:item/dice_1","2":"mchjong:item/dice_2",
@@ -97,14 +105,18 @@ public final class GenerateAssets {
         // Furniture is outside the automatic block/item texture directories. Stitch its particle explicitly.
         text("assets/minecraft/atlases/blocks.json",
             "{\"sources\":[{\"type\":\"minecraft:single\",\"resource\":\"mchjong:furniture/wood_oak\"}]}");
-        // Component-aware geometry lives once in FurnitureMesh/TileMesh, shared by items and blocks.
+        // Opaque interior cuboids put furniture in terrain shadow passes. The visible, component-aware
+        // surfaces stay in FurnitureMesh so wood, cloth and moving tiles keep their exact appearance.
+        shadowModel("mahjong_table", tableShadowBoxes(false));
+        shadowModel("automatic_mahjong_table", tableShadowBoxes(true));
+        shadowModel("mahjong_stool", stoolShadowBoxes());
+        text("assets/mchjong/models/block/table_space.json",
+            "{\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"elements\":[]}");
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"}) {
-            text("assets/mchjong/models/block/" + name + ".json",
-                "{\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"elements\":[]}");
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
         }
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
-            String rotation = name.equals("mahjong_tile") ? "[0,0,0]"
+            String rotation = name.equals("mahjong_tile") ? "[25,35,0]"
                 : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
@@ -127,6 +139,76 @@ public final class GenerateAssets {
                 "{\"model\":{\"type\":\"minecraft:special\",\"base\":\"mchjong:item/" + name
                     + "\",\"model\":{\"type\":\"mchjong:supply\"}}}");
         }
+    }
+
+    private void shadowModel(String name, List<float[]> boxes) throws IOException {
+        JsonObject model = new JsonObject();
+        JsonObject textures = new JsonObject();
+        textures.addProperty("particle", "mchjong:furniture/wood_oak");
+        model.add("textures", textures);
+        JsonArray elements = new JsonArray();
+        for (float[] box : boxes) {
+            JsonObject element = new JsonObject();
+            element.add("from", modelPoint(box[0], box[1], box[2]));
+            element.add("to", modelPoint(box[3], box[4], box[5]));
+            JsonObject faces = new JsonObject();
+            for (String side : List.of("up", "down", "north", "south", "east", "west")) {
+                JsonObject face = new JsonObject();
+                face.addProperty("texture", "#particle");
+                faces.add(side, face);
+            }
+            element.add("faces", faces);
+            elements.add(element);
+        }
+        model.add("elements", elements);
+        text("assets/mchjong/models/block/" + name + ".json", model.toString());
+    }
+
+    private static JsonArray modelPoint(float x, float y, float z) {
+        JsonArray point = new JsonArray();
+        point.add(8 + x * 16);
+        point.add(y * 16);
+        point.add(8 + z * 16);
+        return point;
+    }
+
+    private static List<float[]> tableShadowBoxes(boolean automatic) {
+        List<float[]> boxes = new ArrayList<>();
+        boxes.add(new float[]{-1.355f, .79f, -1.355f, 1.355f, .865f, 1.355f});
+        boxes.add(new float[]{-1.31f, .875f, -1.42f, 1.31f, .985f, -1.34f});
+        boxes.add(new float[]{-1.31f, .875f, 1.34f, 1.31f, .985f, 1.42f});
+        boxes.add(new float[]{-1.42f, .875f, -1.31f, -1.34f, .985f, 1.31f});
+        boxes.add(new float[]{1.34f, .875f, -1.31f, 1.42f, .985f, 1.31f});
+        boxes.add(new float[]{-1.24f, .665f, -1.30f, 1.24f, .82f, -1.24f});
+        boxes.add(new float[]{-1.24f, .665f, 1.24f, 1.24f, .82f, 1.30f});
+        boxes.add(new float[]{-1.30f, .665f, -1.24f, -1.24f, .82f, 1.24f});
+        boxes.add(new float[]{1.24f, .665f, -1.24f, 1.30f, .82f, 1.24f});
+        if (automatic) {
+            boxes.add(new float[]{-.68f, .04f, -.68f, .68f, .105f, .68f});
+            boxes.add(new float[]{-.30f, .18f, -.30f, .30f, .62f, .30f});
+            boxes.add(new float[]{-.41f, .67f, -.41f, .41f, .78f, .41f});
+        } else {
+            for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1}) {
+                float cx = x * 1.15f, cz = z * 1.15f;
+                boxes.add(new float[]{cx - .048f, .03f, cz - .048f, cx + .048f, .77f, cz + .048f});
+            }
+        }
+        return boxes;
+    }
+
+    private static List<float[]> stoolShadowBoxes() {
+        List<float[]> boxes = new ArrayList<>();
+        boxes.add(new float[]{-.35f, .42f, -.35f, .35f, .49f, .35f});
+        boxes.add(new float[]{-.31f, .55f, -.31f, .31f, .59f, .31f});
+        for (int x : new int[]{-1, 1}) for (int z : new int[]{-1, 1}) {
+            float cx = x * .265625f, cz = z * .265625f;
+            boxes.add(new float[]{cx - .04f, .025f, cz - .04f, cx + .04f, .42f, cz + .04f});
+        }
+        boxes.add(new float[]{-.24f, .15f, -.27f, .24f, .18f, -.25f});
+        boxes.add(new float[]{-.24f, .15f, .25f, .24f, .18f, .27f});
+        boxes.add(new float[]{-.27f, .15f, -.24f, -.25f, .18f, .24f});
+        boxes.add(new float[]{.25f, .15f, -.24f, .27f, .18f, .24f});
+        return boxes;
     }
 
     private void png(String name, BufferedImage image) throws IOException {

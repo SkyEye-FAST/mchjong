@@ -37,7 +37,7 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
         }
         return stack;
     }
-    @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
+    @Override protected RenderShape getRenderShape(BlockState state) { return RenderShape.MODEL; }
     @Override public void setPlacedBy(Level level, BlockPos pos, BlockState state, LivingEntity placer, ItemStack stack) {
         if (level.getBlockEntity(pos) instanceof FurnitureBlockEntity furniture) {
             furniture.applyComponentsFromItemStack(stack);

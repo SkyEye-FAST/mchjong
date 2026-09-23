@@ -113,7 +113,10 @@ internal object LegalActions {
             }
         }
         if (actions.isNotEmpty()) actions += Action(PASS)
-        return actions.toList()
+        // Physical copies with the same face and red status make the same call.
+        return actions.distinctBy { action ->
+            action.type() to action.tiles().map { Tile.kind(it) to Tile.red(it) }
+        }
     }
 
     private fun canDiscardAfter(player: PlayerState, used: List<Int>, forbidden: Set<Int>): Boolean =

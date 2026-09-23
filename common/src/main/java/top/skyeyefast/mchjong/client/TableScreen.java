@@ -424,7 +424,8 @@ public final class TableScreen extends Screen {
                     addRenderableWidget(button);
                 }
                 int panelTop = 58 * scale;
-                results = addRenderableWidget(new TableResults(font, view, facePreset(), 10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
+                results = addRenderableWidget(new TableResults(font, view, facePreset(), tileMaterial(), tileBack(),
+                    10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
                     selectedWinner, resultPage, resultStarted, immersive ? 2 : 1));
             }
         }
@@ -933,7 +934,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, room(), layoutWidth, facePreset(), board);
+            information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), board);
         if (view.phase() == Game.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
@@ -1002,7 +1003,7 @@ public final class TableScreen extends Screen {
         }
         if (view.phase() != Game.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
-                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help_" + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
+                : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
                 ? Component.translatable(helpKey)
                 : Component.translatable(helpKey, TableKeys.RIICHI.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
@@ -1215,20 +1216,23 @@ public final class TableScreen extends Screen {
         if (overWidget(mouseX, mouseY)) { super.mouseClicked(mappedEvent, doubleClick); return true; }
         if (overInformation(mouseX, mouseY)) return true;
         if (button == 1) { dragging = true; dragDistance = 0; return true; }
-        if (super.mouseClicked(mappedEvent, doubleClick)) return true;
         if (button == 0) {
             if (decision.pending() || dealing()) return true;
             updateScene();
-            boolean overHand = hand != null && hand.contains(mouseX, mouseY);
-            if (!overHand && openDrawer(mouseX, mouseY)) return true;
-            TableScene.Piece physical = overHand ? null : pickPhysical(mouseX, mouseY);
-            if (physical != null) {
-                handlingDrag = view();
-                handlingStart = tablePoint(mouseX, mouseY);
-                handlingPointer = handlingStart;
-                setFocused(null);
-                return true;
+            if (!(hand != null && hand.contains(mouseX, mouseY))) {
+                if (openDrawer(mouseX, mouseY)) return true;
+                TableScene.Piece physical = pickPhysical(mouseX, mouseY);
+                if (physical != null) {
+                    handlingDrag = view();
+                    handlingStart = tablePoint(mouseX, mouseY);
+                    handlingPointer = handlingStart;
+                    setFocused(null);
+                    return true;
+                }
             }
+        }
+        if (super.mouseClicked(mappedEvent, doubleClick)) return true;
+        if (button == 0) {
             int tile = pick(mouseX, mouseY);
             if (tile >= 0 && choosingRiichi) {
                 TableView snapshot = view();
@@ -1445,7 +1449,7 @@ public final class TableScreen extends Screen {
         @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
             TableScene.Piece source = TableHandling.source(snapshot, scene);
             Projected point = source == null ? null : project(grip(source));
-            active = point != null && !decision.pending() && !handlingMoving() && results == null;
+            active = point != null && !decision.pending() && !handlingMoving() && !dealing() && results == null;
             if (point == null) return;
             setX((int) point.x - 10); setY((int) point.y - 10);
             if (active && isFocused()) {

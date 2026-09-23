@@ -53,6 +53,9 @@ class FurnitureArtworkTest {
         var tile = com.google.gson.JsonParser.parseString(Files.readString(resources.resolve("assets/mchjong/models/item/mahjong_tile.json")))
             .getAsJsonObject();
         assertEquals("front", tile.get("gui_light").getAsString());
+        var guiRotation = tile.getAsJsonObject("display").getAsJsonObject("gui").getAsJsonArray("rotation");
+        assertTrue(guiRotation.get(0).getAsFloat() > 0);
+        assertTrue(guiRotation.get(1).getAsFloat() > 0, "Inventory view exposes tile depth");
     }
 
     @Test void tileBodiesHaveDistinctNeutralReliefAndHeldFacesTurnTowardBothHands() throws Exception {
