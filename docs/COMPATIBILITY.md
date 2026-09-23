@@ -27,9 +27,10 @@ and Forge. Optional Ponder tutorials cover Fabric and NeoForge 1.21.1 and both
 validate the port. Engine and shared gameplay changes travel through this Git
 history rather than a separate feature implementation.
 
-The snapshot and release workflows on `main` build its three loader artifacts and
+The release workflow on `main` builds its three loader artifacts and
 the two 1.20.1 artifacts from the exact commit in `.github/compat-1.20.1-ref`.
-Update that pin only after reviewing and validating a stable port batch. Both
+Snapshot workflows build single-version development artifacts for their respective
+branch profile. Update that pin only after reviewing and validating a stable port batch. Both
 checkouts receive the same mod version during assembly; the filenames include
 Minecraft version and loader. A main commit does not automatically advance the
 compatibility pin. Review feature parity and outstanding port acceptance before
