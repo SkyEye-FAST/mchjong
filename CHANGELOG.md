@@ -7,6 +7,15 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
+
+### Fixed
+
+- Settlement screens preserve table tile-back dye and material choices on concealed kongs.
+- Symmetric rasterization removes asymmetric pip boundary protrusion on dice textures.
+
 ## [0.6.0] - 2026-09-22
 
 ### Added
