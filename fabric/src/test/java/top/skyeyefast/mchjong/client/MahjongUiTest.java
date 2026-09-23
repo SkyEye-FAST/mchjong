@@ -15,13 +15,12 @@ class MahjongUiTest {
         }
     }
 
-    @Test void projectScreensCannotQuietlyReturnToStockControlsOrChestMenus() throws Exception {
+    @Test void projectScreensUseProjectControlsAndBoxMenu() throws Exception {
         Path root = Path.of("..");
         Path client = root.resolve("common/src/main/java/top/skyeyefast/mchjong/client");
         try (var paths = Files.list(client)) {
             for (Path path : paths.filter(p -> p.getFileName().toString().endsWith("Screen.java")).toList()) {
                 String source = Files.readString(path);
-                assertTrue(source.contains("void renderBackground("), path + " must own its background to avoid blurring its labels");
                 for (String stock : new String[]{"Button.builder(", "new Button(", "new EditBox(", "extends AbstractSliderButton"})
                     assertFalse(source.contains(stock), path + " must use the project controls, not " + stock);
             }

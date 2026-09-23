@@ -35,7 +35,7 @@ class RecipeBrowserDataTest {
             assertEquals(144, MahjongSupplies.tileCount(contents));
             assertEquals(2, contents.get(MahjongSupplies.DICE_SLOT).getCount());
             assertNotNull(MahjongSupplies.deck(box, false, reds));
-            assertTrue(box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyStream().findAny().isEmpty());
+            assertTrue(box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY).nonEmptyItemCopyStream().findAny().isEmpty());
         }
         var stock = MahjongSupplies.contents(stocked.getFirst());
         assertEquals(40, stickCount(stock, 100));

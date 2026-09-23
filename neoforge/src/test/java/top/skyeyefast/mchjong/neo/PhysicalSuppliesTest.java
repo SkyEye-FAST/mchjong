@@ -6,9 +6,14 @@ import java.util.List;
 import java.util.Map;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
+import net.minecraft.nbt.NbtOps;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.RegistryOps;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -16,6 +21,7 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CraftingRecipe;
+import net.minecraft.world.item.crafting.Recipe;
 import net.minecraft.world.item.crafting.SingleRecipeInput;
 import net.minecraft.world.item.crafting.StonecutterRecipe;
 import net.neoforged.neoforge.network.connection.ConnectionType;
@@ -71,8 +77,7 @@ class PhysicalSuppliesTest {
     }
 
     @Test void creativeTabUsesHatsuTileIconAndListsAllCatalogueEntries() {
-        var tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(MahjongContent.id("mchjong"));
-        assertNotNull(tab);
+        var tab = BuiltInRegistries.CREATIVE_MODE_TAB.get(MahjongContent.id("mchjong")).orElseThrow().value();
         var icon = tab.getIconItem();
         assertTrue(icon.is(MahjongContent.TILE_ITEM));
         assertEquals(32, MahjongSupplies.tile(icon).face());
@@ -81,16 +86,31 @@ class PhysicalSuppliesTest {
     }
 
     private static Item vanilla(String name) {
-        return BuiltInRegistries.ITEM.get(net.minecraft.resources.ResourceLocation.withDefaultNamespace(name));
+        return BuiltInRegistries.ITEM.get(net.minecraft.resources.Identifier.withDefaultNamespace(name)).orElseThrow().value();
+    }
+    private static ResourceKey<Recipe<?>> recipeKey(String id) {
+        return ResourceKey.create(Registries.RECIPE, MahjongContent.id(id));
     }
     private static CraftingRecipe crafting(MinecraftServer server, String id) {
-        return (CraftingRecipe) server.getRecipeManager().byKey(MahjongContent.id(id)).orElseThrow().value();
+        return (CraftingRecipe) server.getRecipeManager().byKey(recipeKey(id)).orElseThrow().value();
     }
     private static ItemStack craft(MinecraftServer server, String id, int width, int height, List<ItemStack> items) {
         var input = CraftingInput.of(width, height, items);
         var recipe = crafting(server, id);
         assertTrue(recipe.matches(input, server.overworld()), id);
-        return recipe.assemble(input, server.registryAccess());
+        return recipe.assemble(input);
+    }
+    private static ItemStack roundTrip(MinecraftServer server, ItemStack stack) {
+        var ops = RegistryOps.create(NbtOps.INSTANCE, server.registryAccess());
+        return ItemStack.CODEC.parse(ops, ItemStack.CODEC.encodeStart(ops, stack).getOrThrow()).getOrThrow();
+    }
+    private static net.minecraft.world.level.storage.ValueInput input(MinecraftServer server, net.minecraft.nbt.CompoundTag tag) {
+        return net.minecraft.world.level.storage.TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), tag);
+    }
+    private static net.minecraft.nbt.CompoundTag save(MinecraftServer server, top.skyeyefast.mchjong.world.TableEquipment equipment) {
+        var output = net.minecraft.world.level.storage.TagValueOutput.createWithContext(ProblemReporter.DISCARDING, server.registryAccess());
+        equipment.save(output);
+        return output.buildResult();
     }
     private static ItemStack box(List<ItemStack> items) {
         var box = new ItemStack(MahjongContent.BOX_ITEM);
@@ -130,25 +150,26 @@ class PhysicalSuppliesTest {
             assertEquals(color, cloth.get(DataComponents.BASE_COLOR));
         }
         MahjongComponents.TYPES.forEach((name, component) ->
-            assertSame(component, BuiltInRegistries.DATA_COMPONENT_TYPE.get(MahjongContent.id(name))));
-        MahjongContent.SUPPLIES.forEach((name, item) -> assertSame(item, BuiltInRegistries.ITEM.get(MahjongContent.id(name))));
+            assertSame(component, BuiltInRegistries.DATA_COMPONENT_TYPE.get(MahjongContent.id(name)).orElseThrow().value()));
+        MahjongContent.SUPPLIES.forEach((name, item) ->
+            assertSame(item, BuiltInRegistries.ITEM.get(MahjongContent.id(name)).orElseThrow().value()));
     }
 
     @Test void stonecuttingMakesOnlyBlanksAndMahjongDyeUsesFourColors(MinecraftServer server) {
         for (TileMaterial material : TileMaterial.values()) {
-            var cutting = (StonecutterRecipe) server.getRecipeManager().byKey(MahjongContent.id("blanks_" + material.getSerializedName())).orElseThrow().value();
+            var cutting = (StonecutterRecipe) server.getRecipeManager().byKey(recipeKey("blanks_" + material.getSerializedName())).orElseThrow().value();
             var input = new SingleRecipeInput(new ItemStack(vanilla(material.source())));
             assertTrue(cutting.matches(input, server.overworld()));
-            ItemStack blanks = cutting.assemble(input, server.registryAccess());
+            ItemStack blanks = cutting.assemble(input);
             assertTrue(blanks.is(MahjongContent.TILE_ITEM));
             assertEquals(16, blanks.getCount());
             assertEquals(new TileData(-1, material, false), blanks.get(MahjongComponents.TILE));
             assertNull(blanks.get(DataComponents.BASE_COLOR));
         }
-        var stickCutting = (StonecutterRecipe) server.getRecipeManager().byKey(MahjongContent.id("blank_point_sticks")).orElseThrow().value();
+        var stickCutting = (StonecutterRecipe) server.getRecipeManager().byKey(recipeKey("blank_point_sticks")).orElseThrow().value();
         var boneInput = new SingleRecipeInput(new ItemStack(Items.BONE_BLOCK));
         assertTrue(stickCutting.matches(boneInput, server.overworld()));
-        ItemStack sticks = stickCutting.assemble(boneInput, server.registryAccess());
+        ItemStack sticks = stickCutting.assemble(boneInput);
         assertTrue(sticks.is(MahjongContent.POINT_STICK));
         assertEquals(24, sticks.getCount());
         assertEquals(0, sticks.getOrDefault(MahjongComponents.POINTS, 0));
@@ -156,10 +177,9 @@ class PhysicalSuppliesTest {
             new ItemStack(Items.GREEN_DYE), new ItemStack(Items.RED_DYE)));
         assertTrue(dye.is(MahjongContent.MAHJONG_DYE));
         assertEquals(1, dye.getCount());
-        assertTrue(server.getRecipeManager().byKey(MahjongContent.id("engrave_set")).isEmpty());
+        assertTrue(server.getRecipeManager().byKey(recipeKey("engrave_set")).isEmpty());
         assertTrue(server.getRecipeManager().getRecipes().stream().noneMatch(recipe ->
-            recipe.id().getPath().startsWith("engrave_tile_")
-                || recipe.value().getResultItem(server.registryAccess()).is(MahjongContent.CREATIVE_MAHJONG_DYE)));
+            recipe.id().identifier().getPath().startsWith("engrave_tile_")));
     }
 
     @Test void redDyeCraftingPreservesComponentsAndSelectsRuleCompatibleSets(MinecraftServer server) {
@@ -258,7 +278,7 @@ class PhysicalSuppliesTest {
             assertEquals(136, deck.tiles().size());
             assertEquals(108, MahjongSupplies.deck(original, true, deck.redFives()).tiles().size());
             assertTrue(top.skyeyefast.mchjong.engine.Tile.validSet(deck.tiles()));
-            var loaded = ItemStack.parseOptional(server.registryAccess(), (net.minecraft.nbt.CompoundTag) original.save(server.registryAccess()));
+            var loaded = roundTrip(server, original);
             assertTrue(ItemStack.matches(original, loaded));
             var recolored = MahjongSupplies.dye(loaded, DyeColor.CYAN);
             var flowers = MahjongSupplies.contents(recolored).stream()
@@ -331,11 +351,11 @@ class PhysicalSuppliesTest {
     }
 
     @Test void customPresetIdentitySurvivesPrintingAndPersistence(MinecraftServer server) {
-        var preset = new TileFacePreset(net.minecraft.resources.ResourceLocation.parse("example:ink/night"));
+        var preset = new TileFacePreset(net.minecraft.resources.Identifier.parse("example:ink/night"));
         var source = MahjongSupplies.completeBox(TileMaterial.BONE);
         var printed = MahjongSupplies.engrave(source, preset);
         assertEquals(preset, MahjongSupplies.deck(printed).preset());
-        var restored = ItemStack.parseOptional(server.registryAccess(), (net.minecraft.nbt.CompoundTag) printed.save(server.registryAccess()));
+        var restored = roundTrip(server, printed);
         assertTrue(ItemStack.matches(printed, restored));
         assertTrue(MahjongSupplies.engrave(restored, new TileFacePreset(preset.id())).isEmpty());
         var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
@@ -343,7 +363,7 @@ class PhysicalSuppliesTest {
         var tag = new net.minecraft.nbt.CompoundTag();
         equipment.writeAppearance(tag);
         var copy = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
-        copy.load(tag, server.registryAccess());
+        copy.load(input(server, tag));
         assertEquals(preset, copy.preset());
     }
 
@@ -424,16 +444,15 @@ class PhysicalSuppliesTest {
         var small = source.copyWithCount(3);
         small.set(MahjongComponents.POINTS, 100);
         equipment.drawer(2).setItem(1, small.copy());
-        var saved = new net.minecraft.nbt.CompoundTag();
-        equipment.save(saved, server.registryAccess());
+        var saved = save(server, equipment);
         var loaded = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
-        loaded.load(saved, server.registryAccess());
+        loaded.load(input(server, saved));
         assertTrue(ItemStack.matches(source, loaded.drawer(2).getItem(0)));
         assertTrue(ItemStack.matches(small, loaded.drawer(2).getItem(1)));
         assertEquals(10, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
-        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.getAllKeys());
+        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.keySet());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
         assertFalse(saved.contains("game"));
@@ -443,28 +462,27 @@ class PhysicalSuppliesTest {
         var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
         var source = new ItemStack(MahjongContent.POINT_STICK);
         source.set(MahjongComponents.POINTS, 1000);
-        var saved = new net.minecraft.nbt.CompoundTag();
+        var saved = save(server, equipment);
         equipment.writeAppearance(saved);
-        equipment.save(saved, server.registryAccess());
         var snapshot = saved.copy();
         equipment.drawer(0).setItem(0, source.copy());
         assertEquals(snapshot, saved, "Later equipment changes must not mutate an earlier snapshot");
 
         var restored = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
-        restored.load(saved, server.registryAccess());
+        restored.load(input(server, saved));
         restored.drawer(0).setItem(0, source.copy());
         assertEquals(snapshot, saved, "Restored equipment must not mutate its source NBT");
-        restored.load(saved, server.registryAccess());
+        restored.load(input(server, saved));
         assertTrue(restored.drawer(0).isEmpty());
 
         var appearance = new net.minecraft.nbt.CompoundTag();
         equipment.writeAppearance(appearance);
-        restored.load(appearance, server.registryAccess());
+        restored.load(input(server, appearance));
         assertTrue(restored.drawer(0).isEmpty(), "Appearance packets must not disclose drawer contents");
-        equipment.load(appearance, server.registryAccess());
+        equipment.load(input(server, appearance));
         assertTrue(ItemStack.matches(source, equipment.drawer(0).getItem(0)), "Appearance updates must preserve private contents");
-        equipment.save(saved, server.registryAccess());
-        restored.load(saved, server.registryAccess());
+        saved = save(server, equipment);
+        restored.load(input(server, saved));
         var copy = saved.copy();
         restored.drawer(0).getItem(0).grow(10);
         assertEquals(copy, saved);
@@ -501,7 +519,7 @@ class PhysicalSuppliesTest {
         assertNull(MahjongSupplies.deck(oversized));
         assertTrue(MahjongSupplies.engrave(oversized, TileFacePreset.KANSAI).isEmpty());
         assertTrue(MahjongSupplies.dye(oversized, DyeColor.RED).isEmpty());
-        assertEquals(MahjongSupplies.BOX_SLOTS + 1, oversized.get(DataComponents.CONTAINER).stream().count());
+        assertEquals(MahjongSupplies.BOX_SLOTS + 1, oversized.get(DataComponents.CONTAINER).allItemsCopyStream().count());
         var stick = new ItemStack(MahjongContent.POINT_STICK, 64);
         stick.set(MahjongComponents.POINTS, 1000);
         assertTrue(top.skyeyefast.mchjong.item.PointStickMenu.validStick(stick));
@@ -517,12 +535,11 @@ class PhysicalSuppliesTest {
         equipment.installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
         var appearance = new net.minecraft.nbt.CompoundTag();
         equipment.writeAppearance(appearance);
-        equipment.load(appearance, server.registryAccess());
+        equipment.load(input(server, appearance));
         assertTrue(ItemStack.matches(box, equipment.boxes().getItem(0)));
         assertNotNull(equipment.deck());
-        var empty = new net.minecraft.nbt.CompoundTag();
-        new top.skyeyefast.mchjong.world.TableEquipment(() -> {}).save(empty, server.registryAccess());
-        equipment.load(empty, server.registryAccess());
+        var empty = save(server, new top.skyeyefast.mchjong.world.TableEquipment(() -> {}));
+        equipment.load(input(server, empty));
         assertTrue(equipment.boxes().isEmpty());
         assertNull(equipment.deck());
         assertFalse(equipment.hasCloth());
@@ -555,8 +572,7 @@ class PhysicalSuppliesTest {
 
     @Test void nativeContainerAndComponentCodecsRoundTripACompleteGlassSet(MinecraftServer server) {
         var original = MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.MAGENTA);
-        var tag = original.save(server.registryAccess());
-        var restored = ItemStack.parse(server.registryAccess(), tag).orElseThrow();
+        var restored = roundTrip(server, original);
         assertTrue(ItemStack.matches(original, restored));
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess(), ConnectionType.NEOFORGE);
         try {

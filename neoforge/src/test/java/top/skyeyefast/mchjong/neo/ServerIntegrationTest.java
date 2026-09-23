@@ -4,9 +4,15 @@ import io.netty.buffer.Unpooled;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.RegistryFriendlyByteBuf;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ProblemReporter;
+import net.minecraft.world.item.crafting.Recipe;
+import net.minecraft.world.level.storage.TagValueInput;
+import net.minecraft.world.level.storage.ValueInput;
 import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
@@ -27,15 +33,15 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class ServerIntegrationTest {
     @Test void registriesAndRecipesLoadOnDedicatedServer(MinecraftServer server) {
-        assertSame(MahjongContent.TABLE, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.STOOL, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_stool")));
-        assertSame(MahjongContent.TABLE_ITEM, BuiltInRegistries.ITEM.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.TABLE_ENTITY, BuiltInRegistries.BLOCK_ENTITY_TYPE.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.SEAT_ENTITY, BuiltInRegistries.ENTITY_TYPE.get(MahjongContent.id("seat")));
+        assertSame(MahjongContent.TABLE, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_table")).orElseThrow().value());
+        assertSame(MahjongContent.STOOL, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_stool")).orElseThrow().value());
+        assertSame(MahjongContent.TABLE_ITEM, BuiltInRegistries.ITEM.get(MahjongContent.id("mahjong_table")).orElseThrow().value());
+        assertSame(MahjongContent.TABLE_ENTITY, BuiltInRegistries.BLOCK_ENTITY_TYPE.get(MahjongContent.id("mahjong_table")).orElseThrow().value());
+        assertSame(MahjongContent.SEAT_ENTITY, BuiltInRegistries.ENTITY_TYPE.get(MahjongContent.id("seat")).orElseThrow().value());
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, sound) ->
-            assertSame(sound, BuiltInRegistries.SOUND_EVENT.get(MahjongContent.id(name))));
-        assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_table")).isPresent());
-        assertTrue(server.getRecipeManager().byKey(MahjongContent.id("mahjong_stool")).isPresent());
+            assertSame(sound, BuiltInRegistries.SOUND_EVENT.get(MahjongContent.id(name)).orElseThrow().value()));
+        assertTrue(server.getRecipeManager().byKey(ResourceKey.create(Registries.RECIPE, MahjongContent.id("mahjong_table"))).isPresent());
+        assertTrue(server.getRecipeManager().byKey(ResourceKey.create(Registries.RECIPE, MahjongContent.id("mahjong_stool"))).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");
         assertNotNull(commands);
         for (String name : java.util.List.of("world", "host", "clock", "invite", "accept", "decline", "replays", "replay"))
@@ -65,12 +71,16 @@ class ServerIntegrationTest {
         return game;
     }
 
+    private static ValueInput input(MinecraftServer server, CompoundTag tag) {
+        return TagValueInput.create(ProblemReporter.DISCARDING, server.registryAccess(), tag);
+    }
+
     @Test void privateSavedHandsNeverEnterAChunkUpdate(MinecraftServer server) {
         Game game = startedGame();
         CompoundTag saved = new CompoundTag();
         saved.putString("game", TableNetworking.JSON.toJson(game));
         MahjongTableBlockEntity table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
-        table.loadWithComponents(saved, server.registryAccess());
+        table.loadWithComponents(input(server, saved));
         var box = top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
             top.skyeyefast.mchjong.item.TileMaterial.GLASS, net.minecraft.world.item.DyeColor.PURPLE);
         box = top.skyeyefast.mchjong.item.MahjongSupplies.engrave(box, top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
@@ -82,26 +92,26 @@ class ServerIntegrationTest {
         assertTrue(restored.contains("game"));
         assertTrue(restored.contains("boxes"));
         assertTrue(restored.contains("cloth"));
-        Game copy = TableNetworking.JSON.fromJson(restored.getString("game"), Game.class);
+        Game copy = TableNetworking.JSON.fromJson(restored.getString("game").orElseThrow(), Game.class);
         copy.validate();
         assertEquals(TableNetworking.JSON.toJson(game.view(null)), TableNetworking.JSON.toJson(copy.view(null)));
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
-        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset"), appearance.getAllKeys());
-        assertEquals("glass", appearance.getString("tile_material"));
-        assertEquals("mchjong:kanto", appearance.getString("tile_preset"));
-        table.loadWithComponents(appearance, server.registryAccess());
+        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset"), appearance.keySet());
+        assertEquals("glass", appearance.getString("tile_material").orElseThrow());
+        assertEquals("mchjong:kanto", appearance.getString("tile_preset").orElseThrow());
+        table.loadWithComponents(input(server, appearance));
         CompoundTag afterPublicUpdate = table.saveWithoutMetadata(server.registryAccess());
-        assertEquals(restored.getString("game"), afterPublicUpdate.getString("game"));
+        assertEquals(restored.getString("game").orElseThrow(), afterPublicUpdate.getString("game").orElseThrow());
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, table.equipment().boxes().getItem(0)));
         // The ephemeral server provides registries but no loaded level. Live packet delivery is
         // exercised by both client smoke runs; here the exact packet-tag whitelist is the contract.
         var loaded = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
-        loaded.loadWithComponents(restored, server.registryAccess());
+        loaded.loadWithComponents(input(server, restored));
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, loaded.equipment().boxes().getItem(0)));
         assertEquals(appearance, loaded.getUpdateTag(server.registryAccess()));
         assertEquals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO, loaded.equipment().preset());
         var empty = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
-        loaded.loadWithComponents(empty.saveWithoutMetadata(server.registryAccess()), server.registryAccess());
+        loaded.loadWithComponents(input(server, empty.saveWithoutMetadata(server.registryAccess())));
         assertFalse(loaded.saveWithoutMetadata(server.registryAccess()).contains("game"));
         assertTrue(loaded.equipment().boxes().isEmpty());
     }

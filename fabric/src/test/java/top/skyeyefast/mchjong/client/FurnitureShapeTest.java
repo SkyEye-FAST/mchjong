@@ -26,11 +26,13 @@ class FurnitureShapeTest {
     private static final class Mesh implements VertexConsumer {
         final List<Vertex> vertices = new ArrayList<>();
         @Override public VertexConsumer addVertex(float x, float y, float z) { vertices.add(new Vertex(x, y, z)); return this; }
+        @Override public VertexConsumer setColor(int color) { vertices.getLast().color = color; return this; }
         @Override public VertexConsumer setColor(int r, int g, int b, int a) { vertices.getLast().color = a << 24 | r << 16 | g << 8 | b; return this; }
         @Override public VertexConsumer setUv(float u, float v) { vertices.getLast().u = u; vertices.getLast().v = v; return this; }
         @Override public VertexConsumer setUv1(int u, int v) { return this; }
         @Override public VertexConsumer setUv2(int u, int v) { return this; }
         @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
+        @Override public VertexConsumer setLineWidth(float width) { return this; }
     }
 
     @Test void textureDensityAndComponentTintSurviveLongRails() {

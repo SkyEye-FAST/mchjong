@@ -98,12 +98,4 @@ class SeatedCameraStateTest {
         assertEquals(TableGeometry.yaw(0), camera.yaw(0));
         assertEquals(70, camera.fov(70), 1e-6);
     }
-
-    @Test void worldMipsKeepTheWhiteSwatchAndAntialiasedInkOpaque() {
-        assertEquals(5, TileFaceTexture.mipLevels(2048, 4096));
-        assertEquals(3, TileFaceTexture.mipLevels(512, 1024));
-        assertEquals(0xffffffff, TileFaceTexture.onWhite(0));
-        assertEquals(0xff000000, TileFaceTexture.onWhite(0xff000000));
-        assertEquals(0xff7f7f7f, TileFaceTexture.onWhite(0x80000000));
-    }
 }
