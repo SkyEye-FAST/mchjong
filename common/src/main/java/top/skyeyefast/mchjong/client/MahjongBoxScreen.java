@@ -62,8 +62,10 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         presetChoice.visible = print.visible = printing;
         presetChoice.active = printing && choices.size() > 1;
         print.active = printing && choices.contains(preset) && menu.canEngrave(preset);
-        dyeBack.visible = reagent.getItem() instanceof net.minecraft.world.item.DyeItem;
+        boolean undo = reagent.is(MahjongContent.UNDO_DYE);
+        dyeBack.visible = undo || reagent.getItem() instanceof net.minecraft.world.item.DyeItem;
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
+        dyeBack.setMessage(Component.translatable(undo ? "box.mchjong.undo_dye_back" : "box.mchjong.dye_back"));
         if (getFocused() instanceof net.minecraft.client.gui.components.AbstractWidget widget && !widget.visible)
             setFocused(null);
     }

@@ -52,6 +52,7 @@ class PhysicalSuppliesTest {
         assertNotNull(MahjongSupplies.deck(entries.get(40)));
         assertNull(MahjongSupplies.deck(entries.get(40)).back());
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(Items.CYAN_DYE)));
+        assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(MahjongContent.UNDO_DYE)));
         assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
             .filter(stack -> stack.is(MahjongContent.POINT_STICK)).map(stack -> stack.get(MahjongComponents.POINTS)).toList());
         assertEquals(6, entries.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).count());
@@ -388,6 +389,9 @@ class PhysicalSuppliesTest {
                 assertEquals(0, MahjongSupplies.contents(dyed).stream().filter(s -> s.is(MahjongContent.TILE_ITEM)
                     && MahjongSupplies.tile(s).red()).mapToInt(ItemStack::getCount).sum());
             }
+            ItemStack undyed = MahjongSupplies.dye(engraved, null);
+            assertNull(MahjongSupplies.deck(undyed).back());
+            assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(undyed)));
         }
         var shortBox = box(List.of(MahjongSupplies.tile(TileData.BLANK, DyeColor.BLUE, 64)));
         assertTrue(MahjongSupplies.engrave(shortBox, TileFacePreset.KANSAI).isEmpty());

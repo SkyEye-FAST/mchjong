@@ -63,6 +63,11 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     public boolean canDyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE)) {
+            return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
+                .anyMatch(stack -> stack.is(top.skyeyefast.mchjong.world.MahjongContent.TILE_ITEM)
+                    && MahjongSupplies.back(stack) != null);
+        }
         if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye)) return false;
         var color = dye.getDyeColor();
         return items().subList(0, MahjongSupplies.TILE_SLOTS).stream()
@@ -92,8 +97,10 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
 
     private boolean dyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
-        if (!(reagent.getItem() instanceof net.minecraft.world.item.DyeItem dye) || !canDyeBack()) return false;
-        var output = MahjongSupplies.dyedContents(items(), dye.getDyeColor());
+        boolean undo = reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE);
+        if (!undo && !(reagent.getItem() instanceof net.minecraft.world.item.DyeItem) || !canDyeBack()) return false;
+        var color = undo ? null : ((net.minecraft.world.item.DyeItem) reagent.getItem()).getDyeColor();
+        var output = MahjongSupplies.dyedContents(items(), color);
         if (output.isEmpty()) return false;
         output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;

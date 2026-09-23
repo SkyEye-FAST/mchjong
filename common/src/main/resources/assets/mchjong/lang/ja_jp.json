@@ -71,6 +71,7 @@
   "box.mchjong.stick_storage": "点棒",
   "box.mchjong.sticks": "点棒：%s本",
   "box.mchjong.tiles": "牌：%s枚",
+  "box.mchjong.undo_dye_back": "染色を解除",
   "box.mchjong.unlimited": "消費なし",
   "browser.mchjong.components": "素材と内容を反映したレシピ",
   "browser.mchjong.crafting": "麻雀用品の製作",

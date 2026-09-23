@@ -71,6 +71,7 @@
   "box.mchjong.stick_storage": "Point sticks",
   "box.mchjong.sticks": "%s point sticks",
   "box.mchjong.tiles": "%s tiles",
+  "box.mchjong.undo_dye_back": "Remove dye",
   "box.mchjong.unlimited": "Reusable",
   "browser.mchjong.components": "Component-aware recipe",
   "browser.mchjong.crafting": "Mahjong supplies",

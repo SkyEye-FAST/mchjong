@@ -57,7 +57,7 @@ public final class MahjongSupplies {
     }
 
     public static boolean dyeSlotItem(ItemStack stack) {
-        return mahjongDye(stack) || stack.getItem() instanceof DyeItem;
+        return mahjongDye(stack) || stack.getItem() instanceof DyeItem || stack.is(MahjongContent.UNDO_DYE);
     }
 
     public static boolean boxAccepts(int slot, ItemStack stack) {
@@ -151,7 +151,10 @@ public final class MahjongSupplies {
             var items = dyedContents(contents(input), color);
             if (items.isEmpty()) return ItemStack.EMPTY;
             setContents(result, items);
-        } else result.set(DataComponents.BASE_COLOR, color);
+        } else {
+            if (color != null) result.set(DataComponents.BASE_COLOR, color);
+            else result.remove(DataComponents.BASE_COLOR);
+        }
         return result;
     }
 
@@ -161,7 +164,10 @@ public final class MahjongSupplies {
         for (int i = 0; i < output.size(); i++) {
             var stack = output.get(i);
             if (!stack.isEmpty() && (!boxAccepts(i, stack) || stack.getCount() > stack.getMaxStackSize())) return List.of();
-            if (stack.is(MahjongContent.TILE_ITEM)) stack.set(DataComponents.BASE_COLOR, color);
+            if (stack.is(MahjongContent.TILE_ITEM)) {
+                if (color != null) stack.set(DataComponents.BASE_COLOR, color);
+                else stack.remove(DataComponents.BASE_COLOR);
+            }
         }
         return List.copyOf(output);
     }
