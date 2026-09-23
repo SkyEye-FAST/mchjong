@@ -88,9 +88,14 @@ class FurnitureArtworkTest {
     }
 
     @Test void heldSticksExposeTheirMarkedTopAndExtendUpwardIntoTheViewport() throws Exception {
-        var item = com.google.gson.JsonParser.parseString(Files.readString(textures.getParent().getParent()
-            .resolve("models/item/point_stick.json"))).getAsJsonObject();
-        assertEquals("minecraft:builtin/entity", item.get("parent").getAsString(), "Keep the physical cuboid renderer");
+        Path assets = textures.getParent().getParent();
+        var item = com.google.gson.JsonParser.parseString(Files.readString(assets.resolve("models/item/point_stick.json"))).getAsJsonObject();
+        assertEquals("minecraft:item/generated", item.get("parent").getAsString(), "Special renderer uses a normal base item model");
+        var definition = com.google.gson.JsonParser.parseString(Files.readString(assets.resolve("items/point_stick.json")))
+            .getAsJsonObject().getAsJsonObject("model");
+        assertEquals("minecraft:special", definition.get("type").getAsString());
+        assertEquals("mchjong:item/point_stick", definition.get("base").getAsString());
+        assertEquals("mchjong:supply", definition.getAsJsonObject("model").get("type").getAsString());
         var display = item.getAsJsonObject("display");
         var right = display.getAsJsonObject("firstperson_righthand");
         assertEquals(right, display.getAsJsonObject("firstperson_lefthand"));
