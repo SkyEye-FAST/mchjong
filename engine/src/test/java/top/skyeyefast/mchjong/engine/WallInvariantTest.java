@@ -59,6 +59,27 @@ class WallInvariantTest {
     }
 
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
+    void replacementSlotsStayEmptyAndTheLastLiveTileStaysAtTheWallEnd(RuleSet rules) {
+        Wall wall = new Wall(rules.config(), 211, 0);
+        int end = wall.tiles.size();
+        for (int i = 0; i < rules.replacementCapacity(); i++) {
+            int slot = i < 4 ? end - 1 - i : end - 11 - i;
+            assertEquals(slot, wall.nextReplacementSlot());
+            int replacement = wall.tiles.get(slot);
+            int lastLive = wall.tiles.get(wall.liveEnd - 1);
+            int oldLiveEnd = wall.liveEnd;
+            assertEquals(replacement, wall.replace());
+            assertEquals(Tile.ABSENT, wall.tiles.get(slot), "The drawn rinshan slot must remain vacant");
+            assertEquals(lastLive, wall.tiles.get(oldLiveEnd - 1), "The last live tile becomes dead in place");
+            assertEquals(oldLiveEnd - 1, wall.liveEnd);
+        }
+        int haitei = wall.tiles.get(wall.liveEnd - 1);
+        while (wall.remaining() > 1) wall.draw();
+        assertEquals(haitei, wall.draw());
+        assertEquals(0, wall.remaining());
+    }
+
+    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
     void publicWallOnlyExposesDeclaredIndicators(RuleSet rules) {
         Wall wall = new Wall(rules.config(), 123, 0);
         assertEquals(1, wall.publicTiles(false).stream().filter(t -> t >= 0).count());
