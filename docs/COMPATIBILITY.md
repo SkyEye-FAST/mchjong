@@ -53,6 +53,19 @@ All dependency versions live in `gradle.properties`. Viewer API dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
 
+Forge selects JEI from the shared viewer flag and otherwise stays on its base
+profile, so configuring Forge does not prevent an EMI run on another loader.
+`-PforgeRecipeBrowser=none` or `jei` can override its profile explicitly.
+
+### Create workshop
+
+Minecraft 1.21.1 NeoForge integrates Create 6.0.10 as an optional server/client
+dependency. `-PwithCreate=true` supplies it to development runs. Mechanical
+cutting, mixing, printing, red-five application and packing reuse the shared
+item transformations. The reusable printing plate keeps its face preset in the
+existing component. See [Create workshop](CREATE.md) for the production line,
+recipe viewers and focused validation commands.
+
 ### Maid players
 
 The 1.21.1 profile integrates Touhou Little Maid 1.5.3-neoforge+mc1.21.1 on
@@ -103,7 +116,7 @@ The finite crafting displays cover eight-stick marking batches, every table
 wood, and all sixteen back-dye colors on representative tiles, stools, cloth, boxes, red fives and flowers.
 Case back-dye examples cover each material with blue backs: a completed set,
 or 144 blanks with four 1,000-point sticks in the separate stick compartment.
-The ordinary four-color mahjong-dye recipe uses the viewers' vanilla crafting category.
+The ordinary five-color mahjong-dye recipe uses the viewers' vanilla crafting category.
 Dye inputs cycle through colors only when crafting yields the exact same output.
 Arbitrarily rearranged, mixed-material or specially
 named container contents retain exact identities; their survival operations are

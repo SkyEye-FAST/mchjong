@@ -25,7 +25,8 @@ final class PonderSmoke {
     private static final BlockPos TABLE = new BlockPos(3, 1, 3);
     private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
     private static final Map<String, Integer> TEXT_COUNTS = Map.of(
-        "table_placement", 4, "table_equipment", 5, "table_playing", 6);
+        "table_placement", 4, "table_equipment", 5, "table_playing", 6,
+        "workshop_production", 6, "workshop_dyeing", 5);
     private static int stage;
     private static int language;
     private static int sceneIndex;
@@ -63,12 +64,14 @@ final class PonderSmoke {
                 client.options.guiScale().set(previousScale);
                 client.resizeDisplay();
                 Files.writeString(output.resolve("ponder-checks.txt"),
-                    "Ponder: seven item entries, three scenes, four locales, resource reload, full playback, replay reset, native UI and isolated equipment passed.\n");
+                    "Ponder: " + (workshopInstalled() ? "twelve item entries, five scenes" : "seven item entries, three scenes")
+                        + ", four locales, resource reload, full playback, replay reset, native UI and isolated equipment passed.\n");
                 stage = 5;
                 return true;
             }
-            scenes = PonderIndex.getSceneAccess().compile(MahjongContent.id("mahjong_table"));
-            require(scenes.size() == 3, "Scene count changed after language reload");
+            scenes = new java.util.ArrayList<>(PonderIndex.getSceneAccess().compile(MahjongContent.id("mahjong_table")));
+            if (workshopInstalled()) scenes.addAll(PonderIndex.getSceneAccess().compile(MahjongContent.id("mahjong_printing_plate")));
+            require(scenes.size() == (workshopInstalled() ? 5 : 3), "Scene count changed after language reload");
             for (PonderScene scene : scenes) verifyPlayback(scene);
             sceneIndex = 0;
             show(client);
@@ -99,7 +102,11 @@ final class PonderSmoke {
         PonderUI screen = new SingleSceneScreen(scene);
         client.setScreen(screen);
         screen.setComfyReadingEnabled(false);
-        int keyframe = sceneIndex == 0 ? 2 : sceneIndex == 1 ? 2 : 3;
+        int keyframe = switch (scene.getId().getPath()) {
+            case "table_playing" -> 3;
+            case "workshop_production" -> 4;
+            default -> 2;
+        };
         screen.seekToTime(scene.getKeyframeTime(keyframe) + 15);
         ticks = 0;
     }
@@ -112,11 +119,17 @@ final class PonderSmoke {
             require(compiled.size() == entry.getValue(), "Missing or duplicate scenes for " + entry.getKey());
             require(compiled.stream().map(PonderScene::getId).distinct().count() == compiled.size(), "Duplicate scene IDs");
         }
+        if (workshopInstalled()) for (String item : List.of("mahjong_printing_plate", "incomplete_mahjong_box",
+                "mahjong_dye", "red_dora_dye", "undo_dye")) {
+            var compiled = PonderIndex.getSceneAccess().compile(MahjongContent.id(item));
+            require(compiled.size() == 2 && compiled.stream().map(PonderScene::getId).distinct().count() == 2,
+                "Missing or duplicate workshop scenes for " + item);
+        }
         require(PonderIndex.streamPlugins().filter(plugin -> plugin.getModId().equals("mchjong")).count() == 1,
             "Plugin registered more than once");
         PonderIndex.reload();
         require(PonderIndex.getSceneAccess().getRegisteredEntries().stream()
-            .filter(entry -> entry.getKey().getNamespace().equals("mchjong")).count() == 12,
+            .filter(entry -> entry.getKey().getNamespace().equals("mchjong")).count() == (workshopInstalled() ? 22 : 12),
             "Scene reload changed registration count");
         require(PonderUI.of(MahjongContent.id("mahjong_table")).getActiveScene().getId()
             .equals(MahjongContent.id("table_placement")), "Native item entry did not open the first scene");
@@ -124,7 +137,12 @@ final class PonderSmoke {
         Set<String> keys = new HashSet<>();
         keys.add("mchjong.ponder.tag.mahjong");
         keys.add("mchjong.ponder.tag.mahjong.description");
+        if (workshopInstalled()) {
+            keys.add("mchjong.ponder.tag.mahjong_workshop");
+            keys.add("mchjong.ponder.tag.mahjong_workshop.description");
+        }
         TEXT_COUNTS.forEach((id, count) -> {
+            if (id.startsWith("workshop_") && !workshopInstalled()) return;
             keys.add("mchjong.ponder." + id + ".header");
             for (int i = 1; i <= count; i++) keys.add("mchjong.ponder." + id + ".text_" + i);
         });
@@ -133,12 +151,19 @@ final class PonderSmoke {
         // Ponder's datagen API registers plugins again; restore the runtime index after collecting defaults.
         PonderIndex.reload();
         require(english.keySet().equals(keys), "Ponder's generated translation keys differ from the resources");
+        var resourceKeys = new HashSet<>(keys);
+        resourceKeys.add("mchjong.ponder.tag.mahjong_workshop");
+        resourceKeys.add("mchjong.ponder.tag.mahjong_workshop.description");
+        TEXT_COUNTS.forEach((id, count) -> {
+            resourceKeys.add("mchjong.ponder." + id + ".header");
+            for (int i = 1; i <= count; i++) resourceKeys.add("mchjong.ponder." + id + ".text_" + i);
+        });
         for (String locale : LANGUAGES) {
             try (var reader = client.getResourceManager().openAsReader(MahjongContent.id("lang/" + locale + ".json"))) {
                 var translations = JsonParser.parseReader(reader).getAsJsonObject();
                 var actual = translations.keySet().stream().filter(key -> key.startsWith("mchjong.ponder.")).collect(java.util.stream.Collectors.toSet());
-                require(actual.equals(keys), "Incomplete Ponder translations in " + locale);
-                for (String key : keys) require(!translations.get(key).getAsString().isBlank(), "Empty translation: " + key);
+                require(actual.equals(resourceKeys), "Incomplete Ponder translations in " + locale);
+                for (String key : resourceKeys) require(!translations.get(key).getAsString().isBlank(), "Empty translation: " + key);
                 if (locale.equals("en_us")) for (String key : keys)
                     require(english.get(key).equals(translations.get(key).getAsString()), "English storyboard text differs: " + key);
             }
@@ -159,6 +184,10 @@ final class PonderSmoke {
         require((net.minecraft.world.level.Level) scene.getWorld() != Minecraft.getInstance().level, "Tutorial uses the live game level");
         for (int pass = 0; pass < 2; pass++) {
             scene.begin();
+            if (id.startsWith("workshop_")) {
+                require(scene.getBounds().isInside(TABLE.above(2)), "Workshop machine is outside the visible scene bounds");
+                require(scene.getWorld().getBlockState(TABLE.above(2)).isAir(), "Replay retained a workshop machine");
+            }
             MahjongTableBlockEntity initial = table(scene);
             require(initial.getBlockState().is(MahjongContent.TABLE), "Replay did not restore the ordinary table");
             require(!initial.equipment().hasCloth() && initial.equipment().boxes().isEmpty()
@@ -173,6 +202,11 @@ final class PonderSmoke {
                 require(table(scene).equipment().drawer(0).getItem(0).getCount() == 1, "Point-stick demo failed");
             } else if (id.equals("table_playing")) {
                 require(table(scene).getBlockState().is(MahjongContent.AUTO_TABLE), "Automatic-table transition failed");
+            } else if (id.startsWith("workshop_")) {
+                String machine = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    .getKey(scene.getWorld().getBlockState(TABLE.above(2)).getBlock()).toString();
+                require(machine.equals(id.equals("workshop_production") ? "create:mechanical_press" : "create:mechanical_mixer"),
+                    "Workshop machine is missing from the rendered scene");
             }
         }
         scene.begin();
@@ -181,6 +215,10 @@ final class PonderSmoke {
     private static MahjongTableBlockEntity table(PonderScene scene) {
         require(scene.getWorld().getBlockEntity(TABLE) instanceof MahjongTableBlockEntity, "Missing tutorial table block entity");
         return (MahjongTableBlockEntity) scene.getWorld().getBlockEntity(TABLE);
+    }
+
+    private static boolean workshopInstalled() {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(MahjongContent.id("mahjong_printing_plate"));
     }
 
     private static void require(boolean condition, String message) {

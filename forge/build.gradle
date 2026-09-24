@@ -8,7 +8,9 @@ version = rootProject.mod_version
 base.archivesName = "mchjong-forge-${minecraft_version}"
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
 
-def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+// Configuring this subproject must not reject an EMI runtime requested for Fabric or NeoForge.
+def recipeBrowser = providers.gradleProperty('forgeRecipeBrowser').getOrElse(
+    providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei' ? 'jei' : 'none')
 if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('Forge recipeBrowser must be none or jei')
 def smokeProfile = recipeBrowser == 'jei' ? 'jei-bootstrap-' : 'bootstrap-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")

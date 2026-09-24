@@ -20,6 +20,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
+- Optional Create production lines with efficient cutting, printing, dyeing and packing
 
 ## Installation
 
@@ -50,6 +51,9 @@ On 1.21.1 and 1.20.1, optional Ponder tutorials cover placement, equipment and
 seated play. Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
+
+On Minecraft 1.21.1 NeoForge, the optional [Create workshop](docs/CREATE.md)
+automates supply production without opening the mahjong box menu.
 
 On 1.21.1, Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on
 Fabric add a Mahjong task for maids. During work hours, a maid can take an empty

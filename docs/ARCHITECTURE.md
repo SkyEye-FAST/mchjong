@@ -325,6 +325,15 @@ the entire 136/144-tile transaction, then commits it with exactly one ordinary
 dye consumed; creative dye is retained. Presets are immutable item components.
 Crafting rules stay in `recipe/`, and neither loader carries separate rules.
 
+Optional Create machine adapters live in NeoForge's `compat/create` package.
+`MahjongSupplies` owns component-preserving red-five conversion, stick marking,
+batch back coloring, full-set printing and atomic box packing. Crafting and
+Create both delegate to those pure transformations. Native Create machinery
+executes immutable snapshot recipes with exact-component ingredients; the
+integration only adapts inventory admission, recipe selection and output
+capacity at its machine boundaries. Create data is generated separately and
+packaged only in that loader profile. See [Create workshop](CREATE.md).
+
 Private equipment saves explicitly encode empty slots. Public block updates
 omit those slots entirely and contain appearance only, so receiving an
 appearance update cannot clear a server's box, game or private wall. Loading a

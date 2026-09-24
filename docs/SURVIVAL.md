@@ -7,7 +7,7 @@ It uses vanilla crafting and stonecutting with batch preparation for full sets.
 ## Recipe browsing
 
 With JEI or EMI installed, inspect an item with the viewer's recipe/usage keys.
-The ordinary four-color mahjong dye uses the normal crafting category. Face
+The ordinary five-color mahjong dye uses the normal crafting category. Face
 printing is performed inside a held box. The supplies catalogue places empty
 and complete cases together and lists point sticks in ascending denomination.
 
@@ -101,12 +101,14 @@ C H C       C = copper ingot, H = hopper
 ```
 
 Three same-color carpets in a horizontal row make one matching cloth.
-A vanilla chest and one string make a mahjong box, shapeless.
+A mahjong box uses three wooden slabs across the top row, leather/chest/leather
+across the middle row and one iron nugget in the bottom center. The slabs may
+use different wood types; the box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
 
-One black, red, green and blue dye make one mahjong dye, shapeless. Ordinary
+One each of black, red, green, blue and white dye make one mahjong dye, shapeless. Ordinary
 mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
 through the creative catalogue, not survival crafting or loot.
 

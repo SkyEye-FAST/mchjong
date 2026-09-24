@@ -40,6 +40,12 @@ public final class GeneratePonderStructure {
             // Keep their whole volume in the backup so native Ponder rendering and replay work.
             var workshop = structure.copy();
             workshop.put("size", position(7, 5, 7));
+            var air = new CompoundTag();
+            air.putString("Name", "minecraft:air");
+            var workshopPalette = workshop.getList("palette", 10);
+            workshopPalette.add(air);
+            // Ponder derives its occupied bounds from placed entries, not the NBT size alone.
+            workshop.getList("blocks", 10).add(block(6, 4, 6, workshopPalette.size() - 1));
             NbtIo.writeCompressed(workshop, path.resolveSibling("workshop.nbt"));
         }
     }
@@ -48,7 +54,7 @@ public final class GeneratePonderStructure {
         CompoundTag block = new CompoundTag();
         block.put("pos", position(x, y, z));
         block.putInt("state", state);
-        if (state > 0) {
+        if (state == 1 || state == 2) {
             CompoundTag entity = new CompoundTag();
             entity.putString("id", state == 1 ? "mchjong:mahjong_table" : "mchjong:mahjong_stool");
             entity.putString("wood", "oak");

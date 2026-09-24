@@ -42,6 +42,7 @@ public final class TableClientSmoke {
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
     private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
+    private final boolean guidesOnly = Boolean.getBoolean("mchjong.smoke.ponderOnly") || Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
     private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly;
@@ -111,6 +112,13 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (guidesOnly) {
+                    require(Boolean.getBoolean("mchjong.smoke.ponder") || !System.getProperty("mchjong.smoke.browser", "none").equals("none"),
+                        "Choose an installed Ponder or recipe-browser profile for the focused guide checks");
+                    step = 37;
+                    entered = ticks;
+                    return;
+                }
                 UUID id = client.player.getUUID();
                 if (!visualOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
@@ -426,6 +434,12 @@ public final class TableClientSmoke {
             } else if (step == 36 && maidSmoke.tick(client, CENTER, output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Maid task discovery, physical seating, saved binding recovery, seat assignment, legal bot play and task-change cleanup passed.\n");
                 LOG.info("MCHJONG_MAID_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 37) {
+                if (!browserSmoke.tick(client, output)
+                    || (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output))) return;
+                Files.writeString(output.resolve("PASS.txt"), "Focused recipe-browser checks and requested Ponder registration, localization, playback, reload and replay checks passed.\n");
+                LOG.info("MCHJONG_PONDER_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

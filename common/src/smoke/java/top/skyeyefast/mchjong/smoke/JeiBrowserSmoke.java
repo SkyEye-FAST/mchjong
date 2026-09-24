@@ -5,6 +5,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 import mezz.jei.api.constants.VanillaTypes;
 import mezz.jei.api.recipe.RecipeIngredientRole;
+import mezz.jei.api.recipe.category.IRecipeCategory;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin;
@@ -17,21 +18,32 @@ final class JeiBrowserSmoke implements BrowserDriver {
         var runtime = MahjongJeiPlugin.runtime();
         var focus = runtime.getJeiHelpers().getFocusFactory().createFocus(
             output ? RecipeIngredientRole.OUTPUT : RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, stack);
-        return List.of(MahjongJeiPlugin.CRAFTING).stream()
-            .flatMap(type -> runtime.getRecipeManager().createRecipeLookup(type).limitFocus(List.of(focus)).get())
-            .map(top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExample::id).collect(Collectors.toSet());
+        return runtime.getRecipeManager().createRecipeCategoryLookup().get()
+            .filter(category -> category.getRecipeType().getUid().getNamespace().equals("mchjong"))
+            .flatMap(category -> recipeIds(category, focus))
+            .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+    }
+
+    private static <T> java.util.stream.Stream<ResourceLocation> recipeIds(IRecipeCategory<T> category,
+            mezz.jei.api.recipe.IFocus<ItemStack> focus) {
+        return MahjongJeiPlugin.runtime().getRecipeManager().createRecipeLookup(category.getRecipeType())
+            .limitFocus(List.of(focus)).get().map(category::getRegistryName);
     }
 
     @Override public void showRecipe(ResourceLocation id) {
         var runtime = MahjongJeiPlugin.runtime();
-        for (var type : List.of(MahjongJeiPlugin.CRAFTING)) {
-            var result = runtime.getRecipeManager().createRecipeLookup(type).get().filter(recipe -> recipe.id().equals(id)).toList();
-            if (!result.isEmpty()) {
-                runtime.getRecipesGui().showRecipes(runtime.getRecipeManager().getRecipeCategory(type), result, List.of());
-                return;
-            }
-        }
+        for (var category : runtime.getRecipeManager().createRecipeCategoryLookup().get().toList())
+            if (showRecipe(category, id)) return;
         throw new IllegalStateException("JEI did not register " + id);
+    }
+
+    private static <T> boolean showRecipe(IRecipeCategory<T> category, ResourceLocation id) {
+        var runtime = MahjongJeiPlugin.runtime();
+        var result = runtime.getRecipeManager().createRecipeLookup(category.getRecipeType()).get()
+            .filter(recipe -> id.equals(category.getRegistryName(recipe))).toList();
+        if (result.isEmpty()) return false;
+        runtime.getRecipesGui().showRecipes(category, result, List.of());
+        return true;
     }
 
 }

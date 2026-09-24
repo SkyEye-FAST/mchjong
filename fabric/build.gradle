@@ -163,6 +163,8 @@ loom {
             property 'mchjong.smoke.roomOnly', roomSmoke.toString()
             property 'mchjong.smoke.manualOnly', manualSmoke.toString()
             property 'mchjong.smoke.ponder', ponderSmoke.toString()
+            property 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')
+            property 'mchjong.smoke.browserOnly', providers.gradleProperty('smokeBrowser').getOrElse('false')
             property 'mchjong.smoke.browser', recipeBrowser
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath

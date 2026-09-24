@@ -152,6 +152,19 @@ class CreateProcessingTest {
                     server.getRecipeManager().byKey(MahjongContent.id("create/" + id)).orElseThrow()));
             }
             bulkSaw(server, pos.east(3));
+            var assembled = new ItemStack(Items.CHEST);
+            for (var reagent : List.of(Items.LEATHER, Items.IRON_NUGGET)) {
+                var application = com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe.getRecipe(level, assembled,
+                    com.simibubi.create.AllRecipeTypes.DEPLOYING.getType(),
+                    com.simibubi.create.content.kinetics.deployer.DeployerApplicationRecipe.class).orElseThrow().value();
+                assertTrue(application.getIngredients().get(1).test(new ItemStack(reagent)));
+                assembled = application.rollResults(level.random).getFirst();
+                assertTrue(assembled.is(CreateCompat.INCOMPLETE_BOX.get()));
+            }
+            var finishing = com.simibubi.create.content.processing.sequenced.SequencedAssemblyRecipe.getRecipe(level, assembled,
+                com.simibubi.create.AllRecipeTypes.PRESSING.getType(),
+                com.simibubi.create.content.kinetics.press.PressingRecipe.class).orElseThrow().value();
+            assertTrue(MahjongSupplies.validBox(finishing.rollResults(level.random).getFirst()), "Native sequence must finish a usable empty box");
         } finally {
             level.removeBlock(pos.above(2), false);
             level.removeBlock(pos, false);

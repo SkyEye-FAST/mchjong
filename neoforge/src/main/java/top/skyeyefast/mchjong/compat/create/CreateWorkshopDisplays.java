@@ -48,7 +48,7 @@ public final class CreateWorkshopDisplays {
             var tile = MahjongSupplies.tile(new TileData(face, TileMaterial.BONE, red), 1);
             var dye = new ItemStack(red ? MahjongContent.UNDO_DYE : MahjongContent.RED_DORA_DYE);
             var recipe = CreateProcessing.deploying(tile, dye);
-            displays.add(new Display(MahjongContent.id("create/display/five/" + face + "/" + red), "deploying",
+            displays.add(new Display(MahjongContent.id("/create/display/five/" + face + "/" + red), "deploying",
                 List.of(tile, dye), recipe.getRollableResultsAsItemStacks(), new ItemStack(AllBlocks.DEPLOYER.get())));
         }
         var marked = MahjongSupplies.markSticks(List.of(new ItemStack(MahjongContent.POINT_STICK, 16)), new ItemStack(Items.BLUE_DYE), 16);
@@ -59,7 +59,7 @@ public final class CreateWorkshopDisplays {
     private static void add(List<Display> displays, String id, CreateProcessing.Batch batch) {
         if (batch == null) throw new IllegalStateException("Invalid workshop example: " + id);
         boolean mixing = batch.operation().equals("dye_backs") || batch.operation().equals("mark_sticks");
-        displays.add(new Display(MahjongContent.id("create/display/" + id), batch.operation(), batch.inputs(), batch.outputs(),
+        displays.add(new Display(MahjongContent.id("/create/display/" + id), batch.operation(), batch.inputs(), batch.outputs(),
             new ItemStack(mixing ? AllBlocks.MECHANICAL_MIXER.get() : AllBlocks.MECHANICAL_PRESS.get())));
     }
 

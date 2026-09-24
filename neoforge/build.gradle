@@ -190,6 +190,7 @@ neoForge {
             systemProperty 'mchjong.smoke.manualOnly', manualSmoke.toString()
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')
+            systemProperty 'mchjong.smoke.browserOnly', providers.gradleProperty('smokeBrowser').getOrElse('false')
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
