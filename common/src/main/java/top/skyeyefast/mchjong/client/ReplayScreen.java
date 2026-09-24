@@ -340,7 +340,7 @@ public final class ReplayScreen extends Screen {
             graphics.fill(card.x(), card.y(), card.right(), card.bottom(), seat == viewer ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             if (seat == viewer) graphics.renderOutline(card.x(), card.y(), card.width(), card.height(), MahjongUi.ACCENT);
             int inset = PlayerPortrait.draw(graphics, player, card.x() + 4, card.y() + 3, 10);
-            MahjongUi.text(graphics, font, Component.literal(player.name()), card.x() + 5 + inset, card.y() + 4,
+            MahjongUi.text(graphics, font, player.entityBot() ? Component.translatable(player.name()) : Component.literal(player.name()), card.x() + 5 + inset, card.y() + 4,
                 card.width() - 9 - inset, MahjongUi.TEXT, false);
             if (board.scoresOnCards()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.points", player.points()),
                 card.x() + 5, card.y() + 17, card.width() - 10, MahjongUi.MUTED, false);

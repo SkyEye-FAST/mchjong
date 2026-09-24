@@ -1193,7 +1193,8 @@ public final class TableScreen extends Screen {
     public static Component playerName(TableView view, int seat) {
         TableView.Seat player = view.seats().get(seat);
         if (!player.occupied()) return Component.translatable("ui.mchjong.empty");
-        return player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot", seat + 1) : Component.literal(player.name());
+        if (player.bot() && !player.entityBot()) return Component.translatable("ui.mchjong.bot", seat + 1);
+        return player.entityBot() ? Component.translatable(player.name()) : Component.literal(player.name());
     }
 
     private static void elbow(GuiGraphics graphics, Projected point, CalloutButton button, int color) {
