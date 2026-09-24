@@ -138,7 +138,7 @@ class PhysicalHandlingTest {
             .filter(frame -> frame.piece().index() == moved.piece().index()).findFirst().orElseThrow().piece().position());
     }
 
-    @Test void replacementAnimationStartsAtTheRefilledDeadWallSlot() {
+    @Test void replacementAnimationStartsAtTheVacatedDeadWallSlot() {
         var game = manual(RuleSet.MAHJONG_SOUL_3);
         int dealer = game.view(null).dealer();
         act(game, dealer, Action.Type.SHUFFLE);
@@ -149,7 +149,7 @@ class PhysicalHandlingTest {
         var before = snapshot(base, base.revision() + 1, Game.Phase.DRAW, base.wall(), base.seats(),
             new TableView.Handling(7, deadSlot, 1, 1, 1, false), List.of(new Action(Action.Type.DRAW)));
         var wall = new ArrayList<>(before.wall());
-        wall.set(wall.size() - 15, Tile.ABSENT);
+        wall.set(deadSlot, Tile.ABSENT);
         var seats = new ArrayList<>(before.seats());
         var player = seats.get(dealer);
         var hand = new ArrayList<>(player.hand());

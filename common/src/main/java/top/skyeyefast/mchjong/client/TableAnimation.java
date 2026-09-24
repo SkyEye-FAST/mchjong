@@ -191,7 +191,7 @@ public final class TableAnimation {
             }
             if (source == null && target.piece().area() == TableScene.Area.HAND && view.handling() != null
                 && view.handling().sourceSlot() >= 0 && target.piece().seat() == view.turn()) {
-                // The dead-wall slot can be refilled in the same snapshot; it need not disappear to be the source.
+                // A physical draw starts at the server-issued wall slot.
                 if (handled < view.handling().packetSize()) {
                     source = sources.get(new Key(TableScene.Area.WALL, -1, view.handling().sourceSlot() + handled++));
                     if (source != null) drawn.remove(source);
