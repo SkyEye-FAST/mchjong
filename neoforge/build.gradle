@@ -70,6 +70,9 @@ dependencies {
         runtimeOnly "mezz.jei:jei-${minecraft_version}-neoforge:${jei_version}"
         runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-neoforge:${mezz_config_version}"
     }
+    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'rei') {
+        runtimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     jarJar project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")
@@ -120,7 +123,7 @@ def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoole
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
+if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
 def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
@@ -153,6 +156,7 @@ neoForge {
             systemProperty 'mchjong.smoke.browserOnly', browserSmoke.toString()
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
+            if (recipeBrowser == 'rei') systemProperty 'neoforge.warnings.onlyin.hide', 'true'
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }
     }

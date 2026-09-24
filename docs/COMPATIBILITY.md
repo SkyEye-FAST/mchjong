@@ -16,14 +16,13 @@ Branch synchronization, Java boundaries and release pins are documented in
 | Integration | Pinned distribution | Development profile |
 | --- | --- | --- |
 | JEI | 29.40.0.102, with MezzConfig 0.6.3 | `-PrecipeBrowser=jei` |
-| REI | 26.1.819, catalogue/identity adapter | Compile-only API; install separately |
+| REI | 26.1.819 | `-PrecipeBrowser=rei` |
 | Touhou Little Maid | NeoForge 2.0.0 / Orihime 1.0.0, pinned test builds below | `-PwithMaid=true` |
 | Base installation | No optional runtime | `-PrecipeBrowser=none` |
 
-JEI provides custom supply recipe pages on both loaders. REI exposes catalogue
-entries, component identity and screen exclusion zones. Its catalogue adapter is
-distinct from a custom recipe-page implementation. REI's compile classpath uses
-Architectury 20.0.6 and Basic Math 0.6.1.
+JEI and REI provide component-aware supply recipe pages on both loaders. REI also
+exposes the matching catalogue entries, component identity and screen exclusion
+zones. Its compile classpath uses Architectury 20.0.6 and Basic Math 0.6.1.
 
 Optional APIs remain compile-only. MChjong packages its own adapters and shared
 engine; optional mods are installed separately. Current integration scope is

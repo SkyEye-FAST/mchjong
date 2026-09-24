@@ -24,9 +24,13 @@ packets, inventory transactions and rendering.
 
 ## Optional integrations
 
-Append `-PrecipeBrowser=jei` to Fabric or NeoForge client checks, writing to
-`build/smoke/jei-evidence`. Add `-PsmokeBrowser=true` for the focused viewer run
+Append `-PrecipeBrowser=jei` or `-PrecipeBrowser=rei` to Fabric or NeoForge client
+checks, writing to a viewer-specific smoke evidence directory. Add
+`-PsmokeBrowser=true` for the focused viewer run
 under `build/smoke/browser-evidence`.
+REI's NeoForge artifact still carries legacy `@OnlyIn` annotations. NeoForge's
+development-only warning screen is hidden for that smoke profile so the actual
+viewer can run; the warnings remain logged and production behavior is unchanged.
 `RecipeBrowserDataSmoke` checks finite recipes and every cycling input against
 the loaded recipes. Viewer checks query catalogue order, denominations, flower/red
 back dyes, name/component-preserving upgrades and native container exclusions,

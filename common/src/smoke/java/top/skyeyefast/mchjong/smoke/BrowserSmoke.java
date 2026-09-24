@@ -43,7 +43,11 @@ final class BrowserSmoke {
             stage = 4;
             return true;
         }
-        if (driver == null) driver = new JeiBrowserSmoke();
+        if (driver == null) driver = switch (browser) {
+            case "jei" -> new JeiBrowserSmoke();
+            case "rei" -> new ReiBrowserSmoke();
+            default -> throw new IllegalStateException("Unsupported recipe browser: " + browser);
+        };
         if (client.getOverlay() != null) return false;
         check(++ticks < 600, "Browser smoke timed out at stage " + stage);
         if (!driver.ready()) return false;

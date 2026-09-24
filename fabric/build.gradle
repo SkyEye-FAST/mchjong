@@ -47,6 +47,9 @@ dependencies {
         runtimeOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
         runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}"
     }
+    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'rei') {
+        runtimeOnly "me.shedaniel:RoughlyEnoughItems-fabric:${rei_version}"
+    }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     include project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")
@@ -114,7 +117,7 @@ def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toB
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
-if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
+if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
 def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
