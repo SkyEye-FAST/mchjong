@@ -125,7 +125,7 @@ public final class CreatePonder implements PonderPlugin {
     private static void base(SceneBuilder scene, SceneBuildingUtil util, String id, String title, boolean mixer) {
         scene.title(id, title);
         scene.configureBasePlate(0, 0, 7);
-        scene.scaleSceneView(0.85f);
+        scene.scaleSceneView(0.75f);
         for (int x = 0; x < 7; x++) for (int z = 0; z < 7; z++)
             scene.world().setBlock(new BlockPos(x, 1, z), Blocks.AIR.defaultBlockState(), false);
         scene.world().setBlock(BASIN, AllBlocks.BASIN.getDefaultState(), false);
