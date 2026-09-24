@@ -41,9 +41,10 @@ public final class TableClientSmoke {
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
+    private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || maidOnly;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -176,6 +177,7 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (manualOnly) { step = 19; entered = ticks; return; }
                 if (paletteOnly) {
                     client.setScreen(new MaterialPaletteSmoke());
                     step = 31; entered = ticks;
@@ -379,6 +381,12 @@ public final class TableClientSmoke {
             } else if (step == 12 && replaySmoke.tick(client, output)) {
                 step = 19; entered = ticks;
             } else if (step == 19 && manualSmoke.tick(client, output)) {
+                if (manualOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Ordinary table wall building, dice, packet dealing, draws and exit passed.\n");
+                    LOG.info("MCHJONG_MANUAL_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;

@@ -119,6 +119,11 @@ changes need fresh screenshots of the affected flows on both loaders; prefer
 focused captures over unrelated gameplay checks. Inspect those screenshots and
 fresh PASS/FAIL markers and logs; compilation alone is not visual acceptance.
 Report exactly which checks ran and any outstanding failures or coverage limits.
+For routine fixes, run the smallest owning test or smoke command once after the
+change is ready; expand validation only when that check reveals a concrete risk.
+For ordinary-table handling visuals, use `:fabric:runSmokeClient -PsmokeManual=true`
+and `:neoforge:runSmokeClient -PsmokeManual=true` to capture the manual flow without
+the unrelated full client suites.
 
 For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal

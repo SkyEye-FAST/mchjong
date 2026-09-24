@@ -267,8 +267,8 @@ sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
-Ordinary tables show two dice in the central felt area from match start. After
-wall building the dealer can focus/click the dice to pick them up, then roll via
+Ordinary tables show two dice in the central felt area after every wall is built.
+The dealer can then focus/click the dice to pick them up and roll via
 the native action control. Both faces use the item textures; hovering the region
 shows a compact face + face = total panel with native narrated numeric text.
 Immersive play becomes available after dealing completes, including its visible
