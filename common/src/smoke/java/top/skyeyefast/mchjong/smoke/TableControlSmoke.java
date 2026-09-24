@@ -110,7 +110,34 @@ final class TableControlSmoke {
         } else if (stage == 20 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
             languageReload.join();
             require(client.screen.width == 320 && client.screen.height == 240, "Preset options minimum viewport");
+            client.screen.onClose();
+            require(client.screen instanceof TableScreen, "Rules screen did not return to lobby");
+            next(30);
+        } else if (stage == 30 && ticks > 5) {
+            capture(client, output, "25n-no-red-lobby-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
+            click(client, "rules.mchjong.title");
             AutomationControlsSmoke.checkBounds(client);
+            var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
+                    Component.translatable(view.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
+            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
+            var unavailablePreset = widget(client, RuleSet.M_LEAGUE.presetKey());
+            require(!unavailablePreset.active, "Unavailable preset is enabled");
+            AutomationControlsSmoke.checkBounds(client);
+            double scale = client.getWindow().getGuiScale();
+            long window = client.getWindow().getWindow();
+            var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
+            require(cursor != null, "Missing native cursor callback");
+            try { cursor.invoke(window, (unavailablePreset.getX() + 5) * scale, (unavailablePreset.getY() + 5) * scale); }
+            finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
+            next(31);
+        } else if (stage == 31 && ticks > 10) {
+            require(widget(client, RuleSet.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
+            capture(client, output, "25m-presets-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
+            var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
+                    Component.translatable(view.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
+            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
             var unavailable = widget(client, RedFives.THREE.translationKey());
             double scale = client.getWindow().getGuiScale();
             long window = client.getWindow().getWindow();
@@ -325,17 +352,24 @@ final class TableControlSmoke {
     }
     private void next(int value) { stage = value; ticks = 0; }
     private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.TableView view, RuleSet target) {
-        require(view.rules().preset() != RuleSet.M_LEAGUE, "Preset cycle selected unavailable red fives");
-        require(view.rules().preset().players() == target.players(), "Preset cycle changed player count");
+        require(view.rules().preset() != RuleSet.M_LEAGUE, "Preset selector selected unavailable red fives");
+        require(view.rules().preset().players() == target.players(), "Preset selector changed player count");
         if (ticks < 10) return false;
-        if (view.rules().preset() == target) return true;
-        if (ticks % 10 == 0) {
+        if (view.rules().preset() == target && client.screen instanceof TableScreen) return true;
+        if (client.screen instanceof TableScreen && ticks % 10 == 0) {
             String label = Component.translatable("rules.mchjong.preset",
                 Component.translatable(view.rules().preset().presetKey())).getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-            require(button.active, "Host preset cycle is disabled");
+                .filter(widget -> widget.getMessage().getString().startsWith(label)).findFirst().orElseThrow();
+            require(button.active, "Host preset selector is disabled");
             client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        } else if (client.screen instanceof TableRulesScreen && ticks % 10 == 0) {
+            String choice = Component.translatable(target.presetKey()).getString();
+            if (client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+                .anyMatch(widget -> widget.getMessage().getString().equals(choice))) {
+                click(client, target.presetKey());
+                click(client, "rules.mchjong.apply");
+            }
         }
         return false;
     }

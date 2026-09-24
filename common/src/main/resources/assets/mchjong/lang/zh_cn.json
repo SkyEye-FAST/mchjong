@@ -404,7 +404,7 @@
   "rules.mchjong.pending": "正在确认服务器规则",
   "rules.mchjong.points_note": "数值单位为点；马点15000表示+15",
   "rules.mchjong.preset": "预设：%s",
-  "rules.mchjong.preset_help": "切换至下一预设，保留其支持的可调选项",
+  "rules.mchjong.preset_help": "展开或收起预设选项",
   "rules.mchjong.preset_note": "可调整预设选项；其他项目展示当前规则",
   "rules.mchjong.previous": "上一页",
   "rules.mchjong.range": "%s：范围%s～%s，步长%s",

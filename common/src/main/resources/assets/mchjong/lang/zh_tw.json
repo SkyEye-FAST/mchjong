@@ -404,7 +404,7 @@
   "rules.mchjong.pending": "正在確認伺服器規則",
   "rules.mchjong.points_note": "數值單位為點；馬點 15000 表示 +15",
   "rules.mchjong.preset": "預設：%s",
-  "rules.mchjong.preset_help": "切換至下一預設，保留其支援的可調選項",
+  "rules.mchjong.preset_help": "展開或收起預設選項",
   "rules.mchjong.preset_note": "可調整預設選項；其他項目展示目前規則",
   "rules.mchjong.previous": "上一頁",
   "rules.mchjong.range": "%s：範圍 %s～%s，間隔 %s",

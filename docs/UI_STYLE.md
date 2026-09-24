@@ -120,13 +120,15 @@ complete cap and bevel joined to the body. Nearby spectators use the world view
 without occupying participant seats.
 
 The rule screen separates preset options, read-only rule details and custom
-settings. Preset-supported options retain the preset identity. Red compositions
+settings. The preset selector expands to show every preset for the current player
+count; unavailable choices are disabled and explain the red-tile shortage on hover.
+Preset-supported options retain the preset identity. Red compositions
 use three separate choices; unavailable choices remain visible, disabled and
 labelled with a shortage tooltip. Availability comes from synchronized server
 capabilities rather than access to box inventory. Every composition, including
 no-red play, requires a complete matching set with enough ordinary and red fives.
-A selected no-red configuration displays a red warning directly at the bottom
-of the room home screen. All rule pages paginate at
+A selected no-red configuration displays a red warning inside the room home panel
+below its primary action. All rule pages paginate at
 320 x 240, with complete labels available on hover. The shared smoke captures
 the disabled-red tooltip in all four locales at that size.
 Minimum yaku han uses explicit one/two/four choices and match length uses

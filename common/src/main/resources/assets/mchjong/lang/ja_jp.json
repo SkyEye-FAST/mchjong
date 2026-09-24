@@ -404,7 +404,7 @@
   "rules.mchjong.pending": "サーバーのルールを確認中",
   "rules.mchjong.points_note": "単位は点です。ウマの15000は＋15を表します",
   "rules.mchjong.preset": "プリセット：%s",
-  "rules.mchjong.preset_help": "次のプリセットへ切替。対応する選択項目は維持します",
+  "rules.mchjong.preset_help": "プリセット一覧を開く・閉じる",
   "rules.mchjong.preset_note": "選択項目を変更できます。他の項目は現在のルールです",
   "rules.mchjong.previous": "前のページ",
   "rules.mchjong.range": "%s：%s～%s、%s刻み",

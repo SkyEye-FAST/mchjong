@@ -404,7 +404,7 @@
   "rules.mchjong.pending": "Confirming rules with the server",
   "rules.mchjong.points_note": "Enter points; an uma of 15000 means +15",
   "rules.mchjong.preset": "Preset: %s",
-  "rules.mchjong.preset_help": "Next preset; retains supported table options",
+  "rules.mchjong.preset_help": "Show or hide preset choices",
   "rules.mchjong.preset_note": "Preset options are editable; other entries show the current rules",
   "rules.mchjong.previous": "Previous page",
   "rules.mchjong.range": "%s: %s to %s, step %s",

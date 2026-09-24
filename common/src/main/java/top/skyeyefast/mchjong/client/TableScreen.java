@@ -927,7 +927,7 @@ public final class TableScreen extends Screen {
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
             int span = Math.min(440, layoutWidth - 20), left = (layoutWidth - span) / 2;
             int top = 78;
-            MahjongUi.panel(graphics, left - 4, top, span + 8, actionTop + 32 - top);
+            MahjongUi.panel(graphics, left - 4, top, span + 8, actionTop + 46 - top);
         }
         if (view.exitVote() != null) {
             renderExitVote(graphics, view);
@@ -940,7 +940,7 @@ public final class TableScreen extends Screen {
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), layoutWidth - 24);
-            int y = layoutHeight - 6 - lines.size() * font.lineHeight;
+            int y = actionTop + 27;
             for (var line : lines) {
                 graphics.drawCenteredString(font, line, layoutWidth / 2, y, MahjongUi.NEGATIVE);
                 y += font.lineHeight;
