@@ -100,22 +100,16 @@ final class TableHand {
                 if (color != 0) graphics.outline(x(i), top, tileWidth, tileHeight, color);
             }
         }
-        int meldTileWidth = perspective ? Math.min(40, tileWidth) : tileWidth;
-        int meldAvailable = right - left - span - (perspective ? 18 : 8);
+        if (perspective) return;
+        int meldTileWidth = tileWidth;
+        int meldAvailable = right - left - span - 8;
         while (meldTileWidth > 2 && meldWidth(meldTileWidth) > meldAvailable) meldTileWidth--;
-        int meldX = right - meldWidth(meldTileWidth);
+        int meldX = right;
         int meldHeight = Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         int meldY = y + tileHeight - meldHeight;
-        if (perspective && !melds.isEmpty()) {
-            graphics.fill(meldX + 5, meldY + meldHeight + 3, right + 8, meldY + meldHeight + 10, 0x44000000);
-            graphics.horizontalLine(meldX - 3, right + 3, meldY + meldHeight + 1, 0xff34585a);
-        }
         for (var meld : melds) {
-            if (perspective) {
-                TileGui.meld3d(graphics, meld, owner, meldX, meldY, meldTileWidth,
-                    Math.max(1, meldTileWidth / 8), preset, material, dye);
-            } else TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset, material, dye);
-            meldX += TileGui.meldWidth(meld, owner, meldTileWidth);
+            meldX -= TileGui.meldWidth(meld, owner, meldTileWidth);
+            TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset, material, dye);
         }
     }
 
