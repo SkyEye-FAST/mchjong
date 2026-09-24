@@ -361,7 +361,7 @@ or on the ordinary table's felt; carried deposits remain visible between hands.
 The automatic table's active-match overlay includes collapsible controls at the
 lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
 matches) extract norths. Both compact and expanded rows are individual toggle buttons;
-seated rows retain 20-pixel hit areas with inset 16-pixel surfaces and no vertical
+seated rows retain 20-pixel hit areas with inset 18-pixel surfaces and no vertical
 gap. A quiet side handle changes their presentation, retaining a 20-pixel hit area
 and a visible keyboard focus outline. Immersive controls retain the horizontal strip.
 Compact rows use localized
