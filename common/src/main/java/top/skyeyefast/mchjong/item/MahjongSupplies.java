@@ -2,11 +2,14 @@ package top.skyeyefast.mchjong.item;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.NonNullList;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Item;
+import net.minecraft.world.item.Items;
 import net.minecraft.world.item.component.ItemContainerContents;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.RedFives;
@@ -48,8 +51,10 @@ public final class MahjongSupplies {
     }
 
     public static boolean storable(ItemStack stack) {
-        return (stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK) || stack.is(MahjongContent.DICE))
-            && !stack.has(DataComponents.CONTAINER) && !stack.has(DataComponents.BUNDLE_CONTENTS);
+        if (stack.isEmpty() || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
+        return stack.is(MahjongContent.TILE_ITEM) ? tile(stack).valid()
+            : stack.is(MahjongContent.POINT_STICK) ? validPoints(stack.getOrDefault(MahjongComponents.POINTS, 0))
+            : stack.is(MahjongContent.DICE);
     }
 
     public static boolean mahjongDye(ItemStack stack) {
@@ -62,14 +67,14 @@ public final class MahjongSupplies {
 
     public static boolean boxAccepts(int slot, ItemStack stack) {
         if (slot < 0 || slot >= BOX_SLOTS || stack.has(DataComponents.CONTAINER) || stack.has(DataComponents.BUNDLE_CONTENTS)) return false;
-        return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM)
-            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK)
-            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) : dyeSlotItem(stack);
+        return slot < TILE_SLOTS ? stack.is(MahjongContent.TILE_ITEM) && storable(stack)
+            : slot < DYE_SLOT ? stack.is(MahjongContent.POINT_STICK) && storable(stack)
+            : slot == DICE_SLOT ? stack.is(MahjongContent.DICE) && storable(stack) : dyeSlotItem(stack);
     }
 
     /** Do not truncate oversized command-created containers when opening or crafting them. */
     public static boolean validBox(ItemStack box) {
-        if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1) return false;
+        if (!box.is(MahjongContent.BOX_ITEM) || box.getCount() != 1 || box.has(DataComponents.BUNDLE_CONTENTS)) return false;
         var stored = box.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         if (box.has(MahjongComponents.BOX_PRESET)) return stored.nonEmptyStream().findAny().isEmpty();
         if (stored.stream().limit(BOX_SLOTS + 1L).count() > BOX_SLOTS) return false;
@@ -81,6 +86,97 @@ public final class MahjongSupplies {
 
     public static int tileCount(List<ItemStack> items) {
         return items.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).mapToInt(ItemStack::getCount).sum();
+    }
+
+    public static Map<Item, Integer> markings() {
+        return Map.of(Items.WHITE_DYE, 100, Items.BLUE_DYE, 1000,
+            Items.YELLOW_DYE, 5000, Items.RED_DYE, 10000, Items.BLACK_DYE, -10000);
+    }
+
+    private static boolean validPoints(int points) {
+        return points == 0 || points == 100 || points == 1000 || points == 5000 || points == 10000 || points == -10000;
+    }
+
+    /** One physical five per application, even when the source is a larger stack. */
+    public static ItemStack redFive(ItemStack target, ItemStack reagent) {
+        boolean red = reagent.is(MahjongContent.RED_DORA_DYE);
+        if (!red && !reagent.is(MahjongContent.UNDO_DYE)) return ItemStack.EMPTY;
+        var data = tile(target);
+        if (!target.is(MahjongContent.TILE_ITEM) || !storable(target) || data.red() == red
+            || (data.face() != 4 && data.face() != 13 && data.face() != 22)) return ItemStack.EMPTY;
+        var result = target.copyWithCount(1);
+        result.set(MahjongComponents.TILE, data.engraved(data.face(), red));
+        return result;
+    }
+
+    /** Mark a homogeneous group without discarding its name or other components. */
+    public static ItemStack markSticks(List<ItemStack> blanks, ItemStack reagent, int count) {
+        int points = markings().getOrDefault(reagent.getItem(), 0);
+        if (blanks.isEmpty() || points == 0 || count <= 0) return ItemStack.EMPTY;
+        var template = blanks.getFirst();
+        if (!template.is(MahjongContent.POINT_STICK) || !storable(template)
+            || template.getOrDefault(MahjongComponents.POINTS, 0) != 0 || count > template.getMaxStackSize()) return ItemStack.EMPTY;
+        int total = 0;
+        for (var stack : blanks) {
+            if (!ItemStack.isSameItemSameComponents(template, stack) || stack.getCount() > stack.getMaxStackSize()) return ItemStack.EMPTY;
+            total += stack.getCount();
+        }
+        if (total != count) return ItemStack.EMPTY;
+        var result = template.copyWithCount(count);
+        result.set(MahjongComponents.POINTS, points);
+        return result;
+    }
+
+    /** All-or-nothing insertion, using the same slot and component contract as the box menu. */
+    public static ItemStack pack(ItemStack box, List<ItemStack> incoming) {
+        if (!validBox(box) || incoming.isEmpty()) return ItemStack.EMPTY;
+        var stored = contents(box);
+        boolean changed = false;
+        for (var source : incoming) {
+            if (source.isEmpty()) continue;
+            if (!storable(source) || source.getCount() > source.getMaxStackSize()) return ItemStack.EMPTY;
+            var remainder = source.copy();
+            // Merge first, then occupy empty slots; variants never overwrite one another.
+            for (int pass = 0; pass < 2; pass++) for (int slot = 0; slot < BOX_SLOTS && !remainder.isEmpty(); slot++) {
+                if (!boxAccepts(slot, remainder)) continue;
+                var current = stored.get(slot);
+                if (pass == 0 ? current.isEmpty() || !ItemStack.isSameItemSameComponents(current, remainder) : !current.isEmpty()) continue;
+                int moved = Math.min(remainder.getCount(), remainder.getMaxStackSize() - current.getCount());
+                if (moved <= 0) continue;
+                if (current.isEmpty()) stored.set(slot, remainder.copyWithCount(moved));
+                else current.grow(moved);
+                remainder.shrink(moved);
+                changed = true;
+            }
+            if (!remainder.isEmpty()) return ItemStack.EMPTY;
+        }
+        if (!changed) return ItemStack.EMPTY;
+        var result = box.copyWithCount(1);
+        setContents(result, stored);
+        return result;
+    }
+
+    /** The industrial full-deck transaction uses the ordinary engraving implementation. */
+    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks, TileFacePreset preset) {
+        if (!validBox(box) || contents(box).stream().anyMatch(stack -> !stack.isEmpty())
+            || tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
+            || blanks.stream().anyMatch(stack -> !stack.is(MahjongContent.TILE_ITEM) || !tile(stack).blank())) return ItemStack.EMPTY;
+        var packed = pack(box, blanks);
+        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, preset);
+    }
+
+    /** A target is a whole tile stack or one box. Every target must actually change. */
+    public static List<ItemStack> dyeBatch(List<ItemStack> targets, DyeColor color) {
+        if (targets.size() != 2) return List.of();
+        var output = new ArrayList<ItemStack>();
+        for (var target : targets) {
+            if (!(target.is(MahjongContent.BOX_ITEM) && validBox(target))
+                && !(target.is(MahjongContent.TILE_ITEM) && storable(target) && target.getCount() <= target.getMaxStackSize())) return List.of();
+            var result = dye(target, color);
+            if (result.isEmpty() || ItemStack.isSameItemSameComponents(target, result)) return List.of();
+            output.add(result.copyWithCount(target.getCount()));
+        }
+        return List.copyOf(output);
     }
 
     public static ItemStack engrave(ItemStack box, TileFacePreset preset) {

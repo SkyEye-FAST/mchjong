@@ -33,8 +33,9 @@ final class SurvivalRecipes {
         for (String color : COLORS)
             shaped(output, "table_cloth_" + color, List.of("CCC"), Map.of("C", item(color + "_carpet")),
                 stack("table_cloth", 1, Map.of("minecraft:base_color", color)));
-        output.write("data/mchjong/recipe/mahjong_box.json", Map.of("type", "minecraft:crafting_shapeless",
-            "category", "misc", "ingredients", List.of(item("chest"), item("string")), "result", stack("mahjong_box", 1, Map.of())));
+        shaped(output, "mahjong_box", List.of("SSS", "LCL", " I "),
+            Map.of("S", Map.of("tag", "minecraft:wooden_slabs"), "L", item("leather"),
+                "C", item("chest"), "I", item("iron_nugget")), stack("mahjong_box", 1, Map.of()));
         for (String wood : WOODS)
             output.write("data/mchjong/recipe/blanks_" + wood + ".json", Map.of(
                 "type", "minecraft:stonecutting", "ingredient", item(wood + "_planks"),
@@ -47,7 +48,7 @@ final class SurvivalRecipes {
         output.write("data/mchjong/recipe/blank_point_sticks.json", Map.of("type", "minecraft:stonecutting",
             "ingredient", item("bone_block"), "result", stack("point_stick", 24, Map.of("mchjong:points", 0))));
         output.write("data/mchjong/recipe/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",
-            "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye")),
+            "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye"), item("white_dye")),
             "result", stack("mahjong_dye", 1, Map.of())));
         output.write("data/mchjong/recipe/red_dora_dye.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("red_dye")), "result", stack("red_dora_dye", 4, Map.of())));
