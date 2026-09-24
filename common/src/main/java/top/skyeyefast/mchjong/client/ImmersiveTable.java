@@ -252,11 +252,20 @@ final class ImmersiveTable {
 
     private void tile(int tile, int side, double x, double z, int width, boolean back, boolean sideways, boolean dim, double h) {
         double w = sideways ? width * RATIO : width, d = sideways ? width : width * RATIO;
-        double top = h + thickness(width), band = thickness(width) / 3;
+        double top = h + thickness(width);
+        double scale = thickness(width) / TileMesh.DEPTH;
+        double backLayer = (TileMesh.CORE_BACK + TileMesh.DEPTH / 2) * scale;
+        double bodyLayer = (TileMesh.CORE_FRONT - TileMesh.CORE_BACK) * scale;
+        double faceLayer = thickness(width) - backLayer - bodyLayer;
+        boolean showBack = back || tile < 0;
+        double bottomLayer = showBack ? faceLayer : backLayer;
+        int faceColor = dim ? 0xffb1b9b2 : 0xfff4f0e5;
+        int bottomColor = showBack ? faceColor : backColor;
+        int topColor = showBack ? backColor : faceColor;
         contact(side, x, z, w, d);
-        box(side, x, z, w, d, h, h + band, bodyColor, bodyColor);
-        box(side, x, z, w, d, h + band, top, dim ? 0xffa0a9a5 : 0xffe1ded0,
-            dim ? 0xffb1b9b2 : 0xfff4f0e5);
+        box(side, x, z, w, d, h, h + bottomLayer, bottomColor, bottomColor);
+        box(side, x, z, w, d, h + bottomLayer, h + bottomLayer + bodyLayer, bodyColor, bodyColor);
+        box(side, x, z, w, d, h + bottomLayer + bodyLayer, top, topColor, topColor);
         Vertex[] face = rectangle(side, x - w / 2 + 1, z - d / 2 + 1, x + w / 2 - 1, z + d / 2 - 1, top + .2);
         if (sideways) face = new Vertex[]{face[1], face[2], face[3], face[0]};
         artwork(face, tile, back, dim);
