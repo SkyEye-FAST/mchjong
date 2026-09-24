@@ -45,6 +45,14 @@ release bundles. Verify both installed and absent dependency configurations.
 Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
 branch for Fabric and Forge; synchronize stable batches from `main`, preserving
 the engine and shared gameplay rather than developing a second feature line.
+`compat/26.1.2` is the corresponding port-only branch for Fabric/Quilt and
+NeoForge, using Java 25. Keep `main` on Minecraft 1.21.1 / Java 21 and the
+1.20.1 runtime on Java 17. Synchronize applicable code, tests, resources,
+formatting configuration and documentation together; retain each port's loader
+APIs, dependency versions and single-version snapshot workflow. Omit optional
+adapters when the dependency has no build for that Minecraft/loader profile.
+Keep the three-version loader and integration tables in every README aligned,
+and distinguish shipped adapters from completed runtime validation.
 Keep version differences limited to actual Minecraft and loader API boundaries.
 Minecraft and dependency versions belong in `gradle.properties`. Automated
 dependency updates (Renovate) manage routine tool, action and ecosystem version
@@ -56,6 +64,13 @@ Dependabot is reserved for security alerts and automated vulnerability patches,
 with routine version update pull requests disabled to prevent duplication.
 
 ## Interface, resources and documentation
+
+Keep player operations in `PLAYING.md`, `SURVIVAL.md` and `ROOMS.md`; registry,
+persistence and recipe identity in `SUPPLIES.md`; module ownership in
+`ARCHITECTURE.md`; visual contracts in `UI_STYLE.md`; dependency support in
+`COMPATIBILITY.md`; build, branch synchronization and release procedures in
+`DEVELOPMENT.md`; and commands, fixtures and acceptance records in
+`VERIFICATION.md`. Link to the owning guide rather than duplicating its paragraphs.
 
 Before changing screens, widgets, HUDs, inventory UI or physical table layout,
 read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`, `MahjongButton`,

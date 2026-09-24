@@ -73,7 +73,7 @@ spotless {
         leadingTabsToSpaces(2)
     }
     format 'misc', {
-        target '*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore', '.editorconfig'
+        target '*.gradle', 'gradle/*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', 'docs/*.md', '.gitignore', '.editorconfig'
         targetExclude 'release-notes.md'
         trimTrailingWhitespace()
         endWithNewline()
