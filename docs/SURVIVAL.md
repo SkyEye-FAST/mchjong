@@ -138,7 +138,7 @@ separately. The box may contain more tiles than play requires. For example,
 requires only 108 tiles and ignores 2m through 8m. A single box must supply the
 entire matching subset; two boxes do not combine. Mahjong Soul and Tenhou retain
 their preset names for these options. M.League specifies three reds, while
-League A and WRC specify no reds. Unavailable red choices show a shortage tooltip.
+JPML A and WRC specify no reds. Unavailable red choices show a shortage tooltip.
 
 One vanilla black dye crafts **four undo dyes**. Combine one undo dye with one
 red five to restore its ordinary five, preserving its material, back color,

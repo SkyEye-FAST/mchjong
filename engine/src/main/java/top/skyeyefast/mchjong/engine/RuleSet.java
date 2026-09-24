@@ -59,7 +59,7 @@ public enum RuleSet {
         if (sanma()) return mahjongSoul() ? new int[]{15, 0, -15} : new int[]{20, 0, -20};
         if (mLeague()) return new int[]{30, 10, -10, -30};
         if (this == WRC) return new int[]{15, 5, -5, -15};
-        if (this == JPML_A) throw new IllegalStateException("League A placement depends on the number of floating players");
+        if (this == JPML_A) throw new IllegalStateException("JPML A placement depends on the number of floating players");
         return mahjongSoul() ? new int[]{15, 5, -5, -15} : new int[]{20, 10, -10, -20};
     }
     public int[] placementBonus(int floatingPlayers) {

@@ -7,7 +7,7 @@ MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
 presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
-Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
+Mahjong Soul, Tenhou, M.League, JPML A and WRC presets with configurable table
 options. See [Rules and presets](docs/RULES.md) for details.
 
 ## Features

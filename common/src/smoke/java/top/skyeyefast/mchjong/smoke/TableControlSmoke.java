@@ -81,7 +81,7 @@ final class TableControlSmoke {
             click(client, "ui.mchjong.players.4");
             next(5);
         } else if (stage == 5 && view.rules().players() == 4 && selectPreset(client, view, RuleSet.JPML_A)) {
-            require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "League A initial points");
+            require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "JPML A initial points");
             capture(client, output, "25a-league-a-lobby.png");
             next(8);
         } else if (stage == 8 && selectPreset(client, view, RuleSet.WRC)) {

@@ -7,7 +7,7 @@ settings below specify the rule configurations and table options.
 
 ## Preset options and custom rules
 
-The lobby's Mahjong Soul, Tenhou, M.League, League A and WRC choices are presets.
+The lobby's Mahjong Soul, Tenhou, M.League, JPML A and WRC choices are presets.
 Open **Table rules** for three sections: **Preset options**, **Rule details** and
 **Custom rules**. Mahjong Soul and Tenhou allow open tanyao, no/three/four red
 fives, a one/two/four-yaku-han minimum and East-only or East–South matches within
@@ -50,14 +50,14 @@ priority over another player's reaching the target. Starting points, return
 points and placement bonuses do not change with match length.
 
 **End on bankruptcy** is editable in **Custom rules → Match flow**, and appears
-in the preset overview. Mahjong Soul and Tenhou enable it; M.League, League A and
+in the preset overview. Mahjong Soul and Tenhou enable it; M.League, JPML A and
 WRC disable it. The check is strictly below zero, after hand settlement: zero
 points remain playable and negative scores remain recorded. Changing this switch
 away from its preset default marks the rules as custom.
 
 ## Preset specifications
 
-Presets configure hanchan scoring and automated table play. Both League A and
+Presets configure hanchan scoring and automated table play. Both JPML A and
 WRC permit thirteen-or-more ordinary han to reach a fourfold mangan. M.League
 caps ordinary hands at sanbaiman. A counted limit is distinct from a natural
 yakuman and does not trigger natural-yakuman responsibility payments.
@@ -73,10 +73,10 @@ Uma values below are in thousands of points, in first-to-last order, before oka.
 | Tenhou, four players | 25,000 | 30,000 | +20 / +10 / -10 / -20 | +20 |
 | Tenhou, three players | 35,000 | 40,000 | +20 / 0 / -20 | +15 |
 | M.League | 25,000 | 30,000 | +30 / +10 / -10 / -30 | +20 |
-| League A | 30,000 | 30,000 | Floating-player table below | 0 |
+| JPML A | 30,000 | 30,000 | Floating-player table below | 0 |
 | WRC | 30,000 | 30,000 | +15 / +5 / -5 / -15 | 0 |
 
-League A counts players with at least 30,000 points as floating:
+JPML A counts players with at least 30,000 points as floating:
 
 | Floating players | First | Second | Third | Fourth |
 | ---: | ---: | ---: | ---: | ---: |
@@ -85,7 +85,7 @@ League A counts players with at least 30,000 points as floating:
 | 2 | +8 | +4 | -4 | -8 |
 | 3 | +8 | +3 | +1 | -12 |
 
-League A and WRC split tied placement bonuses and leave final unclaimed riichi
+JPML A and WRC split tied placement bonuses and leave final unclaimed riichi
 deposits on the table. M.League shares tied ranks and distributes fractional
 remainders by initial seat order. Online presets use initial seat order to
 resolve equal scores. Mahjong Soul's 30,000/40,000-point extension target is
@@ -93,7 +93,7 @@ independent of its return points.
 
 ## Scoring switches
 
-| Feature | Mahjong Soul | Tenhou | M.League | League A | WRC |
+| Feature | Mahjong Soul | Tenhou | M.League | JPML A | WRC |
 | --- | --- | --- | --- | --- | --- |
 | Ippatsu | Yes | Yes | Yes | No | Yes |
 | Ura dora | Yes | Yes | Yes | No | Yes |
@@ -110,9 +110,9 @@ independent of its return points.
 
 WRC renhou is compared with the ordinary hand and the higher payment wins; it
 does not add five han to other yaku or dora. Riichi kans preserve waits; the
-three competition presets also preserve the hand's interpretations. League A
+three competition presets also preserve the hand's interpretations. JPML A
 additionally prohibits losing a yaku. WRC permits riichi with no live-wall tiles
-remaining; M.League and League A require at least one.
+remaining; M.League and JPML A require at least one.
 
 Scoring evaluates hand interpretations, yaku, fu and point tables. Candidate
 interpretations are compared and selected by highest actual payment rather than
@@ -132,7 +132,7 @@ pool their contents. Four-player play uses four copies of each of the 34 faces:
 | Four reds | 1 | 2 | 1 |
 
 Mahjong Soul and Tenhou accept all three compositions as table variants.
-M.League uses three reds; A and WRC use no reds. Changing those fixed settings
+M.League uses three reds; JPML A and WRC use no reds. Changing those fixed settings
 creates custom rules. Sanma requires only the 108 played tiles: 2m through 8m,
 including the red 5m, need not be present. The three/four-red options therefore
 select two/three playable red fives in sanma.

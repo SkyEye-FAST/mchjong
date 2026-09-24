@@ -234,7 +234,7 @@ class GameLifecycleTest {
         return game;
     }
 
-    @Test void leagueAFloatingBonusesAndCompetitiveTieSettlement() {
+    @Test void jpmlAFloatingBonusesAndCompetitiveTieSettlement() {
         int[][] scores = {{30000,30000,30000,30000}, {60000,25000,20000,15000},
             {40000,35000,25000,20000}, {40000,30000,30000,20000}, {29900,29900,29900,29300}};
         double[][] expected = {{0,0,0,0}, {42,-6,-13,-23}, {18,9,-9,-18}, {18,2,2,-22}, {-.1,-.1,-.1,-.7}};
