@@ -100,6 +100,7 @@ final class ImmersiveTable {
             else {
                 int n = 0;
                 for (int tile : view.seats().get(seat).norths()) tile(tile, 0, -270 + n++ * 29, 340, 27, false, false, false, 0);
+                melds(seat, List.of(view.seats().get(seat).melds()));
             }
             if (TableSettings.get().showRiver) river(view, seat, suppressed);
         }
@@ -137,10 +138,20 @@ final class ImmersiveTable {
             else standing(tile, side, handX + w / 2.0, rail, w);
             handX += w;
         }
+        melds(seat, rails);
+        double x = -halfLength;
+        for (int tile : player.norths()) {
+            tile(tile, side, x, rail - 55, w, false, false, false, 0);
+            x += w;
+        }
+    }
+
+    private void melds(int seat, List<List<Meld>> rails) {
+        int side = side(seat), w = 30;
         for (int row = 0; row < rails.size(); row++) {
-            double x = halfLength;
+            double x = 300;
             // The inner corner keeps wrapped melds clear of the adjacent river.
-            double z = row == 0 ? rail : 285;
+            double z = row == 0 ? 410 : 285;
             for (var meld : rails.get(row)) {
                 x -= TileGui.meldWidth(meld, seat, w);
                 for (var part : MeldLayout.of(meld, seat).parts()) {
@@ -149,11 +160,6 @@ final class ImmersiveTable {
                 }
                 x -= 5;
             }
-        }
-        double x = -halfLength;
-        for (int tile : player.norths()) {
-            tile(tile, side, x, rail - 55, w, false, false, false, 0);
-            x += w;
         }
     }
 
@@ -230,7 +236,7 @@ final class ImmersiveTable {
     private void standing(int tile, int side, double x, double z, int w) {
         double d = thickness(w), h = w * RATIO;
         contact(side, x, z, w, d);
-        box(side, x, z, w, d, 0, h, bodyColor, bodyColor);
+        box(side, x, z, w, d, 0, h, bodyColor, backColor);
         artwork(new Vertex[]{vertex(side, x + w / 2.0 - 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, 2),

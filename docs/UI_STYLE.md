@@ -177,10 +177,11 @@ solid tile bodies and upright concealed opponent hands.
 Tile faces and dyed resource-pack backs share that geometry and use fixed lighting.
 The viewer's
 large interactive hand and raised tile rack form the foreground along the bottom. Place
-the viewer's melds on the same bottom edge at the hand's right end, with a deliberate gap
-between concealed and open tiles. Apply the same owner-relative right-end rule to every seat.
+the viewer's melds flat on the table at the right-hand corner, with the earliest
+meld nearest that corner and later melds extending left. Apply the same owner-relative
+right-end rule to every seat.
 Place immersive automation in a compact centered horizontal strip below the hand, with
-action buttons above the right end of the hand, clear of the central rivers and meld rail. Seated automation keeps its
+action buttons above the right end of the hand, clear of the central rivers and table melds. Seated automation keeps its
 side column. Three-player layouts place both opponents at the sides and do not reserve
 an empty opposite-seat region.
 
