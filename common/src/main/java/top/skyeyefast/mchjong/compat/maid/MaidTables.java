@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.compat.maid;
 
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
-import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskManager;
 import com.github.tartaricacid.touhoulittlemaid.api.entity.data.TaskDataKey;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
@@ -70,7 +69,5 @@ public final class MaidTables extends Behavior<EntityMaid> {
         if (maid.getVehicle() instanceof SeatEntity seat && seat.tablePos().equals(pos)) maid.stopRiding();
         maid.setRideable(binding.getBoolean("follow_owner_vehicle"));
         maid.setData(bindingKey, new CompoundTag());
-        // A room dismissal must not immediately recruit the same maid again.
-        if (MaidMahjongTask.ID.equals(maid.getTask().getUid())) maid.setTask(TaskManager.getIdleTask());
     }
 }

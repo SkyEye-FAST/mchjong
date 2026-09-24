@@ -42,8 +42,9 @@ gradlew.bat :fabric:runSmokeClient -PwithMaid=true --console=plain
 gradlew.bat :neoforge:runSmokeClient -PwithMaid=true --console=plain
 ```
 
-The existing fixture checks task discovery, brain-driven seating, saved entity
-recovery, assigned mounts, legal computer play and cleanup after a task change.
+The existing fixture checks task discovery, default model-name localization,
+brain-driven seating, saved entity recovery, assigned mounts, legal computer
+play and cleanup after a task change.
 Normal and small-window screenshots are under `build/smoke/maid-evidence`.
 
 ### Create and Ponder

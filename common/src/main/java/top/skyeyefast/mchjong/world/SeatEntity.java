@@ -9,6 +9,7 @@ import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.phys.Vec3;
@@ -42,8 +43,15 @@ public final class SeatEntity extends Entity {
     }
     @Override protected boolean canAddPassenger(Entity passenger) { return getPassengers().isEmpty(); }
     @Override protected void positionRider(Entity passenger, MoveFunction position) {
-        // The rider's pelvis, not their feet, rests on the cushion.
-        position.accept(passenger, getX(), getY() - 0.65, getZ());
+        // The maid's riding pose sits lower than a player's on the same mount.
+        double offset = passenger instanceof Player ? 0.65 : 0.15;
+        position.accept(passenger, getX(), getY() - offset, getZ());
+        if (passenger instanceof LivingEntity companion && !(companion instanceof Player)) {
+            float yaw = TableGeometry.yaw(seat());
+            companion.setYRot(yaw);
+            companion.setYBodyRot(yaw);
+            companion.setYHeadRot(yaw);
+        }
     }
     @Override public void tick() {
         super.tick();

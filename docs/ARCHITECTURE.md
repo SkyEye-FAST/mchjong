@@ -190,8 +190,9 @@ gestures. Rendering is read-only and cannot advance play.
 
 `PlayerPortrait` draws Minecraft's cached player-list skins before names in table,
 room and settlement views. Missing player-list entries use the native default
-skin and practice bots use a distinct shared-palette robot. Portrait rendering
-does not add network requests or store skin data in engine snapshots.
+skin, practice bots use a distinct shared-palette robot, and maid companions
+use the maid mod's default Reimu icon. Companion model names resolve on the client.
+Portrait rendering does not add network requests or store skin data in engine snapshots.
 
 `TenpaiHints` caches structural waits per concealed hand, meld set and discard
 kind, separately from snapshot-based availability. `VisibleTiles` deduplicates

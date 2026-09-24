@@ -4,16 +4,20 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
 import net.minecraft.client.resources.DefaultPlayerSkin;
+import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.TableView;
 
 /** Player-list skins stay owned and cached by Minecraft; practice bots have a distinct portrait. */
 final class PlayerPortrait {
+    private static final ResourceLocation MAID_ICON = ResourceLocation.fromNamespaceAndPath("xaerominimap", "entity/icon/sprite/tlm_maid.png");
     private PlayerPortrait() {}
 
     static int draw(GuiGraphics graphics, TableView.Seat player, int x, int y, int size) {
         if (!player.occupied()) return 0;
         if (graphics != null) {
-            if (player.bot()) {
+            if (player.entityBot()) {
+                graphics.blit(MAID_ICON, x, y, size, size, 16, 16, 32, 32, 64, 64);
+            } else if (player.bot()) {
                 graphics.pose().pushPose();
                 graphics.pose().translate(x, y, 0);
                 graphics.pose().scale(size / 8f, size / 8f, 1);
