@@ -82,7 +82,12 @@ def main() -> None:
                 f"Platform release notes contain a relative link: {destination}"
             )
 
-    Path("platform-release-notes.md").write_text(notes, encoding="utf-8")
+    with Path("platform-release-notes.md").open(
+        "w",
+        encoding="utf-8",
+        newline="\n",
+    ) as platform_notes:
+        platform_notes.write(notes.rstrip() + "\n")
 
 
 if __name__ == "__main__":
