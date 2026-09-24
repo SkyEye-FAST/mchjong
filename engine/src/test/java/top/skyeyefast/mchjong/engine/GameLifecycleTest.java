@@ -139,6 +139,33 @@ class GameLifecycleTest {
         assertFalse(publicJson.contains("\"recorder\""));
     }
 
+    @Test void settlementWaitCanBeSkippedWithServerIssuedActions() {
+        Game game = started(RuleSet.TENHOU_4, 204);
+        UUID player = game.players[0].id;
+        Settlement.abort(game, "nine_terminals");
+        assertEquals(Game.Phase.HAND_END, game.phase());
+        TableView hand = game.view(player);
+        int skip = index(hand, Action.Type.SKIP_SETTLEMENT);
+        assertTrue(skip >= 0);
+        assertFalse(game.act(player, hand.decision() - 1, skip));
+        assertTrue(game.act(player, hand.decision(), skip));
+        assertEquals(Game.Phase.TURN, game.phase());
+        assertFalse(game.act(player, hand.decision(), skip));
+
+        game.players[1].points = -100;
+        Settlement.abort(game, "nine_terminals");
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        TableView results = game.view(player);
+        assertEquals(Game.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        assertTrue(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertFalse(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
+        TableView standings = game.view(player);
+        assertTrue(game.act(player, standings.decision(), index(standings, Action.Type.SKIP_SETTLEMENT)));
+        assertEquals(Game.Phase.LOBBY, game.phase());
+    }
+
     // Match progression has two player-count paths; preset differences have focused rule tests.
     @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "MAHJONG_SOUL_3"}) @Timeout(30)
     void completeHanchanAndReloadsPreserveTilesPointsAndPrivacy(RuleSet rules) {

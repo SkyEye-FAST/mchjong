@@ -509,7 +509,9 @@ public final class Game {
         }
         if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            return manual && !players[seat].ready ? List.of(new Action(NEXT)) : List.of();
+            if (players[seat].bot) return List.of();
+            return manual && !players[seat].ready
+                ? List.of(new Action(NEXT), new Action(SKIP_SETTLEMENT)) : List.of(new Action(SKIP_SETTLEMENT));
         }
         if (phase == Phase.REACTION && replies[seat] >= 0) return List.of();
         return options.get(seat);
@@ -559,8 +561,11 @@ public final class Game {
             return true;
         }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            players[seat].ready = true;
-            revision++;
+            if (action.type() == SKIP_SETTLEMENT) advanceSettlement();
+            else {
+                players[seat].ready = true;
+                revision++;
+            }
             return true;
         }
         if (recorder != null) recorder.decision(seat, legal, actionIndex);
@@ -605,6 +610,15 @@ public final class Game {
             honba = drawResult || dealerRepeats ? honba + 1 : 0;
             startHand();
         }
+    }
+
+    private void advanceSettlement() {
+        if (phase == Phase.MATCH_END && age < SETTLEMENT_TICKS) {
+            age = SETTLEMENT_TICKS;
+            for (PlayerState player : players) player.ready = false;
+            decision++;
+            revision++;
+        } else finishSettlement();
     }
 
     private boolean allReady() {
@@ -918,7 +932,7 @@ public final class Game {
         age++;
         if (age <= 0) return;
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            if (settlementTicks() == 0) finishSettlement();
+            if ((phase == Phase.MATCH_END && age == SETTLEMENT_TICKS) || settlementTicks() == 0) advanceSettlement();
             else if (age % 20 == 0) revision++;
             return;
         }

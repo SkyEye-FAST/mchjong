@@ -24,6 +24,7 @@
   "action.mchjong.ron": "Ron",
   "action.mchjong.set_bot": "Set bot difficulty",
   "action.mchjong.shuffle": "Shuffle tiles",
+  "action.mchjong.skip_settlement": "Skip wait",
   "action.mchjong.take_packet": "Take starting tiles",
   "action.mchjong.transfer_host": "Transfer host",
   "action.mchjong.tsumo": "Tsumo",
