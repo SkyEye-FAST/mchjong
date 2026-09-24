@@ -101,16 +101,17 @@ supported languages.
 
 ## Compatibility and implementation
 
-The current workshop profile is Minecraft 1.21.1, NeoForge and Create 6.0.10.
+The workshop supports Minecraft 1.21.1 with NeoForge and Create 6.0.10, and
+Minecraft 1.20.1 with Forge and Create 6.0.8 or Fabric and Create Fabric 6.0.8.1.
 Install Create on the server and clients using the workshop. Its dependency is
 optional; the base mod continues to load independently. The loader's generated
 Create recipes are guarded by a mod-presence condition. Dependency versions
 remain in `gradle.properties`.
 
 The NeoForge runtime accepts Ponder 1.0.82 bundled with Create 6.0.10; a separate
-newer Ponder installation is not required. Fabric/Quilt and Forge artifacts do
-not include the Create adapter. This change does not advance compatibility
-branches or their release pins.
+newer Ponder installation is not required. The 1.20.1 artifacts share the same
+workshop operations and adapt only loader registration, native NBT ingredients
+and inventory access. Both include JEI/EMI displays and Ponder tutorials.
 
 `MahjongSupplies` owns printing, back coloring, red-five conversion, stick marking
 and atomic packing. `compat/create` supplies immutable, exact-component recipes
@@ -126,4 +127,11 @@ blocking, printing, coloring, marking and packing:
 ```text
 gradlew.bat :neoforge:test --tests top.skyeyefast.mchjong.neo.CreateProcessingTest -PwithCreate=true
 gradlew.bat :neoforge:runSmokeClient -PwithCreate=true -PwithPonder=true -PsmokePonder=true -PrecipeBrowser=jei
+```
+
+On `compat/1.20.1`, the focused checks share the same native transaction fixture:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PwithCreate=true -PsmokeCreate=true -PrecipeBrowser=emi
+gradlew.bat :forge:runSmokeClient -PwithCreate=true -PsmokeCreate=true -PrecipeBrowser=jei
 ```

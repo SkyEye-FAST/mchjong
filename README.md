@@ -52,8 +52,9 @@ seated play. Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
 
-On Minecraft 1.21.1 NeoForge, the optional [Create workshop](docs/CREATE.md)
-automates supply production without opening the mahjong box menu.
+The optional [Create workshop](docs/CREATE.md) automates supply production
+without opening the mahjong box menu on Minecraft 1.21.1 NeoForge and
+Minecraft 1.20.1 Fabric and Forge.
 
 On 1.21.1, Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on
 Fabric add a Mahjong task for maids. During work hours, a maid can take an empty

@@ -66,6 +66,12 @@ item transformations. The reusable printing plate keeps its face preset in the
 existing component. See [Create workshop](CREATE.md) for the production line,
 recipe viewers and focused validation commands.
 
+The `compat/1.20.1` artifacts provide the same workshop with Create 6.0.8 on
+Forge and Create Fabric 6.0.8.1 on Fabric. Production code targets Java 17.
+Native machine transaction checks, installed recipe viewers and four-language
+Ponder playback pass on both loaders; both also pass the Create-absent client
+profile. The release pin selects the validated compatibility batch.
+
 ### Maid players
 
 The 1.21.1 profile integrates Touhou Little Maid 1.5.3-neoforge+mc1.21.1 on

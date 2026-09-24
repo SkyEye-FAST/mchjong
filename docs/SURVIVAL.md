@@ -101,7 +101,7 @@ C H C       C = copper ingot, H = hopper
 ```
 
 Three same-color carpets in a horizontal row make one matching cloth.
-A mahjong box uses three wooden slabs across the top row, leather/chest/leather
+A mahjong box uses leather/slab/leather across the top row, slab/chest/slab
 across the middle row and one iron nugget in the bottom center. The slabs may
 use different wood types; the box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
