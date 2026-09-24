@@ -31,6 +31,7 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        top.skyeyefast.mchjong.compat.maid.MaidData.register(bus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.server.ServerStartingEvent event) ->
                 top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));

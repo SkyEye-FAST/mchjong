@@ -10,6 +10,13 @@ logoFile="assets/mchjong/icon.png"
 authors="SkyEye_FAST"
 description='''Playable, in-world mahjong tables with configurable rules.'''
 
+[[dependencies.mchjong]]
+modId="touhou_little_maid"
+type="optional"
+versionRange="[${touhou_little_maid_version},)"
+ordering="AFTER"
+side="BOTH"
+
 [[mixins]]
 config="mchjong.client.mixins.json"
 

@@ -11,6 +11,9 @@
   "icon": "assets/mchjong/icon.png",
   "environment": "*",
   "entrypoints": {
+    "little_maid_extension": [
+      "top.skyeyefast.mchjong.compat.maid.MaidExtension"
+    ],
     "main": [
       "top.skyeyefast.mchjong.Mchjong"
     ],
@@ -33,7 +36,8 @@
   ],
   "suggests": {
     "jei": ">=${jei_version}",
-    "roughlyenoughitems": ">=${rei_version}"
+    "roughlyenoughitems": ">=${rei_version}",
+    "touhou_little_maid": ">=${orihime_version}"
   },
   "depends": {
     "fabricloader": ">=${fabric_loader_min_version}",

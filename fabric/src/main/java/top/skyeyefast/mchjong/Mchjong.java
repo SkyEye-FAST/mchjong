@@ -41,6 +41,7 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        top.skyeyefast.mchjong.compat.maid.MaidData.register();
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
             top.skyeyefast.mchjong.world.WorldSettings::of);
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->

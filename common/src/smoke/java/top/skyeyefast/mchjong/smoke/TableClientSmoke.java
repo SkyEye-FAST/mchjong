@@ -42,7 +42,9 @@ public final class TableClientSmoke {
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
     private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
     private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || browserOnly;
+    private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
+    private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || browserOnly || maidOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -71,6 +73,14 @@ public final class TableClientSmoke {
     public void tick(Minecraft client) {
         if (step == 14) return;
         try {
+            if (step == 100) {
+                if (maidSmoke.tick(client, CENTER, output)) {
+                    Files.writeString(output.resolve("PASS.txt"), "Maid task discovery, seating, saved binding, legal play and cleanup passed.\n");
+                    LOG.info("MCHJONG_MAID_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                }
+                return;
+            }
             require(!client.mouseHandler.isMouseGrabbed(), "Smoke client grabbed the desktop mouse");
             require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().handle(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
@@ -170,6 +180,15 @@ public final class TableClientSmoke {
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
+                if (maidOnly) {
+                    var id = client.player.getUUID();
+                    client.getSingleplayerServer().execute(() -> {
+                        var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                        ((MahjongTableBlockEntity) player.level().getBlockEntity(CENTER)).sit(player, 0);
+                    });
+                    step = 100; entered = ticks;
+                    return;
+                }
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
                 if (manualOnly) { step = 19; entered = ticks; return; }

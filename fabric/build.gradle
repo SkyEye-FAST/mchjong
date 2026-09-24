@@ -1,3 +1,5 @@
+import java.security.MessageDigest
+
 plugins {
     id 'net.fabricmc.fabric-loom' version "${loom_version}"
 }
@@ -5,6 +7,27 @@ plugins {
 version = rootProject.mod_version
 group = rootProject.maven_group
 base.archivesName = "mchjong-fabric-${minecraft_version}"
+
+repositories {
+    exclusiveContent {
+        forRepository {
+            ivy {
+                name = 'OrihimeSnapshots'
+                url = 'https://github.com/Sh1roCu/TouhouLittleMaid-Orihime/releases/download'
+                patternLayout { artifact '[revision]/touhoulittlemaid-fabric-[artifact].[ext]' }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeGroup 'cn.sh1rocu.snapshot' }
+    }
+    exclusiveContent {
+        forRepository { maven { url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
+        filter { includeGroup 'fuzs.forgeconfigapiport' }
+    }
+}
+
+def maidDependency = "cn.sh1rocu.snapshot:${orihime_version}:${orihime_snapshot}@jar"
+configurations { maidSnapshot }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
@@ -14,6 +37,12 @@ dependencies {
     compileOnly "me.shedaniel:RoughlyEnoughItems-api-fabric:${rei_version}"
     compileOnly "dev.architectury:architectury-fabric:${rei_architectury_version}"
     compileOnly "me.shedaniel.cloth:basic-math:${rei_basic_math_version}"
+    compileOnly maidDependency
+    maidSnapshot maidDependency
+    if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) {
+        runtimeOnly maidDependency
+        runtimeOnly "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+    }
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
         runtimeOnly "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
         runtimeOnly "net.mezzdev.config:mezz_config-${minecraft_version}-fabric:${mezz_config_version}"
@@ -47,7 +76,8 @@ processResources {
         java_version: java_version,
         fabric_loader_min_version: fabric_loader_min_version,
         jei_version: jei_version,
-        rei_version: rei_version
+        rei_version: rei_version,
+        orihime_version: orihime_version
     ]
     inputs.properties properties
     filesMatching('fabric.mod.json') { expand properties }
@@ -83,8 +113,9 @@ def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoole
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
-def smokeProfile = paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -106,6 +137,7 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.maid', maidSmoke.toString()
             property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             property 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             property 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
@@ -120,6 +152,19 @@ loom {
         }
     }
 }
+
+tasks.register('verifyMaidSnapshot') {
+    inputs.files configurations.maidSnapshot
+    inputs.property 'sha256', orihime_sha256
+    doLast {
+        def digest = MessageDigest.getInstance('SHA-256').digest(configurations.maidSnapshot.singleFile.bytes)
+        if (digest.encodeHex().toString() != orihime_sha256)
+            throw new GradleException('The pinned Orihime snapshot checksum does not match')
+    }
+}
+tasks.named('compileJava') { dependsOn 'verifyMaidSnapshot' }
+
+apply from: rootProject.file('gradle/quilt-smoke.gradle')
 
 tasks.named('runSmokeClient') {
     doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }

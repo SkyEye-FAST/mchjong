@@ -8,6 +8,17 @@ version = rootProject.mod_version
 base.archivesName = "mchjong-neoforge-${minecraft_version}"
 repositories {
     exclusiveContent {
+        forRepository {
+            ivy {
+                name = 'TouhouLittleMaidSnapshots'
+                url = 'https://github.com/TouhouLittleMaid/TouhouLittleMaid-26.1/releases/download'
+                patternLayout { artifact '[revision]/touhoulittlemaid-[artifact]-snapshot.[ext]' }
+                metadataSources { artifact() }
+            }
+        }
+        filter { includeGroup 'touhoulittlemaid.snapshot' }
+    }
+    exclusiveContent {
         forRepository { maven { name = 'NeoForgeMain'; url = rootProject.neo_maven_url } }
         filter { includeModule 'net.neoforged', 'neoforge' }
     }
@@ -45,7 +56,12 @@ neoForge {
     }
 }
 
+def maidDependency = "touhoulittlemaid.snapshot:${touhou_little_maid_version}:${touhou_little_maid_snapshot}@jar"
+configurations { maidSnapshot }
 dependencies {
+    compileOnly maidDependency
+    maidSnapshot maidDependency
+    if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) runtimeOnly maidDependency
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     compileOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
     compileOnly "dev.architectury:architectury-neoforge:${rei_architectury_version}"
@@ -77,7 +93,8 @@ processResources {
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
         jei_version: rootProject.jei_version,
-        rei_version: rootProject.rei_version
+        rei_version: rootProject.rei_version,
+        touhou_little_maid_version: rootProject.touhou_little_maid_version
     ]
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
@@ -94,6 +111,7 @@ sourceSets {
     }
 }
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
+def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
@@ -103,7 +121,7 @@ def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toB
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei'])) throw new GradleException('recipeBrowser must be none or jei')
-def smokeProfile = paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -124,6 +142,7 @@ neoForge {
             gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
@@ -138,6 +157,16 @@ neoForge {
         }
     }
 }
+tasks.register('verifyMaidSnapshot') {
+    inputs.files configurations.maidSnapshot
+    inputs.property 'sha256', touhou_little_maid_sha256
+    doLast {
+        def digest = java.security.MessageDigest.getInstance('SHA-256').digest(configurations.maidSnapshot.singleFile.bytes).encodeHex().toString()
+        if (digest != touhou_little_maid_sha256) throw new GradleException('The pinned Touhou Little Maid snapshot checksum does not match')
+    }
+}
+tasks.named('compileJava') { dependsOn 'verifyMaidSnapshot' }
+
 tasks.named('runSmokeClient') {
     doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
     doLast {

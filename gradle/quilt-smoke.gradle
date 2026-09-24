@@ -1,0 +1,69 @@
+import org.gradle.api.tasks.JavaExec
+import org.gradle.api.tasks.bundling.Jar
+import org.gradle.jvm.toolchain.JavaLanguageVersion
+
+// Validate the published Fabric JAR with Quilt; reuse the existing client fixtures.
+repositories {
+    exclusiveContent {
+        forRepository { maven { url = 'https://maven.quiltmc.org/repository/release/' } }
+        filter { includeGroup 'org.quiltmc' }
+    }
+}
+configurations { quiltRuntime { transitive = false } }
+dependencies {
+    quiltRuntime "org.quiltmc:quilt-loader:${quilt_version}"
+    quiltRuntime "org.quiltmc:quilt-json5:${quilt_json5_version}"
+    quiltRuntime "org.quiltmc:quilt-config:${quilt_config_version}"
+    quiltRuntime "net.fabricmc:sponge-mixin:${quilt_mixin_version}"
+    ['asm', 'asm-analysis', 'asm-commons', 'asm-tree', 'asm-util'].each {
+        quiltRuntime "org.ow2.asm:${it}:${quilt_asm_version}"
+    }
+}
+
+def fixtureJar = tasks.register('smokeJar', Jar) {
+    archiveClassifier = 'smoke'
+    destinationDirectory = layout.buildDirectory.dir('smoke')
+    from sourceSets.smoke.output
+}
+tasks.register('runQuiltSmokeClient', JavaExec) {
+    group = 'verification'
+    description = 'Run the existing client checks on Quilt with the packaged Fabric mod.'
+    dependsOn tasks.named('jar'), fixtureJar, tasks.named('configureClientLaunch'), tasks.named('downloadAssets')
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
+    mainClass = 'org.quiltmc.loader.impl.launch.knot.KnotClient'
+    classpath = sourceSets.main.runtimeClasspath.filter { file ->
+        !sourceSets.main.output.files.contains(file) && !file.name.startsWith('fabric-loader-')
+            && !file.name.startsWith('sponge-mixin-') && !file.name.startsWith('asm-')
+    } + configurations.quiltRuntime
+    workingDir = layout.buildDirectory.dir('smoke/quilt-run').get().asFile
+    def evidence = layout.buildDirectory.dir('smoke/quilt-evidence')
+    systemProperty 'loader.development', 'true'
+    systemProperty 'loader.disableCustomGui', 'true'
+    systemProperty 'fabric.development', 'true'
+    systemProperty 'fabric.defaultModDistributionNamespace', 'official'
+    systemProperty 'mchjong.smoke', 'true'
+    systemProperty 'mchjong.smoke.quilt', 'true'
+    systemProperty 'mchjong.smoke.roomOnly', providers.gradleProperty('smokeRoom').getOrElse('false')
+    systemProperty 'mchjong.smoke.manualOnly', providers.gradleProperty('smokeManual').getOrElse('false')
+    systemProperty 'mchjong.smoke.maid', providers.gradleProperty('withMaid').getOrElse('false')
+    systemProperty 'mchjong.smoke.browser', providers.gradleProperty('recipeBrowser').getOrElse('none')
+    systemProperty 'mchjong.smoke.output', evidence.get().asFile.absolutePath
+    doFirst {
+        workingDir.mkdirs()
+        delete evidence.get().file('PASS.txt'), evidence.get().file('FAIL.txt')
+        systemProperty 'loader.addMods', [tasks.jar.archiveFile.get().asFile, fixtureJar.get().archiveFile.get().asFile]
+            .collect { it.absolutePath }.join(File.pathSeparator)
+        def launch = rootProject.file('.gradle/loom-cache/projects/fabric/launch.cfg').readLines()
+        int client = launch.indexOf('clientArgs')
+        if (client < 0) throw new GradleException('Missing Loom client launch arguments')
+        def clientArgs = launch.drop(client + 1).takeWhile { it.startsWith('\t') }.collect { it.trim() }
+        setArgs(['--version', minecraft_version, '--username', 'QuiltSmoke', '--accessToken', '0',
+            '--width', '1280', '--height', '800'] + clientArgs)
+    }
+    doLast {
+        if (!evidence.get().file('PASS.txt').asFile.isFile() || evidence.get().file('FAIL.txt').asFile.exists())
+            throw new GradleException("Quilt smoke failed; inspect ${workingDir}/logs/latest.log")
+        def digest = java.security.MessageDigest.getInstance('SHA-256').digest(tasks.jar.archiveFile.get().asFile.bytes).encodeHex()
+        evidence.get().file('quilt-runtime.txt').asFile.text = "Quilt ${quilt_version}, Minecraft ${minecraft_version}, Java ${java_version}\nFabric JAR SHA-256: ${digest}\n"
+    }
+}
