@@ -79,8 +79,8 @@ view. Distance and height sliders preserve the current look direction.
 Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong table.
 Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
-clickable hand and raised rack form the foreground, melds anchor at each owner's right-hand
-end on the same outer hand rail, and four rivers surround the compact central table device.
+clickable hand and raised rack form the foreground, melds lie flat at each owner's
+right-hand table corner, and four rivers surround the compact central table device.
 One perspective camera projects the cloth, solid tiles and upright opponent hands.
 Long melds wrap into the owner's inner corner. Compact player plaques remain at
 the table edges, and the rivers preserve six discards per row with sideways riichi

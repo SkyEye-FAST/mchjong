@@ -185,7 +185,8 @@ progress. `SeatedCamera` bridges native free look and the loader tick lifecycle;
 opaque GUI surface: `ImmersiveTable` builds recipient-safe tile solids and projects
 the cloth, standing hands, rivers and public melds through `TableProjection`.
 `TableBoard` supplies the information and animation anchors, while `TableHand`
-supplies the private clickable hand and its meld rail. The compact replay diagram
+supplies the private clickable hand. The viewer's melds lie flat on the immersive
+table at their right-hand corner. The compact replay diagram
 retains its separate flat layout. Neither world visibility nor camera orientation
 controls the immersive camera. Guide anchors and input use GUI coordinates. Ordinary-table handling
 uses the existing server-issued action buttons; seated play retains physical
@@ -240,7 +241,8 @@ count a wall from the current dealer, then skips that many stacks from its owner
 right end. The opening's left side starts the live wall; its right side holds the
 dead wall. Three-player tables use the same counting across their three walls.
 Live draws take the upper tile before the
-lower; the dead wall is indexed from its opposite end. Revealing dora or ura
+lower; the dead wall is indexed from its opposite end. A replacement leaves its
+wall slot empty while the last live tile becomes dead in place. Revealing dora or ura
 does not change their physical layers. This follows the deal in the
 [EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).
 
@@ -251,8 +253,9 @@ inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
 
-`Game` advances hand settlement after 200 ticks. Match settlement uses two 200-tick
-stages: hand results and final standings, then restores the roster to the lobby.
+`Game` advances hand settlement after 200 ticks or a seated player's skip request.
+Match settlement uses two 200-tick stages, each independently skippable: hand
+results and final standings, then restores the roster to the lobby.
 `RoomView.settlementTicks` synchronizes the remaining duration; the saved decision
 age preserves it across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
