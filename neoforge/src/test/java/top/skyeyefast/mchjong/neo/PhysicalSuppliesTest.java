@@ -444,6 +444,9 @@ class PhysicalSuppliesTest {
         assertEquals(2, undone.size());
         assertNull(MahjongSupplies.back(undone.getLast()));
         assertTrue(MahjongSupplies.dyeBatch(undone, null).isEmpty());
+        var compact = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
+        assertTrue(MahjongSupplies.dyeBatch(List.of(compact, compact.copy()), null).isEmpty());
+        assertTrue(compact.has(MahjongComponents.BOX_PRESET));
         assertEquals(DyeColor.CYAN, MahjongSupplies.back(blank));
         assertTrue(MahjongSupplies.pack(packed, List.of(new ItemStack(Items.STONE))).isEmpty());
         assertTrue(MahjongSupplies.pack(packed, List.of(new ItemStack(MahjongContent.DICE, 64))).isEmpty());

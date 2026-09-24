@@ -13,6 +13,9 @@ description='''Playable, in-world mahjong tables with configurable rules.'''
 [[mixins]]
 config="mchjong.client.mixins.json"
 
+[[mixins]]
+config="mchjong.create.mixins.json"
+
 [[dependencies.mchjong]]
 modId="neoforge"
 type="required"
@@ -30,9 +33,16 @@ side="BOTH"
 [[dependencies.mchjong]]
 modId="ponder"
 type="optional"
-versionRange="[${ponder_version},)"
+versionRange="[${create_ponder_min_version},)"
 ordering="AFTER"
 side="CLIENT"
+
+[[dependencies.mchjong]]
+modId="create"
+type="optional"
+versionRange="[${create_version},6.1)"
+ordering="AFTER"
+side="BOTH"
 
 [[dependencies.mchjong]]
 modId="touhou_little_maid"

@@ -33,6 +33,10 @@ allprojects {
             }
         }
         exclusiveContent {
+            forRepository { maven { name = 'Registrate'; url = 'https://maven.ithundxr.dev/snapshots' } }
+            filter { includeGroup 'com.tterrag.registrate' }
+        }
+        exclusiveContent {
             forRepository { maven { name = 'ForgeConfigAPIPort'; url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
             filter { includeGroup 'fuzs.forgeconfigapiport' }
         }

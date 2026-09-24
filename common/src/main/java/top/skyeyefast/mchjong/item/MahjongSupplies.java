@@ -158,10 +158,11 @@ public final class MahjongSupplies {
 
     /** The industrial full-deck transaction uses the ordinary engraving implementation. */
     public static ItemStack printBox(ItemStack box, List<ItemStack> blanks, TileFacePreset preset) {
-        if (!validBox(box) || contents(box).stream().anyMatch(stack -> !stack.isEmpty())
-            || tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
+        if (!validBox(box)
+            || tileCount(contents(box)) + tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
             || blanks.stream().anyMatch(stack -> !stack.is(MahjongContent.TILE_ITEM) || !tile(stack).blank())) return ItemStack.EMPTY;
-        var packed = pack(box, blanks);
+        if (contents(box).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && !tile(stack).blank())) return ItemStack.EMPTY;
+        var packed = blanks.isEmpty() ? box.copy() : pack(box, blanks);
         return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, preset);
     }
 
@@ -172,6 +173,11 @@ public final class MahjongSupplies {
         for (var target : targets) {
             if (!(target.is(MahjongContent.BOX_ITEM) && validBox(target))
                 && !(target.is(MahjongContent.TILE_ITEM) && storable(target) && target.getCount() <= target.getMaxStackSize())) return List.of();
+            // Expanding a compact box preset is not itself a change to any tile's back.
+            boolean changesBack = target.is(MahjongContent.BOX_ITEM)
+                ? contents(target).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && back(stack) != color)
+                : back(target) != color;
+            if (!changesBack) return List.of();
             var result = dye(target, color);
             if (result.isEmpty() || ItemStack.isSameItemSameComponents(target, result)) return List.of();
             output.add(result.copyWithCount(target.getCount()));

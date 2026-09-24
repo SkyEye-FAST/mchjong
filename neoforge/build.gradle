@@ -26,6 +26,7 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
+    resources.srcDir rootProject.layout.buildDirectory.dir('generated/create')
     resources.srcDir layout.buildDirectory.dir('generated/ponder')
 }
 
@@ -51,6 +52,14 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "maven.modrinth:create:${create_version}+mc${minecraft_version}"
+    compileOnly "com.tterrag.registrate:Registrate:${registrate_version}"
+    if (providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
+        runtimeOnly "maven.modrinth:create:${create_version}+mc${minecraft_version}"
+        testImplementation "maven.modrinth:create:${create_version}+mc${minecraft_version}"
+        testImplementation "com.tterrag.registrate:Registrate:${registrate_version}"
+        testImplementation "net.createmod.ponder:ponder-neoforge:${create_ponder_min_version}+mc${minecraft_version}"
+    }
     compileOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
     if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) {
         runtimeOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
@@ -66,7 +75,8 @@ dependencies {
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'emi') {
         runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
     }
-    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
+    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+        && !providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
         runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
@@ -82,8 +92,13 @@ def testTemp = layout.buildDirectory.dir('tmp/test')
 test {
     useJUnitPlatform()
     maxHeapSize = '2G'
+    systemProperty 'mchjong.create', providers.gradleProperty('withCreate').getOrElse('false')
     doFirst { testTemp.get().asFile.mkdirs() }
     systemProperty 'java.io.tmpdir', testTemp.get().asFile.absolutePath
+}
+
+if (!providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
+    sourceSets.test.java.exclude '**/CreateProcessingTest.java'
 }
 
 // Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
@@ -99,7 +114,7 @@ tasks.register('generatePonder', JavaExec) {
     classpath = sourceSets.ponderData.runtimeClasspath
     mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
     def output = layout.buildDirectory.dir('generated/ponder')
-    args output.get().asFile.absolutePath
+    args output.get().asFile.absolutePath, 'create'
     inputs.files sourceSets.ponderData.allSource
     outputs.dir output
     doFirst { delete output }
@@ -107,12 +122,14 @@ tasks.register('generatePonder', JavaExec) {
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
+    dependsOn ':art:generateAssets', ':art:generateData', ':art:generateCreateData', 'generatePonder'
     def properties = [
         version: project.version,
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
         ponder_version: rootProject.ponder_version,
+        create_version: rootProject.create_version,
+        create_ponder_min_version: rootProject.create_ponder_min_version,
         jei_version: rootProject.jei_version,
         emi_version: rootProject.emi_version,
         rei_version: rootProject.rei_version,
@@ -172,6 +189,7 @@ neoForge {
             systemProperty 'mchjong.smoke.roomOnly', roomSmoke.toString()
             systemProperty 'mchjong.smoke.manualOnly', manualSmoke.toString()
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
+            systemProperty 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath

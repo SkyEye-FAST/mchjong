@@ -24,8 +24,10 @@ public final class MchjongNeoForgeClient {
     @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
         event.enqueueWork(() -> top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()
             .getModelManager().getModel(net.minecraft.client.resources.model.ModelResourceLocation.standalone(top.skyeyefast.mchjong.client.RiichiStickModel.ID))));
-        if (net.neoforged.fml.ModList.get().isLoaded("ponder"))
-            event.enqueueWork(top.skyeyefast.mchjong.compat.ponder.MchjongPonder::register);
+        if (net.neoforged.fml.ModList.get().isLoaded("create"))
+            event.enqueueWork(top.skyeyefast.mchjong.compat.create.CreatePonder::register);
+        else if (net.neoforged.fml.ModList.get().isLoaded("ponder"))
+            event.enqueueWork(() -> top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register());
     }
     @SubscribeEvent public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);

@@ -62,6 +62,18 @@ tasks.register('generateData', Sync) {
     into rootProject.layout.buildDirectory.dir('generated/data')
 }
 
+// Only the NeoForge artifact includes this loader-conditioned optional data pack.
+tasks.register('generateCreateData', JavaExec) {
+    dependsOn classes
+    classpath = sourceSets.main.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.art.GenerateData'
+    def output = rootProject.layout.buildDirectory.dir('generated/create')
+    args output.get().asFile.absolutePath, 'create'
+    inputs.files sourceSets.main.allSource
+    outputs.dir output
+    doFirst { delete output }
+}
+
 test {
     useJUnitPlatform()
     dependsOn generateAssets, generateData

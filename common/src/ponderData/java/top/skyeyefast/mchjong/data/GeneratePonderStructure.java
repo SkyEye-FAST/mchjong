@@ -12,7 +12,8 @@ public final class GeneratePonderStructure {
     private GeneratePonderStructure() {}
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) throw new IllegalArgumentException("Expected the generated resource directory");
+        if (args.length < 1 || args.length > 2) throw new IllegalArgumentException("Expected the generated resource directory and optional create profile");
+        if (args.length == 2 && !args[1].equals("create")) throw new IllegalArgumentException("Unknown structure profile: " + args[1]);
         Path path = Path.of(args[0], "assets", "mchjong", "ponder", "table.nbt");
         Files.createDirectories(path.getParent());
         CompoundTag structure = new CompoundTag();
@@ -34,6 +35,13 @@ public final class GeneratePonderStructure {
         structure.put("blocks", blocks);
         structure.put("entities", new ListTag());
         NbtIo.writeCompressed(structure, path);
+        if (args.length == 2 && args[1].equals("create")) {
+            // The press and mixer sit above the three-block-tall table template's bounds.
+            // Keep their whole volume in the backup so native Ponder rendering and replay work.
+            var workshop = structure.copy();
+            workshop.put("size", position(7, 5, 7));
+            NbtIo.writeCompressed(workshop, path.resolveSibling("workshop.nbt"));
+        }
     }
 
     private static CompoundTag block(int x, int y, int z, int state) {

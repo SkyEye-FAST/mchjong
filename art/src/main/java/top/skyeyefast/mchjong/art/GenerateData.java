@@ -15,8 +15,13 @@ public final class GenerateData {
     private GenerateData(Path root) { this.root = root; }
 
     public static void main(String[] args) throws IOException {
-        if (args.length != 1) throw new IllegalArgumentException("Expected data output directory");
+        if (args.length < 1 || args.length > 2) throw new IllegalArgumentException("Expected data output directory and optional create profile");
         GenerateData output = new GenerateData(Path.of(args[0]));
+        if (args.length == 2) {
+            if (!args[1].equals("create")) throw new IllegalArgumentException("Unknown data profile");
+            CreateRecipes.generate(output);
+            return;
+        }
         SurvivalRecipes.generate(output);
         FurnitureData.generate(output);
     }

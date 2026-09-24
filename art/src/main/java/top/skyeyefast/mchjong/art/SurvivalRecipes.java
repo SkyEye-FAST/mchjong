@@ -11,8 +11,8 @@ final class SurvivalRecipes {
         "mangrove", "cherry", "bamboo", "crimson", "warped");
     static final List<String> COLORS = List.of("white", "orange", "magenta", "light_blue", "yellow", "lime",
         "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
-    private record Material(String name, String source) {}
-    private static final List<Material> MATERIALS = List.of(new Material("bone", "bone_block"),
+    record Material(String name, String source) {}
+    static final List<Material> MATERIALS = List.of(new Material("bone", "bone_block"),
         new Material("quartz", "quartz_block"), new Material("calcite", "calcite"),
         new Material("glass", "glass"), new Material("amethyst", "amethyst_block"));
     private SurvivalRecipes() {}

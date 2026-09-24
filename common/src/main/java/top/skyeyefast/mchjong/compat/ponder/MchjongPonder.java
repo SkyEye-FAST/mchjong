@@ -13,10 +13,16 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public final class MchjongPonder implements PonderPlugin {
     private static final ResourceLocation TABLES = MahjongContent.id("mahjong");
 
-    private MchjongPonder() {}
+    private final PonderPlugin extension;
+
+    private MchjongPonder(PonderPlugin extension) { this.extension = extension; }
 
     public static void register() {
-        PonderIndex.addPlugin(new MchjongPonder());
+        register(null);
+    }
+
+    public static void register(PonderPlugin extension) {
+        PonderIndex.addPlugin(new MchjongPonder(extension));
     }
 
     @Override public String getModId() { return MahjongContent.MOD_ID; }
@@ -30,6 +36,7 @@ public final class MchjongPonder implements PonderPlugin {
             items.addStoryBoard(item, "table", MahjongScenes::equipment, TABLES);
         for (Item item : new Item[] {MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM})
             items.addStoryBoard(item, "table", MahjongScenes::playing, TABLES);
+        if (extension != null) extension.registerScenes(helper);
     }
 
     @Override public void registerTags(PonderTagRegistrationHelper<ResourceLocation> helper) {
@@ -39,5 +46,6 @@ public final class MchjongPonder implements PonderPlugin {
         for (Item item : new Item[] {MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM,
                 MahjongContent.BOX_ITEM, MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK})
             helper.addTagToComponent(BuiltInRegistries.ITEM.getKey(item), TABLES);
+        if (extension != null) extension.registerTags(helper);
     }
 }
