@@ -51,6 +51,13 @@ NeoForge, using Java 25. Keep `main` on Minecraft 1.21.1 / Java 21 and the
 formatting configuration and documentation together; retain each port's loader
 APIs, dependency versions and single-version snapshot workflow. Omit optional
 adapters when the dependency has no build for that Minecraft/loader profile.
+Record completed synchronization with signed merge commits: merge the relevant
+`main` commit into each compatibility branch after adapting its changes, then
+merge both compatibility branch tips back into `main`. Preserve each branch's
+Minecraft and loader-specific tree when recording already adapted changes.
+Finish with `main` as a descendant of both compatibility branch tips, and
+advance the release pins to those synchronized tips. Verify the ancestry and
+remote refs before calling the branch coordination complete.
 Keep the three-version loader and integration tables in every README aligned,
 and distinguish shipped adapters from completed runtime validation.
 Keep version differences limited to actual Minecraft and loader API boundaries.
