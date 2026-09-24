@@ -117,9 +117,7 @@ public final class TableSeatsScreen extends Screen {
 
     static Component presence(PlayerPresence presence) {
         if (presence == null) return Component.translatable("room.mchjong.empty");
-        Component state = Component.translatable(presenceKey(presence));
-        return presence == PlayerPresence.DISCONNECTED
-            ? state.copy().append("  ").append(Component.translatable("room.mchjong.auto_managed")) : state;
+        return Component.translatable(presenceKey(presence));
     }
 
     private static String presenceKey(PlayerPresence presence) {

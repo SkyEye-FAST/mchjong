@@ -179,7 +179,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         TableView snapshot = game.view(authorizedViewer(player));
         player.connection.send(PayloadPackets.clientbound(
-            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply, equipment.redOptions(), game.roomView())));
+            new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply,
+                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView())));
     }
 
     public void open(ServerPlayer player) { sendView(player, true, false); }
@@ -445,7 +446,14 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         Game game = serverGame();
         var current = ((ServerLevel) level).getServer().getPlayerList().getPlayer(player);
         if (current != null && current.serverLevel() == level && seatedViewer(current) != null) return;
-        if (game != null) { game.unseat(player); setChanged(); sentRevision = -1; }
+        if (game != null) {
+            int assigned = game.seatOf(player);
+            boolean voluntary = current != null && current.isAlive() && !current.isSpectator()
+                && assigned >= 0 && level.getBlockState(TableGeometry.stool(worldPosition, assigned)).is(MahjongContent.STOOL);
+            game.unseat(player, voluntary);
+            setChanged();
+            sentRevision = -1;
+        }
     }
 
     public void act(ServerPlayer player, TableActionPayload payload) {
@@ -497,7 +505,9 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     public void control(ServerPlayer player, TableControlPayload payload) {
-        Game game = participantGame(player);
+        Game game = payload.operation() == TableControlPayload.Operation.RESOLVE_LEAVE
+            && player.serverLevel() == level && player.isAlive() && !player.isSpectator()
+            ? serverGame() : participantGame(player);
         if (game == null || !game.tableId().equals(payload.tableId())) {
             sendView(player, false, true);
             return;
@@ -505,6 +515,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         boolean changed = switch (payload.operation()) {
             case REQUEST_EXIT -> payload.token() == game.view(player.getUUID()).decision() && game.requestExit(player.getUUID());
             case ANSWER_EXIT -> game.answerExit(player.getUUID(), payload.token(), payload.enabled());
+            case RESOLVE_LEAVE -> payload.token() == game.view(null).decision()
+                && game.resolveLeave(player.getUUID(), payload.enabled());
             case AUTO_SORT -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.SORT, payload.enabled());
             case AUTO_WIN -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.WIN, payload.enabled());
             case NO_CALLS -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.NO_CALLS, payload.enabled());

@@ -81,12 +81,16 @@ or a saved room. Nearby room members retain preparation controls while relocatin
 but active-game actions and private hands require the correct physical seat.
 Physical dismount in the lobby releases room membership immediately. During an
 active match it retains membership with a five-second grace period; expiry or a
-lost server connection enables temporary win/pass/tsumogiri automation without
-changing personal AutoPlay settings or spending the disconnected player's clock.
+lost server connection enables temporary win/pass/tsumogiri automation while another
+human remains seated, without changing personal AutoPlay settings or spending the disconnected player's clock.
 Returning to the assigned stool restores control. Explicit lobby leave releases
 membership; hosts may replace disconnected guests with bots after the grace period.
 An idle lobby closes and releases all seats once every human is disconnected,
 including after the dismount grace period expires.
+An active match pauses its settlement, clocks and automatic actions as soon as no
+human is seated. The last player to dismount normally chooses to keep the paused
+match or end it; connection loss and invalidated seats keep it paused by default.
+The match resumes when a human returns to an assigned stool.
 The default-on personal automatic seating option requests relocation after seat
 assignment or reopening a reserved table during preparation. Its payload contains only table position
 and identity; the server derives the destination from membership and validates

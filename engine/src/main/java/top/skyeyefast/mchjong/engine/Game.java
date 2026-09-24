@@ -66,6 +66,7 @@ public final class Game {
     HandVisibility handVisibility = HandVisibility.SELF;
     transient boolean invitationTeleport;
     ExitVote exitVote;
+    UUID pendingLeaveDecision;
     long exitVoteSequence;
     int exitCooldown;
     boolean manual;
@@ -231,6 +232,7 @@ public final class Game {
             } else if (!connected.contains(player.id)) {
                 player.presence = PlayerPresence.DISCONNECTED;
                 player.awayTicks = 0;
+                if (player.id.equals(pendingLeaveDecision)) pendingLeaveDecision = null;
             } else if (Objects.equals(mounted.get(player.id), seat)) {
                 player.presence = PlayerPresence.SEATED;
                 player.awayTicks = 0;
@@ -247,6 +249,27 @@ public final class Game {
             revision++;
             if (phase == Phase.LOBBY) decision++;
         }
+        if (hasSeatedHuman()) pendingLeaveDecision = null;
+    }
+
+    private boolean hasSeatedHuman() {
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var player = players[seat];
+            if (player.id != null && !player.bot && player.presence == PlayerPresence.SEATED) return true;
+        }
+        return false;
+    }
+
+    public boolean leaveDecision(UUID actor) {
+        return actor != null && actor.equals(pendingLeaveDecision) && phase != Phase.LOBBY && !hasSeatedHuman();
+    }
+
+    public boolean resolveLeave(UUID actor, boolean retain) {
+        if (!leaveDecision(actor)) return false;
+        pendingLeaveDecision = null;
+        if (retain) revision++;
+        else closeMatch();
+        return true;
     }
 
     public boolean transferHost(UUID actor, UUID successor) {
@@ -305,6 +328,7 @@ public final class Game {
         wall = null;
         pending = null;
         exitVote = null;
+        pendingLeaveDecision = null;
         handling = new ManualHandling();
         exitCooldown = 0;
         hostId = null;
@@ -358,6 +382,7 @@ public final class Game {
             if (players[seat].presence != PlayerPresence.SEATED) {
                 players[seat].presence = PlayerPresence.SEATED;
                 players[seat].awayTicks = 0;
+                pendingLeaveDecision = null;
                 revision++;
                 if (phase == Phase.LOBBY) decision++;
             }
@@ -375,7 +400,10 @@ public final class Game {
     }
 
     /** A lobby dismount leaves the room; active matches retain membership for reconnection. */
-    public void unseat(UUID player) {
+    public void unseat(UUID player) { unseat(player, true); }
+
+    /** Only an intact, connected player's dismount offers the final leave decision. */
+    public void unseat(UUID player, boolean voluntary) {
         int seat = seatOf(player);
         if (seat < 0 || players[seat].bot) return;
         if (phase == Phase.LOBBY) {
@@ -383,9 +411,12 @@ public final class Game {
             removeMember(seat);
             return;
         }
-        if (players[seat].presence != PlayerPresence.SEATED) return;
-        players[seat].presence = PlayerPresence.AWAY;
-        players[seat].awayTicks = AWAY_GRACE_TICKS;
+        if (players[seat].presence == PlayerPresence.DISCONNECTED) return;
+        if (players[seat].presence == PlayerPresence.SEATED) {
+            players[seat].presence = PlayerPresence.AWAY;
+            players[seat].awayTicks = AWAY_GRACE_TICKS;
+        }
+        pendingLeaveDecision = voluntary && !hasSeatedHuman() ? player : null;
         revision++;
     }
 
@@ -875,6 +906,7 @@ public final class Game {
     /** Server-owned automation and timeouts, paced independently from client animations. */
     public void tick() {
         tickPresence();
+        if (phase != Phase.LOBBY && !hasSeatedHuman()) return;
         if (exitCooldown > 0) exitCooldown--;
         if (exitVote != null) {
             int remaining = exitVote.ticksLeft() - 1;
@@ -968,7 +1000,7 @@ public final class Game {
     }
 
     private boolean clockActive(int seat) {
-        return age >= 0 && !players[seat].bot && players[seat].presence != PlayerPresence.DISCONNECTED
+        return age >= 0 && hasSeatedHuman() && !players[seat].bot && players[seat].presence != PlayerPresence.DISCONNECTED
             && (phase == Phase.TURN || phase == Phase.REACTION)
             && !actions(seat).isEmpty();
     }
@@ -1034,6 +1066,8 @@ public final class Game {
         Objects.requireNonNull(archiveQueue);
         Objects.requireNonNull(handVisibility);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
+        if (pendingLeaveDecision != null && (phase == Phase.LOBBY || seatOf(pendingLeaveDecision) < 0))
+            throw new IllegalStateException("Invalid leave decision");
         if (!suppliedTiles.isEmpty() && !Tile.validSet(suppliedTiles)) throw new IllegalStateException("Invalid physical set");
         handling.validate(this);
         if (exitCooldown < 0 || exitCooldown > ExitVote.DURATION_TICKS) throw new IllegalStateException("Invalid exit cooldown");

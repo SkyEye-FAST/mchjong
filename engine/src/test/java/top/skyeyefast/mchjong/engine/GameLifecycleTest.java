@@ -25,6 +25,59 @@ class GameLifecycleTest {
         return game;
     }
 
+    @Test void emptyActiveTablePausesAndLastDismounterChoosesItsFate() {
+        var game = started(RuleSet.TENHOU_4, 201);
+        UUID last = game.players[3].id;
+        for (int seat = 0; seat < 3; seat++) game.unseat(game.players[seat].id);
+        assertFalse(game.leaveDecision(game.players[0].id));
+        game.unseat(last);
+        assertTrue(game.leaveDecision(last));
+        assertFalse(game.resolveLeave(game.players[0].id, false));
+        int age = game.age;
+        long decision = game.decision;
+        int[] move = game.moveTicks.clone(), reserve = game.reserveTicks.clone();
+        for (int tick = 0; tick < Game.AWAY_GRACE_TICKS + 30; tick++) game.tick();
+        assertEquals(age, game.age);
+        assertEquals(decision, game.decision);
+        assertArrayEquals(move, game.moveTicks);
+        assertArrayEquals(reserve, game.reserveTicks);
+        assertTrue(game.resolveLeave(last, true));
+        assertFalse(game.leaveDecision(last));
+        game.synchronizeSeats(Map.of(last, 3), Set.of(last));
+        game.tick();
+        assertEquals(age + 1, game.age);
+        game.validate();
+
+        game.unseat(last);
+        assertTrue(game.resolveLeave(last, false));
+        assertEquals(Game.Phase.LOBBY, game.phase());
+        assertEquals(-1, game.seatOf(last));
+        game.validate();
+    }
+
+    @Test void lostConnectionsKeepTheEmptyMatchPausedWithoutALeaveDecision() {
+        var game = started(RuleSet.TENHOU_3, 202);
+        int age = game.age;
+        game.synchronizeSeats(Map.of(), Set.of());
+        for (int tick = 0; tick < 40; tick++) game.tick();
+        assertEquals(age, game.age);
+        assertEquals(Game.Phase.TURN, game.phase());
+        for (int seat = 0; seat < 3; seat++) assertFalse(game.leaveDecision(game.players[seat].id));
+        game.validate();
+        game = JSON.fromJson(JSON.toJson(game), Game.class);
+        game.validate();
+        game.synchronizeSeats(Map.of(), Set.of());
+        game.tick();
+        assertEquals(age, game.age);
+
+        var displaced = started(RuleSet.TENHOU_3, 203);
+        for (int seat = 0; seat < 3; seat++) displaced.unseat(displaced.players[seat].id, false);
+        assertFalse(displaced.leaveDecision(displaced.players[2].id));
+        int displacedAge = displaced.age;
+        displaced.tick();
+        assertEquals(displacedAge, displaced.age);
+    }
+
     /** Match-rule fixtures start with an assigned roster; RoomSeatingTest exercises the lottery. */
     static void startPositioned(Game game) {
         UUID host = game.hostId;

@@ -9,6 +9,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableAnimation;
+import top.skyeyefast.mchjong.client.TableLeaveScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TableRulesScreen;
@@ -29,6 +30,7 @@ final class TableControlSmoke {
     private int stage, ticks;
     private boolean remainingHidden;
     private CompletableFuture<Void> reseated;
+    private int departedSeat;
     private int originalWidth, originalHeight, originalScale;
     private static final String[] RULE_LANGUAGES = {"zh_cn", "zh_tw", "ja_jp", "en_us"};
     private int ruleLanguage;
@@ -341,6 +343,28 @@ final class TableControlSmoke {
             });
             next(27);
         } else if (stage == 27 && reseated.isDone() && table.clientRoom().invitationTeleport() == originalWorldPolicy.invitationTeleport()) {
+            departedSeat = view.viewerSeat();
+            UUID id = client.player.getUUID();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                player.stopRiding();
+            });
+            next(32);
+        } else if (stage == 32 && reseated.isDone() && client.screen instanceof TableLeaveScreen && ticks > 5) {
+            require(view.viewerSeat() < 0 && view.phase() == Game.Phase.TURN, "Last dismount did not pause the active match");
+            capture(client, output, "26-paused-leave-choice.png");
+            click(client, "ui.mchjong.leave_match_keep");
+            next(33);
+        } else if (stage == 33 && client.screen == null && ticks > 5) {
+            UUID id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            reseated = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                serverTable.sit(player, departedSeat);
+            });
+            next(34);
+        } else if (stage == 34 && reseated.isDone() && view.viewerSeat() == departedSeat) {
             return true;
         }
         return false;
