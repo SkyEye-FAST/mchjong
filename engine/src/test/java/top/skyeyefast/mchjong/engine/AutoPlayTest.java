@@ -213,18 +213,19 @@ class AutoPlayTest {
         assertTrue(player.autoPlay.sort());
     }
 
-    @Test void preferencesPersistAcrossHandsAndReloadButAreClearedWhenTheSeatIsReleased() {
+    @Test void preferencesPersistAcrossReloadAndResetForEachHand() {
         Game game = GameLifecycleTest.started(RuleSet.TENHOU_3, 31);
         UUID actor = game.players[0].id;
         for (var option : AutoPlay.Option.values())
             assertTrue(game.configureAutoPlay(actor, game.decision, option, option != AutoPlay.Option.SORT));
         AutoPlay expected = new AutoPlay(false, true, true, true, true);
-        game.startHand();
         assertEquals(expected, game.view(actor).autoPlay());
         Gson json = new Gson();
         game = json.fromJson(json.toJson(game), Game.class);
         game.validate();
         assertEquals(expected, game.view(actor).autoPlay());
+        game.startHand();
+        assertEquals(AutoPlay.DEFAULT, game.view(actor).autoPlay());
         game.wall = null;
         game.newDecision(Game.Phase.LOBBY);
         assertTrue(game.act(actor, game.decision, Game.indexOf(game.actions(game.seatOf(actor)), LEAVE_ROOM)));
@@ -275,36 +276,6 @@ class AutoPlayTest {
         game.configureEquipment(true, Tile.set(false));
         assertEquals(custom, game.view(host).timeControl());
         game.validate();
-    }
-
-    @Test void preferencesSurviveHandsAndSavesButNotSeatRelease() {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_3, 1);
-        UUID host = UUID.randomUUID();
-        game.join(host, "Host", 0);
-        for (var option : AutoPlay.Option.values())
-            assertTrue(game.configureAutoPlay(host, game.decision, option, option != AutoPlay.Option.SORT));
-        var expected = new AutoPlay(false, true, true, true, true);
-        Gson json = new Gson();
-        game = json.fromJson(json.toJson(game), Game.class);
-        game.validate();
-        assertEquals(expected, game.view(host).autoPlay());
-        game.wall = null;
-        game.newDecision(Game.Phase.LOBBY);
-        assertTrue(game.act(host, game.decision, Game.indexOf(game.actions(game.seatOf(host)), LEAVE_ROOM)));
-        UUID replacement = UUID.randomUUID();
-        assertTrue(game.join(replacement, "Replacement", 0));
-        assertEquals(AutoPlay.DEFAULT, game.view(replacement).autoPlay());
-
-        game = GameLifecycleTest.started(RuleSet.TENHOU_4, 31);
-        host = game.players[0].id;
-        assertTrue(game.configureAutoPlay(host, game.decision, AutoPlay.Option.SORT, false));
-        assertTrue(game.configureAutoPlay(host, game.decision, AutoPlay.Option.WIN, true));
-        expected = game.view(host).autoPlay();
-        game.startHand();
-        assertEquals(expected, game.view(host).autoPlay());
-        game = json.fromJson(json.toJson(game), Game.class);
-        game.validate();
-        assertEquals(expected, game.view(host).autoPlay());
     }
 
     @Test void manualClockUsesThirtyThenOneHundredTwentySecondsAcrossReload() {
