@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.world;
 
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.item.BlockItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.SoundType;
 import net.minecraft.world.level.block.entity.BlockEntityType;
@@ -31,7 +30,7 @@ public final class MahjongContent {
     public static final MahjongStoolBlock STOOL = new MahjongStoolBlock(properties().noOcclusion());
     public static final Item TABLE_ITEM = new MahjongTableItem(TABLE, furniture());
     public static final Item AUTO_TABLE_ITEM = new MahjongTableItem(AUTO_TABLE, furniture());
-    public static final Item STOOL_ITEM = new BlockItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
+    public static final Item STOOL_ITEM = new MahjongStoolItem(STOOL, furniture().component(DataComponents.BASE_COLOR, DyeColor.WHITE));
     public static final Item CLOTH_ITEM = new MahjongSupplyItem(new Item.Properties().component(DataComponents.BASE_COLOR, DyeColor.CYAN));
     public static final Item TILE_ITEM = new MahjongSupplyItem(new Item.Properties().component(MahjongComponents.TILE, TileData.BLANK)
         .component(MahjongComponents.FACE_PRESET, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI));

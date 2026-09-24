@@ -36,21 +36,24 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalSuppliesTest {
     @Test void catalogueKeepsBoxesAdjacentAndListsEveryStickWithoutSeparateTileFaces(MinecraftServer server) {
         var entries = top.skyeyefast.mchjong.item.MahjongCatalog.entries();
-        assertEquals(54 + TileMaterial.values().length, entries.size());
+        assertEquals(69 + TileMaterial.values().length, entries.size());
+        assertEquals(16, entries.stream().filter(stack -> stack.is(MahjongContent.STOOL_ITEM)).count());
         assertEquals(16, entries.stream().filter(stack -> stack.is(MahjongContent.CLOTH_ITEM)).count());
-        for (int i = 23; i <= 38; i++) assertTrue(entries.get(i).is(MahjongContent.CLOTH_ITEM));
-        assertEquals(List.of(DyeColor.values()), entries.subList(23, 39).stream().map(MahjongSupplies::color).toList());
-        for (int i = 39; i <= 42; i++) assertTrue(entries.get(i).is(MahjongContent.BOX_ITEM));
-        assertEquals(2, MahjongSupplies.contents(entries.get(40)).get(MahjongSupplies.DICE_SLOT).getCount());
-        assertTrue(entries.get(43 + TileMaterial.values().length).is(MahjongContent.DICE));
+        for (int i = 22; i <= 37; i++) assertTrue(entries.get(i).is(MahjongContent.STOOL_ITEM));
+        assertEquals(List.of(DyeColor.values()), entries.subList(22, 38).stream().map(MahjongSupplies::color).toList());
+        for (int i = 38; i <= 53; i++) assertTrue(entries.get(i).is(MahjongContent.CLOTH_ITEM));
+        assertEquals(List.of(DyeColor.values()), entries.subList(38, 54).stream().map(MahjongSupplies::color).toList());
+        for (int i = 54; i <= 57; i++) assertTrue(entries.get(i).is(MahjongContent.BOX_ITEM));
+        assertEquals(2, MahjongSupplies.contents(entries.get(55)).get(MahjongSupplies.DICE_SLOT).getCount());
+        assertTrue(entries.get(58 + TileMaterial.values().length).is(MahjongContent.DICE));
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.DICE)));
         assertFalse(MahjongSupplies.boxAccepts(MahjongSupplies.DICE_SLOT, new ItemStack(MahjongContent.POINT_STICK)));
         assertEquals(64, new ItemStack(MahjongContent.MAHJONG_DYE).getMaxStackSize());
         assertEquals(1, new ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE).getMaxStackSize());
-        assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(39))));
-        assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(40))));
-        assertNotNull(MahjongSupplies.deck(entries.get(40)));
-        assertNull(MahjongSupplies.deck(entries.get(40)).back());
+        assertEquals(0, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(54))));
+        assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(55))));
+        assertNotNull(MahjongSupplies.deck(entries.get(55)));
+        assertNull(MahjongSupplies.deck(entries.get(55)).back());
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(Items.CYAN_DYE)));
         assertTrue(MahjongSupplies.boxAccepts(MahjongSupplies.DYE_SLOT, new ItemStack(MahjongContent.UNDO_DYE)));
         assertEquals(List.of(-10000, 0, 100, 1000, 5000, 10000), entries.stream()
@@ -59,13 +62,14 @@ class PhysicalSuppliesTest {
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.TABLE_ITEM)).count());
         assertEquals(11, entries.stream().filter(stack -> stack.is(MahjongContent.AUTO_TABLE_ITEM)).count());
         for (var material : TileMaterial.values()) {
-            var blank = entries.get(43 + material.ordinal());
+            var blank = entries.get(58 + material.ordinal());
             assertTrue(blank.is(MahjongContent.TILE_ITEM));
             assertEquals(new TileData(-1, material, false), MahjongSupplies.tile(blank));
         }
         assertEquals(Component.translatable("block.mchjong.mahjong_table.oak"), entries.get(0).getHoverName());
         assertEquals(Component.translatable("block.mchjong.automatic_mahjong_table.oak"), entries.get(11).getHoverName());
-        assertEquals(Component.translatable("item.mchjong.table_cloth.white"), entries.get(23).getHoverName());
+        assertEquals(Component.translatable("block.mchjong.mahjong_stool.white"), entries.get(22).getHoverName());
+        assertEquals(Component.translatable("item.mchjong.table_cloth.white"), entries.get(38).getHoverName());
         for (int i = 0; i < entries.size(); i++) for (int j = i + 1; j < entries.size(); j++)
             assertFalse(ItemStack.isSameItemSameComponents(entries.get(i), entries.get(j)));
         entries.getFirst().shrink(1);
