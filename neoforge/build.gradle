@@ -75,6 +75,9 @@ dependencies {
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'emi') {
         runtimeOnly "dev.emi:emi-neoforge:${emi_version}"
     }
+    if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'rei') {
+        runtimeOnly "me.shedaniel:RoughlyEnoughItems-neoforge:${rei_version}"
+    }
     if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
         && !providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
         runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
@@ -159,6 +162,7 @@ def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('fal
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
+if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
 def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")

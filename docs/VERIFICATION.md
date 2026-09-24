@@ -28,8 +28,8 @@ fixture, including worlds, packets, inventory transactions and rendering.
 ## Optional integrations
 
 Append `-PrecipeBrowser=jei` to Fabric, Forge or NeoForge client checks. Append
-`-PrecipeBrowser=emi` to Fabric or NeoForge. Profiles write separate `jei-evidence`
-or `emi-evidence` directories; Forge JEI uses `jei-bootstrap-evidence`.
+`-PrecipeBrowser=emi` or `-PrecipeBrowser=rei` to Fabric or NeoForge. Profiles
+write separate viewer evidence directories; Forge JEI uses `jei-bootstrap-evidence`.
 `RecipeBrowserDataSmoke` checks finite recipes and every cycling input against
 the loaded recipes. Viewer checks query catalogue order, denominations, flower/red
 back dyes, name/component-preserving upgrades and native container exclusions,

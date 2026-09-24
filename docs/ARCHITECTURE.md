@@ -121,8 +121,8 @@ are shared with `SupplyCraftingRecipe`; `MahjongSupplies` remains responsible fo
 component and container transformations. `SupplySubtype` uses an immutable stack
 snapshot and Minecraft component equality for recipe-relevant identity.
 
-The independent `compat/jei` and `compat/emi` packages contain the respective
-official plugin entrypoints and rendering adapters. Their APIs are compile-only;
+The independent `compat/jei`, `compat/emi` and `compat/rei` packages contain the
+respective official plugin entrypoints and rendering adapters. Their APIs are compile-only;
 the chosen development profile supplies the complete viewer at runtime. Screen
 boundaries come from the native container screens themselves. See
 [COMPATIBILITY.md](COMPATIBILITY.md) for profiles and validation coverage.

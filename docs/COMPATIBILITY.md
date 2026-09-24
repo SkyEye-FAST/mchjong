@@ -16,9 +16,10 @@ Runtime results and their exact scope are recorded in
 supported adapters, while each compatibility branch pins its own dependencies.
 
 JEI profiles cover Fabric and NeoForge 26.1.2; Fabric, Forge and NeoForge
-1.21.1; and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1.
-On 1.20.1, EMI and REI cover Fabric and Forge. Optional Ponder tutorials cover
-Fabric and NeoForge 1.21.1 and both 1.20.1 loaders.
+1.21.1; and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1 and
+Fabric and Forge 1.20.1. REI covers Fabric and NeoForge 1.21.1 and 26.1.2, plus
+Fabric and Forge 1.20.1. Optional Ponder tutorials cover Fabric and NeoForge
+1.21.1 and both 1.20.1 loaders.
 
 Branch synchronization and release artifact selection are documented in
 [Development](DEVELOPMENT.md#version-synchronization-and-artifacts).
@@ -29,6 +30,7 @@ Branch synchronization and release artifact selection are documented in
 | --- | --- | --- |
 | JEI | 19.56.0.441 | `-PrecipeBrowser=jei`, with MezzConfig 0.5.6 |
 | EMI | 1.1.24+1.21.1 | `-PrecipeBrowser=emi` |
+| REI | 16.0.799 | `-PrecipeBrowser=rei` |
 | Base installation | Current build profile | `-PrecipeBrowser=none` (default) |
 
 All dependency versions live in `gradle.properties`. Viewer API dependencies are

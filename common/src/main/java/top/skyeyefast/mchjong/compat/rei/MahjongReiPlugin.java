@@ -4,22 +4,38 @@ import java.util.List;
 import java.util.function.Function;
 import me.shedaniel.math.Rectangle;
 import me.shedaniel.rei.api.client.plugins.REIClientPlugin;
+import me.shedaniel.rei.api.client.registry.category.CategoryRegistry;
+import me.shedaniel.rei.api.client.registry.display.DisplayRegistry;
 import me.shedaniel.rei.api.client.registry.entry.EntryRegistry;
 import me.shedaniel.rei.api.client.registry.screen.ExclusionZones;
 import me.shedaniel.rei.api.common.entry.comparison.ItemComparatorRegistry;
 import me.shedaniel.rei.api.common.util.EntryStacks;
+import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.inventory.AbstractContainerScreen;
+import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.client.MahjongBoxScreen;
 import top.skyeyefast.mchjong.client.MahjongTableScreen;
 import top.skyeyefast.mchjong.client.PointStickScreen;
+import top.skyeyefast.mchjong.compat.recipes.SupplyRecipeExamples;
 import top.skyeyefast.mchjong.compat.recipes.SupplySubtype;
 import top.skyeyefast.mchjong.item.MahjongCatalog;
 
-/** REI entry catalogue, component discrimination and screen exclusion zones. */
+/** REI supply recipes, entry catalogue, component discrimination and screen exclusion zones. */
 public class MahjongReiPlugin implements REIClientPlugin {
     @Override public void registerItemComparators(ItemComparatorRegistry registry) {
         SupplySubtype.items().forEach(registry::registerComponents);
+    }
+
+    @Override public void registerCategories(CategoryRegistry registry) {
+        registry.add(new SupplyReiCategory());
+        registry.addWorkstations(SupplyReiDisplay.CATEGORY, EntryStacks.of(Items.CRAFTING_TABLE));
+    }
+
+    @Override public void registerDisplays(DisplayRegistry registry) {
+        var level = Minecraft.getInstance().level;
+        if (level == null) return;
+        SupplyRecipeExamples.create(level).forEach(example -> registry.add(new SupplyReiDisplay(example)));
     }
 
     @Override public void registerEntries(EntryRegistry registry) {
