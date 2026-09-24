@@ -149,4 +149,4 @@ jobs:
             "compat-26.1.2/neoforge/build/libs/mchjong-neoforge-26.1.2-${version}.jar#26.1.2 NeoForge" \
             --verify-tag \
             --notes-file release-notes.md \
-            --title "mchjong ${GITHUB_REF_NAME}"
+            --title "MChjong ${GITHUB_REF_NAME}"
