@@ -210,7 +210,7 @@ class ReactionRulesTest {
         assertEquals(List.of(2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
         assertTrue(f.game.players[1].melds.isEmpty());
         assertTrue(f.game.players[3].melds.isEmpty());
-        assertTrue(f.game.view(f.game.players[1].id).actions().isEmpty());
+        assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT)), f.game.view(f.game.players[1].id).actions());
     }
 
     @Test void botRonStillWaitsForAnotherPlayersRon() {

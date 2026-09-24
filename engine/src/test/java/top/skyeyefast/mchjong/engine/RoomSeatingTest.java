@@ -282,7 +282,8 @@ class RoomSeatingTest {
         var roster = Arrays.stream(game.players).map(player -> player.id).toList();
         game.newDecision(Game.Phase.MATCH_END);
         for (var player : game.players) player.ready = false;
-        for (UUID human : roster) assertTrue(game.view(human).actions().isEmpty());
+        for (UUID human : roster)
+            assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT)), game.view(human).actions());
         assertFalse(game.requestExit(id(2)));
         for (int tick = 0; tick < Game.SETTLEMENT_TICKS; tick++) game.tick();
         assertEquals(Game.Phase.MATCH_END, game.phase());
