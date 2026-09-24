@@ -24,6 +24,7 @@
   "action.mchjong.ron": "榮和",
   "action.mchjong.set_bot": "設定電腦玩家難度",
   "action.mchjong.shuffle": "洗牌",
+  "action.mchjong.skip_settlement": "跳過等待",
   "action.mchjong.take_packet": "取牌",
   "action.mchjong.transfer_host": "轉交房主",
   "action.mchjong.tsumo": "自摸",

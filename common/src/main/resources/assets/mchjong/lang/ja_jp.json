@@ -24,6 +24,7 @@
   "action.mchjong.ron": "ロン",
   "action.mchjong.set_bot": "CPUの強さを変更",
   "action.mchjong.shuffle": "洗牌する",
+  "action.mchjong.skip_settlement": "待機をスキップ",
   "action.mchjong.take_packet": "配牌を取る",
   "action.mchjong.transfer_host": "ホストを譲渡",
   "action.mchjong.tsumo": "ツモ",
