@@ -7,22 +7,42 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.0] - 2026-09-24
+
 ### Added
 
 - Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
 - Optional Create workshop with efficient sawing and mixing, reusable face-printing plates, two-target back dyeing, single-tile red-five application and automatic packing.
 - Component-aware JEI/EMI workshop examples and localized Ponder production and dyeing tutorials.
+- Optional Touhou Little Maid and Orihime integration with dedicated mahjong tasks and table seating.
+- Rule option descriptions in rule screens and tooltips across all four supported languages.
 
 ### Changed
 
 - Tile inventory models show their thickness in 3D, and blank fronts use the same material finish as undyed backs.
 - Mahjong dye requires white dye alongside black, red, green and blue. Mahjong boxes use a shaped chest, wooden-slab, leather and iron-nugget recipe.
+- Simplified Chinese translations standardize mahjong terminology for rule presets, extensions, bot actions and table furniture ([#5]).
 
 ### Fixed
 
 - Settlement screens preserve table tile-back dye and material choices on concealed kongs.
 - Symmetric rasterization removes asymmetric pip boundary protrusion on dice textures.
+- Tile back textures on face-down walls align upright toward the table center rather than upside down ([#3]).
+- Winning ron declarations resolve immediately ahead of lower-priority chi, pon or kan prompts ([#4]).
+- Inactive or abandoned matches pause turn timers and confirm final departure before vacating seats.
+- Dice roll controls appear after all four walls are built on manual tables.
+- Unavailable rule presets remain visible with explanatory requirements.
+
+### Compatibility
+
+- Minecraft 1.21.1: Fabric, Forge and NeoForge; Minecraft 1.20.1: Fabric and Forge; Minecraft 26.1.2: Fabric and NeoForge. Quilt uses the corresponding Fabric JAR.
+- JEI is available on all seven builds. EMI covers Fabric and NeoForge on 1.21.1, and Fabric and Forge on 1.20.1. REI provides catalogue and recipe viewers on supported profiles.
+- Ponder tutorials target Fabric and NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
+- Create workshop integration targets NeoForge on 1.21.1, and Fabric and Forge on 1.20.1.
+- Touhou Little Maid and Orihime integrations target Fabric and NeoForge on 1.21.1, Fabric and Forge on 1.20.1, and tested prerelease builds on 26.1.2.
+- Minecraft 1.21.1 requires Java 21; Minecraft 1.20.1 requires Java 17; Minecraft 26.1.2 requires Java 25.
+- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
 
 ## [0.6.0] - 2026-09-22
 
@@ -263,7 +283,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.0...HEAD
+[0.7.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.0
 [0.6.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.6.0
 [0.5.3]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.3
 [0.5.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.2
@@ -278,3 +299,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 [0.1.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.1.0
 [#1]: https://github.com/SkyEye-FAST/mchjong/issues/1
 [#2]: https://github.com/SkyEye-FAST/mchjong/issues/2
+[#3]: https://github.com/SkyEye-FAST/mchjong/issues/3
+[#4]: https://github.com/SkyEye-FAST/mchjong/issues/4
+[#5]: https://github.com/SkyEye-FAST/mchjong/issues/5
