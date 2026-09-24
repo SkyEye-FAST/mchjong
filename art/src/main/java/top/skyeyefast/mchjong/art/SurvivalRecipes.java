@@ -33,7 +33,7 @@ final class SurvivalRecipes {
         for (String color : COLORS)
             shaped(output, "table_cloth_" + color, List.of("CCC"), Map.of("C", item(color + "_carpet")),
                 stack("table_cloth", 1, Map.of("minecraft:base_color", color)));
-        shaped(output, "mahjong_box", List.of("SSS", "LCL", " I "),
+        shaped(output, "mahjong_box", List.of("LSL", "SCS", " I "),
             Map.of("S", Map.of("tag", "minecraft:wooden_slabs"), "L", item("leather"),
                 "C", item("chest"), "I", item("iron_nugget")), stack("mahjong_box", 1, Map.of()));
         for (String wood : WOODS)

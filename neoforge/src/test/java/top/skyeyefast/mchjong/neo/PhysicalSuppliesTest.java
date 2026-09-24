@@ -160,8 +160,8 @@ class PhysicalSuppliesTest {
         assertEquals(1, dye.getCount());
         assertFalse(crafting(server, "mahjong_dye").matches(CraftingInput.of(2, 2, List.of(
             new ItemStack(Items.BLUE_DYE), new ItemStack(Items.BLACK_DYE), new ItemStack(Items.GREEN_DYE), new ItemStack(Items.RED_DYE))), server.overworld()));
-        var caseItem = craft(server, "mahjong_box", 3, 3, List.of(new ItemStack(Items.OAK_SLAB), new ItemStack(Items.BIRCH_SLAB),
-            new ItemStack(Items.SPRUCE_SLAB), new ItemStack(Items.LEATHER), new ItemStack(Items.CHEST), new ItemStack(Items.LEATHER),
+        var caseItem = craft(server, "mahjong_box", 3, 3, List.of(new ItemStack(Items.LEATHER), new ItemStack(Items.OAK_SLAB),
+            new ItemStack(Items.LEATHER), new ItemStack(Items.BIRCH_SLAB), new ItemStack(Items.CHEST), new ItemStack(Items.SPRUCE_SLAB),
             ItemStack.EMPTY, new ItemStack(Items.IRON_NUGGET), ItemStack.EMPTY));
         assertTrue(MahjongSupplies.validBox(caseItem));
         assertTrue(server.getRecipeManager().byKey(MahjongContent.id("engrave_set")).isEmpty());

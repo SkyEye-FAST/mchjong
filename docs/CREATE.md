@@ -30,6 +30,12 @@ holding an iron nugget, then a mechanical press. One pass completes the box.
 The crafting-table route instead uses a chest, three wooden slabs, two leather
 and an iron nugget.
 
+```text
+L S L       L = leather, S = wooden slab
+S C S       C = chest
+. I .       I = iron nugget, . = empty
+```
+
 A printing plate uses three iron ingots across the bottom row, with paper above
 the middle ingot for Kansai faces or bamboo for Kanto faces. Both plates are the
 same item, `mchjong:mahjong_printing_plate`; their `mchjong:face_preset` component
