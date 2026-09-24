@@ -48,14 +48,13 @@ Optional integrations are scoped to the loader named in each cell:
 | --- | --- | --- | --- |
 | JEI supply recipes | Fabric, Forge, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | EMI supply recipes | Fabric, NeoForge | Fabric, Forge | — |
-| REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
+| REI supply recipes | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
 The table describes shipped adapters; installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
-REI's catalogue-only profiles expose item variants and screen exclusion zones.
 Fabric uses Create Fabric for Create and Touhou Little Maid: Orihime for Touhou
 Little Maid; these ports share their original mod's row. Install the build for
 your Minecraft version and loader, not the original mod alongside its port.
