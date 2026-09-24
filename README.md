@@ -1,13 +1,13 @@
 # MChjong
 
-[![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=main)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
+[![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=compat%2F1.20.1)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
-MChjong brings playable mahjong tables into Minecraft. This branch builds for
-Minecraft 1.20.1 on Fabric and Forge.
+MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
+presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
-Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
+Mahjong Soul, Tenhou, M.League, JPML A and WRC presets with configurable table
 options. See [Rules and presets](docs/RULES.md) for details.
 
 ## Features
@@ -19,8 +19,8 @@ options. See [Rules and presets](docs/RULES.md) for details.
 - Animated play and settlement panels with winning hands, scores and final standings
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
-- Resource-pack tile designs and recorded voices, with optional Ponder tutorials
-- Optional Create workshop for efficient, automated production, printing, dyeing and packing
+- Resource-pack tile designs and recorded voices
+- Optional Create production lines with efficient cutting, printing, dyeing and packing
 
 ## Installation
 
@@ -33,6 +33,34 @@ Development builds are available as loader-specific artifacts from successful
 For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 ## Compatibility
+
+Current build profiles support these Minecraft versions and loaders:
+
+| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt |
+| --- | --- | --- | --- | --- |
+| 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
+| 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact; runtime validation pending |
+
+Optional integrations are scoped to the loader named in each cell:
+
+| Integration | 1.21.1 | 1.20.1 | 26.1.2 |
+| --- | --- | --- | --- |
+| JEI supply recipes | Fabric, Forge, NeoForge | Fabric, Forge | Fabric, NeoForge |
+| EMI supply recipes | Fabric, NeoForge | Fabric, Forge | — |
+| REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
+| Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
+| Create workshop | NeoForge | Fabric, Forge | — |
+| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | — |
+
+The table describes shipped adapters; installed-mod and gameplay validation are
+recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
+REI's catalogue-only profiles expose item variants and screen exclusion zones.
+Fabric uses Create Fabric for Create and Touhou Little Maid: Orihime for Touhou
+Little Maid; these ports share their original mod's row. Install the build for
+your Minecraft version and loader, not the original mod alongside its port.
+An em dash marks a profile without that integration. Quilt reuses Fabric adapters
+when the corresponding dependency also supports Quilt.
 
 The current build profile targets **Minecraft 1.20.1** and **Java 17**, using
 Fabric Loader 0.19.5 with Fabric API or Forge 47.4.23. Build with JDK 21.
@@ -47,6 +75,10 @@ viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
 
+On 1.20.1, Touhou Little Maid on Forge and Touhou Little Maid: Orihime on
+Fabric add a Mahjong task for maids. During work hours, a maid can take an empty
+stool at her owner's table and play as a computer opponent.
+
 ## Getting started
 
 Craft a table, prepare a complete tile set in a mahjong box, and equip the table
@@ -56,8 +88,8 @@ preset in the lobby.
 
 Follow the [Playing guide](docs/PLAYING.md) for controls and table operation, and
 [Survival equipment and recipes](docs/SURVIVAL.md) for crafting and setup.
-With Ponder installed, hover over a table or supply item and hold the key shown
-in its tooltip to open an animated guide.
+On a Ponder enabled build, hover over a table or supply item and hold the key
+shown in its tooltip to open an animated guide.
 
 ## Documentation
 

@@ -13,6 +13,30 @@ See [PORT_1.20.1.md](PORT_1.20.1.md) for synchronization with the feature mainli
 | 1.20.1 | Quilt consumes the Fabric artifact | Quilt Loader 0.30.1 loads the packaged JAR on Java 17 to the title screen |
 
 The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
+The [README compatibility tables](../README.md#compatibility) summarize all
+three version lines and distinguish the loaders providing each integration.
+
+## Version synchronization and artifacts
+
+`main` is the sole feature development line. Synchronize stable batches into
+`compat/1.20.1` and `compat/26.1.2`, adapt Minecraft and loader APIs, then
+validate each port. Engine and shared gameplay changes travel through Git history.
+
+The release workflow on `main` builds its three loader artifacts, the two
+1.20.1 artifacts from `.github/compat-1.20.1-ref`, and the two 26.1.2 artifacts
+from `.github/compat-26.1.2-ref`.
+Snapshot workflows build single-version development artifacts for their respective
+branch profile. Update each pin after reviewing and validating a stable port batch. All
+checkouts receive the same mod version during assembly; the filenames include
+Minecraft version and loader. A main commit does not automatically advance the
+compatibility pins. Review feature parity and port acceptance before publishing
+a release. Quilt uses the validated 1.21.1 and 1.20.1 Fabric JARs.
+
+The 1.20.1 port uses native ItemStack NBT, recipe serializers, packet buffers and
+client APIs. JEI 15.59.0.212, EMI 1.1.24+1.20.1, REI 12.0.684 and Ponder 1.0.92
+have loader-specific development profiles; optional dependencies stay outside
+MChjong's release bundles. Each port branch records its validation in its own
+compatibility guide.
 
 ## Optional integrations
 
@@ -23,11 +47,15 @@ The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
 | REI | 12.0.684 | `-PrecipeBrowser=rei`, with Cloth Config and Architectury |
 | Ponder | 1.0.92 | `-PwithPonder=true` |
 | Create | Forge 6.0.8 / Fabric 6.0.8.1 | `-PwithCreate=true` |
+| Touhou Little Maid (Forge) | 1.5.3-forge+mc1.20.1 | `-PwithMaid=true` |
+| Touhou Little Maid: Orihime (Fabric) | 0.8.2-forge1.5.3+mc1.20.1 | `-PwithMaid=true` |
 | Base installation | Current build profile | `-PrecipeBrowser=none` (default) |
 
 All dependency versions live in `gradle.properties`. Viewer dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
+
+### Create workshop
 
 The [Create workshop](CREATE.md) uses the same printing, dyeing and packing
 rules on both loaders. The Forge adapter uses item capabilities and strict-NBT
@@ -35,6 +63,40 @@ ingredients; Fabric uses transactional storage and Fabric API's strict-NBT
 ingredients. Install each loader's matching Create release on the server and
 clients. The optional integration provides JEI/EMI examples and two Ponder
 tutorials while keeping Create and its libraries outside MChjong's release jars.
+
+### Maid players
+
+The 1.20.1 profile integrates Touhou Little Maid 1.5.3-forge+mc1.20.1 on
+Forge and Touhou Little Maid: Orihime 0.8.2-forge1.5.3+mc1.20.1 on Fabric.
+The Fabric development profile also resolves Forge Config API Port 8.0.3,
+Cardinal Components 5.2.3, Porting Lib 2.3.8+1.20.1, Reach Entity Attributes
+2.4.0 and Nashorn 15.4, including libraries nested in Orihime's release JAR.
+Install the matching maid mod and its dependencies on the server and clients,
+then select **Mahjong** in the maid's task
+selector. Sit at an equipped table with an empty stool and keep the maid nearby
+within her work area. During work hours she approaches the stool and joins the room.
+Choose the player count before recruiting maids; the room host can fill remaining
+places with training bots and adjust each maid's difficulty with the bot controls.
+
+Maids retain their names and move with their assigned seats. Their saved task data
+restores the physical mount after a world reload. Changing tasks, dismissing a maid
+from the room, or removing her stool releases the physical seat. During an active
+match a training bot continues the vacated place. Room dismissal returns the maid
+to Idle; select Mahjong again to recruit her for another room.
+
+Both integrations share `compat/maid` and the existing server-owned training AI.
+The maid APIs are compile-only; `-PwithMaid=true` supplies the matching development
+runtime. Run the focused checks with:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PwithMaid=true --console=plain
+gradlew.bat :forge:runSmokeClient -PwithMaid=true --console=plain
+```
+
+Each run writes fresh completion markers and normal/small-window captures to
+the loader's `build/smoke/maid-evidence`. The shared fixture checks task discovery,
+real brain-driven seating, saved entity recovery, assigned mounts, legal computer
+play and cleanup after a task change.
 
 ## Recipe and component coverage
 
@@ -70,6 +132,7 @@ Use the repository wrapper with JDK 21:
 gradlew.bat buildAll --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeClient --console=plain
+gradlew.bat :forge:runSmokeClient -PrecipeBrowser=jei --console=plain
 gradlew.bat :forge:runSmokeServer --console=plain
 gradlew.bat :fabric:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain
 gradlew.bat :forge:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain

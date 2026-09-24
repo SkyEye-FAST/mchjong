@@ -70,8 +70,8 @@ final class BrowserSmoke {
                 var kantoPrint = MahjongContent.id("/create/display/print/bone/kanto");
                 var kansaiRecipes = driver.query(kansai, false);
                 var kantoRecipes = driver.query(kanto, false);
-                check(kansaiRecipes.contains(kansaiPrint) && !kansaiRecipes.contains(kantoPrint), "Kansai plate lookup merged presets");
-                check(kantoRecipes.contains(kantoPrint) && !kantoRecipes.contains(kansaiPrint), "Kanto plate lookup merged presets");
+                check(kansaiRecipes.contains(kansaiPrint) && !kansaiRecipes.contains(kantoPrint), "Kansai printing plate lookup merged face presets");
+                check(kantoRecipes.contains(kantoPrint) && !kantoRecipes.contains(kansaiPrint), "Kanto printing plate lookup merged face presets");
                 displayedRecipe = kantoPrint;
             }
             var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());

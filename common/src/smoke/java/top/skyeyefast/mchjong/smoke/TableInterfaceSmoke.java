@@ -98,7 +98,7 @@ final class TableInterfaceSmoke {
         var hand = List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125, 126);
         if (state == 4) hand = hand.subList(3, 14);
         if (state == 5) hand = hand.subList(0, 13);
-        for (int i = 0; i < 4; i++) seats.add(new TableView.Seat("Player " + (i + 1), true, false, false, 25000,
+        for (int i = 0; i < 4; i++) seats.add(new TableView.Seat(false, "Player " + (i + 1), true, false, false, 25000,
             i == 0 ? hand : Collections.nCopies(13, Tile.HIDDEN), i == 0 && state != 5 ? 126 : Tile.ABSENT,
             i == 0 && state == 4 ? List.of(new Meld(Meld.Type.CHI, List.of(0, 4, 8), 3, 8)) : List.of(),
             List.of(), List.of(), false, false));

@@ -9,19 +9,25 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Optional Create production on Fabric and Forge: efficient cutting and inks, reusable printing plates, batch back coloring, single-tile red fives, stick marking and automatic packing, with JEI/EMI displays and Ponder tutorials.
 - Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
+- Optional Create workshop with efficient sawing and mixing, reusable face-printing plates, two-target back dyeing, single-tile red-five application and automatic packing.
+- Component-aware JEI/EMI workshop examples and localized Ponder production and dyeing tutorials.
+- Mahjong tasks for Touhou Little Maid on Forge and Touhou Little Maid: Orihime on Fabric.
+- Last-player departure confirmation with server-owned paused-match retention.
 
 ### Changed
 
 - Tile inventory models show their thickness in 3D, and blank fronts use the same material finish as undyed backs.
-- Mahjong dye requires black, red, green, blue and white dyes. The shaped box recipe surrounds a chest with three wooden slabs and two leather, with an iron nugget below.
+- Mahjong dye requires white dye alongside black, red, green and blue. Mahjong boxes use a shaped chest, wooden-slab, leather and iron-nugget recipe.
+- Match controls use compact spacing, and unavailable rule presets remain visible with their requirements.
 
 ### Fixed
 
 - Settlement screens preserve table tile-back dye and material choices on concealed kongs.
 - Symmetric rasterization removes asymmetric pip boundary protrusion on dice textures.
+- Empty tables pause match clocks, settlement and automatic play until a player returns.
+- Ordinary-table dice appear after all walls have been built.
 
 ## [0.6.0] - 2026-09-22
 

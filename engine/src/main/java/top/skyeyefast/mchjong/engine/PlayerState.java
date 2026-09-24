@@ -9,6 +9,7 @@ final class PlayerState {
     UUID id;
     String name = "";
     boolean bot;
+    boolean entityBot;
     BotDifficulty botDifficulty = BotDifficulty.EASY;
     transient PlayerPresence presence = PlayerPresence.SEATED;
     transient int awayTicks;

@@ -6,6 +6,13 @@ version = rootProject.mod_version
 group = rootProject.maven_group
 base.archivesName = "mchjong-fabric-${minecraft_version}"
 
+repositories {
+    exclusiveContent {
+        forRepository { maven { name = 'Ladysnake'; url = 'https://maven.ladysnake.org/releases' } }
+        filter { includeGroup 'dev.onyxstudios.cardinal-components-api' }
+    }
+}
+
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
@@ -33,6 +40,20 @@ dependencies {
         exclude group: 'net.fabricmc'
     }
     modCompileOnly("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
+    modCompileOnly "maven.modrinth:touhoulittlemaid-orihime:${orihime_version}"
+    if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) {
+        modLocalRuntime "maven.modrinth:touhoulittlemaid-orihime:${orihime_version}"
+        modLocalRuntime "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
+        // Loom development runs resolve Orihime's nested libraries explicitly.
+        modLocalRuntime "dev.onyxstudios.cardinal-components-api:cardinal-components-base:${cardinal_components_version}"
+        modLocalRuntime "dev.onyxstudios.cardinal-components-api:cardinal-components-entity:${cardinal_components_version}"
+        modLocalRuntime("io.github.fabricators_of_create.Porting-Lib:base:${porting_lib_version}") {
+            exclude group: 'net.fabricmc.fabric-api'
+            exclude group: 'net.fabricmc'
+        }
+        modLocalRuntime "com.jamieswhiteshirt:reach-entity-attributes:${reach_entity_attributes_version}"
+        runtimeOnly "org.openjdk.nashorn:nashorn-core:${nashorn_version}"
+    }
     if (providers.gradleProperty('recipeBrowser').getOrElse('none') == 'jei') {
         modLocalRuntime "mezz.jei:jei-${minecraft_version}-fabric:${jei_version}"
     }
@@ -108,7 +129,8 @@ processResources {
         create_min_version: create_min_version,
         jei_version: jei_version,
         emi_version: emi_version,
-        rei_version: rei_version
+        rei_version: rei_version,
+        orihime_version: orihime_version
     ]
     inputs.properties properties
     filesMatching('fabric.mod.json') { expand properties }
@@ -136,17 +158,19 @@ sourceSets {
     }
 }
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean() || providers.gradleProperty('withCreate').getOrElse('false').toBoolean()
+def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
 def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false').toBoolean()
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
+def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
 if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBrowser requires a recipeBrowser profile')
-def smokeProfile = paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -168,6 +192,7 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.maid', maidSmoke.toString()
             property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             property 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             property 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
@@ -176,7 +201,10 @@ loom {
             property 'mchjong.smoke.roomOnly', roomSmoke.toString()
             property 'mchjong.smoke.browserOnly', browserSmoke.toString()
             property 'mchjong.smoke.createOnly', providers.gradleProperty('smokeCreate').getOrElse('false')
+            property 'mchjong.smoke.manualOnly', manualSmoke.toString()
             property 'mchjong.smoke.ponder', ponderSmoke.toString()
+            property 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')
+            property 'mchjong.smoke.browserOnly', providers.gradleProperty('smokeBrowser').getOrElse('false')
             property 'mchjong.smoke.browser', recipeBrowser
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath

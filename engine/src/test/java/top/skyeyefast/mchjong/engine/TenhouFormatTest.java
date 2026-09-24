@@ -94,7 +94,7 @@ class TenhouFormatTest {
             var tiles = Tile.set(rules.sanma(), rules.defaultRedFives()).subList(seat * 13, seat * 13 + 13);
             participants.add(new ReplayMatch.Participant(new UUID(1, seat + 1), "Player " + seat, false));
             hands.add(tiles); points.add(rules.startingPoints() + seat);
-            seats.add(new TableView.Seat("Player " + seat, true,false,false,points.get(seat),tiles,-2,List.of(),List.of(),List.of(),false,false));
+            seats.add(new TableView.Seat(false, "Player " + seat, true,false,false,points.get(seat),tiles,-2,List.of(),List.of(),List.of(),false,false));
         }
         ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),wall(rules),events,List.of(),seats,
             List.of(),result,Collections.nCopies(count,0),List.of(132),List.of(),List.of(),List.of());

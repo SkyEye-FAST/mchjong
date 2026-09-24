@@ -44,6 +44,14 @@ release bundles. Verify both installed and absent dependency configurations.
 Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
 branch for Fabric and Forge; synchronize stable batches from `main`, preserving
 the engine and shared gameplay rather than developing a second feature line.
+`compat/26.1.2` is the corresponding port-only branch for Fabric/Quilt and
+NeoForge, using Java 25. Keep `main` on Minecraft 1.21.1 / Java 21 and the
+1.20.1 runtime on Java 17. Synchronize applicable code, tests, resources,
+formatting configuration and documentation together; retain each port's loader
+APIs, dependency versions and single-version snapshot workflow. Omit optional
+adapters when the dependency has no build for that Minecraft/loader profile.
+Keep the three-version loader and integration tables in every README aligned,
+and distinguish shipped adapters from completed runtime validation.
 Keep version differences limited to actual Minecraft and loader API boundaries.
 Minecraft and dependency versions belong in `gradle.properties`. Automated
 dependency updates (Renovate) manage routine tool, action and ecosystem version
@@ -117,6 +125,11 @@ changes need fresh screenshots of the affected flows on both loaders; prefer
 focused captures over unrelated gameplay checks. Inspect those screenshots and
 fresh PASS/FAIL markers and logs; compilation alone is not visual acceptance.
 Report exactly which checks ran and any outstanding failures or coverage limits.
+For routine fixes, run the smallest owning test or smoke command once after the
+change is ready; expand validation only when that check reveals a concrete risk.
+For ordinary-table handling visuals, use `:fabric:runSmokeClient -PsmokeManual=true`
+and `:forge:runSmokeClient -PsmokeManual=true` to capture the manual flow without
+the unrelated full client suites.
 
 For Ponder changes, also run both installed-dependency smoke commands in
 [PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal

@@ -147,6 +147,7 @@ final class ManualTableSmoke {
             case 2 -> {
                 if (view.phase() != Game.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
                 check(view.wall().isEmpty() && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table shuffled itself");
+                check(!diceVisible(client), "Dice appeared before shuffling");
                 checkSeatedPreparation(client);
                 capture(client, output, "31-manual-shuffle.png");
                 click(client, "action.mchjong.shuffle");
@@ -155,14 +156,18 @@ final class ManualTableSmoke {
             case 3 -> {
                 if (view.phase() != Game.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table dealt before walls were built");
+                check(!diceVisible(client), "Dice appeared before the wall was complete");
                 checkSeatedPreparation(client);
                 capture(client, output, "32-manual-build-wall.png");
                 click(client, "action.mchjong.build_wall");
                 next(20);
             }
             case 20 -> {
-                if (!offered(view, Action.Type.PICK_UP_DICE) || ticks < 10 || !hasControl(client, "action.mchjong.pick_up_dice")) return false;
+                if (!offered(view, Action.Type.PICK_UP_DICE) || ticks < 30
+                    || TableAnimation.of(table).moving(net.minecraft.Util.getMillis())
+                    || !hasControl(client, "action.mchjong.pick_up_dice")) return false;
                 check(view.handling().diceOne() == 0 && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Dice or dealing advanced before the dealer");
+                check(diceVisible(client), "Dice did not appear after the wall was complete");
                 capture(client, output, "32a-dice-on-table.png");
                 click(client, "action.mchjong.pick_up_dice");
                 next(21);
@@ -389,6 +394,12 @@ final class ManualTableSmoke {
         String label = Component.translatable(key).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(button -> button.getMessage().getString().equals(label) && button.active && button.visible);
+    }
+    private static boolean diceVisible(Minecraft client) {
+        if (!(client.screen instanceof TableScreen)) return false;
+        String label = Component.translatable("action.mchjong.pick_up_dice").getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .anyMatch(button -> button.visible && button.getMessage().getString().equals(label));
     }
     private void click(Minecraft client, String key) {
         if (client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity table) {

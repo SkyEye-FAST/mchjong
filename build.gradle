@@ -6,6 +6,10 @@ plugins {
 allprojects {
     repositories {
         exclusiveContent {
+            forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+            filter { includeGroup 'maven.modrinth' }
+        }
+        exclusiveContent {
             forRepository { maven { name = 'JEI'; url = 'https://maven.blamejared.com/' } }
             filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config' }
         }
@@ -68,7 +72,7 @@ allprojects {
 
 spotless {
     java {
-        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'forge/src/**/*.java', 'art/src/**/*.java', 'neoforge/src/**/*.java'
+        target 'common/src/**/*.java', 'fabric/src/**/*.java', 'forge/src/**/*.java', 'art/src/**/*.java'
         trimTrailingWhitespace()
         endWithNewline()
         leadingTabsToSpaces(4)
@@ -86,7 +90,7 @@ spotless {
         leadingTabsToSpaces(2)
     }
     format 'misc', {
-        target '*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'neoforge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore'
+        target '*.gradle', 'fabric/*.gradle', 'forge/*.gradle', 'engine/*.gradle', 'art/*.gradle', '*.md', '.gitignore', '.editorconfig'
         targetExclude 'release-notes.md'
         trimTrailingWhitespace()
         endWithNewline()

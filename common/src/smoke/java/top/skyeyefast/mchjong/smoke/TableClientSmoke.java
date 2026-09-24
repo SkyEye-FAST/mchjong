@@ -41,9 +41,13 @@ public final class TableClientSmoke {
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
-    private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean createOnly = Boolean.getBoolean("mchjong.smoke.createOnly");
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || browserOnly;
+    private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
+    private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
+    private final boolean guidesOnly = Boolean.getBoolean("mchjong.smoke.ponderOnly") || browserOnly;
+    private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
+    private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -118,7 +122,13 @@ public final class TableClientSmoke {
                     step = 36; entered = ticks;
                     return;
                 }
-                if (browserOnly) { step = 25; entered = ticks; return; }
+                if (guidesOnly) {
+                    require(Boolean.getBoolean("mchjong.smoke.ponder") || !System.getProperty("mchjong.smoke.browser", "none").equals("none"),
+                        "Choose an installed Ponder or recipe-browser profile for the focused guide checks");
+                    step = 37;
+                    entered = ticks;
+                    return;
+                }
                 UUID id = client.player.getUUID();
                 if (!visualOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
@@ -184,6 +194,7 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (manualOnly) { step = 19; entered = ticks; return; }
                 if (paletteOnly) {
                     client.setScreen(new MaterialPaletteSmoke());
                     step = 31; entered = ticks;
@@ -194,7 +205,7 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                if (seatingOnly || visibilityOnly || roomOnly) {
+                if (seatingOnly || visibilityOnly || roomOnly || maidOnly) {
                     step = 24; entered = ticks;
                     return;
                 }
@@ -274,6 +285,7 @@ public final class TableClientSmoke {
                 step = 3; entered = ticks;
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
+                if (maidOnly) { step = 38; entered = ticks; return; }
                 if (visibilityOnly) { step = 33; entered = ticks; return; }
                 if (roomOnly) { step = 34; entered = ticks; return; }
                 if (seatingOnly) {
@@ -386,6 +398,12 @@ public final class TableClientSmoke {
             } else if (step == 12 && replaySmoke.tick(client, output)) {
                 step = 19; entered = ticks;
             } else if (step == 19 && manualSmoke.tick(client, output)) {
+                if (manualOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Ordinary table wall building, dice, packet dealing, draws and exit passed.\n");
+                    LOG.info("MCHJONG_MANUAL_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;
@@ -436,6 +454,16 @@ public final class TableClientSmoke {
                 Files.writeString(output.resolve("create-checks.txt"), "Native basin insertion, full-deck printing, plate return, blocked-output conservation, dye/undo, marking, packing, single-tile red/undo and box assembly passed.\n");
                 Files.writeString(output.resolve("PASS.txt"), "Focused Create production and selected browser/tutorial checks passed.\n");
                 LOG.info("MCHJONG_CREATE_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 38 && maidSmoke.tick(client, CENTER, output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Maid task discovery, physical seating, saved binding recovery, seat assignment, legal bot play and task-change cleanup passed.\n");
+                LOG.info("MCHJONG_MAID_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 37) {
+                if (!browserSmoke.tick(client, output)
+                    || (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output))) return;
+                Files.writeString(output.resolve("PASS.txt"), "Focused recipe-browser checks and requested Ponder registration, localization, playback, reload and replay checks passed.\n");
+                LOG.info("MCHJONG_PONDER_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

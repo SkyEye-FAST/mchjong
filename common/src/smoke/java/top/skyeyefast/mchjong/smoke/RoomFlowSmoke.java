@@ -61,9 +61,13 @@ final class RoomFlowSmoke {
             }
         } else if (stage == 4 && view.handVisibility() == HandVisibility.OPEN) {
             originalPreset = view.rules().preset();
-            click(client, "rules.mchjong.preset", Component.translatable(originalPreset.presetKey()));
+            clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
+            var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RuleSet.values())
+                .filter(preset -> preset.players() == originalPreset.players() && preset != originalPreset).findFirst().orElseThrow();
+            click(client, nextPreset.presetKey());
+            click(client, "rules.mchjong.apply");
             next(5);
-        } else if (stage == 5 && view.rules().preset() != originalPreset) {
+        } else if (stage == 5 && view.rules().preset() != originalPreset && client.screen instanceof TableScreen) {
             click(client, "ui.mchjong.players.3");
             next(6);
         } else if (stage == 6 && view.rules().players() == 3) {
@@ -182,8 +186,12 @@ final class RoomFlowSmoke {
             .filter(button -> button.getMessage().getString().equals(text)).findFirst().orElse(null);
     }
     private static void click(Minecraft client, String key, Object... arguments) {
-        var button = buttonOrNull(client, key, arguments);
-        require(button != null && button.active, "Missing active lobby control: " + key);
+        clickText(client, Component.translatable(key, arguments).getString());
+    }
+    private static void clickText(Minecraft client, String text) {
+        var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
+            .filter(control -> control.getMessage().getString().equals(text)).findFirst().orElse(null);
+        require(button != null && button.active, "Missing active lobby control: " + text);
         client.screen.mouseClicked(button.getX() + 4, button.getY() + 4, 0);
     }
     private static void check(Minecraft client) {

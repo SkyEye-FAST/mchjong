@@ -1,7 +1,8 @@
 # Create workshop
 
-Create machines produce, print, dye and pack mahjong supplies without opening
-the mahjong box menu. All operations use the existing item-data and box rules.
+Create machines can produce, print, dye and pack mahjong supplies without opening
+the mahjong box menu. The workshop uses the same item components and container
+rules as hand crafting and the box menu.
 
 ## Production
 
@@ -14,15 +15,20 @@ the mahjong box menu. All operations use the existing item-data and box rules.
 | Mixer and basin | One black dye | Eight undo dyes |
 | Mixer and basin | 16 identical blank sticks and one marking dye | 16 marked sticks |
 
-Set the saw's output filter to the desired tile material or point stick. Six
-materials yield 144 tiles. Stonecutting still yields 16 tiles or 24 blank sticks
-per material. Stick dyes keep their existing values: white 100, blue 1,000,
-yellow 5,000, red 10,000 and black -10,000.
+Set the saw's output filter to the desired blank tile or point stick. Six tile
+materials yield a 144-tile set. The ordinary stonecutter still yields 16 blanks
+per material; ordinary crafting yields 24 blank sticks per bone block.
 
-## Boxes and printing
+For marking sticks, white means 100 points, blue 1,000, yellow 5,000, red 10,000
+and black -10,000. Each mixer batch uses one dye rather than one dye per eight
+sticks at a crafting table.
 
-Send a chest through a deployer holding leather, a deployer holding an iron
-nugget, then a mechanical press. One pass completes the box. Hand crafting uses:
+## Boxes and printing plates
+
+Assemble a box by sending a chest through a deployer holding leather, a deployer
+holding an iron nugget, then a mechanical press. One pass completes the box.
+The crafting-table route instead uses a chest, three wooden slabs, two leather
+and an iron nugget.
 
 ```text
 L S L       L = leather, S = wooden slab
@@ -31,64 +37,94 @@ S C S       C = chest
 ```
 
 A printing plate uses three iron ingots across the bottom row, with paper above
-the middle ingot for Kansai faces or bamboo for Kanto faces. Both designs use
-`mchjong:mahjong_printing_plate` and the existing `face_preset` value.
+the middle ingot for Kansai faces or bamboo for Kanto faces. Both plates are the
+same item, `mchjong:mahjong_printing_plate`; their existing `face_preset` NBT value
+selects the faces. A plate is reusable and can retain its custom name.
 
-Supply a basin under a press with an empty box, **144 identical blank tiles**,
-one mahjong dye and a printing plate. Feed the blanks as 64 + 64 + 16. Material,
-back color and all other blank data must match. The output contains four ordinary
-copies of each numbered/honor face and one of each flower, for 144 tiles total.
+## Printing a complete set
 
-The plate is returned intact. Route it back with a filtered return line and feed
-it before the blanks and box to reserve the press for printing instead of
-packing. Previously packed blanks can also be completed to 144 and printed.
-Blocked output stops the transaction without consuming materials.
+Supply a basin under a press with an empty box, **144 identical blank tiles**, one
+mahjong dye and a printing plate. A normal inventory holds the blanks as
+64 + 64 + 16; the basin accepts these separate stacks without increasing item
+stack limits. Every blank must have identical material, back coloring and other
+components. The result contains four ordinary copies of each numbered/honor face
+and one of each flower: 144 tiles total.
 
-## Dyeing and packing
+The plate is returned as a separate output. Route it back to the printing basin
+with a filtered return line. Feed the plate before the blanks and box so the
+press reserves that basin for printing rather than packing. Previously packed
+blanks can also be completed to 144 and printed with the same operation.
 
-In a mixer and basin, **one dye treats two targets**. A target is one whole tile
-stack or one box; the pair may contain both kinds. Two boxes and one blue dye
-produce two blue-backed sets. Identical loose tiles merge to their normal stack
-limit. One undo dye removes back coloring from two targets. Both targets must
-change before processing starts.
+Keep a complete output route available for both the box and plate. A blocked
+output pauses processing without consuming materials. Printing retains the blank
+tiles' material, back color and custom components, and the box's own name.
 
-Box recoloring preserves faces, red-five state, preset, material, names, sticks,
-dice and other valid contents. Glass tiles use their colored-glass appearance.
-A deployer applies red dora dye to one ordinary 5m, 5p or 5s at a time; undo dye
-restores one red five. Each application consumes one reagent and processes one
-tile, leaving the rest of the transported stack unchanged.
+## Coloring backs
 
-To pack supplies, feed a box and loose tiles, sticks or dice into a basin under
-a press without a printing plate. Matching stacks merge first. All 45 tile
-slots, nine stick slots and the dice slot retain their capacity rules. Overflow
-leaves the inputs untouched. Adding red 5m × 1, red 5p × 2 and red 5s × 1 to a
-standard 144-tile box fills its 45 tile slots and supplies all red-five presets.
+In a mixer and basin, **one vanilla dye treats two targets**. A target is one
+whole tile stack or one valid mahjong box; a pair may contain both kinds. For
+example, two complete boxes and one blue dye produce two blue-backed sets.
+Supply two separate occupied stack slots: equal tiles naturally merge until
+their normal maximum stack size is reached.
 
-JEI and EMI show executable examples. Ponder's Mahjong workshop category
-provides production and dyeing tutorials on printing plates, incomplete boxes
-and survival dyes, in all four languages.
+Every tile inside a box is recolored together. Tile faces, red-five state, face
+preset, material and names are retained, as are the box's point sticks, dice and
+other valid contents. Glass tiles use their colored-glass appearance.
 
-## Compatibility and development
+One undo dye removes back coloring from two targets through the same mixer
+operation. Both targets must change; an already matching target waits for a
+different batch without consuming the reagent. The mixer changes backs only.
 
-This branch targets Minecraft 1.20.1 on Forge and Fabric, using Create 6.0.8
-and Create Fabric 6.0.8.1 respectively. Install the matching Create distribution
-on the server and clients using the workshop. Create is optional and is not
-bundled into MChjong. Versions are pinned in `gradle.properties`.
+## Red fives and packing
 
-`MahjongSupplies` owns every inventory transformation. Shared `compat/create`
-builds exact-NBT recipes. Loader-specific `CreatePlatform` bridges Forge item
-capabilities or Fabric transactions; native machines own timing, consumption,
-filtering and output routing. Static recipes share a generator with each
-loader's mod-presence conditions.
+A deployer holding red dora dye changes one ordinary 5m, 5p or 5s on a belt or
+depot into its red counterpart. A deployer holding undo dye restores one red five.
+Each application consumes one tile from the transported stack and one reagent;
+the remaining tiles retain their original components.
 
-Build with JDK 21; production artifacts target Java 17. The same focused
-integrated client/server fixture runs on both loaders:
+To pack supplies, put a box and loose tiles, point sticks or dice into a basin
+under a press, without a printing plate. Matching components merge before empty
+slots are used. The transaction respects all 45 tile slots, nine point-stick
+slots and the dice slot; it never places supplies in the dye compartment.
+Insufficient space leaves the inputs untouched. The resulting box can go into
+the mahjong table's internal equipment storage.
+
+Packing four spare reds into a standard 144-tile box produces a universal stock:
+one red 5m, two red 5p and one red 5s. The 148 tiles occupy exactly 45 tile slots
+and cover the no-red, three-red and four-red options. Their material, back and
+face preset must agree with the printed set for those rule options to use them.
+
+JEI and EMI show component-aware workshop examples alongside the ordinary
+recipes. Ponder's **Mahjong workshop** category provides production and dyeing
+guides on the printing plate, incomplete box and survival dyes, in all four
+supported languages.
+
+## Compatibility and implementation
+
+This branch supports Minecraft 1.20.1 with Forge and Create 6.0.8 or Fabric
+and Create Fabric 6.0.8.1.
+Install Create on the server and clients using the workshop. Its dependency is
+optional; the base mod continues to load independently. The loader's generated
+Create recipes are guarded by a mod-presence condition. Dependency versions
+remain in `gradle.properties`.
+
+`MahjongSupplies` owns printing, back coloring, red-five conversion, stick marking
+and atomic packing. Shared `compat/create` supplies immutable, exact-NBT recipes
+to native Create machines; Create controls processing time, ingredient
+consumption, filtering and output handling. Narrow machine-boundary adaptations
+allow repeated supply stacks and reserve sufficient output space for large
+batches. Loader-specific `CreatePlatform` bridges Forge item capabilities or
+Fabric transactions. The JEI/EMI examples call these same adapters.
+
+Build with JDK 21; production artifacts target Java 17. For development, add
+`-PwithCreate=true` to either loader's run. The focused checks share the same
+native transaction fixture for basin and saw inventories, output blocking,
+printing, coloring, marking and packing:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PwithCreate=true -PsmokeCreate=true -PrecipeBrowser=emi
 gradlew.bat :forge:runSmokeClient -PwithCreate=true -PsmokeCreate=true -PrecipeBrowser=jei
 ```
-
 Fresh `PASS.txt`, `create-checks.txt`, browser evidence and Ponder screenshots
 are written under each loader's `build/smoke` directory. `withCreate` also
 enables the matching Ponder runtime for development.

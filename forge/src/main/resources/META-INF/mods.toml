@@ -25,6 +25,13 @@ ordering="AFTER"
 side="BOTH"
 
 [[dependencies.mchjong]]
+modId="touhou_little_maid"
+mandatory=false
+versionRange="[${touhou_little_maid_version},)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.mchjong]]
 modId="forge"
 mandatory=true
 versionRange="[${forge_loader_min_version},)"

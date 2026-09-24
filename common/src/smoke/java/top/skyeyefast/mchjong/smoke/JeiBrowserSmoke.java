@@ -20,7 +20,8 @@ final class JeiBrowserSmoke implements BrowserDriver {
             output ? RecipeIngredientRole.OUTPUT : RecipeIngredientRole.INPUT, VanillaTypes.ITEM_STACK, stack);
         return runtime.getRecipeManager().createRecipeCategoryLookup().get()
             .filter(category -> category.getRecipeType().getUid().getNamespace().equals("mchjong"))
-            .flatMap(category -> recipeIds(category, focus)).filter(java.util.Objects::nonNull).collect(Collectors.toSet());
+            .flatMap(category -> recipeIds(category, focus))
+            .filter(java.util.Objects::nonNull).collect(Collectors.toSet());
     }
 
     private static <T> java.util.stream.Stream<ResourceLocation> recipeIds(IRecipeCategory<T> category,

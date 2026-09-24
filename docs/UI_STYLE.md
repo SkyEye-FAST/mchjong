@@ -103,10 +103,12 @@ who are absent, and keeps wind assignments separate from world-direction coordin
 Per-seat bot controls live directly beneath the top seat cards throughout preparation;
 ownership actions remain in the participant screen. The centered brass primary
 button advances filling seats, the table-specific assignment, then readiness.
-Participants distinguish temporary absence, disconnection with automatic play,
+Participants distinguish temporary absence, disconnection,
 and an empty/released place. Disconnected human names use the negative text color;
 HUD cards include their presence in the summary and hover details. Bot replacement
 becomes available only after the absence grace period or a server disconnection.
+When the last human leaves an active match, a centered decision panel offers to
+keep the paused match or end it. Closing the panel keeps the paused match.
 The personal automatic seating option starts enabled and requests the assigned
 stool when allocation finishes. Turning it off keeps the coordinate-guided manual
 seating flow; ordinary presence updates never force a player back onto a stool.
@@ -120,13 +122,15 @@ complete cap and bevel joined to the body. Nearby spectators use the world view
 without occupying participant seats.
 
 The rule screen separates preset options, read-only rule details and custom
-settings. Preset-supported options retain the preset identity. Red compositions
+settings. The preset selector expands to show every preset for the current player
+count; unavailable choices are disabled and explain the red-tile shortage on hover.
+Preset-supported options retain the preset identity. Red compositions
 use three separate choices; unavailable choices remain visible, disabled and
 labelled with a shortage tooltip. Availability comes from synchronized server
 capabilities rather than access to box inventory. Every composition, including
 no-red play, requires a complete matching set with enough ordinary and red fives.
-A selected no-red configuration displays a red warning directly at the bottom
-of the room home screen. All rule pages paginate at
+A selected no-red configuration displays a red warning inside the room home panel
+below its primary action. All rule pages paginate at
 320 x 240, with complete labels available on hover. The shared smoke captures
 the disabled-red tooltip in all four locales at that size.
 Minimum yaku han uses explicit one/two/four choices and match length uses
@@ -263,8 +267,8 @@ sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
-Ordinary tables show two dice in the central felt area from match start. After
-wall building the dealer can focus/click the dice to pick them up, then roll via
+Ordinary tables show two dice in the central felt area after every wall is built.
+The dealer can then focus/click the dice to pick them up and roll via
 the native action control. Both faces use the item textures; hovering the region
 shows a compact face + face = total panel with native narrated numeric text.
 Immersive play becomes available after dealing completes, including its visible
@@ -357,7 +361,7 @@ or on the ordinary table's felt; carried deposits remain visible between hands.
 The automatic table's active-match overlay includes collapsible controls at the
 lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
 matches) extract norths. Both compact and expanded rows are individual toggle buttons;
-seated rows retain 20-pixel hit areas with inset 16-pixel surfaces and no vertical
+seated rows retain 20-pixel hit areas with inset 18-pixel surfaces and no vertical
 gap. A quiet side handle changes their presentation, retaining a 20-pixel hit area
 and a visible keyboard focus outline. Immersive controls retain the horizontal strip.
 Compact rows use localized

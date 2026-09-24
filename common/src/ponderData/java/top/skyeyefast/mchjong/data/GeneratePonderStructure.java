@@ -13,6 +13,7 @@ public final class GeneratePonderStructure {
 
     public static void main(String[] args) throws Exception {
         if (args.length < 1 || args.length > 2) throw new IllegalArgumentException("Expected the generated resource directory and optional create profile");
+        if (args.length == 2 && !args[1].equals("create")) throw new IllegalArgumentException("Unknown structure profile: " + args[1]);
         Path path = Path.of(args[0], "assets", "mchjong", "ponder", "table.nbt");
         Files.createDirectories(path.getParent());
         CompoundTag structure = new CompoundTag();
@@ -35,12 +36,15 @@ public final class GeneratePonderStructure {
         structure.put("entities", new ListTag());
         NbtIo.writeCompressed(structure, path.toFile());
         if (args.length == 2 && args[1].equals("create")) {
+            // The press and mixer sit above the three-block-tall table template's bounds.
+            // Keep their whole volume in the backup so native Ponder rendering and replay work.
             var workshop = structure.copy();
             workshop.put("size", position(7, 5, 7));
             var air = new CompoundTag();
             air.putString("Name", "minecraft:air");
             var workshopPalette = workshop.getList("palette", 10);
             workshopPalette.add(air);
+            // Ponder derives its occupied bounds from placed entries, not the NBT size alone.
             workshop.getList("blocks", 10).add(block(6, 4, 6, workshopPalette.size() - 1));
             NbtIo.writeCompressed(workshop, path.resolveSibling("workshop.nbt").toFile());
         }

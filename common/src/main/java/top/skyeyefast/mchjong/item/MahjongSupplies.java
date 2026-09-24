@@ -2,6 +2,7 @@ package top.skyeyefast.mchjong.item;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import net.minecraft.core.NonNullList;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.ContainerHelper;
@@ -150,6 +151,7 @@ public final class MahjongSupplies {
             if (source.isEmpty()) continue;
             if (!storable(source) || source.getCount() > source.getMaxStackSize()) return ItemStack.EMPTY;
             var remainder = source.copy();
+            // Merge first, then occupy empty slots; variants never overwrite one another.
             for (int pass = 0; pass < 2; pass++) for (int slot = 0; slot < BOX_SLOTS && !remainder.isEmpty(); slot++) {
                 if (!boxAccepts(slot, remainder)) continue;
                 var current = stored.get(slot);
@@ -186,6 +188,7 @@ public final class MahjongSupplies {
         for (var target : targets) {
             if (!(target.is(MahjongContent.BOX_ITEM) && validBox(target))
                 && !(target.is(MahjongContent.TILE_ITEM) && storable(target) && target.getCount() <= target.getMaxStackSize())) return List.of();
+            // Expanding a compact box preset is not itself a change to any tile's back.
             boolean changesBack = target.is(MahjongContent.BOX_ITEM)
                 ? contents(target).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && back(stack) != color)
                 : back(target) != color;

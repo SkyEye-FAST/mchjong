@@ -62,6 +62,11 @@ public final class GenerateAssets {
             text("assets/mchjong/models/item/" + name + ".json",
                 "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
         }
+        for (String name : List.of("mahjong_printing_plate", "incomplete_mahjong_box")) {
+            png("item/" + name, CreateArtwork.texture(name));
+            text("assets/mchjong/models/item/" + name + ".json",
+                "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
+        }
     }
 
     private void dice() throws IOException {

@@ -9,7 +9,8 @@ The loader subprojects use the following download sources:
 | Fabric client assets | BMCLAPI | `loom_resources_base` |
 | Minecraft libraries | Official repositories | Loader plugin defaults |
 | Minecraft version manifest for Fabric Loom | BMCLAPI | `loom_version_manifests` |
-| Forge runtime and ForgeGradle | Official Forge Maven | `forge/build.gradle` and `settings.gradle` |
+| Forge runtime | BMCLAPI Forge Maven mirror | Exclusive module repository in `forge/build.gradle` |
+| Legacy Forge build tooling | ModDevGradle repositories | `settings.gradle` and `forge/build.gradle` |
 
 Version manifests can contain official URLs for individual version metadata,
 game JARs, mappings and asset indexes. Selecting a manifest mirror does not

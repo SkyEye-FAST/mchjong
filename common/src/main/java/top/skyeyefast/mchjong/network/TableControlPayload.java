@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Administrative table controls never occupy or renumber legal tile actions. */
 public record TableControlPayload(BlockPos pos, UUID tableId, Operation operation, long token, boolean enabled)
         implements MahjongPayload {
-    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, AUTO_SORT, AUTO_WIN, NO_CALLS, AUTO_DISCARD, AUTO_KITA }
+    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, AUTO_SORT, AUTO_WIN, NO_CALLS, AUTO_DISCARD, AUTO_KITA, RESOLVE_LEAVE }
     public static final ResourceLocation TYPE = MahjongContent.id("table_control");
     public static TableControlPayload decode(FriendlyByteBuf buffer) {
         return new TableControlPayload(buffer.readBlockPos(), buffer.readUUID(), buffer.readEnum(Operation.class),

@@ -32,6 +32,13 @@ public final class ClientTableNetworking {
         requestAssignedSeat(client, payload, view, assigned);
         TableAudio.accept(table, view);
         TableAnimation.of(table).accept(view, Util.getMillis());
+        if (payload.leaveDecision()) {
+            if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), view.tableId())))
+                client.setScreen(new TableLeaveScreen(payload.pos(), view.tableId(), view.decision()));
+            return;
+        }
+        if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), view.tableId()))
+            client.setScreen(null);
         TableScreen active = TableScreen.active(client.screen);
         if (previous != null && previous.viewerSeat() >= 0 && view.viewerSeat() < 0
             && view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.LOBBY

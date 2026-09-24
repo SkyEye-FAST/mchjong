@@ -22,6 +22,12 @@ tables and stools.
 All guides provide English, Japanese, Simplified Chinese and Traditional Chinese
 text, keyframes, replay and Ponder's standard reading and camera controls.
 
+With Create installed in its supported profile, **Producing mahjong supplies**
+and **Dyeing tiles and point sticks** cover the automated workshop. These two
+guides appear on the printing plate, incomplete box and three survival dyes.
+They share the same plugin and isolated worlds as the table tutorials. See
+[Create workshop](CREATE.md).
+
 ## Implementation
 
 `common/src/main/java/top/skyeyefast/mchjong/compat/ponder` contains the shared
@@ -35,6 +41,8 @@ backup restores each scene on replay. The structure generator in
 `common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
 own `generatePonder` task before resource processing. Both loader JARs contain the same generated
 `assets/mchjong/ponder/table.nbt` resource.
+The NeoForge profile also generates a taller `workshop.nbt` template, keeping
+the press, mixer and deployer inside Ponder's render and replay bounds.
 
 The compile-only dependencies expose the official Ponder API. The `withPonder`
 Gradle property adds Ponder and its declared dependencies to development runs.
@@ -59,6 +67,15 @@ gradlew.bat :forge:runSmokeClient -PwithPonder=true --console=plain
 
 For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
 `:forge:runClient`.
+
+For tutorial-only changes, add `-PsmokePonder=true` to the installed-Ponder smoke
+commands to run the existing registration, language, replay and visual checks
+without repeating gameplay tests. A recipe viewer selected with
+`-PrecipeBrowser=jei` or `-PrecipeBrowser=emi` is also checked. Add
+`-PwithCreate=true` on NeoForge to include both workshop scenes and their five
+item entries. This profile checks twelve item entries and five storyboards.
+Use `-PsmokeBrowser=true -PrecipeBrowser=jei` or `emi` for recipe-viewer-only
+checks, without repeating Ponder playback or unrelated gameplay scenarios.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
 four languages, plugin reload, full playback, replay restoration and native
@@ -86,3 +103,8 @@ for the focused production, selected recipe viewer and tutorial checks.
 The current build profile uses Ponder 1.0.92 for Minecraft 1.20.1 on Fabric and
 Forge. Dependency versions are selected in `gradle.properties`. Use the
 loader-specific Ponder artifact for the same Minecraft release.
+
+The NeoForge Create profile uses the Ponder 1.0.82 bundled with Create 6.0.10.
+Its optional dependency accepts that version without another Ponder download.
+Workshop scenes have a separate taller structure so the machines above their
+basins remain visible and are included in Ponder's replay backup.

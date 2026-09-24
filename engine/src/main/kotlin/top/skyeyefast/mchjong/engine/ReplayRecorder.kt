@@ -131,6 +131,7 @@ internal class ReplayRecorder(game: Game) {
             hand.sortWith(Tile.ORDER)
             if (player.drawn >= 0 && hand.remove(player.drawn)) hand += player.drawn
             allSeats += TableView.Seat(
+                visible.entityBot(),
                 visible.name(),
                 visible.occupied(),
                 visible.bot(),

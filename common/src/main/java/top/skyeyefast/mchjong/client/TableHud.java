@@ -105,7 +105,7 @@ final class TableHud {
             boolean disconnected = player.occupied() && !player.bot() && presence == PlayerPresence.DISCONNECTED;
             Component wind = Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())]);
             Component name = settings.show(TableSettings.Information.NAMES) || lobby
-                ? player.bot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
+                ? player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
             Component hover = TableScreen.playerName(view, seat).copy();
             if (settings.show(TableSettings.Information.WINDS)) {
@@ -123,7 +123,7 @@ final class TableHud {
                 hover = hover.copy().append("  ").append(Component.translatable("ui.mchjong.rank", rank));
             }
             if (lobby) shortLine = wind.copy().append("  ").append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
-            if (player.occupied() && !player.bot() && presence == PlayerPresence.AWAY) {
+            if (player.occupied() && (!player.bot() || player.entityBot()) && presence == PlayerPresence.AWAY) {
                 if (board == null || !board.perspective())
                     shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.away.short"));
                 hover = hover.copy().append("\n").append(Component.translatable("room.mchjong.away"));

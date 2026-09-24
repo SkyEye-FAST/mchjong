@@ -62,6 +62,8 @@ runs `buildAll` on branch pushes and pull requests and uploads separate Fabric
 and Forge snapshot artifacts.
 
 [Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
-validates the tag against the development version, extracts notes from
-[the changelog](../CHANGELOG.md), and builds and publishes release artifacts.
+runs on `main`, validates the tag against the development version, extracts notes
+from [the changelog](../CHANGELOG.md), and builds the reviewed compatibility
+revision selected by `main`'s `.github/compat-1.20.1-ref` alongside the other
+version profiles. This branch's snapshot workflow builds only its two loaders.
 Follow the versioning and signed-commit requirements in the contributor instructions.

@@ -102,7 +102,11 @@ final class PonderSmoke {
         PonderUI screen = new SingleSceneScreen(scene);
         client.setScreen(screen);
         screen.setComfyReadingEnabled(false);
-        int keyframe = sceneIndex == 3 ? 4 : sceneIndex == 4 ? 2 : sceneIndex == 2 ? 3 : 2;
+        int keyframe = switch (scene.getId().getPath()) {
+            case "table_playing" -> 3;
+            case "workshop_production" -> 4;
+            default -> 2;
+        };
         screen.seekToTime(scene.getKeyframeTime(keyframe) + 15);
         ticks = 0;
     }
@@ -180,6 +184,10 @@ final class PonderSmoke {
         require((net.minecraft.world.level.Level) scene.getWorld() != Minecraft.getInstance().level, "Tutorial uses the live game level");
         for (int pass = 0; pass < 2; pass++) {
             scene.begin();
+            if (id.startsWith("workshop_")) {
+                require(scene.getBounds().isInside(TABLE.above(2)), "Workshop machine is outside the visible scene bounds");
+                require(scene.getWorld().getBlockState(TABLE.above(2)).isAir(), "Replay retained a workshop machine");
+            }
             MahjongTableBlockEntity initial = table(scene);
             require(initial.getBlockState().is(MahjongContent.TABLE), "Replay did not restore the ordinary table");
             require(!initial.equipment().hasCloth() && initial.equipment().boxes().isEmpty()
@@ -194,6 +202,11 @@ final class PonderSmoke {
                 require(table(scene).equipment().drawer(0).getItem(0).getCount() == 1, "Point-stick demo failed");
             } else if (id.equals("table_playing")) {
                 require(table(scene).getBlockState().is(MahjongContent.AUTO_TABLE), "Automatic-table transition failed");
+            } else if (id.startsWith("workshop_")) {
+                String machine = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                    .getKey(scene.getWorld().getBlockState(TABLE.above(2)).getBlock()).toString();
+                require(machine.equals(id.equals("workshop_production") ? "create:mechanical_press" : "create:mechanical_mixer"),
+                    "Workshop machine is missing from the rendered scene");
             }
         }
         scene.begin();
@@ -204,12 +217,12 @@ final class PonderSmoke {
         return (MahjongTableBlockEntity) scene.getWorld().getBlockEntity(TABLE);
     }
 
-    private static void require(boolean condition, String message) {
-        if (!condition) throw new IllegalStateException(message);
-    }
-
     private static boolean workshopInstalled() {
         return net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(MahjongContent.id("mahjong_printing_plate"));
+    }
+
+    private static void require(boolean condition, String message) {
+        if (!condition) throw new IllegalStateException(message);
     }
 
     private static final class SingleSceneScreen extends PonderUI {

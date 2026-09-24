@@ -7,7 +7,7 @@ It uses vanilla crafting and stonecutting with batch preparation for full sets.
 ## Recipe browsing
 
 With JEI or EMI installed, inspect an item with the viewer's recipe/usage keys.
-The ordinary four-color mahjong dye uses the normal crafting category. Face
+The ordinary five-color mahjong dye uses the normal crafting category. Face
 printing is performed inside a held box. The supplies catalogue places empty
 and complete cases together and lists point sticks in ascending denomination.
 
@@ -110,6 +110,7 @@ S C S       C = chest
 ```
 
 The optional [Create workshop](CREATE.md) automates cutting, printing, dyeing and packing.
+The slabs may use different wood types; the box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
@@ -146,7 +147,7 @@ separately. The box may contain more tiles than play requires. For example,
 requires only 108 tiles and ignores 2m through 8m. A single box must supply the
 entire matching subset; two boxes do not combine. Mahjong Soul and Tenhou retain
 their preset names for these options. M.League specifies three reds, while
-League A and WRC specify no reds. Unavailable red choices show a shortage tooltip.
+JPML A and WRC specify no reds. Unavailable red choices show a shortage tooltip.
 
 One vanilla black dye crafts **four undo dyes**. Combine one undo dye with one
 red five to restore its ordinary five, preserving its material, back color,

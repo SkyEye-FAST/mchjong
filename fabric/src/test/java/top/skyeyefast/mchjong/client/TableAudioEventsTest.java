@@ -16,7 +16,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableAudioEventsTest {
     private static final UUID TABLE = new UUID(6, 12);
     private static TableView.Seat seat(List<Discard> river, List<Meld> melds, List<Integer> norths) {
-        return new TableView.Seat("Player", true, false, false, 25000,
+        return new TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(), -2, melds, river, norths, false, false);
     }
     private static TableView view(long revision, int hand, Game.Phase phase, List<TableView.Seat> seats, String result) {
@@ -69,10 +69,10 @@ class TableAudioEventsTest {
     @Test void replacingACalledRiichiDiscardDoesNotRepeatTheDeclarationVoice() {
         var seats = seats();
         var called = new Discard(12, true, true, true);
-        seats.set(0, new TableView.Seat("Player", true, false, false, 24000, List.of(), -2,
+        seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
             List.of(), List.of(called), List.of(), true, false));
         var before = view(1, 1, Game.Phase.TURN, seats, "playing");
-        seats.set(0, new TableView.Seat("Player", true, false, false, 24000, List.of(), -2,
+        seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
             List.of(), List.of(called, new Discard(20, true, false, true)), List.of(), true, false));
         assertEquals(List.of("tsumogiri"), sounds(before, view(2, 1, Game.Phase.REACTION, seats, "playing")));
     }

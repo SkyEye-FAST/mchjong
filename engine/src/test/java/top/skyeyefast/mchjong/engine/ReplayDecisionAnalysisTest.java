@@ -56,7 +56,7 @@ class ReplayDecisionAnalysisTest {
         var participants = new ArrayList<ReplayMatch.Participant>();
         for (int seat = 0; seat < 4; seat++) {
             participants.add(new ReplayMatch.Participant(new UUID(8, seat + 1), "Player " + seat, false));
-            seats.add(new TableView.Seat("Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
+            seats.add(new TableView.Seat(false, "Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false));
         }
         var events = List.of(new ReplayHand.Event(ReplayHand.Kind.DRAW, 0, draw, null, false, false, true));

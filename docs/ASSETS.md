@@ -184,9 +184,7 @@ Furniture uses fifteen original 16 by 16 pixel textures under
 broken wood grain with small knots, subdued neutral woven felt, stepped metal highlights
 with sparse tooling marks and clustered wear on dark edge material
 deterministically with small, discrete palettes and nearest-neighbor sampling.
-[Create's framed machinery](https://github.com/Creators-of-Create/Create) and
-[Farmer's Delight's crafted wooden utensils](https://github.com/vectorwing/FarmersDelight) inform
-the restrained material separation and pixel scale. The patterns are original.
+The patterns are original.
 Wood components select the finish; neutral fabric is tinted by the existing dye
 component. Resource packs can replace these paths directly.
 `assets/mchjong/textures/furniture/cloth_pattern.png` is a separate, fully
@@ -255,12 +253,12 @@ Screenshots and the final result are written beneath `fabric/build/smoke/evidenc
 `00-material-palette.png` shows the sixteen tile materials, four dyes, furniture item
 models and six dice faces together through the real client resource and item pipelines.
 For a focused inventory check on both loaders, run `:fabric:runSmokeClient -PsmokePalette=true`
-and `:neoforge:runSmokeClient -PsmokePalette=true`. Their screenshots and pass markers
+and `:forge:runSmokeClient -PsmokePalette=true`. Their screenshots and pass markers
 are under each loader's `build/smoke/palette-evidence`.
 The held-item screenshots cover both main-hand preferences at 1280 by 800. Real table views
 additionally exercise the world render paths.
-`:neoforge:runSmokeClient` runs the same assertions and screenshots under
-`neoforge/build/smoke/evidence`. Resource reload checks include all furniture and
+`:forge:runSmokeClient` runs the same assertions and screenshots under
+`forge/build/smoke/evidence`. Resource reload checks include all furniture and
 tile-body textures, including their live pixel sampling state.
 
 Both `:fabric:runSmokeClient -PsmokeInterface=true` and its Forge equivalent

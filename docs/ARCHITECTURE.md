@@ -84,16 +84,32 @@ or a saved room. Nearby room members retain preparation controls while relocatin
 but active-game actions and private hands require the correct physical seat.
 Physical dismount in the lobby releases room membership immediately. During an
 active match it retains membership with a five-second grace period; expiry or a
-lost server connection enables temporary win/pass/tsumogiri automation without
-changing personal AutoPlay settings or spending the disconnected player's clock.
+lost server connection enables temporary win/pass/tsumogiri automation while another
+human remains seated, without changing personal AutoPlay settings or spending the disconnected player's clock.
 Returning to the assigned stool restores control. Explicit lobby leave releases
 membership; hosts may replace disconnected guests with bots after the grace period.
 An idle lobby closes and releases all seats once every human is disconnected,
 including after the dismount grace period expires.
+An active match pauses its settlement, clocks and automatic actions as soon as no
+human is seated. The last player to dismount normally chooses to keep the paused
+match or end it; connection loss and invalidated seats keep it paused by default.
+The match resumes when a human returns to an assigned stool.
 The default-on personal automatic seating option requests relocation after seat
 assignment or reopening a reserved table during preparation. Its payload contains only table position
 and identity; the server derives the destination from membership and validates
 the player, distance, stool and mount before moving them.
+
+Physical companion players use an `entityBot` identity in the engine and public
+seat view. Their UUID and display name survive wind assignment and difficulty
+changes, while decisions use the same private-view training AI. The shared table
+adapter authorizes recruitment through the companion's participating owner,
+validates actual stools and mounts, and synchronizes companion presence. Missing
+companions release lobby membership after the presence grace period; during play
+a training bot continues their place. The maid extension in `compat/maid` uses
+the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it via
+the Orihime extension entrypoint; Forge uses the maid extension annotation.
+The saved dimension, block position and table UUID restore transient mounts
+without loading chunks. No optional maid code is loaded by the base entrypoints.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
@@ -309,6 +325,17 @@ point-stick and dye slots share vanilla click validation. Face printing previews
 the entire 136/144-tile transaction, then commits it with exactly one ordinary
 dye consumed; creative dye is retained. Presets are immutable item components.
 Crafting rules stay in `recipe/`, and neither loader carries separate rules.
+
+Optional Create machine adapters live in Fabric's and Forge's `compat/create`
+packages, sharing inventory-independent operations through `common`.
+`MahjongSupplies` owns component-preserving red-five conversion, stick marking,
+batch back coloring, full-set printing and atomic box packing. Crafting and
+Create both delegate to those pure transformations. Native Create machinery
+executes immutable snapshot recipes with exact-NBT ingredients; the
+integration only adapts inventory admission, recipe selection and output
+capacity at its machine boundaries. Fabric uses transactional storage, while
+Forge uses item capabilities. Create data is generated separately for each
+loader profile. See [Create workshop](CREATE.md).
 
 Private equipment saves explicitly encode empty slots. Public block updates
 omit those slots entirely and contain appearance only, so receiving an
