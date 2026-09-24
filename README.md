@@ -39,7 +39,7 @@ Current build profiles support these Minecraft versions and loaders:
 | --- | --- | --- | --- | --- |
 | 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
-| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Fabric artifact validated on Quilt 0.30.1 |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
 
 Optional integrations are scoped to the loader named in each cell:
 
@@ -50,7 +50,7 @@ Optional integrations are scoped to the loader named in each cell:
 | REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
 | Create workshop | NeoForge | Fabric, Forge | — |
-| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge (pinned test builds) |
+| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
 The table describes shipped adapters; installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
@@ -61,18 +61,18 @@ your Minecraft version and loader, not the original mod alongside its port.
 An em dash marks a profile without that integration. Quilt reuses Fabric adapters
 when the corresponding dependency also supports Quilt.
 
-The 26.1.2 maid integrations use tested upstream prerelease builds, pinned by
-version and SHA-256 in [Compatibility](docs/COMPATIBILITY.md).
-They remain optional and are installed separately from MChjong.
-
 This branch builds the **Minecraft 26.1.2 / Java 25** profile.
 The 26.1.2 profile requires Fabric Loader 0.19.3 or newer with Fabric API, or
 NeoForge 26.1.2.109 or newer. The other versions are built from `main` and
-`compat/1.20.1`; Quilt uses their Fabric artifacts.
+`compat/1.20.1`.
 
 Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
+
+Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on Fabric add a
+Mahjong task for maids. During work hours, a maid can take an empty stool at her
+owner's table and play as a computer opponent.
 
 ## Getting started
 
