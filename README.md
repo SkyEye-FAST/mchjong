@@ -40,7 +40,7 @@ Current build profiles support these Minecraft versions and loaders:
 | --- | --- | --- | --- | --- |
 | 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
-| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Fabric artifact validated on Quilt 0.30.1 |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
 
 Optional integrations are scoped to the loader named in each cell:
 
@@ -51,7 +51,7 @@ Optional integrations are scoped to the loader named in each cell:
 | REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
 | Create workshop | NeoForge | Fabric, Forge | — |
-| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge (pinned test builds) |
+| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
 The table describes shipped adapters; installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
@@ -62,13 +62,8 @@ your Minecraft version and loader, not the original mod alongside its port.
 An em dash marks a profile without that integration. Quilt reuses Fabric adapters
 when the corresponding dependency also supports Quilt.
 
-The 26.1.2 maid integrations use tested upstream prerelease builds, pinned by
-version and SHA-256 in that branch's [compatibility guide](https://github.com/SkyEye-FAST/mchjong/blob/compat/26.1.2/docs/COMPATIBILITY.md).
-They remain optional and are installed separately from MChjong.
-
 The 26.1.2 development builds come from `compat/26.1.2`; 1.20.1 builds come
-from `compat/1.20.1`. Quilt has been validated with the 1.21.1 and 1.20.1
-Fabric artifacts. The 1.21.1 profile requires Fabric Loader 0.16.10 or newer
+from `compat/1.20.1`. The 1.21.1 profile requires Fabric Loader 0.16.10 or newer
 with Fabric API, Forge 52.1.16 or newer, or NeoForge 21.1.250 or newer.
 
 On 1.21.1 and 1.20.1, optional Ponder tutorials cover placement, equipment and
@@ -81,8 +76,8 @@ without opening the mahjong box menu on Minecraft 1.21.1 NeoForge and
 Minecraft 1.20.1 Fabric and Forge.
 
 On 1.21.1, Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on
-Fabric add a Mahjong task for maids. The 1.20.1 branch provides the corresponding
-Forge and Fabric integrations. During work hours, a maid can take an empty
+Fabric add a Mahjong task for maids. The 1.20.1 and 26.1.2 branches provide the
+corresponding integrations. During work hours, a maid can take an empty
 stool at her owner's table and play as a computer opponent.
 
 ## Getting started
