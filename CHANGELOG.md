@@ -7,6 +7,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.2] - 2026-09-25
+
+### Added
+
+- Creative inventory lists mahjong stools in all sixteen dye colors, with localized names.
+
+### Fixed
+
+- Companion portraits and stool seating display and behave correctly.
+- Replacement tiles draw from their physical dead-wall slots.
+- Immersive melds follow table order, and flat tile layers align with physical tiles.
+- Settlement controls separate the skip action from hand hints, with final standings appearing at the settlement midpoint.
+- Automatic play settings reset at the start of each hand.
+
 ## [0.7.1] - 2026-09-24
 
 ### Added
@@ -296,7 +310,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.2...HEAD
+[0.7.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.2
 [0.7.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.1
 [0.7.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.0
 [0.6.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.6.0
