@@ -42,7 +42,12 @@ final class BrowserSmoke {
             stage = 4;
             return true;
         }
-        if (driver == null) driver = browser.equals("jei") ? new JeiBrowserSmoke() : new EmiBrowserSmoke();
+        if (driver == null) driver = switch (browser) {
+            case "jei" -> new JeiBrowserSmoke();
+            case "emi" -> new EmiBrowserSmoke();
+            case "rei" -> new ReiBrowserSmoke();
+            default -> throw new IllegalArgumentException("Unknown browser: " + browser);
+        };
         if (client.getOverlay() != null) return false;
         check(++ticks < 600, "Browser smoke timed out at stage " + stage);
         if (!driver.ready()) return false;

@@ -41,7 +41,8 @@ public final class TableClientSmoke {
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
+    private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || browserOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -106,6 +107,7 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (browserOnly) { step = 25; entered = ticks; return; }
                 UUID id = client.player.getUUID();
                 if (!visualOnly && survivalReady == null) {
                     var server = client.getSingleplayerServer();
@@ -376,6 +378,12 @@ public final class TableClientSmoke {
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;
+                if (browserOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Recipe viewer catalogue, lookups and container passed.\n");
+                    LOG.info("MCHJONG_BROWSER_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 if (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output)) return;
                 if (!Boolean.getBoolean("mchjong.smoke.ponder"))
                     Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");

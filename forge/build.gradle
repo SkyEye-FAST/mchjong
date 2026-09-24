@@ -36,8 +36,10 @@ sourceSets {
 
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
 def bootstrapSmoke = providers.gradleProperty('smokeBootstrap').getOrElse('false').toBoolean()
+def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-def smokeProfile = bootstrapSmoke ? 'bootstrap-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBrowser requires a recipeBrowser profile')
+def smokeProfile = bootstrapSmoke ? 'bootstrap-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 
@@ -61,6 +63,7 @@ legacyForge {
             systemProperty 'mchjong.smoke', (!bootstrapSmoke).toString()
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.browser', recipeBrowser
+            systemProperty 'mchjong.smoke.browserOnly', browserSmoke.toString()
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             programArguments.addAll('--mixin', 'mchjong.smoke.mixins.json')
             programArguments.addAll('--width', '1280', '--height', '800')
@@ -92,7 +95,7 @@ dependencies {
     modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"
     modCompileOnly "dev.emi:emi-forge:${emi_version}:api"
-    modCompileOnly "me.shedaniel:RoughlyEnoughItems-api-forge:${rei_version}"
+    modCompileOnly "me.shedaniel:RoughlyEnoughItems-forge:${rei_version}"
     modCompileOnly "me.shedaniel.cloth:cloth-config-forge:${cloth_config_version}"
     modCompileOnly "dev.architectury:architectury-forge:${architectury_version}"
     def browser = providers.gradleProperty('recipeBrowser').getOrElse('none')

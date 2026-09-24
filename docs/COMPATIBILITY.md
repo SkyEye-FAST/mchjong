@@ -24,17 +24,17 @@ The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
 | Ponder | 1.0.92 | `-PwithPonder=true` |
 | Base installation | Current build profile | `-PrecipeBrowser=none` (default) |
 
-All dependency versions live in `gradle.properties`. Viewer API dependencies are
+All dependency versions live in `gradle.properties`. Viewer dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
 
 ## Recipe and component coverage
 
 The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete
-136-tile cases are consecutive. Blank tiles in all sixteen materials and both mahjong dyes precede blank,
-100, 1,000, 5,000 and 10,000 point-stick denominations. Tables and automatic tables list
-every wood species. Tile faces, including
-flowers, share the blank-tile item and are printed through the box menu.
+144-tile cases are consecutive. Blank tiles in all sixteen materials and both
+mahjong dyes precede blank, 100, 1,000, 5,000 and 10,000 point-stick
+denominations. Tables and automatic tables list every wood species. Tile faces,
+including flowers, share the blank-tile item and are printed through the box menu.
 
 Recipe identity distinguishes wood, material, back color, face preset, face, red markings,
 denomination and complete container components. A custom outer item name is
@@ -63,19 +63,23 @@ gradlew.bat buildAll --warning-mode fail --console=plain
 gradlew.bat :fabric:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeClient --console=plain
 gradlew.bat :forge:runSmokeServer --console=plain
-gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=jei --console=plain
-gradlew.bat :forge:runSmokeClient -PrecipeBrowser=jei --console=plain
-gradlew.bat :fabric:runSmokeClient -PrecipeBrowser=emi --console=plain
-gradlew.bat :forge:runSmokeClient -PrecipeBrowser=emi --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain
+gradlew.bat :forge:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=emi --console=plain
+gradlew.bat :forge:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=emi --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=rei --console=plain
+gradlew.bat :forge:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=rei --console=plain
 ```
 
 `--no-parallel --max-workers=2` bounds Gradle workers. The profiles use separate
-`smoke/evidence`, `smoke/jei-evidence` and `smoke/emi-evidence` directories under
+`smoke/evidence` and `smoke/browser-<viewer>-evidence` directories under
 each loader's build directory, with corresponding isolated run directories.
 Each successful run writes a fresh `PASS.txt` and `browser-checks.txt`; check
 their timestamps against the run log and inspect the new screenshots.
 
-Both client commands run the shared gameplay checks. Add `-PsmokeBootstrap=true`
+The base client commands run the shared gameplay checks. The viewer commands
+start in an isolated world and run focused catalogue, recipe and container checks.
+Add `-PsmokeBootstrap=true`
 to Forge for the focused registration, renderer and native NBT bootstrap check.
 The server command checks the dedicated launcher and settings path; integrated
 server runs exercise worlds and player transactions.
@@ -99,10 +103,10 @@ simulation and player transactions are exercised by the integrated-server smoke.
 The generated EULA setting retains Minecraft's default value.
 
 Validation results are recorded from completed runs rather than API compilation.
-Fabric with JEI and Forge with EMI pass the full shared smoke. Both loaders also
-pass the installed-Ponder profile. REI has bootstrap and catalog inspection
-coverage. Automated verification covers individual viewer profiles, recipe queries,
-catalog inspection, and gameplay integration. EMI's development mode reports its
+Fabric and Forge pass the base shared gameplay smoke. JEI, EMI and REI pass
+installed-viewer catalogue, recipe lookup and container checks on both loaders.
+The REI adapter publishes the same finite crafting examples as the other viewers.
+Both loaders pass the installed-Ponder profile. EMI's development mode reports its
 own synthetic `emi:brewing/` recipes as absent from the vanilla recipe manager;
 the MChjong recipe checks pass without EMI recipe diagnostics for MChjong entries.
 
