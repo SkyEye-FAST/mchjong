@@ -140,8 +140,12 @@ class AutoPlayTest {
         game.configureEquipment(true, Tile.set(true));
         for (int seat = 0; seat < 3; seat++) game.join(new UUID(81, seat), "Human " + seat, seat);
         GameLifecycleTest.startPositioned(game);
-        game.synchronizeSeats(java.util.Map.of(), java.util.Set.of());
-        for (int tick = 0; game.phase != Game.Phase.TURN && tick < 500; tick++) game.tick();
+        UUID other = game.players[2].id;
+        game.synchronizeSeats(java.util.Map.of(other, 2), java.util.Set.of(other));
+        for (int tick = 0; game.phase != Game.Phase.TURN && tick < 500; tick++) {
+            if (!game.actions(2).isEmpty()) game.act(other, game.decision, 0);
+            game.tick();
+        }
         assertEquals(Game.Phase.TURN, game.phase, "Trustees must complete physical dealing");
         int seat = game.turn, drawn = game.players[seat].drawn;
         UUID actor = game.players[seat].id;
@@ -150,7 +154,10 @@ class AutoPlayTest {
         assertEquals(drawn, game.players[seat].river.getLast().tile());
         assertEquals(move, game.moveTicks[seat]);
         assertEquals(reserve, game.reserveTicks[seat]);
-        for (int tick = 0; !(game.phase == Game.Phase.TURN && game.turn == seat) && tick < 500; tick++) game.tick();
+        for (int tick = 0; !(game.phase == Game.Phase.TURN && game.turn == seat) && tick < 500; tick++) {
+            if (!game.actions(2).isEmpty()) game.act(other, game.decision, 0);
+            game.tick();
+        }
         assertEquals(Game.Phase.TURN, game.phase);
         assertEquals(seat, game.turn);
         assertTrue(game.join(actor, "Human", seat));
