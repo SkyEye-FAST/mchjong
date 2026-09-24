@@ -12,7 +12,7 @@ public final class GeneratePonderStructure {
     private GeneratePonderStructure() {}
 
     public static void main(String[] args) throws Exception {
-        if (args.length != 1) throw new IllegalArgumentException("Expected the generated resource directory");
+        if (args.length < 1 || args.length > 2) throw new IllegalArgumentException("Expected the generated resource directory and optional create profile");
         Path path = Path.of(args[0], "assets", "mchjong", "ponder", "table.nbt");
         Files.createDirectories(path.getParent());
         CompoundTag structure = new CompoundTag();
@@ -34,13 +34,23 @@ public final class GeneratePonderStructure {
         structure.put("blocks", blocks);
         structure.put("entities", new ListTag());
         NbtIo.writeCompressed(structure, path.toFile());
+        if (args.length == 2 && args[1].equals("create")) {
+            var workshop = structure.copy();
+            workshop.put("size", position(7, 5, 7));
+            var air = new CompoundTag();
+            air.putString("Name", "minecraft:air");
+            var workshopPalette = workshop.getList("palette", 10);
+            workshopPalette.add(air);
+            workshop.getList("blocks", 10).add(block(6, 4, 6, workshopPalette.size() - 1));
+            NbtIo.writeCompressed(workshop, path.resolveSibling("workshop.nbt").toFile());
+        }
     }
 
     private static CompoundTag block(int x, int y, int z, int state) {
         CompoundTag block = new CompoundTag();
         block.put("pos", position(x, y, z));
         block.putInt("state", state);
-        if (state > 0) {
+        if (state == 1 || state == 2) {
             CompoundTag entity = new CompoundTag();
             entity.putString("id", state == 1 ? "mchjong:mahjong_table" : "mchjong:mahjong_stool");
             entity.putString("wood", "oak");

@@ -22,11 +22,19 @@ The optional viewer and Ponder profiles below apply to Fabric and Forge 1.20.1.
 | EMI | 1.1.24+1.20.1 | `-PrecipeBrowser=emi` |
 | REI | 12.0.684 | `-PrecipeBrowser=rei`, with Cloth Config and Architectury |
 | Ponder | 1.0.92 | `-PwithPonder=true` |
+| Create | Forge 6.0.8 / Fabric 6.0.8.1 | `-PwithCreate=true` |
 | Base installation | Current build profile | `-PrecipeBrowser=none` (default) |
 
 All dependency versions live in `gradle.properties`. Viewer dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
+
+The [Create workshop](CREATE.md) uses the same printing, dyeing and packing
+rules on both loaders. The Forge adapter uses item capabilities and strict-NBT
+ingredients; Fabric uses transactional storage and Fabric API's strict-NBT
+ingredients. Install each loader's matching Create release on the server and
+clients. The optional integration provides JEI/EMI examples and two Ponder
+tutorials while keeping Create and its libraries outside MChjong's release jars.
 
 ## Recipe and component coverage
 
@@ -47,7 +55,7 @@ The finite crafting displays cover eight-stick marking batches, every table
 wood, and all sixteen back-dye colors on representative tiles, stools, cloth, boxes, red fives and flowers.
 Case back-dye examples cover each material with blue backs: a completed set,
 or 144 blanks with four 1,000-point sticks in the separate stick compartment.
-The ordinary four-color mahjong-dye recipe uses the viewers' vanilla crafting category.
+The ordinary five-color mahjong-dye recipe uses the viewers' vanilla crafting category.
 Dye inputs cycle through colors only when crafting yields the exact same output.
 Arbitrarily rearranged, mixed-material or specially
 named container contents retain exact identities; their survival operations are

@@ -52,6 +52,11 @@ public final class GenerateAssets {
         text("assets/mchjong/textures/point_sticks.png.mcmeta", "{\"texture\":{\"blur\":true,\"clamp\":true}}");
         models();
         dice();
+        for (String name : List.of("mahjong_printing_plate", "incomplete_mahjong_box")) {
+            png("item/" + name, CreateArtwork.texture(name));
+            text("assets/mchjong/models/item/" + name + ".json",
+                "{\"parent\":\"minecraft:item/generated\",\"textures\":{\"layer0\":\"mchjong:item/" + name + "\"}}");
+        }
         for (String name : java.util.List.of("mahjong_dye", "creative_mahjong_dye", "red_dora_dye", "undo_dye")) {
             png("item/" + name, MahjongDyeArtwork.texture(name));
             text("assets/mchjong/models/item/" + name + ".json",

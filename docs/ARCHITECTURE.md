@@ -1,5 +1,12 @@
 # MChjong architecture
 
+The optional `compat/create` workshop shares its item transformations through
+`MahjongSupplies` and its recipe/viewer/storyboard adapters through `common`.
+Only registration, exact-NBT ingredients and native inventory transactions live
+in the loader-specific `CreatePlatform` classes. Create owns machine timing,
+filtering, consumption and output routing. Recipes and mixins are activated only
+when Create is installed; no GUI state or duplicate container rules are used.
+
 `main` owns feature development. This Minecraft 1.20.1 port has Fabric and
 Forge loader subprojects under an aggregator root. They share gameplay,
 presentation, assets and tests at this Minecraft API level.

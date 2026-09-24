@@ -20,6 +20,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices, with optional Ponder tutorials
+- Optional Create workshop for efficient, automated production, printing, dyeing and packing
 
 ## Installation
 
@@ -36,6 +37,9 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 The current build profile targets **Minecraft 1.20.1** and **Java 17**, using
 Fabric Loader 0.19.5 with Fabric API or Forge 47.4.23. Build with JDK 21.
 The Fabric artifact also loads on Quilt Loader 0.30.1.
+
+The optional [Create workshop](docs/CREATE.md) supports Create 6.0.8 on Forge
+and Create Fabric 6.0.8.1, with shared JEI/EMI displays and Ponder tutorials.
 
 Optional Ponder tutorials cover placement, equipment and seated play. This profile
 targets Ponder 1.0.92 with its declared dependencies. Optional recipe

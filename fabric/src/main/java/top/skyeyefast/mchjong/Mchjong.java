@@ -78,6 +78,8 @@ public class Mchjong implements ModInitializer {
         receiver(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload::decode,
             TableNetworking::receive);
         LOGGER.info("Initializing {} for Fabric", MOD_ID);
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("create"))
+            top.skyeyefast.mchjong.compat.create.CreatePlatform.register();
     }
 
     private static <T> void receiver(net.minecraft.resources.ResourceLocation id,

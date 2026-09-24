@@ -1,0 +1,9 @@
+{
+  "required": true,
+  "minVersion": "0.8",
+  "package": "top.skyeyefast.mchjong.compat.create.mixin",
+  "plugin": "top.skyeyefast.mchjong.compat.create.mixin.CreateMixinPlugin",
+  "compatibilityLevel": "JAVA_17",
+  "mixins": ["BasinOperatingMixin", "BasinInventoryMixin", "BasinOutputMixin", "AutomationRecipeMixin", "SawOutputMixin"],
+  "injectors": {"defaultRequire": 1}
+}

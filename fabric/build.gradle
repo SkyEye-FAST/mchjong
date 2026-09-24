@@ -11,6 +11,18 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    modCompileOnly("com.simibubi.create:create-fabric:${create_fabric_version}") {
+        exclude group: 'net.createmod.ponder', module: "Ponder-Common-${minecraft_version}"
+        exclude group: 'net.fabricmc'
+        exclude group: 'net.fabricmc.fabric-api'
+    }
+    if (providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
+        modLocalRuntime("com.simibubi.create:create-fabric:${create_fabric_version}") {
+            exclude group: 'net.createmod.ponder', module: "Ponder-Common-${minecraft_version}"
+            exclude group: 'net.fabricmc'
+            exclude group: 'net.fabricmc.fabric-api'
+        }
+    }
     modCompileOnly("net.createmod.ponder:Ponder-Fabric-${minecraft_version}:${ponder_version}") { transitive = false }
     modCompileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     modCompileOnly "mezz.jei:jei-${minecraft_version}-fabric-api:${jei_version}"
@@ -35,7 +47,7 @@ dependencies {
         }
         modLocalRuntime("dev.architectury:architectury-fabric:${architectury_version}") { transitive = false }
     }
-    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean()) {
+    if (providers.gradleProperty('withPonder').getOrElse('false').toBoolean() || providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {
         modLocalRuntime("net.createmod.ponder:Ponder-Fabric-${minecraft_version}:${ponder_version}") {
             exclude group: 'net.createmod.ponder', module: "Ponder-Common-${minecraft_version}"
             exclude group: 'net.fabricmc'
@@ -62,6 +74,7 @@ sourceSets.main {
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
     resources.srcDir layout.buildDirectory.dir('generated/ponder')
+    resources.srcDir rootProject.layout.buildDirectory.dir('generated/create-fabric')
 }
 
 // Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
@@ -77,7 +90,7 @@ tasks.register('generatePonder', JavaExec) {
     classpath = sourceSets.ponderData.runtimeClasspath
     mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
     def output = layout.buildDirectory.dir('generated/ponder')
-    args output.get().asFile.absolutePath
+    args output.get().asFile.absolutePath, 'create'
     inputs.files sourceSets.ponderData.allSource
     outputs.dir output
     doFirst { delete output }
@@ -85,13 +98,14 @@ tasks.register('generatePonder', JavaExec) {
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
+    dependsOn ':art:generateAssets', ':art:generateData', ':art:generateCreateFabricData', 'generatePonder'
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
         java_version: minecraft_java_version,
         fabric_loader_min_version: fabric_loader_min_version,
         ponder_version: ponder_version,
+        create_min_version: create_min_version,
         jei_version: jei_version,
         emi_version: emi_version,
         rei_version: rei_version
@@ -109,7 +123,7 @@ tasks.withType(JavaCompile).configureEach {
     if (name == 'compileJava') options.release = minecraft_java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', ':art:generateCreateFabricData', 'generatePonder' }
 jar { from(rootProject.file('LICENSE')) }
 
 // This mod is loaded only by the visual smoke run, never packaged for players.
@@ -121,7 +135,7 @@ sourceSets {
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
     }
 }
-def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean() || providers.gradleProperty('withCreate').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
@@ -161,6 +175,7 @@ loom {
             property 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             property 'mchjong.smoke.roomOnly', roomSmoke.toString()
             property 'mchjong.smoke.browserOnly', browserSmoke.toString()
+            property 'mchjong.smoke.createOnly', providers.gradleProperty('smokeCreate').getOrElse('false')
             property 'mchjong.smoke.ponder', ponderSmoke.toString()
             property 'mchjong.smoke.browser', recipeBrowser
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath

@@ -77,6 +77,12 @@ translation key parity and reject duplicate keys.
 
 ## Compatibility
 
+With Create installed, the printing plate, incomplete box and survival dyes
+offer two shared workshop tutorials covering production and dyeing. Both loaders
+include the taller `workshop.nbt` structure and all four translations. Use
+`-PwithCreate=true -PsmokeCreate=true` on either loader's `runSmokeClient` task
+for the focused production, selected recipe viewer and tutorial checks.
+
 The current build profile uses Ponder 1.0.92 for Minecraft 1.20.1 on Fabric and
 Forge. Dependency versions are selected in `gradle.properties`. Use the
 loader-specific Ponder artifact for the same Minecraft release.

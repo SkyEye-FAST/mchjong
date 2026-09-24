@@ -28,6 +28,8 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public final class MchjongForge {
     public MchjongForge() {
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
+        if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
+            top.skyeyefast.mchjong.compat.create.CreatePlatform.register(bus);
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) ->
             top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->

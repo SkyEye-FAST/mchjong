@@ -24,7 +24,8 @@ public final class ForgeClientBootstrap {
 
     public ForgeClientBootstrap() {
         if (Boolean.getBoolean("mchjong.smoke")) {
-            if (net.minecraftforge.fml.ModList.get().isLoaded("ponder") != Boolean.getBoolean("mchjong.smoke.ponder"))
+            boolean expectPonder = Boolean.getBoolean("mchjong.smoke.ponder") || net.minecraftforge.fml.ModList.get().isLoaded("create");
+            if (net.minecraftforge.fml.ModList.get().isLoaded("ponder") != expectPonder)
                 throw new IllegalStateException("Ponder availability differs from the requested smoke configuration");
             var smoke = new top.skyeyefast.mchjong.smoke.TableClientSmoke();
             net.minecraftforge.common.MinecraftForge.EVENT_BUS.addListener((TickEvent.ClientTickEvent event) -> {

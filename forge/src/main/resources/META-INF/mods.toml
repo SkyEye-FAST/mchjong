@@ -13,9 +13,16 @@ description='''Playable, in-world mahjong tables with configurable rules.'''
 [[dependencies.mchjong]]
 modId="ponder"
 mandatory=false
-versionRange="[${ponder_version},2)"
+versionRange="[${create_ponder_min_version},2)"
 ordering="AFTER"
 side="CLIENT"
+
+[[dependencies.mchjong]]
+modId="create"
+mandatory=false
+versionRange="[${create_min_version},7)"
+ordering="AFTER"
+side="BOTH"
 
 [[dependencies.mchjong]]
 modId="forge"

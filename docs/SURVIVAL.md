@@ -101,12 +101,20 @@ C H C       C = copper ingot, H = hopper
 ```
 
 Three same-color carpets in a horizontal row make one matching cloth.
-A vanilla chest and one string make a mahjong box, shapeless.
+A chest, three wooden slabs, two leather and one iron nugget make one mahjong box:
+
+```text
+L S L       L = leather, S = wooden slab
+S C S       C = chest
+. I .       I = iron nugget, . = empty
+```
+
+The optional [Create workshop](CREATE.md) automates cutting, printing, dyeing and packing.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
 
-One black, red, green and blue dye make one mahjong dye, shapeless. Ordinary
+One each of black, red, green, blue and white dye make one mahjong dye, shapeless. Ordinary
 mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
 through the creative catalogue, not survival crafting or loot.
 

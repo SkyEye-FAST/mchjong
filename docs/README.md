@@ -11,6 +11,7 @@ gameplay.
 | --- | --- |
 | [Playing at a table](PLAYING.md) | Setup, controls, views, settlements and invitations |
 | [Survival equipment and recipes](SURVIVAL.md) | Furniture, boxes, tiles, dice and point sticks |
+| [Create workshop](CREATE.md) | Automated cutting, printing, dyeing, marking and packing |
 | [Rules and presets](RULES.md) | Rule presets, default options and custom settings |
 | [Rooms and permissions](ROOMS.md) | Hosting, visibility, configuration and commands |
 | [Replays](REPLAYS.md) | Playback, privacy, storage and Tenhou export |

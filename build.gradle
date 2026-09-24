@@ -26,7 +26,20 @@ allprojects {
             filter {
                 includeGroup 'net.createmod.ponder'
                 includeGroup 'dev.engine-room.flywheel'
+                includeModule 'com.simibubi.create', 'create-1.20.1'
             }
+        }
+        exclusiveContent {
+            forRepository { maven { name = 'CreateFabric'; url = 'https://mvn.devos.one/snapshots/' } }
+            filter {
+                includeModule 'com.simibubi.create', 'create-fabric'
+                includeGroup 'com.tterrag.registrate_fabric'
+                includeGroup 'io.github.tropheusj'
+            }
+        }
+        exclusiveContent {
+            forRepository { maven { name = 'Registrate'; url = 'https://maven.ithundxr.dev/mirror/' } }
+            filter { includeGroup 'com.tterrag.registrate' }
         }
         exclusiveContent {
             forRepository { maven { name = 'PortingLib'; url = 'https://mvn.devos.one/releases/' } }

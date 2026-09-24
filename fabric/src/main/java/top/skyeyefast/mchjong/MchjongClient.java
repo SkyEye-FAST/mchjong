@@ -12,7 +12,9 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("create"))
+            top.skyeyefast.mchjong.compat.create.CreatePonder.register();
+        else if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
             top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
         net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
             context.addModels(top.skyeyefast.mchjong.client.RiichiStickModel.ID));

@@ -33,6 +33,7 @@ final class BrowserSmoke {
     private BrowserDriver driver;
     private CompletableFuture<Boolean> serverWork;
     private SupplyRecipeExample flower;
+    private net.minecraft.resources.ResourceLocation displayedRecipe;
     private int stage, ticks, width, height, scale;
 
     boolean tick(Minecraft client, Path output) throws java.io.IOException {
@@ -55,6 +56,24 @@ final class BrowserSmoke {
             verifyCatalogue();
             var examples = SupplyRecipeExamples.create(client.level);
             flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
+            displayedRecipe = flower.id();
+            var plateId = MahjongContent.id("mahjong_printing_plate");
+            if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId))
+                check(client.level.getRecipeManager().getRecipes().stream().noneMatch(recipe -> recipe.getId().getNamespace().equals("mchjong")
+                    && recipe.getId().getPath().startsWith("create/")), "Create recipes loaded without Create");
+            if (!browser.equals("rei") && net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId)) {
+                var kansai = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(plateId));
+                MahjongComponents.facePreset(kansai, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI);
+                var kanto = kansai.copy();
+                MahjongComponents.facePreset(kanto, top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
+                var kansaiPrint = MahjongContent.id("/create/display/print/bone/kansai");
+                var kantoPrint = MahjongContent.id("/create/display/print/bone/kanto");
+                var kansaiRecipes = driver.query(kansai, false);
+                var kantoRecipes = driver.query(kanto, false);
+                check(kansaiRecipes.contains(kansaiPrint) && !kansaiRecipes.contains(kantoPrint), "Kansai plate lookup merged presets");
+                check(kantoRecipes.contains(kantoPrint) && !kantoRecipes.contains(kansaiPrint), "Kanto plate lookup merged presets");
+                displayedRecipe = kantoPrint;
+            }
             var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());
             var upgrade = pick(examples, e -> e.source() instanceof SupplyCraftingRecipe recipe
                 && recipe.operation() == SupplyCraftingRecipe.Operation.UPGRADE_TABLE);
@@ -80,7 +99,7 @@ final class BrowserSmoke {
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2); client.resizeDisplay();
             client.setScreen(new InventoryScreen(client.player));
-            driver.showRecipe(flower.id());
+            driver.showRecipe(displayedRecipe);
             stage = 2; ticks = 0;
         } else if (stage == 2 && ticks >= 20) {
             Screenshot.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), ignored -> {});

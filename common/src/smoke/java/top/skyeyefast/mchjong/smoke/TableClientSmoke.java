@@ -42,6 +42,7 @@ public final class TableClientSmoke {
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
     private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
+    private final boolean createOnly = Boolean.getBoolean("mchjong.smoke.createOnly");
     private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || browserOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
@@ -107,6 +108,16 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (createOnly) {
+                    UUID playerId = client.player.getUUID();
+                    survivalReady = client.getSingleplayerServer().submit(() -> {
+                        try { CreateSmoke.verify(client.getSingleplayerServer().getPlayerList().getPlayer(playerId)); }
+                        catch (ReflectiveOperationException failure) { throw new IllegalStateException(failure); }
+                        return true;
+                    });
+                    step = 36; entered = ticks;
+                    return;
+                }
                 if (browserOnly) { step = 25; entered = ticks; return; }
                 UUID id = client.player.getUUID();
                 if (!visualOnly && survivalReady == null) {
@@ -416,6 +427,15 @@ public final class TableClientSmoke {
             } else if (step == 34 && roomSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Four-language lobby controls at normal and small sizes; direct room navigation and proposals; server settlement countdown, automatic final standings and retained lobby; leave and dissolve packets passed.\n");
                 LOG.info("MCHJONG_ROOM_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 36) {
+                if (!survivalReady.isDone()) return;
+                survivalReady.join();
+                if (!browserSmoke.tick(client, output)) return;
+                if (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output)) return;
+                Files.writeString(output.resolve("create-checks.txt"), "Native basin insertion, full-deck printing, plate return, blocked-output conservation, dye/undo, marking, packing, single-tile red/undo and box assembly passed.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Focused Create production and selected browser/tutorial checks passed.\n");
+                LOG.info("MCHJONG_CREATE_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

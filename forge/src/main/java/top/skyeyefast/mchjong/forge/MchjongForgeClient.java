@@ -37,7 +37,9 @@ public final class MchjongForgeClient {
 
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            if (net.minecraftforge.fml.ModList.get().isLoaded("ponder"))
+            if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
+                top.skyeyefast.mchjong.compat.create.CreatePonder.register();
+            else if (net.minecraftforge.fml.ModList.get().isLoaded("ponder"))
                 top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
             RiichiStickModel.initialize(() -> Minecraft.getInstance().getModelManager()
                 .getModel(RiichiStickModel.ID));

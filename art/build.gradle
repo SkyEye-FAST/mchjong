@@ -62,6 +62,19 @@ tasks.register('generateData', Sync) {
     into rootProject.layout.buildDirectory.dir('generated/data')
 }
 
+['Fabric', 'Forge'].each { loader ->
+    tasks.register("generateCreate${loader}Data", JavaExec) {
+        dependsOn classes
+        classpath = sourceSets.main.runtimeClasspath
+        mainClass = 'top.skyeyefast.mchjong.art.GenerateData'
+        def output = rootProject.layout.buildDirectory.dir("generated/create-${loader.toLowerCase()}")
+        args output.get().asFile.absolutePath, loader.toLowerCase()
+        inputs.files sourceSets.main.allSource
+        outputs.dir output
+        doFirst { delete output }
+    }
+}
+
 test {
     useJUnitPlatform()
     dependsOn generateAssets, generateData

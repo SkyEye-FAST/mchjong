@@ -7,6 +7,9 @@
   "authors": [
     "SkyEye_FAST"
   ],
+  "breaks": {
+    "create": ["<${create_min_version}", ">=7"]
+  },
   "license": "Apache-2.0",
   "icon": "assets/mchjong/icon.png",
   "environment": "*",
@@ -18,20 +21,24 @@
       "top.skyeyefast.mchjong.MchjongClient"
     ],
     "jei_mod_plugin": [
-      "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin"
+      "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin",
+      "top.skyeyefast.mchjong.compat.create.CreateWorkshopJei"
     ],
     "emi": [
-      "top.skyeyefast.mchjong.compat.emi.MahjongEmiPlugin"
+      "top.skyeyefast.mchjong.compat.emi.MahjongEmiPlugin",
+      "top.skyeyefast.mchjong.compat.create.CreateWorkshopEmi"
     ],
     "rei_client": [
       "top.skyeyefast.mchjong.compat.rei.MahjongReiPlugin"
     ]
   },
   "mixins": [
+    "mchjong.create.mixins.json",
     "mchjong.data.mixins.json",
     "mchjong.client.mixins.json"
   ],
   "suggests": {
+    "create": ">=${create_min_version}",
     "ponder": ">=${ponder_version}",
     "jei": "${jei_version}",
     "emi": "${emi_version}",
