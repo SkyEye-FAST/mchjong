@@ -17,8 +17,10 @@ class TranslationReferenceTest {
         Path languages = Path.of(System.getProperty("mchjong.languages"));
         Pattern key = Pattern.compile("\"([A-Za-z]+\\.mchjong\\.[A-Za-z0-9_.]+)\"");
         var used = new TreeSet<String>();
-        for (String directory : List.of("common/src/main", "engine/src/main", "fabric/src/main", "neoforge/src/main")) {
-            try (var paths = Files.walk(root.resolve(directory))) {
+        for (String directory : List.of("common/src/main", "engine/src/main", "fabric/src/main", "forge/src/main", "neoforge/src/main")) {
+            Path target = root.resolve(directory);
+            if (!Files.exists(target)) continue;
+            try (var paths = Files.walk(target)) {
                 for (Path path : paths.filter(Files::isRegularFile)
                     .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt")).toList()) {
                     var matches = key.matcher(Files.readString(path));
