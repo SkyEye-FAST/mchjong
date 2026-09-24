@@ -32,7 +32,7 @@ class ReplayStoreTest {
         for (int seat = 0; seat < 3; seat++) {
             var tiles = List.copyOf(available.subList(seat * 13, (seat + 1) * 13));
             dealt.add(tiles);
-            seats.add(new TableView.Seat(players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
+            seats.add(new TableView.Seat(false, players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false));
         }
         var wall = wall();

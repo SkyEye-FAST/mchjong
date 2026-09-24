@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
@@ -43,18 +42,8 @@ final class TableLobby {
             span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, view.timeControl())));
         clock.active = host;
         buttons.add(clock);
-        var presets = Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == view.rules().players()).toList();
-        var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(view.rules().preset().presetKey())),
-            left, y + 24, half, () -> {
-                int step = MahjongUi.shiftDown() ? -1 : 1;
-                for (int offset = 1; offset < presets.size(); offset++) {
-                    var target = presets.get(Math.floorMod(presets.indexOf(view.rules().preset()) + step * offset, presets.size()));
-                    var config = view.rules().withPreset(target);
-                    int action = TableScreen.ruleAction(view, target);
-                    if (action >= 0 && parent.canSupplyReds(config.sanma(), config.redFives())) { parent.send(view, action); break; }
-                }
-            });
-        preset.active = host;
+        var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(view.rules().preset().presetKey())).append(" ▼"),
+            left, y + 24, half, () -> client.setScreen(new TableRulesScreen(parent, view, true)));
         preset.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help")));
         buttons.add(preset);
         buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24, half,

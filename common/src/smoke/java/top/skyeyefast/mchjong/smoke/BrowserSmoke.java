@@ -33,6 +33,7 @@ final class BrowserSmoke {
     private BrowserDriver driver;
     private CompletableFuture<Boolean> serverWork;
     private SupplyRecipeExample flower;
+    private net.minecraft.resources.Identifier displayedRecipe;
     private int stage, ticks, width, height, scale;
 
     boolean tick(Minecraft client, Path output) throws java.io.IOException {
@@ -50,6 +51,7 @@ final class BrowserSmoke {
             verifyCatalogue();
             var examples = SupplyRecipeExamples.create(client.level);
             flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
+            displayedRecipe = flower.id();
             var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());
             var upgrade = pick(examples, e -> e.source().value() instanceof SupplyCraftingRecipe recipe
                 && recipe.operation() == SupplyCraftingRecipe.Operation.UPGRADE_TABLE);
@@ -75,7 +77,7 @@ final class BrowserSmoke {
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2); client.resizeGui();
             client.setScreen(new InventoryScreen(client.player));
-            driver.showRecipe(flower.id());
+            driver.showRecipe(displayedRecipe);
             stage = 2; ticks = 0;
         } else if (stage == 2 && ticks >= 20) {
             Screenshot.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), 1, ignored -> {});

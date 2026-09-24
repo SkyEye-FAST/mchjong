@@ -11,15 +11,20 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
+- Last-player departure confirmation with server-owned paused-match retention.
 
 ### Changed
 
 - Tile inventory models show their thickness in 3D, and blank fronts use the same material finish as undyed backs.
+- Mahjong dye requires white dye alongside black, red, green and blue. Mahjong boxes use a shaped chest, wooden-slab, leather and iron-nugget recipe.
+- Match controls use compact spacing, and unavailable rule presets remain visible with their requirements.
 
 ### Fixed
 
 - Settlement screens preserve table tile-back dye and material choices on concealed kongs.
 - Symmetric rasterization removes asymmetric pip boundary protrusion on dice textures.
+- Empty tables pause match clocks, settlement and automatic play until a player returns.
+- Ordinary-table dice appear after all walls have been built.
 
 ## [0.6.0] - 2026-09-22
 

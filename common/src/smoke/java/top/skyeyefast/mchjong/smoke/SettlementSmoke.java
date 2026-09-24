@@ -161,7 +161,7 @@ final class SettlementSmoke {
                 case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
-            seats.add(new TableView.Seat(seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
+            seats.add(new TableView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
                 true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat < 2, seat < 2));
         }
         var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(8, 40, 0, 24000, 8000, 8000,

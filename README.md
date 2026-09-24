@@ -3,11 +3,11 @@
 [![Snapshot CI](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml/badge.svg?branch=compat%2F26.1.2)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/snapshot.yml)
 [![Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml/badge.svg)](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 
-MChjong brings playable mahjong tables into Minecraft. This branch builds for
-Minecraft 26.1.2 on Fabric and NeoForge.
+MChjong brings playable mahjong tables into Minecraft, with shared gameplay and
+presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
-Mahjong Soul, Tenhou, M.League, League A and WRC presets with configurable table
+Mahjong Soul, Tenhou, M.League, JPML A and WRC presets with configurable table
 options. See [Rules and presets](docs/RULES.md) for details.
 
 ## Features
@@ -35,12 +35,31 @@ For local builds, see [Building and contributing](docs/DEVELOPMENT.md).
 
 Current build profiles support these Minecraft versions and loaders:
 
-| Minecraft | Java | Loader artifacts |
-| --- | --- | --- |
-| 26.1.2 | 25 | Fabric, NeoForge |
-| 1.21.1 | 21 or newer | Fabric, Forge, NeoForge |
-| 1.20.1 | 17 | Fabric, Forge |
+| Minecraft | Development branch | Java runtime | Loader artifacts | Quilt |
+| --- | --- | --- | --- | --- |
+| 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
+| 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact; runtime validation pending |
 
+Optional integrations are scoped to the loader named in each cell:
+
+| Integration | 1.21.1 | 1.20.1 | 26.1.2 |
+| --- | --- | --- | --- |
+| JEI supply recipes | Fabric, Forge, NeoForge | Fabric, Forge | Fabric, NeoForge |
+| EMI supply recipes | Fabric, NeoForge | Fabric, Forge | — |
+| REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
+| Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
+| Create workshop | NeoForge | Fabric, Forge | — |
+| Touhou Little Maid players | NeoForge | Forge | — |
+| Touhou Little Maid: Orihime players | Fabric | Fabric | — |
+
+The table describes shipped adapters; installed-mod and gameplay validation are
+recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
+REI's catalogue-only profiles expose item variants and screen exclusion zones.
+An em dash marks a profile without that integration. Quilt reuses Fabric adapters
+when the corresponding dependency also supports Quilt.
+
+This branch builds the **Minecraft 26.1.2 / Java 25** profile.
 The 26.1.2 profile requires Fabric Loader 0.19.5 or newer with Fabric API, or
 NeoForge 26.1.2.109 or newer. The other versions are built from `main` and
 `compat/1.20.1`; Quilt uses their Fabric artifacts.

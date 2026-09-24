@@ -172,6 +172,7 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (manualOnly) { step = 19; entered = ticks; return; }
                 if (paletteOnly) {
                     client.setScreen(new MaterialPaletteSmoke());
                     step = 31; entered = ticks;
@@ -377,7 +378,7 @@ public final class TableClientSmoke {
                 step = 19; entered = ticks;
             } else if (step == 19 && manualSmoke.tick(client, output)) {
                 if (manualOnly) {
-                    Files.writeString(output.resolve("PASS.txt"), "Manual table handling and physical drag passed.\n");
+                    Files.writeString(output.resolve("PASS.txt"), "Ordinary table wall building, dice, packet dealing, draws and exit passed.\n");
                     LOG.info("MCHJONG_MANUAL_SMOKE_PASS");
                     step = 13; entered = ticks;
                     return;

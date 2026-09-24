@@ -28,6 +28,58 @@ class RoomSeatingTest {
         for (var human : humans) act(game, human, Action.Type.READY);
     }
 
+    @Test void companionsKeepTheirIdentityThroughSeatingDifficultyChangesAndReloads() {
+        var game = room(false, 1);
+        UUID maid = id(8);
+        assertFalse(game.joinEntityBot(id(9), maid, "Reimu", 1));
+        assertFalse(game.joinEntityBot(id(0), id(0), "Reimu", 1));
+        assertFalse(game.joinEntityBot(id(0), maid, "Reimu", 0));
+        assertTrue(game.joinEntityBot(id(0), maid, "Reimu", 1));
+        assertFalse(game.joinEntityBot(id(0), maid, "Duplicate", 2));
+        assertFalse(game.transferHost(id(0), maid));
+        act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
+        assertEquals("Reimu", game.view(null).seats().get(1).name());
+        act(game, id(0), Action.Type.FILL_BOTS);
+        act(game, id(0), Action.Type.BEGIN_SEATING);
+        game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        game.validate();
+        int seat = game.seatOf(maid);
+        assertTrue(game.entityBot(maid));
+        assertEquals("Reimu", game.view(null).seats().get(seat).name());
+        assertEquals(BotDifficulty.HARD, game.roomView().seats().get(seat).difficulty());
+        game.synchronizeSeats(Map.of(id(0), game.seatOf(id(0))), java.util.Set.of(id(0)));
+        arriveAndReady(game);
+        assertEquals(Game.Phase.LOBBY, game.phase(), "A missing companion cannot start a match");
+        game.synchronizeSeats(Map.of(id(0), game.seatOf(id(0)), maid, seat), java.util.Set.of(id(0)));
+        for (int tick = 0; tick < 24 && game.phase() == Game.Phase.LOBBY; tick++) game.tick();
+        assertEquals(Game.Phase.TURN, game.phase());
+        game.validate();
+        var concealed = List.copyOf(game.players[seat].hand);
+        int points = game.points(seat);
+        game.leaveEntityBot(maid);
+        assertEquals(-1, game.seatOf(maid));
+        assertTrue(game.trainingSeat(seat));
+        assertEquals(concealed, game.players[seat].hand);
+        assertEquals(points, game.points(seat));
+        assertFalse(game.players[seat].entityBot);
+        game.validate();
+    }
+
+    @Test void absentCompanionsReleaseLobbySeatsAndCanBeDismissedByTheHost() {
+        var game = room(false, 1);
+        UUID maid = id(8);
+        assertTrue(game.joinEntityBot(id(0), maid, "Marisa", 1));
+        game.synchronizeSeats(Map.of(id(0), 0), java.util.Set.of(id(0)));
+        for (int tick = 0; tick < Game.AWAY_GRACE_TICKS; tick++) game.tick();
+        assertEquals(-1, game.seatOf(maid));
+        assertFalse(game.view(null).seats().get(1).occupied());
+        assertTrue(game.joinEntityBot(id(0), maid, "Marisa", 1));
+        act(game, id(0), Action.Type.REMOVE_BOT, 1);
+        assertFalse(game.entityBot(maid));
+        assertTrue(game.isHost(id(0)));
+        game.validate();
+    }
+
     @Test void neighboringLotterySeedsDoNotPinWindsToTheSameChoices() {
         for (int players : new int[]{3, 4}) {
             int[] seen = new int[players];

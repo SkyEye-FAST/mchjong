@@ -40,23 +40,30 @@ public final class TableRulesScreen extends Screen {
     private final List<AbstractWidget> editors = new ArrayList<>();
     private final Map<RedFives, Button> redButtons = new EnumMap<>(RedFives.class);
     private final Map<RedFives, Boolean> redAvailability = new EnumMap<>(RedFives.class);
+    private final Map<RuleSet, Button> presetButtons = new EnumMap<>(RuleSet.class);
+    private final Map<RuleSet, Boolean> presetAvailability = new EnumMap<>(RuleSet.class);
     private final List<Label> labels = new ArrayList<>();
     private RuleOption.Group group = RuleOption.Group.POINTS;
     private Mode mode;
     private int page, pages, pendingTicks;
     private Button apply;
     private boolean rejected;
+    private boolean presetExpanded;
 
     private record Label(Component text, Component tooltip, int x, int y, int width) {
         Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
     }
 
     public TableRulesScreen(TableScreen parent, TableView initial) {
+        this(parent, initial, false);
+    }
+    public TableRulesScreen(TableScreen parent, TableView initial, boolean presetExpanded) {
         super(Component.translatable("rules.mchjong.title"));
         this.parent = parent;
         baseline = initial;
         draft = initial.rules();
         mode = draft.custom() ? Mode.CUSTOM : Mode.PRESET;
+        this.presetExpanded = presetExpanded;
     }
     public TableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
@@ -82,15 +89,30 @@ public final class TableRulesScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets(); editors.clear(); labels.clear(); redButtons.clear(); redAvailability.clear();
+        presetButtons.clear(); presetAvailability.clear(); apply = null;
         int span = Math.min(540, width - 24), left = (width - span) / 2;
-        Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()));
+        Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()))
+            .append(presetExpanded ? " ▲" : " ▼");
         var presetButton = addRenderableWidget(MahjongButton.create(preset, ignored -> {
-            var presets = Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == draft.players()).toList();
-            var next = presets.get((presets.indexOf(draft.preset()) + 1) % presets.size());
-            draft = draft.withPreset(next);
-            numbers.clear(); page = 0; rejected = false; init();
+            presetExpanded = !presetExpanded; init();
         }).bounds(left, 30, span, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help"))).build());
         editors.add(presetButton);
+        if (presetExpanded) {
+            var presets = Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == draft.players()).toList();
+            for (int i = 0; i < presets.size(); i++) {
+                var rule = presets.get(i);
+                var name = Component.translatable(rule.presetKey());
+                var choice = addRenderableWidget(MahjongButton.create(name, ignored -> {
+                    draft = draft.withPreset(rule); mode = Mode.PRESET; numbers.clear(); page = 0; rejected = false;
+                    presetExpanded = false; init();
+                }).bounds(left, 56 + i * 24, span, 20).build().selected(draft.preset() == rule));
+                presetButtons.put(rule, choice);
+            }
+            addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
+                .bounds(left, height - 30, span, 20).build());
+            updateControls();
+            return;
+        }
         int tabWidth = (span - 8) / 3;
         for (var section : Mode.values()) {
             var text = Component.translatable(section.key());
@@ -211,6 +233,13 @@ public final class TableRulesScreen extends Screen {
                     draft.sanma() ? 0 : reds.count(0), reds.count(1), reds.count(2))
                     : Component.translatable("rules.mchjong.insufficient_reds")));
         });
+        presetButtons.forEach((rule, button) -> {
+            boolean available = parent.canSupplyReds(rule.sanma(), draft.withPreset(rule).redFives());
+            button.active = editable && available;
+            if (!Boolean.valueOf(available).equals(presetAvailability.put(rule, available)))
+                button.setTooltip(Tooltip.create(available ? Component.translatable(rule.presetKey())
+                    : Component.translatable("rules.mchjong.insufficient_reds")));
+        });
         if (apply != null) apply.active = editable && !invalid() && !missingReds() && !draft.equals(baseline.rules());
     }
     private boolean missingReds() { return !parent.canSupplyReds(draft.sanma(), draft.redFives()); }
@@ -250,7 +279,7 @@ public final class TableRulesScreen extends Screen {
             : !host() ? "rules.mchjong.read_only" : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid"
             : missingReds() ? "rules.mchjong.insufficient_reds" : mode == Mode.CUSTOM ? "rules.mchjong.custom_note"
             : mode == Mode.PRESET ? "rules.mchjong.apply_note" : "rules.mchjong.details_note";
-        MahjongUi.text(graphics, font, Component.translatable(notice), 12, height - 75, width - 24,
+        MahjongUi.text(graphics, font, Component.translatable(notice), 12, height - (presetExpanded ? 52 : 75), width - 24,
             rejected || stale() || invalid() || missingReds() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, true);
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
     }

@@ -21,7 +21,7 @@ class TableAnimationTest {
     private static final UUID TABLE = new UUID(10, 20);
 
     private static TableView.Seat seat(List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river, boolean riichi) {
-        return new TableView.Seat("Player", true, false, false, 25000, hand, drawn, melds, river, List.of(), riichi, false);
+        return new TableView.Seat(false, "Player", true, false, false, 25000, hand, drawn, melds, river, List.of(), riichi, false);
     }
 
     private static TableView playing(RuleSet preset) {

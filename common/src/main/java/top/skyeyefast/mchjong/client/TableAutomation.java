@@ -84,7 +84,7 @@ final class TableAutomation {
                 @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
                     var font = Minecraft.getInstance().font;
                     if (horizontal) renderSurface(graphics);
-                    else MahjongUi.control(graphics, getX(), getY() + 2, getWidth(), 16,
+                    else MahjongUi.control(graphics, getX(), getY() + 1, getWidth(), 18,
                         active, isHovered(), isFocused(), enabled, false);
                     int color = !active ? MahjongUi.DISABLED : enabled ? MahjongUi.POSITIVE : MahjongUi.MUTED;
                     int markerX = getX() + (horizontal ? 8 : 2), markerSize = horizontal ? 8 : 4;
@@ -118,7 +118,7 @@ final class TableAutomation {
                 @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
                     if (horizontal) renderSurface(graphics);
                     else {
-                        graphics.fill(getX() + 6, getY() + 2, getX() + 14, getY() + 18,
+                        graphics.fill(getX() + 6, getY() + 1, getX() + 14, getY() + 19,
                             isHoveredOrFocused() ? MahjongUi.HOVER : MahjongUi.PANEL);
                         if (isFocused()) graphics.outline(getX() + 5, getY() + 1, 10, 18, MahjongUi.ACCENT);
                     }

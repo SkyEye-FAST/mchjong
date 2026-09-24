@@ -131,7 +131,7 @@ class TablePresentationTest {
     }
 
     @Test void foregroundPickingIncludesTileBodyAndKeepsTheDrawGapEmpty() {
-        var player = new top.skyeyefast.mchjong.engine.TableView.Seat("Viewer", true, false, false,
+        var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Viewer", true, false, false,
             25000, List.of(0, 4, 8), 8, List.of(), List.of(), List.of(), false, false);
         var hand = new TableHand(player, 0, 1280, 752, 58, true);
         var drawn = hand.point(8);
@@ -163,7 +163,7 @@ class TablePresentationTest {
         assertTrue(tedashi.y() < tsumogiri.y(), "Tedashi has a higher arc");
         assertTrue(ImmersiveMotion.duration(true) < ImmersiveMotion.duration(false));
         assertEquals(TileMesh.DEPTH / TileMesh.WIDTH, ImmersiveTable.thickness(32) / 32, 1e-6);
-        var hidden = new top.skyeyefast.mchjong.engine.TableView.Seat("Opponent", true, false, false,
+        var hidden = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Opponent", true, false, false,
             25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
             top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false);
         assertEquals(195, ImmersiveTable.discardSourceX(hidden, 1, 60, true));
@@ -226,7 +226,7 @@ class TablePresentationTest {
             int rows = seat % 2 == 0 ? 4 : 2;
             var river = java.util.stream.IntStream.range(0, rows * 6)
                 .mapToObj(tile -> new top.skyeyefast.mchjong.engine.Discard(tile, tile == 3, false, false)).toList();
-            seats.set(seat, new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false,
+            seats.set(seat, new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false,
                 25000, List.of(), -1, List.of(), river, List.of(), false, false));
         }
         var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
@@ -258,7 +258,7 @@ class TablePresentationTest {
         var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
             new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
-        var player = new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false, 25000,
+        var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false);
         var immersiveRails = ImmersiveTable.outerRails(player, 0);
         assertEquals(2, immersiveRails.size());
@@ -277,7 +277,7 @@ class TablePresentationTest {
 
     @Test void tableResultsRetainsMaterialAndBackDye() {
         var rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config();
-        var seat = new top.skyeyefast.mchjong.engine.TableView.Seat("Player", true, false, false, 25000,
+        var seat = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(), top.skyeyefast.mchjong.engine.Tile.ABSENT, List.of(), List.of(), List.of(), false, false);
         var view = new top.skyeyefast.mchjong.engine.TableView(new java.util.UUID(1, 1), 1, 1, 1, rules,
             top.skyeyefast.mchjong.engine.Game.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,

@@ -179,9 +179,10 @@ class ManualHandlingTest {
     @Test void manualPracticeBotsAdvanceHandlingAndAWholeHandConservesTilesAndArchives() {
         for (RuleSet rules : MODES) {
             Game game = game(rules, true);
-            for (var player : game.players) player.bot = true;
+            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].bot = true;
             int ticks = 0;
             while (game.pendingReplays().isEmpty() && ticks++ < 50_000) {
+                if (!game.actions(0).isEmpty()) assertTrue(game.act(id(0), game.decision, 0));
                 game.tick();
                 game.validate();
                 concealed(game);

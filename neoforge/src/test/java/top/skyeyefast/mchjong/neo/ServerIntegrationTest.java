@@ -139,7 +139,7 @@ class ServerIntegrationTest {
                 assertEquals(proposal, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.decode(buffer));
             }
             Game game = startedGame();
-            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, 63, game.roomView());
+            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63, game.roomView());
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
             TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);
