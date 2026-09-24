@@ -28,9 +28,11 @@ gameplay.
 | Guide | Contents |
 | --- | --- |
 | [Building and contributing](DEVELOPMENT.md) | Builds, development runs, checks and workflows |
+| [Supply data contracts](SUPPLIES.md) | Registry IDs, persistence and recipe identity |
+| [Verification and evidence](VERIFICATION.md) | Focused checks, acceptance records and screenshot review |
 | [Architecture](ARCHITECTURE.md) | Modules, ownership and shared contracts |
 | [Interface style](UI_STYLE.md) | Widgets, layout, accessibility and visual acceptance |
-| [Compatibility and verification](COMPATIBILITY.md) | Dependency profiles and integration checks |
+| [Compatibility and dependencies](COMPATIBILITY.md) | Loader profiles, optional mod distributions and dependency versions |
 | [Build download mirrors](BUILD_MIRRORS.md) | Repository and client asset downloads |
 | [Ponder integration](PONDER.md) | Tutorials and installed-dependency smokes |
 | [Training bots](BOTS.md) | Decision model, difficulty and comparison checks |

@@ -22,57 +22,8 @@ uses an empty ordinary table and retains its wood and custom name.
 The recipe browser's normal crafting and stonecutting controls remain available.
 The case, table-storage and point-stick screens reserve their complete panels,
 including summaries and controls, for the native container interface.
-See [COMPATIBILITY.md](COMPATIBILITY.md) for development profiles and the scope
-of the finite case examples.
-
-## Registry entries
-
-| Name | Registry ID | Kind |
-| --- | --- | --- |
-| Ordinary mahjong table | `mchjong:mahjong_table` | Block and item |
-| Automatic mahjong table | `mchjong:automatic_mahjong_table` | Block and item |
-| Mahjong stool | `mchjong:mahjong_stool` | Block and item |
-| Table cloth | `mchjong:table_cloth` | Item |
-| Mahjong tile, blank or engraved | `mchjong:mahjong_tile` | Item |
-| Mahjong box | `mchjong:mahjong_box` | Storage item |
-| Point stick, blank or marked | `mchjong:point_stick` | Item |
-| Dice | `mchjong:dice` | Item |
-| Mahjong dye | `mchjong:mahjong_dye` | Item, stacks to 64 |
-| Red dora dye | `mchjong:red_dora_dye` | Item, stacks to 64 |
-| Undo dye | `mchjong:undo_dye` | Item, stacks to 64 |
-| Creative mahjong dye | `mchjong:creative_mahjong_dye` | Creative-only item, stacks to 1 |
-| Table occupancy cell | `mchjong:table_space` | Internal block, no item or recipe |
-
-The two tables share the `mchjong:mahjong_table` block entity type. Stools use
-`mchjong:mahjong_stool`. `mchjong:seat` remains the non-persistent seating entity.
-
-## Components and variants
-
-| Component | Value | Used by |
-| --- | --- | --- |
-| `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
-| `mchjong:tile` | `{face, material, red}` | Tile items |
-| `mchjong:face_preset` | `kansai`, `kanto` | Built-in tile-face design |
-| `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
-| `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
-| `minecraft:container` | Native item-stack container | Mahjong boxes |
-
-Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
-are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
-autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
-Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
-Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
-Only faces `4`, `13`, `22` can have
-`red = true`. Material is one of `wood`, `bone`, `quartz`, `calcite`, `glass`,
-`amethyst`. Invalid faces, red combinations and denominations are rejected by
-the component codecs. Identical components stack normally. Undyed tile backs use
-their material texture; default cloth is cyan and stool cushions are white.
-
-All custom components are immutable codec values with persistence and network
-serialization. No item IDs are generated for particular faces, back colors, woods or
-denominations. Placed furniture projects its item components into its block
-entity, including drops and pick-block results. Private box contents are never
-part of a furniture appearance update.
+See [Compatibility](COMPATIBILITY.md) for supported recipe viewers. Registry IDs,
+persistence and recipe identity are documented in [Supply data contracts](SUPPLIES.md).
 
 ## Crafting recipes
 
@@ -325,50 +276,3 @@ Scores provide the settlement reference; players handle the actual currency
 through inventory transactions. Drawers remain available to seated participants
 during play. Full item components persist in private table saves and are returned
 once on removal. Public appearance updates describe furniture and tile colors.
-
-## Code ownership and checks
-
-`item/` owns immutable components and atomic inventory transformations;
-`recipe/` owns component-sensitive vanilla-grid/stonecutter recipes.
-`TableEquipment` owns removable stacks and their public appearance projection;
-`ManualHandling` owns physical handling phases inside the engine. Existing
-scoring and replay code remain independent of Minecraft items.
-
-`FurnitureMesh`, `TileMesh` and `MahjongItemRenderer` share geometry between
-world and inventory rendering. Loader entry points register components,
-serializers, blocks, items and renderers without duplicating these rules.
-NeoForge defers intrusive object creation until registry events.
-
-`GenerateAssets` generates textures and client models only. `GenerateData`
-serializes server data through `SurvivalRecipes` and `FurnitureData`, with
-separate synchronized Gradle outputs and reproducibility checks.
-
-Run `gradlew.bat buildAll`. `ManualHandlingTest` checks all presets, stale
-actions, conservation, reloads and a complete manually handled bot hand.
-`PhysicalSuppliesTest` loads real recipes and component codecs on a dedicated
-NeoForge test server. `BoxMenuSmoke` checks native container operations and exact
-inventory conservation on a real server player, including 136/144-tile printing,
-ordinary/creative dye consumption, invalid buttons and closed menus. The equipment
-smokes exercise survival placement, occupancy-cell interaction, replacement,
-unloading, private/public save separation, sanma's recoverable unused tiles,
-root/occupancy destruction and native explosions in a real world.
-
-The shared client harness operates both an equipped automatic table and an
-ordinary glass-tile table. `ManualTableSmoke` drags actual scattered tiles and
-wall stacks to shuffle, build, take all four packets and draw, then uses normal
-discard and exit controls through client/server packets. It verifies that human
-handling waits for input, private hands
-remain hidden, an in-progress manual save round-trips, and the full box can be
-recovered after exit. Screenshots include the manual phases, two-case inventory,
-colored furniture, cloth and physical point sticks.
-`ItemPresentationSmoke` also selects the actual hotbar items and sends native
-drop actions for both tables, cloth, a glass tile, a point stick and a stool.
-It checks inventory counts and the synchronized dropped-item components while
-capturing their first-person and dropped appearances, without spawning visual
-copies of those items.
-
-Run `gradlew.bat :fabric:runSmokeClient --console=plain` for Fabric, then
-`gradlew.bat :neoforge:runSmokeClient --console=plain` for NeoForge. Each run
-clears old PASS/FAIL markers before launch;
-only a fresh successful completion writes PASS. Inspect that run's logs and
-screenshots in `fabric/build/smoke/evidence` or `neoforge/build/smoke/evidence`.

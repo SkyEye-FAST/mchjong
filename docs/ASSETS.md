@@ -125,11 +125,8 @@ same vanilla equip and swing pose as the item, while the arm retains player scal
 Both main-hand preferences and offhand supplies use the corresponding skin arm.
 Invisible players retain the vanilla hidden-arm presentation.
 
-For a focused grip check, run `gradlew.bat :fabric:runSmokeClient -PsmokeItems=true` or
-`gradlew.bat :neoforge:runSmokeClient -PsmokeItems=true`. This reuses the item
-presentation captures and writes nine screenshots to
-`fabric/build/smoke/items-evidence/screenshots` or
-`neoforge/build/smoke/items-evidence/screenshots`, separately from full gameplay evidence.
+Use the item-presentation profile in [Verification](VERIFICATION.md#focused-interaction-checks)
+for focused grip checks on Fabric and Forge.
 The shared item capture renders both supplies with each main-hand preference in
 the native first-person view at 1280 by 800, with an empty-hand reference for each
 side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulting

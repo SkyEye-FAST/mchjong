@@ -191,6 +191,10 @@ decisions currently execute synchronously; multiple concurrent tables and server
 tick latency have not been load-tested. JVM warm-up, garbage collection and the
 host also affect these timings. No wall-clock cutoff changes the selected action.
 
+The following historical measurements were collected on the 1.21.1 mainline,
+not on this compatibility profile. Current port acceptance is recorded in
+[Verification](VERIFICATION.md#recorded-acceptance).
+
 `buildAll --warning-mode fail` and both smoke source compilations passed on JDK 21.
 All 103 engine tests passed, including nine consolidated bot tests covering live
 availability/development, red and repeated bonuses, legal score/minimum han,

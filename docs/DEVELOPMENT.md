@@ -45,8 +45,9 @@ repositories and client asset mirror.
 
 Choose checks for the changed behavior. Use `./gradlew buildAll --warning-mode fail`
 for broad changes and releases. See [Compatibility and verification](COMPATIBILITY.md)
-for loader smoke tests and dependency profiles, and [Ponder integration](PONDER.md)
-for tutorial validation. Shared visual changes require fresh screenshots from both loaders.
+for dependency profiles and [Verification](VERIFICATION.md) for focused loader,
+tutorial and visual checks. Shared visual changes require fresh screenshots from
+the affected loaders.
 
 ## Contributor guides
 
@@ -67,3 +68,29 @@ from [the changelog](../CHANGELOG.md), and builds the reviewed compatibility
 revision selected by `main`'s `.github/compat-1.20.1-ref` alongside the other
 version profiles. This branch's snapshot workflow builds only its two loaders.
 Follow the versioning and signed-commit requirements in the contributor instructions.
+
+## Version synchronization and artifacts
+
+`main` is the sole feature development line and targets Minecraft 1.21.1 / Java 21.
+Synchronize stable batches into `compat/1.20.1` and `compat/26.1.2`, preserving
+shared gameplay while adapting actual Minecraft and loader API boundaries.
+The 1.20.1 port builds Fabric and Forge with a Java 17 runtime; the 26.1.2 port
+builds Fabric and NeoForge with Java 25. Quilt consumes the matching Fabric JAR.
+
+Synchronize resources, documentation and formatting configuration with code.
+Keep each branch's dependency versions, module set and single-version snapshot
+workflow. Original optional mods and cross-loader ports share one README row;
+name the concrete distributions below the table. Pin usable upstream prereleases
+to an exact build and verify their checksums and installed/absent behavior before
+marking them supported. A source branch alone does not establish compatibility.
+
+The release workflow on `main` builds its three loader artifacts, both 1.20.1
+artifacts from `.github/compat-1.20.1-ref`, and both 26.1.2 artifacts from
+`.github/compat-26.1.2-ref`. Update each pin after reviewing and validating a port
+batch. All checkouts receive the same mod version; filenames include Minecraft
+version and loader. A main commit does not automatically advance the pins.
+Tags and publication belong to `main`; port snapshots build only their own version.
+
+Use [Verification](VERIFICATION.md) for checks and record their exact scope before
+advancing a release pin. The [compatibility tables](../README.md#compatibility)
+describe supported adapters, not a substitute for runtime acceptance.

@@ -1,11 +1,6 @@
 # MChjong architecture
 
-The optional `compat/create` workshop shares its item transformations through
-`MahjongSupplies` and its recipe/viewer/storyboard adapters through `common`.
-Only registration, exact-NBT ingredients and native inventory transactions live
-in the loader-specific `CreatePlatform` classes. Create owns machine timing,
-filtering, consumption and output routing. Recipes and mixins are activated only
-when Create is installed; no GUI state or duplicate container rules are used.
+## Module ownership
 
 `main` owns feature development. This Minecraft 1.20.1 port has Fabric and
 Forge loader subprojects under an aggregator root. They share gameplay,
@@ -43,6 +38,8 @@ on `main`. It targets Fabric and Forge. Features and engine changes originate on
 `main`; the compatibility branch only changes Minecraft APIs, loader adapters,
 metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
+
+## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and Forge bind shared
 payloads to their respective channels. All receivers dispatch to authorized server handlers
@@ -110,6 +107,15 @@ the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it vi
 the Orihime extension entrypoint; Forge uses the maid extension annotation.
 The saved dimension, block position and table UUID restore transient mounts
 without loading chunks. No optional maid code is loaded by the base entrypoints.
+
+## Optional integrations
+
+The optional `compat/create` workshop shares its item transformations through
+`MahjongSupplies` and its recipe/viewer/storyboard adapters through `common`.
+Only registration, exact-NBT ingredients and native inventory transactions live
+in the loader-specific `CreatePlatform` classes. Create owns machine timing,
+filtering, consumption and output routing. Recipes and mixins are activated only
+when Create is installed; no GUI state or duplicate container rules are used.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
@@ -282,31 +288,12 @@ A rejection or 30-second timeout resumes play, followed by a 30-second ballot
 cooldown. Completing the vote releases seats and clears the unfinished hand;
 already completed replay records remain available and no fake settlement is made.
 
-Build: `gradlew.bat buildAll`. Loader-specific development runs remain
-`gradlew.bat :fabric:runClient` and `gradlew.bat :forge:runClient`.
+## Supply transformations and verification boundaries
 
-`gradlew.bat :fabric:test` covers deterministic presentation and pointer geometry.
-It also checks outward-facing tile winding, stable hand placement, compact rivers
-and the mandatory remaining count. `CompactTableLayoutTest` owns hand clearance
-and picking; `TableLayoutTest` owns meld, river and wall geometry. Replay storage
-and access control belong to `ReplayStoreTest`, while packet boundaries and
-reassembly belong to `ReplayTransferTest`. Engine tests cover exits, ballots, save
-reloads and recipient privacy. Full-match and manual-handling checks exercise both
-player counts; focused scoring and reaction tests cover preset differences.
-Asset tests check all four language key sets, duplicate
-keys, format arguments and literal translation references in production sources.
-`gradlew.bat :fabric:runSmokeClient` runs a real Fabric integrated client/server, exercises
-seating and discard packets, and captures settlement and animation screenshots in
-`fabric/build/smoke/evidence`. Rare multi-winner and animation states use display-only
-fixtures; they are not scoring-rule integration tests. The same harness runs with
-`gradlew.bat :forge:runSmokeClient` and stores evidence under
-`forge/build/smoke/evidence`. Both harnesses also create a real engine record,
-archive it on the integrated server, retrieve it through commands and chunked
-networking, render the replay timeline and click the Tenhou export button.
-Development-only source sets contain the smoke adapters.
-Both smoke clients leave the desktop cursor free, including when closing screens
-or entering the world. A smoke-only mouse mixin prevents capture and recentering;
-the harness checks the logical grab state and native cursor mode each tick.
+Test ownership, focused commands and screenshot acceptance are maintained in
+[Verification](VERIFICATION.md). Registry IDs, persistence and finite recipe
+identity are maintained in [Supply data contracts](SUPPLIES.md).
+
 The optional client integration in `compat/ponder` registers three tutorials with
 Ponder after a loader presence check. The scenes share gameplay furniture models,
 component types and seating geometry inside Ponder's display worlds. Native NBT
@@ -366,6 +353,8 @@ and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 owns client effects and resource-pack recording playback. Registered
 resource-pack events separate table effects from recordings. No game logic
 depends on an audio completion callback. See `AUDIO.md` for customization.
+
+## Replay storage and export
 
 Replay recording and playback live in the Minecraft-independent engine.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable

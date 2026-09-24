@@ -1,64 +1,21 @@
-# Minecraft 1.20.1 port
+# Minecraft 1.20.1 port boundaries
 
-`main` remains the only feature development branch. `compat/1.20.1` adapts stable
-main batches to Fabric and Forge. Keep the engine and gameplay changes synchronized
-through Git; version-specific edits belong at the Minecraft and loader boundaries.
-Quilt uses the Fabric artifact.
+`main` owns feature development; this branch adapts shared changes to Fabric
+and Forge on Minecraft 1.20.1. Quilt consumes the matching Fabric artifact.
+Build with JDK 21; production classes target Java 17. Fabric publishes a remapped
+JAR, and Forge a reobfuscated JAR through ModDevGradle's legacy Forge profile.
 
-## Current validation
+The version boundary consists of native ItemStack NBT, recipe serializers,
+payload buffers, loader registration and client APIs. Fabric and Forge share
+gameplay, rendering and item transformations through `common`. Keep the engine
+independent of Minecraft. [Supply data contracts](SUPPLIES.md) define NBT keys,
+canonical defaults, container slots and recipe identity.
 
-The Fabric remapped JAR and Forge reobfuscated JAR build with the checked-in wrapper
-and JDK 21. Main mod classes target Java 17. Fabric and Forge 47.4.23 reach the title screen;
-the bootstrap checks registration, the item renderer, the additional model, native
-NBT default normalization and generated recipe output. The generated asset contract
-checks pass. Both loaders also pass the shared integrated-server/client gameplay
-smoke: inventory authorization, native NBT, placement and destruction, randomized
-seating, private hands, control packets, rules, replay export and four-language UI.
-The recipe contract checks 1,584 examples and 23,664 ingredient alternatives.
+Optional mod versions and runtime dependencies belong in
+[Compatibility](COMPATIBILITY.md). Shared viewer plugins use loader-specific
+discovery; Create inventory access uses Forge capabilities or Fabric transactions.
+Neither adapter duplicates the shared supply transformations.
 
-```text
-./gradlew :fabric:remapJar :forge:reobfJar
-./gradlew :forge:runSmokeClient
-./gradlew :forge:runSmokeClient -PsmokeBootstrap=true
-./gradlew :art:test --tests '*AssetContractTest'
-```
-
-The port uses 1.20.1 native ItemStack NBT, recipe serializers and payload buffers.
-Fabric and Forge share these implementations through `common`.
-
-## Recipe viewers
-
-The shared adapters compile against JEI 15.59.0.212, EMI 1.1.24+1.20.1 and
-REI 12.0.684 for both loaders. Their APIs are compile-only; the optional
-`-PrecipeBrowser=jei`, `-PrecipeBrowser=emi` and `-PrecipeBrowser=rei` development
-profiles load the corresponding runtime. The default `none` profile loads no viewer.
-The REI profile includes Cloth Config and Architectury, while Forge discovers the
-shared plugin through a loader-specific annotation entry point.
-
-Forge uses ModDevGradle's native dependency remapping configurations. The adapters
-use 1.20.1 recipe objects and native NBT identity, preserving the existing shared
-recipe examples and server-authorized crafting behavior.
-
-All three Forge viewer profiles pass the bootstrap smoke. Fabric loads each viewer in
-a local world: JEI registers the supply recipes and displays its inventory overlay;
-EMI displays the material variants and the oak table crafting recipe. REI displays
-the shared catalog's material and color variants using native NBT comparison.
-Fabric with JEI and Forge with EMI also pass the full shared smoke, including
-real inventory transfers, printing and dyeing, recipe lookups, catalog order,
-denominations, and recipe-page and small-container screenshots.
-
-## Ponder and Quilt
-
-Ponder 1.0.92 is available with `-PwithPonder=true` on both loaders. Both profiles
-pass seven entries, three storyboards, four languages, reload, playback and replay
-restoration. Normal and small-window screenshots are saved under each loader's
-`build/smoke/ponder-evidence`; see [PONDER.md](PONDER.md).
-
-Quilt Loader 0.30.1 loads the Fabric release JAR on Java 17 and reaches the title
-screen. Gameplay and packet transactions are covered by the Fabric and Forge
-integrated-server smokes.
-
-Release tags and publication belong to `main`. Its pinned compatibility revision
-supplies both 1.20.1 JARs to the release workflow.
-Advance that reviewed pin after stable port batches; a port batch need not follow
-every individual main commit.
+Build commands and release-pin updates belong in [Development](DEVELOPMENT.md).
+Completed checks, historical baselines and focused runtime commands belong in
+[Verification](VERIFICATION.md#recorded-acceptance).

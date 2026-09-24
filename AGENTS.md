@@ -64,6 +64,13 @@ with routine version update pull requests disabled to prevent duplication.
 
 ## Interface, resources and documentation
 
+Keep player operations in `PLAYING.md`, `SURVIVAL.md` and `ROOMS.md`; registry,
+persistence and recipe identity in `SUPPLIES.md`; module ownership in
+`ARCHITECTURE.md`; visual contracts in `UI_STYLE.md`; dependency support in
+`COMPATIBILITY.md`; build, branch synchronization and release procedures in
+`DEVELOPMENT.md`; and commands, fixtures and acceptance records in
+`VERIFICATION.md`. Link to the owning guide rather than duplicating its paragraphs.
+
 Before changing screens, widgets, HUDs, inventory UI or physical table layout,
 read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`, `MahjongButton`,
 `MahjongSlider` and `MahjongEditBox`, preserving native input and accessibility.
