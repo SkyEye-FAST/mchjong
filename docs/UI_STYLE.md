@@ -372,7 +372,7 @@ Tooltips and narration always contain the full option name and its on/off state.
 Keep a clear gutter between these controls and the action buttons. The seated layout
 is checked at 320 × 240; immersive controls always use the fixed 1280 × 800 virtual
 canvas and are only uniformly scaled by the outer letterbox transform. These preferences belong to the server's
-seated player and are acknowledged before another toggle is enabled. Keep keyboard
+seated player, reset at the start of each hand, and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
 text stay in the action-side gutter. Sorting starts enabled; the other options start
 disabled. A legal win takes priority over automatic north extraction, discards and
