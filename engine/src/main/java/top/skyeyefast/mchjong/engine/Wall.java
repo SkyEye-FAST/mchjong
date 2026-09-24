@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
-/** The 14-tile dead wall is replenished from the back of the live wall after each replacement draw. */
+/** The dead wall grows into the live wall after each replacement draw. */
 final class Wall {
     List<Integer> tiles;
     List<Integer> replacements = new ArrayList<>();
@@ -38,13 +38,15 @@ final class Wall {
         openingSeed = random.nextLong();
         if (open) open(rules, dealer);
         int end = tiles.size();
-        // Replacement tiles are paired so the upper tile of each stack is taken first.
-        for (int i = 0; i < rules.replacementCapacity(); i++) replacements.add(end - 1 - i % 4);
+        // Four replacement tiles sit at the far end. Extra three-player draws use
+        // tiles that have since joined the dead wall from the live-wall edge.
+        for (int i = 0; i < rules.replacementCapacity(); i++)
+            replacements.add(i < 4 ? end - 1 - i : end - 11 - i);
         for (int i = 0; i < 5; i++) {
             dora.add(end - 5 - i * 2);
             ura.add(end - 6 - i * 2);
         }
-        // Additional replacements reuse replenished positions, never indicator slots.
+        // Replacement slots never overlap the indicator stacks.
     }
 
     int remaining() { return Math.max(0, liveEnd - cursor); }
@@ -80,8 +82,9 @@ final class Wall {
         while (!usableReplacement(replacements.get(replacementIndex))) replacementIndex++;
         int slot = replacements.get(replacementIndex++);
         int tile = take(slot);
-        // Move the last live tile into the vacated dead-wall position, preserving 14 reserve tiles.
-        tiles.set(slot, take(--liveEnd));
+        // The last live tile becomes dead in place; the drawn replacement slot stays empty.
+        // Moving it into that slot would make the physical wall and the next draw disagree.
+        liveEnd--;
         return tile;
     }
 
