@@ -11,12 +11,9 @@ Java 21, Fabric Loader 0.19.5 and Fabric API 0.116.17+1.21.1, Forge 52.1.16,
 or NeoForge 21.1.250. Compatibility branches produce their own version-scoped
 artifacts.
 
-| Minecraft | Loader artifacts | Validation scope |
-| --- | --- | --- |
-| 26.1.2 | Fabric and NeoForge on `compat/26.1.2` | JDK 25 build, full integrated client smokes, palette captures, physical manual-table handling and installed JEI checks pass on both loaders |
-| 1.21.1 | Fabric, Forge, NeoForge | Forge has dedicated loader bootstrap checks; full gameplay acceptance remains loader-specific |
-| 1.20.1 | Fabric and Forge on `compat/1.20.1` | Shared integrated-server/client gameplay and Ponder smokes pass |
-| 1.21.1 and 1.20.1 | Quilt consumes the corresponding Fabric artifact | Quilt Loader 0.30.1 loads both packaged JARs to the title screen, using Java 21 and Java 17 respectively |
+Runtime results and their exact scope are recorded in
+[Verification](VERIFICATION.md#cross-version-acceptance). The README tables list
+supported adapters, while each compatibility branch pins its own dependencies.
 
 JEI profiles cover Fabric and NeoForge 26.1.2; Fabric, Forge and NeoForge
 1.21.1; and Fabric and Forge 1.20.1. EMI covers Fabric and NeoForge 1.21.1.
@@ -58,6 +55,11 @@ Ponder playback pass on both loaders; both also pass the Create-absent client
 profile. The release pin selects the validated compatibility batch.
 
 ### Maid players
+
+The 26.1.2 branch supports pinned Touhou Little Maid and Orihime test builds on
+NeoForge and Fabric. Its [compatibility guide](https://github.com/SkyEye-FAST/mchjong/blob/compat/26.1.2/docs/COMPATIBILITY.md)
+records the exact upstream release assets, SHA-256 digests and Forge Config API
+Port dependency. These are optional prereleases, not bundled parts of MChjong.
 
 The 1.20.1 compatibility branch provides the same task through Touhou Little
 Maid 1.5.3-forge+mc1.20.1 on Forge and Orihime

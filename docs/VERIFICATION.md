@@ -125,3 +125,21 @@ retaining originals. Supply the actual run start time, for example:
 
 Record completed checks and coverage limits with the reviewed revision. A prior
 port's screenshots or a running CI job are not acceptance of a later change.
+
+## Cross-version acceptance
+
+The 2026-09-24 synchronization retains `main` on Minecraft 1.21.1 / Java 21.
+Its documentation and formatting changes passed Spotless and local link checks.
+The compatibility branches record their own exact revisions and evidence:
+
+| Minecraft/profile | Verified scope |
+| --- | --- |
+| 1.20.1 Fabric and Forge | Shared engine/resource/presentation build; full base clients; installed Touhou Little Maid/Orihime task, saved-binding, play and cleanup fixtures |
+| 26.1.2 Fabric and NeoForge | JDK 25 build; full clients with JEI; pinned maid prerelease fixtures on both loaders |
+| 26.1.2 Quilt 0.30.1 | Full existing client fixture on Java 25 using the packaged Fabric JAR, including world/inventory, controls, pause/rejoin, manual play and replay |
+| 1.21.1 and 1.20.1 Quilt 0.30.1 | Earlier packaged Fabric JAR title-screen checks, on Java 21 and Java 17 respectively |
+
+Quilt base acceptance does not imply that every Fabric mod combination is
+validated on Quilt. Earlier Create/Ponder and other viewer checks remain
+versioned baselines in their owning branch's verification guide. No optional
+profile is marked rerun merely because shared compilation passed.
