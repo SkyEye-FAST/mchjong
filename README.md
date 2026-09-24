@@ -40,7 +40,7 @@ Current build profiles support these Minecraft versions and loaders:
 | --- | --- | --- | --- | --- |
 | 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
-| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Fabric artifact validated on Quilt 0.30.1 |
+| 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
 
 Optional integrations are scoped to the loader named in each cell:
 
@@ -51,7 +51,7 @@ Optional integrations are scoped to the loader named in each cell:
 | REI | Fabric, NeoForge: catalogue and component identity | Fabric, Forge: supply recipes | Fabric, NeoForge: catalogue and component identity |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
 | Create workshop | NeoForge | Fabric, Forge | — |
-| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge (pinned test builds) |
+| Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
 The table describes shipped adapters; installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
@@ -62,13 +62,8 @@ your Minecraft version and loader, not the original mod alongside its port.
 An em dash marks a profile without that integration. Quilt reuses Fabric adapters
 when the corresponding dependency also supports Quilt.
 
-The 26.1.2 maid integrations use tested upstream prerelease builds, pinned by
-version and SHA-256 in that branch's [compatibility guide](https://github.com/SkyEye-FAST/mchjong/blob/compat/26.1.2/docs/COMPATIBILITY.md).
-They remain optional and are installed separately from MChjong.
-
 The current build profile targets **Minecraft 1.20.1** and **Java 17**, using
 Fabric Loader 0.19.5 with Fabric API or Forge 47.4.23. Build with JDK 21.
-The Fabric artifact also loads on Quilt Loader 0.30.1.
 
 The optional [Create workshop](docs/CREATE.md) supports Create 6.0.8 on Forge
 and Create Fabric 6.0.8.1, with shared JEI/EMI displays and Ponder tutorials.
