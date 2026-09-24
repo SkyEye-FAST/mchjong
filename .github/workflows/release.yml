@@ -141,12 +141,156 @@ jobs:
 
           gh release create "${GITHUB_REF_NAME}" \
             "fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} Fabric / Quilt" \
-            "forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} Forge" \
             "neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} NeoForge" \
+            "forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${version}.jar#${{ steps.version.outputs.minecraft }} Forge" \
             "compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${version}.jar#1.20.1 Fabric / Quilt" \
             "compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${version}.jar#1.20.1 Forge" \
-            "compat-26.1.2/fabric/build/libs/mchjong-fabric-26.1.2-${version}.jar#26.1.2 Fabric" \
+            "compat-26.1.2/fabric/build/libs/mchjong-fabric-26.1.2-${version}.jar#26.1.2 Fabric / Quilt" \
             "compat-26.1.2/neoforge/build/libs/mchjong-neoforge-26.1.2-${version}.jar#26.1.2 NeoForge" \
             --verify-tag \
             --notes-file release-notes.md \
             --title "MChjong ${GITHUB_REF_NAME}"
+
+      - name: Publish Minecraft 1.21.1 Fabric / Quilt
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Fabric / Quilt
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: |
+            fabric
+            quilt
+          curseforge-loaders: |
+            fabric
+            quilt
+          modrinth-game-versions: 1.21.1
+          curseforge-game-versions: 1.21.1
+          modrinth-dependencies: fabric-api(required)
+          curseforge-dependencies: 306612(required)
+
+      - name: Publish Minecraft 1.21.1 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 NeoForge
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: neoforge
+          curseforge-loaders: neoforge
+          modrinth-game-versions: 1.21.1
+          curseforge-game-versions: 1.21.1
+
+      - name: Publish Minecraft 1.21.1 Forge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Forge
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: forge
+          curseforge-loaders: forge
+          modrinth-game-versions: 1.21.1
+          curseforge-game-versions: 1.21.1
+
+      - name: Publish Minecraft 1.20.1 Fabric / Quilt
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Fabric / Quilt
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: |
+            fabric
+            quilt
+          curseforge-loaders: |
+            fabric
+            quilt
+          modrinth-game-versions: 1.20.1
+          curseforge-game-versions: 1.20.1
+          modrinth-dependencies: fabric-api(required)
+          curseforge-dependencies: 306612(required)
+
+      - name: Publish Minecraft 1.20.1 Forge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Forge
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: forge
+          curseforge-loaders: forge
+          modrinth-game-versions: 1.20.1
+          curseforge-game-versions: 1.20.1
+
+      - name: Publish Minecraft 26.1.2 Fabric / Quilt
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: compat-26.1.2/fabric/build/libs/mchjong-fabric-26.1.2-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 Fabric / Quilt
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: |
+            fabric
+            quilt
+          curseforge-loaders: |
+            fabric
+            quilt
+          modrinth-game-versions: 26.1.2
+          curseforge-game-versions: 26.1.2
+          modrinth-dependencies: fabric-api(required)
+          curseforge-dependencies: 306612(required)
+
+      - name: Publish Minecraft 26.1.2 NeoForge
+        uses: Kira-NT/mc-publish@v3
+        with:
+          modrinth-id: hJSGmT3A
+          modrinth-token: ${{ secrets.MODRINTH_TOKEN }}
+          curseforge-id: 1708733
+          curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
+          files: compat-26.1.2/neoforge/build/libs/mchjong-neoforge-26.1.2-${{ steps.version.outputs.version }}.jar
+          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 NeoForge
+          version: ${{ steps.version.outputs.version }}
+          version-type: release
+          changelog-file: release-notes.md
+          environment: client | server
+          modrinth-loaders: neoforge
+          curseforge-loaders: neoforge
+          modrinth-game-versions: 26.1.2
+          curseforge-game-versions: 26.1.2
