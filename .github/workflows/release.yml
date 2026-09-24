@@ -161,7 +161,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: fabric/build/libs/mchjong-fabric-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Fabric / Quilt
+          name: MChjong ${{ steps.version.outputs.version }} for 1.21.1 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -185,7 +185,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: neoforge/build/libs/mchjong-neoforge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 NeoForge
+          name: MChjong ${{ steps.version.outputs.version }} for 1.21.1 NeoForge
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -203,7 +203,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: forge/build/libs/mchjong-forge-${{ steps.version.outputs.minecraft }}-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Forge
+          name: MChjong ${{ steps.version.outputs.version }} for 1.21.1 Forge
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -221,7 +221,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: compat-1.20.1/fabric/build/libs/mchjong-fabric-1.20.1-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Fabric / Quilt
+          name: MChjong ${{ steps.version.outputs.version }} for 1.20.1 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -245,7 +245,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: compat-1.20.1/forge/build/libs/mchjong-forge-1.20.1-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Forge
+          name: MChjong ${{ steps.version.outputs.version }} for 1.20.1 Forge
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -263,7 +263,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: compat-26.1.2/fabric/build/libs/mchjong-fabric-26.1.2-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 Fabric / Quilt
+          name: MChjong ${{ steps.version.outputs.version }} for 26.1.2 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
@@ -287,7 +287,7 @@ jobs:
           curseforge-id: 1708733
           curseforge-token: ${{ secrets.CURSEFORGE_TOKEN }}
           files: compat-26.1.2/neoforge/build/libs/mchjong-neoforge-26.1.2-${{ steps.version.outputs.version }}.jar
-          name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 NeoForge
+          name: MChjong ${{ steps.version.outputs.version }} for 26.1.2 NeoForge
           version: ${{ steps.version.outputs.version }}
           version-type: release
           changelog-file: platform-release-notes.md
