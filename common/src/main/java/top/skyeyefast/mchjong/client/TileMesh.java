@@ -27,8 +27,8 @@ public final class TileMesh {
     public static final int TILE_HEIGHT = 384;
     public static final int ATLAS_WIDTH = 2048;
     public static final int ATLAS_HEIGHT = 4096;
-    private static final float CORE_BACK = -.011f;
-    private static final float CORE_FRONT = .0255f;
+    static final float CORE_BACK = -.011f;
+    static final float CORE_FRONT = .0255f;
     public static final float SWATCH_U = (ATLAS_WIDTH - 16f) / ATLAS_WIDTH;
     public static final float SWATCH_V = (ATLAS_HEIGHT - 16f) / ATLAS_HEIGHT;
     private static final float[] OUTLINE = outline(WIDTH / 2, HEIGHT / 2, .003f);
