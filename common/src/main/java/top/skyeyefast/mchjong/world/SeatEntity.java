@@ -10,6 +10,7 @@ import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.entity.vehicle.DismountHelper;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.storage.ValueInput;
@@ -20,6 +21,7 @@ import net.minecraft.world.phys.Vec3;
 public final class SeatEntity extends Entity {
     private static final EntityDataAccessor<BlockPos> TABLE = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Integer> SEAT = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> RIDER = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.STRING);
     private UUID rider;
 
     public SeatEntity(EntityType<? extends SeatEntity> type, Level level) {
@@ -33,6 +35,7 @@ public final class SeatEntity extends Entity {
         entityData.set(TABLE, table.immutable());
         entityData.set(SEAT, seat);
         rider = player;
+        entityData.set(RIDER, player.toString());
         BlockPos stool = TableGeometry.stool(table, seat);
         setPos(stool.getX() + 0.5, stool.getY() + TableGeometry.STOOL_HEIGHT, stool.getZ() + 0.5);
         setYRot(TableGeometry.yaw(seat));
@@ -40,13 +43,21 @@ public final class SeatEntity extends Entity {
 
     public BlockPos tablePos() { return entityData.get(TABLE); }
     public int seat() { return entityData.get(SEAT); }
+    public String riderId() { return entityData.get(RIDER); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TABLE, BlockPos.ZERO); builder.define(SEAT, 0);
+        builder.define(TABLE, BlockPos.ZERO); builder.define(SEAT, 0); builder.define(RIDER, "");
     }
     @Override protected boolean canAddPassenger(Entity passenger) { return getPassengers().isEmpty(); }
     @Override protected void positionRider(Entity passenger, MoveFunction position) {
-        // The rider's pelvis, not their feet, rests on the cushion.
-        position.accept(passenger, getX(), getY() - 0.65, getZ());
+        // The maid's riding pose sits lower than a player's on the same mount.
+        double offset = passenger instanceof Player ? 0.65 : 0.15;
+        position.accept(passenger, getX(), getY() - offset, getZ());
+        if (passenger instanceof LivingEntity companion && !(companion instanceof Player)) {
+            float yaw = TableGeometry.yaw(seat());
+            companion.setYRot(yaw);
+            companion.setYBodyRot(yaw);
+            companion.setYHeadRot(yaw);
+        }
     }
     @Override public void tick() {
         super.tick();
@@ -73,6 +84,7 @@ public final class SeatEntity extends Entity {
         entityData.set(TABLE, BlockPos.of(input.getLongOr("table", 0)));
         entityData.set(SEAT, Math.clamp(input.getIntOr("seat", 0), 0, 3));
         rider = input.getString("rider").map(UUID::fromString).orElse(null);
+        entityData.set(RIDER, rider == null ? "" : rider.toString());
     }
     @Override protected void addAdditionalSaveData(ValueOutput output) {
         output.putLong("table", tablePos().asLong());

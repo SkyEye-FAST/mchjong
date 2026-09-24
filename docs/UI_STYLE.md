@@ -238,9 +238,10 @@ and never alter the authoritative action or tile identity.
 Reserve at least 18 logical pixels of face width for immersive river tiles and 20 pixels
 for opponent meld tiles. Allocate river depth per seat before reducing these sizes.
 Long opponent meld rails wrap inward at the owner's corner while retaining the minimum
-face width. Player names have a skin portrait immediately before them; practice bots use
-a distinct robot portrait. Immersive plaque text may scale above native size for the
-1280 × 800 canvas. Ellipsize long names and retain the complete name in hover details.
+face width. Player names have a portrait immediately before them; practice bots use
+a distinct robot portrait and maid companions use the default Reimu icon. Immersive
+plaque text may scale above native size for the 1280 × 800 canvas. Ellipsize long
+names and retain the complete name in hover details.
 
 ## Mahjong box
 

@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.compat.maid;
 
 import com.github.tartaricacid.touhoulittlemaid.entity.passive.EntityMaid;
-import com.github.tartaricacid.touhoulittlemaid.entity.task.TaskManager;
 import java.util.Map;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.Registries;
@@ -50,6 +49,5 @@ public final class MaidTables extends Behavior<EntityMaid> {
         if (maid.getVehicle() instanceof SeatEntity seat && seat.tablePos().equals(pos)) maid.stopRiding();
         maid.setRideable(binding.followVehicles());
         MaidData.clear(maid);
-        if (MaidMahjongTask.ID.equals(maid.getTask().getUid())) maid.setTask(TaskManager.getIdleTask());
     }
 }

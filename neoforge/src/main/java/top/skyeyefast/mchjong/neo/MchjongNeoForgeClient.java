@@ -31,6 +31,8 @@ public final class MchjongNeoForgeClient {
         top.skyeyefast.mchjong.client.TableAudio.tick();
         top.skyeyefast.mchjong.client.SeatedCamera.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();
+        if (net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid"))
+            top.skyeyefast.mchjong.compat.maid.client.MaidClientSeats.tick();
     }
     @SubscribeEvent public static void close(net.neoforged.neoforge.event.GameShuttingDownEvent event) {
         top.skyeyefast.mchjong.client.TableAudio.close();

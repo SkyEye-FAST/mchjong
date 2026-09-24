@@ -47,6 +47,16 @@ final class MaidIntegrationSmoke {
             return false;
         }
         if (step == 2 || step == 7 || step == 8) {
+            if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
+                "Default maid model name is not localized");
+            if (step == 2) {
+                var clientMaid = client.level.getEntitiesOfClass(EntityMaid.class, new net.minecraft.world.phys.AABB(center).inflate(10))
+                    .stream().filter(entity -> entity.getUUID().equals(maidId)).findFirst().orElseThrow();
+                var vehicle = clientMaid.getVehicle();
+                require(vehicle instanceof SeatEntity, "Client maid is not mounted on a Mahjong seat");
+                require(clientMaid.position().distanceTo(vehicle.position()) < 0.3,
+                    "Client maid is away from seat: maid=" + clientMaid.position() + ", seat=" + vehicle.position());
+            }
             if (step == 8) require(client.screen.width == 320 && client.screen.height == 240, "Maid small viewport is not 320x240");
             Screenshot.grab(output.toFile(), step == 2 && capturedLobby ? "maid-seating.png" : "maid-" + step + ".png",
                 client.getMainRenderTarget(), 1, ignored -> {});
@@ -86,7 +96,7 @@ final class MaidIntegrationSmoke {
                 var maid = new EntityMaid(level);
                 maid.tame(owner);
                 maid.setRideable(true);
-                maid.setCustomName(Component.literal("Mahjong Maid"));
+                maid.setModelId("touhou_little_maid:hakurei_reimu");
                 var stool = TableGeometry.stool(center, 1);
                 maid.snapTo(stool.getX() + 1.5, stool.getY(), stool.getZ() + .5, 90, 0);
                 maid.setSchedule(MaidSchedule.ALL);
@@ -107,7 +117,7 @@ final class MaidIntegrationSmoke {
             if (currentStep == 1 || currentStep == 5) {
                 if (!(maid.getVehicle() instanceof SeatEntity seat)) return false;
                 require(game.entityBot(maidId) && game.seatOf(maidId) == seat.seat(), "Maid mount and game membership differ");
-                require(game.view(null).seats().get(seat.seat()).name().equals("Mahjong Maid"), "Maid name lost");
+                require(!game.view(null).seats().get(seat.seat()).name().isBlank(), "Maid model name lost");
                 if (currentStep == 5) {
                     act(table, owner, Action.Type.FILL_BOTS);
                     act(table, owner, Action.Type.BEGIN_SEATING);

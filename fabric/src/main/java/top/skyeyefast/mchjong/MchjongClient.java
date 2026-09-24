@@ -31,6 +31,9 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();
         });
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
+            net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client ->
+                top.skyeyefast.mchjong.compat.maid.client.MaidClientSeats.tick());
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
         BlockEntityRenderers.register(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);
