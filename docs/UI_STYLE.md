@@ -267,6 +267,19 @@ sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
+Native supply containers reserve a 24-pixel logical bottom strip for optional
+recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row
+point-stick drawer a 304 x 216 panel. Each drawer has nine scoring slots and a
+separated final slot for inactive black bust sticks, with an explanatory tooltip.
+The point-stick drawer highlights the receiving player; the mouse wheel cycles
+that recipient and Shift-click stores point sticks in the highlighted row.
+Their slot pitch remains 18 pixels; compact header and inventory gaps keep every
+native slot visible at 320 x 240. Screen bounds provide one source for viewer
+exclusion areas and native click tests. JEI recipe categories reuse `MahjongUi`
+panel, slot and text tokens.
+
+## Physical table layout
+
 Ordinary tables show two dice in the central felt area after every wall is built.
 The dealer can then focus/click the dice to pick them up and roll via
 the native action control. Both faces use the item textures; hovering the region
@@ -275,8 +288,6 @@ Immersive play becomes available after dealing completes, including its visible
 animation, and returns to seated play for the next hand's preparation. Dice and
 their hover target belong exclusively to seated play.
 The completed match returns dice and point-stick positions to storage.
-
-## Physical table layout
 
 The physical table reserves a 3 x 3 block footprint around a 2.875-block frame
 and a 2.625-block playing surface. `TableGeometry` owns these and the seat
@@ -344,18 +355,6 @@ decision controls and the separate clock lane above the hand.
 Tile highlights follow the beveled
 front and back rims and the side edges in the animated world pose, with depth testing.
 
-For a focused seating check, use `:fabric:runSmokeClient -PsmokeSeating=true` and
-`:neoforge:runSmokeClient -PsmokeSeating=true`. These reuse the furniture, seating
-and private-deal captures, the zero-to-four-meld matrix at both viewport sizes,
-and immersive rivers with the hand and expanded automatic controls. They then
-inspect the camera with controls closed and the third-person stool pose.
-Evidence goes to each loader's `build/smoke/seating-evidence`.
-
-For hand visibility, run `:fabric:runSmokeClient -PsmokeVisibility=true` and
-`:neoforge:runSmokeClient -PsmokeVisibility=true`. Inspect each loader's
-`build/smoke/visibility-evidence` for the four room choices in all four languages,
-live seated views and unmounted spectator views at normal and small sizes.
-
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
 The automatic table's active-match overlay includes collapsible controls at the
@@ -390,67 +389,9 @@ values. Each score display faces its owner, with glyph tops pointing toward the
 table center. The wind characters use the resource-pack font, keeping explanatory
 labels off the felt and the riichi-deposit lanes clear.
 
-## Visual acceptance and verification
+## Visual acceptance
 
-Select checks for the affected menu/widget behavior rather than running complete
-suites after each adjustment. For box and immersive controls, use
-`:fabric:runSmokeClient -PsmokeInterface=true` and
-`:neoforge:runSmokeClient -PsmokeInterface=true`; these reuse native box checks
-and capture the affected immersive controls in four languages at normal and small
-viewports under each loader's `build/smoke/interface-evidence`. Check the resulting
-screenshots rather than treating compilation as visual verification. Cover
-small-window layout, keyboard focus, disabled/selected states, box carrier
-synchronization and real inventory transactions. Keep geometric regression
-tests for conditional hand centering, minimal left shifts, drawn-tile clearance,
-meld/wall clearance and tile contact.
-Inspect the zero-to-four-meld screenshots and the four-open-kan fixture at both
-640 x 400 and 320 x 240 logical resolutions. The complete tile bounds must stay
-visible beside the hand, not just the center of the rightmost meld. Remove only
-the smoke's own dropped-item fixtures before those screenshots. Placement must
-reject obstructed outer corners and headroom without consuming an item; breaking
-an outer corner must remove all occupancy cells and return equipment once.
-Placement must also succeed with obstructions just outside the 3 x 3 footprint
-without overwriting them or reserving extra cells. Compare the two-open-kan
-waiting/drawn screenshots: the waiting hand stays centered, and only the actual
-draw causes a minimal shift. Geometric tests cover every call type and source,
-all four seats, standing/exposed tiles and waiting/drawn/post-call hands.
 Update this document and the shared tokens together when intentionally changing
-the style; do not establish a competing set of local widgets or palette values.
-
-The shared smoke captures compact and expanded match controls in all four locales
-through the 1280 × 800 immersive canvas at 640 x 400 and 320 x 240 output sizes. The live four-player match toggles each option once in
-each presentation, using both pointer and keyboard activation. A live three-player
-match verifies the additional north button and its server acknowledgements at
-320 x 240 seated. Immersive captures exercise the same 1280 × 800 canvas through
-multiple window sizes, aspect ratios and GUI scales, including 320 × 240 with black
-bars. Lobby controls are checked separately.
-Native first-person screenshots cover a right-hand tile and point stick. Each
-table has one carried-deposit fixture.
-The wait-preview smoke additionally captures pointer hover and keyboard focus
-at 640 x 400 and 320 x 240 seated and on the fixed immersive canvas in all four languages,
-with thirteen waits, five indicators, carried sticks, riichi and four-kan summaries.
-The immersive preview begins with pointer-only discard hover to check that moving
-onto the diamond preserves the preview without selecting or submitting a tile.
-
-On Windows, `tools/Review-Smoke.ps1` creates labelled contact sheets from the
-original screenshots. Supply the evidence folder, filename pattern, run start
-time and output name, for example:
-
-```powershell
-./tools/Review-Smoke.ps1 -Evidence fabric/build/smoke/evidence `
-    -Pattern '54-table-options-*.png' -Since (Get-Date '2026-09-18T11:30:00') -Name controls
-```
-
-Use the actual start time of the run being reviewed. The tool checks source
-timestamps and keeps the original screenshots alongside the contact sheets.
-
-Native supply containers reserve a 24-pixel logical bottom strip for optional
-recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row
-point-stick drawer a 304 x 216 panel. Each drawer has nine scoring slots and a
-separated final slot for inactive black bust sticks, with an explanatory tooltip.
-The point-stick drawer highlights the receiving player; the mouse wheel cycles
-that recipient and Shift-click stores point sticks in the highlighted row.
-Their slot pitch remains 18 pixels; compact
-header and inventory gaps keep every native slot visible at 320 x 240. Screen
-bounds provide one source for viewer exclusion areas and native click tests.
-The JEI custom recipe categories reuse `MahjongUi` panel, slot and text tokens.
+the style; do not establish competing local widgets or palettes. Focused commands,
+viewport checks and screenshot review are maintained in [Verification](VERIFICATION.md).
+Compilation alone is not visual acceptance.

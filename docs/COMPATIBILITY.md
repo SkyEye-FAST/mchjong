@@ -1,128 +1,63 @@
-# Compatibility and verification
+# Compatibility and dependencies
 
 ## Minecraft 26.1.2 profile
 
-The `compat/26.1.2` branch builds Fabric and NeoForge artifacts with JDK 25.
-Fabric requires Loader 0.19.5 or newer and Fabric API 0.155.3+26.1.2. NeoForge
-requires 26.1.2.109 or newer. Versions are pinned in `gradle.properties`.
+`compat/26.1.2` builds Fabric and NeoForge artifacts with JDK 25. Fabric requires
+Loader 0.19.3 or newer and Fabric API; the development profile pins Loader 0.19.5
+and Fabric API 0.155.3+26.1.2. NeoForge requires 26.1.2.109 or newer.
+Quilt Loader 0.30.1 consumes the packaged Fabric artifact without a separate mod
+module. Its Fabric compatibility layer reports 0.19.3, matching the runtime floor.
 
-The shared engine, gameplay, menus, rendering and translations follow `main`.
-The port adapts Minecraft and loader APIs at their boundaries. Snapshot CI builds
-both loader artifacts from this branch. A release uses the reviewed port revision
-pinned by `main` and gives both JARs the release version.
+The [README tables](../README.md#compatibility) cover all three version lines.
+Branch synchronization, Java boundaries and release pins are documented in
+[Development](DEVELOPMENT.md#version-synchronization-and-artifacts).
 
-The [README compatibility tables](../README.md#compatibility) cover all three
-version lines. Quilt consumes the matching Fabric artifact; its 26.1.2 runtime
-validation is separate from Fabric acceptance.
+## Optional integrations
 
-## Optional recipe viewers
+| Integration | Pinned distribution | Development profile |
+| --- | --- | --- |
+| JEI | 29.40.0.102, with MezzConfig 0.6.3 | `-PrecipeBrowser=jei` |
+| REI | 26.1.819, catalogue/identity adapter | Compile-only API; install separately |
+| Touhou Little Maid | NeoForge 2.0.0 / Orihime 1.0.0, pinned test builds below | `-PwithMaid=true` |
+| Base installation | No optional runtime | `-PrecipeBrowser=none` |
 
-JEI 29.40.0.102 with MezzConfig 0.6.3 is the installed development profile on
-both loaders. Run client checks with `-PrecipeBrowser=jei`; the default profile
-uses `-PrecipeBrowser=none`. The adapter and shared engine are packaged in
-MChjong, while the optional viewer itself remains a separate dependency.
+JEI provides custom supply recipe pages on both loaders. REI exposes catalogue
+entries, component identity and screen exclusion zones. Its catalogue adapter is
+distinct from a custom recipe-page implementation. REI's compile classpath uses
+Architectury 20.0.6 and Basic Math 0.6.1.
 
-REI 26.1.819 provides catalogue entries, component identity and screen exclusion
-zones on both loaders. This is a catalogue adapter, distinct from JEI's custom
-recipe pages and installed-viewer smoke profile.
+Optional APIs remain compile-only. MChjong packages its own adapters and shared
+engine; optional mods are installed separately. Current integration scope is
+listed in the README, rather than inferred from an upstream source branch.
 
-The upstream Create, Create Fabric, Ponder, EMI, Touhou Little Maid and Orihime
-projects do not publish a matching 26.1.2 release in their current Modrinth
-version lists. Their adapters and dependencies are excluded from this build
-profile. Independent ports such as Create Fly are separate integration targets;
-this profile does not claim compatibility with them.
+## Maid test builds
 
-Create, Ponder, EMI and maid adapters are omitted from this profile because
-their matching released dependencies are not available for the selected
-Minecraft/loader versions. Their absence does not remove shared supply
-transformations, companion identity or server-side rule behavior.
+The following upstream prereleases were tested together with the existing maid
+fixture. Original and Fabric-port distributions occupy the same compatibility
+row; install only the distribution for your loader, on the server and clients.
 
-## Version synchronization and artifacts
+| Loader | Distribution | Exact upstream build |
+| --- | --- | --- |
+| Fabric | Touhou Little Maid: Orihime `1.0.0-neo2.0.0+mc26.1.2` | [26.1.2-snapshot-2026-08-24-21-30-49](https://github.com/Sh1roCu/TouhouLittleMaid-Orihime/releases/tag/26.1.2-snapshot-2026-08-24-21-30-49) |
+| NeoForge | Touhou Little Maid `2.0.0-neoforge+mc26.1.2-snapshot` | [snapshot-2026-08-24-14-04-03](https://github.com/TouhouLittleMaid/TouhouLittleMaid-26.1/releases/tag/snapshot-2026-08-24-14-04-03) |
 
-`main` is the sole feature development line. Synchronize stable batches into
-`compat/1.20.1` and `compat/26.1.2`, adapt Minecraft and loader APIs, then
-validate each port. Engine and shared gameplay changes travel through Git history.
-
-The release workflow on `main` builds its three loader artifacts, the two
-1.20.1 artifacts from `.github/compat-1.20.1-ref`, and the two 26.1.2 artifacts
-from `.github/compat-26.1.2-ref`.
-Snapshot workflows build single-version development artifacts for their respective
-branch profile. Update each pin after reviewing and validating a stable port batch. All
-checkouts receive the same mod version during assembly; the filenames include
-Minecraft version and loader. A main commit does not automatically advance the
-compatibility pins. Review feature parity and port acceptance before publishing
-a release. Each port branch keeps its own dependency versions and validation
-guide, while the engine, item transformations and player-facing behavior follow
-the reviewed main revision. Preserve the 26.1.2 render-state, special-model,
-input-event and registry APIs when adapting shared changes.
-
-## Recipe and component coverage
-
-The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete
-144-tile cases are consecutive. Blank tiles in all sixteen materials and both
-mahjong dyes precede blank, 100, 1,000, 5,000 and 10,000 point-stick
-denominations. Tables and automatic tables list every wood species. Tile faces,
-including flowers, share the blank-tile item and are printed through the box menu.
-
-Recipe identity distinguishes wood, material, back color, face preset, face, red markings,
-denomination and complete container components. A custom outer item name is
-cosmetic for lookup; crafting still applies the source recipe's name-preservation
-rules. Examples are built from the recipes in the currently loaded datapack.
-Every cycling ingredient is accepted only when the source recipe produces the
-displayed output with identical components and count.
-
-The finite crafting displays cover eight-stick marking batches, every table
-wood, and all sixteen back-dye colors on representative tiles, stools, cloth, boxes, red fives and flowers.
-Case back-dye examples cover each material with blue backs: a completed set,
-or 144 blanks with four 1,000-point sticks in the separate stick compartment.
-The ordinary five-color mahjong-dye recipe uses the viewers' vanilla crafting category.
-Dye inputs cycle through colors only when crafting yields the exact same output.
-Arbitrarily rearranged, mixed-material or specially
-named container contents retain exact identities; their survival operations are
-governed by the same server recipes, while these particular container layouts
-are outside the pre-enumerated viewer examples.
-
-## Verification commands
-
-The batch synchronized from `main` at `a5d6852` includes paused unattended
-matches, the last-player leave decision, supply-aware rule selection, dice and
-wall presentation, supply transformations, localization and formatting policy.
-Its 26.1.2 adaptation also uses native string-tag recipe ingredients for the
-wooden slabs in the mahjong box recipe.
-
-On 2026-09-24, `buildAll --warning-mode fail` passed. Full Fabric and NeoForge
-client checks with JEI each produced fresh `PASS.txt`, `survival-checks.txt` and
-`browser-checks.txt` under `build/smoke/jei-evidence`. The runs cover live control
-packets, pause/rejoin decisions, ordinary-table play, rule selection, resource
-reloads and installed recipe pages. Fresh leave-decision and small-window rule
-screenshots were inspected on both loaders. This batch does not establish
-Quilt runtime acceptance or rerun every optional dependency profile.
-
-Use the checked-in Gradle wrapper with JDK 25 (`gradlew.bat` on Windows):
+Fabric also requires Forge Config API Port 26.1.4. Gradle resolves the exact
+GitHub release assets through restricted Ivy repositories and verifies their
+SHA-256 digests before compiling. The pins in `gradle.properties` are:
 
 ```text
-./gradlew buildAll --warning-mode fail --console=plain
-./gradlew :fabric:runSmokeClient --console=plain
-./gradlew :neoforge:runSmokeClient --console=plain
-./gradlew :fabric:runSmokeClient -PsmokePalette=true --console=plain
-./gradlew :neoforge:runSmokeClient -PsmokePalette=true --console=plain
-./gradlew :fabric:runSmokeClient -PsmokeManual=true --console=plain
-./gradlew :neoforge:runSmokeClient -PsmokeManual=true --console=plain
-./gradlew :fabric:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain
-./gradlew :neoforge:runSmokeClient -PsmokeBrowser=true -PrecipeBrowser=jei --console=plain
+Orihime: 9503be53f46a01c31ee5fd9bc2fc64f72b02db9860d4433eb0f5de9cbb086dd6
+Touhou Little Maid: b0105bb9b1fd02234024bc9e371a77dfe1631bf795cb98fd7fc7198a52e2fe29
 ```
 
-Smoke profiles write screenshots and PASS markers under each loader's
-`build/smoke/<profile>-evidence`. Check their timestamps and inspect the fresh
-captures for the changed workflow. `buildAll` includes the engine, generated
-assets and data, and loader tests; client runs exercise the integrated server,
-packets, inventory and rendering.
+These are prerelease dependencies, not a claim that every later snapshot is
+compatible. Update a pin only after API review and installed/absent-profile
+verification. [Rooms](ROOMS.md#maid-players) covers player operation;
+[Architecture](ARCHITECTURE.md) covers persistent attachment boundaries.
 
-The baseline port at `b5d4847` records a passing JDK 25 build, full Fabric and
-NeoForge client smokes, palette captures, physical manual-table handling and
-installed-JEI browser smokes. Run the owning checks again when synchronizing changed flows;
-baseline screenshots are not visual acceptance of a later revision.
+## Verification and data contracts
 
-The Fabric and NeoForge dedicated-server launchers can be checked with
-`./gradlew :fabric:runSmokeServer :neoforge:runSmokeServer --console=plain`.
-This starts each server in its isolated settings directory.
+[Verification](VERIFICATION.md#recorded-acceptance) records the tested revisions,
+Quilt artifact checksum, runtime commands and evidence. [Supply data contracts](SUPPLIES.md)
+defines components, persistence and recipe identity. Compilation alone does not
+establish installed-viewer, Quilt or visual acceptance.

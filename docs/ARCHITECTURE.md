@@ -1,5 +1,7 @@
 # MChjong architecture
 
+## Module ownership
+
 `main` owns feature development. This Minecraft 26.1.2 port has Fabric and
 NeoForge loader subprojects under an aggregator root. They share gameplay,
 presentation, assets and tests at this Minecraft API level.
@@ -33,6 +35,8 @@ presentation, assets and tests at this Minecraft API level.
 engine changes originate on `main`; this branch adapts Minecraft APIs, loader
 adapters, metadata and version-specific resources.
 Artifact names include both loader and Minecraft version to keep releases distinct.
+
+## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native
 custom payload packets. All receivers dispatch to authorized server handlers
@@ -96,6 +100,16 @@ validates actual stools and mounts, and synchronizes companion presence. Missing
 companions release lobby membership after the presence grace period; during play
 a training bot continues their place. Companion adapters are version-specific;
 the shared engine and table preserve the same identity and authorization contract.
+
+The optional `compat/maid` task and core-brain logic is shared by the pinned
+Touhou Little Maid and Orihime test builds. `MaidBinding` is a private immutable
+saved value containing position, dimension, table UUID and vehicle preference.
+Only `MaidData` differs by loader: Fabric persistent attachments or NeoForge
+attachment registration. Register the attachment codec during base initialization
+so saved data can load before optional task discovery. Base entrypoints reference
+no optional maid classes; the maid's extension mechanism discovers them when installed.
+
+## Optional integrations
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
@@ -267,32 +281,11 @@ A rejection or 30-second timeout resumes play, followed by a 30-second ballot
 cooldown. Completing the vote releases seats and clears the unfinished hand;
 already completed replay records remain available and no fake settlement is made.
 
-Build: `gradlew.bat buildAll`. Loader-specific development runs remain
-`gradlew.bat :fabric:runClient` and `gradlew.bat :neoforge:runClient`.
+## Supply transformations and verification boundaries
 
-`gradlew.bat :fabric:test` covers deterministic presentation and pointer geometry.
-It also checks outward-facing tile winding, stable hand placement, compact rivers
-and the mandatory remaining count. `CompactTableLayoutTest` owns hand clearance
-and picking; `TableLayoutTest` owns meld, river and wall geometry. Replay storage
-and access control belong to `ReplayStoreTest`, while packet boundaries and
-reassembly belong to `ReplayTransferTest`. Engine tests cover exits, ballots, save
-reloads and recipient privacy. Full-match and manual-handling checks exercise both
-player counts; focused scoring and reaction tests cover preset differences.
-Asset tests check all four language key sets, duplicate
-keys, format arguments and literal translation references in production sources.
-`gradlew.bat :fabric:runSmokeClient` runs a real Fabric integrated client/server, exercises
-seating and discard packets, and captures settlement and animation screenshots in
-`fabric/build/smoke/evidence`. Rare multi-winner and animation states use display-only
-fixtures; they are not scoring-rule integration tests. The same harness runs with
-`gradlew.bat :neoforge:runSmokeClient` and stores evidence under
-`neoforge/build/smoke/evidence`. Both harnesses also create a real engine record,
-archive it on the integrated server, retrieve it through commands and chunked
-networking, render the replay timeline and click the Tenhou export button.
-Development-only source sets contain the smoke adapters.
-Both smoke clients leave the desktop cursor free, including when closing screens
-or entering the world. A smoke-only mouse mixin prevents capture and recentering;
-the harness checks the logical grab state and native cursor mode each tick.
-NeoForge's dedicated-server integration tests also run in `buildAll`.
+Test ownership, focused commands and screenshot acceptance are maintained in
+[Verification](VERIFICATION.md). Registry IDs, persistence and finite recipe
+identity are maintained in [Supply data contracts](SUPPLIES.md).
 
 Survival checks use real server players, menus and levels in the shared smoke
 source set rather than introducing null-world behavior into production code.
@@ -341,6 +334,8 @@ and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 owns client effects and resource-pack recording playback. Registered
 resource-pack events separate table effects from recordings. No game logic
 depends on an audio completion callback. See `AUDIO.md` for customization.
+
+## Replay storage and export
 
 Replay recording and playback live in the Minecraft-independent engine.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable

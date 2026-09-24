@@ -138,22 +138,20 @@ individually, the host can dissolve the room, or the group can prepare fresh sea
 for another match. During a running match, ending play still uses unanimous human
 approval when more than one human participates.
 
-## Verification
+## Maid players
 
-`gradlew.bat buildAll --warning-mode fail` covers the seating state machine,
-ownership, readiness, saved-room privacy, bot choices and both loader builds.
-The existing room tests exercise departures during wind drawing, replacements
-after assignment and fresh seating on a rematch.
+Install the matching maid mod on the server and clients, then select **Mahjong**
+in the maid's task selector. Sit at an equipped table with an empty stool and keep
+the maid nearby within her work area. During work hours she approaches the stool
+and joins the room. Choose the player count before recruiting maids; the host can
+fill remaining places with training bots and adjust each maid's difficulty using
+the bot controls.
 
-`gradlew.bat :fabric:runSmokeClient --console=plain` and
-`gradlew.bat :neoforge:runSmokeClient --console=plain` drive the real preparation
-controls and physical remounts. The invitation checks cover administrator-only
-world commands, policy reload, revoked travel, safe arrival, single-use acceptance
-and joining by sitting. Each loader records its settings and participant screens
-at 320 x 240 logical pixels, alongside ordinary-table wind drawing and automatic
-seat assignment, under its `build/smoke/evidence` directory.
+Maids retain their names and move with their assigned seats. Their saved binding
+restores the physical mount after a world reload. Changing tasks, dismissing a
+maid from the room, or removing her stool releases the physical seat. During an
+active match a training bot continues the vacated place. Room dismissal returns
+the maid to Idle; select Mahjong again to recruit her for another room.
 
-Add `-PsmokeRoom=true` to either loader's client smoke command for focused lobby
-navigation, four-language normal/small screenshots, server settlement countdowns,
-automatic final standings, retained membership and leave/dissolve packets. Evidence
-is written under that loader's `build/smoke/room-evidence` directory.
+See [Compatibility](COMPATIBILITY.md) for supported distributions and versions.
+Developer checks are maintained in [Verification](VERIFICATION.md).
