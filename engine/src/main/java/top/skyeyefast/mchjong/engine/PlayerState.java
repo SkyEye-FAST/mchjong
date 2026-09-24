@@ -40,6 +40,7 @@ final class PlayerState {
     boolean closed() { return melds.stream().allMatch(Meld::closed); }
 
     void resetHand() {
+        autoPlay = AutoPlay.DEFAULT;
         hand.clear(); melds.clear(); river.clear(); norths.clear(); forbiddenDiscards.clear();
         drawn = Tile.ABSENT;
         riichi = doubleRiichi = ippatsu = riichiFuriten = temporaryFuriten = false;
