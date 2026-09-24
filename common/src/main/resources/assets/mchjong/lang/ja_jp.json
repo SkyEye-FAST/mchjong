@@ -175,7 +175,7 @@
   "mchjong.ponder.workshop_dyeing.text_1": "メカニカルミキサーと鉢で、染料1個につき2つの対象を染めます。対象は牌の1スタックまたはケース1個です。青色の染料1個で2ケースの全牌を染められます。",
   "mchjong.ponder.workshop_dyeing.text_2": "変更するのは牌の背面だけです。牌面、赤牌、素材、名前、点棒、サイコロは保持されます。ガラス牌は色付きガラスになります。",
   "mchjong.ponder.workshop_dyeing.text_3": "復元染料1個で2つの対象の背面の色を落とします。両方に変化がある場合のみ加工され、変化がなければ染料も消費しません。",
-  "mchjong.ponder.workshop_dyeing.text_4": "デプロイヤーはベルトやデポ上の通常の五に赤ドラ染料を1枚ずつ塗ります。復元染料は背面の色を保ったまま赤五を1枚ずつ戻します。",
+  "mchjong.ponder.workshop_dyeing.text_4": "デプロイヤーはベルトやデポ上の通常の五に赤ドラ染料を1枚ずつ塗ります。復元染料は背面の色を保ったまま赤ドラを1枚ずつ戻します。",
   "mchjong.ponder.workshop_dyeing.text_5": "ミキサーでは染料1個で同じ未印字の点棒16本を加工します。白は100点、青は1000点、黄は5000点、赤は10000点、黒は-10000点です。",
   "mchjong.ponder.workshop_production.header": "麻雀用品の製造",
   "mchjong.ponder.workshop_production.text_1": "メカニカルソーは素材1個から未印刷の牌24枚を切り出します。素材6個で144枚になります。骨ブロックからは未印字の点棒32本も作れます。",
