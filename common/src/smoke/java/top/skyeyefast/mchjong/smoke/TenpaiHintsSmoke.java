@@ -109,7 +109,7 @@ final class TenpaiHintsSmoke {
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
-        seats.set(0, new TableView.Seat("Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
+        seats.set(0, new TableView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false));
         for (int seat = 1; seat < seats.size(); seat++) {
             int owner = seat;
@@ -118,7 +118,7 @@ final class TenpaiHintsSmoke {
                 return new Meld(seatType(owner), List.of(tile, tile + 1, tile + 2, tile + 3),
                     owner >= 2 ? owner : 0, owner >= 2 ? Tile.ABSENT : tile);
             }).toList();
-            seats.set(seat, new TableView.Seat("Long player name " + seat, true, false, false, 25000,
+            seats.set(seat, new TableView.Seat(false, "Long player name " + seat, true, false, false, 25000,
                 java.util.Collections.nCopies(13 - melds.size() * 3, Tile.HIDDEN), Tile.ABSENT,
                 melds, List.of(), List.of(), seat == seats.size() - 1, false));
         }

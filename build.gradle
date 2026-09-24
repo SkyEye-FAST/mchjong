@@ -6,6 +6,10 @@ plugins {
 allprojects {
     repositories {
         exclusiveContent {
+            forRepository { maven { name = 'Modrinth'; url = 'https://api.modrinth.com/maven' } }
+            filter { includeGroup 'maven.modrinth' }
+        }
+        exclusiveContent {
             forRepository { maven { name = 'JEI'; url = 'https://maven.blamejared.com/' } }
             filter { includeGroup 'mezz.jei'; includeGroup 'net.mezzdev.config' }
         }

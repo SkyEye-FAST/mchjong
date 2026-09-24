@@ -81,6 +81,23 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var connected = new java.util.HashSet<UUID>();
         for (ServerPlayer player : ((ServerLevel) level).getServer().getPlayerList().getPlayers()) connected.add(player.getUUID());
         for (SeatEntity seat : level.getEntitiesOfClass(SeatEntity.class, new AABB(worldPosition).inflate(4))) {
+            if (seat.tablePos().equals(worldPosition) && !seat.isRemoved()
+                && seat.getFirstPassenger() instanceof net.minecraft.world.entity.TamableAnimal companion) {
+                int assigned = game.entityBot(companion.getUUID()) ? game.seatOf(companion.getUUID()) : -1;
+                if (assigned < 0 || !companion.isAlive()
+                    || !level.getBlockState(TableGeometry.stool(worldPosition, assigned)).is(MahjongContent.STOOL)) {
+                    companion.stopRiding();
+                    seat.discard();
+                    game.leaveEntityBot(companion.getUUID());
+                } else {
+                    if (seat.seat() != assigned) {
+                        seat.initialize(worldPosition, assigned, companion.getUUID());
+                        companion.setYRot(TableGeometry.yaw(assigned));
+                    }
+                    mounted.put(companion.getUUID(), assigned);
+                }
+                continue;
+            }
             if (!seat.tablePos().equals(worldPosition) || seat.isRemoved()
                 || !(seat.getFirstPassenger() instanceof ServerPlayer player) || !player.isAlive() || player.isSpectator()) continue;
             int assigned = game.seatOf(player.getUUID());
@@ -361,7 +378,57 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, false);
     }
 
-    private SeatEntity mount(ServerPlayer player, int seat) {
+    /** Existing companions retain membership; new ones need an owner participating nearby. */
+    public int companionSeat(net.minecraft.world.entity.TamableAnimal companion) {
+        Game current = serverGame();
+        if (current == null || companion.level() != level || !companion.isAlive() || companion.isRemoved()) return -1;
+        if (current.entityBot(companion.getUUID())) return current.seatOf(companion.getUUID());
+        if (!(companion.getOwner() instanceof ServerPlayer owner) || participantGame(owner) == null
+            || current.phase() != Game.Phase.LOBBY) return -1;
+        var seats = current.view(null).seats();
+        for (int seat = 0; seat < current.rules().players(); seat++) {
+            BlockPos stool = TableGeometry.stool(worldPosition, seat);
+            if (!seats.get(seat).occupied() && level.getBlockState(stool).is(MahjongContent.STOOL)
+                && level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty())
+                return seat;
+        }
+        return -1;
+    }
+
+    public UUID companionTableId(UUID companion) {
+        Game current = serverGame();
+        return current != null && current.entityBot(companion) ? current.tableId() : null;
+    }
+
+    public boolean sitCompanion(net.minecraft.world.entity.TamableAnimal companion) {
+        int seat = companionSeat(companion);
+        if (seat < 0 || companion.isPassenger()) return false;
+        BlockPos stool = TableGeometry.stool(worldPosition, seat);
+        if (companion.distanceToSqr(stool.getCenter()) > 4 || !level.getBlockState(stool).is(MahjongContent.STOOL)
+            || !level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()) return false;
+        SeatEntity mount = mount(companion, seat);
+        if (mount == null) return false;
+        if (!game.entityBot(companion.getUUID())
+            && !game.joinEntityBot(companion.getOwnerUUID(), companion.getUUID(), companion.getName().getString(), seat)) {
+            companion.stopRiding();
+            mount.discard();
+            return false;
+        }
+        setChanged();
+        sentRevision = -1;
+        return true;
+    }
+
+    public void leaveCompanion(UUID tableId, UUID companion) {
+        Game current = serverGame();
+        if (current != null && current.tableId().equals(tableId)) {
+            current.leaveEntityBot(companion);
+            setChanged();
+            sentRevision = -1;
+        }
+    }
+
+    private SeatEntity mount(net.minecraft.world.entity.LivingEntity player, int seat) {
         SeatEntity mount = new SeatEntity(MahjongContent.SEAT_ENTITY, level);
         mount.initialize(worldPosition, seat, player.getUUID());
         level.addFreshEntity(mount);

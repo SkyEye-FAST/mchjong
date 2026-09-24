@@ -15,7 +15,7 @@ class TableDepositsTest {
     private TableView view(RuleSet rules, int deposits, int declared, boolean manual) {
         var seats = new ArrayList<TableView.Seat>();
         for (int seat = 0; seat < rules.players(); seat++)
-            seats.add(new TableView.Seat("Player", true, false, false, 25000, List.of(), Tile.ABSENT,
+            seats.add(new TableView.Seat(false, "Player", true, false, false, 25000, List.of(), Tile.ABSENT,
                 List.of(), List.of(), List.of(), (declared & 1 << seat) != 0, false));
         return new TableView(new UUID(0, 1), 1, 1, 1, rules.config(), Game.Phase.TURN, 0, 0, 0, 0, deposits,
             0, 50, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),

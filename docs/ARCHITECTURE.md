@@ -92,6 +92,18 @@ assignment or reopening a reserved table during preparation. Its payload contain
 and identity; the server derives the destination from membership and validates
 the player, distance, stool and mount before moving them.
 
+Physical companion players use an `entityBot` identity in the engine and public
+seat view. Their UUID and display name survive wind assignment and difficulty
+changes, while decisions use the same private-view training AI. The shared table
+adapter authorizes recruitment through the companion's participating owner,
+validates actual stools and mounts, and synchronizes companion presence. Missing
+companions release lobby membership after the presence grace period; during play
+a training bot continues their place. The maid extension in `compat/maid` uses
+the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it via
+the Orihime extension entrypoint; NeoForge uses the maid extension annotation.
+The saved dimension, block position and table UUID restore transient mounts
+without loading chunks. No optional maid code is loaded by the base entrypoints.
+
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's
 `matches` and `assemble` methods. Marking reagents and the table-upgrade pattern

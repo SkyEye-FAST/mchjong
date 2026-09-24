@@ -30,7 +30,7 @@ class TableLayoutTest {
 
     private static TableView replace(TableView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {
         var seats = new ArrayList<>(v.seats());
-        seats.set(0, new TableView.Seat("Test", true, false, false, 25000, hand, Tile.ABSENT,
+        seats.set(0, new TableView.Seat(false, "Test", true, false, false, 25000, hand, Tile.ABSENT,
             melds, river, List.of(), false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
@@ -119,7 +119,7 @@ class TableLayoutTest {
                 for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_KAN,
                     List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
                 var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
-                seats.add(new TableView.Seat("Test", true, false, false, 25000, hand, hand.getLast(),
+                seats.add(new TableView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
                     melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true));
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),

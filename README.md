@@ -51,6 +51,10 @@ seated play. Optional recipe viewers provide component-aware supply recipes. See
 [Compatibility and verification](docs/COMPATIBILITY.md) for dependency profiles
 and validation coverage.
 
+On 1.21.1, Touhou Little Maid on NeoForge and Touhou Little Maid: Orihime on
+Fabric add a Mahjong task for maids. During work hours, a maid can take an empty
+stool at her owner's table and play as a computer opponent.
+
 ## Getting started
 
 Craft a table, prepare a complete tile set in a mahjong box, and equip the table

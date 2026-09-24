@@ -504,6 +504,8 @@
   "storage.mchjong.ready": "Ready: click a stool to sit",
   "storage.mchjong.stored": "Stored",
   "storage.mchjong.title": "Table storage",
+  "task.mchjong.mahjong": "Mahjong",
+  "task.mchjong.mahjong.desc": "Join your owner's mahjong table from a nearby empty stool during work hours.",
   "tile.mchjong.1m": "One of Characters",
   "tile.mchjong.1p": "One of Circles",
   "tile.mchjong.1s": "One of Bamboo",

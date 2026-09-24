@@ -35,6 +35,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies.mchjong]]
+modId="touhou_little_maid"
+type="optional"
+versionRange="[${touhou_little_maid_version},)"
+ordering="AFTER"
+side="BOTH"
+
+[[dependencies.mchjong]]
 modId="jei"
 type="optional"
 versionRange="[${jei_version},)"

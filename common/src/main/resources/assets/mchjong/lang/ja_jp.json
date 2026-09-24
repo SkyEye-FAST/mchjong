@@ -504,6 +504,8 @@
   "storage.mchjong.ready": "準備完了、スツールをクリックして着席",
   "storage.mchjong.stored": "収納済み",
   "storage.mchjong.title": "卓内の収納",
+  "task.mchjong.mahjong": "麻雀",
+  "task.mchjong.mahjong.desc": "勤務時間中、主人の麻雀卓の近くにある空いた椅子に座って対局に参加します。",
   "tile.mchjong.1m": "一萬",
   "tile.mchjong.1p": "一筒",
   "tile.mchjong.1s": "一索",

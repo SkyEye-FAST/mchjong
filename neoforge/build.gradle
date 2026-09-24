@@ -51,6 +51,10 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
+    if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) {
+        runtimeOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
+    }
     compileOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-neoforge-api:${jei_version}"
     compileOnly "dev.emi:emi-neoforge:${emi_version}:api"
@@ -111,7 +115,8 @@ processResources {
         ponder_version: rootProject.ponder_version,
         jei_version: rootProject.jei_version,
         emi_version: rootProject.emi_version,
-        rei_version: rootProject.rei_version
+        rei_version: rootProject.rei_version,
+        touhou_little_maid_version: rootProject.touhou_little_maid_version
     ]
     inputs.properties properties
     filesMatching('META-INF/neoforge.mods.toml') { expand properties }
@@ -128,6 +133,7 @@ sourceSets {
     }
 }
 def ponderSmoke = providers.gradleProperty('withPonder').getOrElse('false').toBoolean()
+def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 def itemsSmoke = providers.gradleProperty('smokeItems').getOrElse('false').toBoolean()
 def paletteSmoke = providers.gradleProperty('smokePalette').getOrElse('false').toBoolean()
 def seatingSmoke = providers.gradleProperty('smokeSeating').getOrElse('false').toBoolean()
@@ -135,7 +141,7 @@ def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
-def smokeProfile = paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -156,6 +162,7 @@ neoForge {
             gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()

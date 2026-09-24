@@ -103,6 +103,7 @@ object ReplayPlayback {
             if (seat.drawn >= 0 && seat.hand.remove(seat.drawn)) seat.hand += seat.drawn
             val player = match.participants[i]
             TableView.Seat(
+                hand.finalSeats[i].entityBot(),
                 player.name,
                 true,
                 player.bot,

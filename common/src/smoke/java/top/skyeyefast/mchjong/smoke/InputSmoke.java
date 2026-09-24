@@ -52,7 +52,7 @@ final class InputSmoke {
     private static void verifyFocused(Minecraft client, MahjongTableBlockEntity table) {
         TableView base = table.clientView();
         var seats = new ArrayList<>(base.seats());
-        seats.set(0, new TableView.Seat("Input test", true, false, false, 25000,
+        seats.set(0, new TableView.Seat(false, "Input test", true, false, false, 25000,
             IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), List.of(), false, false));
         var actions = new ArrayList<Action>();
         for (int tile = 0; tile < 14; tile++) actions.add(new Action(Action.Type.DISCARD, tile));
@@ -187,12 +187,12 @@ final class InputSmoke {
             default -> throw new IllegalArgumentException("Expected an open call");
         };
         var seats = new ArrayList<>(base.seats());
-        seats.set(0, new TableView.Seat("Keyboard focus", true, false, false, 25000,
+        seats.set(0, new TableView.Seat(false, "Keyboard focus", true, false, false, 25000,
             List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 15), Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false));
         int from = base.rules().players() - 1;
         var source = seats.get(from);
-        seats.set(from, new TableView.Seat(source.name(), true, false, false, 25000,
+        seats.set(from, new TableView.Seat(false, source.name(), true, false, false, 25000,
             java.util.Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT,
             List.of(), List.of(new Discard(14, false, false, false)), List.of(), false, false));
         var action = new Action(type, consumed);

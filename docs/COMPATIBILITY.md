@@ -53,6 +53,37 @@ All dependency versions live in `gradle.properties`. Viewer API dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
 
+### Maid players
+
+The 1.21.1 profile integrates Touhou Little Maid 1.5.3-neoforge+mc1.21.1 on
+NeoForge and Touhou Little Maid: Orihime 0.8.2-neo1.5.3+mc1.21.1 on Fabric.
+The Fabric runtime also uses Forge Config API Port 21.1.3. Install the matching
+maid mod on the server and clients, then select **Mahjong** in the maid's task
+selector. Sit at an equipped table with an empty stool and keep the maid nearby
+within her work area. During work hours she approaches the stool and joins the room.
+Choose the player count before recruiting maids; the room host can fill remaining
+places with training bots and adjust each maid's difficulty with the bot controls.
+
+Maids retain their names and move with their assigned seats. Their saved task data
+restores the physical mount after a world reload. Changing tasks, dismissing a maid
+from the room, or removing her stool releases the physical seat. During an active
+match a training bot continues the vacated place. Room dismissal returns the maid
+to Idle; select Mahjong again to recruit her for another room.
+
+Both integrations share `compat/maid` and the existing server-owned training AI.
+The maid APIs are compile-only; `-PwithMaid=true` supplies the matching development
+runtime. Run the focused checks with:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PwithMaid=true --console=plain
+gradlew.bat :neoforge:runSmokeClient -PwithMaid=true --console=plain
+```
+
+Each run writes fresh completion markers and normal/small-window captures to
+the loader's `build/smoke/maid-evidence`. The shared fixture checks task discovery,
+real brain-driven seating, saved entity recovery, assigned mounts, legal computer
+play and cleanup after a task change.
+
 ## Recipe and component coverage
 
 The default catalogue uses `MahjongCatalog` on both loaders. Empty and complete

@@ -16,7 +16,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     // established declaration, or the current declaration's one/two-han value.
     /** Public physical positions only: slot indices never reveal a concealed tile identity. */
     public record Handling(int builtWalls, int sourceSlot, int packetSize, int diceOne, int diceTwo, boolean diceHeld) {}
-    public record Seat(String name, boolean occupied, boolean bot, boolean ready, int points,
+    public record Seat(boolean entityBot, String name, boolean occupied, boolean bot, boolean ready, int points,
                        List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
                        List<Integer> norths, boolean riichi, boolean exposed) {
         public Seat {

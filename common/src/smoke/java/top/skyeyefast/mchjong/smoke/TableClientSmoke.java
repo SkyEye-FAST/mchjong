@@ -41,7 +41,9 @@ public final class TableClientSmoke {
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly;
+    private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
+    private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || maidOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -184,7 +186,7 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                if (seatingOnly || visibilityOnly || roomOnly) {
+                if (seatingOnly || visibilityOnly || roomOnly || maidOnly) {
                     step = 24; entered = ticks;
                     return;
                 }
@@ -264,6 +266,7 @@ public final class TableClientSmoke {
                 step = 3; entered = ticks;
             } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
+                if (maidOnly) { step = 36; entered = ticks; return; }
                 if (visibilityOnly) { step = 33; entered = ticks; return; }
                 if (roomOnly) { step = 34; entered = ticks; return; }
                 if (seatingOnly) {
@@ -411,6 +414,10 @@ public final class TableClientSmoke {
             } else if (step == 34 && roomSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Four-language lobby controls at normal and small sizes; direct room navigation and proposals; server settlement countdown, automatic final standings and retained lobby; leave and dissolve packets passed.\n");
                 LOG.info("MCHJONG_ROOM_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 36 && maidSmoke.tick(client, CENTER, output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Maid task discovery, physical seating, saved binding recovery, seat assignment, legal bot play and task-change cleanup passed.\n");
+                LOG.info("MCHJONG_MAID_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();
