@@ -105,6 +105,98 @@ public final class MahjongSupplies {
         return items.stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM)).mapToInt(ItemStack::getCount).sum();
     }
 
+    public static java.util.Map<net.minecraft.world.item.Item, Integer> markings() {
+        return java.util.Map.of(net.minecraft.world.item.Items.WHITE_DYE, 100, net.minecraft.world.item.Items.BLUE_DYE, 1000,
+            net.minecraft.world.item.Items.YELLOW_DYE, 5000, net.minecraft.world.item.Items.RED_DYE, 10000,
+            net.minecraft.world.item.Items.BLACK_DYE, -10000);
+    }
+
+    /** One physical five per application, even when the source is a larger stack. */
+    public static ItemStack redFive(ItemStack target, ItemStack reagent) {
+        boolean red = reagent.is(MahjongContent.RED_DORA_DYE);
+        if (!red && !reagent.is(MahjongContent.UNDO_DYE)) return ItemStack.EMPTY;
+        var data = tile(target);
+        if (!target.is(MahjongContent.TILE_ITEM) || !storable(target) || data.red() == red
+            || (data.face() != 4 && data.face() != 13 && data.face() != 22)) return ItemStack.EMPTY;
+        var result = target.copyWithCount(1);
+        MahjongComponents.tile(result, data.engraved(data.face(), red));
+        return result;
+    }
+
+    /** Mark a homogeneous group without discarding its name or other stack data. */
+    public static ItemStack markSticks(List<ItemStack> blanks, ItemStack reagent, int count) {
+        int points = markings().getOrDefault(reagent.getItem(), 0);
+        if (blanks.isEmpty() || points == 0 || count <= 0) return ItemStack.EMPTY;
+        var template = blanks.get(0);
+        if (!template.is(MahjongContent.POINT_STICK) || !storable(template)
+            || MahjongComponents.points(template) != 0 || count > template.getMaxStackSize()) return ItemStack.EMPTY;
+        int total = 0;
+        for (var stack : blanks) {
+            if (!ItemStack.isSameItemSameTags(template, stack) || stack.getCount() > stack.getMaxStackSize()) return ItemStack.EMPTY;
+            total += stack.getCount();
+        }
+        if (total != count) return ItemStack.EMPTY;
+        var result = template.copyWithCount(count);
+        MahjongComponents.points(result, points);
+        return result;
+    }
+
+    /** All-or-nothing insertion, using the same slot and data contract as the box menu. */
+    public static ItemStack pack(ItemStack box, List<ItemStack> incoming) {
+        if (!validBox(box) || incoming.isEmpty()) return ItemStack.EMPTY;
+        var stored = contents(box);
+        boolean changed = false;
+        for (var source : incoming) {
+            if (source.isEmpty()) continue;
+            if (!storable(source) || source.getCount() > source.getMaxStackSize()) return ItemStack.EMPTY;
+            var remainder = source.copy();
+            for (int pass = 0; pass < 2; pass++) for (int slot = 0; slot < BOX_SLOTS && !remainder.isEmpty(); slot++) {
+                if (!boxAccepts(slot, remainder)) continue;
+                var current = stored.get(slot);
+                if (pass == 0 ? current.isEmpty() || !ItemStack.isSameItemSameTags(current, remainder) : !current.isEmpty()) continue;
+                int moved = Math.min(remainder.getCount(), remainder.getMaxStackSize() - current.getCount());
+                if (moved <= 0) continue;
+                if (current.isEmpty()) stored.set(slot, remainder.copyWithCount(moved));
+                else current.grow(moved);
+                remainder.shrink(moved);
+                changed = true;
+            }
+            if (!remainder.isEmpty()) return ItemStack.EMPTY;
+        }
+        if (!changed) return ItemStack.EMPTY;
+        var result = box.copyWithCount(1);
+        setContents(result, stored);
+        return result;
+    }
+
+    /** The industrial full-deck transaction uses the ordinary engraving implementation. */
+    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks, TileFacePreset preset) {
+        if (!validBox(box)
+            || tileCount(contents(box)) + tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
+            || blanks.stream().anyMatch(stack -> !stack.is(MahjongContent.TILE_ITEM) || !tile(stack).blank())) return ItemStack.EMPTY;
+        if (contents(box).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && !tile(stack).blank())) return ItemStack.EMPTY;
+        var packed = blanks.isEmpty() ? box.copy() : pack(box, blanks);
+        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, preset);
+    }
+
+    /** A target is a whole tile stack or one box. Every target must actually change. */
+    public static List<ItemStack> dyeBatch(List<ItemStack> targets, DyeColor color) {
+        if (targets.size() != 2) return List.of();
+        var output = new ArrayList<ItemStack>();
+        for (var target : targets) {
+            if (!(target.is(MahjongContent.BOX_ITEM) && validBox(target))
+                && !(target.is(MahjongContent.TILE_ITEM) && storable(target) && target.getCount() <= target.getMaxStackSize())) return List.of();
+            boolean changesBack = target.is(MahjongContent.BOX_ITEM)
+                ? contents(target).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && back(stack) != color)
+                : back(target) != color;
+            if (!changesBack) return List.of();
+            var result = dye(target, color);
+            if (result.isEmpty() || ItemStack.isSameItemSameTags(target, result)) return List.of();
+            output.add(result.copyWithCount(target.getCount()));
+        }
+        return List.copyOf(output);
+    }
+
     public static ItemStack engrave(ItemStack box, TileFacePreset preset) {
         if (!validBox(box)) return ItemStack.EMPTY;
         var output = engravedContents(contents(box), preset);

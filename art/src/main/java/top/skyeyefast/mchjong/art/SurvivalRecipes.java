@@ -11,8 +11,8 @@ final class SurvivalRecipes {
         "mangrove", "cherry", "bamboo", "crimson", "warped");
     static final List<String> COLORS = List.of("white", "orange", "magenta", "light_blue", "yellow", "lime",
         "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
-    private record Material(String name, String source) {}
-    private static final List<Material> MATERIALS = List.of(new Material("bone", "bone_block"),
+    record Material(String name, String source) {}
+    static final List<Material> MATERIALS = List.of(new Material("bone", "bone_block"),
         new Material("quartz", "quartz_block"), new Material("calcite", "calcite"),
         new Material("glass", "glass"), new Material("amethyst", "amethyst_block"));
     private SurvivalRecipes() {}
@@ -33,8 +33,9 @@ final class SurvivalRecipes {
         for (String color : COLORS)
             shaped(output, "table_cloth_" + color, List.of("CCC"), Map.of("C", item(color + "_carpet")),
                 stack("table_cloth", 1, Map.of("color", COLORS.indexOf(color))));
-        output.write("data/mchjong/recipes/mahjong_box.json", Map.of("type", "minecraft:crafting_shapeless",
-            "category", "misc", "ingredients", List.of(item("chest"), item("string")), "result", stack("mahjong_box", 1, Map.of())));
+        shaped(output, "mahjong_box", List.of("LSL", "SCS", " I "),
+            Map.of("S", Map.of("tag", "minecraft:wooden_slabs"), "L", item("leather"),
+                "C", item("chest"), "I", item("iron_nugget")), stack("mahjong_box", 1, Map.of()));
         for (String wood : WOODS)
             stonecutting(output, "blanks_" + wood, item(wood + "_planks"), tile(-1, wood, false, 16));
         for (Material material : MATERIALS) {
@@ -42,7 +43,7 @@ final class SurvivalRecipes {
         }
         stonecutting(output, "blank_point_sticks", item("bone_block"), stack("point_stick", 24, Map.of()));
         output.write("data/mchjong/recipes/mahjong_dye.json", Map.of("type", "minecraft:crafting_shapeless",
-            "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye")),
+            "category", "misc", "ingredients", List.of(item("black_dye"), item("red_dye"), item("green_dye"), item("blue_dye"), item("white_dye")),
             "result", stack("mahjong_dye", 1, Map.of())));
         output.write("data/mchjong/recipes/red_dora_dye.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("red_dye")), "result", stack("red_dora_dye", 4, Map.of())));
@@ -72,7 +73,7 @@ final class SurvivalRecipes {
     private static Map<String, Object> tile(int face, String material, boolean red, int count) {
         return stack("mahjong_tile", count, Map.of("tile", new java.util.TreeMap<>(Map.of("face", face, "material", material, "red", red))));
     }
-    private static Map<String, Object> stack(String id, int count, Map<String, ?> components) {
+    static Map<String, Object> stack(String id, int count, Map<String, ?> components) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("item", "mchjong:" + id);
         result.put("count", count);

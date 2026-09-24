@@ -24,8 +24,7 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
     public Operation operation() { return operation; }
 
     public static java.util.Map<net.minecraft.world.item.Item, Integer> markings() {
-        return java.util.Map.of(Items.WHITE_DYE, 100, Items.BLUE_DYE, 1000,
-            Items.YELLOW_DYE, 5000, Items.RED_DYE, 10000, Items.BLACK_DYE, -10000);
+        return MahjongSupplies.markings();
     }
 
     public static List<net.minecraft.world.item.Item> upgradePattern() {
@@ -58,15 +57,9 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
             ItemStack reagent = order == 0 ? second : first;
             switch (operation) {
                 case RED_FIVE, UNDO_RED_FIVE -> {
-                    var data = MahjongSupplies.tile(target);
                     boolean red = operation == Operation.RED_FIVE;
-                    if (target.is(MahjongContent.TILE_ITEM) && MahjongSupplies.storable(target)
-                        && data.valid() && data.red() != red && (data.face() == 4 || data.face() == 13 || data.face() == 22)
-                        && reagent.is(red ? MahjongContent.RED_DORA_DYE : MahjongContent.UNDO_DYE)) {
-                        var result = target.copyWithCount(1);
-                        MahjongComponents.tile(result, data.engraved(data.face(), red));
-                        return result;
-                    }
+                    if (reagent.is(red ? MahjongContent.RED_DORA_DYE : MahjongContent.UNDO_DYE))
+                        return MahjongSupplies.redFive(target, reagent);
                 }
                 case DYE -> {
                     if ((target.is(MahjongContent.TILE_ITEM) || target.is(MahjongContent.CLOTH_ITEM)
@@ -81,21 +74,17 @@ public final class SupplyCraftingRecipe extends CustomRecipe {
     }
 
     private static ItemStack markSticks(List<ItemStack> items) {
-        int blanks = 0, points = 0;
+        var blanks = new ArrayList<ItemStack>();
+        ItemStack reagent = ItemStack.EMPTY;
         for (ItemStack stack : items) {
             if (stack.is(MahjongContent.POINT_STICK)) {
-                if (MahjongComponents.points(stack) != 0 || !MahjongSupplies.storable(stack)) return ItemStack.EMPTY;
-                blanks++;
+                blanks.add(stack.copyWithCount(1));
             } else {
-                if (points != 0) return ItemStack.EMPTY;
-                points = markings().getOrDefault(stack.getItem(), 0);
-                if (points == 0) return ItemStack.EMPTY;
+                if (!reagent.isEmpty()) return ItemStack.EMPTY;
+                reagent = stack;
             }
         }
-        if (blanks != 8 || points == 0) return ItemStack.EMPTY;
-        ItemStack result = new ItemStack(MahjongContent.POINT_STICK, 8);
-        MahjongComponents.points(result, points);
-        return result;
+        return MahjongSupplies.markSticks(blanks, reagent, 8);
     }
 
     private ItemStack upgrade(CraftingContainer input) {
