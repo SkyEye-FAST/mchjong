@@ -23,7 +23,11 @@ public final class MahjongCatalog {
             MahjongComponents.wood(autoTable, wood);
             entries.add(autoTable);
         }
-        entries.add(new ItemStack(MahjongContent.STOOL_ITEM));
+        for (var color : DyeColor.values()) {
+            var stool = new ItemStack(MahjongContent.STOOL_ITEM);
+            MahjongComponents.color(stool, color);
+            entries.add(stool);
+        }
         for (var color : DyeColor.values()) {
             var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
             MahjongComponents.color(cloth, color);
