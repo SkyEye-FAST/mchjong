@@ -614,11 +614,15 @@ public final class Game {
 
     private void advanceSettlement() {
         if (phase == Phase.MATCH_END && age < SETTLEMENT_TICKS) {
-            age = SETTLEMENT_TICKS;
-            for (PlayerState player : players) player.ready = false;
-            decision++;
-            revision++;
+            beginFinalStandings();
         } else finishSettlement();
+    }
+
+    private void beginFinalStandings() {
+        age = SETTLEMENT_TICKS;
+        for (PlayerState player : players) player.ready = false;
+        decision++;
+        revision++;
     }
 
     private boolean allReady() {
@@ -932,7 +936,8 @@ public final class Game {
         age++;
         if (age <= 0) return;
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            if ((phase == Phase.MATCH_END && age == SETTLEMENT_TICKS) || settlementTicks() == 0) advanceSettlement();
+            if (phase == Phase.MATCH_END && age == SETTLEMENT_TICKS) beginFinalStandings();
+            else if (settlementTicks() == 0) advanceSettlement();
             else if (age % 20 == 0) revision++;
             return;
         }
