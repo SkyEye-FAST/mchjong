@@ -74,7 +74,9 @@ Forge and NeoForge snapshot artifacts.
 [Release](https://github.com/SkyEye-FAST/mchjong/actions/workflows/release.yml)
 validates the tag against the development version, extracts notes from
 [the changelog](../CHANGELOG.md), builds and publishes release artifacts to
-GitHub Releases, Modrinth and CurseForge. Before the first release, add the
+GitHub Releases, Modrinth and CurseForge. GitHub Releases keeps the extracted
+notes; Modrinth and CurseForge receive a copy with relative and reference links
+expanded to absolute URLs. Before the first release, add the
 `MODRINTH_TOKEN` and `CURSEFORGE_TOKEN` repository secrets in GitHub Actions.
 Follow the versioning and signed-commit requirements in the contributor instructions.
 

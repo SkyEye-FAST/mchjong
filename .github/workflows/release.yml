@@ -71,6 +71,8 @@ jobs:
             exit 1
           fi
 
+          python3 .github/scripts/prepare_platform_release_notes.py "${version}"
+
       - name: Setup Java
         uses: actions/setup-java@v6
         with:
@@ -162,7 +164,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: |
             fabric
@@ -186,7 +188,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 NeoForge
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: neoforge
           curseforge-loaders: neoforge
@@ -204,7 +206,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.21.1 Forge
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: forge
           curseforge-loaders: forge
@@ -222,7 +224,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: |
             fabric
@@ -246,7 +248,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 1.20.1 Forge
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: forge
           curseforge-loaders: forge
@@ -264,7 +266,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 Fabric / Quilt
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: |
             fabric
@@ -288,7 +290,7 @@ jobs:
           name: MChjong ${{ steps.version.outputs.version }} for Minecraft 26.1.2 NeoForge
           version: ${{ steps.version.outputs.version }}
           version-type: release
-          changelog-file: release-notes.md
+          changelog-file: platform-release-notes.md
           environment: client | server
           modrinth-loaders: neoforge
           curseforge-loaders: neoforge
