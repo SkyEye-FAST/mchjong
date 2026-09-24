@@ -39,6 +39,8 @@ public final class TableScreen extends Screen {
     private final TableTurnClock turnClock = new TableTurnClock();
     private List<TableScene.Piece> scene = List.of();
     private List<TableAnimation.Frame> frames = List.of();
+    private List<TableScene.Piece> settledScene = List.of();
+    private List<TableAnimation.Frame> settledFrames = List.of();
     private final TableDecision decision = new TableDecision();
     private boolean choosingRiichi;
     private Button confirmButton;
@@ -205,7 +207,9 @@ public final class TableScreen extends Screen {
 
     private void updateScene() {
         TableAnimation animation = animation();
-        frames = animation == null ? List.of() : TableSettings.get().animations ? animation.sample(Util.getMillis()) : animation.settled();
+        settledFrames = animation == null ? List.of() : animation.settled();
+        settledScene = settledFrames.stream().map(TableAnimation.Frame::piece).toList();
+        frames = animation == null ? List.of() : TableSettings.get().animations ? animation.sample(Util.getMillis()) : settledFrames;
         scene = frames.stream().map(TableAnimation.Frame::piece).toList();
     }
 
@@ -351,6 +355,7 @@ public final class TableScreen extends Screen {
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
             if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI || action.type() == Action.Type.NEXT
+                || action.type() == Action.Type.SKIP_SETTLEMENT
                 || !immersive && TableHandling.physical(view, action)) continue;
             choices.add(i);
         }
@@ -542,16 +547,26 @@ public final class TableScreen extends Screen {
             return;
         }
         if (TableResults.available(view)) {
+            int skip = TableSeatsScreen.find(view, Action.Type.SKIP_SETTLEMENT, List.of());
             int ticks = room() == null ? 0 : room().settlementTicks();
             boolean standings = view.phase() == Game.Phase.MATCH_END && ticks > Game.SETTLEMENT_TICKS;
             int seconds = (Math.max(0, ticks - (standings ? Game.SETTLEMENT_TICKS : 0)) + 19) / 20;
             String key = view.phase() == Game.Phase.HAND_END ? "ui.mchjong.next_hand_in"
                 : standings ? "ui.mchjong.final_scores_in" : "ui.mchjong.lobby_in";
             int scale = immersive ? 2 : 1;
+            int gap = 4 * scale;
+            int skipWidth = skip >= 0 ? 104 * scale : 0;
+            int countdownWidth = uiWidth() - 20 * scale - skipWidth - (skip >= 0 ? gap : 0);
             var countdown = MahjongButton.create(Component.translatable(key, seconds), ignored -> {})
-                .bounds(10 * scale, 8 * scale, uiWidth() - 20 * scale, 20 * scale).build().textScale(scale).selected(true);
+                .bounds(10 * scale, 8 * scale, countdownWidth, 20 * scale).build().textScale(scale).selected(true);
             countdown.active = false;
             addRenderableWidget(countdown);
+            if (skip >= 0) {
+                Component label = Component.translatable("action.mchjong.skip_settlement");
+                addRenderableWidget(MahjongButton.create(label, ignored -> send(view, skip))
+                    .bounds(10 * scale + countdownWidth + gap, 8 * scale, skipWidth, 20 * scale)
+                    .tooltip(Tooltip.create(label)).build().textScale(scale));
+            }
             return;
         }
         int layoutWidth = uiWidth();
@@ -740,11 +755,11 @@ public final class TableScreen extends Screen {
     private Vec3 anchor(TableView view, Action action) {
         if (view.focus() != null) {
             TableScene.Area area = view.focus().declaration() ? TableScene.Area.HAND : TableScene.Area.RIVER;
-            for (TableScene.Piece piece : scene)
+            for (TableScene.Piece piece : area == TableScene.Area.HAND ? settledScene : scene)
                 if (piece.area() == area && piece.seat() == view.focus().seat() && piece.index() == view.focus().index()) return piece.position();
         }
         if (tileChoice(action) || action.type() == Action.Type.TSUMO) {
-            for (TableScene.Piece piece : scene)
+            for (TableScene.Piece piece : settledScene)
                 if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat()
                     && (action.tiles().contains(piece.tile()) || action.type() == Action.Type.TSUMO
                         && piece.tile() == view.seats().get(view.viewerSeat()).drawn())) return piece.position();
@@ -941,7 +956,7 @@ public final class TableScreen extends Screen {
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), layoutWidth - 24);
-            int y = actionTop + 27;
+            int y = actionTop + 33;
             for (var line : lines) {
                 graphics.drawCenteredString(font, line, layoutWidth / 2, y, MahjongUi.NEGATIVE);
                 y += font.lineHeight;
@@ -1055,11 +1070,13 @@ public final class TableScreen extends Screen {
         if (hand != null) return new ScreenRectangle(0, hand.top(), uiWidth(), uiHeight() - hand.top());
         double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
         double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
-        for (var frame : frames) {
+        boolean standing = settledFrames.stream().anyMatch(frame -> frame.piece().seat() == view.viewerSeat()
+            && frame.piece().area() == TableScene.Area.HAND && !frame.piece().flat());
+        for (var frame : settledFrames) {
             var piece = frame.piece();
-            if (piece.seat() != view.viewerSeat() || (piece.area() != TableScene.Area.HAND
-                && piece.area() != TableScene.Area.MELD && piece.area() != TableScene.Area.NORTH)) continue;
-            // Project the actual animated box, reserving the maximum selection lift for every hand tile.
+            if (piece.seat() != view.viewerSeat() || piece.area() != TableScene.Area.HAND
+                || standing && piece.flat()) continue;
+            // Project the hand at its table position, reserving the maximum selection lift.
             var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
                 (float) piece.position().y, (float) piece.position().z)
                 .rotateY((float) Math.toRadians(piece.yaw())).rotateX((float) Math.toRadians(frame.pitch()))
@@ -1115,8 +1132,11 @@ public final class TableScreen extends Screen {
         int hintBottom = privateHandBounds == null ? layoutHeight - 52 : privateHandBounds.top();
         int hintCenter = hand == null ? layoutWidth / 2 : hand.centerX();
         double handLeft = Double.POSITIVE_INFINITY, handRight = Double.NEGATIVE_INFINITY;
-        if (hand == null) for (var piece : scene) {
-            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()) continue;
+        boolean standing = settledScene.stream().anyMatch(piece -> piece.area() == TableScene.Area.HAND
+            && piece.seat() == view.viewerSeat() && !piece.flat());
+        if (hand == null) for (var piece : settledScene) {
+            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat()
+                || standing && piece.flat()) continue;
             var point = project(piece.position().add(0,
                 (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2.0, 0));
             if (point != null) {

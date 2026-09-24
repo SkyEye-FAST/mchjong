@@ -131,7 +131,8 @@ Each hand's settlement displays a server-controlled 10-second countdown before
 the next hand begins. At the end of a match, the hand settlement advances to final
 standings after 10 seconds; those standings remain for another 10 seconds before
 everyone returns to the lobby. Reopening the interface or reconnecting shows the
-remaining server time. Saved tables preserve that time.
+remaining server time. A seated player can skip either countdown from the settlement
+header. Saved tables preserve the remaining time.
 
 The lobby retains its members, host, bots and room settings. Players can leave
 individually, the host can dissolve the room, or the group can prepare fresh seats

@@ -6,6 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
+import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.Game;
@@ -89,7 +90,7 @@ final class SettlementSmoke {
             fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
                 fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(),
+                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
                 fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, fixture.autoPlay(), false, 1);
             acceptFixture(table, fixture);
@@ -154,7 +155,8 @@ final class SettlementSmoke {
                 : java.util.Collections.nCopies(13, Tile.HIDDEN);
             List<Meld> melds = switch (seat) {
                 case 0 -> List.of(new Meld(Meld.Type.PON, List.of(16, 17, 18), 1, 16));
-                case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52));
+                case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52),
+                    new Meld(Meld.Type.CLOSED_KAN, List.of(56, 57, 58, 59), 1, 56));
                 case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
@@ -166,7 +168,7 @@ final class SettlementSmoke {
             new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Richi", "Chanta", "Haku"), 1)));
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
-            List.of(), wins, "ron",
+            List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
             List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
     }
 }
