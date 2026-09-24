@@ -7,6 +7,19 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.7.1] - 2026-09-24
+
+### Added
+
+- REI displays MChjong supply recipes with ingredient choices and shaped or shapeless layouts.
+- Modrinth and CurseForge publication for all seven supported loader artifacts.
+
+### Compatibility
+
+- REI supply recipes are available on Minecraft 1.21.1 Fabric and NeoForge, 1.20.1 Fabric and Forge, and 26.1.2 Fabric and NeoForge.
+- Fabric and Quilt releases require Fabric API.
+- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+
 ## [0.7.0] - 2026-09-24
 
 ### Added
@@ -283,7 +296,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.1...HEAD
+[0.7.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.1
 [0.7.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.0
 [0.6.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.6.0
 [0.5.3]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.3
