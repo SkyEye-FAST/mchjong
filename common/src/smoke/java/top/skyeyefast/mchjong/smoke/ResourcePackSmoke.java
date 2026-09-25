@@ -97,6 +97,14 @@ final class ResourcePackSmoke {
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
             require(TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Local back was not discovered");
             require(RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:custom_stick")), "Local stick was not discovered");
+            for (var id : top.skyeyefast.mchjong.config.BuiltinPresets.BACKS) {
+                require(TileBackPresets.choices().contains(id), "Built-in back was not listed: " + id);
+                require(client.getResourceManager().getResource(TileBackPresets.texture(id)).isPresent(),
+                    "Built-in back artwork was missing: " + id);
+            }
+            for (var id : top.skyeyefast.mchjong.config.BuiltinPresets.STICKS) {
+                require(RiichiStickPresets.choices().contains(id), "Built-in stick was not listed: " + id);
+            }
             require(VoicePresets.choices().contains(ResourceLocation.parse("smoke:custom_voice")), "Local voice was not discovered");
             require(RiichiStickPresets.definition(ResourceLocation.parse("smoke:server_stick")).length() == 12,
                 "Server stick model was not delivered");
@@ -192,12 +200,22 @@ final class ResourcePackSmoke {
             client.resizeDisplay();
             stage = 83; ticks = 0;
         } else if (stage == 83 && ticks > 8) {
-            Screenshot.grab(output.toFile(), "61-resource-stick-choices-small.png", client.getMainRenderTarget(), ignored -> {});
+            if (ticks == 9) Screenshot.grab(output.toFile(), "61-resource-stick-choices-small.png",
+                client.getMainRenderTarget(), ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
-                .filter(button -> button.getMessage().getString().equals("Local Stick")).findFirst().orElseThrow();
-            choice.onPress();
+                .filter(button -> button.getMessage().getString().equals("Local Stick")).findFirst();
+            if (choice.isEmpty()) {
+                var next = client.screen.children().stream()
+                    .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
+                    .map(child -> (net.minecraft.client.gui.components.Button) child)
+                    .filter(button -> button.getMessage().getString().equals(">") && button.active)
+                    .findFirst().orElseThrow();
+                next.onPress();
+                return false;
+            }
+            choice.orElseThrow().onPress();
             require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(ResourceLocation.parse("smoke:custom_stick")),
                 "Personal stick selection was not saved");
             button(client, "settings.mchjong.voice_preset").onPress();

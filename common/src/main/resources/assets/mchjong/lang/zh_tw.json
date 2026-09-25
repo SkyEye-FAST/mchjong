@@ -235,6 +235,7 @@
   "message.mchjong.stale": "牌桌狀態已改變，請重新選擇操作。",
   "message.mchjong.world_settings": "世界設定：invitationTeleport=%s",
   "message.mchjong.world_settings_failed": "無法讀取或儲存世界設定，請檢查設定檔和伺服器日誌。",
+  "preset.mchjong.back.mojang": "Mojang 標誌",
   "preset.mchjong.default_back": "預設",
   "preset.mchjong.default_stick": "預設立直棒",
   "preset.mchjong.default_voice": "資源包語音",

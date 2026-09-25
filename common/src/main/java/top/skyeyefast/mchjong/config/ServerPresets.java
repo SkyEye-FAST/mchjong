@@ -56,7 +56,8 @@ public final class ServerPresets {
     }
 
     public static void chooseStick(ServerPlayer player, ResourceLocation requested) {
-        ResourceLocation publicId = sharedSticks.containsKey(requested) ? requested : DEFAULT_STICK;
+        ResourceLocation publicId = sharedSticks.containsKey(requested) || BuiltinPresets.STICKS.contains(requested)
+            ? requested : DEFAULT_STICK;
         String name = player.getGameProfile().getName();
         appearances.put(name, publicId);
         var payload = new top.skyeyefast.mchjong.network.StickAppearancePayload(name, publicId);

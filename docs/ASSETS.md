@@ -149,6 +149,8 @@ Several back presets can share one ZIP, which contains only back presets.
 The mahjong box's back selector applies
 the chosen preset to its stored tiles independently of dye. Server presets are
 sent to joining players; an unavailable ID uses the transparent default pattern.
+The built-in back choices are Creeper and Mojang emblem. Their artwork is generated
+with the mod and is available to every player without a preset ZIP.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
@@ -174,6 +176,9 @@ in Settings > Personal > Personal presets. The choice is stored in the client's
 TOML settings. Server presets chosen by a player are shown to everyone; a
 client-only choice appears as the default stick to other players. Unavailable
 artwork also uses the default stick.
+The built-in Bamboo, Lightning Rod and End Rod choices use Minecraft's block
+models and textures, laid horizontally and scaled to the deposit lanes. They are
+shown to every player when selected.
 
 Concealed tiles and physical rear faces combine the material or dyed shell with
 the independent back pattern. Glass keeps its translucent material below that pattern.

@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.client.TableDeposits;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
@@ -22,13 +25,16 @@ final class DepositVisualSmoke {
     private final boolean showWall;
     private int sample, ticks;
     private TableView fixture;
+    private ResourceLocation originalStick;
 
     DepositVisualSmoke() { this(false); }
     DepositVisualSmoke(boolean showWall) { this.showWall = showWall; }
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
-        if (sample == 1) return true;
+        if (sample == BuiltinPresets.STICKS.size() + 1) return true;
         if (ticks == 0) {
+            if (sample == 0) originalStick = TableSettings.get().riichiStickPreset;
+            TableSettings.get().riichiStickPreset = sample == 0 ? originalStick : BuiltinPresets.STICKS.get(sample - 1);
             var base = table.clientView();
             var rules = RuleSet.MAHJONG_SOUL_4.config();
             int count = 8;
@@ -55,10 +61,11 @@ final class DepositVisualSmoke {
         if (ticks == 20) {
             if (TableDeposits.sticks(fixture).size() != fixture.riichiSticks())
                 throw new IllegalStateException("Rendered deposit count differs from the public pot");
-            capture(client, table, output, "carried");
+            capture(client, table, output, sample == 0 ? "carried" : BuiltinPresets.STICKS.get(sample - 1).getPath());
             sample++;
             ticks = 0;
-            if (sample == 1) {
+            if (sample == BuiltinPresets.STICKS.size() + 1) {
+                TableSettings.get().riichiStickPreset = originalStick;
                 client.setScreen(null);
                 return true;
             }

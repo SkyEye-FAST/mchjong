@@ -28,6 +28,11 @@ public final class GenerateAssets {
         for (String preset : TileArtwork.PRESETS) tiles(artwork, preset);
         text("META-INF/licenses/tile-face-presets-NOTICE.md", Files.readString(artwork.resolve("NOTICE.md")));
         png("tile/back", TileArtwork.back());
+        for (String name : List.of("creeper", "mojang")) {
+            png("preset/back/" + name, BuiltinPresetArtwork.back(name));
+            text("assets/mchjong/textures/preset/back/" + name + ".png.mcmeta",
+                "{\"texture\":{\"blur\":true,\"clamp\":true}}");
+        }
         png("furniture/cloth_pattern", new BufferedImage(256, 256, BufferedImage.TYPE_INT_ARGB));
         var plain = new BufferedImage(16, 16, BufferedImage.TYPE_INT_ARGB);
         for (int x = 0; x < 16; x++) for (int y = 0; y < 16; y++) plain.setRGB(x, y, 0xffffffff);

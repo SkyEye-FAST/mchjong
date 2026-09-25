@@ -235,6 +235,7 @@
   "message.mchjong.stale": "The table has changed. Choose an action again.",
   "message.mchjong.world_settings": "World settings: invitationTeleport=%s",
   "message.mchjong.world_settings_failed": "Could not read or save the world settings. Check the configuration file and server log.",
+  "preset.mchjong.back.mojang": "Mojang Logo",
   "preset.mchjong.default_back": "Default",
   "preset.mchjong.default_stick": "Default riichi stick",
   "preset.mchjong.default_voice": "Resource-pack voices",

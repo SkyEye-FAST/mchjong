@@ -235,6 +235,7 @@
   "message.mchjong.stale": "卓の状態が変わりました。もう一度操作を選んでください。",
   "message.mchjong.world_settings": "ワールド設定：invitationTeleport=%s",
   "message.mchjong.world_settings_failed": "ワールド設定の読み込み・保存に失敗しました。設定ファイルとサーバーログを確認してください。",
+  "preset.mchjong.back.mojang": "Mojangのロゴ",
   "preset.mchjong.default_back": "標準",
   "preset.mchjong.default_stick": "標準の立直棒",
   "preset.mchjong.default_voice": "リソースパックの音声",

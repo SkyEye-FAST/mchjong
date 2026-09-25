@@ -5,6 +5,9 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.Items;
+import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** A player's local cosmetic choices, opened from the room settings' Personal scope. */
 public final class PersonalPresetsScreen extends Screen {
@@ -73,9 +76,19 @@ public final class PersonalPresetsScreen extends Screen {
         MahjongUi.text(graphics, font, title, left + 10, 16, span - 20, MahjongUi.TEXT, false);
         var choices = choices();
         int rows = Math.max(1, (height - 132) / 25);
-        if (tab == 0) for (int i = 0; i < rows && page * rows + i < choices.size(); i++)
-                graphics.blit(RiichiStickPresets.texture(choices.get(page * rows + i)),
-                    left + 10, 85 + i * 25, 80, 7, 0, 0, 384, 32, 384, 32);
+        if (tab == 0) for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
+            var id = choices.get(page * rows + i);
+            if (BuiltinPresets.STICKS.contains(id)) {
+                var item = switch (id.getPath()) {
+                    case "bamboo" -> Items.BAMBOO;
+                    case "lightning_rod" -> Items.LIGHTNING_ROD;
+                    case "end_rod" -> Items.END_ROD;
+                    default -> throw new IllegalStateException(id.toString());
+                };
+                graphics.renderItem(new ItemStack(item), left + 42, 80 + i * 25);
+            } else graphics.blit(RiichiStickPresets.texture(id),
+                left + 10, 85 + i * 25, 80, 7, 0, 0, 384, 32, 384, 32);
+        }
         if (choices.size() > rows) graphics.drawCenteredString(font,
             (page + 1) + " / " + ((choices.size() - 1) / rows + 1), width / 2, height - 51, MahjongUi.MUTED);
         if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"),

@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.config.PresetArchives;
+import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** Local rendering choices for a player's riichi deposit; selections remain personal. */
 public final class RiichiStickPresets {
@@ -21,7 +22,8 @@ public final class RiichiStickPresets {
     private static Map<ResourceLocation, Definition> local = Map.of(), server = Map.of();
     private static final Map<String, ResourceLocation> appearances = new HashMap<>();
     private static Set<ResourceLocation> localTextures = Set.of(), serverTextures = Set.of();
-    private static List<ResourceLocation> choices = List.of(DEFAULT);
+    private static List<ResourceLocation> choices = java.util.stream.Stream.concat(
+        java.util.stream.Stream.of(DEFAULT), BuiltinPresets.STICKS.stream()).toList();
     private RiichiStickPresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
@@ -30,6 +32,7 @@ public final class RiichiStickPresets {
     }
     public static Component label(ResourceLocation id) {
         if (DEFAULT.equals(id)) return Component.translatable("preset.mchjong.default_stick");
+        if (BuiltinPresets.STICKS.contains(id)) return Component.translatable("block.minecraft." + id.getPath());
         var definition = definition(id);
         return definition == null ? Component.literal(id.toString()) : Component.literal(definition.name());
     }
@@ -70,7 +73,8 @@ public final class RiichiStickPresets {
         var result = new HashMap<ResourceLocation, Definition>();
         try {
             for (var entry : presets.entrySet()) {
-                if (DEFAULT.equals(entry.getKey())) throw new IOException("Reserved riichi stick preset ID");
+                if (DEFAULT.equals(entry.getKey()) || BuiltinPresets.STICKS.contains(entry.getKey()))
+                    throw new IOException("Reserved riichi stick preset ID");
                 var image = NativeImage.read(new ByteArrayInputStream(entry.getValue().image()));
                 if (image.getWidth() != 384 || image.getHeight() != 32) {
                     image.close();
@@ -103,6 +107,7 @@ public final class RiichiStickPresets {
     private static void update() {
         var ids = new HashSet<>(local.keySet()); ids.addAll(server.keySet());
         choices = java.util.stream.Stream.concat(java.util.stream.Stream.of(DEFAULT),
-            ids.stream().sorted(java.util.Comparator.comparing(ResourceLocation::toString))).toList();
+            java.util.stream.Stream.concat(BuiltinPresets.STICKS.stream(),
+                ids.stream().sorted(java.util.Comparator.comparing(ResourceLocation::toString)))).toList();
     }
 }

@@ -13,6 +13,7 @@ import net.minecraft.client.renderer.texture.DynamicTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.config.PresetArchives;
+import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** The back ID travels with physical tiles; missing artwork resolves to the default pattern. */
 public final class TileBackPresets {
@@ -20,16 +21,22 @@ public final class TileBackPresets {
     private static Map<ResourceLocation, ResourceLocation> local = Map.of(), server = Map.of();
     private static Map<ResourceLocation, String> localNames = Map.of(), serverNames = Map.of();
     private static Set<ResourceLocation> localTextures = Set.of(), serverTextures = Set.of();
-    private static List<ResourceLocation> choices = List.of(DEFAULT);
+    private static List<ResourceLocation> choices = java.util.stream.Stream.concat(
+        java.util.stream.Stream.of(DEFAULT), BuiltinPresets.BACKS.stream()).toList();
     private TileBackPresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
     public static Component label(ResourceLocation id) {
         if (DEFAULT.equals(id)) return Component.translatable("preset.mchjong.default_back");
+        if (id.getPath().equals("creeper") && BuiltinPresets.BACKS.contains(id))
+            return Component.translatable("entity.minecraft.creeper");
+        if (BuiltinPresets.BACKS.contains(id)) return Component.translatable("preset.mchjong.back.mojang");
         String name = serverNames.getOrDefault(id, localNames.get(id));
         return name == null ? Component.literal(id.toString()) : Component.literal(name);
     }
     public static ResourceLocation texture(ResourceLocation id) {
+        if (BuiltinPresets.BACKS.contains(id)) return ResourceLocation.fromNamespaceAndPath("mchjong",
+            "textures/preset/back/" + id.getPath() + ".png");
         return server.getOrDefault(id, local.getOrDefault(id, TileMesh.BACK));
     }
     public static void installLocal(Map<ResourceLocation, PresetArchives.Back> backs) throws IOException {
@@ -60,7 +67,8 @@ public final class TileBackPresets {
         try {
             for (var entry : backs.entrySet()) {
                 ResourceLocation id = entry.getKey();
-                if (DEFAULT.equals(id)) throw new IOException("Reserved back preset ID: " + id);
+                if (DEFAULT.equals(id) || BuiltinPresets.BACKS.contains(id))
+                    throw new IOException("Reserved back preset ID: " + id);
                 var image = NativeImage.read(new ByteArrayInputStream(entry.getValue().image()));
                 if (image.getWidth() != 256 || image.getHeight() != 384) {
                     image.close();
@@ -91,8 +99,10 @@ public final class TileBackPresets {
     }
     private static void update() {
         var ids = new HashSet<>(local.keySet());
-        ids.addAll(server.keySet()); ids.add(DEFAULT);
-        choices = ids.stream().sorted(java.util.Comparator.comparing(ResourceLocation::toString)).toList();
+        ids.addAll(server.keySet());
+        choices = java.util.stream.Stream.concat(java.util.stream.Stream.of(DEFAULT),
+            java.util.stream.Stream.concat(BuiltinPresets.BACKS.stream(),
+                ids.stream().sorted(java.util.Comparator.comparing(ResourceLocation::toString)))).toList();
         TileRenderTypes.reload();
     }
 }

@@ -156,6 +156,12 @@ class AssetContractTest {
             for (int x = 0; x < TileArtwork.WIDTH; x++) {
                 assertEquals(0, solid.getRGB(x, y));
             }
+        for (String name : List.of("creeper", "mojang")) {
+            var image = ImageIO.read(resources.resolve("assets/mchjong/textures/preset/back/" + name + ".png").toFile());
+            assertEquals(256, image.getWidth());
+            assertEquals(384, image.getHeight());
+            assertTrue(Arrays.stream(image.getRGB(0, 0, 256, 384, null, 0, 256)).anyMatch(pixel -> pixel != 0));
+        }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var cloth = ImageIO.read(resources.resolve("assets/mchjong/textures/furniture/cloth_pattern.png").toFile());
         assertTrue(Arrays.stream(cloth.getRGB(0, 0, cloth.getWidth(), cloth.getHeight(), null, 0, cloth.getWidth())).allMatch(pixel -> pixel == 0));
@@ -169,7 +175,7 @@ class AssetContractTest {
         assertArrayEquals(sticks.getRGB(0, 32, 384, 32, null, 0, 384), hudSticks.getRGB(0, 32, 384, 32, null, 0, 384));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
                 "plain.png", "cloth_pattern.png", "riichi_stick.png", "stick_icons.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
-                "mahjong_printing_plate.png", "incomplete_mahjong_box.png"));
+                "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");
