@@ -7,7 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManager;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
-/** The winning pack supplies each definition, just like any other Minecraft resource. */
+/** Client resource definitions use Kansai artwork for unavailable IDs. */
 public final class TileFacePresets {
     public record Definition(ResourceLocation atlas, ResourceLocation glyphs) {}
     private static Map<TileFacePreset, Definition> definitions = Map.of();
@@ -18,7 +18,7 @@ public final class TileFacePresets {
 
     public static List<TileFacePreset> choices() { return choices; }
     public static Definition definition(TileFacePreset preset) {
-        return definitions.getOrDefault(preset, MISSING);
+        return definitions.getOrDefault(preset, definitions.getOrDefault(TileFacePreset.KANSAI, MISSING));
     }
 
     public static void reload(ResourceManager resources) {

@@ -117,6 +117,10 @@ final class ResourcePackSmoke {
             stage = 5; ticks = 0;
         } else if (stage == 5 && ready(client)) {
             require(!TileFacePresets.choices().contains(CUSTOM), "Removed pack left a stale preset");
+            require(TileMesh.atlas(CUSTOM).equals(TileMesh.atlas(TileFacePreset.KANSAI)),
+                "Unavailable faces did not use the default Kansai atlas");
+            require(TileMesh.glyphs(CUSTOM).equals(TileMesh.glyphs(TileFacePreset.KANSAI)),
+                "Unavailable faces did not use the default Kansai engravings");
             require(!TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Removed pack left a stale override");
             return true;
         }
