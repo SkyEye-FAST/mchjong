@@ -1,17 +1,14 @@
 package top.skyeyefast.mchjong.client;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.electronwill.nightconfig.core.Config;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.nio.file.Path;
-import java.nio.file.StandardCopyOption;
 import java.util.EnumSet;
 import java.util.Locale;
-import java.util.Objects;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.LoggerFactory;
+import top.skyeyefast.mchjong.config.TomlFiles;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -28,7 +25,6 @@ public final class TableSettings {
     public enum GuideLines { ALWAYS, HOVER, OFF }
     public enum VoiceSource { RESOURCE_PACK, OFF }
 
-    private static final Gson JSON = new GsonBuilder().setPrettyPrinting().create();
     private static TableSettings current;
     private EnumSet<Information> hiddenInformation = EnumSet.noneOf(Information.class);
     public DiscardMode discardMode = DiscardMode.SINGLE_CLICK;
@@ -91,37 +87,69 @@ public final class TableSettings {
     }
 
     public static Path configPath() {
-        return Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong-client.json");
+        return Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong-client.toml");
     }
 
     public static TableSettings load(Path path) throws IOException {
-        if (!Files.exists(path)) return new TableSettings();
-        try (var reader = Files.newBufferedReader(path)) {
-            TableSettings settings = Objects.requireNonNull(JSON.fromJson(reader, TableSettings.class), "Empty settings");
-            Objects.requireNonNull(settings.hiddenInformation, "Missing information flags");
-            Objects.requireNonNull(settings.discardMode, "Unknown discard mode");
-            Objects.requireNonNull(settings.tileLabels, "Unknown tile label format");
-            Objects.requireNonNull(settings.guideLines, "Unknown guide-line mode");
-            Objects.requireNonNull(settings.voiceSource, "Unknown voice source");
-            if (!Double.isFinite(settings.effectsVolume) || !Double.isFinite(settings.voiceVolume))
-                throw new IllegalArgumentException("Sound volumes must be finite");
-            settings.effectsVolume = Math.clamp(settings.effectsVolume, 0, 1);
-            settings.voiceVolume = Math.clamp(settings.voiceVolume, 0, 1);
-            if (!Double.isFinite(settings.cameraDistance) || !Double.isFinite(settings.cameraHeight))
-                throw new IllegalArgumentException("Camera settings must be finite");
-            settings.cameraDistance = Math.clamp(settings.cameraDistance, MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
-            settings.cameraHeight = Math.clamp(settings.cameraHeight, MIN_CAMERA_HEIGHT, MAX_CAMERA_HEIGHT);
-            return settings;
+        if (!java.nio.file.Files.exists(path)) return new TableSettings();
+        var config = TomlFiles.read(path);
+        var settings = new TableSettings();
+        Object hidden = config.get("hiddenInformation");
+        if (hidden != null) {
+            if (!(hidden instanceof java.util.List<?> names)) throw new IllegalArgumentException("Invalid hiddenInformation");
+            for (Object name : names) settings.hiddenInformation.add(enumValue(name, Information.class));
         }
+        settings.discardMode = enumValue(config.getOrElse("discardMode", settings.discardMode.name()), DiscardMode.class);
+        settings.tileLabels = enumValue(config.getOrElse("tileLabels", settings.tileLabels.name()), TileLabels.class);
+        settings.guideLines = enumValue(config.getOrElse("guideLines", settings.guideLines.name()), GuideLines.class);
+        settings.voiceSource = enumValue(config.getOrElse("voiceSource", settings.voiceSource.name()), VoiceSource.class);
+        settings.actionTiles = bool(config.getOrElse("actionTiles", settings.actionTiles));
+        settings.highlightTiles = bool(config.getOrElse("highlightTiles", settings.highlightTiles));
+        settings.convenienceHints = bool(config.getOrElse("convenienceHints", settings.convenienceHints));
+        settings.autoSeat = bool(config.getOrElse("autoSeat", settings.autoSeat));
+        settings.animations = bool(config.getOrElse("animations", settings.animations));
+        settings.showRiver = bool(config.getOrElse("showRiver", settings.showRiver));
+        settings.countdownSounds = bool(config.getOrElse("countdownSounds", settings.countdownSounds));
+        settings.effectsVolume = Math.clamp(number(config.getOrElse("effectsVolume", settings.effectsVolume)), 0, 1);
+        settings.voiceVolume = Math.clamp(number(config.getOrElse("voiceVolume", settings.voiceVolume)), 0, 1);
+        settings.cameraDistance = Math.clamp(number(config.getOrElse("cameraDistance", settings.cameraDistance)), MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
+        settings.cameraHeight = Math.clamp(number(config.getOrElse("cameraHeight", settings.cameraHeight)), MIN_CAMERA_HEIGHT, MAX_CAMERA_HEIGHT);
+        return settings;
     }
 
     public void save(Path path) throws IOException {
-        Files.createDirectories(path.toAbsolutePath().getParent());
-        Path temporary = Files.createTempFile(path.toAbsolutePath().getParent(), "mchjong-client-", ".json.tmp");
-        try {
-            try (var writer = Files.newBufferedWriter(temporary)) { JSON.toJson(this, writer); }
-            Files.move(temporary, path, StandardCopyOption.REPLACE_EXISTING, StandardCopyOption.ATOMIC_MOVE);
-        } finally { Files.deleteIfExists(temporary); }
+        Config config = Config.inMemory();
+        config.set("hiddenInformation", hiddenInformation.stream().map(Enum::name).toList());
+        config.set("discardMode", discardMode.name());
+        config.set("tileLabels", tileLabels.name());
+        config.set("guideLines", guideLines.name());
+        config.set("voiceSource", voiceSource.name());
+        config.set("actionTiles", actionTiles);
+        config.set("highlightTiles", highlightTiles);
+        config.set("convenienceHints", convenienceHints);
+        config.set("autoSeat", autoSeat);
+        config.set("animations", animations);
+        config.set("showRiver", showRiver);
+        config.set("countdownSounds", countdownSounds);
+        config.set("effectsVolume", effectsVolume);
+        config.set("voiceVolume", voiceVolume);
+        config.set("cameraDistance", cameraDistance);
+        config.set("cameraHeight", cameraHeight);
+        TomlFiles.write(path, config);
+    }
+
+    private static <E extends Enum<E>> E enumValue(Object value, Class<E> type) {
+        if (!(value instanceof String name)) throw new IllegalArgumentException("Invalid " + type.getSimpleName());
+        return Enum.valueOf(type, name);
+    }
+    private static boolean bool(Object value) {
+        if (!(value instanceof Boolean result)) throw new IllegalArgumentException("Expected boolean");
+        return result;
+    }
+    private static double number(Object value) {
+        if (!(value instanceof Number result) || !Double.isFinite(result.doubleValue()))
+            throw new IllegalArgumentException("Expected finite number");
+        return result.doubleValue();
     }
 
     public boolean show(Information information) {

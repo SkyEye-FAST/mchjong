@@ -11,7 +11,7 @@ from the match overlay.
 
 ## World policy
 
-Each world save has `config/mchjong-world.json`, shared by all dimensions and
+Each world save has `config/mchjong-world.toml`, shared by all dimensions and
 tables in that save. Its initial contents are:
 
 ```json

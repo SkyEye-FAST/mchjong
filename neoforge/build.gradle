@@ -52,6 +52,7 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly "maven.modrinth:create:${create_version}+mc${minecraft_version}"
     compileOnly "com.tterrag.registrate:Registrate:${registrate_version}"
     if (providers.gradleProperty('withCreate').getOrElse('false').toBoolean()) {

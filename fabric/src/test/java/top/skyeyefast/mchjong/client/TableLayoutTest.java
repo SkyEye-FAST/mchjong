@@ -312,7 +312,7 @@ class TableLayoutTest {
         settings.tileLabels = TableSettings.TileLabels.MPSZ;
         settings.toggle(TableSettings.Information.REMAINING);
         settings.showRiver = false;
-        var path = directory.resolve("table.json");
+        var path = directory.resolve("table.toml");
         settings.save(path);
         var restored = TableSettings.load(path);
         assertEquals(TableSettings.TileLabels.MPSZ, restored.tileLabels);

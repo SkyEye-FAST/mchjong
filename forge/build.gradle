@@ -68,6 +68,7 @@ tasks.matching { it.name == 'runSmokeClient' }.configureEach {
 configurations { embeddedEngine }
 dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
+    compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     implementation project(path: ':engine', configuration: 'embeddedEngine')
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
