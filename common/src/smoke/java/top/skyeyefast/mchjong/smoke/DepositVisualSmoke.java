@@ -38,7 +38,7 @@ final class DepositVisualSmoke {
                 var river = IntStream.range(seat * 12, seat * 12 + 12)
                     .mapToObj(tile -> new Discard(tile, false, false, false)).toList();
                 seats.add(new TableView.Seat(false, "Player " + (seat + 1), true, false, false, 25000,
-                    hand, Tile.ABSENT, List.of(), river, List.of(), false, false));
+                    hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
                 base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,

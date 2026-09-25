@@ -156,7 +156,7 @@ class PhysicalHandlingTest {
         int drawn = IntStream.range(0, 136).filter(tile -> !hand.contains(tile)).findFirst().orElseThrow();
         hand.add(drawn);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, false, player.points(), hand, drawn,
-            player.melds(), player.river(), player.norths(), false, false));
+            player.melds(), player.river(), player.norths(), false, false, false));
         var after = snapshot(before, before.revision() + 1, Game.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
         var animation = new TableAnimation();
         animation.accept(before, 0);
@@ -184,7 +184,7 @@ class PhysicalHandlingTest {
         var seats = new ArrayList<>(base.seats());
         var player = seats.get(dealer);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, true, player.points(), player.hand(),
-            player.drawn(), player.melds(), player.river(), player.norths(), player.riichi(), player.exposed()));
+            player.drawn(), player.melds(), player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
         var collected = snapshot(receipt, receipt.revision() + 1, Game.Phase.HAND_END, receipt.wall(), seats,
             receipt.handling(), List.of());
         var after = TableScene.build(collected);

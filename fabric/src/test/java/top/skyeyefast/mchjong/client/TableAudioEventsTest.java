@@ -19,7 +19,7 @@ class TableAudioEventsTest {
     private static final UUID TABLE = new UUID(6, 12);
     private static TableView.Seat seat(List<Discard> river, List<Meld> melds, List<Integer> norths) {
         return new TableView.Seat(false, "Player", true, false, false, 25000,
-            List.of(), -2, melds, river, norths, false, false);
+            List.of(), -2, melds, river, norths, false, false, false);
     }
     private static TableView view(long revision, int hand, Game.Phase phase, List<TableView.Seat> seats, String result) {
         return new TableView(TABLE, revision, 1, hand, RuleSet.TENHOU_4.config(), phase, 0,
@@ -103,6 +103,19 @@ class TableAudioEventsTest {
         }
     }
 
+    @Test void doubleRiichiUsesThePublicDeclarationAndKeepsItsSettlementRecordingSeparate() {
+        var before = view(1, 1, Game.Phase.TURN, seats(), "playing");
+        var seats = seats();
+        seats.set(1, new TableView.Seat(false, "Player", true, false, false, 24000,
+            List.of(), -2, List.of(), List.of(new Discard(12, true, false, true)), List.of(), true, false, true));
+        var after = view(2, 1, Game.Phase.REACTION, seats, "playing");
+        var cue = TableAudioEvents.between(before, after).getLast();
+        assertEquals("riichi", cue.sound());
+        assertEquals("double_riichi", cue.voice());
+        assertEquals("yaku.double_riichi", ScoreAnnouncements.yaku("WRichi"));
+        assertTrue(TableAudioEvents.between(after, view(3, 1, Game.Phase.REACTION, seats, "playing")).isEmpty());
+    }
+
     @Test void firstObservationRepeatedAndCosmeticSnapshotsAreSilent() {
         var view = view(1, 1, Game.Phase.TURN, seats(), "playing");
         assertTrue(sounds(null, view).isEmpty());
@@ -142,10 +155,10 @@ class TableAudioEventsTest {
         var seats = seats();
         var called = new Discard(12, true, true, true);
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
-            List.of(), List.of(called), List.of(), true, false));
+            List.of(), List.of(called), List.of(), true, false, false));
         var before = view(1, 1, Game.Phase.TURN, seats, "playing");
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
-            List.of(), List.of(called, new Discard(20, true, false, true)), List.of(), true, false));
+            List.of(), List.of(called, new Discard(20, true, false, true)), List.of(), true, false, false));
         assertEquals(List.of("tsumogiri"), sounds(before, view(2, 1, Game.Phase.REACTION, seats, "playing")));
     }
 

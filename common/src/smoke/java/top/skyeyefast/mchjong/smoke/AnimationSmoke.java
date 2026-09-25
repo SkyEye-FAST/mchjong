@@ -200,13 +200,13 @@ final class AnimationSmoke {
                     .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
                 seats.set(side, new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
                     player.points(), player.hand(), player.drawn(), player.melds(), river, player.norths(),
-                    player.riichi(), player.exposed()));
+                    player.riichi(), player.exposed(), player.doubleRiichi()));
             }
             var right = seats.get(1);
             var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
             seats.set(1, new TableView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
-                List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false));
+                List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false, right.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
@@ -299,7 +299,7 @@ final class AnimationSmoke {
 
     private static TableView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
         return new TableView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
-            hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false);
+            hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false, false);
     }
 
     /** Check the complete rendered tile envelopes, not just the centers of the last meld. */

@@ -53,7 +53,7 @@ final class InputSmoke {
         TableView base = table.clientView();
         var seats = new ArrayList<>(base.seats());
         seats.set(0, new TableView.Seat(false, "Input test", true, false, false, 25000,
-            IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), List.of(), false, false));
+            IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), List.of(), false, false, false));
         var actions = new ArrayList<Action>();
         for (int tile = 0; tile < 14; tile++) actions.add(new Action(Action.Type.DISCARD, tile));
         actions.add(new Action(Action.Type.RIICHI, 0));
@@ -189,12 +189,12 @@ final class InputSmoke {
         var seats = new ArrayList<>(base.seats());
         seats.set(0, new TableView.Seat(false, "Keyboard focus", true, false, false, 25000,
             List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 15), Tile.ABSENT,
-            List.of(), List.of(), List.of(), false, false));
+            List.of(), List.of(), List.of(), false, false, false));
         int from = base.rules().players() - 1;
         var source = seats.get(from);
         seats.set(from, new TableView.Seat(false, source.name(), true, false, false, 25000,
             java.util.Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT,
-            List.of(), List.of(new Discard(14, false, false, false)), List.of(), false, false));
+            List.of(), List.of(new Discard(14, false, false, false)), List.of(), false, false, false));
         var action = new Action(type, consumed);
         var fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), Game.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),

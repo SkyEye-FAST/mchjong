@@ -1097,7 +1097,7 @@ public final class Game {
             if (!visible) hand.replaceAll(tile -> Tile.HIDDEN);
             seats.add(new TableView.Seat(player.entityBot, player.name, player.id != null, player.bot, player.ready, player.points,
                 hand, player.drawn < 0 ? Tile.ABSENT : visible ? player.drawn : Tile.HIDDEN,
-                player.melds, player.river, player.norths, player.riichi, exposed[seat]));
+                player.melds, player.river, player.norths, player.riichi, exposed[seat], player.doubleRiichi));
         }
         boolean ura = rules.uraDora() && wins.stream().anyMatch(win -> players[win.seat()].riichi);
         var clocks = new ArrayList<TimeControl.Clock>();

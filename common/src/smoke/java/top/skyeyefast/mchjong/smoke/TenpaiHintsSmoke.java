@@ -110,7 +110,7 @@ final class TenpaiHintsSmoke {
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
-            List.of(), List.of(), List.of(), false, false));
+            List.of(), List.of(), List.of(), false, false, false));
         for (int seat = 1; seat < seats.size(); seat++) {
             int owner = seat;
             var melds = java.util.stream.IntStream.range(0, seat == 1 ? 4 : 1).mapToObj(i -> {
@@ -120,7 +120,7 @@ final class TenpaiHintsSmoke {
             }).toList();
             seats.set(seat, new TableView.Seat(false, "Long player name " + seat, true, false, false, 25000,
                 java.util.Collections.nCopies(13 - melds.size() * 3, Tile.HIDDEN), Tile.ABSENT,
-                melds, List.of(), List.of(), seat == seats.size() - 1, false));
+                melds, List.of(), List.of(), seat == seats.size() - 1, false, false));
         }
         var wall = new ArrayList<>(java.util.Collections.nCopies(136, Tile.HIDDEN));
         for (int i = 0; i < 5; i++) wall.set(131 - i * 2, 40 + i * 4);

@@ -18,7 +18,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     public record Handling(int builtWalls, int sourceSlot, int packetSize, int diceOne, int diceTwo, boolean diceHeld) {}
     public record Seat(boolean entityBot, String name, boolean occupied, boolean bot, boolean ready, int points,
                        List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
-                       List<Integer> norths, boolean riichi, boolean exposed) {
+                       List<Integer> norths, boolean riichi, boolean exposed, boolean doubleRiichi) {
         public Seat {
             hand = List.copyOf(hand); melds = List.copyOf(melds); river = List.copyOf(river);
             norths = List.copyOf(norths);

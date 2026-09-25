@@ -16,6 +16,7 @@
   "table.countdown": {"subtitle": "sound.mchjong.countdown", "sounds": [{"name": "minecraft:block.note_block.pling", "type": "event", "pitch": 0.8, "volume": 0.5}]},
   "table.turn": {"subtitle": "sound.mchjong.turn", "sounds": [{"name": "minecraft:block.note_block.harp", "type": "event", "pitch": 1.6, "volume": 0.6}]},
   "voice.riichi": {"subtitle": "action.mchjong.riichi", "sounds": []},
+  "voice.double_riichi": {"subtitle": "yaku.mchjong.double_riichi", "sounds": []},
   "voice.chi": {"subtitle": "action.mchjong.chi", "sounds": []},
   "voice.pon": {"subtitle": "action.mchjong.pon", "sounds": []},
   "voice.kan": {"subtitle": "voice.mchjong.kan", "sounds": []},

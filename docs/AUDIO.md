@@ -53,7 +53,7 @@ display name:
 name = "Announcer"
 ```
 
-Action recording filenames are `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`,
+Action recording filenames are `riichi`, `double_riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`,
 `tsumo`, `draw_end` and `match_end`, followed by `.ogg`.
 Settlement recordings use `yaku.<name>.ogg`, where `<name>` is the suffix of the
 corresponding `yaku.mchjong.<name>` translation key. For example, use

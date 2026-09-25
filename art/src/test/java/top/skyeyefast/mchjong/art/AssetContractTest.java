@@ -29,7 +29,7 @@ class AssetContractTest {
                 .getAsJsonObject();
         JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve("en_us.json")))
                 .getAsJsonObject();
-        assertEquals(25 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
+        assertEquals(26 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
         top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.forEach((event, subtitle) ->
             assertEquals(subtitle, sounds.getAsJsonObject("voice." + event).get("subtitle").getAsString()));
         for (var entry : sounds.entrySet()) {

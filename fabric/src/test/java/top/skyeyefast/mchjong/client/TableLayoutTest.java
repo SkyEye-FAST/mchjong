@@ -31,7 +31,7 @@ class TableLayoutTest {
     private static TableView replace(TableView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {
         var seats = new ArrayList<>(v.seats());
         seats.set(0, new TableView.Seat(false, "Test", true, false, false, 25000, hand, Tile.ABSENT,
-            melds, river, List.of(), false, false));
+            melds, river, List.of(), false, false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
             seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.timeControl(), v.clocks(), v.finalRanks(), v.handVisibility(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan());
@@ -120,7 +120,7 @@ class TableLayoutTest {
                     List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
                 var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
                 seats.add(new TableView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
-                    melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true));
+                    melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true, false));
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),

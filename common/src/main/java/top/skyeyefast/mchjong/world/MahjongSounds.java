@@ -11,7 +11,7 @@ public final class MahjongSounds {
     public static final List<String> EFFECTS = List.of("wall", "deal", "draw", "tsumogiri", "tedashi", "riichi",
         "chi", "pon", "kan", "nuki", "ron", "tsumo", "draw_end", "match_end", "countdown", "turn");
     public static final List<String> VOICES = java.util.stream.Stream.concat(
-        java.util.stream.Stream.of("riichi", "chi", "pon", "kan", "nuki", "ron", "tsumo", "draw_end", "match_end"),
+        java.util.stream.Stream.of("riichi", "double_riichi", "chi", "pon", "kan", "nuki", "ron", "tsumo", "draw_end", "match_end"),
         top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.keySet().stream()).toList();
     public static final Map<String, SoundEvent> EVENTS;
     static {
