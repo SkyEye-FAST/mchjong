@@ -4,11 +4,28 @@ import java.awt.Color;
 import java.awt.Graphics2D;
 import java.awt.RenderingHints;
 import java.awt.image.BufferedImage;
-import java.awt.geom.AffineTransform;
-import java.awt.geom.Path2D;
 
-/** Original pixel artwork for the bundled cosmetic presets. */
+/** Deterministic artwork for the bundled cosmetic presets. */
 final class BuiltinPresetArtwork {
+    private static final String[] MOJANG_BANNER = {
+        "............#...........#............",
+        "............##.........##............",
+        "...####.....##.........##.....####...",
+        ".#######..#.##.........##.#..#######.",
+        "############.............############",
+        "###############.......###############",
+        "#####......####.......####......#####",
+        "####........###.......###........####",
+        "####.........###.....###.........####",
+        "####..........##.....##..........####",
+        "####..........#.......#..........####",
+        "####.............................####",
+        "#####...........................#####",
+        "######.........................######",
+        "########......##.....##......########",
+        ".###############.....###############.",
+        "...###########.........###########..."
+    };
     private BuiltinPresetArtwork() {}
 
     static BufferedImage back(String name) {
@@ -24,21 +41,12 @@ final class BuiltinPresetArtwork {
                 fill(g, 82, 238, 24, 24, ink);
                 fill(g, 150, 238, 24, 24, ink);
             } else if (name.equals("mojang")) {
-                // Two mirrored curls give the banner mark a clear one-ink silhouette.
-                var curl = new Path2D.Double();
-                curl.moveTo(120, 151);
-                curl.curveTo(82, 126, 49, 150, 47, 190);
-                curl.curveTo(44, 228, 68, 252, 107, 252);
-                curl.lineTo(117, 230);
-                curl.curveTo(86, 231, 68, 214, 72, 190);
-                curl.curveTo(76, 168, 93, 158, 119, 177);
-                curl.closePath();
-                g.setColor(new Color(0xffeee5d3, true));
-                g.fill(curl);
-                g.fill(AffineTransform.getTranslateInstance(256, 0).createTransformedShape(
-                    AffineTransform.getScaleInstance(-1, 1).createTransformedShape(curl)));
-                fill(g, 111, 131, 12, 31, 0xffeee5d3);
-                fill(g, 133, 131, 12, 31, 0xffeee5d3);
+                // The native banner emblem has a wide, open center and short paired tips.
+                for (int row = 0; row < MOJANG_BANNER.length; row++) {
+                    String pixels = MOJANG_BANNER[row];
+                    for (int col = 0; col < pixels.length(); col++)
+                        if (pixels.charAt(col) == '#') fill(g, 35 + col * 5, 149 + row * 5, 5, 5, 0xffeee5d3);
+                }
             } else throw new IllegalArgumentException(name);
         } finally { g.dispose(); }
         return image;

@@ -338,6 +338,8 @@ point-stick and dye slots share vanilla click validation. Face printing previews
 the entire 136/144-tile transaction, then commits it with exactly one ordinary
 dye consumed; creative dye is retained. Presets are immutable item components.
 Crafting rules stay in `recipe/`, and neither loader carries separate rules.
+Face and back preset changes each consume one ordinary Mahjong dye in the box's
+server-owned inventory transaction; creative Mahjong dye remains available.
 
 Optional Create machine adapters live in NeoForge's `compat/create` package.
 `MahjongSupplies` owns component-preserving red-five conversion, stick marking,

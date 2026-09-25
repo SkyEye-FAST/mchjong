@@ -21,6 +21,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
 - Explicit bot timings include decision-thread CPU time alongside wall-clock latency, with focused cache/search regressions, accepted paired-seed outcomes and diagnostic experiments recorded in the verification guide.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
 - Create workshop Kansai face printing uses a single face plate.
@@ -29,6 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- The built-in Mojang back pattern matches the vanilla banner emblem.
 - Settlement receipts keep han badges next to yaku names and enlarge points and hand grades.
 - Personal voice presets play for the selecting player's declarations and wins instead of other players' actions.
 - Stool vehicles persist through logout and chunk saves, preserving seated players and maid companions.

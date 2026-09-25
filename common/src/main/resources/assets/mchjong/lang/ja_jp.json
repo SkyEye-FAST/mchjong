@@ -84,7 +84,6 @@
   "box.mchjong.locked": "牌ケースを移動するには先に閉じてください。",
   "box.mchjong.preset": "牌面プリセット",
   "box.mchjong.preset_choice": "%s ›",
-  "box.mchjong.print": "牌面を適用",
   "box.mchjong.ready": "一式揃っています",
   "box.mchjong.sanma_set": "三麻一式：%s",
   "box.mchjong.set": "牌一式：%s",

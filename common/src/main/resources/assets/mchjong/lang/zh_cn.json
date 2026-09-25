@@ -84,7 +84,6 @@
   "box.mchjong.locked": "请先关闭牌盒，再移动它。",
   "box.mchjong.preset": "牌面预设",
   "box.mchjong.preset_choice": "%s ›",
-  "box.mchjong.print": "应用牌面",
   "box.mchjong.ready": "牌组完整",
   "box.mchjong.sanma_set": "三麻牌组：%s",
   "box.mchjong.set": "完整牌组：%s",

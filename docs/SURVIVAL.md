@@ -58,14 +58,16 @@ use different wood types; the box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
-The box's back preset screen applies a pattern to the stored tiles without a dye cost.
+The box's back preset screen applies a pattern to the stored tiles using one
+mahjong dye per successful change; creative mahjong dye remains unchanged.
 
 One each of black, red, green, blue and white dye make one mahjong dye, shapeless. Ordinary
 mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
 through the creative catalogue, not survival crafting or loot.
 
 Open a box and put exactly **136 or 144 matching blanks** into its tile slots.
-Insert mahjong dye into the dedicated dye slot and select **Apply faces**.
+Insert mahjong dye into the dedicated dye slot, open **Face preset**, and
+choose a design to apply it.
 The 136-tile set has four ordinary copies of each face and no red fives;
 144 additionally includes one of each of the eight flowers. These sets occupy
 34 and 42 stacks respectively.
@@ -74,7 +76,8 @@ operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
 blanks, invalid selections and already-matching no-red sets do not consume anything.
 
-Choose **Kansai** or **Kanto** in the box. Both designs are built into the mod;
+Choose **Kansai** or **Kanto** from the box's face preset screen. Four sample
+tiles appear beside each design. Both designs are built into the mod;
 the selection applies to inventory items, the world table, immersive hands,
 action previews and settlement. Reprinting an existing complete set applies
 the face preset and restores ordinary fives, including when the

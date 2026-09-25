@@ -140,20 +140,20 @@ final class ResourcePackSmoke {
             pending.join();
             require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName())
                 .equals(ResourceLocation.parse("smoke:server_stick")), "Shared stick selection was not synchronized");
-            var selector = button(client, "box.mchjong.preset_choice");
-            String serverLabel = net.minecraft.network.chat.Component.translatable("box.mchjong.preset_choice",
-                net.minecraft.network.chat.Component.literal("Server Test")).getString();
-            for (int i = 0; i < TileFacePresets.choices().size() && !selector.getMessage().getString().equals(serverLabel); i++) selector.onPress();
-            require(selector.getMessage().getString().equals(serverLabel), "Server preset missing from selector");
+            button(client, "box.mchjong.preset_choice").onPress();
+            require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
+                "Face preset screen did not open");
+            require(TileFacePresets.choices().contains(SERVER),
+                "Server preset missing from selector");
             stage = 21; ticks = 0;
         } else if (stage == 21 && ticks > 4) {
             Screenshot.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
-            var selector = button(client, "box.mchjong.preset_choice");
-            String label = net.minecraft.network.chat.Component.translatable("box.mchjong.preset_choice",
-                net.minecraft.network.chat.Component.literal("Local Test")).getString();
-            for (int i = 0; i < TileFacePresets.choices().size() && !selector.getMessage().getString().equals(label); i++) selector.onPress();
-            require(selector.getMessage().getString().equals(label), "New preset missing from selector");
-            button(client, "box.mchjong.print").onPress();
+            require(TileFacePresets.choices().contains(CUSTOM), "New preset missing from selector");
+            var choice = client.screen.children().stream()
+                .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
+                .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
+                .filter(child -> child.getMessage().getString().equals("Local Test")).findFirst().orElseThrow();
+            choice.onPress();
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;

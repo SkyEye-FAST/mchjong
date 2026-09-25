@@ -53,20 +53,18 @@ final class BoxInterfaceSmoke {
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
                 + ", menu=" + menu.containerId + ", printing=" + printing);
             if (!printing) {
-                var selector = client.screen.children().stream()
+                require(menu.canEngrave(preset), "Preset fixture cannot be printed");
+                press(client, "box.mchjong.preset_choice");
+                require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
+                    "Face button did not open its preset screen");
+                var option = client.screen.children().stream()
                     .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
                     .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
-                    .filter(child -> child.getMessage().getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
-                        && text.getKey().equals("box.mchjong.preset_choice")).findFirst().orElseThrow();
-                String requested = Component.translatable("box.mchjong.preset_choice", Component.translatable(preset.translationKey())).getString();
-                for (int i = 0; i < choices.size() && !selector.getMessage().getString().equals(requested); i++) {
-                    client.screen.setFocused(selector);
-                    selector.setFocused(true);
-                    client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
-                }
-                require(selector.getMessage().getString().equals(requested), "Preset selector did not cycle with keyboard");
-                require(menu.canEngrave(preset), "Preset fixture cannot be printed");
-                press(client, "box.mchjong.print");
+                    .filter(child -> child.getMessage().getString().equals(Component.translatable(preset.translationKey()).getString()))
+                    .findFirst().orElseThrow();
+                client.screen.setFocused(option);
+                option.setFocused(true);
+                client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
                 printing = true;
                 settled = 0;
             }
@@ -93,7 +91,7 @@ final class BoxInterfaceSmoke {
         var dye = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         if (reagentStage == 1) {
             require(dye.isEmpty(), "Empty reagent fixture was not synchronized");
-            require(!visible(client, "box.mchjong.print") && !visible(client, "box.mchjong.dye_back"), "Empty slot exposes actions");
+            require(!visible(client, "box.mchjong.preset_choice") && !visible(client, "box.mchjong.dye_back"), "Empty slot exposes actions");
             capture(client, output, "empty");
             reagentStage = 2;
             reagent(client, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_DYE, 2));
@@ -101,7 +99,7 @@ final class BoxInterfaceSmoke {
         }
         if (reagentStage == 2) {
             require(dye.is(net.minecraft.world.item.Items.RED_DYE), "Vanilla dye fixture was not synchronized");
-            require(visible(client, "box.mchjong.dye_back") && !visible(client, "box.mchjong.print"), "Wrong vanilla-dye actions");
+            require(visible(client, "box.mchjong.dye_back") && !visible(client, "box.mchjong.preset_choice"), "Wrong vanilla-dye actions");
             capture(client, output, "back");
             if (menu.canDyeBack()) press(client, "box.mchjong.dye_back");
             reagentStage = 3; settled = 0;
