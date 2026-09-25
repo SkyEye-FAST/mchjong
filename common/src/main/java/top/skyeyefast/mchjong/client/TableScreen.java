@@ -187,7 +187,7 @@ public final class TableScreen extends Screen {
     }
 
     boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
-        return reds == top.skyeyefast.mchjong.engine.RedFives.NONE || minecraft != null && minecraft.level != null
+        return minecraft != null && minecraft.level != null
             && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             && (table.clientRedOptions() & 1 << ((sanma ? 3 : 0) + reds.ordinal())) != 0;
     }
@@ -202,6 +202,10 @@ public final class TableScreen extends Screen {
 
     private net.minecraft.world.item.DyeColor tileBack() {
         return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().back();
+    }
+    private net.minecraft.world.item.DyeColor clothColor() {
+        var equipment = ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment();
+        return equipment.hasCloth() ? equipment.clothColor() : null;
     }
     private net.minecraft.resources.ResourceLocation tileBackPreset() {
         return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().backPreset();
@@ -957,7 +961,8 @@ public final class TableScreen extends Screen {
             graphics.fill(0, 0, layoutWidth, layoutHeight, MahjongUi.INPUT);
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
-            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed, tileMaterial(), tileBack(), tileBackPreset());
+            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed,
+                tileMaterial(), tileBack(), tileBackPreset(), clothColor());
             renderImmersiveDiscard(graphics, now);
             renderImmersiveDraw(graphics, now);
         }

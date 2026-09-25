@@ -16,6 +16,7 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 final class ImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 140;
+    private static final double MELD_CORNER_X = 470;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
@@ -77,7 +78,8 @@ final class ImmersiveTable {
     }
 
     void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed,
-                TileMaterial material, net.minecraft.world.item.DyeColor dye, ResourceLocation backPreset) {
+                TileMaterial material, net.minecraft.world.item.DyeColor dye, ResourceLocation backPreset,
+                net.minecraft.world.item.DyeColor cloth) {
         this.preset = preset;
         backColor = TileMesh.backColor(material, dye);
         bodyColor = TileMesh.bodyColor(material, dye);
@@ -86,10 +88,11 @@ final class ImmersiveTable {
         points.clear(); widths.clear(); rivers.clear(); faces.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
-        flat(0, -510, -425, 510, 425, 0, 0xff20584f);
+        int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
+        flat(0, -510, -425, 510, 425, 0, felt);
         faces.add(new Face(rectangle(0, -510, -425, 510, 425, .05), FurnitureMesh.CLOTH_PATTERN, 0, 0, 1, 1, 0xffffffff, false));
-        flat(0, -508, -423, 508, -420, .1, 0xff54857a);
-        flat(0, -508, 420, 508, 423, .1, 0xff102f30);
+        flat(0, -508, -423, 508, -420, .1, shade(felt, .82));
+        flat(0, -508, 420, 508, 423, .1, shade(felt, .82));
         paint(graphics);
         box(0, 0, 0, 190, 192, 0, 8, 0xff101d23, 0xff52666b);
         flat(0, -87, -88, 87, 88, 8.1, 0xff30464c);
@@ -134,7 +137,7 @@ final class ImmersiveTable {
         int side = side(seat), w = 30;
         double rail = 410, halfLength = 300;
         var rails = outerRails(player, seat);
-        double handX = handLeft(player, seat);
+        double handX = handLeft(player);
         for (int tile : player.hand()) {
             if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
             else standing(tile, side, handX + w / 2.0, rail, w);
@@ -151,9 +154,9 @@ final class ImmersiveTable {
     private void melds(int seat, List<List<Meld>> rails) {
         int side = side(seat), w = 30;
         for (int row = 0; row < rails.size(); row++) {
-            double x = 300;
+            double x = MELD_CORNER_X;
             // The inner corner keeps wrapped melds clear of the adjacent river.
-            double z = row == 0 ? 410 : 285;
+            double z = (seat == viewer ? 335 : 410) - row * 125;
             for (var meld : rails.get(row)) {
                 x -= TileGui.meldWidth(meld, seat, w);
                 for (var part : MeldLayout.of(meld, seat).parts()) {
@@ -165,17 +168,13 @@ final class ImmersiveTable {
         }
     }
 
-    private static double handLeft(TableView.Seat player, int seat) {
-        double meldSpan = outerRails(player, seat).getFirst().stream().mapToDouble(m -> TileGui.meldWidth(m, seat, 30) + 5).sum();
-        double handSpan = player.hand().size() * 30;
-        return Math.min(-handSpan / 2, 300 - meldSpan - 18 - handSpan);
-    }
+    private static double handLeft(TableView.Seat player) { return -player.hand().size() * 15.0; }
 
     static double discardSourceX(TableView.Seat player, int seat, int tile, boolean tsumogiri) {
         int index = player.hand().indexOf(tile);
         // Hidden identities remain unknown; a draw still has a public end-of-hand position.
         double slot = index >= 0 ? index + .5 : tsumogiri ? player.hand().size() - .5 : player.hand().size() / 2.0;
-        return handLeft(player, seat) + slot * 30;
+        return handLeft(player) + slot * 30;
     }
 
     static List<List<Meld>> outerRails(TableView.Seat player, int seat) {
