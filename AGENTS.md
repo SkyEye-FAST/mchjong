@@ -42,13 +42,15 @@ Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
 classes. Declare optional metadata and keep third-party implementations out of
 release bundles. Verify both installed and absent dependency configurations.
-Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
-branch for Fabric and Forge; synchronize stable batches from `main`, preserving
-the engine and shared gameplay rather than developing a second feature line.
+Quilt uses the corresponding Fabric artifact. Do not synchronize changes from
+`main` to any other branch unless the user explicitly requests it.
+`compat/1.20.1` is a port-only branch for Fabric and Forge; when synchronization
+is requested, preserve the engine and shared gameplay rather than developing a
+second feature line.
 `compat/26.1.2` is the corresponding port-only branch for Fabric/Quilt and
 NeoForge, using Java 25. Keep `main` on Minecraft 1.21.1 / Java 21 and the
-1.20.1 runtime on Java 17. Synchronize applicable code, tests, resources,
-formatting configuration and documentation together; retain each port's loader
+1.20.1 runtime on Java 17. When requested, synchronize applicable code, tests,
+resources, formatting configuration and documentation together; retain each port's loader
 APIs, dependency versions and single-version snapshot workflow. Omit optional
 adapters when the dependency has no build for that Minecraft/loader profile.
 Record completed synchronization with signed merge commits: merge the relevant
