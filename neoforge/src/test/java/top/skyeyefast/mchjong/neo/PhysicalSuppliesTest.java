@@ -421,7 +421,7 @@ class PhysicalSuppliesTest {
         var empty = new ItemStack(MahjongContent.BOX_ITEM);
         empty.set(DataComponents.CUSTOM_NAME, Component.literal("Workshop box"));
         var blanks = List.of(blank, blank.copy(), blank.copyWithCount(16));
-        var printed = MahjongSupplies.printBox(empty, blanks, TileFacePreset.KANTO);
+        var printed = MahjongSupplies.printBox(empty, blanks);
         assertTrue(MahjongSupplies.validBox(printed));
         assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(printed)));
         assertEquals(empty.getHoverName(), printed.getHoverName());
@@ -430,7 +430,7 @@ class PhysicalSuppliesTest {
         for (var tile : MahjongSupplies.contents(printed)) if (!tile.isEmpty()) {
             assertEquals(blank.getHoverName(), tile.getHoverName());
             assertEquals(TileMaterial.GLASS, MahjongSupplies.tile(tile).material());
-            assertEquals(TileFacePreset.KANTO, MahjongSupplies.facePreset(tile));
+            assertEquals(TileFacePreset.KANSAI, MahjongSupplies.facePreset(tile));
         }
         var stick = new ItemStack(MahjongContent.POINT_STICK, 16);
         stick.set(DataComponents.CUSTOM_NAME, Component.literal("Workshop sticks"));
@@ -457,10 +457,12 @@ class PhysicalSuppliesTest {
         var malformed = blank.copy();
         malformed.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         assertTrue(MahjongSupplies.pack(empty, List.of(malformed)).isEmpty());
-        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), blank.copyWithCount(15)), TileFacePreset.KANTO).isEmpty());
+        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), blank.copyWithCount(15))).isEmpty());
         var different = blank.copyWithCount(16);
         different.set(DataComponents.CUSTOM_NAME, Component.literal("Different"));
-        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), different), TileFacePreset.KANTO).isEmpty());
+        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), different)).isEmpty());
+        var custom = MahjongSupplies.engrave(printed, TileFacePreset.KANTO);
+        assertTrue(MahjongSupplies.printBox(custom, List.of()).isEmpty());
     }
 
     @Test void pointStickMarkingUsesOneReagentForEightBlanks(MinecraftServer server) {

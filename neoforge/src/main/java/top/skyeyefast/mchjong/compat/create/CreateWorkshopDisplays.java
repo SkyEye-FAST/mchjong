@@ -13,7 +13,6 @@ import net.minecraft.world.item.Items;
 import net.minecraft.world.level.Level;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
-import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
@@ -21,16 +20,17 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public final class CreateWorkshopDisplays {
     public record Display(ResourceLocation id, String operation, List<ItemStack> inputs, List<ItemStack> outputs, ItemStack machine) {
         public Component title() { return Component.translatable("browser.mchjong.create." + operation); }
+        public boolean requiresBasin() { return machine.is(AllBlocks.MECHANICAL_PRESS.asItem()) || machine.is(AllBlocks.MECHANICAL_MIXER.asItem()); }
     }
     private CreateWorkshopDisplays() {}
 
     public static List<Display> dynamic() {
         var displays = new ArrayList<Display>();
-        for (var material : TileMaterial.values()) for (var preset : List.of(TileFacePreset.KANSAI, TileFacePreset.KANTO)) {
+        for (var material : TileMaterial.values()) {
             var blank = MahjongSupplies.tile(new TileData(-1, material, false), 64);
-            add(displays, "print/" + material.getSerializedName() + "/" + preset.id().getPath(), CreateProcessing.pressing(List.of(
+            add(displays, "print/" + material.getSerializedName(), CreateProcessing.pressing(List.of(
                 blank, blank.copy(), blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
-                new ItemStack(MahjongContent.MAHJONG_DYE), CreateCompat.plate(preset))));
+                new ItemStack(MahjongContent.MAHJONG_DYE), new ItemStack(CreateCompat.PRINTING_PLATE.get()))));
         }
         var box = MahjongSupplies.completeBox(TileMaterial.BONE);
         for (var color : DyeColor.values()) {

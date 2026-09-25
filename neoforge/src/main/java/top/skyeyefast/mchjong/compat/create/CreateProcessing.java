@@ -70,7 +70,7 @@ public final class CreateProcessing {
                 if (needed == 0) templates.add(ItemStack.EMPTY);
                 for (var template : templates) {
                     var blanks = take(inventory, template, needed);
-                    var printed = MahjongSupplies.printBox(box, blanks, MahjongSupplies.facePreset(plate));
+                    var printed = MahjongSupplies.printBox(box, blanks);
                     if (printed.isEmpty()) continue;
                     var inputs = new ArrayList<>(blanks);
                     inputs.add(box);

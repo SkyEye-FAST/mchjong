@@ -157,13 +157,13 @@ public final class MahjongSupplies {
     }
 
     /** The industrial full-deck transaction uses the ordinary engraving implementation. */
-    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks, TileFacePreset preset) {
+    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks) {
         if (!validBox(box)
             || tileCount(contents(box)) + tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
             || blanks.stream().anyMatch(stack -> !stack.is(MahjongContent.TILE_ITEM) || !tile(stack).blank())) return ItemStack.EMPTY;
         if (contents(box).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && !tile(stack).blank())) return ItemStack.EMPTY;
         var packed = blanks.isEmpty() ? box.copy() : pack(box, blanks);
-        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, preset);
+        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, TileFacePreset.KANSAI);
     }
 
     /** A target is a whole tile stack or one box. Every target must actually change. */

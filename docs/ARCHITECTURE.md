@@ -316,7 +316,7 @@ Crafting rules stay in `recipe/`, and neither loader carries separate rules.
 
 Optional Create machine adapters live in NeoForge's `compat/create` package.
 `MahjongSupplies` owns component-preserving red-five conversion, stick marking,
-batch back coloring, full-set printing and atomic box packing. Crafting and
+batch back coloring, default-Kansai full-set printing and atomic box packing. Crafting and
 Create both delegate to those pure transformations. Native Create machinery
 executes immutable snapshot recipes with exact-component ingredients; the
 integration only adapts inventory admission, recipe selection and output

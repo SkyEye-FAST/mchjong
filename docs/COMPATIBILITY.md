@@ -46,8 +46,8 @@ profile, so configuring Forge does not prevent an EMI run on another loader.
 Minecraft 1.21.1 NeoForge integrates Create 6.0.10 as an optional server/client
 dependency. `-PwithCreate=true` supplies it to development runs. Mechanical
 cutting, mixing, printing, red-five application and packing reuse the shared
-item transformations. The reusable printing plate keeps its face preset in the
-existing component. See [Create workshop](CREATE.md) for the production line,
+item transformations. The reusable printing plate prints the default Kansai
+faces. See [Create workshop](CREATE.md) for the production line,
 recipe viewers and focused validation commands.
 
 The `compat/1.20.1` artifacts provide the same workshop with Create 6.0.8 on

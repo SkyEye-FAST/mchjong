@@ -54,7 +54,7 @@ class CreateProcessingTest {
         try {
             var blank = MahjongSupplies.tile(new TileData(-1, TileMaterial.GLASS, false), DyeColor.CYAN, 64);
             blank.set(DataComponents.CUSTOM_NAME, Component.literal("Workshop"));
-            var plate = CreateCompat.plate(TileFacePreset.KANTO);
+            var plate = new ItemStack(CreateCompat.PRINTING_PLATE.get());
             plate.set(DataComponents.CUSTOM_NAME, Component.literal("Reusable plate"));
             var inputs = List.of(blank, blank.copy(), blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
                 new ItemStack(MahjongContent.MAHJONG_DYE), plate);
@@ -76,7 +76,7 @@ class CreateProcessingTest {
             var produced = stacks(basin.getOutputInventory());
             var printed = produced.stream().filter(s -> s.is(MahjongContent.BOX_ITEM)).findFirst().orElseThrow();
             assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(printed)));
-            assertEquals(TileFacePreset.KANTO, MahjongSupplies.deck(printed).preset());
+            assertEquals(TileFacePreset.KANSAI, MahjongSupplies.deck(printed).preset());
             assertTrue(produced.stream().anyMatch(s -> ItemStack.matches(s, plate)));
             assertFalse(BasinRecipe.apply(basin, recipes.getFirst()), "A stale transaction cannot be repeated");
 
@@ -143,8 +143,11 @@ class CreateProcessingTest {
                 new ItemStack(Items.WHITE_DYE))).outputs().getFirst().getCount());
 
             for (String id : List.of("blanks_bone", "blank_point_sticks", "mahjong_dye", "red_dora_dye", "undo_dye",
-                    "printing_plate_kansai", "printing_plate_kanto", "mahjong_box"))
+                    "printing_plate", "mahjong_box"))
                 assertTrue(server.getRecipeManager().byKey(MahjongContent.id("create/" + id)).isPresent(), id);
+            assertTrue(server.getRecipeManager().byKey(MahjongContent.id("create/printing_plate_kanto")).isEmpty());
+            var plateRecipe = server.getRecipeManager().byKey(MahjongContent.id("create/printing_plate")).orElseThrow();
+            assertFalse(plateRecipe.value().getResultItem(server.registryAccess()).has(top.skyeyefast.mchjong.item.MahjongComponents.FACE_PRESET));
             for (String id : List.of("blanks_bone", "blank_point_sticks", "mahjong_dye")) {
                 assertTrue(com.simibubi.create.AllRecipeTypes.shouldIgnoreInAutomation(
                     server.getRecipeManager().byKey(MahjongContent.id(id)).orElseThrow()));
