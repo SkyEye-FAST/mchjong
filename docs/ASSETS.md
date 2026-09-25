@@ -149,8 +149,9 @@ Several back presets can share one ZIP, which contains only back presets.
 The mahjong box's back selector applies
 the chosen preset to its stored tiles independently of dye. Server presets are
 sent to joining players; an unavailable ID uses the transparent default pattern.
-The built-in back choices are Creeper and Mojang emblem. Their artwork is generated
-with the mod and is available to every player without a preset ZIP.
+The built-in back choices are Creeper and Mojang banner marks in a single ink
+color. Their artwork is generated with the mod and is available to every player
+without a preset ZIP.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
