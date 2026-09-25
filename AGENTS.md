@@ -16,7 +16,9 @@ Deliver complete, runnable increments. Choose the simplest implementation that
 meets the requirements, extend existing components and dependencies, and keep
 concerns separate. Check library documentation and types before implementing
 equivalent functionality. Remove obsolete implementation paths rather than
-adding compatibility layers, migrations or speculative configuration.
+adding compatibility layers, migrations or speculative configuration. Update
+`CHANGELOG.md` under `## [Unreleased]` after every edit to document user-visible
+and technical changes.
 
 ## Ownership and architecture
 
@@ -80,6 +82,9 @@ persistence and recipe identity in `SUPPLIES.md`; module ownership in
 `COMPATIBILITY.md`; build, branch synchronization and release procedures in
 `DEVELOPMENT.md`; and commands, fixtures and acceptance records in
 `VERIFICATION.md`. Link to the owning guide rather than duplicating its paragraphs.
+Update `CHANGELOG.md` under `## [Unreleased]` after every edit that modifies
+behavior, fixes bugs, introduces features, or adjusts assets and compatibility,
+categorizing changes under Keep a Changelog headings (`Added`, `Changed`, `Fixed`).
 
 Before changing screens, widgets, HUDs, inventory UI or physical table layout,
 read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`, `MahjongButton`,
@@ -173,7 +178,10 @@ default assessment.
 
 If the release assessment changes the target, first update `mod_version` to that
 target with `-SNAPSHOT` before releasing, such as `0.3.3-SNAPSHOT` to
-`0.4.0-SNAPSHOT`. Release tags are pure SemVer without a prefix, for example
+`0.4.0-SNAPSHOT`. Move accumulated entries under `## [Unreleased]` in
+`CHANGELOG.md` into the formal version section `## [x.y.z] - YYYY-MM-DD`, retain
+an empty `## [Unreleased]` section above it, and update the release links at the
+end of the changelog. Release tags are pure SemVer without a prefix, for example
 `0.4.0`. The Release workflow requires the tag to equal `mod_version` with the
 `-SNAPSHOT` suffix removed and supplies `-Pmod_version=$GITHUB_REF_NAME` so the
 published JARs contain the formal version rather than the Snapshot version.

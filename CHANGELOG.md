@@ -7,6 +7,32 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.
+- Mahjong box tile-back selector screen allowing players to inspect and choose from available tile-back presets.
+- Personal preset configuration screen for selecting custom riichi stick models and localized voice announcements.
+- Built-in banner tile-back preset and vanilla item riichi stick presets.
+- Sequential voice playback and score announcements during settlement, with synchronized yaku highlights.
+- Dedicated voice and sound event distinguishing double riichi declarations.
+- Configurable match rule awarding player experience points according to final uma standings.
+- Create workshop recipe animations across recipe viewers, including REI recipe support on NeoForge.
+
+### Changed
+
+- Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
+- Create workshop Kansai face printing uses a single face plate.
+
+### Fixed
+
+- Tile faces fall back to default Kansai artwork when a requested custom preset archive is unavailable.
+- HUD deposit counters and score displays retain standard riichi stick icons regardless of personal stick presets.
+- Red five composition automatically adjusts to the available tile stock when initializing table rules.
+- Rule navigation page order and hand visibility option ordering match the settings screen layout.
+- Immersive focus indicator size is enlarged for clearer tile targeting.
+- Immersive table cloth boundaries and meld placement align accurately with physical tile positions.
+- Built-in banner tile-back artwork renders with clean single-color marks.
+
 ## [0.7.2] - 2026-09-25
 
 ### Added
