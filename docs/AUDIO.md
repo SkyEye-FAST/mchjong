@@ -33,8 +33,21 @@ display name:
 name = "Announcer"
 ```
 
-Recording filenames can be `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`, `tsumo`,
-`draw_end` or `match_end`, followed by `.ogg`. A preset needs at least one
+Action recording filenames are `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`,
+`tsumo`, `draw_end` and `match_end`, followed by `.ogg`.
+Settlement recordings use `yaku.<name>.ogg`, where `<name>` is the suffix of the
+corresponding `yaku.mchjong.<name>` translation key. For example, use
+`voices/yaku.riichi.ogg`, `voices/yaku.menzen_tsumo.ogg` and
+`voices/yaku.suuankou_tanki.ogg`. Declaration and settlement recordings are
+independent. Dora uses `yaku.dora.ogg`, `yaku.dora_2.ogg` through
+`yaku.dora_12.ogg`, and `yaku.dora_many.ogg` above twelve; a missing counted
+recording falls back to `yaku.dora.ogg` within the same preset.
+
+Hand grades use `score.mangan`, `score.haneman`, `score.baiman`,
+`score.sanbaiman`, `score.kazoe_yakuman`, `score.yakuman` and
+`score.yakuman_2` through `score.yakuman_6`, followed by `.ogg`.
+`assets/mchjong/sounds.json` is the complete recording-ID and subtitle catalog.
+A preset needs at least one
 recording. Use Ogg Vorbis, mono or stereo, at 8–96 kHz. **Each recording must be
 at most 8 seconds long.** Both the archive reader and the client decoder enforce
 the limit. Restart the server after changing server ZIPs; reload client

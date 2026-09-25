@@ -84,13 +84,18 @@ class PresetArchivesTest {
         try (var zip = new ZipOutputStream(Files.newOutputStream(directory.resolve("voices.zip")))) {
             put(zip, "smoke/first/preset.toml", "name = \"First\"\n".getBytes(StandardCharsets.UTF_8));
             put(zip, "smoke/first/voices/ron.ogg", ogg(8000));
+            for (String event : top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.keySet())
+                put(zip, "smoke/first/voices/" + event + ".ogg", ogg(8000));
             put(zip, "smoke/second/preset.toml", "name = \"Second\"\n".getBytes(StandardCharsets.UTF_8));
             put(zip, "smoke/second/voices/riichi.ogg", ogg(8000));
         }
         var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.VOICE);
         assertEquals(2, presets.voices().size());
-        assertEquals(2, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.VOICE)),
-            PresetArchives.Kind.VOICE).voices().size());
+        var restored = PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.VOICE)),
+            PresetArchives.Kind.VOICE);
+        assertEquals(2, restored.voices().size());
+        assertEquals(1 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(),
+            restored.voices().get(net.minecraft.resources.ResourceLocation.parse("smoke:first")).recordings().size());
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK));
     }
 

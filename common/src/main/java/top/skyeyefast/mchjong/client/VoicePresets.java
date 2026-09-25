@@ -9,6 +9,7 @@ import java.util.HashSet;
 import java.util.HexFormat;
 import java.util.List;
 import java.util.Map;
+import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.resources.sounds.AbstractSoundInstance;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
@@ -23,6 +24,7 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import net.minecraft.util.valueproviders.ConstantFloat;
 import top.skyeyefast.mchjong.config.PresetArchives;
+import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.world.MahjongSounds;
 
 /** ZIP recordings are decoded from memory through Minecraft's sound engine. */
@@ -33,6 +35,8 @@ public final class VoicePresets {
     private static Map<ResourceLocation, byte[]> localAudio = Map.of(), serverAudio = Map.of();
     private static volatile Map<ResourceLocation, byte[]> audio = Map.of();
     private static List<ResourceLocation> choices = List.of(DEFAULT);
+    private static SoundInstance current;
+    private static long started;
     private VoicePresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
@@ -114,20 +118,45 @@ public final class VoicePresets {
     }
 
     public static void play(String event, float volume) {
+        stopCurrent();
+        if (volume <= 0 || !MahjongSounds.VOICES.contains(event)) return;
         var selected = TableSettings.get().voicePreset;
-        if (DEFAULT.equals(selected)) {
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, volume));
-            return;
-        }
         var definition = server.getOrDefault(selected, local.get(selected));
-        if (definition == null) {
-            Minecraft.getInstance().getSoundManager().play(SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, volume));
-            return;
+        var manager = Minecraft.getInstance().getSoundManager();
+        if (DEFAULT.equals(selected) || definition == null) {
+            current = SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, volume);
+            if (current.resolve(manager) == null || current.getSound() == SoundManager.EMPTY_SOUND) current = null;
+            if (current == null && event.startsWith("yaku.dora_")) {
+                current = SimpleSoundInstance.forUI(MahjongSounds.voice("yaku.dora"), 1, volume);
+                if (current.resolve(manager) == null || current.getSound() == SoundManager.EMPTY_SOUND) current = null;
+            }
+        } else {
+            var sound = definition.recordings().get(event);
+            if (sound == null && event.startsWith("yaku.dora_")) sound = definition.recordings().get("yaku.dora");
+            if (sound != null) current = new Recording(sound, volume);
         }
-        var sound = definition.recordings().get(event);
-        if (sound != null) Minecraft.getInstance().getSoundManager().play(new Recording(sound, volume));
+        if (current != null) {
+            started = Util.getMillis();
+            manager.play(current);
+        }
+    }
+
+    /** Allow asynchronous decoding to start, and bound resource-pack recordings too. */
+    public static boolean playing() {
+        if (current == null) return false;
+        long elapsed = Util.getMillis() - started;
+        if (elapsed < ScoreAnnouncements.MAX_VOICE_MILLIS + 250
+                && (elapsed < 250 || Minecraft.getInstance().getSoundManager().isActive(current))) return true;
+        stopCurrent();
+        return false;
+    }
+
+    private static void stopCurrent() {
+        if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
+        current = null;
     }
     public static void stop() {
+        stopCurrent();
         var manager = Minecraft.getInstance().getSoundManager();
         for (String event : MahjongSounds.VOICES) manager.stop(MahjongSounds.voice(event).getLocation(), null);
         for (var definition : local.values()) for (var sound : definition.recordings().values()) manager.stop(sound, null);
