@@ -23,9 +23,11 @@ object HandAnalyzer {
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
         hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())
 
+    @JvmStatic
     fun yakuValues(names: List<String>, closed: Boolean, rules: RuleConfig): List<ReplayHand.Yaku> {
         val yakus = Yakus(options(rules))
         return names.map { name ->
+            if (name == "Nagashi") return@map ReplayHand.Yaku(name, 5, false)
             if (name == "Renhou" && rules.renhouMangan()) return@map ReplayHand.Yaku(name, 5, false)
             val yaku = yakus.getYaku(name)
             ReplayHand.Yaku(name, yaku.han - if (closed) 0 else yaku.furoLoss, yaku.isYakuman)

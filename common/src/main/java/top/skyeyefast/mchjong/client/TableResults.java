@@ -16,7 +16,6 @@ import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -27,6 +26,7 @@ public final class TableResults extends AbstractWidget {
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
     private final TableView view;
+    private final List<List<ScoreAnnouncements.Row>> receipts;
     private final TileFacePreset preset;
     private final TileMaterial material;
     private final DyeColor dye;
@@ -52,6 +52,7 @@ public final class TableResults extends AbstractWidget {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
+        this.receipts = view.wins().stream().map(win -> ScoreAnnouncements.rows(view, win)).toList();
         this.preset = preset;
         this.material = material;
         this.dye = dye;
@@ -114,7 +115,7 @@ public final class TableResults extends AbstractWidget {
             scoreTable(graphics, x + 8, top, width - 16, bottom - top);
         } else {
             boolean sidebar = width >= 500;
-            boolean strip = !sidebar && height >= 150;
+            boolean strip = !sidebar && height >= 220;
             int bodyWidth = width - 20 - (sidebar ? 156 : 0);
             int bodyHeight = bottom - top - (strip ? 40 : 0);
             if (view.wins().size() > 1) {
@@ -162,7 +163,7 @@ public final class TableResults extends AbstractWidget {
             var hand = new ArrayList<>(player.hand());
             hand.remove(Integer.valueOf(win.tile()));
             hand.add(win.tile());
-            int tileWidth = compact ? 16 : 22;
+            int tileWidth = compact ? 12 : 22;
             while (tileWidth > 5 && handWidth(hand.size(), player, win.seat(), tileWidth, 4) > span) tileWidth--;
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
@@ -177,33 +178,39 @@ public final class TableResults extends AbstractWidget {
             }
             y += tileWidth * 2 + 5;
         }
-        var yaku = new ArrayList<Component>();
-        for (String key : win.score().yaku()) yaku.add(Component.translatable(YakuCatalog.translationKey(key)));
-        if (win.score().dora() > 0) yaku.add(Component.translatable("ui.mchjong.dora", win.score().dora()));
+        var yaku = receipts.get(winner);
         int visible = readout == null ? yaku.size() : readout.visibleRows(winner);
         int columns = yaku.size() > 6 ? 2 : 1;
         int colWidth = span / columns;
         for (int first = 0; first < yaku.size(); first += columns) {
             int rowHeight = 0;
             for (int col = 0; col < columns && first + col < yaku.size(); col++) {
-                var lines = font.split(yaku.get(first + col), colWidth - 7);
+                var row = yaku.get(first + col);
+                Component han = Component.translatable("ui.mchjong.han", row.han());
+                int badgeWidth = row.han() > 0 ? font.width(han) + 8 : 0;
+                var lines = font.split(Component.translatable(row.translationKey()), Math.max(1, colWidth - badgeWidth - 13));
                 int color = readout != null && !readout.complete() && first + col == visible - 1 ? GOLD : TEXT;
-                for (int row = 0; row < lines.size(); row++) if (graphics != null && first + col < visible)
-                    graphics.drawString(font, lines.get(row), col * colWidth, y + row * 10, color, false);
-                rowHeight = Math.max(rowHeight, lines.size() * 10);
+                if (graphics != null && first + col < visible) {
+                    if (badgeWidth > 0) badge(graphics, han, col * colWidth + colWidth - badgeWidth - 7, y, false);
+                    for (int line = 0; line < lines.size(); line++)
+                        graphics.drawString(font, lines.get(line), col * colWidth, y + 2 + line * 10, color, false);
+                }
+                rowHeight = Math.max(rowHeight, Math.max(13, lines.size() * 10 + 3));
             }
             y += rowHeight + 2;
         }
         // Reserve the complete receipt from the first frame, so new rows never move the hand.
+        String limit = ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer());
         if (scored) {
             int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
             Component points = Component.translatable("ui.mchjong.points", gain);
-            String limit = ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer());
-            if (limit != null && (readout == null || Util.getMillis() - readout.scoredAt(winner) >= 350))
-                points = points.copy().append("  ").append(Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit)));
-            text(graphics, points, 0, y + 2, span, GOLD);
+            Component grade = limit == null ? Component.empty() : Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit));
+            int gradeWidth = limit == null ? 0 : font.width(grade) + 8;
+            text(graphics, points, 0, y + 2, compact && limit != null ? span - gradeWidth - 8 : span, GOLD);
+            if (graphics != null && limit != null && (readout == null || Util.getMillis() - readout.scoredAt(winner) >= 350))
+                badge(graphics, grade, compact ? span - gradeWidth : 0, compact ? y : y + 16, true);
         }
-        y += 16;
+        y += compact || limit == null ? 16 : 33;
         if (win.tile() >= 0) {
             y += 4;
             int leftHeight = indicators(graphics, 0, y, span / 2 - 4, false, compact);
@@ -336,13 +343,20 @@ public final class TableResults extends AbstractWidget {
     private void text(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
         if (graphics != null) graphics.drawString(font, font.plainSubstrByWidth(text.getString(), Math.max(1, span)), x, y, color, false);
     }
+    private void badge(GuiGraphics graphics, Component text, int x, int y, boolean grade) {
+        graphics.fill(x, y, x + font.width(text) + 8, y + 13, grade ? GOLD : MahjongUi.SELECTED);
+        graphics.drawString(font, text, x + 4, y + 2, grade ? MahjongUi.INPUT : TEXT, false);
+    }
     private void line(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
         text(graphics, text, x, y, span, color);
         if (font.width(text) > span) hits.add(new Hit(x, y, span, 10, text));
     }
     private Component winnerSummary(TableView.Win win) {
         var summary = TableScreen.playerName(view, win.seat()).copy();
-        for (String yaku : win.score().yaku()) summary.append("  ").append(Component.translatable(YakuCatalog.translationKey(yaku)));
+        for (var row : receipts.get(view.wins().indexOf(win))) {
+            summary.append("  ").append(Component.translatable(row.translationKey()));
+            if (row.han() > 0) summary.append(" ").append(Component.translatable("ui.mchjong.han", row.han()));
+        }
         return summary;
     }
 

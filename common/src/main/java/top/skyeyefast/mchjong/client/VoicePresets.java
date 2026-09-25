@@ -131,13 +131,8 @@ public final class VoicePresets {
         if (DEFAULT.equals(selected) || definition == null) {
             current = SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, volume);
             if (current.resolve(manager) == null || current.getSound() == SoundManager.EMPTY_SOUND) current = null;
-            if (current == null && event.startsWith("yaku.dora_")) {
-                current = SimpleSoundInstance.forUI(MahjongSounds.voice("yaku.dora"), 1, volume);
-                if (current.resolve(manager) == null || current.getSound() == SoundManager.EMPTY_SOUND) current = null;
-            }
         } else {
             var sound = definition.recordings().get(event);
-            if (sound == null && event.startsWith("yaku.dora_")) sound = definition.recordings().get("yaku.dora");
             if (sound != null) current = new Recording(sound, volume);
         }
         if (current != null) {

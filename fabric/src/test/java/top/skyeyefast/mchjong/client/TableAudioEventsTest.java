@@ -34,8 +34,12 @@ class TableAudioEventsTest {
     }
 
     private static TableView receipt(long revision, int hand, List<TableView.Win> wins) {
+        return receipt(revision, hand, wins, seats(), List.of());
+    }
+    private static TableView receipt(long revision, int hand, List<TableView.Win> wins,
+                                     List<TableView.Seat> seats, List<Integer> wall) {
         return new TableView(TABLE, revision, revision, hand, RuleSet.TENHOU_4.config(), Game.Phase.HAND_END, 0,
-            0, 0, 0, 0, 0, 0, 0, List.of(), null, seats(), List.of(), wins, "ron", List.of(), List.of(),
+            0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(),
             TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
 
@@ -101,6 +105,62 @@ class TableAudioEventsTest {
             assertEquals("score.yakuman" + (count == 1 ? "" : "_" + count), event);
             assertTrue(ScoreAnnouncements.SUBTITLES.containsKey(event));
         }
+    }
+
+    @Test void receiptOrdersYakuAndUsesOpenHandHanFromTheScoringLibrary() {
+        var score = new HandScore(9, 40, 0, 16000, 0, 0,
+            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku", "Richi", "Ippatsu"), 0);
+        var win = new TableView.Win(1, 0, 4, score);
+        var closed = receipt(1, 1, List.of(win));
+        var rows = ScoreAnnouncements.rows(closed, win);
+        assertEquals(List.of("yaku.riichi", "yaku.ippatsu", "yaku.haku", "yaku.seat_wind_south",
+            "yaku.round_wind_east", "yaku.chanta", "yaku.honitsu"), rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertEquals(List.of(1, 1, 1, 1, 1, 2, 3), rows.stream().map(ScoreAnnouncements.Row::han).toList());
+        var seats = seats();
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.PON, List.of(124, 125, 126), 0, 124)), List.of()));
+        var openWin = new TableView.Win(1, 0, 4, new HandScore(6, 40, 0, 12000, 0, 0,
+            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku"), 0));
+        var open = ScoreAnnouncements.rows(receipt(1, 1, List.of(openWin), seats, List.of()), openWin);
+        assertEquals(List.of(1, 1, 1, 1, 2), open.stream().map(ScoreAnnouncements.Row::han).toList());
+    }
+
+    @Test void bonusesHaveSeparateCountsAndThirteenOrMoreUsesOneRecording() {
+        var seats = seats();
+        seats.set(1, new TableView.Seat(false, "Player", true, false, false, 25000,
+            List.of(272, 112, 113, 4, 8, 12, 24, 28, 32, 40, 44, 48, 56, 60), -2,
+            List.of(), List.of(), List.of(120, 121), true, true, false));
+        var wall = new ArrayList<>(Collections.nCopies(14, -1));
+        wall.set(8, 108); // East indicator: two South tiles count as ura.
+        var win = new TableView.Win(1, 0, 60, new HandScore(9, 30, 0, 16000, 0, 0, List.of("Richi"), 8));
+        var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win), seats, wall), win);
+        assertEquals(List.of("yaku.riichi", "yaku.dora_3", "yaku.dora", "yaku.dora_2", "yaku.dora_2"),
+            rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertEquals(List.of("yaku.mchjong.riichi", "yaku.mchjong.dora", "yaku.mchjong.red_dora",
+            "yaku.mchjong.nuki_dora", "yaku.mchjong.ura_dora"), rows.stream().map(ScoreAnnouncements.Row::translationKey).toList());
+        assertEquals(List.of(1, 3, 1, 2, 2), rows.stream().map(ScoreAnnouncements.Row::han).toList());
+        var player = seats.get(1);
+        seats.set(1, new TableView.Seat(false, "Player", true, false, false, 25000,
+            player.hand().subList(1, 14), -2, List.of(), List.of(), player.norths(), true, true, false));
+        wall.set(8, 116); // West indicator: extracted North tiles also count as ura.
+        var redRon = new TableView.Win(1, 0, 272, new HandScore(7, 30, 0, 12000, 0, 0, List.of("Richi"), 6));
+        var ronRows = ScoreAnnouncements.rows(receipt(1, 1, List.of(redRon), seats, wall), redRon);
+        assertEquals(List.of(1, 1, 1, 2, 2), ronRows.stream().map(ScoreAnnouncements.Row::han).toList(),
+            "Include the claimed red tile and ura on extracted North tiles exactly once");
+        for (int count : List.of(1, 2, 12, 13, 14, 20)) {
+            var counted = new TableView.Win(1, 0, 4, new HandScore(count + 1, 30, 0, 32000, 0, 0, List.of("Richi"), count));
+            var last = ScoreAnnouncements.rows(receipt(1, 1, List.of(counted)), counted).getLast();
+            assertEquals("yaku.dora" + (count == 1 ? "" : count < 13 ? "_" + count : "_many"), last.voice());
+            assertEquals(count, last.han());
+        }
+    }
+
+    @Test void yakumanOrderExcludesOrdinaryYakuAndAllBonuses() {
+        var win = new TableView.Win(1, 0, 4, new HandScore(78, 0, 6, 192000, 0, 0,
+            List.of("Daisushi", "SuankoTanki", "Tsuiso", "Chihou", "Richi", "Haku"), 13));
+        var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win)), win);
+        assertEquals(List.of("yaku.chihou", "yaku.tsuuiisou", "yaku.suuankou_tanki", "yaku.daisuushii"),
+            rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertTrue(rows.stream().allMatch(row -> row.han() == 0));
     }
 
     @Test void doubleRiichiUsesThePublicDeclarationAndKeepsItsSettlementRecordingSeparate() {

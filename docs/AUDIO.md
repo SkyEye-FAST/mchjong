@@ -16,7 +16,11 @@ Minecraft resource pack's `mchjong:voice.*` events.
 ## Settlement playback
 
 Winning settlements reveal one yaku at a time, playing its recording and waiting
-for playback to finish before continuing. Counted dora follows the yaku. Each
+for playback to finish before continuing. The receipt and narration share a fixed
+yaku order. Ordinary yaku show their individual han after open-hand reductions;
+natural yakuman show only their applicable yakuman rows. Bonus rows follow in
+this order: dora, red dora, extracted-north dora, ura dora. Each row uses its own
+counted recording, with thirteen or more sharing the same recording. Each
 winner's points appear before the one applicable hand-grade recording; grade
 names are not played as a ladder. Multiple winners are read in order. Missing
 recordings and muted voices retain a short visual cadence rather than blocking
@@ -59,9 +63,15 @@ Settlement recordings use `yaku.<name>.ogg`, where `<name>` is the suffix of the
 corresponding `yaku.mchjong.<name>` translation key. For example, use
 `voices/yaku.riichi.ogg`, `voices/yaku.menzen_tsumo.ogg` and
 `voices/yaku.suuankou_tanki.ogg`. Declaration and settlement recordings are
-independent. Dora uses `yaku.dora.ogg`, `yaku.dora_2.ogg` through
-`yaku.dora_12.ogg`, and `yaku.dora_many.ogg` above twelve; a missing counted
-recording falls back to `yaku.dora.ogg` within the same preset.
+independent, including `double_riichi.ogg` and `yaku.double_riichi.ogg`.
+Seat-wind recordings use `yaku.seat_wind_east.ogg` through
+`yaku.seat_wind_north.ogg`; round winds use `yaku.round_wind_east.ogg` through
+`yaku.round_wind_north.ogg`.
+
+All four bonus rows share the counted recordings: `yaku.dora.ogg` is one tile,
+`yaku.dora_2.ogg` through `yaku.dora_12.ogg` select that many tiles, and
+`yaku.dora_many.ogg` selects thirteen or more. Each row chooses its recording
+independently from its own count.
 
 Hand grades use `score.mangan`, `score.haneman`, `score.baiman`,
 `score.sanbaiman`, `score.kazoe_yakuman`, `score.yakuman` and

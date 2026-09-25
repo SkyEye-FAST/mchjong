@@ -652,6 +652,7 @@
   "ui.mchjong.focus": "応答を待っています",
   "ui.mchjong.furiten": "フリテン",
   "ui.mchjong.furiten_hint": "フリテン：ロンできません。ツモ和了は可能です。",
+  "ui.mchjong.han": "%s翻",
   "ui.mchjong.han_fu": "%1$s翻%2$s符",
   "ui.mchjong.help": "牌を選び、引き出し線の選択肢から操作してください",
   "ui.mchjong.help.confirm": "クリック 選択、Enter 確定、%s リーチ、%s パス",
@@ -747,6 +748,7 @@
   "yaku.mchjong.chuuren_poutou": "九蓮宝燈",
   "yaku.mchjong.daisangen": "大三元",
   "yaku.mchjong.daisuushii": "大四喜",
+  "yaku.mchjong.dora": "ドラ",
   "yaku.mchjong.double_riichi": "ダブル立直",
   "yaku.mchjong.haitei_raoyue": "海底摸月",
   "yaku.mchjong.haku": "白",
@@ -762,7 +764,9 @@
   "yaku.mchjong.kokushi_thirteen_waiting": "国士無双十三面待ち",
   "yaku.mchjong.menzen_tsumo": "門前清自摸和",
   "yaku.mchjong.nagashi_mangan": "流し満貫",
+  "yaku.mchjong.nuki_dora": "抜きドラ",
   "yaku.mchjong.pinhu": "平和",
+  "yaku.mchjong.red_dora": "赤ドラ",
   "yaku.mchjong.renhou": "人和",
   "yaku.mchjong.riichi": "立直",
   "yaku.mchjong.rinshan_kaihou": "嶺上開花",
@@ -782,5 +786,6 @@
   "yaku.mchjong.tanyao": "断幺九",
   "yaku.mchjong.tenhou": "天和",
   "yaku.mchjong.toitoi": "対々和",
-  "yaku.mchjong.tsuuiisou": "字一色"
+  "yaku.mchjong.tsuuiisou": "字一色",
+  "yaku.mchjong.ura_dora": "裏ドラ"
 }

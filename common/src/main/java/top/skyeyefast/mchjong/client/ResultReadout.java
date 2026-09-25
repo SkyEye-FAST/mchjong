@@ -21,7 +21,7 @@ public final class ResultReadout {
 
     public ResultReadout(TableView view, long now) {
         table = view.tableId(); hand = view.handNumber(); viewer = view.viewerSeat(); wins = view.wins();
-        rows = wins.stream().map(win -> ScoreAnnouncements.rows(win.score())).toList();
+        rows = wins.stream().map(win -> ScoreAnnouncements.rows(view, win).stream().map(ScoreAnnouncements.Row::voice).toList()).toList();
         limits = wins.stream().map(win -> ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer())).toList();
         visible = new int[wins.size()];
         scored = new long[wins.size()];

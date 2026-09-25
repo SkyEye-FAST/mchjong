@@ -652,6 +652,7 @@
   "ui.mchjong.focus": "Waiting for a response",
   "ui.mchjong.furiten": "Furiten",
   "ui.mchjong.furiten_hint": "Furiten: you cannot win by ron; tsumo remains possible.",
+  "ui.mchjong.han": "%s han",
   "ui.mchjong.han_fu": "%1$s han, %2$s fu",
   "ui.mchjong.help": "Select a tile, then choose an action on its callout",
   "ui.mchjong.help.confirm": "Click Select, Enter Confirm, %s Riichi, %s Pass",
@@ -747,6 +748,7 @@
   "yaku.mchjong.chuuren_poutou": "Chuuren poutou",
   "yaku.mchjong.daisangen": "Daisangen",
   "yaku.mchjong.daisuushii": "Daisuushii",
+  "yaku.mchjong.dora": "Dora",
   "yaku.mchjong.double_riichi": "Double riichi",
   "yaku.mchjong.haitei_raoyue": "Haitei raoyue",
   "yaku.mchjong.haku": "White dragon",
@@ -762,7 +764,9 @@
   "yaku.mchjong.kokushi_thirteen_waiting": "Kokushi musou thirteen-sided wait",
   "yaku.mchjong.menzen_tsumo": "Menzen tsumo",
   "yaku.mchjong.nagashi_mangan": "Nagashi mangan",
+  "yaku.mchjong.nuki_dora": "North dora",
   "yaku.mchjong.pinhu": "Pinfu",
+  "yaku.mchjong.red_dora": "Red dora",
   "yaku.mchjong.renhou": "Blessing of Man",
   "yaku.mchjong.riichi": "Riichi",
   "yaku.mchjong.rinshan_kaihou": "Rinshan kaihou",
@@ -782,5 +786,6 @@
   "yaku.mchjong.tanyao": "Tanyao",
   "yaku.mchjong.tenhou": "Tenhou",
   "yaku.mchjong.toitoi": "Toitoi",
-  "yaku.mchjong.tsuuiisou": "Tsuuiisou"
+  "yaku.mchjong.tsuuiisou": "Tsuuiisou",
+  "yaku.mchjong.ura_dora": "Ura dora"
 }

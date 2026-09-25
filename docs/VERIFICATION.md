@@ -68,7 +68,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:neoforge:runSmokeCli
 | Flag | Existing fixture and evidence |
 | --- | --- |
 | `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets; `room-evidence` |
-| `-PsmokeSettlement=true` | Recorded sequential yaku, points-before-grade, multiple winners, four-language layouts, resizing and result navigation; `settlement-evidence` |
+| `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language layouts, resizing and result navigation; `settlement-evidence` |
 | `-PsmokeInterface=true` | Box transactions, carrier synchronization, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, zero-to-four melds, immersive controls, closed-screen camera and third-person stool; `seating-evidence` |
 | `-PsmokeVisibility=true` | Four room policies, seated and unmounted spectator views in four languages and two sizes; `visibility-evidence` |

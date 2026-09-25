@@ -255,7 +255,10 @@ inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
 
-`ResultReadout` retains one timeline per observed hand across widget rebuilds.
+`ScoreAnnouncements` supplies the same ordered rows to the receipt and narration,
+using the scoring library's per-yaku han and public winning tiles for the four
+bonus counts. Seat snapshots retain the server's double-riichi declaration for
+action recordings. `ResultReadout` retains one timeline per observed hand across widget rebuilds.
 It reveals each scored yaku and counted-dora row with its recording, then the
 winner's points, then the applicable hand grade. Multiple winners run in order;
 manual navigation completes the local readout without replaying it. The audio

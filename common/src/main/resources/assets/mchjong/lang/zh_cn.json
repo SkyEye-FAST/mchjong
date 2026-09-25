@@ -652,6 +652,7 @@
   "ui.mchjong.focus": "等待玩家响应",
   "ui.mchjong.furiten": "振听",
   "ui.mchjong.furiten_hint": "振听：不能荣和，仍可自摸。",
+  "ui.mchjong.han": "%s番",
   "ui.mchjong.han_fu": "%1$s番%2$s符",
   "ui.mchjong.help": "选中麻将牌后，再选择指引线旁的操作",
   "ui.mchjong.help.confirm": "单击选牌，Enter确认，%s立直，%s跳过",
@@ -747,6 +748,7 @@
   "yaku.mchjong.chuuren_poutou": "九莲宝灯",
   "yaku.mchjong.daisangen": "大三元",
   "yaku.mchjong.daisuushii": "大四喜",
+  "yaku.mchjong.dora": "宝牌",
   "yaku.mchjong.double_riichi": "两立直",
   "yaku.mchjong.haitei_raoyue": "海底摸月",
   "yaku.mchjong.haku": "白",
@@ -762,7 +764,9 @@
   "yaku.mchjong.kokushi_thirteen_waiting": "国士无双十三面",
   "yaku.mchjong.menzen_tsumo": "门前清自摸和",
   "yaku.mchjong.nagashi_mangan": "流局满贯",
+  "yaku.mchjong.nuki_dora": "拔北宝牌",
   "yaku.mchjong.pinhu": "平和",
+  "yaku.mchjong.red_dora": "赤宝牌",
   "yaku.mchjong.renhou": "人和",
   "yaku.mchjong.riichi": "立直",
   "yaku.mchjong.rinshan_kaihou": "岭上开花",
@@ -782,5 +786,6 @@
   "yaku.mchjong.tanyao": "断幺九",
   "yaku.mchjong.tenhou": "天和",
   "yaku.mchjong.toitoi": "对对和",
-  "yaku.mchjong.tsuuiisou": "字一色"
+  "yaku.mchjong.tsuuiisou": "字一色",
+  "yaku.mchjong.ura_dora": "里宝牌"
 }

@@ -176,9 +176,36 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "12-settlement-points.png");
             click(client, "Final standings");
+        } else if (ticks == 80) {
+            capture(client, output, "13-settlement-ranking.png");
+            var win = new TableView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
+                List.of("Daisushi", "SuankoTanki", "Tsuiso", "Tenhou"), 0));
+            var changes = List.of(288000, 0, -288000, 0);
+            var seats = new ArrayList<TableView.Seat>();
+            for (int seat = 0; seat < fixture.seats().size(); seat++) {
+                var player = fixture.seats().get(seat);
+                seats.add(new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(),
+                    player.ready(), 25000 + changes.get(seat), player.hand(), player.drawn(), player.melds(),
+                    player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
+            }
+            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber() + 1, fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+                fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
+                fixture.wallBreak(), fixture.wall(), null, seats, List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
+                List.of(win), "ron", changes, List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
+                fixture.handVisibility(), null, null, fixture.autoPlay(), false, 1);
+            acceptFixture(table, fixture);
+            TableAudio.finishResult();
+            client.setScreen(new TableScreen(table.getBlockPos()));
+        } else if (ticks == 85) {
+            capture(client, output, "13-yakuman.png");
+            client.options.guiScale().set(4);
+            client.resizeDisplay();
+        } else if (ticks == 90) {
+            checkBounds(client);
+            capture(client, output, "13-yakuman-smallest.png");
         } else if (ticks == 95) {
             checkBounds(client);
-            capture(client, output, "13-settlement-ranking.png");
             fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
                 fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
@@ -254,18 +281,18 @@ final class SettlementSmoke {
             List<Integer> hand = seat < 2 ? List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125)
                 : java.util.Collections.nCopies(13, Tile.HIDDEN);
             List<Meld> melds = switch (seat) {
-                case 0 -> List.of(new Meld(Meld.Type.PON, List.of(16, 17, 18), 1, 16));
+                case 0 -> List.of(new Meld(Meld.Type.CLOSED_KAN, List.of(16, 17, 18, 19), 0, Tile.ABSENT));
                 case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52),
                     new Meld(Meld.Type.CLOSED_KAN, List.of(56, 57, 58, 59), 1, 56));
                 case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
             seats.add(new TableView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
-                true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat < 2, seat < 2, false));
+                true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat == 0, seat < 2, false));
         }
-        var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(8, 40, 0, 24000, 8000, 8000,
+        var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
                 List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),
-            new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Richi", "Chanta", "Haku"), 1)));
+            new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
