@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-/** Both viewers use examples produced by the exact same adapters as the machines. */
+/** Recipe browsers use examples produced by the same adapters as the machines. */
 public final class CreateWorkshopDisplays {
     public record Display(ResourceLocation id, String operation, List<ItemStack> inputs, List<ItemStack> outputs, ItemStack machine) {
         public Component title() { return Component.translatable("browser.mchjong.create." + operation); }
@@ -84,7 +84,11 @@ public final class CreateWorkshopDisplays {
             if (!(holder.value() instanceof ProcessingRecipe<?, ?> recipe)) continue;
             if (recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.getItems().length == 0)) continue;
             var operation = recipe.getTypeInfo().getId().getPath();
-            var machine = operation.equals("cutting") ? AllBlocks.MECHANICAL_SAW.get() : AllBlocks.MECHANICAL_MIXER.get();
+            var machine = switch (operation) {
+                case "cutting" -> AllBlocks.MECHANICAL_SAW.get();
+                case "pressing", "compacting" -> AllBlocks.MECHANICAL_PRESS.get();
+                default -> AllBlocks.MECHANICAL_MIXER.get();
+            };
             var inputs = recipe.getIngredients().stream().map(ingredient -> ingredient.getItems()[0].copy()).toList();
             displays.add(new Display(holder.id(), operation, inputs, recipe.getRollableResultsAsItemStacks(), new ItemStack(machine)));
         }

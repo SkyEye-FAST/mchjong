@@ -94,8 +94,8 @@ one red 5m, two red 5p and one red 5s. The 148 tiles occupy exactly 45 tile slot
 and cover the no-red, three-red and four-red options. Their material, back and
 face preset must agree with the printed set for those rule options to use them.
 
-JEI and EMI show component-aware workshop examples alongside the ordinary
-recipes, with a basin below each mixer or press that needs one. Ponder's
+On NeoForge, JEI, EMI and REI show component-aware workshop examples alongside
+the ordinary recipes, with animated Create machines and their basins. Ponder's
 **Mahjong workshop** category provides production and dyeing
 guides on the printing plate, incomplete box and survival dyes, in all four
 supported languages.
@@ -119,7 +119,7 @@ and atomic packing. `compat/create` supplies immutable, exact-component recipes
 to native Create machines; Create controls processing time, ingredient
 consumption, filtering and output handling. Narrow machine-boundary adaptations
 allow repeated supply stacks and reserve sufficient output space for large
-batches. The JEI/EMI examples call these same adapters.
+batches. The NeoForge JEI/EMI/REI examples call these same adapters.
 
 For development, add `-PwithCreate=true` to a NeoForge run. The focused server
 check exercises actual basin and saw inventories, component preservation, output

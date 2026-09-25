@@ -49,12 +49,11 @@ public final class CreateWorkshopEmi implements EmiPlugin {
             widgets.addDrawable(0, 0, 178, 80, (graphics, mouseX, mouseY, delta) -> {
                 MahjongUi.panel(graphics, 0, 0, 178, 80);
                 MahjongUi.text(graphics, Minecraft.getInstance().font, display.title(), 4, 5, 170, MahjongUi.TEXT, false);
+                CreateWorkshopAnimation.render(graphics, display, 0, 0);
                 graphics.drawString(Minecraft.getInstance().font, "→", 105, 49, MahjongUi.ACCENT, false);
             });
             for (int i = 0; i < display.inputs().size(); i++) widgets.addSlot(EmiStack.of(display.inputs().get(i)), 4 + i % 3 * 18, 23 + i / 3 * 18);
             for (int i = 0; i < display.outputs().size(); i++) widgets.addSlot(EmiStack.of(display.outputs().get(i)), 125 + i % 2 * 18, 32 + i / 2 * 18).recipeContext(this);
-            widgets.addSlot(EmiStack.of(display.machine()), 81, 24).drawBack(false);
-            if (display.requiresBasin()) widgets.addSlot(EmiStack.of(AllBlocks.BASIN.get()), 81, 47).drawBack(false);
         }
     }
 }

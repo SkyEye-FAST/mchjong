@@ -12,6 +12,7 @@ import mezz.jei.api.recipe.RecipeIngredientRole;
 import mezz.jei.api.recipe.RecipeType;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.registration.IRecipeCategoryRegistration;
+import mezz.jei.api.registration.IRecipeCatalystRegistration;
 import mezz.jei.api.registration.IRecipeRegistration;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
@@ -34,6 +35,12 @@ public final class CreateWorkshopJei implements IModPlugin {
     @Override public void registerRecipes(IRecipeRegistration registration) {
         if (ModList.get().isLoaded("create")) registration.addRecipes(TYPE, CreateWorkshopDisplays.dynamic());
     }
+    @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
+        if (!ModList.get().isLoaded("create")) return;
+        registration.addRecipeCatalyst(new ItemStack(AllBlocks.MECHANICAL_PRESS.get()), TYPE);
+        registration.addRecipeCatalyst(new ItemStack(AllBlocks.MECHANICAL_MIXER.get()), TYPE);
+        registration.addRecipeCatalyst(new ItemStack(AllBlocks.DEPLOYER.get()), TYPE);
+    }
     private record Category(IDrawable icon) implements IRecipeCategory<CreateWorkshopDisplays.Display> {
         @Override public RecipeType<CreateWorkshopDisplays.Display> getRecipeType() { return TYPE; }
         @Override public Component getTitle() { return Component.translatable("browser.mchjong.create"); }
@@ -46,9 +53,6 @@ public final class CreateWorkshopJei implements IModPlugin {
                 5 + i % 3 * 18, 24 + i / 3 * 18).addItemStack(recipe.inputs().get(i));
             for (int i = 0; i < recipe.outputs().size(); i++) builder.addSlot(RecipeIngredientRole.OUTPUT,
                 126 + i % 2 * 18, 33 + i / 2 * 18).addItemStack(recipe.outputs().get(i));
-            builder.addSlot(RecipeIngredientRole.CATALYST, 82, 25).addItemStack(recipe.machine());
-            if (recipe.requiresBasin()) builder.addSlot(RecipeIngredientRole.CATALYST, 82, 48)
-                .addItemStack(new ItemStack(AllBlocks.BASIN.get()));
         }
         @Override public void draw(CreateWorkshopDisplays.Display recipe, IRecipeSlotsView slots, GuiGraphics graphics, double x, double y) {
             var font = Minecraft.getInstance().font;
@@ -56,7 +60,7 @@ public final class CreateWorkshopJei implements IModPlugin {
             MahjongUi.text(graphics, font, recipe.title(), 4, 5, 170, MahjongUi.TEXT, false);
             for (int i = 0; i < recipe.inputs().size(); i++) MahjongUi.slot(graphics, 5 + i % 3 * 18, 24 + i / 3 * 18, false);
             for (int i = 0; i < recipe.outputs().size(); i++) MahjongUi.slot(graphics, 126 + i % 2 * 18, 33 + i / 2 * 18, false);
-            if (recipe.requiresBasin()) MahjongUi.slot(graphics, 82, 48, false);
+            CreateWorkshopAnimation.render(graphics, recipe, 0, 0);
             graphics.drawString(font, "→", 105, 49, MahjongUi.ACCENT, false);
         }
     }
