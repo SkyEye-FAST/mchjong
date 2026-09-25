@@ -34,8 +34,15 @@ public final class MchjongNeoForge {
         if (net.neoforged.fml.ModList.get().isLoaded("create"))
             top.skyeyefast.mchjong.compat.create.CreateCompat.register(bus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
-            (net.neoforged.neoforge.event.server.ServerStartingEvent event) ->
-                top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
+            (net.neoforged.neoforge.event.server.ServerStartingEvent event) -> {
+                top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
+                top.skyeyefast.mchjong.config.ServerFacePresets.load(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
+            });
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+                if (event.getEntity() instanceof ServerPlayer player)
+                    top.skyeyefast.mchjong.config.ServerFacePresets.send(player);
+            });
         DeferredRegister<net.minecraft.core.component.DataComponentType<?>> components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) -> components.register(name, () -> type));
         components.register(bus);
@@ -96,7 +103,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("9");
+        var registrar = event.registrar("10");
         registrar.playToServer(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
@@ -118,6 +125,8 @@ public final class MchjongNeoForge {
             (payload, context) -> ClientTableNetworking.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload));
     }
 
     private void creativeTab(BuildCreativeModeTabContentsEvent event) {

@@ -16,8 +16,8 @@ The 45 faces use the individual PNG source tiles under
 Kansai respectively.
 `TileArtwork` maps their transparent engravings to runtime
 cells, including all three red fives, preserving proportions and antialiased
-edges. Both designs are ordinary mod resources selected in the mahjong box;
-there is no runtime pack installation or network access.
+edges. Both built-in designs are ordinary mod resources selected in the mahjong
+box and require no runtime pack installation or network access.
 
 Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
 under `META-INF/licenses/`. The supplied Kansai metadata identifies
@@ -35,43 +35,47 @@ All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.
-Resource packs can override or add definitions at
-`assets/<namespace>/tile_face_presets/<name>.json`. The file path defines the
-persistent preset ID `<namespace>:<name>`, for example:
+Custom presets are ZIP archives in `config/mchjong/client-presets/` on a client
+or `config/mchjong/server-presets/` on a server. Inside a ZIP,
+`<namespace>/<name>/preset.toml` defines the persistent
+preset ID `<namespace>:<name>`. The manifest can supply a display name:
 
-```json
-{"atlas":"example:textures/ink/tiles.png","glyphs":"example:textures/ink/tile_glyphs.png"}
+```toml
+name = "Ink"
 ```
 
-Supply both PNGs using this atlas layout. The box selector discovers definitions
-on every resource reload, ordered by namespaced ID. Override
-`assets/mchjong/tile_face_presets/kansai.json` or `kanto.json` to redirect a built-in
-design, or replace its PNGs directly. Pack priority follows Minecraft's normal
-resource selection. Add `preset.<namespace>.<name>` to the pack's language files
-(replace `/` in nested names with `.`), including `en_us`, `ja_jp`, `zh_cn` and
-`zh_tw`. The built-in flower labels remain associated with the stored preset.
+Place 45 transparent PNGs under
+`<namespace>/<name>/tiles/`. Their filenames are
+`1m`–`9m`, `1p`–`9p`, `1s`–`9s`, `1z`–`7z`, `0m`, `0p`, `0s`, and `1q`–`8q`,
+each followed by `.png`. They are fitted to the same face area as the supplied
+individual source images. The white dragon image is included; its printed face
+remains blank. The client assembles the images into render textures at load time.
+A ZIP can contain several `<namespace>/<name>/` directories.
+Reload client resources after changing local ZIPs.
 
 Printing stores only the preset ID on tiles and synchronizes it with table
-appearance. A client resource pack is sufficient to print a new design; the
-server validates the physical set, carrier, menu and dye transaction. Other
-players need the same resources to display the design. Removing the pack keeps
-stored IDs intact and removes its selector entries; unavailable designs display
-Minecraft's missing texture until their resources are installed.
+appearance. To offer presets to every player, place ZIP archives in the server's
+`config/mchjong/server-presets/` directory and restart the server. The mod sends the
+configured images to connecting players and adds them to their mahjong box
+selectors. ZIPs in a client's `config/mchjong/client-presets/` directory add presets to
+that client's selector; other players without those images see default Kansai faces.
+The server validates the physical set,
+carrier, menu and dye transaction. Removing an archive keeps stored IDs intact and
+removes its selector entries; unavailable designs display Kansai faces until
+their resources are installed.
 The asset test compares every atlas cell directly against its generated design,
 including all 45 distinct faces, red fives, flowers, opacity and the declared order.
 
 The bottom-right 32 by 32 pixels, beginning at (2016, 4064), are a solid white
 material swatch. Keep this swatch white when replacing the atlas: the renderer
 uses it for opaque face plates and table display colors, independently of the printed
-faces. Texture metadata enables linear filtering and clamping. GUI faces retain
-their independent linearly filtered atlas. World and item engravings use
-`TileFaceTexture`: it composites the resource-pack engraving over the white face
-plate before generating mipmaps with Minecraft's mip generator, preserving thin
-antialiased strokes without alpha-cutout loss. The shared face RenderType uses
-trilinear minification and linear magnification. The five mip levels of the native
-atlas retain exact cell and white-swatch boundaries; lower-resolution packs use
-fewer levels. Face UVs stop at half-pixel insets. The client smoke checks uploaded
-mip dimensions and live world/GUI filters, including after resource-pack reloads.
+faces. Built-in GUI faces retain their independent linearly filtered atlas. Built-in
+world and item engravings use `TileFaceTexture`: it composites the engraving over
+the white face plate before generating mipmaps with Minecraft's mip generator.
+Configured presets are assembled from individual images with the same white
+backing and linear filtering. The native atlas's five mip levels retain exact
+cell and white-swatch boundaries. Face UVs stop at half-pixel insets. The client
+smoke checks built-in mip dimensions and live world/GUI filters after resource reloads.
 The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
 proportions and the physical tile envelope.
 
@@ -262,8 +266,8 @@ additionally exercise the world render paths.
 tile-body textures, including their live pixel sampling state.
 
 Both `:fabric:runSmokeClient -PsmokeInterface=true` and its NeoForge equivalent
-also install a generated test resource pack, discover and print a new preset
-through the real packet, override a built-in definition, verify replacement
-riichi geometry, capture default/custom table patterns, then remove the pack
+also load local and server preset ZIPs, print a local preset through the real
+packet, override a built-in definition with a test resource pack, verify replacement
+riichi geometry, capture default/custom table patterns, then remove the local ZIP
 and check the reloaded preset list. Captures are under
 `build/smoke/interface-evidence/resource-default` and `resource-custom`.

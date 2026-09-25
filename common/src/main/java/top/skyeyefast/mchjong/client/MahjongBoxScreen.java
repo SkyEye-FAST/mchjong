@@ -50,7 +50,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     }
 
     private Component presetLabel() {
-        return Component.translatable("box.mchjong.preset_choice", Component.translatable(preset.translationKey()));
+        return Component.translatable("box.mchjong.preset_choice", TileFacePresets.label(preset));
     }
 
     private void updateActions() {

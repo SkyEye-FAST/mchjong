@@ -35,6 +35,7 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();
+            top.skyeyefast.mchjong.client.TileFacePresets.tick();
         });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
@@ -48,5 +49,7 @@ public final class MchjongClient implements ClientModInitializer {
             (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.ReplayPayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE,
+            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload)));
     }
 }

@@ -13,7 +13,8 @@ public final class TileRenderTypes extends RenderType {
         var texture = TileMesh.glyphs(preset);
         if (texture.equals(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation()))
             return RenderType.entityCutout(texture);
-        return FACE_TYPES.computeIfAbsent(texture, TileRenderTypes::faceMaterial);
+        return FACE_TYPES.computeIfAbsent(texture, location -> TileFacePresets.dynamicTexture(location)
+            ? material("mchjong_tile_faces", new TextureStateShard(location, true, false)) : faceMaterial(location));
     }
     public static final ResourceLocation PLAIN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);

@@ -32,7 +32,7 @@ and `mchjong:incomplete_mahjong_box` for the [workshop](CREATE.md).
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
-| `mchjong:face_preset` | Built-in `kansai` or `kanto`, or a resource-pack preset | Tile-face design |
+| `mchjong:face_preset` | Built-in `kansai` or `kanto`, or a configured ZIP preset | Tile-face design |
 | `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
 | `minecraft:container` | Native item-stack container | Mahjong boxes |

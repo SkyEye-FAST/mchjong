@@ -39,8 +39,12 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
-            top.skyeyefast.mchjong.world.WorldSettings::of);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            top.skyeyefast.mchjong.world.WorldSettings.of(server);
+            top.skyeyefast.mchjong.config.ServerFacePresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+            top.skyeyefast.mchjong.config.ServerFacePresets.send(handler.player));
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->
             Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, MahjongContent.id(name), type));
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->
@@ -81,6 +85,7 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,

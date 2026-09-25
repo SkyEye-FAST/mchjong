@@ -28,8 +28,14 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public final class MchjongForge {
     public MchjongForge(FMLJavaModLoadingContext context) {
         var bus = context.getModEventBus();
-        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) ->
-            top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
+            top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
+            top.skyeyefast.mchjong.config.ServerFacePresets.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+        });
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+                top.skyeyefast.mchjong.config.ServerFacePresets.send(player);
+        });
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->
             top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));
         var components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);

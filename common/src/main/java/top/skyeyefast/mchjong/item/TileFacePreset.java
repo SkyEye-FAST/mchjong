@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.item;
 import com.mojang.serialization.Codec;
 import net.minecraft.resources.ResourceLocation;
 
-/** Persistent cosmetic identity; resource-pack definitions belong exclusively to the client. */
+/** Persistent cosmetic identity; images are resolved on each client. */
 public record TileFacePreset(ResourceLocation id) {
     public static final TileFacePreset KANSAI = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kansai"));
     public static final TileFacePreset KANTO = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kanto"));

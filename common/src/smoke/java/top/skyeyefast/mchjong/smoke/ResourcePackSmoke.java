@@ -20,13 +20,17 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 /** Real pack selection, native model baking, cosmetic-ID packets and removal/reload. */
 final class ResourcePackSmoke {
     private static final TileFacePreset CUSTOM = new TileFacePreset(ResourceLocation.parse("smoke:custom"));
+    private static final TileFacePreset SERVER = new TileFacePreset(ResourceLocation.parse("smoke:server"));
     private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke(true);
     private CompletableFuture<Void> pending;
+    private CompletableFuture<?> serverSync;
+    private Path localArchive;
     private List<String> selected;
     private int stage, ticks;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) throws Exception {
         if (++ticks > 1800) throw new IllegalStateException("Resource pack smoke timed out at " + stage);
+        if (stage == 1 && serverSync.isCompletedExceptionally()) serverSync.join();
         if (stage == 0) {
             Files.createDirectories(output.resolve("resource-default"));
             if (!baseline.tick(client, table, output.resolve("resource-default"))) return false;
@@ -34,9 +38,18 @@ final class ResourcePackSmoke {
             Path pack = client.gameDirectory.toPath().resolve("resourcepacks/mchjong-smoke-custom");
             write(pack, "pack.mcmeta", "{\"pack\":{\"pack_format\":34,\"description\":\"MChjong resource smoke\"}}");
             String definition = "{\"atlas\":\"mchjong:textures/tiles.png\",\"glyphs\":\"mchjong:textures/tile_glyphs.png\"}";
-            write(pack, "assets/smoke/tile_face_presets/custom.json", definition);
-            for (String language : List.of("en_us", "ja_jp", "zh_cn", "zh_tw"))
-                write(pack, "assets/smoke/lang/" + language + ".json", "{\"preset.smoke.custom\":\"Resource Pack Test\"}");
+            Path images = output.resolve("preset-tiles");
+            for (String key : top.skyeyefast.mchjong.config.PresetArchives.TILE_KEYS)
+                tileImage(images.resolve(key + ".png"), key);
+            localArchive = client.gameDirectory.toPath().resolve("config/mchjong/client-presets/local.zip");
+            archive(localArchive, "custom", "Local Test", images);
+            Path serverConfig = output.resolve("server-config");
+            archive(serverConfig.resolve("mchjong/server-presets/server.zip"), "server", "Server Test", images);
+            serverSync = client.getSingleplayerServer().submit(() -> {
+                top.skyeyefast.mchjong.config.ServerFacePresets.load(serverConfig);
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
+                top.skyeyefast.mchjong.config.ServerFacePresets.send(player);
+            });
             write(pack, "assets/mchjong/tile_face_presets/kanto.json", definition);
             backPattern(pack.resolve("assets/mchjong/textures/tile/back.png"));
             pattern(pack.resolve("assets/mchjong/textures/furniture/cloth_pattern.png"), 256, 256);
@@ -52,8 +65,14 @@ final class ResourcePackSmoke {
             client.getResourcePackRepository().setSelected(packs);
             pending = client.reloadResourcePacks();
             stage = 1; ticks = 0;
-        } else if (stage == 1 && ready(client)) {
+        } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)) {
+            serverSync.join();
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
+            require(TileMesh.atlas(SERVER).getPath().contains("server_faces"), "Server ZIP artwork was not delivered");
+            var worldFaces = (net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
+                .getTexture(TileMesh.glyphs(SERVER));
+            require(worldFaces.getPixels() != null && (worldFaces.getPixels().getPixelRGBA(0, 0) >>> 24) == 255,
+                "Server face texture lost its opaque white backing");
             require(TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Built-in preset override was ignored");
             float maxY = 0;
             for (var quad : RiichiStickModel.baked().getQuads(null, null, net.minecraft.util.RandomSource.create(0))) {
@@ -76,8 +95,16 @@ final class ResourcePackSmoke {
         } else if (stage == 2 && pending.isDone() && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen && ticks > 20) {
             pending.join();
             var selector = button(client, "box.mchjong.preset_choice");
+            String serverLabel = net.minecraft.network.chat.Component.translatable("box.mchjong.preset_choice",
+                net.minecraft.network.chat.Component.literal("Server Test")).getString();
+            for (int i = 0; i < TileFacePresets.choices().size() && !selector.getMessage().getString().equals(serverLabel); i++) selector.onPress();
+            require(selector.getMessage().getString().equals(serverLabel), "Server preset missing from selector");
+            stage = 21; ticks = 0;
+        } else if (stage == 21 && ticks > 4) {
+            Screenshot.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
+            var selector = button(client, "box.mchjong.preset_choice");
             String label = net.minecraft.network.chat.Component.translatable("box.mchjong.preset_choice",
-                net.minecraft.network.chat.Component.translatable(CUSTOM.translationKey())).getString();
+                net.minecraft.network.chat.Component.literal("Local Test")).getString();
             for (int i = 0; i < TileFacePresets.choices().size() && !selector.getMessage().getString().equals(label); i++) selector.onPress();
             require(selector.getMessage().getString().equals(label), "New preset missing from selector");
             button(client, "box.mchjong.print").onPress();
@@ -112,6 +139,7 @@ final class ResourcePackSmoke {
         } else if (stage == 7 && ticks > 20) {
             Screenshot.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), ignored -> {});
             client.screen.onClose();
+            Files.delete(localArchive);
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;
@@ -142,6 +170,29 @@ final class ResourcePackSmoke {
         Path target = root.resolve(name);
         Files.createDirectories(target.getParent());
         Files.writeString(target, content);
+    }
+    private static void tileImage(Path path, String key) throws java.io.IOException {
+        Files.createDirectories(path.getParent());
+        try (var image = new NativeImage(16, 16, false)) {
+            int color = 0xff000000 | (key.hashCode() & 0x00ffffff);
+            for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++)
+                image.setPixelRGBA(x, y, x >= 3 && x < 13 && y >= 3 && y < 13 ? color : 0);
+            image.writeToFile(path);
+        }
+    }
+    private static void archive(Path target, String preset, String label, Path images) throws java.io.IOException {
+        Files.createDirectories(target.getParent());
+        try (var zip = new java.util.zip.ZipOutputStream(Files.newOutputStream(target))) {
+            String root = "smoke/" + preset;
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/preset.toml"));
+            zip.write(("name = \"" + label + "\"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+            for (String key : top.skyeyefast.mchjong.config.PresetArchives.TILE_KEYS) {
+                zip.putNextEntry(new java.util.zip.ZipEntry(root + "/tiles/" + key + ".png"));
+                zip.write(Files.readAllBytes(images.resolve(key + ".png")));
+                zip.closeEntry();
+            }
+        }
     }
     private static void pattern(Path path, int width, int height) throws java.io.IOException {
         Files.createDirectories(path.getParent());

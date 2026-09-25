@@ -46,6 +46,7 @@ public final class MchjongNeoForgeClient {
         top.skyeyefast.mchjong.client.TableAudio.tick();
         top.skyeyefast.mchjong.client.SeatedCamera.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();
+        top.skyeyefast.mchjong.client.TileFacePresets.tick();
     }
     @SubscribeEvent public static void close(net.neoforged.neoforge.event.GameShuttingDownEvent event) {
         top.skyeyefast.mchjong.client.TableAudio.close();

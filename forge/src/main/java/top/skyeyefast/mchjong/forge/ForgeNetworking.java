@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(8)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(9)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(BoxPrintPayload.TYPE, BoxPrintPayload.CODEC, (payload, context) -> {
@@ -35,6 +35,8 @@ final class ForgeNetworking {
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientTableNetworking.receive(payload))
             .addMain(ReplayPayload.TYPE, ReplayPayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload))
+            .addMain(PresetBundlePayload.TYPE, PresetBundlePayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload))
             .build();
         PayloadPackets.initialize(payload -> ForgePayload.create(payload.type().id(), buffer -> channel.encode(buffer, payload)));
     }
