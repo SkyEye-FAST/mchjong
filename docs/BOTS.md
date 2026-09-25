@@ -84,21 +84,10 @@ and any closed-only routes through the resulting-hand evaluation. Calls compare
 this with the unchanged PASS state, including shanten, live advances and value;
 their separate safety adjustment depends on public threat pressure.
 
-Incomplete-hand payout scenarios are weighted by `support`, the stronger of the
-conditional closed option and existing route evidence. This keeps retained dora
-from making a speculative yaku route look like an assured high-value attack;
-established evidence retains its weight when a competing speculative route is
-also present. `support` is a heuristic confidence weight, not a win probability.
-Actual tenpai continues to use legal scoring without this discount. Concealed
-kans preserve closed-only iipeikou eligibility but exclude pinfu and special hands.
-
-Incomplete-hand payout scenarios are additionally discounted by `support`: the
-strongest retained route progress or eligible closed option, capped at one.
-An established route retains full support; speculative alternatives cannot erase
-it. Dora still influence retention, but do not make a weak route's conditional
-payout an assured attack value. Support is heuristic evidence, not a fitted win
-probability. Exact tenpai waits and scoring are not discounted this way.
-Concealed kans keep iipeikou eligibility while excluding pinfu.
+The fractional yaku estimate already includes route-progress decay. It feeds
+conditional payout scenarios, while shanten and live advances separately express
+speed. Concealed kans preserve closed-only iipeikou eligibility but exclude pinfu
+and special hands.
 
 EASY preserves a viable advancing route instead of retreating merely for a
 larger raw ukeire count. The speed term divides live advances by total unseen
@@ -190,7 +179,7 @@ Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
 or `inspect` in place of `position` to print candidate analysis. Inspection runs
 the same candidate selection/search as play and includes calls with their planned
 discards, exclusion reasons, route deficits/progress, selected plans, legal waits,
-speed/retention/value/legality terms, route support, defence/action adjustments, development and
+speed/retention/value/legality terms, defence/action adjustments, development and
 final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
 append `legal` to generate riichi actions as well. `opening 74318` inspects a
 seeded opening. These inputs are confined to the development harness.
@@ -211,7 +200,7 @@ Seat rotations sharing a seed are correlated, and small samples cannot prove
 a strength ordering or require every auxiliary metric to improve monotonically.
 
 Current route-regression and lightweight comparison acceptance is recorded in
-[Verification](VERIFICATION.md#bot-route-evaluation).
+[Verification](VERIFICATION.md#accepted-bot-route-optimization).
 
 Initial fixed-opening baseline on this workstation: discard analysis 0.370 ms;
 EASY/NORMAL/HARD mean decisions 0.443/0.346/0.314 ms (100 measured decisions,

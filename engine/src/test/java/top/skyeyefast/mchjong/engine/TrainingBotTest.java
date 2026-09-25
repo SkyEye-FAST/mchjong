@@ -91,17 +91,6 @@ class TrainingBotTest {
             .filter(r -> r.name().equals("iipeikou")).findFirst().orElseThrow().progress(),
             "A concealed kan does not open the two identical concealed sequences");
 
-        var uncertain = hand("123568m2458p147s1z");
-        var weak = new BotAnalysis(uncertain.view(uncertain.players[0].id), BotDifficulty.HARD);
-        weak.value.dora[Tile.parseKind("5p")] = 4;
-        var remainder = weak.initial().discard(uncertain.players[0].hand.getLast(), false);
-        var estimate = weak.value.potential(remainder, weak.shape(remainder).shanten(), weak.unseen);
-        assertTrue(estimate.viable());
-        assertTrue(estimate.support() > 0 && estimate.support() < 1);
-        double conditional = HandAnalyzer.INSTANCE.estimatedPayment(estimate.routes().han() + estimate.closedOption() +
-            weak.value.bonus(remainder, Tile.ABSENT), true, false, uncertain.rules);
-        assertTrue(estimate.estimate() < conditional, "Retained dora cannot guarantee the speculative attack value");
-
         var pinfu = new BotAnalysis.State(TestHands.tiles("22334456m345p55s"), List.of(), List.of(), 0, false, false, 1);
         var stock = new int[68];
         for (int kind = 0; kind < 34; kind++) stock[kind] = 4;

@@ -210,16 +210,17 @@ The intermediate diagnostic comparison has identical final outcomes after the
 subsequent allocation-only optimizations. Loader and client smoke checks were
 not rerun for this engine-only change.
 
-## Bot route follow-up
+## Bot route valuation experiment
 
-The follow-up keeps the one-shanten enumeration and general search limits while
+This diagnostic batch kept the one-shanten enumeration and general search limits while
 reusing local fits, exact copy-capacity cache keys, precomputed group masks and
 the library's full best-shanten discard set after effective one-shanten draws.
-Incomplete attack values now include route support, and concealed kans retain
-eligible iipeikou routes. Defence thresholds and recipient-information accounting
-are unchanged.
+It additionally multiplied incomplete payout scenarios by route support and
+retained eligible iipeikou routes after concealed kans. Defence thresholds and
+recipient-information accounting were unchanged. The support multiplier was
+not selected for delivery; accepted changes and verification follow below.
 
-The focused `TrainingBotTest` suite still contains 13 tests. A fresh isolated run
+The diagnostic `TrainingBotTest` suite contained 13 tests. An isolated run
 passed all 13 in 7.823 seconds, with no skipped tests. Existing fixtures were
 extended to check complete tied tenpai-discard retention, exhausted-copy cache
 invalidation, irrelevant value-honor invariance, concealed-kan iipeikou and the
@@ -238,7 +239,7 @@ gradlew.bat :engine:test --tests top.skyeyefast.mchjong.engine.TrainingBotTest :
 gradlew.bat :engine:botCompare "-PbotArgs=suite 2 2 137601" --console=plain
 ```
 
-The final comparison and both Spotless checks completed successfully in
+The diagnostic comparison and both Spotless checks completed successfully in
 `build/bot-followup-final-comparison.log` (2m 9s). It used seeds 137601 and 137602
 for each player count, with HARD rotated through every seat against EASY: 14
 matches, 103 four-player hands and 56 three-player hands. The same seed range
@@ -262,7 +263,7 @@ in both batches; its percentage falls only because more player-hands occurred.
 Four-player mean winning value still falls, and three-player winning frequency
 falls despite the larger mean winning value. These are mixed observations from
 two independent seeds per rule set, with correlated seat rotations, not evidence
-of a general strength improvement. No policy was adjusted after this final run.
+of a general strength improvement.
 
 | Rules / role | Decisions before / after | Mean ms before / after | p95 ms before / after | Max ms before / after |
 | --- | ---: | ---: | ---: | ---: |
@@ -281,7 +282,7 @@ establish the distant-hand latency goal, and the earlier pre-route 17.637 ms
 reference remains unmet. Synchronous decisions still have substantial tails;
 these runs do not establish a server-tick bound.
 
-Final HARD yaku occurrences are:
+Diagnostic HARD yaku occurrences are:
 
 | Rules | Scored-yaku occurrences |
 | --- | --- |
@@ -293,6 +294,87 @@ sanshoku wins, compared with three before; the deterministic sanshoku discard
 regression still passes. The three-player sample includes toitoi/sanankou, but
 rare-yaku counts in 35/16 HARD wins do not establish route quality. No loader
 build or client smoke is counted as fresh acceptance for this engine-only follow-up.
+
+A separate two-seed diagnostic (131701-131702) is recorded in
+`build/bot-refine-verified-final.log`. Against the unchanged `b25d17c` baseline,
+the extra multiplier changed four-player HARD win/deal-in rates from
+32.26%/12.90% to 29.70%/19.80%; three-player rates changed from 34.09%/11.36%
+to 36.17%/10.64%. It did not provide consistent evidence of improvement across
+the two seed ranges. Route han already include progress decay, so multiplying
+the whole payout applies an additional discount to that evidence and alters
+closed/open comparisons. The multiplier, its diagnostic field and dedicated
+assertions were removed rather than retained as an alternate policy. The final
+implementation keeps the original conditional payout semantics.
+
+## Accepted bot route optimization
+
+The accepted 2026-09-25 follow-up keeps the graded route evaluator and original
+conditional payout semantics. It retains exact copy-capacity fit caches,
+precomputed group masks, conservative head bounds, sparse target checks,
+allocation-free pair/companion selection and cached continuation tie ordering.
+One-shanten advances use the library's complete best-shanten discard set;
+general search limits and all eligible tenpai continuations are unchanged.
+Concealed kans now retain eligible iipeikou routes. No dependency, defence
+threshold or recipient-information boundary changed.
+
+All 13 focused bot tests passed in 5.848 seconds, with no failures, errors or
+skips. Existing tests were extended for exhausted-copy cache separation,
+irrelevant value-honor invariance, concealed-kan iipeikou and equivalence of
+best-only versus full zero-shanten discard maps. The existing route, call,
+riichi/dama, hidden-information, defence and north-extraction checks remain.
+Kotlin/Misc Spotless checks passed. Local incremental-cache and test-output
+failures were resolved for verification with an isolated engine output and
+Gradle project cache; no permanent build profile or workaround was added.
+
+The accepted test/comparison run completed in 1m 44s, recorded in
+`build/bot-refine-accepted.log`. Its XML report is
+`engine/build/bot-refine-verify/test-results/test/TEST-top.skyeyefast.mchjong.engine.TrainingBotTest.xml`.
+The reusable owning commands are:
+
+```text
+gradlew.bat :engine:test --tests top.skyeyefast.mchjong.engine.TrainingBotTest :spotlessKotlinCheck :spotlessMiscCheck --console=plain
+gradlew.bat :engine:botCompare "-PbotArgs=suite 2 2 131701" --console=plain
+```
+
+The unchanged `b25d17c` baseline is `build/bot-refine-before.log`. Both runs use
+seeds 131701 and 131702 for each player count, rotating HARD through every seat
+against EASY: eight four-player and six three-player matches, 93 and 44 hands
+respectively. Per-rotation hand totals, role-level action/opportunity counts,
+outcome metrics and all scored-yaku counts match the baseline exactly. This is
+an aggregate deterministic comparison, not an assertion that individual action
+traces were compared or that playing strength improved.
+
+| Rules / role | Player-hands | Win rate | Deal-in rate | Mean win points | Mean rank |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| TENHOU_4 / HARD | 93 | 32.26% | 12.90% | 4596.7 | 2.000 |
+| TENHOU_4 / EASY | 279 | 21.15% | 17.56% | 4459.3 | 2.667 |
+| MAHJONG_SOUL_3 / HARD | 44 | 34.09% | 11.36% | 7266.7 | 1.833 |
+| MAHJONG_SOUL_3 / EASY | 88 | 31.82% | 23.86% | 6657.1 | 2.083 |
+
+| Measurement / role | Mean ms before / after | p95 ms before / after | Max ms before / after |
+| --- | ---: | ---: | ---: |
+| Fixed opening / HARD | 38.855 / 24.376 | 63.069 / 36.130 | 86.260 / 44.092 |
+| Fixed opening / EASY | 1.623 / 1.947 | 4.182 / 3.281 | 8.394 / 4.230 |
+| TENHOU_4 / HARD | 48.446 / 33.406 | 171.064 / 111.216 | 488.683 / 404.741 |
+| TENHOU_4 / EASY | 0.781 / 0.578 | 2.355 / 1.661 | 50.019 / 32.630 |
+| MAHJONG_SOUL_3 / HARD | 51.201 / 37.134 | 192.330 / 153.089 | 572.332 / 436.463 |
+| MAHJONG_SOUL_3 / EASY | 2.113 / 1.707 | 9.687 / 7.383 | 69.065 / 58.055 |
+
+The fixed opening uses 20 warm-up and 100 measured decisions. Underlying
+discard analysis changes from 0.301 to 0.321 ms. Final decision-thread CPU means
+are 23.750 ms for HARD and 1.875 ms for EASY. The fixed-opening HARD wall-clock
+mean falls 37.3%; full-match HARD means fall 31.0% and 27.5%. EASY's fixed-opening
+mean rises despite lower full-match means, illustrating remaining timing noise.
+CPU and wall-clock measurements have different scopes; neither eliminates JVM
+warm-up, system load or scheduling effects.
+
+The earlier pre-route 17.637 ms fixed-opening reference was measured in another
+batch and is still lower than this run. No claim is made that the original
+latency goal is fully achieved. Decisions remain synchronous, with observed
+tails above 400 ms; bounded search nodes are not a server-tick time guarantee.
+Only two independent seeds per rule set are used and seat rotations are
+correlated. No policy change followed this accepted run; no loader build or
+client smoke is counted as fresh verification.
 
 ## Cross-version acceptance
 
