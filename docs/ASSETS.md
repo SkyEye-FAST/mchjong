@@ -204,7 +204,9 @@ is exactly the 1,000-point strip: blue with one white dot. The model uses ordina
 Minecraft `elements`, face UVs, parents and texture references, so packs can
 replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
 `[13.6,0.4,8.48]` in model pixels; the table applies the lane scale and orientation.
-Interface riichi icons use the same texture.
+`assets/mchjong/textures/gui/stick_icons.png` contains fixed riichi and honba
+HUD icons copied from the default blue and ivory strips at build time. Changing
+point-stick textures or selecting a stick preset does not alter those icons.
 
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and

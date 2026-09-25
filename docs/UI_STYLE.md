@@ -154,7 +154,8 @@ native text size. Closed settings persist locally and reset
 disables hints.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
-round/remaining header. Indicators use 14-pixel faces when space permits; compact
+round/remaining header. Their stick icons use fixed HUD artwork, independent of
+the selected point-stick preset. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
 on both text lines. Player cards begin at y=38 without a separate indicator row.
@@ -167,7 +168,7 @@ Names, winds and points keep their own rows in 24-pixel cards. With MELDS enable
 grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for
 a localized group count when all melds cannot fit. Immersive cards retain their
 board positions and the board owns the full meld display. In both views, STATUS
-shows riichi using its resource-pack texture (blue with a white dot by default) and a persistent brass
+shows riichi using the fixed HUD icon (blue with a white dot) and a persistent brass
 bottom rule, with the full status in hover details. The sideways river tile
 continues to identify the declaration discard.
 

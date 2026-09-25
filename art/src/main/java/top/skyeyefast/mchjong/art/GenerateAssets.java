@@ -40,8 +40,13 @@ public final class GenerateAssets {
         }
         for (var texture : TileMaterialArtwork.textures().entrySet())
             png("tile_material/" + texture.getKey(), texture.getValue());
-        png("point_sticks", PointStickArtwork.texture());
-        png("item/riichi_stick", PointStickArtwork.texture().getSubimage(0, 64, 384, 32));
+        var pointSticks = PointStickArtwork.texture();
+        png("point_sticks", pointSticks);
+        png("item/riichi_stick", pointSticks.getSubimage(0, 64, 384, 32));
+        var hudSticks = new BufferedImage(384, 64, BufferedImage.TYPE_INT_ARGB);
+        hudSticks.setRGB(0, 0, 384, 32, pointSticks.getRGB(0, 64, 384, 32, null, 0, 384), 0, 384);
+        hudSticks.setRGB(0, 32, 384, 32, pointSticks.getRGB(0, 32, 384, 32, null, 0, 384), 0, 384);
+        png("gui/stick_icons", hudSticks);
         text("assets/mchjong/models/item/riichi_stick.json", """
             {"textures":{"stick":"mchjong:item/riichi_stick","particle":"mchjong:item/riichi_stick"},
              "elements":[{"from":[2.4,0,7.52],"to":[13.6,0.4,8.48],"shade":false,"faces":{
