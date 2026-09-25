@@ -87,6 +87,31 @@ class TrainingBotTest {
             List.of(TestHands.meld(Meld.Type.CLOSED_KAN, "1111m")), List.of(), 0, false, false, 1);
         assertTrue(potential.assess(declared, analysis.unseen).routes().stream()
             .noneMatch(r -> r.name().equals("pinfu") || r.name().equals("chiitoitsu") || r.name().equals("kokushi")));
+        assertEquals(1.0, potential.assess(declared, analysis.unseen).routes().stream()
+            .filter(r -> r.name().equals("iipeikou")).findFirst().orElseThrow().progress(),
+            "A concealed kan does not open the two identical concealed sequences");
+
+        var uncertain = hand("123568m2458p147s1z");
+        var weak = new BotAnalysis(uncertain.view(uncertain.players[0].id), BotDifficulty.HARD);
+        weak.value.dora[Tile.parseKind("5p")] = 4;
+        var remainder = weak.initial().discard(uncertain.players[0].hand.getLast(), false);
+        var estimate = weak.value.potential(remainder, weak.shape(remainder).shanten(), weak.unseen);
+        assertTrue(estimate.viable());
+        assertTrue(estimate.support() > 0 && estimate.support() < 1);
+        double conditional = HandAnalyzer.INSTANCE.estimatedPayment(estimate.routes().han() + estimate.closedOption() +
+            weak.value.bonus(remainder, Tile.ABSENT), true, false, uncertain.rules);
+        assertTrue(estimate.estimate() < conditional, "Retained dora cannot guarantee the speculative attack value");
+
+        var pinfu = new BotAnalysis.State(TestHands.tiles("22334456m345p55s"), List.of(), List.of(), 0, false, false, 1);
+        var stock = new int[68];
+        for (int kind = 0; kind < 34; kind++) stock[kind] = 4;
+        for (int tile : pinfu.hand()) stock[Tile.kind(tile)]--;
+        var liveFit = potential.assess(pinfu, stock).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow();
+        stock[Tile.WHITE] = 0;
+        assertEquals(liveFit, potential.assess(pinfu, stock).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow(),
+            "A value honor cannot change a pinfu group or head fit");
+        var deadFit = potential.assess(pinfu, new int[68]).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow();
+        assertTrue(deadFit.progress() < liveFit.progress(), "Cached fits must retain exact available copy counts");
     }
 
     @Test void oneShantenSearchSurvivesTheGeneralRootBudgetAndReportsItsComponents() {
@@ -98,6 +123,14 @@ class TrainingBotTest {
         var state = initial.discard(discard, false);
         var shape = analysis.shape(state);
         assertEquals(1, shape.shanten());
+        for (int kind : shape.improving().stream().limit(2).toList()) {
+            var drawn = state.draw(Tile.id(kind, 0, false));
+            var all = HandAnalyzer.discardEfficiency(drawn.hand(), drawn.melds(), false);
+            var ready = new java.util.TreeMap<Integer, TileEfficiency>();
+            all.forEach((discardKind, efficiency) -> { if (efficiency.shanten() == 0) ready.put(discardKind, efficiency); });
+            assertEquals(ready, HandAnalyzer.bestDiscardEfficiency(drawn.hand(), drawn.melds()),
+                "The library best-only mode must retain every tenpai discard");
+        }
         analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
         var evaluated = analysis.evaluate(state, shape, analysis.unseen);
         assertTrue(Double.isFinite(analysis.forward(state, evaluated, false)));

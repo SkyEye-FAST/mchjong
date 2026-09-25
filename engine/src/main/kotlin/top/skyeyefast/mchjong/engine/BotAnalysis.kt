@@ -17,6 +17,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     val defence: BotDefence
 
     private val discards = HashMap<ShapeKey, Map<Int, TileEfficiency>>()
+    private val bestDiscards = HashMap<ShapeKey, Map<Int, TileEfficiency>>()
     private val hands = HashMap<ShapeKey, TileEfficiency>()
     private val waits = HashMap<ShapeKey, Set<Int>>()
     private val advances = HashMap<State, Double>()
@@ -42,6 +43,12 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         private val handValue = Collections.unmodifiableList(ArrayList(hand))
         private val meldsValue = Collections.unmodifiableList(ArrayList(melds))
         private val northsValue = Collections.unmodifiableList(ArrayList(norths))
+        private val faceSum = handValue.sumOf { face(it) }
+        private var orderValue: String? = null
+
+        fun orderKey(): String = orderValue ?: handValue.map { face(it) }.sorted().toString().also { orderValue = it }
+
+        fun removedFrom(before: State): Int = before.faceSum - faceSum
 
         fun hand(): kotlin.collections.List<Int> = handValue
 
@@ -225,7 +232,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             val ready = if (baseline.shanten <= 1) candidates.filter { shapes[removedFace(withDraw, it) % 34]!!.shanten == 0 } else emptyList()
             val leaves = ready.ifEmpty {
                 val order = compareByDescending<Pair<State, Double>> { it.second }
-                    .thenBy { it.first.hand().map(::face).sorted().toString() }
+                    .thenBy { it.first.orderKey() }
                 val upper = candidates.map { next ->
                     val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
                     next to (speed(candidateShape, remaining) + value.rankUpper(next, candidateShape.shanten))
@@ -265,7 +272,9 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             val remaining = unseen.clone()
             remaining[face]--
             val withDraw = state.draw(tile(face))
-            val shapes = discards(withDraw)
+            val shapes = bestDiscards.getOrPut(ShapeKey(withDraw)) {
+                HandAnalyzer.bestDiscardEfficiency(withDraw.hand(), withDraw.melds())
+            }
             val faces = HashSet<Int>()
             var best = Double.NEGATIVE_INFINITY
             for (discard in withDraw.hand()) {
@@ -322,6 +331,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         }
 
         private fun removedFace(before: State, after: State): Int =
-            before.hand().sumOf(::face) - after.hand().sumOf(::face)
+            after.removedFrom(before)
     }
 }

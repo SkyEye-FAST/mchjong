@@ -154,8 +154,8 @@ public final class BotComparison {
                     view.actions().get(candidate.index()), candidate.discard() < 0 ? "-" : Tile.notation(Tile.kind(candidate.discard())),
                     evaluation.shanten(), evaluation.live(), evaluation.points(), analysis.defence.mode(evaluation),
                     candidate.search(), candidate.exclusion());
-                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s adjustments=%s forward=%.3f final_utility=%.3f%n",
-                    potential.routes().plan(), potential.routes().han(), potential.closedOption(), evaluation.waits(),
+                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f support=%.3f waits=%s%n  terms=%s adjustments=%s forward=%.3f final_utility=%.3f%n",
+                    potential.routes().plan(), potential.routes().han(), potential.closedOption(), potential.support(), evaluation.waits(),
                     evaluation.terms(), candidate.adjustments(), candidate.forward(), candidate.utility());
                 for (var route : potential.routes().routes())
                     System.out.printf(Locale.ROOT, "  route=%s family=%s missing=%.2f progress=%.3f han=%.1f%n",
@@ -165,6 +165,9 @@ public final class BotComparison {
     }
     private static void measure(TableView view) {
         var self = view.seats().get(view.viewerSeat());
+        var cpu = java.lang.management.ManagementFactory.getThreadMXBean();
+        if (!cpu.isCurrentThreadCpuTimeSupported()) throw new IllegalStateException("Decision timing requires JVM thread CPU accounting");
+        if (!cpu.isThreadCpuTimeEnabled()) cpu.setThreadCpuTimeEnabled(true);
         for (int i = 0; i < 100; i++) HandAnalyzer.discardEfficiency(self.hand(), self.melds());
         long start = System.nanoTime();
         for (int i = 0; i < 500; i++) HandAnalyzer.discardEfficiency(self.hand(), self.melds());
@@ -172,12 +175,16 @@ public final class BotComparison {
         for (var level : BotDifficulty.values()) {
             for (int i = 0; i < 20; i++) TrainingBot.choose(view, level);
             long[] times = new long[100];
+            long cpuNanos = 0;
             for (int i = 0; i < times.length; i++) {
+                long cpuStart = cpu.getCurrentThreadCpuTime();
                 start = System.nanoTime(); TrainingBot.choose(view, level); times[i] = System.nanoTime() - start;
+                cpuNanos += cpu.getCurrentThreadCpuTime() - cpuStart;
             }
             Arrays.sort(times);
-            System.out.printf(Locale.ROOT, "%s mean_ms=%.3f p50_ms=%.3f p95_ms=%.3f max_ms=%.3f%n", level,
-                Arrays.stream(times).average().orElseThrow() / 1e6, times[50] / 1e6, times[95] / 1e6, times[99] / 1e6);
+            System.out.printf(Locale.ROOT, "%s mean_ms=%.3f p50_ms=%.3f p95_ms=%.3f max_ms=%.3f cpu_ms=%.3f%n", level,
+                Arrays.stream(times).average().orElseThrow() / 1e6, times[50] / 1e6, times[95] / 1e6, times[99] / 1e6,
+                cpuNanos / (times.length * 1e6));
         }
     }
 

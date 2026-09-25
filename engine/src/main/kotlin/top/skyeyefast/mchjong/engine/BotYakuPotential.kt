@@ -18,7 +18,26 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
         private val THREE_COLORS = (0..6).map { start -> (0..2).map { suit -> IntArray(3) { suit * 9 + start + it } } }
         private val STRAIGHTS = (0..2).map { suit -> (0..2).map { block -> IntArray(3) { suit * 9 + block * 3 + it } } }
         private val PROGRESS = DoubleArray(65) { exp(-0.65 * (it / 2.0)) }
+        private val SEQUENCE_FIT = SEQUENCES.map(::FitGroup).toTypedArray()
+        private val OUTSIDE_FIT = OUTSIDE_GROUPS.map(::FitGroup).toTypedArray()
+        private val TERMINAL_FIT = TERMINAL_GROUPS.map(::FitGroup).toTypedArray()
     }
+
+    private class FitGroup(val kinds: IntArray) {
+        val first = kinds[0]
+        val triplet = first == kinds[1]
+        val mask = kinds.fold(0L) { bits, kind -> bits or (1L shl kind) }
+        val openEnds = (if (first % 9 < 6) 1L shl first else 0L) or
+            (if (first % 9 > 0) 1L shl kinds[2] else 0L)
+    }
+
+    private val nonValuePairs = (0 until 34).filter { yakuhai(it) == 0 }
+    private val pinfuKinds = ((0 until 27).toList() + nonValuePairs).distinct().toIntArray()
+    private val outsideKinds = OUTSIDE_GROUPS.flatMap { it.toList() }.distinct().toIntArray()
+    private val terminalKinds = TERMINAL_GROUPS.flatMap { it.toList() }.distinct().toIntArray()
+    private data class FitKey(val heldLow: Long, val heldHigh: Long, val stockLow: Long,
+                              val stockHigh: Long, val family: Int, val slots: Int, val needSequence: Boolean)
+    private val fits = HashMap<FitKey, Double>()
     @JvmRecord
     data class Route(
         val name: String,
@@ -39,14 +58,29 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
         }
     }
 
-    private data class Key(val counts: List<Int>, val melds: List<String>, val live: List<Int>)
+    private data class Key(val heldLow: Long, val heldHigh: Long, val stockLow: Long,
+                           val stockHigh: Long, val melds: List<String>)
     private val cache = HashMap<Key, Assessment>()
 
     fun assess(state: BotAnalysis.State, remaining: IntArray): Assessment {
         val counts = IntArray(34)
         state.hand().forEach { counts[Tile.kind(it)]++ }
         val live = IntArray(34) { remaining[it] + remaining[it + 34] }
-        val key = Key(counts.toList(), state.melds().map { it.libraryNotation() }.sorted(), live.toList())
+        var heldLow = 0L
+        var heldHigh = 0L
+        var stockLow = 0L
+        var stockHigh = 0L
+        for (kind in counts.indices) {
+            val shift = (kind % 21) * 3
+            if (kind < 21) {
+                heldLow = heldLow or (counts[kind].toLong() shl shift)
+                stockLow = stockLow or ((counts[kind] + live[kind]).toLong() shl shift)
+            } else {
+                heldHigh = heldHigh or (counts[kind].toLong() shl shift)
+                stockHigh = stockHigh or ((counts[kind] + live[kind]).toLong() shl shift)
+            }
+        }
+        val key = Key(heldLow, heldHigh, stockLow, stockHigh, state.melds().map { it.libraryNotation() }.sorted())
         return cache.getOrPut(key) { assess(counts, state.melds(), live) }
     }
 
@@ -58,6 +92,9 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
         }
         val all = counts.clone()
         fixed.forEach { group -> group.forEach { all[it]++ } }
+        val suits = IntArray(4)
+        for (kind in all.indices) suits[kind / 9] += all[kind]
+        val suitedTotal = suits[0] + suits[1] + suits[2]
         val routes = linkedMapOf<String, Route>()
         fun add(name: String, family: String, missing: Double, han: Int, suit: Int = -1, simpleCompatible: Boolean = true) {
             if (!missing.isFinite()) return
@@ -83,21 +120,31 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
             }
             if (todo.size + melds.size > 4) return Double.POSITIVE_INFINITY
             need.fill(0)
-            todo.forEach { group -> group.forEach { need[it]++ } }
-            if (pair >= 0) need[pair] += 2
+            var required = 0L
+            for (group in todo) for (kind in group) {
+                need[kind]++
+                required = required or (1L shl kind)
+            }
+            if (pair >= 0) {
+                need[pair] += 2
+                required = required or (1L shl pair)
+            }
             var missing = 0.0
-            for (kind in need.indices) {
+            while (required != 0L) {
+                val kind = java.lang.Long.numberOfTrailingZeros(required)
                 if (need[kind] > counts[kind] + live[kind]) return Double.POSITIVE_INFINITY
                 missing += maxOf(0, need[kind] - counts[kind])
+                required = required and (required - 1)
             }
             return missing
         }
 
-        val sequences = SEQUENCES
         if (melds.isEmpty()) {
             // Copy-consuming sequence fit rewards complete groups and live two-sided
             // fragments; value-honor pairs and declared quads cannot support pinfu.
-            add("pinfu", "sequence", fit(counts, live, sequences, (0 until 34).filter { yakuhai(it) == 0 }, true), 1)
+            add("pinfu", "sequence", fit(counts, live, SEQUENCE_FIT, nonValuePairs, true), 1)
+        }
+        if (closed) {
             for (groups in DOUBLE_SEQUENCES) {
                 val start = groups[0][0]
                 add("iipeikou", "sequence", target(groups), 1, start / 9, start % 9 in 1..5)
@@ -112,7 +159,7 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
             add("ittsu", "sequence", target(groups), if (closed) 2 else 1, suit)
         }
         if ((closed || rules.kuitan()) && fixed.all { group -> group.none(Tile::terminalOrHonor) }) {
-            add("tanyao", "mixed", all.indices.filter(Tile::terminalOrHonor).sumOf { all[it] }.toDouble(), 1)
+            add("tanyao", "mixed", ORPHANS.sumOf { all[it] }.toDouble(), 1)
         }
         // Each honor is a separate alternative. Established honor sets can coexist;
         // an unsupported isolated honor is not treated as an assured open yaku.
@@ -126,10 +173,10 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
         for (pure in listOf(false, true)) {
             val groups = if (pure) TERMINAL_GROUPS else OUTSIDE_GROUPS
             if (fixed.all { group -> groups.any { it.contentEquals(group) } } && fixed.size < 4) {
-                val distance = fit(counts, live, groups, if (pure) TERMINALS else ORPHANS, false, 4 - fixed.size,
+                val distance = fit(counts, live, if (pure) TERMINAL_FIT else OUTSIDE_FIT, if (pure) TERMINALS else ORPHANS, false, 4 - fixed.size,
                     fixed.none { it[0] != it[1] })
                 add(if (pure) "junchan" else "chanta", "outside", distance +
-                    if (!pure && all.slice(27..33).sum() == 0) 1.0 else 0.0, if (pure) { if (closed) 3 else 2 } else { if (closed) 2 else 1 })
+                    if (!pure && suits[3] == 0) 1.0 else 0.0, if (pure) { if (closed) 3 else 2 } else { if (closed) 2 else 1 })
             }
         }
         if (fixed.all { it[0] == it[1] }) {
@@ -138,8 +185,10 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
         val concealed = melds.count { it.closed() }
         if (melds.size - concealed <= 1) {
             val need = 3 - concealed
-            val triples = counts.indices.filter { counts[it] + live[it] >= 3 }
-                .sortedWith(compareByDescending<Int> { minOf(3, counts[it]) }.thenBy { it }).take(maxOf(0, need))
+            val triples = ArrayList<Int>(maxOf(0, need))
+            for (held in 3 downTo 0) for (kind in counts.indices) {
+                if (triples.size < need && minOf(3, counts[kind]) == held && counts[kind] + live[kind] >= 3) triples += kind
+            }
             if (triples.size == maxOf(0, need)) {
                 add("sanankou", "triplet", target(triples.map { TRIPLETS[it] }), 2)
             }
@@ -149,19 +198,27 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
             add("shousangen", "triplet", target(dragons, pair), 4) // two required dragon yakuhai included
         }
         for (suit in 0..2) {
-            val suited = (suit * 9 until suit * 9 + 9).sumOf { all[it] }
+            val suited = suits[suit]
             for (pure in listOf(false, true)) {
                 fun allowed(kind: Int): Boolean = kind < 27 && kind / 9 == suit || !pure && kind >= 27
                 if (fixed.any { group -> group.any { !allowed(it) } }) continue
-                val off = all.indices.filter { !allowed(it) }.sumOf { all[it] }
+                val off = suitedTotal - suited + if (pure) suits[3] else 0
                 add(if (pure) "chinitsu" else "honitsu", "flush", off + maxOf(0, 7 - suited) * 0.5,
                     if (pure) { if (closed) 6 else 5 } else { if (closed) 3 else 2 }, suit)
             }
         }
         if (melds.isEmpty()) {
-            val pairs = counts.indices.filter { counts[it] + live[it] >= 2 }
-                .map { minOf(2, counts[it]) }.sortedDescending().take(7)
-            if (pairs.size == 7) add("chiitoitsu", "pairs", (13 - pairs.sum()).toDouble(), 2)
+            var availablePairs = 0
+            var heldPairs = 0
+            var singles = 0
+            for (kind in counts.indices) if (counts[kind] + live[kind] >= 2) {
+                availablePairs++
+                if (counts[kind] >= 2) heldPairs++ else if (counts[kind] == 1) singles++
+            }
+            if (availablePairs >= 7) {
+                val covered = minOf(7, heldPairs) * 2 + minOf(maxOf(0, 7 - heldPairs), singles)
+                add("chiitoitsu", "pairs", (13 - covered).toDouble(), 2)
+            }
             val orphans = ORPHANS
             if (orphans.all { counts[it] + live[it] >= 1 } && orphans.any { counts[it] + live[it] >= 2 }) {
                 val covered = orphans.count { counts[it] > 0 } + if (orphans.any { counts[it] >= 2 }) 1 else 0
@@ -181,8 +238,12 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
             var value = route.value()
             var name = route.name
             var legalHan = route.han
-            val side = companions.filter { companion(route, it) }
-                .maxByOrNull { minOf(route.progress, it.progress) * it.han }
+            var side: Route? = null
+            var sideValue = -1.0
+            for (candidate in companions) if (companion(route, candidate)) {
+                val candidateValue = minOf(route.progress, candidate.progress) * candidate.han
+                if (candidateValue > sideValue) { side = candidate; sideValue = candidateValue }
+            }
             if (side != null) {
                 value += 0.5 * minOf(route.progress, side.progress) * side.han
                 name += "+${side.name}"
@@ -195,7 +256,7 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
     }
 
     private fun companion(a: Route, b: Route): Boolean {
-        if (a.name == b.name || a.family == "orphans" || b.name !in COMPANIONS) return false
+        if (a.name == b.name || a.family == "orphans") return false
         if (a.name == "shousangen" && b.name == "yakuhai") return false // included above
         if (b.name == "yakuhai") return when (a.name) {
             "pinfu", "tanyao", "junchan", "chinitsu", "chiitoitsu" -> false
@@ -235,47 +296,105 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
 
     /** A small, copy-consuming fit, tried with both sequence/triplet tie orders.
      * This is a graded structural deficit, not an assertion of yaku or exact distance. */
-    private fun fit(counts: IntArray, live: IntArray, groups: List<IntArray>, pairs: List<Int>,
+    private fun fit(counts: IntArray, live: IntArray, groups: Array<FitGroup>, pairs: List<Int>,
                     pinfu: Boolean, slots: Int = 4, needSequence: Boolean = false): Double {
+        // Only relevant kinds can affect this fit. Keep their exact capacity:
+        // an exhausted copy must not alias a live target. Two 3-bit words encode
+        // the 34 counts without allocating boxed arrays on every search leaf.
+        val family = if (pinfu) 0 else if (groups === OUTSIDE_FIT) 1 else 2
+        val kinds = when (family) { 0 -> pinfuKinds; 1 -> outsideKinds; else -> terminalKinds }
+        var heldLow = 0L
+        var heldHigh = 0L
+        var stockLow = 0L
+        var stockHigh = 0L
+        for (kind in kinds) {
+            val shift = (kind % 21) * 3
+            if (kind < 21) {
+                heldLow = heldLow or (counts[kind].toLong() shl shift)
+                stockLow = stockLow or ((counts[kind] + live[kind]).toLong() shl shift)
+            } else {
+                heldHigh = heldHigh or (counts[kind].toLong() shl shift)
+                stockHigh = stockHigh or ((counts[kind] + live[kind]).toLong() shl shift)
+            }
+        }
+        return fits.getOrPut(FitKey(heldLow, heldHigh, stockLow, stockHigh, family, slots, needSequence)) {
+            computeFit(counts, live, groups, pairs, pinfu, slots, needSequence)
+        }
+    }
+
+    private fun computeFit(counts: IntArray, live: IntArray, groups: Array<FitGroup>, pairs: List<Int>,
+                           pinfu: Boolean, slots: Int, needSequence: Boolean): Double {
         var best = Double.POSITIVE_INFINITY
         val held = IntArray(34)
         val supply = IntArray(34)
+        val stock = IntArray(34) { counts[it] + live[it] }
+        var initialPresent = 0L
+        var initialAvailable = 0L
+        var initialTriples = 0L
+        for (kind in stock.indices) {
+            if (counts[kind] > 0) initialPresent = initialPresent or (1L shl kind)
+            if (stock[kind] > 0) initialAvailable = initialAvailable or (1L shl kind)
+            if (stock[kind] >= 3) initialTriples = initialTriples or (1L shl kind)
+        }
+        // Consuming a pair or group cannot restore an unavailable group. Keep
+        // the original relative order, including the reverse tie pass.
+        val possible = groups.filter {
+            if (it.triplet) initialTriples and it.mask != 0L else initialAvailable and it.mask == it.mask
+        }.toTypedArray()
+        val groupKinds = possible.fold(0L) { mask, group -> mask or group.mask }
+        var usable = 0
+        for (kind in counts.indices) if (groupKinds and (1L shl kind) != 0L) usable += counts[kind]
         for (pair in pairs) {
             if (counts[pair] == 0 || counts[pair] + live[pair] < 2) continue
-            for (reverse in listOf(false, true)) {
+            val head = minOf(2, counts[pair])
+            val availableForGroups = usable - if (groupKinds and (1L shl pair) != 0L) head else 0
+            val upper = head + minOf(slots * 3, availableForGroups)
+            // Every fitted group consumes its supporting copies. Even perfect
+            // allocation cannot beat this bound; ties need no further fitting.
+            if (maxOf(0.0, slots * 3 + 1.0 - upper) >= best) continue
+            for (direction in 0..1) {
                 counts.copyInto(held)
-                for (kind in supply.indices) supply[kind] = counts[kind] + live[kind]
+                stock.copyInto(supply)
+                var present = initialPresent
+                var available = initialAvailable
+                var triples = initialTriples
                 val usedPair = minOf(2, held[pair])
                 held[pair] -= usedPair
                 supply[pair] -= 2
+                val pairBit = 1L shl pair
+                if (held[pair] == 0) present = present and pairBit.inv()
+                if (supply[pair] == 0) available = available and pairBit.inv()
+                if (supply[pair] < 3) triples = triples and pairBit.inv()
                 var covered = usedPair.toDouble()
                 var sequence = false
                 var ryanmen = false
                 repeat(slots) {
-                    var selected: IntArray? = null
+                    var selected: FitGroup? = null
                     var maximum = -1.0
-                    for (index in groups.indices) {
-                        val group = groups[if (reverse) groups.lastIndex - index else index]
-                        val triplet = group[0] == group[1]
-                        if (triplet && supply[group[0]] < 3 || !triplet &&
-                            (supply[group[0]] < 1 || supply[group[1]] < 1 || supply[group[2]] < 1)) continue
-                        var gain = if (triplet) minOf(3, held[group[0]]).toDouble() else
-                            (if (held[group[0]] > 0) 1.0 else 0.0) +
-                                (if (held[group[1]] > 0) 1.0 else 0.0) + (if (held[group[2]] > 0) 1.0 else 0.0)
-                        if (pinfu && gain == 2.0 && !triplet) {
-                            val twoSided = (held[group[0]] == 0 && group[0] % 9 < 6) || (held[group[2]] == 0 && group[0] % 9 > 0)
-                            if (!twoSided) gain -= 0.45
+                    for (index in possible.indices) {
+                        val group = possible[if (direction == 1) possible.lastIndex - index else index]
+                        if (group.triplet) {
+                            if (triples and group.mask == 0L) continue
+                        } else if (available and group.mask != group.mask) continue
+                        var gain = if (group.triplet) minOf(3, held[group.first]).toDouble()
+                            else java.lang.Long.bitCount(present and group.mask).toDouble()
+                        if (pinfu && gain == 2.0 && !group.triplet) {
+                            if (group.openEnds and present.inv() == 0L) gain -= 0.45
                         }
                         if (gain > maximum) { maximum = gain; selected = group }
                     }
                     val group = selected
                     if (group != null) {
-                        if (group[0] != group[1]) {
+                        if (!group.triplet) {
                             sequence = true
                             if (maximum == 2.0) ryanmen = true
                         }
                         covered += maximum
-                        group.forEach { if (held[it] > 0) held[it]--; supply[it]-- }
+                        for (kind in group.kinds) {
+                            if (held[kind] > 0 && --held[kind] == 0) present = present and (1L shl kind).inv()
+                            if (--supply[kind] == 0) available = available and (1L shl kind).inv()
+                            if (supply[kind] < 3) triples = triples and (1L shl kind).inv()
+                        }
                     }
                 }
                 val distance = maxOf(0.0, slots * 3 + 1 - covered) +

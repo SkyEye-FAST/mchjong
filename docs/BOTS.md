@@ -36,7 +36,10 @@ For every eligible one-shanten candidate, HARD enumerates every live effective
 draw face and every legal discard reaching tenpai. Each continuation uses actual
 ron/tsumo waits, whole-hand furiten and payments, comparing dama and a legal riichi
 declaration. These roots have their own decision-local cache and do not consume
-the general three-root budget. Non-advancing draws retain the immediate estimate;
+the general three-root budget. `HandAnalyzer.bestDiscardEfficiency` uses the
+library's best-shanten mode at these draws: the minimum is zero, so every tied
+tenpai discard is retained, including regular and special-hand alternatives,
+while retreat branches are omitted. Non-advancing draws retain the immediate estimate;
 this horizon is exhaustive for immediate tenpai advances, not for all future play.
 
 The general search expands at most three roots and 37 draw categories per root.
@@ -81,6 +84,22 @@ and any closed-only routes through the resulting-hand evaluation. Calls compare
 this with the unchanged PASS state, including shanten, live advances and value;
 their separate safety adjustment depends on public threat pressure.
 
+Incomplete-hand payout scenarios are weighted by `support`, the stronger of the
+conditional closed option and existing route evidence. This keeps retained dora
+from making a speculative yaku route look like an assured high-value attack;
+established evidence retains its weight when a competing speculative route is
+also present. `support` is a heuristic confidence weight, not a win probability.
+Actual tenpai continues to use legal scoring without this discount. Concealed
+kans preserve closed-only iipeikou eligibility but exclude pinfu and special hands.
+
+Incomplete-hand payout scenarios are additionally discounted by `support`: the
+strongest retained route progress or eligible closed option, capped at one.
+An established route retains full support; speculative alternatives cannot erase
+it. Dora still influence retention, but do not make a weak route's conditional
+payout an assured attack value. Support is heuristic evidence, not a fitted win
+probability. Exact tenpai waits and scoring are not discounted this way.
+Concealed kans keep iipeikou eligibility while excluding pinfu.
+
 EASY preserves a viable advancing route instead of retreating merely for a
 larger raw ukeire count. The speed term divides live advances by total unseen
 stock, so one exchangeable draw can contribute at most one shanten of progress,
@@ -94,7 +113,17 @@ multiset and fixed melds. Scoring keys additionally contain bonus/red value,
 winning face, ron/tsumo, one/two-han riichi and replacement-draw status. Structural
 wait caches do not contain scoring or furiten. Rules, winds and visible indicators
 stay fixed within a decision; unseen draws and furiten are applied at each leaf.
-Route caches include concealed counts, fixed melds and remaining kind counts.
+Route caches pack exact concealed counts and available copy capacity into
+integer keys alongside fixed melds. Pinfu and outside fits have decision-local
+caches containing only their relevant kinds, with the group family, remaining
+slots and sequence requirement. Availability remains part of every fit key;
+an exhausted target cannot reuse a live target's result. Group masks and
+value-pair candidates are precomputed, with original forward/reverse tie orders
+preserved. Sparse target checks, direct pair counts and companion selection
+avoid temporary collection pipelines in the search leaves. Continuation states
+cache discard identity sums and canonical tie-order strings.
+A copy-count bound skips head assignments only when they cannot improve the
+best fit, without changing the search roots or the retained greedy tie orders.
 Fractional payout scenarios interpolate cached integer-han endpoints.
 
 ## Actions and defence
@@ -145,7 +174,11 @@ one-draw/discard horizon.
 ## Reproduction
 
 `./gradlew :engine:botCompare -PbotArgs=measure --console=plain` runs an explicit
-warm-up and decision timing experiment. `-PbotArgs='4 TENHOU_4 HARD EASY'`
+warm-up and decision timing experiment. It prints wall-clock mean/percentiles
+and decision-thread `cpu_ms` using JDK thread CPU accounting. CPU time helps
+distinguish computation from scheduling delays; it excludes work on other JVM
+threads and is not a replacement for the server-visible wall-clock latency.
+`-PbotArgs='4 TENHOU_4 HARD EASY'`
 runs paired seeds 74291 onward, rotating the challenger through every seat
 against a homogeneous opponent field. Use `MAHJONG_SOUL_3` for three players.
 `-PbotArgs='suite 4 2'` runs timings and HARD versus EASY with four seeds in
@@ -157,7 +190,7 @@ Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
 or `inspect` in place of `position` to print candidate analysis. Inspection runs
 the same candidate selection/search as play and includes calls with their planned
 discards, exclusion reasons, route deficits/progress, selected plans, legal waits,
-speed/retention/value/legality terms, defence/action adjustments, development and
+speed/retention/value/legality terms, route support, defence/action adjustments, development and
 final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
 append `legal` to generate riichi actions as well. `opening 74318` inspects a
 seeded opening. These inputs are confined to the development harness.

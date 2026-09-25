@@ -210,6 +210,90 @@ The intermediate diagnostic comparison has identical final outcomes after the
 subsequent allocation-only optimizations. Loader and client smoke checks were
 not rerun for this engine-only change.
 
+## Bot route follow-up
+
+The follow-up keeps the one-shanten enumeration and general search limits while
+reusing local fits, exact copy-capacity cache keys, precomputed group masks and
+the library's full best-shanten discard set after effective one-shanten draws.
+Incomplete attack values now include route support, and concealed kans retain
+eligible iipeikou routes. Defence thresholds and recipient-information accounting
+are unchanged.
+
+The focused `TrainingBotTest` suite still contains 13 tests. A fresh isolated run
+passed all 13 in 7.823 seconds, with no skipped tests. Existing fixtures were
+extended to check complete tied tenpai-discard retention, exhausted-copy cache
+invalidation, irrelevant value-honor invariance, concealed-kan iipeikou and the
+discount on speculative dora-heavy attack values. The earlier route, call,
+riichi/dama, defence and hidden-information regressions remain active.
+
+This workstation's initial attempts encountered missing generated class files
+and a test-results EOF. The successful run used a separate engine output
+directory and Gradle project cache; these are validation-only paths, not a new
+product profile. Its log is `build/bot-followup-verified-check.log`, and its fresh
+XML report is under `build/bot-followup-verified-engine/test-results/test`.
+The routine owning tasks remain:
+
+```text
+gradlew.bat :engine:test --tests top.skyeyefast.mchjong.engine.TrainingBotTest :spotlessKotlinCheck :spotlessMiscCheck --console=plain
+gradlew.bat :engine:botCompare "-PbotArgs=suite 2 2 137601" --console=plain
+```
+
+The final comparison and both Spotless checks completed successfully in
+`build/bot-followup-final-comparison.log` (2m 9s). It used seeds 137601 and 137602
+for each player count, with HARD rotated through every seat against EASY: 14
+matches, 103 four-player hands and 56 three-player hands. The same seed range
+was recorded before the support/eligibility changes in
+`build/bot-followup-before.log` (98 and 52 hands). That baseline already contained
+the first allocation-only group-mask and tie-order cache optimizations; it is
+not an untouched revision-to-revision microbenchmark. Both roles run the policy
+of their corresponding batch, not a frozen-old-opponent tournament.
+
+| Rules / role | Before / after player-hands | Win rate before / after | Deal-in rate before / after | Mean win points before / after |
+| --- | ---: | ---: | ---: | ---: |
+| TENHOU_4 / HARD | 98 / 103 | 30.61% / 33.98% | 15.31% / 13.59% | 3893.3 / 3800.0 |
+| TENHOU_4 / EASY | 294 / 309 | 22.45% / 22.01% | 13.61% / 12.62% | 4807.6 / 4894.1 |
+| MAHJONG_SOUL_3 / HARD | 52 / 56 | 34.62% / 28.57% | 5.77% / 5.36% | 5511.1 / 5956.3 |
+| MAHJONG_SOUL_3 / EASY | 104 / 112 | 23.08% / 26.79% | 16.35% / 13.39% | 5791.7 / 6590.0 |
+
+HARD's four-player mean rank changes from 2.750 to 2.375 and mean net points
+from -912.5 to +2237.5. Its three-player mean rank stays at 1.833, while mean
+net points change from +6016.7 to -300.0. The three-player deal-in count is three
+in both batches; its percentage falls only because more player-hands occurred.
+Four-player mean winning value still falls, and three-player winning frequency
+falls despite the larger mean winning value. These are mixed observations from
+two independent seeds per rule set, with correlated seat rotations, not evidence
+of a general strength improvement. No policy was adjusted after this final run.
+
+| Rules / role | Decisions before / after | Mean ms before / after | p95 ms before / after | Max ms before / after |
+| --- | ---: | ---: | ---: | ---: |
+| TENHOU_4 / HARD | 1534 / 1598 | 52.193 / 42.200 | 213.108 / 146.290 | 801.094 / 668.050 |
+| TENHOU_4 / EASY | 4424 / 4629 | 0.791 / 0.711 | 2.587 / 2.621 | 43.410 / 24.150 |
+| MAHJONG_SOUL_3 / HARD | 826 / 898 | 35.604 / 33.194 | 127.538 / 129.383 | 450.110 / 400.856 |
+| MAHJONG_SOUL_3 / EASY | 1617 / 1776 | 1.690 / 1.712 | 7.506 / 6.358 | 77.960 / 142.747 |
+
+Whole-match timings cover different trajectories and cannot isolate pure
+algorithmic speed. The fixed opening's HARD mean/p95/max changes from
+30.314/39.754/40.976 ms to 34.399/49.062/89.457 ms; final decision-thread CPU
+mean is 30.156 ms. Underlying discard analysis changes from 0.230 to 0.612 ms.
+An intermediate cache-only check measured HARD mean 24.616 ms, but it is not
+substituted for the final measurement. The final fixed-opening result does not
+establish the distant-hand latency goal, and the earlier pre-route 17.637 ms
+reference remains unmet. Synchronous decisions still have substantial tails;
+these runs do not establish a server-tick bound.
+
+Final HARD yaku occurrences are:
+
+| Rules | Scored-yaku occurrences |
+| --- | --- |
+| TENHOU_4 | Chun 2, Haku 2, Hatsu 3, Ipe 2, Ippatsu 3, Pinhu 15, Richi 9, SelfWind 2, Tanyao 6, Tsumo 10 |
+| MAHJONG_SOUL_3 | Chitoi 1, Haku 6, Hatsu 2, Ippatsu 1, Pinhu 1, Richi 2, RoundWind 5, Sananko 1, SelfWind 2, Tanyao 1, Toitoi 1, Tsumo 2 |
+
+These counts overlap within wins. The four-player HARD sample contains no
+sanshoku wins, compared with three before; the deterministic sanshoku discard
+regression still passes. The three-player sample includes toitoi/sanankou, but
+rare-yaku counts in 35/16 HARD wins do not establish route quality. No loader
+build or client smoke is counted as fresh acceptance for this engine-only follow-up.
+
 ## Cross-version acceptance
 
 The 2026-09-24 synchronization retains `main` on Minecraft 1.21.1 / Java 21.

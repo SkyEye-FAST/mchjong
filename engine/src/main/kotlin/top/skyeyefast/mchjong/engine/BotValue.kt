@@ -23,7 +23,7 @@ internal class BotValue(private val view: TableView) {
 
     @JvmRecord
     data class Potential(val viable: Boolean, val estimate: Double, val retention: Double,
-                         val routes: BotYakuPotential.Assessment, val closedOption: Double)
+                         val routes: BotYakuPotential.Assessment, val closedOption: Double, val support: Double)
 
     @JvmRecord
     data class Waits(val ron: Double, val tsumo: Double, val ronTiles: Int, val tsumoTiles: Int) {
@@ -51,25 +51,30 @@ internal class BotValue(private val view: TableView) {
     fun potential(state: BotAnalysis.State, shanten: Int, remaining: IntArray): Potential {
         val bonuses = bonus(state, Tile.ABSENT)
         // Ready hands use legal waits, not a second speculative yaku reward.
-        if (shanten == 0) return Potential(true, 0.0, bonuses * 3.0, BotYakuPotential.Assessment.EMPTY, 0.0)
+        if (shanten == 0) return Potential(true, 0.0, bonuses * 3.0, BotYakuPotential.Assessment.EMPTY, 0.0, 1.0)
         val assessment = routes.assess(state, remaining)
         val closed = state.melds().all { it.closed() }
         val canRiichi = closed && view.remaining() >= view.rules().minRiichiWall() + view.rules().players() * shanten &&
             (!view.rules().needsRiichiDeposit() || view.seats()[view.viewerSeat()].points() >= 1000)
         val option = if (state.riichi()) state.riichiHan().toDouble() else if (canRiichi) 0.35 / (1 + 0.25 * shanten) else 0.0
         val viable = minOf(assessment.attainableHan, assessment.han) + (if (canRiichi) 1 else 0) >= view.rules().minHan()
+        // A conditional payout is not an assured attack value. In particular,
+        // dora must not turn a weak closed-only possibility into certain mangan.
+        // This is graded evidence, not a fitted probability of winning.
+        // A speculative alternative must not erase an already established route.
+        val support = maxOf(option, assessment.routes.maxOfOrNull { it.progress } ?: 0.0).coerceAtMost(1.0)
         val potentialHan = assessment.han + option + bonuses
         val estimate = if (viable) {
             // Cache point-table endpoints, not each continuously varying route
             // estimate. Interpolation remains identical to HandAnalyzer's scenarios.
             val lower = kotlin.math.floor(potentialHan).toInt().coerceAtLeast(1)
             val fraction = (potentialHan - lower).coerceIn(0.0, 1.0)
-            estimatedPayment(lower) * (1 - fraction) + estimatedPayment(lower + 1) * fraction
+            (estimatedPayment(lower) * (1 - fraction) + estimatedPayment(lower + 1) * fraction) * support
         } else {
             0.0
         }
         return Potential(viable, estimate, minOf(24.0, assessment.han * 7) +
-            (if (viable) bonuses * 3.0 else 0.0), assessment, option)
+            (if (viable) bonuses * 3.0 else 0.0), assessment, option, support)
     }
 
     private fun estimatedPayment(han: Int): Double = potentialPayments.getOrPut(han) {

@@ -88,6 +88,15 @@ object HandAnalyzer {
         return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
     }
 
+    /** All minimum-shanten discards, including ties across regular/special hands.
+     * An effective draw from one-shanten has minimum zero, so this includes
+     * every tenpai discard without analyzing the discarded retreat branches. */
+    @JvmStatic
+    fun bestDiscardEfficiency(hand: List<Int>, melds: List<Meld>): Map<Int, TileEfficiency> {
+        val result = analyze(hand, melds, true).shantenInfo as? ShantenWithGot ?: return emptyMap()
+        return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
+    }
+
     @JvmStatic @JvmOverloads
     fun handEfficiency(hand: List<Int>, melds: List<Meld>, goodShape: Boolean = true): TileEfficiency =
         efficiency(analyze(hand, melds, false, goodShape).shantenInfo as ShantenWithoutGot)

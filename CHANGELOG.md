@@ -21,13 +21,18 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Explicit bot timings include decision-thread CPU time alongside wall-clock latency, with cache, search and incomplete-hand support contracts and paired-seed verification documented in their owning guides.
+- Route evaluation uses packed copy-count cache keys, sparse target checks and allocation-free companion selection and pair counting.
+- Focused bot regressions check exact copy capacity in route caches and preservation of all tied tenpai discards in library best-only analysis.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
 - Create workshop Kansai face printing uses a single face plate.
+- Training route matching reuses precomputed group masks and value-pair candidates, caches capacity-aware local fits, skips head assignments only with a copy-count bound, and caches continuation ordering and discard identities while retaining copy allocation and deterministic ties. Exact one-shanten advances reuse the library's complete best-shanten discard set.
 - Hard opponents evaluate every effective draw and tenpai continuation from one-shanten candidates; calls compare route value and closed-hand opportunity with their actual progress. Decision-local caches, reusable route tables and scratch buffers, and conservative distant-branch score bounds reduce repeated evaluation work.
 
 ### Fixed
 
 - Tile faces fall back to default Kansai artwork when a requested custom preset archive is unavailable.
+- Incomplete-hand attack values discount weak yaku evidence even when dora are retained, while established routes retain their value; concealed kans preserve eligible iipeikou routes. Focused regressions and bot documentation cover these boundaries alongside complete tenpai-discard enumeration.
 - HUD deposit counters and score displays retain standard riichi stick icons regardless of personal stick presets.
 - Red five composition automatically adjusts to the available tile stock when initializing table rules.
 - Rule navigation page order and hand visibility option ordering match the settings screen layout.
