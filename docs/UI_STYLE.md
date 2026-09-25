@@ -80,6 +80,9 @@ the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
+Settlement reserves the complete receipt layout before revealing individual yaku
+rows. Highlight the current row with the shared accent; points precede the hand
+grade. Do not reflow the hand or restart the readout on a resize or snapshot refresh.
 The lobby keeps player count, presets, detailed rules, visibility, clock settings,
 invitations and participants on its first page. Keep leave and host dissolution
 distinct in the toolbar, with one prominent seat-preparation action below the settings.

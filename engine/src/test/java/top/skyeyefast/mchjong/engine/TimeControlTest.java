@@ -90,6 +90,23 @@ class TimeControlTest {
         assertEquals(0, restored.roomView().settlementTicks());
     }
 
+    @Test void winningReceiptsKeepAFiniteServerDeadlineWithoutAcknowledgements() {
+        Game game = game(2, 1);
+        Settlement.abort(game, "nine_terminals");
+        game.wins = List.of(new TableView.Win(0, 1, 0,
+            new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
+        int limit = ScoreAnnouncements.maximumTicks(game.wins);
+        int[] reserve = game.reserveTicks.clone();
+        assertEquals(limit, game.roomView().settlementTicks());
+        tick(game, limit - 2);
+        game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        game.tick();
+        assertEquals(Game.Phase.HAND_END, game.phase());
+        assertArrayEquals(reserve, game.reserveTicks);
+        game.tick();
+        assertEquals(Game.Phase.TURN, game.phase());
+    }
+
     @Test void manualCollectionCannotSkipSettlementAndUncollectedHandsStillAdvance() {
         Game game = game(2, 1);
         game.manual = true;

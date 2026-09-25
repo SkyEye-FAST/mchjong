@@ -136,9 +136,10 @@ def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
+def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
-def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -167,6 +168,7 @@ loom {
             property 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             property 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             property 'mchjong.smoke.roomOnly', roomSmoke.toString()
+            property 'mchjong.smoke.settlementOnly', settlementSmoke.toString()
             property 'mchjong.smoke.manualOnly', manualSmoke.toString()
             property 'mchjong.smoke.ponder', ponderSmoke.toString()
             property 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')

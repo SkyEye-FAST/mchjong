@@ -47,8 +47,6 @@ public final class TableAudioEvents {
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
             cues.add(voice(result));
-            if (after.phase() == Game.Phase.MATCH_END)
-                cues.add(new Cue("match_end", "match_end", 25));
         } else if (after.phase() == Game.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);

@@ -139,6 +139,34 @@ class GameLifecycleTest {
         assertFalse(publicJson.contains("\"recorder\""));
     }
 
+    @Test void readoutAcknowledgementsRetainAReadingTailAndCannotChangeTheScore() {
+        Game game = started(RuleSet.TENHOU_4, 205);
+        game.players[1].points = -100;
+        Settlement.abort(game, "nine_terminals");
+        game.wins = List.of(new TableView.Win(0, 1, 4,
+            new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
+        int maximum = ScoreAnnouncements.maximumTicks(game.wins);
+        assertEquals(maximum + Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        var deltas = List.copyOf(game.deltas);
+        for (int seat = 0; seat < 4; seat++) {
+            UUID id = game.players[seat].id;
+            var view = game.view(id);
+            int done = index(view, Action.Type.SETTLEMENT_DONE);
+            assertFalse(game.act(id, view.decision() - 1, done));
+            assertTrue(game.act(id, view.decision(), done));
+            game.tick();
+            if (seat < 3) assertTrue(game.roomView().settlementTicks() > Game.SETTLEMENT_TICKS * 2);
+        }
+        assertEquals(Game.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        game = JSON.fromJson(JSON.toJson(game), Game.class);
+        for (int i = 0; i < Game.SETTLEMENT_TICKS; i++) game.tick();
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(deltas, game.deltas);
+        assertFalse(game.view(game.players[0].id).actions().stream().anyMatch(a -> a.type() == Action.Type.SETTLEMENT_DONE));
+        assertEquals(Game.SETTLEMENT_TICKS, ScoreAnnouncements.maximumTicks(List.of()));
+    }
+
     @Test void settlementWaitCanBeSkippedWithServerIssuedActions() {
         Game game = started(RuleSet.TENHOU_4, 204);
         UUID player = game.players[0].id;
@@ -216,7 +244,8 @@ class GameLifecycleTest {
                 assertPrivateViews(game);
             }
             if (game.phase() == Game.Phase.HAND_END) {
-                for (int tick = 0; tick < Game.SETTLEMENT_TICKS; tick++) game.tick();
+                int remaining = game.roomView().settlementTicks();
+                for (int tick = 0; tick < remaining; tick++) game.tick();
                 continue;
             }
             boolean acted = false;

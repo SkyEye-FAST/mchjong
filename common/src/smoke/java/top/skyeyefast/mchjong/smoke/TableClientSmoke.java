@@ -41,11 +41,12 @@ public final class TableClientSmoke {
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
     private final boolean visibilityOnly = Boolean.getBoolean("mchjong.smoke.visibilityOnly");
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
+    private final boolean settlementOnly = Boolean.getBoolean("mchjong.smoke.settlementOnly");
     private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
     private final boolean guidesOnly = Boolean.getBoolean("mchjong.smoke.ponderOnly") || Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -196,7 +197,7 @@ public final class TableClientSmoke {
                     step = 18; entered = ticks;
                     return;
                 }
-                if (seatingOnly || visibilityOnly || roomOnly || maidOnly) {
+                if (seatingOnly || visibilityOnly || roomOnly || maidOnly || settlementOnly) {
                     step = 24; entered = ticks;
                     return;
                 }
@@ -315,7 +316,7 @@ public final class TableClientSmoke {
                 if (view.phase() != Game.Phase.TURN || view.turn() != view.viewerSeat()) return;
                 require(view.seats().get(view.viewerSeat()).hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
-                if (seatingOnly) {
+                if (seatingOnly || settlementOnly) {
                     prepareDisplaySeat(client);
                     return;
                 }
@@ -377,6 +378,12 @@ public final class TableClientSmoke {
                     "Fixed display seat has not reached the client");
                 step = seatingOnly ? 11 : 10; entered = ticks;
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
+                if (settlementOnly) {
+                    Files.writeString(output.resolve("PASS.txt"), "Sequential yaku, points and grade; multi-winner navigation, resize, collapse and final standings passed.\n");
+                    LOG.info("MCHJONG_SETTLEMENT_SMOKE_PASS");
+                    step = 13; entered = ticks;
+                    return;
+                }
                 step = 11; entered = ticks;
             } else if (step == 11 && animationSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 step = 30; entered = ticks;

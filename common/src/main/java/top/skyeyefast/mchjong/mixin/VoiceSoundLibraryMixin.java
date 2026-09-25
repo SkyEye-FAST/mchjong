@@ -1,25 +1,32 @@
 package top.skyeyefast.mchjong.mixin;
 
 import java.io.ByteArrayInputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.util.Optional;
 import net.minecraft.client.sounds.SoundBufferLibrary;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.server.packs.resources.ResourceProvider;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import top.skyeyefast.mchjong.client.VoicePresets;
-import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Supplies config ZIP recordings to the native sound buffer without a resource pack. */
 @Mixin(SoundBufferLibrary.class)
 public abstract class VoiceSoundLibraryMixin {
     @ModifyVariable(method = "<init>", at = @At("HEAD"), argsOnly = true)
     private static ResourceProvider mchjong$voiceProvider(ResourceProvider delegate) {
-        return location -> {
-            byte[] bytes = VoicePresets.audio(location);
-            if (bytes == null) return delegate.getResource(location);
-            return delegate.getResource(MahjongContent.id("sounds.json"))
-                .map(reference -> new Resource(reference.source(), () -> new ByteArrayInputStream(bytes)));
+        return new ResourceProvider() {
+            @Override public Optional<Resource> getResource(ResourceLocation location) {
+                return delegate.getResource(location);
+            }
+            @Override public InputStream open(ResourceLocation location) throws IOException {
+                byte[] bytes = VoicePresets.audio(location);
+                // The native sound cache contains only Ogg files, not sounds.json pack metadata.
+                return bytes == null ? delegate.open(location) : new ByteArrayInputStream(bytes);
+            }
         };
     }
 }

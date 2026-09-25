@@ -9,6 +9,10 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableAudio;
+import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.client.VoicePresets;
+import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.HandScore;
 import top.skyeyefast.mchjong.engine.Meld;
@@ -21,18 +25,106 @@ final class SettlementSmoke {
     private TableView fixture;
     private int ticks;
     private boolean animations;
+    private boolean sequenceComplete, heardRecording;
+    private int sequenceTicks, captureStage, previousRows;
+    private net.minecraft.resources.ResourceLocation voicePreset;
+    private TableSettings.VoiceSource voiceSource;
+    private double voiceVolume;
+    private static final String[] LANGUAGES = {"ja_jp", "zh_cn", "zh_tw", "en_us"};
+    private int locale, localeTicks;
+    private java.util.concurrent.CompletableFuture<Void> languageReload;
+    private java.util.concurrent.CompletableFuture<com.mojang.blaze3d.audio.SoundBuffer> voiceDecode;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (fixture == null) {
             animations = top.skyeyefast.mchjong.client.TableSettings.get().animations;
             top.skyeyefast.mchjong.client.TableSettings.get().animations = true;
+            var settings = TableSettings.get();
+            voicePreset = settings.voicePreset;
+            voiceSource = settings.voiceSource;
+            voiceVolume = settings.voiceVolume;
+            var preset = net.minecraft.resources.ResourceLocation.parse("smoke:readout");
+            // Decode an existing game recording; no third-party voice assets enter the project.
+            try (var sound = client.getResourceManager().open(net.minecraft.resources.ResourceLocation.parse("minecraft:sounds/random/click.ogg"))) {
+                byte[] recording = sound.readAllBytes();
+                var recordings = new java.util.HashMap<String, byte[]>();
+                ScoreAnnouncements.SUBTITLES.keySet().forEach(event -> recordings.put(event, recording));
+                VoicePresets.installLocal(java.util.Map.of(preset,
+                    new top.skyeyefast.mchjong.config.PresetArchives.Voice("Readout smoke", recordings)));
+            } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+            settings.voicePreset = preset;
+            settings.voiceSource = TableSettings.VoiceSource.SELECTED;
+            settings.voiceVolume = .2;
+            // Match the native engine's sound-only provider; it cannot supply sounds.json.
+            voiceDecode = new net.minecraft.client.sounds.SoundBufferLibrary(location -> location.getPath().endsWith(".ogg")
+                    ? client.getResourceManager().getResource(location) : java.util.Optional.empty())
+                .getCompleteBuffer(VoicePresets.audioPath(preset, "yaku.riichi"));
             fixture = fixture(table.clientView());
+            client.setScreen(null);
             acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         }
         acceptFixture(table, fixture);
+        if (ticks >= 110) {
+            if (languageReload == null) {
+                client.getLanguageManager().setSelected(LANGUAGES[locale]);
+                languageReload = client.reloadResourcePacks();
+                return false;
+            }
+            if (!languageReload.isDone() || client.getOverlay() != null) return false;
+            languageReload.join();
+            if (localeTicks++ == 0) {
+                client.options.guiScale().set(4);
+                client.resizeDisplay();
+                client.setScreen(new TableScreen(table.getBlockPos()));
+            }
+            if (localeTicks < 8) return false;
+            checkBounds(client);
+            capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
+            if (++locale == LANGUAGES.length) return true;
+            localeTicks = 0;
+            languageReload = null;
+            return false;
+        }
+        if (!sequenceComplete) {
+            if (++sequenceTicks > 900) throw new IllegalStateException("Settlement readout stalled");
+            if (voiceDecode.isDone()) voiceDecode.join();
+            var readout = TableAudio.result(fixture);
+            if (readout == null) throw new IllegalStateException("Missing settlement readout");
+            heardRecording |= VoicePresets.playing();
+            int visible = readout.visibleRows(0);
+            if (captureStage == 0 && visible == 1 && previousRows == 1) {
+                capture(client, output, "06-readout-first-yaku.png");
+                captureStage++;
+            } else if (captureStage == 1 && visible >= 3 && previousRows >= 3) {
+                capture(client, output, "06-readout-partial.png");
+                captureStage++;
+            } else if (captureStage == 2 && readout.scoredAt(0) >= 0
+                    && net.minecraft.Util.getMillis() - readout.scoredAt(0) >= 50) {
+                capture(client, output, "06-readout-points.png");
+                captureStage++;
+            } else if (captureStage == 3 && readout.scoredAt(0) >= 0
+                    && net.minecraft.Util.getMillis() - readout.scoredAt(0) >= 500) {
+                capture(client, output, "06-readout-grade.png");
+                captureStage++;
+            }
+            previousRows = visible;
+            if (!readout.complete() || net.minecraft.Util.getMillis() - readout.pointsAt() < 1300) return false;
+            if (!voiceDecode.isDone()) throw new IllegalStateException("Voice buffer never decoded");
+            voiceDecode.join();
+            if (!heardRecording || captureStage != 4) throw new IllegalStateException("Readout did not visit every recorded stage");
+            checkSettledPoints(client);
+            TableResults panel = panel(client);
+            client.screen.mouseClicked(panel.getX() + 15, panel.getY() + 25, 0);
+            sequenceComplete = true;
+        }
         ticks++;
-        if (ticks == 10) {
+        if (ticks == 2) {
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        } else if (ticks == 6) {
+            capture(client, output, "07-readout-complete-immersive.png");
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
             TableResults panel = panel(client);
@@ -105,7 +197,13 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
             top.skyeyefast.mchjong.client.TableSettings.get().animations = animations;
-            return true;
+            TableSettings.get().voicePreset = voicePreset;
+            TableSettings.get().voiceSource = voiceSource;
+            TableSettings.get().voiceVolume = voiceVolume;
+            VoicePresets.stop();
+            fixture = fixture(fixture);
+            acceptFixture(table, fixture);
+            TableAudio.finishResult();
         }
         return false;
     }
@@ -143,7 +241,9 @@ final class SettlementSmoke {
         var room = table.clientRoom();
         table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.invitationTeleport(),
             room.seating(), room.availableWinds(), room.seats(), view.phase() == Game.Phase.MATCH_END
-                ? Game.SETTLEMENT_TICKS * 2 : view.phase() == Game.Phase.HAND_END ? Game.SETTLEMENT_TICKS : 0));
+                ? ScoreAnnouncements.maximumTicks(view.wins()) + Game.SETTLEMENT_TICKS
+                : view.phase() == Game.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0));
+        if (table.clientView() == view) TableAudio.accept(table, view);
     }
 
     static TableView fixture(TableView base) {

@@ -13,6 +13,26 @@ recordings from that preset; **Off** silences recordings while retaining effects
 Missing recordings stay silent. The default voice preset uses the selected
 Minecraft resource pack's `mchjong:voice.*` events.
 
+## Settlement playback
+
+Winning settlements reveal one yaku at a time, playing its recording and waiting
+for playback to finish before continuing. Counted dora follows the yaku. Each
+winner's points appear before the one applicable hand-grade recording; grade
+names are not played as a ladder. Multiple winners are read in order. Missing
+recordings and muted voices retain a short visual cadence rather than blocking
+the receipt. Sound volume and animation settings remain independent.
+
+Resizing and cosmetic table updates retain progress. Selecting another winner,
+changing result pages, hiding or closing the receipt completes the local readout
+and stops pending recordings. The first Skip wait during a readout reveals the
+full receipt; pressing it again sends the server's stage-skip action. Once all
+seated players finish, the server leaves a ten-second reading period. A bounded
+fallback prevents unavailable clients from holding the table indefinitely.
+The match-end recording belongs to final standings, after the hand readout.
+
+The mod does not bundle character recordings or invoke device text-to-speech.
+The default events remain silent until a resource pack supplies recordings.
+
 ## ZIP voice presets
 
 Put client voice ZIPs in `config/mchjong/presets/voices/`. Put server voice ZIPs

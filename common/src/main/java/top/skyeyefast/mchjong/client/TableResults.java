@@ -17,6 +17,7 @@ import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.YakuCatalog;
+import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
@@ -34,6 +35,7 @@ public final class TableResults extends AbstractWidget {
     private final long started;
     private final int contentScale;
     private int winner;
+    private ResultReadout readout;
     private final List<Hit> hits = new ArrayList<>();
     private record Hit(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
@@ -65,20 +67,25 @@ public final class TableResults extends AbstractWidget {
         this(font, view, preset, TileMaterial.BONE, null, x, y, width, height, winner, page, started, contentScale);
     }
 
-    public int selectedWinner() { return winner; }
+    public TableResults readout(ResultReadout value) { readout = value; return this; }
+    public int selectedWinner() { return readout != null && !readout.complete() ? readout.winner() : winner; }
     public TileMaterial material() { return material; }
     public DyeColor dye() { return dye; }
     /** Every result page presents the same once-per-settlement score transition. */
     public int displayedPoints(int seat) {
         int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
-        double progress = TableSettings.get().animations ? Math.clamp((Util.getMillis() - started - 250) / 900.0, 0, 1) : 1;
+        long pointsAt = readout == null ? started : readout.pointsAt();
+        double progress = pointsAt < 0 ? 0 : TableSettings.get().animations
+            ? Math.clamp((Util.getMillis() - pointsAt - 250) / 900.0, 0, 1) : 1;
         return view.seats().get(seat).points() - delta + (int) Math.round(delta * progress);
     }
+    private boolean pointsVisible() { return readout == null || readout.pointsAt() >= 0; }
     public static boolean available(TableView view) {
         return view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END;
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
+        winner = selectedWinner();
         hits.clear();
         int x = getX(), y = getY();
         MahjongUi.panel(graphics, x, y, width, height);
@@ -148,7 +155,8 @@ public final class TableResults extends AbstractWidget {
             : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
         boolean named = view.wins().size() == 1;
         if (named) name(graphics, win.seat(), TableScreen.playerName(view, win.seat()), 0, 0, span, GOLD);
-        text(graphics, score.copy().append("  ").append(source), 0, named ? 12 : 0, span, MUTED);
+        boolean scored = readout == null || readout.scoredAt(winner) >= 0;
+        text(graphics, scored ? score.copy().append("  ").append(source) : source, 0, named ? 12 : 0, span, MUTED);
         int y = named ? 28 : 16;
         if (win.tile() >= 0 && player.exposed()) {
             var hand = new ArrayList<>(player.hand());
@@ -172,18 +180,30 @@ public final class TableResults extends AbstractWidget {
         var yaku = new ArrayList<Component>();
         for (String key : win.score().yaku()) yaku.add(Component.translatable(YakuCatalog.translationKey(key)));
         if (win.score().dora() > 0) yaku.add(Component.translatable("ui.mchjong.dora", win.score().dora()));
-        int columns = span >= 280 ? 3 : 2;
+        int visible = readout == null ? yaku.size() : readout.visibleRows(winner);
+        int columns = yaku.size() > 6 ? 2 : 1;
         int colWidth = span / columns;
         for (int first = 0; first < yaku.size(); first += columns) {
             int rowHeight = 0;
             for (int col = 0; col < columns && first + col < yaku.size(); col++) {
                 var lines = font.split(yaku.get(first + col), colWidth - 7);
-                for (int row = 0; row < lines.size(); row++) if (graphics != null)
-                    graphics.drawString(font, lines.get(row), col * colWidth, y + row * 10, TEXT, false);
+                int color = readout != null && !readout.complete() && first + col == visible - 1 ? GOLD : TEXT;
+                for (int row = 0; row < lines.size(); row++) if (graphics != null && first + col < visible)
+                    graphics.drawString(font, lines.get(row), col * colWidth, y + row * 10, color, false);
                 rowHeight = Math.max(rowHeight, lines.size() * 10);
             }
             y += rowHeight + 2;
         }
+        // Reserve the complete receipt from the first frame, so new rows never move the hand.
+        if (scored) {
+            int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
+            Component points = Component.translatable("ui.mchjong.points", gain);
+            String limit = ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer());
+            if (limit != null && (readout == null || Util.getMillis() - readout.scoredAt(winner) >= 350))
+                points = points.copy().append("  ").append(Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit)));
+            text(graphics, points, 0, y + 2, span, GOLD);
+        }
+        y += 16;
         if (win.tile() >= 0) {
             y += 4;
             int leftHeight = indicators(graphics, 0, y, span / 2 - 4, false, compact);
@@ -270,7 +290,7 @@ public final class TableResults extends AbstractWidget {
             int points = displayedPoints(seat);
             List<String> values = standings ? List.of(Integer.toString(player.points()),
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
-                : List.of(Integer.toString(player.points() - delta), String.format(Locale.ROOT, "%+d", delta), Integer.toString(points));
+                : List.of(Integer.toString(player.points() - delta), pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—", Integer.toString(points));
             for (int i = 0; i < values.size(); i++) {
                 String value = values.get(i);
                 int color = i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
@@ -301,7 +321,7 @@ public final class TableResults extends AbstractWidget {
             text(graphics, Component.literal(amount), cx + 4, cy + 14, cardWidth - 11, TEXT);
             Component change = page == Page.MATCH && seat < view.finalScores().size()
                 ? Component.translatable("ui.mchjong.final_score", String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)))
-                : Component.literal(String.format(Locale.ROOT, "%+d", delta));
+                : Component.literal(pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—");
             text(graphics, change, cx + 4, cy + 25, cardWidth - 11, delta < 0 ? MahjongUi.NEGATIVE : GOLD);
             hits.add(new Hit(cx, cy, cardWidth - 3, cardHeight - 3, name.copy().append("  ")
                 .append(Component.literal((player.points() - delta) + " → " + player.points() + " (" + String.format(Locale.ROOT, "%+d", delta) + ")"))));
@@ -332,6 +352,7 @@ public final class TableResults extends AbstractWidget {
         if (button == 0 && page == Page.HAND && view.wins().size() > 1 && localY >= 21 && localY < 36) {
             int span = contentWidth - 20 - (contentWidth >= 500 ? 156 : 0);
             if (localX >= 10 && localX < 10 + span) {
+                TableAudio.finishResult();
                 winner = Math.min(view.wins().size() - 1, (int) (localX - 10) / (span / view.wins().size()));
                 return true;
             }
@@ -340,6 +361,8 @@ public final class TableResults extends AbstractWidget {
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (page == Page.HAND && view.wins().size() > 1 && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
+            winner = selectedWinner();
+            TableAudio.finishResult();
             winner = Math.floorMod(winner + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), view.wins().size());
             return true;
         }

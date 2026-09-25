@@ -56,7 +56,7 @@ public final class ScoreAnnouncements {
     public static int maximumTicks(List<TableView.Win> wins) {
         if (wins.isEmpty()) return Game.SETTLEMENT_TICKS;
         int recordings = 1; // Opening ron/tsumo, then every winner's rows and final grade.
-        for (var win : wins) recordings += rows(win.score()).size() + 2;
+        for (var win : wins) recordings += win.score().yaku().size() + (win.score().dora() > 0 ? 1 : 0) + 2;
         return Game.SETTLEMENT_TICKS + recordings * (MAX_VOICE_MILLIS / 50 + 10);
     }
 }

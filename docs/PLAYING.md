@@ -118,14 +118,18 @@ discards, while a possible win always takes priority.
 
 ## Results and progression
 
-Results show each player's point movement, winning hands and melds, yaku, and
-revealed dora/ura indicators without a scroll viewport. Select a winner's tab
+Results reveal yaku one at a time with the selected voice preset, followed by
+points and the hand grade. They also show winning hands and melds, and revealed
+dora/ura indicators without a scroll viewport. Select a winner's tab
 when several players ron, or focus the result panel and use Left/Right.
 Separate tabs show hand details, animated point changes and server-authoritative
 final standings. Large windows show point summaries alongside the hand;
 shorter windows keep the dedicated point-change tab available. **View table** hides the receipt without
-advancing play. **Continue** readies your seat for the next hand; **Ready for new
-match** starts another match only after all seats are ready. Table animations can be disabled
+advancing play. The first **Skip wait** finishes the local readout; another
+**Skip wait** advances to the next stage. Otherwise, after seated players finish
+their readouts, the server leaves ten seconds to inspect the receipt before
+continuing. Final standings have a separate ten-second stage before returning to
+the lobby. Table animations can be disabled
 independently of the game rules in the interaction settings.
 
 ## Time controls

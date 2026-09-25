@@ -16,6 +16,8 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.client.resources.sounds.Sound;
 import net.minecraft.client.resources.sounds.SoundInstance;
 import net.minecraft.client.sounds.JOrbisAudioStream;
+import net.minecraft.client.sounds.ChannelAccess;
+import net.minecraft.client.sounds.SoundBufferLibrary;
 import net.minecraft.client.sounds.SoundManager;
 import net.minecraft.client.sounds.WeighedSoundEvents;
 import net.minecraft.network.chat.Component;
@@ -36,6 +38,8 @@ public final class VoicePresets {
     private static volatile Map<ResourceLocation, byte[]> audio = Map.of();
     private static List<ResourceLocation> choices = List.of(DEFAULT);
     private static SoundInstance current;
+    private static ChannelAccess.ChannelHandle channel;
+    private static java.util.concurrent.CompletableFuture<?> decoding;
     private static long started;
     private VoicePresets() {}
 
@@ -110,6 +114,7 @@ public final class VoicePresets {
         } catch (NoSuchAlgorithmException failure) { throw new AssertionError(failure); }
     }
     private static void update() {
+        stopCurrent();
         var sounds = new HashMap<>(localAudio); sounds.putAll(serverAudio);
         audio = Map.copyOf(sounds);
         var ids = new HashSet<>(local.keySet()); ids.addAll(server.keySet());
@@ -141,12 +146,25 @@ public final class VoicePresets {
         }
     }
 
+    public static void trackChannel(SoundInstance sound, ChannelAccess.ChannelHandle handle, SoundBufferLibrary buffers) {
+        if (sound != current) return;
+        channel = handle;
+        if (handle != null && !sound.getSound().shouldStream()) {
+            decoding = buffers.getCompleteBuffer(sound.getSound().getPath());
+            decoding.exceptionally(failure -> {
+                org.slf4j.LoggerFactory.getLogger("mchjong").warn("Cannot decode voice {}", sound.getLocation(), failure);
+                return null;
+            });
+        }
+    }
+
     /** Allow asynchronous decoding to start, and bound resource-pack recordings too. */
     public static boolean playing() {
         if (current == null) return false;
+        if (decoding != null && decoding.isCompletedExceptionally()) { stopCurrent(); return false; }
         long elapsed = Util.getMillis() - started;
         if (elapsed < ScoreAnnouncements.MAX_VOICE_MILLIS + 250
-                && (elapsed < 250 || Minecraft.getInstance().getSoundManager().isActive(current))) return true;
+                && (elapsed < 250 || channel != null && !channel.isStopped())) return true;
         stopCurrent();
         return false;
     }
@@ -154,13 +172,11 @@ public final class VoicePresets {
     private static void stopCurrent() {
         if (current != null) Minecraft.getInstance().getSoundManager().stop(current);
         current = null;
+        channel = null;
+        decoding = null;
     }
     public static void stop() {
         stopCurrent();
-        var manager = Minecraft.getInstance().getSoundManager();
-        for (String event : MahjongSounds.VOICES) manager.stop(MahjongSounds.voice(event).getLocation(), null);
-        for (var definition : local.values()) for (var sound : definition.recordings().values()) manager.stop(sound, null);
-        for (var definition : server.values()) for (var sound : definition.recordings().values()) manager.stop(sound, null);
     }
 
     private static final class Recording extends AbstractSoundInstance {

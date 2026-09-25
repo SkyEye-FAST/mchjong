@@ -162,9 +162,10 @@ def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
+def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
-def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -192,6 +193,7 @@ neoForge {
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             systemProperty 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             systemProperty 'mchjong.smoke.roomOnly', roomSmoke.toString()
+            systemProperty 'mchjong.smoke.settlementOnly', settlementSmoke.toString()
             systemProperty 'mchjong.smoke.manualOnly', manualSmoke.toString()
             systemProperty 'mchjong.smoke.ponder', ponderSmoke.toString()
             systemProperty 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')

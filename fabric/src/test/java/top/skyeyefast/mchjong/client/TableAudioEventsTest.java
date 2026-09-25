@@ -7,6 +7,8 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.HandScore;
+import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -29,6 +31,76 @@ class TableAudioEventsTest {
     }
     private static List<String> sounds(TableView before, TableView after) {
         return TableAudioEvents.between(before, after).stream().map(TableAudioEvents.Cue::sound).toList();
+    }
+
+    private static TableView receipt(long revision, int hand, List<TableView.Win> wins) {
+        return new TableView(TABLE, revision, revision, hand, RuleSet.TENHOU_4.config(), Game.Phase.HAND_END, 0,
+            0, 0, 0, 0, 0, 0, 0, List.of(), null, seats(), List.of(), wins, "ron", List.of(), List.of(),
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
+    }
+
+    @Test void receiptWaitsForEachRecordingThenShowsPointsBeforeTheGrade() {
+        var score = new HandScore(3, 60, 0, 8000, 0, 0, List.of("Richi"), 2);
+        var wins = List.of(new TableView.Win(1, 0, 4, score));
+        var readout = new ResultReadout(receipt(1, 1, wins), 0);
+        assertNull(readout.tick(400, true));
+        assertEquals(0, readout.visibleRows(0));
+        assertEquals("yaku.riichi", readout.tick(500, false));
+        assertNull(readout.tick(5000, true));
+        assertEquals(1, readout.visibleRows(0));
+        assertEquals("yaku.dora_2", readout.tick(5001, false));
+        assertEquals(-1, readout.scoredAt(0));
+        assertNull(readout.tick(6000, true));
+        assertNull(readout.tick(6001, false));
+        assertEquals(6001, readout.scoredAt(0));
+        assertNull(readout.tick(6350, false));
+        assertEquals("score.mangan", readout.tick(6351, false));
+        assertNull(readout.tick(9000, true));
+        assertFalse(readout.complete());
+        assertNull(readout.tick(9001, false));
+        assertTrue(readout.complete());
+        assertEquals(9001, readout.pointsAt());
+        assertTrue(readout.matches(receipt(50, 1, wins)), "Snapshot/decision refresh retains progress");
+        assertFalse(readout.matches(receipt(51, 2, wins)));
+        assertNull(readout.tick(10000, false));
+        readout.finish(11000);
+        assertEquals(9001, readout.pointsAt(), "Skipping a completed readout does not restart scores");
+    }
+
+    @Test void silentMultiWinnerReceiptsAdvanceOnceAndCanBeSkippedWithoutReplaying() {
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var view = receipt(1, 1, List.of(new TableView.Win(1, 0, 4, score), new TableView.Win(2, 0, 4, score)));
+        var readout = new ResultReadout(view, 0);
+        var events = new ArrayList<String>();
+        for (long now = 0; now <= 7000; now += 50) {
+            String event = readout.tick(now, false);
+            if (event != null) events.add(event);
+        }
+        assertEquals(List.of("yaku.riichi", "yaku.riichi"), events);
+        assertTrue(readout.complete());
+        assertEquals(1, readout.winner());
+        var skipped = new ResultReadout(view, 0);
+        skipped.tick(400, false);
+        skipped.finish(450);
+        assertEquals(1, skipped.visibleRows(1));
+        assertNull(skipped.tick(10000, false));
+        assertEquals(450, skipped.pointsAt());
+    }
+
+    @Test void gradesUseActualPaymentsAndCoverAllSupportedYakumanMultipliers() {
+        String[] grades = {null, "mangan", "haneman", "baiman", "sanbaiman", "kazoe_yakuman"};
+        int[] bases = {1920, 2000, 3000, 4000, 6000, 8000};
+        for (int i = 0; i < bases.length; i++) {
+            String expected = grades[i] == null ? null : "score." + grades[i];
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, bases[i] * 4, 0, 0, List.of(), 0), false));
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, bases[i] * 6, 0, 0, List.of(), 0), true));
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, 0, bases[i] * 2, bases[i], List.of(), 0), false));
+        }
+        for (int count = 1; count <= 6; count++) {
+            String event = ScoreAnnouncements.limit(new HandScore(13 * count, 0, count, 32000 * count, 0, 0, List.of(), 0), false);
+            assertEquals("score.yakuman" + (count == 1 ? "" : "_" + count), event);
+            assertTrue(ScoreAnnouncements.SUBTITLES.containsKey(event));
+        }
     }
 
     @Test void firstObservationRepeatedAndCosmeticSnapshotsAreSilent() {
@@ -83,7 +155,7 @@ class TableAudioEventsTest {
             assertEquals(List.of("draw_end"), sounds(before, view(2, 1, Game.Phase.HAND_END, seats(), reason)));
         for (String reason : List.of("ron", "tsumo")) {
             var after = view(2, 1, Game.Phase.MATCH_END, seats(), reason);
-            assertEquals(List.of(reason, "match_end"), sounds(before, after));
+            assertEquals(List.of(reason), sounds(before, after));
             assertTrue(sounds(after, view(3, 1, Game.Phase.MATCH_END, seats(), reason)).isEmpty());
         }
     }

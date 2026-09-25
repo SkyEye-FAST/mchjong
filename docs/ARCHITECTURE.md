@@ -255,9 +255,21 @@ inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
 
-`Game` advances hand settlement after 200 ticks or a seated player's skip request.
-Match settlement uses two 200-tick stages, each independently skippable: hand
-results and final standings, then restores the roster to the lobby.
+`ResultReadout` retains one timeline per observed hand across widget rebuilds.
+It reveals each scored yaku and counted-dora row with its recording, then the
+winner's points, then the applicable hand grade. Multiple winners run in order;
+manual navigation completes the local readout without replaying it. The audio
+engine bounds recordings and does not derive or modify any score.
+
+Draw settlements retain their 200-tick timer. Winning receipts have a finite
+server fallback derived from their recording count and the eight-second clip
+limit. Seated human clients acknowledge completion using the server-issued
+`SETTLEMENT_DONE` action; once all seated humans finish, `Game` shortens the
+remaining hand stage to a 200-tick reading tail. This acknowledgement cannot
+change points or advance the stage immediately. Bots need no acknowledgement;
+the fallback still expires if a client never acknowledges. A seated player's
+explicit skip request can advance the stage. Match settlement then adds a
+separately skippable 200-tick final-standings stage before restoring the roster.
 `RoomView.settlementTicks` synchronizes the remaining duration; the saved decision
 age preserves it across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
