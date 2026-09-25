@@ -275,9 +275,9 @@ public final class TableResults extends AbstractWidget {
         var order = IntStream.range(0, view.seats().size()).boxed().toList();
         if (standings && view.finalRanks().size() == view.seats().size())
             order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
-        int[] ends = standings ? new int[]{span * 52 / 100, span * 74 / 100, span - 4}
+        int[] ends = standings ? new int[]{span * 40 / 100, span * 62 / 100, span * 80 / 100, span - 4}
             : new int[]{span * 38 / 100, span * 59 / 100, span * 78 / 100, span - 4};
-        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.final.short"}
+        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.uma.short", "ui.mchjong.final.short"}
             : new String[]{"ui.mchjong.player", "ui.mchjong.before", "ui.mchjong.change", "ui.mchjong.after"};
         for (int i = 0; i < labels.length; i++) {
             Component label = Component.translatable(labels[i]);
@@ -296,11 +296,13 @@ public final class TableResults extends AbstractWidget {
             name(graphics, seat, name, x + 4, textY, ends[0] - 8, TEXT);
             int points = displayedPoints(seat);
             List<String> values = standings ? List.of(Integer.toString(player.points()),
+                seat < view.finalUma().size() ? String.format(Locale.ROOT, "%+.2f", view.finalUma().get(seat)) : "—",
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
                 : List.of(Integer.toString(player.points() - delta), pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—", Integer.toString(points));
             for (int i = 0; i < values.size(); i++) {
                 String value = values.get(i);
-                int color = i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
+                int color = standings ? i > 0 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT
+                    : i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
                 graphics.drawString(font, value, x + ends[i + 1] - font.width(value) - 3, textY, color, false);
             }
             hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(Component.translatable("ui.mchjong.points", player.points()))));

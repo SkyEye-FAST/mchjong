@@ -60,7 +60,7 @@ final class InputSmoke {
         actions.add(new Action(Action.Type.RIICHI, 4));
         TableView fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
-            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
+            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
         table.acceptView(fixture);
         TableScreen screen = new TableScreen(table.getBlockPos());
         client.setScreen(screen);
@@ -199,7 +199,7 @@ final class InputSmoke {
         var fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), Game.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),
             base.wall(), new TableView.Focus(from, 14, false, 0), seats, List.of(new Action(Action.Type.PASS), action),
-            List.of(), "playing", List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
+            List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
         table.acceptView(fixture);
         TableSettings.get().animations = false;
         TableSettings.get().highlightTiles = false;

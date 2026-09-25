@@ -8,7 +8,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,
-                        String result, List<Integer> deltas, List<Double> finalScores,
+                        String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
                         HandVisibility handVisibility, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
                         boolean ronBlocked, int riichiHan) {
@@ -30,6 +30,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     public TableView {
         wall = List.copyOf(wall); seats = List.copyOf(seats); actions = List.copyOf(actions);
         wins = List.copyOf(wins); deltas = List.copyOf(deltas); finalScores = List.copyOf(finalScores);
+        finalUma = List.copyOf(finalUma);
         clocks = List.copyOf(clocks); finalRanks = List.copyOf(finalRanks);
     }
 }

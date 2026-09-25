@@ -23,7 +23,7 @@ class TableAudioEventsTest {
     }
     private static TableView view(long revision, int hand, Game.Phase phase, List<TableView.Seat> seats, String result) {
         return new TableView(TABLE, revision, 1, hand, RuleSet.TENHOU_4.config(), phase, 0,
-            0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(),
+            0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(), List.of(),
             TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
     private static List<TableView.Seat> seats() {
@@ -39,7 +39,7 @@ class TableAudioEventsTest {
     private static TableView receipt(long revision, int hand, List<TableView.Win> wins,
                                      List<TableView.Seat> seats, List<Integer> wall) {
         return new TableView(TABLE, revision, revision, hand, RuleSet.TENHOU_4.config(), Game.Phase.HAND_END, 0,
-            0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(),
+            0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(), List.of(),
             TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
 

@@ -33,21 +33,21 @@ class TableAnimationTest {
         for (int i = 1; i < rules.players(); i++) seats.add(seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(), List.of(), false));
         return new TableView(TABLE, 2, 2, 1, rules, Game.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
-            List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(),
+            List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
 
     private static TableView lobby(RuleConfig rules) {
         return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
-            List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(),
+            List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
 
     private static TableView update(TableView old, List<TableView.Seat> seats, int viewer) {
         return new TableView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
-            old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(),
+            old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(), old.finalUma(),
             old.timeControl(), old.clocks(), old.finalRanks(), old.handVisibility(), old.exitVote(), old.handling(), old.autoPlay(), old.ronBlocked(), old.riichiHan());
     }
 
@@ -238,12 +238,12 @@ class TableAnimationTest {
             var handling = new TableView.Handling((1 << players) - 1, -1, 0, 0, 0, false);
             var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), Game.Phase.BUILD_WALL, 0,
                 0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
-                Collections.nCopies(players, 0), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
+                Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
                 handling, null, false, 1);
             int wallBreak = 2 * (size / (2 * players) + 3);
             var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), Game.Phase.DEAL, 0,
                 0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
-                Collections.nCopies(players, 0), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
+                Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
                 new TableView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1);
             var animation = new TableAnimation();
             animation.accept(built, 0);

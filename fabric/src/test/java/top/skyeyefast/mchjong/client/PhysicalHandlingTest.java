@@ -211,7 +211,7 @@ class PhysicalHandlingTest {
             List<TableView.Seat> seats, TableView.Handling handling, List<Action> actions) {
         return new TableView(base.tableId(), revision, revision, base.handNumber(), base.rules(), phase, base.viewerSeat(),
             base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(), base.remaining(), base.wallBreak(), wall,
-            base.focus(), seats, actions, base.wins(), base.result(), base.deltas(), base.finalScores(), base.timeControl(),
+            base.focus(), seats, actions, base.wins(), base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(),
             base.clocks(), base.finalRanks(), base.handVisibility(), base.exitVote(), handling, null, base.ronBlocked(), base.riichiHan());
     }
 

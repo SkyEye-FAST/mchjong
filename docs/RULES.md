@@ -65,6 +65,11 @@ yakuman and does not trigger natural-yakuman responsibility payments.
 ## Points and placement
 
 Uma values below are in thousands of points, in first-to-last order, before oka.
+The final standings show each player's uma separately from their final score.
+The Points rule group can award human players 100 Minecraft experience points per
+uma point at match completion. Experience rewards start disabled. When enabled,
+negative uma deducts the corresponding experience by default; the deduction can
+be switched off independently. A player's experience stops at zero.
 
 | Preset | Starting points | Return points | Uma | Oka |
 | --- | ---: | ---: | --- | ---: |

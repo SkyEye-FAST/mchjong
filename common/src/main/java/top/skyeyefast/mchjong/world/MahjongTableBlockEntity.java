@@ -140,6 +140,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         Game game = table.serverGame();
         if (game == null) return;
         game.tick();
+        table.flushExperience();
         table.synchronizeEquipment();
         table.ticks++;
         table.flushReplays();
@@ -150,6 +151,16 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
                     table.sendView(player, false, false);
             }
             table.sentRevision = game.revision();
+        }
+    }
+
+    private void flushExperience() {
+        if (game == null || game.pendingExperience().isEmpty()) return;
+        for (var entry : game.pendingExperience().entrySet()) {
+            ServerPlayer player = ((ServerLevel) level).getServer().getPlayerList().getPlayer(entry.getKey());
+            if (player == null) continue;
+            player.giveExperiencePoints(game.takeExperience(entry.getKey()));
+            setChanged();
         }
     }
 
@@ -473,6 +484,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             }
         }
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
+            flushExperience();
             if (requested == top.skyeyefast.mchjong.engine.Action.Type.LEAVE_ROOM) refreshParticipants(false);
             setChanged();
             flushReplays();

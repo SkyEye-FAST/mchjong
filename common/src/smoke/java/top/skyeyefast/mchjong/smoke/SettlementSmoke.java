@@ -79,8 +79,14 @@ final class SettlementSmoke {
                 client.setScreen(new TableScreen(table.getBlockPos()));
             }
             if (localeTicks < 8) return false;
+            if (localeTicks == 8) {
+                checkBounds(client);
+                capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
+                click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
+                return false;
+            }
             checkBounds(client);
-            capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
+            capture(client, output, "19-ranking-" + LANGUAGES[locale] + ".png");
             if (++locale == LANGUAGES.length) return true;
             localeTicks = 0;
             languageReload = null;
@@ -192,7 +198,7 @@ final class SettlementSmoke {
                 fixture.handNumber() + 1, fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, seats, List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
-                List.of(win), "ron", changes, List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
+                List.of(win), "ron", changes, List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
                 fixture.handVisibility(), null, null, fixture.autoPlay(), false, 1);
             acceptFixture(table, fixture);
             TableAudio.finishResult();
@@ -210,7 +216,7 @@ final class SettlementSmoke {
                 fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
-                List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(),
+                List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(), List.of(),
                 fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, fixture.autoPlay(), false, 1);
             acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
@@ -296,6 +302,6 @@ final class SettlementSmoke {
         return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
-            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
+            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
     }
 }

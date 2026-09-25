@@ -56,7 +56,9 @@ public final class Game {
     String result = "lobby";
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
+    List<Double> finalUma = new ArrayList<>();
     List<Integer> finalRanks = new ArrayList<>();
+    Map<UUID, Integer> pendingExperience = new java.util.HashMap<>();
     ReplayMatch replay;
     ReplayRecorder recorder;
     List<ReplayMatch> archiveQueue = new ArrayList<>();
@@ -353,7 +355,7 @@ public final class Game {
         dealer = initialDealer = round = honba = riichiSticks = turn = 0;
         lastFrom = -1;
         lastTile = Tile.ABSENT;
-        wins.clear(); finalScores.clear(); finalRanks.clear();
+        wins.clear(); finalScores.clear(); finalUma.clear(); finalRanks.clear();
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "lobby";
@@ -680,7 +682,7 @@ public final class Game {
         lastTile = Tile.ABSENT;
         lastFrom = -1;
         pending = null;
-        wins.clear(); finalScores.clear(); finalRanks.clear();
+        wins.clear(); finalScores.clear(); finalUma.clear(); finalRanks.clear();
         Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
@@ -1105,11 +1107,18 @@ public final class Game {
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
-            wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
+            wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores, finalUma,
             timeControl, clocks, finalRanks, handVisibility, exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1);
+    }
+
+    /** Rewards remain queued for disconnected participants until their player is online. */
+    public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
+    public int takeExperience(UUID player) {
+        Integer amount = pendingExperience.remove(player);
+        return amount == null ? 0 : amount;
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
@@ -1117,6 +1126,7 @@ public final class Game {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         Objects.requireNonNull(seating).validate(rules.players());
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
+        Objects.requireNonNull(finalUma); Objects.requireNonNull(pendingExperience);
         Objects.requireNonNull(archiveQueue);
         Objects.requireNonNull(handVisibility);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);

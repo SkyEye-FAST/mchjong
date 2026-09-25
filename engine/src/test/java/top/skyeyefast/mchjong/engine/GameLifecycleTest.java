@@ -363,6 +363,40 @@ class GameLifecycleTest {
         Game fractional = finish(custom, new int[]{40100,30100,20100,10100}, 0);
         assertArrayEquals(new double[]{45.6,4.9,-15.1,-35.4},
             fractional.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+        assertArrayEquals(new double[]{15.3,5,-5,-15.3},
+            fractional.finalUma.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+    }
+
+    @Test void matchUmaRewardsRespectBothExperienceOptionsAndPayOnce() {
+        var rules = RuleSet.WRC.config().with(RuleOption.EXPERIENCE_REWARDS, 1);
+        Game game = new Game(UUID.randomUUID(), rules.preset(), 1);
+        game.rules = rules;
+        game.round = 7;
+        int[] scores = {40000, 30000, 20000, 10000};
+        UUID[] ids = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
+        for (int seat = 0; seat < 4; seat++) {
+            game.players[seat].points = scores[seat];
+            game.players[seat].id = ids[seat];
+        }
+        game.players[2].bot = true;
+        Settlement.exhaustive(game);
+        assertEquals(List.of(15.0, 5.0, -5.0, -15.0), game.finalUma);
+        assertEquals(Map.of(ids[0], 1500, ids[1], 500, ids[3], -1500), game.pendingExperience());
+        Game restored = JSON.fromJson(JSON.toJson(game), Game.class);
+        restored.validate();
+        assertEquals(game.pendingExperience(), restored.pendingExperience());
+        assertEquals(1500, restored.takeExperience(ids[0]));
+        assertEquals(0, restored.takeExperience(ids[0]));
+
+        Game noDeductions = new Game(UUID.randomUUID(), rules.preset(), 2);
+        noDeductions.rules = rules.with(RuleOption.DEDUCT_NEGATIVE_EXPERIENCE, 0);
+        noDeductions.round = 7;
+        for (int seat = 0; seat < 4; seat++) {
+            noDeductions.players[seat].points = scores[seat];
+            noDeductions.players[seat].id = ids[seat];
+        }
+        Settlement.exhaustive(noDeductions);
+        assertEquals(Map.of(ids[0], 1500, ids[1], 500), noDeductions.pendingExperience());
     }
 
     private static Game finish(RuleConfig rules, int[] scores, int deposits) {

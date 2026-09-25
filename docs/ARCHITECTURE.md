@@ -254,6 +254,9 @@ winners have a mouse/keyboard selector. It displays server-authored deltas and f
 inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
+Final standings also show the server's separate uma shares. The table queues
+optional uma-based Minecraft experience changes for human players in its private
+save and pays connected players once from the server thread.
 
 `ScoreAnnouncements` supplies the same ordered rows to the receipt and narration,
 using the scoring library's per-yaku han and public winning tiles for the four
