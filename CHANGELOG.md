@@ -30,6 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Voice event regression coverage checks both the declaring player and another seated player; box smoke checks use the preset button's translation key, and visibility smoke accepts the room's initial mode.
 - The built-in Mojang back pattern matches the vanilla banner emblem.
 - Settlement receipts keep han badges next to yaku names and enlarge points and hand grades.
 - Personal voice presets play for the selecting player's declarations and wins instead of other players' actions.

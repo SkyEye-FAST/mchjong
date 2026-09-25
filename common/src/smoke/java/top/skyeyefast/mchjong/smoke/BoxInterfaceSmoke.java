@@ -132,7 +132,7 @@ final class BoxInterfaceSmoke {
 
     private static boolean visible(Minecraft client, String key) {
         return client.screen.children().stream().anyMatch(child -> child instanceof net.minecraft.client.gui.components.AbstractWidget widget
-            && widget.visible && widget.getMessage().getString().equals(Component.translatable(key).getString()));
+            && widget.visible && matches(widget.getMessage(), key));
     }
 
     private void capture(Minecraft client, Path output, String state) {
@@ -168,10 +168,15 @@ final class BoxInterfaceSmoke {
         var button = client.screen.children().stream()
             .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
             .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
-            .filter(child -> child.getMessage().getString().equals(Component.translatable(key).getString()))
+            .filter(child -> matches(child.getMessage(), key))
             .findFirst().orElseThrow();
         require(button.active && button.visible, "Inactive preset control: " + key);
         button.onPress();
+    }
+
+    private static boolean matches(Component message, String key) {
+        return message.getContents() instanceof net.minecraft.network.chat.contents.TranslatableContents text
+            ? text.getKey().equals(key) : message.getString().equals(Component.translatable(key).getString());
     }
 
     private static void require(boolean condition, String message) {

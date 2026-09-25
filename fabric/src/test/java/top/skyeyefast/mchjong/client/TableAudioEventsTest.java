@@ -163,7 +163,7 @@ class TableAudioEventsTest {
         assertTrue(rows.stream().allMatch(row -> row.han() == 0));
     }
 
-    @Test void doubleRiichiUsesThePublicDeclarationAndKeepsItsSettlementRecordingSeparate() {
+    @Test void doubleRiichiVoiceOnlyFollowsTheLocalDeclaration() {
         var before = view(1, 1, Game.Phase.TURN, seats(), "playing");
         var seats = seats();
         seats.set(1, new TableView.Seat(false, "Player", true, false, false, 24000,
@@ -171,7 +171,11 @@ class TableAudioEventsTest {
         var after = view(2, 1, Game.Phase.REACTION, seats, "playing");
         var cue = TableAudioEvents.between(before, after).getLast();
         assertEquals("riichi", cue.sound());
-        assertEquals("double_riichi", cue.voice());
+        assertNull(cue.voice());
+        var ownSeats = seats();
+        ownSeats.set(0, seats.get(1));
+        assertEquals("double_riichi", TableAudioEvents.between(before,
+            view(2, 1, Game.Phase.REACTION, ownSeats, "playing")).getLast().voice());
         assertEquals("yaku.double_riichi", ScoreAnnouncements.yaku("WRichi"));
         assertTrue(TableAudioEvents.between(after, view(3, 1, Game.Phase.REACTION, seats, "playing")).isEmpty());
     }
