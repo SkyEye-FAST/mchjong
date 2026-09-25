@@ -271,8 +271,9 @@ invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
 The Personal scope in room settings opens a second preset screen for a player's
-riichi stick. Each row shows the strip texture beside its name, and the selected
-ID is saved locally. Keep the list paginated at small window sizes.
+riichi stick and voice. The stick tab shows the strip texture beside each name;
+the voice tab lists recording sets. Both selections are saved locally. Keep the
+lists paginated at small window sizes.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
 recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row

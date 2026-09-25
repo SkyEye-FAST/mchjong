@@ -78,6 +78,40 @@ class PresetArchivesTest {
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK));
     }
 
+    @Test void voiceRecordingsStopAtEightSeconds() throws Exception {
+        VorbisClip.validate(ogg(64_000));
+        assertThrows(IOException.class, () -> VorbisClip.validate(ogg(64_001)));
+        try (var zip = new ZipOutputStream(Files.newOutputStream(directory.resolve("voices.zip")))) {
+            put(zip, "smoke/first/preset.toml", "name = \"First\"\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/first/voices/ron.ogg", ogg(8000));
+            put(zip, "smoke/second/preset.toml", "name = \"Second\"\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/second/voices/riichi.ogg", ogg(8000));
+        }
+        var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.VOICE);
+        assertEquals(2, presets.voices().size());
+        assertEquals(2, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.VOICE)),
+            PresetArchives.Kind.VOICE).voices().size());
+        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK));
+    }
+
+    private static byte[] ogg(long samples) {
+        byte[] data = new byte[85];
+        var numbers = java.nio.ByteBuffer.wrap(data).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+        for (int offset : new int[]{0, 58}) {
+            data[offset] = 'O'; data[offset + 1] = 'g'; data[offset + 2] = 'g'; data[offset + 3] = 'S';
+            numbers.putInt(offset + 14, 123);
+        }
+        data[5] = 2; data[26] = 1; data[27] = 30;
+        data[28] = 1;
+        for (int i = 0; i < 6; i++) data[29 + i] = (byte) "vorbis".charAt(i);
+        data[39] = 1;
+        numbers.putInt(40, 8000);
+        data[63] = 4;
+        numbers.putLong(64, samples);
+        numbers.putInt(76, 1);
+        return data;
+    }
+
     private static void write(Path target, List<String> ids, boolean omitLast) throws IOException {
         try (var zip = new ZipOutputStream(Files.newOutputStream(target))) {
             for (String raw : ids) {

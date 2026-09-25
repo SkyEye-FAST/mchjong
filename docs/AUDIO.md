@@ -1,26 +1,50 @@
-# Audio and custom voices
+# Audio and voice presets
 
-Both loaders expose the same events. Table settings → Audio controls effect volume,
-countdown warnings, voice source, and resource-pack voice volume. Effects are
-positional and also respect Minecraft's Blocks volume. Countdown warnings and
-recorded voices respect Master volume. Setting an individual volume to zero mutes it.
+Table settings → Audio controls effect volume, countdown warnings, voice playback
+and voice volume. Effects are positional and also respect Minecraft's Blocks
+volume. Countdown warnings and recorded voices respect Master volume. Setting a
+volume to zero mutes that category. The preview button plays one effect and the
+selected `ron` recording. Minecraft's accessibility narration has independent
+controls.
 
-**Resource pack** is the default and plays only recordings supplied by the selected
-resource pack, with independent volume. Missing recordings stay silent. **Off**
-disables recorded calls without disabling other effects. The preview button tests
-the selected source. Playback follows new table events after joining or reconnecting.
-Minecraft's accessibility narration retains its independent controls.
+Choose a voice preset in room Settings → Personal → Personal presets. The
+selection and voice volume belong to the local player. **Selected preset** plays
+recordings from that preset; **Off** silences recordings while retaining effects.
+Missing recordings stay silent. The default voice preset uses the selected
+Minecraft resource pack's `mchjong:voice.*` events.
 
-## Resource-pack contract
+## ZIP voice presets
 
-Create a normal Minecraft resource pack for the selected game version. For the
-current build profile its `pack.mcmeta` is:
+Put client voice ZIPs in `config/mchjong/presets/voices/`. Put server voice ZIPs
+in `config/mchjong/server-presets/voices/`. The server sends its presets to all
+joining players. A client-only ZIP affects that player's playback. Each ZIP
+contains only voice presets and may contain several of them:
 
-```json
-{"pack":{"pack_format":34,"description":"My MChjong voices"}}
+```text
+my_pack/announcer/preset.toml
+my_pack/announcer/voices/riichi.ogg
+my_pack/announcer/voices/ron.ogg
 ```
 
-Add a recording at `assets/mchjong/sounds/my_voice/ron.ogg`, and place this in
+The folder pair defines the ID `my_pack:announcer`. The manifest supplies a
+display name:
+
+```toml
+name = "Announcer"
+```
+
+Recording filenames can be `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`, `tsumo`,
+`draw_end` or `match_end`, followed by `.ogg`. A preset needs at least one
+recording. Use Ogg Vorbis, mono or stereo, at 8–96 kHz. **Each recording must be
+at most 8 seconds long.** Both the archive reader and the client decoder enforce
+the limit. Restart the server after changing server ZIPs; reload client
+resources after changing local ZIPs. The sound engine reads these files from
+the ZIP data in memory.
+
+## Default resource-pack voices
+
+The default preset can use recordings supplied by a normal Minecraft resource
+pack. Add `assets/mchjong/sounds/my_voice/ron.ogg` and this definition in
 `assets/mchjong/sounds.json`:
 
 ```json
@@ -33,15 +57,5 @@ Add a recording at `assets/mchjong/sounds/my_voice/ron.ogg`, and place this in
 }
 ```
 
-Select the pack in Minecraft and select **Resource pack** in the audio settings.
-Only use recordings you own or have permission to redistribute. Selection and
-reload use Minecraft's normal client-side sound-resource handling.
-
-Voice suffixes: `riichi`, `chi`, `pon`, `kan`, `nuki`, `ron`, `tsumo`, `draw_end`,
-`match_end`. Prefix each with `voice.` in `sounds.json`.
-
-Effect suffixes: `wall`, `deal`, `draw`, `tsumogiri`, `tedashi`, `riichi`, `chi`,
-`pon`, `kan`, `nuki`, `ron`, `tsumo`, `draw_end`, `match_end`, `countdown`, `turn`.
-Prefix each with `table.` to replace the corresponding effect. Built-in table
-effects use Minecraft's native sound events. Mono Ogg Vorbis is recommended for positional effects;
-use Minecraft's standard `sounds.json` format for variations, volume and pitch.
+Select the pack in Minecraft and choose the default voice preset. Use recordings
+you own or have permission to redistribute.

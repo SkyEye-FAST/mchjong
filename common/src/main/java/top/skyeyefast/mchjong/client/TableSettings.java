@@ -24,7 +24,7 @@ public final class TableSettings {
     public enum DiscardMode { SINGLE_CLICK, DOUBLE_CLICK, CONFIRM }
     public enum TileLabels { NAME, MPSZ }
     public enum GuideLines { ALWAYS, HOVER, OFF }
-    public enum VoiceSource { RESOURCE_PACK, OFF }
+    public enum VoiceSource { SELECTED, OFF }
 
     private static TableSettings current;
     private EnumSet<Information> hiddenInformation = EnumSet.noneOf(Information.class);
@@ -37,8 +37,9 @@ public final class TableSettings {
     public boolean autoSeat = true;
     public boolean animations = true;
     public boolean showRiver = true;
-    public VoiceSource voiceSource = VoiceSource.RESOURCE_PACK;
+    public VoiceSource voiceSource = VoiceSource.SELECTED;
     public ResourceLocation riichiStickPreset = RiichiStickPresets.DEFAULT;
+    public ResourceLocation voicePreset = VoicePresets.DEFAULT;
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
     public boolean countdownSounds = true;
@@ -106,6 +107,7 @@ public final class TableSettings {
         settings.guideLines = enumValue(config.getOrElse("guideLines", settings.guideLines.name()), GuideLines.class);
         settings.voiceSource = enumValue(config.getOrElse("voiceSource", settings.voiceSource.name()), VoiceSource.class);
         settings.riichiStickPreset = ResourceLocation.parse(config.getOrElse("riichiStickPreset", settings.riichiStickPreset.toString()));
+        settings.voicePreset = ResourceLocation.parse(config.getOrElse("voicePreset", settings.voicePreset.toString()));
         settings.actionTiles = bool(config.getOrElse("actionTiles", settings.actionTiles));
         settings.highlightTiles = bool(config.getOrElse("highlightTiles", settings.highlightTiles));
         settings.convenienceHints = bool(config.getOrElse("convenienceHints", settings.convenienceHints));
@@ -128,6 +130,7 @@ public final class TableSettings {
         config.set("guideLines", guideLines.name());
         config.set("voiceSource", voiceSource.name());
         config.set("riichiStickPreset", riichiStickPreset.toString());
+        config.set("voicePreset", voicePreset.toString());
         config.set("actionTiles", actionTiles);
         config.set("highlightTiles", highlightTiles);
         config.set("convenienceHints", convenienceHints);
@@ -176,6 +179,7 @@ public final class TableSettings {
         showRiver = defaults.showRiver;
         voiceSource = defaults.voiceSource;
         riichiStickPreset = defaults.riichiStickPreset;
+        voicePreset = defaults.voicePreset;
         effectsVolume = defaults.effectsVolume;
         voiceVolume = defaults.voiceVolume;
         countdownSounds = defaults.countdownSounds;

@@ -148,8 +148,8 @@ Administrators can enable safe invitation teleportation beside loaded tables;
 after travelling, sit down to join. Senders may invite once per five seconds.
 
 The Audio settings include positional table effects, countdown warnings and
-custom resource-pack recordings. See [Audio customization](AUDIO.md)
-for the event names, volume controls and an example voice resource pack.
+custom ZIP recordings. See [Audio and voice presets](AUDIO.md) for the
+recording names, volume controls and preset layout.
 
 ## Replays
 

@@ -21,7 +21,7 @@ gameplay.
 | Guide | Contents |
 | --- | --- |
 | [Assets](ASSETS.md) | Tile faces, backs, resource packs and deterministic generation |
-| [Audio](AUDIO.md) | Table effects, recorded voices and resource-pack examples |
+| [Audio](AUDIO.md) | Table effects, voice presets and recording formats |
 
 ## Development and verification
 

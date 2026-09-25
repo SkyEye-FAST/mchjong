@@ -36,12 +36,12 @@ public final class MchjongNeoForge {
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.server.ServerStartingEvent event) -> {
                 top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
-                top.skyeyefast.mchjong.config.ServerFacePresets.load(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
+                top.skyeyefast.mchjong.config.ServerPresets.load(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
             });
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
                 if (event.getEntity() instanceof ServerPlayer player)
-                    top.skyeyefast.mchjong.config.ServerFacePresets.send(player);
+                    top.skyeyefast.mchjong.config.ServerPresets.send(player);
             });
         DeferredRegister<net.minecraft.core.component.DataComponentType<?>> components = DeferredRegister.create(Registries.DATA_COMPONENT_TYPE, MahjongContent.MOD_ID);
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) -> components.register(name, () -> type));

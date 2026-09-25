@@ -17,6 +17,7 @@ import java.util.zip.ZipInputStream;
 import java.util.zip.ZipOutputStream;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.world.MahjongSounds;
 
 /** Bounded ZIP format shared by local and server cosmetic config directories. */
 public final class PresetArchives {
@@ -29,9 +30,10 @@ public final class PresetArchives {
     public record Images(String name, Map<String, byte[]> tiles) {}
     public record Back(String name, byte[] image) {}
     public record Stick(String name, byte[] image, float length, float width, float height) {}
+    public record Voice(String name, Map<String, byte[]> recordings) {}
     public record Collection(Map<TileFacePreset, Images> faces, Map<ResourceLocation, Back> backs,
-                             Map<ResourceLocation, Stick> sticks) {}
-    public enum Kind { FACE, BACK, STICK }
+                             Map<ResourceLocation, Stick> sticks, Map<ResourceLocation, Voice> voices) {}
+    public enum Kind { FACE, BACK, STICK, VOICE }
     public static final int MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
     private static final int MAX_ENTRY_BYTES = 8 * 1024 * 1024;
     private PresetArchives() {}
@@ -57,6 +59,7 @@ public final class PresetArchives {
         Map<TileFacePreset, Images> faces = new HashMap<>();
         Map<ResourceLocation, Back> backs = new HashMap<>();
         Map<ResourceLocation, Stick> sticks = new HashMap<>();
+        Map<ResourceLocation, Voice> voices = new HashMap<>();
         var expected = new java.util.HashSet<String>();
         for (var file : files.entrySet()) {
             String path = file.getKey();
@@ -85,7 +88,7 @@ public final class PresetArchives {
                     if (!png(image, true)) throw new IOException("Missing or invalid back.png for " + id);
                     expected.add(root(id) + "back.png");
                     backs.put(id, new Back(label, image));
-                } else {
+                } else if (kind == Kind.STICK) {
                     byte[] image = files.get(root(id) + "stick.png");
                     if (!png(image, 384, 32)) throw new IOException("Missing or invalid stick.png for " + id);
                     float length = dimension(config.get("length"), 8, 16, "length");
@@ -95,13 +98,25 @@ public final class PresetArchives {
                         throw new IOException("Riichi stick must be long and narrow: " + id);
                     expected.add(root(id) + "stick.png");
                     sticks.put(id, new Stick(label, image, length, width, height));
+                } else {
+                    Map<String, byte[]> recordings = new HashMap<>();
+                    for (String event : MahjongSounds.VOICES) {
+                        String soundPath = root(id) + "voices/" + event + ".ogg";
+                        byte[] recording = files.get(soundPath);
+                        if (recording == null) continue;
+                        VorbisClip.validate(recording);
+                        expected.add(soundPath);
+                        recordings.put(event, recording);
+                    }
+                    if (recordings.isEmpty()) throw new IOException("Voice preset has no recordings: " + id);
+                    voices.put(id, new Voice(label, Map.copyOf(recordings)));
                 }
             } catch (RuntimeException failure) {
                 throw new IOException("Invalid preset manifest: " + path, failure);
             }
         }
         if (!files.keySet().equals(expected)) throw new IOException("Archive contains files outside " + kind + " presets");
-        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks));
+        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks), Map.copyOf(voices));
     }
 
     public static Collection loadDirectory(Path directory, Kind kind) throws IOException {
@@ -109,6 +124,7 @@ public final class PresetArchives {
         Map<TileFacePreset, Images> faces = new TreeMap<>(java.util.Comparator.comparing(TileFacePreset::getSerializedName));
         Map<ResourceLocation, Back> backs = new TreeMap<>(java.util.Comparator.comparing(ResourceLocation::toString));
         Map<ResourceLocation, Stick> sticks = new TreeMap<>(java.util.Comparator.comparing(ResourceLocation::toString));
+        Map<ResourceLocation, Voice> voices = new TreeMap<>(java.util.Comparator.comparing(ResourceLocation::toString));
         try (var paths = Files.list(directory)) {
             for (Path path : paths.filter(p -> p.getFileName().toString().endsWith(".zip")).sorted().toList()) {
                 if (Files.size(path) > MAX_ARCHIVE_BYTES) throw new IOException("Preset archive exceeds size limit: " + path);
@@ -123,12 +139,15 @@ public final class PresetArchives {
                     for (var entry : archive.sticks().entrySet())
                         if (sticks.putIfAbsent(entry.getKey(), entry.getValue()) != null)
                             throw new IOException("Duplicate stick preset: " + entry.getKey());
+                    for (var entry : archive.voices().entrySet())
+                        if (voices.putIfAbsent(entry.getKey(), entry.getValue()) != null)
+                            throw new IOException("Duplicate voice preset: " + entry.getKey());
                 } catch (IOException | RuntimeException failure) {
                     throw new IOException("Cannot load preset archive: " + path, failure);
                 }
             }
         }
-        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks));
+        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks), Map.copyOf(voices));
     }
 
     public static byte[] bundle(Collection presets, Kind kind) throws IOException {
@@ -151,6 +170,14 @@ public final class PresetArchives {
                 put(zip, root(entry.getKey()) + "preset.toml",
                     manifest(stick.name(), stick.length(), stick.width(), stick.height()));
                 put(zip, root(entry.getKey()) + "stick.png", stick.image());
+            }
+            if (kind == Kind.VOICE) for (var entry : presets.voices().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(java.util.Comparator.comparing(ResourceLocation::toString))).toList()) {
+                put(zip, root(entry.getKey()) + "preset.toml", manifest(entry.getValue().name()));
+                for (String event : MahjongSounds.VOICES) {
+                    byte[] recording = entry.getValue().recordings().get(event);
+                    if (recording != null) put(zip, root(entry.getKey()) + "voices/" + event + ".ogg", recording);
+                }
             }
         }
         if (output.size() > MAX_ARCHIVE_BYTES) throw new IOException("Preset bundle exceeds size limit");

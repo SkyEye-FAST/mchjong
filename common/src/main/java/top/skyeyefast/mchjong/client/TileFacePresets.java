@@ -92,6 +92,12 @@ public final class TileFacePresets {
         } catch (IOException | RuntimeException failure) {
             com.mojang.logging.LogUtils.getLogger().error("Cannot load local riichi stick presets", failure);
         }
+        try {
+            var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets/voices");
+            VoicePresets.installLocal(PresetArchives.loadDirectory(root, PresetArchives.Kind.VOICE).voices());
+        } catch (IOException | RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().error("Cannot load local voice presets", failure);
+        }
         for (var old : localTextures) if (!dynamic.contains(old)) Minecraft.getInstance().getTextureManager().release(old);
         localTextures = Set.copyOf(dynamic);
         local = Map.copyOf(loaded);
@@ -123,9 +129,10 @@ public final class TileFacePresets {
                     case FACE -> install(archive.faces());
                     case BACK -> TileBackPresets.installServer(archive.backs());
                     case STICK -> RiichiStickPresets.installServer(archive.sticks());
+                    case VOICE -> VoicePresets.installServer(archive.voices());
                 }
             }
-            catch (IOException | RuntimeException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot load server tile faces", failure); }
+            catch (IOException | RuntimeException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot load server presets", failure); }
             finally { transfer = null; transferKind = null; received.reset(); }
         }
     }
@@ -178,6 +185,7 @@ public final class TileFacePresets {
         serverTextures = Set.of(); server = Map.of(); serverNames = Map.of(); connection = null;
         TileBackPresets.clearServer();
         RiichiStickPresets.clearServer();
+        VoicePresets.clearServer();
         transfer = null; transferKind = null; received.reset();
         update();
     }

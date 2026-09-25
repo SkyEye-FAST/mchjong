@@ -41,10 +41,10 @@ public class Mchjong implements ModInitializer {
     public void onInitialize() {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             top.skyeyefast.mchjong.world.WorldSettings.of(server);
-            top.skyeyefast.mchjong.config.ServerFacePresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+            top.skyeyefast.mchjong.config.ServerPresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
-            top.skyeyefast.mchjong.config.ServerFacePresets.send(handler.player));
+            top.skyeyefast.mchjong.config.ServerPresets.send(handler.player));
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->
             Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, MahjongContent.id(name), type));
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->

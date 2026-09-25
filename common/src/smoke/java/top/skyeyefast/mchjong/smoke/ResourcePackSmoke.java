@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.client.TileBackPresets;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.client.RiichiStickModel;
 import top.skyeyefast.mchjong.client.RiichiStickPresets;
+import top.skyeyefast.mchjong.client.VoicePresets;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
@@ -26,9 +27,11 @@ final class ResourcePackSmoke {
     private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke(true);
     private CompletableFuture<Void> pending;
     private CompletableFuture<?> serverSync;
+    private CompletableFuture<?> voiceDecode;
     private Path localArchive;
     private Path localBackArchive;
     private Path localStickArchive;
+    private Path localVoiceArchive;
     private List<String> selected;
     private int stage, ticks;
 
@@ -59,10 +62,17 @@ final class ResourcePackSmoke {
             localStickArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/sticks/local.zip");
             stickArchive(localStickArchive, "custom_stick", "Local Stick", stickImage);
             stickArchive(serverConfig.resolve("mchjong/server-presets/sticks/server.zip"), "server_stick", "Server Stick", stickImage);
+            byte[] recording;
+            try (var sound = client.getResourceManager().open(ResourceLocation.parse("minecraft:sounds/random/click.ogg"))) {
+                recording = sound.readAllBytes();
+            }
+            localVoiceArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/voices/local.zip");
+            voiceArchive(localVoiceArchive, "custom_voice", "Local Voice", recording);
+            voiceArchive(serverConfig.resolve("mchjong/server-presets/voices/server.zip"), "server_voice", "Server Voice", recording);
             serverSync = client.getSingleplayerServer().submit(() -> {
-                top.skyeyefast.mchjong.config.ServerFacePresets.load(serverConfig);
+                top.skyeyefast.mchjong.config.ServerPresets.load(serverConfig);
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
-                top.skyeyefast.mchjong.config.ServerFacePresets.send(player);
+                top.skyeyefast.mchjong.config.ServerPresets.send(player);
             });
             write(pack, "assets/mchjong/tile_face_presets/kanto.json", definition);
             backPattern(pack.resolve("assets/mchjong/textures/tile/back.png"));
@@ -81,11 +91,13 @@ final class ResourcePackSmoke {
             stage = 1; ticks = 0;
         } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)
             && TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back"))
-            && RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:server_stick"))) {
+            && RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:server_stick"))
+            && VoicePresets.choices().contains(ResourceLocation.parse("smoke:server_voice"))) {
             serverSync.join();
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
             require(TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Local back was not discovered");
             require(RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:custom_stick")), "Local stick was not discovered");
+            require(VoicePresets.choices().contains(ResourceLocation.parse("smoke:custom_voice")), "Local voice was not discovered");
             require(RiichiStickPresets.definition(ResourceLocation.parse("smoke:server_stick")).length() == 12,
                 "Server stick model was not delivered");
             require(!TileBackPresets.texture(ResourceLocation.parse("smoke:server_back")).equals(TileMesh.BACK),
@@ -188,10 +200,31 @@ final class ResourcePackSmoke {
             choice.onPress();
             require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(ResourceLocation.parse("smoke:custom_stick")),
                 "Personal stick selection was not saved");
-            client.screen.onClose();
-            client.screen.onClose();
+            button(client, "settings.mchjong.voice_preset").onPress();
+            stage = 85; ticks = 0;
+        } else if (stage == 85 && ticks > 5) {
+            Screenshot.grab(output.toFile(), "61-resource-voice-choices-small.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(1280, 800);
             client.resizeDisplay();
+            stage = 86; ticks = 0;
+        } else if (stage == 86 && ticks > 8) {
+            Screenshot.grab(output.toFile(), "61-resource-voice-choices.png", client.getMainRenderTarget(), ignored -> {});
+            var choice = client.screen.children().stream()
+                .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
+                .map(child -> (net.minecraft.client.gui.components.Button) child)
+                .filter(button -> button.getMessage().getString().equals("Local Voice")).findFirst().orElseThrow();
+            choice.onPress();
+            require(top.skyeyefast.mchjong.client.TableSettings.get().voicePreset.equals(ResourceLocation.parse("smoke:custom_voice")),
+                "Personal voice selection was not saved");
+            var path = VoicePresets.audioPath(ResourceLocation.parse("smoke:custom_voice"), "ron");
+            require(path != null, "Selected voice recording was missing");
+            voiceDecode = new net.minecraft.client.sounds.SoundBufferLibrary(client.getResourceManager()).getCompleteBuffer(path);
+            top.skyeyefast.mchjong.client.TableAudio.preview();
+            stage = 87; ticks = 0;
+        } else if (stage == 87 && voiceDecode.isDone() && ticks > 5) {
+            voiceDecode.join();
+            client.screen.onClose();
+            client.screen.onClose();
             stage = 84; ticks = 0;
         } else if (stage == 84 && ticks > 10) {
             require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName()).equals(RiichiStickPresets.DEFAULT),
@@ -211,6 +244,7 @@ final class ResourcePackSmoke {
             Files.delete(localArchive);
             Files.delete(localBackArchive);
             Files.delete(localStickArchive);
+            Files.delete(localVoiceArchive);
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;
@@ -218,6 +252,7 @@ final class ResourcePackSmoke {
             require(!TileFacePresets.choices().contains(CUSTOM), "Removed pack left a stale preset");
             require(!TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Removed back left a stale preset");
             require(!RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:custom_stick")), "Removed stick left a stale preset");
+            require(!VoicePresets.choices().contains(ResourceLocation.parse("smoke:custom_voice")), "Removed voice left a stale preset");
             require(TileBackPresets.texture(ResourceLocation.parse("smoke:custom_back")).equals(TileMesh.BACK),
                 "Unavailable back did not use the default pattern");
             require(TileMesh.atlas(CUSTOM).equals(TileMesh.atlas(TileFacePreset.KANSAI)),
@@ -291,6 +326,18 @@ final class ResourcePackSmoke {
             zip.closeEntry();
             zip.putNextEntry(new java.util.zip.ZipEntry(root + "/stick.png"));
             zip.write(Files.readAllBytes(image));
+            zip.closeEntry();
+        }
+    }
+    private static void voiceArchive(Path target, String preset, String label, byte[] recording) throws java.io.IOException {
+        Files.createDirectories(target.getParent());
+        try (var zip = new java.util.zip.ZipOutputStream(Files.newOutputStream(target))) {
+            String root = "smoke/" + preset;
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/preset.toml"));
+            zip.write(("name = \"" + label + "\"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/voices/ron.ogg"));
+            zip.write(recording);
             zip.closeEntry();
         }
     }

@@ -15,7 +15,7 @@ import top.skyeyefast.mchjong.world.MahjongSounds;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
-/** Client-local effects and optional resource-pack recordings. Never invokes a speech backend. */
+/** Client-local effects and optional recorded voices. Never invokes a speech backend. */
 public final class TableAudio {
     private static final Map<MahjongTableBlockEntity, TableView> VIEWS = new WeakHashMap<>();
     private static final ArrayList<Speech> SPEECH = new ArrayList<>();
@@ -93,17 +93,15 @@ public final class TableAudio {
         var settings = TableSettings.get();
         switch (settings.voiceSource) {
             case OFF -> { }
-            case RESOURCE_PACK -> {
-                if (settings.voiceVolume > 0) Minecraft.getInstance().getSoundManager().play(
-                    SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, (float) settings.voiceVolume));
+            case SELECTED -> {
+                if (settings.voiceVolume > 0) VoicePresets.play(event, (float) settings.voiceVolume);
             }
         }
     }
 
     public static void settingsChanged() {
         SPEECH.clear();
-        for (String name : MahjongSounds.VOICES)
-            Minecraft.getInstance().getSoundManager().stop(MahjongSounds.voice(name).getLocation(), null);
+        VoicePresets.stop();
     }
 
     public static void preview() {
@@ -112,6 +110,7 @@ public final class TableAudio {
     }
 
     public static void close() {
+        VoicePresets.stop();
         VIEWS.clear(); SPEECH.clear(); level = null;
     }
 }

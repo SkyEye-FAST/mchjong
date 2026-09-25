@@ -171,9 +171,10 @@ class TablePresentationTest {
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
-        assertEquals(List.of(TableSettings.VoiceSource.RESOURCE_PACK, TableSettings.VoiceSource.OFF),
+        assertEquals(List.of(TableSettings.VoiceSource.SELECTED, TableSettings.VoiceSource.OFF),
             List.of(TableSettings.VoiceSource.values()));
-        assertEquals(TableSettings.VoiceSource.RESOURCE_PACK, new TableSettings().voiceSource);
+        assertEquals(TableSettings.VoiceSource.SELECTED, new TableSettings().voiceSource);
+        assertEquals(VoicePresets.DEFAULT, new TableSettings().voicePreset);
     }
 
     @Test void immersiveCardsStayOnTheFixedCanvasPerimeterAndClearEveryRiver() {

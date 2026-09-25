@@ -358,9 +358,10 @@ and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 
 `TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
-owns client effects and resource-pack recording playback. Registered
-resource-pack events separate table effects from recordings. No game logic
-depends on an audio completion callback. See `AUDIO.md` for customization.
+owns client effects and recorded voice playback. Voice ZIPs use the client and
+server `voices/` directories; the client decodes them through Minecraft's sound
+engine and enforces an eight-second limit. No game logic depends on an audio
+completion callback. See `AUDIO.md` for the recording contract.
 
 ## Replay storage and export
 
