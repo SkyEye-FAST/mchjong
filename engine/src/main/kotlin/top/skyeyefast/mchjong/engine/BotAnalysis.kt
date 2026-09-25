@@ -18,11 +18,17 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
 
     private val discards = HashMap<ShapeKey, Map<Int, TileEfficiency>>()
     private val hands = HashMap<ShapeKey, TileEfficiency>()
-    private val goodShapes = HashMap<ShapeKey, TileEfficiency>()
     private val waits = HashMap<ShapeKey, Set<Int>>()
+    private val advances = HashMap<State, Double>()
 
     @JvmField
     var drawNodes = 0
+
+    @JvmField
+    var advanceNodes = 0
+
+    @JvmField
+    var tenpaiLeaves = 0
 
     class State(
         hand: kotlin.collections.List<Int>,
@@ -98,13 +104,19 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     }
 
     @JvmRecord
+    data class Utility(val speed: Double, val retention: Double, val value: Double, val waits: Double, val legality: Double) {
+        fun total(): Double = speed + retention + value + waits + legality
+    }
+
+    @JvmRecord
     data class Evaluation(
         val shanten: Int,
         val live: Int,
-        val good: Int,
         val points: Double,
         val utility: Double,
         val waits: BotValue.Waits,
+        val potential: BotValue.Potential,
+        val terms: Utility,
     )
 
     private data class ShapeKey(val hand: kotlin.collections.List<Int>, val melds: kotlin.collections.List<String>) {
@@ -139,18 +151,12 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     fun shape(state: State): TileEfficiency =
         hands.getOrPut(ShapeKey(state)) { HandAnalyzer.handEfficiency(state.hand(), state.melds(), false) }
 
-    fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray): Evaluation =
-        evaluate(state, shape, remaining, true)
-
-    private fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray, develop: Boolean): Evaluation {
+    fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray): Evaluation {
         val live = live(shape.improving, remaining)
         val key = ShapeKey(state)
-        val good = if (develop && level != BotDifficulty.EASY && shape.shanten == 1) {
-            live(goodShapes.getOrPut(key) { HandAnalyzer.handEfficiency(state.hand(), state.melds()) }.goodShape, remaining)
-        } else {
-            0
-        }
-        val potential = value.potential(state)
+        // HARD values all actual tenpai continuations instead of requesting the
+        // library's separate nested good-shape enumeration for these same roots.
+        val potential = value.potential(state, shape.shanten, remaining)
         hands.putIfAbsent(key, shape)
         val waitValue = if (shape.shanten == 0) {
             value.waits(state, waits.getOrPut(key) { HandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
@@ -159,15 +165,13 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         }
         val points = if (shape.shanten == 0) waitValue.average() else potential.estimate
         // Ordinal utilities, not fitted win/deal-in probabilities or expected monetary returns.
-        var utility = speed(shape, remaining) + potential.retention
-        if (shape.shanten == 0) utility += waitValue.quality() * 2
-        if (level == BotDifficulty.EASY && shape.shanten == 0) utility += minOf(16.0, points / 500)
-        if (level != BotDifficulty.EASY) {
-            utility += good * .6 + ln1p(points / 1000) * if (shape.shanten == 0) 16 else 6
-            if (!potential.viable && shape.shanten > 0) utility -= 45
-        }
-        if (shape.shanten == 0 && waitValue.quality() == 0.0) utility -= 55
-        return Evaluation(shape.shanten, live, good, points, utility, waitValue)
+        val valueTerm = if (level == BotDifficulty.EASY) {
+            if (shape.shanten == 0) minOf(16.0, points / 500) else 0.0
+        } else ln1p(points / 1000) * if (shape.shanten == 0) 16 else 6
+        val legality = (if (level != BotDifficulty.EASY && !potential.viable && shape.shanten > 0) -45.0 else 0.0) +
+            if (shape.shanten == 0 && waitValue.quality() == 0.0) -55.0 else 0.0
+        val terms = Utility(speed(shape, remaining), potential.retention, valueTerm, waitValue.quality() * 2, legality)
+        return Evaluation(shape.shanten, live, points, terms.total(), waitValue, potential, terms)
     }
 
     /** One draw and best discard; unseen tiles are an exchangeable sampling approximation,
@@ -182,11 +186,14 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             view.rules().players()
         }
         if (!replacement && view.remaining() < maxOf(1, distance)) return baseline.utility
+        if (!replacement && baseline.shanten == 1) {
+            return advances.getOrPut(state) { advance(state, baseline, distance) }
+        }
         val branches = unseen.count { it > 0 }
         if (drawNodes + branches > SEARCH_ROOTS * 37) return baseline.utility
-        // Good-shape advances themselves enumerate another draw. At this horizon
-        // use immediate leaves, and compare both endpoints with that same evaluator.
-        val leafBaseline = evaluate(state, shape(state), unseen, false).utility
+        // Both endpoints use the same immediate evaluator, without another draw
+        // hidden inside a good-shape analysis at the continuation leaves.
+        val leafBaseline = baseline.utility
         var sum = 0.0
         var total = 0
         for (face in unseen.indices) {
@@ -207,52 +214,84 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 }
             }
             val shapes = if (state.riichi()) mapOf(Tile.kind(drawn) to shape(state)) else discards(withDraw)
-            // Evaluate all structural continuations; expensive scoring is restricted to the
-            // two strongest continuations. Same-shanten improvements are included naturally.
+            // Rank each structural continuation once. Every tenpai continuation
+            // near readiness uses scoring; distant hands keep a two-leaf beam.
             val candidates = ArrayList<State>()
             val faces = HashSet<Int>()
             for (discard in withDraw.hand()) {
                 if (state.riichi() && discard != drawn || !faces.add(face(discard))) continue
                 candidates += withDraw.discard(discard, false)
             }
-            candidates.sortWith(
-                compareByDescending<State> { next ->
-                    val removed = removedFace(withDraw, next) % 34
-                    val candidateShape = shapes[removed]!!
-                    speed(candidateShape, remaining) + value.potential(next).retention
-                }.thenBy { next -> next.hand().map(::face).sorted().toString() },
-            )
-            for (next in candidates.subList(0, minOf(2, candidates.size))) {
-                val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
-                val evaluated = evaluate(next, candidateShape, remaining, false)
-                var utility = evaluated.utility
-                if (
-                    candidateShape.shanten == 0 &&
-                    !next.riichi() &&
-                    next.melds().all { it.closed() } &&
-                    view.remaining() - (if (replacement) 1 else maxOf(1, distance)) >= view.rules().minRiichiWall() &&
-                    (!view.rules().needsRiichiDeposit() || view.seats()[view.viewerSeat()].points() >= 1000)
-                ) {
-                    val declared = State(
-                        next.hand(),
-                        next.melds(),
-                        next.norths(),
-                        next.river(),
-                        true,
-                        next.ronBlocked(),
-                        withDraw.riichiHan(),
-                    )
-                    utility = maxOf(utility, evaluate(declared, candidateShape, remaining, false).utility - riichiCost(evaluated))
+            val ready = if (baseline.shanten <= 1) candidates.filter { shapes[removedFace(withDraw, it) % 34]!!.shanten == 0 } else emptyList()
+            val leaves = ready.ifEmpty {
+                val order = compareByDescending<Pair<State, Double>> { it.second }
+                    .thenBy { it.first.hand().map(::face).sorted().toString() }
+                val upper = candidates.map { next ->
+                    val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
+                    next to (speed(candidateShape, remaining) + value.rankUpper(next, candidateShape.shanten))
+                }.sortedWith(order)
+                val beam = ArrayList<Pair<State, Double>>(3)
+                for ((next, ceiling) in upper) {
+                    // This is a conservative numerical bound, not an extra beam
+                    // cutoff. No omitted candidate can beat the retained top two.
+                    if (beam.size == 2 && ceiling < beam[1].second) break
+                    val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
+                    val potential = value.potential(next, candidateShape.shanten, remaining)
+                    beam += next to (speed(candidateShape, remaining) + potential.retention + ln1p(potential.estimate / 1000) * 6)
+                    beam.sortWith(order)
+                    if (beam.size > 2) beam.removeAt(2)
                 }
-                val discard = tile(removedFace(withDraw, next))
-                utility -= defence.penalty(discard, defence.mode(evaluated))
-                utility += defence.reserve(next)
-                best = maxOf(best, utility)
+                beam.map { it.first }
+            }
+            for (next in leaves) {
+                val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
+                best = maxOf(best, continuation(withDraw, next, candidateShape, remaining, replacement, distance))
             }
             sum += count * if (best.isFinite()) best else leafBaseline
             total += count
         }
         return if (total == 0) baseline.utility else baseline.utility + sum / total - leafBaseline
+    }
+
+    /** Every live improving face and every tenpai discard. Non-advancing draws
+     * retain the root estimate; they do not invoke another beam or another ply. */
+    private fun advance(state: State, baseline: Evaluation, distance: Int): Double {
+        var gain = 0.0
+        val improving = shape(state).improving
+        for (face in unseen.indices) {
+            val count = unseen[face]
+            if (count == 0 || face % 34 !in improving) continue
+            advanceNodes++
+            val remaining = unseen.clone()
+            remaining[face]--
+            val withDraw = state.draw(tile(face))
+            val shapes = discards(withDraw)
+            val faces = HashSet<Int>()
+            var best = Double.NEGATIVE_INFINITY
+            for (discard in withDraw.hand()) {
+                val shape = shapes[Tile.kind(discard)] ?: continue
+                if (shape.shanten != 0 || !faces.add(face(discard))) continue
+                tenpaiLeaves++
+                best = maxOf(best, continuation(withDraw, withDraw.discard(discard, false), shape, remaining, false, distance))
+            }
+            if (best.isFinite()) gain += count * (best - baseline.utility)
+        }
+        return baseline.utility + gain / maxOf(1, unseen.sum())
+    }
+
+    private fun continuation(before: State, next: State, shape: TileEfficiency, remaining: IntArray,
+                             replacement: Boolean, distance: Int): Double {
+        val evaluated = evaluate(next, shape, remaining)
+        var utility = evaluated.utility
+        if (shape.shanten == 0 && !next.riichi() && next.melds().all { it.closed() } &&
+            view.remaining() - (if (replacement) 1 else maxOf(1, distance)) >= view.rules().minRiichiWall() &&
+            (!view.rules().needsRiichiDeposit() || view.seats()[view.viewerSeat()].points() >= 1000)) {
+            val declared = State(next.hand(), next.melds(), next.norths(), next.river(), true, next.ronBlocked(), before.riichiHan())
+            val ready = evaluate(declared, shape, remaining)
+            utility = maxOf(utility, ready.utility - riichiCost(ready))
+        }
+        val discard = tile(removedFace(before, next))
+        return utility - defence.penalty(discard, defence.mode(evaluated)) + defence.reserve(next)
     }
 
     fun riichiCost(hand: Evaluation): Double {

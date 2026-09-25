@@ -13,6 +13,20 @@ public final class BotComparison {
             return;
         }
         if (args[0].equals("measure")) { measure(); return; }
+        if (args[0].equals("hand")) {
+            var game = TrainingBotTest.hand(args[1]);
+            if (args.length > 2 && args[2].equals("legal")) {
+                game.players[0].firstTurn = false;
+                game.options.set(0, LegalActions.onTurn(game, 0));
+            }
+            inspect(game.view(game.players[0].id));
+            return;
+        }
+        if (args[0].equals("opening")) {
+            var game = GameLifecycleTest.started(RuleSet.TENHOU_4, Long.parseLong(args[1]));
+            inspect(game.view(game.players[game.turn].id));
+            return;
+        }
         if (args[0].equals("position") || args[0].equals("inspect")) {
             try {
                 var view = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])), TableView.class);
@@ -71,6 +85,7 @@ public final class BotComparison {
                     if (hand.wins().stream().anyMatch(w -> w.from() == player)) s.deals++;
                     for (var win : hand.wins()) if (win.seat() == seat) {
                         s.wins++;
+                        for (var yaku : win.score().yaku()) s.yaku.merge(yaku, 1, Integer::sum);
                         s.value += win.from() >= 0 ? win.score().ron() :
                             win.score().tsumoDealer() * (seat == hand.dealer() ? rules.players() - 1 : 1)
                                 + (seat == hand.dealer() ? 0 : win.score().tsumoChild() * (rules.players() - 2));
@@ -132,14 +147,19 @@ public final class BotComparison {
             System.out.printf("%s choice=%s%n", level, view.actions().get(TrainingBot.choose(view, level)));
             var analysis = new BotAnalysis(view, level);
             System.out.println(analysis.defence.threats);
-            var state = analysis.initial();
-            var shapes = analysis.discards(state);
-            for (var action : view.actions()) if (action.type() == Action.Type.DISCARD) {
-                int tile = action.tiles().getFirst();
-                var evaluation = analysis.evaluate(state.discard(tile, false), shapes.get(Tile.kind(tile)), analysis.unseen);
-                System.out.printf(Locale.ROOT, "%s shanten=%d live=%d good=%d value=%.1f utility=%.2f mode=%s%n",
-                    Tile.notation(Tile.kind(tile)), evaluation.shanten(), evaluation.live(), evaluation.good(), evaluation.points(),
-                    evaluation.utility(), analysis.defence.mode(evaluation));
+            for (var candidate : TrainingBot.inspect(view, level)) {
+                var evaluation = candidate.evaluation();
+                var potential = evaluation.potential();
+                System.out.printf(Locale.ROOT, "%s discard=%s shanten=%d live=%d value=%.1f mode=%s search=%s excluded=%s%n",
+                    view.actions().get(candidate.index()), candidate.discard() < 0 ? "-" : Tile.notation(Tile.kind(candidate.discard())),
+                    evaluation.shanten(), evaluation.live(), evaluation.points(), analysis.defence.mode(evaluation),
+                    candidate.search(), candidate.exclusion());
+                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s adjustments=%s forward=%.3f final_utility=%.3f%n",
+                    potential.routes().plan(), potential.routes().han(), potential.closedOption(), evaluation.waits(),
+                    evaluation.terms(), candidate.adjustments(), candidate.forward(), candidate.utility());
+                for (var route : potential.routes().routes())
+                    System.out.printf(Locale.ROOT, "  route=%s family=%s missing=%.2f progress=%.3f han=%.1f%n",
+                        route.name(), route.family(), route.missing(), route.progress(), route.han());
             }
         }
     }
@@ -183,6 +203,7 @@ public final class BotComparison {
         final java.util.ArrayList<Long> times = new java.util.ArrayList<>();
         final java.util.EnumMap<Action.Type, Integer> actions = new java.util.EnumMap<>(Action.Type.class);
         final java.util.EnumMap<Action.Type, Integer> offered = new java.util.EnumMap<>(Action.Type.class);
+        final java.util.Map<String, Integer> yaku = new java.util.TreeMap<>();
         void print(BotDifficulty level) {
             times.sort(Long::compare);
             System.out.printf(Locale.ROOT,
@@ -191,6 +212,7 @@ public final class BotComparison {
                 rank / (double) matches, points / (double) matches, nanos / (double) decisions / 1e6,
                 times.get((int) (times.size() * .95)) / 1e6, times.getLast() / 1e6, decisions);
             System.out.printf("%s actions=%s opportunities=%s%n", level, actions, offered);
+            System.out.printf("%s yaku=%s%n", level, yaku);
         }
     }
 }

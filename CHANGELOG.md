@@ -17,11 +17,13 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Dedicated voice and sound event distinguishing double riichi declarations.
 - Configurable match rule awarding player experience points according to final uma standings.
 - Create workshop recipe animations across recipe viewers, including REI recipe support on NeoForge.
+- Gradual, copy-aware yaku route evaluation for training opponents, with candidate utility diagnostics, compact position inspection, scored-yaku comparison statistics and focused validation evidence in the maintainer guide.
 
 ### Changed
 
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
 - Create workshop Kansai face printing uses a single face plate.
+- Hard opponents evaluate every effective draw and tenpai continuation from one-shanten candidates; calls compare route value and closed-hand opportunity with their actual progress. Decision-local caches, reusable route tables and scratch buffers, and conservative distant-branch score bounds reduce repeated evaluation work.
 
 ### Fixed
 
@@ -32,6 +34,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Immersive focus indicator size is enlarged for clearer tile targeting.
 - Immersive table cloth boundaries and meld placement align accurately with physical tile positions.
 - Built-in banner tile-back artwork renders with clean single-color marks.
+- Training opponents advance the narrated settlement stage, and retain valuable dama continuations when comparing riichi.
 
 ## [0.7.2] - 2026-09-25
 
