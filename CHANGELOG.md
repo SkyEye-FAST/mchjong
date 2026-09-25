@@ -29,6 +29,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Settlement receipts keep han badges next to yaku names and enlarge points and hand grades.
+- Personal voice presets play for the selecting player's declarations and wins instead of other players' actions.
 - Stool vehicles persist through logout and chunk saves, preserving seated players and maid companions.
 - Tile faces fall back to default Kansai artwork when a requested custom preset archive is unavailable.
 - Concealed kans preserve eligible iipeikou routes, with focused regression coverage alongside copy-aware caches and complete tenpai-discard enumeration.

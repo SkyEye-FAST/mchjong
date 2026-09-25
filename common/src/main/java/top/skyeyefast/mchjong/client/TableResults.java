@@ -191,7 +191,8 @@ public final class TableResults extends AbstractWidget {
                 var lines = font.split(Component.translatable(row.translationKey()), Math.max(1, colWidth - badgeWidth - 13));
                 int color = readout != null && !readout.complete() && first + col == visible - 1 ? GOLD : TEXT;
                 if (graphics != null && first + col < visible) {
-                    if (badgeWidth > 0) badge(graphics, han, col * colWidth + colWidth - badgeWidth - 7, y, false);
+                    if (badgeWidth > 0) badge(graphics, han,
+                        col * colWidth + font.width(lines.getLast()) + 4, y + (lines.size() - 1) * 10, false);
                     for (int line = 0; line < lines.size(); line++)
                         graphics.drawString(font, lines.get(line), col * colWidth, y + 2 + line * 10, color, false);
                 }
@@ -205,12 +206,14 @@ public final class TableResults extends AbstractWidget {
             int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
             Component points = Component.translatable("ui.mchjong.points", gain);
             Component grade = limit == null ? Component.empty() : Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit));
-            int gradeWidth = limit == null ? 0 : font.width(grade) + 8;
-            text(graphics, points, 0, y + 2, compact && limit != null ? span - gradeWidth - 8 : span, GOLD);
+            int gradeWidth = limit == null ? 0 : 2 * (font.width(grade) + 8);
+            boolean beside = compact && limit != null && 2 * font.width(points) + gradeWidth + 8 <= span;
+            largeText(graphics, points, 0, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
             if (graphics != null && limit != null && (readout == null || Util.getMillis() - readout.scoredAt(winner) >= 350))
-                badge(graphics, grade, compact ? span - gradeWidth : 0, compact ? y : y + 16, true);
+                largeBadge(graphics, grade, beside ? span - gradeWidth : 0, beside ? y : y + 26);
+            y += limit == null || beside ? 28 : 54;
         }
-        y += compact || limit == null ? 16 : 33;
+        else y += limit == null ? 28 : 54;
         if (win.tile() >= 0) {
             y += 4;
             int leftHeight = indicators(graphics, 0, y, span / 2 - 4, false, compact);
@@ -348,6 +351,21 @@ public final class TableResults extends AbstractWidget {
     private void badge(GuiGraphics graphics, Component text, int x, int y, boolean grade) {
         graphics.fill(x, y, x + font.width(text) + 8, y + 13, grade ? GOLD : MahjongUi.SELECTED);
         graphics.drawString(font, text, x + 4, y + 2, grade ? MahjongUi.INPUT : TEXT, false);
+    }
+    private void largeText(GuiGraphics graphics, Component value, int x, int y, int span, int color) {
+        if (graphics == null) return;
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().scale(2, 2, 1);
+        text(graphics, value, 0, 0, span / 2, color);
+        graphics.pose().popPose();
+    }
+    private void largeBadge(GuiGraphics graphics, Component value, int x, int y) {
+        graphics.pose().pushPose();
+        graphics.pose().translate(x, y, 0);
+        graphics.pose().scale(2, 2, 1);
+        badge(graphics, value, 0, 0, true);
+        graphics.pose().popPose();
     }
     private void line(GuiGraphics graphics, Component text, int x, int y, int span, int color) {
         text(graphics, text, x, y, span, color);

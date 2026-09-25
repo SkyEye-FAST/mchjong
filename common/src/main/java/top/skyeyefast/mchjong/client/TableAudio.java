@@ -110,7 +110,7 @@ public final class TableAudio {
                     speak("match_end");
                 } else if (!finalStage && SPEECH.isEmpty()) {
                     String event = result.tick(Util.getMillis(), speaking);
-                    if (event != null) speak(event);
+                    if (event != null && view.wins().get(result.winner()).seat() == view.viewerSeat()) speak(event);
                 }
                 if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
                     for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.SETTLEMENT_DONE) {

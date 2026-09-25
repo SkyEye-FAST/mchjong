@@ -9,7 +9,7 @@ controls.
 
 Choose a voice preset in room Settings → Personal → Personal presets. The
 selection and voice volume belong to the local player. **Selected preset** plays
-recordings from that preset; **Off** silences recordings while retaining effects.
+that player's declarations and winning-hand recordings; **Off** silences recordings while retaining effects.
 Missing recordings stay silent. The default voice preset uses the selected
 Minecraft resource pack's `mchjong:voice.*` events.
 

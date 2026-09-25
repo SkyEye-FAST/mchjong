@@ -82,8 +82,9 @@ scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
 Settlement reserves the complete receipt layout before revealing individual yaku
 rows. Highlight the current row with the shared accent; points precede the hand
-grade. Put each ordinary yaku's han in a solid square-cornered badge aligned to
-the row's right edge; natural yakuman have no han badge. Show the hand grade in
+grade. Put each ordinary yaku's han in a solid square-cornered badge directly
+after the yaku name's last line; natural yakuman have no han badge. Enlarge
+points and hand grades together. Show the hand grade in
 a brass-filled badge beneath the points, or beside them in compact receipts.
 Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
