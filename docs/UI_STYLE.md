@@ -123,8 +123,8 @@ stool when allocation finishes. Turning it off keeps the coordinate-guided manua
 seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
-The room Hand visibility control cycles through Open hands, Visible to all players,
-Visible to riichi players and Visible only to self; Shift cycles backward. Only
+The room Hand visibility control cycles through Visible only to self, Visible to
+riichi players, Visible to all players and Open hands; Shift cycles backward. Only
 the host can change it before play. Open hands lays tiles face up; the other
 modes retain standing hands and change access to faces. Concealed fronts use a
 complete cap and bevel joined to the body. Nearby spectators use the world view
