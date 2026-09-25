@@ -109,7 +109,8 @@ companions release lobby membership after the presence grace period; during play
 a training bot continues their place. The maid extension in `compat/maid` uses
 the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it via
 the Orihime extension entrypoint; NeoForge uses the maid extension annotation.
-The saved dimension, block position and table UUID restore transient mounts
+Seat vehicles save their passengers with the chunk, including maid companions.
+The saved dimension, block position and table UUID restore missing mounts
 without loading chunks. No optional maid code is loaded by the base entrypoints.
 
 ## Optional integrations

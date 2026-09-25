@@ -76,7 +76,7 @@ public final class MchjongForge {
         blockEntities.register(bus);
         DeferredRegister<EntityType<?>> entities = DeferredRegister.create(Registries.ENTITY_TYPE, MahjongContent.MOD_ID);
         entities.register("seat", () -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
-            .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
+            .sized(0.3f, 0.1f).clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         entities.register(bus);
         DeferredRegister<CreativeModeTab> tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MahjongContent.MOD_ID);
         tabs.register("mchjong", () -> CreativeModeTab.builder()

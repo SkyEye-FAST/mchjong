@@ -29,6 +29,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Stool vehicles persist through logout and chunk saves, preserving seated players and maid companions.
 - Tile faces fall back to default Kansai artwork when a requested custom preset archive is unavailable.
 - Concealed kans preserve eligible iipeikou routes, with focused regression coverage alongside copy-aware caches and complete tenpai-discard enumeration.
 - HUD deposit counters and score displays retain standard riichi stick icons regardless of personal stick presets.
