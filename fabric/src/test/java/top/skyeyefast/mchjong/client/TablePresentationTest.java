@@ -166,8 +166,8 @@ class TablePresentationTest {
         var hidden = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Opponent", true, false, false,
             25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
             top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false, false);
-        assertEquals(195, ImmersiveTable.discardSourceX(hidden, 1, 60, true));
-        assertEquals(0, ImmersiveTable.discardSourceX(hidden, 1, 60, false));
+        assertEquals(195, ImmersiveTable.discardSourceX(hidden, 1, 0, 4, 60, true));
+        assertEquals(0, ImmersiveTable.discardSourceX(hidden, 1, 0, 4, 60, false));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
@@ -261,11 +261,14 @@ class TablePresentationTest {
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
         var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
-        var immersiveRails = ImmersiveTable.outerRails(player, 0);
-        assertEquals(2, immersiveRails.size());
-        assertEquals(4, immersiveRails.stream().mapToInt(List::size).sum());
-        assertTrue(60 + 18 + immersiveRails.getFirst().stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum() <= 600,
-            "Four kans wrap at the inner corner without shrinking or pushing the standing hand off its rail");
+        int meldWidth = melds.stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum();
+        for (int side : new int[]{1, 2}) {
+            double handLeft = ImmersiveTable.handLeft(player, 0, side);
+            int corner = side == 1 ? 350 : 470;
+            assertTrue(handLeft >= (side == 1 ? -425 : -510), "Standing hand left the cloth");
+            assertTrue(handLeft + 60 + 12 <= corner - meldWidth,
+                "Four kans need one row with space before the shifted standing hand");
+        }
         int width = TableBoard.outerTileWidth(player, 0, 157);
         assertEquals(10, width);
         var rails = TableBoard.meldRails(player, 0, width, 157);

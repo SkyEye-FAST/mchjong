@@ -127,8 +127,10 @@ the Ready control reflects server-confirmed presence at the assigned stool.
 The room Hand visibility control cycles through Visible only to self, Visible to
 riichi players, Visible to all players and Open hands; Shift cycles backward. Only
 the host can change it before play. Open hands lays tiles face up; the other
-modes retain standing hands and change access to faces. Concealed fronts use a
-complete cap and bevel joined to the body. Nearby spectators use the world view
+modes retain standing hands and change access to faces. Tile fronts face their
+owner. Hidden identities suppress only the printed artwork; the opaque white
+plate keeps its thickness and rear cap, including when viewed through a glass
+body or in a face-down wall. Nearby spectators use the world view
 without occupying participant seats.
 
 The rule screen separates preset options, read-only rule details and custom
@@ -249,8 +251,8 @@ longer arc. Riichi rotation occurs near landing. These animations are presentati
 and never alter the authoritative action or tile identity.
 Reserve at least 18 logical pixels of face width for immersive river tiles and 20 pixels
 for opponent meld tiles. Allocate river depth per seat before reducing these sizes.
-Long opponent meld rails wrap inward at the owner's corner while retaining the minimum
-face width. Player names have a portrait immediately before them; practice bots use
+Opponent melds stay in one row at the owner's corner and the hand shifts left
+to clear them, retaining the minimum face width. Player names have a portrait immediately before them; practice bots use
 a distinct robot portrait and maid companions use the default Reimu icon. Immersive
 plaque text may scale above native size for the 1280 × 800 canvas. Ellipsize long
 names and retain the complete name in hover details.

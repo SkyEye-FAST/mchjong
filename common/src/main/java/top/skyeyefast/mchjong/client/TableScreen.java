@@ -505,7 +505,8 @@ public final class TableScreen extends Screen {
                     source = oldHand.point(previous.seats().get(seat).drawn());
                 sourceWidth = oldHand.tileWidth();
             }
-            double opponentX = ImmersiveTable.discardSourceX(previous.seats().get(seat), seat, discard.tile(), discard.tsumogiri());
+            double opponentX = ImmersiveTable.discardSourceX(previous.seats().get(seat), seat,
+                previous.viewerSeat(), previous.seats().size(), discard.tile(), discard.tsumogiri());
             long duration = ImmersiveMotion.duration(discard.tsumogiri());
             immersiveDiscard = new ImmersiveDiscardMotion(discard.tile(), seat, discard.tsumogiri(), discard.riichi(),
                 Util.getMillis(), duration, source, sourceWidth, opponentX);

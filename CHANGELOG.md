@@ -30,6 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Tile faces keep an opaque white plate with a rear surface visible through glass, including hidden hands and face-down walls. Glass shells render after opaque plates. Only visible identities show printed artwork, and standing faces retain their owner-facing orientation in both views. Immersive melds stay in one row at their original depth while standing hands move aside.
 - Voice event regression coverage checks both the declaring player and another seated player; box smoke checks use the preset button's translation key, and visibility smoke accepts the room's initial mode.
 - The built-in Mojang back pattern matches the vanilla banner emblem.
 - Settlement receipts keep han badges next to yaku names and enlarge points and hand grades.
