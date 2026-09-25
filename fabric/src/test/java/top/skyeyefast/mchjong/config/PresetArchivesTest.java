@@ -54,6 +54,30 @@ class PresetArchivesTest {
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE));
     }
 
+    @Test void stickArchivesBoundTheModelToALongBar() throws Exception {
+        byte[] image = PNG.clone();
+        java.nio.ByteBuffer.wrap(image, 16, 4).putInt(384);
+        java.nio.ByteBuffer.wrap(image, 20, 4).putInt(32);
+        Path path = directory.resolve("sticks.zip");
+        try (var zip = new ZipOutputStream(Files.newOutputStream(path))) {
+            put(zip, "smoke/wood/preset.toml", "name = \"Wood\"\nlength = 12\nwidth = 1\nheight = 0.5\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/wood/stick.png", image);
+            put(zip, "smoke/white/preset.toml", "name = \"White\"\nlength = 8\nwidth = 1.5\nheight = 1\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/white/stick.png", image);
+        }
+        var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK);
+        assertEquals(2, presets.sticks().size());
+        assertEquals(12, presets.sticks().get(ResourceLocation.parse("smoke:wood")).length());
+        assertEquals(2, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.STICK)),
+            PresetArchives.Kind.STICK).sticks().size());
+        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.BACK));
+        try (var zip = new ZipOutputStream(Files.newOutputStream(directory.resolve("invalid.zip")))) {
+            put(zip, "smoke/short/preset.toml", "name = \"Short\"\nlength = 8\nwidth = 2\nheight = 0.5\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/short/stick.png", image);
+        }
+        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK));
+    }
+
     private static void write(Path target, List<String> ids, boolean omitLast) throws IOException {
         try (var zip = new ZipOutputStream(Files.newOutputStream(target))) {
             for (String raw : ids) {

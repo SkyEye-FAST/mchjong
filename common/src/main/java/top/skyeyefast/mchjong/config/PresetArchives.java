@@ -28,8 +28,10 @@ public final class PresetArchives {
         "0m", "0p", "0s", "1q", "2q", "3q", "4q", "5q", "6q", "7q", "8q");
     public record Images(String name, Map<String, byte[]> tiles) {}
     public record Back(String name, byte[] image) {}
-    public record Collection(Map<TileFacePreset, Images> faces, Map<ResourceLocation, Back> backs) {}
-    public enum Kind { FACE, BACK }
+    public record Stick(String name, byte[] image, float length, float width, float height) {}
+    public record Collection(Map<TileFacePreset, Images> faces, Map<ResourceLocation, Back> backs,
+                             Map<ResourceLocation, Stick> sticks) {}
+    public enum Kind { FACE, BACK, STICK }
     public static final int MAX_ARCHIVE_BYTES = 32 * 1024 * 1024;
     private static final int MAX_ENTRY_BYTES = 8 * 1024 * 1024;
     private PresetArchives() {}
@@ -54,6 +56,7 @@ public final class PresetArchives {
         }
         Map<TileFacePreset, Images> faces = new HashMap<>();
         Map<ResourceLocation, Back> backs = new HashMap<>();
+        Map<ResourceLocation, Stick> sticks = new HashMap<>();
         var expected = new java.util.HashSet<String>();
         for (var file : files.entrySet()) {
             String path = file.getKey();
@@ -77,24 +80,35 @@ public final class PresetArchives {
                         expected.add(tilePath(preset, key));
                     }
                     faces.put(preset, new Images(label, Map.copyOf(tiles)));
-                } else {
+                } else if (kind == Kind.BACK) {
                     byte[] image = files.get(root(id) + "back.png");
                     if (!png(image, true)) throw new IOException("Missing or invalid back.png for " + id);
                     expected.add(root(id) + "back.png");
                     backs.put(id, new Back(label, image));
+                } else {
+                    byte[] image = files.get(root(id) + "stick.png");
+                    if (!png(image, 384, 32)) throw new IOException("Missing or invalid stick.png for " + id);
+                    float length = dimension(config.get("length"), 8, 16, "length");
+                    float width = dimension(config.get("width"), .25f, 2, "width");
+                    float height = dimension(config.get("height"), .125f, 1, "height");
+                    if (length < width * 5 || length < height * 5)
+                        throw new IOException("Riichi stick must be long and narrow: " + id);
+                    expected.add(root(id) + "stick.png");
+                    sticks.put(id, new Stick(label, image, length, width, height));
                 }
             } catch (RuntimeException failure) {
                 throw new IOException("Invalid preset manifest: " + path, failure);
             }
         }
         if (!files.keySet().equals(expected)) throw new IOException("Archive contains files outside " + kind + " presets");
-        return new Collection(Map.copyOf(faces), Map.copyOf(backs));
+        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks));
     }
 
     public static Collection loadDirectory(Path directory, Kind kind) throws IOException {
         Files.createDirectories(directory);
         Map<TileFacePreset, Images> faces = new TreeMap<>(java.util.Comparator.comparing(TileFacePreset::getSerializedName));
         Map<ResourceLocation, Back> backs = new TreeMap<>(java.util.Comparator.comparing(ResourceLocation::toString));
+        Map<ResourceLocation, Stick> sticks = new TreeMap<>(java.util.Comparator.comparing(ResourceLocation::toString));
         try (var paths = Files.list(directory)) {
             for (Path path : paths.filter(p -> p.getFileName().toString().endsWith(".zip")).sorted().toList()) {
                 if (Files.size(path) > MAX_ARCHIVE_BYTES) throw new IOException("Preset archive exceeds size limit: " + path);
@@ -106,12 +120,15 @@ public final class PresetArchives {
                     for (var entry : archive.backs().entrySet())
                         if (backs.putIfAbsent(entry.getKey(), entry.getValue()) != null)
                             throw new IOException("Duplicate back preset: " + entry.getKey());
+                    for (var entry : archive.sticks().entrySet())
+                        if (sticks.putIfAbsent(entry.getKey(), entry.getValue()) != null)
+                            throw new IOException("Duplicate stick preset: " + entry.getKey());
                 } catch (IOException | RuntimeException failure) {
                     throw new IOException("Cannot load preset archive: " + path, failure);
                 }
             }
         }
-        return new Collection(Map.copyOf(faces), Map.copyOf(backs));
+        return new Collection(Map.copyOf(faces), Map.copyOf(backs), Map.copyOf(sticks));
     }
 
     public static byte[] bundle(Collection presets, Kind kind) throws IOException {
@@ -128,6 +145,13 @@ public final class PresetArchives {
                 put(zip, root(entry.getKey()) + "preset.toml", manifest(entry.getValue().name()));
                 put(zip, root(entry.getKey()) + "back.png", entry.getValue().image());
             }
+            if (kind == Kind.STICK) for (var entry : presets.sticks().entrySet().stream()
+                .sorted(Map.Entry.comparingByKey(java.util.Comparator.comparing(ResourceLocation::toString))).toList()) {
+                var stick = entry.getValue();
+                put(zip, root(entry.getKey()) + "preset.toml",
+                    manifest(stick.name(), stick.length(), stick.width(), stick.height()));
+                put(zip, root(entry.getKey()) + "stick.png", stick.image());
+            }
         }
         if (output.size() > MAX_ARCHIVE_BYTES) throw new IOException("Preset bundle exceeds size limit");
         return output.toByteArray();
@@ -136,6 +160,16 @@ public final class PresetArchives {
     private static byte[] manifest(String name) {
         var config = com.electronwill.nightconfig.core.Config.inMemory();
         config.set("name", name);
+        var writer = new java.io.StringWriter();
+        new TomlWriter().write(config, writer);
+        return writer.toString().getBytes(StandardCharsets.UTF_8);
+    }
+    private static byte[] manifest(String name, float length, float width, float height) {
+        var config = com.electronwill.nightconfig.core.Config.inMemory();
+        config.set("name", name);
+        config.set("length", length);
+        config.set("width", width);
+        config.set("height", height);
         var writer = new java.io.StringWriter();
         new TomlWriter().write(config, writer);
         return writer.toString().getBytes(StandardCharsets.UTF_8);
@@ -155,5 +189,15 @@ public final class PresetArchives {
             && (!back || width == 256 && height == 384)
             && bytes[0] == (byte) 137 && bytes[1] == 80 && bytes[2] == 78 && bytes[3] == 71
             && bytes[4] == 13 && bytes[5] == 10 && bytes[6] == 26 && bytes[7] == 10;
+    }
+    private static boolean png(byte[] bytes, int width, int height) {
+        return png(bytes, false) && ByteBuffer.wrap(bytes, 16, 4).getInt() == width
+            && ByteBuffer.wrap(bytes, 20, 4).getInt() == height;
+    }
+    private static float dimension(Object value, float min, float max, String name) throws IOException {
+        if (!(value instanceof Number number) || !Double.isFinite(number.doubleValue())
+            || number.doubleValue() < min || number.doubleValue() > max)
+            throw new IOException("Invalid riichi stick " + name);
+        return number.floatValue();
     }
 }

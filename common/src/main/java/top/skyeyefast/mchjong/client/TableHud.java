@@ -283,7 +283,8 @@ final class TableHud {
 
     static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        if (riichi) graphics.blit(RiichiStickModel.TEXTURE, x, y, width, height, 0, 0, 384, 32, 384, 32);
+        if (riichi) graphics.blit(RiichiStickPresets.texture(TableSettings.get().riichiStickPreset),
+            x, y, width, height, 0, 0, 384, 32, 384, 32);
         else graphics.blit(FurnitureMesh.STICK_TEXTURE, x, y, width, height, 0, 32, 384, 32, 384, 192);
     }
 

@@ -86,6 +86,12 @@ public final class TileFacePresets {
         } catch (IOException | RuntimeException failure) {
             com.mojang.logging.LogUtils.getLogger().error("Cannot load local tile back presets", failure);
         }
+        try {
+            var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets/sticks");
+            RiichiStickPresets.installLocal(PresetArchives.loadDirectory(root, PresetArchives.Kind.STICK).sticks());
+        } catch (IOException | RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().error("Cannot load local riichi stick presets", failure);
+        }
         for (var old : localTextures) if (!dynamic.contains(old)) Minecraft.getInstance().getTextureManager().release(old);
         localTextures = Set.copyOf(dynamic);
         local = Map.copyOf(loaded);
@@ -113,8 +119,11 @@ public final class TileFacePresets {
         if (++nextPart == parts) {
             try {
                 var archive = PresetArchives.read(new ByteArrayInputStream(received.toByteArray()), chunk.kind());
-                if (chunk.kind() == PresetArchives.Kind.FACE) install(archive.faces());
-                else TileBackPresets.installServer(archive.backs());
+                switch (chunk.kind()) {
+                    case FACE -> install(archive.faces());
+                    case BACK -> TileBackPresets.installServer(archive.backs());
+                    case STICK -> RiichiStickPresets.installServer(archive.sticks());
+                }
             }
             catch (IOException | RuntimeException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot load server tile faces", failure); }
             finally { transfer = null; transferKind = null; received.reset(); }
@@ -168,6 +177,7 @@ public final class TileFacePresets {
         for (var location : serverTextures) Minecraft.getInstance().getTextureManager().release(location);
         serverTextures = Set.of(); server = Map.of(); serverNames = Map.of(); connection = null;
         TileBackPresets.clearServer();
+        RiichiStickPresets.clearServer();
         transfer = null; transferKind = null; received.reset();
         update();
     }

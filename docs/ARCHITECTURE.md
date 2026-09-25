@@ -346,6 +346,10 @@ Tile faces and tile backs are independent materials. Back presets use ZIPs in
 `config/mchjong/presets/backs/` and `config/mchjong/server-presets/backs/`.
 Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
+Riichi stick presets use the corresponding `sticks/` directories. Their model
+dimensions are bounded before transfer, while each player stores a personal
+selection in the client TOML settings. The server broadcasts only selections
+from its own stick presets; a client-only selection stays on that player's client.
 
 `TimeControl` is enforced entirely in `Game`: per-hand reserves and fresh decision
 allowances are independent for each active responder. Client interpolation and

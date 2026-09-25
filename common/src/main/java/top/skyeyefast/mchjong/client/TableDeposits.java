@@ -36,13 +36,22 @@ public final class TableDeposits {
                               PoseStack pose, MultiBufferSource buffers, int light) {
         for (var stick : sticks(view)) {
             double progress = animated && stick.declared() ? animation.riichiProgress(stick.seat(), now) : 1;
+            var id = stick.seat() == view.viewerSeat() ? TableSettings.get().riichiStickPreset
+                : RiichiStickPresets.forPlayer(view.seats().get(stick.seat()).name());
+            var preset = RiichiStickPresets.definition(id);
+            float length = preset == null ? 11.2f : preset.length();
+            float width = preset == null ? .96f : preset.width();
+            float height = preset == null ? .4f : preset.height();
+            float renderedHeight = HEIGHT * height / .4f;
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(stick.seat() * 90));
-            pose.translate(0, TableGeometry.FELT_Y + (automatic ? .044 : .002) + stick.layer() * (HEIGHT + .002)
+            pose.translate(0, TableGeometry.FELT_Y + (automatic ? .044 : .002) + stick.layer() * (renderedHeight + .002)
                 + Math.sin(progress * Math.PI) * .09, TableScene.HAND_Z + (LANE_Z - TableScene.HAND_Z) * progress);
-            pose.scale(HALF_LENGTH / FurnitureMesh.STICK_HALF_LENGTH, HEIGHT / FurnitureMesh.STICK_HEIGHT,
-                HALF_WIDTH / FurnitureMesh.STICK_HALF_WIDTH);
-            RiichiStickModel.render(pose, buffers, light);
+            pose.scale(HALF_LENGTH / FurnitureMesh.STICK_HALF_LENGTH * length / 11.2f,
+                renderedHeight / FurnitureMesh.STICK_HEIGHT,
+                HALF_WIDTH / FurnitureMesh.STICK_HALF_WIDTH * width / .96f);
+            if (preset == null) RiichiStickModel.render(pose, buffers, light);
+            else FurnitureMesh.customStick(pose, buffers, light, preset.texture());
             pose.popPose();
         }
     }

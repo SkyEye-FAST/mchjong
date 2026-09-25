@@ -51,5 +51,7 @@ public final class MchjongClient implements ClientModInitializer {
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE,
+            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload)));
     }
 }

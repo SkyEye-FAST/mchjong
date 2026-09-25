@@ -108,6 +108,8 @@ public final class MchjongNeoForge {
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToServer(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
+        registrar.playToServer(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload.CODEC,
+            (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
@@ -129,6 +131,8 @@ public final class MchjongNeoForge {
             (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE, top.skyeyefast.mchjong.network.StickAppearancePayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload));
     }
 
     private void creativeTab(BuildCreativeModeTabContentsEvent event) {

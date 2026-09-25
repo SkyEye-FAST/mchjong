@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.client.TileFacePresets;
 import top.skyeyefast.mchjong.client.TileBackPresets;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.client.RiichiStickModel;
+import top.skyeyefast.mchjong.client.RiichiStickPresets;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
@@ -27,6 +28,7 @@ final class ResourcePackSmoke {
     private CompletableFuture<?> serverSync;
     private Path localArchive;
     private Path localBackArchive;
+    private Path localStickArchive;
     private List<String> selected;
     private int stage, ticks;
 
@@ -52,6 +54,11 @@ final class ResourcePackSmoke {
             localBackArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/backs/local.zip");
             backArchive(localBackArchive, "custom_back", "Local Back", backImage);
             backArchive(serverConfig.resolve("mchjong/server-presets/backs/server.zip"), "server_back", "Server Back", backImage);
+            Path stickImage = output.resolve("stick.png");
+            pattern(stickImage, 384, 32);
+            localStickArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/sticks/local.zip");
+            stickArchive(localStickArchive, "custom_stick", "Local Stick", stickImage);
+            stickArchive(serverConfig.resolve("mchjong/server-presets/sticks/server.zip"), "server_stick", "Server Stick", stickImage);
             serverSync = client.getSingleplayerServer().submit(() -> {
                 top.skyeyefast.mchjong.config.ServerFacePresets.load(serverConfig);
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
@@ -73,10 +80,14 @@ final class ResourcePackSmoke {
             pending = client.reloadResourcePacks();
             stage = 1; ticks = 0;
         } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)
-            && TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back"))) {
+            && TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back"))
+            && RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:server_stick"))) {
             serverSync.join();
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
             require(TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Local back was not discovered");
+            require(RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:custom_stick")), "Local stick was not discovered");
+            require(RiichiStickPresets.definition(ResourceLocation.parse("smoke:server_stick")).length() == 12,
+                "Server stick model was not delivered");
             require(!TileBackPresets.texture(ResourceLocation.parse("smoke:server_back")).equals(TileMesh.BACK),
                 "Server back artwork was not delivered");
             require(TileMesh.atlas(SERVER).getPath().contains("server_faces"), "Server ZIP artwork was not delivered");
@@ -91,6 +102,8 @@ final class ResourcePackSmoke {
                 for (int i = 1; i < vertices.length; i += 8) maxY = Math.max(maxY, Float.intBitsToFloat(vertices[i]));
             }
             require(maxY > .07f, "Native riichi model override was not baked");
+            client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
+                new top.skyeyefast.mchjong.network.StickChoicePayload(ResourceLocation.parse("smoke:server_stick"))));
             var id = client.player.getUUID();
             pending = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
@@ -105,6 +118,8 @@ final class ResourcePackSmoke {
             stage = 2; ticks = 0;
         } else if (stage == 2 && pending.isDone() && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen && ticks > 20) {
             pending.join();
+            require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName())
+                .equals(ResourceLocation.parse("smoke:server_stick")), "Shared stick selection was not synchronized");
             var selector = button(client, "box.mchjong.preset_choice");
             String serverLabel = net.minecraft.network.chat.Component.translatable("box.mchjong.preset_choice",
                 net.minecraft.network.chat.Component.literal("Server Test")).getString();
@@ -153,6 +168,35 @@ final class ResourcePackSmoke {
         } else if (stage == 8 && ticks > 20) {
             Screenshot.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
             var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
+            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(screen));
+            stage = 81; ticks = 0;
+        } else if (stage == 81 && ticks > 5) {
+            button(client, "settings.mchjong.scope.personal").onPress();
+            button(client, "settings.mchjong.personal_presets").onPress();
+            stage = 82; ticks = 0;
+        } else if (stage == 82 && client.screen instanceof top.skyeyefast.mchjong.client.PersonalPresetsScreen && ticks > 5) {
+            Screenshot.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), ignored -> {});
+            client.getWindow().setWindowed(640, 480);
+            client.resizeDisplay();
+            stage = 83; ticks = 0;
+        } else if (stage == 83 && ticks > 8) {
+            Screenshot.grab(output.toFile(), "61-resource-stick-choices-small.png", client.getMainRenderTarget(), ignored -> {});
+            var choice = client.screen.children().stream()
+                .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
+                .map(child -> (net.minecraft.client.gui.components.Button) child)
+                .filter(button -> button.getMessage().getString().equals("Local Stick")).findFirst().orElseThrow();
+            choice.onPress();
+            require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(ResourceLocation.parse("smoke:custom_stick")),
+                "Personal stick selection was not saved");
+            client.screen.onClose();
+            client.screen.onClose();
+            client.getWindow().setWindowed(1280, 800);
+            client.resizeDisplay();
+            stage = 84; ticks = 0;
+        } else if (stage == 84 && ticks > 10) {
+            require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName()).equals(RiichiStickPresets.DEFAULT),
+                "Client-only stick selection was shared with the server");
+            var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
             screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
@@ -166,12 +210,14 @@ final class ResourcePackSmoke {
             client.screen.onClose();
             Files.delete(localArchive);
             Files.delete(localBackArchive);
+            Files.delete(localStickArchive);
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;
         } else if (stage == 5 && ready(client)) {
             require(!TileFacePresets.choices().contains(CUSTOM), "Removed pack left a stale preset");
             require(!TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Removed back left a stale preset");
+            require(!RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:custom_stick")), "Removed stick left a stale preset");
             require(TileBackPresets.texture(ResourceLocation.parse("smoke:custom_back")).equals(TileMesh.BACK),
                 "Unavailable back did not use the default pattern");
             require(TileMesh.atlas(CUSTOM).equals(TileMesh.atlas(TileFacePreset.KANSAI)),
@@ -231,6 +277,19 @@ final class ResourcePackSmoke {
             zip.write(("name = \"" + label + "\"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
             zip.closeEntry();
             zip.putNextEntry(new java.util.zip.ZipEntry(root + "/back.png"));
+            zip.write(Files.readAllBytes(image));
+            zip.closeEntry();
+        }
+    }
+    private static void stickArchive(Path target, String preset, String label, Path image) throws java.io.IOException {
+        Files.createDirectories(target.getParent());
+        try (var zip = new java.util.zip.ZipOutputStream(Files.newOutputStream(target))) {
+            String root = "smoke/" + preset;
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/preset.toml"));
+            zip.write(("name = \"" + label + "\"\nlength = 12\nwidth = 1\nheight = 0.5\n")
+                .getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/stick.png"));
             zip.write(Files.readAllBytes(image));
             zip.closeEntry();
         }

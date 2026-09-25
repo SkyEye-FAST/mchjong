@@ -64,6 +64,8 @@ public final class TableOptionsScreen extends Screen {
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
                 () -> minecraft.setScreen(new TableSettingsScreen(parent))));
+            entries.add(new Entry(Component.translatable("settings.mchjong.personal_presets"), true,
+                () -> minecraft.setScreen(new PersonalPresetsScreen(this))));
         }
         int rows = Math.max(1, (height - 154) / 24);
         pages = Math.max(1, (entries.size() + rows - 1) / rows);

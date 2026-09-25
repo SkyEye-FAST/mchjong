@@ -9,13 +9,16 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(9)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(10)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(BoxPrintPayload.TYPE, BoxPrintPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
             .addMain(BoxBackPayload.TYPE, BoxBackPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) payload.handle(context.getSender());
+            })
+            .addMain(StickChoicePayload.TYPE, StickChoicePayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
             .addMain(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
@@ -40,6 +43,8 @@ final class ForgeNetworking {
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload))
             .addMain(PresetBundlePayload.TYPE, PresetBundlePayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload))
+            .addMain(StickAppearancePayload.TYPE, StickAppearancePayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload))
             .build();
         PayloadPackets.initialize(payload -> ForgePayload.create(payload.type().id(), buffer -> channel.encode(buffer, payload)));
     }

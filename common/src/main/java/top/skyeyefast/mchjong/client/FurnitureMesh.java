@@ -198,20 +198,28 @@ public final class FurnitureMesh {
             case -10000 -> 5;
             default -> throw new IllegalArgumentException("Unknown point-stick denomination: " + points);
         };
-        var out = buffers.getBuffer(TileRenderTypes.STICKS);
-        float x = STICK_HALF_LENGTH, z = STICK_HALF_WIDTH, y = STICK_HEIGHT;
-        stickFace(pose, out, light, row, 0, 1, 0, -x,y,z, x,y,z, x,y,-z, -x,y,-z);
-        stickFace(pose, out, light, row, 0,-1, 0, -x,0,-z, x,0,-z, x,0,z, -x,0,z);
-        stickFace(pose, out, light, row, 0, 0, 1, -x,0,z, x,0,z, x,y,z, -x,y,z);
-        stickFace(pose, out, light, row, 0, 0,-1, x,0,-z, -x,0,-z, -x,y,-z, x,y,-z);
-        stickFace(pose, out, light, row, 1, 0, 0, x,0,z, x,0,-z, x,y,-z, x,y,z);
-        stickFace(pose, out, light, row,-1, 0, 0, -x,0,-z, -x,0,z, -x,y,z, -x,y,-z);
+        stick(pose, buffers.getBuffer(TileRenderTypes.STICKS), light, row, 192);
     }
 
-    private static void stickFace(PoseStack pose, VertexConsumer out, int light, int row,
+    /** A custom riichi texture occupies one 384 by 32 strip on the same bounded bar mesh. */
+    public static void customStick(PoseStack pose, MultiBufferSource buffers, int light, ResourceLocation texture) {
+        stick(pose, buffers.getBuffer(RenderType.entityCutout(texture)), light, 0, 32);
+    }
+
+    private static void stick(PoseStack pose, VertexConsumer out, int light, int row, int atlasHeight) {
+        float x = STICK_HALF_LENGTH, z = STICK_HALF_WIDTH, y = STICK_HEIGHT;
+        stickFace(pose, out, light, row, atlasHeight, 0, 1, 0, -x,y,z, x,y,z, x,y,-z, -x,y,-z);
+        stickFace(pose, out, light, row, atlasHeight, 0,-1, 0, -x,0,-z, x,0,-z, x,0,z, -x,0,z);
+        stickFace(pose, out, light, row, atlasHeight, 0, 0, 1, -x,0,z, x,0,z, x,y,z, -x,y,z);
+        stickFace(pose, out, light, row, atlasHeight, 0, 0,-1, x,0,-z, -x,0,-z, -x,y,-z, x,y,-z);
+        stickFace(pose, out, light, row, atlasHeight, 1, 0, 0, x,0,z, x,0,-z, x,y,-z, x,y,z);
+        stickFace(pose, out, light, row, atlasHeight,-1, 0, 0, -x,0,-z, -x,0,z, -x,y,z, -x,y,-z);
+    }
+
+    private static void stickFace(PoseStack pose, VertexConsumer out, int light, int row, int atlasHeight,
                                   float nx, float ny, float nz, float... corners) {
         float u0 = .5f / 384, u1 = 1 - u0;
-        float v0 = (row * 32 + .5f) / 192, v1 = ((row + 1) * 32 - .5f) / 192;
+        float v0 = (row * 32 + .5f) / atlasHeight, v1 = ((row + 1) * 32 - .5f) / atlasHeight;
         for (int i = 0; i < 4; i++) {
             float x = corners[3 * i], y = corners[3 * i + 1], z = corners[3 * i + 2];
             // Both broad faces are printed; side faces sample the unmarked end of the same strip.

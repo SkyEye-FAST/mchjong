@@ -154,6 +154,27 @@ The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
 All eleven woods use `wood.png`.
 
+Riichi stick presets are ZIP archives in `config/mchjong/presets/sticks/` on a
+client or `config/mchjong/server-presets/sticks/` on a server. Each preset has
+`<namespace>/<name>/preset.toml` and a 384 by 32 transparent
+`<namespace>/<name>/stick.png`. A ZIP can contain several stick presets and no
+other preset category. The manifest defines a display name and cuboid dimensions
+in sixteenths of a block:
+
+```toml
+name = "Lacquer"
+length = 12
+width = 1
+height = 0.5
+```
+
+Length must be 8–16, width 0.25–2 and height 0.125–1. Length must be at least
+five times both width and height, keeping the model a long bar. Select a stick
+in Settings > Personal > Personal presets. The choice is stored in the client's
+TOML settings. Server presets chosen by a player are shown to everyone; a
+client-only choice appears as the default stick to other players. Unavailable
+artwork also uses the default stick.
+
 Concealed tiles and physical rear faces combine the material or dyed shell with
 the independent back pattern. Glass keeps its translucent material below that pattern.
 Front and back geometry is batched by material rather than switching render

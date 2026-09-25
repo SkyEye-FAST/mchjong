@@ -6,6 +6,7 @@ import java.nio.file.Path;
 import java.util.EnumSet;
 import java.util.Locale;
 import net.minecraft.client.Minecraft;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.phys.Vec3;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.config.TomlFiles;
@@ -37,6 +38,7 @@ public final class TableSettings {
     public boolean animations = true;
     public boolean showRiver = true;
     public VoiceSource voiceSource = VoiceSource.RESOURCE_PACK;
+    public ResourceLocation riichiStickPreset = RiichiStickPresets.DEFAULT;
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
     public boolean countdownSounds = true;
@@ -103,6 +105,7 @@ public final class TableSettings {
         settings.tileLabels = enumValue(config.getOrElse("tileLabels", settings.tileLabels.name()), TileLabels.class);
         settings.guideLines = enumValue(config.getOrElse("guideLines", settings.guideLines.name()), GuideLines.class);
         settings.voiceSource = enumValue(config.getOrElse("voiceSource", settings.voiceSource.name()), VoiceSource.class);
+        settings.riichiStickPreset = ResourceLocation.parse(config.getOrElse("riichiStickPreset", settings.riichiStickPreset.toString()));
         settings.actionTiles = bool(config.getOrElse("actionTiles", settings.actionTiles));
         settings.highlightTiles = bool(config.getOrElse("highlightTiles", settings.highlightTiles));
         settings.convenienceHints = bool(config.getOrElse("convenienceHints", settings.convenienceHints));
@@ -124,6 +127,7 @@ public final class TableSettings {
         config.set("tileLabels", tileLabels.name());
         config.set("guideLines", guideLines.name());
         config.set("voiceSource", voiceSource.name());
+        config.set("riichiStickPreset", riichiStickPreset.toString());
         config.set("actionTiles", actionTiles);
         config.set("highlightTiles", highlightTiles);
         config.set("convenienceHints", convenienceHints);
@@ -171,6 +175,7 @@ public final class TableSettings {
         animations = defaults.animations;
         showRiver = defaults.showRiver;
         voiceSource = defaults.voiceSource;
+        riichiStickPreset = defaults.riichiStickPreset;
         effectsVolume = defaults.effectsVolume;
         voiceVolume = defaults.voiceVolume;
         countdownSounds = defaults.countdownSounds;

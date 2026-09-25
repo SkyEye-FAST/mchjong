@@ -84,11 +84,15 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE,
+            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE, top.skyeyefast.mchjong.network.StickAppearancePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,
