@@ -106,6 +106,8 @@ public final class MchjongNeoForge {
         var registrar = event.registrar("10");
         registrar.playToServer(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
+        registrar.playToServer(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload.CODEC,
+            (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });

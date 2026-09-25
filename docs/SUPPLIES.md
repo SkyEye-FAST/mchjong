@@ -33,6 +33,7 @@ and `mchjong:incomplete_mahjong_box` for the [workshop](CREATE.md).
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
 | `mchjong:face_preset` | Built-in `kansai` or `kanto`, or a configured ZIP preset | Tile-face design |
+| `mchjong:back_preset` | Default or a configured ZIP preset | Tile-back pattern |
 | `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
 | `minecraft:container` | Native item-stack container | Mahjong boxes |
@@ -46,7 +47,7 @@ Only faces `4`, `13`, `22` can have `red = true`. Material is one of the eleven
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Undyed tile backs use
-their material texture; default cloth is cyan and stool cushions are white.
+their material texture and selected pattern; default cloth is cyan and stool cushions are white.
 
 All custom components are immutable codec values with persistence and network
 serialization. No item IDs are generated for particular faces, back colors, woods

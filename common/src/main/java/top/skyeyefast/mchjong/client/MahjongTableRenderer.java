@@ -55,7 +55,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             case BACK -> TileRenderTypes.back(material, back);
             case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.faces(table.equipment().preset());
-            case PATTERN -> TileRenderTypes.BACK_PATTERN;
+            case PATTERN -> TileRenderTypes.backPattern(table.equipment().backPreset());
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);

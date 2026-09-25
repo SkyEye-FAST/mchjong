@@ -8,22 +8,28 @@ import top.skyeyefast.mchjong.network.PresetBundlePayload;
 
 /** One server-wide collection loaded from ZIPs in the mod config directory. */
 public final class ServerFacePresets {
-    private static byte[] bundle = new byte[0];
+    private static byte[] faces = new byte[0], backs = new byte[0];
     private ServerFacePresets() {}
 
     public static void load(Path configDirectory) {
-        Path directory = configDirectory.resolve("mchjong/server-presets");
+        Path faceDirectory = configDirectory.resolve("mchjong/server-presets/faces");
+        Path backDirectory = configDirectory.resolve("mchjong/server-presets/backs");
         try {
-            var presets = PresetArchives.loadDirectory(directory);
-            bundle = PresetArchives.bundle(presets);
-            com.mojang.logging.LogUtils.getLogger().info("Loaded {} server tile face presets from {}", presets.size(), directory);
+            var facePresets = PresetArchives.loadDirectory(faceDirectory, PresetArchives.Kind.FACE);
+            var backPresets = PresetArchives.loadDirectory(backDirectory, PresetArchives.Kind.BACK);
+            faces = PresetArchives.bundle(facePresets, PresetArchives.Kind.FACE);
+            backs = PresetArchives.bundle(backPresets, PresetArchives.Kind.BACK);
+            com.mojang.logging.LogUtils.getLogger().info("Loaded {} face and {} back presets from {}",
+                facePresets.faces().size(), backPresets.backs().size(), configDirectory.resolve("mchjong"));
         } catch (IOException failure) {
-            throw new IllegalStateException("Cannot load server tile face presets from " + directory, failure);
+            throw new IllegalStateException("Cannot load server presets from " + configDirectory, failure);
         }
     }
 
     public static void send(ServerPlayer player) {
-        for (var part : PresetBundlePayload.split(bundle))
+        for (var part : PresetBundlePayload.split(faces, PresetArchives.Kind.FACE))
+            player.connection.send(PayloadPackets.clientbound(part));
+        for (var part : PresetBundlePayload.split(backs, PresetArchives.Kind.BACK))
             player.connection.send(PayloadPackets.clientbound(part));
     }
 }

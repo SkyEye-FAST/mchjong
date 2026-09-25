@@ -31,6 +31,7 @@ public final class TileFacePresets {
     private static List<TileFacePreset> choices = List.of();
     private static net.minecraft.client.multiplayer.ClientPacketListener connection;
     private static UUID transfer;
+    private static PresetArchives.Kind transferKind;
     private static int nextPart, parts;
     private static final ByteArrayOutputStream received = new ByteArrayOutputStream();
     private static final Definition MISSING = new Definition(net.minecraft.client.renderer.texture.MissingTextureAtlasSprite.getLocation(),
@@ -70,14 +71,20 @@ public final class TileFacePresets {
         });
         var names = new HashMap<TileFacePreset, String>();
         try {
-            var archives = PresetArchives.loadDirectory(Minecraft.getInstance().gameDirectory.toPath()
-                .resolve("config/mchjong/client-presets"));
-            for (var entry : archives.entrySet()) {
+            var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets");
+            var archives = PresetArchives.loadDirectory(root.resolve("faces"), PresetArchives.Kind.FACE);
+            for (var entry : archives.faces().entrySet()) {
                 loaded.put(entry.getKey(), register(entry.getKey(), entry.getValue().tiles(), "local_faces", dynamic));
                 names.put(entry.getKey(), entry.getValue().name());
             }
         } catch (IOException | RuntimeException failure) {
             com.mojang.logging.LogUtils.getLogger().error("Cannot load local tile face presets", failure);
+        }
+        try {
+            var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets/backs");
+            TileBackPresets.installLocal(PresetArchives.loadDirectory(root, PresetArchives.Kind.BACK).backs());
+        } catch (IOException | RuntimeException failure) {
+            com.mojang.logging.LogUtils.getLogger().error("Cannot load local tile back presets", failure);
         }
         for (var old : localTextures) if (!dynamic.contains(old)) Minecraft.getInstance().getTextureManager().release(old);
         localTextures = Set.copyOf(dynamic);
@@ -94,19 +101,23 @@ public final class TileFacePresets {
         var current = Minecraft.getInstance().getConnection();
         if (current == null) return;
         if (chunk.part() == 0) {
-            transfer = chunk.transfer(); nextPart = 0; parts = chunk.parts(); received.reset();
+            transfer = chunk.transfer(); transferKind = chunk.kind(); nextPart = 0; parts = chunk.parts(); received.reset();
             connection = current;
         }
-        if (!chunk.transfer().equals(transfer) || chunk.part() != nextPart || chunk.parts() != parts
+        if (!chunk.transfer().equals(transfer) || chunk.kind() != transferKind || chunk.part() != nextPart || chunk.parts() != parts
             || received.size() + chunk.data().length > PresetArchives.MAX_ARCHIVE_BYTES) {
-            transfer = null; received.reset();
+            transfer = null; transferKind = null; received.reset();
             throw new IllegalArgumentException("Preset bundle chunks arrived out of sequence");
         }
         received.writeBytes(chunk.data());
         if (++nextPart == parts) {
-            try { install(PresetArchives.read(new ByteArrayInputStream(received.toByteArray()))); }
+            try {
+                var archive = PresetArchives.read(new ByteArrayInputStream(received.toByteArray()), chunk.kind());
+                if (chunk.kind() == PresetArchives.Kind.FACE) install(archive.faces());
+                else TileBackPresets.installServer(archive.backs());
+            }
             catch (IOException | RuntimeException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot load server tile faces", failure); }
-            finally { transfer = null; received.reset(); }
+            finally { transfer = null; transferKind = null; received.reset(); }
         }
     }
 
@@ -156,7 +167,8 @@ public final class TileFacePresets {
     private static void clearServer() {
         for (var location : serverTextures) Minecraft.getInstance().getTextureManager().release(location);
         serverTextures = Set.of(); server = Map.of(); serverNames = Map.of(); connection = null;
-        transfer = null; received.reset();
+        TileBackPresets.clearServer();
+        transfer = null; transferKind = null; received.reset();
         update();
     }
 

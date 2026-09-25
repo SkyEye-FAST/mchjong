@@ -9,6 +9,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.client.TileFacePresets;
+import top.skyeyefast.mchjong.client.TileBackPresets;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.client.RiichiStickModel;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -25,6 +26,7 @@ final class ResourcePackSmoke {
     private CompletableFuture<Void> pending;
     private CompletableFuture<?> serverSync;
     private Path localArchive;
+    private Path localBackArchive;
     private List<String> selected;
     private int stage, ticks;
 
@@ -41,10 +43,15 @@ final class ResourcePackSmoke {
             Path images = output.resolve("preset-tiles");
             for (String key : top.skyeyefast.mchjong.config.PresetArchives.TILE_KEYS)
                 tileImage(images.resolve(key + ".png"), key);
-            localArchive = client.gameDirectory.toPath().resolve("config/mchjong/client-presets/local.zip");
+            localArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/faces/local.zip");
             archive(localArchive, "custom", "Local Test", images);
             Path serverConfig = output.resolve("server-config");
-            archive(serverConfig.resolve("mchjong/server-presets/server.zip"), "server", "Server Test", images);
+            archive(serverConfig.resolve("mchjong/server-presets/faces/server.zip"), "server", "Server Test", images);
+            Path backImage = output.resolve("back.png");
+            backPattern(backImage);
+            localBackArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/backs/local.zip");
+            backArchive(localBackArchive, "custom_back", "Local Back", backImage);
+            backArchive(serverConfig.resolve("mchjong/server-presets/backs/server.zip"), "server_back", "Server Back", backImage);
             serverSync = client.getSingleplayerServer().submit(() -> {
                 top.skyeyefast.mchjong.config.ServerFacePresets.load(serverConfig);
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID());
@@ -65,9 +72,13 @@ final class ResourcePackSmoke {
             client.getResourcePackRepository().setSelected(packs);
             pending = client.reloadResourcePacks();
             stage = 1; ticks = 0;
-        } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)) {
+        } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)
+            && TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back"))) {
             serverSync.join();
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
+            require(TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Local back was not discovered");
+            require(!TileBackPresets.texture(ResourceLocation.parse("smoke:server_back")).equals(TileMesh.BACK),
+                "Server back artwork was not delivered");
             require(TileMesh.atlas(SERVER).getPath().contains("server_faces"), "Server ZIP artwork was not delivered");
             var worldFaces = (net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
                 .getTexture(TileMesh.glyphs(SERVER));
@@ -112,6 +123,20 @@ final class ResourcePackSmoke {
         } else if (stage == 3 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
             require(MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Custom preset packet did not print");
+            button(client, "box.mchjong.back_choice").onPress();
+            stage = 31; ticks = 0;
+        } else if (stage == 31 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxBackScreen && ticks > 5) {
+            Screenshot.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), ignored -> {});
+            var choice = client.screen.children().stream()
+                .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
+                .map(child -> (net.minecraft.client.gui.components.Button) child)
+                .filter(button -> button.getMessage().getString().equals("Local Back")).findFirst().orElseThrow();
+            choice.onPress();
+            stage = 32; ticks = 0;
+        } else if (stage == 32 && ticks > 20) {
+            var menu = (MahjongBoxMenu) client.player.containerMenu;
+            require(MahjongSupplies.backPreset(menu.getSlot(0).getItem()).equals(ResourceLocation.parse("smoke:custom_back")),
+                "Back preset packet did not update physical tiles");
             Screenshot.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), ignored -> {});
             client.screen.onClose();
             stage = 4; ticks = 0;
@@ -140,11 +165,15 @@ final class ResourcePackSmoke {
             Screenshot.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), ignored -> {});
             client.screen.onClose();
             Files.delete(localArchive);
+            Files.delete(localBackArchive);
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;
         } else if (stage == 5 && ready(client)) {
             require(!TileFacePresets.choices().contains(CUSTOM), "Removed pack left a stale preset");
+            require(!TileBackPresets.choices().contains(ResourceLocation.parse("smoke:custom_back")), "Removed back left a stale preset");
+            require(TileBackPresets.texture(ResourceLocation.parse("smoke:custom_back")).equals(TileMesh.BACK),
+                "Unavailable back did not use the default pattern");
             require(TileMesh.atlas(CUSTOM).equals(TileMesh.atlas(TileFacePreset.KANSAI)),
                 "Unavailable faces did not use the default Kansai atlas");
             require(TileMesh.glyphs(CUSTOM).equals(TileMesh.glyphs(TileFacePreset.KANSAI)),
@@ -192,6 +221,18 @@ final class ResourcePackSmoke {
                 zip.write(Files.readAllBytes(images.resolve(key + ".png")));
                 zip.closeEntry();
             }
+        }
+    }
+    private static void backArchive(Path target, String preset, String label, Path image) throws java.io.IOException {
+        Files.createDirectories(target.getParent());
+        try (var zip = new java.util.zip.ZipOutputStream(Files.newOutputStream(target))) {
+            String root = "smoke/" + preset;
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/preset.toml"));
+            zip.write(("name = \"" + label + "\"\n").getBytes(java.nio.charset.StandardCharsets.UTF_8));
+            zip.closeEntry();
+            zip.putNextEntry(new java.util.zip.ZipEntry(root + "/back.png"));
+            zip.write(Files.readAllBytes(image));
+            zip.closeEntry();
         }
     }
     private static void pattern(Path path, int width, int height) throws java.io.IOException {

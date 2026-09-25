@@ -53,7 +53,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             else TileMesh.drawArtwork(pose, buffers.getBuffer(TileRenderTypes.faces(MahjongSupplies.facePreset(stack))), TileMesh.artwork(data), light);
             TileMesh.drawBody(pose, buffers.getBuffer(TileRenderTypes.body(data.material())),
                 light, data.material(), back);
-            TileMesh.drawBackPattern(pose, buffers.getBuffer(TileRenderTypes.BACK_PATTERN), false, false, light);
+            TileMesh.drawBackPattern(pose, buffers.getBuffer(TileRenderTypes.backPattern(MahjongSupplies.backPreset(stack))), false, false, light);
         }
         pose.popPose();
     }

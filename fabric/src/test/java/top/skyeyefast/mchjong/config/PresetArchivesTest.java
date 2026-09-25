@@ -24,16 +24,34 @@ class PresetArchivesTest {
     @Test void loadsSeveralZipsAndSeveralPresetsPerZip() throws Exception {
         write(directory.resolve("first.zip"), List.of("smoke:ink", "smoke:paper"), false);
         write(directory.resolve("second.zip"), List.of("other:blue"), false);
-        var presets = PresetArchives.loadDirectory(directory);
-        assertEquals(3, presets.size());
-        assertEquals("Ink", presets.get(new TileFacePreset(ResourceLocation.parse("smoke:ink"))).name());
-        assertEquals(45, presets.get(new TileFacePreset(ResourceLocation.parse("other:blue"))).tiles().size());
-        assertEquals(3, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets))).size());
+        var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE);
+        assertEquals(3, presets.faces().size());
+        assertEquals("Ink", presets.faces().get(new TileFacePreset(ResourceLocation.parse("smoke:ink"))).name());
+        assertEquals(45, presets.faces().get(new TileFacePreset(ResourceLocation.parse("other:blue"))).tiles().size());
+        assertEquals(3, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.FACE)),
+            PresetArchives.Kind.FACE).faces().size());
     }
 
     @Test void rejectsIncompletePreset() throws Exception {
         write(directory.resolve("incomplete.zip"), List.of("smoke:ink"), true);
-        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory));
+        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE));
+    }
+
+    @Test void backArchivesUseTheirOwnCategoryAndRejectMixedFiles() throws Exception {
+        byte[] back = PNG.clone();
+        java.nio.ByteBuffer.wrap(back, 16, 4).putInt(256);
+        java.nio.ByteBuffer.wrap(back, 20, 4).putInt(384);
+        Path path = directory.resolve("backs.zip");
+        try (var zip = new ZipOutputStream(Files.newOutputStream(path))) {
+            put(zip, "smoke/ink/preset.toml", "name = \"Ink back\"\n".getBytes(StandardCharsets.UTF_8));
+            put(zip, "smoke/ink/back.png", back);
+        }
+        var loaded = PresetArchives.loadDirectory(directory, PresetArchives.Kind.BACK);
+        assertEquals(1, loaded.backs().size());
+        assertEquals("Ink back", loaded.backs().get(ResourceLocation.parse("smoke:ink")).name());
+        assertEquals(1, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(loaded, PresetArchives.Kind.BACK)),
+            PresetArchives.Kind.BACK).backs().size());
+        assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE));
     }
 
     private static void write(Path target, List<String> ids, boolean omitLast) throws IOException {

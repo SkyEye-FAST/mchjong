@@ -136,12 +136,12 @@ Face printing uses a bounded cosmetic-ID payload tied to the current menu. The s
 136/144-tile input, then commits all tile slots and dye
 consumption together. Tile, point-stick and dye compartments have distinct
 native insertion ranges. `TileFacePreset` is an immutable resource-ID component;
-ZIPs in `config/mchjong/client-presets/` and `config/mchjong/server-presets/`
+ZIPs in `config/mchjong/presets/faces/` and `config/mchjong/server-presets/faces/`
 supply the client selector.
 Server ZIPs are loaded at startup and their individual
 tile images are sent to joining players; clients assemble render atlases. An
 unavailable ID displays Kansai artwork. The
-deck's preset is synchronized as public appearance, independently of private
+deck's face and back presets are synchronized as public appearance, independently of private
 container contents.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
@@ -342,8 +342,8 @@ The selected Minecraft, Java, loader, mapping and dependency versions live in
 `gradle.properties`, and resource processing writes the matching compatibility
 metadata into each artifact.
 
-Tile faces and tile backs are independent materials. Custom backs use ordinary
-player-supplied resource packs.
+Tile faces and tile backs are independent materials. Back presets use ZIPs in
+`config/mchjong/presets/backs/` and `config/mchjong/server-presets/backs/`.
 Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
 

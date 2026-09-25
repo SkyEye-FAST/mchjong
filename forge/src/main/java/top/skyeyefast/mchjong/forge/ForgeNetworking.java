@@ -15,6 +15,9 @@ final class ForgeNetworking {
             .addMain(BoxPrintPayload.TYPE, BoxPrintPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
+            .addMain(BoxBackPayload.TYPE, BoxBackPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) payload.handle(context.getSender());
+            })
             .addMain(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })

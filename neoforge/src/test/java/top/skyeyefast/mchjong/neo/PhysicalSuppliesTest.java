@@ -104,6 +104,24 @@ class PhysicalSuppliesTest {
         return box;
     }
 
+    @Test void backPresetBelongsToPhysicalTilesAndSurvivesDyeing(MinecraftServer server) {
+        var box = MahjongSupplies.completeBox(TileMaterial.BONE);
+        var id = net.minecraft.resources.ResourceLocation.parse("smoke:pattern");
+        var contents = MahjongSupplies.backedContents(MahjongSupplies.contents(box), id);
+        assertFalse(contents.isEmpty());
+        MahjongSupplies.setContents(box, contents);
+        assertEquals(id, MahjongSupplies.deck(box).backPreset());
+        var colored = MahjongSupplies.dyedContents(MahjongSupplies.contents(box), DyeColor.BLUE);
+        assertEquals(id, MahjongSupplies.backPreset(colored.getFirst()));
+        assertEquals(DyeColor.BLUE, MahjongSupplies.back(colored.getFirst()));
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, box);
+        assertEquals(id, equipment.backPreset());
+        assertEquals(net.minecraft.resources.ResourceLocation.parse("mchjong:default"),
+            MahjongSupplies.backPreset(MahjongSupplies.backedContents(contents,
+                net.minecraft.resources.ResourceLocation.parse("mchjong:default")).getFirst()));
+    }
+
     @Test void everyFurnitureWoodAndClothColorUsesOneItemRegistryEntry(MinecraftServer server) {
         for (FurnitureWood wood : FurnitureWood.values()) {
             String name = wood.getSerializedName(), suffix = wood == FurnitureWood.OAK ? "" : "_" + name;
@@ -498,7 +516,8 @@ class PhysicalSuppliesTest {
         assertEquals(10, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
-        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.getAllKeys());
+        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset", "tile_back_preset"),
+            publicData.getAllKeys());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
         assertFalse(saved.contains("game"));

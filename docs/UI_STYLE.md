@@ -252,8 +252,9 @@ The left side contains 45 tile slots, nine point-stick slots, one adjacent dice
 slot and 36 player slots.
 The right side shows tile/stick counts, set readiness and a dedicated dye slot.
 An empty dye slot shows a short insertion hint. Vanilla dye reveals only the
-back-color action; Mahjong dye reveals a single cycling preset selector, three
-sample faces and the print action. The selector cycles the complete preset list
+back-color action; Mahjong dye reveals a single cycling face selector and the
+print action. A separate back button opens a paginated secondary screen that
+applies the selected back to the stored tiles. The face selector cycles the complete preset list
 with mouse or keyboard activation (Shift reverses direction), so additional
 presets do not change the layout. Keep action visibility synchronized with the
 actual slot contents and clear focus when its control disappears.

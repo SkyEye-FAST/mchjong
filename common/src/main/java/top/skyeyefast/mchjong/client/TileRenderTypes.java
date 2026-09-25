@@ -18,12 +18,17 @@ public final class TileRenderTypes extends RenderType {
     }
     public static final ResourceLocation PLAIN = ResourceLocation.fromNamespaceAndPath("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);
-    public static final RenderType BACK_PATTERN = create("mchjong_back_pattern", DefaultVertexFormat.NEW_ENTITY,
-        VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
-            .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
-            .setTextureState(new TextureStateShard(TileMesh.BACK, true, false))
-            .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
-            .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false));
+    private static final java.util.Map<ResourceLocation, RenderType> BACK_PATTERNS = new java.util.HashMap<>();
+    public static final RenderType BACK_PATTERN = backPattern(TileBackPresets.DEFAULT);
+    public static RenderType backPattern(ResourceLocation preset) {
+        ResourceLocation texture = TileBackPresets.texture(preset);
+        return BACK_PATTERNS.computeIfAbsent(texture, key -> create("mchjong_back_pattern", DefaultVertexFormat.NEW_ENTITY,
+            VertexFormat.Mode.QUADS, 1536, false, true, CompositeState.builder()
+                .setShaderState(RENDERTYPE_ENTITY_TRANSLUCENT_SHADER)
+                .setTextureState(new TextureStateShard(key, true, false))
+                .setTransparencyState(TRANSLUCENT_TRANSPARENCY).setCullState(CULL)
+                .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false)));
+    }
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
     private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes();
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
@@ -66,7 +71,7 @@ public final class TileRenderTypes extends RenderType {
     public static RenderType gui(ResourceLocation texture) {
         return GUI.computeIfAbsent(texture, key -> guiMaterial("mchjong_gui", key, true));
     }
-    public static void reload() { FACE_TYPES.clear(); GUI.clear(); GUI.putAll(guiTypes()); }
+    public static void reload() { FACE_TYPES.clear(); BACK_PATTERNS.clear(); GUI.clear(); GUI.putAll(guiTypes()); }
 
     private static java.util.Map<ResourceLocation, RenderType> guiTypes() {
         var result = new java.util.HashMap<ResourceLocation, RenderType>();

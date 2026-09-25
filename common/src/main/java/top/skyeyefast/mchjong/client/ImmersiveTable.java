@@ -21,6 +21,7 @@ final class ImmersiveTable {
     private int backColor;
     private int bodyColor;
     private ResourceLocation backTexture;
+    private ResourceLocation backPattern;
     private record Vertex(double x, double z, double h) {}
     private record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
@@ -76,11 +77,12 @@ final class ImmersiveTable {
     }
 
     void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed,
-                TileMaterial material, net.minecraft.world.item.DyeColor dye) {
+                TileMaterial material, net.minecraft.world.item.DyeColor dye, ResourceLocation backPreset) {
         this.preset = preset;
         backColor = TileMesh.backColor(material, dye);
         bodyColor = TileMesh.bodyColor(material, dye);
         backTexture = TileRenderTypes.backTexture(material, dye);
+        backPattern = TileBackPresets.texture(backPreset);
         points.clear(); widths.clear(); rivers.clear(); faces.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
@@ -333,7 +335,7 @@ final class ImmersiveTable {
     private void artwork(Vertex[] vertices, int tile, boolean back, boolean dim) {
         if (back || tile < 0) {
             faces.add(new Face(vertices, backTexture, 0, 0, 1, 1, backColor, false));
-            faces.add(new Face(vertices, TileMesh.BACK, 0, 0, 1, 1, 0xffffffff, false));
+            faces.add(new Face(vertices, backPattern, 0, 0, 1, 1, 0xffffffff, false));
             return;
         }
         int face = TileMesh.face(tile);

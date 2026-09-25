@@ -29,6 +29,7 @@ public final class TableResults extends AbstractWidget {
     private final TileFacePreset preset;
     private final TileMaterial material;
     private final DyeColor dye;
+    private final net.minecraft.resources.ResourceLocation backPreset;
     private final Page page;
     private final long started;
     private final int contentScale;
@@ -40,12 +41,19 @@ public final class TableResults extends AbstractWidget {
 
     public TableResults(Font font, TableView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
                         int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
+        this(font, view, preset, material, dye, TileBackPresets.DEFAULT, x, y, width, height, winner, page, started, contentScale);
+    }
+
+    public TableResults(Font font, TableView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+                        net.minecraft.resources.ResourceLocation backPreset,
+                        int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
         this.font = font;
         this.view = view;
         this.preset = preset;
         this.material = material;
         this.dye = dye;
+        this.backPreset = backPreset;
         this.page = page;
         this.started = started;
         this.contentScale = contentScale;
@@ -151,12 +159,12 @@ public final class TableResults extends AbstractWidget {
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
                 if (i == hand.size() - 1) x += 4;
-                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, false, preset, material, dye);
+                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, false, preset, material, dye, backPreset);
                 x += tileWidth + 1;
             }
             for (var meld : player.melds()) {
                 x += 5;
-                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset, material, dye);
+                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset, material, dye, backPreset);
                 x += TileGui.meldWidth(meld, win.seat(), tileWidth);
             }
             y += tileWidth * 2 + 5;
@@ -203,7 +211,7 @@ public final class TableResults extends AbstractWidget {
         text(graphics, label, x, y + (compact ? 4 : 0), labelWidth, MUTED);
         for (int i = 0; i < tiles.size(); i++) if (graphics != null)
             TileGui.tile(graphics, tiles.get(i), x + (compact ? labelWidth : 0) + i * (compact ? 12 : 14),
-                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false, false, preset, material, dye);
+                y + (compact ? 0 : 11), compact ? 10 : 12, false, false, false, false, preset, material, dye, backPreset);
         return compact ? 17 : 31;
     }
 
@@ -223,12 +231,12 @@ public final class TableResults extends AbstractWidget {
                 while (tileWidth > 4 && handWidth(concealed, player, seat, tileWidth, 0) > cardWidth - 8) tileWidth--;
                 int tx = cx, tileY = cy + 24 + tileWidth / 2;
                 if (player.exposed()) for (int tile : player.hand()) {
-                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, false, preset, material, dye);
+                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, false, preset, material, dye, backPreset);
                     tx += tileWidth + 1;
                 }
                 for (var meld : player.melds()) {
                     tx += 5;
-                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset, material, dye);
+                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset, material, dye, backPreset);
                     tx += TileGui.meldWidth(meld, seat, tileWidth);
                 }
             }

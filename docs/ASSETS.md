@@ -35,8 +35,8 @@ All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.
-Custom presets are ZIP archives in `config/mchjong/client-presets/` on a client
-or `config/mchjong/server-presets/` on a server. Inside a ZIP,
+Custom face presets are ZIP archives in `config/mchjong/presets/faces/` on a client
+or `config/mchjong/server-presets/faces/` on a server. Inside a ZIP,
 `<namespace>/<name>/preset.toml` defines the persistent
 preset ID `<namespace>:<name>`. The manifest can supply a display name:
 
@@ -51,13 +51,14 @@ each followed by `.png`. They are fitted to the same face area as the supplied
 individual source images. The white dragon image is included; its printed face
 remains blank. The client assembles the images into render textures at load time.
 A ZIP can contain several `<namespace>/<name>/` directories.
+Each ZIP belongs to its category directory and contains only face presets.
 Reload client resources after changing local ZIPs.
 
 Printing stores only the preset ID on tiles and synchronizes it with table
-appearance. To offer presets to every player, place ZIP archives in the server's
-`config/mchjong/server-presets/` directory and restart the server. The mod sends the
+appearance. To offer face presets to every player, place ZIP archives in the server's
+`config/mchjong/server-presets/faces/` directory and restart the server. The mod sends the
 configured images to connecting players and adds them to their mahjong box
-selectors. ZIPs in a client's `config/mchjong/client-presets/` directory add presets to
+selectors. ZIPs in a client's `config/mchjong/presets/faces/` directory add presets to
 that client's selector; other players without those images see default Kansai faces.
 The server validates the physical set,
 carrier, menu and dye transaction. Removing an archive keeps stored IDs intact and
@@ -91,17 +92,17 @@ generated-item models and can be replaced independently by resource packs.
 
 Undyed tiles use their own material texture for the rear face and back shell, so
 all eleven woods, bone, quartz, calcite, glass and amethyst have no separate default back
-color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 transparent
+color. `assets/mchjong/textures/tile/back.png` is the default 256 by 384 transparent
 pattern layer applied to every rear face, including undyed and glass tiles and
-concealed face covers. Its default pixels are fully transparent. The tile's
+concealed face covers. Its pixels are fully transparent. The tile's
 `BASE_COLOR` component selects one of Minecraft's sixteen dye colors without
 changing the material-colored body or opaque white printed surface.
 
 The pattern preserves its own colors and alpha independently of dye. Dyeing a glass tile tints its
 translucent glass material instead, matching the stained-glass model while its
 rear face continues to use `textures/tile_material/glass.png`. Undyed glass keeps
-the neutral glass tint. Resource packs can replace the material textures and the
-back pattern independently. Dyed opaque shells use the solid white
+the neutral glass tint. Resource packs can replace the material textures.
+Dyed opaque shells use the solid white
 `textures/tile/plain.png` tinted by the dye, beneath the pattern.
 
 The body uses original neutral relief textures under `textures/tile_material/`:
@@ -140,16 +141,18 @@ side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulti
 screenshots for native-like hand placement, grip
 contact, readable printed faces and clearance above the hotbar.
 
-To supply a back design, create a normal resource pack for your target
-Minecraft version containing the `textures/tile/back.png` path and matching
-`pack_format` (34 for Minecraft 1.21.1). Preserve the 2:3 aspect ratio; transparent
-pixels reveal the tile material or dye beneath, and partial alpha is supported.
+Back presets are ZIP archives in `config/mchjong/presets/backs/` on a client or
+`config/mchjong/server-presets/backs/` on a server. Each
+`<namespace>/<name>/preset.toml` names one preset, and
+`<namespace>/<name>/back.png` supplies its 256 by 384 transparent pattern.
+Several back presets can share one ZIP, which contains only back presets.
+The mahjong box's back selector applies
+the chosen preset to its stored tiles independently of dye. Server presets are
+sent to joining players; an unavailable ID uses the transparent default pattern.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
-All eleven woods use `wood.png`. Selection, persistence and reloading use
-Minecraft's resource-pack system. Back textures do
-not replace the face atlas or affect private game data.
+All eleven woods use `wood.png`.
 
 Concealed tiles and physical rear faces combine the material or dyed shell with
 the independent back pattern. Glass keeps its translucent material below that pattern.
@@ -266,7 +269,7 @@ additionally exercise the world render paths.
 tile-body textures, including their live pixel sampling state.
 
 Both `:fabric:runSmokeClient -PsmokeInterface=true` and its NeoForge equivalent
-also load local and server preset ZIPs, print a local preset through the real
+also load local and server face preset ZIPs, print a local preset through the real
 packet, override a built-in definition with a test resource pack, verify replacement
 riichi geometry, capture default/custom table patterns, then remove the local ZIP
 and check the reloaded preset list. Captures are under

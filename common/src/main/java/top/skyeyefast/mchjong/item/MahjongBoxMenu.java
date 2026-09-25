@@ -95,6 +95,19 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         return true;
     }
 
+    public boolean chooseBack(Player player, net.minecraft.resources.ResourceLocation preset) {
+        if (player.level().isClientSide || !stillValid(player) || preset.toString().length() > 128) return false;
+        var output = MahjongSupplies.backedContents(items(), preset);
+        if (output.isEmpty()) return false;
+        updating = true;
+        try {
+            for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
+        } finally { updating = false; }
+        save();
+        broadcastChanges();
+        return true;
+    }
+
     private boolean dyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
         boolean undo = reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE);

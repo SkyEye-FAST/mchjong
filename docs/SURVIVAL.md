@@ -58,6 +58,7 @@ use different wood types; the box keeps its single appearance.
 A cloth, stool or individual tile plus one dye changes its color, shapeless.
 A box plus one dye recolors every tile back in the box, including spare blanks;
 the materials, faces, red flags and point sticks are unchanged.
+The box's back preset screen applies a pattern to the stored tiles without a dye cost.
 
 One each of black, red, green, blue and white dye make one mahjong dye, shapeless. Ordinary
 mahjong dye stacks to 64; creative mahjong dye stacks to one and is supplied
@@ -241,7 +242,7 @@ renderer never resolves a face texture for such a sentinel. Moving a camera
 behind a glass tile therefore cannot reveal an opponent's printed face.
 
 The default back is a neutral texture tinted by the 16 dye colors. Custom
-resource packs can replace `assets/mchjong/textures/tile/back.png`.
+back presets supply a transparent pattern selected in the mahjong box.
 See [ASSETS.md](ASSETS.md).
 
 Ordinary tables have four wooden drawers below their side rails. Open a drawer
