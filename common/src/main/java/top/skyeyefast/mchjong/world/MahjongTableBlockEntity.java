@@ -52,6 +52,13 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var policy = WorldSettings.of(level.getServer()).policy();
         game.configureWorld(policy.invitationTeleport());
         synchronizeEquipment();
+        if (game.phase() == Game.Phase.LOBBY && !equipment.canSupplyReds(game.rules().sanma(), game.rules().redFives()))
+            for (var reds : new top.skyeyefast.mchjong.engine.RedFives[]{top.skyeyefast.mchjong.engine.RedFives.THREE,
+                top.skyeyefast.mchjong.engine.RedFives.FOUR, top.skyeyefast.mchjong.engine.RedFives.NONE})
+                if (game.rules().preset().allows(reds) && equipment.canSupplyReds(game.rules().sanma(), reds)) {
+                    game.configureStockRedFives(reds);
+                    break;
+                }
         if (equipment.selectRules(game.rules())) appearanceChanged();
         if (game.phase() == Game.Phase.LOBBY)
             game.configureEquipment(!automatic(), !equipment.hasCloth() || equipment.deck() == null

@@ -177,6 +177,14 @@ public final class Game {
         return true;
     }
 
+    /** The server's equipment adapter uses this when the selected red stock cannot be supplied. */
+    public boolean configureStockRedFives(RedFives reds) {
+        if (phase != Phase.LOBBY || exitVote != null || !rules.preset().allows(reds) || rules.redFives() == reds) return false;
+        applyRules(rules.with(RuleOption.RED_FIVES, reds.ordinal()));
+        newDecision(Phase.LOBBY);
+        return true;
+    }
+
     private void applyRules(RuleConfig config) {
         if (rules.players() != config.players()) seating = new RoomSeating();
         rules = config;
