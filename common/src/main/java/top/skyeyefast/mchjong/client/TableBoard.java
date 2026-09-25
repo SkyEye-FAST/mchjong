@@ -122,7 +122,7 @@ final class TableBoard {
 
     Rect focus() {
         Rect card = card(viewer);
-        return new Rect(card.x(), card.y() - 21, card.width(), 17);
+        return new Rect(card.x(), card.y() - (perspective ? 38 : 21), card.width(), perspective ? 34 : 17);
     }
 
     Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }

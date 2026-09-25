@@ -236,16 +236,20 @@ final class TableHud {
             int span = Math.min(width / 2 - 8, font.width(focus) + 27);
             int x = width - 8 - span;
             int y = bottom() + 4;
+            int scale = board != null && board.perspective() ? 2 : 1;
             if (board != null) {
                 var focusArea = board.focus();
                 x = focusArea.x();
                 y = focusArea.y();
                 span = focusArea.width();
             }
-            MahjongUi.panel(graphics, x, y, span, 17);
-            if (span > 28) text(font, graphics, focus, x + 4, y + 5, span - 22, MahjongUi.ACCENT);
-            TileGui.tile(graphics, view.focus().tile(), x + span - 15, y + 1, 9, false, false, false, preset);
-            regions.add(new Region(x, y, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append("  ").append(focus)));
+            int height = 17 * scale;
+            MahjongUi.panel(graphics, x, y, span, height);
+            if (span > 28 * scale) textScaled(font, graphics, focus, x + 4 * scale, y + 5 * scale,
+                span - 22 * scale, MahjongUi.ACCENT, scale);
+            TileGui.tile(graphics, view.focus().tile(), x + span - 15 * scale, y + scale,
+                9 * scale, false, false, false, preset);
+            regions.add(new Region(x, y, span, height, TableScreen.playerName(view, view.focus().seat()).copy().append("  ").append(focus)));
         }
     }
 

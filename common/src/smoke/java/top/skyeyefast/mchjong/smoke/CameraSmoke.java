@@ -124,7 +124,8 @@ final class CameraSmoke {
         }
         table.acceptView(new top.skyeyefast.mchjong.engine.TableView(base.tableId(), base.revision() + 1, base.decision(),
             base.handNumber(), top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config(),
-            top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(), null,
+            top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
+            new top.skyeyefast.mchjong.engine.TableView.Focus(1, 64, false, 0),
             seats, java.util.List.of(new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.RIICHI, 0),
                 new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.PASS)),
             java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), java.util.List.of(), base.timeControl(),
