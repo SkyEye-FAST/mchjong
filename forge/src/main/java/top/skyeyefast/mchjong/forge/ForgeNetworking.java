@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.forge;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraftforge.network.NetworkRegistry;
 import net.minecraftforge.network.NetworkDirection;
 import top.skyeyefast.mchjong.network.*;
@@ -8,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = NetworkRegistry.ChannelBuilder.named(new net.minecraft.resources.ResourceLocation("mchjong", "play"))
+        var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
             .networkProtocolVersion(() -> "10").clientAcceptedVersions("10"::equals).serverAcceptedVersions("10"::equals).simpleChannel();
         channel.messageBuilder(BoxPrintPayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(BoxPrintPayload::write).decoder(BoxPrintPayload::decode).consumerMainThread((payload, context) -> {

@@ -1,11 +1,13 @@
 package top.skyeyefast.mchjong.forge.smoke;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
+import top.skyeyefast.mchjong.smoke.SmokeScreenshots;
 import net.minecraft.client.gui.screens.TitleScreen;
-import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraftforge.registries.ForgeRegistries;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.event.TickEvent;
@@ -44,18 +46,18 @@ public final class ForgeClientBootstrap {
         }
         if (!(client.screen instanceof TitleScreen) || client.getOverlay() != null) return;
         if (++titleTicks < 60) return;
-        if (BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_table")) != MahjongContent.TABLE)
+        if (ForgeRegistries.BLOCKS.getValue(MahjongContent.id("mahjong_table")) != MahjongContent.TABLE)
             throw new IllegalStateException("Forge table registration is missing");
         for (var item : MahjongItemRenderer.items())
             if (!(IClientItemExtensions.of(item).getCustomRenderer() instanceof MahjongItemRenderer))
-                throw new IllegalStateException("Forge item renderer is missing for " + BuiltInRegistries.ITEM.getKey(item));
+                throw new IllegalStateException("Forge item renderer is missing for " + ItemRegistry.getKey(item));
         var models = client.getModelManager();
         if (models.getModel(RiichiStickModel.ID) == models.getMissingModel())
             throw new IllegalStateException("Forge additional riichi-stick model is missing");
         Path output = Path.of(System.getProperty("mchjong.smoke.output"));
         verifyNativeStackData();
         Files.createDirectories(output);
-        Screenshot.grab(output.toFile(), "forge-bootstrap.png", client.getMainRenderTarget(), message -> {});
+        SmokeScreenshots.grab(output.toFile(), "forge-bootstrap.png", client.getMainRenderTarget(), message -> {});
         Files.writeString(output.resolve("PASS.txt"), "Forge client registrations, renderer bindings and additional model loaded.\n");
         complete = true;
         client.stop();
@@ -78,7 +80,7 @@ public final class ForgeClientBootstrap {
             try (var input = MahjongContent.class.getResourceAsStream("/data/mchjong/recipes/" + name + ".json")) {
                 if (input == null) throw new IllegalStateException("Missing generated recipe " + name);
                 var json = com.google.gson.JsonParser.parseReader(new java.io.InputStreamReader(input, java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
-                var serializer = BuiltInRegistries.RECIPE_SERIALIZER.get(new net.minecraft.resources.ResourceLocation(json.get("type").getAsString()));
+                var serializer = ForgeRegistries.RECIPE_SERIALIZERS.getValue(ResourceIds.of(json.get("type").getAsString()));
                 var result = serializer.fromJson(MahjongContent.id(name), json).getResultItem(net.minecraft.core.RegistryAccess.EMPTY);
                 boolean valid = name.equals("mahjong_table_cherry")
                     ? top.skyeyefast.mchjong.item.MahjongComponents.wood(result) == top.skyeyefast.mchjong.item.FurnitureWood.CHERRY

@@ -1,10 +1,10 @@
 package top.skyeyefast.mchjong.smoke;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.client.TableResults;
@@ -43,9 +43,9 @@ final class SettlementSmoke {
             voicePreset = settings.voicePreset;
             voiceSource = settings.voiceSource;
             voiceVolume = settings.voiceVolume;
-            var preset = new net.minecraft.resources.ResourceLocation("smoke:readout");
+            var preset = ResourceIds.of("smoke:readout");
             // Decode an existing game recording; no third-party voice assets enter the project.
-            try (var sound = client.getResourceManager().open(new net.minecraft.resources.ResourceLocation("minecraft:sounds/random/click.ogg"))) {
+            try (var sound = client.getResourceManager().open(ResourceIds.of("minecraft:sounds/random/click.ogg"))) {
                 byte[] recording = sound.readAllBytes();
                 var recordings = new java.util.HashMap<String, byte[]>();
                 ScoreAnnouncements.SUBTITLES.keySet().forEach(event -> recordings.put(event, recording));
@@ -266,7 +266,7 @@ final class SettlementSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 
     static void acceptFixture(MahjongTableBlockEntity table, TableView view) {

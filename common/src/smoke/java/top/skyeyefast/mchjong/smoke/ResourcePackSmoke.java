@@ -1,12 +1,12 @@
 package top.skyeyefast.mchjong.smoke;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.client.TileFacePresets;
 import top.skyeyefast.mchjong.client.TileBackPresets;
@@ -22,8 +22,8 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Real pack selection, native model baking, cosmetic-ID packets and removal/reload. */
 final class ResourcePackSmoke {
-    private static final TileFacePreset CUSTOM = new TileFacePreset(new ResourceLocation("smoke:custom"));
-    private static final TileFacePreset SERVER = new TileFacePreset(new ResourceLocation("smoke:server"));
+    private static final TileFacePreset CUSTOM = new TileFacePreset(ResourceIds.of("smoke:custom"));
+    private static final TileFacePreset SERVER = new TileFacePreset(ResourceIds.of("smoke:server"));
     private final DepositVisualSmoke baseline = new DepositVisualSmoke(), customized = new DepositVisualSmoke(true);
     private CompletableFuture<Void> pending;
     private CompletableFuture<?> serverSync;
@@ -63,7 +63,7 @@ final class ResourcePackSmoke {
             stickArchive(localStickArchive, "custom_stick", "Local Stick", stickImage);
             stickArchive(serverConfig.resolve("mchjong/server-presets/sticks/server.zip"), "server_stick", "Server Stick", stickImage);
             byte[] recording;
-            try (var sound = client.getResourceManager().open(new ResourceLocation("minecraft:sounds/random/click.ogg"))) {
+            try (var sound = client.getResourceManager().open(ResourceIds.of("minecraft:sounds/random/click.ogg"))) {
                 recording = sound.readAllBytes();
             }
             localVoiceArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/voices/local.zip");
@@ -90,13 +90,13 @@ final class ResourcePackSmoke {
             pending = client.reloadResourcePacks();
             stage = 1; ticks = 0;
         } else if (stage == 1 && ready(client) && serverSync.isDone() && TileFacePresets.choices().contains(SERVER)
-            && TileBackPresets.choices().contains(new ResourceLocation("smoke:server_back"))
-            && RiichiStickPresets.choices().contains(new ResourceLocation("smoke:server_stick"))
-            && VoicePresets.choices().contains(new ResourceLocation("smoke:server_voice"))) {
+            && TileBackPresets.choices().contains(ResourceIds.of("smoke:server_back"))
+            && RiichiStickPresets.choices().contains(ResourceIds.of("smoke:server_stick"))
+            && VoicePresets.choices().contains(ResourceIds.of("smoke:server_voice"))) {
             serverSync.join();
             require(TileFacePresets.choices().contains(CUSTOM), "Custom preset was not discovered");
-            require(TileBackPresets.choices().contains(new ResourceLocation("smoke:custom_back")), "Local back was not discovered");
-            require(RiichiStickPresets.choices().contains(new ResourceLocation("smoke:custom_stick")), "Local stick was not discovered");
+            require(TileBackPresets.choices().contains(ResourceIds.of("smoke:custom_back")), "Local back was not discovered");
+            require(RiichiStickPresets.choices().contains(ResourceIds.of("smoke:custom_stick")), "Local stick was not discovered");
             for (var id : top.skyeyefast.mchjong.config.BuiltinPresets.BACKS) {
                 require(TileBackPresets.choices().contains(id), "Built-in back was not listed: " + id);
                 require(client.getResourceManager().getResource(TileBackPresets.texture(id)).isPresent(),
@@ -105,10 +105,10 @@ final class ResourcePackSmoke {
             for (var id : top.skyeyefast.mchjong.config.BuiltinPresets.STICKS) {
                 require(RiichiStickPresets.choices().contains(id), "Built-in stick was not listed: " + id);
             }
-            require(VoicePresets.choices().contains(new ResourceLocation("smoke:custom_voice")), "Local voice was not discovered");
-            require(RiichiStickPresets.definition(new ResourceLocation("smoke:server_stick")).length() == 12,
+            require(VoicePresets.choices().contains(ResourceIds.of("smoke:custom_voice")), "Local voice was not discovered");
+            require(RiichiStickPresets.definition(ResourceIds.of("smoke:server_stick")).length() == 12,
                 "Server stick model was not delivered");
-            require(!TileBackPresets.texture(new ResourceLocation("smoke:server_back")).equals(TileMesh.BACK),
+            require(!TileBackPresets.texture(ResourceIds.of("smoke:server_back")).equals(TileMesh.BACK),
                 "Server back artwork was not delivered");
             require(TileMesh.atlas(SERVER).getPath().contains("server_faces"), "Server ZIP artwork was not delivered");
             var worldFaces = (net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
@@ -117,13 +117,13 @@ final class ResourcePackSmoke {
                 "Server face texture lost its opaque white backing");
             require(TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Built-in preset override was ignored");
             float maxY = 0;
-            for (var quad : RiichiStickModel.baked().getQuads(null, null, net.minecraft.util.RandomSource.create(0))) {
+            for (var quad : top.skyeyefast.mchjong.client.ModelRendering.quads(RiichiStickModel.baked())) {
                 int[] vertices = quad.getVertices();
                 for (int i = 1; i < vertices.length; i += 8) maxY = Math.max(maxY, Float.intBitsToFloat(vertices[i]));
             }
             require(maxY > .07f, "Native riichi model override was not baked");
             client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
-                new top.skyeyefast.mchjong.network.StickChoicePayload(new ResourceLocation("smoke:server_stick"))));
+                new top.skyeyefast.mchjong.network.StickChoicePayload(ResourceIds.of("smoke:server_stick"))));
             var id = client.player.getUUID();
             pending = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
@@ -139,7 +139,7 @@ final class ResourcePackSmoke {
         } else if (stage == 2 && pending.isDone() && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen && ticks > 20) {
             pending.join();
             require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName())
-                .equals(new ResourceLocation("smoke:server_stick")), "Shared stick selection was not synchronized");
+                .equals(ResourceIds.of("smoke:server_stick")), "Shared stick selection was not synchronized");
             button(client, "box.mchjong.preset_choice").onPress();
             require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
                 "Face preset screen did not open");
@@ -147,7 +147,7 @@ final class ResourcePackSmoke {
                 "Server preset missing from selector");
             stage = 21; ticks = 0;
         } else if (stage == 21 && ticks > 4) {
-            Screenshot.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
             require(TileFacePresets.choices().contains(CUSTOM), "New preset missing from selector");
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
@@ -161,7 +161,7 @@ final class ResourcePackSmoke {
             button(client, "box.mchjong.back_choice").onPress();
             stage = 31; ticks = 0;
         } else if (stage == 31 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxBackScreen && ticks > 5) {
-            Screenshot.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
@@ -170,9 +170,9 @@ final class ResourcePackSmoke {
             stage = 32; ticks = 0;
         } else if (stage == 32 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
-            require(MahjongSupplies.backPreset(menu.getSlot(0).getItem()).equals(new ResourceLocation("smoke:custom_back")),
+            require(MahjongSupplies.backPreset(menu.getSlot(0).getItem()).equals(ResourceIds.of("smoke:custom_back")),
                 "Back preset packet did not update physical tiles");
-            Screenshot.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), ignored -> {});
             client.screen.onClose();
             stage = 4; ticks = 0;
         } else if (stage == 4) {
@@ -186,7 +186,7 @@ final class ResourcePackSmoke {
             screen.resetView();
             stage = 8; ticks = 0;
         } else if (stage == 8 && ticks > 20) {
-            Screenshot.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
             var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
             client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(screen));
             stage = 81; ticks = 0;
@@ -195,12 +195,12 @@ final class ResourcePackSmoke {
             button(client, "settings.mchjong.personal_presets").onPress();
             stage = 82; ticks = 0;
         } else if (stage == 82 && client.screen instanceof top.skyeyefast.mchjong.client.PersonalPresetsScreen && ticks > 5) {
-            Screenshot.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(640, 480);
             client.resizeDisplay();
             stage = 83; ticks = 0;
         } else if (stage == 83 && ticks > 8) {
-            if (ticks == 9) Screenshot.grab(output.toFile(), "61-resource-stick-choices-small.png",
+            if (ticks == 9) SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices-small.png",
                 client.getMainRenderTarget(), ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
@@ -216,25 +216,25 @@ final class ResourcePackSmoke {
                 return false;
             }
             choice.orElseThrow().onPress();
-            require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(new ResourceLocation("smoke:custom_stick")),
+            require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(ResourceIds.of("smoke:custom_stick")),
                 "Personal stick selection was not saved");
             button(client, "settings.mchjong.voice_preset").onPress();
             stage = 85; ticks = 0;
         } else if (stage == 85 && ticks > 5) {
-            Screenshot.grab(output.toFile(), "61-resource-voice-choices-small.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices-small.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(1280, 800);
             client.resizeDisplay();
             stage = 86; ticks = 0;
         } else if (stage == 86 && ticks > 8) {
-            Screenshot.grab(output.toFile(), "61-resource-voice-choices.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices.png", client.getMainRenderTarget(), ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
                 .filter(button -> button.getMessage().getString().equals("Local Voice")).findFirst().orElseThrow();
             choice.onPress();
-            require(top.skyeyefast.mchjong.client.TableSettings.get().voicePreset.equals(new ResourceLocation("smoke:custom_voice")),
+            require(top.skyeyefast.mchjong.client.TableSettings.get().voicePreset.equals(ResourceIds.of("smoke:custom_voice")),
                 "Personal voice selection was not saved");
-            var path = VoicePresets.audioPath(new ResourceLocation("smoke:custom_voice"), "ron");
+            var path = VoicePresets.audioPath(ResourceIds.of("smoke:custom_voice"), "ron");
             require(path != null, "Selected voice recording was missing");
             voiceDecode = new net.minecraft.client.sounds.SoundBufferLibrary(client.getResourceManager()).getCompleteBuffer(path);
             top.skyeyefast.mchjong.client.TableAudio.preview();
@@ -252,12 +252,12 @@ final class ResourcePackSmoke {
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
             require(client.screen instanceof top.skyeyefast.mchjong.client.TableScreen screen && screen.immersive(), "Resource fixture did not enter immersive view");
-            Screenshot.grab(output.toFile(), "61-resource-custom-immersive.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-immersive.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(640, 480);
             client.resizeDisplay();
             stage = 7; ticks = 0;
         } else if (stage == 7 && ticks > 20) {
-            Screenshot.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), ignored -> {});
             client.screen.onClose();
             Files.delete(localArchive);
             Files.delete(localBackArchive);
@@ -268,10 +268,10 @@ final class ResourcePackSmoke {
             stage = 5; ticks = 0;
         } else if (stage == 5 && ready(client)) {
             require(!TileFacePresets.choices().contains(CUSTOM), "Removed pack left a stale preset");
-            require(!TileBackPresets.choices().contains(new ResourceLocation("smoke:custom_back")), "Removed back left a stale preset");
-            require(!RiichiStickPresets.choices().contains(new ResourceLocation("smoke:custom_stick")), "Removed stick left a stale preset");
-            require(!VoicePresets.choices().contains(new ResourceLocation("smoke:custom_voice")), "Removed voice left a stale preset");
-            require(TileBackPresets.texture(new ResourceLocation("smoke:custom_back")).equals(TileMesh.BACK),
+            require(!TileBackPresets.choices().contains(ResourceIds.of("smoke:custom_back")), "Removed back left a stale preset");
+            require(!RiichiStickPresets.choices().contains(ResourceIds.of("smoke:custom_stick")), "Removed stick left a stale preset");
+            require(!VoicePresets.choices().contains(ResourceIds.of("smoke:custom_voice")), "Removed voice left a stale preset");
+            require(TileBackPresets.texture(ResourceIds.of("smoke:custom_back")).equals(TileMesh.BACK),
                 "Unavailable back did not use the default pattern");
             require(TileMesh.atlas(CUSTOM).equals(TileMesh.atlas(TileFacePreset.KANSAI)),
                 "Unavailable faces did not use the default Kansai atlas");

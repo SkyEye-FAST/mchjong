@@ -84,6 +84,7 @@ legacyForge {
             systemProperty 'mchjong.smoke.browser', recipeBrowser
             systemProperty 'mchjong.smoke.browserOnly', browserSmoke.toString()
             systemProperty 'mchjong.smoke.createOnly', providers.gradleProperty('smokeCreate').getOrElse('false')
+            systemProperty 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             programArguments.addAll('--mixin', 'mchjong.smoke.mixins.json')
             programArguments.addAll('--width', '1280', '--height', '800')
@@ -97,7 +98,7 @@ legacyForge {
 }
 
 tasks.named('runSmokeClient') {
-    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
+    doFirst { delete smokeEvidence }
     doLast {
         if (!smokeEvidence.get().file('PASS.txt').asFile.isFile() || smokeEvidence.get().file('FAIL.txt').asFile.exists())
             throw new GradleException("Forge client smoke failed; inspect ${smokeRun.get().asFile}/logs/latest.log")

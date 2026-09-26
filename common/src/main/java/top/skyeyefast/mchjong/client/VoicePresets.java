@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.security.MessageDigest;
@@ -31,7 +32,7 @@ import top.skyeyefast.mchjong.world.MahjongSounds;
 
 /** ZIP recordings are decoded from memory through Minecraft's sound engine. */
 public final class VoicePresets {
-    public static final ResourceLocation DEFAULT = new ResourceLocation("mchjong", "default");
+    public static final ResourceLocation DEFAULT = ResourceIds.of("mchjong", "default");
     private record Definition(String name, Map<String, ResourceLocation> recordings) {}
     private static Map<ResourceLocation, Definition> local = Map.of(), server = Map.of();
     private static Map<ResourceLocation, byte[]> localAudio = Map.of(), serverAudio = Map.of();
@@ -54,7 +55,7 @@ public final class VoicePresets {
         var definition = server.getOrDefault(preset, local.get(preset));
         if (definition == null) return null;
         var sound = definition.recordings().get(event);
-        return sound == null ? null : new ResourceLocation(sound.getNamespace(),
+        return sound == null ? null : ResourceIds.of(sound.getNamespace(),
             "sounds/" + sound.getPath() + ".ogg");
     }
 
@@ -80,8 +81,8 @@ public final class VoicePresets {
                 validateDecoded(recording.getValue());
                 String hash = digest(recording.getValue());
                 String stem = "voice_presets/" + hash + "/" + recording.getKey();
-                var location = new ResourceLocation("mchjong", stem);
-                var path = new ResourceLocation("mchjong", "sounds/" + stem + ".ogg");
+                var location = ResourceIds.of("mchjong", stem);
+                var path = ResourceIds.of("mchjong", "sounds/" + stem + ".ogg");
                 sounds.put(path, recording.getValue());
                 paths.put(recording.getKey(), location);
             }

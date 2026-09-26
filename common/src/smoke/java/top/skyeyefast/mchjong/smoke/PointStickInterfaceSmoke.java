@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.PointStickScreen;
@@ -94,7 +93,7 @@ final class PointStickInterfaceSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
     private static void check(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

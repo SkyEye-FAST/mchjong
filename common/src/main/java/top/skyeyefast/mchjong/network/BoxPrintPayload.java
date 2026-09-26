@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.network;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -11,7 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public record BoxPrintPayload(int containerId, TileFacePreset preset) implements MahjongPayload {
     public static final ResourceLocation TYPE = MahjongContent.id("box_print");
     public static BoxPrintPayload decode(FriendlyByteBuf buffer) {
-        return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(new ResourceLocation(buffer.readUtf(128))));
+        return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(ResourceIds.of(buffer.readUtf(128))));
     }
     @Override public void write(FriendlyByteBuf buffer) {
         buffer.writeVarInt(containerId());

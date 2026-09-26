@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import com.mojang.math.Axis;
@@ -16,8 +17,8 @@ public final class FurnitureMesh {
     public static final float STICK_HALF_LENGTH = .35f;
     public static final float STICK_HALF_WIDTH = .03f;
     public static final float STICK_HEIGHT = .025f;
-    public static final ResourceLocation STICK_TEXTURE = new ResourceLocation("mchjong", "textures/point_sticks.png");
-    public static final ResourceLocation CLOTH_PATTERN = new ResourceLocation("mchjong", "textures/furniture/cloth_pattern.png");
+    public static final ResourceLocation STICK_TEXTURE = ResourceIds.of("mchjong", "textures/point_sticks.png");
+    public static final ResourceLocation CLOTH_PATTERN = ResourceIds.of("mchjong", "textures/furniture/cloth_pattern.png");
     private static final int WHITE = 0xffffffff;
     private static final int SHADE = 0xffb7aca0;
     private FurnitureMesh() {}
@@ -231,6 +232,6 @@ public final class FurnitureMesh {
     }
 
     public static RenderType texture(String texture) {
-        return RenderType.entityCutout(new ResourceLocation("mchjong", "textures/furniture/" + texture + ".png"));
+        return RenderType.entityCutout(ResourceIds.of("mchjong", "textures/furniture/" + texture + ".png"));
     }
 }

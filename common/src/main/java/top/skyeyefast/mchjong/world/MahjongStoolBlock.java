@@ -23,7 +23,7 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
     public MahjongStoolBlock(Properties properties) { super(properties); }
     @Override public BlockEntity newBlockEntity(BlockPos pos, BlockState state) { return new FurnitureBlockEntity(pos, state); }
 
-    // This is the vanilla/Fabric hook. NeoForge's extended hook delegates to it in this profile.
+    // This is the vanilla/Fabric hook. Forge's extended hook delegates to it in this profile.
     @SuppressWarnings("deprecation")
     @Override public ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         ItemStack stack = new ItemStack(this);
@@ -39,8 +39,12 @@ public final class MahjongStoolBlock extends BaseEntityBlock {
             furniture.applyItem(stack);
         }
     }
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) { return SHAPE; }
 
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player, net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
         // Sneak is also vanilla's dismount input; do not start riding while it is held.
         if (player.isShiftKeyDown()) return InteractionResult.PASS;

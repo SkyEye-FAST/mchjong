@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.config;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 
@@ -17,6 +18,11 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import net.minecraft.resources.ResourceLocation;
 
 class PresetArchivesTest {
+    @org.junit.jupiter.api.BeforeAll static void bootstrapMinecraft() {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
+    }
+
     @TempDir Path directory;
     private static final byte[] PNG = java.util.Base64.getDecoder().decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+lm5kAAAAASUVORK5CYII=");
@@ -26,8 +32,8 @@ class PresetArchivesTest {
         write(directory.resolve("second.zip"), List.of("other:blue"), false);
         var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE);
         assertEquals(3, presets.faces().size());
-        assertEquals("Ink", presets.faces().get(new TileFacePreset(new ResourceLocation("smoke:ink"))).name());
-        assertEquals(45, presets.faces().get(new TileFacePreset(new ResourceLocation("other:blue"))).tiles().size());
+        assertEquals("Ink", presets.faces().get(new TileFacePreset(ResourceIds.of("smoke:ink"))).name());
+        assertEquals(45, presets.faces().get(new TileFacePreset(ResourceIds.of("other:blue"))).tiles().size());
         assertEquals(3, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.FACE)),
             PresetArchives.Kind.FACE).faces().size());
     }
@@ -48,7 +54,7 @@ class PresetArchivesTest {
         }
         var loaded = PresetArchives.loadDirectory(directory, PresetArchives.Kind.BACK);
         assertEquals(1, loaded.backs().size());
-        assertEquals("Ink back", loaded.backs().get(new ResourceLocation("smoke:ink")).name());
+        assertEquals("Ink back", loaded.backs().get(ResourceIds.of("smoke:ink")).name());
         assertEquals(1, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(loaded, PresetArchives.Kind.BACK)),
             PresetArchives.Kind.BACK).backs().size());
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.FACE));
@@ -67,7 +73,7 @@ class PresetArchivesTest {
         }
         var presets = PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK);
         assertEquals(2, presets.sticks().size());
-        assertEquals(12, presets.sticks().get(new ResourceLocation("smoke:wood")).length());
+        assertEquals(12, presets.sticks().get(ResourceIds.of("smoke:wood")).length());
         assertEquals(2, PresetArchives.read(new ByteArrayInputStream(PresetArchives.bundle(presets, PresetArchives.Kind.STICK)),
             PresetArchives.Kind.STICK).sticks().size());
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.BACK));
@@ -95,7 +101,7 @@ class PresetArchivesTest {
             PresetArchives.Kind.VOICE);
         assertEquals(2, restored.voices().size());
         assertEquals(1 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(),
-            restored.voices().get(new net.minecraft.resources.ResourceLocation("smoke:first")).recordings().size());
+            restored.voices().get(ResourceIds.of("smoke:first")).recordings().size());
         assertThrows(IOException.class, () -> PresetArchives.loadDirectory(directory, PresetArchives.Kind.STICK));
     }
 
@@ -120,7 +126,7 @@ class PresetArchivesTest {
     private static void write(Path target, List<String> ids, boolean omitLast) throws IOException {
         try (var zip = new ZipOutputStream(Files.newOutputStream(target))) {
             for (String raw : ids) {
-                var id = new TileFacePreset(new ResourceLocation(raw));
+                var id = new TileFacePreset(ResourceIds.of(raw));
                 String manifest = id.id().getNamespace() + "/" + id.id().getPath() + "/preset.toml";
                 put(zip, manifest, ("name = \"" + (raw.equals("smoke:ink") ? "Ink" : raw) + "\"\n")
                     .getBytes(StandardCharsets.UTF_8));

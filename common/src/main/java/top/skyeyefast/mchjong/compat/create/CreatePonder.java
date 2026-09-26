@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.compat.create;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
 import java.util.List;
 import com.simibubi.create.AllBlocks;
 import com.simibubi.create.content.processing.basin.BasinBlockEntity;
@@ -39,7 +40,7 @@ public final class CreatePonder implements PonderPlugin {
             MahjongContent.MAHJONG_DYE, MahjongContent.RED_DORA_DYE, MahjongContent.UNDO_DYE);
     }
     @Override public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
-        var items = helper.withKeyFunction(BuiltInRegistries.ITEM::getKey);
+        var items = helper.withKeyFunction(ItemRegistry::getKey);
         for (var item : entries()) {
             items.addStoryBoard(item, "workshop", CreatePonder::production, TAG);
             items.addStoryBoard(item, "workshop", CreatePonder::dyeing, TAG);
@@ -48,7 +49,7 @@ public final class CreatePonder implements PonderPlugin {
     @Override public void registerTags(PonderTagRegistrationHelper<ResourceLocation> helper) {
         helper.registerTag(TAG).title("Mahjong workshop").description("Automated printing, dyeing and packing")
             .item(CreateCompat.PRINTING_PLATE).addToIndex().register();
-        for (var item : entries()) helper.addTagToComponent(BuiltInRegistries.ITEM.getKey(item), TAG);
+        for (var item : entries()) helper.addTagToComponent(ItemRegistry.getKey(item), TAG);
     }
 
     private static void production(SceneBuilder scene, SceneBuildingUtil util) {

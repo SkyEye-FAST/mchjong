@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.PlayerFaceRenderer;
@@ -9,7 +10,7 @@ import top.skyeyefast.mchjong.engine.TableView;
 
 /** Player-list skins stay owned and cached by Minecraft; practice bots have a distinct portrait. */
 final class PlayerPortrait {
-    private static final ResourceLocation MAID_ICON = new ResourceLocation("xaerominimap", "entity/icon/sprite/tlm_maid.png");
+    private static final ResourceLocation MAID_ICON = ResourceIds.of("xaerominimap", "entity/icon/sprite/tlm_maid.png");
     private PlayerPortrait() {}
 
     static int draw(GuiGraphics graphics, TableView.Seat player, int x, int y, int size) {

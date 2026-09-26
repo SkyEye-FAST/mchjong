@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.compat.rei;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Function;
@@ -28,7 +30,7 @@ import top.skyeyefast.mchjong.item.MahjongCatalog;
 /** REI crafting examples, entry catalogue, NBT discrimination and screen exclusion zones. */
 public class MahjongReiPlugin implements REIClientPlugin {
     private static boolean createAvailable() {
-        return net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate"));
+        return ItemRegistry.containsKey(ResourceIds.of("mchjong", "mahjong_printing_plate"));
     }
     @Override public void registerCategories(me.shedaniel.rei.api.client.registry.category.CategoryRegistry registry) {
         if (createAvailable()) top.skyeyefast.mchjong.compat.create.CreateWorkshopRei.registerCategories(registry);

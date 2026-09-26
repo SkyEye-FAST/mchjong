@@ -7,7 +7,6 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.client.TableAnimation;
 import top.skyeyefast.mchjong.client.TableScreen;
@@ -108,34 +107,8 @@ final class AnimationSmoke {
             InputSmoke.verify(client, table);
         }
         if (ticks == 114) capture(client, output, "20-riichi-selection.png");
-        // Repeat the same zero-to-four-meld fixtures at both accepted GUI sizes.
-        int layoutStart = ticks >= 256 ? 256 : 116;
-        if (ticks >= layoutStart && ticks <= layoutStart + 56 && (ticks - layoutStart) % 14 == 0) {
-            int count = (ticks - layoutStart) / 14;
-            fixture = table.clientView();
-            var seats = new ArrayList<>(fixture.seats());
-            var melds = List.of(
-                new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0),
-                new Meld(Meld.Type.CLOSED_KAN, List.of(4, 5, 6, 7), 0, Tile.ABSENT),
-                new Meld(Meld.Type.ADDED_KAN, List.of(8, 9, 10, 11), 3, 8),
-                new Meld(Meld.Type.OPEN_KAN, List.of(12, 13, 14, 15), 2, 12));
-            seats.set(0, seat(IntStream.range(80, 94 - count * 3).boxed().toList(),
-                melds.subList(0, count), List.of(), false));
-            update(table, seats, fixture.wall());
-            TableSettings.get().animations = false;
-            var screen = new TableScreen(table.getBlockPos());
-            client.setScreen(screen);
-            screen.resetView();
-        }
-        int captureStart = layoutStart + 10;
-        if (ticks >= captureStart && ticks <= captureStart + 56 && (ticks - captureStart) % 14 == 0) {
-            boolean small = layoutStart == 256;
-            if (client.screen.width != (small ? 320 : 640) || client.screen.height != (small ? 240 : 400))
-                throw new IllegalStateException("Unexpected viewport for the corner layout matrix");
-            verifyCornerVisible(client, table);
-            capture(client, output, (small ? "45-layout-" : "40-layout-") + (ticks - captureStart) / 14
-                + (small ? "-melds-320x240.png" : "-melds.png"));
-        }
+        // Clearance arithmetic belongs to CompactTableLayoutTest; keep one real camera boundary.
+        if (ticks == 116) ticks = 184;
         if (ticks == 184) {
             windowWidth = client.getWindow().getWidth();
             windowHeight = client.getWindow().getHeight();
@@ -164,32 +137,10 @@ final class AnimationSmoke {
             client.resizeDisplay();
         }
         if (ticks == 220) {
-            verifyCornerVisible(client, table);
-            capture(client, output, "42-layout-four-kans.png");
-        }
-        if (ticks == 222 || ticks == 238) {
-            var seats = new ArrayList<>(fixture.seats());
-            var melds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
-                List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i + 1, i * 4)).toList();
-            seats.set(0, seat(IntStream.range(80, ticks == 222 ? 87 : 88).boxed().toList(), melds, List.of(), false));
-            update(table, seats, fixture.wall());
-            var screen = new TableScreen(table.getBlockPos());
-            client.setScreen(screen);
-            screen.resetView();
-        }
-        if (ticks == 236 || ticks == 252) {
-            verifyCornerVisible(client, table);
-            var pieces = TableScene.build(table.clientView());
-            double center = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.HAND && p.index() < 7)
-                .mapToDouble(p -> p.position().x).average().orElseThrow();
-            if (ticks == 236 ? Math.abs(center) > 1e-7 : center >= 0 || center < -TableScene.HAND_STEP - TableScene.DRAW_GAP)
-                throw new IllegalStateException("Two-kan hand did not use the closest feasible center: " + center);
-            capture(client, output, ticks == 236 ? "43-layout-two-kans-waiting.png" : "44-layout-two-kans-drawn.png");
-        }
-        if (ticks == 254) {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
+            ticks = 322;
         }
         if (ticks == 322) {
             var seats = new ArrayList<>(fixture.seats());
@@ -333,6 +284,6 @@ final class AnimationSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 }

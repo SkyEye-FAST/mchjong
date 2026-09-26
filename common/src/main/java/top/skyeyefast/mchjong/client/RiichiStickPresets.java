@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** Local rendering choices for a player's riichi deposit; selections remain personal. */
 public final class RiichiStickPresets {
-    public static final ResourceLocation DEFAULT = new ResourceLocation("mchjong", "default");
+    public static final ResourceLocation DEFAULT = ResourceIds.of("mchjong", "default");
     public record Definition(String name, ResourceLocation texture, float length, float width, float height) {}
     private static Map<ResourceLocation, Definition> local = Map.of(), server = Map.of();
     private static final Map<String, ResourceLocation> appearances = new HashMap<>();
@@ -85,7 +86,7 @@ public final class RiichiStickPresets {
             for (var entry : presets.entrySet()) {
                 var id = entry.getKey();
                 var stick = entry.getValue();
-                var texture = new ResourceLocation("mchjong",
+                var texture = ResourceIds.of("mchjong",
                     prefix + "/" + id.getNamespace() + "/" + id.getPath());
                 manager.register(texture, new DynamicTexture(images.get(id)));
                 manager.getTexture(texture).setFilter(true, false);

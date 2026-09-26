@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.gui.Font;
@@ -15,7 +16,7 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class TableHud {
     private static final String[] WINDS = {"east", "south", "west", "north"};
-    private static final ResourceLocation STICK_ICONS = new ResourceLocation("mchjong", "textures/gui/stick_icons.png");
+    private static final ResourceLocation STICK_ICONS = ResourceIds.of("mchjong", "textures/gui/stick_icons.png");
     private record Region(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }

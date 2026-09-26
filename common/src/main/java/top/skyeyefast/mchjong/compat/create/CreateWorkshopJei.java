@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.compat.create;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.simibubi.create.AllBlocks;
 import mezz.jei.api.IModPlugin;
 import mezz.jei.api.JeiPlugin;
@@ -25,18 +27,18 @@ import top.skyeyefast.mchjong.client.MahjongUi;
 @JeiPlugin
 public final class CreateWorkshopJei implements IModPlugin {
     private static final RecipeType<CreateWorkshopDisplays.Display> TYPE = RecipeType.create("mchjong", "create_workshop", CreateWorkshopDisplays.Display.class);
-    @Override public ResourceLocation getPluginUid() { return new ResourceLocation("mchjong", "create_workshop"); }
+    @Override public ResourceLocation getPluginUid() { return ResourceIds.of("mchjong", "create_workshop"); }
     @Override public void registerCategories(IRecipeCategoryRegistration registration) {
-        if (!BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate"))) return;
+        if (!ItemRegistry.containsKey(ResourceIds.of("mchjong", "mahjong_printing_plate"))) return;
         var icon = registration.getJeiHelpers().getGuiHelper().createDrawableIngredient(VanillaTypes.ITEM_STACK,
             new ItemStack(CreateCompat.PRINTING_PLATE));
         registration.addRecipeCategories(new Category(icon));
     }
     @Override public void registerRecipes(IRecipeRegistration registration) {
-        if (BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate"))) registration.addRecipes(TYPE, CreateWorkshopDisplays.dynamic());
+        if (ItemRegistry.containsKey(ResourceIds.of("mchjong", "mahjong_printing_plate"))) registration.addRecipes(TYPE, CreateWorkshopDisplays.dynamic());
     }
     @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        if (!BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate"))) return;
+        if (!ItemRegistry.containsKey(ResourceIds.of("mchjong", "mahjong_printing_plate"))) return;
         registration.addRecipeCatalyst(new ItemStack(AllBlocks.MECHANICAL_PRESS.get()), TYPE);
         registration.addRecipeCatalyst(new ItemStack(AllBlocks.MECHANICAL_MIXER.get()), TYPE);
         registration.addRecipeCatalyst(new ItemStack(AllBlocks.DEPLOYER.get()), TYPE);

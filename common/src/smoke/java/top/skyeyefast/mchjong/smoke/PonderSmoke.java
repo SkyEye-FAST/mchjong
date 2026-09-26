@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.smoke;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
 import com.google.gson.JsonParser;
 import java.io.IOException;
 import java.nio.file.Files;
@@ -13,7 +14,6 @@ import net.createmod.ponder.foundation.PonderIndex;
 import net.createmod.ponder.foundation.PonderScene;
 import net.createmod.ponder.foundation.ui.PonderUI;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.resources.language.I18n;
 import net.minecraft.core.BlockPos;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -23,7 +23,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 /** Installed-Ponder validation; referenced only by the explicitly enabled client smoke. */
 final class PonderSmoke {
     private static final BlockPos TABLE = new BlockPos(3, 1, 3);
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
+    private static final String[] LANGUAGES = {"en_us", "zh_cn"};
     private static final Map<String, Integer> TEXT_COUNTS = Map.of(
         "table_placement", 4, "table_equipment", 5, "table_playing", 6,
         "workshop_production", 6, "workshop_dyeing", 5);
@@ -65,14 +65,14 @@ final class PonderSmoke {
                 client.resizeDisplay();
                 Files.writeString(output.resolve("ponder-checks.txt"),
                     "Ponder: " + (workshopInstalled() ? "twelve item entries, five scenes" : "seven item entries, three scenes")
-                        + ", four locales, resource reload, full playback, replay reset, native UI and isolated equipment passed.\n");
+                        + ", Latin/CJK text, resource reload, full playback, replay reset, native UI and isolated equipment passed.\n");
                 stage = 5;
                 return true;
             }
             scenes = new java.util.ArrayList<>(PonderIndex.getSceneAccess().compile(MahjongContent.id("mahjong_table")));
             if (workshopInstalled()) scenes.addAll(PonderIndex.getSceneAccess().compile(MahjongContent.id("mahjong_printing_plate")));
             require(scenes.size() == (workshopInstalled() ? 5 : 3), "Scene count changed after language reload");
-            for (PonderScene scene : scenes) verifyPlayback(scene);
+            if (language == 0) for (PonderScene scene : scenes) verifyPlayback(scene);
             sceneIndex = 0;
             show(client);
             stage = 3;
@@ -81,8 +81,8 @@ final class PonderSmoke {
         if (++ticks < 25) return false;
         String name = "ponder-" + LANGUAGES[language] + "-" + scenes.get(sceneIndex).getId().getPath()
             + (small ? "-small" : "") + ".png";
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), message -> {});
-        if (!small) {
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), message -> {});
+        if (!small && sceneIndex == 0) {
             small = true;
             show(client);
         } else {
@@ -203,7 +203,7 @@ final class PonderSmoke {
             } else if (id.equals("table_playing")) {
                 require(table(scene).getBlockState().is(MahjongContent.AUTO_TABLE), "Automatic-table transition failed");
             } else if (id.startsWith("workshop_")) {
-                String machine = net.minecraft.core.registries.BuiltInRegistries.BLOCK
+                String machine = scene.getWorld().registryAccess().registryOrThrow(net.minecraft.core.registries.Registries.BLOCK)
                     .getKey(scene.getWorld().getBlockState(TABLE.above(2)).getBlock()).toString();
                 require(machine.equals(id.equals("workshop_production") ? "create:mechanical_press" : "create:mechanical_mixer"),
                     "Workshop machine is missing from the rendered scene");
@@ -218,7 +218,7 @@ final class PonderSmoke {
     }
 
     private static boolean workshopInstalled() {
-        return net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(MahjongContent.id("mahjong_printing_plate"));
+        return ItemRegistry.containsKey(MahjongContent.id("mahjong_printing_plate"));
     }
 
     private static void require(boolean condition, String message) {

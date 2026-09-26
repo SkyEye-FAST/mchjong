@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.world;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.item.Item;
@@ -61,5 +62,5 @@ public final class MahjongContent {
             .pushReaction(PushReaction.BLOCK);
     }
 
-    public static ResourceLocation id(String path) { return new ResourceLocation(MOD_ID, path); }
+    public static ResourceLocation id(String path) { return ResourceIds.of(MOD_ID, path); }
 }

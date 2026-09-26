@@ -59,7 +59,7 @@ final class StoolInteractionSmoke {
             });
             step++;
         } else if (step == 5) {
-            net.minecraft.client.Screenshot.grab(output.toFile(), "00-stool-sneak-momentum.png",
+            SmokeScreenshots.grab(output.toFile(), "00-stool-sneak-momentum.png",
                 client.getMainRenderTarget(), ignored -> {});
             client.options.keyShift.setDown(false);
             step = 6;

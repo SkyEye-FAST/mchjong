@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.config;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.electronwill.nightconfig.toml.TomlParser;
 import com.electronwill.nightconfig.toml.TomlWriter;
 import java.io.ByteArrayOutputStream;
@@ -68,7 +69,7 @@ public final class PresetArchives {
             String[] parts = path.split("/");
             if (parts.length != 3) throw new IOException("Invalid preset manifest path: " + path);
             try {
-                ResourceLocation id = new ResourceLocation(parts[0], parts[1]);
+                ResourceLocation id = ResourceIds.of(parts[0], parts[1]);
                 var config = new TomlParser().parse(new java.io.StringReader(new String(file.getValue(), StandardCharsets.UTF_8)));
                 Object name = config.get("name");
                 String label = name == null ? id.toString() : name instanceof String value ? value : null;

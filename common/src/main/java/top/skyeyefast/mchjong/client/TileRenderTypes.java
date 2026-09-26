@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.vertex.DefaultVertexFormat;
 import com.mojang.blaze3d.vertex.VertexFormat;
 import net.minecraft.client.renderer.RenderType;
@@ -16,7 +17,7 @@ public final class TileRenderTypes extends RenderType {
         return FACE_TYPES.computeIfAbsent(texture, location -> TileFacePresets.dynamicTexture(location)
             ? material("mchjong_tile_faces", new TextureStateShard(location, true, false)) : faceMaterial(location));
     }
-    public static final ResourceLocation PLAIN = new ResourceLocation("mchjong", "textures/tile/plain.png");
+    public static final ResourceLocation PLAIN = ResourceIds.of("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = material("mchjong_tile_backs", PLAIN);
     private static final java.util.Map<ResourceLocation, RenderType> BACK_PATTERNS = new java.util.HashMap<>();
     public static final RenderType BACK_PATTERN = backPattern(TileBackPresets.DEFAULT);
@@ -51,7 +52,7 @@ public final class TileRenderTypes extends RenderType {
     }
 
     public static ResourceLocation bodyTexture(top.skyeyefast.mchjong.item.TileMaterial material) {
-        return new ResourceLocation("mchjong", "textures/tile_material/" + material.texture() + ".png");
+        return ResourceIds.of("mchjong", "textures/tile_material/" + material.texture() + ".png");
     }
 
     public static ResourceLocation backTexture(top.skyeyefast.mchjong.item.TileMaterial material,

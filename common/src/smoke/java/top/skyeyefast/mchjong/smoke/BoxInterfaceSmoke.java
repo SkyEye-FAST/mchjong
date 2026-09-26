@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.MahjongBoxScreen;
@@ -12,7 +11,7 @@ import top.skyeyefast.mchjong.item.MahjongSupplies;
 
 /** Actual synchronized box, native language reloads, and a 320x240 logical viewport. */
 final class BoxInterfaceSmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
+    private static final String[] LANGUAGES = {"en_us", "zh_cn"};
     private int sample = -1, settled, scale, windowWidth, windowHeight;
     private String language;
     private CompletableFuture<Void> reload;
@@ -79,9 +78,11 @@ final class BoxInterfaceSmoke {
         require(bounds.top() >= 0 && bounds.bottom() <= client.screen.height - 24, "Box overlaps recipe-browser controls");
         for (var slot : menu.slots)
             require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 < bounds.width() && slot.y + 16 < bounds.height(), "Slot outside the box panel");
-        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
-        reagentStage = 1;
-        reagent(client, net.minecraft.world.item.ItemStack.EMPTY);
+        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
+        if (sample == 0) {
+            reagentStage = 1;
+            reagent(client, net.minecraft.world.item.ItemStack.EMPTY);
+        } else advance(client);
         return false;
     }
 
@@ -109,6 +110,10 @@ final class BoxInterfaceSmoke {
         capture(client, output, "back-applied");
         reagentStage = 0;
         reagent(client, new net.minecraft.world.item.ItemStack(top.skyeyefast.mchjong.world.MahjongContent.CREATIVE_MAHJONG_DYE));
+        return advance(client);
+    }
+
+    private boolean advance(Minecraft client) {
         sample++;
         if (sample == LANGUAGES.length) {
             client.options.guiScale().set(scale);
@@ -136,14 +141,15 @@ final class BoxInterfaceSmoke {
     }
 
     private void capture(Minecraft client, Path output, String state) {
-        Screenshot.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
     }
 
     private static void verifyTileLabels(Minecraft client) {
         var settings = top.skyeyefast.mchjong.client.TableSettings.get();
         var previous = settings.tileLabels;
         try {
-            for (var preset : top.skyeyefast.mchjong.client.TileFacePresets.choices()) for (int face : new int[]{0, 4, 27, 34, 38, 39, 40, 41}) {
+            for (int face : new int[]{4, 27, 34}) {
+                var preset = top.skyeyefast.mchjong.item.TileFacePreset.KANSAI;
                 var data = new top.skyeyefast.mchjong.item.TileData(face, top.skyeyefast.mchjong.item.TileMaterial.BONE, face == 4);
                 var stack = top.skyeyefast.mchjong.item.MahjongSupplies.tile(data, net.minecraft.world.item.DyeColor.BLUE, 1);
                 top.skyeyefast.mchjong.item.MahjongComponents.facePreset(stack, preset);

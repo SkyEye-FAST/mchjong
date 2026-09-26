@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.smoke;
 
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
@@ -45,7 +44,7 @@ final class CameraSmoke {
                 "Overlay picking does not share the inspect eye");
             require(sample % 2 == 0 ? Math.abs(fov - normal) < 1e-5 : fov < normal - 10,
                 "Inspect transition did not reach its expected FOV");
-            Screenshot.grab(output.toFile(), "59-camera-fov-" + client.options.fov().get()
+            SmokeScreenshots.grab(output.toFile(), "59-camera-fov-" + client.options.fov().get()
                 + (sample % 2 == 0 ? "-normal.png" : "-inspect.png"), client.getMainRenderTarget(), ignored -> {});
         } else if (sample == 6) {
             require(camera.isDetached(), "Third-person camera was captured by seated controls");
@@ -58,10 +57,10 @@ final class CameraSmoke {
             ((TableScreen) client.screen).resetView();
             require(client.player.getYRot() == yaw && client.player.getXRot() == pitch,
                 "Resetting the seated pose overwrote native third-person rotation");
-            Screenshot.grab(output.toFile(), "59-camera-third-person.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "59-camera-third-person.png", client.getMainRenderTarget(), ignored -> {});
         } else {
             require(((TableScreen) client.screen).immersive(), "Dense readability fixture lost immersive view");
-            Screenshot.grab(output.toFile(), "59-readable-dense-" + client.screen.width + "x" + client.screen.height + ".png",
+            SmokeScreenshots.grab(output.toFile(), "59-readable-dense-" + client.screen.width + "x" + client.screen.height + ".png",
                 client.getMainRenderTarget(), ignored -> {});
         }
         if (++sample == 9) {

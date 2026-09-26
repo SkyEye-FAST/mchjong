@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.electronwill.nightconfig.core.Config;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -106,8 +107,8 @@ public final class TableSettings {
         settings.tileLabels = enumValue(config.getOrElse("tileLabels", settings.tileLabels.name()), TileLabels.class);
         settings.guideLines = enumValue(config.getOrElse("guideLines", settings.guideLines.name()), GuideLines.class);
         settings.voiceSource = enumValue(config.getOrElse("voiceSource", settings.voiceSource.name()), VoiceSource.class);
-        settings.riichiStickPreset = new ResourceLocation(config.getOrElse("riichiStickPreset", settings.riichiStickPreset.toString()));
-        settings.voicePreset = new ResourceLocation(config.getOrElse("voicePreset", settings.voicePreset.toString()));
+        settings.riichiStickPreset = ResourceIds.of(config.getOrElse("riichiStickPreset", settings.riichiStickPreset.toString()));
+        settings.voicePreset = ResourceIds.of(config.getOrElse("voicePreset", settings.voicePreset.toString()));
         settings.actionTiles = bool(config.getOrElse("actionTiles", settings.actionTiles));
         settings.highlightTiles = bool(config.getOrElse("highlightTiles", settings.highlightTiles));
         settings.convenienceHints = bool(config.getOrElse("convenienceHints", settings.convenienceHints));

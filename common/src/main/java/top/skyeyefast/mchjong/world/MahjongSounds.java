@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.world;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -17,9 +18,9 @@ public final class MahjongSounds {
     static {
         var events = new LinkedHashMap<String, SoundEvent>();
         EFFECTS.forEach(name -> events.put("table." + name, SoundEvent.createVariableRangeEvent(
-            new ResourceLocation(MahjongContent.MOD_ID, "table." + name))));
+            ResourceIds.of(MahjongContent.MOD_ID, "table." + name))));
         VOICES.forEach(name -> events.put("voice." + name, SoundEvent.createVariableRangeEvent(
-            new ResourceLocation(MahjongContent.MOD_ID, "voice." + name))));
+            ResourceIds.of(MahjongContent.MOD_ID, "voice." + name))));
         EVENTS = java.util.Collections.unmodifiableMap(events);
     }
     private MahjongSounds() {}

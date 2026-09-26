@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.compat.create;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.ArrayList;
 import java.util.List;
 import dev.emi.emi.api.EmiEntrypoint;
@@ -21,8 +23,8 @@ import top.skyeyefast.mchjong.item.MahjongSupplies;
 @EmiEntrypoint
 public final class CreateWorkshopEmi implements EmiPlugin {
     @Override public void register(EmiRegistry registry) {
-        if (!BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate")) || Minecraft.getInstance().level == null) return;
-        var category = new EmiRecipeCategory(new ResourceLocation("mchjong", "create_workshop"), EmiStack.of(CreateCompat.PRINTING_PLATE)) {
+        if (!ItemRegistry.containsKey(ResourceIds.of("mchjong", "mahjong_printing_plate")) || Minecraft.getInstance().level == null) return;
+        var category = new EmiRecipeCategory(ResourceIds.of("mchjong", "create_workshop"), EmiStack.of(CreateCompat.PRINTING_PLATE)) {
             @Override public Component getName() { return Component.translatable("browser.mchjong.create"); }
         };
         registry.addCategory(category);

@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.compat.jei;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.List;
 import java.util.function.Function;
 import mezz.jei.api.IModPlugin;
@@ -32,7 +33,7 @@ public final class MahjongJeiPlugin implements IModPlugin {
     private static IJeiRuntime runtime;
 
     public static IJeiRuntime runtime() { return runtime; }
-    @Override public ResourceLocation getPluginUid() { return new ResourceLocation("mchjong", "supplies"); }
+    @Override public ResourceLocation getPluginUid() { return ResourceIds.of("mchjong", "supplies"); }
 
     @Override public void registerItemSubtypes(ISubtypeRegistration registration) {
         var interpreter = new ISubtypeInterpreter<ItemStack>() {

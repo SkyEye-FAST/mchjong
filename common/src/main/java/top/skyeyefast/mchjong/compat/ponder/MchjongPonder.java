@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.compat.ponder;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
 import net.createmod.ponder.api.registration.PonderPlugin;
 import net.createmod.ponder.api.registration.PonderSceneRegistrationHelper;
 import net.createmod.ponder.api.registration.PonderTagRegistrationHelper;
@@ -28,7 +29,7 @@ public final class MchjongPonder implements PonderPlugin {
     @Override public String getModId() { return MahjongContent.MOD_ID; }
 
     @Override public void registerScenes(PonderSceneRegistrationHelper<ResourceLocation> helper) {
-        PonderSceneRegistrationHelper<Item> items = helper.withKeyFunction(BuiltInRegistries.ITEM::getKey);
+        PonderSceneRegistrationHelper<Item> items = helper.withKeyFunction(ItemRegistry::getKey);
         for (Item item : new Item[] {MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM})
             items.addStoryBoard(item, "table", MahjongScenes::placement, TABLES);
         for (Item item : new Item[] {MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.BOX_ITEM,
@@ -45,7 +46,7 @@ public final class MchjongPonder implements PonderPlugin {
             .item(MahjongContent.TABLE_ITEM).addToIndex().register();
         for (Item item : new Item[] {MahjongContent.TABLE_ITEM, MahjongContent.AUTO_TABLE_ITEM, MahjongContent.STOOL_ITEM,
                 MahjongContent.BOX_ITEM, MahjongContent.CLOTH_ITEM, MahjongContent.TILE_ITEM, MahjongContent.POINT_STICK})
-            helper.addTagToComponent(BuiltInRegistries.ITEM.getKey(item), TABLES);
+            helper.addTagToComponent(ItemRegistry.getKey(item), TABLES);
         if (extension != null) extension.registerTags(helper);
     }
 }

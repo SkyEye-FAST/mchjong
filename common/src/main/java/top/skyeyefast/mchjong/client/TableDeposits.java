@@ -4,9 +4,7 @@ import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.math.Axis;
 import java.util.ArrayList;
 import java.util.List;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.world.level.block.Blocks;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -66,8 +64,7 @@ public final class TableDeposits {
                     case "end_rod" -> Blocks.END_ROD;
                     default -> throw new IllegalStateException(id.toString());
                 };
-                Minecraft.getInstance().getBlockRenderer().renderSingleBlock(block.defaultBlockState(),
-                    pose, buffers, light, OverlayTexture.NO_OVERLAY);
+                ModelRendering.block(block.defaultBlockState(), pose, buffers, light);
             } else {
                 pose.scale(HALF_LENGTH / FurnitureMesh.STICK_HALF_LENGTH * length / 11.2f,
                     renderedHeight / FurnitureMesh.STICK_HEIGHT,

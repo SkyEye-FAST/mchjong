@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -57,11 +58,11 @@ public final class TileFacePresets {
         resources.listResources("tile_face_presets", path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
             try (var reader = resource.openAsReader()) {
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
-                var id = new TileFacePreset(new ResourceLocation(path.getNamespace(), name));
+                var id = new TileFacePreset(ResourceIds.of(path.getNamespace(), name));
                 if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
-                Definition definition = new Definition(new ResourceLocation(json.get("atlas").getAsString()),
-                    new ResourceLocation(json.get("glyphs").getAsString()));
+                Definition definition = new Definition(ResourceIds.of(json.get("atlas").getAsString()),
+                    ResourceIds.of(json.get("glyphs").getAsString()));
                 if (resources.getResource(definition.atlas()).isEmpty() || resources.getResource(definition.glyphs()).isEmpty())
                     throw new IllegalArgumentException("Missing atlas or glyph texture");
                 loaded.put(id, definition);
@@ -169,8 +170,8 @@ public final class TileFacePresets {
     private static Definition register(TileFacePreset preset, TileFaceImages.Pair pair, String prefix,
                                        Set<ResourceLocation> locations) {
         String path = prefix + "/" + preset.id().getNamespace() + "/" + preset.id().getPath();
-        var atlasId = new ResourceLocation("mchjong", path + "/tiles");
-        var glyphsId = new ResourceLocation("mchjong", path + "/glyphs");
+        var atlasId = ResourceIds.of("mchjong", path + "/tiles");
+        var glyphsId = ResourceIds.of("mchjong", path + "/glyphs");
         var textures = Minecraft.getInstance().getTextureManager();
         textures.register(atlasId, new DynamicTexture(pair.atlas()));
         textures.register(glyphsId, new DynamicTexture(pair.glyphs()));

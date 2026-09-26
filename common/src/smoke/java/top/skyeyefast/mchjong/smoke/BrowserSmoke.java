@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.smoke;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
@@ -7,7 +8,6 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Predicate;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.screens.inventory.InventoryScreen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.SimpleMenuProvider;
@@ -58,8 +58,8 @@ final class BrowserSmoke {
             flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
             displayedRecipe = flower.id();
             var plateId = MahjongContent.id("mahjong_printing_plate");
-            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId)) {
-                var plate = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(plateId));
+            if (ItemRegistry.containsKey(plateId)) {
+                var plate = new net.minecraft.world.item.ItemStack(ItemRegistry.get(plateId));
                 var print = MahjongContent.id("/create/display/print/bone");
                 check(driver.query(plate, false).contains(print), "Printing plate lookup missed the workshop recipe");
                 displayedRecipe = print;
@@ -92,7 +92,7 @@ final class BrowserSmoke {
             driver.showRecipe(displayedRecipe);
             stage = 2; ticks = 0;
         } else if (stage == 2 && ticks >= 20) {
-            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "60-browser-" + browser + "-recipe.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3); client.resizeDisplay();
             serverWork = client.getSingleplayerServer().submit(() -> {
@@ -108,7 +108,7 @@ final class BrowserSmoke {
             if (!(client.screen instanceof MahjongBoxScreen screen)) return false;
             var bounds = screen.browserBounds();
             check(bounds.top() >= 0 && bounds.bottom() <= screen.height - 24, "Container overlaps browser controls");
-            Screenshot.grab(output.toFile(), "60-browser-" + browser + "-container.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "60-browser-" + browser + "-container.png", client.getMainRenderTarget(), ignored -> {});
             Files.writeString(output.resolve("browser-checks.txt"), browser + ": catalogue order, point denominations, flower/red back dyes, component-preserving upgrade lookups and native container bounds passed.\n");
             client.player.closeContainer();
             client.getWindow().setWindowed(width, height);

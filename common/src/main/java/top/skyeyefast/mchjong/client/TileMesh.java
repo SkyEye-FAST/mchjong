@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.renderer.texture.OverlayTexture;
@@ -14,9 +15,9 @@ public final class TileMesh {
     public static final float WIDTH = .104f;
     public static final float HEIGHT = .160f;
     public static final float DEPTH = .0726f;
-    public static final ResourceLocation ATLAS = new ResourceLocation(MahjongContent.MOD_ID, "textures/tiles.png");
-    public static final ResourceLocation BACK = new ResourceLocation(MahjongContent.MOD_ID, "textures/tile/back.png");
-    public static final ResourceLocation GLYPHS = new ResourceLocation(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
+    public static final ResourceLocation ATLAS = ResourceIds.of(MahjongContent.MOD_ID, "textures/tiles.png");
+    public static final ResourceLocation BACK = ResourceIds.of(MahjongContent.MOD_ID, "textures/tile/back.png");
+    public static final ResourceLocation GLYPHS = ResourceIds.of(MahjongContent.MOD_ID, "textures/tile_glyphs.png");
     public static ResourceLocation atlas(top.skyeyefast.mchjong.item.TileFacePreset preset) {
         return TileFacePresets.definition(preset).atlas();
     }

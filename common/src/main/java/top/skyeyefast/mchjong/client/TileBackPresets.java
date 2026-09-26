@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.blaze3d.platform.NativeImage;
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
@@ -17,7 +18,7 @@ import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** The back ID travels with physical tiles; missing artwork resolves to the default pattern. */
 public final class TileBackPresets {
-    public static final ResourceLocation DEFAULT = new ResourceLocation("mchjong", "default");
+    public static final ResourceLocation DEFAULT = ResourceIds.of("mchjong", "default");
     private static Map<ResourceLocation, ResourceLocation> local = Map.of(), server = Map.of();
     private static Map<ResourceLocation, String> localNames = Map.of(), serverNames = Map.of();
     private static Set<ResourceLocation> localTextures = Set.of(), serverTextures = Set.of();
@@ -35,7 +36,7 @@ public final class TileBackPresets {
         return name == null ? Component.literal(id.toString()) : Component.literal(name);
     }
     public static ResourceLocation texture(ResourceLocation id) {
-        if (BuiltinPresets.BACKS.contains(id)) return new ResourceLocation("mchjong",
+        if (BuiltinPresets.BACKS.contains(id)) return ResourceIds.of("mchjong",
             "textures/preset/back/" + id.getPath() + ".png");
         return server.getOrDefault(id, local.getOrDefault(id, TileMesh.BACK));
     }
@@ -78,7 +79,7 @@ public final class TileBackPresets {
             }
             for (var entry : images.entrySet()) {
                 ResourceLocation id = entry.getKey();
-                ResourceLocation texture = new ResourceLocation("mchjong",
+                ResourceLocation texture = ResourceIds.of("mchjong",
                     prefix + "/" + id.getNamespace() + "/" + id.getPath());
                 textures.register(texture, new DynamicTexture(entry.getValue()));
                 textures.getTexture(texture).setFilter(true, false);

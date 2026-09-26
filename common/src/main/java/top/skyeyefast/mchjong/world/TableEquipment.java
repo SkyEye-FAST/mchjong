@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.world;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.nbt.ListTag;
@@ -28,7 +29,7 @@ public final class TableEquipment {
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back;
     private TileFacePreset preset = TileFacePreset.KANSAI;
-    private net.minecraft.resources.ResourceLocation backPreset = new net.minecraft.resources.ResourceLocation("mchjong", "default");
+    private net.minecraft.resources.ResourceLocation backPreset = ResourceIds.of("mchjong", "default");
 
     public TableEquipment(Runnable changed) {
         boxes.addListener(container -> {
@@ -207,7 +208,7 @@ public final class TableEquipment {
         material = deck == null ? TileMaterial.BONE : deck.material();
         back = deck == null ? null : deck.back();
         preset = deck == null ? TileFacePreset.KANSAI : deck.preset();
-        backPreset = deck == null ? new net.minecraft.resources.ResourceLocation("mchjong", "default") : deck.backPreset();
+        backPreset = deck == null ? ResourceIds.of("mchjong", "default") : deck.backPreset();
     }
 
     public ItemStack installCloth(ItemStack source) {
@@ -276,8 +277,8 @@ public final class TableEquipment {
             int id = tag.getInt("tile_back");
             back = id < 0 ? null : DyeColor.byId(id);
         }
-        if (tag.contains("tile_preset")) preset = new TileFacePreset(new net.minecraft.resources.ResourceLocation(tag.getString("tile_preset")));
-        if (tag.contains("tile_back_preset")) backPreset = new net.minecraft.resources.ResourceLocation(tag.getString("tile_back_preset"));
+        if (tag.contains("tile_preset")) preset = new TileFacePreset(ResourceIds.of(tag.getString("tile_preset")));
+        if (tag.contains("tile_back_preset")) backPreset = ResourceIds.of(tag.getString("tile_back_preset"));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
     }

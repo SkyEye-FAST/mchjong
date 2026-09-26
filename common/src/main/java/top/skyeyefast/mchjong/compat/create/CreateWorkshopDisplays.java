@@ -1,5 +1,7 @@
 package top.skyeyefast.mchjong.compat.create;
 
+import top.skyeyefast.mchjong.platform.ItemRegistry;
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.ArrayList;
 import java.util.List;
 import com.simibubi.create.AllBlocks;
@@ -36,7 +38,7 @@ public final class CreateWorkshopDisplays {
         }
         var box = MahjongSupplies.completeBox(TileMaterial.BONE);
         for (var color : DyeColor.values()) {
-            var reagent = new ItemStack(BuiltInRegistries.ITEM.get(new ResourceLocation("minecraft", color.getName() + "_dye")));
+            var reagent = new ItemStack(ItemRegistry.get(ResourceIds.of("minecraft", color.getName() + "_dye")));
             add(displays, "backs/boxes/" + color.getName(), CreateProcessing.mixing(List.of(box, box.copy(), reagent)));
             add(displays, "backs/tiles/" + color.getName(), CreateProcessing.mixing(List.of(
                 MahjongSupplies.tile(new TileData(-1, TileMaterial.BONE, false), 64),

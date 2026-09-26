@@ -40,7 +40,7 @@ public final class TableSpaceBlock extends Block {
     }
     @Override protected void createBlockStateDefinition(StateDefinition.Builder<Block, BlockState> builder) { builder.add(X, Z); }
     public static BlockPos center(BlockPos pos, BlockState state) { return pos.offset(RADIUS - state.getValue(X), 0, RADIUS - state.getValue(Z)); }
-    // Vanilla/Fabric hook; NeoForge's player-aware hook delegates to this method.
+    // Vanilla/Fabric hook; Forge's player-aware hook delegates to this method.
     @SuppressWarnings("deprecation")
     @Override public net.minecraft.world.item.ItemStack getCloneItemStack(BlockGetter level, BlockPos pos, BlockState state) {
         BlockPos center = center(pos, state);
@@ -48,7 +48,11 @@ public final class TableSpaceBlock extends Block {
         return table.getBlock() instanceof MahjongTableBlock
             ? table.getBlock().getCloneItemStack(level, center, table) : net.minecraft.world.item.ItemStack.EMPTY;
     }
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public RenderShape getRenderShape(BlockState state) { return RenderShape.INVISIBLE; }
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public VoxelShape getShape(BlockState state, BlockGetter level, BlockPos pos, CollisionContext context) {
         VoxelShape shape = SHAPES[state.getValue(X)][state.getValue(Z)];
         BlockPos center = center(pos, state);
@@ -62,12 +66,14 @@ public final class TableSpaceBlock extends Block {
         }
         return shape;
     }
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public InteractionResult use(BlockState state, Level level, BlockPos pos, Player player,
             net.minecraft.world.InteractionHand hand, BlockHitResult hit) {
         BlockPos center = center(pos, state);
         BlockState table = level.getBlockState(center);
         return table.getBlock() instanceof MahjongTableBlock
-            ? table.getBlock().use(table, level, center, player, hand, hit) : InteractionResult.PASS;
+            ? table.use(level, player, hand, hit.withPosition(center)) : InteractionResult.PASS;
     }
     @Override public void playerWillDestroy(Level level, BlockPos pos, BlockState state, Player player) {
         if (!level.isClientSide && player.isCreative()) {
@@ -76,6 +82,8 @@ public final class TableSpaceBlock extends Block {
         }
         super.playerWillDestroy(level, pos, state, player);
     }
+    // Required 1.20.1 BlockBehaviour override; callers use BlockState.
+    @SuppressWarnings("deprecation")
     @Override public void onRemove(BlockState state, Level level, BlockPos pos, BlockState replacement, boolean moving) {
         if (!level.isClientSide && !state.is(replacement.getBlock())) {
             BlockPos center = center(pos, state);

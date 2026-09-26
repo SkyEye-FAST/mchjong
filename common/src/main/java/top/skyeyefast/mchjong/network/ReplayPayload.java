@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.network;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -12,7 +13,7 @@ public record ReplayPayload(UUID transfer, Kind kind, int part, int parts, Strin
     public enum Kind { INDEX, MATCH }
     public static final int CHUNK_SIZE = 16_384;
     public static final int MAX_PARTS = 512;
-    public static final ResourceLocation TYPE = new ResourceLocation(MahjongContent.MOD_ID, "replay");
+    public static final ResourceLocation TYPE = ResourceIds.of(MahjongContent.MOD_ID, "replay");
     public static ReplayPayload decode(FriendlyByteBuf buffer) {
         return new ReplayPayload(buffer.readUUID(), buffer.readEnum(Kind.class), buffer.readVarInt(), buffer.readVarInt(),
             buffer.readUtf(CHUNK_SIZE));

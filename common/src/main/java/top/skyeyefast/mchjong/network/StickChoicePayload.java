@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.network;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.server.level.ServerPlayer;
@@ -10,7 +11,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public record StickChoicePayload(ResourceLocation preset) implements MahjongPayload {
     public static final net.minecraft.resources.ResourceLocation TYPE = MahjongContent.id("stick_choice");
     public static StickChoicePayload decode(FriendlyByteBuf buffer) {
-            return new StickChoicePayload(new ResourceLocation(buffer.readUtf(128)));
+            return new StickChoicePayload(ResourceIds.of(buffer.readUtf(128)));
         }
     @Override public void write(FriendlyByteBuf buffer) {
             buffer.writeUtf(preset().toString(), 128);

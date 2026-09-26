@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.config;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.HashMap;
@@ -14,7 +15,7 @@ public final class ServerPresets {
     private static byte[] faces = new byte[0], backs = new byte[0], sticks = new byte[0], voices = new byte[0];
     private static Map<ResourceLocation, PresetArchives.Stick> sharedSticks = Map.of();
     private static final Map<String, ResourceLocation> appearances = new HashMap<>();
-    private static final ResourceLocation DEFAULT_STICK = new ResourceLocation("mchjong", "default");
+    private static final ResourceLocation DEFAULT_STICK = ResourceIds.of("mchjong", "default");
     private ServerPresets() {}
 
     public static void load(Path configDirectory) {

@@ -17,5 +17,4 @@ discovery; Create inventory access uses Forge capabilities or Fabric transaction
 Neither adapter duplicates the shared supply transformations.
 
 Build commands and release-pin updates belong in [Development](DEVELOPMENT.md).
-Completed checks, historical baselines and focused runtime commands belong in
-[Verification](VERIFICATION.md#recorded-acceptance).
+Reusable focused validation commands belong in [Verification](VERIFICATION.md).

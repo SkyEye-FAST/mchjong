@@ -1,5 +1,6 @@
 package top.skyeyefast.mchjong.config;
 
+import top.skyeyefast.mchjong.platform.ResourceIds;
 import java.util.List;
 import net.minecraft.resources.ResourceLocation;
 
@@ -11,6 +12,6 @@ public final class BuiltinPresets {
     private BuiltinPresets() {}
 
     private static ResourceLocation id(String path) {
-        return new ResourceLocation("mchjong", path);
+        return ResourceIds.of("mchjong", path);
     }
 }
