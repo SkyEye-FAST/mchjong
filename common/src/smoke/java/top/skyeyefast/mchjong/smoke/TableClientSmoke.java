@@ -35,6 +35,7 @@ public final class TableClientSmoke {
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
+    private final YsmSmoke ysmSmoke = Boolean.getBoolean("mchjong.smoke.ysm") ? new YsmSmoke() : null;
     private final boolean paletteOnly = Boolean.getBoolean("mchjong.smoke.paletteOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
     private final boolean interfaceOnly = Boolean.getBoolean("mchjong.smoke.interfaceOnly");
@@ -203,6 +204,7 @@ public final class TableClientSmoke {
                     return;
                 }
                 if (itemsOnly) {
+                    if (ysmSmoke != null && !ysmSmoke.prepare(client)) return;
                     client.setScreen(null);
                     step = 18; entered = ticks;
                     return;
@@ -275,6 +277,7 @@ public final class TableClientSmoke {
             } else if (step == 18 && ticks - entered > 10) {
                 if (!itemPresentationSmoke.tick(client, output)) return;
                 if (itemsOnly) {
+                    if (ysmSmoke != null && !ysmSmoke.seat(client, CENTER, output)) return;
                     Files.writeString(output.resolve("PASS.txt"), "Verified native tile and point-stick grips for right and left main hands.\n");
                     LOG.info("MCHJONG_ITEM_PRESENTATION_PASS");
                     step = 13; entered = ticks;
