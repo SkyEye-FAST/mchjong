@@ -84,6 +84,7 @@ class TableAnimationTest {
         var animation = new TableAnimation();
         animation.accept(playing(RuleSet.MAHJONG_SOUL_4), 1000);
         assertFalse(animation.dealing(1000));
+        assertEquals(1, animation.dealProgress(0, 0, 1000));
         assertEquals(animation.settled(), animation.sample(1000));
     }
 
@@ -110,8 +111,10 @@ class TableAnimationTest {
         animation.accept(lobby(playing.rules()), 0);
         animation.accept(playing, 100);
         var midway = animation.sample(1000);
+        double progress = animation.dealProgress(0, 4, 1100);
         animation.accept(update(playing, playing.seats(), 0), 1000);
         assertEquals(midway, animation.sample(1000));
+        assertEquals(progress, animation.dealProgress(0, 4, 1100));
         assertEquals(animation.settled(), animation.sample(3000));
     }
 
@@ -222,6 +225,9 @@ class TableAnimationTest {
             assertEquals(wall.size(), wall.stream().map(frame -> frame.piece().position()).distinct().count());
             assertTrue(wall.stream().allMatch(frame -> frame.piece().tile() == Tile.HIDDEN && frame.pitch() == 90));
             var halfway = animation.sample(900);
+            assertEquals(1, animation.dealProgress(0, 0, 900));
+            assertTrue(animation.dealProgress(1, 0, 900) > 0 && animation.dealProgress(1, 0, 900) < 1);
+            assertEquals(0, animation.dealProgress(0, 12, 900));
             assertEquals(0, tile(halfway, 0).pitch());
             var last = halfway.stream().filter(frame -> frame.piece().area() == TableScene.Area.HAND
                 && frame.piece().seat() == 0 && frame.piece().index() == 12).findFirst().orElseThrow();

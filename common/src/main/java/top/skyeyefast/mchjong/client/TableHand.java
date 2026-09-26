@@ -79,12 +79,12 @@ final class TableHand {
     }
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, TileFacePreset preset) {
-        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, TileMaterial.BONE, null, TileBackPresets.DEFAULT);
+        render(graphics, selected, hovered, highlight, Tile.ABSENT, preset, TileMaterial.BONE, null, TileBackPresets.DEFAULT, null, null, 0);
     }
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
                 TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye,
-                net.minecraft.resources.ResourceLocation backPreset) {
+                net.minecraft.resources.ResourceLocation backPreset, TableAnimation deal, TableBoard.Point source, long now) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
@@ -94,6 +94,19 @@ final class TableHand {
         }
         for (int i = 0; i < tiles.size(); i++) {
             int tile = tiles.get(i), top = y(i, tile, selected, hovered), color = highlight.applyAsInt(tile);
+            double fraction = deal == null ? 1 : deal.dealProgress(owner, i, now);
+            if (fraction < 1 && source != null) {
+                if (fraction <= 0) continue;
+                double progress = ImmersiveMotion.smooth(fraction);
+                int movingWidth = (int) Math.round(20 + (tileWidth - 20) * progress);
+                int movingHeight = Math.round(movingWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+                int movingX = (int) Math.round(source.x() + (x(i) + tileWidth / 2.0 - source.x()) * progress);
+                int movingY = (int) Math.round(source.y() + (top + tileHeight / 2.0 - source.y()) * progress
+                    - Math.sin(Math.PI * fraction) * 22);
+                TileGui.tile3d(graphics, tile, movingX - movingWidth / 2, movingY - movingHeight / 2, movingWidth,
+                    fraction < .45, false, false, false, Math.max(2, movingWidth / 8), preset, material, dye, backPreset);
+                continue;
+            }
             if (tile != suppressedTile) {
                 if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
                     Math.max(2, tileWidth / 8), preset, material, dye, backPreset);

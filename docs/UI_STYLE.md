@@ -310,8 +310,10 @@ Ordinary tables show two dice in the central felt area after every wall is built
 The dealer can then focus/click the dice to pick them up and roll via
 the native action control. Both faces use the item textures; hovering the region
 shows a compact face + face = total panel with native narrated numeric text.
-Immersive play becomes available after dealing completes, including its visible
-animation, and returns to seated play for the next hand's preparation. Dice and
+On ordinary tables, immersive play becomes available after dealing completes,
+including its visible animation, and returns to seated play for the next hand's
+preparation. Automatic tables retain immersive play while packets travel to each
+hand, using the shared deal timeline and keeping tile actions locked until arrival. Dice and
 their hover target belong exclusively to seated play.
 The completed match returns dice and point-stick positions to storage.
 

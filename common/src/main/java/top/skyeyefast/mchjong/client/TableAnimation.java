@@ -55,6 +55,18 @@ public final class TableAnimation {
 
     public List<Frame> settled() { return settled; }
     public boolean dealing(long now) { return now < openingUntil; }
+
+    double dealProgress(int seat, int index, long now) {
+        if (!dealing(now)) return 1;
+        for (var target : settled) {
+            var piece = target.piece();
+            if (piece.area() != TableScene.Area.HAND || piece.seat() != seat || piece.index() != index) continue;
+            var motion = motions.get(key(piece));
+            if (motion == null || motion.duration() == 0) return 1;
+            return Math.clamp((now - motion.start()) / (double) motion.duration(), 0, 1);
+        }
+        return 1;
+    }
     public boolean moving(long now) { return now < ending; }
     public List<Cue> cues(long now) { return cues.stream().filter(cue -> now - cue.started() < 1100).toList(); }
     public double riichiProgress(int seat, long now) { return ease((now - riichiStarted[seat]) / 450.0); }

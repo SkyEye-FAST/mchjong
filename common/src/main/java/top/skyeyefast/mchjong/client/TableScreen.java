@@ -148,7 +148,7 @@ public final class TableScreen extends Screen {
 
     private void toggleView() {
         TableView view = view();
-        if (view == null || view.viewerSeat() < 0 || !immersivePhase(view.phase()) || dealing()) return;
+        if (view == null || view.viewerSeat() < 0 || !immersiveReady(view)) return;
         immersive = !immersive;
         clearCameraInput();
         handlingDrag = null;
@@ -229,6 +229,10 @@ public final class TableScreen extends Screen {
     private boolean dealing() {
         TableAnimation animation = animation();
         return animation != null && TableSettings.get().animations && animation.dealing(Util.getMillis());
+    }
+
+    private boolean immersiveReady(TableView view) {
+        return immersivePhase(view.phase()) && (automatic() || !dealing());
     }
 
     private boolean handlingMoving() {
@@ -325,7 +329,7 @@ public final class TableScreen extends Screen {
         TableView previous = presentedView;
         int oldSelected = selectedTile, oldHovered = hoveredTile;
         refreshDecision(view);
-        viewReady = immersivePhase(view.phase()) && !dealing();
+        viewReady = immersiveReady(view);
         if (!viewReady || view.viewerSeat() < 0) immersive = false;
         boolean newResult = TableResults.available(view) && (lastPhase != view.phase() || previous == null
             || !previous.tableId().equals(view.tableId()) || previous.handNumber() != view.handNumber()
@@ -951,7 +955,7 @@ public final class TableScreen extends Screen {
         framePartial = partialTick;
         TableView view = view();
         if (view == null) return;
-        if (view.revision() != lastRevision || viewReady != (immersivePhase(view.phase()) && !dealing())) rebuild();
+        if (view.revision() != lastRevision || viewReady != immersiveReady(view)) rebuild();
         updateScene();
         information.clear();
         boolean canvas = immersive;
@@ -972,7 +976,7 @@ public final class TableScreen extends Screen {
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
             if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed,
-                tileMaterial(), tileBack(), tileBackPreset(), clothColor());
+                tileMaterial(), tileBack(), tileBackPreset(), clothColor(), dealing() ? animation() : null, now);
             renderImmersiveDiscard(graphics, now);
             renderImmersiveDraw(graphics, now);
         }
@@ -1041,10 +1045,11 @@ public final class TableScreen extends Screen {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack(), tileBackPreset());
+        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack(), tileBackPreset(),
+            dealing() ? animation() : null, board == null ? null : board.drawSource(), Util.getMillis());
         updateHints(view);
         super.render(graphics, drawMouseX, drawMouseY, partialTick);
-        if (dealing()) renderStatus(graphics, Component.translatable("ui.mchjong.dealing"),
+        if (dealing()) renderStatus(graphics, Component.translatable(immersive ? "ui.mchjong.dealing.immersive" : "ui.mchjong.dealing"),
             actionTop - 14 * statusScale, MahjongUi.ACCENT);
         else if (TableSettings.get().animations && animation() != null && !TableResults.available(view)) {
             var cues = animation().cues(Util.getMillis());
