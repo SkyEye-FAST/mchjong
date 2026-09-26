@@ -12,6 +12,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
+            top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
         top.skyeyefast.mchjong.fabric.mixin.SpecialModelRenderersAccessor.mchjong$idMapper().put(
             top.skyeyefast.mchjong.client.MahjongItemRenderer.TYPE,
             top.skyeyefast.mchjong.client.MahjongItemRenderer.MAP_CODEC);
@@ -30,9 +32,6 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.client.ClientReplays.tick();
             top.skyeyefast.mchjong.client.TileFacePresets.tick();
         });
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
-            net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client ->
-                top.skyeyefast.mchjong.compat.maid.client.MaidClientSeats.tick());
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
         BlockEntityRenderers.register(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);

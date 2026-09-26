@@ -23,6 +23,10 @@ public final class MchjongNeoForgeClient {
         event.registerCategory(top.skyeyefast.mchjong.client.TableKeys.CATEGORY);
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
     }
+    @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid"))
+            event.enqueueWork(top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts::register);
+    }
     @SubscribeEvent public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {
         event.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         event.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
@@ -32,8 +36,6 @@ public final class MchjongNeoForgeClient {
         top.skyeyefast.mchjong.client.TableAudio.tick();
         top.skyeyefast.mchjong.client.SeatedCamera.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();
-        if (net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid"))
-            top.skyeyefast.mchjong.compat.maid.client.MaidClientSeats.tick();
         top.skyeyefast.mchjong.client.TileFacePresets.tick();
     }
     @SubscribeEvent public static void close(net.neoforged.neoforge.event.GameShuttingDownEvent event) {
