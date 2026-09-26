@@ -41,7 +41,7 @@ are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
 autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
 Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
-Only faces `4`, `13`, `22` can have `red = true`. Material is one of the eleven
+Only faces `4`, `13`, `22` can have `red = true`. Material is one of the twelve
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Undyed tile backs use
@@ -73,8 +73,8 @@ synchronized Gradle outputs and reproducibility checks.
 ## Recipe catalogue and identity
 
 `MahjongCatalog` is shared by the loaders. Empty and complete 144-tile cases are
-consecutive. Blank tiles cover sixteen materials; point sticks are ordered by
-denomination, including the inactive negative stick. Furniture covers all eleven
+consecutive. Blank tiles cover seventeen materials; point sticks are ordered by
+denomination, including the inactive negative stick. Furniture covers all twelve
 wood types. Flowers and red fives share the existing tile item.
 
 Recipe identity distinguishes wood, material, back color, face preset, face, red

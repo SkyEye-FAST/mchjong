@@ -93,7 +93,7 @@ definitions; the generator writes these alongside the item models.
 ## Tile backs and customization
 
 Undyed tiles use their own material texture for the rear face and back shell, so
-all eleven woods, bone, quartz, calcite, glass and amethyst have no separate default back
+all twelve woods, bone, quartz, calcite, glass and amethyst have no separate default back
 color. `assets/mchjong/textures/tile/back.png` is the default 256 by 384 transparent
 pattern layer applied to every rear face, including undyed and glass tiles and
 concealed face covers. Its pixels are fully transparent. The tile's
@@ -112,7 +112,7 @@ The body uses original neutral relief textures under `textures/tile_material/`:
 `TileMaterialArtwork` generates original 16 by 16, limited-palette grain, pores,
 chalk veins, stepped glass reflections and crystal facets
 without borrowing game textures; the material component supplies their tint.
-Oak, spruce, birch, jungle, acacia, dark oak, mangrove, cherry, bamboo, crimson
+Oak, spruce, birch, jungle, acacia, dark oak, mangrove, cherry, pale oak, bamboo, crimson
 and warped tiles share the wood relief with individual material colors. Cutting
 each wood's planks yields its matching blank tiles. Blank fronts use the same
 material texture and color as that material's undyed back.
@@ -157,7 +157,7 @@ without a preset ZIP.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
-All eleven woods use `wood.png`.
+All twelve woods use `wood.png`.
 
 Riichi stick presets are ZIP archives in `config/mchjong/presets/sticks/` on a
 client or `config/mchjong/server-presets/sticks/` on a server. Each preset has
@@ -218,8 +218,8 @@ replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
 HUD icons copied from the default blue and ivory strips at build time. Changing
 point-stick textures or selecting a stick preset does not alter those icons.
 
-Furniture uses fifteen original 16 by 16 pixel textures under
-`assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
+Furniture uses sixteen original 16 by 16 pixel textures under
+`assets/mchjong/textures/furniture`: twelve `wood_<family>.png` finishes and
 `felt.png`, `steel.png`, `brass.png`, `edge.png`. `FurnitureArtwork` generates
 broken wood grain with small knots, subdued neutral woven felt, stepped metal highlights
 with sparse tooling marks and clustered wear on dark edge material

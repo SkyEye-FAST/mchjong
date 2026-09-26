@@ -11,8 +11,8 @@ class FurnitureArtworkTest {
     private final Path textures = Path.of(System.getProperty("mchjong.resources"), "assets/mchjong/textures/furniture");
 
     @Test void everyWoodAndSurfaceHasItsOwnOpaquePixelTexture() throws Exception {
-        assertEquals(11, FurnitureArtwork.WOODS.size());
-        assertEquals(15, FurnitureArtwork.textures().size());
+        assertEquals(12, FurnitureArtwork.WOODS.size());
+        assertEquals(16, FurnitureArtwork.textures().size());
         var signatures = new HashSet<Integer>();
         for (var entry : FurnitureArtwork.textures().entrySet()) {
             var actual = ImageIO.read(textures.resolve(entry.getKey() + ".png").toFile());

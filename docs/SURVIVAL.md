@@ -121,12 +121,12 @@ recipes. Face printing instead uses the box's server-authorized menu button.
 
 ## Stonecutting
 
-One plank of any of the eleven vanilla woods, bone block, quartz block, calcite,
+One plank of any of the twelve vanilla woods, bone block, quartz block, calcite,
 glass block or amethyst block yields **16 unengraved tiles** of its corresponding
 material. Each wooden blank retains its wood species. One bone block can
 alternatively yield **24 unmarked point sticks**.
 
-The eight flowers are physical tiles in all sixteen materials and sixteen back colors.
+The eight flowers are physical tiles in all seventeen materials and sixteen back colors.
 They can be carried, stored in a box, dyed and dropped like the other tiles.
 Nine source blocks make the 144 blanks used to print a complete flower set.
 Riichi uses the validated 136-tile set (108 in sanma), while flowers remain

@@ -8,7 +8,7 @@ import java.util.Map;
 /** Small declarative recipe families; recipe IDs are variants, item IDs are not. */
 final class SurvivalRecipes {
     static final List<String> WOODS = List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak",
-        "mangrove", "cherry", "bamboo", "crimson", "warped");
+        "mangrove", "cherry", "pale_oak", "bamboo", "crimson", "warped");
     static final List<String> COLORS = List.of("white", "orange", "magenta", "light_blue", "yellow", "lime",
         "pink", "gray", "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black");
     record Material(String name, String source) {}

@@ -48,7 +48,7 @@ class TranslationReferenceTest {
         for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
         used.add("itemGroup.mchjong");
-        for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped")) {
+        for (String wood : SurvivalRecipes.WOODS) {
             used.add("block.mchjong.mahjong_table." + wood);
             used.add("block.mchjong.automatic_mahjong_table." + wood);
         }

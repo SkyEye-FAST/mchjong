@@ -12,6 +12,7 @@ final class FurnitureArtwork {
         Map.entry("birch", 0xd7c59a), Map.entry("jungle", 0xae7d60),
         Map.entry("acacia", 0xb66543), Map.entry("dark_oak", 0x50392d),
         Map.entry("mangrove", 0x884744), Map.entry("cherry", 0xdca7a5),
+        Map.entry("pale_oak", 0xded8c7),
         Map.entry("bamboo", 0xc2ac63), Map.entry("crimson", 0x85435f),
         Map.entry("warped", 0x43857f));
 
