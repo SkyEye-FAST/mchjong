@@ -114,8 +114,6 @@
       ],
       "registryUrls": [
         "https://maven.fabricmc.net/",
-        "https://maven.aliyun.com/repository/public/",
-        "https://bmclapi2.bangbang93.com/maven/",
         "https://repo.maven.apache.org/maven2"
       ],
       "groupName": "Fabric ecosystem"
@@ -128,8 +126,6 @@
       "allowedVersions": "/\\+1\\.21\\.1$/",
       "registryUrls": [
         "https://maven.fabricmc.net/",
-        "https://maven.aliyun.com/repository/public/",
-        "https://bmclapi2.bangbang93.com/maven/",
         "https://repo.maven.apache.org/maven2"
       ],
       "groupName": "Fabric ecosystem"
