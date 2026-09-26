@@ -21,7 +21,6 @@ import net.minecraft.world.phys.Vec3;
 public final class SeatEntity extends Entity {
     private static final EntityDataAccessor<BlockPos> TABLE = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.BLOCK_POS);
     private static final EntityDataAccessor<Integer> SEAT = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<String> RIDER = SynchedEntityData.defineId(SeatEntity.class, EntityDataSerializers.STRING);
     private UUID rider;
 
     public SeatEntity(EntityType<? extends SeatEntity> type, Level level) {
@@ -35,7 +34,6 @@ public final class SeatEntity extends Entity {
         entityData.set(TABLE, table.immutable());
         entityData.set(SEAT, seat);
         rider = player;
-        entityData.set(RIDER, player.toString());
         BlockPos stool = TableGeometry.stool(table, seat);
         setPos(stool.getX() + 0.5, stool.getY() + TableGeometry.STOOL_HEIGHT, stool.getZ() + 0.5);
         setYRot(TableGeometry.yaw(seat));
@@ -43,9 +41,8 @@ public final class SeatEntity extends Entity {
 
     public BlockPos tablePos() { return entityData.get(TABLE); }
     public int seat() { return entityData.get(SEAT); }
-    public String riderId() { return entityData.get(RIDER); }
     @Override protected void defineSynchedData(SynchedEntityData.Builder builder) {
-        builder.define(TABLE, BlockPos.ZERO); builder.define(SEAT, 0); builder.define(RIDER, "");
+        builder.define(TABLE, BlockPos.ZERO); builder.define(SEAT, 0);
     }
     @Override protected boolean canAddPassenger(Entity passenger) { return getPassengers().isEmpty(); }
     @Override protected void positionRider(Entity passenger, MoveFunction position) {
@@ -84,7 +81,6 @@ public final class SeatEntity extends Entity {
         entityData.set(TABLE, BlockPos.of(input.getLongOr("table", 0)));
         entityData.set(SEAT, Math.clamp(input.getIntOr("seat", 0), 0, 3));
         rider = input.getString("rider").map(UUID::fromString).orElse(null);
-        entityData.set(RIDER, rider == null ? "" : rider.toString());
     }
     @Override protected void addAdditionalSaveData(ValueOutput output) {
         output.putLong("table", tablePos().asLong());
