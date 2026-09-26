@@ -20,7 +20,7 @@ public final class TableScene {
     public static final double HAND_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double DRAW_GAP = 0.035;
     public static final double MELD_RIGHT = TableGeometry.FELT_HALF_WIDTH - 1.0 / 16.0;
-    public static final double HAND_MELD_GAP = 0.10;
+    public static final double HAND_MELD_GAP = 0.15;
     public static final double WALL_Z = 0.91;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;

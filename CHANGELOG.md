@@ -32,6 +32,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Wait for REI's asynchronous recipe index before starting recipe-viewer smoke checks and capture the requested recipe category.
 - Keep workshop storyboard text aligned with the shared translations for the single printing plate.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
