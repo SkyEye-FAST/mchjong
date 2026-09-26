@@ -11,6 +11,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Draw one Mojang banner mark on tile backs.
 - Render Mahjong furniture and supplies in the player's head slot.
+- Preserve complete maid model translation keys when playing on a server.
 
 ## [0.8.0] - 2026-09-26
 
