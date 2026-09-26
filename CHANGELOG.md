@@ -31,6 +31,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Keep Ponder item controls above the table and tutorial text in the standard reading area so the furniture remains visible.
 - Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
 

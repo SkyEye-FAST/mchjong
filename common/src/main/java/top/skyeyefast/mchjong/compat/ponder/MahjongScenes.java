@@ -22,6 +22,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 final class MahjongScenes {
     private static final BlockPos TABLE = new BlockPos(3, 1, 3);
     private static final Vec3 FELT = new Vec3(3.5, 2.05, 3.5);
+    private static final Vec3 CONTROLS = FELT.add(-2, 1.6, 2);
     private static final int TEXT_TIME = 100;
 
     private MahjongScenes() {}
@@ -48,15 +49,15 @@ final class MahjongScenes {
         base(scene, "table_equipment", "Preparing the table");
         scene.world().showSection(util.select().fromTo(1, 1, 1, 5, 1, 5), Direction.DOWN);
         ItemStack box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
-        scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick().withItem(box);
+        scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(box);
         say(scene, "Prepare the tiles required by the rules: 136 for four players or 108 for three, with matching material, backs and face design. Spare tiles may stay in the box.", FELT);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().boxes().setItem(0, box.copy()));
-        scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick();
+        scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick();
         say(scene, "Right-click the table to open its storage. It holds up to two mahjong boxes inside.", FELT);
         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
         cloth.set(DataComponents.BASE_COLOR, DyeColor.CYAN);
-        scene.overlay().showControls(FELT, Pointing.DOWN, 80).rightClick().withItem(cloth);
+        scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(cloth);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().installCloth(cloth));
         say(scene, "Use a cloth on the table. A cloth and a complete set make the table ready for play.", FELT);
@@ -65,7 +66,7 @@ final class MahjongScenes {
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().drawer(0).setItem(0, stick.copy()));
         Vec3 drawer = TableGeometry.world(TABLE, TableGeometry.drawerBounds(0).getCenter());
-        scene.overlay().showControls(drawer, Pointing.DOWN, 80).rightClick().withItem(stick);
+        scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(stick);
         say(scene, "Open the side drawers to store point sticks and hand payments to the other players.", drawer);
         say(scene, "Manage boxes through table storage in the lobby. Crouch-click the tabletop with empty hands to collect the cloth.", FELT);
         scene.markAsFinished();
@@ -79,7 +80,7 @@ final class MahjongScenes {
             table.equipment().boxes().setItem(0, MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE));
         });
         Vec3 stool = Vec3.atCenterOf(TableGeometry.stool(TABLE, 0));
-        scene.overlay().showControls(stool, Pointing.DOWN, 80).rightClick();
+        scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick();
         say(scene, "Click a stool to sit and open the table controls. Click it again to reopen the controls while seated.", stool);
         say(scene, "Choose three- or four-player mahjong and a rule preset in the lobby, then have every player ready up.", FELT);
         say(scene, "On an ordinary table, sweep the loose tiles to shuffle, drag them toward your wall, then pull wall tiles toward your hand.", FELT);
@@ -103,7 +104,7 @@ final class MahjongScenes {
     }
 
     private static void say(SceneBuilder scene, String text, Vec3 target) {
-        scene.overlay().showText(TEXT_TIME).text(text).pointAt(target).placeNearTarget().attachKeyFrame();
+        scene.overlay().showText(TEXT_TIME).text(text).pointAt(target).attachKeyFrame();
         scene.idle(TEXT_TIME + 10);
     }
 }
