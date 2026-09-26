@@ -49,10 +49,13 @@ route evaluation only when it cannot change those top two. Near readiness, every
 in particular, dama retains its option to discard the drawn tile when compared
 with locked riichi. Both advancing draws and same-shanten improvements participate;
 an offensive root can retreat at most one shanten. A completed legal tsumo is taken
-immediately. Both levels use the general search for replacement declarations.
+immediately. Decisions offering replacement declarations use search at both levels,
+including their ordinary alternatives. PASS, or the baseline discard when comparing
+replacement declarations, receives a search slot before competing call discards.
+Replacement declarations require a searched continuation within the bounded budget.
 Continuation leaves use immediate efficiency and legal wait value. Development
 compares endpoints at that same depth, without nested good-shape enumeration.
-Unexpanded candidates retain their root value.
+Unexpanded ordinary candidates retain their root value.
 
 ## Incomplete-hand routes
 
@@ -78,8 +81,9 @@ mandatory dragon yakuhai are accounted for before combining evidence. Route
 retention is capped below a shanten step; it does not replace the offensive
 retreat gate or public-information defence.
 
-An undeclared closed hand receives only a distance-discounted riichi option when
-the deposit and remaining-wall conditions permit it. Opening loses that option
+An undeclared closed hand receives a distance-discounted riichi option in both
+route retention and conditional payout when the deposit and remaining-wall
+conditions permit it. Both levels retain this option. Opening loses that option
 and any closed-only routes through the resulting-hand evaluation. Calls compare
 this with the unchanged PASS state, including shanten, live advances and value;
 their separate safety adjustment depends on public threat pressure.

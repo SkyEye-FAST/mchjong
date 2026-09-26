@@ -68,7 +68,9 @@ internal class BotValue(private val view: TableView) {
         } else {
             0.0
         }
-        return Potential(viable, estimate, minOf(24.0, assessment.han * 7) +
+        // Keeping the declaration option matters at both levels, including EASY
+        // where incomplete-hand payout is deliberately absent from utility.
+        return Potential(viable, estimate, minOf(24.0, (assessment.han + option) * 7) +
             (if (viable) bonuses * 3.0 else 0.0), assessment, option)
     }
 
