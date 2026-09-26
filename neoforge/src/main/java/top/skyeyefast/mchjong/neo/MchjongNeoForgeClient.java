@@ -22,6 +22,8 @@ public final class MchjongNeoForgeClient {
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
     }
     @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
+        if (net.neoforged.fml.ModList.get().isLoaded("touhou_little_maid"))
+            event.enqueueWork(top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts::register);
         event.enqueueWork(() -> top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()
             .getModelManager().getModel(net.minecraft.client.resources.model.ModelResourceLocation.standalone(top.skyeyefast.mchjong.client.RiichiStickModel.ID))));
         if (net.neoforged.fml.ModList.get().isLoaded("create"))

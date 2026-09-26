@@ -12,6 +12,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
+            top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
         net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
             context.addModels(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
         top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()
