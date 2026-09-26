@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.forge.smoke;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
+import top.skyeyefast.mchjong.smoke.SmokeScreenshots;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -44,7 +44,7 @@ public final class ForgeClientBootstrap {
             throw new IllegalStateException("Forge additional riichi-stick model is missing");
         Path output = Path.of(System.getProperty("mchjong.smoke.output"));
         Files.createDirectories(output);
-        Screenshot.grab(output.toFile(), "forge-bootstrap.png", client.getMainRenderTarget(), message -> {});
+        SmokeScreenshots.grab(output.toFile(), "forge-bootstrap.png", client.getMainRenderTarget(), message -> {});
         Files.writeString(output.resolve("PASS.txt"), "Forge client registrations, renderer bindings and additional model loaded.\n");
         complete = true;
         client.stop();

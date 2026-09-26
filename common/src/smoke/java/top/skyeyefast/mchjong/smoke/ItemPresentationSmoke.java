@@ -2,7 +2,6 @@ package top.skyeyefast.mchjong.smoke;
 
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.world.entity.HumanoidArm;
 import org.lwjgl.glfw.GLFW;
 
@@ -36,7 +35,7 @@ final class ItemPresentationSmoke {
             default -> "07-held-point-stick";
         };
         String side = sample < 3 || sample >= 6 ? "-right" : "-left";
-        Screenshot.grab(output.toFile(), name + side + (sample >= 6 ? "-small.png" : ".png"),
+        SmokeScreenshots.grab(output.toFile(), name + side + (sample >= 6 ? "-small.png" : ".png"),
             client.getMainRenderTarget(), ignored -> {});
         ticks = 0;
         if (++sample == 9) {

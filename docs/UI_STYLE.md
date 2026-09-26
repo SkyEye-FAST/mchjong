@@ -78,7 +78,9 @@ settings can switch them to mpsz notation and 1q-8q for flowers.
 Design and verify against a minimum 320 x 240 **logical GUI** viewport as well as
 the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
-scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
+scale. Support English, Japanese, Simplified Chinese and Traditional Chinese.
+Select visual checks according to the changed layout or translation; the full
+locale/viewport matrix is not a per-edit requirement.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
 Settlement reserves the complete receipt layout before revealing individual yaku
 rows. Highlight the current row with the shared accent; points precede the hand
@@ -143,8 +145,7 @@ capabilities rather than access to box inventory. Every composition, including
 no-red play, requires a complete matching set with enough ordinary and red fives.
 A selected no-red configuration displays a red warning inside the room home panel
 below its primary action. All rule pages paginate at
-320 x 240, with complete labels available on hover. The shared smoke captures
-the disabled-red tooltip in all four locales at that size.
+320 x 240, with complete labels available on hover.
 Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.

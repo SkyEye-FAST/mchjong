@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableOptionsScreen;
@@ -15,8 +14,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Real room proposals, private/public packets and unmounted world rendering on both loaders. */
 final class HandVisibilitySmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
-    private int mode, stage, ticks, locale;
+    private int mode, stage, ticks;
     private RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<?> work;
     private int seat;
@@ -44,8 +42,6 @@ final class HandVisibilitySmoke {
             if (view.handVisibility() != visibility) button.onPress();
             next(1);
         } else if (stage == 1 && view.handVisibility() == visibility && ticks > 5) {
-            client.getLanguageManager().setSelected(LANGUAGES[locale]);
-            work = client.reloadResourcePacks();
             next(2);
         } else if (stage == 2) {
             resize(client, true);
@@ -59,9 +55,7 @@ final class HandVisibilitySmoke {
                 "settings.mchjong.hand_visibility." + visibility.name().toLowerCase(java.util.Locale.ROOT))).getString();
             require(client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
                 .anyMatch(button -> button.active && button.getMessage().getString().equals(label)), "Missing room visibility control");
-            capture(client, output, "room-" + visibility + "-" + LANGUAGES[locale] + "-small.png");
-            if (++locale < LANGUAGES.length) { next(1); return false; }
-            locale = 0;
+            capture(client, output, "room-" + visibility + "-small.png");
             resize(client, false);
             client.setScreen(new TableScreen(table.getBlockPos()));
             next(4);
@@ -131,7 +125,7 @@ final class HandVisibilitySmoke {
         client.resizeDisplay();
     }
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
     private static void require(boolean condition, String message) {
         if (!condition) throw new IllegalStateException(message);

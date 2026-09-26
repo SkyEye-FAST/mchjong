@@ -6,7 +6,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.atomic.AtomicReference;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.core.BlockPos;
@@ -259,13 +258,13 @@ public final class TableClientSmoke {
                 if (!tableInterfaceSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) return;
                 step = 35; entered = ticks;
             } else if (step == 35 && resourcePackSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
-                Files.writeString(output.resolve("PASS.txt"), "Box transfers, keyboard presets and dye actions in four locales; immersive localized controls; seated and immersive turn/reserve clocks, riichi, meld and reaction layouts at normal and small viewports.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Box transfers, keyboard presets and dye actions; representative Latin/CJK controls, seated reserve clock and immersive riichi, meld and reaction layouts.\n");
                 LOG.info("MCHJONG_INTERFACE_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 18 && ticks - entered > 10) {
                 if (!itemPresentationSmoke.tick(client, output)) return;
                 if (itemsOnly) {
-                    Files.writeString(output.resolve("PASS.txt"), "Captured native tile and point-stick grips for right and left main hands.\n");
+                    Files.writeString(output.resolve("PASS.txt"), "Verified native tile and point-stick grips for right and left main hands.\n");
                     LOG.info("MCHJONG_ITEM_PRESENTATION_PASS");
                     step = 13; entered = ticks;
                     return;
@@ -427,7 +426,7 @@ public final class TableClientSmoke {
                 step = 27; entered = ticks;
             } else if (step == 27 && ticks - entered > 20) {
                 capture(client, "04-cushion-third-person.png");
-                Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, zero-to-four meld layouts at both viewport sizes, immersive rivers and hand with expanded options, stable open/closed first-person camera and third-person capture.\n");
+                Files.writeString(output.resolve("PASS.txt"), "Seating, private deal, camera clearance, immersive rivers and hand with expanded options, stable open/closed first-person camera and third-person view.\n");
                 LOG.info("MCHJONG_SEATING_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 33 && visibilitySmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
@@ -482,7 +481,7 @@ public final class TableClientSmoke {
     }
 
     private void capture(Minecraft client, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), message -> LOG.info("Screenshot: {}", message.getString()));
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), message -> LOG.info("Screenshot: {}", message.getString()));
     }
 
     private static void require(boolean condition, String message) {

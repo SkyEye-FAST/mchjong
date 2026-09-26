@@ -7,6 +7,10 @@ group = rootProject.maven_group
 version = rootProject.mod_version
 base.archivesName = "mchjong-neoforge-${minecraft_version}"
 repositories {
+    maven {
+        url = 'https://maven.fabricmc.net/'
+        content { includeModule 'net.fabricmc', 'fabric-loader' }
+    }
     exclusiveContent {
         forRepository { maven { name = 'BMCLAPINeoForge'; url = 'https://bmclapi2.bangbang93.com/maven/' } }
         filter { includeModule 'net.neoforged', 'neoforge' }
@@ -52,6 +56,8 @@ neoForge {
 }
 
 dependencies {
+    // Optional recipe-browser APIs expose Fabric environment annotations.
+    compileOnly "net.fabricmc:fabric-loader:${loader_version}"
     compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly "maven.modrinth:create:${create_version}+mc${minecraft_version}"
     compileOnly "dev.engine-room.flywheel:flywheel-neoforge-${minecraft_version}:${flywheel_version}"
@@ -200,13 +206,14 @@ neoForge {
             systemProperty 'mchjong.smoke.ponderOnly', providers.gradleProperty('smokePonder').getOrElse('false')
             systemProperty 'mchjong.smoke.browserOnly', providers.gradleProperty('smokeBrowser').getOrElse('false')
             systemProperty 'mchjong.smoke.browser', recipeBrowser
+            systemProperty 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
             systemProperty 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             systemProperty 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }
     }
 }
 tasks.named('runSmokeClient') {
-    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
+    doFirst { delete smokeEvidence }
     doLast {
         def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {

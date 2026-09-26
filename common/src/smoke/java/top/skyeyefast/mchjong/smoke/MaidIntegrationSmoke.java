@@ -7,7 +7,6 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
@@ -47,7 +46,7 @@ final class MaidIntegrationSmoke {
             if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
                 "Default maid model name is not localized");
             if (step == 8) require(client.screen.width == 320 && client.screen.height == 240, "Maid small viewport is not 320x240");
-            Screenshot.grab(output.toFile(), step == 2 && capturedLobby ? "maid-seating.png" : "maid-" + step + ".png",
+            SmokeScreenshots.grab(output.toFile(), step == 2 && capturedLobby ? "maid-seating.png" : "maid-" + step + ".png",
                 client.getMainRenderTarget(), ignored -> {});
             if (step == 2 && !capturedLobby) {
                 capturedLobby = true;

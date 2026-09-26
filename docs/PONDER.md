@@ -50,20 +50,16 @@ The release artifacts contain MChjong's integration code and tutorial resources.
 
 ## Development and validation
 
-Run the full build and the two ordinary client smoke tests:
+Select the affected loader's tutorial check:
 
 ```text
-gradlew.bat buildAll --warning-mode fail
-gradlew.bat :fabric:runSmokeClient --console=plain
-gradlew.bat :neoforge:runSmokeClient --console=plain
+gradlew.bat :fabric:runSmokeClient -PwithPonder=true -PsmokePonder=true --console=plain
+gradlew.bat :neoforge:runSmokeClient -PwithPonder=true -PsmokePonder=true --console=plain
 ```
 
-Enable Ponder for the corresponding client checks:
-
-```text
-gradlew.bat :fabric:runSmokeClient -PwithPonder=true --console=plain
-gradlew.bat :neoforge:runSmokeClient -PwithPonder=true --console=plain
-```
+Use one representative loader for shared storyboard edits. Registration or loader API
+changes require the corresponding loader check. Choose captures with
+`-PsmokeScreenshots` as described in [Verification](VERIFICATION.md#scope-and-screenshots).
 
 For interactive development, add `-PwithPonder=true` to `:fabric:runClient` or
 `:neoforge:runClient`.
@@ -78,11 +74,11 @@ Use `-PsmokeBrowser=true -PrecipeBrowser=jei` or `emi` for recipe-viewer-only
 checks, without repeating Ponder playback or unrelated gameplay scenarios.
 
 The installed-Ponder checks validate all seven item entries, three storyboards,
-four languages, plugin reload, full playback, replay restoration and native
+representative Latin/CJK text, plugin reload, full playback, replay restoration and native
 Ponder screens. They run after the same gameplay checks as the ordinary smoke.
 Evidence is saved in `fabric/build/smoke/ponder-evidence` and
 `neoforge/build/smoke/ponder-evidence`; each contains `PASS.txt`,
-`ponder-checks.txt` and language-specific screenshots under `screenshots`.
+`ponder-checks.txt` and any explicitly requested screenshots under `screenshots`.
 Ordinary smoke evidence remains in each loader's `build/smoke/evidence`.
 Installed-Ponder runs use `fabric/build/smoke/ponder-run` for the Fabric game directory;
 base-client runs use `fabric/build/smoke/run`. Each profile keeps its own settings,

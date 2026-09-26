@@ -1,10 +1,7 @@
 package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.vertex.PoseStack;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
-import net.minecraft.client.renderer.RenderType;
-import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.client.resources.model.BakedModel;
 import net.minecraft.resources.ResourceLocation;
 
@@ -19,9 +16,7 @@ public final class RiichiStickModel {
     public static void render(PoseStack pose, MultiBufferSource buffers, int light) {
         pose.pushPose();
         pose.translate(-.5, 0, -.5);
-        Minecraft.getInstance().getBlockRenderer().getModelRenderer().renderModel(pose.last(),
-            buffers.getBuffer(RenderType.entityTranslucent(net.minecraft.world.inventory.InventoryMenu.BLOCK_ATLAS)),
-            null, model.get(), 1, 1, 1, light, OverlayTexture.NO_OVERLAY);
+        ModelRendering.stick(pose, buffers, model.get(), light);
         pose.popPose();
     }
 }

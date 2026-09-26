@@ -11,8 +11,8 @@ Java 21, Fabric Loader 0.19.5 and Fabric API 0.116.17+1.21.1, Forge 52.1.16,
 or NeoForge 21.1.250. Compatibility branches produce their own version-scoped
 artifacts.
 
-Runtime results and their exact scope are recorded in
-[Verification](VERIFICATION.md#cross-version-acceptance). The README tables list
+Reusable validation commands and their scope are in
+[Verification](VERIFICATION.md). The README tables list
 supported adapters, while each compatibility branch pins its own dependencies.
 
 JEI profiles cover Fabric and NeoForge 26.1.2; Fabric, Forge and NeoForge

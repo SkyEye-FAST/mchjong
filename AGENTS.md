@@ -16,9 +16,7 @@ Deliver complete, runnable increments. Choose the simplest implementation that
 meets the requirements, extend existing components and dependencies, and keep
 concerns separate. Check library documentation and types before implementing
 equivalent functionality. Remove obsolete implementation paths rather than
-adding compatibility layers, migrations or speculative configuration. Update
-`CHANGELOG.md` under `## [Unreleased]` after every edit to document user-visible
-and technical changes.
+adding compatibility layers, migrations or speculative configuration.
 
 ## Ownership and architecture
 
@@ -80,11 +78,14 @@ Keep player operations in `PLAYING.md`, `SURVIVAL.md` and `ROOMS.md`; registry,
 persistence and recipe identity in `SUPPLIES.md`; module ownership in
 `ARCHITECTURE.md`; visual contracts in `UI_STYLE.md`; dependency support in
 `COMPATIBILITY.md`; build, branch synchronization and release procedures in
-`DEVELOPMENT.md`; and commands, fixtures and acceptance records in
+`DEVELOPMENT.md`; and reusable verification commands and test ownership in
 `VERIFICATION.md`. Link to the owning guide rather than duplicating its paragraphs.
-Update `CHANGELOG.md` under `## [Unreleased]` after every edit that modifies
-behavior, fixes bugs, introduces features, or adjusts assets and compatibility,
-categorizing changes under Keep a Changelog headings (`Added`, `Changed`, `Fixed`).
+Add one concise `CHANGELOG.md` entry per meaningful completed change under
+`## [Unreleased]`, using `Added`, `Changed` or `Fixed`. Documentation cleanup and
+routine verification do not each need an entry. Keep guides focused on current
+contracts, operating instructions and necessary maintenance constraints. Put test
+results and coverage limits in the delivery message or PR, not permanent dated
+acceptance logs, screenshot inventories, benchmark tables or experiment archives.
 
 Before changing screens, widgets, HUDs, inventory UI or physical table layout,
 read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`, `MahjongButton`,
@@ -129,13 +130,21 @@ Reserve client smokes for real loader, world, packet and UI boundaries rather th
 repeating domain assertions. Remove redundant tests instead of disabling them or
 adding alternate suites, fallback paths or new test frameworks.
 
+Before running checks, identify the changed boundary and select the smallest
+owning command. A small fix must not trigger unrelated suites, full client runs
+or a screenshot matrix. Do not add a permanent test for a one-time diagnostic,
+cosmetic adjustment or an assertion that only mirrors implementation. Preserve
+tests for distinct failure modes, permissions, persistence and data integrity.
+Remove diagnostic fixtures when their investigation ends. Each extra parameter
+dimension must exercise different behavior; do not take Cartesian products of
+loaders, languages, sizes, presets, materials and player counts by default.
+
 Use JDK 21 for the current profile and the checked-in Gradle wrapper. The examples
 below use `./gradlew`; use `gradlew.bat` on Windows when required by the shell:
 
 ```text
-./gradlew buildAll --warning-mode fail
-./gradlew :fabric:runSmokeClient --console=plain
-./gradlew :neoforge:runSmokeClient --console=plain
+./gradlew :fabric:compileJava --warning-mode fail
+./gradlew :fabric:test --tests '*PresetArchivesTest'
 ```
 
 `buildAll` covers the engine, presentation, generated resources and NeoForge
@@ -144,19 +153,22 @@ unit tests, compilation tasks and focused client smoke modes. Do not default to
 the complete build or full client smoke suites for every change or repeat them
 after each small adjustment. Reserve full suites for releases, broad cross-module
 changes, or failures whose scope cannot be isolated. Shared visual or interaction
-changes need fresh screenshots of the affected flows on both loaders; prefer
-focused captures over unrelated gameplay checks. Inspect those screenshots and
-fresh PASS/FAIL markers and logs; compilation alone is not visual acceptance.
+changes need a focused visual check only when rendering or interaction can change.
+Use one representative loader and capture only the affected state (normally one
+or two images). Add another loader, locale or viewport only for a concrete
+loader API, translation or responsive-layout risk. Screenshot capture is opt-in;
+assertion-only smoke runs must not produce a gallery. Inspect requested captures
+and fresh PASS/FAIL markers; compilation alone is not visual acceptance.
 Report exactly which checks ran and any outstanding failures or coverage limits.
 For routine fixes, run the smallest owning test or smoke command once after the
 change is ready; expand validation only when that check reveals a concrete risk.
-For ordinary-table handling visuals, use `:fabric:runSmokeClient -PsmokeManual=true`
-and `:neoforge:runSmokeClient -PsmokeManual=true` to capture the manual flow without
-the unrelated full client suites.
+Keep generated screenshots and logs in ignored build output, never in a tracked
+archive. Replace evidence for the selected profile rather than accumulating runs.
 
-For Ponder changes, also run both installed-dependency smoke commands in
-[PONDER.md](docs/PONDER.md), with `-PwithPonder=true`, and inspect their normal
-and small-window tutorial screenshots in each loader's `smoke/ponder-evidence`.
+For Ponder changes, select the affected installed-dependency check in
+[PONDER.md](docs/PONDER.md). Test another loader or small window only when the
+change crosses that boundary. API replacements require compilation of affected
+source sets; do not silence deprecation diagnostics instead of replacing calls.
 
 ## Versioning and releases
 
