@@ -91,6 +91,10 @@ artifacts from `.github/compat-1.20.1-ref`, and both 26.1.2 artifacts from
 batch. All checkouts receive the same mod version; filenames include Minecraft
 version and loader. A main commit does not automatically advance the pins.
 Tags and publication belong to `main`; port snapshots build only their own version.
+Each verified artifact is published sequentially in this order: 1.21.1
+Fabric/Quilt, NeoForge, Forge; 1.20.1 Fabric/Quilt, Forge; then 26.1.2
+Fabric/Quilt, NeoForge. Fabric/Quilt uploads list Fabric API as a required
+dependency on both platforms.
 
 Use [Verification](VERIFICATION.md) for checks and record their exact scope before
 advancing a release pin. The [compatibility tables](../README.md#compatibility)
