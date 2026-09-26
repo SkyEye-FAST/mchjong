@@ -378,6 +378,16 @@ client smoke is counted as fresh verification.
 
 ## Cross-version acceptance
 
+### Table layout and Ponder synchronization (2026-09-26)
+
+The `cc20083` table layout and clearance changes are synchronized to both
+compatibility profiles. The `c2f121e` Ponder overlay change is synchronized to
+1.20.1, preserving its item data API; 26.1.2 retains its existing integration set.
+Release pins identify the signed compatibility merge tips. This batch was
+reviewed through source diffs, signatures, ancestry and remote refs. Builds,
+tests and client smoke checks were skipped at the user's request; this record
+does not add runtime acceptance for the synchronized changes.
+
 ### Post-0.7.2 synchronization (2026-09-26)
 
 Minecraft 1.21.1 passed `buildAll --warning-mode fail` and focused
