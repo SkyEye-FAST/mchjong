@@ -42,7 +42,6 @@
   ],
   "suggests": {
     "create": ">=${create_min_version}",
-    "yes_steve_model": "*",
     "patchouli": "*",
     "ponder": ">=${ponder_version}",
     "jei": ">=${jei_version}",

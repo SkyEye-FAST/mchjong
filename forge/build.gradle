@@ -51,7 +51,6 @@ if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBro
 def smokeProfile = bootstrapSmoke ? 'bootstrap-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
-if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) smokeProfile = 'ysm-' + smokeProfile
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 
@@ -77,7 +76,6 @@ legacyForge {
             systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
-            systemProperty 'mchjong.smoke.ysm', providers.gradleProperty('withYsm').getOrElse('false')
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
@@ -113,9 +111,6 @@ tasks.named('runSmokeClient') {
 
 configurations { embeddedEngine }
 dependencies {
-    if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) {
-        modRuntimeOnly "maven.modrinth:yes-steve-model:${ysm_version}-forge+mc${minecraft_version}"
-    }
     modCompileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FORGE"
     if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
         modRuntimeOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FORGE"
