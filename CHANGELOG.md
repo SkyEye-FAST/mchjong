@@ -30,6 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
 
 - Tile faces keep an opaque white plate with a rear surface visible through glass, including hidden hands and face-down walls. Glass shells render after opaque plates. Only visible identities show printed artwork, and standing faces retain their owner-facing orientation in both views. Immersive melds stay in one row at their original depth while standing hands move aside.

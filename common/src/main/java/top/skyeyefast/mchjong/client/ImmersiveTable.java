@@ -25,7 +25,6 @@ import top.skyeyefast.mchjong.mixin.GuiGraphicsExtractorAccessor;
 final class ImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 140;
-    private static final double MELD_CORNER_X = 470;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
@@ -165,7 +164,7 @@ final class ImmersiveTable {
 
     private void outer(TableView.Seat player, int seat, boolean layHandsOpen) {
         int side = side(seat), w = 30;
-        double rail = 410, halfLength = 300;
+        double rail = outerRail(side), halfLength = 300;
         double handX = handLeft(player, seat, side);
         for (int tile : player.hand()) {
             if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
@@ -183,7 +182,7 @@ final class ImmersiveTable {
     private void melds(int seat, List<Meld> melds) {
         int side = side(seat), w = 30;
         double x = meldCorner(side);
-        double z = seat == viewer ? 335 : 410;
+        double z = outerRail(side);
         for (var meld : melds) {
             x -= TileGui.meldWidth(meld, seat, w);
             for (var part : MeldLayout.of(meld, seat).parts()) {
@@ -194,13 +193,17 @@ final class ImmersiveTable {
         }
     }
 
-    private static double meldCorner(int side) { return side % 2 == 0 ? MELD_CORNER_X : 350; }
+    static double meldCorner(int side) { return (side % 2 == 0 ? 510 : 425) - 3; }
+
+    static double outerRail(int side) {
+        return (side % 2 == 0 ? 425 : 510) - 3 - 30 * RATIO / 2;
+    }
 
     static double handLeft(TableView.Seat player, int seat, int side) {
         int handWidth = player.hand().size() * 30;
         double meldLeft = meldCorner(side);
         for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(meld, seat, 30) + 5;
-        return Math.min(-handWidth / 2.0, meldLeft - 12 - handWidth);
+        return Math.min(-handWidth / 2.0, meldLeft - 18 - handWidth);
     }
 
     static double discardSourceX(TableView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
@@ -311,7 +314,7 @@ final class ImmersiveTable {
             } else {
                 double scale = 30.0 / RIVER_WIDTH;
                 start = TableProjection.seat(target.side(), opponentX + localX * scale,
-                    410 + (thickness(RIVER_WIDTH) / 2 - v.h()) * scale,
+                    outerRail(target.side()) + (thickness(RIVER_WIDTH) / 2 - v.h()) * scale,
                     (RIVER_WIDTH * RATIO / 2 - localZ) * scale);
             }
             return ImmersiveMotion.interpolate(start, end, progress, fraction, tsumogiri);
