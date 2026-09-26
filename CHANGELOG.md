@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Bring immersive rivers closer to the center and keep player plaques clear of hands and melds.
 - Keep opaque dyed tile backs intact on immersive side hands.
 - Draw one Mojang banner mark on tile backs.
 - Render Mahjong furniture and supplies in the player's head slot.
