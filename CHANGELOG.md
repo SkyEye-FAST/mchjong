@@ -32,6 +32,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Route NeoForge build tooling outside the general Maven mirror to keep dependency resolution on its official repositories.
 - Preserve client-side maid seating when vehicle following is disabled, including restored companions and assigned seat changes.
 - Align the box face and back selectors, show both only with Mahjong dye, and apply their selections together from the main screen for one dye.
 - Training opponents reserve search for passing when comparing calls, evaluate replacement alternatives at matching depth, and retain the closed-hand riichi option at both difficulty levels.
