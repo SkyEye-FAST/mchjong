@@ -9,6 +9,7 @@ import net.minecraft.client.renderer.entity.player.AvatarRenderer;
 import net.minecraft.world.entity.player.PlayerModelType;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
+import org.joml.Matrix4f;
 import org.joml.Vector3f;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
@@ -32,9 +33,11 @@ public final class HeldSupplyArm {
             || !(stack.is(MahjongContent.TILE_ITEM) || stack.is(MahjongContent.POINT_STICK))) return;
 
         var grip = stack.is(MahjongContent.TILE_ITEM)
-            ? new Vector3f(0, -TileMesh.HEIGHT * 4.5f * .4f, 0)
-            : new Vector3f((held.context().leftHand() ? 1 : -1) * FurnitureMesh.STICK_HALF_LENGTH * .75f, -.05f, 0);
-        grip.mulPosition(transformed.last().pose());
+            ? new Vector3f(.5f, .5f - TileMesh.HEIGHT * 4.5f / 2, .5f)
+            : new Vector3f(.5f + (held.context().leftHand() ? 1 : -1) * FurnitureMesh.STICK_HALF_LENGTH * .75f, .45f, .5f);
+        // The special renderer already includes the camera/equip pose and item centering.
+        // Recover its local grip before applying the unscaled arm pose, exactly once.
+        grip.mulPosition(new Matrix4f(held.basePose().pose()).invert().mul(transformed.last().pose()));
 
         var client = Minecraft.getInstance();
         var renderer = (AvatarRenderer<?>) client.getEntityRenderDispatcher().getRenderer(held.player());
@@ -44,8 +47,10 @@ public final class HeldSupplyArm {
         var armPose = new PoseStack();
         armPose.last().set(held.basePose());
         armPose.translate(grip.x(), grip.y(), grip.z());
+        // Keep the arm at player scale; only the grip follows the resource-pack item transform.
+        // A shallow pitch keeps the forearm below the grip instead of pointing it into the camera.
         armPose.mulPose(Axis.ZP.rotationDegrees(side * 20));
-        armPose.mulPose(Axis.XP.rotationDegrees(-35));
+        armPose.mulPose(Axis.XP.rotationDegrees(-15));
         armPose.translate(side * (slim ? 5.5f : 6f) / 16, -(slim ? 12.5f : 12f) / 16, 0);
         var skin = held.player().getSkin().body().texturePath();
         FirstPersonArm.render(renderer, held.player(), armPose, collector, light, skin, leftHand);

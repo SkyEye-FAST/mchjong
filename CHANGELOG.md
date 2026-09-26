@@ -24,6 +24,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Lower first-person supply grips to keep tile faces clear and restore native arms in the 26.1.2 special-item renderer.
 - Use a single Kan label for open, concealed and added kan actions and hints in all four languages.
 - Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
 - Synchronize post-0.7.2 gameplay, presets, audio and presentation with the Minecraft 26.1.2 Fabric and NeoForge APIs.
