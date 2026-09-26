@@ -135,12 +135,15 @@ inside a 4:3 viewport. Minecraft mirrors these transforms for the left hand.
 `HeldSupplyArm` attaches the player's native arm and sleeve to the lower tile edge
 or point-stick end. The grip follows the model's first-person transform and the
 same vanilla equip and swing pose as the item, while the arm retains player scale.
+The forearm slopes toward the lower screen edge, with the tile grip at its bottom
+edge so the hand leaves the printed face readable. Native hand-renderer hooks also
+let optional player-model mods supply their own arm geometry.
 Both main-hand preferences and offhand supplies use the corresponding skin arm.
 Invisible players retain the vanilla hidden-arm presentation.
 
 For a focused grip check, run `gradlew.bat :fabric:runSmokeClient -PsmokeItems=true` or
 `gradlew.bat :neoforge:runSmokeClient -PsmokeItems=true`. This reuses the item
-presentation captures and writes nine screenshots to
+presentation checks. Explicitly selected `-PsmokeScreenshots` filenames are written to
 `fabric/build/smoke/items-evidence/screenshots` or
 `neoforge/build/smoke/items-evidence/screenshots`, separately from full gameplay evidence.
 The shared item capture renders both supplies with each main-hand preference in

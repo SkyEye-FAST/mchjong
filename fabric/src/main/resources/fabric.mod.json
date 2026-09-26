@@ -34,6 +34,7 @@
     "mchjong.client.mixins.json"
   ],
   "suggests": {
+    "yes_steve_model": "*",
     "patchouli": "*",
     "ponder": ">=${ponder_version}",
     "jei": ">=${jei_version}",

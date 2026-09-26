@@ -49,6 +49,21 @@ key reopening and saved opt-out. Evidence uses `patchouli-installed-evidence`
 and `patchouli-absent-evidence`. Select `manual-zh_cn.png` or
 `manual-recommendation.png` with `-PsmokeScreenshots` for visual review.
 
+### Yes Steve Model
+
+```text
+gradlew.bat :fabric:runSmokeClient -PwithYsm=true -PsmokeItems=true --console=plain
+gradlew.bat :neoforge:runSmokeClient -PwithYsm=true -PsmokeItems=true --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeItems=true --console=plain
+```
+
+The installed profile requires YSM's native library to initialize, selects its
+built-in model, exercises the existing left/right supply grips, and mounts the
+real synchronized stool. Evidence uses `ysm-items-evidence`; the absent profile
+uses `items-evidence`. Select `07-held-glass-tile-right.png` and
+`07-ysm-seated.png` with `-PsmokeScreenshots` for visual inspection of the model's
+arms and seated pose. Native-library initialization errors fail this check.
+
 ### Maid integration
 
 ```text

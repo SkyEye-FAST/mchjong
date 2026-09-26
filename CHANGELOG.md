@@ -25,6 +25,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Lower and straighten first-person supply grips to keep tile faces clear, and add optional YSM runtime profiles for native arm rendering and seated poses.
 - Use a single Kan label for open, concealed and added kan actions and hints in all four languages.
 - Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
 - Synchronize corner meld placement and hand clearance to both compatibility profiles, plus Ponder overlay placement to 1.20.1, and advance the release branch pins.

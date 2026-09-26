@@ -37,7 +37,7 @@ public final class HeldSupplyArm {
         modelTransform.apply(model, context, transform, leftHand);
         // Mesh coordinates include ItemRenderer's centering and MahjongItemRenderer's local placement.
         var grip = stack.is(MahjongContent.TILE_ITEM)
-            ? new Vector3f(0, -TileMesh.HEIGHT * 4.5f * .4f, 0)
+            ? new Vector3f(0, -TileMesh.HEIGHT * 4.5f / 2, 0)
             : new Vector3f((leftHand ? 1 : -1) * FurnitureMesh.STICK_HALF_LENGTH * .75f, -.05f, 0);
         grip.mulPosition(transform.last().pose());
 
@@ -46,8 +46,9 @@ public final class HeldSupplyArm {
         pose.pushPose();
         pose.translate(grip.x(), grip.y(), grip.z());
         // Keep the arm at player scale; only the grip follows the resource-pack item transform.
+        // A shallow pitch keeps the forearm below the grip instead of pointing it into the camera.
         pose.mulPose(Axis.ZP.rotationDegrees(side * 20));
-        pose.mulPose(Axis.XP.rotationDegrees(-35));
+        pose.mulPose(Axis.XP.rotationDegrees(-15));
         pose.translate(side * (slim ? 5.5f : 6f) / 16, -(slim ? 12.5f : 12f) / 16, 0);
         if (leftHand) renderer.renderLeftHand(pose, buffers, light, player);
         else renderer.renderRightHand(pose, buffers, light, player);
