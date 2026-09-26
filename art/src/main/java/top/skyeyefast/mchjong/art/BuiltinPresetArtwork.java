@@ -7,24 +7,24 @@ import java.awt.image.BufferedImage;
 
 /** Deterministic artwork for the bundled cosmetic presets. */
 final class BuiltinPresetArtwork {
-    private static final String[] MOJANG_BANNER = {
-        "............#...........#............",
-        "............##.........##............",
-        "...####.....##.........##.....####...",
-        ".#######..#.##.........##.#..#######.",
-        "############.............############",
-        "###############.......###############",
-        "#####......####.......####......#####",
-        "####........###.......###........####",
-        "####.........###.....###.........####",
-        "####..........##.....##..........####",
-        "####..........#.......#..........####",
-        "####.............................####",
-        "#####...........................#####",
-        "######.........................######",
-        "########......##.....##......########",
-        ".###############.....###############.",
-        "...###########.........###########..."
+    private static final String[] MOJANG_BANNER_MARK = {
+        "............#.....",
+        "............##....",
+        "...####.....##....",
+        ".#######..#.##....",
+        "############......",
+        "###############...",
+        "#####......####...",
+        "####........###...",
+        "####.........###..",
+        "####..........##..",
+        "####..........#...",
+        "####..............",
+        "#####.............",
+        "######............",
+        "########......##..",
+        ".###############..",
+        "...###########...."
     };
     private BuiltinPresetArtwork() {}
 
@@ -41,11 +41,11 @@ final class BuiltinPresetArtwork {
                 fill(g, 82, 238, 24, 24, ink);
                 fill(g, 150, 238, 24, 24, ink);
             } else if (name.equals("mojang")) {
-                // The native banner emblem has a wide, open center and short paired tips.
-                for (int row = 0; row < MOJANG_BANNER.length; row++) {
-                    String pixels = MOJANG_BANNER[row];
+                // The banner texture stores the front and mirrored back side by side; draw one mark.
+                for (int row = 0; row < MOJANG_BANNER_MARK.length; row++) {
+                    String pixels = MOJANG_BANNER_MARK[row];
                     for (int col = 0; col < pixels.length(); col++)
-                        if (pixels.charAt(col) == '#') fill(g, 35 + col * 5, 149 + row * 5, 5, 5, 0xffeee5d3);
+                        if (pixels.charAt(col) == '#') fill(g, 64 + col * 8, 124 + row * 8, 8, 8, 0xffeee5d3);
                 }
             } else throw new IllegalArgumentException(name);
         } finally { g.dispose(); }
