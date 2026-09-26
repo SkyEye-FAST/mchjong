@@ -203,6 +203,9 @@ next patch Snapshot, for example `0.4.0` to `0.4.1-SNAPSHOT`. That new Snapshot 
 again only the default development target; reassess the SemVer level at the next
 release request.
 
+Split work into complete batches by concern and commit each batch separately.
+Do not combine unrelated features, fixes or contributor-policy changes in one
+commit. Keep each batch's implementation, relevant tests and documentation together.
 Use signed Git commits for each complete batch and push normally. Every commit
 must follow the Conventional Commits specification (`<type>(<scope>): <description>`
 or `<type>: <description>`), using standard types (`feat`, `fix`, `docs`, `style`,
