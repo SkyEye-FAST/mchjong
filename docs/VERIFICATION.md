@@ -89,7 +89,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:forge:runSmokeClient
 | `-PsmokeVisibility=true` | Four room policies, private packets and unmounted spectator permissions; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
 | `-PsmokeItems=true` | Native held/dropped supplies and exact inventory changes; `items-evidence` |
-| `-PsmokePalette=true` | Material, dye and furniture presentation; `palette-evidence` |
+| `-PsmokePalette=true` | Material, dye, furniture and player head-slot presentation; `palette-evidence` |
 
 ## Test ownership and acceptance
 
