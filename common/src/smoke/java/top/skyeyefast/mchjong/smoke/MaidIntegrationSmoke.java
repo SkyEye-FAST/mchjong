@@ -124,7 +124,8 @@ final class MaidIntegrationSmoke {
             if (currentStep == 1 || currentStep == 5) {
                 if (!(maid.getVehicle() instanceof SeatEntity seat)) return false;
                 require(game.entityBot(maidId) && game.seatOf(maidId) == seat.seat(), "Maid mount and game membership differ");
-                require(!game.view(null).seats().get(seat.seat()).name().isBlank(), "Maid model name lost");
+                require(game.view(null).seats().get(seat.seat()).name()
+                    .equals("model.touhou_little_maid.hakurei_reimu.name"), "Maid model translation key was lost");
                 if (currentStep == 5) {
                     act(table, owner, Action.Type.FILL_BOTS);
                     act(table, owner, Action.Type.BEGIN_SEATING);

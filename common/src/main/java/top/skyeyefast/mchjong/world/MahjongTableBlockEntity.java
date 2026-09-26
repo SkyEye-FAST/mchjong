@@ -5,6 +5,7 @@ import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.contents.TranslatableContents;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
@@ -426,9 +427,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             || !level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(0.1), e -> !e.isRemoved() && e.isVehicle()).isEmpty()) return false;
         SeatEntity mount = mount(companion, seat);
         if (mount == null) return false;
+        Component name = companion.getName();
+        String displayName = name.getContents() instanceof TranslatableContents translated
+            ? translated.getKey() : name.getString();
         if (!game.entityBot(companion.getUUID())
             && (!(companion.getOwner() instanceof ServerPlayer owner)
-                || !game.joinEntityBot(owner.getUUID(), companion.getUUID(), companion.getName().getString(), seat))) {
+                || !game.joinEntityBot(owner.getUUID(), companion.getUUID(), displayName, seat))) {
             companion.stopRiding();
             mount.discard();
             return false;

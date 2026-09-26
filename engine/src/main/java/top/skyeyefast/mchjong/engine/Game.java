@@ -110,7 +110,7 @@ public final class Game {
         setBot(seat, BotDifficulty.EASY);
         var bot = players[seat];
         bot.id = id;
-        bot.name = name.substring(0, Math.min(32, name.length()));
+        bot.name = name.substring(0, Math.min(256, name.length()));
         bot.entityBot = true;
         bot.presence = PlayerPresence.SEATED;
         for (var player : players) player.ready = player.bot;
