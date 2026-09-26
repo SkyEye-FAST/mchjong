@@ -1,0 +1,21 @@
+{
+  "name": "manual.mchjong.entry.tiles.name",
+  "category": "mchjong:equipment",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 1,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.tiles.page_2"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:mahjong_box",
+      "recipe2": "mchjong:mahjong_dye"
+    }
+  ]
+}

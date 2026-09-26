@@ -105,6 +105,7 @@ public final class TableClientSmoke {
                 client.options.fov().set(70);
                 client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 TableSettings.get().reset();
+                TableSettings.get().recommendPatchouli = Boolean.getBoolean("mchjong.smoke.patchouliOnly");
                 client.resizeGui();
                 client.createWorldOpenFlows().createFreshLevel("table-smoke-" + System.currentTimeMillis(),
                     new LevelSettings("MChjong isolated smoke", GameType.CREATIVE,
@@ -115,6 +116,7 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (Boolean.getBoolean("mchjong.smoke.patchouliOnly")) { step = 38; return; }
                 if (manualOnly) { step = 19; entered = ticks; return; }
                 if (browserOnly) { step = 25; entered = ticks; return; }
                 UUID id = client.player.getUUID();
@@ -446,6 +448,10 @@ public final class TableClientSmoke {
             } else if (step == 34 && roomSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Four-language lobby controls at normal and small sizes; direct room navigation and proposals; server settlement countdown, automatic final standings and retained lobby; leave and dissolve packets passed.\n");
                 LOG.info("MCHJONG_ROOM_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 38 && ManualSmoke.tick(client, output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Patchouli manual: selected installed/absent profile, entry rendering and recommendation controls passed.\n");
+                LOG.info("MCHJONG_PATCHOULI_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

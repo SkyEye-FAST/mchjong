@@ -28,6 +28,15 @@ Optional APIs remain compile-only. MChjong packages its own adapters and shared
 engine; optional mods are installed separately. Current integration scope is
 listed in the [README compatibility tables](../README.md#compatibility).
 
+### Patchouli handbook
+
+The 26.1.2 Fabric and NeoForge profiles use Patchouli 26.1-94, supplied to
+development runs with `-PwithPatchouli=true`. The public client API opens
+`mchjong:guide`; book definitions and localized content are shared resources.
+The dependency is compile-only and is not bundled. See the
+[handbook controls](PLAYING.md#in-game-handbook) and
+[focused checks](VERIFICATION.md#patchouli-handbook).
+
 ## Maid test builds
 
 The following upstream prereleases were tested together with the existing maid

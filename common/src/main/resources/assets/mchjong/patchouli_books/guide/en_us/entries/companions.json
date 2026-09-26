@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.companions.name",
+  "category": "mchjong:reference",
+  "icon": "mchjong:mahjong_stool",
+  "sortnum": 12,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.companions.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.companions.page_2"
+    }
+  ]
+}

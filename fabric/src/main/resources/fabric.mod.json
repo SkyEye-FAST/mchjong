@@ -35,6 +35,7 @@
     "mchjong.fabric.mixins.json"
   ],
   "suggests": {
+    "patchouli": "*",
     "jei": ">=${jei_version}",
     "roughlyenoughitems": ">=${rei_version}",
     "touhou_little_maid": ">=${orihime_version}"

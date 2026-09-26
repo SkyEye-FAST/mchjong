@@ -20,6 +20,7 @@ options. See [Rules and presets](docs/RULES.md) for details.
 - Private replay archives, step-by-step playback and Tenhou JSON export
 - English, Japanese, Simplified Chinese and Traditional Chinese localization
 - Resource-pack tile designs and recorded voices
+- Optional Patchouli handbook with equipment, controls, riichi basics and replay guidance
 
 ## Installation
 
@@ -49,6 +50,7 @@ Optional integrations are scoped to the loader named in each cell:
 | EMI supply recipes | Fabric, NeoForge | Fabric, Forge | — |
 | REI supply recipes | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
+| Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 
@@ -82,6 +84,7 @@ preset in the lobby.
 
 Follow the [Playing guide](docs/PLAYING.md) for controls and table operation, and
 [Survival equipment and recipes](docs/SURVIVAL.md) for crafting and setup.
+With Patchouli installed, press **H** in the world to open the Mahjong Handbook.
 
 ## Documentation
 

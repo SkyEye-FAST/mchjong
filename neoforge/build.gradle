@@ -56,6 +56,10 @@ neoForge {
 def maidDependency = "touhoulittlemaid.snapshot:${touhou_little_maid_version}:${touhou_little_maid_snapshot}@jar"
 configurations { maidSnapshot }
 dependencies {
+    compileOnly "vazkii.patchouli:patchouli-neoforge:${patchouli_version}"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        runtimeOnly "vazkii.patchouli:patchouli-neoforge:${patchouli_version}"
+    }
     compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly maidDependency
     maidSnapshot maidDependency
@@ -93,6 +97,7 @@ processResources {
         version: project.version,
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
+        patchouli_version: rootProject.patchouli_version,
         jei_version: rootProject.jei_version,
         rei_version: rootProject.rei_version,
         touhou_little_maid_version: rootProject.touhou_little_maid_version
@@ -124,6 +129,8 @@ def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').t
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
 def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
+    smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -144,6 +151,8 @@ neoForge {
             gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
+            systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()

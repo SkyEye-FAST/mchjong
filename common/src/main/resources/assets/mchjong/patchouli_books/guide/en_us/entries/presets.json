@@ -1,0 +1,21 @@
+{
+  "name": "manual.mchjong.entry.presets.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:red_dora_dye",
+  "sortnum": 9,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.presets.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.presets.page_2"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:red_dora_dye",
+      "recipe2": "mchjong:undo_dye"
+    }
+  ]
+}

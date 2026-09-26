@@ -186,7 +186,7 @@ class AssetContractTest {
         assertArrayEquals(sticks.getRGB(0, 32, 384, 32, null, 0, 384), hudSticks.getRGB(0, 32, 384, 32, null, 0, 384));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
                 "plain.png", "cloth_pattern.png", "riichi_stick.png", "stick_icons.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
-                "creeper.png", "mojang.png"));
+                "mahjong_manual.png", "creeper.png", "mojang.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");

@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.replays.name",
+  "category": "mchjong:reference",
+  "icon": "minecraft:book",
+  "sortnum": 10,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.replays.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.replays.page_2"
+    }
+  ]
+}

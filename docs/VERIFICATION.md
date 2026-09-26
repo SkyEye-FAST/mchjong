@@ -36,6 +36,20 @@ the loaded recipes. Viewer checks query catalogue order, denominations, flower/r
 back dyes, name/component-preserving upgrades and native container exclusions,
 including a recipe page and a server-backed case at 320 × 240.
 
+### Patchouli handbook
+
+```text
+gradlew.bat :fabric:runSmokeClient -PwithPatchouli=true -PsmokePatchouli=true --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokePatchouli=true --console=plain
+```
+
+The installed profile checks the handbook key, book item, chapter and entry
+loading, recipes, resource reload and Latin/CJK page rendering. The absent profile
+checks the automatic recommendation, link confirmation, session dismissal,
+key reopening and saved opt-out. Evidence uses `patchouli-installed-evidence`
+and `patchouli-absent-evidence`. Select `manual-zh_cn.png` or
+`manual-recommendation.png` with `-PsmokeScreenshots` for visual review.
+
 ### Maid integration
 
 ```text

@@ -12,6 +12,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
+        boolean patchouli = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("patchouli");
+        Runnable openManual = patchouli ? top.skyeyefast.mchjong.compat.patchouli.PatchouliBook::open : () -> {};
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
             top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
         top.skyeyefast.mchjong.fabric.mixin.SpecialModelRenderersAccessor.mchjong$idMapper().put(
@@ -22,11 +24,13 @@ public final class MchjongClient implements ClientModInitializer {
                 (net.minecraft.server.packs.resources.ResourceManagerReloadListener)
                     top.skyeyefast.mchjong.client.TileFacePresets::reload);
         net.minecraft.client.KeyMapping.Category.register(top.skyeyefast.mchjong.client.TableKeys.CATEGORY.id());
+        net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper.registerKeyMapping(top.skyeyefast.mchjong.compat.patchouli.ManualClient.OPEN);
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(net.fabricmc.fabric.api.client.keymapping.v1.KeyMappingHelper::registerKeyMapping);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.BOX_MENU, top.skyeyefast.mchjong.client.MahjongBoxScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
+            top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(patchouli, openManual);
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();
