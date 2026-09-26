@@ -162,6 +162,15 @@ class AssetContractTest {
             assertEquals(384, image.getHeight());
             assertTrue(Arrays.stream(image.getRGB(0, 0, 256, 384, null, 0, 256)).anyMatch(pixel -> pixel != 0));
         }
+        var mojang = ImageIO.read(resources.resolve("assets/mchjong/textures/preset/back/mojang.png").toFile());
+        int left = mojang.getWidth(), right = -1;
+        for (int y = 0; y < mojang.getHeight(); y++)
+            for (int x = 0; x < mojang.getWidth(); x++)
+                if ((mojang.getRGB(x, y) >>> 24) != 0) {
+                    left = Math.min(left, x);
+                    right = Math.max(right, x);
+                }
+        assertTrue(right - left < 150, "One banner mark must fit on the tile back");
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var cloth = ImageIO.read(resources.resolve("assets/mchjong/textures/furniture/cloth_pattern.png").toFile());
         assertTrue(Arrays.stream(cloth.getRGB(0, 0, cloth.getWidth(), cloth.getHeight(), null, 0, cloth.getWidth())).allMatch(pixel -> pixel == 0));

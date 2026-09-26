@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Draw one Mojang banner mark on tile backs.
+
 ## [0.8.0] - 2026-09-26
 
 ### Added
