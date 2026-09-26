@@ -18,6 +18,12 @@ final class SurvivalRecipes {
     private SurvivalRecipes() {}
 
     static void generate(GenerateData output) throws IOException {
+        output.write("data/mchjong/recipe/mahjong_manual.json", Map.of(
+            "type", "minecraft:crafting_shapeless", "category", "misc",
+            "result", Map.of("id", "patchouli:guide_book", "count", 1, "components", Map.of("patchouli:book", "mchjong:guide")),
+            "ingredients", List.of(item("book"), item("green_dye"), "mchjong:mahjong_tile"),
+            "fabric:load_conditions", List.of(Map.of("condition", "fabric:all_mods_loaded", "values", List.of("patchouli"))),
+            "neoforge:conditions", List.of(Map.of("type", "neoforge:mod_loaded", "modid", "patchouli"))));
         output.write("data/mchjong/recipe/dice.json", Map.of("type", "minecraft:crafting_shapeless",
             "category", "misc", "ingredients", List.of(item("bone_meal"), item("white_dye"), item("black_dye")),
             "result", stack("dice", 2, Map.of())));

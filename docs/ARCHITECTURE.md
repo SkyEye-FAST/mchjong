@@ -109,12 +109,12 @@ maid's vehicle-follow preference, preserving the server-authorized seated pose.
 
 ## Optional integrations
 
-`compat/patchouli` separates the presence-independent handbook key and
-recommendation screen from the optional public API call. Supported loader client
-entry points check mod presence before referencing the API adapter. Shared
+`compat/patchouli` provides the installation recommendation in chat. Supported
+loader client entry points check mod presence before offering the recommendation. Shared
 Patchouli resources define `mchjong:guide`, using the ordinary language files
 for chapter, entry and page text. The handbook reads client resources and has no
-gameplay authority.
+gameplay authority. The presence-guarded server adapter gives each player a starter
+book once, recording recipient UUIDs in overworld saved data.
 
 `compat/recipes` creates executable display examples from the loaded recipe
 manager. Every output and cycling input is checked through the source recipe's

@@ -84,7 +84,7 @@ preset in the lobby.
 
 Follow the [Playing guide](docs/PLAYING.md) for controls and table operation, and
 [Survival equipment and recipes](docs/SURVIVAL.md) for crafting and setup.
-With Patchouli installed, press **H** in the world to open the Mahjong Handbook.
+With Patchouli installed, use the Mahjong Handbook item to read it in game.
 
 ## Documentation
 

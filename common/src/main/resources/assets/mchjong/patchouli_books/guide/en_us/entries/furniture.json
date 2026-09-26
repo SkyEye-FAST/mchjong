@@ -19,7 +19,8 @@
     },
     {
       "type": "patchouli:crafting",
-      "recipe": "mchjong:table_cloth_green"
+      "recipe": "mchjong:table_cloth_green",
+      "recipe2": "mchjong:mahjong_manual"
     }
   ]
 }
