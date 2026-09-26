@@ -97,6 +97,7 @@ sourceSets.main {
 }
 
 processResources {
+    exclude 'data/mchjong/recipe/mahjong_manual.json'
     dependsOn ':art:generateAssets', ':art:generateData'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version, jei_version: jei_version]
     inputs.properties properties

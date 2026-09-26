@@ -11,7 +11,6 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 @EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT)
 public final class MchjongNeoForgeClient {
     private static final boolean PATCHOULI = net.neoforged.fml.ModList.get().isLoaded("patchouli");
-    private static final Runnable OPEN_MANUAL = PATCHOULI ? top.skyeyefast.mchjong.compat.patchouli.PatchouliBook::open : () -> {};
     private MchjongNeoForgeClient() {}
     @SubscribeEvent public static void models(net.neoforged.neoforge.client.event.ModelEvent.RegisterAdditional event) {
         event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
@@ -21,7 +20,6 @@ public final class MchjongNeoForgeClient {
             top.skyeyefast.mchjong.client.TileFacePresets::reload);
     }
     @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
-        event.register(top.skyeyefast.mchjong.compat.patchouli.ManualClient.OPEN);
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
     }
     @SubscribeEvent public static void setup(net.neoforged.fml.event.lifecycle.FMLClientSetupEvent event) {
@@ -48,7 +46,7 @@ public final class MchjongNeoForgeClient {
         }, top.skyeyefast.mchjong.client.MahjongItemRenderer.items());
     }
     @SubscribeEvent public static void tick(net.neoforged.neoforge.client.event.ClientTickEvent.Post event) {
-        top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(PATCHOULI, OPEN_MANUAL);
+        top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(PATCHOULI);
         top.skyeyefast.mchjong.client.TableAudio.tick();
         top.skyeyefast.mchjong.client.SeatedCamera.tick();
         top.skyeyefast.mchjong.client.ClientReplays.tick();

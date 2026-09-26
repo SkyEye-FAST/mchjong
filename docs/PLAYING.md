@@ -9,16 +9,17 @@ MChjong features three- and four-player riichi mahjong. See
 
 ### In-game handbook
 
-Install the matching optional Patchouli build and press **H** while in the world
-to open the Mahjong Handbook. Change the binding under Controls → Key Binds →
-Mahjong table. The handbook includes equipment recipes, seating, controls, riichi
+Install the matching optional Patchouli build and use the Mahjong Handbook item
+to open it. The handbook includes equipment recipes, seating, controls, riichi
 basics, settlement, replays and customization in all four supported languages.
-Its book item is also available in the MChjong creative tab.
+Each player receives one on first joining a world with Patchouli installed on the
+server. Craft additional copies with a book, green dye and any mahjong tile, or
+take one from the MChjong creative tab.
 
-On supported loaders, a client without Patchouli offers an installation recommendation
-after entering a world. **Continue playing** dismisses it for this game session;
-**Don't remind me again** saves the preference locally. The handbook key can
-reopen the recommendation. Download opens Minecraft's link confirmation.
+On supported loaders, a client without Patchouli shows a chat recommendation
+once per game session after entering a world, with a clickable download link.
+Set `recommendPatchouli = false` in
+`config/mchjong-client.toml` to disable the automatic reminder.
 See [Compatibility](COMPATIBILITY.md) for matching builds.
 
 ### Preparing the table

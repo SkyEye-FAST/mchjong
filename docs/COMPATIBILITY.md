@@ -44,8 +44,9 @@ profile, so configuring Forge does not prevent an EMI run on another loader.
 ### Patchouli handbook
 
 The 1.21.1 Fabric and NeoForge profiles use Patchouli 1.21.1-93, supplied to
-development runs with `-PwithPatchouli=true`. The public client API opens
-`mchjong:guide`; book definitions and localized content are shared resources.
+development runs with `-PwithPatchouli=true`. The book item opens `mchjong:guide`;
+book definitions and localized content are shared resources. Install Patchouli
+on the server as well as the client for crafting and the initial book grant.
 The dependency is compile-only and is not bundled. See the
 [handbook controls](PLAYING.md#in-game-handbook) and
 [focused checks](VERIFICATION.md#patchouli-handbook).

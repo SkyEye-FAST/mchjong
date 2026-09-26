@@ -13,8 +13,6 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public final class MchjongClient implements ClientModInitializer {
     @Override public void onInitializeClient() {
         boolean patchouli = net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("patchouli");
-        Runnable openManual = patchouli ? top.skyeyefast.mchjong.compat.patchouli.PatchouliBook::open : () -> {};
-        net.fabricmc.fabric.api.client.keybinding.v1.KeyBindingHelper.registerKeyBinding(top.skyeyefast.mchjong.compat.patchouli.ManualClient.OPEN);
         if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
             top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
         net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
@@ -37,7 +35,7 @@ public final class MchjongClient implements ClientModInitializer {
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.TABLE_MENU, top.skyeyefast.mchjong.client.MahjongTableScreen::new);
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
-            top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(patchouli, openManual);
+            top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(patchouli);
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();

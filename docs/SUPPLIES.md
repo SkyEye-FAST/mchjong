@@ -28,6 +28,12 @@ and `mchjong:incomplete_mahjong_box` for the [workshop](CREATE.md).
 
 ## Components and variants
 
+The optional shapeless recipe `mchjong:mahjong_manual` produces
+`patchouli:guide_book` bound to `mchjong:guide`. Loader
+resource conditions enable it only when Patchouli is installed.
+The server stores starter-book recipient UUIDs in `mchjong_manual_gifts` saved
+data, shared across dimensions and retained across player deaths and reconnects.
+
 | Component | Value | Used by |
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
