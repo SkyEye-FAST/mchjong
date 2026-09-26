@@ -23,6 +23,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Use a single Kan label for open, concealed and added kan actions and hints in all four languages.
 - Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
 - Synchronize corner meld placement and hand clearance to both compatibility profiles, plus Ponder overlay placement to 1.20.1, and advance the release branch pins.
 - Synchronize post-0.7.2 changes across the Minecraft 1.20.1, 1.21.1 and 26.1.2 loader profiles, with signed branch ancestry and reviewed release pins.
