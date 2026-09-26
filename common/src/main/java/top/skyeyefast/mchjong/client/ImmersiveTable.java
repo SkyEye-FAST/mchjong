@@ -1,6 +1,8 @@
 package top.skyeyefast.mchjong.client;
 
 import com.mojang.blaze3d.pipeline.RenderPipeline;
+import com.mojang.blaze3d.pipeline.DepthStencilState;
+import com.mojang.blaze3d.platform.CompareOp;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -23,6 +25,9 @@ import top.skyeyefast.mchjong.mixin.GuiGraphicsExtractorAccessor;
 
 /** Recipient-safe miniature 3D scene, projected into the fixed immersive canvas. */
 final class ImmersiveTable {
+    private static final RenderPipeline GUI_DEPTH = RenderPipeline.builder(RenderPipelines.GUI_TEXTURED_SNIPPET)
+        .withLocation("mchjong/gui_tile_depth")
+        .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true)).build();
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 140;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
@@ -31,6 +36,7 @@ final class ImmersiveTable {
     private int bodyColor;
     private Identifier backTexture;
     private Identifier backPattern;
+    private boolean depthTest;
     private record Vertex(double x, double z, double h) {}
     private record Face(Vertex[] vertices, Identifier texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
@@ -40,12 +46,13 @@ final class ImmersiveTable {
         }
     }
     private record ProjectedFace(RenderPipeline pipeline, TextureSetup textureSetup, Matrix3x2f pose,
-                                 TableProjection.Point[] points, float u0, float v0, float u1, float v1,
+                                 TableProjection.Point[] points, float[] depths, float u0, float v0, float u1, float v1,
                                  int color, ScreenRectangle bounds) implements GuiElementRenderState {
         @Override public void buildVertices(VertexConsumer out) {
             for (int i = 3; i >= 0; i--) {
                 var p = points[i];
-                out.addVertexWith2DPose(pose, p.x(), p.y())
+                out.addVertex(pose.m00() * p.x() + pose.m10() * p.y() + pose.m20(),
+                    pose.m01() * p.x() + pose.m11() * p.y() + pose.m21(), depths[i])
                     .setUv(i == 0 || i == 3 ? u0 : u1, i < 2 ? v0 : v1)
                     .setColor(color);
             }
@@ -106,6 +113,8 @@ final class ImmersiveTable {
         bodyColor = TileMesh.bodyColor(material, dye);
         backTexture = TileRenderTypes.backTexture(material, dye);
         backPattern = TileBackPresets.texture(backPreset);
+        // Side hands overlap in projection; opaque shells need per-pixel occlusion.
+        depthTest = material != TileMaterial.GLASS;
         points.clear(); widths.clear(); rivers.clear(); faces.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
@@ -134,17 +143,23 @@ final class ImmersiveTable {
     }
 
     private void paint(GuiGraphicsExtractor graphics) {
-        paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth);
+        paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth, depthTest);
     }
 
     private void paint(GuiGraphicsExtractor graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
-                       java.util.function.ToDoubleFunction<Face> depth) {
+                       java.util.function.ToDoubleFunction<Face> depth, boolean useDepth) {
         faces.sort(Comparator.comparingInt((Face face) -> face.contact() ? 0 : 1).thenComparingDouble(depth));
         for (var face : faces) {
             var points = new TableProjection.Point[4];
+            var depths = new float[4];
             float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
             for (int i = 0; i < 4; i++) {
                 points[i] = projection.apply(face.vertices()[i]);
+                if (useDepth) {
+                    var vertex = face.vertices()[i];
+                    // Perspective scale is reciprocal camera distance and interpolates across the face.
+                    depths[i] = (float) (-100 + 100 * (TableProjection.scale(vertex.z(), vertex.h()) - 1));
+                }
                 minX = Math.min(minX, points[i].x()); minY = Math.min(minY, points[i].y());
                 maxX = Math.max(maxX, points[i].x()); maxY = Math.max(maxY, points[i].y());
             }
@@ -155,7 +170,7 @@ final class ImmersiveTable {
             var bounds = new ScreenRectangle(left, top, Math.max(1, (int) Math.ceil(maxX) - left),
                 Math.max(1, (int) Math.ceil(maxY) - top)).transformMaxBounds(pose);
             ((GuiGraphicsExtractorAccessor) (Object) graphics).mchjong$guiRenderState().addGuiElement(
-                new ProjectedFace(RenderPipelines.GUI_TEXTURED, setup, pose, points, face.u0(), face.v0(),
+                new ProjectedFace(useDepth ? GUI_DEPTH : RenderPipelines.GUI_TEXTURED, setup, pose, points, depths, face.u0(), face.v0(),
                     face.u1(), face.v1(), face.color(), bounds));
         }
         if (!faces.isEmpty()) graphics.nextStratum();
@@ -354,7 +369,7 @@ final class ImmersiveTable {
                 depth += .694 * world.z() + .72 * world.h();
             }
             return depth / 4;
-        });
+        }, false);
     }
 
     private void box(int side, double x, double z, double w, double d, double bottom, double top, int body, int cap) {
