@@ -157,8 +157,10 @@ public final class TableClientSmoke {
                         MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
                         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
                         table.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.engrave(
-                            top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(top.skyeyefast.mchjong.item.TileMaterial.GLASS,
-                                net.minecraft.world.item.DyeColor.BLUE), top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
+                            top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
+                                seatingOnly ? top.skyeyefast.mchjong.item.TileMaterial.QUARTZ : top.skyeyefast.mchjong.item.TileMaterial.GLASS,
+                                seatingOnly ? net.minecraft.world.item.DyeColor.PINK : net.minecraft.world.item.DyeColor.BLUE),
+                            top.skyeyefast.mchjong.item.TileFacePreset.KANTO));
                         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
                         top.skyeyefast.mchjong.item.MahjongComponents.color(cloth, net.minecraft.world.item.DyeColor.CYAN);
                         table.useEquipment(player, cloth);
@@ -200,6 +202,12 @@ public final class TableClientSmoke {
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
                 require(((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
+                if (seatingOnly) {
+                    var equipment = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment();
+                    require(equipment.material() == top.skyeyefast.mchjong.item.TileMaterial.QUARTZ
+                        && equipment.back() == net.minecraft.world.item.DyeColor.PINK,
+                        "Immersive fixture did not synchronize its opaque dyed tiles");
+                }
                 if (manualOnly) { step = 19; entered = ticks; return; }
                 if (paletteOnly) {
                     client.setScreen(new MaterialPaletteSmoke());
