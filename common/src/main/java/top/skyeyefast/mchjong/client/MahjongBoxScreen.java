@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Dedicated compartments and server-authorized face printing over native inventory synchronization. */
 public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMenu> {
+    private boolean openingPreset;
     private MahjongButton dyeBack;
     private MahjongButton presetChoice;
     private MahjongButton backChoice;
@@ -28,15 +29,25 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         super.init();
         topPos = Math.min(topPos, height - imageHeight - 24);
         presetChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
-            minecraft.setScreen(new MahjongBoxFaceScreen(this)))
+            openPreset(new MahjongBoxFaceScreen(this)))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build());
         dyeBack = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.dye_back"), ignored ->
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build().primary());
         backChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
-            minecraft.setScreen(new MahjongBoxBackScreen(this)))
+            openPreset(new MahjongBoxBackScreen(this)))
             .bounds(leftPos + 196, topPos + 160, 94, 20).build());
         updateActions();
+    }
+
+    private void openPreset(net.minecraft.client.gui.screens.Screen screen) {
+        openingPreset = true;
+        try { minecraft.setScreen(screen); }
+        finally { openingPreset = false; }
+    }
+
+    @Override public void removed() {
+        if (!openingPreset) super.removed();
     }
 
     @Override protected void containerTick() {

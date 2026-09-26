@@ -270,6 +270,8 @@ secondary screens. Each successful change consumes one ordinary Mahjong dye;
 creative Mahjong dye remains in the slot. Show four sample tiles beside each
 face preset. Keep action visibility synchronized with the actual slot contents
 and clear focus when its control disappears.
+Preset pages retain the same authorized box menu and return to its inventory
+without reopening it; leaving the box ends the native menu lifecycle.
 Vanilla dyes in that slot recolor every stored tile back to one of the
 sixteen dye colors through the explicit Dye backs action, while Undo dye removes tile-back dyeing through the Remove dye action; Mahjong dye remains the reagent for
 face printing. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot

@@ -9,16 +9,14 @@ import top.skyeyefast.mchjong.network.BoxPrintPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 
 /** Shows several sample tiles for each face preset before printing the box contents. */
-public final class MahjongBoxFaceScreen extends Screen {
+public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
     private static final int[] SAMPLES = {
         Tile.id(0, 0, false), Tile.id(13, 0, false), Tile.id(26, 0, false), Tile.id(Tile.EAST, 0, false)
     };
-    private final MahjongBoxScreen parent;
     private int page;
 
     public MahjongBoxFaceScreen(MahjongBoxScreen parent) {
-        super(Component.translatable("box.mchjong.preset"));
-        this.parent = parent;
+        super(Component.translatable("box.mchjong.preset"), parent);
     }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
@@ -69,5 +67,4 @@ public final class MahjongBoxFaceScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    @Override public void onClose() { minecraft.setScreen(parent); }
 }

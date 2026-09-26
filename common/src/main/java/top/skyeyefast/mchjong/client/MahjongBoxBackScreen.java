@@ -8,13 +8,11 @@ import top.skyeyefast.mchjong.network.BoxBackPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 
 /** Selects the decorative back for the physical tiles stored in the open box. */
-public final class MahjongBoxBackScreen extends Screen {
-    private final MahjongBoxScreen parent;
+public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
     private int page;
 
     public MahjongBoxBackScreen(MahjongBoxScreen parent) {
-        super(Component.translatable("box.mchjong.back_title"));
-        this.parent = parent;
+        super(Component.translatable("box.mchjong.back_title"), parent);
     }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
@@ -65,5 +63,4 @@ public final class MahjongBoxBackScreen extends Screen {
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
-    @Override public void onClose() { minecraft.setScreen(parent); }
 }
