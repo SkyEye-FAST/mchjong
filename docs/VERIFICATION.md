@@ -378,6 +378,22 @@ client smoke is counted as fresh verification.
 
 ## Cross-version acceptance
 
+### Post-0.7.2 synchronization (2026-09-26)
+
+Minecraft 1.21.1 passed `buildAll --warning-mode fail` and focused
+`smokeInterface`, `smokeSettlement` and `smokeVisibility` runs on Fabric and
+NeoForge. Forge passed `smokeBootstrap`; the shared preset-menu fix also passed
+Fabric tests and Forge compilation. NeoForge passed the installed Create/Ponder
+profile with `-PwithCreate=true -PwithPonder=true -PsmokePonder=true
+-PrecipeBrowser=rei`. Fresh PASS markers, preset and settlement screens, immersive
+hands, the animated REI workshop page, and normal/small Ponder screenshots were
+inspected. Logs use `build/compat-*.log`; captures are under the loader's
+`build/smoke/{interface,settlement,visibility,rei}-evidence` directories.
+
+The compatibility branches record their own fresh checks below their
+post-0.7.2 synchronization headings. Quilt continues to use the corresponding
+Fabric artifact; its runtime records remain scoped to the earlier dated runs.
+
 The 2026-09-24 synchronization retains `main` on Minecraft 1.21.1 / Java 21.
 Its documentation and formatting changes passed Spotless and local link checks.
 The compatibility branches record their own exact revisions and evidence:

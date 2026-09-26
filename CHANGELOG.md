@@ -21,6 +21,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Synchronize post-0.7.2 changes across the Minecraft 1.20.1, 1.21.1 and 26.1.2 loader profiles, with signed branch ancestry and reviewed release pins.
 - Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
 - Explicit bot timings include decision-thread CPU time alongside wall-clock latency, with focused cache/search regressions, accepted paired-seed outcomes and diagnostic experiments recorded in the verification guide.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
