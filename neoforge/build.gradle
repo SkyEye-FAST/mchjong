@@ -19,12 +19,9 @@ repositories {
         filter { includeGroup 'touhoulittlemaid.snapshot' }
     }
     exclusiveContent {
-        forRepository { maven { name = 'NeoForgeMain'; url = rootProject.neo_maven_url } }
-        filter { includeModule 'net.neoforged', 'neoforge' }
-    }
-    exclusiveContent {
         forRepository { maven { name = 'NeoForgedReleases'; url = 'https://maven.neoforged.net/releases' } }
         filter {
+            includeModule 'net.neoforged', 'neoforge'
             includeModule 'net.neoforged', 'testframework'
         }
     }

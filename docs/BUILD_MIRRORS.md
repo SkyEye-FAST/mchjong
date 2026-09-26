@@ -1,31 +1,24 @@
-# Build download mirrors
+# Build download sources
 
 The loader subprojects use the following download sources:
 
 | Downloads | Source | Configuration |
 | --- | --- | --- |
-| General Maven dependencies and Gradle plugins | Aliyun | Root `build.gradle` and `settings.gradle` |
-| Fabric Loom plugin, Loader and Fabric API | Hanbings Fabric Maven mirror | `settings.gradle` and `loom_fabric_repository` |
-| Fabric client assets | BMCLAPI | `loom_resources_base` |
+| General Maven dependencies and Gradle plugins | Maven Central and Gradle Plugin Portal | Root `build.gradle` and `settings.gradle` |
+| Fabric Loom plugin, Loader and Fabric API | Official Fabric Maven | `settings.gradle` and Loom defaults |
+| Fabric client assets | Mojang | Loom defaults |
 | Minecraft libraries | Official repositories | Loader plugin defaults |
-| Minecraft version manifest for both loaders | BMCLAPI | `loom_version_manifests` and `neoForge.neoFormRuntime.launcherManifestUrl` |
-| NeoForge main module, including userdev | BMCLAPI | `neo_maven_url` and the exclusive module repository in `neoforge/build.gradle` |
+| Minecraft version manifests | Mojang | Loader plugin defaults |
+| NeoForge main module, including userdev | Official NeoForge Maven | Exclusive module repository in `neoforge/build.gradle` |
 | NeoForge test framework and build tooling | Official repositories | ModDevGradle and `neoforge/build.gradle` |
 
-Version manifests can contain official URLs for individual version metadata,
-game JARs, mappings and asset indexes. Selecting a manifest mirror does not
-rewrite those embedded URLs. Optional mod integrations retain their own Maven
-repositories.
-Fabric, Forge and NeoForge dependency groups are excluded from the general Maven
-mirror so their tooling and APIs resolve through the loaders' official repositories.
-
-GitHub-hosted CI uses Mojang's HTTPS manifest and asset endpoints plus NeoForged's
-official Maven repository. Local builds retain the mirror sources configured in
-`gradle.properties`.
+Local builds and CI share these sources. Optional mod integrations use their
+publishers' Maven repositories. Machine-specific download overrides belong in
+the user's Gradle configuration or environment.
 
 Proxy credentials and machine-specific settings belong outside the repository.
 
-## NeoForge client assets
+## Optional local asset mirror
 
 NeoForm Runtime supports the `NFRT_ASSET_REPOSITORY` environment variable for
 the client asset object repository. Set it before starting Gradle or the IDE.
@@ -43,8 +36,8 @@ NFRT_ASSET_REPOSITORY=https://bmclapi2.bangbang93.com/assets/ ./gradlew :neoforg
 ```
 
 The same environment variable applies to `:neoforge:runClient` and
-`:neoforge:runSmokeClient`. Fabric reads its asset mirror directly from
-`gradle.properties`.
+`:neoforge:runSmokeClient`. Fabric supports `loom_resources_base` in the user's
+Gradle properties. These local overrides do not change CI download sources.
 
 ## Verification and sources
 
@@ -57,9 +50,7 @@ Use JDK 25 and the checked-in Gradle wrapper:
 
 Existing caches can satisfy downloads without contacting a mirror. A successful
 cached build verifies configuration compatibility, not a complete fresh download.
-Mirrors can lag upstream releases; inspect the exact version and artifact before
-changing a repository URL. BMCLAPI's Maven mirror does not cover every development
-dependency, so its NeoForge routing is limited to the main module.
+Check the exact artifact and version when diagnosing a repository failure.
 
 ## Upstream resources
 

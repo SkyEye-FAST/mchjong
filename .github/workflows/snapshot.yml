@@ -13,12 +13,6 @@ jobs:
   build:
     name: Build snapshot
     runs-on: ubuntu-latest
-    env:
-      GRADLE_OPTS: -Dorg.gradle.project.neoForge.neoFormRuntime.launcherManifestUrl=https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
-      ORG_GRADLE_PROJECT_neo_maven_url: https://maven.neoforged.net/releases
-      ORG_GRADLE_PROJECT_loom_resources_base: https://resources.download.minecraft.net/
-      ORG_GRADLE_PROJECT_loom_version_manifests: https://piston-meta.mojang.com/mc/game/version_manifest_v2.json
-
     steps:
       - name: Checkout
         uses: actions/checkout@v7

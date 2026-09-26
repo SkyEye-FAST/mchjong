@@ -32,7 +32,7 @@ gameplay.
 | [Architecture](ARCHITECTURE.md) | Modules, ownership and shared contracts |
 | [Interface style](UI_STYLE.md) | Widgets, layout, accessibility and visual acceptance |
 | [Compatibility and dependencies](COMPATIBILITY.md) | Loader profiles, optional mod distributions and dependency versions |
-| [Build download mirrors](BUILD_MIRRORS.md) | Repository and client asset downloads |
+| [Build download sources](BUILD_MIRRORS.md) | Repository and client asset downloads |
 | [Training bots](BOTS.md) | Decision model, difficulty and comparison checks |
 
 Contribution and release requirements are in [AGENTS.md](../AGENTS.md).
