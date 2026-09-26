@@ -262,12 +262,30 @@ class TablePresentationTest {
         var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
         int meldWidth = melds.stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum();
-        for (int side : new int[]{1, 2}) {
+        for (int side = 0; side < 4; side++) {
             double handLeft = ImmersiveTable.handLeft(player, 0, side);
-            int corner = side == 1 ? 350 : 470;
-            assertTrue(handLeft >= (side == 1 ? -425 : -510), "Standing hand left the cloth");
-            assertTrue(handLeft + 60 + 12 <= corner - meldWidth,
+            double corner = ImmersiveTable.meldCorner(side);
+            double halfWidth = side % 2 == 0 ? 510 : 425;
+            double halfDepth = side % 2 == 0 ? 425 : 510;
+            assertEquals(halfWidth - 3, corner, "Melds stay at the owner's right corner");
+            assertTrue(handLeft >= -halfWidth, "Standing hand left the cloth");
+            assertTrue(handLeft + 60 + 18 <= corner - meldWidth,
                 "Four kans need one row with space before the shifted standing hand");
+            double right = corner;
+            for (var meld : melds) {
+                right -= TileGui.meldWidth(meld, 0, 30);
+                for (var part : MeldLayout.of(meld, 0).parts()) {
+                    double scale = 30.0 / TileMesh.WIDTH;
+                    double x = right + part.x() * scale;
+                    double z = ImmersiveTable.outerRail(side) + part.z() * scale;
+                    double w = (part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH) * scale;
+                    double d = (part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) * scale;
+                    assertTrue(x - w / 2 >= -halfWidth && x + w / 2 <= halfWidth);
+                    assertTrue(z - d / 2 >= -halfDepth && z + d / 2 <= halfDepth);
+                    assertEquals(halfDepth - 3, z + d / 2, 1e-5);
+                }
+                right -= 5;
+            }
         }
         int width = TableBoard.outerTileWidth(player, 0, 157);
         assertEquals(10, width);
