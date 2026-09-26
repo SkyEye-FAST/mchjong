@@ -666,6 +666,7 @@
   "ui.mchjong.help.single_click": "单击出牌，Shift＋单击选牌，%s立直，%s跳过",
   "ui.mchjong.immersive_after_deal": "配牌完成后可进入沉浸视角",
   "ui.mchjong.invite": "邀请玩家",
+  "ui.mchjong.invite.short": "邀请",
   "ui.mchjong.invite_accept": "接受",
   "ui.mchjong.invite_decline": "拒绝",
   "ui.mchjong.invite_hint": "邀请有效期为60秒，请自行前往牌桌入座。",
