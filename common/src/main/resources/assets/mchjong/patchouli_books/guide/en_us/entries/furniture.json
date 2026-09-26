@@ -1,0 +1,25 @@
+{
+  "name": "manual.mchjong.entry.furniture.name",
+  "category": "mchjong:equipment",
+  "icon": "mchjong:mahjong_table",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.furniture.page_2"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:mahjong_table",
+      "recipe2": "mchjong:mahjong_stool"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:table_cloth_green"
+    }
+  ]
+}

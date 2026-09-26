@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.results.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:point_stick",
+  "sortnum": 6,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.results.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.results.page_2"
+    }
+  ]
+}

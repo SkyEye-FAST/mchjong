@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.customization.name",
+  "category": "mchjong:reference",
+  "icon": "mchjong:mahjong_dye",
+  "sortnum": 11,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.customization.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.customization.page_2"
+    }
+  ]
+}

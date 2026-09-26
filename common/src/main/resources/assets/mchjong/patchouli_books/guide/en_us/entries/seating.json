@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.seating.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:mahjong_stool",
+  "sortnum": 3,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.seating.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.seating.page_2"
+    }
+  ]
+}

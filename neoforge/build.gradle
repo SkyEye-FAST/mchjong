@@ -53,6 +53,10 @@ neoForge {
 }
 
 dependencies {
+    compileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        runtimeOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
+    }
     // Optional recipe-browser APIs expose Fabric environment annotations.
     compileOnly "net.fabricmc:fabric-loader:${loader_version}"
     compileOnly "com.electronwill.night-config:toml:${night_config_version}"
@@ -136,6 +140,7 @@ processResources {
         minecraft_version: rootProject.minecraft_version,
         neo_loader_min_version: rootProject.neo_loader_min_version,
         ponder_version: rootProject.ponder_version,
+        patchouli_version: rootProject.patchouli_version,
         create_version: rootProject.create_version,
         create_ponder_min_version: rootProject.create_ponder_min_version,
         jei_version: rootProject.jei_version,
@@ -170,6 +175,8 @@ def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('fal
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
 def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
+    smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -190,6 +197,8 @@ neoForge {
             gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
+            systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()

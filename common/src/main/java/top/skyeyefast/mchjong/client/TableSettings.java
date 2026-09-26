@@ -43,6 +43,7 @@ public final class TableSettings {
     public double effectsVolume = 0.7;
     public double voiceVolume = 0.8;
     public boolean countdownSounds = true;
+    public boolean recommendPatchouli = true;
     public static final double MIN_CAMERA_DISTANCE = 1.6;
     public static final double MAX_CAMERA_DISTANCE = 2.8;
     public static final double MIN_CAMERA_HEIGHT = 1.35;
@@ -115,6 +116,7 @@ public final class TableSettings {
         settings.animations = bool(config.getOrElse("animations", settings.animations));
         settings.showRiver = bool(config.getOrElse("showRiver", settings.showRiver));
         settings.countdownSounds = bool(config.getOrElse("countdownSounds", settings.countdownSounds));
+        settings.recommendPatchouli = bool(config.getOrElse("recommendPatchouli", settings.recommendPatchouli));
         settings.effectsVolume = Math.clamp(number(config.getOrElse("effectsVolume", settings.effectsVolume)), 0, 1);
         settings.voiceVolume = Math.clamp(number(config.getOrElse("voiceVolume", settings.voiceVolume)), 0, 1);
         settings.cameraDistance = Math.clamp(number(config.getOrElse("cameraDistance", settings.cameraDistance)), MIN_CAMERA_DISTANCE, MAX_CAMERA_DISTANCE);
@@ -138,6 +140,7 @@ public final class TableSettings {
         config.set("animations", animations);
         config.set("showRiver", showRiver);
         config.set("countdownSounds", countdownSounds);
+        config.set("recommendPatchouli", recommendPatchouli);
         config.set("effectsVolume", effectsVolume);
         config.set("voiceVolume", voiceVolume);
         config.set("cameraDistance", cameraDistance);

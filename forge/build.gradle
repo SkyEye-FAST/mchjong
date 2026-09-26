@@ -87,6 +87,7 @@ sourceSets.main {
     output.resourcesDir = layout.buildDirectory.dir('classes/java/main').get().asFile
     java.srcDir '../common/src/main/java'
     java.exclude 'top/skyeyefast/mchjong/compat/ponder/**'
+    java.exclude 'top/skyeyefast/mchjong/compat/patchouli/**'
     java.exclude 'top/skyeyefast/mchjong/compat/emi/**'
     java.exclude 'top/skyeyefast/mchjong/compat/rei/**'
     java.exclude 'top/skyeyefast/mchjong/compat/maid/**'

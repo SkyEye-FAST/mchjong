@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Optional Patchouli handbook in four languages, with equipment recipes, playing guidance, a rebindable shortcut and a dismissible installation recommendation.
+
 - Invite controls beside vacant seats in the lobby, opening the online player selector.
 - Pale oak tables, stools and tile material with matching crafting and stonecutting recipes for Minecraft 26.1.2.
 - Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.

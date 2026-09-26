@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.handling.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:dice",
+  "sortnum": 4,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.handling.page_2"
+    }
+  ]
+}

@@ -41,6 +41,15 @@ Forge selects JEI from the shared viewer flag and otherwise stays on its base
 profile, so configuring Forge does not prevent an EMI run on another loader.
 `-PforgeRecipeBrowser=none` or `jei` can override its profile explicitly.
 
+### Patchouli handbook
+
+The 1.21.1 Fabric and NeoForge profiles use Patchouli 1.21.1-93, supplied to
+development runs with `-PwithPatchouli=true`. The public client API opens
+`mchjong:guide`; book definitions and localized content are shared resources.
+The dependency is compile-only and is not bundled. See the
+[handbook controls](PLAYING.md#in-game-handbook) and
+[focused checks](VERIFICATION.md#patchouli-handbook).
+
 ### Create workshop
 
 Minecraft 1.21.1 NeoForge integrates Create 6.0.10 as an optional server/client

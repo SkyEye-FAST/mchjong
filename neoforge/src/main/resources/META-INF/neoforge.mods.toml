@@ -38,6 +38,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies.mchjong]]
+modId="patchouli"
+type="optional"
+versionRange="[${patchouli_version},)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.mchjong]]
 modId="create"
 type="optional"
 versionRange="[${create_version},6.1)"

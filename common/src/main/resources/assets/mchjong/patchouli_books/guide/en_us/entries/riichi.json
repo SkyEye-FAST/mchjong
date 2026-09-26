@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.riichi.name",
+  "category": "mchjong:rules",
+  "icon": "mchjong:point_stick",
+  "sortnum": 8,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.riichi.page_2"
+    }
+  ]
+}

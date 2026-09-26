@@ -1,0 +1,20 @@
+{
+  "name": "manual.mchjong.entry.stock.name",
+  "category": "mchjong:equipment",
+  "icon": "mchjong:point_stick",
+  "sortnum": 2,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.stock.page_2"
+    },
+    {
+      "type": "patchouli:crafting",
+      "recipe": "mchjong:dice"
+    }
+  ]
+}

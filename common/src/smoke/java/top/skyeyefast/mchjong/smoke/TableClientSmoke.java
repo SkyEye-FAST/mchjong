@@ -98,6 +98,7 @@ public final class TableClientSmoke {
                 client.options.fov().set(70);
                 client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
                 TableSettings.get().reset();
+                TableSettings.get().recommendPatchouli = Boolean.getBoolean("mchjong.smoke.patchouliOnly");
                 client.resizeDisplay();
                 GameRules rules = new GameRules();
                 rules.getRule(GameRules.RULE_DOMOBSPAWNING).set(false, null);
@@ -112,6 +113,10 @@ public final class TableClientSmoke {
                 step = 1;
                 LOG.info("Created isolated smoke world");
             } else if (step == 1 && client.player != null && client.getSingleplayerServer() != null && client.level != null) {
+                if (Boolean.getBoolean("mchjong.smoke.patchouliOnly")) {
+                    step = 38;
+                    return;
+                }
                 if (guidesOnly) {
                     require(Boolean.getBoolean("mchjong.smoke.ponder") || !System.getProperty("mchjong.smoke.browser", "none").equals("none"),
                         "Choose an installed Ponder or recipe-browser profile for the focused guide checks");
@@ -446,6 +451,10 @@ public final class TableClientSmoke {
                     || (Boolean.getBoolean("mchjong.smoke.ponder") && !PonderSmoke.tick(client, output))) return;
                 Files.writeString(output.resolve("PASS.txt"), "Focused recipe-browser checks and requested Ponder registration, localization, playback, reload and replay checks passed.\n");
                 LOG.info("MCHJONG_PONDER_SMOKE_PASS");
+                step = 13; entered = ticks;
+            } else if (step == 38 && ManualSmoke.tick(client, output)) {
+                Files.writeString(output.resolve("PASS.txt"), "Patchouli manual: selected installed/absent profile, entry rendering and recommendation controls passed.\n");
+                LOG.info("MCHJONG_PATCHOULI_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 13 && ticks - entered > 30) {
                 client.stop();

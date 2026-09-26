@@ -22,7 +22,8 @@ class TranslationReferenceTest {
             if (!Files.exists(target)) continue;
             try (var paths = Files.walk(target)) {
                 for (Path path : paths.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt")).toList()) {
+                    .filter(path -> path.toString().endsWith(".java") || path.toString().endsWith(".kt")
+                        || path.toString().endsWith(".json") && path.toString().contains("patchouli_books")).toList()) {
                     var matches = key.matcher(Files.readString(path));
                     while (matches.find()) {
                         String value = matches.group(1);
