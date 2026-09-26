@@ -52,7 +52,7 @@ final class BoxInterfaceSmoke {
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
                 + ", menu=" + menu.containerId + ", printing=" + printing);
             if (!printing) {
-                require(menu.canEngrave(preset), "Preset fixture cannot be printed");
+                require(menu.canApplyAppearance(preset, MahjongSupplies.backPreset(menu.getSlot(0).getItem())), "Preset fixture cannot be printed");
                 press(client, "box.mchjong.preset_choice");
                 require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
                     "Face button did not open its preset screen");
@@ -64,6 +64,9 @@ final class BoxInterfaceSmoke {
                 client.screen.setFocused(option);
                 option.setFocused(true);
                 client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
+                require(client.screen instanceof MahjongBoxScreen, "Selection did not return to the box");
+                require(!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset), "Selection applied before confirmation");
+                press(client, "box.mchjong.apply");
                 printing = true;
                 settled = 0;
             }
@@ -92,7 +95,8 @@ final class BoxInterfaceSmoke {
         var dye = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         if (reagentStage == 1) {
             require(dye.isEmpty(), "Empty reagent fixture was not synchronized");
-            require(!visible(client, "box.mchjong.preset_choice") && !visible(client, "box.mchjong.dye_back"), "Empty slot exposes actions");
+            require(!visible(client, "box.mchjong.preset_choice") && !visible(client, "box.mchjong.back_choice")
+                && !visible(client, "box.mchjong.apply") && !visible(client, "box.mchjong.dye_back"), "Empty slot exposes actions");
             capture(client, output, "empty");
             reagentStage = 2;
             reagent(client, new net.minecraft.world.item.ItemStack(net.minecraft.world.item.Items.RED_DYE, 2));
@@ -100,7 +104,8 @@ final class BoxInterfaceSmoke {
         }
         if (reagentStage == 2) {
             require(dye.is(net.minecraft.world.item.Items.RED_DYE), "Vanilla dye fixture was not synchronized");
-            require(visible(client, "box.mchjong.dye_back") && !visible(client, "box.mchjong.preset_choice"), "Wrong vanilla-dye actions");
+            require(visible(client, "box.mchjong.dye_back") && !visible(client, "box.mchjong.preset_choice")
+                && !visible(client, "box.mchjong.back_choice") && !visible(client, "box.mchjong.apply"), "Wrong vanilla-dye actions");
             capture(client, output, "back");
             if (menu.canDyeBack()) press(client, "box.mchjong.dye_back");
             reagentStage = 3; settled = 0;

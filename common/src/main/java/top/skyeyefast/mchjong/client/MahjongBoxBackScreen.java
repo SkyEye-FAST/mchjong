@@ -4,8 +4,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
-import top.skyeyefast.mchjong.network.BoxBackPayload;
-import top.skyeyefast.mchjong.network.PayloadPackets;
 
 /** Selects the decorative back for the physical tiles stored in the open box. */
 public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
@@ -27,10 +25,9 @@ public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             ResourceLocation id = choices.get(page * rows + i);
             var button = MahjongButton.create(TileBackPresets.label(id), ignored -> {
-                minecraft.getConnection().send(PayloadPackets.serverbound(new BoxBackPayload(parent.boxMenu().containerId, id)));
+                parent.selectBack(id);
                 onClose();
             }).bounds(left + 38, top + i * 25, span - 42, 20).build().selected(id.equals(parent.backPreset()));
-            button.active = parent.boxMenu().canChooseBack(id);
             addRenderableWidget(button);
         }
         int navY = height - 56;

@@ -9,13 +9,10 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(10)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(11)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(BoxPrintPayload.TYPE, BoxPrintPayload.CODEC, (payload, context) -> {
-                if (context.getSender() != null) payload.handle(context.getSender());
-            })
-            .addMain(BoxBackPayload.TYPE, BoxBackPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
             .addMain(StickChoicePayload.TYPE, StickChoicePayload.CODEC, (payload, context) -> {

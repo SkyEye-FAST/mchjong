@@ -16,6 +16,9 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     private MahjongButton dyeBack;
     private MahjongButton presetChoice;
     private MahjongButton backChoice;
+    private MahjongButton apply;
+    private TileFacePreset selectedFace;
+    private net.minecraft.resources.ResourceLocation selectedBack;
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
@@ -30,13 +33,17 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         topPos = Math.min(topPos, height - imageHeight - 24);
         presetChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
             openPreset(new MahjongBoxFaceScreen(this)))
-            .bounds(leftPos + 196, topPos + 136, 94, 20).build());
+            .bounds(leftPos + 196, topPos + 126, 94, 20).build());
         dyeBack = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.dye_back"), ignored ->
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build().primary());
         backChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
             openPreset(new MahjongBoxBackScreen(this)))
             .bounds(leftPos + 196, topPos + 160, 94, 20).build());
+        apply = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.apply"), ignored ->
+            minecraft.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
+                new top.skyeyefast.mchjong.network.BoxPrintPayload(menu.containerId, facePreset(), backPreset()))))
+            .bounds(leftPos + 196, topPos + 190, 94, 20).build().primary());
         updateActions();
     }
 
@@ -66,22 +73,29 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
         dyeBack.setMessage(Component.translatable(undo ? "box.mchjong.undo_dye_back" : "box.mchjong.dye_back"));
         backChoice.setMessage(Component.translatable("box.mchjong.back_choice", TileBackPresets.label(backPreset())));
+        backChoice.visible = printing;
         backChoice.active = MahjongSupplies.tileCount(menu.items()) > 0 && printing;
+        apply.visible = printing;
+        apply.active = printing && menu.canApplyAppearance(facePreset(), backPreset());
         if (getFocused() instanceof net.minecraft.client.gui.components.AbstractWidget widget && !widget.visible)
             setFocused(null);
     }
 
     net.minecraft.resources.ResourceLocation backPreset() {
+        if (selectedBack != null) return selectedBack;
         return menu.items().stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM))
             .findFirst().map(MahjongSupplies::backPreset).orElse(TileBackPresets.DEFAULT);
     }
 
     TileFacePreset facePreset() {
+        if (selectedFace != null) return selectedFace;
         return menu.items().stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM))
             .findFirst().map(MahjongSupplies::facePreset).orElse(TileFacePreset.KANSAI);
     }
 
     MahjongBoxMenu boxMenu() { return menu; }
+    void selectFace(TileFacePreset preset) { selectedFace = preset; }
+    void selectBack(net.minecraft.resources.ResourceLocation preset) { selectedBack = preset; }
 
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
@@ -117,7 +131,8 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         if (!reagent.isEmpty()) MahjongUi.text(graphics, font, Component.translatable(reagent.is(MahjongContent.CREATIVE_MAHJONG_DYE)
             ? "box.mchjong.unlimited" : "box.mchjong.dye_cost"), 218, 87, 72, MahjongUi.MUTED, false);
         if (presetChoice.visible) {
-            MahjongUi.text(graphics, font, Component.translatable("box.mchjong.preset"), 196, 122, 94, MahjongUi.TEXT, false);
+            MahjongUi.text(graphics, font, Component.translatable("box.mchjong.preset"), 196, 115, 94, MahjongUi.TEXT, false);
+            MahjongUi.text(graphics, font, Component.translatable("box.mchjong.back_title"), 196, 149, 94, MahjongUi.TEXT, false);
         } else if (dyeBack.visible) {
             MahjongUi.text(graphics, font, reagent.getHoverName(), 196, 122, 94, MahjongUi.TEXT, false);
         } else paragraph(graphics, Component.translatable("box.mchjong.insert_dye"), 124, MahjongUi.MUTED);

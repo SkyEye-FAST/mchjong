@@ -81,9 +81,6 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload.CODEC);
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE,
-            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));

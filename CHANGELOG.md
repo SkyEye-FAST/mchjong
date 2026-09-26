@@ -33,6 +33,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Align the box face and back selectors, show both only with Mahjong dye, and apply their selections together from the main screen for one dye.
 - Training opponents reserve search for passing when comparing calls, evaluate replacement alternatives at matching depth, and retain the closed-hand riichi option at both difficulty levels.
 - Use supported loader APIs for native model rendering, resource identifiers and client registration across Minecraft profiles.
 - Keep Ponder item controls above the table and tutorial text in the standard reading area so the furniture remains visible.

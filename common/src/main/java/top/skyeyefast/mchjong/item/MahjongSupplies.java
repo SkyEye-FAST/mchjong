@@ -279,6 +279,25 @@ public final class MahjongSupplies {
         return List.copyOf(output);
     }
 
+    /** Preview both appearance selections as one atomic dye transaction. */
+    public static List<ItemStack> appearanceContents(List<ItemStack> input, TileFacePreset face,
+            net.minecraft.resources.ResourceLocation back) {
+        if (input.size() != BOX_SLOTS || back.toString().length() > 128) return List.of();
+        for (int i = 0; i < input.size(); i++)
+            if (!input.get(i).isEmpty() && (!boxAccepts(i, input.get(i))
+                || input.get(i).getCount() > input.get(i).getMaxStackSize())) return List.of();
+        var output = backedContents(input, back);
+        boolean changed = !output.isEmpty();
+        if (!changed) output = input;
+        boolean print = output.stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM)
+            && (tile(stack).blank() || !facePreset(stack).equals(face)));
+        if (print) {
+            output = engravedContents(output, face);
+            if (output.isEmpty()) return List.of();
+        }
+        return changed || print ? output : List.of();
+    }
+
     /** Change only the decorative rear pattern; dye color and tile identity stay intact. */
     public static List<ItemStack> backedContents(List<ItemStack> input, net.minecraft.resources.ResourceLocation preset) {
         if (input.size() != BOX_SLOTS || tileCount(input) == 0 || preset.toString().length() > 128) return List.of();

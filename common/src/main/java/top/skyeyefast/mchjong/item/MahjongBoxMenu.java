@@ -56,14 +56,9 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         inventory.setChanged();
     }
 
-    public boolean canEngrave(TileFacePreset preset) {
+    public boolean canApplyAppearance(TileFacePreset face, net.minecraft.resources.ResourceLocation back) {
         return MahjongSupplies.mahjongDye(contents.getItem(MahjongSupplies.DYE_SLOT))
-            && !MahjongSupplies.engravedContents(items(), preset).isEmpty();
-    }
-
-    public boolean canChooseBack(net.minecraft.resources.ResourceLocation preset) {
-        return MahjongSupplies.mahjongDye(contents.getItem(MahjongSupplies.DYE_SLOT))
-            && !MahjongSupplies.backedContents(items(), preset).isEmpty();
+            && !MahjongSupplies.appearanceContents(items(), face, back).isEmpty();
     }
 
     public boolean canDyeBack() {
@@ -84,27 +79,11 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         return !player.level().isClientSide && stillValid(player) && id == DYE_BACK_BUTTON && dyeBack();
     }
 
-    public boolean print(Player player, TileFacePreset preset) {
+    public boolean applyAppearance(Player player, TileFacePreset face, net.minecraft.resources.ResourceLocation back) {
         if (player.level().isClientSide || !stillValid(player)) return false;
         var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (!MahjongSupplies.mahjongDye(dye)) return false;
-        var output = MahjongSupplies.engravedContents(items(), preset);
-        if (output.isEmpty()) return false;
-        if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
-        updating = true;
-        try {
-            for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
-        } finally { updating = false; }
-        save();
-        broadcastChanges();
-        return true;
-    }
-
-    public boolean chooseBack(Player player, net.minecraft.resources.ResourceLocation preset) {
-        if (player.level().isClientSide || !stillValid(player) || preset.toString().length() > 128) return false;
-        var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
-        if (!MahjongSupplies.mahjongDye(dye)) return false;
-        var output = MahjongSupplies.backedContents(items(), preset);
+        var output = MahjongSupplies.appearanceContents(items(), face, back);
         if (output.isEmpty()) return false;
         if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;
