@@ -16,8 +16,8 @@ Version manifests can contain official URLs for individual version metadata,
 game JARs, mappings and asset indexes. Selecting a manifest mirror does not
 rewrite those embedded URLs. Optional mod integrations retain their own Maven
 repositories.
-NeoForge dependency groups are excluded from the general Maven mirror so their
-build tooling resolves through the loader's official repositories.
+Fabric, Forge and NeoForge dependency groups are excluded from the general Maven
+mirror so their tooling and APIs resolve through the loaders' official repositories.
 
 Local builds use the sources configured in `gradle.properties`.
 
