@@ -206,12 +206,12 @@ the table camera. Align sideways riichi tiles to the same owner-relative top edg
 the other tiles in their row, matching seated play. The viewer's rows grow
 toward the foreground, the opposite rows recede toward the far rail, and the side rivers
 remain broad enough to read rather than becoming screen-edge strips. Keep opponent hands
-and melds on the same outer rail, with melds anchored at the owner's right-hand end. Place
-the local portrait plaque at the lower-left edge, side opponents along the side edges,
-and the opposite player at the upper-right edge. These plaques contain only portrait, name, wind
-and score; turn, riichi and presence use small marks. The central device carries the
-round, remaining tiles, turn direction and graphical honba/riichi point sticks with
-counts. It must not spell out honba or deposits.
+and melds on the same outer rail, with melds anchored at the owner's right-hand end.
+Place the local portrait plaque beside the private hand and opponent plaques beside
+their rails. Keep every plaque clear of hands, melds and rivers. They contain only
+portrait, name, wind and score; turn, riichi and presence use small marks. The central
+device carries the round, remaining tiles, turn direction and graphical honba/riichi
+point sticks with counts. It must not spell out honba or deposits.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 In replay diagrams, dim tsumogiri and mark tedashi. Live play keeps both at normal
 brightness and distinguishes their movement by animation. The sideways riichi discard
@@ -219,8 +219,9 @@ remains an independent marker.
 Perspective depth follows each tile's position: the far rail is smallest, the side
 rails converge toward it, and the viewer's foreground stays full size. Animation
 anchors use the same projected centers as the tile faces. Player labels are compact
-translucent table-edge plaques. Use larger portrait and score type on the virtual
-canvas; toolbar, automation, score and status captions use twice the native font size.
+translucent plaques in open table margins. Use larger portrait and score type on the
+virtual canvas; toolbar, automation, score and status captions use twice the native
+font size.
 The bottom-left keyboard help uses that same enlarged size. In both views, show
 the move allowance as large warm-white digits with a smaller brass `+reserve`,
 right-aligned above the private hand. Reserve a separate clock lane below the

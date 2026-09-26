@@ -172,6 +172,12 @@ final class AnimationSmoke {
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
             seats.set(1, new TableView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
                 List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false, right.doubleRiichi()));
+            int leftSeat = seats.size() - 1;
+            var left = seats.get(leftSeat);
+            var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+                List.of(116 + i * 4, 117 + i * 4, 118 + i * 4, 119 + i * 4), 2, 116 + i * 4)).toList();
+            seats.set(leftSeat, new TableView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
+                Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
