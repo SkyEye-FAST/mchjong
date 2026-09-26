@@ -31,21 +31,22 @@ class RoomSeatingTest {
     @Test void companionsKeepTheirIdentityThroughSeatingDifficultyChangesAndReloads() {
         var game = room(false, 1);
         UUID maid = id(8);
+        String modelName = "model.touhou_little_maid.cirno.name";
         assertFalse(game.joinEntityBot(id(9), maid, "Reimu", 1));
         assertFalse(game.joinEntityBot(id(0), id(0), "Reimu", 1));
         assertFalse(game.joinEntityBot(id(0), maid, "Reimu", 0));
-        assertTrue(game.joinEntityBot(id(0), maid, "Reimu", 1));
+        assertTrue(game.joinEntityBot(id(0), maid, modelName, 1));
         assertFalse(game.joinEntityBot(id(0), maid, "Duplicate", 2));
         assertFalse(game.transferHost(id(0), maid));
         act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
-        assertEquals("Reimu", game.view(null).seats().get(1).name());
+        assertEquals(modelName, game.view(null).seats().get(1).name());
         act(game, id(0), Action.Type.FILL_BOTS);
         act(game, id(0), Action.Type.BEGIN_SEATING);
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
         int seat = game.seatOf(maid);
         assertTrue(game.entityBot(maid));
-        assertEquals("Reimu", game.view(null).seats().get(seat).name());
+        assertEquals(modelName, game.view(null).seats().get(seat).name());
         assertEquals(BotDifficulty.HARD, game.roomView().seats().get(seat).difficulty());
         game.synchronizeSeats(Map.of(id(0), game.seatOf(id(0))), java.util.Set.of(id(0)));
         arriveAndReady(game);
