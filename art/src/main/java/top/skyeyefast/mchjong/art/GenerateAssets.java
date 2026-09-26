@@ -146,6 +146,7 @@ public final class GenerateAssets {
                 + "\"gui_light\":\"" + lighting + "\",\"display\":{"
                 + "\"gui\":{\"rotation\":" + rotation + "},"
                 + "\"ground\":{\"translation\":[0,2,0],\"scale\":[0.5,0.5,0.5]},"
+                + "\"head\":{\"rotation\":[0,180,0],\"translation\":[0,13,7],\"scale\":[1,1,1]},"
                 + "\"firstperson_righthand\":" + held + ","
                 + "\"firstperson_lefthand\":" + held + ","
                 + "\"thirdperson_righthand\":{\"rotation\":[75,45,0],\"scale\":[0.6,0.6,0.6]},"
