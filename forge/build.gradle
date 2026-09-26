@@ -13,8 +13,8 @@ repositories {
     exclusiveContent {
         forRepository {
             maven {
-                name = 'BMCLAPIForge'
-                url = 'https://bmclapi2.bangbang93.com/maven/'
+                name = 'ForgeReleases'
+                url = 'https://maven.minecraftforge.net/'
             }
         }
         filter { includeModule 'net.minecraftforge', 'forge' }

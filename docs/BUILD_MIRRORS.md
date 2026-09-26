@@ -1,27 +1,23 @@
-# Build download mirrors
+# Build download sources
 
 The loader subprojects use the following download sources:
 
 | Downloads | Source | Configuration |
 | --- | --- | --- |
-| General Maven dependencies and Gradle plugins | Aliyun | Root `build.gradle` and `settings.gradle` |
-| Fabric Loom plugin, Loader and Fabric API | Hanbings Fabric Maven mirror | `settings.gradle` and `loom_fabric_repository` |
-| Fabric client assets | BMCLAPI | `loom_resources_base` |
+| General Maven dependencies and Gradle plugins | Maven Central and Gradle Plugin Portal | Root `build.gradle` and `settings.gradle` |
+| Fabric Loom plugin, Loader and Fabric API | Official Fabric Maven | `settings.gradle` and Loom defaults |
+| Fabric client assets | Mojang | Loom defaults |
 | Minecraft libraries | Official repositories | Loader plugin defaults |
-| Minecraft version manifest for Fabric Loom | BMCLAPI | `loom_version_manifests` |
-| Forge runtime | BMCLAPI Forge Maven mirror | Exclusive module repository in `forge/build.gradle` |
+| Minecraft version manifests | Mojang | Loader plugin defaults |
+| Forge runtime | Official Forge Maven | Exclusive module repository in `forge/build.gradle` |
 | Legacy Forge build tooling | ModDevGradle repositories | `settings.gradle` and `forge/build.gradle` |
 
-Version manifests can contain official URLs for individual version metadata,
-game JARs, mappings and asset indexes. Selecting a manifest mirror does not
-rewrite those embedded URLs. Optional mod integrations retain their own Maven
-repositories.
-Fabric, Forge and NeoForge dependency groups are excluded from the general Maven
-mirror so their tooling and APIs resolve through the loaders' official repositories.
+Local builds and CI share these sources. Optional mod integrations use their
+publishers' Maven repositories. Machine-specific download overrides belong in
+the user's Gradle configuration or environment.
 
-Local builds use the sources configured in `gradle.properties`.
-
-Proxy credentials and machine-specific settings belong outside the repository.
+Fabric supports `loom_resources_base` in the user's Gradle properties for a local
+asset mirror. These local overrides do not change CI download sources.
 
 ## Verification and sources
 
@@ -34,8 +30,7 @@ Use JDK 21 and the checked-in Gradle wrapper:
 
 Existing caches can satisfy downloads without contacting a mirror. A successful
 cached build verifies configuration compatibility, not a complete fresh download.
-Mirrors can lag upstream releases; inspect the exact version and artifact before
-changing a repository URL.
+Check the exact artifact and version when diagnosing a repository failure.
 
 ## Upstream resources
 

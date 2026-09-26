@@ -1,18 +1,7 @@
 pluginManagement {
 	repositories {
 		maven { url = 'https://maven.minecraftforge.net/' }
-		maven {
-			name = 'AliyunGradlePlugin'
-			url = 'https://maven.aliyun.com/repository/gradle-plugin/'
-		}
-		maven {
-			name = 'AliyunPublic'
-			url = 'https://maven.aliyun.com/repository/public/'
-		}
-		maven {
-			name = 'FabricMirror'
-			url = 'https://repository.hanbings.io/proxy/'
-		}
+		maven { url = 'https://maven.fabricmc.net/' }
 		mavenCentral()
 		gradlePluginPortal()
 	}

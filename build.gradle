@@ -57,11 +57,6 @@ allprojects {
             forRepository { maven { name = 'ForgeConfigAPIPort'; url = 'https://raw.githubusercontent.com/Fuzss/modresources/main/maven/' } }
             filter { includeGroup 'fuzs.forgeconfigapiport' }
         }
-        maven {
-            name = 'AliyunPublic'
-            url = 'https://maven.aliyun.com/repository/public/'
-            content { excludeGroupByRegex 'net\\.(fabricmc|minecraftforge|neoforged)(\\..*)?' }
-        }
         mavenCentral()
     }
 
