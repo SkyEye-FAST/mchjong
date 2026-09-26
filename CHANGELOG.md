@@ -22,6 +22,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Use a single Kan label for open, concealed and added kan actions and hints in all four languages.
 - Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
 - Synchronize post-0.7.2 gameplay, presets, audio and presentation with the Minecraft 26.1.2 Fabric and NeoForge APIs.
 - Adapt preset textures, rendering extraction and voice playback callbacks to the current client APIs; document this profile's two snapshot artifacts.
