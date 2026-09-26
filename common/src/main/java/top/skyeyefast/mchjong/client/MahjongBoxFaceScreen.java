@@ -5,8 +5,6 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
-import top.skyeyefast.mchjong.network.BoxPrintPayload;
-import top.skyeyefast.mchjong.network.PayloadPackets;
 
 /** Shows several sample tiles for each face preset before printing the box contents. */
 public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
@@ -31,10 +29,9 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             TileFacePreset preset = choices.get(page * rows + i);
             var button = MahjongButton.create(TileFacePresets.label(preset), ignored -> {
-                minecraft.getConnection().send(PayloadPackets.serverbound(new BoxPrintPayload(parent.boxMenu().containerId, preset)));
+                parent.selectFace(preset);
                 onClose();
             }).bounds(left + 76, top + i * 25, span - 80, 20).build().selected(preset.equals(parent.facePreset()));
-            button.active = parent.boxMenu().canEngrave(preset);
             addRenderableWidget(button);
         }
         int navY = height - 56;

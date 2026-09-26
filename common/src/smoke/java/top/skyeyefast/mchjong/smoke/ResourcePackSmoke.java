@@ -144,7 +144,7 @@ final class ResourcePackSmoke {
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
-            require(MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Custom preset packet did not print");
+            require(!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Face selection printed before applying");
             button(client, "box.mchjong.back_choice").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 31; ticks = 0;
         } else if (stage == 31 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxBackScreen && ticks > 5) {
@@ -154,9 +154,13 @@ final class ResourcePackSmoke {
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
                 .filter(button -> button.getMessage().getString().equals("Local Back")).findFirst().orElseThrow();
             choice.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            require(!MahjongSupplies.backPreset(((MahjongBoxMenu) client.player.containerMenu).getSlot(0).getItem())
+                .equals(Identifier.parse("smoke:custom_back")), "Back selection applied before confirmation");
+            button(client, "box.mchjong.apply").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 32; ticks = 0;
         } else if (stage == 32 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
+            require(MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Combined appearance packet did not print faces");
             require(MahjongSupplies.backPreset(menu.getSlot(0).getItem()).equals(Identifier.parse("smoke:custom_back")),
                 "Back preset packet did not update physical tiles");
             SmokeScreenshots.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), 1, ignored -> {});
