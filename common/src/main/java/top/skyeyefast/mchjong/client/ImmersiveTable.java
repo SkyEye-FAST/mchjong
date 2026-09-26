@@ -29,7 +29,7 @@ final class ImmersiveTable {
         .withLocation("mchjong/gui_tile_depth")
         .withDepthStencilState(new DepthStencilState(CompareOp.LESS_THAN_OR_EQUAL, true)).build();
     static final int RIVER_WIDTH = 32;
-    private static final int RIVER_START = 140;
+    private static final int RIVER_START = 120;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
@@ -98,10 +98,10 @@ final class ImmersiveTable {
 
     static TableBoard.Rect card(int side) {
         return switch (side) {
-            case 1 -> new TableBoard.Rect(1090, 260, 166, 72);
-            case 3 -> new TableBoard.Rect(24, 260, 166, 72);
-            case 2 -> new TableBoard.Rect(1070, 84, 166, 72);
-            default -> new TableBoard.Rect(28, 558, 180, 72);
+            case 1 -> new TableBoard.Rect(900, 446, 166, 72);
+            case 3 -> new TableBoard.Rect(220, 170, 166, 72);
+            case 2 -> new TableBoard.Rect(840, 170, 166, 72);
+            default -> new TableBoard.Rect(220, 492, 180, 72);
         };
     }
 
