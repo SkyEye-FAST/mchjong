@@ -58,7 +58,7 @@ final class RoomFlowSmoke {
                 click(client, "settings.mchjong.hand_visibility", Component.translatable("settings.mchjong.hand_visibility.self"));
                 next(4);
             }
-        } else if (stage == 4 && view.handVisibility() == HandVisibility.OPEN) {
+        } else if (stage == 4 && view.handVisibility() == HandVisibility.RIICHI) {
             originalPreset = view.rules().preset();
             clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
             var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RuleSet.values())
