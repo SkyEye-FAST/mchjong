@@ -22,6 +22,7 @@ final class ImmersiveTable {
     private int bodyColor;
     private ResourceLocation backTexture;
     private ResourceLocation backPattern;
+    private boolean depthTest;
     private record Vertex(double x, double z, double h) {}
     private record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
@@ -84,7 +85,14 @@ final class ImmersiveTable {
         bodyColor = TileMesh.bodyColor(material, dye);
         backTexture = TileRenderTypes.backTexture(material, dye);
         backPattern = TileBackPresets.texture(backPreset);
+        // Side hands overlap in projection; opaque shells need per-pixel occlusion.
+        depthTest = material != TileMaterial.GLASS;
         points.clear(); widths.clear(); rivers.clear(); faces.clear();
+        if (depthTest) {
+            graphics.flush();
+            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT,
+                net.minecraft.client.Minecraft.ON_OSX);
+        }
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
         int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
@@ -112,19 +120,22 @@ final class ImmersiveTable {
     }
 
     private void paint(GuiGraphics graphics) {
-        paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth);
+        paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth, depthTest);
     }
 
     private void paint(GuiGraphics graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
-                       java.util.function.ToDoubleFunction<Face> depth) {
+                       java.util.function.ToDoubleFunction<Face> depth, boolean useDepth) {
         graphics.flush();
         faces.sort(Comparator.comparingInt((Face face) -> face.contact() ? 0 : 1).thenComparingDouble(depth));
         for (var face : faces) {
-            var out = graphics.bufferSource().getBuffer(TileRenderTypes.gui(face.texture()));
+            var out = graphics.bufferSource().getBuffer(useDepth
+                ? TileRenderTypes.guiDepth(face.texture()) : TileRenderTypes.gui(face.texture()));
             for (int i = 3; i >= 0; i--) {
-                var v = face.vertices()[i];
-                var p = projection.apply(v);
-                out.addVertex(graphics.pose().last().pose(), p.x(), p.y(), 0).setColor(face.color())
+                var vertex = face.vertices()[i];
+                var p = projection.apply(vertex);
+                // The perspective scale is reciprocal camera distance and interpolates correctly in screen space.
+                float z = useDepth ? (float) (-100 + 100 * (TableProjection.scale(vertex.z(), vertex.h()) - 1)) : 0;
+                out.addVertex(graphics.pose().last().pose(), p.x(), p.y(), z).setColor(face.color())
                     .setUv(i == 0 || i == 3 ? face.u0() : face.u1(), i < 2 ? face.v0() : face.v1()).setLight(0xf000f0);
             }
         }
@@ -324,7 +335,7 @@ final class ImmersiveTable {
                 depth += .694 * world.z() + .72 * world.h();
             }
             return depth / 4;
-        });
+        }, false);
     }
 
     private void box(int side, double x, double z, double w, double d, double bottom, double top, int body, int cap) {

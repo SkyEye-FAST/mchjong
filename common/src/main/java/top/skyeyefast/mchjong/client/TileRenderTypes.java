@@ -30,7 +30,8 @@ public final class TileRenderTypes extends RenderType {
                 .setLightmapState(LIGHTMAP).setOverlayState(OVERLAY).createCompositeState(false)));
     }
     public static final RenderType STICKS = material("mchjong_point_sticks", FurnitureMesh.STICK_TEXTURE);
-    private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes();
+    private static final java.util.Map<ResourceLocation, RenderType> GUI = guiTypes(false);
+    private static final java.util.Map<ResourceLocation, RenderType> GUI_DEPTH = guiTypes(true);
     private static final java.util.Map<top.skyeyefast.mchjong.item.TileMaterial, RenderType> BODIES =
         new java.util.EnumMap<>(top.skyeyefast.mchjong.item.TileMaterial.class);
     static {
@@ -69,28 +70,36 @@ public final class TileRenderTypes extends RenderType {
     }
 
     public static RenderType gui(ResourceLocation texture) {
-        return GUI.computeIfAbsent(texture, key -> guiMaterial("mchjong_gui", key, true));
+        return GUI.computeIfAbsent(texture, key -> guiMaterial("mchjong_gui", key, true, false));
     }
-    public static void reload() { FACE_TYPES.clear(); BACK_PATTERNS.clear(); GUI.clear(); GUI.putAll(guiTypes()); }
+    public static RenderType guiDepth(ResourceLocation texture) {
+        return GUI_DEPTH.computeIfAbsent(texture, key -> guiMaterial("mchjong_gui_depth", key, true, true));
+    }
+    public static void reload() {
+        FACE_TYPES.clear(); BACK_PATTERNS.clear();
+        GUI.clear(); GUI.putAll(guiTypes(false));
+        GUI_DEPTH.clear(); GUI_DEPTH.putAll(guiTypes(true));
+    }
 
-    private static java.util.Map<ResourceLocation, RenderType> guiTypes() {
+    private static java.util.Map<ResourceLocation, RenderType> guiTypes(boolean depth) {
         var result = new java.util.HashMap<ResourceLocation, RenderType>();
-        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS, true));
-        result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK, true));
+        result.put(TileMesh.ATLAS, guiMaterial("mchjong_gui_faces", TileMesh.ATLAS, true, depth));
+        result.put(TileMesh.BACK, guiMaterial("mchjong_gui_backs", TileMesh.BACK, true, depth));
         for (var material : top.skyeyefast.mchjong.item.TileMaterial.values()) {
             var texture = bodyTexture(material);
-            result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture, false));
+            result.put(texture, guiMaterial("mchjong_gui_" + material.getSerializedName(), texture, false, depth));
         }
         return result;
     }
 
-    private static RenderType guiMaterial(String name, ResourceLocation texture, boolean blur) {
+    private static RenderType guiMaterial(String name, ResourceLocation texture, boolean blur, boolean depth) {
         return create(name, DefaultVertexFormat.POSITION_COLOR_TEX_LIGHTMAP, VertexFormat.Mode.QUADS, 1536,
             false, false, CompositeState.builder()
                 .setShaderState(RENDERTYPE_TEXT_SEE_THROUGH_SHADER)
                 .setTextureState(new TextureStateShard(texture, blur, false))
                 .setTransparencyState(TRANSLUCENT_TRANSPARENCY)
-                .setDepthTestState(NO_DEPTH_TEST).setWriteMaskState(COLOR_WRITE)
+                .setDepthTestState(depth ? LEQUAL_DEPTH_TEST : NO_DEPTH_TEST)
+                .setWriteMaskState(depth ? COLOR_DEPTH_WRITE : COLOR_WRITE)
                 .setLightmapState(LIGHTMAP).createCompositeState(false));
     }
 
