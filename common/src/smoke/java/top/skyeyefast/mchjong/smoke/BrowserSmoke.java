@@ -58,21 +58,11 @@ final class BrowserSmoke {
             flower = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).flower());
             displayedRecipe = flower.id();
             var plateId = MahjongContent.id("mahjong_printing_plate");
-            if (!net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId))
-                check(client.level.getRecipeManager().getRecipes().stream().noneMatch(recipe -> recipe.getId().getNamespace().equals("mchjong")
-                    && recipe.getId().getPath().startsWith("create/")), "Create recipes loaded without Create");
-            if (!browser.equals("rei") && net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId)) {
-                var kansai = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(plateId));
-                MahjongComponents.facePreset(kansai, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI);
-                var kanto = kansai.copy();
-                MahjongComponents.facePreset(kanto, top.skyeyefast.mchjong.item.TileFacePreset.KANTO);
-                var kansaiPrint = MahjongContent.id("/create/display/print/bone/kansai");
-                var kantoPrint = MahjongContent.id("/create/display/print/bone/kanto");
-                var kansaiRecipes = driver.query(kansai, false);
-                var kantoRecipes = driver.query(kanto, false);
-                check(kansaiRecipes.contains(kansaiPrint) && !kansaiRecipes.contains(kantoPrint), "Kansai printing plate lookup merged face presets");
-                check(kantoRecipes.contains(kantoPrint) && !kantoRecipes.contains(kansaiPrint), "Kanto printing plate lookup merged face presets");
-                displayedRecipe = kantoPrint;
+            if (net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(plateId)) {
+                var plate = new net.minecraft.world.item.ItemStack(net.minecraft.core.registries.BuiltInRegistries.ITEM.get(plateId));
+                var print = MahjongContent.id("/create/display/print/bone");
+                check(driver.query(plate, false).contains(print), "Printing plate lookup missed the workshop recipe");
+                displayedRecipe = print;
             }
             var red = pick(examples, e -> e.output().is(MahjongContent.TILE_ITEM) && MahjongSupplies.tile(e.output()).red());
             var upgrade = pick(examples, e -> e.source() instanceof SupplyCraftingRecipe recipe

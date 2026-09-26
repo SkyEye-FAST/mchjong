@@ -41,7 +41,7 @@ backup restores each scene on replay. The structure generator in
 `common/src/ponderData` uses Minecraft's native NBT encoder; each loader runs its
 own `generatePonder` task before resource processing. Both loader JARs contain the same generated
 `assets/mchjong/ponder/table.nbt` resource.
-The NeoForge profile also generates a taller `workshop.nbt` template, keeping
+Both loaders also generate a taller `workshop.nbt` template, keeping
 the press, mixer and deployer inside Ponder's render and replay bounds.
 
 The compile-only dependencies expose the official Ponder API. The `withPonder`
@@ -72,7 +72,7 @@ For tutorial-only changes, add `-PsmokePonder=true` to the installed-Ponder smok
 commands to run the existing registration, language, replay and visual checks
 without repeating gameplay tests. A recipe viewer selected with
 `-PrecipeBrowser=jei` or `-PrecipeBrowser=emi` is also checked. Add
-`-PwithCreate=true` on NeoForge to include both workshop scenes and their five
+`-PwithCreate=true` on either loader to include both workshop scenes and their five
 item entries. This profile checks twelve item entries and five storyboards.
 Use `-PsmokeBrowser=true -PrecipeBrowser=jei` or `emi` for recipe-viewer-only
 checks, without repeating Ponder playback or unrelated gameplay scenarios.
@@ -104,7 +104,4 @@ The current build profile uses Ponder 1.0.92 for Minecraft 1.20.1 on Fabric and
 Forge. Dependency versions are selected in `gradle.properties`. Use the
 loader-specific Ponder artifact for the same Minecraft release.
 
-The NeoForge Create profile uses the Ponder 1.0.82 bundled with Create 6.0.10.
-Its optional dependency accepts that version without another Ponder download.
-Workshop scenes have a separate taller structure so the machines above their
-basins remain visible and are included in Ponder's replay backup.
+See [Compatibility](COMPATIBILITY.md) for the Create and recipe-viewer profiles.

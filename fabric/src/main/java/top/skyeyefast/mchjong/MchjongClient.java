@@ -37,6 +37,7 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.client.TableAudio.tick();
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();
+            top.skyeyefast.mchjong.client.TileFacePresets.tick();
         });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
             top.skyeyefast.mchjong.client.TableAudio.close());
@@ -46,6 +47,16 @@ public final class MchjongClient implements ClientModInitializer {
         for (var item : top.skyeyefast.mchjong.client.MahjongItemRenderer.items())
             net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE,
+            (client, listener, buffer, sender) -> {
+                var payload = top.skyeyefast.mchjong.network.PresetBundlePayload.decode(buffer);
+                client.execute(() -> top.skyeyefast.mchjong.client.TileFacePresets.receive(payload));
+            });
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE,
+            (client, listener, buffer, sender) -> {
+                var payload = top.skyeyefast.mchjong.network.StickAppearancePayload.decode(buffer);
+                client.execute(() -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload));
+            });
         ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
             (client, listener, buffer, sender) -> {
                 var payload = TableViewPayload.decode(buffer);

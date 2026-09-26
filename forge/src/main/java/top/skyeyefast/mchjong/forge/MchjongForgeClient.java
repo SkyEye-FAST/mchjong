@@ -70,6 +70,7 @@ public final class MchjongForgeClient {
             TableAudio.tick();
             SeatedCamera.tick();
             ClientReplays.tick();
+            top.skyeyefast.mchjong.client.TileFacePresets.tick();
         }
 
         @SubscribeEvent public static void close(GameShuttingDownEvent event) { TableAudio.close(); }

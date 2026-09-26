@@ -41,7 +41,7 @@ final class CreateSmoke {
         try {
             var blank = MahjongSupplies.tile(new TileData(-1, TileMaterial.GLASS, false), DyeColor.CYAN, 64);
             blank.setHoverName(Component.literal("Workshop tiles"));
-            var plate = CreateCompat.plate(TileFacePreset.KANTO);
+            var plate = new ItemStack(CreateCompat.PRINTING_PLATE);
             plate.setHoverName(Component.literal("Reusable plate"));
             var box = new ItemStack(MahjongContent.BOX_ITEM);
             box.setHoverName(Component.literal("Workshop box"));
@@ -57,7 +57,7 @@ final class CreateSmoke {
             var produced = CreateSmokeInventory.outputs(basin);
             var printed = produced.stream().filter(stack -> stack.is(MahjongContent.BOX_ITEM)).findFirst().orElseThrow();
             check(MahjongSupplies.tileCount(MahjongSupplies.contents(printed)) == 144, "Printing lost tiles");
-            check(MahjongSupplies.deck(printed).preset().equals(TileFacePreset.KANTO), "Printing lost preset");
+            check(MahjongSupplies.deck(printed).preset().equals(TileFacePreset.KANSAI), "Printing lost preset");
             check(printed.getHoverName().equals(box.getHoverName()), "Printing lost box name");
             check(produced.stream().anyMatch(stack -> ItemStack.matches(stack, plate)), "Plate not returned intact");
             check(!BasinRecipe.apply(basin, recipes.getFirst()), "Stale recipe consumed a second time");

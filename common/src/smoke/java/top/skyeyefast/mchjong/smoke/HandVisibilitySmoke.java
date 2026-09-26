@@ -41,7 +41,7 @@ final class HandVisibilitySmoke {
             var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
                 .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
             require(button.active, "Host visibility control is disabled");
-            button.onPress();
+            if (view.handVisibility() != visibility) button.onPress();
             next(1);
         } else if (stage == 1 && view.handVisibility() == visibility && ticks > 5) {
             client.getLanguageManager().setSelected(LANGUAGES[locale]);

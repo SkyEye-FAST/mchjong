@@ -20,13 +20,9 @@ final class CreateRecipes {
             item("minecraft:green_dye"), item("minecraft:blue_dye"), item("minecraft:white_dye")), List.of(stack("mahjong_dye", 2, Map.of())));
         processing(output, loader, "red_dora_dye", "mixing", List.of(item("minecraft:red_dye")), List.of(stack("red_dora_dye", 8, Map.of())));
         processing(output, loader, "undo_dye", "mixing", List.of(item("minecraft:black_dye")), List.of(stack("undo_dye", 8, Map.of())));
-        for (String preset : List.of("kansai", "kanto")) {
-            var plate = new LinkedHashMap<>(stack("mahjong_printing_plate", 1, Map.of("face_preset", "mchjong:" + preset)));
-            var nbt = plate.remove("nbt");
-            write(output, loader, "printing_plate_" + preset, Map.of("type", "mchjong:shaped", "category", "misc",
-                "pattern", List.of(" P ", "III"), "key", Map.of("P", item("minecraft:" + (preset.equals("kansai") ? "paper" : "bamboo")),
-                    "I", item("minecraft:iron_ingot")), "result", plate, "result_nbt", nbt));
-        }
+        write(output, loader, "printing_plate", Map.of("type", "minecraft:crafting_shaped", "category", "misc",
+            "pattern", List.of(" P ", "III"), "key", Map.of("P", item("minecraft:paper"),
+                "I", item("minecraft:iron_ingot")), "result", stack("mahjong_printing_plate", 1, Map.of())));
         var transitional = stack("incomplete_mahjong_box", 1, Map.of());
         var incomplete = item("mchjong:incomplete_mahjong_box");
         write(output, loader, "mahjong_box", Map.of("type", "create:sequenced_assembly", "ingredient", item("minecraft:chest"),

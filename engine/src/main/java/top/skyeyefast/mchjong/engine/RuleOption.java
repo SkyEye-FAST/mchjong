@@ -14,6 +14,8 @@ public enum RuleOption {
     SHARED_RANKS(Group.POINTS, RuleSet::sharedRanks),
     ROUND_SHARED_PLACEMENT(Group.POINTS, RuleSet::mLeague),
     AWARD_FINAL_DEPOSITS(Group.POINTS, RuleSet::awardFinalDeposits),
+    EXPERIENCE_REWARDS(Group.POINTS, r -> false),
+    DEDUCT_NEGATIVE_EXPERIENCE(Group.POINTS, r -> true),
     UMA_1(0), UMA_2(1), UMA_3(2), UMA_4(3),
     FLOAT_0_1(0, 0), FLOAT_0_2(0, 1), FLOAT_0_3(0, 2), FLOAT_0_4(0, 3),
     FLOAT_1_1(1, 0), FLOAT_1_2(1, 1), FLOAT_1_3(1, 2), FLOAT_1_4(1, 3),
@@ -119,6 +121,7 @@ public enum RuleOption {
     public int floatingPlayers() { return name().startsWith("FLOAT_") ? Character.digit(name().charAt(6), 10) : -1; }
 
     public boolean visible(RuleConfig rules) {
+        if (this == DEDUCT_NEGATIVE_EXPERIENCE) return rules.experienceRewards();
         if (group != Group.UMA) return true;
         if (placementRank() > rules.players()) return false;
         return floatingPlayers() >= 0 ? rules.floatingPlacement()

@@ -67,6 +67,7 @@ public final class TileMesh {
 
     public static void drawFace(PoseStack pose, VertexConsumer vertices, int tile, boolean concealed, int light) {
         if (!concealed && tile >= 0) drawArtwork(pose, vertices, face(tile), light);
+        else drawWhiteFront(pose, vertices, light);
     }
 
     public static int artwork(top.skyeyefast.mchjong.item.TileData tile) {
@@ -77,15 +78,20 @@ public final class TileMesh {
     /** Physical item designs include flowers without allocating riichi wall tile IDs to them. */
     public static void drawArtwork(PoseStack pose, VertexConsumer vertices, int face, int light) {
         if (face < 0 || face >= 45) throw new IllegalArgumentException("Invalid tile artwork");
-        // The three shells meet edge-to-edge. There are no overlapping side faces or internal caps.
-        band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
-        band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
-        cap(pose, vertices, CAP_OUTLINE, .0359f, false, false, false, 0xffffffff, light);
+        drawWhiteFront(pose, vertices, light);
         float u0 = (face % 8 * TILE_WIDTH + 0.5f) / ATLAS_WIDTH;
         float v0 = (face / 8 * TILE_HEIGHT + 0.5f) / ATLAS_HEIGHT;
         float u1 = (face % 8 * TILE_WIDTH + TILE_WIDTH - 0.5f) / ATLAS_WIDTH;
         float v1 = (face / 8 * TILE_HEIGHT + TILE_HEIGHT - 0.5f) / ATLAS_HEIGHT;
         texturedFace(pose, vertices, u0, v0, u1, v1, 0.048f, 0.073f, DEPTH / 2, light, false, 0xffffffff);
+    }
+
+    private static void drawWhiteFront(PoseStack pose, VertexConsumer vertices, int light) {
+        // The opaque face plate has a rear surface visible through a glass body.
+        cap(pose, vertices, OUTLINE, CORE_FRONT, true, false, false, 0xffffffff, light);
+        band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
+        band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, .0359f, 0xffffffff, light, false, SWATCH_U, SWATCH_V);
+        cap(pose, vertices, CAP_OUTLINE, .0359f, false, false, false, 0xffffffff, light);
     }
 
     /** Blank fronts use the same material and untinted color as the back. */
@@ -96,7 +102,7 @@ public final class TileMesh {
         cap(pose, vertices, CAP_OUTLINE, .0359f, false, true, false, color, light);
     }
 
-    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean concealed, boolean faceDown, int light,
+    public static void drawBack(PoseStack pose, VertexConsumer vertices, boolean faceDown, int light,
                                 TileMaterial material, DyeColor dye) {
         int color = backColor(material, dye);
         boolean materialBack = usesMaterialBack(material, dye);
@@ -111,17 +117,10 @@ public final class TileMesh {
             band(pose, vertices, OUTLINE, -.0343f, OUTLINE, CORE_BACK, color, light, false, u, v);
             cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2, true, true, faceDown, color, light);
         }
-        if (concealed) {
-            float u = .5f / TILE_WIDTH, v = .5f / TILE_HEIGHT;
-            band(pose, vertices, OUTLINE, CORE_FRONT, OUTLINE, .0343f, color, light, false, u, v);
-            band(pose, vertices, OUTLINE, .0343f, CAP_OUTLINE, DEPTH / 2, color, light, false, u, v);
-            cap(pose, vertices, CAP_OUTLINE, DEPTH / 2, false, true, false, color, light);
-        }
     }
 
-    public static void drawBackPattern(PoseStack pose, VertexConsumer vertices, boolean concealed, boolean faceDown, int light) {
+    public static void drawBackPattern(PoseStack pose, VertexConsumer vertices, boolean faceDown, int light) {
         cap(pose, vertices, CAP_OUTLINE, -DEPTH / 2 - .0001f, true, true, faceDown, 0xffffffff, light);
-        if (concealed) cap(pose, vertices, CAP_OUTLINE, DEPTH / 2 + .0001f, false, true, false, 0xffffffff, light);
     }
 
     private static float[] outline(float w, float h, float r) {

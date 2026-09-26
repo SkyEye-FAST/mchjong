@@ -5,6 +5,7 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
+import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
@@ -14,6 +15,7 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class TableHud {
     private static final String[] WINDS = {"east", "south", "west", "north"};
+    private static final ResourceLocation STICK_ICONS = new ResourceLocation("mchjong", "textures/gui/stick_icons.png");
     private record Region(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
@@ -36,11 +38,13 @@ final class TableHud {
     }
 
     void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
-        render(font, graphics, view, room, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null, board);
+        render(font, graphics, view, room, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null,
+            TileBackPresets.DEFAULT, board);
     }
 
     void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset,
-                top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye, TableBoard board) {
+                top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye,
+                net.minecraft.resources.ResourceLocation backPreset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
         boolean lobby = view.phase() == Game.Phase.LOBBY;
@@ -199,7 +203,7 @@ final class TableHud {
                     else {
                         int meldX = x + 5;
                         for (var meld : player.melds()) {
-                            TileGui.meld(graphics, meld, seat, meldX, top + 27, tileWidth, preset, material, dye);
+                            TileGui.meld(graphics, meld, seat, meldX, top + 27, tileWidth, preset, material, dye, backPreset);
                             meldX += TileGui.meldWidth(meld, seat, tileWidth) + 2;
                         }
                     }
@@ -232,16 +236,20 @@ final class TableHud {
             int span = Math.min(width / 2 - 8, font.width(focus) + 27);
             int x = width - 8 - span;
             int y = bottom() + 4;
+            int scale = board != null && board.perspective() ? 2 : 1;
             if (board != null) {
                 var focusArea = board.focus();
                 x = focusArea.x();
                 y = focusArea.y();
                 span = focusArea.width();
             }
-            MahjongUi.panel(graphics, x, y, span, 17);
-            if (span > 28) text(font, graphics, focus, x + 4, y + 5, span - 22, MahjongUi.ACCENT);
-            TileGui.tile(graphics, view.focus().tile(), x + span - 15, y + 1, 9, false, false, false, preset);
-            regions.add(new Region(x, y, span, 17, TableScreen.playerName(view, view.focus().seat()).copy().append("  ").append(focus)));
+            int height = 17 * scale;
+            MahjongUi.panel(graphics, x, y, span, height);
+            if (span > 28 * scale) textScaled(font, graphics, focus, x + 4 * scale, y + 5 * scale,
+                span - 22 * scale, MahjongUi.ACCENT, scale);
+            TileGui.tile(graphics, view.focus().tile(), x + span - 15 * scale, y + scale,
+                9 * scale, false, false, false, preset);
+            regions.add(new Region(x, y, span, height, TableScreen.playerName(view, view.focus().seat()).copy().append("  ").append(focus)));
         }
     }
 
@@ -281,8 +289,7 @@ final class TableHud {
 
     static void stick(GuiGraphics graphics, int x, int y, boolean riichi, int scale) {
         int width = 14 * scale, height = 4 * scale;
-        if (riichi) graphics.blit(RiichiStickModel.TEXTURE, x, y, width, height, 0, 0, 384, 32, 384, 32);
-        else graphics.blit(FurnitureMesh.STICK_TEXTURE, x, y, width, height, 0, 32, 384, 32, 384, 192);
+        graphics.blit(STICK_ICONS, x, y, width, height, 0, riichi ? 0 : 32, 384, 32, 384, 64);
     }
 
     private static void text(Font font, GuiGraphics graphics, Component text, int x, int y, int width, int color) {

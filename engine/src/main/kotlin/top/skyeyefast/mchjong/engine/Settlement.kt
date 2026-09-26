@@ -221,14 +221,20 @@ internal object Settlement {
         }
         val floating = ranking.count { game.players[it].points >= game.rules.returnPoints() }
         val bonus = game.rules.placementPoints(floating)
+        val uma = bonus.copyOf()
         bonus[0] += (game.rules.returnPoints() - game.rules.startingPoints()) * game.rules.players()
         game.finalScores = ArrayList(Collections.nCopies(game.rules.players(), 0.0))
+        game.finalUma = ArrayList(Collections.nCopies(game.rules.players(), 0.0))
         game.finalRanks = ArrayList(Collections.nCopies(game.rules.players(), 0))
         var place = 0
         for (group in groups) {
             val rank = place + 1
             var placement = 0
-            for (ignored in group.indices) placement += bonus[place++]
+            var umaPlacement = 0
+            for (ignored in group.indices) {
+                umaPlacement += uma[place]
+                placement += bonus[place++]
+            }
             for (i in group.indices) {
                 val seat = group[i]
                 val share = if (game.rules.roundSharedPlacement()) {
@@ -238,6 +244,18 @@ internal object Settlement {
                 }
                 game.finalRanks[seat] = rank
                 game.finalScores[seat] = (game.players[seat].points - game.rules.returnPoints()) / 1000.0 + share
+                val umaShare = if (game.rules.roundSharedPlacement()) {
+                    (Math.floorDiv(umaPlacement / 100, group.size) + if (i < Math.floorMod(umaPlacement / 100, group.size)) 1 else 0) / 10.0
+                } else {
+                    umaPlacement / (1000.0 * group.size)
+                }
+                game.finalUma[seat] = umaShare
+                val player = game.players[seat]
+                if (game.rules.experienceRewards() && player.id != null && !player.bot) {
+                    val experience = Math.round(kotlin.math.abs(umaShare) * 100).toInt() * (if (umaShare < 0) -1 else 1)
+                    if (experience > 0 || experience < 0 && game.rules.deductNegativeExperience())
+                        game.pendingExperience.merge(player.id, experience, Integer::sum)
+                }
             }
         }
     }

@@ -144,6 +144,7 @@ internal class ReplayRecorder(game: Game) {
                 visible.norths(),
                 visible.riichi(),
                 visible.exposed(),
+                visible.doubleRiichi(),
             )
         }
         val ura = mutableListOf<Int>()

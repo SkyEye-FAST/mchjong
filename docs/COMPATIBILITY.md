@@ -39,7 +39,7 @@ The [Create workshop](CREATE.md) reuses shared printing, dyeing, marking and
 packing operations. Forge uses item capabilities and strict-NBT ingredients;
 Fabric uses transactional storage and Fabric API's strict-NBT ingredients.
 The matching Create distribution is installed on the server and clients.
-The integration adds JEI/EMI workshop examples and Ponder tutorials.
+The integration adds animated JEI/EMI/REI workshop examples and Ponder tutorials.
 
 ### Maid players
 

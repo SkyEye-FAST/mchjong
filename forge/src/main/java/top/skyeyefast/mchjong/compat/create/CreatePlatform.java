@@ -33,8 +33,7 @@ public final class CreatePlatform {
             CreateProcessing.deploying(event.getInventory().getItem(0), event.getInventory().getItem(1))), 100));
         bus.addListener((BuildCreativeModeTabContentsEvent event) -> {
             if (event.getTabKey() != MahjongContent.TAB_KEY && event.getTabKey() != CreativeModeTabs.FUNCTIONAL_BLOCKS) return;
-            event.accept(CreateCompat.plate(TileFacePreset.KANSAI));
-            event.accept(CreateCompat.plate(TileFacePreset.KANTO));
+            event.accept(new ItemStack(CreateCompat.PRINTING_PLATE));
         });
     }
 

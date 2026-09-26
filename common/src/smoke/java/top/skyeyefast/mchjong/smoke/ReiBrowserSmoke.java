@@ -14,12 +14,24 @@ import top.skyeyefast.mchjong.item.MahjongCatalog;
 
 final class ReiBrowserSmoke implements BrowserDriver {
     @Override public boolean ready() {
-        if (DisplayRegistry.getInstance().getAll().values().stream().flatMap(List::stream)
-            .flatMap(display -> display.getDisplayLocation().stream())
-            .noneMatch(id -> id.getNamespace().equals("mchjong") && id.getPath().startsWith("/supplies/"))) return false;
-        var entries = catalogue();
-        return MahjongCatalog.entries().stream().allMatch(expected -> entries.stream()
-            .anyMatch(actual -> SupplySubtype.of(actual).equals(SupplySubtype.of(expected))));
+        try {
+            var display = DisplayRegistry.getInstance().getAll().values().stream().flatMap(List::stream)
+                .flatMap(candidate -> candidate.getDisplayLocation().stream())
+                .filter(id -> id.getNamespace().equals("mchjong") && id.getPath().startsWith("/supplies/"))
+                .findFirst().orElse(null);
+            if (display == null) return false;
+            var registered = DisplayRegistry.getInstance().getAll().values().stream().flatMap(List::stream)
+                .filter(candidate -> candidate.getDisplayLocation().filter(display::equals).isPresent())
+                .findFirst().orElse(null);
+            if (registered == null || registered.getOutputEntries().isEmpty() || registered.getOutputEntries().getFirst().isEmpty()) return false;
+            if (ViewSearchBuilder.builder().addRecipesFor(registered.getOutputEntries().getFirst().getFirst()).streamDisplays()
+                .flatMap(spec -> spec.provideInternalDisplayIds().stream()).noneMatch(display::equals)) return false;
+            var entries = catalogue();
+            return MahjongCatalog.entries().stream().allMatch(expected -> entries.stream()
+                .anyMatch(actual -> SupplySubtype.of(actual).equals(SupplySubtype.of(expected))));
+        } catch (java.util.ConcurrentModificationException ignored) {
+            return false;
+        }
     }
 
     @Override public List<ItemStack> catalogue() {
@@ -41,7 +53,7 @@ final class ReiBrowserSmoke implements BrowserDriver {
             .filter(candidate -> candidate.getDisplayLocation().filter(id::equals).isPresent())
             .findFirst().orElseThrow(() -> new IllegalStateException("REI did not register " + id));
         var output = display.getOutputEntries().getFirst().getFirst();
-        if (!ViewSearchBuilder.builder().addRecipesFor(output).open())
+        if (!ViewSearchBuilder.builder().addRecipesFor(output).filterCategory(display.getCategoryIdentifier()).open())
             throw new IllegalStateException("REI did not open " + id);
     }
 }

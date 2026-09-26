@@ -28,6 +28,7 @@ public final class TableEquipment {
     private TileMaterial material = TileMaterial.BONE;
     private DyeColor back;
     private TileFacePreset preset = TileFacePreset.KANSAI;
+    private net.minecraft.resources.ResourceLocation backPreset = new net.minecraft.resources.ResourceLocation("mchjong", "default");
 
     public TableEquipment(Runnable changed) {
         boxes.addListener(container -> {
@@ -47,6 +48,7 @@ public final class TableEquipment {
     public TileMaterial material() { return material; }
     public DyeColor back() { return back; }
     public TileFacePreset preset() { return preset; }
+    public net.minecraft.resources.ResourceLocation backPreset() { return backPreset; }
     public MahjongSupplies.Deck deck() { return deck; }
     public int activeBox() { return activeBox; }
     public boolean matchActive() { return !matchSticks.isEmpty(); }
@@ -205,6 +207,7 @@ public final class TableEquipment {
         material = deck == null ? TileMaterial.BONE : deck.material();
         back = deck == null ? null : deck.back();
         preset = deck == null ? TileFacePreset.KANSAI : deck.preset();
+        backPreset = deck == null ? new net.minecraft.resources.ResourceLocation("mchjong", "default") : deck.backPreset();
     }
 
     public ItemStack installCloth(ItemStack source) {
@@ -274,6 +277,7 @@ public final class TableEquipment {
             back = id < 0 ? null : DyeColor.byId(id);
         }
         if (tag.contains("tile_preset")) preset = new TileFacePreset(new net.minecraft.resources.ResourceLocation(tag.getString("tile_preset")));
+        if (tag.contains("tile_back_preset")) backPreset = new net.minecraft.resources.ResourceLocation(tag.getString("tile_back_preset"));
         if (tag.contains("tile_material")) for (TileMaterial candidate : TileMaterial.values())
             if (candidate.getSerializedName().equals(tag.getString("tile_material"))) material = candidate;
     }
@@ -283,5 +287,6 @@ public final class TableEquipment {
         tag.putString("tile_material", material.getSerializedName());
         tag.putInt("tile_back", back == null ? -1 : back.getId());
         tag.putString("tile_preset", preset.getSerializedName());
+        tag.putString("tile_back_preset", backPreset.toString());
     }
 }

@@ -29,7 +29,9 @@ class AssetContractTest {
                 .getAsJsonObject();
         JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve("en_us.json")))
                 .getAsJsonObject();
-        assertEquals(25, sounds.size());
+        assertEquals(26 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
+        top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.forEach((event, subtitle) ->
+            assertEquals(subtitle, sounds.getAsJsonObject("voice." + event).get("subtitle").getAsString()));
         for (var entry : sounds.entrySet()) {
             JsonObject sound = entry.getValue().getAsJsonObject();
             assertTrue(translations.has(sound.get("subtitle").getAsString()), entry.getKey());
@@ -154,15 +156,26 @@ class AssetContractTest {
             for (int x = 0; x < TileArtwork.WIDTH; x++) {
                 assertEquals(0, solid.getRGB(x, y));
             }
+        for (String name : List.of("creeper", "mojang")) {
+            var image = ImageIO.read(resources.resolve("assets/mchjong/textures/preset/back/" + name + ".png").toFile());
+            assertEquals(256, image.getWidth());
+            assertEquals(384, image.getHeight());
+            assertTrue(Arrays.stream(image.getRGB(0, 0, 256, 384, null, 0, 256)).anyMatch(pixel -> pixel != 0));
+        }
         assertFalse(Files.exists(resources.resolve("resourcepacks")));
         var cloth = ImageIO.read(resources.resolve("assets/mchjong/textures/furniture/cloth_pattern.png").toFile());
         assertTrue(Arrays.stream(cloth.getRGB(0, 0, cloth.getWidth(), cloth.getHeight(), null, 0, cloth.getWidth())).allMatch(pixel -> pixel == 0));
         var sticks = ImageIO.read(resources.resolve("assets/mchjong/textures/point_sticks.png").toFile());
         var riichi = ImageIO.read(resources.resolve("assets/mchjong/textures/item/riichi_stick.png").toFile());
+        var hudSticks = ImageIO.read(resources.resolve("assets/mchjong/textures/gui/stick_icons.png").toFile());
         assertArrayEquals(sticks.getRGB(0, 64, 384, 32, null, 0, 384), riichi.getRGB(0, 0, 384, 32, null, 0, 384));
+        assertEquals(384, hudSticks.getWidth());
+        assertEquals(64, hudSticks.getHeight());
+        assertArrayEquals(sticks.getRGB(0, 64, 384, 32, null, 0, 384), hudSticks.getRGB(0, 0, 384, 32, null, 0, 384));
+        assertArrayEquals(sticks.getRGB(0, 32, 384, 32, null, 0, 384), hudSticks.getRGB(0, 32, 384, 32, null, 0, 384));
         var expectedTextures = new HashSet<>(Set.of("tiles.png", "tile_glyphs.png", "back.png", "point_sticks.png",
-                "plain.png", "cloth_pattern.png", "riichi_stick.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
-                "mahjong_printing_plate.png", "incomplete_mahjong_box.png"));
+                "plain.png", "cloth_pattern.png", "riichi_stick.png", "stick_icons.png", "mahjong_dye.png", "creative_mahjong_dye.png", "red_dora_dye.png", "undo_dye.png",
+                "mahjong_printing_plate.png", "incomplete_mahjong_box.png", "creeper.png", "mojang.png"));
         FurnitureArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         TileMaterialArtwork.textures().keySet().forEach(name -> expectedTextures.add(name + ".png"));
         for (int face = 1; face <= 6; face++) expectedTextures.add("dice_" + face + ".png");

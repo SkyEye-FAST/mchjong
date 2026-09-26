@@ -16,7 +16,9 @@ Deliver complete, runnable increments. Choose the simplest implementation that
 meets the requirements, extend existing components and dependencies, and keep
 concerns separate. Check library documentation and types before implementing
 equivalent functionality. Remove obsolete implementation paths rather than
-adding compatibility layers, migrations or speculative configuration.
+adding compatibility layers, migrations or speculative configuration. Update
+`CHANGELOG.md` under `## [Unreleased]` after every edit to document user-visible
+and technical changes.
 
 ## Ownership and architecture
 
@@ -41,15 +43,24 @@ Keep optional integrations in a dedicated client compatibility package. Check
 mod availability in loader client entry points before referencing integration
 classes. Declare optional metadata and keep third-party implementations out of
 release bundles. Verify both installed and absent dependency configurations.
-Quilt uses the corresponding Fabric artifact. `compat/1.20.1` is a port-only
-branch for Fabric and Forge; synchronize stable batches from `main`, preserving
-the engine and shared gameplay rather than developing a second feature line.
+Quilt uses the corresponding Fabric artifact. Do not synchronize changes from
+`main` to any other branch unless the user explicitly requests it.
+`compat/1.20.1` is a port-only branch for Fabric and Forge; when synchronization
+is requested, preserve the engine and shared gameplay rather than developing a
+second feature line.
 `compat/26.1.2` is the corresponding port-only branch for Fabric/Quilt and
 NeoForge, using Java 25. Keep `main` on Minecraft 1.21.1 / Java 21 and the
-1.20.1 runtime on Java 17. Synchronize applicable code, tests, resources,
-formatting configuration and documentation together; retain each port's loader
+1.20.1 runtime on Java 17. When requested, synchronize applicable code, tests,
+resources, formatting configuration and documentation together; retain each port's loader
 APIs, dependency versions and single-version snapshot workflow. Omit optional
 adapters when the dependency has no build for that Minecraft/loader profile.
+Record completed synchronization with signed merge commits: merge the relevant
+`main` commit into each compatibility branch after adapting its changes, then
+merge both compatibility branch tips back into `main`. Preserve each branch's
+Minecraft and loader-specific tree when recording already adapted changes.
+Finish with `main` as a descendant of both compatibility branch tips, and
+advance the release pins to those synchronized tips. Verify the ancestry and
+remote refs before calling the branch coordination complete.
 Keep the three-version loader and integration tables in every README aligned,
 and distinguish shipped adapters from completed runtime validation.
 Keep version differences limited to actual Minecraft and loader API boundaries.
@@ -70,6 +81,9 @@ persistence and recipe identity in `SUPPLIES.md`; module ownership in
 `COMPATIBILITY.md`; build, branch synchronization and release procedures in
 `DEVELOPMENT.md`; and commands, fixtures and acceptance records in
 `VERIFICATION.md`. Link to the owning guide rather than duplicating its paragraphs.
+Update `CHANGELOG.md` under `## [Unreleased]` after every edit that modifies
+behavior, fixes bugs, introduces features, or adjusts assets and compatibility,
+categorizing changes under Keep a Changelog headings (`Added`, `Changed`, `Fixed`).
 
 Before changing screens, widgets, HUDs, inventory UI or physical table layout,
 read [UI_STYLE.md](docs/UI_STYLE.md). Reuse `MahjongUi`, `MahjongButton`,
@@ -162,7 +176,10 @@ default assessment.
 
 If the release assessment changes the target, first update `mod_version` to that
 target with `-SNAPSHOT` before releasing, such as `0.3.3-SNAPSHOT` to
-`0.4.0-SNAPSHOT`. Release tags are pure SemVer without a prefix, for example
+`0.4.0-SNAPSHOT`. Move accumulated entries under `## [Unreleased]` in
+`CHANGELOG.md` into the formal version section `## [x.y.z] - YYYY-MM-DD`, retain
+an empty `## [Unreleased]` section above it, and update the release links at the
+end of the changelog. Release tags are pure SemVer without a prefix, for example
 `0.4.0`. The Release workflow requires the tag to equal `mod_version` with the
 `-SNAPSHOT` suffix removed and supplies `-Pmod_version=$GITHUB_REF_NAME` so the
 published JARs contain the formal version rather than the Snapshot version.

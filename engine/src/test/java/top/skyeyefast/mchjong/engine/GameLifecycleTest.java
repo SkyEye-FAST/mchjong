@@ -139,6 +139,34 @@ class GameLifecycleTest {
         assertFalse(publicJson.contains("\"recorder\""));
     }
 
+    @Test void readoutAcknowledgementsRetainAReadingTailAndCannotChangeTheScore() {
+        Game game = started(RuleSet.TENHOU_4, 205);
+        game.players[1].points = -100;
+        Settlement.abort(game, "nine_terminals");
+        game.wins = List.of(new TableView.Win(0, 1, 4,
+            new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
+        int maximum = ScoreAnnouncements.maximumTicks(game.wins);
+        assertEquals(maximum + Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        var deltas = List.copyOf(game.deltas);
+        for (int seat = 0; seat < 4; seat++) {
+            UUID id = game.players[seat].id;
+            var view = game.view(id);
+            int done = index(view, Action.Type.SETTLEMENT_DONE);
+            assertFalse(game.act(id, view.decision() - 1, done));
+            assertTrue(game.act(id, view.decision(), done));
+            game.tick();
+            if (seat < 3) assertTrue(game.roomView().settlementTicks() > Game.SETTLEMENT_TICKS * 2);
+        }
+        assertEquals(Game.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        game = JSON.fromJson(JSON.toJson(game), Game.class);
+        for (int i = 0; i < Game.SETTLEMENT_TICKS; i++) game.tick();
+        assertEquals(Game.Phase.MATCH_END, game.phase());
+        assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(deltas, game.deltas);
+        assertFalse(game.view(game.players[0].id).actions().stream().anyMatch(a -> a.type() == Action.Type.SETTLEMENT_DONE));
+        assertEquals(Game.SETTLEMENT_TICKS, ScoreAnnouncements.maximumTicks(List.of()));
+    }
+
     @Test void settlementWaitCanBeSkippedWithServerIssuedActions() {
         Game game = started(RuleSet.TENHOU_4, 204);
         UUID player = game.players[0].id;
@@ -216,7 +244,8 @@ class GameLifecycleTest {
                 assertPrivateViews(game);
             }
             if (game.phase() == Game.Phase.HAND_END) {
-                for (int tick = 0; tick < Game.SETTLEMENT_TICKS; tick++) game.tick();
+                int remaining = game.roomView().settlementTicks();
+                for (int tick = 0; tick < remaining; tick++) game.tick();
                 continue;
             }
             boolean acted = false;
@@ -334,6 +363,40 @@ class GameLifecycleTest {
         Game fractional = finish(custom, new int[]{40100,30100,20100,10100}, 0);
         assertArrayEquals(new double[]{45.6,4.9,-15.1,-35.4},
             fractional.finalScores.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+        assertArrayEquals(new double[]{15.3,5,-5,-15.3},
+            fractional.finalUma.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
+    }
+
+    @Test void matchUmaRewardsRespectBothExperienceOptionsAndPayOnce() {
+        var rules = RuleSet.WRC.config().with(RuleOption.EXPERIENCE_REWARDS, 1);
+        Game game = new Game(UUID.randomUUID(), rules.preset(), 1);
+        game.rules = rules;
+        game.round = 7;
+        int[] scores = {40000, 30000, 20000, 10000};
+        UUID[] ids = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
+        for (int seat = 0; seat < 4; seat++) {
+            game.players[seat].points = scores[seat];
+            game.players[seat].id = ids[seat];
+        }
+        game.players[2].bot = true;
+        Settlement.exhaustive(game);
+        assertEquals(List.of(15.0, 5.0, -5.0, -15.0), game.finalUma);
+        assertEquals(Map.of(ids[0], 1500, ids[1], 500, ids[3], -1500), game.pendingExperience());
+        Game restored = JSON.fromJson(JSON.toJson(game), Game.class);
+        restored.validate();
+        assertEquals(game.pendingExperience(), restored.pendingExperience());
+        assertEquals(1500, restored.takeExperience(ids[0]));
+        assertEquals(0, restored.takeExperience(ids[0]));
+
+        Game noDeductions = new Game(UUID.randomUUID(), rules.preset(), 2);
+        noDeductions.rules = rules.with(RuleOption.DEDUCT_NEGATIVE_EXPERIENCE, 0);
+        noDeductions.round = 7;
+        for (int seat = 0; seat < 4; seat++) {
+            noDeductions.players[seat].points = scores[seat];
+            noDeductions.players[seat].id = ids[seat];
+        }
+        Settlement.exhaustive(noDeductions);
+        assertEquals(Map.of(ids[0], 1500, ids[1], 500), noDeductions.pendingExperience());
     }
 
     private static Game finish(RuleConfig rules, int[] scores, int deposits) {

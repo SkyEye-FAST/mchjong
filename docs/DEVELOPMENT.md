@@ -72,8 +72,9 @@ Follow the versioning and signed-commit requirements in the contributor instruct
 ## Version synchronization and artifacts
 
 `main` is the sole feature development line and targets Minecraft 1.21.1 / Java 21.
-Synchronize stable batches into `compat/1.20.1` and `compat/26.1.2`, preserving
-shared gameplay while adapting actual Minecraft and loader API boundaries.
+Synchronize into `compat/1.20.1` and `compat/26.1.2` only when explicitly
+requested, preserving shared gameplay while adapting actual Minecraft and loader
+API boundaries.
 The 1.20.1 port builds Fabric and Forge with a Java 17 runtime; the 26.1.2 port
 builds Fabric and NeoForge with Java 25. Quilt consumes the matching Fabric JAR.
 

@@ -26,7 +26,6 @@ public final class CreateWorkshopEmi implements EmiPlugin {
             @Override public Component getName() { return Component.translatable("browser.mchjong.create"); }
         };
         registry.addCategory(category);
-        registry.setDefaultComparison(CreateCompat.PRINTING_PLATE, Comparison.compareData(stack -> MahjongSupplies.facePreset(stack.getItemStack())));
         var displays = new ArrayList<>(CreateWorkshopDisplays.dynamic());
         var staticRecipes = CreateWorkshopDisplays.staticRecipes(Minecraft.getInstance().level);
         var ids = staticRecipes.stream().map(CreateWorkshopDisplays.Display::id).collect(java.util.stream.Collectors.toSet());
@@ -39,20 +38,19 @@ public final class CreateWorkshopEmi implements EmiPlugin {
         @Override public ResourceLocation getId() { return display.id(); }
         @Override public List<EmiIngredient> getInputs() { return display.inputs().stream().<EmiIngredient>map(EmiStack::of).toList(); }
         @Override public List<EmiStack> getOutputs() { return display.outputs().stream().map(EmiStack::of).toList(); }
-        @Override public List<EmiIngredient> getCatalysts() { return List.of(EmiStack.of(display.machine())); }
+        @Override public List<EmiIngredient> getCatalysts() { return display.requiresBasin() ? List.of(EmiStack.of(display.machine()), EmiStack.of(com.simibubi.create.AllBlocks.BASIN.asItem())) : List.of(EmiStack.of(display.machine())); }
         @Override public int getDisplayWidth() { return 178; }
-        @Override public int getDisplayHeight() { return 98; }
+        @Override public int getDisplayHeight() { return 80; }
         @Override public boolean supportsRecipeTree() { return false; }
         @Override public void addWidgets(WidgetHolder widgets) {
-            widgets.addDrawable(0, 0, 178, 98, (graphics, mouseX, mouseY, delta) -> {
-                MahjongUi.panel(graphics, 0, 0, 178, 98);
+            widgets.addDrawable(0, 0, 178, 80, (graphics, mouseX, mouseY, delta) -> {
+                MahjongUi.panel(graphics, 0, 0, 178, 80);
                 MahjongUi.text(graphics, Minecraft.getInstance().font, display.title(), 4, 5, 170, MahjongUi.TEXT, false);
-                graphics.drawString(Minecraft.getInstance().font, "→", 84, 50, MahjongUi.ACCENT, false);
+                CreateWorkshopAnimation.render(graphics, display, 0, 0);
+                graphics.drawString(Minecraft.getInstance().font, "→", 105, 49, MahjongUi.ACCENT, false);
             });
             for (int i = 0; i < display.inputs().size(); i++) widgets.addSlot(EmiStack.of(display.inputs().get(i)), 4 + i % 3 * 18, 23 + i / 3 * 18);
             for (int i = 0; i < display.outputs().size(); i++) widgets.addSlot(EmiStack.of(display.outputs().get(i)), 125 + i % 2 * 18, 32 + i / 2 * 18).recipeContext(this);
-            widgets.addSlot(EmiStack.of(display.machine()), 81, 24).drawBack(false);
-            widgets.addText(Component.translatable("browser.mchjong.components"), 4, 84, MahjongUi.MUTED, false);
         }
     }
 }

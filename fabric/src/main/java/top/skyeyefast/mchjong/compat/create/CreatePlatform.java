@@ -28,8 +28,7 @@ public final class CreatePlatform {
             CreateProcessing.deploying(event.getInventory().getItem(0), event.getInventory().getItem(1))), 100));
         for (var tab : List.of(MahjongContent.TAB_KEY, CreativeModeTabs.FUNCTIONAL_BLOCKS))
             ItemGroupEvents.modifyEntriesEvent(tab).register(entries -> {
-                entries.accept(CreateCompat.plate(TileFacePreset.KANSAI));
-                entries.accept(CreateCompat.plate(TileFacePreset.KANTO));
+                entries.accept(new ItemStack(CreateCompat.PRINTING_PLATE));
             });
     }
 

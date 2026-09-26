@@ -27,6 +27,12 @@ import top.skyeyefast.mchjong.item.MahjongCatalog;
 
 /** REI crafting examples, entry catalogue, NBT discrimination and screen exclusion zones. */
 public class MahjongReiPlugin implements REIClientPlugin {
+    private static boolean createAvailable() {
+        return net.minecraft.core.registries.BuiltInRegistries.ITEM.containsKey(new ResourceLocation("mchjong", "mahjong_printing_plate"));
+    }
+    @Override public void registerCategories(me.shedaniel.rei.api.client.registry.category.CategoryRegistry registry) {
+        if (createAvailable()) top.skyeyefast.mchjong.compat.create.CreateWorkshopRei.registerCategories(registry);
+    }
     @Override public void registerItemComparators(ItemComparatorRegistry registry) {
         // Stable NBT hashes keep equal recipe ingredients equal after REI copies their stacks.
         SupplySubtype.items().forEach(item -> registry.register((context, stack) -> {
@@ -43,6 +49,7 @@ public class MahjongReiPlugin implements REIClientPlugin {
     }
 
     @Override public void registerDisplays(DisplayRegistry registry) {
+        if (createAvailable()) top.skyeyefast.mchjong.compat.create.CreateWorkshopRei.displays().forEach(registry::add);
         var level = Minecraft.getInstance().level;
         if (level == null) return;
         for (var example : SupplyRecipeExamples.create(level)) {

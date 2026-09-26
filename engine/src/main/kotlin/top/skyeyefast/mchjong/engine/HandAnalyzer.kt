@@ -23,9 +23,11 @@ object HandAnalyzer {
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
         hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())
 
+    @JvmStatic
     fun yakuValues(names: List<String>, closed: Boolean, rules: RuleConfig): List<ReplayHand.Yaku> {
         val yakus = Yakus(options(rules))
         return names.map { name ->
+            if (name == "Nagashi") return@map ReplayHand.Yaku(name, 5, false)
             if (name == "Renhou" && rules.renhouMangan()) return@map ReplayHand.Yaku(name, 5, false)
             val yaku = yakus.getYaku(name)
             ReplayHand.Yaku(name, yaku.han - if (closed) 0 else yaku.furoLoss, yaku.isYakuman)
@@ -83,6 +85,15 @@ object HandAnalyzer {
     @JvmStatic @JvmOverloads
     fun discardEfficiency(hand: List<Int>, melds: List<Meld>, goodShape: Boolean = true): Map<Int, TileEfficiency> {
         val result = analyze(hand, melds, false, goodShape).shantenInfo as? ShantenWithGot ?: return emptyMap()
+        return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
+    }
+
+    /** All minimum-shanten discards, including ties across regular/special hands.
+     * An effective draw from one-shanten has minimum zero, so this includes
+     * every tenpai discard without analyzing the discarded retreat branches. */
+    @JvmStatic
+    fun bestDiscardEfficiency(hand: List<Int>, melds: List<Meld>): Map<Int, TileEfficiency> {
+        val result = analyze(hand, melds, true).shantenInfo as? ShantenWithGot ?: return emptyMap()
         return result.discardToAdvance.mapKeys { kind(it.key) }.mapValues { efficiency(it.value) }
     }
 

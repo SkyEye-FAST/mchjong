@@ -35,7 +35,8 @@ The keys below are accessed and normalized through `MahjongComponents`.
 | --- | --- | --- |
 | `wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `tile` | `{face, material, red}` | Tile items |
-| `face_preset` | Built-in `mchjong:kansai` or `mchjong:kanto`, or a resource-pack identifier | Tile-face design |
+| `face_preset` | Built-in `mchjong:kansai` or `mchjong:kanto`, or a cosmetic preset identifier | Tile-face design |
+| `back_preset` | Cosmetic preset identifier; the default design omits this key | Tile-back design |
 | `points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `color` | Vanilla dye integer ID, `0..15` | Tile backs, cloth, stool cushions |
 | `Items` | Native item-stack list with slot indices | Mahjong boxes |
@@ -50,7 +51,7 @@ Only faces `4`, `13`, `22` can have `red = true`. Material is one of the eleven
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
 `amethyst`. Invalid faces, red combinations and denominations are rejected by
 the component codecs. Identical components stack normally. Undyed tile backs use
-their material texture; default cloth is cyan and stool cushions are white.
+their material texture and selected pattern; default cloth is cyan and stool cushions are white.
 
 Domain values use codecs and are written through native NBT and packet buffers.
 Default-valued fields are normalized so fresh and crafted stacks remain mergeable.

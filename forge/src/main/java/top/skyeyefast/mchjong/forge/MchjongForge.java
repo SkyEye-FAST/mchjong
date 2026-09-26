@@ -30,8 +30,14 @@ public final class MchjongForge {
         var bus = FMLJavaModLoadingContext.get().getModEventBus();
         if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
             top.skyeyefast.mchjong.compat.create.CreatePlatform.register(bus);
-        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) ->
-            top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer()));
+        MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
+            top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
+            top.skyeyefast.mchjong.config.ServerPresets.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+        });
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+                top.skyeyefast.mchjong.config.ServerPresets.send(player);
+        });
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->
             top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));
         var recipes = DeferredRegister.create(Registries.RECIPE_SERIALIZER, MahjongContent.MOD_ID);
@@ -69,7 +75,7 @@ public final class MchjongForge {
         blockEntities.register(bus);
         DeferredRegister<EntityType<?>> entities = DeferredRegister.create(Registries.ENTITY_TYPE, MahjongContent.MOD_ID);
         entities.register("seat", () -> MahjongContent.SEAT_ENTITY = EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC)
-            .sized(0.3f, 0.1f).noSave().clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
+            .sized(0.3f, 0.1f).clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         entities.register(bus);
         DeferredRegister<CreativeModeTab> tabs = DeferredRegister.create(Registries.CREATIVE_MODE_TAB, MahjongContent.MOD_ID);
         tabs.register("mchjong", () -> CreativeModeTab.builder()

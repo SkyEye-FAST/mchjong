@@ -21,17 +21,18 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Shared viewer examples built through the same pure transformations and machine adapters. */
 public final class CreateWorkshopDisplays {
     public record Display(ResourceLocation id, String operation, List<ItemStack> inputs, List<ItemStack> outputs, ItemStack machine) {
+        public boolean requiresBasin() { return !operation.equals("cutting") && !operation.equals("deploying") && !operation.equals("sequenced_assembly") && !operation.equals("pressing"); }
         public Component title() { return Component.translatable("browser.mchjong.create." + operation); }
     }
     private CreateWorkshopDisplays() {}
 
     public static List<Display> dynamic() {
         var displays = new ArrayList<Display>();
-        for (var material : TileMaterial.values()) for (var preset : List.of(TileFacePreset.KANSAI, TileFacePreset.KANTO)) {
+        for (var material : TileMaterial.values()) {
             var blank = MahjongSupplies.tile(new TileData(-1, material, false), 64);
-            add(displays, "print/" + material.getSerializedName() + "/" + preset.id().getPath(), CreateProcessing.pressing(List.of(
+            add(displays, "print/" + material.getSerializedName(), CreateProcessing.pressing(List.of(
                 blank, blank.copy(), blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
-                new ItemStack(MahjongContent.MAHJONG_DYE), CreateCompat.plate(preset))));
+                new ItemStack(MahjongContent.MAHJONG_DYE), new ItemStack(CreateCompat.PRINTING_PLATE))));
         }
         var box = MahjongSupplies.completeBox(TileMaterial.BONE);
         for (var color : DyeColor.values()) {
@@ -83,7 +84,11 @@ public final class CreateWorkshopDisplays {
             if (!(entry instanceof ProcessingRecipe<?> recipe)) continue;
             if (recipe.getIngredients().stream().anyMatch(ingredient -> ingredient.getItems().length == 0)) continue;
             var operation = recipe.getTypeInfo().getId().getPath();
-            var machine = operation.equals("cutting") ? AllBlocks.MECHANICAL_SAW.get() : AllBlocks.MECHANICAL_MIXER.get();
+            var machine = switch (operation) {
+                case "cutting" -> AllBlocks.MECHANICAL_SAW.get();
+                case "pressing", "compacting" -> AllBlocks.MECHANICAL_PRESS.get();
+                default -> AllBlocks.MECHANICAL_MIXER.get();
+            };
             var inputs = recipe.getIngredients().stream().map(ingredient -> ingredient.getItems()[0].copy()).toList();
             displays.add(new Display(entry.getId(), operation, inputs, recipe.getRollableResultsAsItemStacks(), new ItemStack(machine)));
         }

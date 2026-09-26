@@ -36,10 +36,10 @@ S C S       C = chest
 . I .       I = iron nugget, . = empty
 ```
 
-A printing plate uses three iron ingots across the bottom row, with paper above
-the middle ingot for Kansai faces or bamboo for Kanto faces. Both plates are the
-same item, `mchjong:mahjong_printing_plate`; their existing `face_preset` NBT value
-selects the faces. A plate is reusable and can retain its custom name.
+A printing plate uses three iron ingots across the bottom row and paper above
+the middle ingot. The reusable `mchjong:mahjong_printing_plate` can retain its
+custom name. The press prints the default Kansai faces; the mahjong box switches
+finished sets to any available face preset.
 
 ## Printing a complete set
 
@@ -47,7 +47,7 @@ Supply a basin under a press with an empty box, **144 identical blank tiles**, o
 mahjong dye and a printing plate. A normal inventory holds the blanks as
 64 + 64 + 16; the basin accepts these separate stacks without increasing item
 stack limits. Every blank must have identical material, back coloring and other
-components. The result contains four ordinary copies of each numbered/honor face
+components. The result has Kansai faces, with four ordinary copies of each numbered/honor face
 and one of each flower: 144 tiles total.
 
 The plate is returned as a separate output. Route it back to the printing basin
@@ -94,8 +94,9 @@ one red 5m, two red 5p and one red 5s. The 148 tiles occupy exactly 45 tile slot
 and cover the no-red, three-red and four-red options. Their material, back and
 face preset must agree with the printed set for those rule options to use them.
 
-JEI and EMI show component-aware workshop examples alongside the ordinary
-recipes. Ponder's **Mahjong workshop** category provides production and dyeing
+On NeoForge, JEI, EMI and REI show component-aware workshop examples alongside
+the ordinary recipes, with animated Create machines and their basins. Ponder's
+**Mahjong workshop** category provides production and dyeing
 guides on the printing plate, incomplete box and survival dyes, in all four
 supported languages.
 
@@ -114,7 +115,7 @@ to native Create machines; Create controls processing time, ingredient
 consumption, filtering and output handling. Narrow machine-boundary adaptations
 allow repeated supply stacks and reserve sufficient output space for large
 batches. Loader-specific `CreatePlatform` bridges Forge item capabilities or
-Fabric transactions. The JEI/EMI examples call these same adapters.
+Fabric transactions. The animated JEI/EMI/REI examples call these same adapters.
 
 Build with JDK 21; production artifacts target Java 17. For development, add
 `-PwithCreate=true` to either loader's run. The focused checks share the same

@@ -80,6 +80,16 @@ the normal 640 x 400 viewport. Reflow or paginate content when needed, rather
 than moving controls outside the screen. Actual pixel resolution depends on GUI
 scale. Verify English, Japanese, Simplified Chinese and Traditional Chinese.
 Retain existing no-scroll settlement navigation and replay keyboard controls.
+Settlement reserves the complete receipt layout before revealing individual yaku
+rows. Highlight the current row with the shared accent; points precede the hand
+grade. Put each ordinary yaku's han in a solid square-cornered badge directly
+after the yaku name's last line; natural yakuman have no han badge. Enlarge
+points and hand grades together. Show the hand grade in
+a brass-filled badge beneath the points, or beside them in compact receipts.
+Small receipts reserve their body for the hand and yaku; the Point changes page
+provides the complete score table. Reserve both badge and text
+space before the readout begins. Do not reflow the hand or restart the readout
+on a resize or snapshot refresh.
 The lobby keeps player count, presets, detailed rules, visibility, clock settings,
 invitations and participants on its first page. Keep leave and host dissolution
 distinct in the toolbar, with one prominent seat-preparation action below the settings.
@@ -114,11 +124,13 @@ stool when allocation finishes. Turning it off keeps the coordinate-guided manua
 seating flow; ordinary presence updates never force a player back onto a stool.
 Room timing and invitations live in Settings → Room;
 the Ready control reflects server-confirmed presence at the assigned stool.
-The room Hand visibility control cycles through Open hands, Visible to all players,
-Visible to riichi players and Visible only to self; Shift cycles backward. Only
+The room Hand visibility control cycles through Visible only to self, Visible to
+riichi players, Visible to all players and Open hands; Shift cycles backward. Only
 the host can change it before play. Open hands lays tiles face up; the other
-modes retain standing hands and change access to faces. Concealed fronts use a
-complete cap and bevel joined to the body. Nearby spectators use the world view
+modes retain standing hands and change access to faces. Tile fronts face their
+owner. Hidden identities suppress only the printed artwork; the opaque white
+plate keeps its thickness and rear cap, including when viewed through a glass
+body or in a face-down wall. Nearby spectators use the world view
 without occupying participant seats.
 
 The rule screen separates preset options, read-only rule details and custom
@@ -154,7 +166,8 @@ native text size. Closed settings persist locally and reset
 disables hints.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
-round/remaining header. Indicators use 14-pixel faces when space permits; compact
+round/remaining header. Their stick icons use fixed HUD artwork, independent of
+the selected point-stick preset. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
 on both text lines. Player cards begin at y=38 without a separate indicator row.
@@ -167,7 +180,7 @@ Names, winds and points keep their own rows in 24-pixel cards. With MELDS enable
 grow to 40 pixels for actual resource-pack faces at 5–7 pixels, or 36 pixels for
 a localized group count when all melds cannot fit. Immersive cards retain their
 board positions and the board owns the full meld display. In both views, STATUS
-shows riichi using its resource-pack texture (blue with a white dot by default) and a persistent brass
+shows riichi using the fixed HUD icon (blue with a white dot) and a persistent brass
 bottom rule, with the full status in hover details. The sideways river tile
 continues to identify the declaration discard.
 
@@ -238,8 +251,8 @@ longer arc. Riichi rotation occurs near landing. These animations are presentati
 and never alter the authoritative action or tile identity.
 Reserve at least 18 logical pixels of face width for immersive river tiles and 20 pixels
 for opponent meld tiles. Allocate river depth per seat before reducing these sizes.
-Long opponent meld rails wrap inward at the owner's corner while retaining the minimum
-face width. Player names have a portrait immediately before them; practice bots use
+Opponent melds stay in one row at the owner's corner and the hand shifts left
+to clear them, retaining the minimum face width. Player names have a portrait immediately before them; practice bots use
 a distinct robot portrait and maid companions use the default Reimu icon. Immersive
 plaque text may scale above native size for the 1280 × 800 canvas. Ellipsize long
 names and retain the complete name in hover details.
@@ -252,11 +265,13 @@ The left side contains 45 tile slots, nine point-stick slots, one adjacent dice
 slot and 36 player slots.
 The right side shows tile/stick counts, set readiness and a dedicated dye slot.
 An empty dye slot shows a short insertion hint. Vanilla dye reveals only the
-back-color action; Mahjong dye reveals a single cycling preset selector, three
-sample faces and the print action. The selector cycles the complete preset list
-with mouse or keyboard activation (Shift reverses direction), so additional
-presets do not change the layout. Keep action visibility synchronized with the
-actual slot contents and clear focus when its control disappears.
+back-color action; Mahjong dye reveals face and back buttons that open paginated
+secondary screens. Each successful change consumes one ordinary Mahjong dye;
+creative Mahjong dye remains in the slot. Show four sample tiles beside each
+face preset. Keep action visibility synchronized with the actual slot contents
+and clear focus when its control disappears.
+Preset pages retain the same authorized box menu and return to its inventory
+without reopening it; leaving the box ends the native menu lifecycle.
 Vanilla dyes in that slot recolor every stored tile back to one of the
 sixteen dye colors through the explicit Dye backs action, while Undo dye removes tile-back dyeing through the Remove dye action; Mahjong dye remains the reagent for
 face printing. Keep a native 16-pixel item in an 18-pixel slot pitch. The carrier slot
@@ -268,6 +283,11 @@ The summary consumes synchronized menu contents. Client styling cannot move,
 sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
+
+The Personal scope in room settings opens a second preset screen for a player's
+riichi stick and voice. The stick tab shows the strip texture beside each name;
+the voice tab lists recording sets. Both selections are saved locally. Keep the
+lists paginated at small window sizes.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
 recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row

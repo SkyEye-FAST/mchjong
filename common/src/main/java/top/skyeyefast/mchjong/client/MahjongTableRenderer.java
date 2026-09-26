@@ -33,14 +33,19 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         pose.translate(0.5, 0, 0.5);
         // Opaque shells and furniture first; glass shells are sorted and blended with the glass body pass.
         boolean glass = table.equipment().material() == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
-        tiles(table, frames, pose, buffers, light, Layer.BACK);
-        if (!glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
+        if (!glass) {
+            tiles(table, frames, pose, buffers, light, Layer.BACK);
+            tiles(table, frames, pose, buffers, light, Layer.BODY);
+        }
         tiles(table, frames, pose, buffers, light, Layer.FACE);
         if (table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE))
             TableIndicator.render(view, pose, buffers, light);
         TableDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
         TableDice.renderWorld(view, pose, buffers, light);
-        if (glass) tiles(table, frames, pose, buffers, light, Layer.BODY);
+        if (glass) {
+            tiles(table, frames, pose, buffers, light, Layer.BACK);
+            tiles(table, frames, pose, buffers, light, Layer.BODY);
+        }
         tiles(table, frames, pose, buffers, light, Layer.PATTERN);
         tiles(table, frames, pose, buffers, light, Layer.OUTLINE);
         pose.popPose();
@@ -55,7 +60,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             case BACK -> TileRenderTypes.back(material, back);
             case BODY -> TileRenderTypes.body(material);
             case FACE -> TileRenderTypes.faces(table.equipment().preset());
-            case PATTERN -> TileRenderTypes.BACK_PATTERN;
+            case PATTERN -> TileRenderTypes.backPattern(table.equipment().backPreset());
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
@@ -76,8 +81,8 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             switch (layer) {
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), light);
                 case BODY -> TileMesh.drawBody(pose, vertices, light, material, back);
-                case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0, faceDown, light, material, back);
-                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, piece.back() || piece.tile() < 0, faceDown, light);
+                case BACK -> TileMesh.drawBack(pose, vertices, faceDown, light, material, back);
+                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, faceDown, light);
                 case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();

@@ -8,7 +8,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,
-                        String result, List<Integer> deltas, List<Double> finalScores,
+                        String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
                         HandVisibility handVisibility, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
                         boolean ronBlocked, int riichiHan) {
@@ -18,7 +18,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     public record Handling(int builtWalls, int sourceSlot, int packetSize, int diceOne, int diceTwo, boolean diceHeld) {}
     public record Seat(boolean entityBot, String name, boolean occupied, boolean bot, boolean ready, int points,
                        List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
-                       List<Integer> norths, boolean riichi, boolean exposed) {
+                       List<Integer> norths, boolean riichi, boolean exposed, boolean doubleRiichi) {
         public Seat {
             hand = List.copyOf(hand); melds = List.copyOf(melds); river = List.copyOf(river);
             norths = List.copyOf(norths);
@@ -30,6 +30,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
     public TableView {
         wall = List.copyOf(wall); seats = List.copyOf(seats); actions = List.copyOf(actions);
         wins = List.copyOf(wins); deltas = List.copyOf(deltas); finalScores = List.copyOf(finalScores);
+        finalUma = List.copyOf(finalUma);
         clocks = List.copyOf(clocks); finalRanks = List.copyOf(finalRanks);
     }
 }

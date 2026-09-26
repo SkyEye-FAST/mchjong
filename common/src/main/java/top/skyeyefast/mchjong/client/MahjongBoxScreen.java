@@ -12,10 +12,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Dedicated compartments and server-authorized face printing over native inventory synchronization. */
 public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMenu> {
-    private MahjongButton print;
+    private boolean openingPreset;
     private MahjongButton dyeBack;
-    private TileFacePreset preset = TileFacePreset.KANSAI;
     private MahjongButton presetChoice;
+    private MahjongButton backChoice;
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
@@ -28,20 +28,26 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
     @Override protected void init() {
         super.init();
         topPos = Math.min(topPos, height - imageHeight - 24);
-        presetChoice = addRenderableWidget(MahjongButton.create(presetLabel(), ignored -> {
-            var choices = TileFacePresets.choices();
-            preset = choices.get(Math.floorMod(choices.indexOf(preset) + (hasShiftDown() ? -1 : 1), choices.size()));
-            presetChoice.setMessage(presetLabel());
-            updateActions();
-        }).bounds(leftPos + 196, topPos + 136, 94, 20).build());
+        presetChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
+            openPreset(new MahjongBoxFaceScreen(this)))
+            .bounds(leftPos + 196, topPos + 136, 94, 20).build());
         dyeBack = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.dye_back"), ignored ->
             minecraft.gameMode.handleInventoryButtonClick(menu.containerId, MahjongBoxMenu.DYE_BACK_BUTTON))
             .bounds(leftPos + 196, topPos + 136, 94, 20).build().primary());
-        print = addRenderableWidget(MahjongButton.create(Component.translatable("box.mchjong.print"), ignored ->
-            minecraft.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
-                new top.skyeyefast.mchjong.network.BoxPrintPayload(menu.containerId, preset))))
-            .bounds(leftPos + 196, topPos + 184, 94, 20).build().primary());
+        backChoice = addRenderableWidget(MahjongButton.create(Component.empty(), ignored ->
+            openPreset(new MahjongBoxBackScreen(this)))
+            .bounds(leftPos + 196, topPos + 160, 94, 20).build());
         updateActions();
+    }
+
+    private void openPreset(net.minecraft.client.gui.screens.Screen screen) {
+        openingPreset = true;
+        try { minecraft.setScreen(screen); }
+        finally { openingPreset = false; }
+    }
+
+    @Override public void removed() {
+        if (!openingPreset) super.removed();
     }
 
     @Override protected void containerTick() {
@@ -49,26 +55,33 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         updateActions();
     }
 
-    private Component presetLabel() {
-        return Component.translatable("box.mchjong.preset_choice", Component.translatable(preset.translationKey()));
-    }
-
     private void updateActions() {
-        var choices = TileFacePresets.choices();
-        if (!choices.isEmpty() && !choices.contains(preset)) preset = choices.get(0);
-        presetChoice.setMessage(presetLabel());
+        presetChoice.setMessage(Component.translatable("box.mchjong.preset_choice", TileFacePresets.label(facePreset())));
         var reagent = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         boolean printing = MahjongSupplies.mahjongDye(reagent);
-        presetChoice.visible = print.visible = printing;
-        presetChoice.active = printing && choices.size() > 1;
-        print.active = printing && choices.contains(preset) && menu.canEngrave(preset);
+        presetChoice.visible = printing;
+        presetChoice.active = !TileFacePresets.choices().isEmpty();
         boolean undo = reagent.is(MahjongContent.UNDO_DYE);
         dyeBack.visible = undo || reagent.getItem() instanceof net.minecraft.world.item.DyeItem;
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
         dyeBack.setMessage(Component.translatable(undo ? "box.mchjong.undo_dye_back" : "box.mchjong.dye_back"));
+        backChoice.setMessage(Component.translatable("box.mchjong.back_choice", TileBackPresets.label(backPreset())));
+        backChoice.active = MahjongSupplies.tileCount(menu.items()) > 0 && printing;
         if (getFocused() instanceof net.minecraft.client.gui.components.AbstractWidget widget && !widget.visible)
             setFocused(null);
     }
+
+    net.minecraft.resources.ResourceLocation backPreset() {
+        return menu.items().stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM))
+            .findFirst().map(MahjongSupplies::backPreset).orElse(TileBackPresets.DEFAULT);
+    }
+
+    TileFacePreset facePreset() {
+        return menu.items().stream().filter(stack -> stack.is(MahjongContent.TILE_ITEM))
+            .findFirst().map(MahjongSupplies::facePreset).orElse(TileFacePreset.KANSAI);
+    }
+
+    MahjongBoxMenu boxMenu() { return menu; }
 
     @Override public void renderBackground(GuiGraphics graphics) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
@@ -104,8 +117,6 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
             ? "box.mchjong.unlimited" : "box.mchjong.dye_cost"), 218, 87, 72, MahjongUi.MUTED, false);
         if (presetChoice.visible) {
             MahjongUi.text(graphics, font, Component.translatable("box.mchjong.preset"), 196, 122, 94, MahjongUi.TEXT, false);
-            for (int i = 0; i < 3; i++) TileGui.tile(graphics, new int[]{4, 13, 22}[i] * 4,
-                208 + i * 25, 160, 14, false, false, false, preset);
         } else if (dyeBack.visible) {
             MahjongUi.text(graphics, font, reagent.getHoverName(), 196, 122, 94, MahjongUi.TEXT, false);
         } else paragraph(graphics, Component.translatable("box.mchjong.insert_dye"), 124, MahjongUi.MUTED);

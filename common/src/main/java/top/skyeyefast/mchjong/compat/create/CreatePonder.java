@@ -68,14 +68,14 @@ public final class CreatePonder implements PonderPlugin {
         show(scene, new ItemStack(CreateCompat.INCOMPLETE_BOX));
         say(scene, "To assemble a box, apply leather to a chest with a deployer, apply an iron nugget, then press it. This route saves the wooden slabs.");
         var blank = MahjongSupplies.tile(new TileData(-1, TileMaterial.BONE, false), 64);
-        var plate = CreateCompat.plate(TileFacePreset.KANTO);
+        var plate = new ItemStack(CreateCompat.PRINTING_PLATE);
         var inputs = List.of(blank, blank.copy(), blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
             new ItemStack(MahjongContent.MAHJONG_DYE), plate);
         scene.world().modifyBlockEntity(BASIN, BasinBlockEntity.class, basin -> {
             for (int i = 0; i < inputs.size(); i++) basin.inputInventory.setStackInSlot(i, inputs.get(i).copy());
         });
         show(scene, plate);
-        say(scene, "Under a mechanical press, supply one empty box, 144 identical blank tiles, one mahjong dye and a printing plate. The plate selects Kansai or Kanto faces.");
+        say(scene, "Under a mechanical press, supply one empty box, 144 identical blank tiles, one mahjong dye and a printing plate. The press prints Kansai faces.");
         var printed = CreateProcessing.pressing(inputs).outputs().get(0);
         scene.world().modifyBlockEntity(BASIN.above(2), com.simibubi.create.content.kinetics.press.MechanicalPressBlockEntity.class,
             press -> press.getPressingBehaviour().start(com.simibubi.create.content.kinetics.press.PressingBehaviour.Mode.BASIN));

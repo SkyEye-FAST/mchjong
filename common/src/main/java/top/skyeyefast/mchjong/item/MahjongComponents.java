@@ -24,6 +24,12 @@ public final class MahjongComponents {
     public static void tile(ItemStack stack, TileData tile) { write(stack, "tile", TileData.CODEC, tile); }
     public static TileFacePreset facePreset(ItemStack stack) { return read(stack, "face_preset", TileFacePreset.CODEC, TileFacePreset.KANSAI); }
     public static void facePreset(ItemStack stack, TileFacePreset preset) { write(stack, "face_preset", TileFacePreset.CODEC, preset); }
+    public static net.minecraft.resources.ResourceLocation backPreset(ItemStack stack) {
+        return read(stack, "back_preset", net.minecraft.resources.ResourceLocation.CODEC, MahjongContent.id("default"));
+    }
+    public static void backPreset(ItemStack stack, net.minecraft.resources.ResourceLocation preset) {
+        write(stack, "back_preset", net.minecraft.resources.ResourceLocation.CODEC, preset);
+    }
     public static int points(ItemStack stack) {
         int value = read(stack, "points", Codec.INT, 0);
         return DENOMINATIONS.contains(value) ? value : 0;
@@ -64,6 +70,7 @@ public final class MahjongComponents {
         if (data.contains("wood") && FurnitureWood.CODEC.parse(NbtOps.INSTANCE, data.get("wood")).result().isEmpty()) return false;
         if (data.contains("tile") && TileData.CODEC.parse(NbtOps.INSTANCE, data.get("tile")).result().isEmpty()) return false;
         if (data.contains("face_preset") && TileFacePreset.CODEC.parse(NbtOps.INSTANCE, data.get("face_preset")).result().isEmpty()) return false;
+        if (data.contains("back_preset") && net.minecraft.resources.ResourceLocation.CODEC.parse(NbtOps.INSTANCE, data.get("back_preset")).result().isEmpty()) return false;
         if (data.contains("points") && (!data.contains("points", 3) || !DENOMINATIONS.contains(data.getInt("points")))) return false;
         if (data.contains("color") && (!data.contains("color", 3) || data.getInt("color") < 0 || data.getInt("color") > 15)) return false;
         return !data.contains("box_preset") || boxPreset(stack) != null;
@@ -79,6 +86,7 @@ public final class MahjongComponents {
         if (data.getString("wood").equals("oak")) data.remove("wood");
         if (data.contains("points", 3) && data.getInt("points") == 0) data.remove("points");
         if (data.getString("face_preset").equals("mchjong:kansai")) data.remove("face_preset");
+        if (data.getString("back_preset").equals("mchjong:default")) data.remove("back_preset");
         if (data.contains("tile") && TileData.CODEC.parse(NbtOps.INSTANCE, data.get("tile")).result().filter(TileData.BLANK::equals).isPresent())
             data.remove("tile");
         int defaultColor = item == MahjongContent.CLOTH_ITEM ? DyeColor.CYAN.getId()

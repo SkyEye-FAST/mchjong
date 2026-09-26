@@ -38,8 +38,12 @@ public class Mchjong implements ModInitializer {
 
     @Override
     public void onInitialize() {
-        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
-            top.skyeyefast.mchjong.world.WorldSettings::of);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            top.skyeyefast.mchjong.world.WorldSettings.of(server);
+            top.skyeyefast.mchjong.config.ServerPresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+            top.skyeyefast.mchjong.config.ServerPresets.send(handler.player));
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->
             Registry.register(BuiltInRegistries.RECIPE_SERIALIZER, MahjongContent.id(name), serializer));
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, event) ->
@@ -62,12 +66,16 @@ public class Mchjong implements ModInitializer {
         MahjongContent.STOOL_ENTITY = Registry.register(BuiltInRegistries.BLOCK_ENTITY_TYPE, MahjongContent.id("mahjong_stool"),
             BlockEntityType.Builder.of(top.skyeyefast.mchjong.world.FurnitureBlockEntity::new, MahjongContent.STOOL).build(null));
         MahjongContent.SEAT_ENTITY = Registry.register(BuiltInRegistries.ENTITY_TYPE, MahjongContent.id("seat"),
-            EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f).noSave()
+            EntityType.Builder.<SeatEntity>of(SeatEntity::new, MobCategory.MISC).sized(0.3f, 0.1f)
                 .clientTrackingRange(10).updateInterval(10).build("mchjong:seat"));
         Registry.register(BuiltInRegistries.CREATIVE_MODE_TAB, MahjongContent.TAB_KEY, TAB);
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
+        receiver(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload::decode,
+            (player, payload) -> payload.handle(player));
+        receiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload::decode,
+            (player, payload) -> payload.handle(player));
         receiver(TableActionPayload.TYPE, TableActionPayload::decode, TableNetworking::receive);
         receiver(TableControlPayload.TYPE, TableControlPayload::decode, TableNetworking::receive);
         receiver(TableSeatPayload.TYPE, TableSeatPayload::decode, TableNetworking::receive);
