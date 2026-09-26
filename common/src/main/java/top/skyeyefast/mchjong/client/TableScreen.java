@@ -679,6 +679,15 @@ public final class TableScreen extends Screen {
         int cardWidth = (width - 16 - (view.seats().size() - 1) * 4) / view.seats().size();
         for (int seat = 0; seat < view.seats().size(); seat++) {
             var player = view.seats().get(seat);
+            if (!player.occupied()) {
+                int inviteWidth = TableHud.inviteWidth(font);
+                var invite = MahjongButton.create(Component.translatable("ui.mchjong.invite.short"), ignored ->
+                    minecraft.setScreen(new TableInviteScreen(this)))
+                    .bounds(8 + seat * (cardWidth + 4) + cardWidth - inviteWidth - 2, 34, inviteWidth, 20)
+                    .tooltip(Tooltip.create(Component.translatable("ui.mchjong.invite"))).build();
+                invite.active = view.viewerSeat() >= 0 && view.exitVote() == null;
+                addRenderableWidget(invite);
+            }
             if (player.occupied() && !player.bot()
                 && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var difficulty = room.seats().get(seat).difficulty();

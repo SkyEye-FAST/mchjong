@@ -45,7 +45,7 @@ final class RoomFlowSmoke {
         } else if (stage == 3 && ticks > 10) {
             check(client);
             capture(client, output, "lobby-" + LANGUAGES[locale] + "-small.png");
-            for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite",
+            for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite.short", "ui.mchjong.invite",
                     "room.mchjong.participants", "settings.mchjong.scopes")) {
                 click(client, key);
                 require(!(client.screen instanceof TableScreen), "Room shortcut failed: " + key);
