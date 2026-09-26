@@ -93,6 +93,11 @@ final class BoxInterfaceSmoke {
         if (!reagentUpdate.isDone() || settled < 10) return false;
         reagentUpdate.join();
         var dye = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
+        if (reagentStage == 4) {
+            if (!dye.is(top.skyeyefast.mchjong.world.MahjongContent.CREATIVE_MAHJONG_DYE)) return false;
+            reagentStage = 0;
+            return advance(client);
+        }
         if (reagentStage == 1) {
             require(dye.isEmpty(), "Empty reagent fixture was not synchronized");
             require(!visible(client, "box.mchjong.preset_choice") && !visible(client, "box.mchjong.back_choice")
@@ -113,9 +118,9 @@ final class BoxInterfaceSmoke {
         }
         require(!menu.canDyeBack(), "Back-dye action did not acknowledge matching color");
         capture(client, output, "back-applied");
-        reagentStage = 0;
+        reagentStage = 4;
         reagent(client, new net.minecraft.world.item.ItemStack(top.skyeyefast.mchjong.world.MahjongContent.CREATIVE_MAHJONG_DYE));
-        return advance(client);
+        return false;
     }
 
     private boolean advance(Minecraft client) {

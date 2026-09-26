@@ -55,7 +55,8 @@ final class AnimationSmoke {
                     hidden.add(information);
                     TableSettings.get().toggle(information);
                 }
-            TableSettings.get().animations = true;
+            // Layout-only checks skip the opening animation's wait and disable step.
+            TableSettings.get().animations = !layoutsOnly;
             TableScreen screen = new TableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
