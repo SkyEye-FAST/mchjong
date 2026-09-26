@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
-- Optional Patchouli handbook in four languages, with equipment recipes, playing guidance, a rebindable shortcut and a dismissible installation recommendation.
+- Optional craftable Patchouli handbook in four languages, with a starter copy for each player, equipment recipes, playing guidance and an installation recommendation in chat.
 
 - Invite controls beside vacant seats in the lobby, opening the online player selector.
 - Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.

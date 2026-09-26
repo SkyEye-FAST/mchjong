@@ -38,8 +38,9 @@ see [Supply data contracts](SUPPLIES.md#recipe-catalogue-and-identity).
 ### Patchouli handbook
 
 The 1.20.1 Fabric and Forge profiles use Patchouli 1.20.1-85, supplied to
-development runs with `-PwithPatchouli=true`. The public client API opens
-`mchjong:guide`; book definitions and localized content are shared resources.
+development runs with `-PwithPatchouli=true`. The book item opens `mchjong:guide`;
+book definitions and localized content are shared resources. Install Patchouli
+on the server as well as the client for crafting and the initial book grant.
 The dependency is compile-only and is not bundled. See the
 [handbook controls](PLAYING.md#in-game-handbook) and
 [focused checks](VERIFICATION.md#patchouli-handbook).

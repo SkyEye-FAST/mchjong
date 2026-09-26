@@ -1,28 +1,30 @@
 package top.skyeyefast.mchjong.compat.patchouli;
 
-import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import org.lwjgl.glfw.GLFW;
+import net.minecraft.ChatFormatting;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableSettings;
 
 /** The absent-dependency path deliberately contains no Patchouli API references. */
 public final class ManualClient {
-    public static final KeyMapping OPEN = new KeyMapping("key.mchjong.manual", GLFW.GLFW_KEY_H, "key.categories.mchjong");
     private static boolean recommended;
 
     private ManualClient() {}
 
-    public static void tick(boolean installed, Runnable openBook) {
+    public static void tick(boolean installed) {
         Minecraft client = Minecraft.getInstance();
         if (client.player == null || client.level == null || client.screen != null) return;
         if (!installed && !recommended && TableSettings.get().recommendPatchouli) {
             recommended = true;
-            client.setScreen(new ManualRecommendationScreen());
-            return;
+            recommend(client);
         }
-        while (OPEN.consumeClick()) {
-            if (installed) openBook.run();
-            else client.setScreen(new ManualRecommendationScreen());
-        }
+    }
+
+    private static void recommend(Minecraft client) {
+        client.gui.getChat().addMessage(Component.translatable("manual.mchjong.recommend.text")
+            .append(" ").append(Component.translatable("manual.mchjong.recommend.download")
+                .withStyle(style -> style.withColor(ChatFormatting.AQUA).withUnderlined(true)
+                    .withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://modrinth.com/mod/patchouli/versions")))));
     }
 }

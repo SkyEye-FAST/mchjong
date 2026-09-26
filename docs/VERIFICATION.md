@@ -42,10 +42,10 @@ gradlew.bat :fabric:runSmokeClient -PwithPatchouli=true -PsmokePatchouli=true --
 gradlew.bat :fabric:runSmokeClient -PsmokePatchouli=true --console=plain
 ```
 
-The installed profile checks the handbook key, book item, chapter and entry
+The installed profile checks the one-time starter book, crafting and opening the book item, chapter and entry
 loading, recipes, resource reload and Latin/CJK page rendering. The absent profile
-checks the automatic recommendation, link confirmation, session dismissal,
-key reopening and saved opt-out. Evidence uses `patchouli-installed-evidence`
+checks recipe exclusion, the automatic chat recommendation, download URL and once-per-session delivery
+without opening a screen. Evidence uses `patchouli-installed-evidence`
 and `patchouli-absent-evidence`. Select `manual-zh_cn.png` or
 `manual-recommendation.png` with `-PsmokeScreenshots` for visual review.
 

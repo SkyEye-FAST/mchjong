@@ -22,7 +22,7 @@ modId="patchouli"
 mandatory=false
 versionRange="[${patchouli_version},)"
 ordering="AFTER"
-side="CLIENT"
+side="BOTH"
 
 [[dependencies.mchjong]]
 modId="create"

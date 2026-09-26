@@ -35,8 +35,11 @@ public final class MchjongForge {
             top.skyeyefast.mchjong.config.ServerPresets.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
         });
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
-            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player)
+            if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {
                 top.skyeyefast.mchjong.config.ServerPresets.send(player);
+                if (net.minecraftforge.fml.ModList.get().isLoaded("patchouli"))
+                    top.skyeyefast.mchjong.compat.patchouli.ManualGift.give(player);
+            }
         });
         MinecraftForge.EVENT_BUS.addListener((RegisterCommandsEvent event) ->
             top.skyeyefast.mchjong.world.TableCommands.register(event.getDispatcher()));

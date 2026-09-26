@@ -2,12 +2,11 @@ package top.skyeyefast.mchjong.smoke;
 
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.gui.components.Button;
-import net.minecraft.client.gui.screens.ConfirmLinkScreen;
-import top.skyeyefast.mchjong.client.TableSettings;
+import net.minecraft.network.chat.ClickEvent;
+import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.compat.patchouli.ManualClient;
-import top.skyeyefast.mchjong.compat.patchouli.ManualRecommendationScreen;
 
 final class ManualSmoke {
     private static int ticks;
@@ -16,29 +15,42 @@ final class ManualSmoke {
     static boolean tick(Minecraft client, Path output) throws IOException {
         if (Boolean.getBoolean("mchjong.smoke.patchouli"))
             return InstalledManualSmoke.tick(client, output);
-        if (ticks++ == 0) {
-            client.getWindow().setWindowed(960, 720);
-            client.options.guiScale().set(3);
-            client.resizeDisplay();
-        }
-        if (ticks < 30) return false;
-        require(client.screen instanceof ManualRecommendationScreen, "Missing automatic install recommendation");
+        if (ticks++ < 30) return false;
+        require(client.screen == null, "Recommendation must not open a screen");
+        var messages = messages(client);
+        var text = Component.translatable("manual.mchjong.recommend.text").getString();
+        var recommendation = messages.stream().filter(message -> message.getString().startsWith(text)).toList();
+        require(recommendation.size() == 1, "Expected one automatic chat recommendation");
+        require(hasDownload(recommendation.get(0)), "Missing clickable download URL");
+        require(client.getSingleplayerServer().submit(() -> client.getSingleplayerServer().getRecipeManager()
+            .byKey(top.skyeyefast.mchjong.world.MahjongContent.id("mahjong_manual")).isEmpty()).join(),
+            "Handbook recipe loaded without Patchouli");
+        int count = messages.size();
+        ManualClient.tick(false);
+        require(messages(client).size() == count, "Recommendation repeated in same session");
         SmokeScreenshots.grab(output.toFile(), "manual-recommendation.png", client.getMainRenderTarget(), message -> {});
-        var screen = client.screen;
-        var buttons = screen.children().stream().filter(Button.class::isInstance).map(Button.class::cast).toList();
-        require(buttons.size() == 3, "Missing recommendation actions");
-        buttons.get(0).onPress();
-        require(client.screen instanceof ConfirmLinkScreen, "Download must ask before opening browser");
-        client.setScreen(screen);
-        buttons.get(1).onPress();
-        ManualClient.tick(false, () -> { throw new AssertionError("Absent API invoked"); });
-        require(client.screen == null, "Recommendation repeated in same session");
-        net.minecraft.client.KeyMapping.click(com.mojang.blaze3d.platform.InputConstants.getKey(ManualClient.OPEN.saveString()));
-        ManualClient.tick(false, () -> { throw new AssertionError("Absent API invoked"); });
-        require(client.screen instanceof ManualRecommendationScreen, "Manual binding must reopen recommendation");
-        client.screen.children().stream().filter(Button.class::isInstance).map(Button.class::cast).toList().get(2).onPress();
-        require(!TableSettings.load(TableSettings.configPath()).recommendPatchouli, "Dismissal was not persisted");
         return true;
+    }
+
+    static List<Component> messages(Minecraft client) {
+        try {
+            var chat = client.gui.getChat();
+            var field = chat.getClass().getDeclaredField("allMessages");
+            field.setAccessible(true);
+            var result = new java.util.ArrayList<Component>();
+            for (Object message : (List<?>) field.get(chat))
+                result.add((Component) message.getClass().getMethod("content").invoke(message));
+            return result;
+        } catch (ReflectiveOperationException failure) {
+            throw new IllegalStateException("Cannot inspect chat messages", failure);
+        }
+    }
+
+    private static boolean hasDownload(Component message) {
+        var click = message.getStyle().getClickEvent();
+        return (click != null && click.getAction() == ClickEvent.Action.OPEN_URL
+            && click.getValue().equals("https://modrinth.com/mod/patchouli/versions"))
+            || message.getSiblings().stream().anyMatch(ManualSmoke::hasDownload);
     }
 
     static void require(boolean condition, String message) {

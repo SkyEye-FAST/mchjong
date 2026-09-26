@@ -28,6 +28,12 @@ and `mchjong:incomplete_mahjong_box` for the [workshop](CREATE.md).
 
 ## Native NBT and variants
 
+The optional shapeless recipe `mchjong:mahjong_manual` produces
+`patchouli:guide_book` bound to `mchjong:guide`. Loader
+resource conditions enable it only when Patchouli is installed.
+The server stores starter-book recipient UUIDs in `mchjong_manual_gifts` saved
+data, shared across dimensions and retained across player deaths and reconnects.
+
 This branch stores supply data under the stack's `mchjong` NBT compound.
 The keys below are accessed and normalized through `MahjongComponents`.
 
