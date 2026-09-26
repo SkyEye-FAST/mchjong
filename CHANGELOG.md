@@ -9,6 +9,76 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.
+- Mahjong box tile-back selector screen allowing players to inspect and choose from available tile-back presets.
+- Personal preset configuration screen for selecting custom riichi stick models and localized voice announcements.
+- Built-in banner tile-back preset and vanilla item riichi stick presets.
+- Sequential voice playback and score announcements during settlement, with synchronized yaku highlights.
+- Dedicated voice and sound event distinguishing double riichi declarations.
+- Configurable match rule awarding player experience points according to final uma standings.
+- Gradual, copy-aware yaku route evaluation for training opponents, with candidate utility diagnostics, compact position inspection, scored-yaku comparison statistics and focused validation evidence in the maintainer guide.
+
+### Changed
+
+- Synchronize post-0.7.2 gameplay, presets, audio and presentation with the Minecraft 26.1.2 Fabric and NeoForge APIs.
+- Adapt preset textures, rendering extraction and voice playback callbacks to the current client APIs; document this profile's two snapshot artifacts.
+- Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
+- Explicit bot timings include decision-thread CPU time alongside wall-clock latency, with focused cache/search regressions, accepted paired-seed outcomes and diagnostic experiments recorded in the verification guide.
+- Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
+- Training route matching uses packed copy-capacity caches, reusable group masks, sparse target checks, direct pair/companion evaluation and conservative head bounds. Cached continuation ordering retains deterministic ties, and exact one-shanten advances use every tied best-shanten discard from the library.
+- Hard opponents evaluate every effective draw and tenpai continuation from one-shanten candidates; calls compare route value and closed-hand opportunity with their actual progress. Decision-local caches, reusable route tables and scratch buffers, and conservative distant-branch score bounds reduce repeated evaluation work.
+
+### Fixed
+
+- Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
+
+- Tile faces keep an opaque white plate with a rear surface visible through glass, including hidden hands and face-down walls. Glass shells render after opaque plates. Only visible identities show printed artwork, and standing faces retain their owner-facing orientation in both views. Immersive melds stay in one row at their original depth while standing hands move aside.
+- Voice event regression coverage checks both the declaring player and another seated player; box smoke checks use the preset button's translation key, and visibility smoke accepts the room's initial mode.
+- The built-in Mojang back pattern matches the vanilla banner emblem.
+- Settlement receipts keep han badges next to yaku names and enlarge points and hand grades.
+- Personal voice presets play for the selecting player's declarations and wins instead of other players' actions.
+- Stool vehicles persist through logout and chunk saves, preserving seated players and maid companions.
+- Tile faces fall back to default Kansai artwork when a requested custom preset archive is unavailable.
+- Concealed kans preserve eligible iipeikou routes, with focused regression coverage alongside copy-aware caches and complete tenpai-discard enumeration.
+- HUD deposit counters and score displays retain standard riichi stick icons regardless of personal stick presets.
+- Red five composition automatically adjusts to the available tile stock when initializing table rules.
+- Rule navigation page order and hand visibility option ordering match the settings screen layout.
+- Immersive focus indicator size is enlarged for clearer tile targeting.
+- Immersive table cloth boundaries and meld placement align accurately with physical tile positions.
+- Built-in banner tile-back artwork renders with clean single-color marks.
+- Training opponents advance the narrated settlement stage, and retain valuable dama continuations when comparing riichi.
+
+## [0.7.2] - 2026-09-25
+
+### Added
+
+- Creative inventory lists mahjong stools in all sixteen dye colors, with localized names.
+
+### Fixed
+
+- Companion portraits and stool seating display and behave correctly.
+- Replacement tiles draw from their physical dead-wall slots.
+- Immersive melds follow table order, and flat tile layers align with physical tiles.
+- Settlement controls separate the skip action from hand hints, with final standings appearing at the settlement midpoint.
+- Automatic play settings reset at the start of each hand.
+
+## [0.7.1] - 2026-09-24
+
+### Added
+
+- REI displays MChjong supply recipes with ingredient choices and shaped or shapeless layouts.
+- Modrinth and CurseForge publication for all seven supported loader artifacts.
+
+### Compatibility
+
+- REI supply recipes are available on Minecraft 1.21.1 Fabric and NeoForge, 1.20.1 Fabric and Forge, and 26.1.2 Fabric and NeoForge.
+- Fabric and Quilt releases require Fabric API.
+- Loader-specific validation coverage is recorded in [Compatibility and verification](docs/COMPATIBILITY.md).
+
+## [0.7.0] - 2026-09-24
+
+### Added
+
 - Mahjong tile blanks can be cut from all eleven wood plank types, each retaining its own wood color.
 - Mahjong boxes accept Undo Dye in the dye compartment to clear tile-back dyeing through the Remove dye action.
 - Last-player departure confirmation with server-owned paused-match retention.
@@ -265,7 +335,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.6.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.7.2...HEAD
+[0.7.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.2
+[0.7.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.1
+[0.7.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.0
 [0.6.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.6.0
 [0.5.3]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.3
 [0.5.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.5.2

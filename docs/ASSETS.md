@@ -16,8 +16,8 @@ The 45 faces use the individual PNG source tiles under
 Kansai respectively.
 `TileArtwork` maps their transparent engravings to runtime
 cells, including all three red fives, preserving proportions and antialiased
-edges. Both designs are ordinary mod resources selected in the mahjong box;
-there is no runtime pack installation or network access.
+edges. Both built-in designs are ordinary mod resources selected in the mahjong
+box and require no runtime pack installation or network access.
 
 Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
 under `META-INF/licenses/`. The supplied Kansai metadata identifies
@@ -35,43 +35,48 @@ All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.
-Resource packs can override or add definitions at
-`assets/<namespace>/tile_face_presets/<name>.json`. The file path defines the
-persistent preset ID `<namespace>:<name>`, for example:
+Custom face presets are ZIP archives in `config/mchjong/presets/faces/` on a client
+or `config/mchjong/server-presets/faces/` on a server. Inside a ZIP,
+`<namespace>/<name>/preset.toml` defines the persistent
+preset ID `<namespace>:<name>`. The manifest can supply a display name:
 
-```json
-{"atlas":"example:textures/ink/tiles.png","glyphs":"example:textures/ink/tile_glyphs.png"}
+```toml
+name = "Ink"
 ```
 
-Supply both PNGs using this atlas layout. The box selector discovers definitions
-on every resource reload, ordered by namespaced ID. Override
-`assets/mchjong/tile_face_presets/kansai.json` or `kanto.json` to redirect a built-in
-design, or replace its PNGs directly. Pack priority follows Minecraft's normal
-resource selection. Add `preset.<namespace>.<name>` to the pack's language files
-(replace `/` in nested names with `.`), including `en_us`, `ja_jp`, `zh_cn` and
-`zh_tw`. The built-in flower labels remain associated with the stored preset.
+Place 45 transparent PNGs under
+`<namespace>/<name>/tiles/`. Their filenames are
+`1m`–`9m`, `1p`–`9p`, `1s`–`9s`, `1z`–`7z`, `0m`, `0p`, `0s`, and `1q`–`8q`,
+each followed by `.png`. They are fitted to the same face area as the supplied
+individual source images. The white dragon image is included; its printed face
+remains blank. The client assembles the images into render textures at load time.
+A ZIP can contain several `<namespace>/<name>/` directories.
+Each ZIP belongs to its category directory and contains only face presets.
+Reload client resources after changing local ZIPs.
 
 Printing stores only the preset ID on tiles and synchronizes it with table
-appearance. A client resource pack is sufficient to print a new design; the
-server validates the physical set, carrier, menu and dye transaction. Other
-players need the same resources to display the design. Removing the pack keeps
-stored IDs intact and removes its selector entries; unavailable designs display
-Minecraft's missing texture until their resources are installed.
+appearance. To offer face presets to every player, place ZIP archives in the server's
+`config/mchjong/server-presets/faces/` directory and restart the server. The mod sends the
+configured images to connecting players and adds them to their mahjong box
+selectors. ZIPs in a client's `config/mchjong/presets/faces/` directory add presets to
+that client's selector; other players without those images see default Kansai faces.
+The server validates the physical set,
+carrier, menu and dye transaction. Removing an archive keeps stored IDs intact and
+removes its selector entries; unavailable designs display Kansai faces until
+their resources are installed.
 The asset test compares every atlas cell directly against its generated design,
 including all 45 distinct faces, red fives, flowers, opacity and the declared order.
 
 The bottom-right 32 by 32 pixels, beginning at (2016, 4064), are a solid white
 material swatch. Keep this swatch white when replacing the atlas: the renderer
 uses it for opaque face plates and table display colors, independently of the printed
-faces. Texture metadata enables linear filtering and clamping. GUI faces retain
-their independent linearly filtered atlas. World and item engravings use
-`TileFaceTexture`: it composites the resource-pack engraving over the white face
-plate before generating mipmaps with Minecraft's mip generator, preserving thin
-antialiased strokes without alpha-cutout loss. The shared face RenderType uses
-trilinear minification and linear magnification. The five mip levels of the native
-atlas retain exact cell and white-swatch boundaries; lower-resolution packs use
-fewer levels. Face UVs stop at half-pixel insets. The client smoke checks uploaded
-mip dimensions and live world/GUI filters, including after resource-pack reloads.
+faces. Built-in GUI faces retain their independent linearly filtered atlas. Built-in
+world and item engravings use `TileFaceTexture`: it composites the engraving over
+the white face plate before generating mipmaps with Minecraft's mip generator.
+Configured presets are assembled from individual images with the same white
+backing and linear filtering. The native atlas's five mip levels retain exact
+cell and white-swatch boundaries. Face UVs stop at half-pixel insets. The client
+smoke checks built-in mip dimensions and live world/GUI filters after resource reloads.
 The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
 proportions and the physical tile envelope.
 
@@ -89,17 +94,17 @@ definitions; the generator writes these alongside the item models.
 
 Undyed tiles use their own material texture for the rear face and back shell, so
 all eleven woods, bone, quartz, calcite, glass and amethyst have no separate default back
-color. `assets/mchjong/textures/tile/back.png` is a separate 256 by 384 transparent
+color. `assets/mchjong/textures/tile/back.png` is the default 256 by 384 transparent
 pattern layer applied to every rear face, including undyed and glass tiles and
-concealed face covers. Its default pixels are fully transparent. The tile's
+concealed face covers. Its pixels are fully transparent. The tile's
 `BASE_COLOR` component selects one of Minecraft's sixteen dye colors without
 changing the material-colored body or opaque white printed surface.
 
 The pattern preserves its own colors and alpha independently of dye. Dyeing a glass tile tints its
 translucent glass material instead, matching the stained-glass model while its
 rear face continues to use `textures/tile_material/glass.png`. Undyed glass keeps
-the neutral glass tint. Resource packs can replace the material textures and the
-back pattern independently. Dyed opaque shells use the solid white
+the neutral glass tint. Resource packs can replace the material textures.
+Dyed opaque shells use the solid white
 `textures/tile/plain.png` tinted by the dye, beneath the pattern.
 
 The body uses original neutral relief textures under `textures/tile_material/`:
@@ -138,16 +143,45 @@ side, then repeats the right-hand comparisons at 640 by 480. Inspect the resulti
 screenshots for native-like hand placement, grip
 contact, readable printed faces and clearance above the hotbar.
 
-To supply a back design, create a normal resource pack for your target
-Minecraft version containing the `textures/tile/back.png` path and matching
-resource-pack metadata for Minecraft 26.1.2. Preserve the 2:3 aspect ratio; transparent
-pixels reveal the tile material or dye beneath, and partial alpha is supported.
+Back presets are ZIP archives in `config/mchjong/presets/backs/` on a client or
+`config/mchjong/server-presets/backs/` on a server. Each
+`<namespace>/<name>/preset.toml` names one preset, and
+`<namespace>/<name>/back.png` supplies its 256 by 384 transparent pattern.
+Several back presets can share one ZIP, which contains only back presets.
+The mahjong box's back selector applies
+the chosen preset to its stored tiles independently of dye. Server presets are
+sent to joining players; an unavailable ID uses the transparent default pattern.
+The built-in back choices are Creeper and Mojang banner marks in a single ink
+color. Their artwork is generated with the mod and is available to every player
+without a preset ZIP.
 On face-down wall tiles, the image's top points toward the table center.
 The pattern covers the flat cap while the bevel retains its material or dye.
 To customize the body, replace `textures/tile_material/<material texture>.png`.
-All eleven woods use `wood.png`. Selection, persistence and reloading use
-Minecraft's resource-pack system. Back textures do
-not replace the face atlas or affect private game data.
+All eleven woods use `wood.png`.
+
+Riichi stick presets are ZIP archives in `config/mchjong/presets/sticks/` on a
+client or `config/mchjong/server-presets/sticks/` on a server. Each preset has
+`<namespace>/<name>/preset.toml` and a 384 by 32 transparent
+`<namespace>/<name>/stick.png`. A ZIP can contain several stick presets and no
+other preset category. The manifest defines a display name and cuboid dimensions
+in sixteenths of a block:
+
+```toml
+name = "Lacquer"
+length = 12
+width = 1
+height = 0.5
+```
+
+Length must be 8–16, width 0.25–2 and height 0.125–1. Length must be at least
+five times both width and height, keeping the model a long bar. Select a stick
+in Settings > Personal > Personal presets. The choice is stored in the client's
+TOML settings. Server presets chosen by a player are shown to everyone; a
+client-only choice appears as the default stick to other players. Unavailable
+artwork also uses the default stick.
+The built-in Bamboo, Lightning Rod and End Rod choices use Minecraft's block
+models and textures, laid horizontally and scaled to the deposit lanes. They are
+shown to every player when selected.
 
 Concealed tiles and physical rear faces combine the material or dyed shell with
 the independent back pattern. Glass keeps its translucent material below that pattern.
@@ -180,7 +214,9 @@ is exactly the 1,000-point strip: blue with one white dot. The model uses ordina
 Minecraft `elements`, face UVs, parents and texture references, so packs can
 replace its geometry and texture. Default bounds are `[2.4,0,7.52]` to
 `[13.6,0.4,8.48]` in model pixels; the table applies the lane scale and orientation.
-Interface riichi icons use the same texture.
+`assets/mchjong/textures/gui/stick_icons.png` contains fixed riichi and honba
+HUD icons copied from the default blue and ivory strips at build time. Changing
+point-stick textures or selecting a stick preset does not alter those icons.
 
 Furniture uses fifteen original 16 by 16 pixel textures under
 `assets/mchjong/textures/furniture`: eleven `wood_<family>.png` finishes and
@@ -266,8 +302,8 @@ additionally exercise the world render paths.
 tile-body textures, including their live pixel sampling state.
 
 Both `:fabric:runSmokeClient -PsmokeInterface=true` and its NeoForge equivalent
-also install a generated test resource pack, discover and print a new preset
-through the real packet, override a built-in definition, verify replacement
-riichi geometry, capture default/custom table patterns, then remove the pack
+also load local and server face preset ZIPs, print a local preset through the real
+packet, override a built-in definition with a test resource pack, verify replacement
+riichi geometry, capture default/custom table patterns, then remove the local ZIP
 and check the reloaded preset list. Captures are under
 `build/smoke/interface-evidence/resource-default` and `resource-custom`.

@@ -33,6 +33,7 @@ final class TableBoard {
     private final Map<Integer, Integer> tileWidths = new HashMap<>();
     private TileMaterial material = TileMaterial.BONE;
     private net.minecraft.world.item.DyeColor back;
+    private net.minecraft.resources.Identifier backPreset = TileBackPresets.DEFAULT;
 
     TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop) {
         this(view, left, right, top, bottom, actionsTop, false);
@@ -121,7 +122,7 @@ final class TableBoard {
 
     Rect focus() {
         Rect card = card(viewer);
-        return new Rect(card.x(), card.y() - 21, card.width(), 17);
+        return new Rect(card.x(), card.y() - (perspective ? 38 : 21), card.width(), perspective ? 34 : 17);
     }
 
     Point point(int tile) { return immersive == null ? tiles.get(tile) : immersive.point(tile); }
@@ -140,17 +141,19 @@ final class TableBoard {
     }
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset) {
-        render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null);
+        render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null, TileBackPresets.DEFAULT, null);
     }
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
-                TileMaterial material, net.minecraft.world.item.DyeColor back) {
+                TileMaterial material, net.minecraft.world.item.DyeColor back,
+                net.minecraft.resources.Identifier backPreset, net.minecraft.world.item.DyeColor cloth) {
         this.material = material;
         this.back = back;
+        this.backPreset = backPreset;
         tiles.clear();
         tileWidths.clear();
         if (immersive != null) {
-            immersive.render(graphics, view, preset, suppressedTile, material, back);
+            immersive.render(graphics, view, preset, suppressedTile, material, back, backPreset, cloth);
             immersiveCenter(graphics, view);
             return;
         }
@@ -169,7 +172,7 @@ final class TableBoard {
             int width = Math.min(10, Math.max(2, (riverArea(seat).x() - x - 4) / 4));
             int y = bounds.bottom() - tileHeight(width) - 8;
             for (int tile : player.norths()) {
-                TileGui.tile(graphics, tile, x, y, width, false, false, false, false, preset, material, back);
+                TileGui.tile(graphics, tile, x, y, width, false, false, false, false, preset, material, back, backPreset);
                 remember(tile, x + width / 2, y + tileHeight(width) / 2);
                 x += width;
             }
@@ -381,10 +384,10 @@ final class TableBoard {
     private static int tileHeight(int width) { return Math.round(width * TileMesh.HEIGHT / TileMesh.WIDTH); }
     private void tile(GuiGraphicsExtractor graphics, int tile, int x, int y, int width, boolean back, boolean sideways,
                       boolean marked, boolean dimmed, TileFacePreset preset) {
-        TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, material, this.back);
+        TileGui.tile(graphics, tile, x, y, width, back, sideways, marked, dimmed, preset, material, this.back, backPreset);
     }
     private void meld(GuiGraphicsExtractor graphics, Meld meld, int owner, int x, int y, int width, TileFacePreset preset) {
-        TileGui.meld(graphics, meld, owner, x, y, width, preset, material, back);
+        TileGui.meld(graphics, meld, owner, x, y, width, preset, material, back, backPreset);
     }
     private void rememberRotated(int tile, int cx, int cy, int x, int y, int side) {
         rememberRotated(tile, cx, cy, x, y, side, 1);

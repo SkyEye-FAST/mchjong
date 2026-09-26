@@ -51,10 +51,14 @@ public final class Game {
     int[] replies = {-1, -1, -1, -1};
     List<List<Action>> options = new ArrayList<>();
     List<TableView.Win> wins = new ArrayList<>();
+    private long presentedDecision = -1;
+    private int presentedSeats;
     String result = "lobby";
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
+    List<Double> finalUma = new ArrayList<>();
     List<Integer> finalRanks = new ArrayList<>();
+    Map<UUID, Integer> pendingExperience = new java.util.HashMap<>();
     ReplayMatch replay;
     ReplayRecorder recorder;
     List<ReplayMatch> archiveQueue = new ArrayList<>();
@@ -173,6 +177,14 @@ public final class Game {
         return true;
     }
 
+    /** The server's equipment adapter uses this when the selected red stock cannot be supplied. */
+    public boolean configureStockRedFives(RedFives reds) {
+        if (phase != Phase.LOBBY || exitVote != null || !rules.preset().allows(reds) || rules.redFives() == reds) return false;
+        applyRules(rules.with(RuleOption.RED_FIVES, reds.ordinal()));
+        newDecision(Phase.LOBBY);
+        return true;
+    }
+
     private void applyRules(RuleConfig config) {
         if (rules.players() != config.players()) seating = new RoomSeating();
         rules = config;
@@ -210,8 +222,19 @@ public final class Game {
     }
 
     private int settlementTicks() {
-        int duration = phase == Phase.MATCH_END ? SETTLEMENT_TICKS * 2 : phase == Phase.HAND_END ? SETTLEMENT_TICKS : 0;
+        int duration = phase == Phase.MATCH_END ? ScoreAnnouncements.maximumTicks(wins) + SETTLEMENT_TICKS
+            : phase == Phase.HAND_END ? ScoreAnnouncements.maximumTicks(wins) : 0;
         return Math.max(0, duration - Math.max(0, age));
+    }
+
+    private boolean presentationComplete() {
+        if (wins.isEmpty()) return true;
+        if (presentedDecision != decision) return false;
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var player = players[seat];
+            if (!player.bot && player.presence == PlayerPresence.SEATED && (presentedSeats & (1 << seat)) == 0) return false;
+        }
+        return true;
     }
 
     /** Only the world adapter supplies actual mounts and live connections. Clients cannot confirm presence. */
@@ -340,7 +363,7 @@ public final class Game {
         dealer = initialDealer = round = honba = riichiSticks = turn = 0;
         lastFrom = -1;
         lastTile = Tile.ABSENT;
-        wins.clear(); finalScores.clear(); finalRanks.clear();
+        wins.clear(); finalScores.clear(); finalUma.clear(); finalRanks.clear();
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
         result = "lobby";
@@ -510,8 +533,11 @@ public final class Game {
         if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             if (players[seat].bot) return List.of();
-            return manual && !players[seat].ready
-                ? List.of(new Action(NEXT), new Action(SKIP_SETTLEMENT)) : List.of(new Action(SKIP_SETTLEMENT));
+            var actions = new ArrayList<Action>();
+            if (manual && !players[seat].ready) actions.add(new Action(NEXT));
+            actions.add(new Action(SKIP_SETTLEMENT));
+            if (!wins.isEmpty() && age < ScoreAnnouncements.maximumTicks(wins)) actions.add(new Action(SETTLEMENT_DONE));
+            return List.copyOf(actions);
         }
         if (phase == Phase.REACTION && replies[seat] >= 0) return List.of();
         return options.get(seat);
@@ -562,6 +588,16 @@ public final class Game {
         }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             if (action.type() == SKIP_SETTLEMENT) advanceSettlement();
+            else if (action.type() == SETTLEMENT_DONE) {
+                if (presentedDecision != decision) {
+                    presentedDecision = decision;
+                    presentedSeats = 0;
+                }
+                if ((presentedSeats & (1 << seat)) == 0) {
+                    presentedSeats |= 1 << seat;
+                    revision++;
+                }
+            }
             else {
                 players[seat].ready = true;
                 revision++;
@@ -613,13 +649,13 @@ public final class Game {
     }
 
     private void advanceSettlement() {
-        if (phase == Phase.MATCH_END && age < SETTLEMENT_TICKS) {
+        if (phase == Phase.MATCH_END && age < ScoreAnnouncements.maximumTicks(wins)) {
             beginFinalStandings();
         } else finishSettlement();
     }
 
     private void beginFinalStandings() {
-        age = SETTLEMENT_TICKS;
+        age = ScoreAnnouncements.maximumTicks(wins);
         for (PlayerState player : players) player.ready = false;
         decision++;
         revision++;
@@ -654,7 +690,7 @@ public final class Game {
         lastTile = Tile.ABSENT;
         lastFrom = -1;
         pending = null;
-        wins.clear(); finalScores.clear(); finalRanks.clear();
+        wins.clear(); finalScores.clear(); finalUma.clear(); finalRanks.clear();
         Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
         exposed = new boolean[4];
         deltas = new ArrayList<>(Collections.nCopies(4, 0));
@@ -936,7 +972,16 @@ public final class Game {
         age++;
         if (age <= 0) return;
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            if (phase == Phase.MATCH_END && age == SETTLEMENT_TICKS) beginFinalStandings();
+            int handTicks = ScoreAnnouncements.maximumTicks(wins);
+            // Completion can shorten the fallback, but always leaves a server-timed reading tail.
+            if (!wins.isEmpty() && age < handTicks - SETTLEMENT_TICKS && presentationComplete()) {
+                age = handTicks - SETTLEMENT_TICKS;
+                revision++;
+            }
+            if (age == handTicks) {
+                if (phase == Phase.MATCH_END) beginFinalStandings();
+                else finishSettlement();
+            }
             else if (settlementTicks() == 0) advanceSettlement();
             else if (age % 20 == 0) revision++;
             return;
@@ -1062,7 +1107,7 @@ public final class Game {
             if (!visible) hand.replaceAll(tile -> Tile.HIDDEN);
             seats.add(new TableView.Seat(player.entityBot, player.name, player.id != null, player.bot, player.ready, player.points,
                 hand, player.drawn < 0 ? Tile.ABSENT : visible ? player.drawn : Tile.HIDDEN,
-                player.melds, player.river, player.norths, player.riichi, exposed[seat]));
+                player.melds, player.river, player.norths, player.riichi, exposed[seat], player.doubleRiichi));
         }
         boolean ura = rules.uraDora() && wins.stream().anyMatch(win -> players[win.seat()].riichi);
         var clocks = new ArrayList<TimeControl.Clock>();
@@ -1070,11 +1115,18 @@ public final class Game {
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
-            wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores,
+            wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores, finalUma,
             timeControl, clocks, finalRanks, handVisibility, exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1);
+    }
+
+    /** Rewards remain queued for disconnected participants until their player is online. */
+    public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
+    public int takeExperience(UUID player) {
+        Integer amount = pendingExperience.remove(player);
+        return amount == null ? 0 : amount;
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
@@ -1082,6 +1134,7 @@ public final class Game {
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
         Objects.requireNonNull(seating).validate(rules.players());
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
+        Objects.requireNonNull(finalUma); Objects.requireNonNull(pendingExperience);
         Objects.requireNonNull(archiveQueue);
         Objects.requireNonNull(handVisibility);
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);

@@ -25,11 +25,13 @@ import top.skyeyefast.mchjong.mixin.GuiGraphicsExtractorAccessor;
 final class ImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 140;
+    private static final double MELD_CORNER_X = 470;
     private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
     private int bodyColor;
     private Identifier backTexture;
+    private Identifier backPattern;
     private record Vertex(double x, double z, double h) {}
     private record Face(Vertex[] vertices, Identifier texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
@@ -98,18 +100,21 @@ final class ImmersiveTable {
     }
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressed,
-                TileMaterial material, net.minecraft.world.item.DyeColor dye) {
+                TileMaterial material, net.minecraft.world.item.DyeColor dye, Identifier backPreset,
+                net.minecraft.world.item.DyeColor cloth) {
         this.preset = preset;
         backColor = TileMesh.backColor(material, dye);
         bodyColor = TileMesh.bodyColor(material, dye);
         backTexture = TileRenderTypes.backTexture(material, dye);
+        backPattern = TileBackPresets.texture(backPreset);
         points.clear(); widths.clear(); rivers.clear(); faces.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
-        flat(0, -510, -425, 510, 425, 0, 0xff20584f);
+        int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
+        flat(0, -510, -425, 510, 425, 0, felt);
         faces.add(new Face(rectangle(0, -510, -425, 510, 425, .05), FurnitureMesh.CLOTH_PATTERN, 0, 0, 1, 1, 0xffffffff, false));
-        flat(0, -508, -423, 508, -420, .1, 0xff54857a);
-        flat(0, -508, 420, 508, 423, .1, 0xff102f30);
+        flat(0, -508, -423, 508, -420, .1, shade(felt, .82));
+        flat(0, -508, 420, 508, 423, .1, shade(felt, .82));
         paint(graphics);
         box(0, 0, 0, 190, 192, 0, 8, 0xff101d23, 0xff52666b);
         flat(0, -87, -88, 87, 88, 8.1, 0xff30464c);
@@ -122,7 +127,7 @@ final class ImmersiveTable {
             else {
                 int n = 0;
                 for (int tile : view.seats().get(seat).norths()) tile(tile, 0, -270 + n++ * 29, 340, 27, false, false, false, 0);
-                melds(seat, List.of(view.seats().get(seat).melds()));
+                melds(seat, view.seats().get(seat).melds());
             }
             if (TableSettings.get().showRiver) river(view, seat, suppressed);
         }
@@ -161,14 +166,13 @@ final class ImmersiveTable {
     private void outer(TableView.Seat player, int seat, boolean layHandsOpen) {
         int side = side(seat), w = 30;
         double rail = 410, halfLength = 300;
-        var rails = outerRails(player, seat);
-        double handX = handLeft(player, seat);
+        double handX = handLeft(player, seat, side);
         for (int tile : player.hand()) {
             if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
             else standing(tile, side, handX + w / 2.0, rail, w);
             handX += w;
         }
-        melds(seat, rails);
+        melds(seat, player.melds());
         double x = -halfLength;
         for (int tile : player.norths()) {
             tile(tile, side, x, rail - 55, w, false, false, false, 0);
@@ -176,49 +180,34 @@ final class ImmersiveTable {
         }
     }
 
-    private void melds(int seat, List<List<Meld>> rails) {
+    private void melds(int seat, List<Meld> melds) {
         int side = side(seat), w = 30;
-        for (int row = 0; row < rails.size(); row++) {
-            double x = 300;
-            // The inner corner keeps wrapped melds clear of the adjacent river.
-            double z = row == 0 ? 410 : 285;
-            for (var meld : rails.get(row)) {
-                x -= TileGui.meldWidth(meld, seat, w);
-                for (var part : MeldLayout.of(meld, seat).parts()) {
-                    double scale = w / (double) TileMesh.WIDTH;
-                    tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
-                }
-                x -= 5;
+        double x = meldCorner(side);
+        double z = seat == viewer ? 335 : 410;
+        for (var meld : melds) {
+            x -= TileGui.meldWidth(meld, seat, w);
+            for (var part : MeldLayout.of(meld, seat).parts()) {
+                double scale = w / (double) TileMesh.WIDTH;
+                tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
             }
+            x -= 5;
         }
     }
 
-    private static double handLeft(TableView.Seat player, int seat) {
-        double meldSpan = outerRails(player, seat).getFirst().stream().mapToDouble(m -> TileGui.meldWidth(m, seat, 30) + 5).sum();
-        double handSpan = player.hand().size() * 30;
-        return Math.min(-handSpan / 2, 300 - meldSpan - 18 - handSpan);
+    private static double meldCorner(int side) { return side % 2 == 0 ? MELD_CORNER_X : 350; }
+
+    static double handLeft(TableView.Seat player, int seat, int side) {
+        int handWidth = player.hand().size() * 30;
+        double meldLeft = meldCorner(side);
+        for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(meld, seat, 30) + 5;
+        return Math.min(-handWidth / 2.0, meldLeft - 12 - handWidth);
     }
 
-    static double discardSourceX(TableView.Seat player, int seat, int tile, boolean tsumogiri) {
+    static double discardSourceX(TableView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
         int index = player.hand().indexOf(tile);
         // Hidden identities remain unknown; a draw still has a public end-of-hand position.
         double slot = index >= 0 ? index + .5 : tsumogiri ? player.hand().size() - .5 : player.hand().size() / 2.0;
-        return handLeft(player, seat) + slot * 30;
-    }
-
-    static List<List<Meld>> outerRails(TableView.Seat player, int seat) {
-        var rails = new ArrayList<List<Meld>>();
-        List<Meld> row = new ArrayList<>();
-        rails.add(row);
-        int occupied = player.hand().size() * 30 + 18;
-        for (var meld : player.melds()) {
-            int width = TileGui.meldWidth(meld, seat, 30) + 5;
-            if (!row.isEmpty() && occupied + width > 600) {
-                row = new ArrayList<>(); rails.add(row); occupied = 0;
-            }
-            row.add(meld); occupied += width;
-        }
-        return rails;
+        return handLeft(player, seat, TableBoard.side(seat, viewer, players)) + slot * 30;
     }
 
     private void river(TableBoardState view, int seat, int suppressed) {
@@ -274,8 +263,13 @@ final class ImmersiveTable {
 
     private void standing(int tile, int side, double x, double z, int w) {
         double d = thickness(w), h = w * RATIO;
+        double scale = w / (double) TileMesh.WIDTH;
+        double coreBack = TileMesh.CORE_BACK * scale, coreFront = TileMesh.CORE_FRONT * scale;
         contact(side, x, z, w, d);
-        box(side, x, z, w, d, 0, h, bodyColor, backColor);
+        box(side, x, z + (coreBack - d / 2) / 2, w, coreBack + d / 2, 0, h, backColor, backColor);
+        box(side, x, z + (coreBack + coreFront) / 2, w, coreFront - coreBack, 0, h, bodyColor, bodyColor);
+        // Keep the opaque face plate closed so its rear is visible through glass.
+        box(side, x, z + (coreFront + d / 2) / 2, w, d / 2 - coreFront, 0, h, 0xfff4f0e5, 0xfff4f0e5);
         artwork(new Vertex[]{vertex(side, x + w / 2.0 - 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, h - 2),
             vertex(side, x - w / 2.0 + 1, z - d / 2 - .1, 2),
@@ -284,9 +278,8 @@ final class ImmersiveTable {
             vertex(side, x + w / 2.0, z + d / 2 + .1, h),
             vertex(side, x + w / 2.0, z + d / 2 + .1, 0),
             vertex(side, x - w / 2.0, z + d / 2 + .1, 0)};
-        if (tile < 0) artwork(front, tile, true, false);
-        else {
-            solid(front, 0xfff4f0e5);
+        solid(front, 0xfff4f0e5);
+        if (tile >= 0) {
             artwork(new Vertex[]{vertex(side, x - w / 2.0 + 1, z + d / 2 + .2, h - 2),
                 vertex(side, x + w / 2.0 - 1, z + d / 2 + .2, h - 2),
                 vertex(side, x + w / 2.0 - 1, z + d / 2 + .2, 2),
@@ -363,7 +356,7 @@ final class ImmersiveTable {
     private void artwork(Vertex[] vertices, int tile, boolean back, boolean dim) {
         if (back || tile < 0) {
             faces.add(new Face(vertices, backTexture, 0, 0, 1, 1, backColor, false));
-            faces.add(new Face(vertices, TileMesh.BACK, 0, 0, 1, 1, 0xffffffff, false));
+            faces.add(new Face(vertices, backPattern, 0, 0, 1, 1, 0xffffffff, false));
             return;
         }
         int face = TileMesh.face(tile);

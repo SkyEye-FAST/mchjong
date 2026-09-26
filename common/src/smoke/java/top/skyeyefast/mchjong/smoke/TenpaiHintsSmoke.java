@@ -95,7 +95,7 @@ final class TenpaiHintsSmoke {
                 original.handNumber(), original.rules(), original.phase(), original.viewerSeat(), original.dealer(),
                 original.round(), original.honba(), original.riichiSticks(), original.turn(), original.remaining(),
                 original.wallBreak(), original.wall(), original.focus(), original.seats(), original.actions(), original.wins(),
-                original.result(), original.deltas(), original.finalScores(), original.timeControl(), original.clocks(),
+                original.result(), original.deltas(), original.finalScores(), original.finalUma(), original.timeControl(), original.clocks(),
                 original.finalRanks(), original.handVisibility(), original.exitVote(), original.handling(), original.autoPlay(), original.ronBlocked(), original.riichiHan()));
             client.setScreen(new TableScreen(table.getBlockPos()));
         }
@@ -110,7 +110,7 @@ final class TenpaiHintsSmoke {
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
-            List.of(), List.of(), List.of(), false, false));
+            List.of(), List.of(), List.of(), false, false, false));
         for (int seat = 1; seat < seats.size(); seat++) {
             int owner = seat;
             var melds = java.util.stream.IntStream.range(0, seat == 1 ? 4 : 1).mapToObj(i -> {
@@ -120,7 +120,7 @@ final class TenpaiHintsSmoke {
             }).toList();
             seats.set(seat, new TableView.Seat(false, "Long player name " + seat, true, false, false, 25000,
                 java.util.Collections.nCopies(13 - melds.size() * 3, Tile.HIDDEN), Tile.ABSENT,
-                melds, List.of(), List.of(), seat == seats.size() - 1, false));
+                melds, List.of(), List.of(), seat == seats.size() - 1, false, false));
         }
         var wall = new ArrayList<>(java.util.Collections.nCopies(136, Tile.HIDDEN));
         for (int i = 0; i < 5; i++) wall.set(131 - i * 2, 40 + i * 4);
@@ -128,7 +128,7 @@ final class TenpaiHintsSmoke {
         fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
             original.rules(), Game.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
             original.wallBreak(), wall, null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125), new Action(Action.Type.DISCARD, 0)) : List.of(),
-            List.of(), "playing", List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, original.autoPlay(), true, 1);
+            List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, original.autoPlay(), true, 1);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
         table.acceptView(fixture); client.setScreen(new TableScreen(table.getBlockPos()));

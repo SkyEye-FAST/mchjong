@@ -124,6 +124,24 @@ class PhysicalSuppliesTest {
         return box;
     }
 
+    @Test void backPresetBelongsToPhysicalTilesAndSurvivesDyeing(MinecraftServer server) {
+        var box = MahjongSupplies.completeBox(TileMaterial.BONE);
+        var id = net.minecraft.resources.Identifier.parse("smoke:pattern");
+        var contents = MahjongSupplies.backedContents(MahjongSupplies.contents(box), id);
+        assertFalse(contents.isEmpty());
+        MahjongSupplies.setContents(box, contents);
+        assertEquals(id, MahjongSupplies.deck(box).backPreset());
+        var colored = MahjongSupplies.dyedContents(MahjongSupplies.contents(box), DyeColor.BLUE);
+        assertEquals(id, MahjongSupplies.backPreset(colored.getFirst()));
+        assertEquals(DyeColor.BLUE, MahjongSupplies.back(colored.getFirst()));
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, box);
+        assertEquals(id, equipment.backPreset());
+        assertEquals(net.minecraft.resources.Identifier.parse("mchjong:default"),
+            MahjongSupplies.backPreset(MahjongSupplies.backedContents(contents,
+                net.minecraft.resources.Identifier.parse("mchjong:default")).getFirst()));
+    }
+
     @Test void everyFurnitureWoodAndClothColorUsesOneItemRegistryEntry(MinecraftServer server) {
         for (FurnitureWood wood : FurnitureWood.values()) {
             String name = wood.getSerializedName(), suffix = wood == FurnitureWood.OAK ? "" : "_" + name;
@@ -441,7 +459,7 @@ class PhysicalSuppliesTest {
         var empty = new ItemStack(MahjongContent.BOX_ITEM);
         empty.set(DataComponents.CUSTOM_NAME, Component.literal("Workshop box"));
         var blanks = List.of(blank, blank.copy(), blank.copyWithCount(16));
-        var printed = MahjongSupplies.printBox(empty, blanks, TileFacePreset.KANTO);
+        var printed = MahjongSupplies.printBox(empty, blanks);
         assertTrue(MahjongSupplies.validBox(printed));
         assertEquals(144, MahjongSupplies.tileCount(MahjongSupplies.contents(printed)));
         assertEquals(empty.getHoverName(), printed.getHoverName());
@@ -450,7 +468,7 @@ class PhysicalSuppliesTest {
         for (var tile : MahjongSupplies.contents(printed)) if (!tile.isEmpty()) {
             assertEquals(blank.getHoverName(), tile.getHoverName());
             assertEquals(TileMaterial.GLASS, MahjongSupplies.tile(tile).material());
-            assertEquals(TileFacePreset.KANTO, MahjongSupplies.facePreset(tile));
+            assertEquals(TileFacePreset.KANSAI, MahjongSupplies.facePreset(tile));
         }
         var stick = new ItemStack(MahjongContent.POINT_STICK, 16);
         stick.set(DataComponents.CUSTOM_NAME, Component.literal("Workshop sticks"));
@@ -477,10 +495,12 @@ class PhysicalSuppliesTest {
         var malformed = blank.copy();
         malformed.set(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
         assertTrue(MahjongSupplies.pack(empty, List.of(malformed)).isEmpty());
-        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), blank.copyWithCount(15)), TileFacePreset.KANTO).isEmpty());
+        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), blank.copyWithCount(15))).isEmpty());
         var different = blank.copyWithCount(16);
         different.set(DataComponents.CUSTOM_NAME, Component.literal("Different"));
-        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), different), TileFacePreset.KANTO).isEmpty());
+        assertTrue(MahjongSupplies.printBox(empty, List.of(blank, blank.copy(), different)).isEmpty());
+        var custom = MahjongSupplies.engrave(printed, TileFacePreset.KANTO);
+        assertTrue(MahjongSupplies.printBox(custom, List.of()).isEmpty());
     }
 
     @Test void pointStickMarkingUsesOneReagentForEightBlanks(MinecraftServer server) {
@@ -515,7 +535,8 @@ class PhysicalSuppliesTest {
         assertEquals(10, loaded.drawer(2).getContainerSize());
         var publicData = new net.minecraft.nbt.CompoundTag();
         loaded.writeAppearance(publicData);
-        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset"), publicData.keySet());
+        assertEquals(java.util.Set.of("cloth_color", "tile_material", "tile_back", "tile_preset", "tile_back_preset"),
+            publicData.keySet());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
         assertFalse(saved.contains("game"));

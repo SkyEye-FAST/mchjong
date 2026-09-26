@@ -98,16 +98,12 @@ changes, while decisions use the same private-view training AI. The shared table
 adapter authorizes recruitment through the companion's participating owner,
 validates actual stools and mounts, and synchronizes companion presence. Missing
 companions release lobby membership after the presence grace period; during play
-a training bot continues their place. Companion adapters are version-specific;
-the shared engine and table preserve the same identity and authorization contract.
-
-The optional `compat/maid` task and core-brain logic is shared by the pinned
-Touhou Little Maid and Orihime test builds. `MaidBinding` is a private immutable
-saved value containing position, dimension, table UUID and vehicle preference.
-Only `MaidData` differs by loader: Fabric persistent attachments or NeoForge
-attachment registration. Register the attachment codec during base initialization
-so saved data can load before optional task discovery. Base entrypoints reference
-no optional maid classes; the maid's extension mechanism discovers them when installed.
+a training bot continues their place. The maid extension in `compat/maid` uses
+the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it via
+the Orihime extension entrypoint; NeoForge uses the maid extension annotation.
+Seat vehicles save their passengers with the chunk, including maid companions.
+The saved dimension, block position and table UUID restore missing mounts
+without loading chunks. No optional maid code is loaded by the base entrypoints.
 
 ## Optional integrations
 
@@ -133,8 +129,13 @@ Face printing uses a bounded cosmetic-ID payload tied to the current menu. The s
 136/144-tile input, then commits all tile slots and dye
 consumption together. Tile, point-stick and dye compartments have distinct
 native insertion ranges. `TileFacePreset` is an immutable resource-ID component;
-resource-pack definitions supply the client selector and atlas pair. The deck's preset
-is synchronized as public appearance, independently of private container contents.
+ZIPs in `config/mchjong/presets/faces/` and `config/mchjong/server-presets/faces/`
+supply the client selector.
+Server ZIPs are loaded at startup and their individual
+tile images are sent to joining players; clients assemble render atlases. An
+unavailable ID displays Kansai artwork. The
+deck's face and back presets are synchronized as public appearance, independently of private
+container contents.
 `MahjongTableMenu` exposes two case slots through the same native container protocol;
 its lifetime is bound to the specific idle table and nearby player. `MahjongTableScreen`
 shows the selected complete set and cloth readiness without changing equipment.
@@ -200,7 +201,8 @@ hands are ignored even when room hand visibility reveals them. `TableHints` rend
 this information only when the local, default-off convenience preference is on;
 no private information or new request type is added to the protocol.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
-`BotValue` (legal scoring and potential), and `BotDefence` (public per-opponent
+`BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
+copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent
 evidence) beneath `TrainingBot` action selection. `HandBonuses` and call-discard
 restrictions are shared with engine execution. Recipient-only furiten and
 riichi-han fields support exact self-state simulation. See [BOTS.md](BOTS.md)
@@ -246,10 +248,28 @@ winners have a mouse/keyboard selector. It displays server-authored deltas and f
 inventing a private tie-break order. Input stays in `TableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
+Final standings also show the server's separate uma shares. The table queues
+optional uma-based Minecraft experience changes for human players in its private
+save and pays connected players once from the server thread.
 
-`Game` advances hand settlement after 200 ticks or a seated player's skip request.
-Match settlement uses two 200-tick stages, each independently skippable: hand
-results and final standings, then restores the roster to the lobby.
+`ScoreAnnouncements` supplies the same ordered rows to the receipt and narration,
+using the scoring library's per-yaku han and public winning tiles for the four
+bonus counts. Seat snapshots retain the server's double-riichi declaration for
+action recordings. `ResultReadout` retains one timeline per observed hand across widget rebuilds.
+It reveals each scored yaku and counted-dora row with its recording, then the
+winner's points, then the applicable hand grade. Multiple winners run in order;
+manual navigation completes the local readout without replaying it. The audio
+engine bounds recordings and does not derive or modify any score.
+
+Draw settlements retain their 200-tick timer. Winning receipts have a finite
+server fallback derived from their recording count and the eight-second clip
+limit. Seated human clients acknowledge completion using the server-issued
+`SETTLEMENT_DONE` action; once all seated humans finish, `Game` shortens the
+remaining hand stage to a 200-tick reading tail. This acknowledgement cannot
+change points or advance the stage immediately. Bots need no acknowledgement;
+the fallback still expires if a client never acknowledges. A seated player's
+explicit skip request can advance the stage. Match settlement then adds a
+separately skippable 200-tick final-standings stage before restoring the roster.
 `RoomView.settlementTicks` synchronizes the remaining duration; the saved decision
 age preserves it across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
@@ -304,6 +324,8 @@ point-stick and dye slots share vanilla click validation. Face printing previews
 the entire 136/144-tile transaction, then commits it with exactly one ordinary
 dye consumed; creative dye is retained. Presets are immutable item components.
 Crafting rules stay in `recipe/`, and neither loader carries separate rules.
+Face and back preset changes each consume one ordinary Mahjong dye in the box's
+server-owned inventory transaction; creative Mahjong dye remains available.
 
 `MahjongSupplies` owns component-preserving red-dora conversion, stick marking,
 batch back coloring, full-set printing and atomic box packing. Crafting and
@@ -324,10 +346,14 @@ The selected Minecraft, Java, loader, mapping and dependency versions live in
 `gradle.properties`, and resource processing writes the matching compatibility
 metadata into each artifact.
 
-Tile faces and tile backs are independent materials. Custom backs use ordinary
-player-supplied resource packs.
+Tile faces and tile backs are independent materials. Back presets use ZIPs in
+`config/mchjong/presets/backs/` and `config/mchjong/server-presets/backs/`.
 Resource selection and reloads do not affect server rules,
 tile IDs or private snapshots. See `ASSETS.md` for the resource contract.
+Riichi stick presets use the corresponding `sticks/` directories. Their model
+dimensions are bounded before transfer, while each player stores a personal
+selection in the client TOML settings. The server broadcasts only selections
+from its own stick presets; a client-only selection stays on that player's client.
 
 `TimeControl` is enforced entirely in `Game`: per-hand reserves and fresh decision
 allowances are independent for each active responder. Client interpolation and
@@ -336,9 +362,10 @@ and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 
 `TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
-owns client effects and resource-pack recording playback. Registered
-resource-pack events separate table effects from recordings. No game logic
-depends on an audio completion callback. See `AUDIO.md` for customization.
+owns client effects and recorded voice playback. Voice ZIPs use the client and
+server `voices/` directories; the client decodes them through Minecraft's sound
+engine and enforces an eight-second limit. No game logic depends on an audio
+completion callback. See `AUDIO.md` for the recording contract.
 
 ## Replay storage and export
 

@@ -15,7 +15,7 @@ class TableDecisionTest {
 
     private static TableView view(UUID table, long revision, long decision, int viewer, List<Action> actions) {
         return new TableView(table, revision, decision, 1, RuleSet.MAHJONG_SOUL_4.config(), Game.Phase.TURN,
-            viewer, 0, 0, 0, 0, 0, 70, 0, List.of(), null, List.of(), actions, List.of(), "playing", List.of(), List.of(),
+            viewer, 0, 0, 0, 0, 0, 70, 0, List.of(), null, List.of(), actions, List.of(), "playing", List.of(), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
     }
 

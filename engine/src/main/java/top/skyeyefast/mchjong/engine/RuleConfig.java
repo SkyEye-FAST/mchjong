@@ -54,6 +54,8 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
     public boolean sharedRanks() { return enabled(SHARED_RANKS); }
     public boolean roundSharedPlacement() { return enabled(ROUND_SHARED_PLACEMENT); }
     public boolean awardFinalDeposits() { return enabled(AWARD_FINAL_DEPOSITS); }
+    public boolean experienceRewards() { return enabled(EXPERIENCE_REWARDS); }
+    public boolean deductNegativeExperience() { return enabled(DEDUCT_NEGATIVE_EXPERIENCE); }
     public int[] placementPoints(int floating) {
         int[] points = new int[players()];
         for (int rank = 0; rank < points.length; rank++)

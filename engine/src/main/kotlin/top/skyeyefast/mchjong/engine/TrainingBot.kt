@@ -19,6 +19,7 @@ import top.skyeyefast.mchjong.engine.Action.Type.READY
 import top.skyeyefast.mchjong.engine.Action.Type.RIICHI
 import top.skyeyefast.mchjong.engine.Action.Type.RON
 import top.skyeyefast.mchjong.engine.Action.Type.SHUFFLE
+import top.skyeyefast.mchjong.engine.Action.Type.SKIP_SETTLEMENT
 import top.skyeyefast.mchjong.engine.Action.Type.TAKE_PACKET
 import top.skyeyefast.mchjong.engine.Action.Type.TSUMO
 
@@ -26,10 +27,22 @@ import top.skyeyefast.mchjong.engine.Action.Type.TSUMO
 internal class TrainingBot private constructor(
     private val view: TableView,
     private val level: BotDifficulty,
+    private val diagnostics: MutableList<Diagnostic>? = null,
 ) {
     private val analysis = BotAnalysis(view, level)
     private val defence = analysis.defence
     private val initial = analysis.initial()
+
+    @JvmRecord
+    data class Adjustments(val action: Double, val danger: Double, val reserve: Double, val riichi: Double,
+                           val callPressure: Double, val sticks: Double) {
+        fun total(): Double = action - danger + reserve - riichi - callPressure + sticks
+    }
+
+    @JvmRecord
+    data class Diagnostic(val index: Int, val discard: Int, val evaluation: BotAnalysis.Evaluation,
+                          val adjustments: Adjustments, val forward: Double, val utility: Double,
+                          val search: String, val exclusion: String)
 
     private data class Choice(
         val index: Int,
@@ -116,8 +129,12 @@ internal class TrainingBot private constructor(
             val safe = fold
             // Judge a call by the resulting hand. A valuable, fast continuation
             // can justify attacking even when the unchanged hand would fold.
-            choices.removeIf { it !== safe && (!viable(it) || defence.mode(it.evaluation) != BotDefence.Mode.PUSH) }
-            if (choices.size == 1) return safe.index
+            choices.removeIf {
+                val remove = it !== safe && (!viable(it) || defence.mode(it.evaluation) != BotDefence.Mode.PUSH)
+                if (remove) record(it, exclusion = "fold")
+                remove
+            }
+            if (choices.size == 1) { record(safe); return safe.index }
         }
         choices.sortWith(compareByDescending<Choice> { score(it) }.thenBy { it.key })
         var bestScore = Double.NEGATIVE_INFINITY
@@ -125,27 +142,39 @@ internal class TrainingBot private constructor(
         var roots = 0
         for (candidate in choices) {
             val type = view.actions()[candidate.index].type()
-            if ((type == CHI || type == PON || type == OPEN_KAN) && !viable(candidate)) continue
-            if (type == RIICHI && candidate.evaluation.waits.quality() == 0.0) continue
-            if (candidate !== fold && candidate.evaluation.shanten > minimum + 1) continue
+            if ((type == CHI || type == PON || type == OPEN_KAN) && !viable(candidate)) {
+                record(candidate, exclusion = "no-yaku-route"); continue
+            }
+            if (type == RIICHI && candidate.evaluation.waits.quality() == 0.0) {
+                record(candidate, exclusion = "no-legal-wait"); continue
+            }
+            if (candidate !== fold && candidate.evaluation.shanten > minimum + 1) {
+                record(candidate, exclusion = "shanten"); continue
+            }
             // A larger raw ukeire count is not evidence that going backwards is
             // faster. Basic evaluators preserve an available viable route; HARD
             // must actually search a retreat, while dead/yakuless routes can escape.
             val safer = candidate.discard >= 0 && baseline.discard >= 0 &&
                 defence.danger(candidate.discard) < defence.danger(baseline.discard)
             val retreat = candidate.evaluation.shanten > minimum && !candidate.replacement && candidate !== fold && !safer
+            val exact = level == BotDifficulty.HARD && candidate.evaluation.shanten == 1 && !candidate.replacement
             if (
                 retreat && viable(baseline) && baseline.evaluation.live > 0 &&
-                (level != BotDifficulty.HARD || roots >= BotAnalysis.SEARCH_ROOTS)
-            ) continue
+                (level != BotDifficulty.HARD || !exact && roots >= BotAnalysis.SEARCH_ROOTS)
+            ) { record(candidate, exclusion = "unsearched-retreat"); continue }
             var candidateScore = score(candidate)
+            var delta = 0.0
+            var search = "static"
             val expand = candidate !== fold && (level == BotDifficulty.HARD || candidate.replacement)
-            if (expand && roots < BotAnalysis.SEARCH_ROOTS && candidate.evaluation.shanten <= minimum + 1) {
+            if (expand && (exact || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
                 val forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
-                candidateScore += forward - candidate.evaluation.utility -
+                delta = forward - candidate.evaluation.utility -
                     if (candidate.replacement) minOf(8.0, candidate.evaluation.live * 0.25) else 0.0
-                roots++
+                candidateScore += delta
+                search = if (exact) "one-shanten-exact" else "bounded"
+                if (!exact) roots++
             }
+            record(candidate, delta, search)
             if (candidateScore > bestScore || candidateScore == bestScore && candidate.key < best.key) {
                 bestScore = candidateScore
                 best = candidate
@@ -155,26 +184,29 @@ internal class TrainingBot private constructor(
     }
 
     private fun viable(candidate: Choice): Boolean =
-        if (candidate.evaluation.shanten == 0) candidate.evaluation.waits.quality() > 0 else analysis.value.potential(candidate.state).viable
+        if (candidate.evaluation.shanten == 0) candidate.evaluation.waits.quality() > 0 else candidate.evaluation.potential.viable
 
-    private fun score(candidate: Choice): Double {
-        var score = candidate.evaluation.utility + candidate.adjustment
-        if (candidate.discard >= 0) score -= defence.penalty(candidate.discard, defence.mode(candidate.evaluation))
-        score += defence.reserve(candidate.state)
+    private fun score(candidate: Choice): Double = candidate.evaluation.utility + adjustments(candidate).total()
+
+    private fun adjustments(candidate: Choice): Adjustments {
         val type = view.actions()[candidate.index].type()
-        if (type == RIICHI) {
-            score -= analysis.riichiCost(candidate.evaluation) +
-                if (defence.placementUrgency(candidate.evaluation.points) < 1) 5 else 0
-        }
-        if (type == CHI || type == PON || type == OPEN_KAN) {
-            // A closed hand retains a future riichi/tsumo path and defensive options.
-            if (initial.melds().all { it.closed() }) score -= if (level == BotDifficulty.EASY) 4 else 8
-            score -= defence.pressure() * 2
-        }
-        if (candidate.evaluation.shanten == 0) {
-            score += minOf(8.0, candidate.evaluation.waits.quality()) * view.riichiSticks() * 0.4
-        }
-        return score
+        // PASS and the post-call discard already compare speed, live stock,
+        // routes, payments and the conditional closed option. Only public threat
+        // pressure remains here, rather than charging a fixed opening tax again.
+        return Adjustments(candidate.adjustment,
+            if (candidate.discard >= 0) defence.penalty(candidate.discard, defence.mode(candidate.evaluation)) else 0.0,
+            defence.reserve(candidate.state),
+            if (type == RIICHI) analysis.riichiCost(candidate.evaluation) +
+                if (defence.placementUrgency(candidate.evaluation.points) < 1) 5 else 0 else 0.0,
+            if (type == CHI || type == PON || type == OPEN_KAN) defence.pressure() * 2 else 0.0,
+            if (candidate.evaluation.shanten == 0) minOf(8.0, candidate.evaluation.waits.quality()) * view.riichiSticks() * 0.4 else 0.0)
+    }
+
+    private fun record(candidate: Choice, delta: Double = 0.0, search: String = "static", exclusion: String = "") {
+        if (diagnostics == null) return
+        val adjustment = adjustments(candidate)
+        diagnostics += Diagnostic(candidate.index, candidate.discard, candidate.evaluation, adjustment, delta,
+            candidate.evaluation.utility + adjustment.total() + delta, search, exclusion)
     }
 
     private fun addCall(choices: MutableList<Choice>, index: Int, action: Action) {
@@ -271,10 +303,19 @@ internal class TrainingBot private constructor(
     }
 
     companion object {
+        /** Opt-in trace uses exactly the same candidate generation and search as play. */
+        @JvmStatic
+        fun inspect(view: TableView, level: BotDifficulty): List<Diagnostic> {
+            if (view.actions().none { it.type() in listOf(DISCARD, RIICHI, PASS, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI) }) return emptyList()
+            val diagnostics = mutableListOf<Diagnostic>()
+            TrainingBot(view, level, diagnostics).choose()
+            return diagnostics
+        }
+
         @JvmStatic
         fun choose(view: TableView, level: BotDifficulty): Int {
             if (view.actions().isEmpty()) throw IllegalArgumentException("A bot needs a legal decision")
-            for (type in listOf(RON, TSUMO, NEXT, READY, DRAW_WIND, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
+            for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, READY, DRAW_WIND, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
                 val index = index(view.actions(), type)
                 if (index >= 0) return index
             }

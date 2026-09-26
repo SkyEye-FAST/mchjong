@@ -14,6 +14,7 @@ public final class MahjongComponents {
     public static final DataComponentType<FurnitureWood> WOOD = type(FurnitureWood.CODEC);
     public static final DataComponentType<TileData> TILE = type(TileData.CODEC);
     public static final DataComponentType<TileFacePreset> FACE_PRESET = type(TileFacePreset.CODEC);
+    public static final DataComponentType<net.minecraft.resources.Identifier> BACK_PRESET = type(net.minecraft.resources.Identifier.CODEC);
     public static final DataComponentType<RedFives> BOX_PRESET = type(Codec.STRING.comapFlatMap(value -> {
         for (var candidate : RedFives.values())
             if (candidate.name().equalsIgnoreCase(value)) return DataResult.success(candidate);
@@ -22,7 +23,8 @@ public final class MahjongComponents {
     public static final DataComponentType<Integer> POINTS = type(Codec.INT.validate(value -> DENOMINATIONS.contains(value)
         ? DataResult.success(value) : DataResult.error(() -> "Invalid point-stick denomination")));
     public static final Map<String, DataComponentType<?>> TYPES = Map.of(
-        "wood", WOOD, "tile", TILE, "points", POINTS, "face_preset", FACE_PRESET, "box_preset", BOX_PRESET);
+        "wood", WOOD, "tile", TILE, "points", POINTS, "face_preset", FACE_PRESET,
+        "back_preset", BACK_PRESET, "box_preset", BOX_PRESET);
 
     private MahjongComponents() {}
     // Minecraft derives a registry-aware stream codec from the persistent codec.

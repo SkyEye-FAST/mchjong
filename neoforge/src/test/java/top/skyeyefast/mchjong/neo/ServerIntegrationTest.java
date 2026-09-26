@@ -96,7 +96,7 @@ class ServerIntegrationTest {
         copy.validate();
         assertEquals(TableNetworking.JSON.toJson(game.view(null)), TableNetworking.JSON.toJson(copy.view(null)));
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
-        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset"), appearance.keySet());
+        assertEquals(java.util.Set.of("wood", "color", "cloth_color", "tile_material", "tile_back", "tile_preset", "tile_back_preset"), appearance.keySet());
         assertEquals("glass", appearance.getString("tile_material").orElseThrow());
         assertEquals("mchjong:kanto", appearance.getString("tile_preset").orElseThrow());
         table.loadWithComponents(input(server, appearance));

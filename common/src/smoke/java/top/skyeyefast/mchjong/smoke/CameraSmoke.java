@@ -123,14 +123,15 @@ final class CameraSmoke {
             var hand = seat == 0 ? java.util.stream.IntStream.range(0, 14).boxed().toList()
                 : java.util.Collections.nCopies(13 - count * 3, top.skyeyefast.mchjong.engine.Tile.HIDDEN);
             seats.add(new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player " + (seat + 1), true, false, false,
-                25000, hand, seat == 0 ? 13 : -1, melds, river, java.util.List.of(), false, false));
+                25000, hand, seat == 0 ? 13 : -1, melds, river, java.util.List.of(), false, false, false));
         }
         table.acceptView(new top.skyeyefast.mchjong.engine.TableView(base.tableId(), base.revision() + 1, base.decision(),
             base.handNumber(), top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config(),
-            top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(), null,
+            top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
+            new top.skyeyefast.mchjong.engine.TableView.Focus(1, 64, false, 0),
             seats, java.util.List.of(new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.RIICHI, 0),
                 new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.PASS)),
-            java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), base.timeControl(),
+            java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), java.util.List.of(), base.timeControl(),
             java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1));
     }
 

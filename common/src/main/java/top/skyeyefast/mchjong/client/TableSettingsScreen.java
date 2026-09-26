@@ -92,7 +92,7 @@ public final class TableSettingsScreen extends Screen {
         } else {
             addRenderableWidget(new VolumeSlider(left, 65, column, false));
             var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
-            voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.RESOURCE_PACK;
+            voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.SELECTED;
             addRenderableWidget(MahjongButton.create(value("settings.mchjong.voice", settings.voiceSource), ignored -> {
                 var modes = TableSettings.VoiceSource.values();
                 settings.voiceSource = modes[(settings.voiceSource.ordinal() + 1) % modes.length];
@@ -133,7 +133,7 @@ public final class TableSettingsScreen extends Screen {
         if (saveFailed) graphics.centeredText(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
         if (tab == 3) {
             int y = 145;
-            for (var line : font.split(Component.translatable("settings.mchjong.pack_voice_note"), Math.min(540, width - 32))) {
+            for (var line : font.split(Component.translatable("settings.mchjong.voice_preset_note"), Math.min(540, width - 32))) {
                 graphics.centeredText(font, line, width / 2, y, MahjongUi.MUTED);
                 y += 11;
             }

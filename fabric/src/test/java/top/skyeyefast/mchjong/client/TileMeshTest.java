@@ -94,7 +94,7 @@ class TileMeshTest {
             var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
             TileMesh.drawBody(pose, mesh, 0, material, null);
             TileMesh.drawFace(pose, mesh, 0, hidden, 0);
-            TileMesh.drawBack(pose, mesh, hidden, pitch > 0, 0, material, null);
+            TileMesh.drawBack(pose, mesh, pitch > 0, 0, material, null);
             assertEquals(0, mesh.vertices.size() % 4);
             for (int i = 0; i < mesh.vertices.size(); i += 4) {
                 var a = mesh.vertices.get(i);
@@ -107,12 +107,9 @@ class TileMeshTest {
         }
     }
 
-    @Test void concealedTileShellHasNoOpenEdges() {
+    @Test void concealedWhitePlateIsClosedAndVisibleFromBehindGlass() {
         var mesh = new Mesh();
-        var pose = new PoseStack();
-        var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
-        TileMesh.drawBody(pose, mesh, 0, material, null);
-        TileMesh.drawBack(pose, mesh, true, false, 0, material, null);
+        TileMesh.drawFace(new PoseStack(), mesh, -1, true, 0);
         var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
         for (int quad = 0; quad < mesh.vertices.size(); quad += 4) for (int corner = 0; corner < 4; corner++) {
             var a = mesh.vertices.get(quad + corner).position;
@@ -120,6 +117,10 @@ class TileMeshTest {
             edges.merge(java.util.Set.of(a, b), 1, Integer::sum);
         }
         assertTrue(edges.values().stream().allMatch(count -> count == 2), "Every shell edge must meet exactly one neighboring face");
+        assertTrue(mesh.vertices.stream().anyMatch(vertex -> vertex.position.z == TileMesh.CORE_FRONT && vertex.normal.z == -1),
+            "The white plate needs a rear cap facing the glass body");
+        assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.color == 0xffffffff
+            && vertex.u == TileMesh.SWATCH_U && vertex.v == TileMesh.SWATCH_V), "Hidden fronts contain only opaque white geometry");
     }
 
     @Test void glassBodyIsTranslucentAndHiddenFacesEmitNoGlyphGeometry() {
@@ -127,15 +128,15 @@ class TileMeshTest {
         var shown = new Mesh();
         TileMesh.drawFace(new PoseStack(), hidden, -1, false, 0);
         TileMesh.drawFace(new PoseStack(), shown, 0, false, 0);
-        assertEquals(0, hidden.vertices.size(), "Hidden tiles leave the printed shell to the concealed back pass");
-        assertEquals(80, shown.vertices.size());
+        assertFalse(hidden.vertices.isEmpty(), "Hidden tiles retain the white shell without glyph geometry");
+        assertEquals(hidden.vertices.size() + 4, shown.vertices.size(), "Only visible identities add a printed quad");
         var body = new Mesh();
         var glass = top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         TileMesh.drawBody(new PoseStack(), body, 0, glass, null);
         assertEquals(32, body.vertices.size(), "Eight material sides, no overlapping internal caps");
         assertTrue(body.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255));
         var backs = new Mesh();
-        TileMesh.drawBack(new PoseStack(), backs, false, false, 0, glass, net.minecraft.world.item.DyeColor.RED);
+        TileMesh.drawBack(new PoseStack(), backs, false, 0, glass, net.minecraft.world.item.DyeColor.RED);
         assertTrue(backs.vertices.stream().allMatch(vertex -> vertex.alpha > 0 && vertex.alpha < 255),
             "Dyed glass stays translucent instead of gaining an opaque back");
         assertTrue(TileMesh.usesMaterialBack(glass, net.minecraft.world.item.DyeColor.RED));
@@ -143,7 +144,8 @@ class TileMeshTest {
         assertFalse(TileMesh.usesMaterialBack(top.skyeyefast.mchjong.item.TileMaterial.BONE, net.minecraft.world.item.DyeColor.RED));
         var faceDown = new Mesh();
         TileMesh.drawFace(new PoseStack(), faceDown, 0, true, 0);
-        assertTrue(faceDown.vertices.isEmpty());
+        assertEquals(hidden.vertices.size(), faceDown.vertices.size(), "Face-down wall tiles retain their white front");
+        assertTrue(faceDown.vertices.stream().allMatch(vertex -> vertex.color == 0xffffffff));
     }
 
     @Test void everyMaterialHasAnOpaqueWhiteFaceWithoutTintingItsGlyphsOrBody() {
@@ -162,7 +164,7 @@ class TileMeshTest {
         var pose = new PoseStack();
         pose.mulPose(Axis.XP.rotationDegrees(90));
         var mesh = new Mesh();
-        TileMesh.drawBack(pose, mesh, false, true, 0, top.skyeyefast.mchjong.item.TileMaterial.BONE,
+        TileMesh.drawBack(pose, mesh, true, 0, top.skyeyefast.mchjong.item.TileMaterial.BONE,
             net.minecraft.world.item.DyeColor.BLUE);
         var face = mesh.vertices.subList(mesh.vertices.size() - 12, mesh.vertices.size());
         assertTrue(face.stream().allMatch(vertex -> vertex.position.y > 0.036 && vertex.normal.y > 0.99));
@@ -171,13 +173,13 @@ class TileMeshTest {
             assertEquals(.5f + vertex.position.z / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
         }
         var pattern = new Mesh();
-        TileMesh.drawBackPattern(pose, pattern, false, true, 0);
+        TileMesh.drawBackPattern(pose, pattern, true, 0);
         for (int i = 0; i < face.size(); i++) {
             assertEquals(face.get(i).u, pattern.vertices.get(i).u);
             assertEquals(face.get(i).v, pattern.vertices.get(i).v);
         }
         var standing = new Mesh();
-        TileMesh.drawBackPattern(new PoseStack(), standing, false, false, 0);
+        TileMesh.drawBackPattern(new PoseStack(), standing, false, 0);
         for (var vertex : standing.vertices) {
             assertEquals(.5f - vertex.position.x / (TileMesh.WIDTH - .003f), vertex.u, 1e-6);
             assertEquals(.5f - vertex.position.y / (TileMesh.HEIGHT - .003f), vertex.v, 1e-6);
@@ -190,7 +192,7 @@ class TileMeshTest {
         var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
         TileMesh.drawBody(pose, mesh, 0, material, null);
         TileMesh.drawBlankFront(pose, mesh, 0, material);
-        TileMesh.drawBack(pose, mesh, false, false, 0, material, null);
+        TileMesh.drawBack(pose, mesh, false, 0, material, null);
         var edges = new java.util.HashMap<java.util.Set<Vector3f>, Integer>();
         for (int i = 0; i < mesh.vertices.size(); i += 4) for (int corner = 0; corner < 4; corner++) {
             var a = mesh.vertices.get(i + corner).position;
@@ -206,7 +208,7 @@ class TileMeshTest {
             var front = new Mesh();
             var back = new Mesh();
             TileMesh.drawBlankFront(new PoseStack(), front, 0, material);
-            TileMesh.drawBack(new PoseStack(), back, false, false, 0, material, null);
+            TileMesh.drawBack(new PoseStack(), back, false, 0, material, null);
             assertFalse(front.vertices.isEmpty(), material.name());
             assertTrue(front.vertices.stream().allMatch(vertex -> vertex.color == TileMesh.backColor(material, null)), material.name());
             assertTrue(back.vertices.stream().allMatch(vertex -> vertex.color == TileMesh.backColor(material, null)), material.name());

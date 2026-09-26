@@ -9,7 +9,8 @@ public final class TileRenderTypes {
     public static final RenderType FACES = RenderTypes.entityCutout(TileMesh.GLYPHS);
     public static final Identifier PLAIN = Identifier.fromNamespaceAndPath("mchjong", "textures/tile/plain.png");
     public static final RenderType BACKS = RenderTypes.entityCutout(PLAIN);
-    public static final RenderType BACK_PATTERN = RenderTypes.entityTranslucent(TileMesh.BACK);
+    public static final RenderType BACK_PATTERN = backPattern(TileBackPresets.DEFAULT);
+    public static RenderType backPattern(Identifier preset) { return RenderTypes.entityTranslucent(TileBackPresets.texture(preset)); }
     public static final RenderType STICKS = RenderTypes.entityCutout(FurnitureMesh.STICK_TEXTURE);
 
     private TileRenderTypes() {}

@@ -59,6 +59,7 @@ neoForge {
 def maidDependency = "touhoulittlemaid.snapshot:${touhou_little_maid_version}:${touhou_little_maid_snapshot}@jar"
 configurations { maidSnapshot }
 dependencies {
+    compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     compileOnly maidDependency
     maidSnapshot maidDependency
     if (providers.gradleProperty('withMaid').getOrElse('false').toBoolean()) runtimeOnly maidDependency
@@ -121,10 +122,11 @@ def interfaceSmoke = providers.gradleProperty('smokeInterface').getOrElse('false
 def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('false').toBoolean()
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
+def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
-def smokeProfile = maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -152,6 +154,7 @@ neoForge {
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
             systemProperty 'mchjong.smoke.visibilityOnly', visibilitySmoke.toString()
             systemProperty 'mchjong.smoke.roomOnly', roomSmoke.toString()
+            systemProperty 'mchjong.smoke.settlementOnly', settlementSmoke.toString()
             systemProperty 'mchjong.smoke.manualOnly', manualSmoke.toString()
             systemProperty 'mchjong.smoke.browserOnly', browserSmoke.toString()
             systemProperty 'mchjong.smoke.browser', recipeBrowser

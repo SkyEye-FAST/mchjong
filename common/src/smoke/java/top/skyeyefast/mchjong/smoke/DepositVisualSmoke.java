@@ -7,8 +7,11 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.Screenshot;
+import net.minecraft.resources.Identifier;
 import top.skyeyefast.mchjong.client.TableDeposits;
 import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.TableSettings;
+import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RuleSet;
@@ -22,13 +25,16 @@ final class DepositVisualSmoke {
     private final boolean showWall;
     private int sample, ticks;
     private TableView fixture;
+    private Identifier originalStick;
 
     DepositVisualSmoke() { this(false); }
     DepositVisualSmoke(boolean showWall) { this.showWall = showWall; }
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
-        if (sample == 1) return true;
+        if (sample == BuiltinPresets.STICKS.size() + 1) return true;
         if (ticks == 0) {
+            if (sample == 0) originalStick = TableSettings.get().riichiStickPreset;
+            TableSettings.get().riichiStickPreset = sample == 0 ? originalStick : BuiltinPresets.STICKS.get(sample - 1);
             var base = table.clientView();
             var rules = RuleSet.MAHJONG_SOUL_4.config();
             int count = 8;
@@ -38,11 +44,11 @@ final class DepositVisualSmoke {
                 var river = IntStream.range(seat * 12, seat * 12 + 12)
                     .mapToObj(tile -> new Discard(tile, false, false, false)).toList();
                 seats.add(new TableView.Seat(false, "Player " + (seat + 1), true, false, false, 25000,
-                    hand, Tile.ABSENT, List.of(), river, List.of(), false, false));
+                    hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
                 base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,
-                0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(),
+                0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null,
                 table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1);
             table.acceptView(fixture);
@@ -55,10 +61,11 @@ final class DepositVisualSmoke {
         if (ticks == 20) {
             if (TableDeposits.sticks(fixture).size() != fixture.riichiSticks())
                 throw new IllegalStateException("Rendered deposit count differs from the public pot");
-            capture(client, table, output, "carried");
+            capture(client, table, output, sample == 0 ? "carried" : BuiltinPresets.STICKS.get(sample - 1).getPath());
             sample++;
             ticks = 0;
-            if (sample == 1) {
+            if (sample == BuiltinPresets.STICKS.size() + 1) {
+                TableSettings.get().riichiStickPreset = originalStick;
                 client.setScreen(null);
                 return true;
             }

@@ -32,6 +32,7 @@ public final class MahjongTableRenderer
         TileMaterial material;
         net.minecraft.world.item.DyeColor back;
         TileFacePreset preset;
+        net.minecraft.resources.Identifier backPreset;
         TableAnimation animation;
         boolean animated;
         long now;
@@ -52,6 +53,7 @@ public final class MahjongTableRenderer
         state.material = table.equipment().material();
         state.back = table.equipment().back();
         state.preset = table.equipment().preset();
+        state.backPreset = table.equipment().backPreset();
         if (state.view == null) {
             state.animation = null;
             state.frames = List.of();
@@ -78,13 +80,18 @@ public final class MahjongTableRenderer
         pose.pushPose();
         pose.translate(.5, 0, .5);
         boolean glass = state.material == TileMaterial.GLASS;
-        tiles(state, pose, buffers, Layer.BACK);
-        if (!glass) tiles(state, pose, buffers, Layer.BODY);
+        if (!glass) {
+            tiles(state, pose, buffers, Layer.BACK);
+            tiles(state, pose, buffers, Layer.BODY);
+        }
         tiles(state, pose, buffers, Layer.FACE);
         if (state.automatic) TableIndicator.render(state.view, pose, buffers, state.lightCoords);
-        TableDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, state.lightCoords);
+        TableDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
         TableDice.renderWorld(state.view, pose, collector, state.lightCoords);
-        if (glass) tiles(state, pose, buffers, Layer.BODY);
+        if (glass) {
+            tiles(state, pose, buffers, Layer.BACK);
+            tiles(state, pose, buffers, Layer.BODY);
+        }
         tiles(state, pose, buffers, Layer.PATTERN);
         tiles(state, pose, buffers, Layer.OUTLINE);
         buffers.submit(pose);
@@ -96,7 +103,7 @@ public final class MahjongTableRenderer
             case BACK -> TileRenderTypes.back(state.material, state.back);
             case BODY -> TileRenderTypes.body(state.material);
             case FACE -> TileRenderTypes.faces(state.preset);
-            case PATTERN -> TileRenderTypes.BACK_PATTERN;
+            case PATTERN -> TileRenderTypes.backPattern(state.backPreset);
             case OUTLINE -> RenderTypes.lines();
         });
         TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
@@ -117,9 +124,8 @@ public final class MahjongTableRenderer
             switch (layer) {
                 case FACE -> TileMesh.drawFace(pose, vertices, piece.tile(), piece.back(), state.lightCoords);
                 case BODY -> TileMesh.drawBody(pose, vertices, state.lightCoords, state.material, state.back);
-                case BACK -> TileMesh.drawBack(pose, vertices, piece.back() || piece.tile() < 0,
-                    faceDown, state.lightCoords, state.material, state.back);
-                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, piece.back() || piece.tile() < 0, faceDown, state.lightCoords);
+                case BACK -> TileMesh.drawBack(pose, vertices, faceDown, state.lightCoords, state.material, state.back);
+                case PATTERN -> TileMesh.drawBackPattern(pose, vertices, faceDown, state.lightCoords);
                 case OUTLINE -> TileMesh.drawOutline(pose, vertices, highlight);
             }
             pose.popPose();

@@ -93,7 +93,13 @@ public final class TableScreen extends Screen {
     public TableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
-    @Override public void removed() { clearCameraInput(); }
+    @Override public void removed() {
+        clearCameraInput();
+        if (TableAudio.result(presentedView) != null) {
+            TableAudio.finishResult();
+            VoicePresets.stop();
+        }
+    }
     private void clearCameraInput() {
         inspecting = false;
         dragging = false;
@@ -181,7 +187,7 @@ public final class TableScreen extends Screen {
     }
 
     boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
-        return reds == top.skyeyefast.mchjong.engine.RedFives.NONE || minecraft != null && minecraft.level != null
+        return minecraft != null && minecraft.level != null
             && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             && (table.clientRedOptions() & 1 << ((sanma ? 3 : 0) + reds.ordinal())) != 0;
     }
@@ -196,6 +202,13 @@ public final class TableScreen extends Screen {
 
     private net.minecraft.world.item.DyeColor tileBack() {
         return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().back();
+    }
+    private net.minecraft.world.item.DyeColor clothColor() {
+        var equipment = ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment();
+        return equipment.hasCloth() ? equipment.clothColor() : null;
+    }
+    private net.minecraft.resources.Identifier tileBackPreset() {
+        return ((MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos)).equipment().backPreset();
     }
 
     private TableAnimation animation() {
@@ -314,7 +327,9 @@ public final class TableScreen extends Screen {
         refreshDecision(view);
         viewReady = immersivePhase(view.phase()) && !dealing();
         if (!viewReady || view.viewerSeat() < 0) immersive = false;
-        boolean newResult = lastPhase != view.phase() && TableResults.available(view);
+        boolean newResult = TableResults.available(view) && (lastPhase != view.phase() || previous == null
+            || !previous.tableId().equals(view.tableId()) || previous.handNumber() != view.handNumber()
+            || !previous.wins().equals(view.wins()));
         if (newResult) {
             resultsExpanded = true;
             resultPage = TableResults.Page.HAND;
@@ -323,6 +338,7 @@ public final class TableScreen extends Screen {
         }
         if (view.phase() == Game.Phase.MATCH_END && room() != null
             && room().settlementTicks() <= Game.SETTLEMENT_TICKS && !finalSummaryShown) {
+            TableAudio.finishResult();
             resultPage = TableResults.Page.MATCH;
             resultsExpanded = true;
             finalSummaryShown = true;
@@ -355,7 +371,7 @@ public final class TableScreen extends Screen {
         for (int i = 0; i < view.actions().size(); i++) {
             Action action = view.actions().get(i);
             if (action.type() == Action.Type.DISCARD || action.type() == Action.Type.RIICHI || action.type() == Action.Type.NEXT
-                || action.type() == Action.Type.SKIP_SETTLEMENT
+                || action.type() == Action.Type.SKIP_SETTLEMENT || action.type() == Action.Type.SETTLEMENT_DONE
                 || !immersive && TableHandling.physical(view, action)) continue;
             choices.add(i);
         }
@@ -416,22 +432,23 @@ public final class TableScreen extends Screen {
         if (TableResults.available(view) && TableSettings.get().show(TableSettings.Information.RESULTS)) {
             int scale = immersive ? 2 : 1;
             addRenderableWidget(MahjongButton.create(Component.translatable(resultsExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"),
-                ignored -> { resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10 * scale, uiHeight() - 48 * scale, boxWidth, 20 * scale).build());
+                ignored -> { TableAudio.finishResult(); resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10 * scale, uiHeight() - 48 * scale, boxWidth, 20 * scale).build());
             if (resultsExpanded) {
                 int tabs = view.phase() == Game.Phase.MATCH_END ? 3 : 2;
                 int tabWidth = (layoutWidth - 20 * scale) / tabs;
                 for (int i = 0; i < tabs; i++) {
                     var page = TableResults.Page.values()[i];
                     var button = MahjongButton.create(Component.translatable("ui.mchjong.result_page." + i), ignored -> {
+                        TableAudio.finishResult();
                         resultPage = page; results = null; rebuild();
                     }).bounds(10 * scale + i * tabWidth, 34 * scale, tabWidth - 3 * scale, 20 * scale).build();
                     button.selected(page == resultPage);
                     addRenderableWidget(button);
                 }
                 int panelTop = 58 * scale;
-                results = addRenderableWidget(new TableResults(font, view, facePreset(), tileMaterial(), tileBack(),
+                results = addRenderableWidget(new TableResults(font, view, facePreset(), tileMaterial(), tileBack(), tileBackPreset(),
                     10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
-                    selectedWinner, resultPage, resultStarted, immersive ? 2 : 1));
+                    selectedWinner, resultPage, resultStarted, immersive ? 2 : 1).readout(TableAudio.result(view)));
             }
         }
         if (discard >= 0) {
@@ -488,7 +505,8 @@ public final class TableScreen extends Screen {
                     source = oldHand.point(previous.seats().get(seat).drawn());
                 sourceWidth = oldHand.tileWidth();
             }
-            double opponentX = ImmersiveTable.discardSourceX(previous.seats().get(seat), seat, discard.tile(), discard.tsumogiri());
+            double opponentX = ImmersiveTable.discardSourceX(previous.seats().get(seat), seat,
+                previous.viewerSeat(), previous.seats().size(), discard.tile(), discard.tsumogiri());
             long duration = ImmersiveMotion.duration(discard.tsumogiri());
             immersiveDiscard = new ImmersiveDiscardMotion(discard.tile(), seat, discard.tsumogiri(), discard.riichi(),
                 Util.getMillis(), duration, source, sourceWidth, opponentX);
@@ -524,7 +542,7 @@ public final class TableScreen extends Screen {
         int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         TileGui.tile3d(graphics, motion.tile(), (int) Math.round(x) - tileWidth / 2,
             (int) Math.round(y) - tileHeight / 2, tileWidth, false, false, false, false,
-            Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack());
+            Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
     }
 
     private void buildToolbar(TableView view) {
@@ -557,7 +575,11 @@ public final class TableScreen extends Screen {
             int gap = 4 * scale;
             int skipWidth = skip >= 0 ? 104 * scale : 0;
             int countdownWidth = uiWidth() - 20 * scale - skipWidth - (skip >= 0 ? gap : 0);
-            var countdown = MahjongButton.create(Component.translatable(key, seconds), ignored -> {})
+            var readout = TableAudio.result(view);
+            boolean reading = !view.wins().isEmpty() && ticks - (standings ? Game.SETTLEMENT_TICKS : 0) > Game.SETTLEMENT_TICKS;
+            Component caption = reading ? Component.translatable(readout != null && !readout.complete()
+                ? "ui.mchjong.readout_active" : "ui.mchjong.readout_waiting") : Component.translatable(key, seconds);
+            var countdown = MahjongButton.create(caption, ignored -> {})
                 .bounds(10 * scale, 8 * scale, countdownWidth, 20 * scale).build().textScale(scale).selected(true);
             countdown.active = false;
             addRenderableWidget(countdown);
@@ -734,7 +756,13 @@ public final class TableScreen extends Screen {
         TableView current = view();
         refreshDecision(current);
         if (dealing() || TableResults.available(snapshot) && Util.getMillis() - resultStarted < 500
-            || minecraft.getConnection() == null || !decision.submit(snapshot, index)) return;
+            || minecraft.getConnection() == null) return;
+        if (index >= 0 && index < snapshot.actions().size()
+            && snapshot.actions().get(index).type() == Action.Type.SKIP_SETTLEMENT && TableAudio.finishResult()) {
+            rebuild();
+            return;
+        }
+        if (!decision.submit(snapshot, index)) return;
         minecraft.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
         callouts.forEach(button -> button.active = false);
         selectedTile = lastClickedTile = Tile.ABSENT;
@@ -933,7 +961,8 @@ public final class TableScreen extends Screen {
             graphics.fill(0, 0, layoutWidth, layoutHeight, MahjongUi.INPUT);
             long now = Util.getMillis();
             int suppressed = immersiveDiscardActive(now) ? immersiveDiscard.tile() : Tile.ABSENT;
-            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed, tileMaterial(), tileBack());
+            if (board != null) board.render(graphics, TableBoardState.live(view), facePreset(), suppressed,
+                tileMaterial(), tileBack(), tileBackPreset(), clothColor());
             renderImmersiveDiscard(graphics, now);
             renderImmersiveDraw(graphics, now);
         }
@@ -949,7 +978,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), board);
+            information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), tileBackPreset(), board);
         if (view.phase() == Game.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
@@ -1002,7 +1031,7 @@ public final class TableScreen extends Screen {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack());
+        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack(), tileBackPreset());
         updateHints(view);
         super.extractRenderState(graphics, drawMouseX, drawMouseY, partialTick);
         if (dealing()) renderStatus(graphics, Component.translatable("ui.mchjong.dealing"),

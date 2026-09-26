@@ -42,8 +42,12 @@ public class Mchjong implements ModInitializer {
     @Override
     public void onInitialize() {
         top.skyeyefast.mchjong.compat.maid.MaidData.register();
-        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(
-            top.skyeyefast.mchjong.world.WorldSettings::of);
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
+            top.skyeyefast.mchjong.world.WorldSettings.of(server);
+            top.skyeyefast.mchjong.config.ServerPresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+        });
+        net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) ->
+            top.skyeyefast.mchjong.config.ServerPresets.send(handler.player));
         top.skyeyefast.mchjong.item.MahjongComponents.TYPES.forEach((name, type) ->
             Registry.register(BuiltInRegistries.DATA_COMPONENT_TYPE, MahjongContent.id(name), type));
         top.skyeyefast.mchjong.recipe.MahjongRecipes.SERIALIZERS.forEach((name, serializer) ->
@@ -81,10 +85,18 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE,
+            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
         PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(TableViewPayload.TYPE, TableViewPayload.CODEC);
         PayloadTypeRegistry.clientboundPlay().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC);
+        PayloadTypeRegistry.clientboundPlay().register(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE, top.skyeyefast.mchjong.network.StickAppearancePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(TableActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,

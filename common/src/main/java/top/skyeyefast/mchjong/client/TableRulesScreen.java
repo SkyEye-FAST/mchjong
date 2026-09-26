@@ -274,7 +274,8 @@ public final class TableRulesScreen extends Screen {
             if (mouseX >= label.x() && mouseX < label.x() + label.width() && mouseY >= label.y() - 4 && mouseY < label.y() + 12)
                 graphics.setTooltipForNextFrame(label.tooltip(), mouseX, mouseY);
         }
-        graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
+        if (!presetExpanded)
+            graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
         String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"
             : !host() ? "rules.mchjong.read_only" : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid"
             : missingReds() ? "rules.mchjong.insufficient_reds" : mode == Mode.CUSTOM ? "rules.mchjong.custom_note"

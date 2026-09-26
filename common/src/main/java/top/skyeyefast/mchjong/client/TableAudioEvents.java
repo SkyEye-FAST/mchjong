@@ -29,16 +29,18 @@ public final class TableAudioEvents {
             for (int i = old.river().size(); i < next.river().size(); i++) {
                 var discard = next.river().get(i);
                 cues.add(effect(discard.tsumogiri() ? "tsumogiri" : "tedashi", 0));
-                if (discard.riichi() && !old.riichi()) cues.add(voice("riichi"));
+                if (discard.riichi() && !old.riichi())
+                    cues.add(new Cue("riichi", seat == after.viewerSeat() ? next.doubleRiichi() ? "double_riichi" : "riichi" : null, 0));
             }
             for (int i = 0; i < next.melds().size(); i++) {
                 var meld = next.melds().get(i);
                 if (i >= old.melds().size() || !meld.equals(old.melds().get(i))) {
                     String type = meld.kan() ? "kan" : meld.type().name().toLowerCase(java.util.Locale.ROOT);
-                    cues.add(voice(type));
+                    cues.add(seat == after.viewerSeat() ? voice(type) : effect(type, 0));
                 }
             }
-            if (next.norths().size() > old.norths().size()) cues.add(voice("nuki"));
+            if (next.norths().size() > old.norths().size())
+                cues.add(seat == after.viewerSeat() ? voice("nuki") : effect("nuki", 0));
             if (next.drawn() != Tile.ABSENT && (old.drawn() == Tile.ABSENT || next.hand().size() > old.hand().size()))
                 cues.add(effect("draw", 0));
         }
@@ -46,9 +48,8 @@ public final class TableAudioEvents {
         boolean wasEnded = before.phase() == Game.Phase.HAND_END || before.phase() == Game.Phase.MATCH_END;
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
-            cues.add(voice(result));
-            if (after.phase() == Game.Phase.MATCH_END)
-                cues.add(new Cue("match_end", "match_end", 25));
+            boolean ownWin = after.wins().stream().anyMatch(win -> win.seat() == after.viewerSeat());
+            cues.add(ownWin || result.equals("draw_end") ? voice(result) : effect(result, 0));
         } else if (after.phase() == Game.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);

@@ -25,6 +25,10 @@ public final class MahjongSupplies {
 
     public static DyeColor color(ItemStack stack) { return stack.getOrDefault(DataComponents.BASE_COLOR, DyeColor.BLUE); }
     public static DyeColor back(ItemStack stack) { return stack.get(DataComponents.BASE_COLOR); }
+    public static net.minecraft.resources.Identifier backPreset(ItemStack stack) {
+        return stack.getOrDefault(MahjongComponents.BACK_PRESET,
+            net.minecraft.resources.Identifier.fromNamespaceAndPath("mchjong", "default"));
+    }
     public static TileData tile(ItemStack stack) { return stack.getOrDefault(MahjongComponents.TILE, TileData.BLANK); }
     public static ItemStack tile(TileData data, int count) { return tile(data, null, count); }
     public static ItemStack tile(TileData data, DyeColor color, int count) {
@@ -166,13 +170,13 @@ public final class MahjongSupplies {
     }
 
     /** The industrial full-deck transaction uses the ordinary engraving implementation. */
-    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks, TileFacePreset preset) {
+    public static ItemStack printBox(ItemStack box, List<ItemStack> blanks) {
         if (!validBox(box)
             || tileCount(contents(box)) + tileCount(blanks) != SET_SIZE + TileData.FLOWER_COUNT
             || blanks.stream().anyMatch(stack -> !stack.is(MahjongContent.TILE_ITEM) || !tile(stack).blank())) return ItemStack.EMPTY;
         if (contents(box).stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM) && !tile(stack).blank())) return ItemStack.EMPTY;
         var packed = blanks.isEmpty() ? box.copy() : pack(box, blanks);
-        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, preset);
+        return packed.isEmpty() ? ItemStack.EMPTY : engrave(packed, TileFacePreset.KANSAI);
     }
 
     /** A target is a whole tile stack or one box. Every target must actually change. */
@@ -230,7 +234,8 @@ public final class MahjongSupplies {
             int[] faces = new int[34];
             int[] flowers = new int[TileData.FLOWER_COUNT];
             for (var stack : tiles) {
-                if (tile(stack).material() != tile(template).material() || back(stack) != back(template)) return List.of();
+                if (tile(stack).material() != tile(template).material() || back(stack) != back(template)
+                    || !backPreset(stack).equals(backPreset(template))) return List.of();
                 var data = tile(stack);
                 if (data.flower()) flowers[data.face() - TileData.FIRST_FLOWER] += stack.getCount();
                 else faces[data.face()] += stack.getCount();
@@ -283,6 +288,25 @@ public final class MahjongSupplies {
         return List.copyOf(output);
     }
 
+    /** Change only the decorative rear pattern; dye color and tile identity stay intact. */
+    public static List<ItemStack> backedContents(List<ItemStack> input, net.minecraft.resources.Identifier preset) {
+        if (input.size() != BOX_SLOTS || tileCount(input) == 0 || preset.toString().length() > 128) return List.of();
+        var output = new ArrayList<>(input.stream().map(ItemStack::copy).toList());
+        boolean changed = false;
+        for (int i = 0; i < TILE_SLOTS; i++) {
+            var stack = output.get(i);
+            if (stack.isEmpty()) continue;
+            if (!boxAccepts(i, stack) || stack.getCount() > stack.getMaxStackSize()) return List.of();
+            if (!backPreset(stack).equals(preset)) {
+                if (preset.equals(net.minecraft.resources.Identifier.fromNamespaceAndPath("mchjong", "default")))
+                    stack.remove(MahjongComponents.BACK_PRESET);
+                else stack.set(MahjongComponents.BACK_PRESET, preset);
+                changed = true;
+            }
+        }
+        return changed ? List.copyOf(output) : List.of();
+    }
+
     /** Inventory summaries prefer a four-player set, then a usable three-player subset. */
     public static Deck deck(ItemStack box) {
         if (!validBox(box)) return null;
@@ -316,7 +340,7 @@ public final class MahjongSupplies {
             TileData data = tile(stack);
             if (!data.valid()) return null;
             if (data.blank() || data.flower()) continue;
-            var appearance = new Deck(data.material(), back(stack), facePreset(stack), reds, sanma);
+            var appearance = new Deck(data.material(), back(stack), facePreset(stack), backPreset(stack), reds, sanma);
             stocks.computeIfAbsent(appearance, ignored -> new int[68])[data.face() * 2 + (data.red() ? 1 : 0)] += stack.getCount();
         }
         for (var stock : stocks.entrySet()) {
@@ -332,7 +356,8 @@ public final class MahjongSupplies {
         return null;
     }
 
-    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset, RedFives redFives, boolean sanma) {
+    public record Deck(TileMaterial material, DyeColor back, TileFacePreset preset,
+                       net.minecraft.resources.Identifier backPreset, RedFives redFives, boolean sanma) {
         public List<Integer> tiles() { return List.copyOf(Tile.set(sanma, redFives)); }
     }
 

@@ -116,6 +116,7 @@ object ReplayPlayback {
                 seat.norths,
                 seat.riichi,
                 true,
+                seat.riichi && hand.finalSeats[i].doubleRiichi(),
             )
         }
         return Frame(

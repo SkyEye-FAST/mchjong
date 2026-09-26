@@ -76,6 +76,8 @@ class TableControlTest {
     }
 
     @Test void handVisibilityIsHostOnlyClearsReadinessAndPersistsPerRoom() {
+        assertArrayEquals(new HandVisibility[]{HandVisibility.SELF, HandVisibility.RIICHI,
+            HandVisibility.ALL, HandVisibility.OPEN}, HandVisibility.values());
         Game lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
         lobby.players[1].ready = true;
@@ -95,6 +97,23 @@ class TableControlTest {
         saved.validate();
         assertEquals(HandVisibility.ALL, saved.handVisibility);
         assertEquals(HandVisibility.SELF, new Game(UUID.randomUUID(), RuleSet.WRC, 2).handVisibility);
+    }
+
+    @Test void stockCompositionChangeClearsLobbyReadinessAndRespectsPreset() {
+        var rules = RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.RED_FIVES, RedFives.NONE.ordinal());
+        var lobby = new Game(UUID.randomUUID(), rules, 1);
+        lobby.join(id(0), "Host", 0);
+        lobby.players[0].ready = true;
+        long token = lobby.decision;
+        assertTrue(lobby.configureStockRedFives(RedFives.THREE));
+        assertEquals(RedFives.THREE, lobby.rules().redFives());
+        assertFalse(lobby.players[0].ready);
+        assertNotEquals(token, lobby.decision);
+        assertFalse(lobby.configureStockRedFives(RedFives.THREE));
+
+        var fixed = new Game(UUID.randomUUID(), RuleSet.WRC, 1);
+        assertFalse(fixed.configureStockRedFives(RedFives.THREE));
+        assertEquals(RedFives.NONE, fixed.rules().redFives());
     }
 
     @Test void visibilityRedactsBeforeSerializationAndRiichiBelongsToTheViewer() {

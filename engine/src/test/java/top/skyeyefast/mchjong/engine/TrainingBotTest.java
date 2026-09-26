@@ -7,7 +7,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TrainingBotTest {
-    private static Game hand(String text) {
+    static Game hand(String text) {
         var game = new Game(new UUID(1, 2), RuleSet.TENHOU_4, 17);
         for (int seat = 0; seat < 4; seat++) game.join(new UUID(2, seat + 1), "Player " + seat, seat);
         game.phase = Game.Phase.TURN;
@@ -22,6 +22,117 @@ class TrainingBotTest {
     private static Action choice(Game game, BotDifficulty difficulty) {
         var view = game.view(game.players[0].id);
         return view.actions().get(TrainingBot.choose(view, difficulty));
+    }
+
+    @Test void yakuRoutesPreserveUsefulTilesWithoutBuyingAnOffensiveRetreat() {
+        String[][] positions = {
+            {"sanshoku", "123m123p12457889s", "8s"},
+            {"ittsu", "1234589m234p558s7p", "7p"},
+            {"iipeikou and pinfu", "22334456m345p55s8p", "8p"},
+            {"toitoi", "111m222p3344s55z67z", "6z,7z"},
+            {"sequence over triplets", "112233m456p67s555z", "5z"},
+            {"honitsu", "11234567789m55z4p", "4p"},
+            {"chiitoitsu", "1122m3344p155s167z", "1s,1z,6z,7z"},
+            {"no speculative retreat", "123456m234p456s12z", "1z,2z"},
+        };
+        assertAll(java.util.Arrays.stream(positions).map(position -> (org.junit.jupiter.api.function.Executable) () -> {
+            var game = hand(position[1]);
+            var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
+            int selected = Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst());
+            assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(),
+                shapes.get(selected).shanten(), position[0]);
+            assertTrue(java.util.Arrays.stream(position[2].split(",")).mapToInt(Tile::parseKind).anyMatch(k -> k == selected),
+                position[0] + " discarded " + Tile.notation(selected));
+            var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
+            for (var tile : game.players[0].hand) {
+                var next = analysis.initial().discard(tile, false);
+                var shape = shapes.get(Tile.kind(tile));
+                var potential = analysis.value.potential(next, shape.shanten(), analysis.unseen);
+                assertTrue(potential.retention() + Math.log1p(potential.estimate() / 1000) * 6 <=
+                    analysis.value.rankUpper(next, shape.shanten()) + 1e-9, "Beam ceiling must dominate every route rank");
+            }
+        }));
+    }
+
+    @Test void potentialIsGradualCopyAwareAndSeparateFromLegalScoring() {
+        String[][] positions = {
+            {"sanshoku", "123m123p12456778s", "8s", "1s"},
+            {"ittsu", "12345689m234p55s7p", "7p", "1m"},
+            {"iipeikou", "22334456m345p55s8p", "8p", "2m"},
+        };
+        for (var position : positions) {
+            var game = hand(position[1]);
+            var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
+            var potential = new BotYakuPotential(game.rules, analysis.value::yakuhai);
+            var before = analysis.initial();
+            var evidence = new ArrayList<BotYakuPotential.Route>();
+            for (var discard : new String[]{position[2], position[3]}) {
+                int tile = before.hand().stream().filter(t -> Tile.kind(t) == Tile.parseKind(discard)).findFirst().orElseThrow();
+                evidence.add(potential.assess(before.discard(tile, false), analysis.unseen).routes().stream()
+                    .filter(r -> r.name().equals(position[0])).findFirst().orElseThrow());
+            }
+            assertTrue(evidence.get(0).progress() > evidence.get(1).progress(), position[0]);
+            assertTrue(evidence.get(1).progress() > 0, "Incomplete support must not be a binary yaku switch");
+        }
+        var game = hand("1111m2233p4455s16z");
+        var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
+        var potential = new BotYakuPotential(game.rules, analysis.value::yakuhai);
+        var state = analysis.initial().discard(game.players[0].hand.getFirst(), false);
+        var routes = potential.assess(state, analysis.unseen);
+        assertEquals(1.0, routes.routes().stream().filter(r -> r.name().equals("chiitoitsu")).findFirst().orElseThrow().missing(),
+            "A quad cannot supply two different seven-pairs pairs");
+        assertTrue(routes.han() < routes.routes().stream().mapToDouble(BotYakuPotential.Route::value).sum(),
+            "Competing structures must not accumulate their possible han");
+        var declared = new BotAnalysis.State(TestHands.tiles("223344p6678s"),
+            List.of(TestHands.meld(Meld.Type.CLOSED_KAN, "1111m")), List.of(), 0, false, false, 1);
+        assertTrue(potential.assess(declared, analysis.unseen).routes().stream()
+            .noneMatch(r -> r.name().equals("pinfu") || r.name().equals("chiitoitsu") || r.name().equals("kokushi")));
+        assertEquals(1.0, potential.assess(declared, analysis.unseen).routes().stream()
+            .filter(r -> r.name().equals("iipeikou")).findFirst().orElseThrow().progress(),
+            "A concealed kan does not open the two identical concealed sequences");
+
+        var pinfu = new BotAnalysis.State(TestHands.tiles("22334456m345p55s"), List.of(), List.of(), 0, false, false, 1);
+        var stock = new int[68];
+        for (int kind = 0; kind < 34; kind++) stock[kind] = 4;
+        for (int tile : pinfu.hand()) stock[Tile.kind(tile)]--;
+        var liveFit = potential.assess(pinfu, stock).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow();
+        stock[Tile.WHITE] = 0;
+        assertEquals(liveFit, potential.assess(pinfu, stock).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow(),
+            "A value honor cannot change a pinfu group or head fit");
+        var deadFit = potential.assess(pinfu, new int[68]).routes().stream().filter(r -> r.name().equals("pinfu")).findFirst().orElseThrow();
+        assertTrue(deadFit.progress() < liveFit.progress(), "Cached fits must retain exact available copy counts");
+    }
+
+    @Test void oneShantenSearchSurvivesTheGeneralRootBudgetAndReportsItsComponents() {
+        var game = hand("123m123p12457889s");
+        var view = game.view(game.players[0].id);
+        var analysis = new BotAnalysis(view, BotDifficulty.HARD);
+        var initial = analysis.initial();
+        int discard = initial.hand().stream().filter(t -> Tile.kind(t) == Tile.parseKind("9s")).findFirst().orElseThrow();
+        var state = initial.discard(discard, false);
+        var shape = analysis.shape(state);
+        assertEquals(1, shape.shanten());
+        for (int kind : shape.improving().stream().limit(2).toList()) {
+            var drawn = state.draw(Tile.id(kind, 0, false));
+            var all = HandAnalyzer.discardEfficiency(drawn.hand(), drawn.melds(), false);
+            var ready = new java.util.TreeMap<Integer, TileEfficiency>();
+            all.forEach((discardKind, efficiency) -> { if (efficiency.shanten() == 0) ready.put(discardKind, efficiency); });
+            assertEquals(ready, HandAnalyzer.bestDiscardEfficiency(drawn.hand(), drawn.melds()),
+                "The library best-only mode must retain every tenpai discard");
+        }
+        analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
+        var evaluated = analysis.evaluate(state, shape, analysis.unseen);
+        assertTrue(Double.isFinite(analysis.forward(state, evaluated, false)));
+        assertEquals(shape.improving().stream().mapToInt(k -> (analysis.unseen[k] > 0 ? 1 : 0) + (analysis.unseen[k + 34] > 0 ? 1 : 0)).sum(),
+            analysis.advanceNodes);
+        assertTrue(analysis.tenpaiLeaves >= analysis.advanceNodes);
+        var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
+        assertTrue(trace.stream().filter(c -> c.evaluation().shanten() == 1 && c.exclusion().isEmpty()).count() > 3);
+        for (var candidate : trace) {
+            assertEquals(candidate.evaluation().terms().total() + candidate.adjustments().total() + candidate.forward(), candidate.utility(), 1e-9);
+            if (candidate.evaluation().shanten() == 1 && candidate.exclusion().isEmpty())
+                assertEquals("one-shanten-exact", candidate.search());
+        }
     }
 
     @Test void analysisKeepsVisibleDiscardsAndSeparatesRedStockAndDuplicateDora() {
@@ -81,14 +192,14 @@ class TrainingBotTest {
         var easy = view.actions().get(TrainingBot.choose(view, BotDifficulty.EASY));
         var hard = view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
         assertEquals(4, Tile.kind(easy.tiles().getFirst()));
-        assertEquals(18, Tile.kind(hard.tiles().getFirst()));
+        assertNotEquals(BotAnalysis.face(easy.tiles().getFirst()), BotAnalysis.face(hard.tiles().getFirst()));
         var analysis = new BotAnalysis(view, BotDifficulty.HARD);
         var start = analysis.initial();
         var shapes = analysis.discards(start);
         var e = start.discard(easy.tiles().getFirst(), false);
         var h = start.discard(hard.tiles().getFirst(), false);
         var ee = analysis.evaluate(e, shapes.get(4), analysis.unseen);
-        var he = analysis.evaluate(h, shapes.get(18), analysis.unseen);
+        var he = analysis.evaluate(h, shapes.get(Tile.kind(hard.tiles().getFirst())), analysis.unseen);
         assertEquals(ee.shanten(), he.shanten());
         assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(), he.shanten());
         assertTrue(he.live() < ee.live());
@@ -146,6 +257,8 @@ class TrainingBotTest {
         assertEquals(Action.Type.PON, choice(game, BotDifficulty.HARD).type(), "A threat alone does not prohibit a useful call");
         game.options.set(0, List.of(pon, new Action(Action.Type.PASS), new Action(Action.Type.RON, game.lastTile)));
         for (var difficulty : BotDifficulty.values()) assertEquals(Action.Type.RON, choice(game, difficulty).type());
+        game.options.set(0, List.of(new Action(Action.Type.SKIP_SETTLEMENT), new Action(Action.Type.SETTLEMENT_DONE)));
+        assertEquals(Action.Type.SKIP_SETTLEMENT, choice(game, BotDifficulty.HARD).type());
         var noYaku = hand("123m456p23s33667z");
         noYaku.phase = Game.Phase.REACTION; noYaku.lastFrom = 1;
         noYaku.lastTile = Tile.id(Tile.WEST, 3, false);

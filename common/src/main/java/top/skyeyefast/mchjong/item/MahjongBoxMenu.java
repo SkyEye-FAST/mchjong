@@ -68,6 +68,11 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
             && !MahjongSupplies.engravedContents(items(), preset).isEmpty();
     }
 
+    public boolean canChooseBack(net.minecraft.resources.Identifier preset) {
+        return MahjongSupplies.mahjongDye(contents.getItem(MahjongSupplies.DYE_SLOT))
+            && !MahjongSupplies.backedContents(items(), preset).isEmpty();
+    }
+
     public boolean canDyeBack() {
         var reagent = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (reagent.is(top.skyeyefast.mchjong.world.MahjongContent.UNDO_DYE)) {
@@ -91,6 +96,22 @@ public final class MahjongBoxMenu extends AbstractContainerMenu {
         var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
         if (!MahjongSupplies.mahjongDye(dye)) return false;
         var output = MahjongSupplies.engravedContents(items(), preset);
+        if (output.isEmpty()) return false;
+        if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
+        updating = true;
+        try {
+            for (int i = 0; i < output.size(); i++) contents.setItem(i, output.get(i));
+        } finally { updating = false; }
+        save();
+        broadcastChanges();
+        return true;
+    }
+
+    public boolean chooseBack(Player player, net.minecraft.resources.Identifier preset) {
+        if (player.level().isClientSide() || !stillValid(player) || preset.toString().length() > 128) return false;
+        var dye = contents.getItem(MahjongSupplies.DYE_SLOT);
+        if (!MahjongSupplies.mahjongDye(dye)) return false;
+        var output = MahjongSupplies.backedContents(items(), preset);
         if (output.isEmpty()) return false;
         if (dye.is(top.skyeyefast.mchjong.world.MahjongContent.MAHJONG_DYE)) output.get(MahjongSupplies.DYE_SLOT).shrink(1);
         updating = true;

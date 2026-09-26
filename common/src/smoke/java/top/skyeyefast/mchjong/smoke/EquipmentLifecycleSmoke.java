@@ -21,6 +21,7 @@ import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
@@ -146,9 +147,17 @@ final class EquipmentLifecycleSmoke {
             TableStorageSmoke.take(player, table, 0);
             check(countInventory(player, before) == 1, "The incomplete case could not be recovered intact");
         }
+        var redOnly = MahjongSupplies.stockedBox(RedFives.THREE);
+        TableStorageSmoke.put(player, table, 0, redOnly);
+        check(!table.equipment().canSupplyReds(false, RedFives.NONE), "Three-red stock incorrectly supplies no-red play");
+        check(table.participantGame(player).rules().redFives() == RedFives.THREE,
+            "Three-red stock left the room on an unavailable no-red setting");
+        TableStorageSmoke.take(player, table, 0);
         var first = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var firstExpected = first.copy();
         TableStorageSmoke.put(player, table, 0, first);
+        check(table.participantGame(player).rules().redFives() == RedFives.NONE,
+            "Replacing three-red stock with no-red stock did not update the room");
         check(first.isEmpty(), "Storage transfer did not move exactly one box");
         var installed = complete.copy();
         TableStorageSmoke.put(player, table, 1, installed);

@@ -33,7 +33,7 @@ class ReplayStoreTest {
             var tiles = List.copyOf(available.subList(seat * 13, (seat + 1) * 13));
             dealt.add(tiles);
             seats.add(new TableView.Seat(false, players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
-                List.of(), List.of(), List.of(), false, false));
+                List.of(), List.of(), List.of(), false, false, false));
         }
         var wall = wall();
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,

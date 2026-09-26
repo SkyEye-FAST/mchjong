@@ -11,7 +11,7 @@ from the match overlay.
 
 ## World policy
 
-Each world save has `config/mchjong-world.json`, shared by all dimensions and
+Each world save has `config/mchjong-world.toml`, shared by all dimensions and
 tables in that save. Its initial contents are:
 
 ```json
@@ -39,12 +39,12 @@ rules or readiness.
 The host chooses Hand visibility directly in the lobby before play. The choice is
 saved with that table, and changing it clears readiness:
 
-- **Open hands:** everyone sees the hands laid face up.
-- **Visible to all players:** everyone, including nearby spectators, sees the
-  ordinary upright tile faces from their physical viewing angle.
+- **Visible only to self:** each seated player sees their own hand. This is the default.
 - **Visible to riichi players:** a player who has declared riichi can see other
   players' upright tile faces. Other viewers see concealed faces.
-- **Visible only to self:** each seated player sees their own hand. This is the default.
+- **Visible to all players:** everyone, including nearby spectators, sees the
+  ordinary upright tile faces from their physical viewing angle.
+- **Open hands:** everyone sees the hands laid face up.
 
 Hands revealed at settlement remain public. Spectators can stand beside the table
 and inspect its world rendering, or interact with an active table to open its

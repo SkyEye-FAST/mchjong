@@ -91,6 +91,21 @@ class ReactionRulesTest {
         }
     }
 
+    @Test void declarationPublishesDoubleRiichiOnlyOnAnUninterruptedFirstTurn() {
+        for (int state = 0; state < 3; state++) {
+            Fixture f = new Fixture(RuleSet.TENHOU_4);
+            f.hand(0, "123456789m111p56z");
+            f.game.players[0].firstTurn = state != 1;
+            f.game.uninterrupted = state != 2;
+            int discard = f.game.players[0].hand.getLast();
+            f.start(0, discard);
+            assertFalse(f.game.view(null).seats().getFirst().doubleRiichi());
+            f.act(0, Action.Type.RIICHI, discard);
+            assertEquals(state == 0, f.game.view(null).seats().getFirst().doubleRiichi());
+            assertEquals(state == 0, f.game.view(f.game.players[1].id).seats().getFirst().doubleRiichi());
+        }
+    }
+
     @Test void automaticWinClaimsConcealedKanRobberyWithoutTakingAReplacementTile() {
         Fixture f = new Fixture(RuleSet.MAHJONG_SOUL_4);
         f.hand(1, "11m19p19s1234567z");
@@ -210,7 +225,8 @@ class ReactionRulesTest {
         assertEquals(List.of(2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
         assertTrue(f.game.players[1].melds.isEmpty());
         assertTrue(f.game.players[3].melds.isEmpty());
-        assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT)), f.game.view(f.game.players[1].id).actions());
+        assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT), new Action(Action.Type.SETTLEMENT_DONE)),
+            f.game.view(f.game.players[1].id).actions());
     }
 
     @Test void botRonStillWaitsForAnotherPlayersRon() {
