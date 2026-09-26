@@ -118,7 +118,8 @@ final class RoomFlowSmoke {
                 capture(client, output, "final-standings.png");
                 next(11);
             }
-        } else if ((stage == 10 || stage == 11) && view.phase() == Game.Phase.LOBBY) {
+        } else if ((stage == 10 || stage == 11) && view.phase() == Game.Phase.LOBBY
+            && buttonOrNull(client, "action.mchjong.leave_room") != null) {
             require(capturedFinal, "Final standings were skipped");
             require(view.viewerSeat() >= 0 && view.seats().stream().filter(seat -> seat.occupied()).count() == 4,
                 "Returning to lobby lost the room roster");
