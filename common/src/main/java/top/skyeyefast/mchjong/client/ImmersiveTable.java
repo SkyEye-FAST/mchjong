@@ -100,7 +100,7 @@ final class ImmersiveTable {
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressed,
                 TileMaterial material, net.minecraft.world.item.DyeColor dye, Identifier backPreset,
-                net.minecraft.world.item.DyeColor cloth) {
+                net.minecraft.world.item.DyeColor cloth, TableAnimation deal, long now) {
         this.preset = preset;
         backColor = TileMesh.backColor(material, dye);
         bodyColor = TileMesh.bodyColor(material, dye);
@@ -122,7 +122,7 @@ final class ImmersiveTable {
         if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
             flat(side(view.turn()), -57, 81, 57, 88, 8.5, MahjongUi.ACCENT);
         for (int seat = 0; seat < players; seat++) {
-            if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen());
+            if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen(), deal, now);
             else {
                 int n = 0;
                 for (int tile : view.seats().get(seat).norths()) tile(tile, 0, -270 + n++ * 29, 340, 27, false, false, false, 0);
@@ -162,13 +162,18 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    private void outer(TableView.Seat player, int seat, boolean layHandsOpen) {
+    private void outer(TableView.Seat player, int seat, boolean layHandsOpen, TableAnimation deal, long now) {
         int side = side(seat), w = 30;
         double rail = outerRail(side), halfLength = 300;
         double handX = handLeft(player, seat, side);
-        for (int tile : player.hand()) {
-            if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
-            else standing(tile, side, handX + w / 2.0, rail, w);
+        for (int index = 0; index < player.hand().size(); index++) {
+            int tile = player.hand().get(index);
+            double fraction = deal == null ? 1 : deal.dealProgress(seat, index, now);
+            if (fraction > 0) {
+                if (fraction < 1) dealTile(tile, side, handX + w / 2.0, rail, player.exposed() || layHandsOpen, fraction);
+                else if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
+                else standing(tile, side, handX + w / 2.0, rail, w);
+            }
             handX += w;
         }
         melds(seat, player.melds());
@@ -176,6 +181,27 @@ final class ImmersiveTable {
         for (int tile : player.norths()) {
             tile(tile, side, x, rail - 55, w, false, false, false, 0);
             x += w;
+        }
+    }
+
+    private void dealTile(int tile, int side, double x, double z, boolean open, double fraction) {
+        int first = faces.size();
+        if (open) tile(tile, 0, 0, 0, 30, fraction < .45, false, false, 0);
+        else standing(fraction < .45 ? -1 : tile, 0, 0, 0, 30);
+        double progress = ImmersiveMotion.smooth(fraction);
+        for (int i = faces.size() - 1; i >= first; i--) {
+            var face = faces.get(i);
+            if (face.contact()) { faces.remove(i); continue; }
+            var vertices = new Vertex[4];
+            for (int j = 0; j < 4; j++) {
+                var v = face.vertices()[j];
+                double sourceZ = open ? v.z() : 30 * RATIO / 2 - v.h();
+                double sourceH = open ? v.h() : thickness(30) / 2 + v.z();
+                vertices[j] = vertex(side, 170 + (x - 170) * progress + v.x(),
+                    z - 75 + sourceZ + (75 + v.z() - sourceZ) * progress,
+                    sourceH + (v.h() - sourceH) * progress + Math.sin(Math.PI * fraction) * 24);
+            }
+            faces.set(i, new Face(vertices, face.texture(), face.u0(), face.v0(), face.u1(), face.v1(), face.color(), false));
         }
     }
 

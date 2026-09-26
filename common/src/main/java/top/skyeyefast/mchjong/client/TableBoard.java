@@ -141,19 +141,20 @@ final class TableBoard {
     }
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset) {
-        render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null, TileBackPresets.DEFAULT, null);
+        render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null, TileBackPresets.DEFAULT, null, null, 0);
     }
 
     void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
                 TileMaterial material, net.minecraft.world.item.DyeColor back,
-                net.minecraft.resources.Identifier backPreset, net.minecraft.world.item.DyeColor cloth) {
+                net.minecraft.resources.Identifier backPreset, net.minecraft.world.item.DyeColor cloth,
+                TableAnimation deal, long now) {
         this.material = material;
         this.back = back;
         this.backPreset = backPreset;
         tiles.clear();
         tileWidths.clear();
         if (immersive != null) {
-            immersive.render(graphics, view, preset, suppressedTile, material, back, backPreset, cloth);
+            immersive.render(graphics, view, preset, suppressedTile, material, back, backPreset, cloth, deal, now);
             immersiveCenter(graphics, view);
             return;
         }

@@ -38,6 +38,7 @@ final class AnimationSmoke {
         ticks++;
         if (fixture == null) {
             TableView base = table.clientView();
+            TableSettings.get().animations = true;
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < base.rules().players(); seat++) seats.add(seat(seat == 0
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN), List.of(), List.of(), false));
@@ -47,29 +48,41 @@ final class AnimationSmoke {
             fixture = new TableView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
                 base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
                 "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
+            if (layoutsOnly) {
+                var previous = new TableView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
+                    fixture.rules(), fixture.phase(), 0, 0, 0, 0, 0, 0, fixture.remaining(), fixture.wallBreak(), fixture.wall(),
+                    null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(),
+                    fixture.clocks(), List.of(), fixture.handVisibility(), null, null, fixture.autoPlay(), false, 1);
+                table.acceptView(previous);
+                TableAnimation.of(table).accept(previous, Util.getMillis() - TableAnimation.DEAL_MILLIS);
+            }
+            TableScreen screen = new TableScreen(table.getBlockPos());
+            client.setScreen(screen);
+            screen.resetView();
+            if (layoutsOnly) screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             table.acceptView(fixture);
+            screen.receivedView();
             for (var information : TableSettings.Information.values())
                 if (information != TableSettings.Information.ROUND && information != TableSettings.Information.TURN
                         && TableSettings.get().show(information)) {
                     hidden.add(information);
                     TableSettings.get().toggle(information);
                 }
-            // Layout-only checks skip the opening animation's wait and disable step.
-            TableSettings.get().animations = !layoutsOnly;
-            TableScreen screen = new TableScreen(table.getBlockPos());
-            client.setScreen(screen);
-            screen.resetView();
-            if (layoutsOnly) {
-                hidden.forEach(TableSettings.get()::toggle);
-                hidden.clear();
-                ticks = 115;
-            }
         }
-        if (ticks == 6) capture(client, output, "12-wall-rising.png");
-        if (ticks == 18) capture(client, output, "13-dealing-packets.png");
+        if (layoutsOnly && ticks <= 60 && !((TableScreen) client.screen).immersive())
+            throw new IllegalStateException("Automatic dealing exited immersive view");
+        if (ticks == 6 && !layoutsOnly) capture(client, output, "12-wall-rising.png");
+        if (ticks == 18) capture(client, output, layoutsOnly ? "13-immersive-dealing-packets.png" : "13-dealing-packets.png");
         if (ticks == 60) {
             if (TableAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
-            capture(client, output, "14-animated-deal-complete.png");
+            capture(client, output, layoutsOnly ? "14-immersive-deal-complete.png" : "14-animated-deal-complete.png");
+            if (layoutsOnly) {
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+                hidden.forEach(TableSettings.get()::toggle);
+                hidden.clear();
+                TableSettings.get().animations = false;
+                ticks = 115;
+            }
         }
         if (ticks == 61) {
             var seats = new ArrayList<>(fixture.seats());
