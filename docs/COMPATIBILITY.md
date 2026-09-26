@@ -50,18 +50,6 @@ The dependency is compile-only and is not bundled. See the
 [handbook controls](PLAYING.md#in-game-handbook) and
 [focused checks](VERIFICATION.md#patchouli-handbook).
 
-### Yes Steve Model
-
-The optional `-PwithYsm=true` runtime profile supplies YSM 2.6.5 on Fabric and
-NeoForge for Minecraft 1.21.1. The 1.20.1 branch supplies Fabric and Forge builds;
-the 26.1.2 branch supplies the NeoForge hotfix build. YSM remains a separate mod.
-
-Stools use synchronized Minecraft passenger state for seated model poses.
-Tile and point-stick grips call the native player hand renderer, allowing YSM
-to supply the selected model's arms. Model-authored riding and arm animations
-remain under YSM's control. The integration uses Minecraft rendering hooks.
-See [focused checks](VERIFICATION.md#yes-steve-model) for runtime acceptance.
-
 ### Create workshop
 
 Minecraft 1.21.1 NeoForge integrates Create 6.0.10 as an optional server/client

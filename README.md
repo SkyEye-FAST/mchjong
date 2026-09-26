@@ -54,9 +54,8 @@ Optional integrations are scoped to the loader named in each cell:
 | Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
-| Yes Steve Model native player rendering | Fabric, NeoForge | Fabric, Forge | NeoForge |
 
-The table describes shipped adapters and native rendering profiles; installed-mod and gameplay validation are
+The table describes shipped adapters; installed-mod and gameplay validation are
 recorded separately in [Compatibility and verification](docs/COMPATIBILITY.md).
 Fabric uses Create Fabric for Create and Touhou Little Maid: Orihime for Touhou
 Little Maid; these ports share their original mod's row. Install the build for

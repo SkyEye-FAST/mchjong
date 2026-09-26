@@ -136,8 +136,7 @@ inside a 4:3 viewport. Minecraft mirrors these transforms for the left hand.
 or point-stick end. The grip follows the model's first-person transform and the
 same vanilla equip and swing pose as the item, while the arm retains player scale.
 The forearm slopes toward the lower screen edge, with the tile grip at its bottom
-edge so the hand leaves the printed face readable. Native hand-renderer hooks also
-let optional player-model mods supply their own arm geometry.
+edge so the hand leaves the printed face readable.
 Both main-hand preferences and offhand supplies use the corresponding skin arm.
 Invisible players retain the vanilla hidden-arm presentation.
 

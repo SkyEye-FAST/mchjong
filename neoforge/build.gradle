@@ -53,9 +53,6 @@ neoForge {
 }
 
 dependencies {
-    if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) {
-        runtimeOnly "maven.modrinth:yes-steve-model:${ysm_version}-neoforge+mc${minecraft_version}"
-    }
     compileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
     if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
         runtimeOnly "vazkii.patchouli:Patchouli:${patchouli_version}-NEOFORGE"
@@ -180,7 +177,6 @@ if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException
 def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
-if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) smokeProfile = 'ysm-' + smokeProfile
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 neoForge {
@@ -205,7 +201,6 @@ neoForge {
             systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
-            systemProperty 'mchjong.smoke.ysm', providers.gradleProperty('withYsm').getOrElse('false')
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             systemProperty 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             systemProperty 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()

@@ -14,10 +14,6 @@ repositories {
 }
 
 dependencies {
-    if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) {
-        modLocalRuntime "maven.modrinth:yes-steve-model:${ysm_version}-fabric+mc${minecraft_version}"
-        modLocalRuntime "fuzs.forgeconfigapiport:forgeconfigapiport-fabric:${forge_config_api_port_version}"
-    }
     modCompileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
     if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
         modLocalRuntime "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
@@ -150,7 +146,6 @@ if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException
 def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
-if (providers.gradleProperty('withYsm').getOrElse('false').toBoolean()) smokeProfile = 'ysm-' + smokeProfile
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -176,7 +171,6 @@ loom {
             property 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             property 'mchjong.smoke.maid', maidSmoke.toString()
             property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
-            property 'mchjong.smoke.ysm', providers.gradleProperty('withYsm').getOrElse('false')
             property 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
             property 'mchjong.smoke.seatingOnly', seatingSmoke.toString()
             property 'mchjong.smoke.interfaceOnly', interfaceSmoke.toString()
