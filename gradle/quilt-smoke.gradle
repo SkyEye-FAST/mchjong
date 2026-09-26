@@ -47,10 +47,11 @@ tasks.register('runQuiltSmokeClient', JavaExec) {
     systemProperty 'mchjong.smoke.manualOnly', providers.gradleProperty('smokeManual').getOrElse('false')
     systemProperty 'mchjong.smoke.maid', providers.gradleProperty('withMaid').getOrElse('false')
     systemProperty 'mchjong.smoke.browser', providers.gradleProperty('recipeBrowser').getOrElse('none')
+    systemProperty 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
     systemProperty 'mchjong.smoke.output', evidence.get().asFile.absolutePath
     doFirst {
         workingDir.mkdirs()
-        delete evidence.get().file('PASS.txt'), evidence.get().file('FAIL.txt')
+        delete evidence
         systemProperty 'loader.addMods', [tasks.jar.archiveFile.get().asFile, fixtureJar.get().archiveFile.get().asFile]
             .collect { it.absolutePath }.join(File.pathSeparator)
         def launch = rootProject.file('.gradle/loom-cache/projects/fabric/launch.cfg').readLines()

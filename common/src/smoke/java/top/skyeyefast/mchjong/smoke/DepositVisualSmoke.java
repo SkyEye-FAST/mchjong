@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.IntStream;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.resources.Identifier;
 import top.skyeyefast.mchjong.client.TableDeposits;
 import top.skyeyefast.mchjong.client.TableScreen;
@@ -74,7 +73,7 @@ final class DepositVisualSmoke {
     }
 
     private void capture(Minecraft client, MahjongTableBlockEntity table, Path output, String state) {
-        Screenshot.grab(output.toFile(), "55-deposits-" + (table.automatic() ? "automatic" : "ordinary")
+        SmokeScreenshots.grab(output.toFile(), "55-deposits-" + (table.automatic() ? "automatic" : "ordinary")
             + "-" + fixture.rules().players() + "p-" + state + ".png", client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

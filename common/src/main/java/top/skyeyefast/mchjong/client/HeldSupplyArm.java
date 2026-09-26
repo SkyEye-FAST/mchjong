@@ -48,7 +48,6 @@ public final class HeldSupplyArm {
         armPose.mulPose(Axis.XP.rotationDegrees(-35));
         armPose.translate(side * (slim ? 5.5f : 6f) / 16, -(slim ? 12.5f : 12f) / 16, 0);
         var skin = held.player().getSkin().body().texturePath();
-        if (leftHand) renderer.renderLeftHand(armPose, collector, light, skin, true);
-        else renderer.renderRightHand(armPose, collector, light, skin, true);
+        FirstPersonArm.render(renderer, held.player(), armPose, collector, light, skin, leftHand);
     }
 }

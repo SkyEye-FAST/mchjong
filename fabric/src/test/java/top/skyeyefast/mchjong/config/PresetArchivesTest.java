@@ -17,6 +17,11 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import net.minecraft.resources.Identifier;
 
 class PresetArchivesTest {
+    @org.junit.jupiter.api.BeforeAll static void bootstrapMinecraft() {
+        net.minecraft.SharedConstants.tryDetectVersion();
+        net.minecraft.server.Bootstrap.bootStrap();
+    }
+
     @TempDir Path directory;
     private static final byte[] PNG = java.util.Base64.getDecoder().decode(
         "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+lm5kAAAAASUVORK5CYII=");

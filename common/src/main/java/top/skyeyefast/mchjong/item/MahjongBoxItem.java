@@ -26,6 +26,8 @@ public final class MahjongBoxItem extends Item {
         return level.isClientSide() ? InteractionResult.SUCCESS : InteractionResult.SUCCESS_SERVER;
     }
 
+    // Minecraft 26.1.2 still dispatches item-specific tooltip text through this override.
+    @SuppressWarnings("deprecation")
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
             Consumer<Component> tooltip, TooltipFlag flag) {
         tooltip.accept(Component.translatable("item.mchjong.box_count", MahjongSupplies.tileCount(MahjongSupplies.contents(stack))));

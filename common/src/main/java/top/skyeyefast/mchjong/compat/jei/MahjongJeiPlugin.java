@@ -8,7 +8,7 @@ import mezz.jei.api.constants.RecipeTypes;
 import mezz.jei.api.ingredients.subtypes.ISubtypeInterpreter;
 import mezz.jei.api.ingredients.subtypes.UidContext;
 import mezz.jei.api.gui.handlers.IGuiContainerHandler;
-import mezz.jei.api.recipe.RecipeType;
+import mezz.jei.api.recipe.types.IRecipeType;
 import mezz.jei.api.registration.*;
 import mezz.jei.api.runtime.IJeiRuntime;
 import net.minecraft.client.Minecraft;
@@ -28,7 +28,7 @@ import top.skyeyefast.mchjong.recipe.SupplyCraftingRecipe;
 
 @JeiPlugin
 public final class MahjongJeiPlugin implements IModPlugin {
-    public static final RecipeType<SupplyRecipeExample> CRAFTING = RecipeType.create("mchjong", "supplies", SupplyRecipeExample.class);
+    public static final IRecipeType<SupplyRecipeExample> CRAFTING = IRecipeType.create("mchjong", "supplies", SupplyRecipeExample.class);
     private static IJeiRuntime runtime;
 
     public static IJeiRuntime runtime() { return runtime; }
@@ -55,7 +55,7 @@ public final class MahjongJeiPlugin implements IModPlugin {
     }
 
     @Override public void registerRecipeCatalysts(IRecipeCatalystRegistration registration) {
-        registration.addRecipeCatalyst(new ItemStack(Items.CRAFTING_TABLE), CRAFTING);
+        registration.addCraftingStation(CRAFTING, new ItemStack(Items.CRAFTING_TABLE));
     }
 
     @Override public void onRuntimeAvailable(IJeiRuntime available) {

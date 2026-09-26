@@ -6,7 +6,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
@@ -25,7 +24,15 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Display-only fixtures for both table views; never submit their fabricated game actions. */
 final class TableInterfaceSmoke {
-    private static final String[] LANGUAGES = {"en_us", "ja_jp", "zh_cn", "zh_tw"};
+    private record Sample(String language, int state, boolean immersive, boolean small) {}
+    private static final Sample[] SAMPLES = {
+        new Sample("en_us", 0, true, false),
+        new Sample("zh_cn", 1, true, true),
+        new Sample("en_us", 2, true, false),
+        new Sample("zh_cn", 3, false, true),
+        new Sample("en_us", 4, false, false),
+        new Sample("zh_cn", 5, true, true)
+    };
     private int sample, ticks;
     private TableView base;
     private CompletableFuture<Void> reload;
@@ -36,18 +43,13 @@ final class TableInterfaceSmoke {
             require(base != null, "Missing interface base snapshot");
             TableSettings.get().animations = false;
         }
-        int localizedSamples = LANGUAGES.length * 6;
-        if (sample == localizedSamples + 16) return true;
-        boolean clockSample = sample >= localizedSamples;
-        int clockCase = (sample - localizedSamples) % 4;
-        int state = clockSample ? (clockCase == 0 ? 0 : clockCase + 2) : sample % 3;
-        boolean immersive = !clockSample || (sample - localizedSamples) / 4 % 2 == 0;
-        boolean small = clockSample ? sample - localizedSamples >= 8 : sample % 6 >= 3;
+        if (sample == SAMPLES.length) return true;
+        var current = SAMPLES[sample];
+        int state = current.state();
+        boolean immersive = current.immersive(), small = current.small();
         if (ticks == 0) {
-            if ((!clockSample && sample % 6 == 0) || sample == localizedSamples) {
-                client.getLanguageManager().setSelected(clockSample ? "zh_cn" : LANGUAGES[sample / 6]);
-                reload = client.reloadResourcePacks();
-            }
+            client.getLanguageManager().setSelected(current.language());
+            reload = client.reloadResourcePacks();
             ticks++;
             return false;
         }
@@ -86,8 +88,8 @@ final class TableInterfaceSmoke {
         }
         String stateName = switch (state) { case 0 -> "riichi"; case 1 -> "vote"; case 2 -> "results";
             case 3 -> "reserve"; case 4 -> "meld"; default -> "reaction"; };
-        Screenshot.grab(output.toFile(), (clockSample ? "61-" : "60-") + (immersive ? "immersive-" : "seated-")
-            + (clockSample ? "zh_cn" : LANGUAGES[sample / 6]) + "-" + stateName
+        SmokeScreenshots.grab(output.toFile(), "60-" + (immersive ? "immersive-" : "seated-")
+            + current.language() + "-" + stateName
             + (small ? "-small.png" : ".png"), client.getMainRenderTarget(), 1, ignored -> {});
         sample++; ticks = 0;
         return false;

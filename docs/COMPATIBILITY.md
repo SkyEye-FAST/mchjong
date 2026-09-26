@@ -54,7 +54,7 @@ installed/absent-profile verification. [Rooms](ROOMS.md#maid-players) covers pla
 
 ## Verification and data contracts
 
-[Verification](VERIFICATION.md#recorded-acceptance) records the tested revisions,
+[Verification](VERIFICATION.md) records the tested revisions,
 Quilt artifact checksum, runtime commands and evidence. [Supply data contracts](SUPPLIES.md)
 defines components, persistence and recipe identity. Compilation alone does not
 establish installed-viewer, Quilt or visual acceptance.

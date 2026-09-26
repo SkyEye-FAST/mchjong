@@ -20,6 +20,7 @@ public final class MchjongNeoForgeClient {
             top.skyeyefast.mchjong.client.TileFacePresets::reload);
     }
     @SubscribeEvent public static void keys(net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent event) {
+        event.registerCategory(top.skyeyefast.mchjong.client.TableKeys.CATEGORY);
         top.skyeyefast.mchjong.client.TableKeys.ALL.forEach(event::register);
     }
     @SubscribeEvent public static void screens(net.neoforged.neoforge.client.event.RegisterMenuScreensEvent event) {

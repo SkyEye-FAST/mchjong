@@ -6,7 +6,6 @@ import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -482,7 +481,7 @@ final class ManualTableSmoke {
             client.screen.height / 2.0 - delta.dot(right.cross(forward)) * scale, 0);
     }
     private static void capture(Minecraft client, Path output, String file) {
-        Screenshot.grab(output.toFile(), file, client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), file, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void check(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

@@ -46,8 +46,8 @@ NeoForge repositories and the NeoForge client asset mirror environment variable.
 Choose checks for the changed behavior. Use `./gradlew buildAll --warning-mode fail`
 for broad changes and releases. See [Compatibility and verification](COMPATIBILITY.md)
 for dependency profiles and [Verification](VERIFICATION.md) for focused loader,
-integration and visual checks. Shared visual changes require fresh screenshots from
-the affected loaders.
+integration and visual checks. Choose one representative loader for shared behavior; add another only when
+its API or runtime path is affected. Request screenshots only for the changed state.
 
 ## Contributor guides
 

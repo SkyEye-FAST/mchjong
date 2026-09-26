@@ -147,6 +147,6 @@ final class RoomPreparationSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        net.minecraft.client.Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

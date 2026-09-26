@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Map;
-import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
@@ -40,7 +39,7 @@ public final class WorldSettings {
 
     public void reload() throws IOException {
         var config = TomlFiles.read(path);
-        if (!config.valueMap().keySet().equals(Set.of("invitationTeleport"))
+        if (config.size() != 1 || !config.contains("invitationTeleport")
             || !(config.get("invitationTeleport") instanceof Boolean enabled))
             throw new IOException("Invalid mahjong world policy: " + path);
         policy = new Policy(enabled);

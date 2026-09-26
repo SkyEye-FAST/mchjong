@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.smoke;
 import java.nio.file.Path;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
@@ -18,7 +17,6 @@ final class AutomationControlsSmoke {
     private int stage, ticks, totalTicks, toggle;
     private long decision;
     private AutoPlay initial, expected;
-    private final SettingsLanguageSmoke languages = new SettingsLanguageSmoke();
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<Void> reseated;
     private boolean sanma;
@@ -97,7 +95,7 @@ final class AutomationControlsSmoke {
             }
             click(client, Component.translatable(toggle % 2 == 0 ? "ui.mchjong.automation_show" : "ui.mchjong.automation_hide").getString());
             next(3);
-        } else if (stage == 5 && languages.tick(client, output)) {
+        } else if (stage == 5 && ticks > 3) {
             click(client, Component.translatable("ui.mchjong.automation_hide").getString());
             next(7);
         } else if (stage == 7 && ticks > 3) {
@@ -134,7 +132,7 @@ final class AutomationControlsSmoke {
     private void next(int value) { stage = value; ticks = 0; }
 
     private void capture(Minecraft client, Path output, String prefix, String mode) {
-        Screenshot.grab(output.toFile(), prefix + "-automatic-controls-" + (sanma ? "3p-" : "4p-") + mode + ".png",
+        SmokeScreenshots.grab(output.toFile(), prefix + "-automatic-controls-" + (sanma ? "3p-" : "4p-") + mode + ".png",
             client.getMainRenderTarget(), 1, ignored -> {});
     }
 

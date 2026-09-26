@@ -16,20 +16,22 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Sequential voice playback and score announcements during settlement, with synchronized yaku highlights.
 - Dedicated voice and sound event distinguishing double riichi declarations.
 - Configurable match rule awarding player experience points according to final uma standings.
-- Gradual, copy-aware yaku route evaluation for training opponents, with candidate utility diagnostics, compact position inspection, scored-yaku comparison statistics and focused validation evidence in the maintainer guide.
+- Gradual, copy-aware yaku route evaluation for training opponents, with candidate utility diagnostics, compact position inspection, scored-yaku comparison statistics.
 
 ### Changed
 
+- Bound routine verification to affected behavior, consolidate client smoke scenarios, and make screenshot capture explicitly selectable; keep maintenance guides focused on current contracts.
 - Synchronize post-0.7.2 gameplay, presets, audio and presentation with the Minecraft 26.1.2 Fabric and NeoForge APIs.
 - Adapt preset textures, rendering extraction and voice playback callbacks to the current client APIs; document this profile's two snapshot artifacts.
 - Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
-- Explicit bot timings include decision-thread CPU time alongside wall-clock latency, with focused cache/search regressions, accepted paired-seed outcomes and diagnostic experiments recorded in the verification guide.
+- Explicit bot timings include decision-thread CPU time alongside wall-clock latency.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
 - Training route matching uses packed copy-capacity caches, reusable group masks, sparse target checks, direct pair/companion evaluation and conservative head bounds. Cached continuation ordering retains deterministic ties, and exact one-shanten advances use every tied best-shanten discard from the library.
 - Hard opponents evaluate every effective draw and tenpai continuation from one-shanten candidates; calls compare route value and closed-hand opportunity with their actual progress. Decision-local caches, reusable route tables and scratch buffers, and conservative distant-branch score bounds reduce repeated evaluation work.
 
 ### Fixed
 
+- Use supported loader APIs for native model rendering, resource identifiers and client registration across Minecraft profiles.
 - Anchor immersive melds at every player's right-hand cloth corner, with complete tile bounds inside the cloth and matching animation positions. Increase crowded hand-to-meld clearance in both immersive and seated views.
 - Keep the authorized Mahjong box menu open while choosing face and back presets, and retain its native close lifecycle.
 

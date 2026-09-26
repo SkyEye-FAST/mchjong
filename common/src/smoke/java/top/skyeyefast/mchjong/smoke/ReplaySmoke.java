@@ -5,7 +5,6 @@ import java.nio.file.Path;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.Screenshot;
 import net.minecraft.client.gui.components.AbstractWidget;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientReplays;
@@ -26,7 +25,6 @@ final class ReplaySmoke {
     private CompletableFuture<ReplayMatch> fixture;
     private ReplayMatch match;
     private CompletableFuture<Boolean> deletion;
-    private ReplayInterfaceSmoke presentation;
     private int stage, ticks;
 
     boolean tick(Minecraft client, Path output) throws Exception {
@@ -131,10 +129,7 @@ final class ReplaySmoke {
             require(deletion.join(), "Deletion verification failed");
             require(Files.isRegularFile(client.gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id() + ".json")),
                 "Deleting a server archive removed the local export");
-            presentation = new ReplayInterfaceSmoke(match.header());
-            stage = 10; ticks = 0;
-        } else if (stage == 10) {
-            if (!presentation.tick(client, output)) return false;
+            client.screen.onClose();
             client.options.guiScale().set(2); client.resizeGui();
             return true;
         }
@@ -184,7 +179,7 @@ final class ReplaySmoke {
             button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
     private static void capture(Minecraft client, Path output, String name) {
-        Screenshot.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean value, String message) { if (!value) throw new IllegalStateException(message); }
 }

@@ -155,6 +155,7 @@ loom {
             property 'mchjong.smoke.manualOnly', manualSmoke.toString()
             property 'mchjong.smoke.browserOnly', browserSmoke.toString()
             property 'mchjong.smoke.browser', recipeBrowser
+            property 'mchjong.smoke.screenshots', providers.gradleProperty('smokeScreenshots').getOrElse('')
             property 'mchjong.smoke.output', smokeEvidence.get().asFile.absolutePath
             property 'java.io.tmpdir', smokeRun.get().asFile.absolutePath
         }
@@ -175,7 +176,7 @@ tasks.named('compileJava') { dependsOn 'verifyMaidSnapshot' }
 apply from: rootProject.file('gradle/quilt-smoke.gradle')
 
 tasks.named('runSmokeClient') {
-    doFirst { delete smokeEvidence.get().file('PASS.txt'), smokeEvidence.get().file('FAIL.txt') }
+    doFirst { delete smokeEvidence }
     doLast {
         def evidence = smokeEvidence.get().asFile
         if (!new File(evidence, 'PASS.txt').isFile() || new File(evidence, 'FAIL.txt').exists()) {

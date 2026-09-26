@@ -23,6 +23,8 @@ public class MahjongSupplyItem extends Item {
         return super.getName(stack);
     }
 
+    // Minecraft 26.1.2 still dispatches item-specific tooltip text through this override.
+    @SuppressWarnings("deprecation")
     @Override public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay display,
             Consumer<Component> tooltip, TooltipFlag flag) {
         TileData tile = stack.get(MahjongComponents.TILE);

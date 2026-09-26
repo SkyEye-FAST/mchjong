@@ -5,8 +5,8 @@ import org.lwjgl.glfw.GLFW;
 
 /** Registered by each loader; screen input uses the player's actual bindings. */
 public final class TableKeys {
-    private static final KeyMapping.Category CATEGORY =
-        KeyMapping.Category.register(top.skyeyefast.mchjong.world.MahjongContent.id("mchjong"));
+    public static final KeyMapping.Category CATEGORY =
+        new KeyMapping.Category(top.skyeyefast.mchjong.world.MahjongContent.id("mchjong"));
     public static final KeyMapping INSPECT = key("inspect", GLFW.GLFW_KEY_C);
     public static final KeyMapping VIEW = key("view", GLFW.GLFW_KEY_V);
     public static final KeyMapping RESET = key("reset", GLFW.GLFW_KEY_HOME);
