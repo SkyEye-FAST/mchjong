@@ -279,6 +279,55 @@ class TrainingBotTest {
         assertEquals(Action.Type.PON, choice(ready, BotDifficulty.HARD).type());
     }
 
+    private static void offerWhiteCalls(Game game) {
+        game.phase = Game.Phase.REACTION;
+        game.turn = game.lastFrom = 3;
+        game.lastTile = Tile.id(Tile.WHITE, 3, false);
+        game.players[3].river.add(new Discard(game.lastTile, false, false, false));
+        game.players[0].drawn = Tile.ABSENT;
+        game.options.set(0, LegalActions.onReaction(game, 0));
+    }
+
+    @Test void openKanMustJustifyLosingTheClosedHandAtBothLevels() {
+        // The concealed yakuhai triplet already works. Neither shape nor live
+        // advances improve by exposing it; the ready hand also loses menzen value.
+        for (String text : List.of("135m246p79s22555z", "123m456p78s22555z")) {
+            var game = hand(text);
+            offerWhiteCalls(game);
+            assertTrue(game.options.get(0).stream().anyMatch(a -> a.type() == Action.Type.OPEN_KAN));
+            for (var level : BotDifficulty.values())
+                assertEquals(Action.Type.PASS, choice(game, level).type(), text + " " + level);
+        }
+    }
+
+    @Test void callBranchesCannotCrowdPassOutOfTheSearch() {
+        var game = hand("135m246p79s22556z");
+        offerWhiteCalls(game);
+        var view = game.view(game.players[0].id);
+        var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
+        assertTrue(trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PON).count() > BotAnalysis.SEARCH_ROOTS);
+        var pass = trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PASS).findFirst().orElseThrow();
+        assertEquals("bounded", pass.search(), "Compare the closed continuation even when many call discards rank above it");
+        assertTrue(pass.forward() > 0);
+        assertEquals(Action.Type.PON, choice(game, BotDifficulty.HARD).type(), "An actual shanten advance can still justify opening");
+        var actions = new ArrayList<>(game.options.get(0));
+        java.util.Collections.reverse(actions);
+        game.options.set(0, actions);
+        assertEquals(Action.Type.PON, choice(game, BotDifficulty.HARD).type());
+    }
+
+    @Test void usefulKansRetainTheirReplacementBenefit() {
+        var open = hand("123m78s22555z");
+        open.players[0].melds.add(TestHands.meld(Meld.Type.PON, "666z"));
+        offerWhiteCalls(open);
+        for (var level : BotDifficulty.values())
+            assertEquals(Action.Type.OPEN_KAN, choice(open, level).type(), "A ready open hand can benefit from a kan");
+        var closed = hand("123m456p78s225555z");
+        closed.players[0].firstTurn = false;
+        closed.options.set(0, LegalActions.onTurn(closed, 0));
+        assertEquals(Action.Type.CLOSED_KAN, choice(closed, BotDifficulty.HARD).type(), "A useful concealed kan preserves menzen");
+    }
+
     @Test void hardPushesValuableGoodTenpaiAndSeparatelyAccountsForTwoThreats() {
         var game = hand("234m340p45667s22p1z");
         game.wall.revealed = 2;

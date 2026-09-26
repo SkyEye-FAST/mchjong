@@ -94,8 +94,7 @@ internal class TrainingBot private constructor(
                     val next = declaration(action)
                     val shape = analysis.shape(next)
                     val cost = declarationCost(action, next)
-                    val opportunity = minOf(8.0, BotAnalysis.live(shape.improving, analysis.unseen) * 0.25)
-                    choices += choice(i, next, shape, Tile.ABSENT, true, opportunity - cost)
+                    choices += choice(i, next, shape, Tile.ABSENT, true, -cost)
                 }
                 else -> Unit
             }
@@ -136,7 +135,12 @@ internal class TrainingBot private constructor(
             }
             if (choices.size == 1) { record(safe); return safe.index }
         }
-        choices.sortWith(compareByDescending<Choice> { score(it) }.thenBy { it.key })
+        val searchDecision = level == BotDifficulty.HARD || choices.any { it.replacement }
+        // Reserve the unchanged alternative before call-discard branches consume
+        // the bounded search. Replacement draws need a searched baseline at EASY too.
+        val reserveBaseline = view.actions()[baseline.index].type() == PASS || choices.any { it.replacement }
+        choices.sortWith(compareBy<Choice> { reserveBaseline && it !== baseline }
+            .thenByDescending { score(it) }.thenBy { it.key })
         var bestScore = Double.NEGATIVE_INFINITY
         var best = baseline
         var roots = 0
@@ -157,7 +161,7 @@ internal class TrainingBot private constructor(
             val safer = candidate.discard >= 0 && baseline.discard >= 0 &&
                 defence.danger(candidate.discard) < defence.danger(baseline.discard)
             val retreat = candidate.evaluation.shanten > minimum && !candidate.replacement && candidate !== fold && !safer
-            val exact = level == BotDifficulty.HARD && candidate.evaluation.shanten == 1 && !candidate.replacement
+            val exact = searchDecision && candidate.evaluation.shanten == 1 && !candidate.replacement
             if (
                 retreat && viable(baseline) && baseline.evaluation.live > 0 &&
                 (level != BotDifficulty.HARD || !exact && roots >= BotAnalysis.SEARCH_ROOTS)
@@ -165,14 +169,15 @@ internal class TrainingBot private constructor(
             var candidateScore = score(candidate)
             var delta = 0.0
             var search = "static"
-            val expand = candidate !== fold && (level == BotDifficulty.HARD || candidate.replacement)
+            val expand = candidate !== fold && searchDecision
             if (expand && (exact || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
                 val forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
-                delta = forward - candidate.evaluation.utility -
-                    if (candidate.replacement) minOf(8.0, candidate.evaluation.live * 0.25) else 0.0
+                delta = forward - candidate.evaluation.utility
                 candidateScore += delta
                 search = if (exact) "one-shanten-exact" else "bounded"
                 if (!exact) roots++
+            } else if (candidate.replacement) {
+                record(candidate, exclusion = "unsearched-replacement"); continue
             }
             record(candidate, delta, search)
             if (candidateScore > bestScore || candidateScore == bestScore && candidate.key < best.key) {
