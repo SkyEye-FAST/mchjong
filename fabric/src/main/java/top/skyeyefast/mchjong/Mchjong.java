@@ -72,8 +72,6 @@ public class Mchjong implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
-        receiver(top.skyeyefast.mchjong.network.BoxBackPayload.TYPE, top.skyeyefast.mchjong.network.BoxBackPayload::decode,
-            (player, payload) -> payload.handle(player));
         receiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload::decode,
             (player, payload) -> payload.handle(player));
         receiver(TableActionPayload.TYPE, TableActionPayload::decode, TableNetworking::receive);

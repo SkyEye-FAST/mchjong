@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "10").clientAcceptedVersions("10"::equals).serverAcceptedVersions("10"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "11").clientAcceptedVersions("11"::equals).serverAcceptedVersions("11"::equals).simpleChannel();
         channel.messageBuilder(BoxPrintPayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(BoxPrintPayload::write).decoder(BoxPrintPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -41,10 +41,6 @@ final class ForgeNetworking {
         channel.messageBuilder(ReplayPayload.class, 7, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(ReplayPayload::write).decoder(ReplayPayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)).add();
-        channel.messageBuilder(BoxBackPayload.class, 8, NetworkDirection.PLAY_TO_SERVER)
-            .encoder(BoxBackPayload::write).decoder(BoxBackPayload::decode).consumerMainThread((payload, context) -> {
-                if (context.get().getSender() != null) payload.handle(context.get().getSender());
-            }).add();
         channel.messageBuilder(StickChoicePayload.class, 9, NetworkDirection.PLAY_TO_SERVER)
             .encoder(StickChoicePayload::write).decoder(StickChoicePayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());

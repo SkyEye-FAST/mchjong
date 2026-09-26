@@ -267,7 +267,9 @@ slot and 36 player slots.
 The right side shows tile/stick counts, set readiness and a dedicated dye slot.
 An empty dye slot shows a short insertion hint. Vanilla dye reveals only the
 back-color action; Mahjong dye reveals face and back buttons that open paginated
-secondary screens. Each successful change consumes one ordinary Mahjong dye;
+secondary screens. Both selectors have separate headings and retain draft choices.
+Apply on the main box screen commits both selections together, consuming one
+ordinary Mahjong dye only when the stored appearance changes;
 creative Mahjong dye remains in the slot. Show four sample tiles beside each
 face preset. Keep action visibility synchronized with the actual slot contents
 and clear focus when its control disappears.

@@ -9,18 +9,20 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Only a cosmetic ID crosses the network; stock, carrier and reagent remain server-authorized. */
-public record BoxPrintPayload(int containerId, TileFacePreset preset) implements MahjongPayload {
+public record BoxPrintPayload(int containerId, TileFacePreset preset, ResourceLocation back) implements MahjongPayload {
     public static final ResourceLocation TYPE = MahjongContent.id("box_print");
     public static BoxPrintPayload decode(FriendlyByteBuf buffer) {
-        return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(ResourceIds.of(buffer.readUtf(128))));
+        return new BoxPrintPayload(buffer.readVarInt(), new TileFacePreset(ResourceIds.of(buffer.readUtf(128))),
+            ResourceIds.of(buffer.readUtf(128)));
     }
     @Override public void write(FriendlyByteBuf buffer) {
         buffer.writeVarInt(containerId());
         buffer.writeUtf(preset().getSerializedName(), 128);
+        buffer.writeUtf(back().toString(), 128);
     }
     public void handle(ServerPlayer player) {
         if (player.containerMenu instanceof MahjongBoxMenu menu && menu.containerId == containerId)
-            menu.print(player, preset);
+            menu.applyAppearance(player, preset, back);
     }
     @Override public ResourceLocation id() { return TYPE; }
 }
