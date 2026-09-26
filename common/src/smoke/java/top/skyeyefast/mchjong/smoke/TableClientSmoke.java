@@ -182,6 +182,10 @@ public final class TableClientSmoke {
                             net.minecraft.world.item.DyeColor.BLUE, 1));
                         player.getInventory().setItem(8, ItemStack.EMPTY);
                         player.getInventory().setChanged();
+                        if (paletteOnly) {
+                            player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, furniture.copy());
+                            player.setGameMode(GameType.SURVIVAL);
+                        }
                         for (int seat = 0; seat < 4; seat++) level.setBlock(TableGeometry.stool(CENTER, seat), MahjongContent.STOOL.defaultBlockState(), 3);
                         player.teleportTo(level, 0.5, 64, 3.5, 180, 30);
                     } catch (Throwable failure) { serverFailure.set(failure); }
@@ -212,11 +216,14 @@ public final class TableClientSmoke {
                 client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
-                capture(client, "00-equipment-inventory.png");
+                capture(client, paletteOnly ? "00-table-head.png" : "00-equipment-inventory.png");
                 if (paletteOnly) {
-                    Files.writeString(output.resolve("PASS.txt"), "All sixteen printed and blank tile materials and native inventory items rendered.\n");
-                    LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
-                    step = 13; entered = ticks;
+                    UUID id = client.player.getUUID();
+                    client.getSingleplayerServer().execute(() -> {
+                        var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                        player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(MahjongContent.STOOL_ITEM));
+                    });
+                    step = 39; entered = ticks;
                     return;
                 }
                 client.screen.onClose();
@@ -237,6 +244,11 @@ public final class TableClientSmoke {
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 17; entered = ticks;
+            } else if (step == 39 && ticks - entered > 15) {
+                capture(client, "00-stool-head.png");
+                Files.writeString(output.resolve("PASS.txt"), "Material palette, native inventory items, and table and stool head-slot rendering passed.\n");
+                LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
+                step = 13; entered = ticks;
             } else if (step == 17 && ticks - entered > 15 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {
                 if (!interfaceSmoke.box(client, output)) return;
                 require(client.player.containerMenu.slots.size() == top.skyeyefast.mchjong.item.MahjongSupplies.BOX_SLOTS + 36, "Client box slot layout differs from server");
