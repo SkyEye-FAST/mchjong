@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Invite controls beside vacant seats in the lobby, opening the online player selector.
 - Pale oak tables, stools and tile material with matching crafting and stonecutting recipes for Minecraft 26.1.2.
 - Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.
 - Mahjong box tile-back selector screen allowing players to inspect and choose from available tile-back presets.

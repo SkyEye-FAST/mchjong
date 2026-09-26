@@ -109,9 +109,10 @@ final class TableHud {
             boolean disconnected = player.occupied() && !player.bot() && presence == PlayerPresence.DISCONNECTED;
             Component wind = Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())]);
             Component name = settings.show(TableSettings.Information.NAMES) || lobby
-                ? player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
+                ? lobby && !player.occupied() ? Component.translatable("wind.mchjong." + WINDS[seat] + ".short")
+                    : player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
-            Component hover = TableScreen.playerName(view, seat).copy();
+            Component hover = lobby && !player.occupied() ? name.copy() : TableScreen.playerName(view, seat).copy();
             if (settings.show(TableSettings.Information.WINDS)) {
                 shortLine = !lobby
                     ? Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())] + ".short")
@@ -191,10 +192,11 @@ final class TableHud {
                         cardWidth - 8, disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
                 }
             } else {
+                int inviteSpace = lobby && !player.occupied() ? inviteWidth(font) + 2 : 0;
                 int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 5, top + 2, 10);
-                text(font, graphics, name, x + 5 + inset, top + 4, cardWidth - 10 - inset,
+                text(font, graphics, name, x + 5 + inset, top + 4, cardWidth - 10 - inset - inviteSpace,
                     disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
-                text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10,
+                if (!lobby || player.occupied()) text(font, graphics, shortLine, x + 5, top + 14, cardWidth - 10,
                     disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED);
                 if (meldSummary) {
                     int tileWidth = summaryWidth;
@@ -209,7 +211,7 @@ final class TableHud {
                     }
                 }
             }
-            regions.add(new Region(x, top, cardWidth, cardHeight, hover));
+            regions.add(new Region(x, top, cardWidth - (lobby && !player.occupied() ? inviteWidth(font) + 2 : 0), cardHeight, hover));
             if (seat == view.viewerSeat() && settings.show(TableSettings.Information.STATUS) && furiten(view)) {
                 Component label = Component.translatable("ui.mchjong.furiten");
                 int scale = board != null && board.perspective() ? 2 : 1;
@@ -258,6 +260,8 @@ final class TableHud {
     }
 
     static int seatedCardHeight(boolean summary, int tileWidth) { return 24 + (summary ? tileWidth == 0 ? 12 : 16 : 0); }
+
+    static int inviteWidth(Font font) { return font.width(Component.translatable("ui.mchjong.invite.short")) + 12; }
 
     private boolean furiten(TableView view) {
         if (furitenView == view) return furiten;

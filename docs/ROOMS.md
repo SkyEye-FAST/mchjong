@@ -110,7 +110,8 @@ not inspect the wall seed. Bot decisions use deterministic heuristic evaluation.
 
 ## Invitations
 
-Use Invite player in the lobby or `/mchjong invite <player>`, with an online
+Use Invite beside a vacant lobby seat to choose an online player. Invite player
+in the lobby opens the same selector. You can also use `/mchjong invite <player>`, with an online
 player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.

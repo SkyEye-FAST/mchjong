@@ -666,6 +666,7 @@
   "ui.mchjong.help.single_click": "クリック 打牌、Shift＋クリック 選択、%s リーチ、%s パス",
   "ui.mchjong.immersive_after_deal": "配牌完了後に没入視点へ切り替えられます",
   "ui.mchjong.invite": "プレイヤーを招待",
+  "ui.mchjong.invite.short": "招待",
   "ui.mchjong.invite_accept": "承諾",
   "ui.mchjong.invite_decline": "辞退",
   "ui.mchjong.invite_hint": "招待の有効期限は60秒です。卓まで移動して着席してください。",

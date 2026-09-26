@@ -112,6 +112,7 @@ and ownership transfer are paginated separately from local presentation options.
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
 who are absent, and keeps wind assignments separate from world-direction coordinates.
+Empty lobby seat cards show their abbreviated wind beside an Invite control.
 Per-seat bot controls live directly beneath the top seat cards throughout preparation;
 ownership actions remain in the participant screen. The centered brass primary
 button advances filling seats, the table-specific assignment, then readiness.

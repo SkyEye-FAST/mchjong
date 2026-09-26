@@ -666,6 +666,7 @@
   "ui.mchjong.help.single_click": "Click Discard, Shift-click Select, %s Riichi, %s Pass",
   "ui.mchjong.immersive_after_deal": "Immersive view is available after dealing finishes",
   "ui.mchjong.invite": "Invite player",
+  "ui.mchjong.invite.short": "Invite",
   "ui.mchjong.invite_accept": "Accept",
   "ui.mchjong.invite_decline": "Decline",
   "ui.mchjong.invite_hint": "Invitations are valid for 60 seconds. Walk to the table to take your seat.",
