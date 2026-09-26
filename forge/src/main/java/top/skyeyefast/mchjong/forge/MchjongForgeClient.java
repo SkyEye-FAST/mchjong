@@ -37,6 +37,8 @@ public final class MchjongForgeClient {
 
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
+            if (net.minecraftforge.fml.ModList.get().isLoaded("touhou_little_maid"))
+                top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
             if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
                 top.skyeyefast.mchjong.compat.create.CreatePonder.register();
             else if (net.minecraftforge.fml.ModList.get().isLoaded("ponder"))

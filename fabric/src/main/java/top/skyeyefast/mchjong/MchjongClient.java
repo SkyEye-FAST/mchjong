@@ -16,6 +16,8 @@ public final class MchjongClient implements ClientModInitializer {
             top.skyeyefast.mchjong.compat.create.CreatePonder.register();
         else if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("ponder"))
             top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
+        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("touhou_little_maid"))
+            top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
         net.fabricmc.fabric.api.client.model.loading.v1.ModelLoadingPlugin.register(context ->
             context.addModels(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
         top.skyeyefast.mchjong.client.RiichiStickModel.initialize(() -> net.minecraft.client.Minecraft.getInstance()

@@ -107,7 +107,9 @@ the maid mods' task, core-brain and typed task-data APIs. Fabric discovers it vi
 the Orihime extension entrypoint; Forge uses the maid extension annotation.
 Seat vehicles save their passengers with the chunk, including maid companions.
 The saved dimension, block position and table UUID restore missing mounts
-without loading chunks. No optional maid code is loaded by the base entrypoints.
+without loading chunks. Optional maid classes load only when the maid mod is present.
+Loader client adapters accept synchronized Mahjong mounts independently of the
+maid's vehicle-follow preference, preserving the server-authorized seated pose.
 
 ## Optional integrations
 

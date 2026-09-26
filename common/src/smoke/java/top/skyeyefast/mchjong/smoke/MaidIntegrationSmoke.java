@@ -43,6 +43,14 @@ final class MaidIntegrationSmoke {
             return false;
         }
         if (step == 2 || step == 7 || step == 8) {
+            var maid = client.level.entitiesForRendering().iterator();
+            EntityMaid seated = null;
+            while (maid.hasNext()) {
+                var entity = maid.next();
+                if (entity instanceof EntityMaid found && found.getUUID().equals(maidId)) seated = found;
+            }
+            require(seated != null && seated.getVehicle() instanceof SeatEntity,
+                "Client maid lost its synchronized seat at step " + step);
             if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
                 "Default maid model name is not localized");
             if (step == 8) require(client.screen.width == 320 && client.screen.height == 240, "Maid small viewport is not 320x240");
@@ -84,7 +92,7 @@ final class MaidIntegrationSmoke {
                 var maid = EntityMaid.TYPE.create(level);
                 maid.setOwnerUUID(ownerId);
                 maid.setTame(true);
-                maid.setRideable(true);
+                maid.setRideable(false);
                 maid.setModelId("touhou_little_maid:hakurei_reimu");
                 var stool = TableGeometry.stool(center, 1);
                 maid.moveTo(stool.getX() + 1.5, stool.getY(), stool.getZ() + .5, 90, 0);
@@ -143,7 +151,7 @@ final class MaidIntegrationSmoke {
             if (currentStep == 10) {
                 if (maid.isPassenger()) return false;
                 require(!game.entityBot(maidId) && game.seatOf(maidId) < 0 && game.trainingSeat(maidSeat), "Task change did not release the maid while preserving play");
-                require(maid.isRideable(), "Task cleanup did not restore vehicle-follow preference");
+                require(!maid.isRideable(), "Task cleanup did not restore vehicle-follow preference");
                 game.validate();
                 return true;
             }

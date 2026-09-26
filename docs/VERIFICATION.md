@@ -43,7 +43,8 @@ gradlew.bat :forge:runSmokeClient -PwithMaid=true --console=plain
 ```
 
 The existing fixture checks task discovery, default model-name localization,
-brain-driven seating, saved entity recovery, assigned mounts, legal computer
+brain-driven seating with vehicle following disabled, client mount synchronization,
+saved entity recovery, assigned mounts, legal computer
 play and cleanup after a task change.
 Selected screenshots and results use `build/smoke/maid-evidence`.
 
