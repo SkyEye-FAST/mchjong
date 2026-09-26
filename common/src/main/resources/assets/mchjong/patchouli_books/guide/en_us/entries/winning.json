@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.winning.name",
+  "category": "mchjong:rules",
+  "icon": "minecraft:paper",
+  "sortnum": 7,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.winning.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.winning.page_2"
+    }
+  ]
+}

@@ -17,6 +17,10 @@ dependencies {
     implementation "com.electronwill.night-config:toml:${night_config_version}"
     include "com.electronwill.night-config:core:${night_config_version}"
     include "com.electronwill.night-config:toml:${night_config_version}"
+    modCompileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        modLocalRuntime "vazkii.patchouli:Patchouli:${patchouli_version}-FABRIC"
+    }
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
@@ -175,6 +179,8 @@ def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
 if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBrowser requires a recipeBrowser profile')
 def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
+    smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 loom {
@@ -196,6 +202,8 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
+            property 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             property 'mchjong.smoke.maid', maidSmoke.toString()
             property 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             property 'mchjong.smoke.paletteOnly', paletteSmoke.toString()

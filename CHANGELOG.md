@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Optional Patchouli handbook in four languages, with equipment recipes, playing guidance, a rebindable shortcut and a dismissible installation recommendation.
+
 - Invite controls beside vacant seats in the lobby, opening the online player selector.
 - Zip preset archives for custom tile faces, tile backs, riichi sticks and voice packages, synchronized from the server to connected clients.
 - Mahjong box tile-back selector screen allowing players to inspect and choose from available tile-back presets.

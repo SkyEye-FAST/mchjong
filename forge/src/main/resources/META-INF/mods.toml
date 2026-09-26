@@ -18,6 +18,13 @@ ordering="AFTER"
 side="CLIENT"
 
 [[dependencies.mchjong]]
+modId="patchouli"
+mandatory=false
+versionRange="[${patchouli_version},)"
+ordering="AFTER"
+side="CLIENT"
+
+[[dependencies.mchjong]]
 modId="create"
 mandatory=false
 versionRange="[${create_min_version},7)"

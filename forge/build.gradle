@@ -49,6 +49,8 @@ def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toB
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBrowser requires a recipeBrowser profile')
 def smokeProfile = bootstrapSmoke ? 'bootstrap-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
+    smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
 def smokeRun = layout.buildDirectory.dir("smoke/${smokeProfile}run")
 
@@ -70,6 +72,8 @@ legacyForge {
             gameDirectory = smokeRun.get().asFile
             systemProperty 'mchjong.smoke.bootstrap', bootstrapSmoke.toString()
             systemProperty 'mchjong.smoke', (!bootstrapSmoke).toString()
+            systemProperty 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
+            systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()
             systemProperty 'mchjong.smoke.itemsOnly', itemsSmoke.toString()
             systemProperty 'mchjong.smoke.paletteOnly', paletteSmoke.toString()
@@ -107,6 +111,10 @@ tasks.named('runSmokeClient') {
 
 configurations { embeddedEngine }
 dependencies {
+    modCompileOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FORGE"
+    if (providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean()) {
+        modRuntimeOnly "vazkii.patchouli:Patchouli:${patchouli_version}-FORGE"
+    }
     modCompileOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
     if (maidSmoke) modRuntimeOnly "maven.modrinth:touhou-little-maid:${touhou_little_maid_version}"
     modCompileOnly("com.simibubi.create:create-${minecraft_version}:${create_forge_version}:slim") { transitive = false }
@@ -176,6 +184,7 @@ processResources {
     dependsOn ':art:generateAssets', ':art:generateData', ':art:generateCreateForgeData', 'generatePonder'
     def properties = [version: project.version, minecraft_version: minecraft_version, forge_loader_min_version: forge_loader_min_version,
         jei_version: jei_version, emi_version: emi_version, rei_version: rei_version, ponder_version: ponder_version,
+        patchouli_version: patchouli_version,
         create_min_version: create_min_version, create_ponder_min_version: create_ponder_min_version,
         touhou_little_maid_version: touhou_little_maid_version]
     inputs.properties properties

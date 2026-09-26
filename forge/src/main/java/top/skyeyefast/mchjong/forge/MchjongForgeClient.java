@@ -21,6 +21,8 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 @Mod.EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MchjongForgeClient {
+    private static final boolean PATCHOULI = net.minecraftforge.fml.ModList.get().isLoaded("patchouli");
+    private static final Runnable OPEN_MANUAL = PATCHOULI ? top.skyeyefast.mchjong.compat.patchouli.PatchouliBook::open : () -> {};
     private MchjongForgeClient() {}
 
     @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event) {
@@ -32,6 +34,7 @@ public final class MchjongForgeClient {
     }
 
     @SubscribeEvent public static void keys(RegisterKeyMappingsEvent event) {
+        event.register(top.skyeyefast.mchjong.compat.patchouli.ManualClient.OPEN);
         TableKeys.ALL.forEach(event::register);
     }
 
@@ -69,6 +72,7 @@ public final class MchjongForgeClient {
 
         @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
+            top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(PATCHOULI, OPEN_MANUAL);
             TableAudio.tick();
             SeatedCamera.tick();
             ClientReplays.tick();

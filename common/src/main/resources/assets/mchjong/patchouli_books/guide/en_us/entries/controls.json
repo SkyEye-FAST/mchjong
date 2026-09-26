@@ -1,0 +1,16 @@
+{
+  "name": "manual.mchjong.entry.controls.name",
+  "category": "mchjong:playing",
+  "icon": "mchjong:mahjong_tile",
+  "sortnum": 5,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.page_1"
+    },
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.controls.page_2"
+    }
+  ]
+}

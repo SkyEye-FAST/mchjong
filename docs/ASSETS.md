@@ -80,6 +80,14 @@ smoke checks built-in mip dimensions and live world/GUI filters after resource r
 The print occupies 240 × 320 pixels within each 256 × 384 cell, retaining source
 proportions and the physical tile envelope.
 
+## Handbook cover
+
+The Patchouli handbook uses `ManualArtwork` to generate its original teal and
+brass cover at `textures/item/mahjong_manual.png` and its generated-item model.
+Book pages and categories live under `assets/mchjong/patchouli_books/guide`;
+the book definition lives under `data/mchjong/patchouli_books/guide`. Page text
+uses the four shared language files.
+
 ## Mahjong dye items
 
 `MahjongDyeArtwork` draws original 16 by 16 four-ink pouch textures at
