@@ -58,7 +58,10 @@ internal class BotValue(private val view: TableView) {
             (!view.rules().needsRiichiDeposit() || view.seats()[view.viewerSeat()].points() >= 1000)
         val option = if (state.riichi()) state.riichiHan().toDouble() else if (canRiichi) 0.35 / (1 + 0.25 * shanten) else 0.0
         val viable = minOf(assessment.attainableHan, assessment.han) + (if (canRiichi) 1 else 0) >= view.rules().minHan()
-        val potentialHan = assessment.han + option + bonuses
+        // The payout is conditional on completing the closed hand and declaring.
+        // Distance discounts the retained option, not the han of that declaration.
+        val payoutOption = if (state.riichi()) state.riichiHan().toDouble() else if (canRiichi) 1.0 else 0.0
+        val potentialHan = assessment.han + payoutOption + bonuses
         val estimate = if (viable) {
             // Cache point-table endpoints, not each continuously varying route
             // estimate. Interpolation remains identical to HandAnalyzer's scenarios.

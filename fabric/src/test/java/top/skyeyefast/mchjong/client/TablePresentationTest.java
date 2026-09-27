@@ -228,7 +228,7 @@ class TablePresentationTest {
         var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
             top.skyeyefast.mchjong.engine.Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
-            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1);
+            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1, java.util.Map.of());
         var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
         assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
             "The local river grows subtly toward the foreground");
@@ -300,7 +300,7 @@ class TablePresentationTest {
             top.skyeyefast.mchjong.engine.Game.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1);
+            top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, null, false, 1, java.util.Map.of());
         var results = new TableResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
             top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, net.minecraft.world.item.DyeColor.PURPLE,
             0, 0, 300, 200, 0, TableResults.Page.HAND, 0L, 1);
