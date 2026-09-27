@@ -89,7 +89,7 @@ final class RoomFlowSmoke {
                     java.nio.file.Files.writeString(directory.resolve("mchjong/bots.json"), TableNetworking.JSON.toJson(List.of(preset)));
                     top.skyeyefast.mchjong.config.BotPresets.load(directory);
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                    var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                     serverTable.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(rules.defaultRedFives()));
                     var game = serverTable.participantGame(player);
                     game.configureRules(id, game.view(id).decision(), rules.config());
