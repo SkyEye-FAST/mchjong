@@ -9,7 +9,6 @@ import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
-import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTableBlockEntity> {
     private enum Layer { BACK, BODY, FACE, PATTERN, OUTLINE }
@@ -55,7 +54,6 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             PoseStack pose, MultiBufferSource buffers, int light, Layer layer) {
         var material = table.equipment().material();
         var back = table.equipment().back();
-        boolean glass = material == top.skyeyefast.mchjong.item.TileMaterial.GLASS;
         var vertices = buffers.getBuffer(switch (layer) {
             case BACK -> TileRenderTypes.back(material, back);
             case BODY -> TileRenderTypes.body(material);

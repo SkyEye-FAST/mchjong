@@ -223,14 +223,6 @@ final class PointStickMenuSmoke {
         return box;
     }
 
-    private static void act(top.skyeyefast.mchjong.engine.Game game, java.util.UUID player,
-            top.skyeyefast.mchjong.engine.Action.Type type) {
-        var view = game.view(player);
-        int index = java.util.stream.IntStream.range(0, view.actions().size())
-            .filter(i -> view.actions().get(i).type() == type).findFirst().orElseThrow();
-        check(game.act(player, view.decision(), index), "Payment fixture action rejected: " + type);
-    }
-
     static ItemStack stick(int points, int count) {
         var result = new ItemStack(MahjongContent.POINT_STICK, count);
         result.set(MahjongComponents.POINTS, points);

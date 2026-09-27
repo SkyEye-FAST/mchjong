@@ -14,7 +14,6 @@ import dev.emi.emi.api.widget.WidgetHolder;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.item.ItemStack;
 import net.neoforged.fml.ModList;
 import top.skyeyefast.mchjong.client.MahjongUi;
 

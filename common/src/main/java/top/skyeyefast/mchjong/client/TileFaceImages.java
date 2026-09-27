@@ -12,8 +12,9 @@ final class TileFaceImages {
     private TileFaceImages() {}
 
     static Pair compose(Map<String, byte[]> tiles) throws IOException {
-        var atlas = new NativeImage(2048, 4096, true);
-        var glyphs = new NativeImage(2048, 4096, true);
+        // Ownership transfers to the returned pair; the caller installs and closes both textures.
+        @SuppressWarnings("resource") var atlas = new NativeImage(2048, 4096, true);
+        @SuppressWarnings("resource") var glyphs = new NativeImage(2048, 4096, true);
         try {
             for (int face = 0; face < PresetArchives.TILE_KEYS.size(); face++) {
                 int cellX = face % 8 * 256, cellY = face / 8 * 384;

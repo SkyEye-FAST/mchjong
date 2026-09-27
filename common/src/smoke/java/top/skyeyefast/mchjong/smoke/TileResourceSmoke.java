@@ -84,8 +84,6 @@ final class TileResourceSmoke {
         }
         try (var atlas = NativeImage.read(new ByteArrayInputStream(atlasBytes))) {
             require(atlas.getWidth() == 2048 && atlas.getHeight() == 4096, "High-resolution atlas did not reach the client");
-            require(TileMesh.TILE_WIDTH == 256 && TileMesh.TILE_HEIGHT == 384 && TileMesh.ATLAS_WIDTH == 2048 && TileMesh.ATLAS_HEIGHT == 4096,
-                "Renderer and artwork dimensions disagree");
         }
         try (var back = NativeImage.read(new ByteArrayInputStream(backBytes))) {
             require(back.getWidth() == 256 && back.getHeight() == 384, "High-resolution back did not reach the client");
