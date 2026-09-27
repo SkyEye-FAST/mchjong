@@ -51,7 +51,8 @@ with locked riichi. Both advancing draws and same-shanten improvements participa
 an offensive root can retreat at most one shanten. A completed legal tsumo is taken
 immediately. Decisions offering replacement declarations use search at both levels,
 including their ordinary alternatives. PASS, or the baseline discard when comparing
-replacement declarations, receives a search slot before competing call discards.
+replacement declarations, receives a search slot first, followed by replacement
+declarations before competing ordinary discards.
 Replacement declarations require a searched continuation within the bounded budget.
 Continuation leaves use immediate efficiency and legal wait value. Development
 compares endpoints at that same depth, without nested good-shape enumeration.
@@ -132,19 +133,26 @@ no unrevealed indicator is assigned as a definite bonus.
 `BotValue` scores completed waits separately for ron/tsumo and dama/riichi.
 `HandBonuses` is shared with settlement, including repeated indicators and a
 tile's simultaneous red/indicator bonuses. Bonus han do not supply a yaku or
-meet the minimum. No ura or ippatsu is assumed. Any discarded structural wait
+meet the minimum. For legal riichi wins with ura enabled, conditional payout
+averages concealed-indicator scenarios over the remaining unseen tiles, without
+replacement and after removing the winning tile. Each scenario retains the
+scored yaku and fu and applies the configured point-table limits. Ura never
+changes legal-yaku eligibility; ippatsu is not assumed. Any discarded structural wait
 blocks the entire ron set; tsumo remains separate. Temporary furiten clears
 after a real draw's discard, while calls follow `callsClearFuriten`. Already
 declared permanent furiten remains blocked. Double riichi retains its two han;
 ordinary continuation discards end eligibility for a first-turn declaration.
+Riichi's forfeited deposit is priced using the same payout-utility scale as the
+candidate hand, weighted by the approximate chance of not winning. Public threat
+pressure and the remaining draw horizon separately penalize locked defence.
 
 Incomplete own hands and conditional opposing wins use the existing point tables
 for 30/40-fu scenarios, interpolating fractional estimated han. Own scenarios
 average ron and the actual player-count tsumo receipts; threat scenarios use ron.
 Visible opposing bonuses are counted, with concealed bonus content estimated from
 public unseen-face density and concealed hand size. Opponent threat pressure is
-assessed separately from hand estimates. Completed own waits use exact legal scoring
-rather than heuristic estimates.
+assessed separately from hand estimates. Completed own waits use exact legal
+scoring with the conditional ura scenarios described above.
 
 `BotDefence` builds a separate threat and risk vector for every opponent using
 public riichi, meld/yakuhai content, exposed bonuses, dealer status and elapsed

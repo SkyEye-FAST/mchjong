@@ -410,6 +410,53 @@ class TrainingBotTest {
         assertEquals(Action.Type.DISCARD, choice(dama, BotDifficulty.HARD).type(), "Already valuable dama need not buy a declaration");
     }
 
+    @Test void riichiRetainsTheRedFiveInAValuableTwoSidedWait() {
+        var game = hand("678m45066p234678s");
+        game.dealer = 3;
+        game.wall.tiles.set(game.wall.dora.getFirst(), Tile.id(8, 3, false));
+        game.players[0].firstTurn = false;
+        game.wall.liveEnd = game.wall.cursor + 44;
+        game.options.set(0, LegalActions.onTurn(game, 0));
+        for (var level : BotDifficulty.values()) {
+            var selected = choice(game, level);
+            assertEquals(Action.Type.RIICHI, selected.type(), level + ": " + selected);
+            assertEquals(Tile.parseKind("5p"), Tile.kind(selected.tiles().getFirst()));
+            assertFalse(Tile.red(selected.tiles().getFirst()));
+        }
+    }
+
+    @Test void conditionalUraUsesRemainingIndicatorsAndNeverSuppliesLegalYaku() {
+        var game = hand("123m456p789s23m55z1z");
+        game.players[0].firstTurn = false;
+        var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
+        int discard = game.players[0].drawn;
+        var declared = analysis.initial().discard(discard, true);
+        int winning = Tile.id(3, 0, false);
+        var remaining = new int[68];
+        remaining[3] = 1;
+        remaining[0] = 2;
+        var ron = analysis.value.score(declared, winning, false, false);
+        assertNotNull(ron);
+        var waits = analysis.value.waits(declared, java.util.Set.of(3), remaining);
+        assertEquals(HandAnalyzer.bonusPayment(ron, 2, true, game.rules), waits.ron(), 0.001,
+            "After winning 4m, each available 1m indicator awards the hand's two 2m tiles");
+        remaining[0] = 0;
+        remaining[17] = 2;
+        assertEquals(ron.ron(), analysis.value.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001);
+        assertEquals(0, analysis.value.waits(analysis.initial().discard(discard, false), java.util.Set.of(3), remaining).ronTiles(),
+            "Hypothetical bonus tiles cannot make yakuless dama legal");
+        game.wall.revealed = 2;
+        remaining[0] = remaining[17] = 1;
+        var twoIndicators = new BotValue(game.view(game.players[0].id));
+        assertEquals(HandAnalyzer.bonusPayment(ron, 2, true, game.rules),
+            twoIndicators.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001,
+            "Two remaining indicators are selected without replacement");
+        game.rules = game.rules.with(RuleOption.URA_DORA, 0);
+        var disabled = new BotValue(game.view(game.players[0].id));
+        remaining[17] = 0; remaining[0] = 2;
+        assertEquals(ron.ron(), disabled.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001);
+    }
+
     @Test void sanmaNorthExtractionPreservesValuableShapesAndUsesThePlayingSet() {
         var game = hand("19m19p19s1234567z4z");
         game.rules = RuleSet.MAHJONG_SOUL_3.config();
