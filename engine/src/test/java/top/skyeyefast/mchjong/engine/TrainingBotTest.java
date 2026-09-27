@@ -43,14 +43,6 @@ class TrainingBotTest {
                 shapes.get(selected).shanten(), position[0]);
             assertTrue(java.util.Arrays.stream(position[2].split(",")).mapToInt(Tile::parseKind).anyMatch(k -> k == selected),
                 position[0] + " discarded " + Tile.notation(selected));
-            var analysis = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
-            for (var tile : game.players[0].hand) {
-                var next = analysis.initial().discard(tile, false);
-                var shape = shapes.get(Tile.kind(tile));
-                var potential = analysis.value.potential(next, shape.shanten(), analysis.unseen);
-                assertTrue(potential.retention() + Math.log1p(potential.estimate() / 1000) * 6 <=
-                    analysis.value.rankUpper(next, shape.shanten()) + 1e-9, "Beam ceiling must dominate every route rank");
-            }
         }));
     }
 
@@ -122,16 +114,36 @@ class TrainingBotTest {
         }
         analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
         var evaluated = analysis.evaluate(state, shape, analysis.unseen);
-        assertTrue(Double.isFinite(analysis.forward(state, evaluated, false)));
+        assertTrue(Double.isFinite(analysis.forward(state, evaluated, false).total()));
         assertEquals(java.util.Arrays.stream(analysis.unseen).filter(count -> count > 0).count(), analysis.advanceNodes);
         assertTrue(analysis.tenpaiLeaves >= shape.improving().stream()
             .mapToInt(k -> (analysis.unseen[k] > 0 ? 1 : 0) + (analysis.unseen[k + 34] > 0 ? 1 : 0)).sum());
         var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
         assertTrue(trace.stream().filter(c -> c.evaluation().shanten() == 1 && c.exclusion().isEmpty()).count() > 3);
         for (var candidate : trace) {
-            assertEquals(candidate.evaluation().terms().total() + candidate.adjustments().total() + candidate.forward(), candidate.utility(), 1e-9);
+            if (candidate.exclusion().isEmpty() && candidate.forecast() != null)
+                assertEquals(candidate.adjustments().immediate() + candidate.forecast().total(), candidate.utility(), 1e-9);
             if (candidate.evaluation().shanten() == 1 && candidate.exclusion().isEmpty())
                 assertEquals("one-shanten", candidate.search());
+        }
+    }
+
+    @Test void boundedCandidatesShareAResolvedHorizonAndReportBudgetPruning() {
+        var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74318);
+        var view = game.view(game.players[game.turn].id);
+        var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
+        assertTrue(trace.stream().anyMatch(c -> c.exclusion().equals("search-budget") || c.exclusion().equals("pareto-dominated")));
+        assertTrue(trace.stream().filter(c -> c.search().equals("bounded") && c.exclusion().isEmpty()).count()
+            <= BotAnalysis.SEARCH_ROOTS);
+        for (var candidate : trace) {
+            if (!candidate.exclusion().isEmpty()) {
+                assertEquals("unassessed", candidate.span());
+                assertNull(candidate.forecast());
+                assertTrue(Double.isNaN(candidate.utility()));
+            } else if (candidate.forecast() != null) {
+                assertEquals(candidate.adjustments().immediate() + candidate.forecast().total(), candidate.utility(), 1e-9);
+                assertEquals(candidate.expanded(), !candidate.span().equals("current"));
+            }
         }
     }
 
@@ -203,7 +215,7 @@ class TrainingBotTest {
         assertEquals(ee.shanten(), he.shanten());
         assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(), he.shanten());
         assertTrue(he.live() < ee.live());
-        assertTrue(analysis.forward(h, he, false) > analysis.forward(e, ee, false));
+        assertTrue(analysis.forward(h, he, false).total() > analysis.forward(e, ee, false).total());
         assertTrue(analysis.drawNodes <= 2 * 37);
         var actions = new ArrayList<>(game.options.get(game.turn));
         java.util.Collections.reverse(actions);
@@ -317,7 +329,7 @@ class TrainingBotTest {
         assertTrue(trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PON).count() > BotAnalysis.SEARCH_ROOTS);
         var pass = trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PASS).findFirst().orElseThrow();
         assertEquals("bounded", pass.search(), "Compare the closed continuation even when many call discards rank above it");
-        assertTrue(pass.forward() > 0);
+        assertTrue(pass.forecast() != null && pass.forecast().total() > pass.evaluation().utility());
         assertEquals(Action.Type.PON, choice(game, BotDifficulty.HARD).type(), "An actual shanten advance can still justify opening");
         var actions = new ArrayList<>(game.options.get(0));
         java.util.Collections.reverse(actions);
@@ -494,7 +506,7 @@ class TrainingBotTest {
         var late = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD);
         var after = late.initial().discard(game.players[0].drawn, false);
         var evaluation = late.evaluate(after, late.shape(after), late.unseen);
-        assertEquals(evaluation.utility(), late.forward(after, evaluation, false));
+        assertEquals(evaluation.utility(), late.forward(after, evaluation, false).endpoint());
         assertEquals(0, late.drawNodes, "Do not invent another own draw after the live wall ends");
 
         // From an observed opening: 62 tiles returning a three-shanten hand to

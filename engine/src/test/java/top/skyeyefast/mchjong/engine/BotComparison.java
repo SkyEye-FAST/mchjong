@@ -238,13 +238,13 @@ public final class BotComparison {
             for (var candidate : TrainingBot.inspect(view, level)) {
                 var evaluation = candidate.evaluation();
                 var potential = evaluation.potential();
-                System.out.printf(Locale.ROOT, "%s discard=%s shanten=%d live=%d value=%.1f mode=%s search=%s excluded=%s%n",
+                System.out.printf(Locale.ROOT, "%s discard=%s shanten=%d live=%d value=%.1f mode=%s search=%s span=%s expanded=%s pruned=%s%n",
                     view.actions().get(candidate.index()), candidate.discard() < 0 ? "-" : Tile.notation(Tile.kind(candidate.discard())),
                     evaluation.shanten(), evaluation.live(), evaluation.points(), analysis.defence.mode(evaluation),
-                    candidate.search(), candidate.exclusion());
-                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s adjustments=%s forward=%.3f final_utility=%.3f%n",
+                    candidate.search(), candidate.span(), candidate.expanded(), candidate.exclusion());
+                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s immediate=%s future=%s static_utility=%.3f final_utility=%.3f%n",
                     potential.routes().plan(), potential.routes().han(), potential.closedOption(), evaluation.waits(),
-                    evaluation.terms(), candidate.adjustments(), candidate.forward(), candidate.utility());
+                    evaluation.terms(), candidate.adjustments(), candidate.forecast(), candidate.staticUtility(), candidate.utility());
                 for (var route : potential.routes().routes())
                     System.out.printf(Locale.ROOT, "  route=%s family=%s missing=%.2f progress=%.3f han=%.1f%n",
                         route.name(), route.family(), route.missing(), route.progress(), route.han());

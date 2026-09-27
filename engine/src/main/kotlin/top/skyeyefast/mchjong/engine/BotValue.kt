@@ -1,7 +1,5 @@
 package top.skyeyefast.mchjong.engine
 
-import kotlin.math.ln1p
-
 /** Complete hands use the engine scorer. Incomplete hands have explicitly heuristic potential. */
 internal class BotValue(private val view: TableView) {
     @JvmField
@@ -79,15 +77,6 @@ internal class BotValue(private val view: TableView) {
 
     private fun estimatedPayment(han: Int): Double = potentialPayments.getOrPut(han) {
         HandAnalyzer.estimatedPayment(han.toDouble(), wind() == 0, false, view.rules())
-    }
-
-    /** Upper bound for the general beam's retention/potential ranking only.
-     * Every supported plan is at most 13 estimated yaku han; an established
-     * declaration adds at most two. Legal tenpai scoring bypasses this beam. */
-    fun rankUpper(state: BotAnalysis.State, shanten: Int): Double {
-        val bonuses = bonus(state, Tile.ABSENT)
-        if (shanten == 0) return bonuses * 3.0
-        return 24 + bonuses * 3.0 + ln1p(estimatedPayment(15 + bonuses) / 1000) * 6
     }
 
     fun score(state: BotAnalysis.State, winning: Int, tsumo: Boolean, replacement: Boolean): HandScore? {

@@ -23,6 +23,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Compare searched bot actions at a common decision horizon, retain distinct candidate routes within the search budget, and expose pruning and future risk in diagnostics.
 - Provide Kotlin's enum API on loader IDE classpaths and remove unused Java imports.
 - Avoid transient Java nullness warnings during IDE project import.
 - Remove unused Java declarations and a constant-only smoke assertion, and align IDE suppression diagnostics with compiler requirements.

@@ -47,9 +47,12 @@ while retreat branches are omitted. This horizon exhaustively covers immediate
 tenpai advances and compares bounded same-shanten improvements.
 
 The general search expands at most three roots and 37 draw categories per root.
-Two-shanten and more distant hands consider all discard faces and score only the
-two strongest continuations. A conservative numerical upper bound skips detailed
-route evaluation only when it cannot change those top two. Near readiness, every tenpai continuation is scored;
+Roots are selected from speed, value and defence non-dominated candidates;
+the unchanged PASS or discard and a replacement declaration receive reserved
+consideration when relevant. Static utility orders equal-priority work, while
+unexpanded routes are recorded as pruned and do not compete against a next-turn
+forecast. At distant leaves, two non-dominated continuations retain distinct
+speed, value and safety; near readiness, every tenpai continuation is scored;
 in particular, dama retains its option to discard the drawn tile when compared
 with locked riichi. Both advancing draws and same-shanten improvements participate;
 an offensive root can retreat at most one shanten. A completed legal tsumo is taken
@@ -58,9 +61,11 @@ including their ordinary alternatives. PASS, or the baseline discard when compar
 replacement declarations, receives a search slot first, followed by replacement
 declarations before competing ordinary discards.
 Replacement declarations require a searched continuation within the bounded budget.
-Continuation leaves use immediate efficiency and legal wait value. Development
-compares endpoints at that same depth, without nested good-shape enumeration.
-Unexpanded ordinary candidates retain their root value.
+Continuation leaves use immediate efficiency and legal wait value. Current action
+costs and the terminal state use one common utility scale; an expanded candidate
+adds the next discard's risk once at that later step. No-next-turn decisions use
+the current state as their common endpoint. The trace reports the endpoint span,
+search status, pruning reason and utility components.
 
 ## Incomplete-hand routes
 

@@ -35,14 +35,16 @@ internal class TrainingBot private constructor(
 
     @JvmRecord
     data class Adjustments(val action: Double, val danger: Double, val reserve: Double, val riichi: Double,
-                           val callPressure: Double, val sticks: Double) {
-        fun total(): Double = action - danger + reserve - riichi - callPressure + sticks
+                           val callPressure: Double) {
+        fun immediate(): Double = action - danger - riichi - callPressure
+        fun total(): Double = immediate() + reserve
     }
 
     @JvmRecord
     data class Diagnostic(val index: Int, val discard: Int, val evaluation: BotAnalysis.Evaluation,
-                          val adjustments: Adjustments, val forward: Double, val utility: Double,
-                          val search: String, val exclusion: String)
+                          val adjustments: Adjustments, val forecast: BotAnalysis.Forecast?,
+                          val staticUtility: Double, val utility: Double, val search: String,
+                          val span: String, val expanded: Boolean, val exclusion: String)
 
     private data class Choice(
         val index: Int,
@@ -145,9 +147,7 @@ internal class TrainingBot private constructor(
         choices.sortWith(compareBy<Choice> { reserveBaseline && it !== baseline }
             .thenBy { reserveBaseline && !it.replacement }
             .thenByDescending { score(it) }.thenBy { it.key })
-        var bestScore = Double.NEGATIVE_INFINITY
-        var best = baseline
-        var roots = 0
+        val eligible = mutableListOf<Choice>()
         for (candidate in choices) {
             val type = view.actions()[candidate.index].type()
             if ((type == CHI || type == PON || type == OPEN_KAN) && !viable(candidate)) {
@@ -165,25 +165,28 @@ internal class TrainingBot private constructor(
             val safer = candidate.discard >= 0 && baseline.discard >= 0 &&
                 defence.danger(candidate.discard) < defence.danger(baseline.discard)
             val retreat = candidate.evaluation.shanten > minimum && !candidate.replacement && candidate !== fold && !safer
-            val oneShanten = searchDecision && candidate.evaluation.shanten == 1 && !candidate.replacement
-            if (
-                retreat && viable(baseline) && baseline.evaluation.live > 0 &&
-                (level != BotDifficulty.HARD || !oneShanten && roots >= BotAnalysis.SEARCH_ROOTS)
-            ) { record(candidate, exclusion = "unsearched-retreat"); continue }
-            var candidateScore = score(candidate)
-            var delta = 0.0
-            var search = "static"
-            val expand = candidate !== fold && searchDecision
-            if (expand && (oneShanten || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
-                val forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
-                delta = forward - candidate.evaluation.utility
-                candidateScore += delta
-                search = if (oneShanten) "one-shanten" else "bounded"
-                if (!oneShanten) roots++
-            } else if (candidate.replacement) {
-                record(candidate, exclusion = "unsearched-replacement"); continue
+            if (retreat && viable(baseline) && baseline.evaluation.live > 0 && !searchDecision) {
+                record(candidate, exclusion = "unsearched-retreat"); continue
             }
-            record(candidate, delta, search)
+            eligible += candidate
+        }
+        val general = eligible.filter { searchDecision && (it.replacement || analysis.canReachNextTurn(it.state)) &&
+            !(it.evaluation.shanten == 1 && !it.replacement) }
+        val frontier = general.filter { candidate -> general.none { it !== candidate && dominates(it, candidate) } }
+        val roots = selectRoots(frontier, general, baseline, fold)
+        var bestScore = Double.NEGATIVE_INFINITY
+        var best = baseline
+        for (candidate in eligible) {
+            val nextTurn = candidate.replacement || analysis.canReachNextTurn(candidate.state)
+            val oneShanten = searchDecision && nextTurn && candidate.evaluation.shanten == 1 && !candidate.replacement
+            if (searchDecision && nextTurn && !oneShanten && candidate !in roots) {
+                record(candidate, exclusion = if (candidate in frontier) "search-budget" else "pareto-dominated")
+                continue
+            }
+            val forecast = if (searchDecision && nextTurn) analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
+                else BotAnalysis.Forecast(candidate.evaluation.utility, 0.0, defence.reserve(candidate.state), 0.0, 0.0, "current")
+            val candidateScore = adjustments(candidate).immediate() + forecast.total()
+            record(candidate, forecast, if (oneShanten) "one-shanten" else if (forecast.span != "current") "bounded" else "static")
             if (candidateScore > bestScore || candidateScore == bestScore && candidate.key < best.key) {
                 bestScore = candidateScore
                 best = candidate
@@ -217,6 +220,47 @@ internal class TrainingBot private constructor(
         return better
     }
 
+    private fun offense(candidate: Choice): Double = candidate.evaluation.utility - candidate.evaluation.terms.speed
+
+    private fun safety(candidate: Choice): Double = adjustments(candidate).total()
+
+    private fun dominates(first: Choice, second: Choice): Boolean {
+        if (first.replacement != second.replacement) return false
+        val a = first.evaluation
+        val b = second.evaluation
+        return a.shanten <= b.shanten && a.live >= b.live && offense(first) >= offense(second) &&
+            safety(first) >= safety(second) &&
+            (a.shanten < b.shanten || a.live > b.live || offense(first) > offense(second) || safety(first) > safety(second))
+    }
+
+    private fun selectRoots(frontier: List<Choice>, all: List<Choice>, baseline: Choice, fold: Choice?): Set<Choice> {
+        val selected = linkedSetOf<Choice>()
+        if (baseline in all && (view.actions()[baseline.index].type() == PASS || all.any { it.replacement })) selected += baseline
+        if (fold in all) selected += fold!!
+        all.filter { it.replacement }.maxWithOrNull(compareBy<Choice> { score(it) }.thenByDescending { it.key })
+            ?.let { selected += it }
+        val dimensions: List<(Choice) -> Double> = listOf(
+            { it.evaluation.terms.speed }, ::offense, ::safety,
+        )
+        val ranges = dimensions.map { dimension ->
+            (frontier.maxOfOrNull(dimension) ?: 0.0) - (frontier.minOfOrNull(dimension) ?: 0.0)
+        }
+        if (selected.isEmpty()) frontier.maxWithOrNull(compareBy<Choice> { score(it) }.thenByDescending { it.key })
+            ?.let { selected += it }
+        while (selected.size < BotAnalysis.SEARCH_ROOTS) {
+            val next = frontier.asSequence().filter { it !in selected }.maxWithOrNull(
+                compareBy<Choice> { candidate ->
+                    dimensions.indices.maxOf { dimension ->
+                        val best = selected.maxOfOrNull(dimensions[dimension]) ?: Double.NEGATIVE_INFINITY
+                        (dimensions[dimension](candidate) - best) / maxOf(1.0, ranges[dimension])
+                    }
+                }.thenBy { score(it) }.thenByDescending { it.key },
+            ) ?: break
+            selected += next
+        }
+        return selected
+    }
+
     private fun viable(candidate: Choice): Boolean =
         if (candidate.evaluation.shanten == 0) candidate.evaluation.waits.quality() > 0 else candidate.evaluation.potential.viable
 
@@ -230,17 +274,19 @@ internal class TrainingBot private constructor(
         return Adjustments(candidate.adjustment,
             if (candidate.discard >= 0) defence.penalty(candidate.discard, defence.mode(candidate.evaluation)) else 0.0,
             defence.reserve(candidate.state),
-            if (type == RIICHI) analysis.riichiCost(candidate.evaluation) +
-                if (defence.placementUrgency(candidate.evaluation.points) < 1) 5 else 0 else 0.0,
-            if (type == CHI || type == PON || type == OPEN_KAN) defence.pressure() * 2 else 0.0,
-            if (candidate.evaluation.shanten == 0) minOf(8.0, candidate.evaluation.waits.quality()) * view.riichiSticks() * 0.4 else 0.0)
+            if (type == RIICHI) analysis.riichiCost(candidate.evaluation) else 0.0,
+            if (type == CHI || type == PON) defence.pressure() * 2 else 0.0)
     }
 
-    private fun record(candidate: Choice, delta: Double = 0.0, search: String = "static", exclusion: String = "") {
+    private fun record(candidate: Choice, forecast: BotAnalysis.Forecast? = null,
+                       search: String = "static", exclusion: String = "") {
         if (diagnostics == null) return
         val adjustment = adjustments(candidate)
-        diagnostics += Diagnostic(candidate.index, candidate.discard, candidate.evaluation, adjustment, delta,
-            candidate.evaluation.utility + adjustment.total() + delta, search, exclusion)
+        diagnostics += Diagnostic(candidate.index, candidate.discard, candidate.evaluation, adjustment, forecast,
+            candidate.evaluation.utility + adjustment.total(),
+            if (exclusion.isEmpty()) adjustment.immediate() + (forecast?.total() ?: candidate.evaluation.utility + adjustment.reserve)
+                else Double.NaN,
+            search, forecast?.span ?: "unassessed", forecast != null && forecast.span != "current", exclusion)
     }
 
     private fun addCall(choices: MutableList<Choice>, index: Int, action: Action) {
