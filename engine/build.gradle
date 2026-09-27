@@ -16,7 +16,7 @@ dependencies {
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
     testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
-    testImplementation "com.google.code.gson:gson:${gson_version}"
+    implementation "com.google.code.gson:gson:${gson_version}"
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(java_version.toInteger())
@@ -38,6 +38,7 @@ tasks.register('botCompare', JavaExec) {
         jvmArgs '-XX:StartFlightRecording=filename=build/bot-profile.jfr,settings=profile,dumponexit=true'
         systemProperty 'bot.profile', 'true'
     }
+    if (providers.gradleProperty('botInspect').isPresent()) systemProperty 'bot.profile', 'true'
 }
 
 shadowJar {
@@ -47,6 +48,7 @@ shadowJar {
     relocate 'mahjongutils', 'top.skyeyefast.mchjong.internal.mahjongutils'
     relocate 'kotlin', 'top.skyeyefast.mchjong.internal.kotlin'
     relocate 'kotlinx', 'top.skyeyefast.mchjong.internal.kotlinx'
+    relocate 'com.google.gson', 'top.skyeyefast.mchjong.internal.gson'
     exclude 'module-info.class', 'META-INF/versions/**/module-info.class'
     exclude 'META-INF/*.SF', 'META-INF/*.RSA', 'META-INF/*.DSA'
     exclude 'org/jetbrains/annotations/**', 'org/intellij/lang/annotations/**'

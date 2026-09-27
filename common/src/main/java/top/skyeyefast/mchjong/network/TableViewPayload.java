@@ -14,14 +14,14 @@ public record TableViewPayload(BlockPos pos, String view, boolean open, boolean 
     public static final ResourceLocation TYPE = MahjongContent.id("table_view");
     public static TableViewPayload decode(FriendlyByteBuf buffer) {
         return new TableViewPayload(buffer.readBlockPos(), buffer.readUtf(32767), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
-            TableNetworking.JSON.fromJson(buffer.readUtf(4096), top.skyeyefast.mchjong.engine.RoomView.class));
+            TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.RoomView.class));
     }
     @Override public void write(FriendlyByteBuf buffer) {
         buffer.writeBlockPos(pos()); buffer.writeUtf(view(), 32767); buffer.writeBoolean(open());
         buffer.writeBoolean(controlReply());
         buffer.writeBoolean(leaveDecision());
         buffer.writeByte(redOptions());
-        buffer.writeUtf(TableNetworking.JSON.toJson(room()), 4096);
+        buffer.writeUtf(TableNetworking.JSON.toJson(room()), 8192);
     }
     @Override public ResourceLocation id() { return TYPE; }
 }

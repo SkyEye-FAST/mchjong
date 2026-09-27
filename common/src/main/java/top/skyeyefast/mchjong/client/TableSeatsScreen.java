@@ -50,8 +50,8 @@ public final class TableSeatsScreen extends Screen {
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
-                label = Component.translatable(player.bot() ? state.difficulty().translationKey()
-                    : player.occupied() ? presenceKey(state.presence()) : "room.mchjong.empty");
+                label = player.bot() ? botName(room, seat)
+                    : Component.translatable(player.occupied() ? presenceKey(state.presence()) : "room.mchjong.empty");
                 hint = label;
                 enabled = false;
                 action = () -> {};
@@ -74,6 +74,15 @@ public final class TableSeatsScreen extends Screen {
             if (action.type() == type && action.tiles().equals(arguments)) return index;
         }
         return -1;
+    }
+
+    static Component botName(RoomView room, int seat) {
+        var state = room.seats().get(seat);
+        if (state.botPreset().isEmpty()) return Component.translatable(state.difficulty().translationKey());
+        var preset = room.botPresets().stream().filter(choice -> choice.id().equals(state.botPreset())).findFirst();
+        String name = preset.map(top.skyeyefast.mchjong.engine.BotPreset.Choice::name).orElse(state.botPreset());
+        return preset.isPresent() && preset.get().compatible() ? Component.literal(name)
+            : Component.translatable("room.mchjong.bot_unavailable", name);
     }
 
     static Component wind(int wind) {
