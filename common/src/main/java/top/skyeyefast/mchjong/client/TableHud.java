@@ -172,11 +172,11 @@ final class TableHud {
             if (turn || lobby && player.ready()) graphics.fill(x, top, x + 2, top + cardHeight, MahjongUi.ACCENT);
             if (board != null) {
                 if (board.perspective()) {
-                    int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 8, top + 12, 38);
+                    int inset = name.getString().isEmpty() ? 0 : PlayerPortrait.draw(graphics, player, x + 8, top + 8, 32);
                     Component label = name.getString().isEmpty() ? shortLine : name;
-                    textScaled(font, graphics, label, x + 8 + inset, top + 12, cardWidth - 18 - inset,
+                    textScaled(font, graphics, label, x + 8 + inset, top + 6, cardWidth - 18 - inset,
                         disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT, 1.75f);
-                    if (!name.getString().isEmpty()) textScaled(font, graphics, shortLine, x + 8 + inset, top + 40,
+                    if (!name.getString().isEmpty()) textScaled(font, graphics, shortLine, x + 8 + inset, top + 27,
                         cardWidth - 18 - inset, disconnected ? MahjongUi.NEGATIVE : turn ? MahjongUi.ACCENT : MahjongUi.MUTED, 2);
                     int markerX = x + cardWidth - 12, markerY = top + 8;
                     if (turn) graphics.fill(markerX, markerY, markerX + 6, markerY + 6, MahjongUi.ACCENT);
