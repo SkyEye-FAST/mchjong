@@ -375,7 +375,8 @@ discards, pruning reasons, evaluation span, route deficits/progress, selected pl
 legal waits, speed/retention/value/legality terms, current action costs, next-turn
 components and final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
 append `legal` to generate riichi actions as well. `opening 74318` inspects a
-seeded opening. These inputs are confined to the development harness.
+seeded opening; append `MAHJONG_SOUL_3` to inspect a three-player opening.
+These inputs are confined to the development harness.
 `-PbotArgs='tables 4 12000 MAHJONG_SOUL_3 HARD'` interleaves four actual `Game.tick()`
 loops on one thread, including their usual decision pacing. This measures the
 engine's aggregate tick cost, excluding Minecraft's rendering, networking and

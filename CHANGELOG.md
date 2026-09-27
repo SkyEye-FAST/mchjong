@@ -17,6 +17,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Reuse evaluated search leaves when comparing computer-player continuations.
 - Recognize resolved post-riichi discards as opponent-specific safe tiles and price incomplete closed-hand riichi scenarios consistently.
 - Expand HARD's one-shanten search to compare non-advancing shape improvements, and weigh push/fold commitments by public opponent pressure and visible tile stock.
 - Evaluate riichi value with conditional unseen ura indicators and a consistent deposit cost, while reserving bounded search capacity for replacement declarations.

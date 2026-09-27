@@ -250,11 +250,10 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 candidates += withDraw.discard(discard, false) to shapes[Tile.kind(discard)]!!
             }
             val ready = if (baseline.shanten <= 1) candidates.filter { it.second.shanten == 0 } else emptyList()
-            val leaves = ready.ifEmpty {
-                selectLeaves(withDraw, candidates, remaining)
-            }
-            for ((next, candidateShape) in leaves) {
-                val result = continuation(withDraw, next, candidateShape, remaining, replacement, distance)
+            val leaves = if (ready.isEmpty()) selectLeaves(withDraw, candidates, remaining) else
+                ready.map { (next, candidateShape) -> Triple(next, candidateShape, evaluate(next, candidateShape, remaining)) }
+            for ((next, candidateShape, evaluated) in leaves) {
+                val result = continuation(withDraw, next, candidateShape, evaluated, remaining, replacement, distance)
                 if (best == null || result.total() > best.total()) best = result
             }
             val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
@@ -297,15 +296,21 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 if (!faces.add(face(discard))) continue
                 candidates += withDraw.discard(discard, false) to shape
             }
-            val leaves = if (face % 34 in improving) candidates else {
+            val leaves = if (face % 34 in improving) {
+                candidates.map { (next, shape) -> Triple(next, shape, evaluate(next, shape, remaining)) }
+            } else {
                 val ranked = selectLeaves(withDraw, candidates, remaining)
                 // Keep the unchanged hand as a value/defence baseline even when another
                 // shape has more immediate improving tiles.
-                (ranked + (withDraw.discard(tile(face), false) to shape(state))).distinctBy { it.first }
+                val unchanged = withDraw.discard(tile(face), false)
+                if (ranked.any { it.first == unchanged }) ranked else {
+                    val unchangedShape = shape(state)
+                    ranked + Triple(unchanged, unchangedShape, evaluate(unchanged, unchangedShape, remaining))
+                }
             }
-            for ((next, shape) in leaves) {
+            for ((next, shape, evaluated) in leaves) {
                 if (shape.shanten == 0) tenpaiLeaves++
-                val result = continuation(withDraw, next, shape, remaining, false, distance)
+                val result = continuation(withDraw, next, shape, evaluated, remaining, false, distance)
                 if (best == null || result.total() > best.total()) best = result
             }
             val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
@@ -320,8 +325,8 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     }
 
     private fun selectLeaves(before: State, candidates: List<Pair<State, TileEfficiency>>,
-                             remaining: IntArray): List<Pair<State, TileEfficiency>> {
-        if (candidates.size <= 2) return candidates
+                             remaining: IntArray): List<Triple<State, TileEfficiency, Evaluation>> {
+        if (candidates.size <= 2) return candidates.map { (state, shape) -> Triple(state, shape, evaluate(state, shape, remaining)) }
         data class Leaf(val state: State, val shape: TileEfficiency, val evaluated: Evaluation,
                         val safety: Double) {
             fun offense(): Double = evaluated.utility - evaluated.terms.speed
@@ -355,12 +360,11 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             ) ?: break
             selected += next
         }
-        return selected.map { it.state to it.shape }
+        return selected.map { Triple(it.state, it.shape, it.evaluated) }
     }
 
-    private fun continuation(before: State, next: State, shape: TileEfficiency, remaining: IntArray,
+    private fun continuation(before: State, next: State, shape: TileEfficiency, evaluated: Evaluation, remaining: IntArray,
                              replacement: Boolean, distance: Int): Forecast {
-        val evaluated = evaluate(next, shape, remaining)
         var utility = evaluated.utility
         var selected = evaluated
         var riichi = 0.0
