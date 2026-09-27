@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.Util;
 import net.minecraft.client.Camera;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.AbstractWidget;
@@ -425,7 +424,7 @@ public final class TableScreen extends Screen {
             Component label = Component.translatable(action.translationKey());
             final TableView snapshot = view;
             CalloutButton button = new CalloutButton(startX + slot % columns * (boxWidth + buttonGap),
-                actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight, label, action, index,
+                actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight, label, action,
                 () -> send(snapshot, index));
             button.setTooltip(Tooltip.create(label));
             addRenderableWidget(button);
@@ -1531,10 +1530,9 @@ public final class TableScreen extends Screen {
 
     private final class CalloutButton extends MahjongButton {
         final Action action;
-        final int actionIndex;
-        CalloutButton(int x, int y, int w, int h, Component label, Action action, int actionIndex, Runnable click) {
+        CalloutButton(int x, int y, int w, int h, Component label, Action action, Runnable click) {
             super(x, y, w, h, label, ignored -> click.run());
-            this.action = action; this.actionIndex = actionIndex;
+            this.action = action;
             if (action.type() == Action.Type.RON || action.type() == Action.Type.TSUMO || action.type() == Action.Type.READY) primary();
         }
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

@@ -3,7 +3,6 @@ package top.skyeyefast.mchjong.client;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 

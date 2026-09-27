@@ -16,7 +16,6 @@ import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RuleOption;
 import top.skyeyefast.mchjong.engine.RuleSet;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.network.TableRulesPayload;

@@ -10,7 +10,6 @@ import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
-import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Loader adapters only register this renderer; every component and mesh decision is shared. */
