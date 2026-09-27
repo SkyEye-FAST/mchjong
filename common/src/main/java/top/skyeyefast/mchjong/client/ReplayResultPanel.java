@@ -16,7 +16,6 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
