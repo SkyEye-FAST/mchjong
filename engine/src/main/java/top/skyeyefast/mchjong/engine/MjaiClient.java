@@ -23,9 +23,11 @@ public final class MjaiClient implements AutoCloseable {
     private int cursor;
     private boolean declared;
     private JsonObject response;
+    private JsonObject reachDiscardResponse;
     private final StringBuilder errors = new StringBuilder();
 
     JsonObject response() { return response; }
+    JsonObject reachDiscardResponse() { return reachDiscardResponse; }
 
     public MjaiClient(BotPreset preset, int seat) throws IOException {
         var command = preset.command().stream().map(arg -> arg.replace("{seat}", Integer.toString(seat))).toList();
@@ -65,6 +67,7 @@ public final class MjaiClient implements AutoCloseable {
         }
         JsonObject response = receive();
         this.response = response;
+        reachDiscardResponse = null;
         boolean reach = response.get("type").getAsString().equals("reach");
         if (reach) {
             if (!response.has("actor") || response.get("actor").getAsInt() != position.seat()
@@ -72,6 +75,7 @@ public final class MjaiClient implements AutoCloseable {
                 throw new IOException("Illegal mjai reach");
             send(Map.of("type", "reach", "actor", position.seat()), true);
             response = receive();
+            reachDiscardResponse = response;
             declared = true;
         }
         try { return MjaiProtocol.action(view, response, reach); }

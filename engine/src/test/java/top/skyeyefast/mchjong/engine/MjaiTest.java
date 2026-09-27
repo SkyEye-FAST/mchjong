@@ -126,10 +126,41 @@ class MjaiTest {
             int index;
             while ((index = session.poll(first)) < 0) Thread.sleep(5);
             assertEquals(Action.Type.RIICHI, view.actions().get(index).type());
+            assertEquals("reach", session.response().get("type").getAsString());
+            assertEquals("dahai", session.reachDiscardResponse().get("type").getAsString());
             var next = new MjaiProtocol.Position(1, 0, List.of(draw, Map.of("type", "reach", "actor", 0), draw), view);
             while ((index = session.poll(next)) < 0) Thread.sleep(5);
             assertEquals(Action.Type.DISCARD, view.actions().get(index).type());
         }
+    }
+
+    @Test void teacherQComparesLegalActionIndicesAndRiichiDiscardStagesSeparately() {
+        var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74291);
+        var view = game.view(game.players[game.turn].id);
+        int kind = Tile.parseKind("5p");
+        int normal = Tile.id(kind, 1, false);
+        int red = Tile.id(kind, 0, true);
+        var first = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", (1L << kind) | (1L << 37),
+            "q_values", List.of(-2.5, 1.0)))).getAsJsonObject();
+        var declaration = BotTeacherReview.compareQ(view, new Action(Action.Type.DISCARD, normal),
+            new Action(Action.Type.RIICHI, red), first, null);
+        assertEquals("action", declaration.stage());
+        assertEquals(3.5, declaration.gap());
+        var second = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", (1L << kind) | (1L << 35),
+            "q_values", List.of(-1.0, 0.5)))).getAsJsonObject();
+        var redChoice = BotTeacherReview.compareQ(view, new Action(Action.Type.RIICHI, normal),
+            new Action(Action.Type.RIICHI, red), first, second);
+        assertEquals("reach-discard", redChoice.stage());
+        assertEquals(1.5, redChoice.gap());
+        assertNull(BotTeacherReview.compareQ(view, new Action(Action.Type.RIICHI, normal),
+            new Action(Action.Type.RIICHI, red), first, null).gap());
+        var kanResponse = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", 1L << 42,
+            "q_values", List.of(0.0), "kan_select", Map.of("mask_bits", (1L << 0) | (1L << 9),
+                "q_values", List.of(-2.0, 0.5))))).getAsJsonObject();
+        var kan = BotTeacherReview.compareQ(view, new Action(Action.Type.CLOSED_KAN, Tile.id(0, 0, false)),
+            new Action(Action.Type.CLOSED_KAN, Tile.id(9, 0, false)), kanResponse, null);
+        assertEquals("kan-select", kan.stage());
+        assertEquals(2.5, kan.gap());
     }
 
     private static BotPreset preset(String mode, int timeout) {

@@ -19,6 +19,7 @@ final class MjaiSession implements AutoCloseable {
     MjaiSession(BotPreset preset) { this.preset = preset; }
     boolean stale(long token) { return pending != null && decision != token; }
     com.google.gson.JsonObject response() { return client == null ? null : client.response(); }
+    com.google.gson.JsonObject reachDiscardResponse() { return client == null ? null : client.reachDiscardResponse(); }
 
     int poll(MjaiProtocol.Position position) {
         if (pending == null) {

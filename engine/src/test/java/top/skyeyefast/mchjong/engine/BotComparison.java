@@ -9,6 +9,7 @@ public final class BotComparison {
 
     public static void main(String[] args) {
         if (args[0].equals("paired")) { BotReport.print(args[1], args[2]); return; }
+        if (args[0].equals("teacher")) { BotTeacherReview.run(args); return; }
         if (args[0].equals("mjai")) {
             try {
                 var preset = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])), BotPreset.class);
@@ -104,9 +105,12 @@ public final class BotComparison {
                         int heuristic = TrainingBot.choose(view, b);
                         compared++;
                         if (!equivalent(view.actions().get(action), view.actions().get(heuristic))) {
-                            var entry = java.util.Map.<String, Object>of("seed", firstSeed + seed, "rotation", rotate,
-                                "model", view.actions().get(action), "heuristic", view.actions().get(heuristic),
-                                "response", mjai.response(), "view", view);
+                            var entry = new java.util.LinkedHashMap<String, Object>();
+                            entry.put("seed", firstSeed + seed); entry.put("rotation", rotate);
+                            entry.put("model", view.actions().get(action)); entry.put("heuristic", view.actions().get(heuristic));
+                            entry.put("response", mjai.response());
+                            if (mjai.reachDiscardResponse() != null) entry.put("reachDiscardResponse", mjai.reachDiscardResponse());
+                            entry.put("view", view);
                             int selected = sample.nextInt(++differences);
                             if (disagreements.size() < 300) disagreements.add(entry);
                             else if (selected < 300) disagreements.set(selected, entry);
@@ -242,9 +246,10 @@ public final class BotComparison {
                     view.actions().get(candidate.index()), candidate.discard() < 0 ? "-" : Tile.notation(Tile.kind(candidate.discard())),
                     evaluation.shanten(), evaluation.live(), evaluation.points(), analysis.defence.mode(evaluation),
                     candidate.search(), candidate.span(), candidate.expanded(), candidate.exclusion());
-                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s immediate=%s future=%s static_utility=%.3f final_utility=%.3f%n",
+                System.out.printf(Locale.ROOT, "  plan=%s potential_han=%.3f closed_option=%.3f waits=%s%n  terms=%s immediate=%s future=%s static_utility=%.3f final_utility=%s%n",
                     potential.routes().plan(), potential.routes().han(), potential.closedOption(), evaluation.waits(),
-                    evaluation.terms(), candidate.adjustments(), candidate.forecast(), candidate.staticUtility(), candidate.utility());
+                    evaluation.terms(), candidate.adjustments(), candidate.forecast(), candidate.staticUtility(),
+                    candidate.utility() == null ? "-" : String.format(Locale.ROOT, "%.3f", candidate.utility()));
                 for (var route : potential.routes().routes())
                     System.out.printf(Locale.ROOT, "  route=%s family=%s missing=%.2f progress=%.3f han=%.1f%n",
                         route.name(), route.family(), route.missing(), route.progress(), route.han());

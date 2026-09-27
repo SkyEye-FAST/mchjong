@@ -132,6 +132,7 @@ class TrainingBotTest {
         var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74318);
         var view = game.view(game.players[game.turn].id);
         var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
+        assertDoesNotThrow(() -> new com.google.gson.Gson().toJson(trace));
         assertTrue(trace.stream().anyMatch(c -> c.exclusion().equals("search-budget") || c.exclusion().equals("pareto-dominated")));
         assertTrue(trace.stream().filter(c -> c.search().equals("bounded") && c.exclusion().isEmpty()).count()
             <= BotAnalysis.SEARCH_ROOTS);
@@ -139,7 +140,7 @@ class TrainingBotTest {
             if (!candidate.exclusion().isEmpty()) {
                 assertEquals("unassessed", candidate.span());
                 assertNull(candidate.forecast());
-                assertTrue(Double.isNaN(candidate.utility()));
+                assertNull(candidate.utility());
             } else if (candidate.forecast() != null) {
                 assertEquals(candidate.adjustments().immediate() + candidate.forecast().total(), candidate.utility(), 1e-9);
                 assertEquals(candidate.expanded(), !candidate.span().equals("current"));

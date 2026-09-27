@@ -262,10 +262,31 @@ of the selected difficulty, using the same seeds as the built-in comparison.
 decisions, with seed/seat, external response metadata and recipient views in
 `engine/build/mjai-disagreements-<id>-<level>.json`. Equivalent physical copies
 of the same tile face count as the same decision; red and ordinary fives remain
-distinct. Inspect one entry with `-PbotArgs='inspect /absolute/path/sample.json 0'`.
+distinct. A staged `reach` response retains the following discard response as
+well. Inspect one entry with `-PbotArgs='inspect /absolute/path/sample.json 0'`.
 Model startup contributes to the external timing totals. Use identical seeds, rotations,
 rules and weights for a before/after comparison, and check an independent seed range
 before drawing conclusions about strength.
+
+To review decisions from an actual completed built-in match, run the optional
+teacher command with the same four-player preset. It records up to the requested
+number of decision positions during built-in play, then reviews those fixed
+histories after the match; the external teacher does not control any move:
+
+```text
+./gradlew :engine:botCompare -PbotArgs='teacher build/mortal-hard.json HARD 1 74291 24 build/study/teacher-dev.jsonl' --console=plain
+```
+
+Each JSONL row contains the recipient-safe mjai history, legal view, executed and
+teacher actions, and candidate diagnostics for disagreements. When the teacher
+returns masked Q values, `teacherQMinusBuiltInQ` compares only legal alternatives
+from that same state. It is a model Q difference, not a point-loss estimate or a
+calibrated win probability. The `reach` choice is compared at its first protocol
+stage; when both choose `reach` but differ on the discard, the second response
+supplies the discard Q comparison. A distinct concealed or added kan uses Mortal's
+kan-selection metadata when present. Missing metadata or a masked action leaves the
+Q difference unavailable. Each sampled position starts an independent teacher
+session so the teacher's earlier recommendations cannot alter its replayed history.
 
 Add `-PbotReport=build/study/before-1.jsonl` to write each completed match's
 seed, rotation, rules, points and ranks. The file is replaced when that run starts.
@@ -326,9 +347,9 @@ slowest recipient snapshots plus early unannounced retreats in `engine/build`.
 Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
 or `inspect` in place of `position` to print candidate analysis. Inspection runs
 the same candidate selection/search as play and includes calls with their planned
-discards, exclusion reasons, route deficits/progress, selected plans, legal waits,
-speed/retention/value/legality terms, defence/action adjustments, development and
-final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
+discards, pruning reasons, evaluation span, route deficits/progress, selected plans,
+legal waits, speed/retention/value/legality terms, current action costs, next-turn
+components and final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
 append `legal` to generate riichi actions as well. `opening 74318` inspects a
 seeded opening. These inputs are confined to the development harness.
 `-PbotArgs='tables 4 12000 MAHJONG_SOUL_3 HARD'` interleaves four actual `Game.tick()`

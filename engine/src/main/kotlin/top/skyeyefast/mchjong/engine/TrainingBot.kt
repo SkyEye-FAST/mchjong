@@ -43,7 +43,7 @@ internal class TrainingBot private constructor(
     @JvmRecord
     data class Diagnostic(val index: Int, val discard: Int, val evaluation: BotAnalysis.Evaluation,
                           val adjustments: Adjustments, val forecast: BotAnalysis.Forecast?,
-                          val staticUtility: Double, val utility: Double, val search: String,
+                          val staticUtility: Double, val utility: Double?, val search: String,
                           val span: String, val expanded: Boolean, val exclusion: String)
 
     private data class Choice(
@@ -285,7 +285,7 @@ internal class TrainingBot private constructor(
         diagnostics += Diagnostic(candidate.index, candidate.discard, candidate.evaluation, adjustment, forecast,
             candidate.evaluation.utility + adjustment.total(),
             if (exclusion.isEmpty()) adjustment.immediate() + (forecast?.total() ?: candidate.evaluation.utility + adjustment.reserve)
-                else Double.NaN,
+                else null,
             search, forecast?.span ?: "unassessed", forecast != null && forecast.span != "current", exclusion)
     }
 
