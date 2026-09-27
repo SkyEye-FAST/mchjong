@@ -31,6 +31,9 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
     public MchjongNeoForge(IEventBus bus) {
+        net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
+            (net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) ->
+                top.skyeyefast.mchjong.config.ServerPresets.tick(event.getServer()));
         if (net.neoforged.fml.ModList.get().isLoaded("create"))
             top.skyeyefast.mchjong.compat.create.CreateCompat.register(bus);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
@@ -106,7 +109,11 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("11");
+        var registrar = event.registrar("12");
+        registrar.playToServer(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC,
+            (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
+        registrar.playToClient(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload));
         registrar.playToServer(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToServer(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload.CODEC,

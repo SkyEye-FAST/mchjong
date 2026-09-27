@@ -31,6 +31,7 @@ final class ResourcePackSmoke {
     private Path localBackArchive;
     private Path localStickArchive;
     private Path localVoiceArchive;
+    private Path serverConfig;
     private List<String> selected;
     private int stage, ticks;
 
@@ -49,7 +50,7 @@ final class ResourcePackSmoke {
                 tileImage(images.resolve(key + ".png"), key);
             localArchive = client.gameDirectory.toPath().resolve("config/mchjong/presets/faces/local.zip");
             archive(localArchive, "custom", "Local Test", images);
-            Path serverConfig = output.resolve("server-config");
+            serverConfig = output.resolve("server-config");
             archive(serverConfig.resolve("mchjong/server-presets/faces/server.zip"), "server", "Server Test", images);
             Path backImage = output.resolve("back.png");
             backPattern(backImage);
@@ -123,6 +124,8 @@ final class ResourcePackSmoke {
             require(maxY > .07f, "Native riichi model override was not baked");
             client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
                 new top.skyeyefast.mchjong.network.StickChoicePayload(ResourceLocation.parse("smoke:server_stick"))));
+            client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
+                new top.skyeyefast.mchjong.network.VoiceChoicePayload(ResourceLocation.parse("smoke:server_voice"))));
             var id = client.player.getUUID();
             pending = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
@@ -139,6 +142,14 @@ final class ResourcePackSmoke {
             pending.join();
             require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName())
                 .equals(ResourceLocation.parse("smoke:server_stick")), "Shared stick selection was not synchronized");
+            require(VoicePresets.forPlayer(client.player.getGameProfile().getName())
+                .equals(ResourceLocation.parse("smoke:server_voice")), "Shared voice selection was not synchronized");
+            var listenerVoice = top.skyeyefast.mchjong.client.TableSettings.get().voicePreset;
+            top.skyeyefast.mchjong.client.TableSettings.get().voicePreset = VoicePresets.DEFAULT;
+            VoicePresets.play("ron", 1, VoicePresets.forPlayer(client.player.getGameProfile().getName()), true);
+            require(VoicePresets.playing(), "Remote speaker recording did not play with a different listener selection");
+            VoicePresets.stop();
+            top.skyeyefast.mchjong.client.TableSettings.get().voicePreset = listenerVoice;
             button(client, "box.mchjong.preset_choice").onPress();
             require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
                 "Face preset screen did not open");
@@ -146,8 +157,10 @@ final class ResourcePackSmoke {
                 "Server preset missing from selector");
             stage = 21; ticks = 0;
         } else if (stage == 21 && ticks > 4) {
+            button(client, "preset.mchjong.source.server").onPress();
             SmokeScreenshots.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
             require(TileFacePresets.choices().contains(CUSTOM), "New preset missing from selector");
+            button(client, "preset.mchjong.source.local").onPress();
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
                 .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
@@ -160,6 +173,7 @@ final class ResourcePackSmoke {
             button(client, "box.mchjong.back_choice").onPress();
             stage = 31; ticks = 0;
         } else if (stage == 31 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxBackScreen && ticks > 5) {
+            button(client, "preset.mchjong.source.local").onPress();
             SmokeScreenshots.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
@@ -198,6 +212,7 @@ final class ResourcePackSmoke {
             button(client, "settings.mchjong.personal_presets").onPress();
             stage = 82; ticks = 0;
         } else if (stage == 82 && client.screen instanceof top.skyeyefast.mchjong.client.PersonalPresetsScreen && ticks > 5) {
+            button(client, "preset.mchjong.source.local").onPress();
             SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(640, 480);
             client.resizeDisplay();
@@ -244,12 +259,27 @@ final class ResourcePackSmoke {
             stage = 87; ticks = 0;
         } else if (stage == 87 && voiceDecode.isDone() && ticks > 5) {
             voiceDecode.join();
+            backArchive(localBackArchive, "custom_back", "Reloaded Local Back", output.resolve("back.png"));
+            backArchive(serverConfig.resolve("mchjong/server-presets/backs/server.zip"), "server_back", "Reloaded Server Back", output.resolve("back.png"));
+            byte[] recording;
+            try (var sound = client.getResourceManager().open(ResourceLocation.parse("minecraft:sounds/random/click.ogg"))) {
+                recording = sound.readAllBytes();
+            }
+            voiceArchive(localVoiceArchive, "custom_voice", "Reloaded Local Voice", recording);
+            stage = 88; ticks = 0;
+        } else if (stage == 88 && TileBackPresets.label(ResourceLocation.parse("smoke:server_back")).getString().equals("Reloaded Server Back")
+                && TileBackPresets.label(ResourceLocation.parse("smoke:custom_back")).getString().equals("Reloaded Local Back")
+                && VoicePresets.label(ResourceLocation.parse("smoke:custom_voice")).getString().equals("Reloaded Local Voice")) {
+            if (client.screen.children().stream().noneMatch(child -> child instanceof net.minecraft.client.gui.components.Button button
+                && button.getMessage().getString().equals("Reloaded Local Voice"))) return false;
             client.screen.onClose();
             client.screen.onClose();
             stage = 84; ticks = 0;
         } else if (stage == 84 && ticks > 10) {
             require(RiichiStickPresets.forPlayer(client.player.getGameProfile().getName()).equals(RiichiStickPresets.DEFAULT),
                 "Client-only stick selection was shared with the server");
+            require(VoicePresets.forPlayer(client.player.getGameProfile().getName()).equals(VoicePresets.DEFAULT),
+                "Client-only voice selection was shared with the server");
             var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
             screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             stage = 6; ticks = 0;
@@ -266,6 +296,14 @@ final class ResourcePackSmoke {
             Files.delete(localBackArchive);
             Files.delete(localStickArchive);
             Files.delete(localVoiceArchive);
+            for (String kind : List.of("faces", "backs", "sticks", "voices"))
+                Files.delete(serverConfig.resolve("mchjong/server-presets/" + kind + "/server.zip"));
+            stage = 89; ticks = 0;
+        } else if (stage == 89 && !TileFacePresets.choices().contains(CUSTOM) && !TileFacePresets.choices().contains(SERVER)
+                && !VoicePresets.choices().contains(ResourceLocation.parse("smoke:custom_voice"))
+                && !VoicePresets.choices().contains(ResourceLocation.parse("smoke:server_voice"))) {
+            require(!TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back")), "Deleted server back remained loaded");
+            require(!RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:server_stick")), "Deleted server stick remained loaded");
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;

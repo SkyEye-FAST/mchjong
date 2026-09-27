@@ -26,6 +26,7 @@ public final class TileBackPresets {
     private TileBackPresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
+    public static PresetSource source(ResourceLocation id) { return PresetSource.of(server.containsKey(id), local.containsKey(id)); }
     public static Component label(ResourceLocation id) {
         if (DEFAULT.equals(id)) return Component.translatable("preset.mchjong.default_back");
         if (id.getPath().equals("creeper") && BuiltinPresets.BACKS.contains(id))
@@ -98,6 +99,7 @@ public final class TileBackPresets {
         return Map.copyOf(result);
     }
     private static void update() {
+        PresetSource.changed();
         var ids = new HashSet<>(local.keySet());
         ids.addAll(server.keySet());
         choices = java.util.stream.Stream.concat(java.util.stream.Stream.of(DEFAULT),

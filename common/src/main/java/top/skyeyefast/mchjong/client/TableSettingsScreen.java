@@ -105,6 +105,8 @@ public final class TableSettingsScreen extends Screen {
         }
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
             settings.reset(); TableAudio.settingsChanged(); parent.resetView(); init();
+            RiichiStickPresets.sendChoice();
+            VoicePresets.sendChoice();
         }).bounds(left, height - 30, column, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(left + column + 6, height - 30, column, 20).build().primary());

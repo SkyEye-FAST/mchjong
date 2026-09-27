@@ -9,9 +9,12 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(11)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(12)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
+            .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) payload.handle(context.getSender());
+            })
             .addMain(BoxPrintPayload.TYPE, BoxPrintPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
@@ -34,6 +37,8 @@ final class ForgeNetworking {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .clientbound()
+            .addMain(VoiceAppearancePayload.TYPE, VoiceAppearancePayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload))
             .addMain(TableViewPayload.TYPE, TableViewPayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientTableNetworking.receive(payload))
             .addMain(ReplayPayload.TYPE, ReplayPayload.CODEC,

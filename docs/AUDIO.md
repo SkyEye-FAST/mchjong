@@ -8,8 +8,11 @@ selected `ron` recording. Minecraft's accessibility narration has independent
 controls.
 
 Choose a voice preset in room Settings → Personal → Personal presets. The
-selection and voice volume belong to the local player. **Selected preset** plays
-that player's declarations and winning-hand recordings; **Off** silences recordings while retaining effects.
+selection belongs to the player, while playback volume belongs to each listener.
+**Selected preset** plays declarations and winning-hand recordings with the
+speaker's selected server voice. Players hear their own local voice selection on
+their client. Nearby spectators also hear players' declarations. **Off** silences
+recordings while retaining effects.
 Missing recordings stay silent. The default voice preset uses the selected
 Minecraft resource pack's `mchjong:voice.*` events.
 
@@ -41,7 +44,10 @@ The default events remain silent until a resource pack supplies recordings.
 
 Put client voice ZIPs in `config/mchjong/presets/voices/`. Put server voice ZIPs
 in `config/mchjong/server-presets/voices/`. The server sends its presets to all
-joining players. A client-only ZIP affects that player's playback. Each ZIP
+joining players and refreshes online players when the archives change. Selecting
+a server voice shares that choice so other players hear the speaker's recordings.
+A client-only ZIP affects that player's playback. The selector separates Server
+and Local presets, marks built-in entries in Server, and shows names and IDs in tooltips. Each ZIP
 contains only voice presets and may contain several of them:
 
 ```text
@@ -80,8 +86,8 @@ Hand grades use `score.mangan`, `score.haneman`, `score.baiman`,
 A preset needs at least one
 recording. Use Ogg Vorbis, mono or stereo, at 8–96 kHz. **Each recording must be
 at most 8 seconds long.** Both the archive reader and the client decoder enforce
-the limit. Restart the server after changing server ZIPs; reload client
-resources after changing local ZIPs. The sound engine reads these files from
+the limit. Local and server ZIP changes load automatically after two stable
+one-second directory checks. The sound engine reads these files from
 the ZIP data in memory.
 
 ## Default resource-pack voices

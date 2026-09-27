@@ -27,6 +27,7 @@ public final class RiichiStickPresets {
     private RiichiStickPresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
+    public static PresetSource source(ResourceLocation id) { return PresetSource.of(server.containsKey(id), local.containsKey(id)); }
     public static Definition definition(ResourceLocation id) {
         return server.getOrDefault(id, local.get(id));
     }
@@ -105,6 +106,7 @@ public final class RiichiStickPresets {
         return Set.copyOf(result);
     }
     private static void update() {
+        PresetSource.changed();
         var ids = new HashSet<>(local.keySet()); ids.addAll(server.keySet());
         choices = java.util.stream.Stream.concat(java.util.stream.Stream.of(DEFAULT),
             java.util.stream.Stream.concat(BuiltinPresets.STICKS.stream(),

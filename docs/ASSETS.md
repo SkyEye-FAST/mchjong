@@ -52,12 +52,18 @@ individual source images. The white dragon image is included; its printed face
 remains blank. The client assembles the images into render textures at load time.
 A ZIP can contain several `<namespace>/<name>/` directories.
 Each ZIP belongs to its category directory and contains only face presets.
-Reload client resources after changing local ZIPs.
+Local and server preset directories are checked once per second. Adding, replacing
+or removing a ZIP reloads that collection after its file metadata stays stable
+across two checks. Open selectors refresh automatically. Their Server and Local
+tabs separate the effective sources; the Server tab marks built-in entries.
+Each preset tooltip shows its
+display name and persistent ID. A server preset takes precedence over a local
+preset with the same ID.
 
 Printing stores only the preset ID on tiles and synchronizes it with table
 appearance. To offer face presets to every player, place ZIP archives in the server's
-`config/mchjong/server-presets/faces/` directory and restart the server. The mod sends the
-configured images to connecting players and adds them to their mahjong box
+`config/mchjong/server-presets/faces/` directory. The mod sends the
+configured images to connecting players and every online player after a change, adding them to their mahjong box
 selectors. ZIPs in a client's `config/mchjong/presets/faces/` directory add presets to
 that client's selector; other players without those images see default Kansai faces.
 The server validates the physical set,
@@ -158,7 +164,7 @@ Back presets are ZIP archives in `config/mchjong/presets/backs/` on a client or
 Several back presets can share one ZIP, which contains only back presets.
 The mahjong box's back selector applies
 the chosen preset to its stored tiles independently of dye. Server presets are
-sent to joining players; an unavailable ID uses the transparent default pattern.
+sent to joining players and refreshed for online players; an unavailable ID uses the transparent default pattern.
 The built-in back choices are Creeper and Mojang banner marks in a single ink
 color. Their artwork is generated with the mod and is available to every player
 without a preset ZIP.
