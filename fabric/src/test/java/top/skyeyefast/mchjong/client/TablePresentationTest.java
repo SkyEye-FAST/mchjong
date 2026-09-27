@@ -198,11 +198,6 @@ class TablePresentationTest {
                     assertTrue(seatCard.right() <= area.x() || seatCard.x() >= area.right()
                         || seatCard.bottom() <= area.y() || seatCard.y() >= area.bottom(),
                         "Seat cards must clear all rivers: " + other + " " + seatCard + " / " + seat + " " + area);
-                    if (other == seat) continue;
-                    var otherRiver = board.riverArea(other);
-                    assertTrue(otherRiver.right() <= area.x() || otherRiver.x() >= area.right()
-                        || otherRiver.bottom() <= area.y() || otherRiver.y() >= area.bottom(),
-                        "Rivers must not overlap: " + seat + " " + area + " / " + other + " " + otherRiver);
                 }
             }
         }

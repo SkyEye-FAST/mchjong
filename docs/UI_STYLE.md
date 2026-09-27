@@ -207,9 +207,11 @@ the other tiles in their row, matching seated play. The viewer's rows grow
 toward the foreground, the opposite rows recede toward the far rail, and the side rivers
 remain broad enough to read rather than becoming screen-edge strips. Keep opponent hands
 and melds on the same outer rail, with melds anchored at the owner's right-hand end.
-Place the local portrait plaque beside the private hand and opponent plaques beside
-their rails. Keep every plaque clear of hands, melds and rivers. They contain only
-portrait, name, wind and score; turn, riichi and presence use small marks. The central
+Place compact player plaques at the matching canvas edges: self at the bottom-left,
+opponents at the left, right and top center. Keep every plaque clear of hands, melds
+and rivers. Reserve the space beside the local plaque for footer help and keep its
+furiten badge below it. Each plaque contains only portrait, name, wind and score;
+turn, riichi and presence use small marks. The central
 device carries the round, remaining tiles, turn direction and graphical honba/riichi
 point sticks with counts. It must not spell out honba or deposits.
 Use the same resource-pack tile faces and server-issued actions as seated play.
