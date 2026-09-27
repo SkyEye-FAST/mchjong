@@ -80,6 +80,7 @@ internal class BotDefence(
 
     private fun risk(threat: Threat, kind: Int): Double {
         if (contains(threat.river, kind)) return 0.0 // Genbutsu applies to this opponent only.
+        if (threat.riichi && contains(view.riichiSafeTiles().getOrDefault(threat.seat, 0L), kind)) return 0.0
         val pair = when (known[kind]) {
             4 -> 0.0
             3 -> 0.10

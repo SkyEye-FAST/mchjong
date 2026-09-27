@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.engine;
 
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 
 /** The live S2C view. Private hands are redacted; completed replays use a separate authorized channel. */
@@ -11,9 +12,10 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
                         HandVisibility handVisibility, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
-                        boolean ronBlocked, int riichiHan) {
+                        boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles) {
     // ronBlocked and riichiHan describe only the recipient. riichiHan is the
     // established declaration, or the current declaration's one/two-han value.
+    // riichiSafeTiles contains public passed-discard kind masks, keyed by target seat.
     /** Public physical positions only: slot indices never reveal a concealed tile identity. */
     public record Handling(int builtWalls, int sourceSlot, int packetSize, int diceOne, int diceTwo, boolean diceHeld) {}
     public record Seat(boolean entityBot, String name, boolean occupied, boolean bot, boolean ready, int points,
@@ -32,5 +34,6 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
         wins = List.copyOf(wins); deltas = List.copyOf(deltas); finalScores = List.copyOf(finalScores);
         finalUma = List.copyOf(finalUma);
         clocks = List.copyOf(clocks); finalRanks = List.copyOf(finalRanks);
+        riichiSafeTiles = Map.copyOf(riichiSafeTiles);
     }
 }

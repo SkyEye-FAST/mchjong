@@ -1189,7 +1189,8 @@ public final class Game {
             timeControl, clocks, finalRanks, handVisibility, exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
-            viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1);
+            viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1,
+            recorder == null ? Map.of() : recorder.riichiSafeTiles());
     }
 
     /** Rewards remain queued for disconnected participants until their player is online. */

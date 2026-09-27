@@ -15,8 +15,9 @@ Kotlin API, even though its JVM entry points are callable from Java.
 `BotAnalysis` receives only a recipient view. Opponents' hand contents, physical
 copy numbers, wall order and seed do not enter evaluation. Physical identities
 serve visible-tile deduplication and selecting a canonical physical copy of an
-equivalent legal action only. The view additionally supplies only the recipient's
-temporary/permanent ron block and established/current declaration's riichi han.
+equivalent legal action only. The view additionally supplies the recipient's
+temporary/permanent ron block, established/current declaration's riichi han, and
+public per-opponent masks of passed discards after accepted riichi.
 Availability starts with the selected 136/108-tile composition and subtracts
 visible ordinary/red faces separately. Moving a discard to the river does not
 restore availability. A simulated draw consumes one available face.
@@ -42,8 +43,8 @@ These roots have their own decision-local cache and do not consume
 the general three-root budget. `HandAnalyzer.bestDiscardEfficiency` uses the
 library's best-shanten mode: advancing draws have a minimum of zero, so every tied
 tenpai discard is retained, including regular and special-hand alternatives,
-while retreat branches are omitted. Non-advancing draws retain the immediate estimate;
-this horizon is exhaustive for immediate tenpai advances, not for all future play.
+while retreat branches are omitted. This horizon exhaustively covers immediate
+tenpai advances and compares bounded same-shanten improvements.
 
 The general search expands at most three roots and 37 draw categories per root.
 Two-shanten and more distant hands consider all discard faces and score only the
@@ -85,10 +86,11 @@ mandatory dragon yakuhai are accounted for before combining evidence. Route
 retention is capped below a shanten step; it does not replace the offensive
 retreat gate or public-information defence.
 
-An undeclared closed hand receives a distance-discounted riichi option in both
-route retention and conditional payout when the deposit and remaining-wall
-conditions permit it. Both levels retain this option. Opening loses that option
-and any closed-only routes through the resulting-hand evaluation. Calls compare
+An undeclared closed hand receives a distance-discounted riichi option in route
+retention when the deposit and remaining-wall conditions permit it. Conditional
+payout includes one han for the completed declaration. Both levels retain the
+option. Opening loses that option and any closed-only routes through the
+resulting-hand evaluation. Calls compare
 this with the unchanged PASS state, including shanten, live advances and value;
 their separate safety adjustment depends on public threat pressure.
 
@@ -159,7 +161,10 @@ scoring with the conditional ura scenarios described above.
 
 `BotDefence` builds a separate threat and risk vector for every opponent using
 public riichi, meld/yakuhai content, exposed bonuses, dealer status and elapsed
-turns. Genbutsu is opponent-specific. Suji only reduces the sequence component;
+turns. Genbutsu is opponent-specific. Discards that pass the ron response window
+after an accepted riichi are also safe against that player. Public event order
+establishes this evidence; confirmed kan/north declarations clear that player's
+accumulated mask. Suji only reduces the sequence component;
 walls and visible honor counts retain residual pair/special-hand risk. Several
 weak signals combine to increase discard risk, balanced against remaining draw
 opportunities before triggering full defensive folding.
