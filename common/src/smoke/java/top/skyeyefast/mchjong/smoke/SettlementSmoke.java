@@ -271,7 +271,7 @@ final class SettlementSmoke {
     static void acceptFixture(MahjongTableBlockEntity table, TableView view) {
         table.acceptView(view);
         var room = table.clientRoom();
-        table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.invitationTeleport(),
+        table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.invitationTeleport(), room.convenienceHints(),
             room.seating(), room.availableWinds(), room.seats(), view.phase() == Game.Phase.MATCH_END
                 ? ScoreAnnouncements.maximumTicks(view.wins()) + Game.SETTLEMENT_TICKS
                 : view.phase() == Game.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0,

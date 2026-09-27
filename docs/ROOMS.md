@@ -9,6 +9,10 @@ display, input, camera and audio settings remain local to each player. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
+The room host can enable **Tenpai hints** in Settings → Room during preparation.
+The room shares this choice with every participant. When enabled, the table
+shows waits and unseen-copy counts from each player's authorized view.
+
 ## World policy
 
 Each world save has `config/mchjong-world.toml`, shared by all dimensions and

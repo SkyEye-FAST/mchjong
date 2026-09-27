@@ -46,6 +46,9 @@ public final class TableOptionsScreen extends Screen {
             entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), canEditWorld(),
                 () -> setWorld("invitationTeleport", !room.invitationTeleport())));
         } else if (tab == 1) {
+            entries.add(new Entry(toggle("settings.mchjong.convenience_hints", room.convenienceHints()), host && lobby,
+                () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
+                    view.decision(), !room.convenienceHints())));
             entries.add(new Entry(Component.translatable("settings.mchjong.hand_visibility",
                 Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))),
                 host && lobby, () -> {
@@ -75,7 +78,11 @@ public final class TableOptionsScreen extends Screen {
             var button = MahjongButton.create(entry.label(), ignored -> entry.action().run())
                 .bounds(left, 84 + row * 24, span, 20).build();
             button.active = entry.enabled();
-            button.setTooltip(Tooltip.create(tab == 0 && !canEditWorld() ? Component.translatable("settings.mchjong.world_locked") : entry.label()));
+            Component help = tab == 0 && !canEditWorld() ? Component.translatable("settings.mchjong.world_locked")
+                : tab == 1 && page * rows + row == 0
+                    ? entry.label().copy().append("\n").append(Component.translatable("settings.mchjong.convenience_hints_help"))
+                    : entry.label();
+            button.setTooltip(Tooltip.create(help));
             addRenderableWidget(button);
         }
         if (pages > 1) {
