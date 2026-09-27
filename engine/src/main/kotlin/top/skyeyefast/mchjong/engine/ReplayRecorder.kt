@@ -25,11 +25,6 @@ internal class ReplayRecorder(game: Game) {
 
     fun riichiSafeTiles(): Map<Int, Long> = RiichiSafety.from(events)
 
-    /** Export only the selected player's initial hand and public events, never the wall. */
-    fun mjai(seat: Int): List<Map<String, Any>> = MjaiProtocol.hand(
-        seat, round, dealer, honba, sticks, initialPoints, initialHands, initialDora, events,
-    )
-
     fun draw(seat: Int, tile: Int) {
         events += ReplayHand.Event(DRAW, seat, tile, null, false, false, true)
     }

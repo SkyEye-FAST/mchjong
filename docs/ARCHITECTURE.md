@@ -227,15 +227,7 @@ copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent
 evidence) beneath `TrainingBot` action selection. `HandBonuses` and call-discard
 restrictions are shared with engine execution. Recipient-only furiten and
 riichi-han fields support exact self-state simulation. See [BOTS.md](BOTS.md)
-for the search boundary and opt-in paired comparison command.
-
-`BotPreset` separates administrator-owned process commands from public preset
-choices. `MjaiProtocol` exports recipient-safe recorder events and maps responses
-to legal engine actions; `MjaiClient` owns one seat's subprocess and
-`MjaiSession` bounds asynchronous requests and their deadlines. Table unloading
-and match closure release subprocesses. Protocol failures pause the table and
-its clocks. Server startup reads the shared `config/BotPresets` registry, while
-room saves retain only the selected preset identity.
+for the search boundary.
 
 `TableAnimation` tracks recipient-safe snapshots by table identity, hand number,
 and viewing permission. Visible physical tile identities follow hand/river/meld

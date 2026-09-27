@@ -695,10 +695,8 @@ public final class TableScreen extends Screen {
                 && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var state = room.seats().get(seat);
             int current = !player.bot() ? -1 : state.difficulty().ordinal();
-            if (!state.botPreset().isEmpty()) for (int i = 0; i < room.botPresets().size(); i++)
-                if (room.botPresets().get(i).id().equals(state.botPreset())) current = i + 2;
             int next = -1, index = -1;
-            for (int candidate = current + 1; candidate < room.botPresets().size() + 2; candidate++) {
+            for (int candidate = current + 1; candidate < top.skyeyefast.mchjong.engine.BotDifficulty.values().length; candidate++) {
                 int action = TableSeatsScreen.find(view, Action.Type.SET_BOT, List.of(seat, candidate));
                 if (action >= 0) { next = candidate; index = action; break; }
             }
@@ -709,9 +707,8 @@ public final class TableScreen extends Screen {
             var button = MahjongButton.create(label, ignored -> send(view, selected))
                 .bounds(8 + seat * (cardWidth + 4), 56, cardWidth, 20)
                 .tooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable("room.mchjong.bot_next", next < 0
-                    ? Component.translatable("room.mchjong.empty") : next < 2
-                    ? Component.translatable(top.skyeyefast.mchjong.engine.BotDifficulty.values()[next].translationKey())
-                    : Component.literal(room.botPresets().get(next - 2).name()))))).build();
+                    ? Component.translatable("room.mchjong.empty")
+                    : Component.translatable(top.skyeyefast.mchjong.engine.BotDifficulty.values()[next].translationKey()))))).build();
             button.active = index >= 0 && view.exitVote() == null;
             addRenderableWidget(button);
         }
@@ -1000,14 +997,6 @@ public final class TableScreen extends Screen {
         }
         if (!TableResults.available(view) || immersive && results == null)
             information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), tileBackPreset(), board);
-        if (room() != null && room().botFailed()) {
-            var lines = font.split(Component.translatable("room.mchjong.bot_failed"), layoutWidth - 32);
-            int y = layoutHeight / 2;
-            for (var line : lines) {
-                graphics.drawCenteredString(font, line, layoutWidth / 2, y, MahjongUi.NEGATIVE);
-                y += font.lineHeight;
-            }
-        }
         if (view.phase() == Game.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {

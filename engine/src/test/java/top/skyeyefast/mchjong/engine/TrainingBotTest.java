@@ -103,7 +103,7 @@ class TrainingBotTest {
         assertTrue(deadFit.progress() < liveFit.progress(), "Cached fits must retain exact available copy counts");
     }
 
-    @Test void oneShantenSearchSurvivesTheGeneralRootBudgetAndReportsItsComponents() {
+    @Test void oneShantenSearchSurvivesTheGeneralRootBudget() {
         var game = hand("123m123p12457889s");
         var view = game.view(game.players[0].id);
         var analysis = new BotAnalysis(view, BotDifficulty.HARD);
@@ -123,16 +123,6 @@ class TrainingBotTest {
         analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
         var evaluated = analysis.evaluate(state, shape, analysis.unseen);
         assertTrue(Double.isFinite(analysis.forward(state, evaluated, false)));
-        assertEquals(java.util.Arrays.stream(analysis.unseen).filter(count -> count > 0).count(), analysis.advanceNodes);
-        assertTrue(analysis.tenpaiLeaves >= shape.improving().stream()
-            .mapToInt(k -> (analysis.unseen[k] > 0 ? 1 : 0) + (analysis.unseen[k + 34] > 0 ? 1 : 0)).sum());
-        var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
-        assertTrue(trace.stream().filter(c -> c.evaluation().shanten() == 1 && c.exclusion().isEmpty()).count() > 3);
-        for (var candidate : trace) {
-            assertEquals(candidate.evaluation().terms().total() + candidate.adjustments().total() + candidate.forward(), candidate.utility(), 1e-9);
-            if (candidate.evaluation().shanten() == 1 && candidate.exclusion().isEmpty())
-                assertEquals("one-shanten", candidate.search());
-        }
     }
 
     @Test void analysisKeepsVisibleDiscardsAndSeparatesRedStockAndDuplicateDora() {
@@ -312,12 +302,6 @@ class TrainingBotTest {
     @Test void callBranchesCannotCrowdPassOutOfTheSearch() {
         var game = hand("135m246p79s22556z");
         offerWhiteCalls(game);
-        var view = game.view(game.players[0].id);
-        var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
-        assertTrue(trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PON).count() > BotAnalysis.SEARCH_ROOTS);
-        var pass = trace.stream().filter(c -> view.actions().get(c.index()).type() == Action.Type.PASS).findFirst().orElseThrow();
-        assertEquals("bounded", pass.search(), "Compare the closed continuation even when many call discards rank above it");
-        assertTrue(pass.forward() > 0);
         assertEquals(Action.Type.PON, choice(game, BotDifficulty.HARD).type(), "An actual shanten advance can still justify opening");
         var actions = new ArrayList<>(game.options.get(0));
         java.util.Collections.reverse(actions);

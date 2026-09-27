@@ -50,7 +50,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
-        game.configureBots(top.skyeyefast.mchjong.config.BotPresets.all());
         game.configureWorld(policy.invitationTeleport());
         synchronizeEquipment();
         if (game.phase() == Game.Phase.LOBBY && !equipment.canSupplyReds(game.rules().sanma(), game.rules().redFives()))
@@ -573,7 +572,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     @Override public void load(CompoundTag tag) {
-        if (game != null) game.closeBots();
         super.load(tag);
         equipment.load(tag);
         if (tag.contains("boxes")) {
@@ -600,8 +598,4 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         equipment.writeAppearance(tag);
     }
 
-    @Override public void setRemoved() {
-        if (game != null) game.closeBots();
-        super.setRemoved();
-    }
 }

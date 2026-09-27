@@ -79,23 +79,11 @@ final class RoomFlowSmoke {
             var pos = table.getBlockPos();
             var rules = view.rules().preset();
             work = client.getSingleplayerServer().submit(() -> {
-                try {
-                    var directory = output.resolve("bot-config").toAbsolutePath();
-                    java.nio.file.Files.createDirectories(directory.resolve("mchjong"));
-                    String executable = Path.of(System.getProperty("java.home"), "bin",
-                        System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java").toString();
-                    var preset = new top.skyeyefast.mchjong.engine.BotPreset("smoke-local", "Local mjai / ローカル / 本地",
-                        rules, List.of(executable, "-version"), directory.toString(), 5);
-                    java.nio.file.Files.writeString(directory.resolve("mchjong/bots.json"), TableNetworking.JSON.toJson(List.of(preset)));
-                    top.skyeyefast.mchjong.config.BotPresets.load(directory);
-                    var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
-                    var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                    serverTable.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(rules.defaultRedFives()));
-                    var game = serverTable.participantGame(player);
-                    game.configureRules(id, game.view(id).decision(), rules.config());
-                    require(game.roomView().botPresets().stream().anyMatch(choice -> choice.id().equals("smoke-local") && choice.compatible()),
-                        "Configured mjai preset did not become available");
-                } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                serverTable.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(rules.defaultRedFives()));
+                var game = serverTable.participantGame(player);
+                game.configureRules(id, game.view(id).decision(), rules.config());
             });
             resize(client, false);
             next(8);
