@@ -76,6 +76,32 @@ public final class Game {
     boolean manual;
     ManualHandling handling = new ManualHandling();
     List<Integer> suppliedTiles;
+    private transient List<BotPreset> botPresets = List.of();
+    private transient MjaiSession[] botSessions = new MjaiSession[4];
+    private transient boolean botFailed;
+
+    public void configureBots(List<BotPreset> presets) {
+        var checked = List.copyOf(presets);
+        if (checked.size() > 12 || checked.stream().map(BotPreset::id).distinct().count() != checked.size())
+            throw new IllegalArgumentException("At most twelve distinct mjai presets are allowed");
+        if (checked.equals(botPresets)) return;
+        closeBots();
+        botPresets = checked;
+        botFailed = false;
+        decision++; revision++;
+    }
+
+    public void closeBots() {
+        if (botSessions != null) for (var session : botSessions) if (session != null) session.close();
+        botSessions = new MjaiSession[4];
+    }
+
+    private List<BotPreset> availableBots() { return botPresets == null ? List.of() : botPresets; }
+
+    public MjaiProtocol.Position mjaiPosition(int seat) {
+        if (seat < 0 || seat >= rules.players() || recorder == null) throw new IllegalArgumentException("No active bot hand");
+        return new MjaiProtocol.Position(handNumber, seat, recorder.mjai(seat), view(players[seat].id));
+    }
 
     public Game(UUID tableId, RuleSet rules, long seed) {
         this(tableId, rules.config(), seed);
@@ -162,7 +188,14 @@ public final class Game {
 
     void finishReplay() {
         if (recorder == null || replay == null) return;
-        replay = replay.append(recorder.finish(this), phase == Phase.MATCH_END);
+        var completed = recorder.finish(this);
+        replay = replay.append(completed, phase == Phase.MATCH_END);
+        if (botSessions != null) for (int seat = 0; seat < rules.players(); seat++) {
+            var session = botSessions[seat];
+            if (session == null) continue;
+            if (session.stale(decision)) { session.close(); botSessions[seat] = null; }
+            else session.finish(handNumber, seat, recorder.mjai(seat), MjaiProtocol.result(completed, phase == Phase.MATCH_END));
+        }
         archiveQueue.removeIf(match -> match.id().equals(replay.id()));
         archiveQueue.add(replay);
         recorder = null;
@@ -216,9 +249,10 @@ public final class Game {
         for (int i = 0; i < rules.players(); i++) {
             var player = players[i];
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
-                seating.winds[i], player.bot ? player.botDifficulty : null));
+                seating.winds[i], player.bot ? player.botDifficulty : null, player.botPreset));
         }
-        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks());
+        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks(),
+            availableBots().stream().map(preset -> preset.choice(rules)).toList(), botFailed);
     }
 
     private int settlementTicks() {
@@ -345,6 +379,8 @@ public final class Game {
     }
 
     private void closeMatch() {
+        closeBots();
+        botFailed = false;
         // Completed hands remain queued for archival; an unfinished hand is not a settlement.
         recorder = null;
         replay = null;
@@ -470,6 +506,7 @@ public final class Game {
         if (!bot.entityBot) bot.name = "Bot " + (seat + 1);
         bot.bot = bot.ready = true;
         bot.botDifficulty = difficulty;
+        bot.botPreset = "";
     }
 
     private boolean fullRoom() {
@@ -516,8 +553,13 @@ public final class Game {
                 for (int target = 0; target < rules.players(); target++) {
                     var player = players[target];
                     if (target != seat && (player.id == null || player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
-                        for (var difficulty : BotDifficulty.values()) if (!player.bot || difficulty != player.botDifficulty)
+                        for (var difficulty : BotDifficulty.values()) if (!player.bot || !player.botPreset.isEmpty() || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
+                        for (int preset = 0; preset < availableBots().size(); preset++) {
+                            var bot = availableBots().get(preset);
+                            if (bot.supports(rules) && !bot.id().equals(player.botPreset))
+                                actions.add(new Action(SET_BOT, List.of(target, BotDifficulty.values().length + preset)));
+                        }
                         if (player.bot) actions.add(new Action(REMOVE_BOT, target));
                     }
                     if (target != seat && player.id != null && !player.bot) actions.add(new Action(TRANSFER_HOST, target));
@@ -545,6 +587,7 @@ public final class Game {
 
     /** Reject stale, replayed, out-of-range, and out-of-turn requests without mutating state. */
     public boolean act(UUID actor, long expectedDecision, int actionIndex) {
+        if (botFailed && phase != Phase.LOBBY) return false;
         int seat = seatOf(actor);
         if (seat < 0 || expectedDecision != decision) return false;
         var legal = actions(seat);
@@ -560,7 +603,12 @@ public final class Game {
                 case FILL_BOTS -> {
                     for (int i = 0; i < rules.players(); i++) if (players[i].id == null) setBot(i, BotDifficulty.EASY);
                 }
-                case SET_BOT -> setBot(action.tiles().get(0), BotDifficulty.values()[action.tiles().get(1)]);
+                case SET_BOT -> {
+                    int target = action.tiles().get(0), preset = action.tiles().get(1);
+                    setBot(target, preset < BotDifficulty.values().length ? BotDifficulty.values()[preset] : BotDifficulty.EASY);
+                    if (preset >= BotDifficulty.values().length)
+                        players[target].botPreset = availableBots().get(preset - BotDifficulty.values().length).id();
+                }
                 case REMOVE_BOT -> {
                     int target = action.tiles().get(0);
                     players[target] = new PlayerState();
@@ -663,6 +711,8 @@ public final class Game {
 
     private boolean allReady() {
         if (!equipped()) return false;
+        for (var player : players) if (player.bot && !player.botPreset.isEmpty()
+            && availableBots().stream().noneMatch(preset -> preset.id().equals(player.botPreset) && preset.supports(rules))) return false;
         if (phase == Phase.LOBBY && seating.stage != RoomSeating.Stage.POSITIONING) return false;
         for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
         if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++)
@@ -799,7 +849,7 @@ public final class Game {
         }
         // A bot always takes a legal ron. Record it before publishing call-only
         // choices so a lower-priority call cannot hold up the settlement.
-        for (int i = 0; i < rules.players(); i++) if (players[i].bot) {
+        for (int i = 0; i < rules.players(); i++) if (players[i].bot && players[i].botPreset.isEmpty()) {
             int ron = indexOf(options.get(i), RON);
             if (ron >= 0) {
                 act(players[i].id, decision, ron);
@@ -969,6 +1019,7 @@ public final class Game {
             if (remaining % 20 == 0) revision++;
             return;
         }
+        if (botFailed) return;
         age++;
         if (age <= 0) return;
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
@@ -1030,7 +1081,26 @@ public final class Game {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
-                    act(players[seat].id, decision, TrainingBot.choose(view(players[seat].id), players[seat].botDifficulty));
+                    if (!players[seat].botPreset.isEmpty() && (phase == Phase.TURN || phase == Phase.REACTION)) {
+                        if (botFailed) return;
+                        try {
+                            if (botSessions == null) botSessions = new MjaiSession[4];
+                            if (botSessions[seat] != null && botSessions[seat].stale(decision)) {
+                                botSessions[seat].close(); botSessions[seat] = null;
+                            }
+                            if (botSessions[seat] == null) {
+                                String id = players[seat].botPreset;
+                                var preset = availableBots().stream().filter(bot -> bot.id().equals(id) && bot.supports(rules))
+                                    .findFirst().orElseThrow(() -> new IllegalStateException("Unavailable mjai preset: " + id));
+                                botSessions[seat] = new MjaiSession(preset);
+                            }
+                            int selected = botSessions[seat].poll(mjaiPosition(seat));
+                            if (selected >= 0) act(players[seat].id, decision, selected);
+                        } catch (RuntimeException error) {
+                            closeBots(); botFailed = true; revision++;
+                            System.getLogger(Game.class.getName()).log(System.Logger.Level.WARNING, "Mjai bot stopped", error);
+                        }
+                    } else act(players[seat].id, decision, TrainingBot.choose(view(players[seat].id), players[seat].botDifficulty));
                     return;
                 }
             }
@@ -1164,6 +1234,9 @@ public final class Game {
         for (PlayerState player : players) {
             Objects.requireNonNull(player.autoPlay);
             Objects.requireNonNull(player.botDifficulty);
+            Objects.requireNonNull(player.botPreset);
+            if (!player.botPreset.isEmpty() && (!player.bot || !player.botPreset.matches("[a-z0-9][a-z0-9_.-]{0,47}")))
+                throw new IllegalStateException("Invalid bot preset");
             if (player.entityBot && (!player.bot || player.id == null)) throw new IllegalStateException("Invalid entity bot");
             if (player.presence == null) player.presence = PlayerPresence.SEATED;
             if (player.presence != PlayerPresence.AWAY) player.awayTicks = 0;

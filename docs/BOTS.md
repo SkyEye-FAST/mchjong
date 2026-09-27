@@ -166,6 +166,72 @@ one-draw/discard horizon.
 
 ## Reproduction
 
+### External mjai opponents
+
+Server administrators can register up to twelve local computer-player presets in
+`config/mchjong/bots.json`. Restart the server after editing this file. Each entry
+has a stable ID, a display name, a four-player rule preset and an executable command:
+
+```json
+[
+  {
+    "id": "local-player",
+    "name": "Local player",
+    "rules": "TENHOU_4",
+    "command": ["/opt/bot/bin/python", "/srv/bot/mortal.py", "{seat}"],
+    "directory": "/srv/bot",
+    "timeoutSeconds": 30
+  }
+]
+```
+
+Use absolute paths for the executable and working directory; Windows paths may
+use forward slashes. Arguments are passed directly to the executable, and `{seat}`
+is replaced with its seat number, 0–3. The administrator supplies the program,
+dependencies and model weights separately. Each program's own configuration
+selects its model. The registered rule preset must match the table's complete
+default configuration. Choose a profile that the external program supports.
+
+The host cycles through compatible presets using the existing computer-player
+control. Selection and seating preserve the preset ID. Changing table rules
+requires selecting compatible computer players before starting. Clients receive
+only IDs and display names; executable paths and arguments stay on the server.
+
+The process speaks the Mortal dialect of mjai: UTF-8, one JSON event per line,
+with `can_act: false` for history updates and `can_act: true` for a decision.
+History updates produce no stdout response. A decision produces one action line,
+including `none` when passing. Diagnostic output belongs on stderr. A `reach`
+response receives the corresponding `reach` event and must then return `dahai`;
+the adapter combines these into the engine's legal riichi discard. Settlement
+events finish each hand. A newly started process receives the current hand's
+recipient-safe history, including after a world reload.
+
+Initial opponent hands and their draws use `?`, regardless of room visibility.
+The process receives public declarations, discards, calls and indicators, together
+with its own hand. Every response is checked against server-issued legal actions,
+including red tiles and call targets. Inference runs in bounded background workers;
+the timeout covers process startup and the decision. Invalid output, process exit
+or timeout pauses table automation and clocks with a visible error. Correct the
+server setup and reload the saved table, or use the existing end-match control.
+Unloading or ending a table closes its subprocesses.
+
+For a paired development comparison, save a single preset object (the entry
+above, without the outer array) to a local file and run:
+
+```text
+./gradlew :engine:botCompare -PbotArgs='mjai /absolute/path/reference.json HARD 4 74291' --console=plain
+```
+
+This rotates one external player through each seat against three built-in players
+of the selected difficulty, using the same seeds as the built-in comparison.
+`-PbotInspect` saves up to 300 differing decisions, the external response metadata
+and recipient views in `engine/build/mjai-disagreements-<id>-<level>.json`. Model
+startup contributes to the external timing totals. Use identical seeds, rotations,
+rules and weights for a before/after comparison, and check an independent seed range
+before drawing conclusions about strength.
+
+### Built-in opponents
+
 `./gradlew :engine:botCompare -PbotArgs=measure --console=plain` runs an explicit
 warm-up and decision timing experiment. It prints wall-clock mean/percentiles
 and decision-thread `cpu_ms` using JDK thread CPU accounting. CPU time helps
@@ -205,7 +271,8 @@ a strength ordering or require every auxiliary metric to improve monotonically.
 
 ## Persistence
 
-Room saves encode difficulty by enum name and require current EASY/HARD values.
-Validation rejects unknown values; the table loader retains the original
-unreadable save. Client and server use matching builds. Lobby requests select a
-server-issued action index with its decision token.
+Room saves retain built-in difficulty and the external preset ID, while process
+configuration stays in the server configuration directory. Validation checks
+stored identities; unavailable or incompatible external presets prevent match
+start. Client and server use matching builds. Lobby requests select a server-issued
+action index with its decision token.

@@ -11,6 +11,7 @@ final class PlayerState {
     boolean bot;
     boolean entityBot;
     BotDifficulty botDifficulty = BotDifficulty.EASY;
+    String botPreset = "";
     transient PlayerPresence presence = PlayerPresence.SEATED;
     transient int awayTicks;
     boolean ready;

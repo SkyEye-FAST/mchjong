@@ -86,14 +86,16 @@ drawn wind stays with that place, so replacing a participant neither redraws nor
 duplicates a wind. Removing a bot makes the place available to a human. Standing
 up during repositioning preserves the reservation; Leave room releases it.
 
-## Bot difficulties
+## Computer players
 
-Each bot can be set to Easy or Hard during any waiting-room stage.
+Each bot can be set to Easy, Hard or a compatible server-configured mjai preset during any waiting-room stage.
 Changing the roster or difficulty clears human readiness. Bots remain ready while
 humans reposition themselves.
 
-The control in each empty or bot-occupied top seat card cycles through Empty, Easy
-and Hard. A physically seated human cannot be replaced; their control is
+The control in each empty or bot-occupied top seat card cycles through Easy, Hard,
+compatible custom presets and Empty. Administrators register programs and their
+locally supplied models following [Computer-player configuration](BOTS.md#external-mjai-opponents).
+A physically seated human cannot be replaced; their control is
 reserved for transferring room ownership. Fill empty seats adds Easy bots.
 
 Easy prioritizes current shanten, live improving tiles and retaining value, with
