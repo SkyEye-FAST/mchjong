@@ -25,12 +25,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     @JvmField
     var drawNodes = 0
 
-    @JvmField
-    var advanceNodes = 0
-
-    @JvmField
-    var tenpaiLeaves = 0
-
     class State(
         hand: kotlin.collections.List<Int>,
         melds: kotlin.collections.List<Meld>,
@@ -133,7 +127,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         val reserve: Double,
         val riichi: Double,
         val win: Double,
-        val span: String,
     ) {
         fun total(): Double = endpoint - danger + reserve - riichi + win
     }
@@ -208,7 +201,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     fun forward(state: State, baseline: Evaluation, replacement: Boolean): Forecast {
         val distance = distance(state)
         if (!replacement && !canReachNextTurn(state))
-            return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
+            return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
         if (!replacement && baseline.shanten == 1) {
             return advances.getOrPut(state) { advance(state, baseline, distance) }
         }
@@ -256,7 +249,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 val result = continuation(withDraw, next, candidateShape, evaluated, remaining, replacement, distance)
                 if (best == null || result.total() > best.total()) best = result
             }
-            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
+            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
             endpoint += count * result.endpoint
             danger += count * result.danger
             reserve += count * result.reserve
@@ -264,9 +257,8 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             win += count * result.win
             total += count
         }
-        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
-        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, win / total,
-            if (replacement) "replacement" else "next-turn")
+        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, win / total)
     }
 
     /** All advancing tenpai discards, plus bounded same-shanten improvements.
@@ -281,7 +273,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         for (face in unseen.indices) {
             val count = unseen[face]
             if (count == 0) continue
-            advanceNodes++
             val remaining = unseen.clone()
             remaining[face]--
             val withDraw = state.draw(tile(face))
@@ -309,19 +300,18 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 }
             }
             for ((next, shape, evaluated) in leaves) {
-                if (shape.shanten == 0) tenpaiLeaves++
                 val result = continuation(withDraw, next, shape, evaluated, remaining, false, distance)
                 if (best == null || result.total() > best.total()) best = result
             }
-            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
+            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
             endpoint += count * result.endpoint
             danger += count * result.danger
             reserve += count * result.reserve
             riichi += count * result.riichi
             total += count
         }
-        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0, "current")
-        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, 0.0, "next-turn")
+        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, 0.0)
     }
 
     private fun selectLeaves(before: State, candidates: List<Pair<State, TileEfficiency>>,
@@ -382,7 +372,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         }
         val discard = tile(removedFace(before, next))
         return Forecast(utility, defence.penalty(discard, defence.mode(selected)), defence.reserve(next),
-            riichi, 0.0, if (replacement) "replacement" else "next-turn")
+            riichi, 0.0)
     }
 
     fun riichiCost(hand: Evaluation, remaining: Int = view.remaining()): Double {

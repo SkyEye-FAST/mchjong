@@ -7,16 +7,9 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
-### Added
-
-- Three-player local mjai presets with north-extraction events and a Mortal package runner.
-- Offline Mortal review of sampled built-in match decisions, with same-state legal-action Q differences for four-player and three-player models and staged riichi diagnostics.
-- Public decision-feature reports joined with settled discard outcomes for computer-player diagnostics.
-- Reproducible computer-player experiments with frozen executable snapshots, per-match reports, sampled decision traces and paired seed-level confidence intervals.
-- Server-configured computer-player presets using local mjai subprocesses and separately supplied models, with recipient-safe history, asynchronous decisions and paired comparison tooling.
-
 ### Changed
 
+- Keep computer-player selection on the built-in Easy and Hard opponents.
 - Reuse evaluated search leaves when comparing computer-player continuations.
 - Recognize resolved post-riichi discards as opponent-specific safe tiles and price incomplete closed-hand riichi scenarios consistently.
 - Expand HARD's one-shanten search to compare non-advancing shape improvements, and weigh push/fold commitments by public opponent pressure and visible tile stock.
@@ -26,7 +19,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Compare searched bot actions at a common decision horizon, retain distinct candidate routes within the search budget, and expose pruning and future risk in diagnostics.
+- Compare searched bot actions at a common decision horizon and retain distinct candidate routes within the search budget.
 - Provide Kotlin's enum API on loader IDE classpaths and remove unused Java imports.
 - Avoid transient Java nullness warnings during IDE project import.
 - Remove unused Java declarations and a constant-only smoke assertion, and align IDE suppression diagnostics with compiler requirements.

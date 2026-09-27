@@ -2,9 +2,8 @@ package top.skyeyefast.mchjong.engine;
 
 /** Public room metadata, separate from private tiles and room rule configuration. */
 public record RoomView(int host, boolean invitationTeleport, RoomSeating.Stage seating, int availableWinds,
-                       java.util.List<Seat> seats, int settlementTicks, java.util.List<BotPreset.Choice> botPresets,
-                       boolean botFailed) {
-    public RoomView { seats = java.util.List.copyOf(seats); botPresets = java.util.List.copyOf(botPresets); }
+                       java.util.List<Seat> seats, int settlementTicks) {
+    public RoomView { seats = java.util.List.copyOf(seats); }
     /** Presence is null only for an empty seat. Virtual bots are always seated; companions use their mounts. */
-    public record Seat(PlayerPresence presence, int wind, BotDifficulty difficulty, String botPreset) {}
+    public record Seat(PlayerPresence presence, int wind, BotDifficulty difficulty) {}
 }

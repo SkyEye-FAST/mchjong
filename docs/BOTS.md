@@ -50,7 +50,7 @@ The general search expands at most three roots and 37 draw categories per root.
 Roots are selected from speed, value and defence non-dominated candidates;
 the unchanged PASS or discard and a replacement declaration receive reserved
 consideration when relevant. Static utility orders equal-priority work, while
-unexpanded routes are recorded as pruned and do not compete against a next-turn
+unexpanded routes do not compete against a next-turn
 forecast. At distant leaves, two non-dominated continuations retain distinct
 speed, value and safety; near readiness, every tenpai continuation is scored;
 in particular, dama retains its option to discard the drawn tile when compared
@@ -64,8 +64,7 @@ Replacement declarations require a searched continuation within the bounded budg
 Continuation leaves use immediate efficiency and legal wait value. Current action
 costs and the terminal state use one common utility scale; an expanded candidate
 adds the next discard's risk once at that later step. No-next-turn decisions use
-the current state as their common endpoint. The trace reports the endpoint span,
-search status, pruning reason and utility components.
+the current state as their common endpoint.
 
 ## Incomplete-hand routes
 
@@ -77,7 +76,7 @@ also consumes distinct kinds, so a quad cannot count as two chiitoitsu pairs.
 Pinfu and outside-hand fits inspect retained heads, complete groups and fragments,
 with pinfu distinguishing two-sided support from edge/closed fragments.
 
-The diagnostic `missing` value is a structural deficit, not another exact shanten
+The `missing` value is a structural deficit, not another exact shanten
 number. Its exponential decay supplies gradual `progress` as supporting tiles are
 kept or discarded. This is heuristic evidence, not a calibrated completion
 probability or a legal-yaku assertion. A target requiring unavailable copies is
@@ -197,206 +196,3 @@ declared hand still compares legal replacement actions with its forced discard.
 The search models a conditional next own turn and stops when the public remaining
 draw count cannot reach that turn, evaluating candidate choices over this
 one-draw/discard horizon.
-
-## Reproduction
-
-### External mjai opponents
-
-Server administrators can register up to twelve local computer-player presets in
-`config/mchjong/bots.json`. Restart the server after editing this file. Each entry
-has a stable ID, a display name, a three- or four-player rule preset and an executable command:
-
-```json
-[
-  {
-    "id": "local-player",
-    "name": "Local player",
-    "rules": "TENHOU_4",
-    "command": ["/opt/bot/bin/python", "/srv/bot/mortal.py", "{seat}"],
-    "directory": "/srv/bot",
-    "timeoutSeconds": 30
-  }
-]
-```
-
-Use absolute paths for the executable and working directory; Windows paths may
-use forward slashes. Arguments are passed directly to the executable, and `{seat}`
-is replaced with its seat number, 0–2 or 0–3. The administrator supplies the program,
-dependencies and model weights separately. Each program's own configuration
-selects its model. The registered rule preset must match the table's complete
-default configuration. Choose a profile that the external program supports.
-
-For a separately installed Mortal three-player package, the repository's
-`tools/mortal3p_mjai.py` serves the package through this protocol. Use a CPython
-3.12 environment with PyTorch, NumPy, Requests and Loguru installed, and point the last
-argument at the directory containing `mjai_bot/mortal3p/mortal.pth`:
-
-```json
-{
-  "id": "mortal3p-local",
-  "name": "Mortal three-player",
-  "rules": "MAHJONG_SOUL_3",
-  "command": ["/absolute/path/to/python3.12", "/absolute/path/to/mchjong/tools/mortal3p_mjai.py", "/absolute/path/to/mortal-package"],
-  "directory": "/absolute/path/to/mortal-package",
-  "timeoutSeconds": 60
-}
-```
-
-The runner uses local inference and does not enable the package's optional
-online service. Keep the separately supplied model and native library together.
-
-The host cycles through compatible presets using the existing computer-player
-control. Selection and seating preserve the preset ID. Changing table rules
-requires selecting compatible computer players before starting. Clients receive
-only IDs and display names; executable paths and arguments stay on the server.
-
-The process speaks the Mortal dialect of mjai: UTF-8, one JSON event per line,
-with `can_act: false` for history updates and `can_act: true` for a decision.
-History updates produce no stdout response. A decision produces one action line,
-including `none` when passing. Diagnostic output belongs on stderr. A `reach`
-response receives the corresponding `reach` event and must then return `dahai`;
-the adapter combines these into the engine's legal riichi discard. Settlement
-events finish each hand. A newly started process receives the current hand's
-recipient-safe history, including after a world reload.
-
-Initial opponent hands and their draws use `?`, regardless of room visibility.
-Three-player histories keep an inert fourth mjai array slot with zero points,
-as required by the three-player native parser. Only seats 0–2 act. North
-extraction is sent as `nukidora`, followed by its replacement draw.
-The process receives public declarations, discards, calls and indicators, together
-with its own hand. Every response is checked against server-issued legal actions,
-including red tiles and call targets. Inference runs in bounded background workers;
-the timeout covers process startup and the decision. Invalid output, process exit
-or timeout pauses table automation and clocks with a visible error. Correct the
-server setup and reload the saved table, or use the existing end-match control.
-Unloading or ending a table closes its subprocesses.
-
-For a paired development comparison, save a single preset object (the entry
-above, without the outer array) to a local file and run:
-
-```text
-./gradlew :engine:botCompare -PbotArgs='mjai /absolute/path/reference.json HARD 4 74291' --console=plain
-```
-
-This rotates one external player through each seat against three built-in players
-of the selected difficulty, using the same seeds as the built-in comparison.
-`-PbotInspect` saves a deterministic reservoir sample of up to 300 differing
-decisions, with seed/seat, external response metadata and recipient views in
-`engine/build/mjai-disagreements-<id>-<level>.json`. Equivalent physical copies
-of the same tile face count as the same decision; red and ordinary fives remain
-distinct. A staged `reach` response retains the following discard response as
-well. Inspect one entry with `-PbotArgs='inspect /absolute/path/sample.json 0'`.
-Model startup contributes to the external timing totals. Use identical seeds, rotations,
-rules and weights for a before/after comparison, and check an independent seed range
-before drawing conclusions about strength.
-
-To review decisions from an actual completed built-in match, run the optional
-teacher command with the same rule preset. It records up to the requested
-number of decision positions during built-in play, then reviews those fixed
-histories after the match; the external teacher does not control any move:
-
-```text
-./gradlew :engine:botCompare -PbotArgs='teacher build/mortal-hard.json HARD 1 74291 24 build/study/teacher-dev.jsonl' --console=plain
-```
-
-Each JSONL row contains the recipient-safe mjai history, legal view, executed and
-teacher actions, and candidate diagnostics for disagreements. When the teacher
-returns masked Q values, `teacherQMinusBuiltInQ` compares only legal alternatives
-from that same state. It is a model Q difference, not a point-loss estimate or a
-calibrated win probability. The `reach` choice is compared at its first protocol
-stage; when both choose `reach` but differ on the discard, the second response
-supplies the discard Q comparison. A distinct concealed or added kan uses Mortal's
-kan-selection metadata when present. Missing metadata or a masked action leaves the
-Q difference unavailable. Three-player models use their own action index map,
-including north extraction, for the same comparison.
-Each sampled position starts an independent teacher
-session so the teacher's earlier recommendations cannot alter its replayed history.
-
-Add `-PbotReport=build/study/before-1.jsonl` to write each completed match's
-seed, rotation, rules, points and ranks. The file is replaced when that run starts.
-Give separate runs unique filenames. Compare two filename prefixes after all
-rotations finish:
-
-```text
-./gradlew :engine:botCompare -PbotArgs='paired build/study/before- build/study/after-' --console=plain
-```
-
-The report rejects duplicate or incomplete seed/seat pairs and mismatched rules or
-opponents. It reports the built-in field's mean points and rank, plus paired 95%
-bootstrap intervals for their changes. A seed with all its seat rotations is one
-sampling unit; the three built-in players and four rotations are correlated.
-Use separate development and holdout seeds, select the candidate on development
-results, and evaluate the holdout once. An interval spanning zero does not establish
-an improvement. This measures strength against the selected opponent and rules.
-
-Add `-PbotRiskReport=build/risk/run` to capture each executed discard's public
-decision features and join them with its settled ron outcome. Files use
-`<prefix>-<seed>-<rotation>.jsonl`; direct snapshot runs use
-`-Dbot.riskReport=build/risk/run`. Each row includes role, shanten, live advances,
-estimated value, threat pressure, danger, attack/defence mode, discarded tile,
-winning seats and actual loss. Feature estimates use HARD for both roles.
-Deal-in rows also retain the recipient view from before execution. Labels are
-assigned after settlement; they never enter player decisions. These are outcomes
-under the observed policy, so group rates are descriptive rather than calibrated
-probabilities for unchosen actions. Diagnostic collection adds work outside the
-reported decision timer; run latency measurements separately.
-
-For concurrent experiments, `:engine:botSnapshot -PbotRevision=before` freezes
-compiled classes and runtime libraries under `engine/build/bot-snapshots/before`.
-From the `engine` directory, run that snapshot using JDK 21:
-
-```text
-java -Dbot.report=build/study/before-1.jsonl -cp "build/bot-snapshots/before/classes;build/bot-snapshots/before/lib/*" top.skyeyefast.mchjong.engine.BotComparison mjai /absolute/path/reference.json HARD 4 74291
-```
-
-Use `:` as the classpath separator on Unix. Preserve each revision's snapshot and
-the same external configuration/weights throughout an experiment. Measure latency
-separately with the machine idle, using the same warm-up and input positions.
-
-### Built-in opponents
-
-`./gradlew :engine:botCompare -PbotArgs=measure --console=plain` runs an explicit
-warm-up and decision timing experiment. It prints wall-clock mean/percentiles
-and decision-thread `cpu_ms` using JDK thread CPU accounting. CPU time helps
-distinguish computation from scheduling delays; it excludes work on other JVM
-threads and is not a replacement for the server-visible wall-clock latency.
-`-PbotArgs='4 TENHOU_4 HARD EASY'`
-runs paired seeds 74291 onward, rotating the challenger through every seat
-against a homogeneous opponent field. Use `MAHJONG_SOUL_3` for three players.
-`-PbotArgs='suite 4 2'` runs timings and HARD versus EASY with four seeds in
-four-player play and two seeds in three-player play (22 matches total).
-An optional final seed argument, e.g. `-PbotArgs='suite 8 8 106601'`, selects an
-independent seed range. `-PbotProfile` enables JDK Flight Recorder and saves the
-slowest recipient snapshots plus early unannounced retreats in `engine/build`.
-Use `-PbotArgs='position build/bot-slow-HARD.json'` to time one saved position,
-or `inspect` in place of `position` to print candidate analysis. Inspection runs
-the same candidate selection/search as play and includes calls with their planned
-discards, pruning reasons, evaluation span, route deficits/progress, selected plans,
-legal waits, speed/retention/value/legality terms, current action costs, next-turn
-components and final utility. `-PbotArgs='hand 123m123p12457889s'` inspects a compact fixture;
-append `legal` to generate riichi actions as well. `opening 74318` inspects a
-seeded opening; append `MAHJONG_SOUL_3` to inspect a three-player opening.
-These inputs are confined to the development harness.
-`-PbotArgs='tables 4 12000 MAHJONG_SOUL_3 HARD'` interleaves four actual `Game.tick()`
-loops on one thread, including their usual decision pacing. This measures the
-engine's aggregate tick cost, excluding Minecraft's rendering, networking and
-other server work; it is not a live-server TPS test.
-This reuses `GameLifecycleTest` startup and actual engine actions/settlements;
-the experiment is outside `check` and `buildAll`.
-
-The comparison also prints scored-yaku occurrence counts per role. A winning hand
-can contribute several different yaku; these counts are not disjoint percentages.
-Win/deal-in rates use player-hands, multiple ron counts a deal-in once per
-discarder/hand, win value excludes honba/deposits and follows the actual
-three/four-player payment schedule. Points and rank are final match outcomes.
-Decisions include forced actions; timings are wall-clock JVM measurements.
-Seat rotations sharing a seed are correlated, and small samples cannot prove
-a strength ordering or require every auxiliary metric to improve monotonically.
-
-## Persistence
-
-Room saves retain built-in difficulty and the external preset ID, while process
-configuration stays in the server configuration directory. Validation checks
-stored identities; unavailable or incompatible external presets prevent match
-start. Client and server use matching builds. Lobby requests select a server-issued
-action index with its decision token.
