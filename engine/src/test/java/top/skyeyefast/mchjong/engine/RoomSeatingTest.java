@@ -28,6 +28,23 @@ class RoomSeatingTest {
         for (var human : humans) act(game, human, Action.Type.READY);
     }
 
+    @Test void seatingRequiresEquipmentBeforeLeavingTheLobby() {
+        var game = room(true, 4);
+        var tiles = game.suppliedTiles;
+        int begin = game.view(id(0)).actions().indexOf(new Action(Action.Type.BEGIN_SEATING));
+        long decision = game.decision;
+        assertTrue(begin >= 0);
+
+        assertTrue(game.configureEquipment(true, List.of()));
+        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.BEGIN_SEATING));
+        assertFalse(game.act(id(0), decision, begin));
+        assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
+
+        assertTrue(game.configureEquipment(true, tiles));
+        act(game, id(0), Action.Type.BEGIN_SEATING);
+        assertEquals(RoomSeating.Stage.DRAWING, game.roomView().seating());
+    }
+
     @Test void companionsKeepTheirIdentityThroughSeatingDifficultyChangesAndReloads() {
         var game = room(false, 1);
         UUID maid = id(8);

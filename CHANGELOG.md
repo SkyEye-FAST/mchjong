@@ -15,6 +15,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Show missing table supplies in the lobby before seat confirmation.
 - Preserve hand order when automatic sorting is turned off and support drag reordering with an upward discard threshold.
 - Keep immersive view active when an exit vote opens.
 - Disable invitations for friends who are already seated in the room.
