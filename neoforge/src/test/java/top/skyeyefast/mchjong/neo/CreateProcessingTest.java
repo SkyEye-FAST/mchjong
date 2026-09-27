@@ -81,6 +81,17 @@ class CreateProcessingTest {
             assertFalse(BasinRecipe.apply(basin, recipes.getFirst()), "A stale transaction cannot be repeated");
 
             clear(basin);
+            for (var input : List.of(blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
+                    new ItemStack(MahjongContent.MAHJONG_DYE)))
+                assertTrue(net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(basin.inputInventory, input, false).isEmpty());
+            assertNull(CreateProcessing.pressing(stacks(basin.inputInventory)),
+                "Incomplete blanks must wait for a full printing batch, even before the plate arrives");
+            assertTrue(net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(basin.inputInventory, plate.copy(), false).isEmpty());
+            assertNull(CreateProcessing.pressing(stacks(basin.inputInventory)),
+                "The plate must not make an incomplete printing batch available");
+            assertEquals(19, total(basin.inputInventory));
+
+            clear(basin);
             var pair = List.of(printed, printed.copy(), new ItemStack(Items.BLUE_DYE));
             for (var input : pair)
                 assertTrue(net.neoforged.neoforge.items.ItemHandlerHelper.insertItemStacked(basin.inputInventory, input.copy(), false).isEmpty(),

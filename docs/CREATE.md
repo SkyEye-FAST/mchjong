@@ -51,9 +51,9 @@ components. The result has Kansai faces, with four ordinary copies of each numbe
 and one of each flower: 144 tiles total.
 
 The plate is returned as a separate output. Route it back to the printing basin
-with a filtered return line. Feed the plate before the blanks and box so the
-press reserves that basin for printing rather than packing. Previously packed
-blanks can also be completed to 144 and printed with the same operation.
+with a filtered return line. The press waits for the full printing batch before
+moving blank tiles into the box. A box already holding blanks can be completed
+to 144 and printed with the same operation.
 
 Keep a complete output route available for both the box and plate. A blocked
 output pauses processing without consuming materials. Printing retains the blank
