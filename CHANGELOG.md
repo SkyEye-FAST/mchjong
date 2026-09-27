@@ -49,7 +49,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Dedicated voice and sound event distinguishing double riichi declarations.
 - Configurable match rule awarding player experience points according to final uma standings.
 - Create workshop recipe animations across recipe viewers, including REI recipe support on NeoForge.
-- Gradual, copy-aware yaku route evaluation for training opponents, with candidate utility diagnostics, compact position inspection, scored-yaku comparison statistics.
+- Gradual, copy-aware yaku route evaluation for training opponents.
 
 ### Changed
 
@@ -60,7 +60,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Synchronize corner meld placement and hand clearance to both compatibility profiles, plus Ponder overlay placement to 1.20.1, and advance the release branch pins.
 - Synchronize post-0.7.2 changes across the Minecraft 1.20.1, 1.21.1 and 26.1.2 loader profiles, with signed branch ancestry and reviewed release pins.
 - Face and back presets use paginated box screens, with four sample tiles for each face design and one Mahjong dye consumed per successful change.
-- Explicit bot timings include decision-thread CPU time alongside wall-clock latency.
 - Client and server mod settings are stored in TOML format (`mchjong.toml` and `mchjong-client.toml`).
 - Create workshop Kansai face printing uses a single face plate.
 - Training route matching uses packed copy-capacity caches, reusable group masks, sparse target checks, direct pair/companion evaluation and conservative head bounds. Cached continuation ordering retains deterministic ties, and exact one-shanten advances use every tied best-shanten discard from the library.
