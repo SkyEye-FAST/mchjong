@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.art;
 
 import java.awt.Color;
-import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
 
 /** A polished ivory die with recessed pips, drawn without antialiasing at 32 pixels. */

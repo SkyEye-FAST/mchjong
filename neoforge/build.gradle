@@ -92,6 +92,7 @@ dependencies {
         runtimeOnly "net.createmod.ponder:ponder-neoforge:${ponder_version}+mc${minecraft_version}"
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlin_version}"
     jarJar project(path: ':engine', configuration: 'embeddedEngine')
     additionalRuntimeClasspath project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")

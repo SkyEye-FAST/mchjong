@@ -73,6 +73,7 @@ dependencies {
     implementation minecraft.dependency("net.minecraftforge:forge:${minecraft_version}-${forge_version}")
     compileOnly "com.electronwill.night-config:toml:${night_config_version}"
     implementation project(path: ':engine', configuration: 'embeddedEngine')
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlin_version}"
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
     compileOnly "mezz.jei:jei-${minecraft_version}-common-api:${jei_version}"
     compileOnly "mezz.jei:jei-${minecraft_version}-forge-api:${jei_version}"

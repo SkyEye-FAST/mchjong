@@ -52,6 +52,7 @@ dependencies {
         modLocalRuntime "net.createmod.ponder:ponder-fabric:${ponder_version}+mc${minecraft_version}"
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlin_version}"
     include project(path: ':engine', configuration: 'embeddedEngine')
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
