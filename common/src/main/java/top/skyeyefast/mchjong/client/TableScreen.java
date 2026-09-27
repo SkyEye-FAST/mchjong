@@ -1158,10 +1158,11 @@ public final class TableScreen extends Screen {
 
     private void renderFooter(GuiGraphics graphics, Component text, int color) {
         int scale = immersive ? 2 : 1;
+        int left = immersive ? 208 : 10;
         graphics.pose().pushPose();
-        graphics.pose().translate(10, uiHeight() - 13 * scale, 0);
+        graphics.pose().translate(left, uiHeight() - 13 * scale, 0);
         graphics.pose().scale(scale, scale, 1);
-        int available = (uiWidth() - (hints.visible ? 48 * scale : 20)) / scale;
+        int available = (uiWidth() - left - (hints.visible ? 48 * scale : 10)) / scale;
         graphics.drawString(font, font.plainSubstrByWidth(text.getString(), available), 0, 0, color, true);
         graphics.pose().popPose();
     }

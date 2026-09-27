@@ -70,10 +70,10 @@ final class ImmersiveTable {
 
     static TableBoard.Rect card(int side) {
         return switch (side) {
-            case 1 -> new TableBoard.Rect(900, 446, 166, 72);
-            case 3 -> new TableBoard.Rect(220, 170, 166, 72);
-            case 2 -> new TableBoard.Rect(840, 170, 166, 72);
-            default -> new TableBoard.Rect(220, 492, 180, 72);
+            case 1 -> new TableBoard.Rect(1106, 108, 166, 48);
+            case 3 -> new TableBoard.Rect(8, 108, 166, 48);
+            case 2 -> new TableBoard.Rect(557, 8, 166, 48);
+            default -> new TableBoard.Rect(12, 722, 180, 48);
         };
     }
 
