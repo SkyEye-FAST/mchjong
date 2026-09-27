@@ -38,6 +38,7 @@ public final class VoicePresets {
     private static Map<ResourceLocation, byte[]> localAudio = Map.of(), serverAudio = Map.of();
     private static volatile Map<ResourceLocation, byte[]> audio = Map.of();
     private static List<ResourceLocation> choices = List.of(DEFAULT);
+    private static final Map<String, ResourceLocation> playerVoices = new HashMap<>();
     private static SoundInstance current;
     private static ChannelAccess.ChannelHandle channel;
     private static java.util.concurrent.CompletableFuture<?> decoding;
@@ -45,6 +46,16 @@ public final class VoicePresets {
     private VoicePresets() {}
 
     public static List<ResourceLocation> choices() { return choices; }
+    public static PresetSource source(ResourceLocation id) { return PresetSource.of(server.containsKey(id), local.containsKey(id)); }
+    public static void receive(top.skyeyefast.mchjong.network.VoiceAppearancePayload payload) {
+        playerVoices.put(payload.playerName(), payload.preset());
+    }
+    public static ResourceLocation forPlayer(String name) { return playerVoices.getOrDefault(name, DEFAULT); }
+    public static void sendChoice() {
+        var connection = Minecraft.getInstance().getConnection();
+        if (connection != null) connection.send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
+            new top.skyeyefast.mchjong.network.VoiceChoicePayload(TableSettings.get().voicePreset)));
+    }
     public static Component label(ResourceLocation id) {
         if (DEFAULT.equals(id)) return Component.translatable("preset.mchjong.default_voice");
         var definition = server.getOrDefault(id, local.get(id));
@@ -66,9 +77,10 @@ public final class VoicePresets {
     public static void installServer(Map<ResourceLocation, PresetArchives.Voice> presets) throws IOException {
         var loaded = install(presets);
         server = loaded.definitions(); serverAudio = loaded.audio(); update();
+        sendChoice();
     }
     public static void clearServer() {
-        server = Map.of(); serverAudio = Map.of(); update();
+        server = Map.of(); serverAudio = Map.of(); playerVoices.clear(); update();
     }
     private record Loaded(Map<ResourceLocation, Definition> definitions, Map<ResourceLocation, byte[]> audio) {}
     private static Loaded install(Map<ResourceLocation, PresetArchives.Voice> presets) throws IOException {
@@ -108,6 +120,7 @@ public final class VoicePresets {
         } catch (NoSuchAlgorithmException failure) { throw new AssertionError(failure); }
     }
     private static void update() {
+        PresetSource.changed();
         stopCurrent();
         var sounds = new HashMap<>(localAudio); sounds.putAll(serverAudio);
         audio = Map.copyOf(sounds);
@@ -117,10 +130,13 @@ public final class VoicePresets {
     }
 
     public static void play(String event, float volume) {
+        play(event, volume, TableSettings.get().voicePreset, false);
+    }
+
+    public static void play(String event, float volume, ResourceLocation selected, boolean remote) {
         stopCurrent();
         if (volume <= 0 || !MahjongSounds.VOICES.contains(event)) return;
-        var selected = TableSettings.get().voicePreset;
-        var definition = server.getOrDefault(selected, local.get(selected));
+        var definition = remote ? server.get(selected) : server.getOrDefault(selected, local.get(selected));
         var manager = Minecraft.getInstance().getSoundManager();
         if (DEFAULT.equals(selected) || definition == null) {
             current = SimpleSoundInstance.forUI(MahjongSounds.voice(event), 1, volume);

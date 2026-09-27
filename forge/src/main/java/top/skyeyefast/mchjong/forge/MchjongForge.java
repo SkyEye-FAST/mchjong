@@ -30,6 +30,10 @@ public final class MchjongForge {
         var bus = context.getModEventBus();
         if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
             top.skyeyefast.mchjong.compat.create.CreatePlatform.register(bus);
+        MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.TickEvent.ServerTickEvent event) -> {
+            if (event.phase == net.minecraftforge.event.TickEvent.Phase.END)
+                top.skyeyefast.mchjong.config.ServerPresets.tick(event.getServer());
+        });
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
             top.skyeyefast.mchjong.config.ServerPresets.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());

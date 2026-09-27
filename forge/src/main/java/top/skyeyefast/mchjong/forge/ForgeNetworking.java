@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "11").clientAcceptedVersions("11"::equals).serverAcceptedVersions("11"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "12").clientAcceptedVersions("12"::equals).serverAcceptedVersions("12"::equals).simpleChannel();
         channel.messageBuilder(BoxPrintPayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(BoxPrintPayload::write).decoder(BoxPrintPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -41,6 +41,10 @@ final class ForgeNetworking {
         channel.messageBuilder(ReplayPayload.class, 7, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(ReplayPayload::write).decoder(ReplayPayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload)).add();
+        channel.messageBuilder(VoiceChoicePayload.class, 8, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(VoiceChoicePayload::write).decoder(VoiceChoicePayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) payload.handle(context.get().getSender());
+            }).add();
         channel.messageBuilder(StickChoicePayload.class, 9, NetworkDirection.PLAY_TO_SERVER)
             .encoder(StickChoicePayload::write).decoder(StickChoicePayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -51,6 +55,9 @@ final class ForgeNetworking {
         channel.messageBuilder(StickAppearancePayload.class, 11, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(StickAppearancePayload::write).decoder(StickAppearancePayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.RiichiStickPresets.receive(payload)).add();
+        channel.messageBuilder(VoiceAppearancePayload.class, 12, NetworkDirection.PLAY_TO_CLIENT)
+            .encoder(VoiceAppearancePayload::write).decoder(VoiceAppearancePayload::decode)
+            .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload)).add();
         PayloadPackets.initialize(payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_SERVER),
             payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_CLIENT));
     }

@@ -15,6 +15,8 @@ public final class PersonalPresetsScreen extends Screen {
     private int tab;
     private int page;
     private boolean saveFailed;
+    private PresetSource source = PresetSource.SERVER;
+    private int presetRevision;
 
     public PersonalPresetsScreen(TableOptionsScreen parent) {
         super(Component.translatable("settings.mchjong.personal_presets"));
@@ -25,6 +27,7 @@ public final class PersonalPresetsScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets();
+        presetRevision = PresetSource.revision();
         int span = Math.min(440, width - 24), left = (width - span) / 2;
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.stick_preset"), ignored -> {
             tab = 0; page = 0; init();
@@ -32,14 +35,17 @@ public final class PersonalPresetsScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.voice_preset"), ignored -> {
             tab = 1; page = 0; init();
         }).bounds(left + span / 2 + 2, 37, span / 2 - 2, 20).build().selected(tab == 1));
+        source.tabs(left, 61, span, value -> { source = value; page = 0; init(); }).forEach(this::addRenderableWidget);
         var choices = choices();
-        int rows = Math.max(1, (height - 132) / 25);
-        page = net.minecraft.util.Mth.clamp(page, 0, (choices.size() - 1) / rows);
+        int rows = Math.max(1, (height - 156) / 25);
+        page = net.minecraft.util.Mth.clamp(page, 0, Math.max(0, (choices.size() - 1) / rows));
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             ResourceLocation id = choices.get(page * rows + i);
-            addRenderableWidget(MahjongButton.create(tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id),
-                ignored -> choose(id)).bounds(left + (tab == 0 ? 102 : 10), 78 + i * 25,
-                    span - (tab == 0 ? 102 : 10), 20).build()
+            var origin = tab == 0 ? RiichiStickPresets.source(id) : VoicePresets.source(id);
+            addRenderableWidget(MahjongButton.create(origin.caption(tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id)),
+                ignored -> choose(id)).bounds(left + (tab == 0 ? 102 : 10), 90 + i * 25,
+                    span - (tab == 0 ? 102 : 10), 20)
+                .tooltip(PresetSource.tooltip(tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id), id)).build()
                 .selected(id.equals(tab == 0 ? TableSettings.get().riichiStickPreset : TableSettings.get().voicePreset)));
         }
         int navY = height - 56;
@@ -63,6 +69,7 @@ public final class PersonalPresetsScreen extends Screen {
         } else {
             settings.voicePreset = id;
             settings.voiceSource = TableSettings.VoiceSource.SELECTED;
+            VoicePresets.sendChoice();
             TableAudio.settingsChanged();
         }
         try { settings.save(TableSettings.configPath()); saveFailed = false; }
@@ -75,7 +82,7 @@ public final class PersonalPresetsScreen extends Screen {
         int span = Math.min(440, width - 24), left = (width - span) / 2;
         MahjongUi.text(graphics, font, title, left + 10, 16, span - 20, MahjongUi.TEXT, false);
         var choices = choices();
-        int rows = Math.max(1, (height - 132) / 25);
+        int rows = Math.max(1, (height - 156) / 25);
         if (tab == 0) for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             var id = choices.get(page * rows + i);
             if (BuiltinPresets.STICKS.contains(id)) {
@@ -85,9 +92,9 @@ public final class PersonalPresetsScreen extends Screen {
                     case "end_rod" -> Items.END_ROD;
                     default -> throw new IllegalStateException(id.toString());
                 };
-                graphics.renderItem(new ItemStack(item), left + 42, 80 + i * 25);
+                graphics.renderItem(new ItemStack(item), left + 42, 92 + i * 25);
             } else graphics.blit(RiichiStickPresets.texture(id),
-                left + 10, 85 + i * 25, 80, 7, 0, 0, 384, 32, 384, 32);
+                left + 10, 97 + i * 25, 80, 7, 0, 0, 384, 32, 384, 32);
         }
         if (choices.size() > rows) graphics.drawCenteredString(font,
             (page + 1) + " / " + ((choices.size() - 1) / rows + 1), width / 2, height - 51, MahjongUi.MUTED);
@@ -96,7 +103,9 @@ public final class PersonalPresetsScreen extends Screen {
         super.render(graphics, x, y, partialTick);
     }
     private java.util.List<ResourceLocation> choices() {
-        return tab == 0 ? RiichiStickPresets.choices() : VoicePresets.choices();
+        return (tab == 0 ? RiichiStickPresets.choices() : VoicePresets.choices()).stream()
+            .filter(id -> source.includes(tab == 0 ? RiichiStickPresets.source(id) : VoicePresets.source(id))).toList();
     }
+    @Override public void tick() { if (presetRevision != PresetSource.revision()) init(); }
     @Override public void onClose() { minecraft.setScreen(parent); }
 }
