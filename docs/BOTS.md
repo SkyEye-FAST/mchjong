@@ -307,8 +307,8 @@ calibrated win probability. The `reach` choice is compared at its first protocol
 stage; when both choose `reach` but differ on the discard, the second response
 supplies the discard Q comparison. A distinct concealed or added kan uses Mortal's
 kan-selection metadata when present. Missing metadata or a masked action leaves the
-Q difference unavailable. The three-player model's action index map is not
-available in this package, so its review records actions without Q differences.
+Q difference unavailable. Three-player models use their own action index map,
+including north extraction, for the same comparison.
 Each sampled position starts an independent teacher
 session so the teacher's earlier recommendations cannot alter its replayed history.
 

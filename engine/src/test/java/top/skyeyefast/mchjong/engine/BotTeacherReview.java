@@ -141,14 +141,14 @@ final class BotTeacherReview {
 
     static QComparison compareQ(TableView view, Action builtIn, Action teacher,
                                 JsonObject response, JsonObject reachDiscard) {
-        if (view.rules().sanma()) return new QComparison("three-player-q-unmapped", null, null);
         if (builtIn.type() == Action.Type.RIICHI && teacher.type() == Action.Type.RIICHI) {
             return new QComparison("reach-discard", q(reachDiscard, discardIndex(teacher.tiles().getFirst())),
                 q(reachDiscard, discardIndex(builtIn.tiles().getFirst())));
         }
         int teacherIndex = actionIndex(view, teacher);
         int builtInIndex = actionIndex(view, builtIn);
-        if (teacherIndex == 42 && builtInIndex == 42 && !equivalent(builtIn, teacher) &&
+        int kanIndex = view.rules().sanma() ? 39 : 42;
+        if (teacherIndex == kanIndex && builtInIndex == kanIndex && !equivalent(builtIn, teacher) &&
             teacher.type() != Action.Type.OPEN_KAN && builtIn.type() != Action.Type.OPEN_KAN) {
             var meta = response == null || !response.has("meta") ? null : response.getAsJsonObject("meta");
             var select = meta != null && meta.has("kan_select") && meta.get("kan_select").isJsonObject() ?
@@ -179,6 +179,17 @@ final class BotTeacherReview {
     }
 
     private static int actionIndex(TableView view, Action action) {
+        if (view.rules().sanma()) return switch (action.type()) {
+            case DISCARD -> discardIndex(action.tiles().getFirst());
+            case RIICHI -> 37;
+            case PON -> 38;
+            case OPEN_KAN, CLOSED_KAN, ADDED_KAN -> 39;
+            case NUKI -> 40;
+            case RON, TSUMO -> 41;
+            case ABORT_NINE -> 42;
+            case PASS -> 43;
+            default -> -1;
+        };
         return switch (action.type()) {
             case DISCARD -> discardIndex(action.tiles().getFirst());
             case RIICHI -> 37;

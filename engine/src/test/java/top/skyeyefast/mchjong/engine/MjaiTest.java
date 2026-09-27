@@ -212,10 +212,25 @@ class MjaiTest {
         assertEquals(2.5, kan.gap());
         var sanma = GameLifecycleTest.started(RuleSet.TENHOU_3, 74291);
         var sanmaView = sanma.view(sanma.players[sanma.turn].id);
-        var unavailable = BotTeacherReview.compareQ(sanmaView, new Action(Action.Type.DISCARD, normal),
-            new Action(Action.Type.DISCARD, red), first, null);
-        assertEquals("three-player-q-unmapped", unavailable.stage());
-        assertNull(unavailable.gap());
+        var callResponse = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", (1L << 38) | (1L << 43),
+            "q_values", List.of(0.75, -0.25)))).getAsJsonObject();
+        var call = BotTeacherReview.compareQ(sanmaView, new Action(Action.Type.PASS, List.of()),
+            new Action(Action.Type.PON, normal), callResponse, null);
+        assertEquals("action", call.stage());
+        assertEquals(1.0, call.gap());
+        var nukiResponse = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", (1L << kind) | (1L << 40),
+            "q_values", List.of(-0.5, 1.25)))).getAsJsonObject();
+        var nuki = BotTeacherReview.compareQ(sanmaView, new Action(Action.Type.DISCARD, normal),
+            new Action(Action.Type.NUKI, Tile.id(Tile.NORTH, 0, false)), nukiResponse, null);
+        assertEquals(1.75, nuki.gap());
+        var sanmaKanResponse = JSON.toJsonTree(Map.of("meta", Map.of("mask_bits", 1L << 39,
+            "q_values", List.of(0.0), "kan_select", Map.of("mask_bits", (1L << 0) | (1L << 9),
+                "q_values", List.of(-2.0, 0.5))))).getAsJsonObject();
+        var sanmaKan = BotTeacherReview.compareQ(sanmaView,
+            new Action(Action.Type.CLOSED_KAN, Tile.id(0, 0, false)),
+            new Action(Action.Type.CLOSED_KAN, Tile.id(9, 0, false)), sanmaKanResponse, null);
+        assertEquals("kan-select", sanmaKan.stage());
+        assertEquals(2.5, sanmaKan.gap());
     }
 
     private static BotPreset preset(String mode, int timeout) {
