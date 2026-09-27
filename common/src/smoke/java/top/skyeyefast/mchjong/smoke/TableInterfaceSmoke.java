@@ -112,7 +112,7 @@ final class TableInterfaceSmoke {
             null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
                 new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF,
-            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1);
+            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1, java.util.Map.of());
         return state == 2 ? SettlementSmoke.fixture(normal) : normal;
     }
 
