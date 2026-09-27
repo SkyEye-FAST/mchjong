@@ -47,8 +47,9 @@ public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 304);
-        MahjongUi.text(graphics, font, title, (width - Math.min(304, width - 24)) / 2 + 10, 16,
-            Math.min(304, width - 24) - 20, MahjongUi.TEXT, false);
+        MahjongUi.text(graphics, font, Component.translatable("item.mchjong.mahjong_box").append(" › ").append(title),
+            (width - Math.min(304, width - 24)) / 2 + 10, 16,
+            Math.min(304, width - 24) - 20, MahjongUi.ACCENT, false);
         var choices = choices();
         int rows = Math.max(1, Math.min(5, (height - 128) / 25));
         int left = (width - Math.min(304, width - 24)) / 2;
