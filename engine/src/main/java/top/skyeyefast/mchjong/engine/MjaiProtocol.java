@@ -22,13 +22,16 @@ public final class MjaiProtocol {
 
     static List<Map<String, Object>> hand(int seat, int round, int dealer, int honba, int sticks,
             List<Integer> points, List<List<Integer>> hands, List<Integer> dora, List<ReplayHand.Event> events) {
-        if (hands.size() != 4) throw new IllegalArgumentException("Mjai requires four players");
+        int players = hands.size();
+        if ((players != 3 && players != 4) || points.size() != players || seat < 0 || seat >= players)
+            throw new IllegalArgumentException("Invalid mjai seats");
         var result = new ArrayList<Map<String, Object>>();
         var concealed = new ArrayList<List<String>>();
-        for (int i = 0; i < 4; i++) concealed.add(i == seat ? faces(hands.get(i)) : Collections.nCopies(13, "?"));
-        result.add(Map.of("type", "start_kyoku", "bakaze", new String[]{"E", "S", "W", "N"}[round / 4],
-            "kyoku", round % 4 + 1, "oya", dealer, "honba", honba, "kyotaku", sticks,
-            "scores", List.copyOf(points), "tehais", concealed, "dora_marker", tile(dora.get(0))));
+        for (int i = 0; i < players; i++) concealed.add(i == seat ? faces(hands.get(i)) : Collections.nCopies(13, "?"));
+        if (players == 3) concealed.add(Collections.nCopies(13, "?"));
+        result.add(Map.of("type", "start_kyoku", "bakaze", new String[]{"E", "S", "W", "N"}[round / players],
+            "kyoku", round % players + 1, "oya", dealer, "honba", honba, "kyotaku", sticks,
+            "scores", mjaiScores(points), "tehais", concealed, "dora_marker", tile(dora.get(0))));
         for (var event : events) {
             int actor = event.seat();
             switch (event.kind()) {
@@ -62,7 +65,7 @@ public final class MjaiProtocol {
                         }
                     }
                 }
-                case NUKI -> throw new IllegalArgumentException("North extraction is outside four-player mjai");
+                case NUKI -> result.add(Map.of("type", "nukidora", "actor", actor, "pai", tile(event.tile())));
             }
         }
         return List.copyOf(result);
@@ -70,11 +73,18 @@ public final class MjaiProtocol {
 
     private static List<String> faces(List<Integer> tiles) { return tiles.stream().map(MjaiProtocol::tile).toList(); }
 
+    private static List<Integer> mjaiScores(List<Integer> scores) {
+        if (scores.size() != 3) return List.copyOf(scores);
+        var padded = new ArrayList<>(scores);
+        padded.add(0);
+        return List.copyOf(padded);
+    }
+
     static List<Map<String, Object>> result(ReplayHand hand, boolean endGame) {
         var events = new ArrayList<Map<String, Object>>();
-        if (hand.wins().isEmpty()) events.add(Map.of("type", "ryukyoku", "deltas", hand.deltas()));
+        if (hand.wins().isEmpty()) events.add(Map.of("type", "ryukyoku", "deltas", mjaiScores(hand.deltas())));
         else for (var win : hand.wins()) events.add(Map.of("type", "hora", "actor", win.seat(),
-            "target", win.from() < 0 ? win.seat() : win.from(), "deltas", win.deltas(), "ura_markers", faces(hand.ura())));
+            "target", win.from() < 0 ? win.seat() : win.from(), "deltas", mjaiScores(win.deltas()), "ura_markers", faces(hand.ura())));
         events.add(Map.of("type", "end_kyoku"));
         if (endGame) events.add(Map.of("type", "end_game"));
         return List.copyOf(events);
@@ -83,6 +93,7 @@ public final class MjaiProtocol {
     /** Match every claim against the server's legal actions, including red identity and call source. */
     static int action(TableView view, JsonObject response, boolean reach) {
         String type = response.get("type").getAsString();
+        if (reach && !type.equals("dahai")) throw new IllegalArgumentException("Reach must be followed by dahai");
         if (!type.equals("none") && !type.equals("ryukyoku")
             && (!response.has("actor") || response.get("actor").getAsInt() != view.viewerSeat()))
             throw new IllegalArgumentException("Wrong mjai actor");
@@ -94,6 +105,7 @@ public final class MjaiProtocol {
             case "daiminkan" -> Action.Type.OPEN_KAN;
             case "ankan" -> Action.Type.CLOSED_KAN;
             case "kakan" -> Action.Type.ADDED_KAN;
+            case "nukidora" -> Action.Type.NUKI;
             case "hora" -> view.phase() == Game.Phase.TURN ? Action.Type.TSUMO : Action.Type.RON;
             case "ryukyoku" -> Action.Type.ABORT_NINE;
             default -> throw new IllegalArgumentException("Unknown mjai action: " + type);
@@ -107,7 +119,8 @@ public final class MjaiProtocol {
                 if (response.has("target") && response.get("target").getAsInt() == target) return i;
                 continue;
             }
-            if (expected == Action.Type.DISCARD || expected == Action.Type.RIICHI || expected == Action.Type.ADDED_KAN) {
+            if (expected == Action.Type.DISCARD || expected == Action.Type.RIICHI
+                || expected == Action.Type.ADDED_KAN || expected == Action.Type.NUKI) {
                 int tile = action.tiles().get(0);
                 if (!tile(tile).equals(response.get("pai").getAsString())) continue;
                 if (expected != Action.Type.ADDED_KAN && response.has("tsumogiri")

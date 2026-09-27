@@ -33,7 +33,8 @@ public final class BotComparison {
             return;
         }
         if (args[0].equals("opening")) {
-            var game = GameLifecycleTest.started(RuleSet.TENHOU_4, Long.parseLong(args[1]));
+            var rules = args.length > 2 ? RuleSet.valueOf(args[2]) : RuleSet.TENHOU_4;
+            var game = GameLifecycleTest.started(rules, Long.parseLong(args[1]));
             inspect(game.view(game.players[game.turn].id));
             return;
         }

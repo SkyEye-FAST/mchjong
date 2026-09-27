@@ -204,7 +204,7 @@ one-draw/discard horizon.
 
 Server administrators can register up to twelve local computer-player presets in
 `config/mchjong/bots.json`. Restart the server after editing this file. Each entry
-has a stable ID, a display name, a four-player rule preset and an executable command:
+has a stable ID, a display name, a three- or four-player rule preset and an executable command:
 
 ```json
 [
@@ -221,10 +221,29 @@ has a stable ID, a display name, a four-player rule preset and an executable com
 
 Use absolute paths for the executable and working directory; Windows paths may
 use forward slashes. Arguments are passed directly to the executable, and `{seat}`
-is replaced with its seat number, 0–3. The administrator supplies the program,
+is replaced with its seat number, 0–2 or 0–3. The administrator supplies the program,
 dependencies and model weights separately. Each program's own configuration
 selects its model. The registered rule preset must match the table's complete
 default configuration. Choose a profile that the external program supports.
+
+For a separately installed Mortal three-player package, the repository's
+`tools/mortal3p_mjai.py` serves the package through this protocol. Use a CPython
+3.12 environment with PyTorch, NumPy, Requests and Loguru installed, and point the last
+argument at the directory containing `mjai_bot/mortal3p/mortal.pth`:
+
+```json
+{
+  "id": "mortal3p-local",
+  "name": "Mortal three-player",
+  "rules": "MAHJONG_SOUL_3",
+  "command": ["/absolute/path/to/python3.12", "/absolute/path/to/mchjong/tools/mortal3p_mjai.py", "/absolute/path/to/mortal-package"],
+  "directory": "/absolute/path/to/mortal-package",
+  "timeoutSeconds": 60
+}
+```
+
+The runner uses local inference and does not enable the package's optional
+online service. Keep the separately supplied model and native library together.
 
 The host cycles through compatible presets using the existing computer-player
 control. Selection and seating preserve the preset ID. Changing table rules
@@ -241,6 +260,9 @@ events finish each hand. A newly started process receives the current hand's
 recipient-safe history, including after a world reload.
 
 Initial opponent hands and their draws use `?`, regardless of room visibility.
+Three-player histories keep an inert fourth mjai array slot with zero points,
+as required by the three-player native parser. Only seats 0–2 act. North
+extraction is sent as `nukidora`, followed by its replacement draw.
 The process receives public declarations, discards, calls and indicators, together
 with its own hand. Every response is checked against server-issued legal actions,
 including red tiles and call targets. Inference runs in bounded background workers;
@@ -269,7 +291,7 @@ rules and weights for a before/after comparison, and check an independent seed r
 before drawing conclusions about strength.
 
 To review decisions from an actual completed built-in match, run the optional
-teacher command with the same four-player preset. It records up to the requested
+teacher command with the same rule preset. It records up to the requested
 number of decision positions during built-in play, then reviews those fixed
 histories after the match; the external teacher does not control any move:
 
@@ -285,7 +307,9 @@ calibrated win probability. The `reach` choice is compared at its first protocol
 stage; when both choose `reach` but differ on the discard, the second response
 supplies the discard Q comparison. A distinct concealed or added kan uses Mortal's
 kan-selection metadata when present. Missing metadata or a masked action leaves the
-Q difference unavailable. Each sampled position starts an independent teacher
+Q difference unavailable. The three-player model's action index map is not
+available in this package, so its review records actions without Q differences.
+Each sampled position starts an independent teacher
 session so the teacher's earlier recommendations cannot alter its replayed history.
 
 Add `-PbotReport=build/study/before-1.jsonl` to write each completed match's

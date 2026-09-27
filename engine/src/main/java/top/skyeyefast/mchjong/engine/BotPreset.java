@@ -7,7 +7,7 @@ import java.util.List;
 public record BotPreset(String id, String name, RuleSet rules, List<String> command, String directory, int timeoutSeconds) {
     public BotPreset {
         if (id == null || !id.matches("[a-z0-9][a-z0-9_.-]{0,47}") || name == null || name.isBlank() || name.length() > 64
-            || rules == null || rules.players() != 4 || command == null || command.isEmpty() || command.size() > 32
+            || rules == null || command == null || command.isEmpty() || command.size() > 32
             || command.stream().anyMatch(arg -> arg == null || arg.length() > 4096 || arg.indexOf('\0') >= 0)
             || directory == null || timeoutSeconds < 1 || timeoutSeconds > 120)
             throw new IllegalArgumentException("Invalid mjai bot preset");

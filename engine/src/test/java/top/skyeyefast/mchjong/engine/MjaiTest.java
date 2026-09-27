@@ -30,6 +30,38 @@ class MjaiTest {
         assertEquals(events, restored.mjaiPosition(1).events());
     }
 
+    @Test void sanmaHistoryAndNorthExtractionUseThreeSeatsAndLegalActions() {
+        var game = GameLifecycleTest.started(RuleSet.MAHJONG_SOUL_3, 74291);
+        var history = game.mjaiPosition(1).events();
+        var start = JSON.toJsonTree(history.getFirst()).getAsJsonObject();
+        assertEquals(4, start.getAsJsonArray("scores").size());
+        assertEquals(4, start.getAsJsonArray("tehais").size());
+        assertEquals(0, start.getAsJsonArray("scores").get(3).getAsInt());
+        for (var tile : start.getAsJsonArray("tehais").get(3).getAsJsonArray()) assertEquals("?", tile.getAsString());
+        for (int seat = 0; seat < 3; seat++)
+            assertEquals(seat != 1, start.getAsJsonArray("tehais").get(seat).getAsJsonArray().get(0).getAsString().equals("?"));
+        var north = Tile.id(Tile.NORTH, 0, false);
+        var event = new ReplayHand.Event(ReplayHand.Kind.NUKI, 2, north, null, false, false, true);
+        var events = MjaiProtocol.hand(1, 4, 2, 0, 0, List.of(35000, 35000, 35000),
+            List.of(game.players[0].hand, game.players[1].hand, game.players[2].hand), List.of(north), List.of(event));
+        assertEquals("S", events.getFirst().get("bakaze"));
+        assertEquals(2, events.getFirst().get("kyoku"));
+        assertEquals(Map.of("type", "nukidora", "actor", 2, "pai", "N"), events.getLast());
+
+        var turn = TrainingBotTest.hand("234567p234567s4z1z");
+        turn.rules = RuleSet.MAHJONG_SOUL_3.config();
+        turn.wall = new Wall(turn.rules, 24, 0);
+        turn.players[0].firstTurn = false;
+        turn.options.set(0, LegalActions.onTurn(turn, 0));
+        var view = turn.view(turn.players[0].id);
+        var response = JSON.toJsonTree(Map.of("type", "nukidora", "actor", 0, "pai", "N")).getAsJsonObject();
+        assertEquals(Action.Type.NUKI, view.actions().get(MjaiProtocol.action(view, response, false)).type());
+        response.addProperty("pai", "E");
+        assertThrows(IllegalArgumentException.class, () -> MjaiProtocol.action(view, response, false));
+        response.addProperty("pai", "N");
+        assertThrows(IllegalArgumentException.class, () -> MjaiProtocol.action(view, response, true));
+    }
+
     @Test void responseCannotChooseAnotherActorTileOrDiscardIdentity() {
         var game = GameLifecycleTest.started(RuleSet.TENHOU_4, 74291);
         var view = game.view(game.players[game.turn].id);
@@ -62,6 +94,13 @@ class MjaiTest {
         assertEquals("test", restored.players[1].botPreset);
         game.rules = RuleSet.TENHOU_3.config();
         assertTrue(game.actions(0).stream().noneMatch(a -> a.type() == Action.Type.SET_BOT && a.tiles().get(1) == 2));
+        var sanma = new Game(UUID.randomUUID(), RuleSet.TENHOU_3, 4);
+        var sanmaHost = UUID.randomUUID();
+        sanma.join(sanmaHost, "Sanma host", 0);
+        sanma.configureBots(List.of(preset("normal", 5, RuleSet.TENHOU_3)));
+        assertTrue(sanma.actions(0).stream().anyMatch(a -> a.type() == Action.Type.SET_BOT && a.tiles().get(1) == 2));
+        sanma.rules = RuleSet.MAHJONG_SOUL_3.config();
+        assertTrue(sanma.actions(0).stream().noneMatch(a -> a.type() == Action.Type.SET_BOT && a.tiles().get(1) == 2));
     }
 
     @Test void addedKanMustIdentifyTheExistingPonIncludingItsRedTile() {
@@ -92,6 +131,16 @@ class MjaiTest {
             assertThrows(java.util.concurrent.CompletionException.class, () -> {
                 while (session.poll(position) < 0) Thread.sleep(5);
             });
+        }
+    }
+
+    @Test @Timeout(10) void sanmaSubprocessReceivesThreeNamesAndChoosesLegally() throws Exception {
+        var game = GameLifecycleTest.started(RuleSet.TENHOU_3, 74291);
+        try (var session = new MjaiSession(preset("normal", 5, RuleSet.TENHOU_3))) {
+            var position = game.mjaiPosition(game.turn);
+            int index;
+            while ((index = session.poll(position)) < 0) Thread.sleep(5);
+            assertEquals(Action.Type.DISCARD, position.view().actions().get(index).type());
         }
     }
 
@@ -161,12 +210,22 @@ class MjaiTest {
             new Action(Action.Type.CLOSED_KAN, Tile.id(9, 0, false)), kanResponse, null);
         assertEquals("kan-select", kan.stage());
         assertEquals(2.5, kan.gap());
+        var sanma = GameLifecycleTest.started(RuleSet.TENHOU_3, 74291);
+        var sanmaView = sanma.view(sanma.players[sanma.turn].id);
+        var unavailable = BotTeacherReview.compareQ(sanmaView, new Action(Action.Type.DISCARD, normal),
+            new Action(Action.Type.DISCARD, red), first, null);
+        assertEquals("three-player-q-unmapped", unavailable.stage());
+        assertNull(unavailable.gap());
     }
 
     private static BotPreset preset(String mode, int timeout) {
+        return preset(mode, timeout, RuleSet.TENHOU_4);
+    }
+
+    private static BotPreset preset(String mode, int timeout, RuleSet rules) {
         String java = Path.of(System.getProperty("java.home"), "bin", System.getProperty("os.name").startsWith("Windows") ? "java.exe" : "java").toString();
-        return new BotPreset("test", "Test bot", RuleSet.TENHOU_4,
-            List.of(java, "-cp", System.getProperty("java.class.path"), FakeBot.class.getName(), mode),
+        return new BotPreset("test", "Test bot", rules,
+            List.of(java, "-cp", System.getProperty("java.class.path"), FakeBot.class.getName(), mode, Integer.toString(rules.players())),
             Path.of("").toAbsolutePath().toString(), timeout);
     }
 
@@ -178,6 +237,8 @@ class MjaiTest {
             for (String line; (line = reader.readLine()) != null;) {
                 var event = JSON.fromJson(line, JsonObject.class);
                 String type = event.get("type").getAsString();
+                if (type.equals("start_game") && event.getAsJsonArray("names").size() != Integer.parseInt(args[1]))
+                    throw new IllegalStateException("Wrong mjai player count");
                 if (type.equals("reach")) {
                     if (reached) throw new IllegalStateException("Duplicate reach echo");
                     reached = true;

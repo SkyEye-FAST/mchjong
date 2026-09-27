@@ -30,7 +30,6 @@ final class BotTeacherReview {
             "teacher <preset.json> <difficulty> <seeds> <first-seed> <samples> <report.jsonl>");
         try {
             var preset = JSON.fromJson(Files.readString(Path.of(args[1])), BotPreset.class);
-            if (preset.rules().players() != 4) throw new IllegalArgumentException("The mjai teacher requires four-player rules");
             var difficulty = BotDifficulty.valueOf(args[2]);
             int seeds = Integer.parseInt(args[3]);
             long firstSeed = Long.parseLong(args[4]);
@@ -55,7 +54,7 @@ final class BotTeacherReview {
                             (game.phase == Game.Phase.TURN || game.phase == Game.Phase.REACTION)) {
                             eligible++;
                             boolean critical = view.actions().stream().anyMatch(action -> switch (action.type()) {
-                                case RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN -> true;
+                                case RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI -> true;
                                 default -> false;
                             });
                             double priority = random.nextDouble() * (critical ? 2.0 : 1.0);
@@ -142,6 +141,7 @@ final class BotTeacherReview {
 
     static QComparison compareQ(TableView view, Action builtIn, Action teacher,
                                 JsonObject response, JsonObject reachDiscard) {
+        if (view.rules().sanma()) return new QComparison("three-player-q-unmapped", null, null);
         if (builtIn.type() == Action.Type.RIICHI && teacher.type() == Action.Type.RIICHI) {
             return new QComparison("reach-discard", q(reachDiscard, discardIndex(teacher.tiles().getFirst())),
                 q(reachDiscard, discardIndex(builtIn.tiles().getFirst())));

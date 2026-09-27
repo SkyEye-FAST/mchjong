@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Three-player local mjai presets with north-extraction events and a Mortal package runner.
 - Offline Mortal review of sampled built-in match decisions, with same-state legal-action Q differences and staged riichi diagnostics.
 - Public decision-feature reports joined with settled discard outcomes for computer-player diagnostics.
 - Reproducible computer-player experiments with frozen executable snapshots, per-match reports, sampled decision traces and paired seed-level confidence intervals.
