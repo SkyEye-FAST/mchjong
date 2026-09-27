@@ -168,7 +168,10 @@ internal object LegalActions {
     @JvmStatic
     fun formalTenpai(game: Game, seat: Int): Boolean {
         val player = game.players[seat]
-        val melds = if (game.rules.formalTenpaiIgnoresMelds()) emptyList() else player.melds
-        return HandAnalyzer.waits(player.hand, melds).isNotEmpty()
+        return formalTenpai(player.hand, player.melds, game.rules)
     }
+
+    @JvmStatic
+    fun formalTenpai(hand: List<Int>, melds: List<Meld>, rules: RuleConfig): Boolean =
+        HandAnalyzer.waits(hand, if (rules.formalTenpaiIgnoresMelds()) emptyList() else melds).isNotEmpty()
 }
