@@ -8,6 +8,7 @@ import net.minecraft.resources.Identifier;
 /** Selects the decorative back for the physical tiles stored in the open box. */
 public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
     private int page;
+    private PresetSource source = PresetSource.SERVER;
 
     public MahjongBoxBackScreen(MahjongBoxScreen parent) {
         super(Component.translatable("box.mchjong.back_title"), parent);
@@ -18,16 +19,18 @@ public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
     @Override protected void init() {
         clearWidgets();
         int span = Math.min(304, width - 24), left = (width - span) / 2;
-        var choices = TileBackPresets.choices();
-        int rows = Math.max(1, Math.min(5, (height - 110) / 25));
-        page = Math.clamp(page, 0, (choices.size() - 1) / rows);
-        int top = 52;
+        source.tabs(left, 34, span, value -> { source = value; page = 0; init(); }).forEach(this::addRenderableWidget);
+        var choices = choices();
+        int rows = Math.max(1, Math.min(5, (height - 128) / 25));
+        page = Math.clamp(page, 0, Math.max(0, (choices.size() - 1) / rows));
+        int top = 62;
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             Identifier id = choices.get(page * rows + i);
-            var button = MahjongButton.create(TileBackPresets.label(id), ignored -> {
+            var button = MahjongButton.create(TileBackPresets.source(id).caption(TileBackPresets.label(id)), ignored -> {
                 parent.selectBack(id);
                 onClose();
-            }).bounds(left + 38, top + i * 25, span - 42, 20).build().selected(id.equals(parent.backPreset()));
+            }).bounds(left + 38, top + i * 25, span - 42, 20)
+                .tooltip(PresetSource.tooltip(TileBackPresets.label(id), id)).build().selected(id.equals(parent.backPreset()));
             addRenderableWidget(button);
         }
         int navY = height - 56;
@@ -47,17 +50,21 @@ public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
         MahjongUi.backdrop(graphics, width, height, 304);
         MahjongUi.text(graphics, font, title, (width - Math.min(304, width - 24)) / 2 + 10, 16,
             Math.min(304, width - 24) - 20, MahjongUi.TEXT, false);
-        var choices = TileBackPresets.choices();
-        int rows = Math.max(1, Math.min(5, (height - 110) / 25));
+        var choices = choices();
+        int rows = Math.max(1, Math.min(5, (height - 128) / 25));
         int left = (width - Math.min(304, width - 24)) / 2;
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             Identifier id = choices.get(page * rows + i);
-            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TileBackPresets.texture(id), left + 7, 52 + i * 25, 0, 0,
+            graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, TileBackPresets.texture(id), left + 7, 62 + i * 25, 0, 0,
                 14, 20, 256, 384, 256, 384);
         }
         if (choices.size() > rows) graphics.centeredText(font,
             (page + 1) + " / " + ((choices.size() - 1) / rows + 1), width / 2, height - 51, MahjongUi.MUTED);
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private java.util.List<Identifier> choices() {
+        return TileBackPresets.choices().stream().filter(id -> source.includes(TileBackPresets.source(id))).toList();
     }
 
 }

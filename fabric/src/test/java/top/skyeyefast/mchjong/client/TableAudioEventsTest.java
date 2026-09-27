@@ -163,7 +163,7 @@ class TableAudioEventsTest {
         assertTrue(rows.stream().allMatch(row -> row.han() == 0));
     }
 
-    @Test void doubleRiichiVoiceOnlyFollowsTheLocalDeclaration() {
+    @Test void doubleRiichiVoiceCarriesTheDeclaringSeatForEveryListener() {
         var before = view(1, 1, Game.Phase.TURN, seats(), "playing");
         var seats = seats();
         seats.set(1, new TableView.Seat(false, "Player", true, false, false, 24000,
@@ -171,7 +171,8 @@ class TableAudioEventsTest {
         var after = view(2, 1, Game.Phase.REACTION, seats, "playing");
         var cue = TableAudioEvents.between(before, after).getLast();
         assertEquals("riichi", cue.sound());
-        assertNull(cue.voice());
+        assertEquals("double_riichi", cue.voice());
+        assertEquals(1, cue.seat());
         var ownSeats = seats();
         ownSeats.set(0, seats.get(1));
         assertEquals("double_riichi", TableAudioEvents.between(before,
@@ -213,6 +214,9 @@ class TableAudioEventsTest {
         seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.ADDED_KAN, List.of(40, 41, 42, 43), 0, 40)), List.of()));
         seats.set(2, seat(List.of(), List.of(), List.of(120)));
         assertEquals(List.of("kan", "nuki"), sounds(before, view(2, 1, Game.Phase.TURN, seats, "playing")));
+        var cues = TableAudioEvents.between(before, view(2, 1, Game.Phase.TURN, seats, "playing"));
+        assertEquals(List.of(1, 2), cues.stream().map(TableAudioEvents.Cue::seat).toList());
+        assertEquals(List.of("kan", "nuki"), cues.stream().map(TableAudioEvents.Cue::voice).toList());
     }
 
     @Test void replacingACalledRiichiDiscardDoesNotRepeatTheDeclarationVoice() {
@@ -235,5 +239,11 @@ class TableAudioEventsTest {
             assertEquals(List.of(reason), sounds(before, after));
             assertTrue(sounds(after, view(3, 1, Game.Phase.MATCH_END, seats(), reason)).isEmpty());
         }
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var multiple = receipt(2, 1, List.of(new TableView.Win(1, 0, 4, score), new TableView.Win(2, 0, 4, score)));
+        var voices = TableAudioEvents.between(before, multiple).stream().filter(cue -> cue.voice() != null).toList();
+        assertEquals(List.of(1, 2), voices.stream().map(TableAudioEvents.Cue::seat).toList());
+        assertTrue(voices.stream().allMatch(cue -> cue.voice().equals("ron")));
+        assertEquals(1, TableAudioEvents.between(before, multiple).stream().filter(cue -> "ron".equals(cue.sound())).count());
     }
 }

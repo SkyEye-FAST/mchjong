@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 abstract class MahjongBoxPresetScreen extends Screen {
     protected final MahjongBoxScreen parent;
     private boolean returning;
+    private int presetRevision = -1;
 
     MahjongBoxPresetScreen(Component title, MahjongBoxScreen parent) {
         super(title);
@@ -19,6 +20,10 @@ abstract class MahjongBoxPresetScreen extends Screen {
     @Override public void tick() {
         if (minecraft.player == null || minecraft.player.containerMenu != parent.boxMenu()
                 || !minecraft.player.isAlive()) minecraft.setScreen(null);
+        else if (presetRevision != PresetSource.revision()) {
+            presetRevision = PresetSource.revision();
+            init();
+        }
     }
 
     @Override public void onClose() {

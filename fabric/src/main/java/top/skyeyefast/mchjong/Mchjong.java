@@ -42,6 +42,8 @@ public class Mchjong implements ModInitializer {
     @Override
     public void onInitialize() {
         top.skyeyefast.mchjong.compat.maid.MaidData.register();
+        net.fabricmc.fabric.api.event.lifecycle.v1.ServerTickEvents.END_SERVER_TICK.register(
+            top.skyeyefast.mchjong.config.ServerPresets::tick);
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             top.skyeyefast.mchjong.world.WorldSettings.of(server);
             top.skyeyefast.mchjong.config.ServerPresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
@@ -83,6 +85,10 @@ public class Mchjong implements ModInitializer {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
         PayloadTypeRegistry.serverboundPlay().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
+        PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC);
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE,
+            (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
+        PayloadTypeRegistry.clientboundPlay().register(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(TableControlPayload.TYPE, TableControlPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(TableSeatPayload.TYPE, TableSeatPayload.CODEC);
         PayloadTypeRegistry.serverboundPlay().register(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload.CODEC);

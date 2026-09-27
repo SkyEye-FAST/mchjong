@@ -8,7 +8,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 
 /** Pure snapshot comparison, shared by playback and tests. A newly observed table is silent. */
 public final class TableAudioEvents {
-    public record Cue(String sound, String voice, int delay) {}
+    public record Cue(String sound, String voice, int delay, int seat) {}
     private TableAudioEvents() {}
 
     public static List<Cue> between(TableView before, TableView after) {
@@ -30,17 +30,17 @@ public final class TableAudioEvents {
                 var discard = next.river().get(i);
                 cues.add(effect(discard.tsumogiri() ? "tsumogiri" : "tedashi", 0));
                 if (discard.riichi() && !old.riichi())
-                    cues.add(new Cue("riichi", seat == after.viewerSeat() ? next.doubleRiichi() ? "double_riichi" : "riichi" : null, 0));
+                    cues.add(new Cue("riichi", next.doubleRiichi() ? "double_riichi" : "riichi", 0, seat));
             }
             for (int i = 0; i < next.melds().size(); i++) {
                 var meld = next.melds().get(i);
                 if (i >= old.melds().size() || !meld.equals(old.melds().get(i))) {
                     String type = meld.kan() ? "kan" : meld.type().name().toLowerCase(java.util.Locale.ROOT);
-                    cues.add(seat == after.viewerSeat() ? voice(type) : effect(type, 0));
+                    cues.add(voice(type, seat));
                 }
             }
             if (next.norths().size() > old.norths().size())
-                cues.add(seat == after.viewerSeat() ? voice("nuki") : effect("nuki", 0));
+                cues.add(voice("nuki", seat));
             if (next.drawn() != Tile.ABSENT && (old.drawn() == Tile.ABSENT || next.hand().size() > old.hand().size()))
                 cues.add(effect("draw", 0));
         }
@@ -48,13 +48,16 @@ public final class TableAudioEvents {
         boolean wasEnded = before.phase() == Game.Phase.HAND_END || before.phase() == Game.Phase.MATCH_END;
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
-            boolean ownWin = after.wins().stream().anyMatch(win -> win.seat() == after.viewerSeat());
-            cues.add(ownWin || result.equals("draw_end") ? voice(result) : effect(result, 0));
+            if (result.equals("draw_end")) cues.add(voice(result, -1));
+            else {
+                cues.add(effect(result, 0));
+                for (var win : after.wins()) cues.add(new Cue(null, result, 0, win.seat()));
+            }
         } else if (after.phase() == Game.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);
     }
 
-    private static Cue effect(String sound, int delay) { return new Cue(sound, null, delay); }
-    private static Cue voice(String sound) { return new Cue(sound, sound, 0); }
+    private static Cue effect(String sound, int delay) { return new Cue(sound, null, delay, -1); }
+    private static Cue voice(String sound, int seat) { return new Cue(sound, sound, 0, seat); }
 }

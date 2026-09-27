@@ -29,6 +29,8 @@ public final class TileFacePresets {
     private static Set<Identifier> serverTextures = Set.of();
     private static Set<Identifier> localTextures = Set.of();
     private static List<TileFacePreset> choices = List.of();
+    private static top.skyeyefast.mchjong.config.PresetDirectory monitor;
+    private static int ticks;
     private static net.minecraft.client.multiplayer.ClientPacketListener connection;
     private static UUID transfer;
     private static PresetArchives.Kind transferKind;
@@ -39,6 +41,7 @@ public final class TileFacePresets {
     private TileFacePresets() {}
 
     public static List<TileFacePreset> choices() { return choices; }
+    public static PresetSource source(TileFacePreset id) { return PresetSource.of(server.containsKey(id), localNames.containsKey(id)); }
     public static net.minecraft.network.chat.Component label(TileFacePreset preset) {
         String name = serverNames.getOrDefault(preset, localNames.get(preset));
         return name == null ? net.minecraft.network.chat.Component.translatable(preset.translationKey())
@@ -52,6 +55,10 @@ public final class TileFacePresets {
     }
 
     public static void reload(ResourceManager resources) {
+        try {
+            monitor = new top.skyeyefast.mchjong.config.PresetDirectory(
+                Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets"));
+        } catch (IOException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot watch local presets", failure); }
         var loaded = new java.util.HashMap<TileFacePreset, Definition>();
         var dynamic = new HashSet<Identifier>();
         resources.listResources("tile_face_presets", path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
@@ -70,14 +77,21 @@ public final class TileFacePresets {
             }
         });
         var names = new HashMap<TileFacePreset, String>();
+        var composed = new HashMap<TileFacePreset, TileFaceImages.Pair>();
         try {
             var root = Minecraft.getInstance().gameDirectory.toPath().resolve("config/mchjong/presets");
             var archives = PresetArchives.loadDirectory(root.resolve("faces"), PresetArchives.Kind.FACE);
+            for (var entry : archives.faces().entrySet())
+                composed.put(entry.getKey(), TileFaceImages.compose(entry.getValue().tiles()));
             for (var entry : archives.faces().entrySet()) {
-                loaded.put(entry.getKey(), register(entry.getKey(), entry.getValue().tiles(), "local_faces", dynamic));
+                loaded.put(entry.getKey(), register(entry.getKey(), composed.remove(entry.getKey()), "local_faces", dynamic));
                 names.put(entry.getKey(), entry.getValue().name());
             }
         } catch (IOException | RuntimeException failure) {
+            for (var pair : composed.values()) { pair.atlas().close(); pair.glyphs().close(); }
+            for (var id : localNames.keySet()) loaded.put(id, local.get(id));
+            names.putAll(localNames);
+            dynamic.addAll(localTextures);
             com.mojang.logging.LogUtils.getLogger().error("Cannot load local tile face presets", failure);
         }
         try {
@@ -107,11 +121,16 @@ public final class TileFacePresets {
 
     public static void tick() {
         if (connection != null && connection != Minecraft.getInstance().getConnection()) clearServer();
+        if (++ticks % 20 != 0 || monitor == null || Minecraft.getInstance().getOverlay() != null) return;
+        try {
+            if (monitor.changed()) reload(Minecraft.getInstance().getResourceManager());
+        } catch (IOException failure) { com.mojang.logging.LogUtils.getLogger().error("Cannot inspect local presets", failure); }
     }
 
     public static void receive(PresetBundlePayload chunk) {
         var current = Minecraft.getInstance().getConnection();
         if (current == null) return;
+        if (connection != null && connection != current) clearServer();
         if (chunk.part() == 0) {
             transfer = chunk.transfer(); transferKind = chunk.kind(); nextPart = 0; parts = chunk.parts(); received.reset();
             connection = current;
@@ -191,6 +210,7 @@ public final class TileFacePresets {
     }
 
     private static void update() {
+        PresetSource.changed();
         var merged = new HashMap<>(local);
         merged.putAll(server);
         definitions = Map.copyOf(merged);

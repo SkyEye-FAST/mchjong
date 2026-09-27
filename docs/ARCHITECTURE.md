@@ -140,8 +140,9 @@ consumption together. Tile, point-stick and dye compartments have distinct
 native insertion ranges. `TileFacePreset` is an immutable resource-ID component;
 ZIPs in `config/mchjong/presets/faces/` and `config/mchjong/server-presets/faces/`
 supply the client selector.
-Server ZIPs are loaded at startup and their individual
-tile images are sent to joining players; clients assemble render atlases. An
+`PresetDirectory` detects stable ZIP changes on client and server ticks.
+Server ZIPs are loaded at startup and refreshed during play; their individual
+tile images are sent to joining and already connected players; clients assemble render atlases. An
 unavailable ID displays Kansai artwork. The
 deck's face and back presets are synchronized as public appearance, independently of private
 container contents.
@@ -374,7 +375,9 @@ and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 `TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
 owns client effects and recorded voice playback. Voice ZIPs use the client and
 server `voices/` directories; the client decodes them through Minecraft's sound
-engine and enforces an eight-second limit. No game logic depends on an audio
+engine and enforces an eight-second limit. Server-authorized voice selections
+are broadcast by player name; action cues carry their originating seat so each
+listener resolves the speaker's voice. No game logic depends on an audio
 completion callback. See `AUDIO.md` for the recording contract.
 
 ## Replay storage and export

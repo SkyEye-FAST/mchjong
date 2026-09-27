@@ -24,7 +24,7 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 public final class TableAudio {
     private static final Map<MahjongTableBlockEntity, TableView> VIEWS = new WeakHashMap<>();
     private static final ArrayList<Speech> SPEECH = new ArrayList<>();
-    private record Speech(long tick, String voice) {}
+    private record Speech(long tick, String voice, net.minecraft.resources.Identifier preset, boolean remote) {}
     private static ClientLevel level;
     private static long ticks;
     private static UUID clockTable;
@@ -72,9 +72,10 @@ public final class TableAudio {
             result = null;
         }
         for (var cue : TableAudioEvents.between(before, view)) {
-            effect(cue.sound(), table.getBlockPos(), cue.delay());
-            if (view.viewerSeat() >= 0 && cue.voice() != null)
-                SPEECH.add(new Speech(ticks + cue.delay(), cue.voice()));
+            if (cue.sound() != null) effect(cue.sound(), table.getBlockPos(), cue.delay());
+            if (cue.voice() != null && Minecraft.getInstance().player != null
+                    && Minecraft.getInstance().player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table.getBlockPos())) <= 256)
+                SPEECH.add(speech(view, cue.seat(), cue.voice(), ticks + cue.delay()));
         }
     }
 
@@ -83,21 +84,20 @@ public final class TableAudio {
         ticks++;
         var client = Minecraft.getInstance();
         VoicePresets.playing();
+        if (TableSettings.get().voiceSource == TableSettings.VoiceSource.OFF || TableSettings.get().voiceVolume <= 0)
+            VoicePresets.stop();
+        boolean speaking = VoicePresets.playing();
+        if (!speaking && !SPEECH.isEmpty() && SPEECH.getFirst().tick() <= ticks) {
+            speak(SPEECH.removeFirst());
+            speaking = VoicePresets.playing();
+        }
         if (client.player == null || !(client.player.getVehicle() instanceof SeatEntity seat)) {
-            SPEECH.clear();
             if (seated) { finishResult(); VoicePresets.stop(); }
             seated = false;
             clockTable = null;
             return;
         }
         seated = true;
-        if (TableSettings.get().voiceSource == TableSettings.VoiceSource.OFF || TableSettings.get().voiceVolume <= 0)
-            VoicePresets.stop();
-        boolean speaking = VoicePresets.playing();
-        if (!speaking && !SPEECH.isEmpty() && SPEECH.getFirst().tick() <= ticks) {
-            speak(SPEECH.removeFirst().voice());
-            speaking = VoicePresets.playing();
-        }
         if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
             var view = table.clientView();
             if (result != null && result.matches(view)) {
@@ -110,7 +110,7 @@ public final class TableAudio {
                     speak("match_end");
                 } else if (!finalStage && SPEECH.isEmpty()) {
                     String event = result.tick(Util.getMillis(), speaking);
-                    if (event != null && view.wins().get(result.winner()).seat() == view.viewerSeat()) speak(event);
+                    if (event != null) speak(speech(view, view.wins().get(result.winner()).seat(), event, ticks));
                 }
                 if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
                     for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.SETTLEMENT_DONE) {
@@ -144,11 +144,21 @@ public final class TableAudio {
     }
 
     private static void speak(String event) {
+        speak(new Speech(ticks, event, TableSettings.get().voicePreset, false));
+    }
+
+    private static Speech speech(TableView view, int seat, String event, long tick) {
+        boolean remote = seat >= 0 && seat != view.viewerSeat();
+        var preset = remote ? VoicePresets.forPlayer(view.seats().get(seat).name()) : TableSettings.get().voicePreset;
+        return new Speech(tick, event, preset, remote);
+    }
+
+    private static void speak(Speech speech) {
         var settings = TableSettings.get();
         switch (settings.voiceSource) {
             case OFF -> { }
             case SELECTED -> {
-                if (settings.voiceVolume > 0) VoicePresets.play(event, (float) settings.voiceVolume);
+                if (settings.voiceVolume > 0) VoicePresets.play(speech.voice(), (float) settings.voiceVolume, speech.preset(), speech.remote());
             }
         }
     }

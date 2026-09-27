@@ -12,6 +12,7 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
         Tile.id(0, 0, false), Tile.id(13, 0, false), Tile.id(26, 0, false), Tile.id(Tile.EAST, 0, false)
     };
     private int page;
+    private PresetSource source = PresetSource.SERVER;
 
     public MahjongBoxFaceScreen(MahjongBoxScreen parent) {
         super(Component.translatable("box.mchjong.preset"), parent);
@@ -22,16 +23,18 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
     @Override protected void init() {
         clearWidgets();
         int span = Math.min(304, width - 24), left = (width - span) / 2;
-        var choices = TileFacePresets.choices();
-        int rows = Math.max(1, Math.min(5, (height - 110) / 25));
-        page = Math.clamp(page, 0, (choices.size() - 1) / rows);
-        int top = 52;
+        source.tabs(left, 34, span, value -> { source = value; page = 0; init(); }).forEach(this::addRenderableWidget);
+        var choices = choices();
+        int rows = Math.max(1, Math.min(5, (height - 128) / 25));
+        page = Math.clamp(page, 0, Math.max(0, (choices.size() - 1) / rows));
+        int top = 62;
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             TileFacePreset preset = choices.get(page * rows + i);
-            var button = MahjongButton.create(TileFacePresets.label(preset), ignored -> {
+            var button = MahjongButton.create(TileFacePresets.source(preset).caption(TileFacePresets.label(preset)), ignored -> {
                 parent.selectFace(preset);
                 onClose();
-            }).bounds(left + 76, top + i * 25, span - 80, 20).build().selected(preset.equals(parent.facePreset()));
+            }).bounds(left + 76, top + i * 25, span - 80, 20)
+                .tooltip(PresetSource.tooltip(TileFacePresets.label(preset), preset.id())).build().selected(preset.equals(parent.facePreset()));
             addRenderableWidget(button);
         }
         int navY = height - 56;
@@ -51,17 +54,21 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
         MahjongUi.backdrop(graphics, width, height, 304);
         int span = Math.min(304, width - 24), left = (width - span) / 2;
         MahjongUi.text(graphics, font, title, left + 10, 16, span - 20, MahjongUi.TEXT, false);
-        var choices = TileFacePresets.choices();
-        int rows = Math.max(1, Math.min(5, (height - 110) / 25));
+        var choices = choices();
+        int rows = Math.max(1, Math.min(5, (height - 128) / 25));
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             TileFacePreset preset = choices.get(page * rows + i);
             for (int sample = 0; sample < SAMPLES.length; sample++)
-                TileGui.tile(graphics, SAMPLES[sample], left + 7 + sample * 17, 52 + i * 25, 13,
+                TileGui.tile(graphics, SAMPLES[sample], left + 7 + sample * 17, 62 + i * 25, 13,
                     false, false, false, preset);
         }
         if (choices.size() > rows) graphics.centeredText(font,
             (page + 1) + " / " + ((choices.size() - 1) / rows + 1), width / 2, height - 51, MahjongUi.MUTED);
         super.extractRenderState(graphics, mouseX, mouseY, partialTick);
+    }
+
+    private java.util.List<TileFacePreset> choices() {
+        return TileFacePresets.choices().stream().filter(id -> source.includes(TileFacePresets.source(id))).toList();
     }
 
 }

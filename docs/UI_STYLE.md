@@ -294,7 +294,9 @@ Synchronize the carrier index with ordinary menu data, not a parallel payload.
 The Personal scope in room settings opens a second preset screen for a player's
 riichi stick and voice. The stick tab shows the strip texture beside each name;
 the voice tab lists recording sets. Both selections are saved locally. Keep the
-lists paginated at small window sizes.
+lists paginated at small window sizes. All four preset selectors have Server
+and Local source tabs, mark built-in entries in Server, automatically refresh loaded entries, and show
+the full name and persistent ID in each choice's tooltip.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
 recipe-browser controls. The 56-slot box uses a 304 x 216 panel and the four-row

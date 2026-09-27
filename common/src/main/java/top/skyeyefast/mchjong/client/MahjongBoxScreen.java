@@ -62,6 +62,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
 
     private void updateActions() {
         presetChoice.setMessage(Component.translatable("box.mchjong.preset_choice", TileFacePresets.label(facePreset())));
+        presetChoice.setTooltip(PresetSource.tooltip(TileFacePresets.label(facePreset()), facePreset().id()));
         var reagent = menu.getSlot(MahjongSupplies.DYE_SLOT).getItem();
         boolean printing = MahjongSupplies.mahjongDye(reagent);
         presetChoice.visible = printing;
@@ -71,6 +72,7 @@ public final class MahjongBoxScreen extends AbstractContainerScreen<MahjongBoxMe
         dyeBack.active = dyeBack.visible && menu.canDyeBack();
         dyeBack.setMessage(Component.translatable(undo ? "box.mchjong.undo_dye_back" : "box.mchjong.dye_back"));
         backChoice.setMessage(Component.translatable("box.mchjong.back_choice", TileBackPresets.label(backPreset())));
+        backChoice.setTooltip(PresetSource.tooltip(TileBackPresets.label(backPreset()), backPreset()));
         backChoice.visible = printing;
         backChoice.active = MahjongSupplies.tileCount(menu.items()) > 0 && printing;
         apply.visible = printing;
