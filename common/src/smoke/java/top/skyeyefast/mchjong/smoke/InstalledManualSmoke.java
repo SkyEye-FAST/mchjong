@@ -73,9 +73,9 @@ final class InstalledManualSmoke {
             reload.join();
             var book = BookRegistry.INSTANCE.books.get(MahjongContent.id("guide"));
             ManualSmoke.require(book != null && !book.getContents().isErrored(), "Book failed to load");
-            ManualSmoke.require(book.getContents().categories.size() == 4, "Missing manual chapters");
+            ManualSmoke.require(book.getContents().categories.size() == 5, "Missing manual chapters");
             entries = book.getContents().entries.values().stream().sorted(java.util.Comparator.comparing(e -> e.getId().toString())).toList();
-            ManualSmoke.require(entries.size() == 13, "Missing manual entries");
+            ManualSmoke.require(entries.size() == 14, "Missing manual entries");
             ManualSmoke.require(!book.getBookItem().isEmpty(), "Missing book item");
             ManualSmoke.require(net.minecraft.world.item.ItemStack.matches(crafted, book.getBookItem()), "Recipe produced the wrong handbook");
             client.getSingleplayerServer().submit(() -> {
