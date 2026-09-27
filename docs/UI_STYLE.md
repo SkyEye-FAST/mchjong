@@ -95,9 +95,9 @@ on a resize or snapshot refresh.
 The lobby keeps player count, presets, detailed rules, visibility, clock settings,
 invitations and participants on its first page. Keep leave and host dissolution
 distinct in the toolbar, with one prominent seat-preparation action below the settings.
-Settlement dedicates the top strip to the server's countdown and automatically
-opens final standings at the match's second stage. The roster returns to the lobby
-after that stage, with leave and dissolution available there.
+Settlement uses one top action with the server's countdown in parentheses and
+automatically opens final standings at the match's second stage. The roster
+returns to the lobby after that stage, with leave and dissolution available there.
 This responsive rule applies to ordinary screens and the seated overlay, not the
 immersive table. The immersive table is the fixed virtual canvas described below;
 small viewports scale that canvas uniformly rather than reflowing it.
