@@ -118,13 +118,11 @@ internal class BotValue(private val view: TableView) {
         return scores[key]
     }
 
-    fun payment(score: HandScore): Int {
-        if (score.ron() > 0) return score.ron()
-        return if (wind() == 0) {
-            score.tsumoDealer() * (view.rules().players() - 1)
-        } else {
-            score.tsumoDealer() + score.tsumoChild() * (view.rules().players() - 2)
-        }
+    fun winningPayment(state: BotAnalysis.State, winning: Int, score: HandScore, remaining: IntArray): Double =
+        expected(score, if (state.riichi() && view.rules().uraDora()) uraDistribution(state, winning, remaining) else doubleArrayOf(1.0))
+
+    private fun expected(score: HandScore, ura: DoubleArray): Double = ura.indices.sumOf { bonus ->
+        ura[bonus] * HandAnalyzer.bonusPayment(score, bonus, wind() == 0, view.rules())
     }
 
     fun waits(state: BotAnalysis.State, kinds: Set<Int>, remaining: IntArray): Waits {
@@ -142,16 +140,53 @@ internal class BotValue(private val view: TableView) {
                 val tile = BotAnalysis.tile(face)
                 val ronScore = if (furiten) null else score(state, tile, false, false)
                 val tsumoScore = score(state, tile, true, false)
+                val ura = if (state.riichi() && view.rules().uraDora()) uraDistribution(state, tile, remaining) else doubleArrayOf(1.0)
                 if (ronScore != null) {
-                    ron += count * payment(ronScore)
+                    ron += count * expected(ronScore, ura)
                     ronTiles += count
                 }
                 if (tsumoScore != null) {
-                    tsumo += count * payment(tsumoScore)
+                    tsumo += count * expected(tsumoScore, ura)
                     tsumoTiles += count
                 }
             }
         }
         return Waits(ron, tsumo, ronTiles, tsumoTiles)
+    }
+
+    /** Sample concealed indicators without replacement from exchangeable unseen tiles.
+     * Only the winning tile is removed; neither hidden wall identities nor opponent hands enter. */
+    private fun uraDistribution(state: BotAnalysis.State, winning: Int, remaining: IntArray): DoubleArray {
+        val indicators = view.wall().count { it >= 0 }
+        if (indicators == 0) return doubleArrayOf(1.0)
+        val complete = IntArray(34)
+        state.hand().forEach { complete[Tile.kind(it)]++ }
+        state.melds().forEach { meld -> meld.tiles().forEach { complete[Tile.kind(it)]++ } }
+        state.norths().forEach { complete[Tile.kind(it)]++ }
+        complete[Tile.kind(winning)]++
+        val buckets = IntArray(5)
+        for (kind in 0 until 34) {
+            val count = remaining[kind] + remaining[kind + 34] - if (kind == Tile.kind(winning)) 1 else 0
+            if (count > 0) buckets[complete[Tile.doraAfter(kind, view.rules().sanma())]] += count
+        }
+        val draws = minOf(indicators, buckets.sum())
+        if (draws == 0) return doubleArrayOf(1.0)
+        if (draws == 1) return buckets.map { it / buckets.sum().toDouble() }.toDoubleArray()
+        var ways = Array(draws + 1) { DoubleArray(draws * 4 + 1) }
+        ways[0][0] = 1.0
+        for (bonus in buckets.indices) {
+            val next = Array(draws + 1) { DoubleArray(draws * 4 + 1) }
+            for (used in 0..draws) for (han in ways[used].indices) {
+                if (ways[used][han] == 0.0) continue
+                var combinations = 1.0
+                for (take in 0..minOf(buckets[bonus], draws - used)) {
+                    next[used + take][han + take * bonus] += ways[used][han] * combinations
+                    combinations *= (buckets[bonus] - take).toDouble() / (take + 1)
+                }
+            }
+            ways = next
+        }
+        val total = ways[draws].sum()
+        return ways[draws].map { it / total }.toDoubleArray()
     }
 }

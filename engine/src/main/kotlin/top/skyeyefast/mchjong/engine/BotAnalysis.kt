@@ -172,9 +172,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         }
         val points = if (shape.shanten == 0) waitValue.average() else potential.estimate
         // Ordinal utilities, not fitted win/deal-in probabilities or expected monetary returns.
-        val valueTerm = if (level == BotDifficulty.EASY) {
-            if (shape.shanten == 0) minOf(16.0, points / 500) else 0.0
-        } else ln1p(points / 1000) * if (shape.shanten == 0) 16 else 6
+        val valueTerm = pointUtility(points, shape.shanten == 0)
         val legality = (if (level != BotDifficulty.EASY && !potential.viable && shape.shanten > 0) -45.0 else 0.0) +
             if (shape.shanten == 0 && waitValue.quality() == 0.0) -55.0 else 0.0
         val terms = Utility(speed(shape, remaining), potential.retention, valueTerm, waitValue.quality() * 2, legality)
@@ -215,7 +213,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             if (baseline.shanten == 0 && Tile.kind(drawn) in shape(state).improving) {
                 val win = value.score(state, drawn, true, replacement)
                 if (win != null) {
-                    sum += count * (120 + ln1p(value.payment(win) / 1000.0) * 16)
+                    sum += count * (120 + ln1p(value.winningPayment(state, drawn, win, unseen) / 1000.0) * 16)
                     total += count
                     continue
                 }
@@ -309,9 +307,15 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         // The exchangeable-draw chance is an approximation, not a calibrated win rate.
         val mass = maxOf(1, unseen.sum()).toDouble()
         val chance = 1 - (1 - minOf(.99, hand.waits.quality() / mass)).pow(draws)
-        val deposit = if (view.rules().needsRiichiDeposit()) 10 * (1 - chance) else 0.0
+        // Price a forfeited deposit on the same payout scale as the candidate hand.
+        val deposit = if (view.rules().needsRiichiDeposit())
+            (pointUtility(hand.points, true) - pointUtility(maxOf(0.0, hand.points - 1000), true)) * (1 - chance) else 0.0
         return deposit + defence.pressure() * 8 + 4 / draws
     }
+
+    private fun pointUtility(points: Double, ready: Boolean): Double =
+        if (level == BotDifficulty.EASY) { if (ready) minOf(16.0, points / 500) else 0.0 }
+        else ln1p(points / 1000) * if (ready) 16 else 6
 
     companion object {
         const val SEARCH_ROOTS = 3
