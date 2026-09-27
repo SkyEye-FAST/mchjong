@@ -232,11 +232,43 @@ above, without the outer array) to a local file and run:
 
 This rotates one external player through each seat against three built-in players
 of the selected difficulty, using the same seeds as the built-in comparison.
-`-PbotInspect` saves up to 300 differing decisions, the external response metadata
-and recipient views in `engine/build/mjai-disagreements-<id>-<level>.json`. Model
-startup contributes to the external timing totals. Use identical seeds, rotations,
+`-PbotInspect` saves a deterministic reservoir sample of up to 300 differing
+decisions, with seed/seat, external response metadata and recipient views in
+`engine/build/mjai-disagreements-<id>-<level>.json`. Equivalent physical copies
+of the same tile face count as the same decision; red and ordinary fives remain
+distinct. Inspect one entry with `-PbotArgs='inspect /absolute/path/sample.json 0'`.
+Model startup contributes to the external timing totals. Use identical seeds, rotations,
 rules and weights for a before/after comparison, and check an independent seed range
 before drawing conclusions about strength.
+
+Add `-PbotReport=build/study/before-1.jsonl` to write each completed match's
+seed, rotation, rules, points and ranks. The file is replaced when that run starts.
+Give separate runs unique filenames. Compare two filename prefixes after all
+rotations finish:
+
+```text
+./gradlew :engine:botCompare -PbotArgs='paired build/study/before- build/study/after-' --console=plain
+```
+
+The report rejects duplicate or incomplete seed/seat pairs and mismatched rules or
+opponents. It reports the built-in field's mean points and rank, plus paired 95%
+bootstrap intervals for their changes. A seed with all its seat rotations is one
+sampling unit; the three built-in players and four rotations are correlated.
+Use separate development and holdout seeds, select the candidate on development
+results, and evaluate the holdout once. An interval spanning zero does not establish
+an improvement. This measures strength against the selected opponent and rules.
+
+For concurrent experiments, `:engine:botSnapshot -PbotRevision=before` freezes
+compiled classes and runtime libraries under `engine/build/bot-snapshots/before`.
+From the `engine` directory, run that snapshot using JDK 21:
+
+```text
+java -Dbot.report=build/study/before-1.jsonl -cp "build/bot-snapshots/before/classes;build/bot-snapshots/before/lib/*" top.skyeyefast.mchjong.engine.BotComparison mjai /absolute/path/reference.json HARD 4 74291
+```
+
+Use `:` as the classpath separator on Unix. Preserve each revision's snapshot and
+the same external configuration/weights throughout an experiment. Measure latency
+separately with the machine idle, using the same warm-up and input positions.
 
 ### Built-in opponents
 

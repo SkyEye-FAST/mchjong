@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Reproducible computer-player experiments with frozen executable snapshots, per-match reports, sampled decision traces and paired seed-level confidence intervals.
 - Server-configured computer-player presets using local mjai subprocesses and separately supplied models, with recipient-safe history, asynchronous decisions and paired comparison tooling.
 
 ### Changed

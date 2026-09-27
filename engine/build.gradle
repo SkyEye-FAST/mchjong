@@ -39,6 +39,15 @@ tasks.register('botCompare', JavaExec) {
         systemProperty 'bot.profile', 'true'
     }
     if (providers.gradleProperty('botInspect').isPresent()) systemProperty 'bot.profile', 'true'
+    if (providers.gradleProperty('botReport').isPresent()) systemProperty 'bot.report', providers.gradleProperty('botReport').get()
+}
+
+// Freeze an experiment's classes and dependencies before editing the next candidate.
+tasks.register('botSnapshot', Sync) {
+    dependsOn tasks.named('testClasses')
+    into layout.buildDirectory.dir('bot-snapshots/' + providers.gradleProperty('botRevision').getOrElse('current'))
+    from({ sourceSets.main.output.files + sourceSets.test.output.files }) { into 'classes' }
+    from({ configurations.testRuntimeClasspath.files }) { into 'lib' }
 }
 
 shadowJar {

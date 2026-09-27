@@ -8,6 +8,7 @@ public final class BotComparison {
     private BotComparison() {}
 
     public static void main(String[] args) {
+        if (args[0].equals("paired")) { BotReport.print(args[1], args[2]); return; }
         if (args[0].equals("mjai")) {
             try {
                 var preset = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])), BotPreset.class);
@@ -37,7 +38,9 @@ public final class BotComparison {
         }
         if (args[0].equals("position") || args[0].equals("inspect")) {
             try {
-                var view = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])), TableView.class);
+                var data = com.google.gson.JsonParser.parseString(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])));
+                if (args.length > 2) data = data.getAsJsonArray().get(Integer.parseInt(args[2])).getAsJsonObject().get("view");
+                var view = new com.google.gson.Gson().fromJson(data, TableView.class);
                 if (args[0].equals("position")) measure(view); else inspect(view);
             } catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
             return;
@@ -61,6 +64,17 @@ public final class BotComparison {
         System.out.printf("comparison rules=%s challenger=%s field=%s seeds=%d first_seed=%d%n", rules, challenger, b, seeds, firstSeed);
         var stats = new Stats[]{new Stats(), new Stats()};
         var disagreements = new java.util.ArrayList<java.util.Map<String, Object>>();
+        var sample = new java.util.Random(0);
+        int differences = 0;
+        int compared = 0;
+        String report = System.getProperty("bot.report");
+        if (report != null) {
+            try {
+                var path = java.nio.file.Path.of(report).toAbsolutePath();
+                java.nio.file.Files.createDirectories(path.getParent());
+                java.nio.file.Files.writeString(path, "");
+            } catch (java.io.IOException error) { throw new java.io.UncheckedIOException(error); }
+        }
         for (int seed = 0; seed < seeds; seed++) for (int rotate = 0; rotate < rules.players(); rotate++) {
             var game = GameLifecycleTest.started(rules, firstSeed + seed);
             var mjai = external == null ? null : new MjaiSession(external);
@@ -86,9 +100,15 @@ public final class BotComparison {
                     if (external != null && group == 0 && view.actions().size() > 1 && Boolean.getBoolean("bot.profile")
                         && (game.phase == Game.Phase.TURN || game.phase == Game.Phase.REACTION)) {
                         int heuristic = TrainingBot.choose(view, b);
-                        if (!view.actions().get(action).equals(view.actions().get(heuristic)) && disagreements.size() < 300)
-                            disagreements.add(java.util.Map.of("model", view.actions().get(action), "heuristic", view.actions().get(heuristic),
-                                "response", mjai.response(), "view", view));
+                        compared++;
+                        if (!equivalent(view.actions().get(action), view.actions().get(heuristic))) {
+                            var entry = java.util.Map.<String, Object>of("seed", firstSeed + seed, "rotation", rotate,
+                                "model", view.actions().get(action), "heuristic", view.actions().get(heuristic),
+                                "response", mjai.response(), "view", view);
+                            int selected = sample.nextInt(++differences);
+                            if (disagreements.size() < 300) disagreements.add(entry);
+                            else if (selected < 300) disagreements.set(selected, entry);
+                        }
                     }
                     stats[group].nanos += elapsed;
                     stats[group].times.add(elapsed);
@@ -131,10 +151,21 @@ public final class BotComparison {
                     }
                 }
             }
-            System.out.printf("seed=%d rotation=%d hands=%d%n", firstSeed + seed, rotate, game.handNumber);
+            var points = java.util.stream.IntStream.range(0, rules.players())
+                .map(seat -> game.players[seat].points - rules.config().startingPoints()).boxed().toList();
+            System.out.printf("seed=%d rotation=%d hands=%d points=%s ranks=%s%n", firstSeed + seed, rotate, game.handNumber, points, game.finalRanks);
+            if (report != null) {
+                var result = java.util.Map.of("seed", firstSeed + seed, "rotation", rotate, "challenger", challenger,
+                    "field", b.name(), "rules", rules.name(), "points", points, "ranks", game.finalRanks, "hands", game.handNumber);
+                try {
+                    java.nio.file.Files.writeString(java.nio.file.Path.of(report), new com.google.gson.Gson().toJson(result) + "\n",
+                        java.nio.file.StandardOpenOption.APPEND);
+                } catch (java.io.IOException error) { throw new java.io.UncheckedIOException(error); }
+            }
             } finally { if (mjai != null) mjai.close(); }
         }
         stats[0].print(challenger); stats[1].print(b.name());
+        if (compared > 0) System.out.printf("teacher compared=%d differences=%d sampled=%d%n", compared, differences, disagreements.size());
         if (external != null && Boolean.getBoolean("bot.profile")) {
             try {
                 java.nio.file.Files.writeString(java.nio.file.Path.of("build", "mjai-disagreements-" + external.id() + "-" + b + ".json"),
@@ -152,6 +183,11 @@ public final class BotComparison {
                 System.out.printf("%s retreats=%d unannounced_retreats=%d%n", label, stats[i].retreats, stats[i].unannouncedRetreats);
             } catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
         }
+    }
+
+    private static boolean equivalent(Action first, Action second) {
+        return first.type() == second.type() && first.tiles().stream().map(BotAnalysis::face).sorted().toList()
+            .equals(second.tiles().stream().map(BotAnalysis::face).sorted().toList());
     }
 
     private static void measure() {
