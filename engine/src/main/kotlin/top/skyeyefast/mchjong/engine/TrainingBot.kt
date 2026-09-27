@@ -162,21 +162,21 @@ internal class TrainingBot private constructor(
             val safer = candidate.discard >= 0 && baseline.discard >= 0 &&
                 defence.danger(candidate.discard) < defence.danger(baseline.discard)
             val retreat = candidate.evaluation.shanten > minimum && !candidate.replacement && candidate !== fold && !safer
-            val exact = searchDecision && candidate.evaluation.shanten == 1 && !candidate.replacement
+            val oneShanten = searchDecision && candidate.evaluation.shanten == 1 && !candidate.replacement
             if (
                 retreat && viable(baseline) && baseline.evaluation.live > 0 &&
-                (level != BotDifficulty.HARD || !exact && roots >= BotAnalysis.SEARCH_ROOTS)
+                (level != BotDifficulty.HARD || !oneShanten && roots >= BotAnalysis.SEARCH_ROOTS)
             ) { record(candidate, exclusion = "unsearched-retreat"); continue }
             var candidateScore = score(candidate)
             var delta = 0.0
             var search = "static"
             val expand = candidate !== fold && searchDecision
-            if (expand && (exact || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
+            if (expand && (oneShanten || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
                 val forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
                 delta = forward - candidate.evaluation.utility
                 candidateScore += delta
-                search = if (exact) "one-shanten-exact" else "bounded"
-                if (!exact) roots++
+                search = if (oneShanten) "one-shanten" else "bounded"
+                if (!oneShanten) roots++
             } else if (candidate.replacement) {
                 record(candidate, exclusion = "unsearched-replacement"); continue
             }
