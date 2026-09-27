@@ -169,6 +169,17 @@ walls and visible honor counts retain residual pair/special-hand risk. Several
 weak signals combine to increase discard risk, balanced against remaining draw
 opportunities before triggering full defensive folding.
 
+Four fixed opposing melds leave only a single-tile pair wait, so their risk vector
+uses visible pair availability without sequence or special-hand components. Four
+fixed triplet/kan groups also establish two han of toitoi in conditional payout.
+
+On the final discard with no live wall remaining, a no-more-dangerous alternative
+can preserve formal tenpai or nagashi mangan instead of future development value.
+Formal tenpai shares settlement's structural-wait predicate, including dead and
+yakuless waits. Nagashi eligibility also shares settlement's rule checks; another
+player's qualifying nagashi replaces noten payments. This comparison prioritizes
+the current hand's draw settlement while retaining the ordinary danger estimate.
+
 Push/fold uses live waits, realizable/estimated value, remaining draw opportunities,
 opposing value weighted by its public threat pressure, multiple threats and
 late-match score gaps. Riichi supplies full pressure; uncertain open hands supply

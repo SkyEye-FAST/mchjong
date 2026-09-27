@@ -23,6 +23,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Account for four-meld pair waits and guaranteed toitoi value, and preserve safer final-discard tenpai or nagashi settlements in computer-player decisions.
 - Anchor compact immersive player plaques to their seat edges for clearer orientation.
 - Bring immersive rivers closer to the center and keep player plaques clear of hands and melds.
 - Keep opaque dyed tile backs intact on immersive side hands.
