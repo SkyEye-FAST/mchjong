@@ -100,6 +100,9 @@ internal class TrainingBot private constructor(
             }
         }
         if (choices.isEmpty()) throw IllegalStateException("No evaluated legal bot action")
+        val finalDiscards = if (view.remaining() == 0 && view.phase() == Game.Phase.TURN) {
+            choices.filter { view.actions()[it.index].type() == DISCARD }
+        } else emptyList()
         val baseline = choices.asSequence()
             .filter { view.actions()[it.index].type() == DISCARD || view.actions()[it.index].type() == PASS }
             .minWithOrNull(
@@ -133,7 +136,7 @@ internal class TrainingBot private constructor(
                 if (remove) record(it, exclusion = "fold")
                 remove
             }
-            if (choices.size == 1) { record(safe); return safe.index }
+            if (choices.size == 1) { record(safe); return exhaustiveChoice(safe, finalDiscards).index }
         }
         val searchDecision = level == BotDifficulty.HARD || choices.any { it.replacement }
         // Reserve the unchanged alternative before call-discard branches consume
@@ -186,7 +189,32 @@ internal class TrainingBot private constructor(
                 best = candidate
             }
         }
-        return best.index
+        return exhaustiveChoice(best, finalDiscards).index
+    }
+
+    private fun exhaustiveChoice(selected: Choice, discards: List<Choice>): Choice {
+        if (discards.isEmpty() || view.actions()[selected.index].type() != DISCARD) return selected
+        val own = view.seats()[view.viewerSeat()]
+        val otherNagashi = view.seats().indices.any { seat ->
+            val player = view.seats()[seat]
+            seat != view.viewerSeat() && Settlement.nagashiEligible(view.rules(), player.melds(), player.river())
+        }
+        fun settlement(candidate: Choice): Int {
+            val river = own.river() + Discard(candidate.discard, false, false, false)
+            if (Settlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
+            return if (!otherNagashi && LegalActions.formalTenpai(candidate.state.hand(), candidate.state.melds(), view.rules())) 1 else 0
+        }
+        // No future draws remain. Prefer a better draw settlement only when the
+        // discard is no more dangerous; dead/yakuless waits still count as tenpai.
+        val current = settlement(selected)
+        val danger = defence.danger(selected.discard)
+        val better = discards.filter { defence.danger(it.discard) <= danger && settlement(it) > current }
+            .minWithOrNull(compareByDescending<Choice> { settlement(it) }
+                .thenBy { defence.danger(it.discard) }.thenByDescending { score(it) }.thenBy { it.key })
+            ?: return selected
+        diagnostics?.removeIf { it.index == better.index }
+        record(better, search = "exhaustive-settlement")
+        return better
     }
 
     private fun viable(candidate: Choice): Boolean =

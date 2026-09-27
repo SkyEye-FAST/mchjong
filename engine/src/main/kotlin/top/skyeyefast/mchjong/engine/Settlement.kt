@@ -124,11 +124,7 @@ internal object Settlement {
             tenpai[seat] = LegalActions.formalTenpai(game, seat)
             if (tenpai[seat]) count++
             game.exposed[seat] = tenpai[seat]
-            if (
-                game.rules.nagashiMangan() && player.river.isNotEmpty() &&
-                (game.rules.nagashiAllowsCalls() || player.closed()) &&
-                player.river.all { !it.called() && Tile.terminalOrHonor(Tile.kind(it.tile())) }
-            ) {
+            if (nagashiEligible(game.rules, player.melds, player.river)) {
                 nagashi += seat
             }
         }
@@ -156,6 +152,11 @@ internal object Settlement {
         }
         finish(game, tenpai[game.dealer], true, false, if (nagashi.isEmpty()) "exhaustive" else "nagashi", before)
     }
+
+    fun nagashiEligible(rules: RuleConfig, melds: List<Meld>, river: List<Discard>): Boolean =
+        rules.nagashiMangan() && river.isNotEmpty() &&
+            (rules.nagashiAllowsCalls() || melds.all { it.closed() }) &&
+            river.all { !it.called() && Tile.terminalOrHonor(Tile.kind(it.tile())) }
 
     private fun transfer(game: Game, payer: Int, recipient: Int, points: Int) {
         if (payer == recipient || points < 0) throw IllegalStateException("Invalid point transfer")

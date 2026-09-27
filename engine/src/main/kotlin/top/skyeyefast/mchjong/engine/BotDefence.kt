@@ -16,6 +16,7 @@ internal class BotDefence(
         val value: Double,
         val closed: Boolean,
         val riichi: Boolean,
+        val fixedMelds: Int,
     )
 
     private val known = VisibleTiles.counts(view)
@@ -47,6 +48,7 @@ internal class BotDefence(
                     if (meld.kind() == Tile.EAST + view.round() / view.rules().players()) han++
                 }
             }
+            if (opponent.melds().size == 4 && opponent.melds().none { it.type() == Meld.Type.CHI }) han += 2
             // Visible yaku/bonus content and elapsed turns strengthen an open-hand signal;
             // neither calls nor discards prove tenpai or concealed yaku.
             val progress = minOf(1.0, opponent.river().size / 16.0)
@@ -70,7 +72,7 @@ internal class BotDefence(
                 true,
                 view.rules(),
             )
-            val threat = Threat(seat, river, pressure, estimate, open == 0, opponent.riichi())
+            val threat = Threat(seat, river, pressure, estimate, open == 0, opponent.riichi(), opponent.melds().size)
             threats += threat
             for (kind in 0 until 34) risks[seat][kind] = risk(threat, kind)
         }
@@ -87,6 +89,8 @@ internal class BotDefence(
             2 -> 0.22
             else -> 0.38
         }
+        // Four fixed groups leave only a single concealed tile: ron must complete its pair.
+        if (threat.fixedMelds == 4) return pair
         if (level == BotDifficulty.EASY) return if (Tile.terminalOrHonor(kind)) 0.8 else 1.0
         // Keep a residual for tanki/shanpon, chiitoitsu and (closed hands) kokushi.
         val special = if (threat.closed && Tile.terminalOrHonor(kind)) 0.06 else 0.02
