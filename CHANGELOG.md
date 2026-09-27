@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Allow a nearby owner's maid to take an empty lobby seat before the owner sits down.
 - Wait for the complete printing batch before a Create press moves blank tiles into a mahjong box.
 - Advance each settlement stage early only after every human player confirms, and show its remaining seconds in the single top action.
 

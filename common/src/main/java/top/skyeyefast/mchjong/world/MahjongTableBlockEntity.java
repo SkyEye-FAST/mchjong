@@ -397,12 +397,13 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, false);
     }
 
-    /** Existing companions retain membership; new ones need an owner participating nearby. */
+    /** Existing companions retain membership; new ones need a nearby living owner. */
     public int companionSeat(net.minecraft.world.entity.TamableAnimal companion) {
         Game current = serverGame();
         if (current == null || companion.level() != level || !companion.isAlive() || companion.isRemoved()) return -1;
         if (current.entityBot(companion.getUUID())) return current.seatOf(companion.getUUID());
-        if (!(companion.getOwner() instanceof ServerPlayer owner) || participantGame(owner) == null
+        if (!(companion.getOwner() instanceof ServerPlayer owner) || owner.serverLevel() != level
+            || !owner.isAlive() || owner.isSpectator() || owner.distanceToSqr(worldPosition.getCenter()) > 64
             || current.phase() != Game.Phase.LOBBY) return -1;
         var seats = current.view(null).seats();
         for (int seat = 0; seat < current.rules().players(); seat++) {
