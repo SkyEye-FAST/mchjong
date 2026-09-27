@@ -258,14 +258,14 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         return if (total == 0) baseline.utility else baseline.utility + sum / total - leafBaseline
     }
 
-    /** Every live improving face and every tenpai discard. Non-advancing draws
-     * retain the root estimate; they do not invoke another beam or another ply. */
+    /** All advancing tenpai discards, plus bounded same-shanten improvements.
+     * Keeping the drawn tile can improve a wait shape before it advances shanten. */
     private fun advance(state: State, baseline: Evaluation, distance: Int): Double {
         var gain = 0.0
         val improving = shape(state).improving
         for (face in unseen.indices) {
             val count = unseen[face]
-            if (count == 0 || face % 34 !in improving) continue
+            if (count == 0) continue
             advanceNodes++
             val remaining = unseen.clone()
             remaining[face]--
@@ -275,11 +275,22 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             }
             val faces = HashSet<Int>()
             var best = Double.NEGATIVE_INFINITY
+            val candidates = ArrayList<Pair<State, TileEfficiency>>()
             for (discard in withDraw.hand()) {
                 val shape = shapes[Tile.kind(discard)] ?: continue
-                if (shape.shanten != 0 || !faces.add(face(discard))) continue
-                tenpaiLeaves++
-                best = maxOf(best, continuation(withDraw, withDraw.discard(discard, false), shape, remaining, false, distance))
+                if (!faces.add(face(discard))) continue
+                candidates += withDraw.discard(discard, false) to shape
+            }
+            val leaves = if (face % 34 in improving) candidates else {
+                val ranked = candidates.sortedWith(compareByDescending<Pair<State, TileEfficiency>> { live(it.second.improving, remaining) }
+                    .thenBy { it.first.orderKey() }).take(2)
+                // Keep the unchanged hand as a value/defence baseline even when another
+                // shape has more immediate improving tiles.
+                (ranked + (withDraw.discard(tile(face), false) to shape(state))).distinctBy { it.first }
+            }
+            for ((next, shape) in leaves) {
+                if (shape.shanten == 0) tenpaiLeaves++
+                best = maxOf(best, continuation(withDraw, next, shape, remaining, false, distance))
             }
             if (best.isFinite()) gain += count * (best - baseline.utility)
         }

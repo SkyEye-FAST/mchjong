@@ -81,7 +81,8 @@ internal class BotDefence(
     private fun risk(threat: Threat, kind: Int): Double {
         if (contains(threat.river, kind)) return 0.0 // Genbutsu applies to this opponent only.
         val pair = when (known[kind]) {
-            3, 4 -> 0.10
+            4 -> 0.0
+            3 -> 0.10
             2 -> 0.22
             else -> 0.38
         }
@@ -122,7 +123,9 @@ internal class BotDefence(
 
     fun pressure(): Double = threats.sumOf { it.pressure }
 
-    fun strongestValue(): Double = threats.asSequence().filter { it.pressure >= 0.4 }.maxOfOrNull { it.value } ?: 0.0
+    // A conditional open-hand payout is not an established tenpai threat.
+    // Use the same public pressure here as in discard danger; riichi stays at 1.
+    fun strongestValue(): Double = threats.asSequence().filter { it.pressure >= 0.4 }.maxOfOrNull { it.value * it.pressure } ?: 0.0
 
     fun mode(hand: BotAnalysis.Evaluation): Mode {
         if (pressure() < 0.5) return Mode.PUSH
@@ -130,7 +133,8 @@ internal class BotDefence(
         if (level == BotDifficulty.EASY) return if (hand.shanten >= 3) Mode.FOLD else Mode.CAUTIOUS
         val urgency = placementUrgency(hand.points)
         val goodTenpai = hand.shanten == 0 && hand.waits.quality() >= 3 && hand.points * urgency >= strongestValue()
-        val goodApproach = hand.shanten == 1 && hand.live >= 14 && hand.points * urgency >= strongestValue() * 1.5 && draws >= 5
+        val goodApproach = hand.shanten == 1 && hand.live >= 14 && hand.potential.viable &&
+            hand.points * urgency >= strongestValue() * 1.5 && draws >= 5
         if (goodTenpai || goodApproach && pressure() < 1.5) return Mode.PUSH
         // Several weak signals still affect each discard's risk. Their sum alone
         // must not turn uncertain opponents into an established tenpai threat.

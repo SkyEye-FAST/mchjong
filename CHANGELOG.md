@@ -14,6 +14,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Expand HARD's one-shanten search to compare non-advancing shape improvements, and weigh push/fold commitments by public opponent pressure and visible tile stock.
 - Evaluate riichi value with conditional unseen ura indicators and a consistent deposit cost, while reserving bounded search capacity for replacement declarations.
 - Hot-reload local and server preset ZIPs, separate preset sources with name/ID tooltips, and share each player's server voice for declarations and winning-hand recordings.
 - Align table sound subtitles with vanilla accessibility subtitle conventions across supported languages.
