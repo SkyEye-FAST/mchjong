@@ -27,7 +27,7 @@ class TrainingBotTest {
     @Test void yakuRoutesPreserveUsefulTilesWithoutBuyingAnOffensiveRetreat() {
         String[][] positions = {
             {"sanshoku", "123m123p12457889s", "8s"},
-            {"ittsu", "1234589m234p558s7p", "7p"},
+            {"ittsu", "1234589m234p558s7p", "7p,8s"},
             {"iipeikou and pinfu", "22334456m345p55s8p", "8p"},
             {"toitoi", "111m222p3344s55z67z", "6z,7z"},
             {"sequence over triplets", "112233m456p67s555z", "5z"},
@@ -123,15 +123,15 @@ class TrainingBotTest {
         analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
         var evaluated = analysis.evaluate(state, shape, analysis.unseen);
         assertTrue(Double.isFinite(analysis.forward(state, evaluated, false)));
-        assertEquals(shape.improving().stream().mapToInt(k -> (analysis.unseen[k] > 0 ? 1 : 0) + (analysis.unseen[k + 34] > 0 ? 1 : 0)).sum(),
-            analysis.advanceNodes);
-        assertTrue(analysis.tenpaiLeaves >= analysis.advanceNodes);
+        assertEquals(java.util.Arrays.stream(analysis.unseen).filter(count -> count > 0).count(), analysis.advanceNodes);
+        assertTrue(analysis.tenpaiLeaves >= shape.improving().stream()
+            .mapToInt(k -> (analysis.unseen[k] > 0 ? 1 : 0) + (analysis.unseen[k + 34] > 0 ? 1 : 0)).sum());
         var trace = TrainingBot.inspect(view, BotDifficulty.HARD);
         assertTrue(trace.stream().filter(c -> c.evaluation().shanten() == 1 && c.exclusion().isEmpty()).count() > 3);
         for (var candidate : trace) {
             assertEquals(candidate.evaluation().terms().total() + candidate.adjustments().total() + candidate.forward(), candidate.utility(), 1e-9);
             if (candidate.evaluation().shanten() == 1 && candidate.exclusion().isEmpty())
-                assertEquals("one-shanten-exact", candidate.search());
+                assertEquals("one-shanten", candidate.search());
         }
     }
 
@@ -213,6 +213,15 @@ class TrainingBotTest {
             BotAnalysis.face(reordered.actions().get(TrainingBot.choose(reordered, BotDifficulty.HARD)).tiles().getFirst()));
     }
 
+    @Test void oneShantenKeepsConnectedTilesWhenImmediateAdvancesAreEqual() {
+        var game = hand("3445m12389p24s377z");
+        var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
+        assertEquals(shapes.get(Tile.WEST).shanten(), shapes.get(Tile.parseKind("4m")).shanten());
+        assertEquals(shapes.get(Tile.WEST).improving(), shapes.get(Tile.parseKind("4m")).improving());
+        assertEquals(Tile.WEST, Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst()),
+            "Keep the connected 3445 shape instead of an isolated non-value honor");
+    }
+
     @Test void tiersUseLiveEfficiencyAndHardBotNeverReadsHiddenHandsOrSeed() {
         var game = hand("123456m234p456s12z");
         var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of());
@@ -259,7 +268,7 @@ class TrainingBotTest {
         for (var difficulty : BotDifficulty.values()) assertEquals(Action.Type.RON, choice(game, difficulty).type());
         game.options.set(0, List.of(new Action(Action.Type.SKIP_SETTLEMENT), new Action(Action.Type.SETTLEMENT_DONE)));
         assertEquals(Action.Type.SKIP_SETTLEMENT, choice(game, BotDifficulty.HARD).type());
-        var noYaku = hand("123m456p23s33667z");
+        var noYaku = hand("123m456p23s33442z");
         noYaku.phase = Game.Phase.REACTION; noYaku.lastFrom = 1;
         noYaku.lastTile = Tile.id(Tile.WEST, 3, false);
         noYaku.players[1].river.add(new Discard(noYaku.lastTile, false, false, false));

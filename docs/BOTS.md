@@ -32,12 +32,15 @@ and opponent evidence beyond riichi. Its bounded draw/discard search
 includes same-shanten improvements, with walls, combined-threat push/fold and safe
 reserves in the defense assessment.
 
-For every eligible one-shanten candidate, HARD enumerates every live effective
-draw face and every legal discard reaching tenpai. Each continuation uses actual
+For every eligible one-shanten candidate, HARD considers every live draw face.
+Advancing draws enumerate every discard reaching tenpai. Each ready continuation uses actual
 ron/tsumo waits, whole-hand furiten and payments, comparing dama and a legal riichi
-declaration. These roots have their own decision-local cache and do not consume
+declaration. Non-advancing draws also compare the two widest continuations with
+keeping the existing hand, allowing connected shapes to improve before shanten
+decreases. The retained hand includes the simulated discard in its furiten state.
+These roots have their own decision-local cache and do not consume
 the general three-root budget. `HandAnalyzer.bestDiscardEfficiency` uses the
-library's best-shanten mode at these draws: the minimum is zero, so every tied
+library's best-shanten mode: advancing draws have a minimum of zero, so every tied
 tenpai discard is retained, including regular and special-hand alternatives,
 while retreat branches are omitted. Non-advancing draws retain the immediate estimate;
 this horizon is exhaustive for immediate tenpai advances, not for all future play.
@@ -162,7 +165,9 @@ weak signals combine to increase discard risk, balanced against remaining draw
 opportunities before triggering full defensive folding.
 
 Push/fold uses live waits, realizable/estimated value, remaining draw opportunities,
-opposing value, multiple threats and late-match score gaps. Full folding orders
+opposing value weighted by its public threat pressure, multiple threats and
+late-match score gaps. Riichi supplies full pressure; uncertain open hands supply
+their estimated pressure. Full folding orders
 discards by safety before efficiency, allowing completed groups to be broken.
 Each candidate's resulting hand determines its attack/defence mode; a viable,
 fast, valuable call is compared before folding the unchanged hand.
