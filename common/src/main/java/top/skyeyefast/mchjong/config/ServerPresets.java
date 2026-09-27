@@ -23,6 +23,7 @@ public final class ServerPresets {
     private ServerPresets() {}
 
     public static void load(Path configDirectory) {
+        BotPresets.load(configDirectory);
         directory = configDirectory;
         appearances.clear();
         voiceChoices.clear();

@@ -8,6 +8,14 @@ public final class BotComparison {
     private BotComparison() {}
 
     public static void main(String[] args) {
+        if (args[0].equals("mjai")) {
+            try {
+                var preset = new com.google.gson.Gson().fromJson(java.nio.file.Files.readString(java.nio.file.Path.of(args[1])), BotPreset.class);
+                var level = BotDifficulty.valueOf(args[2]);
+                compare(Integer.parseInt(args[3]), preset.rules(), level, level, Long.parseLong(args[4]), preset);
+            } catch (java.io.IOException error) { throw new java.io.UncheckedIOException(error); }
+            return;
+        }
         if (args[0].equals("tables")) {
             tables(Integer.parseInt(args[1]), Integer.parseInt(args[2]), RuleSet.valueOf(args[3]), BotDifficulty.valueOf(args[4]));
             return;
@@ -45,11 +53,20 @@ public final class BotComparison {
         var a = BotDifficulty.valueOf(args[2]);
         var b = BotDifficulty.valueOf(args[3]);
         long firstSeed = args.length > 4 ? Long.parseLong(args[4]) : 74291;
-        System.out.printf("comparison rules=%s challenger=%s field=%s seeds=%d first_seed=%d%n", rules, a, b, seeds, firstSeed);
+        compare(seeds, rules, a, b, firstSeed, null);
+    }
+
+    private static void compare(int seeds, RuleSet rules, BotDifficulty a, BotDifficulty b, long firstSeed, BotPreset external) {
+        String challenger = external == null ? a.name() : external.id();
+        System.out.printf("comparison rules=%s challenger=%s field=%s seeds=%d first_seed=%d%n", rules, challenger, b, seeds, firstSeed);
         var stats = new Stats[]{new Stats(), new Stats()};
+        var disagreements = new java.util.ArrayList<java.util.Map<String, Object>>();
         for (int seed = 0; seed < seeds; seed++) for (int rotate = 0; rotate < rules.players(); rotate++) {
             var game = GameLifecycleTest.started(rules, firstSeed + seed);
+            var mjai = external == null ? null : new MjaiSession(external);
+            try {
             int steps = 0;
+            int notifiedHand = -1;
             while (game.phase != Game.Phase.MATCH_END && steps++ < 20000) {
                 boolean acted = false;
                 for (int seat = 0; seat < rules.players(); seat++) {
@@ -57,8 +74,22 @@ public final class BotComparison {
                     if (view.actions().isEmpty()) continue;
                     int group = seat == rotate ? 0 : 1;
                     long start = System.nanoTime();
-                    int action = TrainingBot.choose(view, group == 0 ? a : b);
+                    int action;
+                    if (group == 0 && mjai != null && (game.phase == Game.Phase.TURN || game.phase == Game.Phase.REACTION)) {
+                        var position = game.mjaiPosition(seat);
+                        while ((action = mjai.poll(position)) < 0) {
+                            try { Thread.sleep(1); }
+                            catch (InterruptedException error) { Thread.currentThread().interrupt(); throw new IllegalStateException(error); }
+                        }
+                    } else action = TrainingBot.choose(view, group == 0 ? a : b);
                     long elapsed = System.nanoTime() - start;
+                    if (external != null && group == 0 && view.actions().size() > 1 && Boolean.getBoolean("bot.profile")
+                        && (game.phase == Game.Phase.TURN || game.phase == Game.Phase.REACTION)) {
+                        int heuristic = TrainingBot.choose(view, b);
+                        if (!view.actions().get(action).equals(view.actions().get(heuristic)) && disagreements.size() < 300)
+                            disagreements.add(java.util.Map.of("model", view.actions().get(action), "heuristic", view.actions().get(heuristic),
+                                "response", mjai.response(), "view", view));
+                    }
                     stats[group].nanos += elapsed;
                     stats[group].times.add(elapsed);
                     stats[group].decisions++;
@@ -68,6 +99,14 @@ public final class BotComparison {
                     if (elapsed > stats[group].slowest) { stats[group].slowest = elapsed; stats[group].position = view; }
                     if (Boolean.getBoolean("bot.profile")) stats[group].observe(view, action);
                     if (!game.act(game.players[seat].id, view.decision(), action)) throw new AssertionError("Rejected action");
+                    if (mjai != null && game.handNumber != notifiedHand
+                        && (game.phase == Game.Phase.HAND_END || game.phase == Game.Phase.MATCH_END)) {
+                        var hand = game.replay.hands().getLast();
+                        mjai.finish(hand.number(), rotate, MjaiProtocol.hand(rotate, hand.round(), hand.dealer(), hand.honba(), hand.sticks(),
+                            hand.initialPoints(), hand.initialHands(), hand.initialDora(), hand.events()),
+                            MjaiProtocol.result(hand, game.phase == Game.Phase.MATCH_END));
+                        notifiedHand = game.handNumber;
+                    }
                     acted = true;
                     break;
                 }
@@ -93,16 +132,24 @@ public final class BotComparison {
                 }
             }
             System.out.printf("seed=%d rotation=%d hands=%d%n", firstSeed + seed, rotate, game.handNumber);
+            } finally { if (mjai != null) mjai.close(); }
         }
-        stats[0].print(a); stats[1].print(b);
+        stats[0].print(challenger); stats[1].print(b.name());
+        if (external != null && Boolean.getBoolean("bot.profile")) {
+            try {
+                java.nio.file.Files.writeString(java.nio.file.Path.of("build", "mjai-disagreements-" + external.id() + "-" + b + ".json"),
+                    new com.google.gson.Gson().toJson(disagreements));
+            } catch (java.io.IOException error) { throw new java.io.UncheckedIOException(error); }
+        }
         if (Boolean.getBoolean("bot.profile")) for (int i = 0; i < stats.length; i++) {
             try {
-                java.nio.file.Files.writeString(java.nio.file.Path.of("build", "bot-slow-" + (i == 0 ? a : b) + ".json"),
+                String label = i == 0 ? challenger : b.name();
+                java.nio.file.Files.writeString(java.nio.file.Path.of("build", "bot-slow-" + label + ".json"),
                     new com.google.gson.Gson().toJson(stats[i].position));
                 if (stats[i].earlyRetreat != null)
-                    java.nio.file.Files.writeString(java.nio.file.Path.of("build", "bot-retreat-" + (i == 0 ? a : b) + ".json"),
+                    java.nio.file.Files.writeString(java.nio.file.Path.of("build", "bot-retreat-" + label + ".json"),
                         new com.google.gson.Gson().toJson(stats[i].earlyRetreat));
-                System.out.printf("%s retreats=%d unannounced_retreats=%d%n", i == 0 ? a : b, stats[i].retreats, stats[i].unannouncedRetreats);
+                System.out.printf("%s retreats=%d unannounced_retreats=%d%n", label, stats[i].retreats, stats[i].unannouncedRetreats);
             } catch (java.io.IOException e) { throw new java.io.UncheckedIOException(e); }
         }
     }
@@ -211,7 +258,7 @@ public final class BotComparison {
         final java.util.EnumMap<Action.Type, Integer> actions = new java.util.EnumMap<>(Action.Type.class);
         final java.util.EnumMap<Action.Type, Integer> offered = new java.util.EnumMap<>(Action.Type.class);
         final java.util.Map<String, Integer> yaku = new java.util.TreeMap<>();
-        void print(BotDifficulty level) {
+        void print(String level) {
             times.sort(Long::compare);
             System.out.printf(Locale.ROOT,
                 "%s seats=%d hands=%d win=%.4f deal=%.4f value=%.1f rank=%.3f points=%.1f decision_ms=%.3f p95_ms=%.3f max_ms=%.3f decisions=%d%n",

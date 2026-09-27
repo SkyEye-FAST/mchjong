@@ -143,5 +143,7 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Bot checks
 
 Use `:engine:test --tests "*TrainingBotTest"` for decision regressions.
+Use `:engine:test --tests "*MjaiTest"` for external preset authorization,
+recipient history, legal-response mapping and subprocess timeout boundaries.
 Performance experiments are opt-in; commands and interpretation are in
 [Training opponents](BOTS.md#reproduction).

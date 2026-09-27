@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Server-configured computer-player presets using local mjai subprocesses and separately supplied models, with recipient-safe history, asynchronous decisions and paired comparison tooling.
+
 ### Changed
 
 - Hot-reload local and server preset ZIPs, separate preset sources with name/ID tooltips, and share each player's server voice for declarations and winning-hand recordings.
