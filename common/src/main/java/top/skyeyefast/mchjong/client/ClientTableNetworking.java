@@ -51,9 +51,13 @@ public final class ClientTableNetworking {
             if (payload.controlReply()) active.receivedControlReply();
         }
         if (payload.open()) {
-            TableScreen screen = new TableScreen(payload.pos());
-            client.setScreen(screen);
-            screen.resetView();
+            if (active != null && active.tablePos().equals(payload.pos())) {
+                if (client.screen != active) client.setScreen(active);
+            } else {
+                TableScreen screen = new TableScreen(payload.pos());
+                client.setScreen(screen);
+                screen.resetView();
+            }
         }
     }
 
