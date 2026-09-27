@@ -117,6 +117,24 @@ object HandAnalyzer {
         return payment(lower) * (1 - fraction) + payment(lower + 1) * fraction
     }
 
+    /** Conditional extra-dora payout using an already legal hand's yaku and fu. */
+    @JvmStatic
+    fun bonusPayment(score: HandScore, extraDora: Int, dealer: Boolean, rules: RuleConfig): Int {
+        require(extraDora >= 0)
+        if (score.yakuman() > 0 || extraDora == 0) return if (score.ron() > 0) score.ron()
+            else if (dealer) score.tsumoDealer() * (rules.players() - 1)
+            else score.tsumoDealer() + score.tsumoChild() * (rules.players() - 2)
+        val han = score.han() + extraDora
+        val pointHan = if (rules.kiriageMangan() && han == 3 && score.fu() == 60) 5 else han
+        val options = HanHuOptions(hasKiriageMangan = rules.kiriageMangan(), hasKazoeYakuman = rules.kazoeYakuman())
+        val parent = getParentPointByHanHu(pointHan, score.fu(), options)
+        val child = getChildPointByHanHu(pointHan, score.fu(), options)
+        return (if (score.ron() > 0) {
+            if (dealer) parent.ron else child.ron
+        } else if (dealer) parent.tsumo * (rules.players() - 1).toUInt()
+        else child.tsumoParent + child.tsumoChild * (rules.players() - 2).toUInt()).toInt()
+    }
+
     @JvmStatic
     fun riichiKanKeepsMelds(handBeforeDraw: List<Int>, melds: List<Meld>, kanKind: Int): Boolean {
         // Inspect the original tenpai decompositions, including shapes whose

@@ -140,6 +140,7 @@ internal class TrainingBot private constructor(
         // the bounded search. Replacement draws need a searched baseline at EASY too.
         val reserveBaseline = view.actions()[baseline.index].type() == PASS || choices.any { it.replacement }
         choices.sortWith(compareBy<Choice> { reserveBaseline && it !== baseline }
+            .thenBy { reserveBaseline && !it.replacement }
             .thenByDescending { score(it) }.thenBy { it.key })
         var bestScore = Double.NEGATIVE_INFINITY
         var best = baseline
