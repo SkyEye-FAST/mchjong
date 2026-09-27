@@ -27,6 +27,9 @@ final class ForgeNetworking {
             .addMain(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
+            .addMain(TableHandOrderPayload.TYPE, TableHandOrderPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
+            })
             .addMain(TableSeatPayload.TYPE, TableSeatPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })

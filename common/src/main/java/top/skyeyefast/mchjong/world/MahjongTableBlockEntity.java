@@ -527,6 +527,16 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, true);
     }
 
+    public void reorderHand(ServerPlayer player, top.skyeyefast.mchjong.network.TableHandOrderPayload payload) {
+        Game current = participantGame(player);
+        if (current != null && current.tableId().equals(payload.tableId())
+            && current.reorderHand(player.getUUID(), payload.decision(), payload.source(), payload.target(), payload.after())) {
+            setChanged();
+            sentRevision = -1;
+        }
+        sendView(player, false, false);
+    }
+
     public void control(ServerPlayer player, TableControlPayload payload) {
         Game game = payload.operation() == TableControlPayload.Operation.RESOLVE_LEAVE
             && player.serverLevel() == level && player.isAlive() && !player.isSpectator()

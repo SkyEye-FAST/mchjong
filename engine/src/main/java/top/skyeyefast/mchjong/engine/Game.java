@@ -403,8 +403,25 @@ public final class Game {
         if (manual || seat < 0 || players[seat].bot || exitVote != null || expectedDecision != decision
             || option == AutoPlay.Option.KITA && !rules.sanma()
             || players[seat].autoPlay.enabled(option) == enabled) return false;
+        if (option == AutoPlay.Option.SORT && !enabled) {
+            var player = players[seat];
+            player.hand.sort(Tile.ORDER);
+            if (player.drawn >= 0 && player.hand.remove(Integer.valueOf(player.drawn))) player.hand.add(player.drawn);
+        }
         players[seat].autoPlay = players[seat].autoPlay.with(option, enabled);
         // Other responders retain their decision token and remaining time.
+        revision++;
+        return true;
+    }
+
+    public boolean reorderHand(UUID actor, long expectedDecision, int source, int target, boolean after) {
+        int seat = seatOf(actor);
+        if (seat < 0 || players[seat].bot || manual || players[seat].autoPlay.sort()
+            || exitVote != null || expectedDecision != decision || source == target
+            || !players[seat].hand.contains(source) || !players[seat].hand.contains(target)) return false;
+        var hand = players[seat].hand;
+        hand.remove(Integer.valueOf(source));
+        hand.add(hand.indexOf(target) + (after ? 1 : 0), source);
         revision++;
         return true;
     }
@@ -1130,7 +1147,8 @@ public final class Game {
                 || handVisibility.reveals(viewer >= 0 && players[viewer].riichi);
             List<Integer> hand = new ArrayList<>(player.hand);
             if (manual || player.autoPlay.sort()) hand.sort(Tile.ORDER);
-            if (player.drawn >= 0 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
+            if (player.drawn >= 0 && (seat != viewer || manual || player.autoPlay.sort())
+                && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
             if (phase == Phase.REACTION && seat == lastFrom)
                 focus = new TableView.Focus(seat, lastTile, pending != null,
                     pending == null ? player.river.size() - 1 : hand.indexOf(lastTile));

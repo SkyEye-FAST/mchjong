@@ -124,6 +124,10 @@ public final class MchjongNeoForge {
         registrar.playToServer(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableHandOrderPayload.TYPE,
+            top.skyeyefast.mchjong.network.TableHandOrderPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
         registrar.playToServer(TableSeatPayload.TYPE, TableSeatPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
