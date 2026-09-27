@@ -78,11 +78,7 @@ public final class TableSeatsScreen extends Screen {
 
     static Component botName(RoomView room, int seat) {
         var state = room.seats().get(seat);
-        if (state.botPreset().isEmpty()) return Component.translatable(state.difficulty().translationKey());
-        var preset = room.botPresets().stream().filter(choice -> choice.id().equals(state.botPreset())).findFirst();
-        String name = preset.map(top.skyeyefast.mchjong.engine.BotPreset.Choice::name).orElse(state.botPreset());
-        return preset.isPresent() && preset.get().compatible() ? Component.literal(name)
-            : Component.translatable("room.mchjong.bot_unavailable", name);
+        return Component.translatable(state.difficulty().translationKey());
     }
 
     static Component wind(int wind) {

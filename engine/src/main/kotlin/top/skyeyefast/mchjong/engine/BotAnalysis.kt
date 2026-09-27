@@ -25,12 +25,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     @JvmField
     var drawNodes = 0
 
-    @JvmField
-    var advanceNodes = 0
-
-    @JvmField
-    var tenpaiLeaves = 0
-
     class State(
         hand: kotlin.collections.List<Int>,
         melds: kotlin.collections.List<Meld>,
@@ -266,7 +260,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         for (face in unseen.indices) {
             val count = unseen[face]
             if (count == 0) continue
-            advanceNodes++
             val remaining = unseen.clone()
             remaining[face]--
             val withDraw = state.draw(tile(face))
@@ -289,7 +282,6 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
                 (ranked + (withDraw.discard(tile(face), false) to shape(state))).distinctBy { it.first }
             }
             for ((next, shape) in leaves) {
-                if (shape.shanten == 0) tenpaiLeaves++
                 best = maxOf(best, continuation(withDraw, next, shape, remaining, false, distance))
             }
             if (best.isFinite()) gain += count * (best - baseline.utility)

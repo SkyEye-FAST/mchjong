@@ -26,31 +26,6 @@ tasks.named('compileJava', JavaCompile) { options.release = 17 }
 tasks.named('compileKotlin') { compilerOptions.jvmTarget = org.jetbrains.kotlin.gradle.dsl.JvmTarget.JVM_17 }
 test { useJUnitPlatform(); maxHeapSize = '1G' }
 
-// Explicit experiment, never part of check/buildAll. Reuses the engine lifecycle fixtures.
-tasks.register('botCompare', JavaExec) {
-    dependsOn testClasses
-    classpath = sourceSets.test.runtimeClasspath
-    mainClass = 'top.skyeyefast.mchjong.engine.BotComparison'
-    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(21) }
-    maxHeapSize = '1G'
-    args providers.gradleProperty('botArgs').getOrElse('measure').split(' ')
-    if (providers.gradleProperty('botProfile').isPresent()) {
-        jvmArgs '-XX:StartFlightRecording=filename=build/bot-profile.jfr,settings=profile,dumponexit=true'
-        systemProperty 'bot.profile', 'true'
-    }
-    if (providers.gradleProperty('botInspect').isPresent()) systemProperty 'bot.profile', 'true'
-    if (providers.gradleProperty('botReport').isPresent()) systemProperty 'bot.report', providers.gradleProperty('botReport').get()
-    if (providers.gradleProperty('botRiskReport').isPresent()) systemProperty 'bot.riskReport', providers.gradleProperty('botRiskReport').get()
-}
-
-// Freeze an experiment's classes and dependencies before editing the next candidate.
-tasks.register('botSnapshot', Sync) {
-    dependsOn tasks.named('testClasses')
-    into layout.buildDirectory.dir('bot-snapshots/' + providers.gradleProperty('botRevision').getOrElse('current'))
-    from({ sourceSets.main.output.files + sourceSets.test.output.files }) { into 'classes' }
-    from({ configurations.testRuntimeClasspath.files }) { into 'lib' }
-}
-
 shadowJar {
     addMultiReleaseAttribute = false
     duplicatesStrategy = DuplicatesStrategy.INCLUDE

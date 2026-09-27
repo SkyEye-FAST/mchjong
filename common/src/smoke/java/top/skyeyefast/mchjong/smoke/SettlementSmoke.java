@@ -277,8 +277,7 @@ final class SettlementSmoke {
         table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.invitationTeleport(),
             room.seating(), room.availableWinds(), room.seats(), view.phase() == Game.Phase.MATCH_END
                 ? ScoreAnnouncements.maximumTicks(view.wins()) + Game.SETTLEMENT_TICKS
-                : view.phase() == Game.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0,
-            room.botPresets(), room.botFailed()));
+                : view.phase() == Game.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0));
         if (table.clientView() == view) TableAudio.accept(table, view);
     }
 

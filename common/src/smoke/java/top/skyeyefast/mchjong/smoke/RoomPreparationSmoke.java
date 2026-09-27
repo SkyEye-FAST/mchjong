@@ -24,7 +24,6 @@ final class RoomPreparationSmoke {
     private boolean capturedPositioning;
     private int botSeat = -1;
     private int botCycle;
-    private boolean customBotSelected;
     private Boolean originalAutoSeat;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
@@ -64,8 +63,6 @@ final class RoomPreparationSmoke {
                         click(client, BotDifficulty.HARD.translationKey());
                         botCycle = 2;
                     } else if (botCycle == 3 && occupant.bot() && difficulty == BotDifficulty.EASY) {
-                        if (room.botPresets().stream().anyMatch(top.skyeyefast.mchjong.engine.BotPreset.Choice::compatible)
-                            && !customBotSelected) throw new IllegalStateException("Bot cycle skipped the configured mjai preset");
                         capture(client, output, prefix + "-bot-easy.png");
                         botCycle = 4;
                     }
@@ -77,14 +74,6 @@ final class RoomPreparationSmoke {
                 if (!view.seats().get(botSeat).occupied()) {
                     click(client, "room.mchjong.add_bot");
                     botCycle = 3;
-                } else if (!room.seats().get(botSeat).botPreset().isEmpty()) {
-                    var selected = room.botPresets().stream()
-                        .filter(preset -> preset.id().equals(room.seats().get(botSeat).botPreset())).findFirst().orElseThrow();
-                    if (!selected.compatible()) throw new IllegalStateException("Selected incompatible mjai preset");
-                    customBotSelected = true;
-                    AutomationControlsSmoke.checkBounds(client);
-                    capture(client, output, prefix + "-bot-custom.png");
-                    clickLabel(client, selected.name());
                 }
                 return false;
             }
