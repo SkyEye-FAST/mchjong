@@ -40,6 +40,7 @@ tasks.register('botCompare', JavaExec) {
     }
     if (providers.gradleProperty('botInspect').isPresent()) systemProperty 'bot.profile', 'true'
     if (providers.gradleProperty('botReport').isPresent()) systemProperty 'bot.report', providers.gradleProperty('botReport').get()
+    if (providers.gradleProperty('botRiskReport').isPresent()) systemProperty 'bot.riskReport', providers.gradleProperty('botRiskReport').get()
 }
 
 // Freeze an experiment's classes and dependencies before editing the next candidate.

@@ -78,6 +78,8 @@ public final class BotComparison {
         for (int seed = 0; seed < seeds; seed++) for (int rotate = 0; rotate < rules.players(); rotate++) {
             var game = GameLifecycleTest.started(rules, firstSeed + seed);
             var mjai = external == null ? null : new MjaiSession(external);
+            var riskPath = System.getProperty("bot.riskReport");
+            var risk = riskPath == null ? null : new BotRiskReport(riskPath + "-" + (firstSeed + seed) + "-" + rotate + ".jsonl");
             try {
             int steps = 0;
             int notifiedHand = -1;
@@ -118,7 +120,10 @@ public final class BotComparison {
                         if (view.actions().stream().anyMatch(o -> o.type() == type)) stats[group].offered.merge(type, 1, Integer::sum);
                     if (elapsed > stats[group].slowest) { stats[group].slowest = elapsed; stats[group].position = view; }
                     if (Boolean.getBoolean("bot.profile")) stats[group].observe(view, action);
+                    if (risk != null) risk.observe(firstSeed + seed, rotate, view, view.actions().get(action));
                     if (!game.act(game.players[seat].id, view.decision(), action)) throw new AssertionError("Rejected action");
+                    if (risk != null && (game.phase == Game.Phase.HAND_END || game.phase == Game.Phase.MATCH_END))
+                        risk.finish(game.replay.hands().getLast());
                     if (mjai != null && game.handNumber != notifiedHand
                         && (game.phase == Game.Phase.HAND_END || game.phase == Game.Phase.MATCH_END)) {
                         var hand = game.replay.hands().getLast();

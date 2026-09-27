@@ -263,6 +263,18 @@ Use separate development and holdout seeds, select the candidate on development
 results, and evaluate the holdout once. An interval spanning zero does not establish
 an improvement. This measures strength against the selected opponent and rules.
 
+Add `-PbotRiskReport=build/risk/run` to capture each executed discard's public
+decision features and join them with its settled ron outcome. Files use
+`<prefix>-<seed>-<rotation>.jsonl`; direct snapshot runs use
+`-Dbot.riskReport=build/risk/run`. Each row includes role, shanten, live advances,
+estimated value, threat pressure, danger, attack/defence mode, discarded tile,
+winning seats and actual loss. Feature estimates use HARD for both roles.
+Deal-in rows also retain the recipient view from before execution. Labels are
+assigned after settlement; they never enter player decisions. These are outcomes
+under the observed policy, so group rates are descriptive rather than calibrated
+probabilities for unchosen actions. Diagnostic collection adds work outside the
+reported decision timer; run latency measurements separately.
+
 For concurrent experiments, `:engine:botSnapshot -PbotRevision=before` freezes
 compiled classes and runtime libraries under `engine/build/bot-snapshots/before`.
 From the `engine` directory, run that snapshot using JDK 21:
