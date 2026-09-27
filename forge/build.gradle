@@ -147,6 +147,7 @@ dependencies {
         modRuntimeOnly "dev.architectury:architectury-forge:${architectury_version}"
     }
     implementation project(path: ':engine', configuration: 'embeddedEngine')
+    compileOnly "org.jetbrains.kotlin:kotlin-stdlib:${kotlin_version}"
     embeddedEngine project(path: ':engine', configuration: 'embeddedEngine')
 }
 

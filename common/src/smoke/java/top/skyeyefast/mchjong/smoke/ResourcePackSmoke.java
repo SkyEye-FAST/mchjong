@@ -263,14 +263,14 @@ final class ResourcePackSmoke {
             backArchive(localBackArchive, "custom_back", "Reloaded Local Back", output.resolve("back.png"));
             backArchive(serverConfig.resolve("mchjong/server-presets/backs/server.zip"), "server_back", "Reloaded Server Back", output.resolve("back.png"));
             byte[] recording;
-            try (var sound = client.getResourceManager().open(ResourceLocation.parse("minecraft:sounds/random/click.ogg"))) {
+            try (var sound = client.getResourceManager().open(ResourceIds.of("minecraft:sounds/random/click.ogg"))) {
                 recording = sound.readAllBytes();
             }
             voiceArchive(localVoiceArchive, "custom_voice", "Reloaded Local Voice", recording);
             stage = 88; ticks = 0;
-        } else if (stage == 88 && TileBackPresets.label(ResourceLocation.parse("smoke:server_back")).getString().equals("Reloaded Server Back")
-                && TileBackPresets.label(ResourceLocation.parse("smoke:custom_back")).getString().equals("Reloaded Local Back")
-                && VoicePresets.label(ResourceLocation.parse("smoke:custom_voice")).getString().equals("Reloaded Local Voice")) {
+        } else if (stage == 88 && TileBackPresets.label(ResourceIds.of("smoke:server_back")).getString().equals("Reloaded Server Back")
+                && TileBackPresets.label(ResourceIds.of("smoke:custom_back")).getString().equals("Reloaded Local Back")
+                && VoicePresets.label(ResourceIds.of("smoke:custom_voice")).getString().equals("Reloaded Local Voice")) {
             if (client.screen.children().stream().noneMatch(child -> child instanceof net.minecraft.client.gui.components.Button button
                 && button.getMessage().getString().equals("Reloaded Local Voice"))) return false;
             client.screen.onClose();
@@ -301,10 +301,10 @@ final class ResourcePackSmoke {
                 Files.delete(serverConfig.resolve("mchjong/server-presets/" + kind + "/server.zip"));
             stage = 89; ticks = 0;
         } else if (stage == 89 && !TileFacePresets.choices().contains(CUSTOM) && !TileFacePresets.choices().contains(SERVER)
-                && !VoicePresets.choices().contains(ResourceLocation.parse("smoke:custom_voice"))
-                && !VoicePresets.choices().contains(ResourceLocation.parse("smoke:server_voice"))) {
-            require(!TileBackPresets.choices().contains(ResourceLocation.parse("smoke:server_back")), "Deleted server back remained loaded");
-            require(!RiichiStickPresets.choices().contains(ResourceLocation.parse("smoke:server_stick")), "Deleted server stick remained loaded");
+                && !VoicePresets.choices().contains(ResourceIds.of("smoke:custom_voice"))
+                && !VoicePresets.choices().contains(ResourceIds.of("smoke:server_voice"))) {
+            require(!TileBackPresets.choices().contains(ResourceIds.of("smoke:server_back")), "Deleted server back remained loaded");
+            require(!RiichiStickPresets.choices().contains(ResourceIds.of("smoke:server_stick")), "Deleted server stick remained loaded");
             client.getResourcePackRepository().setSelected(selected);
             pending = client.reloadResourcePacks();
             stage = 5; ticks = 0;
