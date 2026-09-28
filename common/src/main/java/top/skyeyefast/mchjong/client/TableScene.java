@@ -58,15 +58,17 @@ public final class TableScene {
             }
             // Stay centered whenever possible; move only far enough to clear the actual meld bounds.
             // Include the actual drawn tile and gap, without reserving empty meld or draw slots.
-            int concealed = player.hand().size() - (player.drawn() != Tile.ABSENT ? 1 : 0);
+            boolean separateDraw = player.drawn() != Tile.ABSENT && !player.hand().isEmpty()
+                && player.hand().getLast() == player.drawn();
+            int concealed = player.hand().size() - (separateDraw ? 1 : 0);
             double left = -Math.max(0, concealed - 1) * HAND_STEP / 2;
             if (!melds.isEmpty() && !player.hand().isEmpty()) {
                 double handRight = left + (player.hand().size() - 1) * HAND_STEP
-                    + (player.drawn() != Tile.ABSENT ? DRAW_GAP : 0) + RIVER_STEP / 2;
+                    + (separateDraw ? DRAW_GAP : 0) + RIVER_STEP / 2;
                 left += Math.min(0, meldLeft - HAND_MELD_GAP - handRight);
             }
             for (int i = 0; i < player.hand().size(); i++) {
-                boolean drawn = player.drawn() != Tile.ABSENT && i == player.hand().size() - 1;
+                boolean drawn = separateDraw && i == player.hand().size() - 1;
                 boolean declaration = view.focus() != null && view.focus().declaration()
                     && view.focus().seat() == seat && view.focus().index() == i;
                 boolean flat = player.exposed() || declaration

@@ -14,6 +14,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Preserve hand order when automatic sorting is turned off and support drag reordering with an upward discard threshold.
 - Keep immersive view active when an exit vote opens.
 - Disable invitations for friends who are already seated in the room.
 - Allow a nearby owner's maid to take an empty lobby seat before the owner sits down.

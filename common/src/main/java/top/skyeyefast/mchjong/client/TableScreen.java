@@ -70,6 +70,10 @@ public final class TableScreen extends Screen {
     private TableView handlingDrag;
     private Vec3 handlingStart;
     private Vec3 handlingPointer;
+    private TableView handDrag;
+    private int handDragTile = Tile.ABSENT;
+    private double handDragStartX, handDragStartY, handDragX, handDragY;
+    private boolean handDragMoved;
     private boolean immersive;
     private boolean viewReady;
     private TableBoard board;
@@ -95,6 +99,7 @@ public final class TableScreen extends Screen {
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {}
     @Override public void removed() {
         clearCameraInput();
+        handDrag = null;
         if (TableAudio.result(presentedView) != null) {
             TableAudio.finishResult();
             VoicePresets.stop();
@@ -152,6 +157,7 @@ public final class TableScreen extends Screen {
         immersive = !immersive;
         clearCameraInput();
         handlingDrag = null;
+        handDrag = null;
         rebuild();
     }
 
@@ -253,6 +259,9 @@ public final class TableScreen extends Screen {
     private void refreshDecision(TableView view) {
         if (handlingDrag != null && (view == null || !handlingDrag.tableId().equals(view.tableId())
             || handlingDrag.decision() != view.decision())) handlingDrag = null;
+        if (handDrag != null && (view == null || !handDrag.tableId().equals(view.tableId())
+            || handDrag.decision() != view.decision() || view.viewerSeat() < 0
+            || !view.seats().get(view.viewerSeat()).hand().contains(handDragTile))) handDrag = null;
         if (decision.receive(view)) {
             selectedTile = lastClickedTile = hoveredTile = Tile.ABSENT;
             hints.clearPreview();
@@ -860,6 +869,17 @@ public final class TableScreen extends Screen {
         return best == null ? Tile.ABSENT : best.tile();
     }
 
+    private double handTileCenterX(int tile) {
+        TableView view = view();
+        if (view == null) return width / 2.0;
+        for (TableScene.Piece piece : settledScene) {
+            if (piece.area() != TableScene.Area.HAND || piece.seat() != view.viewerSeat() || piece.tile() != tile) continue;
+            Projected center = projectHand(piece);
+            if (center != null) return center.x();
+        }
+        return width / 2.0;
+    }
+
     private record Pointer(Vec3 origin, Vec3 ray) {}
 
     private Pointer pointer(double mouseX, double mouseY) {
@@ -1046,8 +1066,17 @@ public final class TableScreen extends Screen {
             for (var piece : scene) if (piece.area() == TableScene.Area.HAND && piece.seat() == view.viewerSeat() && piece.tile() == tile)
                 return highlight(pos, piece);
             return 0;
-        }, immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT, facePreset(), tileMaterial(), tileBack(), tileBackPreset(),
+        }, handDrag != null && handDragMoved ? handDragTile
+            : immersiveDrawActive(Util.getMillis()) ? immersiveDraw.tile() : Tile.ABSENT,
+            facePreset(), tileMaterial(), tileBack(), tileBackPreset(),
             dealing() ? animation() : null, board == null ? null : board.drawSource(), Util.getMillis());
+        if (handDrag != null && handDragMoved) {
+            int tileWidth = hand == null ? Math.min(32, Math.max(16, uiWidth() / 14)) : hand.tileWidth();
+            int tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
+            TileGui.tile3d(graphics, handDragTile, (int) handDragX - tileWidth / 2,
+                (int) handDragY - tileHeight / 2, tileWidth, false, false, false, false,
+                Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
+        }
         updateHints(view);
         super.extractRenderState(graphics, drawMouseX, drawMouseY, partialTick);
         if (dealing()) renderStatus(graphics, Component.translatable(immersive ? "ui.mchjong.dealing.immersive" : "ui.mchjong.dealing"),
@@ -1309,6 +1338,19 @@ public final class TableScreen extends Screen {
                     return true;
                 }
             }
+            TableView snapshot = view();
+            if (tile >= 0 && !choosingRiichi && !event.hasShiftDown() && snapshot != null
+                && snapshot.autoPlay() != null && !snapshot.autoPlay().sort()) {
+                handDrag = snapshot;
+                handDragTile = tile;
+                handDragStartX = handDragX = mouseX;
+                handDragStartY = handDragY = mouseY;
+                handDragMoved = false;
+                selectedTile = tile;
+                setFocused(null);
+                rebuild();
+                return true;
+            }
             if (tile >= 0 && !choosingRiichi && !event.hasShiftDown() && discardFromClick(tile)) return true;
             selectedTile = tile;
             lastClickedTile = Tile.ABSENT;
@@ -1359,9 +1401,35 @@ public final class TableScreen extends Screen {
         int button = event.button();
         if (TableKeys.INSPECT.matchesMouse(event)) { inspecting = false; return true; }
         if (immersive) {
-            if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
+            if (!insideImmersiveCanvas(mouseX, mouseY) && handDrag == null) return false;
             mouseX = canvasX(mouseX);
             mouseY = canvasY(mouseY);
+        }
+        if (button == 0 && handDrag != null) {
+            TableView snapshot = handDrag;
+            int tile = handDragTile;
+            boolean moved = handDragMoved || Math.hypot(mouseX - handDragStartX, mouseY - handDragStartY) > 4;
+            double startY = handDragStartY;
+            handDrag = null;
+            handDragTile = Tile.ABSENT;
+            TableView current = view();
+            if (current == null || !snapshot.tableId().equals(current.tableId()) || snapshot.decision() != current.decision()
+                || current.autoPlay() == null || current.autoPlay().sort()) return true;
+            if (!moved) {
+                if (!discardFromClick(tile)) { selectedTile = tile; rebuild(); }
+            } else if (mouseY <= startY - (immersive ? 96 : 48)) {
+                int action = discardAction(current, tile);
+                if (action >= 0) send(current, action);
+            } else {
+                int target = pick(mouseX, mouseY);
+                if (target >= 0 && target != tile && minecraft.getConnection() != null) {
+                    double center = hand == null ? handTileCenterX(target) : hand.centerX(target);
+                    minecraft.getConnection().send(PayloadPackets.serverbound(
+                        new top.skyeyefast.mchjong.network.TableHandOrderPayload(pos, current.tableId(),
+                            current.decision(), tile, target, mouseX > center)));
+                }
+            }
+            return true;
         }
         if (button == 0 && handlingDrag != null) {
             TableView snapshot = handlingDrag;
@@ -1384,12 +1452,18 @@ public final class TableScreen extends Screen {
         double mouseX = event.x(), mouseY = event.y();
         int button = event.button();
         if (immersive) {
-            if (!insideImmersiveCanvas(mouseX, mouseY)) return false;
+            if (!insideImmersiveCanvas(mouseX, mouseY) && handDrag == null) return false;
             double scale = immersiveScale();
             mouseX = canvasX(mouseX);
             mouseY = canvasY(mouseY);
             dx /= scale;
             dy /= scale;
+        }
+        if (button == 0 && handDrag != null) {
+            handDragX = mouseX;
+            handDragY = mouseY;
+            handDragMoved |= Math.hypot(mouseX - handDragStartX, mouseY - handDragStartY) > 4;
+            return true;
         }
         if (button == 0 && handlingDrag != null) { handlingPointer = tablePoint(mouseX, mouseY); return true; }
         if (button == 1 && dragging && minecraft.player != null) {
@@ -1409,6 +1483,7 @@ public final class TableScreen extends Screen {
         int key = event.key();
         TableView view = view();
         if (key == GLFW.GLFW_KEY_ESCAPE && handlingDrag != null) { handlingDrag = null; handlingStart = null; return true; }
+        if (key == GLFW.GLFW_KEY_ESCAPE && handDrag != null) { handDrag = null; return true; }
         if (TableKeys.DRAWER.matches(event) && openOwnDrawer()) return true;
         if (results != null && results.isFocused() && results.keyPressed(event)) return true;
         if (key == GLFW.GLFW_KEY_ESCAPE && (choosingRiichi || selectedTile >= 0)) { cancelSelection(); return true; }

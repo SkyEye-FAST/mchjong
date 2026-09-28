@@ -22,6 +22,12 @@ public final class TableNetworking {
             table.control(player, payload);
     }
 
+    public static void receive(ServerPlayer player, TableHandOrderPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.reorderHand(player, payload);
+    }
+
     public static void receive(ServerPlayer player, TableSeatPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

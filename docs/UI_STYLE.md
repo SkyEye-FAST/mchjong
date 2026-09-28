@@ -411,6 +411,11 @@ disabled. A legal win takes priority over automatic north extraction, discards a
 skipped calls. Without automatic wins, the win decision remains explicit. Automatic
 north extraction uses only legal server actions, independently of the skip-calls
 preference, and retains the normal robbery and replacement-draw flow.
+Turning sorting off keeps the hand's current order. Dragging a tile onto another
+tile changes its position; dragging it upward at least 48 logical pixels in seated
+view or 96 pixels on the immersive canvas discards only when a discard is legal.
+Shorter drags retain the tile. The personal single-click, double-click and
+confirmation settings continue to govern click discards.
 Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second

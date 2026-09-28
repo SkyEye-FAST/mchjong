@@ -121,4 +121,24 @@ class CompactTableLayoutTest {
             assertTrue(center(open, 4) < center(pons, 4), "A genuinely wider open kan needs more room");
         }
     }
+
+    @Test void aDrawnTileMovedIntoTheHandHasNoStrayDrawGap() {
+        var base = base(RuleSet.TENHOU_4);
+        var player = new TableView.Seat(false, "Test", true, false, false, 25000,
+            List.of(0, 4, 8), 4, List.of(), List.of(), List.of(), false, false, false);
+        var hand = new TableHand(player, 0, 640, 400, 32, true);
+        assertEquals(hand.tileWidth(), hand.centerX(8) - hand.centerX(4));
+        var point = hand.point(4);
+        assertEquals(4, hand.pick(point.x(), point.y(), Tile.ABSENT));
+        var seats = new ArrayList<>(base.seats());
+        seats.set(0, player);
+        var view = new TableView(base.tableId(), base.revision(), base.decision(), base.handNumber(), base.rules(),
+            base.phase(), 0, base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(),
+            base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
+            base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(), base.clocks(),
+            base.finalRanks(), base.handVisibility(), base.exitVote(), base.handling(), base.autoPlay(),
+            base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles());
+        var pieces = TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
+        assertEquals(TableScene.HAND_STEP, pieces.get(2).position().distanceTo(pieces.get(1).position()), 1e-9);
+    }
 }
