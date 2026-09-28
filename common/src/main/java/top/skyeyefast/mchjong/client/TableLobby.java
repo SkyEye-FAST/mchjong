@@ -63,8 +63,12 @@ final class TableLobby {
         int start = TableSeatsScreen.find(view, Action.Type.BEGIN_SEATING, List.of());
         if (start < 0) start = TableSeatsScreen.find(view, Action.Type.FILL_BOTS, List.of());
         int index = start;
-        String label = index < 0 ? "room.mchjong.wait_host" : view.actions().get(index).type() == Action.Type.FILL_BOTS
+        String label;
+        if (index >= 0) label = view.actions().get(index).type() == Action.Type.FILL_BOTS
             ? "room.mchjong.start_bots" : parent.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual";
+        else if (host && view.seats().stream().allMatch(TableView.Seat::occupied))
+            label = parent.automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed";
+        else label = "room.mchjong.wait_host";
         var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.send(view, index)).primary();
         primary.setHeight(26);
         primary.active = index >= 0;
