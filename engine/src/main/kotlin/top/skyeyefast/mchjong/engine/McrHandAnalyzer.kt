@@ -121,7 +121,7 @@ object McrHandAnalyzer {
         return LibraryHand(concealed.map(::libraryTile), melds.map { libraryMeld(it, owner) })
     }
 
-    /** Concealed tiles exclude the drawn/winning tile: size + 3 * meld count must equal 13. */
+    /** Validate physical identities and fixed melds without running shape or scoring algorithms. */
     @JvmStatic
     fun validateHand(concealed: List<Int>, melds: List<Meld>, owner: Int) {
         hand(concealed, melds, owner)

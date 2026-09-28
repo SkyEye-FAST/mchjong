@@ -42,6 +42,7 @@ class McrPersistenceTest {
         int remaining = game.remaining();
         var restored = roundTrip(game);
         var robbed = roundTrip(game);
+        rejected(McrCodec.save(game), object -> object.getAsJsonObject("pendingKong").addProperty("type", "CLOSED_KAN"));
         assertEquals(Meld.Type.PON, restored.melds(1).get(0).type());
         assertEquals(McrWinContext.KongWin.ROBBED, restored.winningContext(2).kongWin());
         passAll(game);
@@ -114,14 +115,23 @@ class McrPersistenceTest {
         String json = McrCodec.save(game);
         rejected(json, object -> object.addProperty("format", 2));
         rejected(json, object -> object.remove("seed"));
+        rejected(json, object -> object.addProperty("seed", "4"));
+        rejected(json, object -> object.addProperty("decision", Long.MAX_VALUE));
+        rejected(json, object -> object.addProperty("drawKong", "ROBBED"));
+        rejected(json, object -> player(object, 1).addProperty("winForbidden", "false"));
         rejected(json, object -> object.addProperty("phase", "MATCH_END"));
         rejected(json, object -> object.getAsJsonObject("wall").addProperty("head", 52));
+        rejected(json, object -> object.getAsJsonObject("wall").addProperty("head", 53.5));
+        rejected(json, object -> object.getAsJsonObject("wall").addProperty("tail", 4_294_967_440L));
+        rejected(json, object -> player(object, 3).add("drawn", player(object, 3).getAsJsonArray("hand").get(0)));
         rejected(json, object -> player(object, 1).getAsJsonArray("hand").set(0, player(object, 0).getAsJsonArray("hand").get(0)));
         rejected(json, object -> player(object, 0).addProperty("points", 100));
         rejected(json, object -> object.getAsJsonArray("replies").get(0).getAsJsonObject()
             .getAsJsonObject("action").addProperty("type", "NEXT"));
         rejected(json, object -> object.getAsJsonArray("replies").add(object.getAsJsonArray("replies").get(0).deepCopy()));
-        for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"), " ".repeat(65_537)})
+        for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"),
+            json.replace("\"format\":1", "\"format\":1,\"format\":1"),
+            "{\"nested\":" + "[".repeat(1000) + "0" + "]".repeat(1000) + "}", " ".repeat(65_537)})
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(invalid));
         assertEquals(json, McrCodec.save(game));
     }

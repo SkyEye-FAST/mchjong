@@ -118,6 +118,12 @@ public final class McrGame {
     public McrSettlement.Result result() { return result; }
     public List<McrSettlement.Penalty> penalties() { return List.copyOf(penalties); }
 
+    /** The host resolves the authorized seat. Use -1 for spectators; never pass a client-claimed seat. */
+    public McrView view(int viewerSeat) { return McrView.project(this, viewerSeat); }
+
+    List<Integer> publicWall() { return wall.tiles().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(); }
+    boolean responded(int seat) { checkSeat(seat); return replies[seat] != null; }
+
     /** Engine inspection is private, not a recipient-filtered network snapshot. */
     public List<Action> actions(int seat) {
         checkSeat(seat);

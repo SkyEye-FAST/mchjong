@@ -105,6 +105,8 @@ tail replacements, exhaustion and conservation across player-owned zones.
 `McrPersistenceTest` owns private save round trips, resumed responses and added
 kongs, payment idempotence, stale-token rejection and invalid-save rejection.
 The sixteen-hand `McrGameTest` lifecycle restores each completed hand before advancing.
+`McrViewTest` owns participant/spectator redaction, concealed kongs, private
+response progress, public flowers/penalties and the save/view codec separation.
 `McrGameTest` owns fixed-wall dealing, ordered supplementary draws, action
 arbitration, wrong-win continuation/stop-win, kong transaction boundaries,
 server-derived winning facts and the complete sixteen-hand lifecycle.

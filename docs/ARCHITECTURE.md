@@ -156,17 +156,44 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
+The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
+rejects duplicate fields and checks numeric/boolean types before binding records.
 
 Restoration checks physical conservation, hand and meld structure, wall bounds,
 claim ownership, penalty/stop-win consistency and completed winning results.
 Legal actions are regenerated from the restored position. Previously submitted
 responses must still be valid and remain submitted; a completed reaction window
-cannot be restored as pending. Restore advances revision and decision so old
-action tokens cannot be reused. A partial response advances only revision,
+cannot be restored as pending. Restore advances revision and decision so the saved
+decision token cannot be reused. A partial response advances only revision,
 leaving the shared decision valid for the other responders.
 
 The save record is separate from recipient data. Restore failures are reported
 to the storage caller; the codec never substitutes a new match.
+
+### MCR recipient views
+
+`McrGame.view(seat)` builds an immutable `McrView` before serialization.
+The engine host resolves the authorized participant seat; `-1` requests the
+unprivileged spectator view. Ordinary concealed hands and drawn identities are
+visible only to their owner. Concealed kongs use four hidden sentinels for other
+recipients. A normal winning result exposes that winner's hand and melds, while
+other hands and every remaining wall tile stay hidden. Wall slots retain only
+hidden/absent occupancy. Flowers, rivers, exposed melds, points, stop-win flags,
+declared claim tiles and penalty events are public.
+
+Only the recipient receives their legal actions and submitted-response status.
+Other players' action choices and responses are absent from the data model.
+The public focus contains the offered discard or added-kong tile, not another
+player's response. Below-minimum structural wins remain issued actions; a
+subsequent wrong-win event updates points and the stop-win flag independently
+of the hand result.
+
+`McrCodec.encodeView(view)` and `decodeView(json)` use the view contract rather
+than the private save contract. Both codecs bound document size and nesting,
+require complete typed record fields and reject duplicate fields. View
+construction enforces concealed-data redaction, so private state is not a valid
+view document. Snapshot revision reflects partial-response changes without
+invalidating the other players' shared decision token.
 
 ## Networking and authority
 

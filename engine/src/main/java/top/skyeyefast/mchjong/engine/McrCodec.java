@@ -31,6 +31,17 @@ public final class McrCodec {
 
     public static String save(McrGame game) { return encode(game.save()); }
 
+    /** Accepts an already-redacted view, never live state or a private save. */
+    public static String encodeView(McrView view) { return encode(java.util.Objects.requireNonNull(view)); }
+
+    public static McrView decodeView(String json) {
+        try {
+            return decode(json, McrView.class);
+        } catch (RuntimeException invalid) {
+            throw new IllegalArgumentException("Invalid MCR view", invalid);
+        }
+    }
+
     /** Restore atomically; malformed saves throw and never silently start a replacement match. */
     public static McrGame restore(String json) {
         try {
