@@ -108,6 +108,8 @@ The settings hub has World, Room and Personal tabs. Administrators edit world po
 in the World tab through permission-checked server commands; other players see
 read-only values with a short administrator-only explanation. Room controls
 and ownership transfer are paginated separately from local presentation options.
+Secondary settings and preset pages show their parent scope in the header;
+expanded preset choices use an inset and a quiet vertical rule.
 
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
