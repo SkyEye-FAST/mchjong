@@ -195,6 +195,36 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
+### MCR room-to-match sessions
+
+`McrSession` binds a prepared room's four distinct participant UUIDs to fixed
+engine seats. Display names are metadata, not authorization. Its start operation
+accepts a complete standard 144-tile stock and delegates shuffling to `McrGame`;
+it owns the match without owning lobby configuration or seating assignment.
+
+The server host supplies observed UUID-to-seat mounts through `synchronizeSeats`.
+Only a participant mounted at their assigned seat receives that seat's private
+view. A missing, displaced or ambiguously occupied mount grants spectator access.
+Play pauses while any of the four participants is absent; issued actions are
+withheld until the full roster is seated again. Pending responses and scores
+remain intact. After a completed hand, all four participants acknowledge before
+the session advances the dealer and deals the next hand.
+
+Requests contain the table UUID, runtime incarnation UUID, current game decision
+and action index. The authenticated sender's UUID determines the acting seat.
+Every newly created or restored session generates a fresh incarnation, so requests
+from another match or another restoration of the same save remain invalid even
+when their numeric decisions coincide. Partial responses and presence changes
+advance the session view revision without invalidating other responders' decisions.
+
+`McrCodec.saveSession` stores the fixed roster, table identity, hand confirmations
+and private game state; `restoreSession` validates them together. Mount presence
+is re-established by the server, never restored from disk. `encodeSessionView`
+and `decodeSessionView` carry the identity envelope and already-redacted `McrView`,
+not the saved game. The Minecraft host remains responsible for authenticating the
+sender and checking the dimension, loaded table, live mount and server policies
+before calling these methods.
+
 ## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native

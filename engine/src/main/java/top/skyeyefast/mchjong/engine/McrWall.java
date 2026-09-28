@@ -14,7 +14,11 @@ final class McrWall {
     private int tail;
 
     McrWall(long seed) {
-        this(Tile.mcrSet());
+        this(seed, Tile.mcrSet());
+    }
+
+    McrWall(long seed, List<Integer> stock) {
+        this(stock);
         Collections.shuffle(tiles, new Random(seed));
     }
 

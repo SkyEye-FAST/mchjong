@@ -87,6 +87,10 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
     }
 
     static McrView project(McrGame game, int viewerSeat) {
+        return project(game, viewerSeat, true);
+    }
+
+    static McrView project(McrGame game, int viewerSeat, boolean allowActions) {
         if (viewerSeat < -1 || viewerSeat > 3) throw new IllegalArgumentException("Invalid MCR viewer seat");
         int winner = game.result() instanceof McrSettlement.Win win ? win.winner() : -1;
         var seats = new ArrayList<Seat>(4);
@@ -104,7 +108,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             ? new Focus(game.claimFrom(), game.claimTile(), game.robbingKong()) : null;
         return new McrView(game.revision(), game.decision(), game.handNumber(), game.phase(), viewerSeat,
             game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.publicWall(), focus, seats,
-            viewerSeat == -1 ? List.of() : game.actions(viewerSeat), viewerSeat != -1 && game.responded(viewerSeat),
+            viewerSeat == -1 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat != -1 && game.responded(viewerSeat),
             game.result(), game.penalties());
     }
 

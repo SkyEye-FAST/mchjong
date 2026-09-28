@@ -36,6 +36,9 @@ public final class McrGame {
     /** An ordered opening wall is private engine input for deterministic games and verification. */
     public McrGame(long seed, List<Integer> openingWall) { this(seed, new McrWall(openingWall)); }
 
+    /** Room equipment supplies an unordered, complete stock; the engine owns the shuffle. */
+    public static McrGame fromStock(long seed, List<Integer> stock) { return new McrGame(seed, new McrWall(seed, stock)); }
+
     private McrGame(long seed, McrWall wall) {
         this.seed = seed;
         startHand(wall);

@@ -102,6 +102,9 @@ interface smoke verify their native config-screen factories.
 tail replacements, exhaustion and conservation across player-owned zones.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
+`McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,
+incarnation-scoped requests, supplied-stock shuffling, resumed responses and
+all-player hand acknowledgements.
 `McrPersistenceTest` owns private save round trips, resumed responses and added
 kongs, payment idempotence, stale-token rejection and invalid-save rejection.
 The sixteen-hand `McrGameTest` lifecycle restores each completed hand before advancing.

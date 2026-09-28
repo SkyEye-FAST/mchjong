@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Bind MCR matches to authenticated participants and observed seats, with presence pauses, unanimous hand advancement and restore-safe request identities.
 - Add recipient-safe MCR views with private actions, concealed-kong redaction, public flower/penalty data and separate bounded view encoding.
 - Add explicit MCR saves with validated wall/player state, resumable response windows and independent penalty/result restoration.
 - Add raw MCR dealing and independent zero-sum win, wrong-win penalty and exhaustive-draw payment records.

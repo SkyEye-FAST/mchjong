@@ -31,6 +31,26 @@ public final class McrCodec {
 
     public static String save(McrGame game) { return encode(game.save()); }
 
+    public static String saveSession(McrSession session) { return encode(session.save()); }
+
+    public static McrSession restoreSession(String json) {
+        try {
+            return McrSession.restore(decode(json, McrSession.State.class));
+        } catch (RuntimeException invalid) {
+            throw new IllegalArgumentException("Invalid MCR session save", invalid);
+        }
+    }
+
+    public static String encodeSessionView(McrSession.View view) { return encode(java.util.Objects.requireNonNull(view)); }
+
+    public static McrSession.View decodeSessionView(String json) {
+        try {
+            return decode(json, McrSession.View.class);
+        } catch (RuntimeException invalid) {
+            throw new IllegalArgumentException("Invalid MCR session view", invalid);
+        }
+    }
+
     /** Accepts an already-redacted view, never live state or a private save. */
     public static String encodeView(McrView view) { return encode(java.util.Objects.requireNonNull(view)); }
 
@@ -134,6 +154,10 @@ public final class McrCodec {
         } else if (type == boolean.class) {
             if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean())
                 throw new JsonParseException("Expected an MCR boolean");
+        } else if (type == java.util.UUID.class) {
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString()
+                || !java.util.UUID.fromString(value.getAsString()).toString().equalsIgnoreCase(value.getAsString()))
+                throw new JsonParseException("Expected a canonical MCR UUID");
         } else if (type == String.class || type instanceof Class<?> entry && entry.isEnum()) {
             if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isString())
                 throw new JsonParseException("Expected an MCR string");
