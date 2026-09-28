@@ -71,8 +71,9 @@ public final class TableRulesScreen extends Screen {
 
     private boolean host() {
         var view = parent.view();
-        return view != null && view.tableId().equals(baseline.tableId()) && view.phase() == Game.Phase.LOBBY
-            && view.actions().stream().anyMatch(action -> action.type() == Action.Type.CHANGE_RULE);
+        var room = parent.room();
+        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == Game.Phase.LOBBY
+            && view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
     }
     private boolean stale() {
         var view = parent.view();
@@ -224,7 +225,9 @@ public final class TableRulesScreen extends Screen {
 
     private void updateControls() {
         boolean editable = host() && pending == null && !stale();
-        editors.forEach(widget -> widget.active = editable);
+        var world = parent.worldPolicy();
+        boolean customEditable = world != null && (world.allowCustomRules() || mode != Mode.CUSTOM);
+        editors.forEach(widget -> widget.active = editable && customEditable);
         redButtons.forEach((reds, button) -> {
             boolean available = parent.canSupplyReds(draft.sanma(), reds);
             button.active = editable && available;
@@ -234,17 +237,25 @@ public final class TableRulesScreen extends Screen {
                     : Component.translatable("rules.mchjong.insufficient_reds")));
         });
         presetButtons.forEach((rule, button) -> {
-            boolean available = parent.canSupplyReds(rule.sanma(), draft.withPreset(rule).redFives());
+            boolean available = parent.canSupplyReds(rule.sanma(), draft.withPreset(rule).redFives())
+                && world != null && (world.forcedPreset() == null || world.forcedPreset() == rule);
             button.active = editable && available;
             if (!Boolean.valueOf(available).equals(presetAvailability.put(rule, available)))
                 button.setTooltip(Tooltip.create(available ? Component.translatable(rule.presetKey())
                     : Component.translatable("rules.mchjong.insufficient_reds")));
         });
-        if (apply != null) apply.active = editable && !invalid() && !missingReds() && !draft.equals(baseline.rules());
+        if (apply != null) apply.active = editable && allowedByWorld(draft) && !invalid() && !missingReds()
+            && !draft.equals(baseline.rules());
+    }
+    private boolean allowedByWorld(RuleConfig config) {
+        var world = parent.worldPolicy();
+        return world != null && (world.forcedPreset() == null || world.forcedPreset() == config.preset())
+            && (world.allowCustomRules() || !config.custom());
     }
     private boolean missingReds() { return !parent.canSupplyReds(draft.sanma(), draft.redFives()); }
     private void submit() {
-        if (!host() || stale() || invalid() || missingReds() || pending != null || minecraft.getConnection() == null) return;
+        if (!host() || stale() || !allowedByWorld(draft) || invalid() || missingReds()
+            || pending != null || minecraft.getConnection() == null) return;
         pending = draft;
         pendingTicks = 0;
         minecraft.getConnection().send(PayloadPackets.serverbound(

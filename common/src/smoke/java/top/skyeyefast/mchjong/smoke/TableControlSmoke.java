@@ -311,17 +311,17 @@ final class TableControlSmoke {
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                     InvitationSmoke.verify(player, serverTable);
                     var game = serverTable.participantGame(player);
-                    require(game.configureHandVisibility(id, game.view(id).decision(), top.skyeyefast.mchjong.engine.HandVisibility.OPEN),
-                        "Host cannot configure room hand visibility");
+                    require(game.configureOpenHands(id, game.view(id).decision(), true),
+                        "Host cannot configure room open hands");
                     require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
-                    require(game.view(id).handVisibility() == top.skyeyefast.mchjong.engine.HandVisibility.OPEN
-                        && game.roomView().invitationTeleport(), "Room setting replaced world policy");
+                    require(game.view(id).openHands() && policy.policy().invitationTeleport(),
+                        "Room setting replaced world policy");
                 } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | java.io.IOException failure) {
                     throw new IllegalStateException(failure);
                 }
             });
             next(6);
-        } else if (stage == 6 && view.handVisibility() == top.skyeyefast.mchjong.engine.HandVisibility.OPEN) {
+        } else if (stage == 6 && view.openHands()) {
             click(client, "room.mchjong.start_bots");
             next(28);
         } else if (stage == 28) {
@@ -340,7 +340,7 @@ final class TableControlSmoke {
                 } catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
             });
             next(27);
-        } else if (stage == 27 && reseated.isDone() && table.clientRoom().invitationTeleport() == originalWorldPolicy.invitationTeleport()) {
+        } else if (stage == 27 && reseated.isDone() && table.clientWorldPolicy().invitationTeleport() == originalWorldPolicy.invitationTeleport()) {
             departedSeat = view.viewerSeat();
             UUID id = client.player.getUUID();
             reseated = client.getSingleplayerServer().submit(() -> {

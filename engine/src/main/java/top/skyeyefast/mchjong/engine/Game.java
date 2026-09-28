@@ -67,9 +67,10 @@ public final class Game {
     int[] reserveTicks = new int[4];
     UUID hostId;
     RoomSeating seating = new RoomSeating();
-    HandVisibility handVisibility = HandVisibility.SELF;
+    PlayerHandVisibility playerHandVisibility = PlayerHandVisibility.SELF;
+    boolean openHands;
     boolean convenienceHints;
-    transient boolean invitationTeleport;
+    transient WorldPolicy worldPolicy = WorldPolicy.DEFAULT;
     ExitVote exitVote;
     UUID pendingLeaveDecision;
     long exitVoteSequence;
@@ -104,7 +105,8 @@ public final class Game {
 
     /** The world adapter validates the nearby owner before a companion claims an empty lobby place. */
     public boolean joinEntityBot(UUID owner, UUID id, String name, int seat) {
-        if (owner == null || id == null || owner.equals(id) || name == null || seat < 0 || seat >= rules.players() || seatOf(id) >= 0
+        if (!worldPolicy.allowCompanionPlayers() || owner == null || id == null || owner.equals(id) || name == null
+            || seat < 0 || seat >= rules.players() || seatOf(id) >= 0
             || hostId != null && seatOf(owner) < 0 || seatOf(owner) >= 0 && players[seatOf(owner)].bot || phase != Phase.LOBBY
             || exitVote != null || players[seat].id != null) return false;
         setBot(seat, BotDifficulty.EASY);
@@ -171,7 +173,7 @@ public final class Game {
     public boolean isHost(UUID player) { return seatOf(player) >= 0 && seatOf(player) == host(); }
 
     public boolean configureRules(UUID actor, long expectedDecision, RuleConfig config) {
-        if (config == null || phase != Phase.LOBBY || exitVote != null || !isHost(actor)
+        if (config == null || !worldPolicy.permitsRules(config) || phase != Phase.LOBBY || exitVote != null || !isHost(actor)
             || expectedDecision != decision || rules.equals(config) || config.players() == 3 && players[3].id != null) return false;
         applyRules(config);
         newDecision(Phase.LOBBY);
@@ -197,23 +199,82 @@ public final class Game {
     }
 
     /** Called only by the server's world-policy adapter, never by a room control. */
-    public void configureWorld(boolean invitationTeleport) {
-        if (this.invitationTeleport == invitationTeleport) return;
-        this.invitationTeleport = invitationTeleport;
-        revision++;
+    public void configureWorld(WorldPolicy policy) {
+        Objects.requireNonNull(policy);
+        WorldPolicy previous = worldPolicy;
+        boolean changed = !policy.equals(previous);
+        boolean decisionChanged = phase == Phase.LOBBY
+            && (policy.allowBots() != previous.allowBots() || policy.forcedPreset() != previous.forcedPreset());
+        worldPolicy = policy;
+        if (!policy.allowConvenienceHints() && convenienceHints) {
+            convenienceHints = false;
+            changed = true;
+        }
+        if (!policy.allowExperienceRewards() && !pendingExperience.isEmpty()) {
+            pendingExperience.clear();
+            changed = true;
+        }
+        if (!policy.replaysEnabled() && (replay != null || recorder != null || !archiveQueue.isEmpty())) {
+            replay = null;
+            recorder = null;
+            archiveQueue.clear();
+            changed = true;
+        }
+        if (phase == Phase.LOBBY) {
+            boolean rosterChanged = false;
+            for (int seat = 0; seat < rules.players(); seat++) {
+                PlayerState player = players[seat];
+                if (player.bot && (!player.entityBot && !policy.allowBots()
+                    || player.entityBot && !policy.allowCompanionPlayers())) {
+                    players[seat] = new PlayerState();
+                    players[seat].points = rules.startingPoints();
+                    rosterChanged = true;
+                }
+            }
+            if (rosterChanged) {
+                seating = new RoomSeating();
+                for (PlayerState player : players) player.ready = false;
+                changed = true;
+                decisionChanged = true;
+            }
+            RuleConfig constrained = rules;
+            if (policy.forcedPreset() != null && rules.preset() != policy.forcedPreset()
+                && (policy.forcedPreset().players() == rules.players()
+                    || java.util.stream.IntStream.range(policy.forcedPreset().players(), rules.players())
+                        .allMatch(seat -> players[seat].id == null)))
+                constrained = rules.withPreset(policy.forcedPreset());
+            if (!policy.allowCustomRules() && constrained.custom())
+                constrained = constrained.withPreset(constrained.preset());
+            if (!rules.equals(constrained)) {
+                applyRules(constrained);
+                changed = true;
+                decisionChanged = true;
+            }
+        }
+        if (decisionChanged) newDecision(Phase.LOBBY);
+        else if (changed) revision++;
     }
 
-    public boolean configureHandVisibility(UUID actor, long expectedDecision, HandVisibility visibility) {
-        if (visibility == null || visibility == handVisibility || phase != Phase.LOBBY || exitVote != null
+    public boolean configureHandVisibility(UUID actor, long expectedDecision, PlayerHandVisibility visibility) {
+        if (visibility == null || visibility == playerHandVisibility || phase != Phase.LOBBY || exitVote != null
             || !isHost(actor) || expectedDecision != decision) return false;
-        handVisibility = visibility;
+        playerHandVisibility = visibility;
+        for (PlayerState player : players) player.ready = false;
+        newDecision(Phase.LOBBY);
+        return true;
+    }
+
+    public boolean configureOpenHands(UUID actor, long expectedDecision, boolean enabled) {
+        if (openHands == enabled || phase != Phase.LOBBY || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        openHands = enabled;
         for (PlayerState player : players) player.ready = false;
         newDecision(Phase.LOBBY);
         return true;
     }
 
     public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
-        if (convenienceHints == enabled || phase != Phase.LOBBY || exitVote != null
+        if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || phase != Phase.LOBBY || exitVote != null
             || !isHost(actor) || expectedDecision != decision) return false;
         convenienceHints = enabled;
         revision++;
@@ -227,7 +288,7 @@ public final class Game {
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
                 seating.winds[i], player.bot ? player.botDifficulty : null));
         }
-        return new RoomView(host(), invitationTeleport, convenienceHints, seating.stage, seating.available, seats, settlementTicks(),
+        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, settlementTicks(),
             skippedDecision == decision ? skippedSeats : 0);
     }
 
@@ -546,18 +607,20 @@ public final class Game {
                 for (int tile = 0; tile < rules.players(); tile++) if ((seating.available & 1 << tile) != 0)
                     actions.add(new Action(DRAW_WIND, tile));
             if (seat == host()) {
-                if (!fullRoom()) actions.add(new Action(FILL_BOTS));
+                if (!fullRoom() && worldPolicy.allowBots()) actions.add(new Action(FILL_BOTS));
                 if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING && equipped()) actions.add(new Action(BEGIN_SEATING));
                 for (int target = 0; target < rules.players(); target++) {
                     var player = players[target];
                     if (target != seat && (player.id == null || player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
-                        for (var difficulty : BotDifficulty.values()) if (!player.bot || difficulty != player.botDifficulty)
+                        if (worldPolicy.allowBots()) for (var difficulty : BotDifficulty.values())
+                            if (!player.bot || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
                         if (player.bot) actions.add(new Action(REMOVE_BOT, target));
                     }
                     if (target != seat && player.id != null && !player.bot) actions.add(new Action(TRANSFER_HOST, target));
                 }
                 for (RuleSet preset : RuleSet.values()) {
+                    if (worldPolicy.forcedPreset() != null) continue;
                     if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || players[3].id == null)) {
                         actions.add(new Action(CHANGE_RULE, preset.ordinal()));
                     }
@@ -709,7 +772,7 @@ public final class Game {
     }
 
     private boolean allReady() {
-        if (!equipped()) return false;
+        if (!equipped() || !worldPolicy.permitsRules(rules)) return false;
         if (phase == Phase.LOBBY && seating.stage != RoomSeating.Stage.POSITIONING) return false;
         for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
         if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++)
@@ -722,9 +785,9 @@ public final class Game {
         round = honba = riichiSticks = 0;
         for (PlayerState player : players) player.points = rules.startingPoints();
         long now = System.currentTimeMillis();
-        replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
+        replay = worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.id, player.name, player.bot)).toList(),
-            List.of(), false, RedFives.of(suppliedTiles));
+            List.of(), false, RedFives.of(suppliedTiles)) : null;
         startHand();
     }
 
@@ -1138,13 +1201,21 @@ public final class Game {
     }
 
     public TableView view(UUID authorizedViewer) {
-        int viewer = seatOf(authorizedViewer);
+        return view(seatOf(authorizedViewer), SpectatorHandVisibility.HIDDEN);
+    }
+
+    public TableView spectatorView(SpectatorHandVisibility visibility) {
+        return view(-1, Objects.requireNonNull(visibility));
+    }
+
+    private TableView view(int viewer, SpectatorHandVisibility spectatorVisibility) {
         var seats = new ArrayList<TableView.Seat>();
         TableView.Focus focus = null;
         for (int seat = 0; seat < rules.players(); seat++) {
             PlayerState player = players[seat];
-            boolean visible = seat == viewer || exposed[seat]
-                || handVisibility.reveals(viewer >= 0 && players[viewer].riichi);
+            boolean visible = openHands || seat == viewer || exposed[seat]
+                || viewer >= 0 && playerHandVisibility.reveals(players[viewer].riichi)
+                || viewer < 0 && spectatorVisibility.reveals(playerHandVisibility);
             List<Integer> hand = new ArrayList<>(player.hand);
             if (manual || player.autoPlay.sort()) hand.sort(Tile.ORDER);
             if (player.drawn >= 0 && (seat != viewer || manual || player.autoPlay.sort())
@@ -1164,7 +1235,7 @@ public final class Game {
         return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores, finalUma,
-            timeControl, clocks, finalRanks, handVisibility, exitVote, manual ? handling.view(this) : null,
+            timeControl, clocks, finalRanks, playerHandVisibility, openHands, exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1,
@@ -1175,7 +1246,7 @@ public final class Game {
     public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
     public int takeExperience(UUID player) {
         Integer amount = pendingExperience.remove(player);
-        return amount == null ? 0 : amount;
+        return amount == null ? 0 : worldPolicy.limitExperienceChange(amount);
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
@@ -1185,7 +1256,8 @@ public final class Game {
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
         Objects.requireNonNull(finalUma); Objects.requireNonNull(pendingExperience);
         Objects.requireNonNull(archiveQueue);
-        Objects.requireNonNull(handVisibility);
+        Objects.requireNonNull(playerHandVisibility);
+        if (worldPolicy == null) worldPolicy = WorldPolicy.DEFAULT;
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
         if (pendingLeaveDecision != null && (phase == Phase.LOBBY || seatOf(pendingLeaveDecision) < 0))
             throw new IllegalStateException("Invalid leave decision");

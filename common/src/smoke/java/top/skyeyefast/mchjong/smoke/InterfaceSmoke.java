@@ -188,7 +188,7 @@ final class InterfaceSmoke {
             capture(client, output, "35-scope-" + (settingsStage - 11) + "-320x240.png");
             if (settingsStage == 11) click(client, "settings.mchjong.scope.world");
             else if (settingsStage == 12) {
-                originalTeleport = table.clientRoom().invitationTeleport();
+                originalTeleport = table.clientWorldPolicy().invitationTeleport();
                 clickWorldTeleport(client, originalTeleport);
                 settingsStage = 15; settingsTicks = 0;
                 return false;
@@ -202,14 +202,14 @@ final class InterfaceSmoke {
             settingsStage++; settingsTicks = 0;
         } else if (settingsStage == 15) {
             require(settingsTicks < 100, "World UI change was not acknowledged by the server");
-            if (table.clientRoom().invitationTeleport() != originalTeleport && settingsTicks > 10) {
+            if (table.clientWorldPolicy().invitationTeleport() != originalTeleport && settingsTicks > 10) {
                 capture(client, output, "35-world-admin-edited-320x240.png");
                 clickWorldTeleport(client, !originalTeleport);
                 settingsStage = 16; settingsTicks = 0;
             }
         } else if (settingsStage == 16) {
             require(settingsTicks < 100, "World UI could not restore the saved policy");
-            if (table.clientRoom().invitationTeleport() == originalTeleport && settingsTicks > 10) {
+            if (table.clientWorldPolicy().invitationTeleport() == originalTeleport && settingsTicks > 10) {
                 click(client, "settings.mchjong.scope.personal");
                 settingsStage = 13; settingsTicks = 0;
             }

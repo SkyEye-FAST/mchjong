@@ -128,7 +128,7 @@ final class CameraSmoke {
             seats, java.util.List.of(new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.RIICHI, 0),
                 new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.PASS)),
             java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), java.util.List.of(), base.timeControl(),
-            java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF, null, null, base.autoPlay(), false, 1, java.util.Map.of()));
+            java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of()));
     }
 
     private static void require(boolean condition, String message) {

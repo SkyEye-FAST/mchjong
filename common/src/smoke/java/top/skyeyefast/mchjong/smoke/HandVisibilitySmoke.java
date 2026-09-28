@@ -8,11 +8,11 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableOptionsScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.HandVisibility;
+import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
-/** Real room proposals, private/public packets and unmounted world rendering on both loaders. */
+/** Real room proposals, participant permissions and hidden spectator packets on both loaders. */
 final class HandVisibilitySmoke {
     private int mode, stage, ticks;
     private RoomPreparationSmoke preparation = new RoomPreparationSmoke();
@@ -20,7 +20,7 @@ final class HandVisibilitySmoke {
     private int seat;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
-        if (mode == HandVisibility.values().length) return true;
+        if (mode == PlayerHandVisibility.values().length) return true;
         ticks++;
         if (work != null) {
             if (!work.isDone() || client.getOverlay() != null) return false;
@@ -28,20 +28,20 @@ final class HandVisibilitySmoke {
         }
         var view = table.clientView();
         if (view == null) return false;
-        var visibility = HandVisibility.values()[mode];
+        var visibility = PlayerHandVisibility.values()[mode];
         if (stage == 0) {
             if (view.viewerSeat() < 0 || view.phase() != Game.Phase.LOBBY) return false;
             var parent = new TableScreen(table.getBlockPos());
             client.setScreen(parent);
             client.setScreen(new TableOptionsScreen(parent));
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
-                "settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
+                "settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
             var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
                 .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
             require(button.active, "Host visibility control is disabled");
-            if (view.handVisibility() != visibility) button.onPress();
+            if (view.playerHandVisibility() != visibility) button.onPress();
             next(1);
-        } else if (stage == 1 && view.handVisibility() == visibility && ticks > 5) {
+        } else if (stage == 1 && view.playerHandVisibility() == visibility && ticks > 5) {
             next(2);
         } else if (stage == 2) {
             resize(client, true);
@@ -84,10 +84,9 @@ final class HandVisibilitySmoke {
             });
             next(6);
         } else if (stage == 6 && view.viewerSeat() < 0 && !client.player.isPassenger() && ticks > 15) {
-            boolean visible = visibility == HandVisibility.ALL || visibility == HandVisibility.OPEN;
             for (var player : view.seats()) if (!player.exposed()) {
                 require(!player.hand().isEmpty(), "Observer received no concealed hand geometry");
-                require(player.hand().stream().allMatch(tile -> visible ? tile >= 0 : tile == Tile.HIDDEN),
+                require(player.hand().stream().allMatch(tile -> tile == Tile.HIDDEN),
                     "Observer received wrong hand permissions: " + visibility);
             }
             require(view.actions().isEmpty(), "Observer received game actions");
