@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static top.skyeyefast.mchjong.engine.McrGameTest.fixed;
 import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 
 class McrSessionTest {
@@ -76,7 +77,7 @@ class McrSessionTest {
     }
 
     @Test void pendingResponsesRestoreWithFreshIncarnationsAndNoAssumedPresence() {
-        var game = new McrGame(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
             .hand(3, "555m123789m123p1z").build());
         McrGameTest.discardKind(game, 0, "5m");
@@ -113,7 +114,7 @@ class McrSessionTest {
     }
 
     @Test void wrongWinAndHandAcknowledgementsPersistWithoutPayingOrAdvancingTwice() {
-        var session = session(new McrGame(5, new McrGameTest.Fixture().hand(0, "12345m567p789s11z6m").build()));
+        var session = session(fixed(5, new McrGameTest.Fixture().hand(0, "12345m567p789s11z6m").build()));
         play(session, 0, WIN);
         var after = session.view(id(0));
         assertEquals(-30, after.game().seats().get(0).points());

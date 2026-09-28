@@ -93,7 +93,7 @@ have their own `PlayerState.flowers` area and are included by the shared
 `PlayerState.physicalTiles` accounting, separately from concealed tiles and
 extracted norths. A hand reset clears all these zones.
 
-`McrWall` owns a finite 144-tile wall with front draws and tail replacements.
+`McrWall` owns 144 fixed physical slots, with front draws and tail replacements.
 A drawn flower moves to the player's flower area and causes another tail draw,
 repeating until an ordinary tile is returned. The caller places that returned
 tile in the concealed hand. Exhaustion returns `Tile.ABSENT` and retains flowers
@@ -106,9 +106,20 @@ select a complete, uniform 144-tile subset from one case and supply the physical
 identities to `McrSession.start`. Selection is read-only and keeps flower
 item faces separate from ordinary analysis kinds. See [Supply data](SUPPLIES.md#mcr-stock-boundary).
 
-`McrWall.drawRaw` takes a physical tile from the front without replacing flowers,
-so initial packets can be distributed before any player starts supplementary draws.
-Normal `draw` and `replace` retain automatic flower collection and tail replacement.
+`McrWallLayout` owns four walls of eighteen stacks, with upper/lower slots in
+each stack. Columns run from the owner's right to left; clockwise traversal
+visits walls in the opposite order to player turns. `McrOpening` records both
+two-die rolls, the second roller and the first drawable stack after the counted
+break. The first roll counts the dealer as one to select the second roller;
+the sum of both rolls counts stacks from that roller's right end, continuing
+clockwise onto the next wall when the count exceeds eighteen. Shuffling and
+both rolls use the server-owned seed.
+
+`McrWall.takeRaw` takes a named physical slot for initial packets and the dealer's
+jump. `drawRaw` takes the next occupied front slot. Independent front and back
+cursors skip taken slots; both traversals take a stack's upper tile before its
+lower tile. `draw` and `replace` retain automatic flower collection and tail
+replacement. Tile identities remain in their physical slots until taken.
 `McrSettlement` keeps normal wins and exhaustive draws in its `Result` contract;
 below-minimum declarations produce separate `Penalty` events. Self-draw charges
 each opponent eight plus total fan points; discard wins charge the discarder that
@@ -122,8 +133,10 @@ turn order, with seat zero as the opening dealer. Each completed hand advances
 the dealer once. Four hands advance the prevalent wind, and the sixteenth hand
 ends the match. Points start at zero and retain both win payments and penalties.
 
-Construction deals three four-tile packets to each player, then the dealer's
-two upper tiles and each other player's thirteenth tile, through `McrWall.drawRaw`.
+Construction follows `McrWallLayout.initialDeal`: three four-tile packets to each
+player, then the dealer takes the first and third remaining stacks' upper tiles.
+South, West and North take the next available front slots. In traversal indices,
+the final five raw takes are 48, 52, 49, 50 and 51; the next front take is 53.
 Only after these 53 physical tiles have been allocated does the game replace
 flowers, completing each seat in East, South, West, North order. The wall supplies
 every replacement from the tail. Normal draws use the existing automatic
@@ -131,7 +144,7 @@ replacement path. The game tracks the actual draw origin separately from the
 end of the wall; a flower replacement is distinct from a kong replacement,
 including a flower drawn after declaring a kong.
 
-`McrLegalActions` derives the current `Action` choices. `McrGame.act` accepts a
+`McrLegalActions` derives the current `McrAction` choices. `McrGame.act` accepts a
 seat, the current decision token and one issued action index. A reaction window
 collects each eligible seat's response once before arbitration: qualifying wins
 take precedence over pung/kong, then chow. Simultaneous qualifying wins select
@@ -166,12 +179,15 @@ sizes, drawn-tile aliases, all 144 physical identities and zero-sum points.
 
 `McrGame.save()` produces the immutable, private `McrGameState` record.
 It contains the current-format identifier, future-wall seed, revision and decision,
-hand position, wall slots and both cursors, physical player zones, stop-win flags,
+hand position, physical wall slots, both rolls and break, front/back cursors, physical player zones, stop-win flags,
 draw provenance, pending added kong, submitted responses, penalties and hand result.
 `McrCodec.save(game)` encodes that record; `McrCodec.restore(json)` decodes it
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
+The current game and session format is 3. Restore rejects earlier experimental
+formats directly. Wall validation checks upper-before-lower occupancy and that
+each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
 
@@ -194,7 +210,9 @@ unprivileged spectator view. Ordinary concealed hands and drawn identities are
 visible only to their owner. Concealed kongs use four hidden sentinels for other
 recipients. A normal winning result exposes that winner's hand and melds, while
 other hands and every remaining wall tile stay hidden. Wall slots retain only
-hidden/absent occupancy. Flowers, rivers, exposed melds, points, stop-win flags,
+hidden/absent occupancy in fixed physical order; public opening metadata exposes
+the dice, second roller and break, not the seed or tile identities.
+Flowers, rivers, exposed melds, points, stop-win flags,
 declared claim tiles and penalty events are public.
 
 Only the recipient receives their legal actions and submitted-response status.

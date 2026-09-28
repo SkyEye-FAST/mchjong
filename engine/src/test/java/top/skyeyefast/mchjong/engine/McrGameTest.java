@@ -10,18 +10,27 @@ import static org.junit.jupiter.api.Assertions.*;
 import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 
 class McrGameTest {
+    static final McrOpening OPENING = McrOpening.of(0, new McrOpening.Roll(2, 3), new McrOpening.Roll(1, 3));
+
+    static McrGame fixed(long seed, List<Integer> physical) { return new McrGame(seed, physical, OPENING); }
+
+    static List<Integer> physical(List<Integer> traversal) {
+        var slots = new Integer[144];
+        for (int index = 0; index < slots.length; index++) slots[McrWallLayout.drawSlot(OPENING, index)] = traversal.get(index);
+        return List.copyOf(Arrays.asList(slots));
+    }
     @Test void initialPacketsFinishBeforeOrderedFlowerReplacement() {
         var order = new Fixture().at(0, FlowerTile.SPRING.id()).at(4, FlowerTile.SUMMER.id())
             .at(8, FlowerTile.AUTUMN.id()).at(12, FlowerTile.WINTER.id())
-            .at(143, FlowerTile.PLUM.id()).at(142, 0).at(141, 1).at(140, 2).at(139, 3).build();
-        var game = new McrGame(1, order);
+            .tail(0, FlowerTile.PLUM.id()).tail(1, 0).tail(2, 1).tail(3, 2).tail(4, 3).build();
+        var game = fixed(1, order);
         for (int seat = 0; seat < 4; seat++) {
             var expected = new HashSet<Integer>();
             for (int i = 0; i < (seat == 0 ? 14 : 13); i++) {
-                int tile = order.get(dealSlot(seat, i));
+                int tile = order.get(McrWallLayout.drawSlot(OPENING, dealSlot(seat, i)));
                 if (!Tile.isFlower(tile)) expected.add(tile);
             }
-            expected.add(order.get(142 - seat));
+            expected.add(order.get(McrWallLayout.replacementSlot(OPENING, 1 + seat)));
             assertEquals(expected, new HashSet<>(game.hand(seat)));
             assertEquals(seat == 0 ? 14 : 13, game.hand(seat).size());
         }
@@ -30,14 +39,14 @@ class McrGameTest {
         assertEquals(List.of(FlowerTile.AUTUMN.id()), game.flowers(2));
         assertEquals(List.of(FlowerTile.WINTER.id()), game.flowers(3));
         assertEquals(86, game.remaining());
-        assertEquals(order.get(142), game.drawn(0));
+        assertEquals(order.get(McrWallLayout.replacementSlot(OPENING, 1)), game.drawn(0));
         assertEquals(McrWinContext.KongWin.NONE, game.winningContext(0).kongWin());
         game.validate();
     }
 
     @Test void ordinaryDrawReplacesConsecutiveFlowersWithoutAKongWin() {
-        var game = new McrGame(2, new Fixture().hand(1, "19m19p19s1234567z")
-            .at(53, FlowerTile.SPRING.id()).at(143, FlowerTile.SUMMER.id()).at(142, 0).build());
+        var game = fixed(2, new Fixture().hand(1, "19m19p19s1234567z")
+            .at(53, FlowerTile.SPRING.id()).tail(0, FlowerTile.SUMMER.id()).tail(1, 0).build());
         discard(game, 0, game.drawn(0));
         passAll(game);
         play(game, 1, DRAW);
@@ -55,7 +64,7 @@ class McrGameTest {
     }
 
     @Test void claimsWaitForAllRepliesAndPungOutranksChow() {
-        var game = new McrGame(3, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(3, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "46m123789p123s11z").hand(2, "55m234678s234p22z").build());
         discardKind(game, 0, "5m");
         assertTrue(has(game, 1, CHOW));
@@ -75,7 +84,7 @@ class McrGameTest {
     }
 
     @Test void nearestQualifyingClaimWinsOnceAheadOfKongRegardlessOfReplyOrder() {
-        var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
@@ -108,7 +117,7 @@ class McrGameTest {
     }
 
     @Test void aLowFanSelfDrawIsOfferedThenPenalizedWithoutEndingTheHand() {
-        var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
+        var game = fixed(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         assertNotNull(game.score(0));
         assertFalse(game.score(0).meetsMinimum());
         assertTrue(has(game, 0, WIN));
@@ -133,7 +142,7 @@ class McrGameTest {
     }
 
     @Test void aLowFanDiscardWinContinuesPlayAndBlocksEvenALaterQualifyingSelfDraw() {
-        var game = new McrGame(6, new Fixture().hand(0, "279m147p258s2345z8s")
+        var game = fixed(6, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").at(53, Tile.parseKind("8s")).build());
         discardKind(game, 0, "8s");
         assertNotNull(game.score(1));
@@ -159,7 +168,7 @@ class McrGameTest {
     }
 
     @Test void incompleteShapesNeverOfferAWinDeclaration() {
-        var game = new McrGame(7, new Fixture().hand(0, "147m258p369s1234z5m")
+        var game = fixed(7, new Fixture().hand(0, "147m258p369s1234z5m")
             .hand(1, "159m159p159s1234z").build());
         assertNull(game.score(0));
         assertFalse(has(game, 0, WIN));
@@ -171,7 +180,7 @@ class McrGameTest {
     }
 
     @Test void wrongClaimDoesNotConsumeAnotherPlayersClaimAndTheOffenderCanStillPung() {
-        var game = new McrGame(9, new Fixture().hand(0, "279m147p258s2345z8s")
+        var game = fixed(9, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").hand(2, "88s123456m789p11z").build());
         discardKind(game, 0, "8s");
         play(game, 1, WIN);
@@ -192,7 +201,7 @@ class McrGameTest {
     }
 
     @Test void wrongNearestClaimIsPenalizedSeparatelyFromTheActualWinnersPayment() {
-        var game = new McrGame(10, new Fixture().hand(0, "279m147p258s2345z8s")
+        var game = fixed(10, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").hand(2, "123456789p111z8s").build());
         discardKind(game, 0, "8s");
         play(game, 1, WIN);
@@ -213,7 +222,7 @@ class McrGameTest {
             .hand(1, "445566m2277779s").hand(2, "123456789p111z8s").at(135, Tile.parseKind("8s"));
         int slot = 53;
         for (var flower : FlowerTile.values()) fixture.at(slot++, flower.id());
-        var game = new McrGame(11, fixture.build());
+        var game = fixed(11, fixture.build());
         discardKind(game, 0, "8s");
         play(game, 1, WIN);
         passAll(game); // The qualifying player declines this first discard.
@@ -247,7 +256,7 @@ class McrGameTest {
     }
 
     @Test void chowExecutesOnlyAfterHigherPriorityResponsesPass() {
-        var game = new McrGame(12, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(12, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "46m123789p123s11z").hand(2, "55m234678s234p22z").build());
         discardKind(game, 0, "5m");
         play(game, 1, CHOW);
@@ -266,8 +275,8 @@ class McrGameTest {
     }
 
     @Test void exposedAndConcealedKongsReplaceWithoutSharingRiichiDeadWallRules() {
-        var exposed = new McrGame(13, new Fixture().hand(0, "279m147p258s2345z5m")
-            .hand(1, "555m123456p78s11z").at(143, Tile.parseKind("9s")).build());
+        var exposed = fixed(13, new Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "555m123456p78s11z").tail(0, Tile.parseKind("9s")).build());
         discardKind(exposed, 0, "5m");
         int remaining = exposed.remaining();
         play(exposed, 1, MELDED_KONG);
@@ -279,8 +288,8 @@ class McrGameTest {
         play(exposed, 1, WIN);
         assertInstanceOf(McrSettlement.Win.class, exposed.result());
 
-        var concealed = new McrGame(14, new Fixture().hand(0, "1111m123456p78s22z")
-            .at(143, Tile.parseKind("9s")).build());
+        var concealed = fixed(14, new Fixture().hand(0, "1111m123456p78s22z")
+            .tail(0, Tile.parseKind("9s")).build());
         remaining = concealed.remaining();
         play(concealed, 0, CONCEALED_KONG);
         assertEquals(remaining - 1, concealed.remaining());
@@ -292,9 +301,9 @@ class McrGameTest {
     }
 
     @Test void aFlowerAfterKongStartsAFlowerReplacementRatherThanAKongWin() {
-        var game = new McrGame(15, new Fixture().hand(0, "1111m123456p78s22z")
-            .at(143, FlowerTile.SPRING.id()).at(142, FlowerTile.SUMMER.id())
-            .at(141, Tile.parseKind("9s")).build());
+        var game = fixed(15, new Fixture().hand(0, "1111m123456p78s22z")
+            .tail(0, FlowerTile.SPRING.id()).tail(1, FlowerTile.SUMMER.id())
+            .tail(2, Tile.parseKind("9s")).build());
         play(game, 0, CONCEALED_KONG);
         assertEquals(List.of(FlowerTile.SPRING.id(), FlowerTile.SUMMER.id()), game.flowers(0));
         assertEquals(McrWinContext.KongWin.NONE, game.winningContext(0).kongWin());
@@ -345,10 +354,10 @@ class McrGameTest {
     }
 
     static McrGame addedKongPosition() {
-        var game = new McrGame(16, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(16, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "55m123456p789s11z").hand(2, "123456s789p22z46m")
             .at(53, Tile.WEST).at(54, Tile.GREEN).at(55, Tile.RED)
-            .at(56, Tile.parseKind("5m")).at(143, Tile.parseKind("9s")).build());
+            .at(56, Tile.parseKind("5m")).tail(0, Tile.parseKind("9s")).build());
         discardKind(game, 0, "5m");
         play(game, 1, PUNG);
         passAll(game);
@@ -366,7 +375,7 @@ class McrGameTest {
     }
 
     @Test void dealerSelfDrawPaysNormallyAndAlwaysAdvancesTheDealer() {
-        var game = new McrGame(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
+        var game = fixed(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
         play(game, 0, WIN);
         var win = assertInstanceOf(McrSettlement.Win.class, game.result());
         assertEquals(-1, win.fromSeat());
@@ -454,7 +463,7 @@ class McrGameTest {
 
     private static int dealSlot(int seat, int index) {
         return index < 12 ? index / 4 * 16 + seat * 4 + index % 4
-            : index == 13 ? 50 : 48 + seat + (seat >= 2 ? 1 : 0);
+            : index == 13 ? 52 : 48 + seat;
     }
 
     /** Build one full physical wall, allocating copies across all explicitly supplied hands. */
@@ -478,10 +487,12 @@ class McrGameTest {
             return this;
         }
 
+        Fixture tail(int offset, int kindOrFlower) { return at(142 - 2 * (offset / 2) + offset % 2, kindOrFlower); }
+
         List<Integer> build() {
             int next = 0;
             for (int slot = 0; slot < 144; slot++) if (order[slot] == null) order[slot] = stock.get(next++);
-            return List.copyOf(Arrays.asList(order));
+            return physical(Arrays.asList(order));
         }
     }
 }

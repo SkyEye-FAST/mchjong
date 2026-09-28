@@ -111,7 +111,7 @@ public final class McrSession {
     /** A private envelope, not a wire view. No mount state or reusable request incarnation is persisted. */
     public record State(int format, UUID tableId, long revision, List<Participant> participants,
                         int confirmed, McrGameState game) {
-        public static final int FORMAT = 2;
+        public static final int FORMAT = 3;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");

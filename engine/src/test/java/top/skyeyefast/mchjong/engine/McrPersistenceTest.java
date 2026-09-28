@@ -10,7 +10,7 @@ import static top.skyeyefast.mchjong.engine.McrGameTest.*;
 
 class McrPersistenceTest {
     @Test void partialResponsesSurviveAndOldActionTokensDoNot() {
-        var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
@@ -33,7 +33,7 @@ class McrPersistenceTest {
         }
         assertSamePosition(game, restored);
         assertEquals(1, saved.replies().size(), "A saved state is detached from further play");
-        roundTrip(restored); // A settled ron does not take or pay for the tile again.
+        roundTrip(restored); // A settled discard win does not take or pay for the tile again.
     }
 
     @Test void pendingAddedKongCanResumeEitherPassingOrRobbingWithoutReapplyingActions() {
@@ -59,7 +59,7 @@ class McrPersistenceTest {
     }
 
     @Test void wrongWinSurvivesWithoutRepaymentAndNextHandClearsOnlyTheRestriction() {
-        var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
+        var game = fixed(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         play(game, 0, WIN);
         var restored = roundTrip(game);
         assertTrue(restored.winForbidden(0));
@@ -79,8 +79,8 @@ class McrPersistenceTest {
     }
 
     @Test void drawAndFlowerReplacementRestoreTheSameTailAndWinningFacts() {
-        var game = new McrGame(2, new Fixture().hand(1, "19m19p19s1234567z")
-            .at(53, FlowerTile.SPRING.id()).at(143, FlowerTile.SUMMER.id()).at(142, 0).build());
+        var game = fixed(2, new Fixture().hand(1, "19m19p19s1234567z")
+            .at(53, FlowerTile.SPRING.id()).tail(0, FlowerTile.SUMMER.id()).tail(1, 0).build());
         discard(game, 0, game.drawn(0));
         passAll(game);
         var restored = roundTrip(game);
@@ -95,7 +95,7 @@ class McrPersistenceTest {
     }
 
     @Test void completedSelfDrawRestoresWithoutRepayingAndRetainsTheNextWallSeed() {
-        var game = new McrGame(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
+        var game = fixed(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
         play(game, 0, WIN);
         var restored = roundTrip(game);
         String json = McrCodec.save(game);
@@ -108,7 +108,7 @@ class McrPersistenceTest {
     }
 
     @Test void malformedOrInconsistentSavesAreRejectedWithoutChangingTheLiveGame() {
-        var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m").build());
         discardKind(game, 0, "5m");
         play(game, 2, WIN);
@@ -120,9 +120,10 @@ class McrPersistenceTest {
         rejected(json, object -> object.addProperty("drawKong", "ROBBED"));
         rejected(json, object -> player(object, 1).addProperty("winForbidden", "false"));
         rejected(json, object -> object.addProperty("phase", "MATCH_END"));
-        rejected(json, object -> object.getAsJsonObject("wall").addProperty("head", 52));
-        rejected(json, object -> object.getAsJsonObject("wall").addProperty("head", 53.5));
-        rejected(json, object -> object.getAsJsonObject("wall").addProperty("tail", 4_294_967_440L));
+        rejected(json, object -> object.getAsJsonObject("wall").addProperty("front", 52));
+        rejected(json, object -> object.getAsJsonObject("wall").addProperty("front", 53.5));
+        rejected(json, object -> object.getAsJsonObject("wall").addProperty("back", 4_294_967_440L));
+        rejected(json, object -> object.getAsJsonObject("wall").getAsJsonObject("opening").addProperty("breakStack", -1));
         rejected(json, object -> player(object, 3).add("drawn", player(object, 3).getAsJsonArray("hand").get(0)));
         rejected(json, object -> player(object, 1).getAsJsonArray("hand").set(0, player(object, 0).getAsJsonArray("hand").get(0)));
         rejected(json, object -> player(object, 0).addProperty("points", 100));
@@ -130,7 +131,7 @@ class McrPersistenceTest {
             .getAsJsonObject("action").addProperty("type", "NEXT"));
         rejected(json, object -> object.getAsJsonArray("replies").add(object.getAsJsonArray("replies").get(0).deepCopy()));
         for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"),
-            json.replace("\"format\":2", "\"format\":2,\"format\":2"),
+            json.replace("\"format\":3", "\"format\":3,\"format\":3"),
             "{\"nested\":" + "[".repeat(1000) + "0" + "]".repeat(1000) + "}", " ".repeat(65_537)})
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(invalid));
         assertEquals(json, McrCodec.save(game));

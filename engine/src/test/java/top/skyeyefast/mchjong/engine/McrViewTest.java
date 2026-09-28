@@ -9,8 +9,8 @@ import static top.skyeyefast.mchjong.engine.McrGameTest.*;
 
 class McrViewTest {
     @Test void handsDrawsAndConcealedKongsAreRedactedBeforeSerialization() {
-        var game = new McrGame(14, new Fixture().hand(0, "1111m123456p78s22z")
-            .at(143, Tile.parseKind("9s")).build());
+        var game = fixed(14, new Fixture().hand(0, "1111m123456p78s22z")
+            .tail(0, Tile.parseKind("9s")).build());
         play(game, 0, CONCEALED_KONG);
         var before = game.view(-1);
         for (int viewer = -1; viewer < 4; viewer++) {
@@ -39,7 +39,7 @@ class McrViewTest {
     }
 
     @Test void responseProgressIsPrivateAndAddedKongFocusIsPublic() {
-        var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
+        var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
@@ -73,7 +73,7 @@ class McrViewTest {
     }
 
     @Test void lowFanDeclarationRemainsVisibleAndPenaltyDoesNotBecomeAWinResult() {
-        var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
+        var game = fixed(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         assertFalse(game.score(0).meetsMinimum());
         assertTrue(game.view(0).actions().stream().anyMatch(action -> action.type() == WIN));
         play(game, 0, WIN);
@@ -95,8 +95,8 @@ class McrViewTest {
     }
 
     @Test void flowersArePublicButPrivateSavesCannotBeUsedAsViews() {
-        var game = new McrGame(2, new Fixture().hand(1, "19m19p19s1234567z")
-            .at(53, FlowerTile.SPRING.id()).at(143, FlowerTile.SUMMER.id()).at(142, 0).build());
+        var game = fixed(2, new Fixture().hand(1, "19m19p19s1234567z")
+            .at(53, FlowerTile.SPRING.id()).tail(0, FlowerTile.SUMMER.id()).tail(1, 0).build());
         discard(game, 0, game.drawn(0));
         passAll(game);
         play(game, 1, DRAW);

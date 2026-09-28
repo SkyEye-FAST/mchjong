@@ -7,17 +7,18 @@ import java.util.Objects;
 
 /** Recipient-safe MCR data. A viewer of -1 is an unprivileged spectator, never a player seat. */
 public record McrView(long revision, long decision, int handNumber, McrGame.Phase phase,
-                      int viewerSeat, int dealer, int roundWind, int turn, int remaining,
+                      int viewerSeat, int dealer, int roundWind, int turn, int remaining, McrOpening opening,
                       List<Integer> wall, Focus focus, List<Seat> seats, List<McrAction> actions,
                       boolean responded, McrSettlement.Result result, List<McrSettlement.Penalty> penalties) {
     public McrView {
         Objects.requireNonNull(phase);
+        Objects.requireNonNull(opening);
         wall = List.copyOf(wall);
         seats = List.copyOf(seats);
         actions = List.copyOf(actions);
         penalties = List.copyOf(penalties);
         if (revision < 1 || decision < 1 || handNumber < 1 || handNumber > 16 || viewerSeat < -1 || viewerSeat > 3
-            || dealer != (handNumber - 1) % 4 || roundWind != Tile.EAST + (handNumber - 1) / 4
+            || dealer != (handNumber - 1) % 4 || opening.dealer() != dealer || roundWind != Tile.EAST + (handNumber - 1) / 4
             || turn < 0 || turn > 3 || remaining < 0 || remaining > 91
             || seats.size() != 4 || wall.size() != 144 || actions.size() > 32 || penalties.size() > 64)
             throw new IllegalArgumentException("Invalid MCR view bounds");
@@ -63,7 +64,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             if (wind < Tile.EAST || wind > Tile.NORTH || hand.size() > 14 || melds.size() > 4
                 || river.size() > 136 || flowers.size() > 8
                 || hand.stream().anyMatch(tile -> tile != Tile.HIDDEN && !ordinary(tile))
-                || drawn != Tile.ABSENT && drawn != Tile.HIDDEN && !ordinary(drawn)
+                || drawn != Tile.ABSENT && drawn != Tile.HIDDEN && (!ordinary(drawn) || !hand.contains(drawn))
                 || flowers.stream().anyMatch(tile -> !Tile.isFlower(tile))
                 || river.stream().anyMatch(discard -> !ordinary(discard.tile()) || discard.riichi()))
                 throw new IllegalArgumentException("Invalid MCR seat view");
@@ -107,7 +108,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
         Focus focus = game.phase() == McrGame.Phase.REACTION
             ? new Focus(game.claimFrom(), game.claimTile(), game.robbingKong()) : null;
         return new McrView(game.revision(), game.decision(), game.handNumber(), game.phase(), viewerSeat,
-            game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.publicWall(), focus, seats,
+            game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.opening(), game.publicWall(), focus, seats,
             viewerSeat == -1 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat != -1 && game.responded(viewerSeat),
             game.result(), game.penalties());
     }

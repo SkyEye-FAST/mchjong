@@ -33,11 +33,13 @@ public final class McrGame {
 
     public McrGame(long seed) { this(seed, new McrWall(seed)); }
 
-    /** An ordered opening wall is private engine input for deterministic games and verification. */
-    public McrGame(long seed, List<Integer> openingWall) { this(seed, new McrWall(openingWall)); }
+    /** Physical placement and opening are private engine inputs, never client-claimed draw order. */
+    public McrGame(long seed, List<Integer> physicalWall, McrOpening opening) {
+        this(seed, new McrWall(physicalWall, opening));
+    }
 
     /** Room equipment supplies an unordered, complete stock; the engine owns the shuffle. */
-    public static McrGame fromStock(long seed, List<Integer> stock) { return new McrGame(seed, new McrWall(seed, stock)); }
+    public static McrGame fromStock(long seed, List<Integer> stock) { return new McrGame(seed, new McrWall(seed, 0, stock)); }
 
     private McrGame(long seed, McrWall wall) {
         this.seed = seed;
@@ -111,6 +113,7 @@ public final class McrGame {
     public int roundWind() { return Tile.EAST + handIndex / 4; }
     public int seatWind(int seat) { checkSeat(seat); return Tile.EAST + Math.floorMod(seat - dealer(), 4); }
     public int remaining() { return wall.remaining(); }
+    public McrOpening opening() { return wall.opening(); }
     public int points(int seat) { return player(seat).points; }
     public int drawn(int seat) { return player(seat).drawn; }
     public boolean winForbidden(int seat) { checkSeat(seat); return winForbidden[seat]; }
@@ -164,7 +167,7 @@ public final class McrGame {
     public boolean nextHand() {
         if (phase != Phase.HAND_END) return false;
         handIndex++;
-        startHand(new McrWall(seed + WALL_SEED_STEP * handIndex));
+        startHand(new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), Tile.mcrSet()));
         revision = Math.addExact(revision, 1);
         return true;
     }
@@ -180,17 +183,13 @@ public final class McrGame {
         drawKong = McrWinContext.KongWin.NONE;
         drawWallLast = false;
         turn = dealer();
-        // Three four-tile packets per player, then the dealer takes the two upper tiles.
-        // Raw flowers stay in the dealt packets until all 53 physical tiles are distributed.
-        for (int packet = 0; packet < 3; packet++) for (int wind = 0; wind < 4; wind++)
-            for (int tile = 0; tile < 4; tile++) players[(dealer() + wind) % 4].hand.add(wall.drawRaw());
-        var east = players[dealer()];
-        east.hand.add(wall.drawRaw());
-        players[(dealer() + 1) % 4].hand.add(wall.drawRaw());
-        east.drawn = wall.drawRaw();
-        east.hand.add(east.drawn);
-        players[(dealer() + 2) % 4].hand.add(wall.drawRaw());
-        players[(dealer() + 3) % 4].hand.add(wall.drawRaw());
+        if (wall.opening().dealer() != dealer()) throw new IllegalArgumentException("Opening belongs to another dealer");
+        // Allocate all raw physical packets, including the first/third-stack jump, before replacing any flower.
+        for (var take : McrWallLayout.initialDeal(wall.opening())) {
+            int tile = wall.takeRaw(take.slot());
+            players[take.seat()].hand.add(tile);
+            if (take.seat() == dealer()) players[dealer()].drawn = tile;
+        }
         // Finish each seat's complete replacement chain before moving East -> South -> West -> North.
         for (int wind = 0; wind < 4; wind++) {
             int seat = (dealer() + wind) % 4;
@@ -429,7 +428,7 @@ public final class McrGame {
         Objects.requireNonNull(drawKong);
         checkSeat(turn);
         if (handIndex < 0 || handIndex >= 16 || revision < 1 || revision == Long.MAX_VALUE
-            || decision < 1 || decision == Long.MAX_VALUE || wall.save().head() < 53)
+            || decision < 1 || decision == Long.MAX_VALUE || wall.save().front() < 53 || wall.opening().dealer() != dealer())
             throw new IllegalStateException("Invalid MCR position");
         boolean ended = phase == Phase.HAND_END || phase == Phase.MATCH_END;
         if (ended != (result != null) || ended && (phase == Phase.MATCH_END) != (handIndex == 15))

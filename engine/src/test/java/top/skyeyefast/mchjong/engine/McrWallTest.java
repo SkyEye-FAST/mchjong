@@ -6,16 +6,18 @@ import java.util.HashSet;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
+import static top.skyeyefast.mchjong.engine.McrGameTest.OPENING;
+import static top.skyeyefast.mchjong.engine.McrGameTest.physical;
 
 class McrWallTest {
     @Test void rawDealingDoesNotReplaceOrSkipFlowers() {
         var order = new ArrayList<>(Tile.mcrSet());
         Collections.swap(order, 0, order.indexOf(FlowerTile.SPRING.id()));
-        var wall = new McrWall(order);
+        var wall = new McrWall(physical(order), OPENING);
         assertEquals(FlowerTile.SPRING.id(), wall.drawRaw());
         assertEquals(143, wall.remaining());
         assertEquals(order.get(1), wall.drawRaw());
-        assertEquals(order.get(143), wall.tiles().get(143), "Raw dealing leaves the tail untouched");
+        assertEquals(order.get(143), wall.tiles().get(McrWallLayout.drawSlot(OPENING, 143)), "Raw dealing leaves the tail untouched");
         for (int i = 2; i < 144; i++) assertEquals(order.get(i), wall.drawRaw());
         assertEquals(Tile.ABSENT, wall.drawRaw());
     }
@@ -35,7 +37,7 @@ class McrWallTest {
         assertTrue(Tile.validMcrSet(stock));
         assertFalse(Tile.validSet(stock));
         assertFalse(Tile.validMcrSet(Tile.set(true)));
-        assertThrows(IllegalArgumentException.class, () -> new McrWall(Tile.set(false)));
+        assertThrows(IllegalArgumentException.class, () -> new McrWall(Tile.set(false), OPENING));
         var invalid = new ArrayList<>(stock);
         invalid.set(143, invalid.get(142));
         assertFalse(Tile.validMcrSet(invalid));
@@ -81,15 +83,15 @@ class McrWallTest {
 
     @Test void aFrontFlowerReplacesRepeatedlyFromTheTailWithoutEnteringTheHand() {
         var order = new ArrayList<>(Tile.mcrSet());
-        Collections.swap(order, 0, order.indexOf(FlowerTile.SPRING.id()));
-        var wall = new McrWall(order);
+        Collections.swap(order, 0, order.indexOf(FlowerTile.SUMMER.id()));
+        var wall = new McrWall(physical(order), OPENING);
         var player = new PlayerState();
         int tile = wall.draw(player);
         assertEquals(Tile.id(0, 0, false), tile);
         assertTrue(player.hand.isEmpty());
-        assertEquals(List.of(FlowerTile.SPRING.id(), FlowerTile.CHRYSANTHEMUM.id(), FlowerTile.BAMBOO.id(),
-            FlowerTile.ORCHID.id(), FlowerTile.PLUM.id(), FlowerTile.WINTER.id(), FlowerTile.AUTUMN.id(),
-            FlowerTile.SUMMER.id()), player.flowers);
+        assertEquals(List.of(FlowerTile.SUMMER.id(), FlowerTile.BAMBOO.id(), FlowerTile.CHRYSANTHEMUM.id(),
+            FlowerTile.PLUM.id(), FlowerTile.ORCHID.id(), FlowerTile.AUTUMN.id(), FlowerTile.WINTER.id(),
+            FlowerTile.SPRING.id()), player.flowers);
         assertEquals(135, wall.remaining());
         player.hand.add(tile);
         wall.assertConservation(player);
@@ -100,7 +102,7 @@ class McrWallTest {
     }
 
     @Test void flowerOnlyExhaustionKeepsOwnershipAndResetClearsTheFlowerArea() {
-        var wall = new McrWall(Tile.mcrSet());
+        var wall = new McrWall(physical(Tile.mcrSet()), OPENING);
         var player = new PlayerState();
         for (int i = 0; i < 136; i++) player.hand.add(wall.draw(player));
         assertEquals(8, wall.remaining());

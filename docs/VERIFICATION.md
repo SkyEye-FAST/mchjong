@@ -100,6 +100,8 @@ interface smoke verify their native config-screen factories.
 
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
+`McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
+and first/third jump sources, front/tail traversal and restored physical cursors.
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
 identities, appearance matching, separate-case selection and the supplied-stock
 session boundary. Run them with
