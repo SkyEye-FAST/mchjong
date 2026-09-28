@@ -19,10 +19,20 @@ shows waits and unseen-copy counts from each player's authorized view.
 Each world save has `config/mchjong-world.toml`, shared by all dimensions and
 tables in that save. Its initial contents are:
 
-```json
-{
-  "invitationTeleport": false
-}
+```toml
+invitationTeleport = false
+invitationsEnabled = true
+spectatingEnabled = true
+spectatorHandVisibility = "hidden"
+allowConvenienceHints = true
+allowExperienceRewards = false
+deductNegativeExperience = true
+maxExperienceChange = 5000
+replaysEnabled = true
+allowBots = true
+allowCompanionPlayers = true
+allowCustomRules = true
+forcedPreset = "none"
 ```
 
 Administrators with command permission level 2 can change these values in
@@ -32,12 +42,20 @@ permission-checked commands available below:
 ```text
 /mchjong world
 /mchjong world invitationTeleport true
+/mchjong world spectatingEnabled false
+/mchjong world spectatorHandVisibility follow_players
+/mchjong world forcedPreset tenhou_4
 /mchjong world reload
 ```
 
 Changes made by commands are saved atomically. Reload applies file edits. World
-policy applies to active tables as well as new rooms; it does not reset room
-rules or readiness.
+policy applies to active tables as well as new rooms. It governs server-wide
+information access, Minecraft experience rewards, replay availability, server-side
+participants and which room capabilities are allowed. `maxExperienceChange` caps
+the absolute experience change from one match; `deductNegativeExperience` only
+matters when experience rewards are enabled. `allowCustomRules` restricts rooms to
+named presets, while `forcedPreset` can require one preset without copying its
+individual mahjong options into world settings.
 
 ## Hand visibility
 
@@ -46,14 +64,21 @@ saved with that table, and changing it clears readiness:
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
 - **Visible to riichi players:** a player who has declared riichi can see other
-  players' upright tile faces. Other viewers see concealed faces.
-- **Visible to all players:** everyone, including nearby spectators, sees the
-  ordinary upright tile faces from their physical viewing angle.
-- **Open hands:** everyone sees the hands laid face up.
+  players' concealed tile identities in their authorized view. Other participants do not.
+- **Visible to all players:** every participant sees the other participants'
+  concealed tile identities in their authorized view.
+
+**Open hands** is separate from information permission. When enabled by the host,
+the physical hands are laid face up, so their faces are naturally public in world
+rendering.
 
 Hands revealed at settlement remain public. Spectators can stand beside the table
 and inspect its world rendering, or interact with an active table to open its
-overview. Spectating leaves participant seats available and grants no game actions.
+overview when `spectatingEnabled` permits it. Their concealed-hand snapshots are
+redacted by `spectatorHandVisibility`: `hidden` reveals none, `follow_players`
+never exceeds the room's participant visibility, and `all` reveals every hand.
+None of these values grants additional information to participants. Spectating
+leaves participant seats available and grants no game actions.
 
 ## Room ownership
 

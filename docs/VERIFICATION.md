@@ -86,7 +86,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:forge:runSmokeClient
 | `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language standings with uma, resizing and result navigation; `settlement-evidence` |
 | `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, camera clearance, immersive controls, closed-screen camera and third-person stool; `seating-evidence` |
-| `-PsmokeVisibility=true` | Four room policies, private packets and unmounted spectator permissions; `visibility-evidence` |
+| `-PsmokeVisibility=true` | Three participant visibility modes, private packets and independently redacted unmounted spectators; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
 | `-PsmokeItems=true` | Native held/dropped supplies and exact inventory changes; `items-evidence` |
 | `-PsmokePalette=true` | Material, dye, furniture and player head-slot presentation; `palette-evidence` |

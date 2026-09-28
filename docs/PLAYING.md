@@ -70,9 +70,10 @@ room and personal controls. Open **MChjong → Config** in the mod list to adjus
 your personal display, interaction, view, audio, riichi-stick and voice choices
 before joining a table. On Fabric and Quilt, install Mod Menu to use that entry;
 Forge provides it in its Mods screen. Hosts choose **Hand visibility** for their room:
-open hands, visible to all players, visible to riichi players, or visible only
-to self. Nearby spectators can see upright hand faces in the all-players mode
-while standing beside the table. Hosts can transfer room ownership to another participant. See
+visible to all players, visible to riichi players, or visible only to self. **Open
+hands** is a separate room option that physically lays every hand face up. Spectator
+access and spectator hand visibility are controlled by the world's administrator
+policy rather than by the participant visibility choice. Hosts can transfer room ownership to another participant. See
 [Rooms and permissions](ROOMS.md) for configuration and commands.
 
 **Exit** ends the table immediately when only one human is registered, even

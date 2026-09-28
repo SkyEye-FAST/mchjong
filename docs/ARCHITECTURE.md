@@ -181,15 +181,26 @@ Follow [UI_STYLE.md](UI_STYLE.md) for controls, screen structure and visual chec
 The server owns the wall, hands, legal actions and settlement. Requests contain an
 action index and decision token, never tiles or a claimed score. Snapshots are built for
 each recipient: opponents' concealed tiles and unrevealed wall tiles are replaced
-with hidden sentinels **before serialization**. `HandVisibility` is saved per room;
-the host can change it during preparation, clearing readiness. OPEN reveals and
-lays down hands, ALL reveals upright faces to everyone including unseated viewers,
-RIICHI reveals upright faces to viewers who have declared riichi, and SELF keeps
-concealed faces private. Settlement exposure remains public in every mode.
-`WorldSettings` supplies the administrator-controlled invitation teleport policy
-per world save, across dimensions. That world policy is transient in `Game`.
-`RoomView` publishes room ownership and world capabilities separately from tile
-state. The World settings UI uses the server-advertised administrator command
+with hidden sentinels **before serialization**. `PlayerHandVisibility` is saved per
+room; the host can change it during preparation, clearing readiness. ALL authorizes
+all concealed hand identities in participant snapshots, RIICHI does so only for
+participants who have declared riichi, and SELF keeps opponents concealed. `openHands` is a separate room option:
+it physically lays down the hands and therefore makes their faces public in world
+rendering. Settlement exposure remains public in every mode.
+
+Non-participants use a separate server-side path. `SpectatorHandVisibility` is a
+world policy: HIDDEN redacts concealed hands, FOLLOW_PLAYERS never exceeds the
+room's participant visibility, and ALL authorizes every hand without changing what
+participants may see. `spectatingEnabled` independently controls whether a
+non-participant may open an active table's spectator screen.
+
+`WorldSettings` owns administrator policy per world save, across dimensions. It
+also controls invitations and invitation teleportation, Minecraft experience
+rewards, replay availability, bots and companion participants, convenience hints,
+and the thin custom-rule/forced-preset boundary. `Game` receives only the pure
+runtime `WorldPolicy`; Minecraft UI and storage behavior stay outside the engine.
+`TableViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
+room state. The World settings UI uses the server-advertised administrator command
 tree to enable controls and submits the existing permission-checked commands;
 only synchronized table snapshots update the displayed policy values.
 Ownership follows a UUID, not the lowest numbered human seat.

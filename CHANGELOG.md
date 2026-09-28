@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Separate participant hand visibility, spectator information policy and physical open-hands presentation, with server-side redaction for each viewer role.
+- Expand administrator World settings for spectating, invitations, convenience hints, experience rewards, replays, bots, companion players and room-rule restrictions; move Minecraft experience rewards out of mahjong rule options.
 - Open personal settings and presets from the mod-list configuration button on Fabric/Quilt and Forge.
 - Make tenpai hints a host controlled room option shared by all participants.
 - Show parent scopes and inset preset choices in secondary menus.
