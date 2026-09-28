@@ -53,11 +53,11 @@ public final class PersonalPresetsScreen extends Screen {
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             ResourceLocation id = choices.get(page * rows + i);
             var origin = tab == 0 ? RiichiStickPresets.source(id) : VoicePresets.source(id);
-            Component label = origin.caption(tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id));
+            Component label = tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id);
             addRenderableWidget(MahjongButton.create(label,
                 ignored -> choose(id)).bounds(contentLeft + previewWidth, 60 + i * 22,
                     contentSpan - previewWidth, 20)
-                .tooltip(PresetSource.tooltip(tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id), id)).build()
+                .tooltip(origin.tooltip(label, id)).build()
                 .option(label, Component.empty()).checked(id.equals(tab == 0 ? TableSettings.get().riichiStickPreset : TableSettings.get().voicePreset)));
         }
         int navY = height - 56;
