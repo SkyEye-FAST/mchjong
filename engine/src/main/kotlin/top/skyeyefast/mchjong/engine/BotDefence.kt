@@ -66,7 +66,7 @@ internal class BotDefence(
             // bonuses are an exchangeable estimate from public remaining counts,
             // never an inspection of concealed identities or an asserted han.
             val hiddenBonus = opponent.hand().size * bonusMass / maxOf(1, total)
-            val estimate = HandAnalyzer.estimatedPayment(
+            val estimate = RiichiHandAnalyzer.estimatedPayment(
                 maxOf(view.rules().minHan().toDouble(), han.toDouble()) + bonus + hiddenBonus,
                 seat == view.dealer(),
                 true,

@@ -158,10 +158,10 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     }
 
     fun discards(state: State): Map<Int, TileEfficiency> =
-        discards.getOrPut(ShapeKey(state)) { HandAnalyzer.discardEfficiency(state.hand(), state.melds(), false) }
+        discards.getOrPut(ShapeKey(state)) { RiichiHandAnalyzer.discardEfficiency(state.hand(), state.melds(), false) }
 
     fun shape(state: State): TileEfficiency =
-        hands.getOrPut(ShapeKey(state)) { HandAnalyzer.handEfficiency(state.hand(), state.melds(), false) }
+        hands.getOrPut(ShapeKey(state)) { RiichiHandAnalyzer.handEfficiency(state.hand(), state.melds(), false) }
 
     fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray): Evaluation {
         val live = live(shape.improving, remaining)
@@ -171,7 +171,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         val potential = value.potential(state, shape.shanten, remaining)
         hands.putIfAbsent(key, shape)
         val waitValue = if (shape.shanten == 0) {
-            value.waits(state, waits.getOrPut(key) { HandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
+            value.waits(state, waits.getOrPut(key) { RiichiHandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
         } else {
             BotValue.Waits.EMPTY
         }
@@ -277,7 +277,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             remaining[face]--
             val withDraw = state.draw(tile(face))
             val shapes = bestDiscards.getOrPut(ShapeKey(withDraw)) {
-                HandAnalyzer.bestDiscardEfficiency(withDraw.hand(), withDraw.melds())
+                RiichiHandAnalyzer.bestDiscardEfficiency(withDraw.hand(), withDraw.melds())
             }
             val faces = HashSet<Int>()
             var best: Forecast? = null

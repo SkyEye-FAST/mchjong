@@ -17,8 +17,8 @@ import mahjongutils.shanten.CommonShantenArgs
 import mahjongutils.shanten.UnionShantenResult
 import mahjongutils.yaku.Yakus
 
-/** The only boundary to mahjong-utils. No Minecraft or network types are accepted here. */
-object HandAnalyzer {
+/** Riichi-only mahjong-utils boundary. No Minecraft or network types are accepted here. */
+object RiichiHandAnalyzer {
     private fun options(rules: RuleConfig) = HoraOptions(aotenjou = false, allowKuitan = rules.kuitan(),
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
         hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())

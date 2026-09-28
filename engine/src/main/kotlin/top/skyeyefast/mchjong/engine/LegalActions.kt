@@ -21,7 +21,7 @@ internal object LegalActions {
         if (!player.riichi && player.closed() && game.wall.remaining() >= game.rules.minRiichiWall() &&
             (!game.rules.needsRiichiDeposit() || player.points >= 1000)
         ) {
-            val tenpai = HandAnalyzer.tenpaiDiscards(player.hand, player.melds)
+            val tenpai = RiichiHandAnalyzer.tenpaiDiscards(player.hand, player.melds)
             for (tile in ordered) if (Tile.kind(tile) in tenpai) actions += Action(RIICHI, tile)
         }
         if (game.rules.abortiveDraws() && player.firstTurn && game.uninterrupted &&
@@ -54,15 +54,15 @@ internal object LegalActions {
         after.removeAll(quad.toSet())
         val melds = ArrayList(player.melds)
         melds += Meld(Meld.Type.CLOSED_KAN, quad, seat, Tile.ABSENT)
-        val waits = HandAnalyzer.waits(before, player.melds)
-        if (waits != HandAnalyzer.waits(after, melds)) return false
-        if (game.rules.riichiKanKeepsMelds() && !HandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false
+        val waits = RiichiHandAnalyzer.waits(before, player.melds)
+        if (waits != RiichiHandAnalyzer.waits(after, melds)) return false
+        if (game.rules.riichiKanKeepsMelds() && !RiichiHandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false
         if (game.rules.riichiKanKeepsYaku()) for (wait in waits) for (tsumo in booleanArrayOf(false, true)) {
-            val previous = HandAnalyzer.score(
+            val previous = RiichiHandAnalyzer.score(
                 before, player.melds, wait * 4, tsumo, game.wind(seat), game.round / game.rules.players(),
                 0, listOf("Richi"), game.rules
             )
-            val next = HandAnalyzer.score(
+            val next = RiichiHandAnalyzer.score(
                 after, melds, wait * 4, tsumo, game.wind(seat), game.round / game.rules.players(),
                 0, listOf("Richi"), game.rules
             )
@@ -76,7 +76,7 @@ internal object LegalActions {
         val player = game.players[seat]
         val actions = ArrayList<Action>()
         val kind = Tile.kind(game.lastTile)
-        val waits = HandAnalyzer.waits(player.hand, player.melds)
+        val waits = RiichiHandAnalyzer.waits(player.hand, player.melds)
         if (kind in waits && !player.temporaryFuriten && !player.riichiFuriten &&
             player.river.none { Tile.kind(it.tile()) in waits }
         ) {
@@ -159,7 +159,7 @@ internal object LegalActions {
             player.hand, player.melds, player.norths, tile,
             HandBonuses.indicators(game.wall.indicators(game.rules.uraDora() && player.riichi), game.rules.sanma())
         )
-        return HandAnalyzer.score(
+        return RiichiHandAnalyzer.score(
             player.hand, player.melds, tile, tsumo, game.wind(seat), game.round / game.rules.players(),
             dora, extra, game.rules
         )
@@ -173,5 +173,5 @@ internal object LegalActions {
 
     @JvmStatic
     fun formalTenpai(hand: List<Int>, melds: List<Meld>, rules: RuleConfig): Boolean =
-        HandAnalyzer.waits(hand, if (rules.formalTenpaiIgnoresMelds()) emptyList() else melds).isNotEmpty()
+        RiichiHandAnalyzer.waits(hand, if (rules.formalTenpaiIgnoresMelds()) emptyList() else melds).isNotEmpty()
 }

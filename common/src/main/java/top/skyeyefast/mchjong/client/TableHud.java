@@ -274,7 +274,7 @@ final class TableHud {
         var concealed = new ArrayList<>(self.hand());
         if (concealed.size() % 3 == 2 && self.drawn() >= 0) concealed.remove(Integer.valueOf(self.drawn()));
         if (concealed.size() + self.melds().size() * 3 != 13 || concealed.stream().anyMatch(tile -> tile < 0)) return false;
-        var waits = top.skyeyefast.mchjong.engine.HandAnalyzer.waits(concealed, self.melds());
+        var waits = top.skyeyefast.mchjong.engine.RiichiHandAnalyzer.waits(concealed, self.melds());
         return furiten = self.river().stream().anyMatch(discard -> waits.contains(top.skyeyefast.mchjong.engine.Tile.kind(discard.tile())));
     }
 

@@ -17,8 +17,9 @@ allows it.
   replay-format transformation. Kotlin APIs called from Java keep ordinary JVM
   entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
   required), so Java orchestration does not need Kotlin-specific call shapes. The
-  engine Shadow archive embeds and relocates mahjong-utils, Kotlin and kotlinx,
-  so neither loader requires a Kotlin language mod at runtime. Engine production
+  engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, Kotlin
+  and kotlinx. Each loader embeds that self-contained artifact without requiring
+  an external Kotlin language mod or MCR library. Engine production
   Java and Kotlin bytecode targets Java 17, allowing the same domain artifact to
   serve the 1.20.1 and 1.21.1 Minecraft profiles. The build and existing test suite
   use the project's Java 21 toolchain.
@@ -41,6 +42,36 @@ on `main`. It targets Fabric and Forge. Features and engine changes originate on
 `main`; the compatibility branch only changes Minecraft APIs, loader adapters,
 metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
+
+## Hand analysis boundaries
+
+`RiichiHandAnalyzer` owns the Riichi scoring and shape adapter used by `Game`,
+legal actions, hints, replays and bots. `McrHandAnalyzer` is the sole production
+boundary to mcr-mahjong. Its public methods accept engine tile IDs, `Meld` values
+and JDK collections, and return ordinary kind sets or `McrHandScore` records.
+Explicit named mappings translate all 34 kinds, meld shapes, called chow positions,
+suppliers and winds. Physical IDs are validated and deduplicated before conversion.
+
+The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` from Maven Central and
+relocates its `top.skyeyefast.mcr` package to `top.skyeyefast.mchjong.internal.mcr`.
+The library's MIT license and upstream attribution remain in the bundled archive.
+`Game`, `RuleConfig`, public views and table actions retain their Riichi contracts;
+the MCR foundation is an independent engine service, not a selectable table mode.
+
+MCR analysis takes the concealed hand before drawing or winning:
+`concealed.size() + 3 * melds.size() == 13`, with the winning tile supplied
+separately. Owner/supplier seats use `0..3`; seat/round winds in `McrWinContext`
+use the `Tile.EAST`, `SOUTH`, `WEST` and `NORTH` kind constants. Structural waits
+exclude fifth copies already owned in the concealed hand and fixed melds.
+
+`McrWinContext` separates the last wall tile from the last physical copy and
+distinguishes kong replacement from robbing a kong. Flower replacement alone
+is not a kong event. Its flower count maps directly to the library context.
+`McrHandScore` retains the library's total fan, non-flower fan, minimum
+qualification and named fan entries, including awarded subtotals and the
+mixed-kong marker. The library owns shanten, winning shapes and fan calculation;
+these records carry scoring facts independently of Riichi `HandScore` and table
+payments.
 
 ## Physical tile domains
 

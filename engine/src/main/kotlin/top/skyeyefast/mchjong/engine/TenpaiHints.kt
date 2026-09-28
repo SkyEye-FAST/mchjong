@@ -46,7 +46,7 @@ class TenpaiHints {
         val kinds = byDiscard.getOrPut(key) {
             val concealed = hand.toMutableList()
             if (key >= 0) concealed.remove(concealed.first { Tile.kind(it) == key })
-            HandAnalyzer.waits(concealed, melds)
+            RiichiHandAnalyzer.waits(concealed, melds)
         }
         val known = VisibleTiles.counts(view)
         return java.util.List.copyOf(

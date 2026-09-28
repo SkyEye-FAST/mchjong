@@ -16,7 +16,7 @@ object ReplayDecisionAnalysis {
         val frame = ReplayPlayback.at(match, handIndex, decision.eventCursor)
         val self = frame.seats[decision.seat]
         val known = visibleCounts(frame, decision.seat, match.rules.sanma())
-        val byDiscard = HandAnalyzer.discardEfficiency(self.hand(), self.melds(), false)
+        val byDiscard = RiichiHandAnalyzer.discardEfficiency(self.hand(), self.melds(), false)
         return decision.options.map { action ->
             if (action.type() != Action.Type.DISCARD && action.type() != Action.Type.RIICHI || action.tiles().isEmpty()) {
                 null

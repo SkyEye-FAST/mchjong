@@ -106,7 +106,7 @@ class GameLifecycleTest {
         }
         TableView.Seat player = view.seats().get(view.viewerSeat());
         if (view.phase() == Game.Phase.TURN) {
-            Set<Integer> best = HandAnalyzer.bestDiscardKinds(player.hand(), player.melds());
+            Set<Integer> best = RiichiHandAnalyzer.bestDiscardKinds(player.hand(), player.melds());
             for (int i = view.actions().size() - 1; i >= 0; i--) {
                 Action action = view.actions().get(i);
                 if (action.type() == Action.Type.DISCARD && best.contains(Tile.kind(action.tiles().getFirst()))) return i;

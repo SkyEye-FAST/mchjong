@@ -101,6 +101,13 @@ interface smoke verify their native config-screen factories.
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
+`McrHandAnalyzerTest` owns the explicit tile/meld/context conversions, basic
+library calls, flower exclusion and fan-result projection. `ScoringBridgeTest`
+owns the existing Riichi scoring adapter. Run these engine boundaries with:
+
+```text
+gradlew.bat :engine:test --tests "*McrHandAnalyzerTest" --tests "*McrWallTest" --tests "*WallInvariantTest" --tests "*ScoringBridgeTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
+```
 
 Engine tests own scoring, reaction priority, exits, ballots, saved state and
 recipient privacy. Lifecycle/manual checks exercise both player counts; enumerate

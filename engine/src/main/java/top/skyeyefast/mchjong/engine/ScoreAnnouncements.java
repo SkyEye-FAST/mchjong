@@ -49,7 +49,7 @@ public final class ScoreAnnouncements {
         var score = win.score();
         var player = view.seats().get(win.seat());
         var result = new ArrayList<Row>();
-        var values = HandAnalyzer.yakuValues(score.yaku(), player.melds().stream().allMatch(Meld::closed), view.rules());
+        var values = RiichiHandAnalyzer.yakuValues(score.yaku(), player.melds().stream().allMatch(Meld::closed), view.rules());
         values.stream().filter(value -> score.yakuman() == 0 || value.yakuman())
             .sorted(Comparator.comparingInt(value -> ORDER.indexOf(value.name()))).forEach(value -> {
                 String voice = switch (value.name()) {

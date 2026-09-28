@@ -902,7 +902,7 @@ public final class Game {
             if ((rules.yakulessFuriten() || rules.minHan() > 1) && (pending == null || pending.type() == ADDED_KAN
                 || pending.type() == NUKI && rules.robNorthWithoutKokushi())
                 && options.get(i).stream().noneMatch(action -> action.type() == RON)
-                && HandAnalyzer.waits(players[i].hand, players[i].melds).contains(Tile.kind(lastTile))) {
+                && RiichiHandAnalyzer.waits(players[i].hand, players[i].melds).contains(Tile.kind(lastTile))) {
                 players[i].temporaryFuriten = true;
                 if (players[i].riichi) players[i].riichiFuriten = true;
             }

@@ -1,6 +1,6 @@
 # Training opponent analysis
 
-The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `HandAnalyzer`. Its
+The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `RiichiHandAnalyzer`. Its
 `ShantenWithGot.discardToAdvance` and `ShantenWithoutGot.advance` provide
 structural efficiency; `waits` supplies structural
 tenpai and `score` supplies legal yaku, fu and actual payments under `RuleConfig`.
@@ -40,7 +40,7 @@ declaration. Non-advancing draws also compare the two widest continuations with
 keeping the existing hand, allowing connected shapes to improve before shanten
 decreases. The retained hand includes the simulated discard in its furiten state.
 These roots have their own decision-local cache and do not consume
-the general three-root budget. `HandAnalyzer.bestDiscardEfficiency` uses the
+the general three-root budget. `RiichiHandAnalyzer.bestDiscardEfficiency` uses the
 library's best-shanten mode: advancing draws have a minimum of zero, so every tied
 tenpai discard is retained, including regular and special-hand alternatives,
 while retreat branches are omitted. This horizon exhaustively covers immediate
@@ -81,7 +81,7 @@ number. Its exponential decay supplies gradual `progress` as supporting tiles ar
 kept or discarded. This is heuristic evidence, not a calibrated completion
 probability or a legal-yaku assertion. A target requiring unavailable copies is
 excluded. Scores, custom yaku minima and completed waits remain owned by
-`HandAnalyzer` and `BotValue`.
+`RiichiHandAnalyzer` and `BotValue`.
 
 Alternatives compete: the selected plan has one primary route and at most one
 discounted compatible companion. Sequence templates do not accumulate with

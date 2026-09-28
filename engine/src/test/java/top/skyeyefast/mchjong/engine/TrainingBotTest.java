@@ -37,7 +37,7 @@ class TrainingBotTest {
         };
         assertAll(java.util.Arrays.stream(positions).map(position -> (org.junit.jupiter.api.function.Executable) () -> {
             var game = hand(position[1]);
-            var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
+            var shapes = RiichiHandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
             int selected = Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst());
             assertEquals(shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow(),
                 shapes.get(selected).shanten(), position[0]);
@@ -106,10 +106,10 @@ class TrainingBotTest {
         assertEquals(1, shape.shanten());
         for (int kind : shape.improving().stream().limit(2).toList()) {
             var drawn = state.draw(Tile.id(kind, 0, false));
-            var all = HandAnalyzer.discardEfficiency(drawn.hand(), drawn.melds(), false);
+            var all = RiichiHandAnalyzer.discardEfficiency(drawn.hand(), drawn.melds(), false);
             var ready = new java.util.TreeMap<Integer, TileEfficiency>();
             all.forEach((discardKind, efficiency) -> { if (efficiency.shanten() == 0) ready.put(discardKind, efficiency); });
-            assertEquals(ready, HandAnalyzer.bestDiscardEfficiency(drawn.hand(), drawn.melds()),
+            assertEquals(ready, RiichiHandAnalyzer.bestDiscardEfficiency(drawn.hand(), drawn.melds()),
                 "The library best-only mode must retain every tenpai discard");
         }
         analysis.drawNodes = BotAnalysis.SEARCH_ROOTS * 37;
@@ -127,12 +127,12 @@ class TrainingBotTest {
         assertEquals(0, analysis.unseen[13 + 34], "Owned red five cannot be drawn again");
         assertEquals(3, analysis.unseen[13]);
         assertEquals(3, analysis.value.bonus(state, Tile.ABSENT), "Two indicators plus the same tile's red bonus");
-        var waits = analysis.value.waits(state, HandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen);
+        var waits = analysis.value.waits(state, RiichiHandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen);
         assertTrue(waits.ronTiles() > 0);
         assertTrue(waits.tsumoTiles() > 0);
-        assertEquals(java.util.Set.of(22, 25), HandAnalyzer.waits(state.hand(), state.melds()));
+        assertEquals(java.util.Set.of(22, 25), RiichiHandAnalyzer.waits(state.hand(), state.melds()));
         var furiten = new BotAnalysis.State(state.hand(), state.melds(), state.norths(), 1L << 22, false, false, 1);
-        assertEquals(0, analysis.value.waits(furiten, HandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen).ronTiles());
+        assertEquals(0, analysis.value.waits(furiten, RiichiHandAnalyzer.waits(state.hand(), state.melds()), analysis.unseen).ronTiles());
         int discard = state.hand().getFirst();
         int before = analysis.unseen[BotAnalysis.face(discard)];
         game.players[0].hand.remove(Integer.valueOf(discard));
@@ -197,7 +197,7 @@ class TrainingBotTest {
 
     @Test void oneShantenKeepsConnectedTilesWhenImmediateAdvancesAreEqual() {
         var game = hand("3445m12389p24s377z");
-        var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
+        var shapes = RiichiHandAnalyzer.discardEfficiency(game.players[0].hand, List.of(), false);
         assertEquals(shapes.get(Tile.WEST).shanten(), shapes.get(Tile.parseKind("4m")).shanten());
         assertEquals(shapes.get(Tile.WEST).improving(), shapes.get(Tile.parseKind("4m")).improving());
         assertEquals(Tile.WEST, Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst()),
@@ -206,7 +206,7 @@ class TrainingBotTest {
 
     @Test void tiersUseLiveEfficiencyAndHardBotNeverReadsHiddenHandsOrSeed() {
         var game = hand("123456m234p456s12z");
-        var shapes = HandAnalyzer.discardEfficiency(game.players[0].hand, List.of());
+        var shapes = RiichiHandAnalyzer.discardEfficiency(game.players[0].hand, List.of());
         int min = shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow();
         for (var difficulty : BotDifficulty.values())
             assertEquals(min, shapes.get(Tile.kind(choice(game, difficulty).tiles().getFirst())).shanten());
@@ -266,7 +266,7 @@ class TrainingBotTest {
             ready.players[1].river.add(new Discard(tile, false, false, false));
         var improve = new Action(Action.Type.PON, ready.players[0].hand.stream().filter(t -> Tile.kind(t) == 22).toList());
         ready.options.set(0, List.of(improve, new Action(Action.Type.PASS)));
-        assertEquals(0, HandAnalyzer.handEfficiency(ready.players[0].hand, ready.players[0].melds).shanten());
+        assertEquals(0, RiichiHandAnalyzer.handEfficiency(ready.players[0].hand, ready.players[0].melds).shanten());
         assertEquals(Action.Type.PON, choice(ready, BotDifficulty.HARD).type());
     }
 
@@ -336,7 +336,7 @@ class TrainingBotTest {
         uncertain.players[2].melds.add(TestHands.meld(Meld.Type.PON, "666z"));
         for (int seat = 1; seat <= 2; seat++)
             uncertain.players[seat].river.add(new Discard(Tile.id(0, seat + 1, false), false, false, false));
-        var shapes = HandAnalyzer.discardEfficiency(uncertain.players[0].hand, List.of(), false);
+        var shapes = RiichiHandAnalyzer.discardEfficiency(uncertain.players[0].hand, List.of(), false);
         int minimum = shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow();
         assertEquals(minimum, shapes.get(Tile.kind(choice(uncertain, BotDifficulty.HARD).tiles().getFirst())).shanten(),
             "Two early calls do not justify breaking a completed group for genbutsu");
@@ -350,7 +350,7 @@ class TrainingBotTest {
         call.wall.tiles.set(call.wall.dora.get(1), Tile.id(Tile.NORTH, 1, false));
         var pon = new Action(Action.Type.PON, call.players[0].hand.stream().filter(t -> Tile.kind(t) == Tile.WHITE).toList());
         call.options.set(0, List.of(pon, new Action(Action.Type.PASS)));
-        assertEquals(2, HandAnalyzer.handEfficiency(call.players[0].hand, List.of(), false).shanten());
+        assertEquals(2, RiichiHandAnalyzer.handEfficiency(call.players[0].hand, List.of(), false).shanten());
         assertEquals(Action.Type.PON, choice(call, BotDifficulty.HARD).type(),
             "Compare a valuable fast called hand before deciding to fold the unchanged hand");
 
@@ -368,7 +368,7 @@ class TrainingBotTest {
         ready.players[2].river.add(new Discard(Tile.id(Tile.WHITE, 2, false), false, false, false));
         assertEquals(17, Tile.kind(choice(ready, BotDifficulty.HARD).tiles().getFirst()),
             "Retreat from a cheap live wait using genbutsu against a publicly expensive riichi");
-        assertTrue(HandAnalyzer.discardEfficiency(ready.players[0].hand, List.of(), false).get(17).shanten() > 0);
+        assertTrue(RiichiHandAnalyzer.discardEfficiency(ready.players[0].hand, List.of(), false).get(17).shanten() > 0);
     }
 
     @Test void riichiComparesLegalValueWithDamaAndOwnTemporaryFuritenStaysPrivate() {
@@ -423,7 +423,7 @@ class TrainingBotTest {
         var ron = analysis.value.score(declared, winning, false, false);
         assertNotNull(ron);
         var waits = analysis.value.waits(declared, java.util.Set.of(3), remaining);
-        assertEquals(HandAnalyzer.bonusPayment(ron, 2, true, game.rules), waits.ron(), 0.001,
+        assertEquals(RiichiHandAnalyzer.bonusPayment(ron, 2, true, game.rules), waits.ron(), 0.001,
             "After winning 4m, each available 1m indicator awards the hand's two 2m tiles");
         remaining[0] = 0;
         remaining[17] = 2;
@@ -433,7 +433,7 @@ class TrainingBotTest {
         game.wall.revealed = 2;
         remaining[0] = remaining[17] = 1;
         var twoIndicators = new BotValue(game.view(game.players[0].id));
-        assertEquals(HandAnalyzer.bonusPayment(ron, 2, true, game.rules),
+        assertEquals(RiichiHandAnalyzer.bonusPayment(ron, 2, true, game.rules),
             twoIndicators.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001,
             "Two remaining indicators are selected without replacement");
         game.rules = game.rules.with(RuleOption.URA_DORA, 0);
@@ -479,7 +479,7 @@ class TrainingBotTest {
         speed.rules = RuleSet.MAHJONG_SOUL_3.config();
         speed.wall = new Wall(speed.rules, 24, 0);
         speed.players[0].norths.addAll(List.of(Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 3, false)));
-        var shapes = HandAnalyzer.discardEfficiency(speed.players[0].hand, List.of(), false);
+        var shapes = RiichiHandAnalyzer.discardEfficiency(speed.players[0].hand, List.of(), false);
         for (var level : BotDifficulty.values())
             assertEquals(2, shapes.get(Tile.kind(choice(speed, level).tiles().getFirst())).shanten(),
                 "Raw ukeire cannot justify an unsearched offensive retreat");

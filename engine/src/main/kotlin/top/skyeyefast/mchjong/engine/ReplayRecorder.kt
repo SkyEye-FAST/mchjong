@@ -111,7 +111,7 @@ internal class ReplayRecorder(game: Game) {
             pao,
             bonus,
             0,
-            if (score.yaku().contains("Nagashi")) emptyList() else HandAnalyzer.yakuValues(score.yaku(), player.closed(), game.rules),
+            if (score.yaku().contains("Nagashi")) emptyList() else RiichiHandAnalyzer.yakuValues(score.yaku(), player.closed(), game.rules),
             maxOf(0, score.dora() - red - ura - north),
             ura,
             red,
