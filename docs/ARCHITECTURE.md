@@ -219,8 +219,8 @@ kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
 physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
 and pending declarations. Training bots share this accounting. Opponents' concealed
 hands are ignored even when room hand visibility reveals them. `TableHints` renders
-this information only when the local, default-off convenience preference is on;
-no private information or new request type is added to the protocol.
+this information when the room host enables convenience hints during preparation;
+the room view synchronizes that choice to every participant.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
 copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent

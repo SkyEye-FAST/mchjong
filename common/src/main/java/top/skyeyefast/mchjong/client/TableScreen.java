@@ -1169,7 +1169,7 @@ public final class TableScreen extends Screen {
     }
 
     private void updateHints(TableView view) {
-        if (!TableSettings.get().convenienceHints || dealing() || decision.pending() || results != null) {
+        if (room() == null || !room().convenienceHints() || dealing() || decision.pending() || results != null) {
             hints.clearPreview();
             return;
         }

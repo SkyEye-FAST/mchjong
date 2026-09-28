@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Make tenpai hints a host controlled room option shared by all participants.
 - Show parent scopes and inset preset choices in secondary menus.
 
 ### Fixed
