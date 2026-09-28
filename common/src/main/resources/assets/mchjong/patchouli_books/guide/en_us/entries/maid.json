@@ -1,0 +1,12 @@
+{
+  "name": "manual.mchjong.entry.maid.name",
+  "category": "mchjong:integration",
+  "icon": "mchjong:mahjong_table",
+  "sortnum": 0,
+  "pages": [
+    {
+      "type": "patchouli:text",
+      "text": "manual.mchjong.entry.maid.page_1"
+    }
+  ]
+}
