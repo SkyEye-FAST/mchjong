@@ -212,7 +212,6 @@ class GameLifecycleTest {
         assertEquals(Game.Phase.MATCH_END, game.phase());
         assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
         assertFalse(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
-        TableView standings = game.view(player);
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].id;
             TableView view = game.view(id);

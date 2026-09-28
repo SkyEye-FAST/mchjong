@@ -18,7 +18,6 @@ import top.skyeyefast.mchjong.client.PersonalPresetsScreen;
 import top.skyeyefast.mchjong.client.TableClockScreen;
 import top.skyeyefast.mchjong.client.TableInviteScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableSettingsScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
