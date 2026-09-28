@@ -138,6 +138,13 @@ final class InterfaceSmoke {
             capture(client, output, "33-personal-entry-320x240.png");
             click(client, "settings.mchjong.personal_presets");
             require(client.screen instanceof PersonalPresetsScreen, "Personal presets did not open from mod settings");
+            settingsStage = -2; settingsTicks = 0;
+        } else if (settingsStage == -2 && settingsTicks > 12) {
+            checkBounds(client);
+            capture(client, output, "33-personal-presets-320x240.png");
+            click(client, "settings.mchjong.voice_preset");
+            click(client, "preset.mchjong.source.local");
+            checkBounds(client);
             client.screen.onClose();
             require(client.screen instanceof PersonalSettingsScreen, "Personal presets did not return to mod settings");
             click(client, "settings.mchjong.preferences");
@@ -150,11 +157,21 @@ final class InterfaceSmoke {
             capture(client, output, "33-settings-tab-" + (settingsStage - 1) + ".png");
             if (settingsStage < 4) click(client, "settings.mchjong.tab." + settingsStage);
             else {
-                client.screen.onClose();
-                require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
-                client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
+                client.options.guiScale().set(2);
+                client.resizeDisplay();
+                settingsStage = -3; settingsTicks = 0;
+                return false;
             }
             settingsStage++; settingsTicks = 0;
+        } else if (settingsStage == -3 && settingsTicks > 12) {
+            checkBounds(client);
+            capture(client, output, "33-settings-wide.png");
+            client.screen.onClose();
+            require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
+            client.options.guiScale().set(3);
+            client.resizeDisplay();
+            client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
+            settingsStage = 5; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);
             var field = client.screen.children().stream().filter(MahjongEditBox.class::isInstance)
@@ -219,12 +236,16 @@ final class InterfaceSmoke {
             client.screen.onClose();
             restoreWindow(client);
             settingsStage = 9; settingsTicks = 0;
-        } else if (settingsStage == 9 && settingsTicks > 10 && automation.tick(client, table, output)) {
+        } else if (settingsStage == 9 && settingsTicks > 10) {
             restoreWindow(client);
             settingsStage = 10;
             return true;
         }
         return false;
+    }
+
+    boolean automation(Minecraft client, MahjongTableBlockEntity table, Path output) {
+        return automation.tick(client, table, output);
     }
 
     private void restoreWindow(Minecraft client) {

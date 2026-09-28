@@ -286,6 +286,9 @@ public final class TableClientSmoke {
                 step = 18; entered = ticks;
             } else if (step == 32 && fixtureSeat.isDone() && ticks - entered > 20) {
                 require(fixtureSeat.join(), "Interface fixture did not obtain a physical seat");
+                if (!interfaceSmoke.settings(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) return;
+                step = 40; entered = ticks;
+            } else if (step == 40) {
                 if (!tableInterfaceSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) return;
                 step = 35; entered = ticks;
             } else if (step == 35 && resourcePackSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
@@ -400,6 +403,7 @@ public final class TableClientSmoke {
                 capture(client, "06-reloaded-solid-backs.png");
                 step = 15; entered = ticks;
             } else if (step == 15 && interfaceSmoke.settings(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
+                && interfaceSmoke.automation(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)
                 && controlSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 prepareDisplaySeat(client);
             } else if (step == 28 && fixtureSeat.isDone() && ticks - entered > 20) {

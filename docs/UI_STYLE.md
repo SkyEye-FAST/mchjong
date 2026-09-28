@@ -67,8 +67,8 @@ uses a drop shadow for contrast.
 Keep the title, body, supporting information and navigation visually distinct.
 Secondary screens use a centered panel over a subdued backdrop. In the table
 view, compact HUD cards belong near the edges so the physical hand stays clear.
-Actions remain separate from informational labels. Settings use explicit tabs
-and an orderly grid; selection does not replace the setting's written value.
+Actions remain separate from informational labels. Settings use explicit category
+navigation and grouped option rows; selection does not replace the setting's written value.
 Tooltips contain concise labels and state only. Gameplay and crafting explanations
 belong in the documentation, not long hover paragraphs covering the table.
 Tile tooltips use the same material, face and back-color rows for numbered,
@@ -110,6 +110,15 @@ read-only values with a short administrator-only explanation. Room controls
 and ownership transfer are paginated separately from local presentation options.
 Secondary settings and preset pages show their parent scope in the header;
 expanded preset choices use an inset and a quiet vertical rule.
+Settings use a persistent left category rail and flat, compact option rows beneath
+a centered section heading. Labels align left, values align right, and boolean
+options use square indicators. Keep borders for keyboard focus and footer actions.
+Personal preset navigation groups indented Server/Local entries beneath each
+stick/voice category. Mark the active child with a leading accent. Narrow windows
+retain this hierarchy and paginate the content area.
+Settlement score tables use compact rows, quiet horizontal separators and a leading
+accent for the local player. Numeric headings and values share right-aligned column
+edges; the player heading aligns with names after their portraits.
 
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
@@ -294,10 +303,10 @@ Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
 The Personal scope in room settings and the mod-list configuration entry open
 the same local settings and preset screens. The preset screen lets a player choose a
-riichi stick and voice. The stick tab shows the strip texture beside each name;
-the voice tab lists recording sets. Both selections are saved locally. Keep the
+riichi stick and voice. The stick category shows the strip texture beside each name;
+the voice category lists recording sets. Both selections are saved locally. Keep the
 lists paginated at small window sizes. All four preset selectors have Server
-and Local source tabs, mark built-in entries in Server, automatically refresh loaded entries, and show
+and Local source navigation, mark built-in entries in Server, automatically refresh loaded entries, and show
 the full name and persistent ID in each choice's tooltip.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional
