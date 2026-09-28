@@ -1,7 +1,9 @@
 package top.skyeyefast.mchjong.client;
 
-import java.util.List;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.multiplayer.PlayerInfo;
@@ -10,6 +12,7 @@ import net.minecraft.network.chat.Component;
 /** Uses the connection's online roster; server-side commands resolve and authorize the target. */
 public final class TableInviteScreen extends Screen {
     private final TableScreen parent;
+    private final Map<String, MahjongButton> invitations = new HashMap<>();
     private int page;
     private int pages = 1;
 
@@ -23,6 +26,7 @@ public final class TableInviteScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets();
+        invitations.clear();
         if (minecraft.getConnection() == null || minecraft.player == null) return;
         List<PlayerInfo> players = minecraft.getConnection().getOnlinePlayers().stream()
             .filter(info -> !info.getProfile().id().equals(minecraft.player.getUUID()))
@@ -33,10 +37,11 @@ public final class TableInviteScreen extends Screen {
         int span = Math.min(320, width - 24), left = (width - span) / 2;
         for (int index = page * rows; index < Math.min(players.size(), (page + 1) * rows); index++) {
             var profile = players.get(index).getProfile();
-            addRenderableWidget(MahjongButton.create(Component.literal(profile.name()), ignored -> {
+            var button = addRenderableWidget(MahjongButton.create(Component.literal(profile.name()), ignored -> {
                 if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong invite " + profile.id());
                 onClose();
             }).bounds(left, 56 + (index % rows) * 24, span, 20).build());
+            invitations.put(profile.name(), button);
         }
         var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
             .bounds(left, height - 56, 32, 20).build());
@@ -49,6 +54,9 @@ public final class TableInviteScreen extends Screen {
     }
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
+        var view = parent.view();
+        if (view != null) invitations.forEach((name, button) -> button.active = view.seats().stream()
+            .noneMatch(seat -> seat.occupied() && !seat.bot() && seat.name().equals(name)));
         MahjongUi.backdrop(graphics, width, height, 320);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.invite_hint"), 12, 34, width - 24, MahjongUi.MUTED, true);
