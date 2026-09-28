@@ -99,7 +99,7 @@ the player, distance, stool and mount before moving them.
 Physical companion players use an `entityBot` identity in the engine and public
 seat view. Their UUID and display name survive wind assignment and difficulty
 changes, while decisions use the same private-view training AI. The shared table
-adapter authorizes recruitment through the companion's participating owner,
+adapter authorizes recruitment through the companion's nearby living owner,
 validates actual stools and mounts, and synchronizes companion presence. Missing
 companions release lobby membership after the presence grace period; during play
 a training bot continues their place. The maid extension in `compat/maid` uses
