@@ -75,6 +75,9 @@ public final class CreateProcessing {
                 continue;
             }
             var incoming = inventory.stream().filter(MahjongSupplies::storable).toList();
+            // Blanks belong to the complete printing transaction, even before its plate arrives.
+            if (incoming.stream().anyMatch(stack -> stack.is(MahjongContent.TILE_ITEM)
+                && MahjongSupplies.tile(stack).blank())) continue;
             var packed = MahjongSupplies.pack(box, incoming);
             if (packed.isEmpty()) continue;
             var inputs = new ArrayList<>(incoming);

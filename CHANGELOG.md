@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Wait for the complete printing batch before a Create press moves blank tiles into a mahjong box.
 - Advance each settlement stage early only after every human player confirms, and show its remaining seconds in the single top action.
 
 ## [0.8.1] - 2026-09-27
