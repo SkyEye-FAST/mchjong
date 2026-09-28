@@ -259,6 +259,23 @@ not the saved game. The Minecraft host remains responsible for authenticating th
 sender and checking the dimension, loaded table, live mount and server policies
 before calling these methods.
 
+### MCR physical presentation
+
+The engine's `McrWallLayout` contains stack/slot topology, traversal and initial
+take plans, with no world coordinates or mesh dimensions. The presentation-owned
+`McrTableScene` consumes `McrView` and projects one seat-local geometry through
+the shared `TableGeometry.orient` rotation. It preserves physical wall slot
+indices, original hand indices and discard history indices for picking and
+animation consumers. Its complete built-wall projection contains only hidden
+identities, and its live projection consumes only already-redacted data.
+
+`McrRiverLayout` packs unclaimed discards into six columns. `McrMeldLayout`
+positions flat public melds with a source-marking sideways tile, including all
+four tiles of a supplemented triplet in one row. `McrFlowerLayout` reserves a
+separate public flower area. `McrSceneRenderer` consumes the scene and `McrDeck`,
+sharing tile meshes, materials and artwork lookup while retaining MCR geometry.
+The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mcr-physical-layout).
+
 ## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native

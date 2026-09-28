@@ -34,6 +34,7 @@ public final class TableClientSmoke {
     private static final Logger LOG = LoggerFactory.getLogger("mchjong-smoke");
     private static final BlockPos CENTER = new BlockPos(0, 64, 0);
     private final Path output = Path.of(System.getProperty("mchjong.smoke.output"));
+    private final McrDisplaySmoke mcrDisplay = Boolean.getBoolean("mchjong.smoke.mcrLayoutOnly") ? new McrDisplaySmoke() : null;
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
     private final boolean paletteOnly = Boolean.getBoolean("mchjong.smoke.paletteOnly");
     private final boolean seatingOnly = Boolean.getBoolean("mchjong.smoke.seatingOnly");
@@ -74,6 +75,14 @@ public final class TableClientSmoke {
     public void tick(Minecraft client) {
         if (step == 14) return;
         try {
+            if (mcrDisplay != null) {
+                if (mcrDisplay.tick(client, output)) {
+                    Files.writeString(output.resolve("PASS.txt"), "MCR wall and play display fixtures passed\n");
+                    step = 14;
+                    client.stop();
+                }
+                return;
+            }
             require(!client.mouseHandler.isMouseGrabbed(), "Smoke client grabbed the desktop mouse");
             require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");

@@ -37,6 +37,42 @@ artwork, felt dyes, suit colors and world materials are not interface tokens.
 Avoid turning every edge gold: reserve emphasis for the current selection,
 keyboard focus, an important decision or the panel's small header accent.
 
+## MCR physical layout
+
+MCR presentation uses its own scene and layout types. Dimensions derive from
+`TileMesh.WIDTH`, `HEIGHT` and `DEPTH` at the scene's tile scale. Seat-local x
+runs left to right as seen by the seated player; z increases toward that player.
+All four seats use the same local poses rotated by `TableGeometry.orient`.
+
+The built wall has four straight eighteen-stack sides, each stack upper/lower.
+Each side is displaced along its length in the same local direction, so one
+end extends past its adjacent wall while the opposite end stops short. This
+fourfold pinwheel arrangement forms the offset hash-shaped enclosure rather
+than endpoint-aligned square corners. Offset, corner clearance and the small
+inter-stack seam come from tile dimensions; stacks do not overlap at the corners.
+Rendered slot indices are the engine's fixed physical slots, independent of the
+opening and draw order.
+
+Each river packs only physically present discards, six per row from left to
+right. The first row is closest to the table center and further rows expand
+toward the player. A called-away history entry occupies no river position.
+Every river tile has the same upright face orientation and width.
+The group origin has a uniform seat-local offset so four full rows fit inside
+the wall footprint without touching the neighboring player's river.
+
+Melds lie face up in a rail in front of the standing hand, between hand and
+river. The claimed tile is rotated ninety degrees: left for the previous
+player, middle for the opposite player and right for the next player. A chow
+uses the left source only. A concealed kong has four face-down tiles until
+the recipient view exposes the completed winning hand. Open quads and
+supplemented triplets use the same four-tile flat row; the fourth tile does
+not form a separate raised or forward stack.
+
+Flowers lie face up in a separate four-column, two-row area in front of the
+hand, beside the meld rail. They never occupy standing-hand or river positions.
+The scene preserves the source indices in its pieces and does not reconstruct
+hidden tile identities to arrange them. `McrView` remains the visibility authority.
+
 ## Components and interaction
 
 Use `MahjongButton`, `MahjongSlider` and `MahjongEditBox`. These specialize the
