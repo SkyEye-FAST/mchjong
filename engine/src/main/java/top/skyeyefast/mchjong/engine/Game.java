@@ -68,6 +68,7 @@ public final class Game {
     UUID hostId;
     RoomSeating seating = new RoomSeating();
     HandVisibility handVisibility = HandVisibility.SELF;
+    boolean convenienceHints;
     transient boolean invitationTeleport;
     ExitVote exitVote;
     UUID pendingLeaveDecision;
@@ -211,6 +212,14 @@ public final class Game {
         return true;
     }
 
+    public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
+        if (convenienceHints == enabled || phase != Phase.LOBBY || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        convenienceHints = enabled;
+        revision++;
+        return true;
+    }
+
     public RoomView roomView() {
         var seats = new ArrayList<RoomView.Seat>();
         for (int i = 0; i < rules.players(); i++) {
@@ -218,7 +227,7 @@ public final class Game {
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
                 seating.winds[i], player.bot ? player.botDifficulty : null));
         }
-        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks(),
+        return new RoomView(host(), invitationTeleport, convenienceHints, seating.stage, seating.available, seats, settlementTicks(),
             skippedDecision == decision ? skippedSeats : 0);
     }
 

@@ -99,6 +99,24 @@ class TableControlTest {
         assertEquals(HandVisibility.SELF, new Game(UUID.randomUUID(), RuleSet.WRC, 2).handVisibility);
     }
 
+    @Test void convenienceHintsAreControlledByTheLobbyHostAndPersistWithTheRoom() {
+        var lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        lobby.join(id(0), "Host", 0);
+        lobby.join(id(1), "Guest", 1);
+        long token = lobby.decision;
+        assertFalse(lobby.roomView().convenienceHints());
+        assertFalse(lobby.configureConvenienceHints(id(1), token, true));
+        assertFalse(lobby.configureConvenienceHints(id(0), token - 1, true));
+        assertTrue(lobby.configureConvenienceHints(id(0), token, true));
+        assertTrue(lobby.roomView().convenienceHints());
+        assertFalse(lobby.configureConvenienceHints(id(0), token, true));
+        var saved = new Gson().fromJson(new Gson().toJson(lobby), Game.class);
+        saved.validate();
+        assertTrue(saved.roomView().convenienceHints());
+        GameLifecycleTest.startPositioned(lobby);
+        assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
+    }
+
     @Test void stockCompositionChangeClearsLobbyReadinessAndRespectsPreset() {
         var rules = RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.RED_FIVES, RedFives.NONE.ordinal());
         var lobby = new Game(UUID.randomUUID(), rules, 1);

@@ -153,7 +153,7 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Personal interaction settings include default-off tenpai hints. A small diamond
+Room settings include default-off tenpai hints for all participants. A small diamond
 with an exclamation mark appears at the lower right when valid waits are available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
@@ -166,8 +166,7 @@ immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
 of language and font glyph bearings. Wrap waits into compact rows when side
 controls or player cards restrict the space, preserving the hand anchor and
-native text size. Closed settings persist locally and reset
-disables hints.
+native text size. The room host can change this setting during preparation.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
 round/remaining header. Their stick icons use fixed HUD artwork, independent of

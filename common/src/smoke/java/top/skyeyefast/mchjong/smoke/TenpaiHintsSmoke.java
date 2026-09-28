@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.Meld;
+import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -26,20 +27,25 @@ final class TenpaiHintsSmoke {
         new Sample("en_us", 2, false), new Sample("zh_cn", 2, true)
     };
     private int sample = -1, ticks, width, height, scale;
-    private boolean enabled, animations;
+    private boolean animations;
     private TableSettings.DiscardMode discardMode;
     private String language;
     private CompletableFuture<Void> reload;
     private TableView original, fixture;
+    private RoomView originalRoom;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         var settings = TableSettings.get();
         if (sample < 0) {
             width = client.getWindow().getScreenWidth(); height = client.getWindow().getScreenHeight();
             scale = client.options.guiScale().get(); language = client.getLanguageManager().getSelected();
-            enabled = settings.convenienceHints; animations = settings.animations; discardMode = settings.discardMode;
-            settings.convenienceHints = true; settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
+            animations = settings.animations; discardMode = settings.discardMode;
+            settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
             original = table.clientView();
+            originalRoom = table.clientRoom();
+            table.acceptRoom(new RoomView(originalRoom.host(), originalRoom.invitationTeleport(), true,
+                originalRoom.seating(), originalRoom.availableWinds(), originalRoom.seats(),
+                originalRoom.settlementTicks(), originalRoom.settlementSkippedSeats()));
             sample = 0;
             show(client, table);
             return false;
@@ -91,7 +97,8 @@ final class TenpaiHintsSmoke {
         if (++ticks <= 20) return false;
         if (++sample < SAMPLES.length) show(client, table);
         else {
-            settings.convenienceHints = enabled; settings.animations = animations; settings.discardMode = discardMode;
+            settings.animations = animations; settings.discardMode = discardMode;
+            table.acceptRoom(originalRoom);
             client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeGui();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
             table.acceptView(new TableView(original.tableId(), original.revision() + 13, original.decision(),

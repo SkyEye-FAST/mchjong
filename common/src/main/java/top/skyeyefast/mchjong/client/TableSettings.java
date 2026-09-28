@@ -33,7 +33,6 @@ public final class TableSettings {
     public GuideLines guideLines = GuideLines.HOVER;
     public boolean actionTiles = true;
     public boolean highlightTiles = true;
-    public boolean convenienceHints = false;
     public boolean autoSeat = true;
     public boolean animations = true;
     public boolean showRiver = true;
@@ -111,7 +110,6 @@ public final class TableSettings {
         settings.voicePreset = Identifier.parse(config.getOrElse("voicePreset", settings.voicePreset.toString()));
         settings.actionTiles = bool(config.getOrElse("actionTiles", settings.actionTiles));
         settings.highlightTiles = bool(config.getOrElse("highlightTiles", settings.highlightTiles));
-        settings.convenienceHints = bool(config.getOrElse("convenienceHints", settings.convenienceHints));
         settings.autoSeat = bool(config.getOrElse("autoSeat", settings.autoSeat));
         settings.animations = bool(config.getOrElse("animations", settings.animations));
         settings.showRiver = bool(config.getOrElse("showRiver", settings.showRiver));
@@ -135,7 +133,6 @@ public final class TableSettings {
         config.set("voicePreset", voicePreset.toString());
         config.set("actionTiles", actionTiles);
         config.set("highlightTiles", highlightTiles);
-        config.set("convenienceHints", convenienceHints);
         config.set("autoSeat", autoSeat);
         config.set("animations", animations);
         config.set("showRiver", showRiver);
@@ -176,7 +173,6 @@ public final class TableSettings {
         guideLines = defaults.guideLines;
         actionTiles = defaults.actionTiles;
         highlightTiles = defaults.highlightTiles;
-        convenienceHints = defaults.convenienceHints;
         autoSeat = defaults.autoSeat;
         animations = defaults.animations;
         showRiver = defaults.showRiver;
