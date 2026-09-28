@@ -15,6 +15,7 @@ public final class TableOptionsScreen extends Screen {
     private int page;
     private int pages = 1;
     private long revision = -1;
+    private top.skyeyefast.mchjong.world.WorldSettings.Policy policy;
     private record Entry(Component label, boolean enabled, Runnable action) {}
 
     public TableOptionsScreen(TableScreen parent) {
@@ -29,8 +30,10 @@ public final class TableOptionsScreen extends Screen {
         clearWidgets();
         var view = parent.view();
         var room = parent.room();
-        if (view == null || room == null) return;
+        var world = parent.worldPolicy();
+        if (view == null || room == null || world == null) return;
         revision = view.revision();
+        policy = world;
         int span = Math.min(440, width - 24), left = (width - span) / 2;
         String[] scopes = {"world", "room", "personal"};
         for (int i = 0; i < scopes.length; i++) {
@@ -43,26 +46,66 @@ public final class TableOptionsScreen extends Screen {
         boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
         boolean lobby = view.phase() == Game.Phase.LOBBY;
         if (tab == 0) {
-            entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", room.invitationTeleport()), canEditWorld(),
-                () -> setWorld("invitationTeleport", !room.invitationTeleport())));
+            boolean edit = canEditWorld();
+            entries.add(new Entry(toggle("settings.mchjong.invitations_enabled", world.invitationsEnabled()), edit,
+                () -> setWorld("invitationsEnabled", !world.invitationsEnabled())));
+            entries.add(new Entry(toggle("settings.mchjong.invitation_teleport", world.invitationTeleport()), edit,
+                () -> setWorld("invitationTeleport", !world.invitationTeleport())));
+            entries.add(new Entry(toggle("settings.mchjong.spectating_enabled", world.spectatingEnabled()), edit,
+                () -> setWorld("spectatingEnabled", !world.spectatingEnabled())));
+            entries.add(new Entry(Component.translatable("settings.mchjong.spectator_hand_visibility",
+                Component.translatable("settings.mchjong.spectator_hand_visibility."
+                    + world.spectatorHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), edit, () -> {
+                        var modes = top.skyeyefast.mchjong.engine.SpectatorHandVisibility.values();
+                        int direction = Screen.hasShiftDown() ? -1 : 1;
+                        var next = modes[Math.floorMod(world.spectatorHandVisibility().ordinal() + direction, modes.length)];
+                        setWorldValue("spectatorHandVisibility", next.name().toLowerCase(java.util.Locale.ROOT));
+                    }));
+            entries.add(new Entry(toggle("settings.mchjong.allow_convenience_hints", world.allowConvenienceHints()), edit,
+                () -> setWorld("allowConvenienceHints", !world.allowConvenienceHints())));
+            entries.add(new Entry(toggle("settings.mchjong.allow_experience_rewards", world.allowExperienceRewards()), edit,
+                () -> setWorld("allowExperienceRewards", !world.allowExperienceRewards())));
+            entries.add(new Entry(toggle("settings.mchjong.deduct_negative_experience", world.deductNegativeExperience()), edit,
+                () -> setWorld("deductNegativeExperience", !world.deductNegativeExperience())));
+            entries.add(new Entry(Component.translatable("settings.mchjong.max_experience_change", world.maxExperienceChange()), edit,
+                () -> setWorldValue("maxExperienceChange", Integer.toString(nextExperienceLimit(
+                    world.maxExperienceChange(), Screen.hasShiftDown() ? -1 : 1)))));
+            entries.add(new Entry(toggle("settings.mchjong.replays_enabled", world.replaysEnabled()), edit,
+                () -> setWorld("replaysEnabled", !world.replaysEnabled())));
+            entries.add(new Entry(toggle("settings.mchjong.allow_bots", world.allowBots()), edit,
+                () -> setWorld("allowBots", !world.allowBots())));
+            entries.add(new Entry(toggle("settings.mchjong.allow_companion_players", world.allowCompanionPlayers()), edit,
+                () -> setWorld("allowCompanionPlayers", !world.allowCompanionPlayers())));
+            entries.add(new Entry(toggle("settings.mchjong.allow_custom_rules", world.allowCustomRules()), edit,
+                () -> setWorld("allowCustomRules", !world.allowCustomRules())));
+            Component forced = world.forcedPreset() == null ? Component.translatable("settings.mchjong.none")
+                : Component.translatable(world.forcedPreset().translationKey());
+            entries.add(new Entry(Component.translatable("settings.mchjong.forced_preset", forced), edit, () -> {
+                var next = nextPreset(world.forcedPreset(), Screen.hasShiftDown() ? -1 : 1);
+                setWorldValue("forcedPreset", next == null ? "none" : next.name().toLowerCase(java.util.Locale.ROOT));
+            }));
         } else if (tab == 1) {
-            entries.add(new Entry(toggle("settings.mchjong.convenience_hints", room.convenienceHints()), host && lobby,
+            entries.add(new Entry(toggle("settings.mchjong.convenience_hints", room.convenienceHints()),
+                host && lobby && world.allowConvenienceHints(),
                 () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
                     view.decision(), !room.convenienceHints())));
             entries.add(new Entry(Component.translatable("settings.mchjong.hand_visibility",
-                Component.translatable("settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))),
+                Component.translatable("settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))),
                 host && lobby, () -> {
-                    var modes = top.skyeyefast.mchjong.engine.HandVisibility.values();
+                    var modes = top.skyeyefast.mchjong.engine.PlayerHandVisibility.values();
                     int direction = Screen.hasShiftDown() ? -1 : 1;
-                    parent.configureVisibility(modes[Math.floorMod(view.handVisibility().ordinal() + direction, modes.length)]);
+                    parent.configureVisibility(modes[Math.floorMod(view.playerHandVisibility().ordinal() + direction, modes.length)]);
                 }));
+            entries.add(new Entry(toggle("settings.mchjong.open_hands", view.openHands()), host && lobby,
+                () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.OPEN_HANDS,
+                    view.decision(), !view.openHands())));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
                 () -> minecraft.setScreen(new TableSeatsScreen(parent))));
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
                 () -> minecraft.setScreen(new TableRulesScreen(parent, view))));
             entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
                 () -> minecraft.setScreen(new TableClockScreen(parent, view.timeControl()))));
-            entries.add(new Entry(Component.translatable("ui.mchjong.invite"), view.viewerSeat() >= 0 && lobby,
+            entries.add(new Entry(Component.translatable("ui.mchjong.invite"), view.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
                 () -> minecraft.setScreen(new TableInviteScreen(parent))));
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
@@ -111,13 +154,34 @@ public final class TableOptionsScreen extends Screen {
     }
 
     private void setWorld(String setting, boolean enabled) {
-        if (canEditWorld()) minecraft.getConnection().sendCommand("mchjong world " + setting + " " + enabled);
+        setWorldValue(setting, Boolean.toString(enabled));
+    }
+
+    private void setWorldValue(String setting, String value) {
+        if (canEditWorld()) minecraft.getConnection().sendCommand("mchjong world " + setting + " " + value);
+    }
+
+    private static int nextExperienceLimit(int current, int direction) {
+        int[] values = {0, 500, 1_000, 2_500, 5_000, 10_000, 25_000, 50_000, 100_000};
+        if (direction > 0) {
+            for (int value : values) if (value > current) return value;
+            return values[0];
+        }
+        for (int index = values.length - 1; index >= 0; index--) if (values[index] < current) return values[index];
+        return values[values.length - 1];
+    }
+
+    private static top.skyeyefast.mchjong.engine.RuleSet nextPreset(top.skyeyefast.mchjong.engine.RuleSet current, int direction) {
+        var values = top.skyeyefast.mchjong.engine.RuleSet.values();
+        int slot = current == null ? 0 : current.ordinal() + 1;
+        slot = Math.floorMod(slot + direction, values.length + 1);
+        return slot == 0 ? null : values[slot - 1];
     }
 
     @Override public void tick() {
         var view = parent.view();
         if (view == null) { onClose(); return; }
-        if (revision != view.revision()) init();
+        if (revision != view.revision() || !java.util.Objects.equals(policy, parent.worldPolicy())) init();
     }
 
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {

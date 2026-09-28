@@ -40,8 +40,11 @@ final class InvitationSmoke {
         try {
             recipient.setPos(sender.getX() + 32, sender.getY(), sender.getZ());
             policy.set("invitationTeleport", true);
+            policy.setSpectatorHandVisibility(top.skyeyefast.mchjong.engine.SpectatorHandVisibility.ALL);
             policy.reload();
             check(policy.policy().invitationTeleport(), "Reload did not preserve the saved world policy");
+            check(policy.policy().spectatorHandVisibility() == top.skyeyefast.mchjong.engine.SpectatorHandVisibility.ALL,
+                "Reload did not preserve spectator hand visibility");
             TableInvitations.invite(sender, recipient);
             check(recipient.token != null, "Invitation did not contain a recipient-bound acceptance link");
             var before = recipient.position();
@@ -78,6 +81,7 @@ final class InvitationSmoke {
             }
             recipient.discard();
             policy.set("invitationTeleport", original.invitationTeleport());
+            policy.setSpectatorHandVisibility(original.spectatorHandVisibility());
         }
     }
 

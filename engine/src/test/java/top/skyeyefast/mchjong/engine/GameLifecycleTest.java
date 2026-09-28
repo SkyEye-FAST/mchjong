@@ -404,10 +404,11 @@ class GameLifecycleTest {
             fractional.finalUma.stream().mapToDouble(Double::doubleValue).toArray(), .00001);
     }
 
-    @Test void matchUmaRewardsRespectBothExperienceOptionsAndPayOnce() {
-        var rules = RuleSet.WRC.config().with(RuleOption.EXPERIENCE_REWARDS, 1);
+    @Test void matchUmaRewardsRespectWorldExperiencePolicyAndPayOnce() {
+        var rules = RuleSet.WRC.config();
         Game game = new Game(UUID.randomUUID(), rules.preset(), 1);
         game.rules = rules;
+        game.configureWorld(new WorldPolicy(true, true, true, 5_000, true, true, true, true, null));
         game.round = 7;
         int[] scores = {40000, 30000, 20000, 10000};
         UUID[] ids = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
@@ -422,18 +423,21 @@ class GameLifecycleTest {
         Game restored = JSON.fromJson(JSON.toJson(game), Game.class);
         restored.validate();
         assertEquals(game.pendingExperience(), restored.pendingExperience());
-        assertEquals(1500, restored.takeExperience(ids[0]));
+        restored.configureWorld(new WorldPolicy(true, true, false, 500, true, true, true, true, null));
+        assertEquals(500, restored.takeExperience(ids[0]));
+        assertEquals(0, restored.takeExperience(ids[3]));
         assertEquals(0, restored.takeExperience(ids[0]));
 
         Game noDeductions = new Game(UUID.randomUUID(), rules.preset(), 2);
-        noDeductions.rules = rules.with(RuleOption.DEDUCT_NEGATIVE_EXPERIENCE, 0);
+        noDeductions.rules = rules;
+        noDeductions.configureWorld(new WorldPolicy(true, true, false, 500, true, true, true, true, null));
         noDeductions.round = 7;
         for (int seat = 0; seat < 4; seat++) {
             noDeductions.players[seat].points = scores[seat];
             noDeductions.players[seat].id = ids[seat];
         }
         Settlement.exhaustive(noDeductions);
-        assertEquals(Map.of(ids[0], 1500, ids[1], 500), noDeductions.pendingExperience());
+        assertEquals(Map.of(ids[0], 500, ids[1], 500), noDeductions.pendingExperience());
     }
 
     private static Game finish(RuleConfig rules, int[] scores, int deposits) {

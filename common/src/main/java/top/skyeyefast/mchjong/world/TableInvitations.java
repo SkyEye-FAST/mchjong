@@ -42,7 +42,8 @@ public final class TableInvitations {
     public static int invite(ServerPlayer sender, ServerPlayer recipient) throws CommandSyntaxException {
         MahjongTableBlockEntity table = TableCommands.table(sender);
         Game game = table.participantGame(sender);
-        if (game.phase() != Game.Phase.LOBBY || recipient == sender || recipient.isSpectator()
+        if (!WorldSettings.of(sender.server).policy().invitationsEnabled()
+            || game.phase() != Game.Phase.LOBBY || recipient == sender || recipient.isSpectator()
             || game.seatOf(recipient.getUUID()) >= 0 || game.view(null).seats().stream().allMatch(seat -> seat.occupied()))
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var server = sender.server;
@@ -75,6 +76,8 @@ public final class TableInvitations {
     public static int respond(ServerPlayer recipient, UUID token, boolean accept) throws CommandSyntaxException {
         var server = recipient.server;
         var inbox = of(server);
+        if (!WorldSettings.of(server).policy().invitationsEnabled())
+            throw TableCommands.error("message.mchjong.invite_unavailable");
         Invitation invitation = inbox.pending.get(token);
         if (invitation == null || !invitation.validFor(recipient.getUUID(), server.overworld().getGameTime()))
             throw TableCommands.error("message.mchjong.invite_expired");

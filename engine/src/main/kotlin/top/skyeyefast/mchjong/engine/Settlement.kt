@@ -252,10 +252,9 @@ internal object Settlement {
                 }
                 game.finalUma[seat] = umaShare
                 val player = game.players[seat]
-                if (game.rules.experienceRewards() && player.id != null && !player.bot) {
-                    val experience = Math.round(kotlin.math.abs(umaShare) * 100).toInt() * (if (umaShare < 0) -1 else 1)
-                    if (experience > 0 || experience < 0 && game.rules.deductNegativeExperience())
-                        game.pendingExperience.merge(player.id, experience, Integer::sum)
+                if (player.id != null && !player.bot) {
+                    val experience = game.worldPolicy.experienceChange(umaShare)
+                    if (experience != 0) game.pendingExperience.merge(player.id, experience, Integer::sum)
                 }
             }
         }

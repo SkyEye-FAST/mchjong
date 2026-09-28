@@ -303,8 +303,9 @@ class RoomSeatingTest {
 
     @Test void rematchRequiresFreshSeatingAndRetainsPlayersHostAndWorldPolicy() {
         var game = room(false, 4);
-        game.configureWorld(true);
-        assertTrue(game.configureHandVisibility(id(0), game.decision, HandVisibility.ALL));
+        var policy = new WorldPolicy(true, false, true, 1_000, true, true, true, true, null);
+        game.configureWorld(policy);
+        assertTrue(game.configureHandVisibility(id(0), game.decision, PlayerHandVisibility.ALL));
         long token = game.decision;
         assertTrue(game.transferHost(id(0), id(2)));
         assertNotEquals(token, game.decision);
@@ -326,8 +327,8 @@ class RoomSeatingTest {
         assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
         assertEquals(roster, Arrays.stream(game.players).map(player -> player.id).toList());
         assertTrue(game.isHost(id(2)));
-        assertEquals(HandVisibility.ALL, game.handVisibility);
-        assertTrue(game.roomView().invitationTeleport());
+        assertEquals(PlayerHandVisibility.ALL, game.playerHandVisibility);
+        assertEquals(policy, game.worldPolicy);
         assertNull(game.wall);
         assertTrue(game.view(id(2)).actions().stream().noneMatch(action -> action.type() == Action.Type.READY));
         game.validate();

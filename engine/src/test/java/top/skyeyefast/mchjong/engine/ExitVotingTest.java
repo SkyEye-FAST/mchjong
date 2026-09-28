@@ -19,7 +19,7 @@ class ExitVotingTest {
             if (phase == Game.Phase.LOBBY || phase == Game.Phase.MATCH_END) continue;
             var game = new Game(UUID.randomUUID(), rules, 71);
             assertTrue(game.join(HOST, "Host", 0));
-            assertTrue(game.configureHandVisibility(HOST, game.decision, HandVisibility.OPEN));
+            assertTrue(game.configureOpenHands(HOST, game.decision, true));
             GameLifecycleTest.startPositioned(game);
             game.phase = phase;
             assertTrue(game.requestExit(HOST), phase.name());
@@ -29,7 +29,7 @@ class ExitVotingTest {
             assertNull(view.exitVote());
             assertTrue(view.wall().isEmpty());
             assertTrue(view.seats().stream().noneMatch(TableView.Seat::occupied));
-            assertEquals(HandVisibility.OPEN, view.handVisibility());
+            assertTrue(view.openHands());
             game.validate();
             assertTrue(game.join(HOST, "Host", 0));
             GameLifecycleTest.startPositioned(game);
@@ -132,6 +132,7 @@ class ExitVotingTest {
         assertFalse(game.configureClock(HOST, TimeControl.DEFAULT));
         assertTrue(game.configureClock(GUEST, TimeControl.DEFAULT));
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        game.validate();
         assertTrue(game.isHost(GUEST));
         int leave = GameLifecycleTest.index(game.view(GUEST), Action.Type.LEAVE_ROOM);
         assertTrue(game.act(GUEST, game.decision, leave));

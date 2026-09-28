@@ -66,37 +66,38 @@ class TableControlTest {
         lobby.validate();
     }
 
-    private static Game game(int humans, RuleSet rules, boolean open) {
+    private static Game game(int humans, RuleSet rules, boolean openHands) {
         Game game = new Game(UUID.randomUUID(), rules, 123);
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));
-        if (open) assertTrue(game.configureHandVisibility(id(0), game.decision, HandVisibility.OPEN));
+        if (openHands) assertTrue(game.configureOpenHands(id(0), game.decision, true));
         GameLifecycleTest.startPositioned(game);
         assertEquals(Game.Phase.TURN, game.phase());
         return game;
     }
 
     @Test void handVisibilityIsHostOnlyClearsReadinessAndPersistsPerRoom() {
-        assertArrayEquals(new HandVisibility[]{HandVisibility.SELF, HandVisibility.RIICHI,
-            HandVisibility.ALL, HandVisibility.OPEN}, HandVisibility.values());
+        assertArrayEquals(new PlayerHandVisibility[]{PlayerHandVisibility.SELF, PlayerHandVisibility.RIICHI,
+            PlayerHandVisibility.ALL}, PlayerHandVisibility.values());
         Game lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
         lobby.players[1].ready = true;
         long token = lobby.decision;
-        assertFalse(lobby.configureHandVisibility(id(1), token, HandVisibility.ALL));
-        assertFalse(lobby.configureHandVisibility(null, token, HandVisibility.ALL));
-        assertFalse(lobby.configureHandVisibility(id(0), token - 1, HandVisibility.ALL));
+        assertFalse(lobby.configureHandVisibility(id(1), token, PlayerHandVisibility.ALL));
+        assertFalse(lobby.configureHandVisibility(null, token, PlayerHandVisibility.ALL));
+        assertFalse(lobby.configureHandVisibility(id(0), token - 1, PlayerHandVisibility.ALL));
         assertTrue(lobby.players[1].ready);
-        assertTrue(lobby.configureHandVisibility(id(0), token, HandVisibility.ALL));
+        assertTrue(lobby.configureHandVisibility(id(0), token, PlayerHandVisibility.ALL));
         assertFalse(lobby.players[1].ready);
         assertNotEquals(token, lobby.decision);
-        lobby.configureWorld(true);
         assertTrue(lobby.configureRules(id(0), lobby.decision, RuleSet.WRC.config()));
-        assertEquals(HandVisibility.ALL, lobby.handVisibility);
-        assertTrue(lobby.roomView().invitationTeleport());
+        assertEquals(PlayerHandVisibility.ALL, lobby.playerHandVisibility);
+        assertTrue(lobby.configureOpenHands(id(0), lobby.decision, true));
         var saved = new Gson().fromJson(new Gson().toJson(lobby), Game.class);
         saved.validate();
-        assertEquals(HandVisibility.ALL, saved.handVisibility);
-        assertEquals(HandVisibility.SELF, new Game(UUID.randomUUID(), RuleSet.WRC, 2).handVisibility);
+        assertEquals(PlayerHandVisibility.ALL, saved.playerHandVisibility);
+        assertTrue(saved.openHands);
+        assertEquals(PlayerHandVisibility.SELF, new Game(UUID.randomUUID(), RuleSet.WRC, 2).playerHandVisibility);
+        assertFalse(new Game(UUID.randomUUID(), RuleSet.WRC, 2).openHands);
     }
 
     @Test void convenienceHintsAreControlledByTheLobbyHostAndPersistWithTheRoom() {
@@ -117,6 +118,21 @@ class TableControlTest {
         assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
     }
 
+    @Test void worldPolicyInvalidatesLobbyActionsWhenTheirAvailabilityChanges() {
+        var lobby = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        assertTrue(lobby.join(id(0), "Host", 0));
+        var before = lobby.view(id(0));
+        int fillBots = java.util.stream.IntStream.range(0, before.actions().size())
+            .filter(index -> before.actions().get(index).type() == Action.Type.FILL_BOTS).findFirst().orElseThrow();
+
+        lobby.configureWorld(new WorldPolicy(true, false, true, 5_000, true, false, true, true, null));
+
+        assertNotEquals(before.decision(), lobby.decision);
+        assertTrue(lobby.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.FILL_BOTS
+            || action.type() == Action.Type.SET_BOT));
+        assertFalse(lobby.act(id(0), before.decision(), fillBots));
+    }
+
     @Test void stockCompositionChangeClearsLobbyReadinessAndRespectsPreset() {
         var rules = RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.RED_FIVES, RedFives.NONE.ordinal());
         var lobby = new Game(UUID.randomUUID(), rules, 1);
@@ -134,26 +150,36 @@ class TableControlTest {
         assertEquals(RedFives.NONE, fixed.rules().redFives());
     }
 
-    @Test void visibilityRedactsBeforeSerializationAndRiichiBelongsToTheViewer() {
-        for (var mode : HandVisibility.values()) {
+    @Test void participantAndSpectatorVisibilityAreRedactedIndependentlyBeforeSerialization() {
+        for (var mode : PlayerHandVisibility.values()) {
             Game game = game(2, RuleSet.MAHJONG_SOUL_3, false);
             assertFalse(game.configureHandVisibility(id(0), game.decision, mode));
-            game.handVisibility = mode;
+            game.playerHandVisibility = mode;
             game.players[1].riichi = true;
-            for (int viewer : new int[]{-1, 0, 1}) {
-                var view = game.view(viewer < 0 ? null : id(viewer));
+            for (int viewer : new int[]{0, 1}) {
+                var view = game.view(id(viewer));
                 for (int seat = 0; seat < game.rules.players(); seat++) {
-                    boolean visible = seat == viewer || mode == HandVisibility.OPEN || mode == HandVisibility.ALL
-                        || mode == HandVisibility.RIICHI && viewer == 1;
+                    boolean visible = seat == viewer || mode == PlayerHandVisibility.ALL
+                        || mode == PlayerHandVisibility.RIICHI && viewer == 1;
                     var hand = view.seats().get(seat);
                     assertTrue(hand.hand().stream().allMatch(tile -> visible ? tile >= 0 : tile == Tile.HIDDEN));
                     if (game.players[seat].drawn >= 0) assertEquals(visible ? game.players[seat].drawn : Tile.HIDDEN, hand.drawn());
                 }
-                if (viewer < 0) assertTrue(view.actions().isEmpty());
+            }
+            for (var spectator : SpectatorHandVisibility.values()) {
+                var view = game.spectatorView(spectator);
+                boolean visible = spectator == SpectatorHandVisibility.ALL
+                    || spectator == SpectatorHandVisibility.FOLLOW_PLAYERS && mode == PlayerHandVisibility.ALL;
+                assertTrue(view.actions().isEmpty());
+                for (var hand : view.seats())
+                    assertTrue(hand.hand().stream().allMatch(tile -> visible ? tile >= 0 : tile == Tile.HIDDEN));
             }
             game.exposed[2] = true;
-            assertTrue(game.view(null).seats().get(2).hand().stream().allMatch(tile -> tile >= 0));
+            assertTrue(game.spectatorView(SpectatorHandVisibility.HIDDEN).seats().get(2).hand().stream().allMatch(tile -> tile >= 0));
         }
+        Game open = game(2, RuleSet.MAHJONG_SOUL_3, true);
+        assertTrue(open.spectatorView(SpectatorHandVisibility.HIDDEN).seats().stream()
+            .flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0));
     }
 
     @Test void reloadPreservesVoteAndExitDoesNotDiscardCompletedReplayQueue() {
@@ -164,7 +190,7 @@ class TableControlTest {
         game.requestExit(id(0));
         game = new Gson().fromJson(new Gson().toJson(game), Game.class);
         game.validate();
-        assertEquals(HandVisibility.OPEN, game.handVisibility);
+        assertTrue(game.openHands);
         assertTrue(game.answerExit(id(1), game.exitVote.id(), true));
         assertEquals(replays, game.pendingReplays());
         game.validate();
