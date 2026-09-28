@@ -237,7 +237,7 @@ public final class TableClientSmoke {
                         var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                         player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(MahjongContent.STOOL_ITEM));
                     });
-                    step = 40; entered = ticks;
+                    step = 41; entered = ticks;
                     return;
                 }
                 client.screen.onClose();
@@ -258,7 +258,7 @@ public final class TableClientSmoke {
                     } catch (Throwable failure) { serverFailure.set(failure); }
                 });
                 step = 17; entered = ticks;
-            } else if (step == 40 && ticks - entered > 15) {
+            } else if (step == 41 && ticks - entered > 15) {
                 capture(client, "00-stool-head.png");
                 Files.writeString(output.resolve("PASS.txt"), "Material palette, native inventory items, and table and stool head-slot rendering passed.\n");
                 LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
