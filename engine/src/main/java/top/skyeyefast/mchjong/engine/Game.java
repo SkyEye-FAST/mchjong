@@ -101,10 +101,10 @@ public final class Game {
     public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
     public boolean entityBot(UUID id) { int seat = seatOf(id); return seat >= 0 && players[seat].entityBot; }
 
-    /** Server integrations bind a physical companion to an empty place in its owner's room. */
+    /** The world adapter validates the nearby owner before a companion claims an empty lobby place. */
     public boolean joinEntityBot(UUID owner, UUID id, String name, int seat) {
-        if (id == null || name == null || seat < 0 || seat >= rules.players() || seatOf(id) >= 0
-            || seatOf(owner) < 0 || players[seatOf(owner)].bot || phase != Phase.LOBBY
+        if (owner == null || id == null || owner.equals(id) || name == null || seat < 0 || seat >= rules.players() || seatOf(id) >= 0
+            || hostId != null && seatOf(owner) < 0 || seatOf(owner) >= 0 && players[seatOf(owner)].bot || phase != Phase.LOBBY
             || exitVote != null || players[seat].id != null) return false;
         setBot(seat, BotDifficulty.EASY);
         var bot = players[seat];

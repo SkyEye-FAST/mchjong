@@ -110,6 +110,7 @@ final class MaidIntegrationSmoke {
                 maid.setTask(task);
                 maidId = maid.getUUID();
                 level.addFreshEntity(maid);
+                owner.stopRiding();
                 return true;
             }
             if (currentStep == 4) {
@@ -123,8 +124,15 @@ final class MaidIntegrationSmoke {
             require(maid != null, "Maid entity disappeared");
             if (currentStep == 1 || currentStep == 5) {
                 if (!(maid.getVehicle() instanceof SeatEntity seat)) return false;
-                require(game.entityBot(maidId) && game.seatOf(maidId) == seat.seat(), "Maid mount and game membership differ");
-                require(game.view(null).seats().get(seat.seat()).name()
+                if (currentStep == 1) {
+                    require(owner.getVehicle() == null && table.companionTableId(maidId) != null,
+                        "Maid did not join before her owner sat down");
+                    table.sit(owner, seat.seat() == 0 ? 1 : 0);
+                }
+                Game joined = table.participantGame(owner);
+                require(joined != null && joined.entityBot(maidId) && joined.seatOf(maidId) == seat.seat(),
+                    "Maid mount and game membership differ");
+                require(joined.view(null).seats().get(seat.seat()).name()
                     .equals("model.touhou_little_maid.hakurei_reimu.name"), "Maid model translation key was lost");
                 if (currentStep == 5) {
                     act(table, owner, Action.Type.FILL_BOTS);

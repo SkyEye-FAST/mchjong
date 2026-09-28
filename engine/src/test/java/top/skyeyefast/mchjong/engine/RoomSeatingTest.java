@@ -32,6 +32,7 @@ class RoomSeatingTest {
         var game = room(false, 1);
         UUID maid = id(8);
         String modelName = "model.touhou_little_maid.cirno.name";
+        assertFalse(game.joinEntityBot(null, maid, "Reimu", 1));
         assertFalse(game.joinEntityBot(id(9), maid, "Reimu", 1));
         assertFalse(game.joinEntityBot(id(0), id(0), "Reimu", 1));
         assertFalse(game.joinEntityBot(id(0), maid, "Reimu", 0));
@@ -64,6 +65,18 @@ class RoomSeatingTest {
         assertEquals(points, game.points(seat));
         assertFalse(game.players[seat].entityBot);
         game.validate();
+    }
+
+    @Test void aNearbyOwnersCompanionMayClaimAPlaceBeforeTheOwnerJoins() {
+        var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        UUID owner = id(0), maid = id(8);
+        assertTrue(game.joinEntityBot(owner, maid, "Reimu", 1));
+        assertEquals(1, game.seatOf(maid));
+        assertEquals(-1, game.roomView().host());
+        assertTrue(game.join(owner, "Owner", 0));
+        assertEquals(0, game.roomView().host());
+        game.leaveEntityBot(maid);
+        assertEquals(-1, game.seatOf(maid));
     }
 
     @Test void absentCompanionsReleaseLobbySeatsAndCanBeDismissedByTheHost() {
