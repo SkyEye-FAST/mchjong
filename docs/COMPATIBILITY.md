@@ -28,6 +28,12 @@ Optional APIs remain compile-only. MChjong packages its own adapters and shared
 engine; optional mods are installed separately. Current integration scope is
 listed in the [README compatibility tables](../README.md#compatibility).
 
+Fabric and Quilt use the optional Mod Menu 18.0.2 integration for the personal
+settings button in the mod list. `-PwithModMenu=true` adds Mod Menu to Fabric
+development runs. NeoForge provides the button through its native mod-list
+config-screen API. Both open the same local settings and preset
+pages, which save to `config/mchjong-client.toml`.
+
 ### Patchouli handbook
 
 The 26.1.2 Fabric and NeoForge profiles use Patchouli 26.1-94, supplied to

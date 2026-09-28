@@ -104,7 +104,7 @@ small viewports scale that canvas uniformly rather than reflowing it.
 
 ## Table rules
 
-The settings hub has World, Room and Personal tabs. Administrators edit world policy
+The table settings hub has World, Room and Personal tabs. Administrators edit world policy
 in the World tab through permission-checked server commands; other players see
 read-only values with a short administrator-only explanation. Room controls
 and ownership transfer are paginated separately from local presentation options.
@@ -292,7 +292,8 @@ sort, create or authorize inventory contents. The server retains carrier locks,
 invalid-item rejection and native click/shift/drag/swap conservation rules.
 Synchronize the carrier index with ordinary menu data, not a parallel payload.
 
-The Personal scope in room settings opens a second preset screen for a player's
+The Personal scope in room settings and the mod-list configuration entry open
+the same local settings and preset screens. The preset screen lets a player choose a
 riichi stick and voice. The stick tab shows the strip texture beside each name;
 the voice tab lists recording sets. Both selections are saved locally. Keep the
 lists paginated at small window sizes. All four preset selectors have Server

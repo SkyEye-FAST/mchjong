@@ -9,16 +9,16 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 
-/** A player's local cosmetic choices, opened from the room settings' Personal scope. */
+/** A player's local cosmetic choices. */
 public final class PersonalPresetsScreen extends Screen {
-    private final TableOptionsScreen parent;
+    private final Screen parent;
     private int tab;
     private int page;
     private boolean saveFailed;
     private PresetSource source = PresetSource.SERVER;
     private int presetRevision;
 
-    public PersonalPresetsScreen(TableOptionsScreen parent) {
+    public PersonalPresetsScreen(Screen parent) {
         super(Component.translatable("settings.mchjong.personal_presets"));
         this.parent = parent;
     }

@@ -20,6 +20,9 @@
     "client": [
       "top.skyeyefast.mchjong.MchjongClient"
     ],
+    "modmenu": [
+      "top.skyeyefast.mchjong.compat.modmenu.MchjongModMenu"
+    ],
     "jei_mod_plugin": [
       "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin"
     ],
@@ -35,6 +38,7 @@
     "mchjong.fabric.mixins.json"
   ],
   "suggests": {
+    "modmenu": "*",
     "patchouli": "*",
     "jei": ">=${jei_version}",
     "roughlyenoughitems": ">=${rei_version}",

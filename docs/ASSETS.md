@@ -191,7 +191,7 @@ height = 0.5
 
 Length must be 8–16, width 0.25–2 and height 0.125–1. Length must be at least
 five times both width and height, keeping the model a long bar. Select a stick
-in Settings > Personal > Personal presets. The choice is stored in the client's
+in MChjong's mod-list Config → Personal presets. The choice is stored in the client's
 TOML settings. Server presets chosen by a player are shown to everyone; a
 client-only choice appears as the default stick to other players. Unavailable
 artwork also uses the default stick.
