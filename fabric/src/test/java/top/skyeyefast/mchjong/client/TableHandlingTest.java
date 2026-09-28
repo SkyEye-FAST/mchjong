@@ -84,8 +84,11 @@ class TableHandlingTest {
             for (int packet = 0; packet < 4 * rules.players(); packet++) {
                 var view = game.view(player(game.view(null).turn()));
                 assertEquals(packet < 3 * rules.players() ? 4 : 1, view.handling().packetSize());
-                for (var piece : TableScene.build(view)) if (piece.area() == TableScene.Area.WALL)
-                    assertEquals(piece.index() == view.handling().sourceSlot(), TableHandling.source(view, piece));
+                var pieces = TableScene.build(view);
+                assertEquals(view.handling().packetSize(), pieces.stream().filter(piece -> TableHandling.source(view, piece)).count());
+                for (var piece : pieces) if (piece.area() == TableScene.Area.WALL)
+                    assertEquals(piece.index() >= view.handling().sourceSlot()
+                        && piece.index() < view.handling().sourceSlot() + view.handling().packetSize(), TableHandling.source(view, piece));
                 assertTrue(TableHandling.completes(view, Vec3.ZERO, TableHandling.destination(view)));
                 assertFalse(TableHandling.completes(view, Vec3.ZERO, Vec3.ZERO));
                 act(game, view.viewerSeat(), Action.Type.TAKE_PACKET);
@@ -93,6 +96,7 @@ class TableHandlingTest {
             var draw = game.view(player(dealer));
             assertEquals(Game.Phase.DRAW, draw.phase());
             assertNotNull(TableHandling.source(draw, TableScene.build(draw)));
+            assertEquals(1, TableScene.build(draw).stream().filter(piece -> TableHandling.source(draw, piece)).count());
             assertTrue(TableHandling.completes(draw, Vec3.ZERO, TableHandling.destination(draw)));
             act(game, dealer, Action.Type.DRAW);
             assertEquals(-1, TableHandling.action(game.view(player(dealer))));

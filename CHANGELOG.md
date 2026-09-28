@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Highlight every tile in a wall pickup packet and allow grabbing any tile in that packet.
 - Close MCR wall corners with a fine tile seam while retaining the four projecting ends.
 
 ### Added

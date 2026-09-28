@@ -297,8 +297,7 @@ public final class TableScreen extends Screen {
                 && button.action.tiles().contains(piece.tile())) return MahjongUi.POSITIVE;
         }
         if ((highlights || getFocused() instanceof PhysicalHandle) && TableHandling.action(view) >= 0) {
-            // A held packet may contain more tiles than the stack used to begin the gesture.
-            // Derive its outline from the same offset as the mesh, not the idle pickup hint.
+            // Keep the held outline attached to the displaced mesh throughout the gesture.
             if (handlingDrag != null)
                 return handlingOffset(table, piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
             if (!handlingMoving() && TableHandling.source(view, piece)
@@ -943,9 +942,7 @@ public final class TableScreen extends Screen {
         boolean held = switch (handlingDrag.actions().get(index).type()) {
             case SHUFFLE -> piece.area() == TableScene.Area.LOOSE && piece.position().distanceToSqr(handlingStart) < .2;
             case BUILD_WALL -> piece.area() == TableScene.Area.LOOSE && piece.seat() == handlingDrag.viewerSeat();
-            case TAKE_PACKET, DRAW -> piece.area() == TableScene.Area.WALL
-                && piece.index() >= handlingDrag.handling().sourceSlot()
-                && piece.index() < handlingDrag.handling().sourceSlot() + handlingDrag.handling().packetSize();
+            case TAKE_PACKET, DRAW -> TableHandling.source(handlingDrag, piece);
             case NEXT -> piece.area() != TableScene.Area.WALL && piece.seat() == handlingDrag.viewerSeat();
             default -> false;
         };

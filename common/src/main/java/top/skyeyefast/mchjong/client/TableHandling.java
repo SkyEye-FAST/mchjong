@@ -31,7 +31,8 @@ public final class TableHandling {
             case SHUFFLE -> piece.area() == TableScene.Area.LOOSE;
             case BUILD_WALL -> piece.area() == TableScene.Area.LOOSE && piece.seat() == view.viewerSeat();
             case TAKE_PACKET, DRAW -> piece.area() == TableScene.Area.WALL
-                && piece.index() == view.handling().sourceSlot() && piece.tile() < 0;
+                && piece.index() >= view.handling().sourceSlot()
+                && piece.index() < view.handling().sourceSlot() + view.handling().packetSize() && piece.tile() < 0;
             case NEXT -> piece.seat() == view.viewerSeat() && piece.area() != TableScene.Area.WALL;
             default -> false;
         };

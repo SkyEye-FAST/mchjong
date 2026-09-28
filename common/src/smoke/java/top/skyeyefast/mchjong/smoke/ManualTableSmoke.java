@@ -106,6 +106,8 @@ final class ManualTableSmoke {
                 .filter(frame -> draggingScreen.handlingOffset(CENTER, frame.piece()).lengthSqr() > 0).toList();
             check(!held.isEmpty() && held.stream().allMatch(frame -> draggingScreen.highlight(CENTER, frame.piece()) != 0),
                 "Held physical source lost its outline in " + view.phase() + ", decision=" + view.decision());
+            if (view.phase() == Game.Phase.DEAL || view.phase() == Game.Phase.DRAW)
+                check(held.size() == view.handling().packetSize(), "Held packet must include every source tile");
             draggingScreen.mouseReleased(dragEnd.x, dragEnd.y, 0);
             draggingScreen = null;
             return false;
@@ -418,6 +420,10 @@ final class ManualTableSmoke {
     private void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
         var screen = (TableScreen) client.screen;
         var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
+        if (view.phase() == Game.Phase.DEAL || view.phase() == Game.Phase.DRAW)
+            check(frames.stream().filter(frame -> frame.piece().area() == top.skyeyefast.mchjong.client.TableScene.Area.WALL
+                && screen.highlight(CENTER, frame.piece()) != 0).count() == view.handling().packetSize(),
+                "Pickup hint must highlight the complete packet");
         var camera = client.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
         for (var frame : frames) {
             var piece = frame.piece();
