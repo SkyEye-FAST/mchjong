@@ -83,7 +83,7 @@ internal class BotValue(private val view: TableView) {
         val bonus = bonus(state, winning)
         val key = ScoreKey(
             state.hand().map { BotAnalysis.face(it) }.sorted(),
-            state.melds().map { it.libraryNotation() }.sorted(),
+            state.melds().map { MahjongUtilsInterop.meldNotation(it) }.sorted(),
             bonus,
             BotAnalysis.face(winning),
             tsumo,

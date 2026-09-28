@@ -149,7 +149,7 @@ class TableAnimationTest {
         animation.accept(discarded, 0);
         var origin = tile(animation.sample(0), 13).piece().position();
         seats.set(0, seat(seats.getFirst().hand(), Tile.ABSENT, List.of(), List.of(new Discard(13, false, true, true)), false));
-        seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN), Tile.ABSENT, List.of(new Meld(Meld.Type.PON, List.of(13, 14, 15), 0, 13)), List.of(), false));
+        seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN), Tile.ABSENT, List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
         animation.accept(update(discarded, seats, 0), 100);
         assertEquals(origin, tile(animation.sample(100), 13).piece().position());
         assertEquals(TableScene.Area.MELD, tile(animation.sample(600), 13).piece().area());
@@ -173,7 +173,7 @@ class TableAnimationTest {
         var base = playing(RuleSet.MAHJONG_SOUL_4);
         var seats = new ArrayList<>(base.seats());
         seats.set(0, seat(List.of(0, 1, 2, 3, 4, 5, 6), Tile.ABSENT,
-            List.of(new Meld(Meld.Type.PON, List.of(40, 41, 42), 1, 40), new Meld(Meld.Type.ADDED_KAN, List.of(80, 81, 82, 83), 2, 80)), List.of(), false));
+            List.of(new Meld(Meld.Type.TRIPLET, List.of(40, 41, 42), 1, 40), new Meld(Meld.Type.ADDED_QUAD, List.of(80, 81, 82, 83), 2, 80)), List.of(), false));
         var pieces = TableScene.build(update(base, seats, 0)).stream().filter(piece -> piece.area() == TableScene.Area.MELD).toList();
         assertEquals(7, pieces.stream().map(TableScene.Piece::index).distinct().count());
         assertTrue(pieces.stream().allMatch(piece -> Math.abs(piece.position().y
@@ -206,7 +206,7 @@ class TableAnimationTest {
         seats.set(0, seat(seats.getFirst().hand(), Tile.ABSENT, List.of(),
             List.of(new Discard(13, false, true, true)), false));
         seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN), Tile.ABSENT,
-            List.of(new Meld(Meld.Type.PON, List.of(13, 14, 15), 0, 13)), List.of(), false));
+            List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
         animation.accept(update(discarded, seats, 0), 220);
         var called = tile(animation.sample(220), 13);
         assertEquals(moving.piece().position(), called.piece().position());

@@ -39,7 +39,7 @@ internal object LegalActions {
                 actions += Action(CLOSED_KAN, matching)
             }
         }
-        if (!player.riichi) for (meld in player.melds) if (meld.type() == Meld.Type.PON) {
+        if (!player.riichi) for (meld in player.melds) if (meld.type() == Meld.Type.TRIPLET) {
             for (tile in matching(player.hand, meld.kind())) actions += Action(ADDED_KAN, tile)
         }
         return actions.toList()
@@ -53,7 +53,7 @@ internal object LegalActions {
         val after = ArrayList(player.hand)
         after.removeAll(quad.toSet())
         val melds = ArrayList(player.melds)
-        melds += Meld(Meld.Type.CLOSED_KAN, quad, seat, Tile.ABSENT)
+        melds += Meld(Meld.Type.CONCEALED_QUAD, quad, seat, Tile.ABSENT)
         val waits = RiichiHandAnalyzer.waits(before, player.melds)
         if (waits != RiichiHandAnalyzer.waits(after, melds)) return false
         if (game.rules.riichiKanKeepsMelds() && !RiichiHandAnalyzer.riichiKanKeepsMelds(before, player.melds, kind)) return false

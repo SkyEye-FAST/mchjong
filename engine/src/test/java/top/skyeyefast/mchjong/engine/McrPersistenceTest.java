@@ -5,7 +5,7 @@ import com.google.gson.JsonParser;
 import java.util.function.Consumer;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 import static top.skyeyefast.mchjong.engine.McrGameTest.*;
 
 class McrPersistenceTest {
@@ -15,20 +15,20 @@ class McrPersistenceTest {
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
         long token = game.decision(), revision = game.revision();
-        play(game, 2, RON);
+        play(game, 2, WIN);
         assertEquals(token, game.decision());
         assertEquals(revision + 1, game.revision());
         var saved = game.save();
         var restored = roundTrip(game);
         assertEquals(token + 1, restored.decision());
         assertTrue(restored.actions(2).isEmpty());
-        assertFalse(restored.act(1, token, index(restored, 1, RON)));
+        assertFalse(restored.act(1, token, index(restored, 1, WIN)));
         assertEquals(game.revision() + 1, restored.revision());
         assertThrows(UnsupportedOperationException.class, () -> saved.players().get(0).hand().clear());
         assertFalse(McrCodec.save(game).contains("choices"));
         for (var match : new McrGame[]{game, restored}) {
-            play(match, 3, OPEN_KAN);
-            play(match, 1, RON);
+            play(match, 3, MELDED_KONG);
+            play(match, 1, WIN);
             assertEquals(1, ((McrSettlement.Win) match.result()).winner());
         }
         assertSamePosition(game, restored);
@@ -38,12 +38,12 @@ class McrPersistenceTest {
 
     @Test void pendingAddedKongCanResumeEitherPassingOrRobbingWithoutReapplyingActions() {
         var game = addedKongPosition();
-        play(game, 1, ADDED_KAN);
+        play(game, 1, MELDED_KONG);
         int remaining = game.remaining();
         var restored = roundTrip(game);
         var robbed = roundTrip(game);
-        rejected(McrCodec.save(game), object -> object.getAsJsonObject("pendingKong").addProperty("type", "CLOSED_KAN"));
-        assertEquals(Meld.Type.PON, restored.melds(1).get(0).type());
+        rejected(McrCodec.save(game), object -> object.getAsJsonObject("pendingKong").addProperty("type", "CONCEALED_KONG"));
+        assertEquals(Meld.Type.TRIPLET, restored.melds(1).get(0).type());
         assertEquals(McrWinContext.KongWin.ROBBED, restored.winningContext(2).kongWin());
         passAll(game);
         passAll(restored);
@@ -51,19 +51,19 @@ class McrPersistenceTest {
         assertEquals(remaining - 1, restored.remaining());
         assertEquals(McrWinContext.KongWin.REPLACEMENT, restored.winningContext(1).kongWin());
         roundTrip(restored);
-        play(robbed, 2, RON);
+        play(robbed, 2, WIN);
         passAll(robbed);
         assertEquals(remaining, robbed.remaining());
-        assertEquals(Meld.Type.PON, robbed.melds(1).get(0).type());
+        assertEquals(Meld.Type.TRIPLET, robbed.melds(1).get(0).type());
         roundTrip(robbed);
     }
 
     @Test void wrongWinSurvivesWithoutRepaymentAndNextHandClearsOnlyTheRestriction() {
         var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
-        play(game, 0, TSUMO);
+        play(game, 0, WIN);
         var restored = roundTrip(game);
         assertTrue(restored.winForbidden(0));
-        assertFalse(has(restored, 0, TSUMO));
+        assertFalse(has(restored, 0, WIN));
         assertEquals(-30, restored.points(0));
         assertEquals(game.penalties(), restored.penalties());
         rejected(McrCodec.save(game), object -> player(object, 0).addProperty("winForbidden", false));
@@ -90,13 +90,13 @@ class McrPersistenceTest {
         restored = roundTrip(restored);
         assertEquals(2, restored.winningContext(1).flowerCount());
         assertEquals(McrWinContext.KongWin.NONE, restored.winningContext(1).kongWin());
-        play(restored, 1, TSUMO);
+        play(restored, 1, WIN);
         roundTrip(restored);
     }
 
     @Test void completedSelfDrawRestoresWithoutRepayingAndRetainsTheNextWallSeed() {
         var game = new McrGame(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
-        play(game, 0, TSUMO);
+        play(game, 0, WIN);
         var restored = roundTrip(game);
         String json = McrCodec.save(game);
         rejected(json, object -> object.getAsJsonObject("result").getAsJsonObject("win")
@@ -111,9 +111,9 @@ class McrPersistenceTest {
         var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m").build());
         discardKind(game, 0, "5m");
-        play(game, 2, RON);
+        play(game, 2, WIN);
         String json = McrCodec.save(game);
-        rejected(json, object -> object.addProperty("format", 2));
+        rejected(json, object -> object.addProperty("format", 1));
         rejected(json, object -> object.remove("seed"));
         rejected(json, object -> object.addProperty("seed", "4"));
         rejected(json, object -> object.addProperty("decision", Long.MAX_VALUE));
@@ -130,7 +130,7 @@ class McrPersistenceTest {
             .getAsJsonObject("action").addProperty("type", "NEXT"));
         rejected(json, object -> object.getAsJsonArray("replies").add(object.getAsJsonArray("replies").get(0).deepCopy()));
         for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"),
-            json.replace("\"format\":1", "\"format\":1,\"format\":1"),
+            json.replace("\"format\":2", "\"format\":2,\"format\":2"),
             "{\"nested\":" + "[".repeat(1000) + "0" + "]".repeat(1000) + "}", " ".repeat(65_537)})
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(invalid));
         assertEquals(json, McrCodec.save(game));

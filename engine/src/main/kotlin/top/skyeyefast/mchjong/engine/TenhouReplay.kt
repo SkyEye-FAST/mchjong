@@ -96,20 +96,20 @@ object TenhouReplay {
                     val who = externalSeat(match, event.seat)
                     val from = externalSeat(match, meld.fromSeat())
                     when (meld.type()) {
-                        Meld.Type.CHI, Meld.Type.PON -> draws.add(call(meld.type(), who, from, meld.tiles(), meld.calledTile()))
-                        Meld.Type.OPEN_KAN -> {
+                        Meld.Type.SEQUENCE, Meld.Type.TRIPLET -> draws.add(call(meld.type(), who, from, meld.tiles(), meld.calledTile()))
+                        Meld.Type.OPEN_QUAD -> {
                             draws.add(call(meld.type(), who, from, meld.tiles(), meld.calledTile()))
                             discards.add(0)
                         }
-                        Meld.Type.CLOSED_KAN -> {
+                        Meld.Type.CONCEALED_QUAD -> {
                             val tiles = faces(meld.tiles()).sorted()
                             discards.add("${tiles[0]}${tiles[1]}${tiles[2]}a${tiles[3]}")
                         }
-                        Meld.Type.ADDED_KAN -> {
+                        Meld.Type.ADDED_QUAD -> {
                             val pon = meld.tiles().toMutableList()
                             require(pon.remove(event.tile)) { "Missing added kan tile" }
                             discards.add(
-                                call(Meld.Type.PON, who, from, pon, meld.calledTile())
+                                call(Meld.Type.TRIPLET, who, from, pon, meld.calledTile())
                                     .replace("p", "k${tile(event.tile)}"),
                             )
                         }
@@ -140,15 +140,15 @@ object TenhouReplay {
         owned.sortWith(Tile.ORDER)
         val tokens = owned.map { tile(it).toString() }.toMutableList()
         val direction = Math.floorMod(who - from - 1, 4)
-        require(type == Meld.Type.CHI || direction <= 2) { "A meld cannot call from itself" }
+        require(type == Meld.Type.SEQUENCE || direction <= 2) { "A meld cannot call from itself" }
         val index = when {
-            type == Meld.Type.CHI -> 0
-            type == Meld.Type.OPEN_KAN && direction == 2 -> 3
+            type == Meld.Type.SEQUENCE -> 0
+            type == Meld.Type.OPEN_QUAD && direction == 2 -> 3
             else -> direction
         }
         val marker = when (type) {
-            Meld.Type.CHI -> "c"
-            Meld.Type.PON -> "p"
+            Meld.Type.SEQUENCE -> "c"
+            Meld.Type.TRIPLET -> "p"
             else -> "m"
         }
         tokens.add(index, marker + tile(called))

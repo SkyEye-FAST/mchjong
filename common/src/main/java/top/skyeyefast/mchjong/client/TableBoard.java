@@ -187,7 +187,7 @@ final class TableBoard {
         int maximum = center.height() <= 40 && !vertical ? 12 : 14;
         int width = Math.min(maximum, outerTileWidth(player, seat, length, maximum));
         var rails = meldRails(player, seat, width, length);
-        boolean addedKan = player.melds().stream().anyMatch(meld -> meld.type() == Meld.Type.ADDED_KAN);
+        boolean addedKan = player.melds().stream().anyMatch(meld -> meld.type() == Meld.Type.ADDED_QUAD);
         int railDepth = tileHeight(width) + (addedKan ? width : 0);
         int thickness = railDepth * rails.size();
         int cx = side == 3 ? bounds.x() + thickness / 2 : side == 1 ? bounds.right() - thickness / 2

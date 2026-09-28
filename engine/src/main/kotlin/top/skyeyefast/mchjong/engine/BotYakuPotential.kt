@@ -80,14 +80,14 @@ internal class BotYakuPotential(private val rules: RuleConfig, private val yakuh
                 stockHigh = stockHigh or ((counts[kind] + live[kind]).toLong() shl shift)
             }
         }
-        val key = Key(heldLow, heldHigh, stockLow, stockHigh, state.melds().map { it.libraryNotation() }.sorted())
+        val key = Key(heldLow, heldHigh, stockLow, stockHigh, state.melds().map { MahjongUtilsInterop.meldNotation(it) }.sorted())
         return cache.getOrPut(key) { assess(counts, state.melds(), live) }
     }
 
     private fun assess(counts: IntArray, melds: List<Meld>, live: IntArray): Assessment {
         val closed = melds.all { it.closed() }
         val fixed = melds.map { meld ->
-            if (meld.type() == Meld.Type.CHI) meld.tiles().map(Tile::kind).sorted().toIntArray()
+            if (meld.type() == Meld.Type.SEQUENCE) meld.tiles().map(Tile::kind).sorted().toIntArray()
             else IntArray(3) { meld.kind() }
         }
         val all = counts.clone()

@@ -76,7 +76,7 @@ class TrainingBotTest {
         assertTrue(routes.han() < routes.routes().stream().mapToDouble(BotYakuPotential.Route::value).sum(),
             "Competing structures must not accumulate their possible han");
         var declared = new BotAnalysis.State(TestHands.tiles("223344p6678s"),
-            List.of(TestHands.meld(Meld.Type.CLOSED_KAN, "1111m")), List.of(), 0, false, false, 1);
+            List.of(TestHands.meld(Meld.Type.CONCEALED_QUAD, "1111m")), List.of(), 0, false, false, 1);
         assertTrue(potential.assess(declared, analysis.unseen).routes().stream()
             .noneMatch(r -> r.name().equals("pinfu") || r.name().equals("chiitoitsu") || r.name().equals("kokushi")));
         assertEquals(1.0, potential.assess(declared, analysis.unseen).routes().stream()
@@ -138,11 +138,11 @@ class TrainingBotTest {
         game.players[0].hand.remove(Integer.valueOf(discard));
         game.players[0].river.add(new Discard(discard, false, false, false));
         assertEquals(before, new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD).unseen[BotAnalysis.face(discard)]);
-        var pon = TestHands.meld(Meld.Type.PON, "777z");
+        var pon = TestHands.meld(Meld.Type.TRIPLET, "777z");
         game.players[2].melds.add(pon);
         game.lastTile = pon.calledTile(); game.lastFrom = 1; game.phase = Game.Phase.REACTION;
         game.players[1].river.add(new Discard(game.lastTile, false, false, true));
-        game.players[2].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "1111z"));
+        game.players[2].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "1111z"));
         game.players[0].norths.add(Tile.id(Tile.NORTH, 0, false));
         var known = VisibleTiles.counts(game.view(game.players[0].id));
         assertEquals(3, known[Tile.RED], "Called river tile and focus alias the meld tile");
@@ -153,7 +153,7 @@ class TrainingBotTest {
     @Test void bonusesCannotMakeYakulessOrBelowMinimumWaitsLegal() {
         var game = hand("123m456p789s23m55z");
         // A structurally complete open hand with only dora has no winning value.
-        var meld = TestHands.meld(Meld.Type.CHI, "123m");
+        var meld = TestHands.meld(Meld.Type.SEQUENCE, "123m");
         var state = new BotAnalysis.State(TestHands.tiles("456p789s23m55z"), List.of(meld), List.of(), 0, false, false, 1);
         var value = new BotValue(game.view(game.players[0].id));
         value.dora[Tile.WHITE] = 3;
@@ -259,7 +259,7 @@ class TrainingBotTest {
         for (var difficulty : BotDifficulty.values()) assertEquals(Action.Type.PASS, choice(noYaku, difficulty).type());
         // Already tenpai: calling can replace dead pair waits with live tsumo improvement.
         var ready = hand("234m456p2255s");
-        ready.players[0].melds.add(TestHands.meld(Meld.Type.PON, "555z"));
+        ready.players[0].melds.add(TestHands.meld(Meld.Type.TRIPLET, "555z"));
         ready.phase = Game.Phase.REACTION; ready.lastFrom = 1;
         ready.lastTile = Tile.id(22, 3, false);
         for (int tile : List.of(Tile.id(19, 2, false), Tile.id(19, 3, false), Tile.id(22, 0, true), ready.lastTile))
@@ -303,7 +303,7 @@ class TrainingBotTest {
 
     @Test void usefulKansRetainTheirReplacementBenefit() {
         var open = hand("123m78s22555z");
-        open.players[0].melds.add(TestHands.meld(Meld.Type.PON, "666z"));
+        open.players[0].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666z"));
         offerWhiteCalls(open);
         for (var level : BotDifficulty.values())
             assertEquals(Action.Type.OPEN_KAN, choice(open, level).type(), "A ready open hand can benefit from a kan");
@@ -332,8 +332,8 @@ class TrainingBotTest {
 
     @Test void pushFoldUsesPublicThreatStrengthAndTheResultingHand() {
         var uncertain = hand("123568m2458p147s1z");
-        uncertain.players[1].melds.add(TestHands.meld(Meld.Type.PON, "555z"));
-        uncertain.players[2].melds.add(TestHands.meld(Meld.Type.PON, "666z"));
+        uncertain.players[1].melds.add(TestHands.meld(Meld.Type.TRIPLET, "555z"));
+        uncertain.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666z"));
         for (int seat = 1; seat <= 2; seat++)
             uncertain.players[seat].river.add(new Discard(Tile.id(0, seat + 1, false), false, false, false));
         var shapes = RiichiHandAnalyzer.discardEfficiency(uncertain.players[0].hand, List.of(), false);
@@ -359,8 +359,8 @@ class TrainingBotTest {
         ready.wall = new Wall(ready.rules, 24, 0);
         ready.players[1].riichi = true;
         ready.players[1].norths.addAll(List.of(Tile.id(Tile.NORTH, 0, false), Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 2, false)));
-        ready.players[2].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "1111z"));
-        ready.players[2].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "2222z"));
+        ready.players[2].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "1111z"));
+        ready.players[2].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "2222z"));
         ready.wall.revealed = 3;
         for (int i = 0; i < 3; i++) ready.wall.tiles.set(ready.wall.dora.get(i), Tile.id(Tile.WEST, i, false));
         ready.players[1].river.add(new Discard(Tile.id(17, 3, false), true, false, false));

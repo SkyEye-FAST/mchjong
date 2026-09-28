@@ -16,8 +16,8 @@ public final class McrGame {
     private final PlayerState[] players = {new PlayerState(), new PlayerState(), new PlayerState(), new PlayerState()};
     private final boolean[] winForbidden = new boolean[4];
     private final List<McrSettlement.Penalty> penalties = new ArrayList<>();
-    private final Action[] replies = new Action[4];
-    private List<List<Action>> choices;
+    private final McrAction[] replies = new McrAction[4];
+    private List<List<McrAction>> choices;
     private McrWall wall;
     private Phase phase;
     private long decision;
@@ -26,7 +26,7 @@ public final class McrGame {
     private int turn;
     private int claimTile = Tile.ABSENT;
     private int claimFrom = -1;
-    private Action pendingKong;
+    private McrAction pendingKong;
     private boolean drawWallLast;
     private McrWinContext.KongWin drawKong = McrWinContext.KongWin.NONE;
     private McrSettlement.Result result;
@@ -128,7 +128,7 @@ public final class McrGame {
     boolean responded(int seat) { checkSeat(seat); return replies[seat] != null; }
 
     /** Engine inspection is private, not a recipient-filtered network snapshot. */
-    public List<Action> actions(int seat) {
+    public List<McrAction> actions(int seat) {
         checkSeat(seat);
         return replies[seat] == null ? choices.get(seat) : List.of();
     }
@@ -137,7 +137,7 @@ public final class McrGame {
     public boolean act(int seat, long expectedDecision, int actionIndex) {
         if (seat < 0 || seat >= 4 || expectedDecision != decision || replies[seat] != null
             || actionIndex < 0 || actionIndex >= choices.get(seat).size()) return false;
-        Action action = choices.get(seat).get(actionIndex);
+        McrAction action = choices.get(seat).get(actionIndex);
         if (phase == Phase.REACTION) {
             replies[seat] = action;
             if (responsesComplete()) resolveReactions();
@@ -145,9 +145,9 @@ public final class McrGame {
             switch (action.type()) {
                 case DRAW -> draw(false);
                 case DISCARD -> discard(action.tiles().get(0));
-                case TSUMO -> declareSelfDraw();
-                case CLOSED_KAN -> concealedKong(action);
-                case ADDED_KAN -> {
+                case WIN -> declareSelfDraw();
+                case CONCEALED_KONG -> concealedKong(action);
+                case MELDED_KONG -> {
                     pendingKong = action;
                     claimTile = action.tiles().get(0);
                     claimFrom = seat;
@@ -252,7 +252,7 @@ public final class McrGame {
         // among qualifying declarations only the nearest seat after the supplier wins.
         for (int distance = 1; distance < 4; distance++) {
             int seat = (claimFrom + distance) % 4;
-            if (replies[seat] == null || replies[seat].type() != Action.Type.RON) continue;
+            if (replies[seat] == null || replies[seat].type() != McrAction.Type.WIN) continue;
             var score = Objects.requireNonNull(score(seat));
             if (!score.meetsMinimum()) wrongWin(seat, claimTile);
             else if (win == null) win = McrSettlement.win(seat, claimFrom, claimTile, winningContext(seat), score);
@@ -280,8 +280,8 @@ public final class McrGame {
         for (int distance = 1; distance < 4; distance++) {
             int seat = (claimFrom + distance) % 4;
             int candidate = replies[seat] == null ? 0 : switch (replies[seat].type()) {
-                case PON, OPEN_KAN -> 2;
-                case CHI -> 1;
+                case PUNG, MELDED_KONG -> 2;
+                case CHOW -> 1;
                 default -> 0;
             };
             if (candidate > priority) { selected = seat; priority = candidate; }
@@ -292,16 +292,16 @@ public final class McrGame {
         else changePhase(Phase.DRAW);
     }
 
-    private void claim(int seat, Action action) {
+    private void claim(int seat, McrAction action) {
         var player = players[seat];
         var tiles = new ArrayList<>(action.tiles());
         player.hand.removeAll(tiles);
         tiles.add(claimTile);
         tiles.sort(Tile.ORDER);
         Meld.Type type = switch (action.type()) {
-            case CHI -> Meld.Type.CHI;
-            case PON -> Meld.Type.PON;
-            case OPEN_KAN -> Meld.Type.OPEN_KAN;
+            case CHOW -> Meld.Type.SEQUENCE;
+            case PUNG -> Meld.Type.TRIPLET;
+            case MELDED_KONG -> Meld.Type.OPEN_QUAD;
             default -> throw new IllegalStateException("Not a meld claim");
         };
         player.melds.add(new Meld(type, tiles, claimFrom, claimTile));
@@ -311,14 +311,14 @@ public final class McrGame {
         turn = seat;
         drawWallLast = false;
         drawKong = McrWinContext.KongWin.NONE;
-        if (type == Meld.Type.OPEN_KAN) draw(true);
+        if (type == Meld.Type.OPEN_QUAD) draw(true);
         else changePhase(Phase.TURN);
     }
 
-    private void concealedKong(Action action) {
+    private void concealedKong(McrAction action) {
         var player = players[turn];
         player.hand.removeAll(action.tiles());
-        player.melds.add(new Meld(Meld.Type.CLOSED_KAN, action.tiles(), turn, Tile.ABSENT));
+        player.melds.add(new Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), turn, Tile.ABSENT));
         draw(true);
     }
 
@@ -327,12 +327,12 @@ public final class McrGame {
         int kind = Tile.kind(claimTile);
         for (int i = 0; i < player.melds.size(); i++) {
             var pung = player.melds.get(i);
-            if (pung.type() != Meld.Type.PON || pung.kind() != kind) continue;
+            if (pung.type() != Meld.Type.TRIPLET || pung.kind() != kind) continue;
             var tiles = new ArrayList<>(pung.tiles());
             tiles.add(claimTile);
             tiles.sort(Tile.ORDER);
             player.hand.remove(Integer.valueOf(claimTile));
-            player.melds.set(i, new Meld(Meld.Type.ADDED_KAN, tiles, pung.fromSeat(), pung.calledTile()));
+            player.melds.set(i, new Meld(Meld.Type.ADDED_QUAD, tiles, pung.fromSeat(), pung.calledTile()));
             pendingKong = null;
             draw(true);
             return;
@@ -375,7 +375,7 @@ public final class McrGame {
     }
 
     private void rebuildChoices() {
-        var actions = new ArrayList<List<Action>>(4);
+        var actions = new ArrayList<List<McrAction>>(4);
         for (int seat = 0; seat < 4; seat++) actions.add(McrLegalActions.forSeat(this, seat));
         choices = List.copyOf(actions);
     }
@@ -442,10 +442,10 @@ public final class McrGame {
             throw new IllegalStateException("Invalid next draw position");
         if (drawKong == McrWinContext.KongWin.ROBBED || drawWallLast && wall.remaining() != 0)
             throw new IllegalStateException("Invalid MCR draw origin");
-        if (pendingKong != null && (phase != Phase.REACTION || pendingKong.type() != Action.Type.ADDED_KAN
+        if (pendingKong != null && (phase != Phase.REACTION || pendingKong.type() != McrAction.Type.MELDED_KONG
             || !pendingKong.tiles().equals(List.of(claimTile)) || wall.remaining() == 0
             || players[claimFrom].drawn < 0 || !players[claimFrom].hand.contains(claimTile)
-            || players[claimFrom].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.PON && meld.kind() == Tile.kind(claimTile))))
+            || players[claimFrom].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.TRIPLET && meld.kind() == Tile.kind(claimTile))))
             throw new IllegalStateException("Invalid pending MCR kong");
         if (phase == Phase.REACTION && pendingKong == null) {
             var river = players[claimFrom].river;
@@ -456,8 +456,8 @@ public final class McrGame {
             throw new IllegalStateException("Last-wall context disagrees with the wall");
         if (phase == Phase.TURN && drawKong == McrWinContext.KongWin.REPLACEMENT
             && (players[turn].drawn < 0 || players[turn].melds.isEmpty()
-                || !players[turn].melds.get(players[turn].melds.size() - 1).kan()
-                    && players[turn].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.ADDED_KAN)))
+                || !players[turn].melds.get(players[turn].melds.size() - 1).quad()
+                    && players[turn].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.ADDED_QUAD)))
             throw new IllegalStateException("Kong replacement has no completed kong");
         if (result instanceof McrSettlement.Draw && wall.remaining() != 0)
             throw new IllegalStateException("Exhaustive draw still has wall tiles");
@@ -532,7 +532,7 @@ public final class McrGame {
             if (!self) {
                 var supplier = players[win.fromSeat()];
                 if (win.context().kongWin() == McrWinContext.KongWin.ROBBED) {
-                    if (supplier.melds.stream().noneMatch(meld -> meld.type() == Meld.Type.PON && meld.kind() == Tile.kind(win.tile())))
+                    if (supplier.melds.stream().noneMatch(meld -> meld.type() == Meld.Type.TRIPLET && meld.kind() == Tile.kind(win.tile())))
                         throw new IllegalArgumentException("Robbed kong has no original pung");
                 } else if (supplier.river.isEmpty() || supplier.river.get(supplier.river.size() - 1).tile() != win.tile()
                     || !supplier.river.get(supplier.river.size() - 1).called()) {

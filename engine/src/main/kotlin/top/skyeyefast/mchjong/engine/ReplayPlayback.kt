@@ -75,9 +75,9 @@ object ReplayPlayback {
                 ReplayHand.Kind.MELD -> {
                     if (!event.committed) continue
                     val meld = event.meld!!
-                    if (meld.type() == Meld.Type.ADDED_KAN) {
+                    if (meld.type() == Meld.Type.ADDED_QUAD) {
                         seat.remove(event.tile)
-                        val pon = seat.melds.indexOfLast { it.type() == Meld.Type.PON && it.kind() == meld.kind() }
+                        val pon = seat.melds.indexOfLast { it.type() == Meld.Type.TRIPLET && it.kind() == meld.kind() }
                         require(pon >= 0) { "Added kan has no pon" }
                         seat.melds[pon] = meld
                     } else {

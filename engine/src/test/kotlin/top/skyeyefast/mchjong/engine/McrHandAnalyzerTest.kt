@@ -36,25 +36,25 @@ class McrHandAnalyzerTest {
         val chow = TestHands.tiles("345p")
         for ((index, position) in listOf(ChowPosition.LOW, ChowPosition.MIDDLE, ChowPosition.HIGH).withIndex()) {
             assertEquals(LibraryMeld.Chow(LibraryTile.P4, position),
-                McrHandAnalyzer.libraryMeld(Meld(Meld.Type.CHI, chow.reversed(), 0, chow[index]), 1))
+                McrHandAnalyzer.libraryMeld(Meld(Meld.Type.SEQUENCE, chow.reversed(), 0, chow[index]), 1))
         }
         val pung = TestHands.tiles("555s")
         for ((supplier, relative) in listOf(0 to RelativePlayer.LEFT, 3 to RelativePlayer.OPPOSITE, 2 to RelativePlayer.RIGHT)) {
             assertEquals(LibraryMeld.Pung(LibraryTile.S5, relative),
-                McrHandAnalyzer.libraryMeld(Meld(Meld.Type.PON, pung, supplier, pung[0]), 1))
+                McrHandAnalyzer.libraryMeld(Meld(Meld.Type.TRIPLET, pung, supplier, pung[0]), 1))
         }
         val kong = TestHands.tiles("5555s")
         assertEquals(LibraryMeld.Kong(LibraryTile.S5, RelativePlayer.RIGHT, false),
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.OPEN_KAN, kong, 2, kong[0]), 1))
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.OPEN_QUAD, kong, 2, kong[0]), 1))
         assertEquals(LibraryMeld.Kong(LibraryTile.S5, null, false),
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.CLOSED_KAN, kong, 1, Tile.ABSENT), 1))
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.CONCEALED_QUAD, kong, 1, Tile.ABSENT), 1))
         assertEquals(LibraryMeld.Kong(LibraryTile.S5, RelativePlayer.LEFT, true),
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.ADDED_KAN, kong, 0, kong[0]), 1))
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.ADDED_QUAD, kong, 0, kong[0]), 1))
         assertThrows(IllegalArgumentException::class.java) {
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.CHI, chow, 0, Tile.id(0, 0, false)), 1)
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.SEQUENCE, chow, 0, Tile.id(0, 0, false)), 1)
         }
         assertThrows(IllegalArgumentException::class.java) {
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.OPEN_KAN, pung, 0, pung[0]), 1)
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.OPEN_QUAD, pung, 0, pung[0]), 1)
         }
     }
 
@@ -116,8 +116,8 @@ class McrHandAnalyzerTest {
     @Test fun preservesAwardedMixedKongSubtotals() {
         val concealed = TestHands.tiles("1111m")
         val exposed = TestHands.tiles("2222s")
-        val melds = listOf(Meld(Meld.Type.CLOSED_KAN, concealed, 0, Tile.ABSENT),
-            Meld(Meld.Type.OPEN_KAN, exposed, 3, exposed[0]))
+        val melds = listOf(Meld(Meld.Type.CONCEALED_QUAD, concealed, 0, Tile.ABSENT),
+            Meld(Meld.Type.OPEN_QUAD, exposed, 3, exposed[0]))
         val hand = TestHands.tiles("345p11z67s")
         assertEquals(0, McrHandAnalyzer.shanten(hand, melds, 0))
         assertEquals(setOf(Tile.parseKind("5s"), Tile.parseKind("8s")), McrHandAnalyzer.waits(hand, melds, 0))
@@ -144,7 +144,7 @@ class McrHandAnalyzerTest {
             McrHandAnalyzer.score(hand, emptyList(), 0, FlowerTile.SPRING.id(), context())
         }
         assertThrows(IllegalArgumentException::class.java) {
-            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.CHI, listOf(FlowerTile.SPRING.id(),
+            McrHandAnalyzer.libraryMeld(Meld(Meld.Type.SEQUENCE, listOf(FlowerTile.SPRING.id(),
                 FlowerTile.SUMMER.id(), FlowerTile.AUTUMN.id()), 3, FlowerTile.SPRING.id()), 0)
         }
         assertThrows(IllegalArgumentException::class.java) {

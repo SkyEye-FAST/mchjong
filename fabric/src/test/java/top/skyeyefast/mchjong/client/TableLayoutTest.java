@@ -72,11 +72,11 @@ class TableLayoutTest {
             for (int source = 1; source <= 3; source++) {
                 var melds = new ArrayList<Meld>();
                 for (int i = 0; i < count; i++) {
-                    var tiles = type == Meld.Type.CHI ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
-                        : type == Meld.Type.PON ? List.of(i * 4, i * 4 + 1, i * 4 + 2)
+                    var tiles = type == Meld.Type.SEQUENCE ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
+                        : type == Meld.Type.TRIPLET ? List.of(i * 4, i * 4 + 1, i * 4 + 2)
                         : List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
-                    melds.add(new Meld(type, tiles, type == Meld.Type.CLOSED_KAN ? 0 : source,
-                        type == Meld.Type.CLOSED_KAN ? Tile.ABSENT : tiles.getFirst()));
+                    melds.add(new Meld(type, tiles, type == Meld.Type.CONCEALED_QUAD ? 0 : source,
+                        type == Meld.Type.CONCEALED_QUAD ? Tile.ABSENT : tiles.getFirst()));
                 }
                 int size = 14 - count * 3;
                 var hand = java.util.stream.IntStream.range(100, 100 + size).boxed().toList();
@@ -85,7 +85,7 @@ class TableLayoutTest {
                 var calls = pieces.stream().filter(p -> p.seat() == 0 && p.area() == TableScene.Area.MELD).toList();
                 for (var part : calls) {
                     double bottom = TableScene.HAND_Z + TileMesh.HEIGHT * TableScene.TILE_SCALE / 2;
-                    if (type == Meld.Type.ADDED_KAN && part.index() % 4 == 3)
+                    if (type == Meld.Type.ADDED_QUAD && part.index() % 4 == 3)
                         bottom -= TileMesh.WIDTH * TableScene.TILE_SCALE;
                     assertEquals(bottom, bounds(part).maxZ, 1e-5, "Align the bottom edges; added tiles go in front");
                     assertEquals(top.skyeyefast.mchjong.world.TableGeometry.FELT_Y
@@ -102,10 +102,10 @@ class TableLayoutTest {
     @Test void existingMeldsStayAtTheCornerAsAdditionalGroupsAreDeclared() {
         var view = start(RuleSet.TENHOU_4);
         var melds = List.of(
-            new Meld(Meld.Type.PON, List.of(0, 1, 2), 1, 0),
-            new Meld(Meld.Type.ADDED_KAN, List.of(4, 5, 6, 7), 2, 4),
-            new Meld(Meld.Type.CLOSED_KAN, List.of(8, 9, 10, 11), 0, Tile.ABSENT),
-            new Meld(Meld.Type.OPEN_KAN, List.of(12, 13, 14, 15), 3, 12));
+            new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), 1, 0),
+            new Meld(Meld.Type.ADDED_QUAD, List.of(4, 5, 6, 7), 2, 4),
+            new Meld(Meld.Type.CONCEALED_QUAD, List.of(8, 9, 10, 11), 0, Tile.ABSENT),
+            new Meld(Meld.Type.OPEN_QUAD, List.of(12, 13, 14, 15), 3, 12));
         List<TableScene.Piece> previous = List.of();
         for (int count = 1; count <= 4; count++) {
             var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
@@ -126,7 +126,7 @@ class TableLayoutTest {
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
                 var melds = new ArrayList<Meld>();
-                for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_KAN,
+                for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_QUAD,
                     List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
                 var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
                 seats.add(new TableView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
@@ -187,7 +187,7 @@ class TableLayoutTest {
 
     @Test void meldTilesTouchAndAddedKanLiesInFrontOfItsCalledTile() {
         for (int source = 1; source <= 3; source++) {
-            var layout = MeldLayout.of(new Meld(Meld.Type.ADDED_KAN, List.of(0, 1, 2, 3), source, 0), 0);
+            var layout = MeldLayout.of(new Meld(Meld.Type.ADDED_QUAD, List.of(0, 1, 2, 3), source, 0), 0);
             for (int i = 1; i < 3; i++) {
                 var before = layout.parts().get(i - 1);
                 var after = layout.parts().get(i);

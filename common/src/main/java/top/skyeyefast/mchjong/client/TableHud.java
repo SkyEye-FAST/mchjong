@@ -6,6 +6,7 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
+import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Game;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
@@ -146,7 +147,7 @@ final class TableHud {
             if (settings.show(TableSettings.Information.COUNTS)) hover = hover.copy().append("\n")
                 .append(Component.translatable("ui.mchjong.counts", player.hand().size(), player.river().size(), player.norths().size()));
             if (settings.show(TableSettings.Information.MELDS)) for (var meld : player.melds()) hover = hover.copy().append("\n")
-                .append(Component.translatable("action.mchjong." + meld.type().name().toLowerCase(java.util.Locale.ROOT)));
+                .append(Component.translatable(new Action(Action.Type.fromMeld(meld.type())).translationKey()));
             int x = 8 + seat * (cardWidth + 4);
             boolean meldSummary = seated && settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty();
             int summaryWidth = meldSummary ? summaryTileWidth(player.melds(), seat, cardWidth - 10) : 0;

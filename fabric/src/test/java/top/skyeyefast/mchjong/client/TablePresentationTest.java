@@ -36,7 +36,7 @@ class TablePresentationTest {
 
     @Test void seatedMeldSummaryPreservesTextAndFallsBackAtNarrowWidths() {
         var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
-            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN,
+            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
         assertEquals(0, TableHud.summaryTileWidth(melds, 0, 63));
         int size = TableHud.summaryTileWidth(melds, 0, 143);
@@ -46,7 +46,7 @@ class TablePresentationTest {
         assertEquals(24, TableHud.seatedCardHeight(false, 0));
         assertEquals(36, TableHud.seatedCardHeight(true, 0));
         assertEquals(40, TableHud.seatedCardHeight(true, size));
-        var added = new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.ADDED_KAN,
+        var added = new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.ADDED_QUAD,
             List.of(4, 5, 6, 7), 1, 4);
         for (var part : MeldLayout.of(added, 0).parts()) {
             double depth = part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT;
@@ -252,7 +252,7 @@ class TablePresentationTest {
             }
         }
         var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
-            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN,
+            new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
         var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);

@@ -35,7 +35,11 @@ public final class TableAudioEvents {
             for (int i = 0; i < next.melds().size(); i++) {
                 var meld = next.melds().get(i);
                 if (i >= old.melds().size() || !meld.equals(old.melds().get(i))) {
-                    String type = meld.kan() ? "kan" : meld.type().name().toLowerCase(java.util.Locale.ROOT);
+                    String type = switch (meld.type()) {
+                        case SEQUENCE -> "chi";
+                        case TRIPLET -> "pon";
+                        case OPEN_QUAD, CONCEALED_QUAD, ADDED_QUAD -> "kan";
+                    };
                     cues.add(voice(type, seat));
                 }
             }

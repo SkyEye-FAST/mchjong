@@ -107,7 +107,7 @@ final class CameraSmoke {
             int count = seat == 1 ? 4 : seat == 2 ? 2 : 0;
             var melds = java.util.stream.IntStream.range(0, count).mapToObj(i -> {
                 int tile = owner == 1 ? 14 + 4 * i : 30 + 3 * i;
-                var type = owner == 1 ? top.skyeyefast.mchjong.engine.Meld.Type.OPEN_KAN : top.skyeyefast.mchjong.engine.Meld.Type.PON;
+                var type = owner == 1 ? top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD : top.skyeyefast.mchjong.engine.Meld.Type.TRIPLET;
                 return new top.skyeyefast.mchjong.engine.Meld(type,
                     java.util.stream.IntStream.range(tile, tile + (owner == 1 ? 4 : 3)).boxed().toList(), 0, tile);
             }).toList();

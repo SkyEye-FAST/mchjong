@@ -92,9 +92,9 @@ class BotScenarioTest {
 
     @Test void fourFixedMeldsOnlyPermitSingleTilePairWaits() {
         var game = TrainingBotTest.hand("123456789m1123z4z");
-        game.players[1].melds.addAll(List.of(TestHands.meld(Meld.Type.CHI, "123p"),
-            TestHands.meld(Meld.Type.CHI, "456p"), TestHands.meld(Meld.Type.CHI, "123s"),
-            TestHands.meld(Meld.Type.CHI, "456s")));
+        game.players[1].melds.addAll(List.of(TestHands.meld(Meld.Type.SEQUENCE, "123p"),
+            TestHands.meld(Meld.Type.SEQUENCE, "456p"), TestHands.meld(Meld.Type.SEQUENCE, "123s"),
+            TestHands.meld(Meld.Type.SEQUENCE, "456s")));
         game.players[1].hand.add(Tile.id(15, 0, false));
         for (int copy = 1; copy < 4; copy++)
             game.players[2].river.add(new Discard(Tile.id(0, copy, false), false, false, false));
@@ -110,9 +110,9 @@ class BotScenarioTest {
 
     @Test void fourExposedTripletsGuaranteeToitoiValue() {
         var game = TrainingBotTest.hand("123456789m1123z4z");
-        game.players[1].melds.addAll(List.of(TestHands.meld(Meld.Type.PON, "111p"),
-            TestHands.meld(Meld.Type.PON, "222p"), TestHands.meld(Meld.Type.PON, "333s"),
-            TestHands.meld(Meld.Type.PON, "444s")));
+        game.players[1].melds.addAll(List.of(TestHands.meld(Meld.Type.TRIPLET, "111p"),
+            TestHands.meld(Meld.Type.TRIPLET, "222p"), TestHands.meld(Meld.Type.TRIPLET, "333s"),
+            TestHands.meld(Meld.Type.TRIPLET, "444s")));
         game.players[1].hand.add(Tile.id(15, 0, false));
         game.wall.tiles.set(game.wall.dora.get(0), Tile.id(Tile.WEST, 3, false));
         var defence = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD).defence;

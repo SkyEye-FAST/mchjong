@@ -112,7 +112,7 @@ final class ReplayWallPanel extends AbstractWidget {
         for (int i = 0; i < end; i++) {
             var event = hand.events().get(i);
             if (!event.committed()) continue;
-            if (event.kind() == ReplayHand.Kind.NUKI || event.kind() == ReplayHand.Kind.MELD && event.meld() != null && event.meld().kan()) count++;
+            if (event.kind() == ReplayHand.Kind.NUKI || event.kind() == ReplayHand.Kind.MELD && event.meld() != null && event.meld().quad()) count++;
         }
         return count;
     }

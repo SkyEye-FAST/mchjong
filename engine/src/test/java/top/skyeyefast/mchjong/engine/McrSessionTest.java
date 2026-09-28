@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 
 class McrSessionTest {
     private static final UUID TABLE = new UUID(10, 1);
@@ -82,7 +82,7 @@ class McrSessionTest {
         McrGameTest.discardKind(game, 0, "5m");
         var session = session(game);
         var before = session.view(id(1));
-        play(session, 2, RON);
+        play(session, 2, WIN);
         assertTrue(session.view(id(2)).game().responded());
         assertEquals(before.game().decision(), session.view(id(1)).game().decision());
         assertEquals(before.revision() + 1, session.view(id(1)).revision());
@@ -99,13 +99,13 @@ class McrSessionTest {
         assertNotEquals(session.incarnation(), first.incarnation());
         assertEquals(first.view(id(1)).game().decision(), second.view(id(1)).game().decision());
         var request = first.view(id(1));
-        int choice = index(request, RON);
+        int choice = index(request, WIN);
         assertFalse(second.act(id(1), TABLE, request.incarnation(), request.game().decision(), choice));
         assertTrue(second.view(id(2)).game().responded());
         assertTrue(second.view(id(2)).game().actions().isEmpty());
         assertEquals(before.game().actions(), second.view(id(1)).game().actions());
-        play(second, 3, OPEN_KAN);
-        play(second, 1, RON);
+        play(second, 3, MELDED_KONG);
+        play(second, 1, WIN);
         assertEquals(1, ((McrSettlement.Win) second.view(id(1)).game().result()).winner());
         assertTrue(second.view(id(1)).canConfirmNextHand());
         var otherMatch = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
@@ -114,11 +114,11 @@ class McrSessionTest {
 
     @Test void wrongWinAndHandAcknowledgementsPersistWithoutPayingOrAdvancingTwice() {
         var session = session(new McrGame(5, new McrGameTest.Fixture().hand(0, "12345m567p789s11z6m").build()));
-        play(session, 0, TSUMO);
+        play(session, 0, WIN);
         var after = session.view(id(0));
         assertEquals(-30, after.game().seats().get(0).points());
         assertTrue(after.game().seats().get(0).winForbidden());
-        assertTrue(after.game().actions().stream().noneMatch(action -> action.type() == TSUMO));
+        assertTrue(after.game().actions().stream().noneMatch(action -> action.type() == WIN));
         session = McrCodec.restoreSession(McrCodec.saveSession(session));
         session.synchronizeSeats(MOUNTS);
         for (int steps = 0; steps < 600 && session.view(null).game().phase() != McrGame.Phase.HAND_END; steps++) {
@@ -181,20 +181,20 @@ class McrSessionTest {
     }
 
     private static McrSession session(McrGame game) {
-        var session = McrSession.restore(new McrSession.State(1, TABLE, 1, ROSTER, 0, game.save()));
+        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, TABLE, 1, ROSTER, 0, game.save()));
         session.synchronizeSeats(MOUNTS);
         return session;
     }
 
     private static UUID id(int seat) { return ROSTER.get(seat).id(); }
 
-    private static int index(McrSession.View view, Action.Type type) {
+    private static int index(McrSession.View view, McrAction.Type type) {
         var actions = view.game().actions();
         for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == type) return i;
         throw new AssertionError("Missing " + type + " in " + actions);
     }
 
-    private static void play(McrSession session, int seat, Action.Type type) {
+    private static void play(McrSession session, int seat, McrAction.Type type) {
         var view = session.view(id(seat));
         assertTrue(session.act(id(seat), view.tableId(), view.incarnation(), view.game().decision(), index(view, type)));
     }

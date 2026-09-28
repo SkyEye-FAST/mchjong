@@ -282,10 +282,10 @@ internal class TrainingBot private constructor(
             ADDED_KAN -> {
                 for (i in melds.indices) {
                     val old = melds[i]
-                    if (old.type() == Meld.Type.PON && old.kind() == Tile.kind(action.tiles().first())) {
+                    if (old.type() == Meld.Type.TRIPLET && old.kind() == Tile.kind(action.tiles().first())) {
                         val tiles = old.tiles().toMutableList()
                         tiles.addAll(action.tiles())
-                        melds[i] = Meld(Meld.Type.ADDED_KAN, tiles, old.fromSeat(), old.calledTile())
+                        melds[i] = Meld(Meld.Type.ADDED_QUAD, tiles, old.fromSeat(), old.calledTile())
                         break
                     }
                 }
@@ -296,7 +296,7 @@ internal class TrainingBot private constructor(
                 if (!closed) tiles += view.focus().tile()
                 tiles.sortWith(Tile.ORDER)
                 melds += Meld(
-                    Meld.Type.valueOf(action.type().name),
+                    action.type().meldType(),
                     tiles,
                     if (closed) view.viewerSeat() else view.focus().seat(),
                     if (closed) Tile.ABSENT else view.focus().tile(),

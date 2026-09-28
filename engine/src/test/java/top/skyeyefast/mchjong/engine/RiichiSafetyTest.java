@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RiichiSafetyTest {
     private static ReplayHand.Event event(ReplayHand.Kind kind, int seat, int tile) {
         return new ReplayHand.Event(kind, seat, tile,
-            kind == ReplayHand.Kind.MELD ? TestHands.meld(Meld.Type.CLOSED_KAN, "5555m") : null, false, false, true);
+            kind == ReplayHand.Kind.MELD ? TestHands.meld(Meld.Type.CONCEALED_QUAD, "5555m") : null, false, false, true);
     }
 
     @Test void onlyCompletedDiscardsAfterEachAcceptedRiichiAreSafe() {

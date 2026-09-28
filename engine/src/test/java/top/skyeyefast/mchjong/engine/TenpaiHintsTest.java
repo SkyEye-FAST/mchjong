@@ -13,7 +13,7 @@ class TenpaiHintsTest {
         var hints = new TenpaiHints();
         int six = Tile.id(23, 0, false);
         game.players[1].river.add(new Discard(six, false, false, true));
-        game.players[2].melds.add(TestHands.meld(Meld.Type.PON, "666s"));
+        game.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666s"));
         game.players[1].hand.add(Tile.id(23, 3, false));
         game.playerHandVisibility = PlayerHandVisibility.ALL;
         var view = game.view(OWNER);
@@ -42,7 +42,7 @@ class TenpaiHintsTest {
         assertEquals(List.of(new TenpaiHints.Wait(Tile.RED, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
         game.players[0].hand.clear();
         game.players[0].hand.addAll(TestHands.tiles("123456p1113s"));
-        game.players[0].melds.add(TestHands.meld(Meld.Type.CLOSED_KAN, "2222s"));
+        game.players[0].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "2222s"));
         assertEquals(List.of(new TenpaiHints.Wait(20, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
     }
 

@@ -35,7 +35,7 @@ object RiichiHandAnalyzer {
     }
 
     private fun tiles(ids: List<Int>) = ids.map { LibraryTile[Tile.notation(Tile.kind(it))] }
-    private fun furo(melds: List<Meld>) = melds.map { Furo(it.libraryNotation()) }
+    private fun furo(melds: List<Meld>) = melds.map { Furo(MahjongUtilsInterop.meldNotation(it)) }
     private fun kind(tile: LibraryTile) = Tile.parseKind(tile.toString())
 
     // Shanten concerns only the concealed remainder. Passing declared quads to

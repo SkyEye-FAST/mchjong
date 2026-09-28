@@ -55,8 +55,8 @@ object McrHandAnalyzer {
         require(owner in 0..3) { "MCR seats must be in 0..3" }
         val ids = meld.tiles()
         val quad = when (meld.type()) {
-            Meld.Type.CHI, Meld.Type.PON -> false
-            Meld.Type.OPEN_KAN, Meld.Type.CLOSED_KAN, Meld.Type.ADDED_KAN -> true
+            Meld.Type.SEQUENCE, Meld.Type.TRIPLET -> false
+            Meld.Type.OPEN_QUAD, Meld.Type.CONCEALED_QUAD, Meld.Type.ADDED_QUAD -> true
         }
         require(ids.size == if (quad) 4 else 3) { "Incorrect physical meld size" }
         unique(ids)
@@ -67,7 +67,7 @@ object McrHandAnalyzer {
             require(meld.calledTile() in ids) { "The called physical tile must belong to the meld" }
         }
         val from = if (meld.closed()) null else relative(meld.fromSeat(), owner)
-        if (meld.type() == Meld.Type.CHI) {
+        if (meld.type() == Meld.Type.SEQUENCE) {
             require(from == RelativePlayer.LEFT) { "A chow must come from the seat on the left" }
             require(kinds[0] < 27 && kinds[0] / 9 == kinds[2] / 9
                 && kinds[1] == kinds[0] + 1 && kinds[2] == kinds[0] + 2) { "Invalid chow tiles" }
@@ -82,11 +82,11 @@ object McrHandAnalyzer {
         require(kinds.all { it == kinds[0] }) { "A pung or kong needs identical kinds" }
         val tile = byKind.getValue(kinds[0])
         return when (meld.type()) {
-            Meld.Type.PON -> LibraryMeld.Pung(tile, requireNotNull(from))
-            Meld.Type.OPEN_KAN -> LibraryMeld.Kong(tile, requireNotNull(from), false)
-            Meld.Type.CLOSED_KAN -> LibraryMeld.Kong(tile, null, false)
-            Meld.Type.ADDED_KAN -> LibraryMeld.Kong(tile, requireNotNull(from), true)
-            Meld.Type.CHI -> error("Chow already converted")
+            Meld.Type.TRIPLET -> LibraryMeld.Pung(tile, requireNotNull(from))
+            Meld.Type.OPEN_QUAD -> LibraryMeld.Kong(tile, requireNotNull(from), false)
+            Meld.Type.CONCEALED_QUAD -> LibraryMeld.Kong(tile, null, false)
+            Meld.Type.ADDED_QUAD -> LibraryMeld.Kong(tile, requireNotNull(from), true)
+            Meld.Type.SEQUENCE -> error("Chow already converted")
         }
     }
 

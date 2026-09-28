@@ -117,7 +117,7 @@ class TableAudioEventsTest {
             "yaku.round_wind_east", "yaku.chanta", "yaku.honitsu"), rows.stream().map(ScoreAnnouncements.Row::voice).toList());
         assertEquals(List.of(1, 1, 1, 1, 1, 2, 3), rows.stream().map(ScoreAnnouncements.Row::han).toList());
         var seats = seats();
-        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.PON, List.of(124, 125, 126), 0, 124)), List.of()));
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(124, 125, 126), 0, 124)), List.of()));
         var openWin = new TableView.Win(1, 0, 4, new HandScore(6, 40, 0, 12000, 0, 0,
             List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku"), 0));
         var open = ScoreAnnouncements.rows(receipt(1, 1, List.of(openWin), seats, List.of()), openWin);
@@ -209,9 +209,9 @@ class TableAudioEventsTest {
 
     @Test void addedKanDoesNotRepeatPonAndNukiHasItsOwnVoice() {
         var seats = seats();
-        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.PON, List.of(40, 41, 42), 0, 40)), List.of()));
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(40, 41, 42), 0, 40)), List.of()));
         var before = view(1, 1, Game.Phase.TURN, seats, "playing");
-        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.ADDED_KAN, List.of(40, 41, 42, 43), 0, 40)), List.of()));
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.ADDED_QUAD, List.of(40, 41, 42, 43), 0, 40)), List.of()));
         seats.set(2, seat(List.of(), List.of(), List.of(120)));
         assertEquals(List.of("kan", "nuki"), sounds(before, view(2, 1, Game.Phase.TURN, seats, "playing")));
         var cues = TableAudioEvents.between(before, view(2, 1, Game.Phase.TURN, seats, "playing"));

@@ -151,7 +151,7 @@ final class TenpaiHintsSmoke {
         client.getLanguageManager().setSelected(SAMPLES[sample].language()); reload = client.reloadResourcePacks(); ticks = 0;
     }
 
-    private static Meld.Type seatType(int seat) { return seat >= 2 ? Meld.Type.CLOSED_KAN : Meld.Type.OPEN_KAN; }
+    private static Meld.Type seatType(int seat) { return seat >= 2 ? Meld.Type.CONCEALED_QUAD : Meld.Type.OPEN_QUAD; }
 
     private static AbstractWidget hintButton(Minecraft client) {
         String title = Component.translatable("hints.mchjong.button").getString();

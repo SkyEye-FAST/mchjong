@@ -40,7 +40,7 @@ class ScoringBridgeTest {
         assertTrue(base.kiriageMangan());
         assertFalse(base.kazoeYakuman());
         var open = TestHands.tiles("456m345p55s678s");
-        var meld = TestHands.meld(Meld.Type.CHI, "234m");
+        var meld = TestHands.meld(Meld.Type.SEQUENCE, "234m");
         assertNotNull(RiichiHandAnalyzer.score(open.subList(0,10), List.of(meld), open.getLast(), false, 1, 0, 0, List.of(), rules));
         assertNull(RiichiHandAnalyzer.score(open.subList(0,10), List.of(meld), open.getLast(), false, 1, 0, 0, List.of(), rules.with(RuleOption.KUITAN, 0)));
         var honors = TestHands.tiles("11122233344455z");
@@ -71,13 +71,13 @@ class ScoringBridgeTest {
     }
 
     @Test void bonusesAloneDoNotSatisfyTheOneYakuMinimum() {
-        var meld = TestHands.meld(Meld.Type.CHI, "123m");
+        var meld = TestHands.meld(Meld.Type.SEQUENCE, "123m");
         var hand = TestHands.tiles("456p789s22z456m");
         assertNull(RiichiHandAnalyzer.score(hand.subList(0,10), List.of(meld), hand.getLast(), false, 2, 0, 8, List.of(), RuleSet.TENHOU_4.config()));
     }
 
     @Test void competitivePresetsUseTwoFuForTheDoubleWindPair() {
-        var melds = List.of(TestHands.meld(Meld.Type.PON, "555z"), TestHands.meld(Meld.Type.PON, "555p"));
+        var melds = List.of(TestHands.meld(Meld.Type.TRIPLET, "555z"), TestHands.meld(Meld.Type.TRIPLET, "555p"));
         var hand = TestHands.tiles("123m46s11z5s");
         var tenhou = RiichiHandAnalyzer.score(hand.subList(0,7), melds, hand.getLast(), false, 0, 0, 0, List.of(), RuleSet.TENHOU_4.config());
         assertNotNull(tenhou); assertEquals(40, tenhou.fu());
@@ -147,7 +147,7 @@ class ScoringBridgeTest {
         var hand = TestHands.tiles("111222333m444p5z");
         assertFalse(RiichiHandAnalyzer.riichiKanKeepsMelds(hand, List.of(), 0));
         assertTrue(RiichiHandAnalyzer.riichiKanKeepsMelds(hand, List.of(), 12));
-        var quad = new Meld(Meld.Type.CLOSED_KAN, TestHands.tiles("2222s"), 0, Tile.ABSENT);
+        var quad = new Meld(Meld.Type.CONCEALED_QUAD, TestHands.tiles("2222s"), 0, Tile.ABSENT);
         assertFalse(RiichiHandAnalyzer.riichiKanKeepsMelds(TestHands.tiles("123456p1113s"), List.of(quad), 18),
             "WRC's fifth-copy example still has a pair and middle-wait interpretation");
     }

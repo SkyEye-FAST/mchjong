@@ -7,7 +7,7 @@ import java.util.List;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
 import static org.junit.jupiter.api.Assertions.*;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 
 class McrGameTest {
     @Test void initialPacketsFinishBeforeOrderedFlowerReplacement() {
@@ -50,7 +50,7 @@ class McrGameTest {
         assertEquals(Tile.SOUTH, context.seatWind());
         assertEquals(Tile.EAST, context.roundWind());
         assertFalse(context.wallLast());
-        assertTrue(has(game, 1, TSUMO));
+        assertTrue(has(game, 1, WIN));
         game.validate();
     }
 
@@ -58,39 +58,39 @@ class McrGameTest {
         var game = new McrGame(3, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "46m123789p123s11z").hand(2, "55m234678s234p22z").build());
         discardKind(game, 0, "5m");
-        assertTrue(has(game, 1, CHI));
-        assertFalse(has(game, 2, CHI));
-        play(game, 1, CHI);
+        assertTrue(has(game, 1, CHOW));
+        assertFalse(has(game, 2, CHOW));
+        play(game, 1, CHOW);
         assertEquals(McrGame.Phase.REACTION, game.phase());
-        play(game, 2, PON);
+        play(game, 2, PUNG);
         passAll(game);
         assertEquals(2, game.turn());
-        assertEquals(Meld.Type.PON, game.melds(2).get(0).type());
+        assertEquals(Meld.Type.TRIPLET, game.melds(2).get(0).type());
         assertTrue(game.melds(1).isEmpty());
         assertTrue(game.river(0).getLast().called());
         assertEquals(Tile.ABSENT, game.drawn(2));
-        assertFalse(has(game, 2, TSUMO));
-        assertFalse(has(game, 2, CLOSED_KAN));
+        assertFalse(has(game, 2, WIN));
+        assertFalse(has(game, 2, CONCEALED_KONG));
         game.validate();
     }
 
-    @Test void nearestQualifyingRonWinsOnceAheadOfKongRegardlessOfReplyOrder() {
+    @Test void nearestQualifyingClaimWinsOnceAheadOfKongRegardlessOfReplyOrder() {
         var game = new McrGame(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
-        assertTrue(has(game, 1, RON));
-        assertTrue(has(game, 2, RON));
-        assertFalse(has(game, 2, CHI));
+        assertTrue(has(game, 1, WIN));
+        assertTrue(has(game, 2, WIN));
+        assertFalse(has(game, 2, CHOW));
         long token = game.decision();
-        int choice = index(game, 2, RON);
+        int choice = index(game, 2, WIN);
         assertFalse(game.act(2, token - 1, choice));
         assertFalse(game.act(2, token, 999));
         assertTrue(game.act(2, token, choice));
         assertFalse(game.act(2, token, choice), "A response is accepted only once");
-        play(game, 3, OPEN_KAN);
+        play(game, 3, MELDED_KONG);
         assertEquals(McrGame.Phase.REACTION, game.phase());
-        play(game, 1, RON);
+        play(game, 1, WIN);
         var win = assertInstanceOf(McrSettlement.Win.class, game.result());
         assertEquals(1, win.winner());
         assertEquals(0, win.fromSeat());
@@ -111,14 +111,14 @@ class McrGameTest {
         var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         assertNotNull(game.score(0));
         assertFalse(game.score(0).meetsMinimum());
-        assertTrue(has(game, 0, TSUMO));
+        assertTrue(has(game, 0, WIN));
         var before = game.hand(0);
-        play(game, 0, TSUMO);
+        play(game, 0, WIN);
         assertEquals(McrGame.Phase.TURN, game.phase());
         assertNull(game.result());
         assertEquals(before, game.hand(0));
         assertTrue(game.winForbidden(0));
-        assertFalse(has(game, 0, TSUMO));
+        assertFalse(has(game, 0, WIN));
         assertEquals(List.of(-30, 10, 10, 10), game.penalties().get(0).deltas());
         assertEquals(1, game.penalties().get(0).handNumber());
         assertEquals(-30, game.points(0));
@@ -132,13 +132,13 @@ class McrGameTest {
         assertEquals(-30, game.points(0), "Starting another hand does not erase penalties");
     }
 
-    @Test void aLowFanRonContinuesPlayAndBlocksEvenALaterQualifyingSelfDraw() {
+    @Test void aLowFanDiscardWinContinuesPlayAndBlocksEvenALaterQualifyingSelfDraw() {
         var game = new McrGame(6, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").at(53, Tile.parseKind("8s")).build());
         discardKind(game, 0, "8s");
         assertNotNull(game.score(1));
         assertFalse(game.score(1).meetsMinimum());
-        play(game, 1, RON);
+        play(game, 1, WIN);
         passAll(game);
         assertNull(game.result());
         assertEquals(List.of(10, -30, 10, 10), game.penalties().get(0).deltas());
@@ -149,11 +149,11 @@ class McrGameTest {
         var wouldWin = McrHandAnalyzer.score(beforeWin, game.melds(1), 1, game.drawn(1), game.winningContext(1));
         assertNotNull(wouldWin);
         assertTrue(wouldWin.meetsMinimum());
-        assertFalse(has(game, 1, TSUMO));
+        assertFalse(has(game, 1, WIN));
         assertTrue(game.winForbidden(1));
-        assertTrue(has(game, 1, CLOSED_KAN), "Stopping wins must not stop normal declarations");
-        play(game, 1, CLOSED_KAN);
-        assertEquals(Meld.Type.CLOSED_KAN, game.melds(1).get(0).type());
+        assertTrue(has(game, 1, CONCEALED_KONG), "Stopping wins must not stop normal declarations");
+        play(game, 1, CONCEALED_KONG);
+        assertEquals(Meld.Type.CONCEALED_QUAD, game.melds(1).get(0).type());
         assertEquals(1, game.penalties().size());
         game.validate();
     }
@@ -162,41 +162,41 @@ class McrGameTest {
         var game = new McrGame(7, new Fixture().hand(0, "147m258p369s1234z5m")
             .hand(1, "159m159p159s1234z").build());
         assertNull(game.score(0));
-        assertFalse(has(game, 0, TSUMO));
+        assertFalse(has(game, 0, WIN));
         discardKind(game, 0, "5m");
-        assertFalse(has(game, 1, RON));
+        assertFalse(has(game, 1, WIN));
         passAll(game);
         assertTrue(game.penalties().isEmpty());
         game.validate();
     }
 
-    @Test void wrongRonDoesNotConsumeAnotherPlayersClaimAndTheOffenderCanStillPung() {
+    @Test void wrongClaimDoesNotConsumeAnotherPlayersClaimAndTheOffenderCanStillPung() {
         var game = new McrGame(9, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").hand(2, "88s123456m789p11z").build());
         discardKind(game, 0, "8s");
-        play(game, 1, RON);
-        play(game, 2, PON);
+        play(game, 1, WIN);
+        play(game, 2, PUNG);
         passAll(game);
         assertTrue(game.winForbidden(1));
         assertEquals(2, game.turn());
         assertNull(game.result());
         discardKind(game, 2, "5m");
-        assertTrue(has(game, 1, PON));
-        assertFalse(has(game, 1, RON));
-        play(game, 1, PON);
+        assertTrue(has(game, 1, PUNG));
+        assertFalse(has(game, 1, WIN));
+        play(game, 1, PUNG);
         passAll(game);
         assertEquals(1, game.turn());
-        assertEquals(Meld.Type.PON, game.melds(1).get(0).type());
+        assertEquals(Meld.Type.TRIPLET, game.melds(1).get(0).type());
         assertEquals(1, game.penalties().size());
         game.validate();
     }
 
-    @Test void wrongNearestRonIsPenalizedSeparatelyFromTheActualWinnersPayment() {
+    @Test void wrongNearestClaimIsPenalizedSeparatelyFromTheActualWinnersPayment() {
         var game = new McrGame(10, new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").hand(2, "123456789p111z8s").build());
         discardKind(game, 0, "8s");
-        play(game, 1, RON);
-        play(game, 2, RON);
+        play(game, 1, WIN);
+        play(game, 2, WIN);
         passAll(game);
         var win = assertInstanceOf(McrSettlement.Win.class, game.result());
         assertEquals(2, win.winner());
@@ -208,14 +208,14 @@ class McrGameTest {
         game.validate();
     }
 
-    @Test void stopWinBlocksLastWallRonAndLastWallIsNotLastCopy() {
+    @Test void stopWinBlocksLastWallClaimAndLastWallIsNotLastCopy() {
         var fixture = new Fixture().hand(0, "279m147p258s2345z8s")
             .hand(1, "445566m2277779s").hand(2, "123456789p111z8s").at(135, Tile.parseKind("8s"));
         int slot = 53;
         for (var flower : FlowerTile.values()) fixture.at(slot++, flower.id());
         var game = new McrGame(11, fixture.build());
         discardKind(game, 0, "8s");
-        play(game, 1, RON);
+        play(game, 1, WIN);
         passAll(game); // The qualifying player declines this first discard.
         for (int steps = 0; steps < 500 && !(game.phase() == McrGame.Phase.TURN && game.remaining() == 0); steps++) {
             switch (game.phase()) {
@@ -237,9 +237,9 @@ class McrGameTest {
         assertTrue(context.wallLast());
         assertFalse(context.lastCopy());
         assertTrue(McrHandAnalyzer.score(game.hand(1), game.melds(1), 1, tile, context).meetsMinimum());
-        assertFalse(has(game, 1, RON));
-        assertTrue(has(game, 2, RON));
-        assertFalse(has(game, 0, PON));
+        assertFalse(has(game, 1, WIN));
+        assertTrue(has(game, 2, WIN));
+        assertFalse(has(game, 0, PUNG));
         passAll(game);
         assertInstanceOf(McrSettlement.Draw.class, game.result());
         assertEquals(-30, game.points(1));
@@ -250,11 +250,11 @@ class McrGameTest {
         var game = new McrGame(12, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "46m123789p123s11z").hand(2, "55m234678s234p22z").build());
         discardKind(game, 0, "5m");
-        play(game, 1, CHI);
+        play(game, 1, CHOW);
         passAll(game);
         assertEquals(1, game.turn());
         var meld = game.melds(1).get(0);
-        assertEquals(Meld.Type.CHI, meld.type());
+        assertEquals(Meld.Type.SEQUENCE, meld.type());
         assertEquals(0, meld.fromSeat());
         assertEquals(List.of(3, 4, 5), meld.tiles().stream().map(Tile::kind).toList());
         assertEquals(11, game.hand(1).size());
@@ -270,24 +270,24 @@ class McrGameTest {
             .hand(1, "555m123456p78s11z").at(143, Tile.parseKind("9s")).build());
         discardKind(exposed, 0, "5m");
         int remaining = exposed.remaining();
-        play(exposed, 1, OPEN_KAN);
+        play(exposed, 1, MELDED_KONG);
         passAll(exposed);
         assertEquals(remaining - 1, exposed.remaining());
-        assertEquals(Meld.Type.OPEN_KAN, exposed.melds(1).get(0).type());
+        assertEquals(Meld.Type.OPEN_QUAD, exposed.melds(1).get(0).type());
         assertEquals(McrWinContext.KongWin.REPLACEMENT, exposed.winningContext(1).kongWin());
-        assertTrue(has(exposed, 1, TSUMO));
-        play(exposed, 1, TSUMO);
+        assertTrue(has(exposed, 1, WIN));
+        play(exposed, 1, WIN);
         assertInstanceOf(McrSettlement.Win.class, exposed.result());
 
         var concealed = new McrGame(14, new Fixture().hand(0, "1111m123456p78s22z")
             .at(143, Tile.parseKind("9s")).build());
         remaining = concealed.remaining();
-        play(concealed, 0, CLOSED_KAN);
+        play(concealed, 0, CONCEALED_KONG);
         assertEquals(remaining - 1, concealed.remaining());
-        assertEquals(Meld.Type.CLOSED_KAN, concealed.melds(0).get(0).type());
+        assertEquals(Meld.Type.CONCEALED_QUAD, concealed.melds(0).get(0).type());
         assertEquals(McrWinContext.KongWin.REPLACEMENT, concealed.winningContext(0).kongWin());
-        assertTrue(has(concealed, 0, TSUMO));
-        play(concealed, 0, TSUMO);
+        assertTrue(has(concealed, 0, WIN));
+        play(concealed, 0, WIN);
         assertInstanceOf(McrSettlement.Win.class, concealed.result());
     }
 
@@ -295,7 +295,7 @@ class McrGameTest {
         var game = new McrGame(15, new Fixture().hand(0, "1111m123456p78s22z")
             .at(143, FlowerTile.SPRING.id()).at(142, FlowerTile.SUMMER.id())
             .at(141, Tile.parseKind("9s")).build());
-        play(game, 0, CLOSED_KAN);
+        play(game, 0, CONCEALED_KONG);
         assertEquals(List.of(FlowerTile.SPRING.id(), FlowerTile.SUMMER.id()), game.flowers(0));
         assertEquals(McrWinContext.KongWin.NONE, game.winningContext(0).kongWin());
         assertEquals(2, game.winningContext(0).flowerCount());
@@ -308,19 +308,19 @@ class McrGameTest {
         int remaining = game.remaining();
         assertTrue(game.winningContext(1).lastCopy(), "The exposed pung and its called river tile count only three times");
         assertFalse(game.winningContext(1).wallLast());
-        play(game, 1, ADDED_KAN);
+        play(game, 1, MELDED_KONG);
         assertEquals(McrGame.Phase.REACTION, game.phase());
-        assertEquals(Meld.Type.PON, game.melds(1).get(0).type());
+        assertEquals(Meld.Type.TRIPLET, game.melds(1).get(0).type());
         assertEquals(McrWinContext.KongWin.ROBBED, game.winningContext(2).kongWin());
-        assertTrue(has(game, 2, RON));
-        assertFalse(has(game, 2, CHI));
+        assertTrue(has(game, 2, WIN));
+        assertFalse(has(game, 2, CHOW));
         passAll(game);
         assertEquals(remaining - 1, game.remaining());
         var kong = game.melds(1).get(0);
-        assertEquals(Meld.Type.ADDED_KAN, kong.type());
+        assertEquals(Meld.Type.ADDED_QUAD, kong.type());
         assertEquals(0, kong.fromSeat());
         assertEquals(McrWinContext.KongWin.REPLACEMENT, game.winningContext(1).kongWin());
-        assertTrue(has(game, 1, TSUMO));
+        assertTrue(has(game, 1, WIN));
         game.validate();
     }
 
@@ -329,15 +329,15 @@ class McrGameTest {
         int remaining = game.remaining();
         int extra = game.drawn(1);
         var previousRiver = game.river(1);
-        play(game, 1, ADDED_KAN);
-        play(game, 2, RON);
+        play(game, 1, MELDED_KONG);
+        play(game, 2, WIN);
         passAll(game);
         var win = assertInstanceOf(McrSettlement.Win.class, game.result());
         assertEquals(2, win.winner());
         assertEquals(1, win.fromSeat());
         assertEquals(McrWinContext.KongWin.ROBBED, win.context().kongWin());
         assertEquals(remaining, game.remaining());
-        assertEquals(Meld.Type.PON, game.melds(1).get(0).type());
+        assertEquals(Meld.Type.TRIPLET, game.melds(1).get(0).type());
         assertFalse(game.hand(1).contains(extra));
         assertTrue(game.hand(2).contains(extra));
         assertEquals(previousRiver, game.river(1), "Robbing a kong is not a discard event");
@@ -350,7 +350,7 @@ class McrGameTest {
             .at(53, Tile.WEST).at(54, Tile.GREEN).at(55, Tile.RED)
             .at(56, Tile.parseKind("5m")).at(143, Tile.parseKind("9s")).build());
         discardKind(game, 0, "5m");
-        play(game, 1, PON);
+        play(game, 1, PUNG);
         passAll(game);
         discardKind(game, 1, "9s");
         passAll(game);
@@ -361,13 +361,13 @@ class McrGameTest {
         }
         play(game, 1, DRAW);
         assertEquals(Tile.parseKind("5m"), Tile.kind(game.drawn(1)));
-        assertTrue(has(game, 1, ADDED_KAN));
+        assertTrue(has(game, 1, MELDED_KONG));
         return game;
     }
 
     @Test void dealerSelfDrawPaysNormallyAndAlwaysAdvancesTheDealer() {
         var game = new McrGame(8, new Fixture().hand(0, "19m19p19s1234567z1m").build());
-        play(game, 0, TSUMO);
+        play(game, 0, WIN);
         var win = assertInstanceOf(McrSettlement.Win.class, game.result());
         assertEquals(-1, win.fromSeat());
         assertEquals(3 * (8 + win.score().totalFan()), game.points(0));
@@ -406,24 +406,24 @@ class McrGameTest {
         for (int seat = 0; seat < 4; seat++) assertTrue(game.actions(seat).isEmpty());
     }
 
-    static boolean has(McrGame game, int seat, Action.Type type) {
+    static boolean has(McrGame game, int seat, McrAction.Type type) {
         return game.actions(seat).stream().anyMatch(action -> action.type() == type);
     }
 
-    static int index(McrGame game, int seat, Action.Type type) {
+    static int index(McrGame game, int seat, McrAction.Type type) {
         var actions = game.actions(seat);
         for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == type) return i;
         fail("Missing " + type + " for seat " + seat + " in " + game.phase() + ": " + actions);
         return -1;
     }
 
-    static void play(McrGame game, int seat, Action.Type type) {
+    static void play(McrGame game, int seat, McrAction.Type type) {
         assertTrue(game.act(seat, game.decision(), index(game, seat, type)));
         game.validate();
     }
 
     static void discard(McrGame game, int seat, int tile) {
-        int choice = game.actions(seat).indexOf(new Action(DISCARD, tile));
+        int choice = game.actions(seat).indexOf(new McrAction(DISCARD, tile));
         assertTrue(choice >= 0, "Missing discard " + tile);
         assertTrue(game.act(seat, game.decision(), choice));
         game.validate();

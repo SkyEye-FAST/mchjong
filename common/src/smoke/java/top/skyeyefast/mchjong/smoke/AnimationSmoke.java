@@ -96,7 +96,7 @@ final class AnimationSmoke {
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(seats.getFirst().hand(), List.of(), List.of(new Discard(13, true, true, true)), true));
             seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN),
-                List.of(new Meld(Meld.Type.PON, List.of(13, 14, 15), 0, 13)), List.of(), false));
+                List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
             update(table, seats, fixture.wall());
         }
         if (ticks == 78) capture(client, output, "16-pon-and-riichi-stick-moving.png");
@@ -105,7 +105,7 @@ final class AnimationSmoke {
             var seats = new ArrayList<>(fixture.seats());
             var hand = new ArrayList<>(IntStream.range(4, 13).boxed().toList());
             hand.add(16);
-            seats.set(0, seat(hand, List.of(new Meld(Meld.Type.CLOSED_KAN, List.of(0, 1, 2, 3), 0, Tile.ABSENT)),
+            seats.set(0, seat(hand, List.of(new Meld(Meld.Type.CONCEALED_QUAD, List.of(0, 1, 2, 3), 0, Tile.ABSENT)),
                 seats.getFirst().river(), true));
             var wall = new ArrayList<>(fixture.wall());
             wall.set(53, Tile.ABSENT);
@@ -130,7 +130,7 @@ final class AnimationSmoke {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+            var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i % 3 + 1, i * 4)).toList();
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(List.of(80, 81), melds, List.of(), false));
@@ -168,13 +168,13 @@ final class AnimationSmoke {
                     player.riichi(), player.exposed(), player.doubleRiichi()));
             }
             var right = seats.get(1);
-            var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+            var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
             seats.set(1, new TableView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
                 List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false, right.doubleRiichi()));
             int leftSeat = seats.size() - 1;
             var left = seats.get(leftSeat);
-            var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+            var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(116 + i * 4, 117 + i * 4, 118 + i * 4, 119 + i * 4), 2, 116 + i * 4)).toList();
             seats.set(leftSeat, new TableView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));

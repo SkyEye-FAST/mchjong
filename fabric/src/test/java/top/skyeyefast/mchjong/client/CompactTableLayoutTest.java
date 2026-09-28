@@ -19,10 +19,10 @@ class CompactTableLayoutTest {
 
     private static List<Meld> melds(Meld.Type type, int count, int owner, int source) {
         return IntStream.range(0, count).mapToObj(i -> {
-            var tiles = type == Meld.Type.CHI ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
-                : IntStream.range(i * 4, i * 4 + (type == Meld.Type.PON ? 3 : 4)).boxed().toList();
-            return new Meld(type, tiles, type == Meld.Type.CLOSED_KAN ? owner : source,
-                type == Meld.Type.CLOSED_KAN ? Tile.ABSENT : tiles.getFirst());
+            var tiles = type == Meld.Type.SEQUENCE ? List.of(i * 12, i * 12 + 4, i * 12 + 8)
+                : IntStream.range(i * 4, i * 4 + (type == Meld.Type.TRIPLET ? 3 : 4)).boxed().toList();
+            return new Meld(type, tiles, type == Meld.Type.CONCEALED_QUAD ? owner : source,
+                type == Meld.Type.CONCEALED_QUAD ? Tile.ABSENT : tiles.getFirst());
         }).toList();
     }
 
@@ -62,7 +62,7 @@ class CompactTableLayoutTest {
                     boolean exposed = state == 3;
                     int size = (state == 0 ? 13 : 14) - count * 3;
                     int concealed = size - (drawn ? 1 : 0);
-                    var pieces = scene(v, owner, melds(Meld.Type.OPEN_KAN, count, owner, (owner + 1) % rules.players()), size, drawn, exposed);
+                    var pieces = scene(v, owner, melds(Meld.Type.OPEN_QUAD, count, owner, (owner + 1) % rules.players()), size, drawn, exposed);
                     var hand = pieces.stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
                     double shift = center(pieces, concealed);
                     String context = rules + " seat=" + owner + " kans=" + count + " state=" + state;
@@ -94,7 +94,7 @@ class CompactTableLayoutTest {
     @Test void twoOpenKansDoNotMoveAWaitingHandForAnAbsentDraw() {
         var v = base(RuleSet.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
-            var melds = melds(Meld.Type.OPEN_KAN, 2, owner, (owner + 1) % 4);
+            var melds = melds(Meld.Type.OPEN_QUAD, 2, owner, (owner + 1) % 4);
             var waiting = scene(v, owner, melds, 7, false, false);
             var drawn = scene(v, owner, melds, 8, true, false);
             assertEquals(0, center(waiting, 7), 1e-9, "An absent draw must not force an otherwise centered hand left");
@@ -114,9 +114,9 @@ class CompactTableLayoutTest {
         var v = base(RuleSet.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
             int source = (owner + 1) % 4;
-            var pons = scene(v, owner, melds(Meld.Type.PON, 3, owner, source), 5, true, false);
-            var added = scene(v, owner, melds(Meld.Type.ADDED_KAN, 3, owner, source), 5, true, false);
-            var open = scene(v, owner, melds(Meld.Type.OPEN_KAN, 3, owner, source), 5, true, false);
+            var pons = scene(v, owner, melds(Meld.Type.TRIPLET, 3, owner, source), 5, true, false);
+            var added = scene(v, owner, melds(Meld.Type.ADDED_QUAD, 3, owner, source), 5, true, false);
+            var open = scene(v, owner, melds(Meld.Type.OPEN_QUAD, 3, owner, source), 5, true, false);
             assertEquals(center(pons, 4), center(added, 4), 1e-9, "Front-aligned added tiles must not reserve extra horizontal width");
             assertTrue(center(open, 4) < center(pons, 4), "A genuinely wider open kan needs more room");
         }

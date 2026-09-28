@@ -19,20 +19,20 @@ public record ActionPreview(List<Integer> tiles, Meld meld) {
                 tiles.addAll(action.tiles());
                 if (view.focus() != null) {
                     tiles.add(view.focus().tile());
-                    meld = new Meld(Meld.Type.valueOf(action.type().name()), tiles, view.focus().seat(), view.focus().tile());
+                    meld = new Meld(action.type().meldType(), tiles, view.focus().seat(), view.focus().tile());
                 }
             }
             case CLOSED_KAN -> {
                 tiles.addAll(action.tiles());
-                meld = new Meld(Meld.Type.CLOSED_KAN, tiles, view.viewerSeat(), Tile.ABSENT);
+                meld = new Meld(Meld.Type.CONCEALED_QUAD, tiles, view.viewerSeat(), Tile.ABSENT);
             }
             case ADDED_KAN -> {
                 if (view.viewerSeat() >= 0) {
                     for (Meld pon : view.seats().get(view.viewerSeat()).melds()) {
-                        if (pon.type() == Meld.Type.PON && pon.kind() == Tile.kind(action.tiles().getFirst())) {
+                        if (pon.type() == Meld.Type.TRIPLET && pon.kind() == Tile.kind(action.tiles().getFirst())) {
                             tiles.addAll(pon.tiles());
                             tiles.addAll(action.tiles());
-                            meld = new Meld(Meld.Type.ADDED_KAN, tiles, pon.fromSeat(), pon.calledTile());
+                            meld = new Meld(Meld.Type.ADDED_QUAD, tiles, pon.fromSeat(), pon.calledTile());
                             break;
                         }
                     }

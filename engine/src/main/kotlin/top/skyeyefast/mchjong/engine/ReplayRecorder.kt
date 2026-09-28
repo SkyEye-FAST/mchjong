@@ -44,14 +44,14 @@ internal class ReplayRecorder(game: Game) {
     fun declare(game: Game, seat: Int, action: Action) {
         val tile = game.lastTile
         val meld = when (action.type()) {
-            Action.Type.CLOSED_KAN -> Meld(Meld.Type.CLOSED_KAN, action.tiles(), seat, Tile.ABSENT)
+            Action.Type.CLOSED_KAN -> Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT)
             Action.Type.ADDED_KAN -> {
                 val pon = game.players[seat].melds.first {
-                    it.type() == Meld.Type.PON && it.kind() == Tile.kind(tile)
+                    it.type() == Meld.Type.TRIPLET && it.kind() == Tile.kind(tile)
                 }
                 val tiles = pon.tiles().toMutableList()
                 tiles += tile
-                Meld(Meld.Type.ADDED_KAN, tiles, pon.fromSeat(), pon.calledTile())
+                Meld(Meld.Type.ADDED_QUAD, tiles, pon.fromSeat(), pon.calledTile())
             }
             else -> null
         }

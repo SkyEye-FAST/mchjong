@@ -244,7 +244,8 @@ public final class TableAnimation {
             for (int i = 0; i < player.melds().size(); i++) {
                 var meld = player.melds().get(i);
                 if (i >= old.melds().size() || meld.type() != old.melds().get(i).type())
-                    announcements.add(new Cue(seat, "action.mchjong." + meld.type().name().toLowerCase(java.util.Locale.ROOT), now));
+                    announcements.add(new Cue(seat, new top.skyeyefast.mchjong.engine.Action(
+                        top.skyeyefast.mchjong.engine.Action.Type.fromMeld(meld.type())).translationKey(), now));
             }
             if (player.norths().size() > old.norths().size()) announcements.add(new Cue(seat, "action.mchjong.nuki", now));
         }

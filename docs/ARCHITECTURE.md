@@ -45,6 +45,17 @@ Artifact names include both loader and Minecraft version to keep releases distin
 
 ## Hand analysis boundaries
 
+`Meld.Type` names physical structures: sequence, triplet, open quad, concealed
+quad and added quad. The last preserves the original triplet's supplier and
+fourth-tile provenance. Riichi declarations map explicitly at the `Action`
+boundary; library notation belongs to `MahjongUtilsInterop`.
+
+`McrAction` is the MCR declaration contract. `WIN` obtains its draw/claim method
+from the current game position. `MELDED_KONG` takes three owned tiles in a discard
+reaction, or one owned tile when supplementing a public triplet on a draw turn.
+The latter keeps the original triplet and fourth tile pending until robbery
+responses finish. MCR save and session records accept only their current format.
+
 `RiichiHandAnalyzer` owns the Riichi scoring and shape adapter used by `Game`,
 legal actions, hints, replays and bots. `McrHandAnalyzer` is the sole production
 boundary to mcr-mahjong. Its public methods accept engine tile IDs, `Meld` values

@@ -287,10 +287,10 @@ final class SettlementSmoke {
             List<Integer> hand = seat < 2 ? List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125)
                 : java.util.Collections.nCopies(13, Tile.HIDDEN);
             List<Meld> melds = switch (seat) {
-                case 0 -> List.of(new Meld(Meld.Type.CLOSED_KAN, List.of(16, 17, 18, 19), 0, Tile.ABSENT));
-                case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52),
-                    new Meld(Meld.Type.CLOSED_KAN, List.of(56, 57, 58, 59), 1, 56));
-                case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
+                case 0 -> List.of(new Meld(Meld.Type.CONCEALED_QUAD, List.of(16, 17, 18, 19), 0, Tile.ABSENT));
+                case 1 -> List.of(new Meld(Meld.Type.OPEN_QUAD, List.of(52, 53, 54, 55), 2, 52),
+                    new Meld(Meld.Type.CONCEALED_QUAD, List.of(56, 57, 58, 59), 1, 56));
+                case 2 -> List.of(new Meld(Meld.Type.SEQUENCE, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
             seats.add(new TableView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),

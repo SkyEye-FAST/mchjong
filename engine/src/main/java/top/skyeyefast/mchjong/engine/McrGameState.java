@@ -6,10 +6,10 @@ import java.util.Objects;
 /** Private save data, never a client view. Only the current format is accepted. */
 public record McrGameState(int format, long seed, long revision, long decision, int handNumber,
                            int turn, McrGame.Phase phase, Wall wall, List<Player> players,
-                           int claimTile, int claimFrom, Action pendingKong, boolean drawWallLast,
+                           int claimTile, int claimFrom, McrAction pendingKong, boolean drawWallLast,
                            McrWinContext.KongWin drawKong, List<Reply> replies,
                            List<McrSettlement.Penalty> penalties, McrSettlement.Result result) {
-    public static final int FORMAT = 1;
+    public static final int FORMAT = 2;
 
     public McrGameState {
         if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR save format: " + format);
@@ -54,7 +54,7 @@ public record McrGameState(int format, long seed, long revision, long decision, 
     }
 
     /** Store the chosen action, not an index into a serialized legal-action cache. */
-    public record Reply(int seat, Action action) {
+    public record Reply(int seat, McrAction action) {
         public Reply {
             if (seat < 0 || seat > 3) throw new IllegalArgumentException("Invalid MCR responder");
             Objects.requireNonNull(action);

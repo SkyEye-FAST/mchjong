@@ -134,7 +134,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     private data class ShapeKey(val hand: kotlin.collections.List<Int>, val melds: kotlin.collections.List<String>) {
         constructor(state: State) : this(
             state.hand().map { Tile.kind(it) }.sorted(),
-            state.melds().map { it.libraryNotation() }.sorted(),
+            state.melds().map { MahjongUtilsInterop.meldNotation(it) }.sorted(),
         )
     }
 

@@ -8,7 +8,7 @@ import java.util.Objects;
 /** Recipient-safe MCR data. A viewer of -1 is an unprivileged spectator, never a player seat. */
 public record McrView(long revision, long decision, int handNumber, McrGame.Phase phase,
                       int viewerSeat, int dealer, int roundWind, int turn, int remaining,
-                      List<Integer> wall, Focus focus, List<Seat> seats, List<Action> actions,
+                      List<Integer> wall, Focus focus, List<Seat> seats, List<McrAction> actions,
                       boolean responded, McrSettlement.Result result, List<McrSettlement.Penalty> penalties) {
     public McrView {
         Objects.requireNonNull(phase);
@@ -69,8 +69,8 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
                 throw new IllegalArgumentException("Invalid MCR seat view");
             for (var meld : melds) {
                 boolean kong = switch (meld.type()) {
-                    case CHI, PON -> false;
-                    case OPEN_KAN, CLOSED_KAN, ADDED_KAN -> true;
+                    case SEQUENCE, TRIPLET -> false;
+                    case OPEN_QUAD, CONCEALED_QUAD, ADDED_QUAD -> true;
                 };
                 if (meld.tiles().size() != (kong ? 4 : 3) || meld.fromSeat() < 0 || meld.fromSeat() > 3
                     || (meld.closed() ? meld.calledTile() != Tile.ABSENT : !meld.tiles().contains(meld.calledTile())))

@@ -828,7 +828,7 @@ public final class Game {
 
     int next(int seat) { return (seat + 1) % rules.players(); }
     int wind(int seat) { return Math.floorMod(seat - dealer, rules.players()); }
-    int kanCount() { return Arrays.stream(players).mapToInt(p -> (int) p.melds.stream().filter(Meld::kan).count()).sum(); }
+    int kanCount() { return Arrays.stream(players).mapToInt(p -> (int) p.melds.stream().filter(Meld::quad).count()).sum(); }
 
     void newDecision(Phase nextPhase) {
         phase = nextPhase;
@@ -996,14 +996,14 @@ public final class Game {
         tiles.add(lastTile);
         tiles.sort(Tile.ORDER);
         Meld.Type type = switch (action.type()) {
-            case CHI -> Meld.Type.CHI;
-            case PON -> Meld.Type.PON;
-            case OPEN_KAN -> Meld.Type.OPEN_KAN;
+            case CHI -> Meld.Type.SEQUENCE;
+            case PON -> Meld.Type.TRIPLET;
+            case OPEN_KAN -> Meld.Type.OPEN_QUAD;
             default -> throw new IllegalStateException("Not a call");
         };
         player.melds.add(new Meld(type, tiles, lastFrom, lastTile));
         if (recorder != null) recorder.call(seat, player.melds.get(player.melds.size() - 1));
-        recordPao(seat, lastFrom, type == Meld.Type.OPEN_KAN);
+        recordPao(seat, lastFrom, type == Meld.Type.OPEN_QUAD);
         interrupt();
         turn = seat;
         if (action.type() == OPEN_KAN) { completeKan(seat, false); return; }
@@ -1030,16 +1030,16 @@ public final class Game {
         }
         if (action.type() == CLOSED_KAN) {
             player.hand.removeAll(action.tiles());
-            player.melds.add(new Meld(Meld.Type.CLOSED_KAN, action.tiles(), seat, Tile.ABSENT));
+            player.melds.add(new Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT));
         } else {
             int tile = action.tiles().get(0);
             player.hand.remove(Integer.valueOf(tile));
             for (int i = 0; i < player.melds.size(); i++) {
                 Meld meld = player.melds.get(i);
-                if (meld.type() == Meld.Type.PON && meld.kind() == Tile.kind(tile)) {
+                if (meld.type() == Meld.Type.TRIPLET && meld.kind() == Tile.kind(tile)) {
                     var tiles = new ArrayList<>(meld.tiles());
                     tiles.add(tile);
-                    player.melds.set(i, new Meld(Meld.Type.ADDED_KAN, tiles, meld.fromSeat(), meld.calledTile()));
+                    player.melds.set(i, new Meld(Meld.Type.ADDED_QUAD, tiles, meld.fromSeat(), meld.calledTile()));
                     break;
                 }
             }
@@ -1054,7 +1054,7 @@ public final class Game {
             else wall.pendingIndicators++;
         }
         if (recorder != null) recorder.dora(this);
-        fourKanAbort = rules.abortiveDraws() && kanCount() == 4 && Arrays.stream(players).filter(p -> p.melds.stream().anyMatch(Meld::kan)).count() > 1;
+        fourKanAbort = rules.abortiveDraws() && kanCount() == 4 && Arrays.stream(players).filter(p -> p.melds.stream().anyMatch(Meld::quad)).count() > 1;
         draw(seat, true, true);
     }
 
@@ -1064,7 +1064,7 @@ public final class Game {
         long winds = player.melds.stream().filter(m -> m.kind() >= Tile.EAST && m.kind() <= Tile.NORTH).count();
         if (dragons == 3 && player.dragonPao < 0) player.dragonPao = from;
         if (winds == 4 && player.windPao < 0) player.windPao = from;
-        if (openKan && rules.suukantsuPao() && player.melds.stream().filter(Meld::kan).count() == 4) player.kanPao = from;
+        if (openKan && rules.suukantsuPao() && player.melds.stream().filter(Meld::quad).count() == 4) player.kanPao = from;
     }
 
     /** Server-owned automation and timeouts, paced independently from client animations. */

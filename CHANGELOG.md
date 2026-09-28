@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Separate MCR declarations from Riichi actions and name shared meld structures independently of rules, with explicit library and presentation mappings.
 - Select complete, appearance-matched 144-tile MCR stock from individual physical cases and map independent flower identities to item faces.
 - Bind MCR matches to authenticated participants and observed seats, with presence pauses, unanimous hand advancement and restore-safe request identities.
 - Add recipient-safe MCR views with private actions, concealed-kong redaction, public flower/penalty data and separate bounded view encoding.

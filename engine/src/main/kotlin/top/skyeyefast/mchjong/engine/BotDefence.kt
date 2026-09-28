@@ -42,13 +42,13 @@ internal class BotDefence(
             val wind = Tile.EAST + Math.floorMod(seat - view.dealer(), view.rules().players())
             opponent.melds().forEach { meld ->
                 meld.tiles().forEach { bonus += value.bonus(it) }
-                if (meld.type() != Meld.Type.CHI) {
+                if (meld.type() != Meld.Type.SEQUENCE) {
                     if (meld.kind() >= Tile.WHITE) han++
                     if (meld.kind() == wind) han++
                     if (meld.kind() == Tile.EAST + view.round() / view.rules().players()) han++
                 }
             }
-            if (opponent.melds().size == 4 && opponent.melds().none { it.type() == Meld.Type.CHI }) han += 2
+            if (opponent.melds().size == 4 && opponent.melds().none { it.type() == Meld.Type.SEQUENCE }) han += 2
             // Visible yaku/bonus content and elapsed turns strengthen an open-hand signal;
             // neither calls nor discards prove tenpai or concealed yaku.
             val progress = minOf(1.0, opponent.river().size / 16.0)

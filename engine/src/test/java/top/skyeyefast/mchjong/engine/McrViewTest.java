@@ -4,14 +4,14 @@ import com.google.gson.JsonParser;
 import java.util.List;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 import static top.skyeyefast.mchjong.engine.McrGameTest.*;
 
 class McrViewTest {
     @Test void handsDrawsAndConcealedKongsAreRedactedBeforeSerialization() {
         var game = new McrGame(14, new Fixture().hand(0, "1111m123456p78s22z")
             .at(143, Tile.parseKind("9s")).build());
-        play(game, 0, CLOSED_KAN);
+        play(game, 0, CONCEALED_KONG);
         var before = game.view(-1);
         for (int viewer = -1; viewer < 4; viewer++) {
             var view = game.view(viewer);
@@ -28,7 +28,7 @@ class McrViewTest {
             else assertEquals(List.of(Tile.HIDDEN, Tile.HIDDEN, Tile.HIDDEN, Tile.HIDDEN), kong.tiles());
         }
         assertThrows(UnsupportedOperationException.class, () -> before.seats().get(0).hand().clear());
-        play(game, 0, TSUMO);
+        play(game, 0, WIN);
         var finished = game.view(-1);
         roundTrip(finished);
         assertInstanceOf(McrSettlement.Win.class, finished.result());
@@ -44,7 +44,7 @@ class McrViewTest {
             .hand(3, "555m123789m123p1z").build());
         discardKind(game, 0, "5m");
         var before = game.view(1);
-        play(game, 2, RON);
+        play(game, 2, WIN);
         var after = game.view(1);
         assertEquals(before.revision() + 1, after.revision());
         assertEquals(before.decision(), after.decision());
@@ -63,7 +63,7 @@ class McrViewTest {
 
         var added = addedKongPosition();
         int tile = added.drawn(1), remaining = added.remaining();
-        play(added, 1, ADDED_KAN);
+        play(added, 1, MELDED_KONG);
         var observer = added.view(-1);
         assertEquals(new McrView.Focus(1, tile, true), observer.focus());
         assertEquals(remaining, observer.remaining());
@@ -75,12 +75,12 @@ class McrViewTest {
     @Test void lowFanDeclarationRemainsVisibleAndPenaltyDoesNotBecomeAWinResult() {
         var game = new McrGame(5, new Fixture().hand(0, "12345m567p789s11z6m").build());
         assertFalse(game.score(0).meetsMinimum());
-        assertTrue(game.view(0).actions().stream().anyMatch(action -> action.type() == TSUMO));
-        play(game, 0, TSUMO);
+        assertTrue(game.view(0).actions().stream().anyMatch(action -> action.type() == WIN));
+        play(game, 0, WIN);
         var self = game.view(0);
         assertTrue(self.seats().get(0).winForbidden());
         assertTrue(self.actions().stream().anyMatch(action -> action.type() == DISCARD));
-        assertFalse(self.actions().stream().anyMatch(action -> action.type() == TSUMO));
+        assertFalse(self.actions().stream().anyMatch(action -> action.type() == WIN));
         var observer = game.view(-1);
         assertNull(observer.result());
         assertEquals(List.of(-30, 10, 10, 10), observer.seats().stream().map(McrView.Seat::points).toList());

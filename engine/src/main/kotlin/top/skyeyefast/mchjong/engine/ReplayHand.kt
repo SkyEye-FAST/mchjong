@@ -145,7 +145,7 @@ data class ReplayHand(
 
     private fun validateMeld(meld: Meld, players: Int) {
         java.util.Objects.requireNonNull(meld.type())
-        require(meld.fromSeat() in 0 until players && meld.tiles().size == if (meld.kan()) 4 else 3) {
+        require(meld.fromSeat() in 0 until players && meld.tiles().size == if (meld.quad()) 4 else 3) {
             "Invalid replay meld"
         }
         meld.tiles().forEach(Tile::kind)

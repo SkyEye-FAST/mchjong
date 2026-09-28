@@ -36,15 +36,15 @@ class TenhouFormatTest {
     @Test void calledTileAndMarkerPositionsEncodeEachDirectionIncludingRedFives() {
         int red = Tile.id(4, 0, true);
         var pon = List.of(red, 17, 18);
-        assertEquals("p511515", TenhouReplay.call(Meld.Type.PON, 0, 3, pon, red));
-        assertEquals("15p5115", TenhouReplay.call(Meld.Type.PON, 0, 2, pon, red));
-        assertEquals("1515p51", TenhouReplay.call(Meld.Type.PON, 0, 1, pon, red));
-        assertEquals("m51151515", TenhouReplay.call(Meld.Type.OPEN_KAN, 0, 3, List.of(red,17,18,19), red));
-        assertEquals("15m511515", TenhouReplay.call(Meld.Type.OPEN_KAN, 0, 2, List.of(red,17,18,19), red));
-        assertEquals("151515m51", TenhouReplay.call(Meld.Type.OPEN_KAN, 0, 1, List.of(red,17,18,19), red));
-        assertEquals("c151314", TenhouReplay.call(Meld.Type.CHI, 0, 3, List.of(8,12,17), 17));
-        assertEquals("c145116", TenhouReplay.call(Meld.Type.CHI, 0, 3, List.of(12,red,20), 12));
-        assertThrows(IllegalArgumentException.class, () -> TenhouReplay.call(Meld.Type.PON, 0, 0, pon, red));
+        assertEquals("p511515", TenhouReplay.call(Meld.Type.TRIPLET, 0, 3, pon, red));
+        assertEquals("15p5115", TenhouReplay.call(Meld.Type.TRIPLET, 0, 2, pon, red));
+        assertEquals("1515p51", TenhouReplay.call(Meld.Type.TRIPLET, 0, 1, pon, red));
+        assertEquals("m51151515", TenhouReplay.call(Meld.Type.OPEN_QUAD, 0, 3, List.of(red,17,18,19), red));
+        assertEquals("15m511515", TenhouReplay.call(Meld.Type.OPEN_QUAD, 0, 2, List.of(red,17,18,19), red));
+        assertEquals("151515m51", TenhouReplay.call(Meld.Type.OPEN_QUAD, 0, 1, List.of(red,17,18,19), red));
+        assertEquals("c151314", TenhouReplay.call(Meld.Type.SEQUENCE, 0, 3, List.of(8,12,17), 17));
+        assertEquals("c145116", TenhouReplay.call(Meld.Type.SEQUENCE, 0, 3, List.of(12,red,20), 12));
+        assertThrows(IllegalArgumentException.class, () -> TenhouReplay.call(Meld.Type.TRIPLET, 0, 0, pon, red));
     }
 
     @Test void sanmaPadsTheFourthSeatRotatesStartingDealerAndSkipsTheFourthRoundId() {
@@ -70,11 +70,11 @@ class TenhouFormatTest {
 
     @Test void declarationsUseDrawAndDiscardStreamsWithoutLosingRobbedDeclarations() {
         List<ReplayHand.Event> events = List.of(
-            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, Tile.id(4, 0, true), new Meld(Meld.Type.OPEN_KAN,
+            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, Tile.id(4, 0, true), new Meld(Meld.Type.OPEN_QUAD,
                 List.of(Tile.id(4, 0, true),17,18,19), 3, Tile.id(4, 0, true)), false,false,true),
-            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, -2, new Meld(Meld.Type.CLOSED_KAN,
+            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, -2, new Meld(Meld.Type.CONCEALED_QUAD,
                 List.of(Tile.id(13, 0, true),53,54,55), 0, -2), false,false,true),
-            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, Tile.id(22, 0, true), new Meld(Meld.Type.ADDED_KAN,
+            new ReplayHand.Event(ReplayHand.Kind.MELD, 0, Tile.id(22, 0, true), new Meld(Meld.Type.ADDED_QUAD,
                 List.of(89,90,91,Tile.id(22, 0, true)), 3, 89), false,false,false),
             new ReplayHand.Event(ReplayHand.Kind.NUKI, 0, 120, null, false,false,false));
         var root = TenhouReplay.export(fixture(RuleSet.TENHOU_4, 0, 0, events, "four_kans"));

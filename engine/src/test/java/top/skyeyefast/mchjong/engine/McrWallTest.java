@@ -65,7 +65,7 @@ class McrWallTest {
         assertTrue(wall.tiles().stream().allMatch(tile -> tile == Tile.ABSENT));
         var meldTiles = List.of(0, 1, 2);
         for (var player : players) player.hand.removeAll(meldTiles);
-        players[0].melds.add(new Meld(Meld.Type.PON, meldTiles, 3, 0));
+        players[0].melds.add(new Meld(Meld.Type.TRIPLET, meldTiles, 3, 0));
         players[3].river.add(new Discard(0, false, true, false));
         int discarded = players[1].hand.removeFirst();
         players[1].river.add(new Discard(discarded, false, false, false));
