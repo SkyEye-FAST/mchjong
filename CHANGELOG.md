@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Close MCR wall corners with a fine tile seam while retaining the four projecting ends.
+
 ### Added
 
 - Add independent MCR physical scenes with offset four-wall geometry, compact six-column rivers, source-marked flat melds and a separate public flower area.

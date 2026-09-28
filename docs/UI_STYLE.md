@@ -49,7 +49,8 @@ Each side is displaced along its length in the same local direction, so one
 end extends past its adjacent wall while the opposite end stops short. This
 fourfold pinwheel arrangement forms the offset hash-shaped enclosure rather
 than endpoint-aligned square corners. Offset, corner clearance and the small
-inter-stack seam come from tile dimensions; stacks do not overlap at the corners.
+inter-stack seam come from tile dimensions; the short end meets the adjacent
+wall with that same fine seam, and stacks do not overlap at the corners.
 Rendered slot indices are the engine's fixed physical slots, independent of the
 opening and draw order.
 

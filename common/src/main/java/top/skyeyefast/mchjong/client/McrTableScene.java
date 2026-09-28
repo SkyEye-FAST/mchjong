@@ -18,8 +18,9 @@ public final class McrTableScene {
     public static final double DEPTH = (double) TileMesh.DEPTH * TILE_SCALE;
     public static final double WALL_STEP = WIDTH + DEPTH / 16;
     public static final double WALL_LENGTH = (McrWallLayout.STACKS_PER_SIDE - 1) * WALL_STEP + WIDTH;
-    public static final double WALL_OFFSET = HEIGHT;
     public static final double WALL_Z = (WALL_LENGTH - HEIGHT + DEPTH) / 2;
+    // The short end meets the next wall with the same seam as adjacent stacks.
+    public static final double WALL_OFFSET = WALL_LENGTH / 2 - WALL_Z + HEIGHT / 2 + (WALL_STEP - WIDTH);
     public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - DEPTH;
     public static final double PUBLIC_Z = HAND_Z - (HEIGHT + DEPTH) / 2 - DEPTH;
     public static final double PUBLIC_LEFT = -PUBLIC_Z + HEIGHT / 2;

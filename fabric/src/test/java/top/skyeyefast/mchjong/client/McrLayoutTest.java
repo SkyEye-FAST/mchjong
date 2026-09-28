@@ -33,6 +33,9 @@ class McrLayoutTest {
         double right = McrTableScene.WALL_LENGTH / 2 - McrTableScene.WALL_OFFSET;
         assertTrue(left < -McrTableScene.WALL_Z - McrTableScene.HEIGHT / 2, "One end passes the adjacent wall");
         assertTrue(right < McrTableScene.WALL_Z - McrTableScene.HEIGHT / 2, "The other end stops short");
+        assertEquals(McrTableScene.WALL_STEP - McrTableScene.WIDTH,
+            McrTableScene.WALL_Z - McrTableScene.HEIGHT / 2 - right, 1e-8,
+            "Corners must close with the same fine seam as neighboring stacks");
         for (int i = 0; i < pieces.size(); i++) for (int j = i + 1; j < pieces.size(); j++)
             assertFalse(bounds(pieces.get(i)).deflate(1e-7).intersects(bounds(pieces.get(j)).deflate(1e-7)),
                 "Wall slots intersect: " + i + ", " + j);
