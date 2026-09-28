@@ -59,15 +59,15 @@ public final class CreatePonder implements PonderPlugin {
         scene.world().showSection(util.select().position(1, 1, 3), Direction.DOWN);
         new com.simibubi.create.foundation.ponder.CreateSceneBuilder(scene).world().setKineticSpeed(util.select().position(1, 1, 3), 32);
         show(scene, new ItemStack(Items.BONE_BLOCK, 6));
-        say(scene, "A mechanical saw cuts 24 blank tiles per material. Six materials make 144 tiles. A bone block also yields 32 blank point sticks.");
+        say(scene, "A mechanical saw cuts 24 blank tiles from each material; six materials make 144. A bone block also yields 32 blank point sticks.");
         show(scene, new ItemStack(MahjongContent.MAHJONG_DYE, 2));
-        say(scene, "Mix black, red, green, blue and white dyes for two mahjong dyes. Mixing a red or black dye yields eight red dora or undo dyes.");
+        say(scene, "Mix black, red, green, blue, and white dye for two Mahjong Dyes. One red dye blends into eight Red Dora Dyes, and one black dye into eight Undo Dyes.");
         scene.world().setBlock(new BlockPos(5, 3, 3), AllBlocks.DEPLOYER.getDefaultState()
             .setValue(com.simibubi.create.content.kinetics.deployer.DeployerBlock.FACING, Direction.DOWN), false);
         scene.world().setBlock(new BlockPos(5, 1, 3), AllBlocks.DEPOT.getDefaultState(), false);
         scene.world().showSection(util.select().fromTo(5, 1, 3, 5, 3, 3), Direction.DOWN);
         show(scene, new ItemStack(CreateCompat.INCOMPLETE_BOX));
-        say(scene, "To assemble a box, apply leather to a chest with a deployer, apply an iron nugget, then press it. This route saves the wooden slabs.");
+        say(scene, "To build a box, have a deployer attach leather and an iron nugget to a chest, then press it. This route saves the wooden slabs.");
         var blank = MahjongSupplies.tile(new TileData(-1, TileMaterial.BONE, false), 64);
         var plate = new ItemStack(CreateCompat.PRINTING_PLATE);
         var inputs = List.of(blank, blank.copy(), blank.copyWithCount(16), new ItemStack(MahjongContent.BOX_ITEM),
@@ -76,7 +76,7 @@ public final class CreatePonder implements PonderPlugin {
             for (int i = 0; i < inputs.size(); i++) basin.inputInventory.setStackInSlot(i, inputs.get(i).copy());
         });
         show(scene, plate);
-        say(scene, "Under a mechanical press, supply one empty box, 144 identical blank tiles, one mahjong dye and a printing plate. The press prints Kansai faces.");
+        say(scene, "Under a mechanical press, place an empty box, 144 identical blank tiles, one Mahjong Dye, and a printing plate, and the machine prints Kansai faces.");
         var printed = CreateProcessing.pressing(inputs).outputs().get(0);
         scene.world().modifyBlockEntity(BASIN.above(2), com.simibubi.create.content.kinetics.press.MechanicalPressBlockEntity.class,
             press -> press.getPressingBehaviour().start(com.simibubi.create.content.kinetics.press.PressingBehaviour.Mode.BASIN));
@@ -87,8 +87,8 @@ public final class CreatePonder implements PonderPlugin {
             basin.getOutputInventory().setStackInSlot(1, plate.copy());
         });
         show(scene, printed);
-        say(scene, "The press returns the printing plate with the complete 144-tile box. Route the plate back for the next batch. Material, backs and names are retained.");
-        say(scene, "A press and basin can also pack tiles, marked sticks and dice into a box. Existing slot limits apply. Route the finished box directly to the table.");
+        say(scene, "The press outputs the full 144-tile box and returns the plate. Send the plate back for the next batch; material, backs, and names are kept.");
+        say(scene, "The press and basin can also pack tiles, marked sticks, and dice into a box, obeying the existing slot limits. Finished boxes can be delivered straight to the table.");
         scene.markAsFinished();
     }
 
@@ -101,25 +101,25 @@ public final class CreatePonder implements PonderPlugin {
             basin.inputInventory.setStackInSlot(2, new ItemStack(Items.BLUE_DYE));
         });
         show(scene, new ItemStack(Items.BLUE_DYE));
-        say(scene, "One dye colors two targets in a mixer and basin. Each target is a whole tile stack or one box. Two boxes and one blue dye color both complete sets.");
+        say(scene, "A mixer and basin color two targets per dye: a whole tile stack or one box each. Two boxes and one blue dye color both complete sets.");
         var dyed = MahjongSupplies.dyeBatch(List.of(box, box.copy()), DyeColor.BLUE);
         scene.world().modifyBlockEntity(BASIN, BasinBlockEntity.class, basin -> {
             basin.inputInventory.clearContent();
             for (int i = 0; i < dyed.size(); i++) basin.getOutputInventory().setStackInSlot(i, dyed.get(i).copy());
         });
         show(scene, dyed.get(0));
-        say(scene, "Only the tile backs change. Faces, red fives, material, names, point sticks and dice remain intact. Glass tiles become tinted glass.");
+        say(scene, "Only the backs change. Faces, red fives, material, names, sticks, and dice stay untouched. Glass tiles turn into tinted glass.");
         show(scene, new ItemStack(MahjongContent.UNDO_DYE));
-        say(scene, "One undo dye removes back coloring from two targets. Both targets must actually change; an unchanged batch does not start or consume dye.");
+        say(scene, "One Undo Dye removes the back color from two targets. Both must actually change; otherwise the machine stays off and the dye is not consumed.");
         scene.world().setBlock(BASIN.above(2), AllBlocks.DEPLOYER.getDefaultState()
             .setValue(com.simibubi.create.content.kinetics.deployer.DeployerBlock.FACING, Direction.DOWN), false);
         scene.world().setBlock(BASIN, AllBlocks.DEPOT.getDefaultState(), false);
         show(scene, MahjongSupplies.tile(new TileData(13, TileMaterial.BONE, true), 1));
-        say(scene, "On a belt or depot, a deployer applies red dora dye to one ordinary five at a time. Undo dye restores one red five without changing its back.");
+        say(scene, "A deployer applies Red Dora Dye to 5m, 5p, and 5s tiles one by one on belts or depots. Undo Dye restores them one by one, keeping the back color.");
         scene.world().setBlock(BASIN, AllBlocks.BASIN.getDefaultState(), false);
         scene.world().setBlock(BASIN.above(2), AllBlocks.MECHANICAL_MIXER.getDefaultState(), false);
         show(scene, new ItemStack(MahjongContent.POINT_STICK, 16));
-        say(scene, "A mixer marks 16 identical blank sticks with one dye: white 100, blue 1000, yellow 5000, red 10000 or black -10000.");
+        say(scene, "A mixer marks 16 identical blank sticks with a single dye: white 100, blue 1,000, yellow 5,000, red 10,000, and black −10,000 points.");
         scene.markAsFinished();
     }
 
