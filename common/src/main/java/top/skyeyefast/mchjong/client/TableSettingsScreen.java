@@ -2,6 +2,9 @@ package top.skyeyefast.mchjong.client;
 
 import java.io.IOException;
 import java.util.Locale;
+import java.util.ArrayList;
+import java.util.List;
+import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.Tooltip;
@@ -14,6 +17,9 @@ public final class TableSettingsScreen extends Screen {
     private int tab;
     private int page;
     private boolean saveFailed;
+    private int pages;
+    private SettingsLayout layout;
+    private final List<AbstractWidget> options = new ArrayList<>();
 
     public TableSettingsScreen(Screen parent) {
         super(Component.translatable("settings.mchjong.title"));
@@ -25,81 +31,80 @@ public final class TableSettingsScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets();
-        int span = Math.min(560, width - 24);
-        int left = (width - span) / 2;
-        int tabs = 4;
-        for (int i = 0; i < tabs; i++) {
+        options.clear();
+        layout = SettingsLayout.of(width, height);
+        int left = layout.bodyLeft(), span = layout.bodyWidth();
+        for (int i = 0; i < 4; i++) {
             final int index = i;
             var button = MahjongButton.create(Component.translatable("settings.mchjong.tab." + i), ignored -> {
                 tab = index; page = 0; init();
-            }).bounds(left + i * (span / tabs), 33, span / tabs - 4, 20).build();
+            }).bounds(layout.left() + 4, 62 + i * 22, layout.rail() - 4, 20).build().navigation();
             button.selected(tab == i);
             addRenderableWidget(button);
         }
-        int column = (span - 6) / 2;
-        int rows = Math.max(1, (height - 130) / 26);
         if (tab == 0) {
-            var values = TableSettings.Information.values();
-            int perPage = rows * 2;
-            page = Math.clamp(page, 0, (values.length - 1) / perPage);
-            for (int n = 0; n < perPage && page * perPage + n < values.length; n++) {
-                var information = values[page * perPage + n];
-                var toggle = addToggle(left + (n % 2) * (column + 6), 65 + (n / 2) * 26, column,
-                    information.key(), settings.show(information), () -> settings.toggle(information));
+            for (var information : TableSettings.Information.values()) {
+                var toggle = addToggle(information.key(), settings.show(information), () -> settings.toggle(information));
                 if (information == TableSettings.Information.REMAINING && !settings.showRiver) {
                     toggle.active = false;
                 }
             }
-            if (values.length > perPage) {
-                var previous = MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
-                    .bounds(width / 2 - 66, height - 61, 30, 20).build();
-                previous.active = page > 0;
-                addRenderableWidget(previous);
-                var next = MahjongButton.create(Component.literal(">"), ignored -> { page++; init(); })
-                    .bounds(width / 2 + 36, height - 61, 30, 20).build();
-                next.active = (page + 1) * perPage < values.length;
-                addRenderableWidget(next);
-            }
         } else if (tab == 1) {
-            addRenderableWidget(MahjongButton.create(value("settings.mchjong.discard", settings.discardMode), ignored -> {
+            addChoice("settings.mchjong.discard", settings.discardMode, () -> {
                 var values = TableSettings.DiscardMode.values();
-                settings.discardMode = values[(settings.discardMode.ordinal() + 1) % values.length]; init();
-            }).bounds(left, 65, span, 20).build());
-            addRenderableWidget(MahjongButton.create(value("settings.mchjong.guides", settings.guideLines), ignored -> {
+                settings.discardMode = values[Math.floorMod(settings.discardMode.ordinal() + (hasShiftDown() ? -1 : 1), values.length)];
+            });
+            addChoice("settings.mchjong.guides", settings.guideLines, () -> {
                 var values = TableSettings.GuideLines.values();
-                settings.guideLines = values[(settings.guideLines.ordinal() + 1) % values.length]; init();
-            }).bounds(left, 91, span, 20).build());
-            addToggle(left, 117, column, "settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
-            addToggle(left + column + 6, 117, column, "settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
-            addToggle(left, 143, span, "settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
-            addRenderableWidget(MahjongButton.create(value("settings.mchjong.tile_labels", settings.tileLabels), ignored -> {
+                settings.guideLines = values[Math.floorMod(settings.guideLines.ordinal() + (hasShiftDown() ? -1 : 1), values.length)];
+            });
+            addToggle("settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
+            addToggle("settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
+            addToggle("settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
+            addChoice("settings.mchjong.tile_labels", settings.tileLabels, () -> {
                 settings.tileLabels = settings.tileLabels == TableSettings.TileLabels.NAME
                     ? TableSettings.TileLabels.MPSZ : TableSettings.TileLabels.NAME;
-                init();
-            }).bounds(left, 169, column, 20).build());
-            addToggle(left + column + 6, 169, column, "settings.mchjong.auto_seat", settings.autoSeat,
+            });
+            addToggle("settings.mchjong.auto_seat", settings.autoSeat,
                 () -> settings.autoSeat = !settings.autoSeat)
                 .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.auto_seat_help")));
         } else if (tab == 2) {
-            addRenderableWidget(new CameraSlider(left, 65, span, true));
-            addRenderableWidget(new CameraSlider(left, 91, span, false));
-            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> resetView())
-                .bounds(left, 117, span, 20).build());
-            addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver);
+            options.add(new CameraSlider(left, 0, span, true));
+            options.add(new CameraSlider(left, 0, span, false));
+            addAction("settings.mchjong.reset_view", this::resetView);
+            addToggle("settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver);
         } else {
-            addRenderableWidget(new VolumeSlider(left, 65, column, false));
-            var voiceVolume = addRenderableWidget(new VolumeSlider(left + column + 6, 65, column, true));
-            voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.SELECTED;
-            addRenderableWidget(MahjongButton.create(value("settings.mchjong.voice", settings.voiceSource), ignored -> {
+            options.add(new VolumeSlider(left, 0, span, false));
+            addToggle("settings.mchjong.countdown", settings.countdownSounds, () -> settings.countdownSounds = !settings.countdownSounds);
+            addAction("settings.mchjong.audio_preview", TableAudio::preview);
+            addChoice("settings.mchjong.voice", settings.voiceSource, () -> {
                 var modes = TableSettings.VoiceSource.values();
-                settings.voiceSource = modes[(settings.voiceSource.ordinal() + 1) % modes.length];
-                TableAudio.settingsChanged(); init();
-            }).bounds(left, 91, span, 20).build());
-            addToggle(left, 117, column, "settings.mchjong.countdown", settings.countdownSounds,
-                () -> settings.countdownSounds = !settings.countdownSounds);
-            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.audio_preview"), ignored -> TableAudio.preview())
-                .bounds(left + column + 6, 117, column, 20).build());
+                settings.voiceSource = modes[Math.floorMod(settings.voiceSource.ordinal() + (hasShiftDown() ? -1 : 1), modes.length)];
+                TableAudio.settingsChanged();
+            }).setTooltip(Tooltip.create(Component.translatable("settings.mchjong.voice_preset_note")));
+            var voiceVolume = new VolumeSlider(left, 0, span, true);
+            voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.SELECTED;
+            options.add(voiceVolume);
         }
+        int rows = layout.rows();
+        pages = Math.max(1, (options.size() + rows - 1) / rows);
+        page = Math.clamp(page, 0, pages - 1);
+        for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
+            var option = options.get(page * rows + i);
+            option.setY(60 + i * 22);
+            addRenderableWidget(option);
+        }
+        if (pages > 1) {
+            var previous = MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
+                .bounds(left, layout.paging(), 30, 20).build().navigation();
+            previous.active = page > 0;
+            addRenderableWidget(previous);
+            var next = MahjongButton.create(Component.literal(">"), ignored -> { page++; init(); })
+                .bounds(left + span - 30, layout.paging(), 30, 20).build().navigation();
+            next.active = page + 1 < pages;
+            addRenderableWidget(next);
+        }
+        int column = (span - 6) / 2;
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
             settings.reset(); TableAudio.settingsChanged(); resetView(); init();
             RiichiStickPresets.sendChoice();
@@ -109,17 +114,29 @@ public final class TableSettingsScreen extends Screen {
             .bounds(left + column + 6, height - 30, column, 20).build().primary());
     }
 
-    private Button addToggle(int x, int y, int w, String key, boolean enabled, Runnable toggle) {
+    private Button addToggle(String key, boolean enabled, Runnable toggle) {
         Component label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
             Component.translatable(enabled ? "options.on" : "options.off"));
-        var button = MahjongButton.create(label, ignored -> { toggle.run(); init(); }).bounds(x, y, w, 20).build().selected(enabled);
-        button.setTooltip(Tooltip.create(label));
-        return addRenderableWidget(button);
+        var button = MahjongButton.create(label, ignored -> { toggle.run(); init(); })
+            .bounds(layout.bodyLeft(), 0, layout.bodyWidth(), 20).build()
+            .option(Component.translatable(key), Component.empty()).checked(enabled);
+        options.add(button);
+        return button;
     }
 
-    private static Component value(String key, Enum<?> value) {
-        return Component.translatable("settings.mchjong.toggle", Component.translatable(key),
-            Component.translatable(key + "." + value.name().toLowerCase(Locale.ROOT)));
+    private MahjongButton addChoice(String key, Enum<?> value, Runnable action) {
+        Component label = Component.translatable(key);
+        Component current = Component.translatable(key + "." + value.name().toLowerCase(Locale.ROOT));
+        var button = MahjongButton.create(Component.translatable("settings.mchjong.toggle", label, current),
+            ignored -> { action.run(); init(); }).bounds(layout.bodyLeft(), 0, layout.bodyWidth(), 20).build().option(label, current);
+        options.add(button);
+        return button;
+    }
+
+    private void addAction(String key, Runnable action) {
+        Component label = Component.translatable(key);
+        options.add(MahjongButton.create(label, ignored -> action.run()).bounds(layout.bodyLeft(), 0, layout.bodyWidth(), 20)
+            .build().option(label, Component.literal("›")));
     }
 
     private void resetView() {
@@ -128,21 +145,14 @@ public final class TableSettingsScreen extends Screen {
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        MahjongUi.backdrop(graphics, width, height, 560);
-        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
-            12, 16, width - 24, MahjongUi.ACCENT, true);
-        if (tab == 0) {
-            int pages = (TableSettings.Information.values().length - 1) / (Math.max(1, (height - 130) / 26) * 2) + 1;
-            if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 55, MahjongUi.MUTED);
-        }
+        layout.paint(graphics, font, width, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
+            Component.translatable("settings.mchjong.tab." + tab));
+        graphics.fill(layout.left(), 38, layout.left() + layout.rail(), 152, MahjongUi.INPUT);
+        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.preferences"),
+            layout.left() + 7, 44, layout.rail() - 14, MahjongUi.TEXT, false);
+        if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages,
+            layout.bodyLeft() + layout.bodyWidth() / 2, layout.paging() + 6, MahjongUi.MUTED);
         if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
-        if (tab == 3) {
-            int y = 145;
-            for (var line : font.split(Component.translatable("settings.mchjong.voice_preset_note"), Math.min(540, width - 32))) {
-                graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.MUTED);
-                y += 11;
-            }
-        }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
@@ -166,6 +176,8 @@ public final class TableSettingsScreen extends Screen {
             updateMessage();
         }
         @Override protected void updateMessage() {
+            String key = distance ? "settings.mchjong.camera_distance" : "settings.mchjong.camera_height";
+            option(Component.translatable(key + ".label"), Component.literal(String.format(Locale.ROOT, "%.2f", distance ? settings.cameraDistance : settings.cameraHeight)));
             setMessage(Component.translatable(distance ? "settings.mchjong.camera_distance" : "settings.mchjong.camera_height",
                 String.format(Locale.ROOT, "%.2f", distance ? settings.cameraDistance : settings.cameraHeight)));
         }
@@ -186,6 +198,8 @@ public final class TableSettingsScreen extends Screen {
             updateMessage();
         }
         @Override protected void updateMessage() {
+            option(Component.translatable((voice ? "settings.mchjong.voice_volume" : "settings.mchjong.effects_volume") + ".label"),
+                Component.literal(Math.round(value * 100) + "%"));
             setMessage(Component.translatable(voice ? "settings.mchjong.voice_volume" : "settings.mchjong.effects_volume", Math.round(value * 100)));
         }
         @Override protected void applyValue() {

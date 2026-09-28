@@ -10,6 +10,10 @@ import net.minecraft.network.chat.Component;
 public class MahjongButton extends Button {
     private boolean selected;
     private boolean primary;
+    private boolean navigation;
+    private Component optionLabel;
+    private Component optionValue;
+    private Boolean checked;
     private float textScale = 1;
 
     public MahjongButton(int x, int y, int width, int height, Component message, OnPress action) {
@@ -19,6 +23,9 @@ public class MahjongButton extends Button {
 
     public MahjongButton selected(boolean value) { selected = value; return this; }
     public MahjongButton primary() { primary = true; return this; }
+    public MahjongButton navigation() { navigation = true; return this; }
+    public MahjongButton option(Component label, Component value) { optionLabel = label; optionValue = value; return this; }
+    public MahjongButton checked(boolean value) { checked = value; return this; }
     public MahjongButton textScale(float value) { textScale = value; return this; }
 
     @Override public void setMessage(Component message) {
@@ -28,6 +35,25 @@ public class MahjongButton extends Button {
 
     @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {
         renderSurface(g);
+        if (optionLabel != null) {
+            var font = Minecraft.getInstance().font;
+            int color = active ? MahjongUi.TEXT : MahjongUi.DISABLED;
+            int valueWidth = checked != null ? 12 : Math.min(width / 2, font.width(optionValue));
+            MahjongUi.text(g, font, optionLabel, getX() + 6, getY() + (height - 8) / 2,
+                width - valueWidth - 22, color, false);
+            if (checked != null) {
+                int cx = getX() + width - 16, cy = getY() + (height - 10) / 2;
+                g.renderOutline(cx, cy, 10, 10, active && checked ? MahjongUi.ACCENT : color);
+                if (checked) g.fill(cx + 2, cy + 2, cx + 8, cy + 8, active ? MahjongUi.ACCENT : color);
+            } else MahjongUi.text(g, font, optionValue, getX() + width - valueWidth - 6,
+                getY() + (height - 8) / 2, valueWidth, color, false);
+            return;
+        }
+        if (navigation) {
+            MahjongUi.text(g, Minecraft.getInstance().font, getMessage(), getX() + 7, getY() + (height - 8) / 2,
+                width - 14, active ? selected ? MahjongUi.ACCENT : MahjongUi.TEXT : MahjongUi.DISABLED, false);
+            return;
+        }
         g.pose().pushPose();
         g.pose().translate(getX() + width / 2f, getY() + height / 2f, 0);
         g.pose().scale(textScale, textScale, 1);
@@ -38,6 +64,18 @@ public class MahjongButton extends Button {
     }
 
     protected final void renderSurface(GuiGraphics g) {
+        if (optionLabel != null) {
+            g.fill(getX(), getY(), getX() + width, getY() + height, active && isHovered() ? MahjongUi.HOVER : MahjongUi.INPUT);
+            if (active && isFocused()) g.renderOutline(getX(), getY(), width, height, MahjongUi.ACCENT);
+            return;
+        }
+        if (navigation) {
+            g.fill(getX(), getY(), getX() + width, getY() + height,
+                selected ? MahjongUi.SELECTED : isHovered() ? MahjongUi.HOVER : MahjongUi.PANEL);
+            if (selected) g.fill(getX(), getY(), getX() + 2, getY() + height, MahjongUi.ACCENT);
+            if (isFocused()) g.renderOutline(getX(), getY(), width, height, MahjongUi.ACCENT);
+            return;
+        }
         MahjongUi.control(g, getX(), getY(), width, height, active, isHovered(), isFocused(), selected, primary);
     }
 
