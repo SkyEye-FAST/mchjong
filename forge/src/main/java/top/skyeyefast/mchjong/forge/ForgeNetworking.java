@@ -10,7 +10,7 @@ final class ForgeNetworking {
 
     static void register() {
         var channel = NetworkRegistry.ChannelBuilder.named(ResourceIds.of("mchjong", "play"))
-            .networkProtocolVersion(() -> "12").clientAcceptedVersions("12"::equals).serverAcceptedVersions("12"::equals).simpleChannel();
+            .networkProtocolVersion(() -> "13").clientAcceptedVersions("13"::equals).serverAcceptedVersions("13"::equals).simpleChannel();
         channel.messageBuilder(BoxPrintPayload.class, 0, NetworkDirection.PLAY_TO_SERVER)
             .encoder(BoxPrintPayload::write).decoder(BoxPrintPayload::decode).consumerMainThread((payload, context) -> {
                 if (context.get().getSender() != null) payload.handle(context.get().getSender());
@@ -58,6 +58,10 @@ final class ForgeNetworking {
         channel.messageBuilder(VoiceAppearancePayload.class, 12, NetworkDirection.PLAY_TO_CLIENT)
             .encoder(VoiceAppearancePayload::write).decoder(VoiceAppearancePayload::decode)
             .consumerMainThread((payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload)).add();
+        channel.messageBuilder(TableHandOrderPayload.class, 13, NetworkDirection.PLAY_TO_SERVER)
+            .encoder(TableHandOrderPayload::write).decoder(TableHandOrderPayload::decode).consumerMainThread((payload, context) -> {
+                if (context.get().getSender() != null) TableNetworking.receive(context.get().getSender(), payload);
+            }).add();
         PayloadPackets.initialize(payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_SERVER),
             payload -> channel.toVanillaPacket(payload, NetworkDirection.PLAY_TO_CLIENT));
     }

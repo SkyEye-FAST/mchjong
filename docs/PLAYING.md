@@ -85,7 +85,12 @@ archive; an unfinished hand is not scored.
 
 Click tiles directly on the physical table. Settings offer single-click,
 double-click, or select-and-confirm discards. Shift-click selects without
-discarding. Enter confirms the selected tile; R opens riichi selection
+discarding. On automatic tables, turning off **Sort hand** keeps the current
+tile order. Drag a tile onto another tile to move it within your hand; drag it
+up by at least 48 GUI pixels to discard it. In immersive view, the threshold
+is 96 pixels on the fixed virtual canvas. A shorter drag keeps the tile in
+your hand. Single-click and double-click remain discard choices.
+Enter confirms the selected tile; R opens riichi selection
 and P passes a response. Riichi highlights only legal discard candidates and
 requires confirmation. Right-click or Esc cancels a selection before closing the
 overlay. Right-drag looks freely around the seated table; the wheel moves closer

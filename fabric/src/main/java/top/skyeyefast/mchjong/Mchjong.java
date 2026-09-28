@@ -83,6 +83,8 @@ public class Mchjong implements ModInitializer {
             (player, payload) -> payload.handle(player));
         receiver(TableActionPayload.TYPE, TableActionPayload::decode, TableNetworking::receive);
         receiver(TableControlPayload.TYPE, TableControlPayload::decode, TableNetworking::receive);
+        receiver(top.skyeyefast.mchjong.network.TableHandOrderPayload.TYPE,
+            top.skyeyefast.mchjong.network.TableHandOrderPayload::decode, TableNetworking::receive);
         receiver(TableSeatPayload.TYPE, TableSeatPayload::decode, TableNetworking::receive);
         receiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload::decode,
             (player, payload) -> payload.handle(player));
