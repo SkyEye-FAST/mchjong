@@ -33,6 +33,7 @@ public final class ReplayServer {
 
     /** Failed writes remain in Game's persisted queue and can be retried without losing a finished hand. */
     public static boolean flush(MinecraftServer server, Game game) throws IOException {
+        if (!top.skyeyefast.mchjong.world.WorldSettings.of(server).policy().replaysEnabled()) return false;
         boolean changed = false;
         for (var match : game.pendingReplays()) {
             state(server).store().save(match);
@@ -66,6 +67,10 @@ public final class ReplayServer {
     }
 
     private static int send(ServerPlayer player, UUID match, boolean remove, int page, String search, boolean oldestFirst) {
+        if (!top.skyeyefast.mchjong.world.WorldSettings.of(player.level().getServer()).policy().replaysEnabled()) {
+            player.sendSystemMessage(Component.translatable("message.mchjong.replays_disabled"));
+            return 0;
+        }
         State state = state(player.level().getServer());
         long now = System.nanoTime();
         state.requests().values().removeIf(time -> now - time >= 500_000_000L);

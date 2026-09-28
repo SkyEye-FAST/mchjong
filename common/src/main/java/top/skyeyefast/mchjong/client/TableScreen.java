@@ -192,6 +192,11 @@ public final class TableScreen extends Screen {
             ? table.clientRoom() : null;
     }
 
+    top.skyeyefast.mchjong.world.WorldSettings.Policy worldPolicy() {
+        return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
+            ? table.clientWorldPolicy() : null;
+    }
+
     boolean canSupplyReds(boolean sanma, top.skyeyefast.mchjong.engine.RedFives reds) {
         return minecraft != null && minecraft.level != null
             && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
@@ -308,6 +313,13 @@ public final class TableScreen extends Screen {
 
     @Override public void tick() {
         if (!minecraft.isWindowActive()) clearCameraInput();
+        var current = view();
+        var world = worldPolicy();
+        if (current != null && world != null && current.viewerSeat() < 0 && current.phase() != Game.Phase.LOBBY
+            && !world.spectatingEnabled()) {
+            onClose();
+            return;
+        }
         if (cameraEnabled()) {
             TableSettings.get().camera().look((lookKeys[1] ? 1 : 0) - (lookKeys[0] ? 1 : 0),
                 (lookKeys[3] ? 1 : 0) - (lookKeys[2] ? 1 : 0));
@@ -635,14 +647,17 @@ public final class TableScreen extends Screen {
         camera.active = view.viewerSeat() >= 0 && viewReady;
         addRenderableWidget(camera);
         right -= viewWidth + gap;
-        addRenderableWidget(MahjongButton.create(replayLabel, ignored -> ClientReplays.list(0, "", false))
+        var replay = MahjongButton.create(replayLabel, ignored -> ClientReplays.list(0, "", false))
             .bounds(right - replayWidth, immersive ? 16 : 8, replayWidth, controlHeight)
-            .tooltip(Tooltip.create(Component.translatable("replay.mchjong.title"))).build());
+            .tooltip(Tooltip.create(Component.translatable("replay.mchjong.title"))).build();
+        var world = worldPolicy();
+        replay.active = world == null || world.replaysEnabled();
+        addRenderableWidget(replay);
         if (immersive) for (var child : children())
             if (child instanceof MahjongButton button) button.textScale(2);
     }
 
-    void configureVisibility(top.skyeyefast.mchjong.engine.HandVisibility visibility) {
+    void configureVisibility(top.skyeyefast.mchjong.engine.PlayerHandVisibility visibility) {
         var view = view();
         if (minecraft.getConnection() == null || view == null) return;
         minecraft.getConnection().send(PayloadPackets.serverbound(
@@ -696,7 +711,9 @@ public final class TableScreen extends Screen {
                     minecraft.setScreen(new TableInviteScreen(this)))
                     .bounds(8 + seat * (cardWidth + 4) + cardWidth - inviteWidth - 2, 34, inviteWidth, 20)
                     .tooltip(Tooltip.create(Component.translatable("ui.mchjong.invite"))).build();
-                invite.active = view.viewerSeat() >= 0 && view.exitVote() == null;
+                var world = worldPolicy();
+                invite.active = view.viewerSeat() >= 0 && view.exitVote() == null
+                    && (world == null || world.invitationsEnabled());
                 addRenderableWidget(invite);
             }
             if (player.occupied() && !player.bot()

@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.HandVisibility;
+import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
 
@@ -49,14 +49,15 @@ final class TableLobby {
         buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24, half,
             () -> client.setScreen(new TableRulesScreen(parent, view))).selected(view.rules().custom()));
         var visibility = button(Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
-            "settings.mchjong.hand_visibility." + view.handVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
-            () -> parent.configureVisibility(HandVisibility.values()[Math.floorMod(view.handVisibility().ordinal()
-                + (MahjongUi.shiftDown() ? -1 : 1), HandVisibility.values().length)]));
+            "settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
+            () -> parent.configureVisibility(PlayerHandVisibility.values()[Math.floorMod(view.playerHandVisibility().ordinal()
+                + (MahjongUi.shiftDown() ? -1 : 1), PlayerHandVisibility.values().length)]));
         visibility.active = host;
         buttons.add(visibility);
         var invite = button(Component.translatable("ui.mchjong.invite"), left, y + 72, half,
             () -> client.setScreen(new TableInviteScreen(parent)));
-        invite.active = member;
+        var world = parent.worldPolicy();
+        invite.active = member && (world == null || world.invitationsEnabled());
         buttons.add(invite);
         buttons.add(button(Component.translatable("room.mchjong.participants"), left + half + 4, y + 72, half,
             () -> client.setScreen(new TableSeatsScreen(parent))));

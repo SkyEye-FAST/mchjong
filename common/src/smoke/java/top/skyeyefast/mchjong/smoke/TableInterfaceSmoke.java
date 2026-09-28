@@ -73,7 +73,7 @@ final class TableInterfaceSmoke {
                 TableScreen opened = (TableScreen) client.screen;
                 ClientTableNetworking.receive(new TableViewPayload(table.getBlockPos(),
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
-                    table.clientRedOptions(), table.clientRoom()));
+                    table.clientRedOptions(), table.clientRoom(), table.clientWorldPolicy()));
                 require(client.screen == opened && opened.immersive(),
                     "Opening the exit vote replaced the immersive table screen");
             }
@@ -122,7 +122,7 @@ final class TableInterfaceSmoke {
             1, base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
             null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
-                new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.HandVisibility.SELF,
+                new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false,
             state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1, java.util.Map.of());
         return state == 2 ? SettlementSmoke.fixture(normal) : normal;
     }

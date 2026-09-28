@@ -34,7 +34,7 @@ class CompactTableLayoutTest {
             drawn ? hand.getLast() : Tile.ABSENT, melds, List.of(), List.of(), false, exposed, false));
         var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.handVisibility(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
         return TableScene.build(view).stream().filter(p -> p.seat() == owner).toList();
     }
 
@@ -136,7 +136,7 @@ class CompactTableLayoutTest {
             base.phase(), 0, base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(),
             base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
             base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(), base.clocks(),
-            base.finalRanks(), base.handVisibility(), base.exitVote(), base.handling(), base.autoPlay(),
+            base.finalRanks(), base.playerHandVisibility(), base.openHands(), base.exitVote(), base.handling(), base.autoPlay(),
             base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles());
         var pieces = TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
         assertEquals(TableScene.HAND_STEP, pieces.get(2).position().distanceTo(pieces.get(1).position()), 1e-9);

@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.HandVisibility;
+import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -58,7 +58,7 @@ final class RoomFlowSmoke {
                 click(client, "settings.mchjong.hand_visibility", Component.translatable("settings.mchjong.hand_visibility.self"));
                 next(4);
             }
-        } else if (stage == 4 && view.handVisibility() == HandVisibility.RIICHI) {
+        } else if (stage == 4 && view.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
             originalPreset = view.rules().preset();
             clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
             var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RuleSet.values())

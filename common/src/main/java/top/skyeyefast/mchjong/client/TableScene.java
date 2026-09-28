@@ -1,7 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import top.skyeyefast.mchjong.engine.HandVisibility;
-
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
@@ -71,8 +69,7 @@ public final class TableScene {
                 boolean drawn = separateDraw && i == player.hand().size() - 1;
                 boolean declaration = view.focus() != null && view.focus().declaration()
                     && view.focus().seat() == seat && view.focus().index() == i;
-                boolean flat = player.exposed() || declaration
-                    || view.handVisibility() == HandVisibility.OPEN;
+                boolean flat = player.exposed() || declaration || view.openHands();
                 result.add(piece(declaration ? view.focus().tile() : player.hand().get(i), seat, Area.HAND, i,
                     left + i * HAND_STEP + (drawn ? DRAW_GAP : 0), top + (flat ? FLAT_CENTER : 0.081) * TILE_SCALE, HAND_Z, 0, flat, false));
             }

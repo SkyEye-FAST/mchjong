@@ -30,8 +30,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private String unreadableSave;
     private int ticks;
     private long sentRevision = -1;
+    private WorldSettings.Policy sentWorldPolicy;
     private TableView clientView;
     private top.skyeyefast.mchjong.engine.RoomView clientRoom;
+    private WorldSettings.Policy clientWorldPolicy;
     private int clientRedOptions;
     private long clientViewReceivedNanos;
     private long nextArchiveRetry;
@@ -49,7 +51,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
-        game.configureWorld(policy.invitationTeleport());
+        game.configureWorld(policy.gamePolicy());
         synchronizeEquipment();
         if (game.phase() == Game.Phase.LOBBY && !equipment.canSupplyReds(game.rules().sanma(), game.rules().redFives()))
             for (var reds : new top.skyeyefast.mchjong.engine.RedFives[]{top.skyeyefast.mchjong.engine.RedFives.THREE,
@@ -129,6 +131,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (level == null || !level.isClientSide()) throw new IllegalStateException("Client room state on server");
         clientRoom = java.util.Objects.requireNonNull(room);
     }
+    public WorldSettings.Policy clientWorldPolicy() { return clientWorldPolicy; }
+    public void acceptWorldPolicy(WorldSettings.Policy policy) {
+        if (level == null || !level.isClientSide()) throw new IllegalStateException("Client world policy on server");
+        clientWorldPolicy = java.util.Objects.requireNonNull(policy);
+    }
     public int clientRedOptions() { return clientRedOptions; }
     public void acceptRedOptions(int options) {
         if (level == null || !level.isClientSide()) throw new IllegalStateException("Client supply state on server");
@@ -150,13 +157,15 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         table.synchronizeEquipment();
         table.ticks++;
         table.flushReplays();
-        if (game.revision() != table.sentRevision || table.ticks % 40 == 0) {
+        var worldPolicy = WorldSettings.of(level.getServer()).policy();
+        if (game.revision() != table.sentRevision || !worldPolicy.equals(table.sentWorldPolicy) || table.ticks % 40 == 0) {
             table.setChanged();
             for (ServerPlayer player : ((ServerLevel) level).players()) {
                 if (player.distanceToSqr(pos.getX() + 0.5, pos.getY(), pos.getZ() + 0.5) <= 24 * 24)
                     table.sendView(player, false, false);
             }
             table.sentRevision = game.revision();
+            table.sentWorldPolicy = worldPolicy;
         }
     }
 
@@ -194,13 +203,23 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             if (open) player.sendSystemMessage(Component.translatable("message.mchjong.corrupt"));
             return;
         }
-        TableView snapshot = game.view(authorizedViewer(player));
+        var policy = WorldSettings.of(level.getServer()).policy();
+        UUID viewer = authorizedViewer(player);
+        TableView snapshot = viewer == null ? game.spectatorView(policy.spectatorHandVisibility()) : game.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply,
-                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView())));
+                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView(), policy)));
     }
 
-    public void open(ServerPlayer player) { sendView(player, true, false); }
+    public void open(ServerPlayer player) {
+        Game current = serverGame();
+        if (current != null && current.phase() != Game.Phase.LOBBY && authorizedViewer(player) == null
+            && !WorldSettings.of(level.getServer()).policy().spectatingEnabled()) {
+            player.sendSystemMessage(Component.translatable("message.mchjong.spectating_disabled"));
+            return;
+        }
+        sendView(player, true, false);
+    }
 
     public boolean equipmentEditable() { return unreadableSave == null && (game == null || game.phase() == Game.Phase.LOBBY); }
 
@@ -399,7 +418,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     /** Existing companions retain membership; new ones need a nearby living owner. */
     public int companionSeat(net.minecraft.world.entity.TamableAnimal companion) {
         Game current = serverGame();
-        if (current == null || companion.level() != level || !companion.isAlive() || companion.isRemoved()) return -1;
+        if (current == null || !WorldSettings.of(level.getServer()).policy().allowCompanionPlayers()
+            || companion.level() != level || !companion.isAlive() || companion.isRemoved()) return -1;
         if (current.entityBot(companion.getUUID())) return current.seatOf(companion.getUUID());
         if (!(companion.getOwner() instanceof ServerPlayer owner) || owner.level() != level
             || !owner.isAlive() || owner.isSpectator() || owner.distanceToSqr(worldPosition.getCenter()) > 64
@@ -556,6 +576,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             case AUTO_DISCARD -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.DISCARD, payload.enabled());
             case AUTO_KITA -> game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.KITA, payload.enabled());
             case CONVENIENCE_HINTS -> game.configureConvenienceHints(player.getUUID(), payload.token(), payload.enabled());
+            case OPEN_HANDS -> game.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
         };
         if (changed) {
             refreshParticipants(payload.operation() == TableControlPayload.Operation.REQUEST_EXIT);

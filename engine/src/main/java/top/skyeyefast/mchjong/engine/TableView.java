@@ -11,7 +11,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
                         List<Seat> seats, List<Action> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
-                        HandVisibility handVisibility, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
+                        PlayerHandVisibility playerHandVisibility, boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
                         boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles) {
     // ronBlocked and riichiHan describe only the recipient. riichiHan is the
     // established declaration, or the current declaration's one/two-han value.
