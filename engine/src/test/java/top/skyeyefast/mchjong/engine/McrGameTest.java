@@ -344,7 +344,7 @@ class McrGameTest {
         game.validate();
     }
 
-    private static McrGame addedKongPosition() {
+    static McrGame addedKongPosition() {
         var game = new McrGame(16, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "55m123456p789s11z").hand(2, "123456s789p22z46m")
             .at(53, Tile.WEST).at(54, Tile.GREEN).at(55, Tile.RED)
@@ -395,6 +395,7 @@ class McrGameTest {
             }
             exhaust(game);
             assertInstanceOf(McrSettlement.Draw.class, game.result());
+            game = McrCodec.restore(McrCodec.save(game));
             for (int seat = 0; seat < 4; seat++) assertEquals(0, game.points(seat));
             assertEquals(0, game.remaining());
             assertEquals(hand < 16 ? McrGame.Phase.HAND_END : McrGame.Phase.MATCH_END, game.phase());
@@ -405,40 +406,40 @@ class McrGameTest {
         for (int seat = 0; seat < 4; seat++) assertTrue(game.actions(seat).isEmpty());
     }
 
-    private static boolean has(McrGame game, int seat, Action.Type type) {
+    static boolean has(McrGame game, int seat, Action.Type type) {
         return game.actions(seat).stream().anyMatch(action -> action.type() == type);
     }
 
-    private static int index(McrGame game, int seat, Action.Type type) {
+    static int index(McrGame game, int seat, Action.Type type) {
         var actions = game.actions(seat);
         for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == type) return i;
         fail("Missing " + type + " for seat " + seat + " in " + game.phase() + ": " + actions);
         return -1;
     }
 
-    private static void play(McrGame game, int seat, Action.Type type) {
+    static void play(McrGame game, int seat, Action.Type type) {
         assertTrue(game.act(seat, game.decision(), index(game, seat, type)));
         game.validate();
     }
 
-    private static void discard(McrGame game, int seat, int tile) {
+    static void discard(McrGame game, int seat, int tile) {
         int choice = game.actions(seat).indexOf(new Action(DISCARD, tile));
         assertTrue(choice >= 0, "Missing discard " + tile);
         assertTrue(game.act(seat, game.decision(), choice));
         game.validate();
     }
 
-    private static void discardKind(McrGame game, int seat, String notation) {
+    static void discardKind(McrGame game, int seat, String notation) {
         int kind = Tile.parseKind(notation);
         discard(game, seat, game.hand(seat).stream().filter(tile -> Tile.kind(tile) == kind).findFirst().orElseThrow());
     }
 
-    private static void passAll(McrGame game) {
+    static void passAll(McrGame game) {
         for (int seat = 0; seat < 4 && game.phase() == McrGame.Phase.REACTION; seat++)
             if (has(game, seat, PASS)) play(game, seat, PASS);
     }
 
-    private static void exhaust(McrGame game) {
+    static void exhaust(McrGame game) {
         for (int steps = 0; steps < 600; steps++) {
             switch (game.phase()) {
                 case TURN -> discard(game, game.turn(), game.drawn(game.turn()) >= 0
@@ -457,7 +458,7 @@ class McrGameTest {
     }
 
     /** Build one full physical wall, allocating copies across all explicitly supplied hands. */
-    private static final class Fixture {
+    static final class Fixture {
         private final List<Integer> stock = new ArrayList<>(Tile.mcrSet());
         private final Integer[] order = new Integer[144];
 

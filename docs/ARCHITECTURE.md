@@ -146,6 +146,28 @@ private-engine inspection values. Recipient authorization and redaction belong
 to the Minecraft-facing boundary, not these accessors. `validate()` checks hand
 sizes, drawn-tile aliases, all 144 physical identities and zero-sum points.
 
+### MCR persistence
+
+`McrGame.save()` produces the immutable, private `McrGameState` record.
+It contains the current-format identifier, future-wall seed, revision and decision,
+hand position, wall slots and both cursors, physical player zones, stop-win flags,
+draw provenance, pending added kong, submitted responses, penalties and hand result.
+`McrCodec.save(game)` encodes that record; `McrCodec.restore(json)` decodes it
+and constructs a game without dealing or applying any payment again. The codec
+uses the engine's embedded Gson and explicit win/draw tags for settlement results.
+All record fields are required, and incompatible formats or invalid data are rejected.
+
+Restoration checks physical conservation, hand and meld structure, wall bounds,
+claim ownership, penalty/stop-win consistency and completed winning results.
+Legal actions are regenerated from the restored position. Previously submitted
+responses must still be valid and remain submitted; a completed reaction window
+cannot be restored as pending. Restore advances revision and decision so old
+action tokens cannot be reused. A partial response advances only revision,
+leaving the shared decision valid for the other responders.
+
+The save record is separate from recipient data. Restore failures are reported
+to the storage caller; the codec never substitutes a new match.
+
 ## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native

@@ -123,6 +123,12 @@ object McrHandAnalyzer {
 
     /** Concealed tiles exclude the drawn/winning tile: size + 3 * meld count must equal 13. */
     @JvmStatic
+    fun validateHand(concealed: List<Int>, melds: List<Meld>, owner: Int) {
+        hand(concealed, melds, owner)
+    }
+
+    /** Concealed tiles exclude the drawn/winning tile: size + 3 * meld count must equal 13. */
+    @JvmStatic
     fun shanten(concealed: List<Int>, melds: List<Meld>, owner: Int): Int =
         McrMahjong.shanten(hand(concealed, melds, owner))
 

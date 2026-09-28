@@ -21,6 +21,7 @@ public final class McrGame {
     private McrWall wall;
     private Phase phase;
     private long decision;
+    private long revision = 1;
     private int handIndex;
     private int turn;
     private int claimTile = Tile.ABSENT;
@@ -40,8 +41,67 @@ public final class McrGame {
         startHand(wall);
     }
 
+    private McrGame(McrGameState state) {
+        seed = state.seed();
+        revision = Math.addExact(state.revision(), 1);
+        decision = Math.addExact(state.decision(), 1);
+        handIndex = state.handNumber() - 1;
+        turn = state.turn();
+        phase = state.phase();
+        wall = McrWall.restore(state.wall());
+        claimTile = state.claimTile();
+        claimFrom = state.claimFrom();
+        pendingKong = state.pendingKong();
+        drawWallLast = state.drawWallLast();
+        drawKong = state.drawKong();
+        result = state.result();
+        penalties.addAll(state.penalties());
+        for (int seat = 0; seat < 4; seat++) {
+            var saved = state.players().get(seat);
+            var player = players[seat];
+            player.hand.addAll(saved.hand());
+            player.melds.addAll(saved.melds());
+            player.river.addAll(saved.river());
+            player.flowers.addAll(saved.flowers());
+            player.drawn = saved.drawn();
+            player.points = saved.points();
+            winForbidden[seat] = saved.winForbidden();
+        }
+        validate();
+        validateSavedEvents();
+        rebuildChoices();
+        for (var reply : state.replies()) {
+            if (phase != Phase.REACTION || replies[reply.seat()] != null
+                || !choices.get(reply.seat()).contains(reply.action()))
+                throw new IllegalArgumentException("Invalid saved MCR response");
+            replies[reply.seat()] = reply.action();
+        }
+        if (phase == Phase.REACTION && responsesComplete())
+            throw new IllegalArgumentException("Saved reaction window has already completed");
+    }
+
+    /** Detached private state. Legal-action caches are rebuilt rather than trusted on restore. */
+    public McrGameState save() {
+        validate();
+        validateSavedEvents();
+        var seats = new ArrayList<McrGameState.Player>(4);
+        var submitted = new ArrayList<McrGameState.Reply>(3);
+        for (int seat = 0; seat < 4; seat++) {
+            var player = players[seat];
+            seats.add(new McrGameState.Player(player.hand, player.melds, player.river, player.flowers,
+                player.drawn, player.points, winForbidden[seat]));
+            if (replies[seat] != null) submitted.add(new McrGameState.Reply(seat, replies[seat]));
+        }
+        return new McrGameState(McrGameState.FORMAT, seed, revision, decision, handNumber(), turn, phase,
+            wall.save(), seats, claimTile, claimFrom, pendingKong, drawWallLast, drawKong, submitted, penalties, result);
+    }
+
+    /** Does not deal, settle, apply penalties or resolve pending responses a second time. */
+    public static McrGame restore(McrGameState state) { return new McrGame(Objects.requireNonNull(state)); }
+
     public Phase phase() { return phase; }
     public long decision() { return decision; }
+    public long revision() { return revision; }
     public int handNumber() { return handIndex + 1; }
     public int dealer() { return handIndex % 4; }
     public int turn() { return turn; }
@@ -87,6 +147,7 @@ public final class McrGame {
                 default -> throw new IllegalStateException("Unexpected MCR turn action: " + action.type());
             }
         }
+        revision = Math.addExact(revision, 1);
         return true;
     }
 
@@ -95,6 +156,7 @@ public final class McrGame {
         if (phase != Phase.HAND_END) return false;
         handIndex++;
         startHand(new McrWall(seed + WALL_SEED_STEP * handIndex));
+        revision = Math.addExact(revision, 1);
         return true;
     }
 
@@ -300,6 +362,10 @@ public final class McrGame {
         phase = next;
         decision++;
         Arrays.fill(replies, null);
+        rebuildChoices();
+    }
+
+    private void rebuildChoices() {
         var actions = new ArrayList<List<Action>>(4);
         for (int seat = 0; seat < 4; seat++) actions.add(McrLegalActions.forSeat(this, seat));
         choices = List.copyOf(actions);
@@ -350,6 +416,42 @@ public final class McrGame {
 
     /** Private integrity check, including all 144 physical identities and zero-sum points. */
     public void validate() {
+        Objects.requireNonNull(phase);
+        Objects.requireNonNull(drawKong);
+        checkSeat(turn);
+        if (handIndex < 0 || handIndex >= 16 || revision < 1 || revision == Long.MAX_VALUE
+            || decision < 1 || decision == Long.MAX_VALUE || wall.save().head() < 53)
+            throw new IllegalStateException("Invalid MCR position");
+        boolean ended = phase == Phase.HAND_END || phase == Phase.MATCH_END;
+        if (ended != (result != null) || ended && (phase == Phase.MATCH_END) != (handIndex == 15))
+            throw new IllegalStateException("MCR phase and result disagree");
+        if (claimTile == Tile.ABSENT ? claimFrom != -1 : claimFrom < 0 || claimFrom > 3 || claimTile < 0 || claimTile >= 136)
+            throw new IllegalStateException("Invalid MCR claim source");
+        if (phase == Phase.REACTION && (claimFrom != turn || claimTile == Tile.ABSENT))
+            throw new IllegalStateException("Reaction has no current claim");
+        if (phase == Phase.DRAW && (wall.remaining() == 0 || claimFrom < 0 || turn != (claimFrom + 1) % 4))
+            throw new IllegalStateException("Invalid next draw position");
+        if (drawKong == McrWinContext.KongWin.ROBBED || drawWallLast && wall.remaining() != 0)
+            throw new IllegalStateException("Invalid MCR draw origin");
+        if (pendingKong != null && (phase != Phase.REACTION || pendingKong.type() != Action.Type.ADDED_KAN
+            || !pendingKong.tiles().equals(List.of(claimTile)) || wall.remaining() == 0
+            || players[claimFrom].drawn < 0 || !players[claimFrom].hand.contains(claimTile)
+            || players[claimFrom].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.PON && meld.kind() == Tile.kind(claimTile))))
+            throw new IllegalStateException("Invalid pending MCR kong");
+        if (phase == Phase.REACTION && pendingKong == null) {
+            var river = players[claimFrom].river;
+            if (river.isEmpty() || river.get(river.size() - 1).tile() != claimTile || river.get(river.size() - 1).called())
+                throw new IllegalStateException("Reaction does not refer to the last unclaimed discard");
+        }
+        if ((phase == Phase.TURN || phase == Phase.REACTION) && drawWallLast != (wall.remaining() == 0))
+            throw new IllegalStateException("Last-wall context disagrees with the wall");
+        if (phase == Phase.TURN && drawKong == McrWinContext.KongWin.REPLACEMENT
+            && (players[turn].drawn < 0 || players[turn].melds.isEmpty()
+                || !players[turn].melds.get(players[turn].melds.size() - 1).kan()
+                    && players[turn].melds.stream().noneMatch(meld -> meld.type() == Meld.Type.ADDED_KAN)))
+            throw new IllegalStateException("Kong replacement has no completed kong");
+        if (result instanceof McrSettlement.Draw && wall.remaining() != 0)
+            throw new IllegalStateException("Exhaustive draw still has wall tiles");
         wall.assertConservation(players);
         if (Arrays.stream(players).mapToLong(player -> player.points).sum() != 0)
             throw new IllegalStateException("MCR point conservation failed");
@@ -360,8 +462,79 @@ public final class McrGame {
                 || result instanceof McrSettlement.Win win && win.winner() == seat;
             if (player.hand.size() + 3 * player.melds.size() != (extra ? 14 : 13))
                 throw new IllegalStateException("Invalid MCR concealed hand size at seat " + seat);
-            if (player.drawn != Tile.ABSENT && !player.hand.contains(player.drawn))
-                throw new IllegalStateException("Drawn tile is not owned by its player");
+            boolean canHaveDraw = phase == Phase.TURN && seat == turn
+                || phase == Phase.REACTION && pendingKong != null && seat == claimFrom
+                || result instanceof McrSettlement.Win win && win.fromSeat() == -1 && win.winner() == seat;
+            if (player.drawn != Tile.ABSENT && (!canHaveDraw || !player.hand.contains(player.drawn)))
+                throw new IllegalStateException("Invalid drawn-tile ownership");
+            if (!player.norths.isEmpty() || player.river.stream().anyMatch(Discard::riichi))
+                throw new IllegalStateException("Riichi state in an MCR hand");
+            var concealed = new ArrayList<>(player.hand);
+            if (extra) concealed.remove(concealed.size() - 1);
+            McrHandAnalyzer.validateHand(concealed, player.melds, seat);
+        }
+    }
+
+    private void validateSavedEvents() {
+        if (penalties.size() > 64) throw new IllegalArgumentException("Too many MCR penalties");
+        var penaltyKeys = new HashSet<Integer>();
+        int previousHand = 0;
+        for (var penalty : penalties) {
+            if (penalty.handNumber() < previousHand || penalty.handNumber() > handNumber()
+                || penalty.tile() < 0 || penalty.tile() >= 136
+                || !penaltyKeys.add(penalty.handNumber() * 4 + penalty.offender())
+                || !penalty.equals(McrSettlement.wrongWin(penalty.handNumber(), penalty.offender(), penalty.tile())))
+                throw new IllegalArgumentException("Invalid saved MCR penalty");
+            previousHand = penalty.handNumber();
+        }
+        for (int seat = 0; seat < 4; seat++) if (winForbidden[seat] != penaltyKeys.contains(handNumber() * 4 + seat))
+            throw new IllegalArgumentException("Stop-win state disagrees with current-hand penalties");
+
+        var riverTiles = new HashSet<Integer>();
+        for (int seat = 0; seat < 4; seat++) {
+            for (var discard : players[seat].river) {
+                if (!riverTiles.add(discard.tile()) || discard.tile() < 0 || discard.tile() >= 136)
+                    throw new IllegalArgumentException("Invalid saved MCR discard history");
+                if (discard.called()) {
+                    int source = seat;
+                    boolean meldClaim = Arrays.stream(players).flatMap(player -> player.melds.stream())
+                        .anyMatch(meld -> !meld.closed() && meld.fromSeat() == source && meld.calledTile() == discard.tile());
+                    boolean winningClaim = result instanceof McrSettlement.Win win && win.fromSeat() == seat
+                        && win.tile() == discard.tile() && win.context().kongWin() != McrWinContext.KongWin.ROBBED;
+                    if (!meldClaim && !winningClaim) throw new IllegalArgumentException("Called discard has no destination");
+                }
+            }
+            for (var meld : players[seat].melds) if (!meld.closed()
+                && players[meld.fromSeat()].river.stream().noneMatch(discard -> discard.called() && discard.tile() == meld.calledTile()))
+                throw new IllegalArgumentException("Exposed meld has no source discard");
+        }
+        if (result instanceof McrSettlement.Win win) {
+            checkSeat(win.winner());
+            boolean self = win.context().method() == McrWinContext.Method.SELF_DRAW;
+            if (!self) checkSeat(win.fromSeat());
+            var winner = players[win.winner()];
+            if (winForbidden[win.winner()] || !winner.hand.contains(win.tile())
+                || win.context().seatWind() != seatWind(win.winner()) || win.context().roundWind() != roundWind()
+                || win.context().flowerCount() != winner.flowers.size() || win.context().lastCopy() != lastCopy(win.tile())
+                || win.context().wallLast() != (drawWallLast && win.context().kongWin() != McrWinContext.KongWin.ROBBED)
+                || self && (turn != win.winner() || winner.drawn != win.tile() || win.context().kongWin() != drawKong)
+                || !self && (win.fromSeat() != claimFrom || win.tile() != claimTile || turn != claimFrom))
+                throw new IllegalArgumentException("Saved MCR winning context disagrees with the position");
+            if (!self) {
+                var supplier = players[win.fromSeat()];
+                if (win.context().kongWin() == McrWinContext.KongWin.ROBBED) {
+                    if (supplier.melds.stream().noneMatch(meld -> meld.type() == Meld.Type.PON && meld.kind() == Tile.kind(win.tile())))
+                        throw new IllegalArgumentException("Robbed kong has no original pung");
+                } else if (supplier.river.isEmpty() || supplier.river.get(supplier.river.size() - 1).tile() != win.tile()
+                    || !supplier.river.get(supplier.river.size() - 1).called()) {
+                    throw new IllegalArgumentException("Winning claim has no source discard");
+                }
+            }
+            var concealed = new ArrayList<>(winner.hand);
+            concealed.remove(Integer.valueOf(win.tile()));
+            if (!win.score().equals(McrHandAnalyzer.score(concealed, winner.melds, win.winner(), win.tile(), win.context()))
+                || !win.equals(McrSettlement.win(win.winner(), win.fromSeat(), win.tile(), win.context(), win.score())))
+                throw new IllegalArgumentException("Invalid saved MCR winning result");
         }
     }
 

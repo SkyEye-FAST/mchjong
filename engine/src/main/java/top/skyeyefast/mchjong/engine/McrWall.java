@@ -27,6 +27,16 @@ final class McrWall {
 
     int remaining() { return tail - head; }
 
+    private McrWall(McrGameState.Wall state) {
+        tiles = new ArrayList<>(state.tiles());
+        head = state.head();
+        tail = state.tail();
+    }
+
+    static McrWall restore(McrGameState.Wall state) { return new McrWall(state); }
+
+    McrGameState.Wall save() { return new McrGameState.Wall(tiles, head, tail); }
+
     /** Private physical slots, including ABSENT for tiles already taken. */
     List<Integer> tiles() { return List.copyOf(tiles); }
 

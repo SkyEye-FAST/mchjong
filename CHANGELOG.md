@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add explicit MCR saves with validated wall/player state, resumable response windows and independent penalty/result restoration.
 - Add raw MCR dealing and independent zero-sum win, wrong-win penalty and exhaustive-draw payment records.
 - Add an engine-only sixteen-hand MCR match with ordered initial flower replacement, validated actions, single-winner arbitration, kong/robbing transactions and separate wrong-win penalties with hand-scoped stop-win status.
 - Add the engine's standard 144-tile MCR stock, separate physical flower area and finite wall with automatic tail replacement and complete tile accounting.
