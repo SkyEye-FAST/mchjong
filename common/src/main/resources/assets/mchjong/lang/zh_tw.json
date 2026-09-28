@@ -303,6 +303,7 @@
   "preset.mchjong.m_league": "M.League",
   "preset.mchjong.mahjong_soul": "雀魂",
   "preset.mchjong.source.builtin": "內建",
+  "preset.mchjong.source.builtin.annotation": "（內建）",
   "preset.mchjong.source.local": "本機",
   "preset.mchjong.source.server": "伺服器",
   "preset.mchjong.tenhou": "天鳳",

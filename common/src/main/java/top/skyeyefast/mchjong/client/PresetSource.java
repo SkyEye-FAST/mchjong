@@ -21,9 +21,6 @@ public enum PresetSource {
         return Component.translatable("preset.mchjong.source." + name().toLowerCase(java.util.Locale.ROOT));
     }
     public boolean includes(PresetSource origin) { return this == origin || this == SERVER && origin == BUILTIN; }
-    public Component caption(Component name) {
-        return this == BUILTIN ? label().copy().append(" · ").append(name) : name;
-    }
     public List<MahjongButton> tabs(int left, int top, int width, Consumer<PresetSource> choose) {
         var buttons = new ArrayList<MahjongButton>();
         int span = (width - 4) / 2;
@@ -31,7 +28,9 @@ public enum PresetSource {
             .bounds(left + (source == SERVER ? 0 : span + 4), top, span, 20).build().selected(source == this));
         return buttons;
     }
-    public static Tooltip tooltip(Component name, Identifier id) {
-        return Tooltip.create(name.copy().append("\n").append(Component.literal(id.toString()).withStyle(net.minecraft.ChatFormatting.GRAY)));
+    public Tooltip tooltip(Component name, Identifier id) {
+        var text = name.copy();
+        if (this == BUILTIN) text.append(Component.translatable("preset.mchjong.source.builtin.annotation").withStyle(net.minecraft.ChatFormatting.GRAY));
+        return Tooltip.create(text.append("\n").append(Component.literal(id.toString()).withStyle(net.minecraft.ChatFormatting.GRAY)));
     }
 }

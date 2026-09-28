@@ -30,11 +30,11 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
         int top = 62;
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             TileFacePreset preset = choices.get(page * rows + i);
-            var button = MahjongButton.create(TileFacePresets.source(preset).caption(TileFacePresets.label(preset)), ignored -> {
+            var button = MahjongButton.create(TileFacePresets.label(preset), ignored -> {
                 parent.selectFace(preset);
                 onClose();
             }).bounds(left + 76, top + i * 25, span - 80, 20)
-                .tooltip(PresetSource.tooltip(TileFacePresets.label(preset), preset.id())).build().selected(preset.equals(parent.facePreset()));
+                .tooltip(TileFacePresets.source(preset).tooltip(TileFacePresets.label(preset), preset.id())).build().selected(preset.equals(parent.facePreset()));
             addRenderableWidget(button);
         }
         int navY = height - 56;
