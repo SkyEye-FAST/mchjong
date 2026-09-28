@@ -51,6 +51,8 @@ public final class Game {
     List<TableView.Win> wins = new ArrayList<>();
     private long presentedDecision = -1;
     private int presentedSeats;
+    private long skippedDecision = -1;
+    private int skippedSeats;
     String result = "lobby";
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
@@ -216,7 +218,8 @@ public final class Game {
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
                 seating.winds[i], player.bot ? player.botDifficulty : null));
         }
-        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks());
+        return new RoomView(host(), invitationTeleport, seating.stage, seating.available, seats, settlementTicks(),
+            skippedDecision == decision ? skippedSeats : 0);
     }
 
     private int settlementTicks() {
@@ -231,6 +234,14 @@ public final class Game {
         for (int seat = 0; seat < rules.players(); seat++) {
             var player = players[seat];
             if (!player.bot && player.presence == PlayerPresence.SEATED && (presentedSeats & (1 << seat)) == 0) return false;
+        }
+        return true;
+    }
+
+    private boolean settlementSkipped() {
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var player = players[seat];
+            if (player.id != null && !player.bot && (skippedSeats & (1 << seat)) == 0) return false;
         }
         return true;
     }
@@ -588,7 +599,16 @@ public final class Game {
             return true;
         }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
-            if (action.type() == SKIP_SETTLEMENT) advanceSettlement();
+            if (action.type() == SKIP_SETTLEMENT) {
+                if (skippedDecision == decision && (skippedSeats & (1 << seat)) != 0) return false;
+                if (skippedDecision != decision) {
+                    skippedDecision = decision;
+                    skippedSeats = 0;
+                }
+                skippedSeats |= 1 << seat;
+                if (settlementSkipped()) advanceSettlement();
+                else revision++;
+            }
             else if (action.type() == SETTLEMENT_DONE) {
                 if (presentedDecision != decision) {
                     presentedDecision = decision;

@@ -277,11 +277,11 @@ limit. Seated human clients acknowledge completion using the server-issued
 `SETTLEMENT_DONE` action; once all seated humans finish, `Game` shortens the
 remaining hand stage to a 200-tick reading tail. This acknowledgement cannot
 change points or advance the stage immediately. Bots need no acknowledgement;
-the fallback still expires if a client never acknowledges. A seated player's
-explicit skip request can advance the stage. Match settlement then adds a
-separately skippable 200-tick final-standings stage before restoring the roster.
-`RoomView.settlementTicks` synchronizes the remaining duration; the saved decision
-age preserves it across reloads. `TableScreen` switches to final standings at the
+the fallback still expires if a client never acknowledges. Each settlement stage
+advances early when every human player confirms its skip action. Match settlement
+then adds a 200-tick final-standings stage before restoring the roster.
+`RoomView` synchronizes the remaining duration and skip confirmations; the saved decision
+age preserves the countdown across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 
 `TableLobby` groups player count, matching rule presets, rule details, visibility,
