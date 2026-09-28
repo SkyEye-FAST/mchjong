@@ -569,29 +569,27 @@ public final class TableScreen extends Screen {
         }
         if (TableResults.available(view)) {
             int skip = TableSeatsScreen.find(view, Action.Type.SKIP_SETTLEMENT, List.of());
+            boolean skipped = room() != null && view.viewerSeat() >= 0
+                && (room().settlementSkippedSeats() & (1 << view.viewerSeat())) != 0;
             int ticks = room() == null ? 0 : room().settlementTicks();
             boolean standings = view.phase() == Game.Phase.MATCH_END && ticks > Game.SETTLEMENT_TICKS;
             int seconds = (Math.max(0, ticks - (standings ? Game.SETTLEMENT_TICKS : 0)) + 19) / 20;
-            String key = view.phase() == Game.Phase.HAND_END ? "ui.mchjong.next_hand_in"
-                : standings ? "ui.mchjong.final_scores_in" : "ui.mchjong.lobby_in";
+            String key = view.phase() == Game.Phase.HAND_END ? "ui.mchjong.next_hand"
+                : standings ? "ui.mchjong.final_scores" : "ui.mchjong.lobby";
             int scale = immersive ? 2 : 1;
-            int gap = 4 * scale;
-            int skipWidth = skip >= 0 ? 104 * scale : 0;
-            int countdownWidth = uiWidth() - 20 * scale - skipWidth - (skip >= 0 ? gap : 0);
+            int countdownWidth = uiWidth() - 20 * scale;
             var readout = TableAudio.result(view);
             boolean reading = !view.wins().isEmpty() && ticks - (standings ? Game.SETTLEMENT_TICKS : 0) > Game.SETTLEMENT_TICKS;
-            Component caption = reading ? Component.translatable(readout != null && !readout.complete()
-                ? "ui.mchjong.readout_active" : "ui.mchjong.readout_waiting") : Component.translatable(key, seconds);
-            var countdown = MahjongButton.create(caption, ignored -> {})
-                .bounds(10 * scale, 8 * scale, countdownWidth, 20 * scale).build().textScale(scale).selected(true);
-            countdown.active = false;
+            Component caption = Component.translatable(key, seconds);
+            Component help = Component.translatable(skip < 0 || skipped
+                ? "ui.mchjong.readout_waiting" : "action.mchjong.skip_settlement");
+            if (skip >= 0 && !skipped && reading) help = help.copy().append("\n").append(Component.translatable(
+                readout != null && !readout.complete() ? "ui.mchjong.readout_active" : "ui.mchjong.readout_waiting"));
+            var countdown = MahjongButton.create(caption, ignored -> send(view, skip))
+                .bounds(10 * scale, 8 * scale, countdownWidth, 20 * scale)
+                .tooltip(Tooltip.create(help)).build().textScale(scale).selected(true);
+            countdown.active = skip >= 0 && !skipped;
             addRenderableWidget(countdown);
-            if (skip >= 0) {
-                Component label = Component.translatable("action.mchjong.skip_settlement");
-                addRenderableWidget(MahjongButton.create(label, ignored -> send(view, skip))
-                    .bounds(10 * scale + countdownWidth + gap, 8 * scale, skipWidth, 20 * scale)
-                    .tooltip(Tooltip.create(label)).build().textScale(scale));
-            }
             return;
         }
         int layoutWidth = uiWidth();

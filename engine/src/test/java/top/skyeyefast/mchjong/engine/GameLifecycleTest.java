@@ -171,12 +171,30 @@ class GameLifecycleTest {
         Game game = started(RuleSet.TENHOU_4, 204);
         UUID player = game.players[0].id;
         Settlement.abort(game, "nine_terminals");
+        game.wins = List.of(new TableView.Win(0, 1, 4,
+            new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
         assertEquals(Game.Phase.HAND_END, game.phase());
         TableView hand = game.view(player);
         int skip = index(hand, Action.Type.SKIP_SETTLEMENT);
+        int done = index(hand, Action.Type.SETTLEMENT_DONE);
         assertTrue(skip >= 0);
+        assertTrue(done > skip);
         assertFalse(game.act(player, hand.decision() - 1, skip));
         assertTrue(game.act(player, hand.decision(), skip));
+        assertEquals(Game.Phase.HAND_END, game.phase());
+        assertEquals(skip, index(game.view(player), Action.Type.SKIP_SETTLEMENT));
+        assertEquals(done, index(game.view(player), Action.Type.SETTLEMENT_DONE));
+        assertEquals(1, game.roomView().settlementSkippedSeats());
+        assertFalse(game.act(player, hand.decision(), skip));
+        game = JSON.fromJson(JSON.toJson(game), Game.class);
+        game.validate();
+        assertEquals(1, game.roomView().settlementSkippedSeats());
+        for (int seat = 1; seat < 4; seat++) {
+            UUID id = game.players[seat].id;
+            TableView view = game.view(id);
+            assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
+            if (seat < 3) assertEquals(Game.Phase.HAND_END, game.phase());
+        }
         assertEquals(Game.Phase.TURN, game.phase());
         assertFalse(game.act(player, hand.decision(), skip));
 
@@ -185,13 +203,32 @@ class GameLifecycleTest {
         assertEquals(Game.Phase.MATCH_END, game.phase());
         TableView results = game.view(player);
         assertEquals(Game.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
-        assertTrue(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
+        for (int seat = 0; seat < 4; seat++) {
+            UUID id = game.players[seat].id;
+            TableView view = game.view(id);
+            assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
+            if (seat < 3) assertEquals(Game.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        }
         assertEquals(Game.Phase.MATCH_END, game.phase());
         assertEquals(Game.SETTLEMENT_TICKS, game.roomView().settlementTicks());
         assertFalse(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
         TableView standings = game.view(player);
-        assertTrue(game.act(player, standings.decision(), index(standings, Action.Type.SKIP_SETTLEMENT)));
+        for (int seat = 0; seat < 4; seat++) {
+            UUID id = game.players[seat].id;
+            TableView view = game.view(id);
+            assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
+            if (seat < 3) assertEquals(Game.Phase.MATCH_END, game.phase());
+        }
         assertEquals(Game.Phase.LOBBY, game.phase());
+
+        Game practice = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 205);
+        UUID solo = UUID.randomUUID();
+        assertTrue(practice.join(solo, "Solo", 0));
+        startPositioned(practice);
+        Settlement.abort(practice, "nine_terminals");
+        TableView practiceHand = practice.view(solo);
+        assertTrue(practice.act(solo, practiceHand.decision(), index(practiceHand, Action.Type.SKIP_SETTLEMENT)));
+        assertEquals(Game.Phase.TURN, practice.phase());
     }
 
     // Match progression has two player-count paths; preset differences have focused rule tests.
