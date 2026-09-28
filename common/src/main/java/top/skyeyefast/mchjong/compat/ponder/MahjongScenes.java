@@ -30,17 +30,17 @@ final class MahjongScenes {
         base(scene, "table_placement", "Placing a mahjong table");
         scene.overlay().chaseBoundingBoxOutline(PonderPalette.GREEN, "footprint",
             new AABB(2, 1, 2, 5, 2, 5), TEXT_TIME);
-        say(scene, "Leave a clear 3 x 3 area for the table, with room above its playing surface.", FELT);
+        say(scene, "Leave a clear 3 × 3 area for the table, with nothing blocking the space above.", FELT);
         scene.world().showSection(util.select().position(TABLE), Direction.DOWN);
-        say(scene, "Place the table at the center of this area. Its frame fills the surrounding space.", FELT);
+        say(scene, "Place the table in the center of the area; its rim reaches into the surrounding blocks.", FELT);
         for (int seat = 0; seat < 4; seat++) {
             scene.world().showSection(util.select().position(TableGeometry.stool(TABLE, seat)), Direction.DOWN);
             scene.idle(8);
         }
-        say(scene, "Place stools two blocks from the center, on the sides used by your game.",
+        say(scene, "Put one stool two blocks from the center on each side you play on.",
             Vec3.atCenterOf(TableGeometry.stool(TABLE, 0)));
         scene.rotateCameraY(90);
-        say(scene, "Both ordinary and automatic tables use this compact arrangement.", FELT);
+        say(scene, "Both ordinary and automatic tables use this compact layout.", FELT);
         scene.markAsFinished();
     }
 
@@ -49,25 +49,25 @@ final class MahjongScenes {
         scene.world().showSection(util.select().fromTo(1, 1, 1, 5, 1, 5), Direction.DOWN);
         ItemStack box = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(box);
-        say(scene, "Prepare the tiles required by the rules: 136 for four players or 108 for three, with matching material, backs and face design. Spare tiles may stay in the box.", FELT);
+        say(scene, "Put the tiles your rules need into the box: 136 for four players or 108 for three, all with matching material, backs, and face preset. Spare tiles may stay in the box.", FELT);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().boxes().setItem(0, box.copy()));
         scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick();
-        say(scene, "Right-click the table to open its storage. It holds up to two mahjong boxes inside.", FELT);
+        say(scene, "Right-click the table to open its storage; it holds up to two boxes.", FELT);
         ItemStack cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
         MahjongComponents.color(cloth, DyeColor.CYAN);
         scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(cloth);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().installCloth(cloth));
-        say(scene, "Use a cloth on the table. A cloth and a complete set make the table ready for play.", FELT);
+        say(scene, "Right-click the table with a cloth in hand to drape it. With the cloth down and a full set ready, you can start preparing a match.", FELT);
         ItemStack stick = new ItemStack(MahjongContent.POINT_STICK);
         MahjongComponents.points(stick, 1000);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class,
             table -> table.equipment().drawer(0).setItem(0, stick.copy()));
         Vec3 drawer = TableGeometry.world(TABLE, TableGeometry.drawerBounds(0).getCenter());
         scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick().withItem(stick);
-        say(scene, "Open the side drawers to store point sticks and hand payments to the other players.", drawer);
-        say(scene, "Manage boxes through table storage in the lobby. Crouch-click the tabletop with empty hands to collect the cloth.", FELT);
+        say(scene, "Open the side drawer to store every stick denomination and pay players manually during settlement.", drawer);
+        say(scene, "While waiting, move boxes in and out through the storage screen. Keep both hands empty and sneak-right-click the tabletop to retrieve the cloth.", FELT);
         scene.markAsFinished();
     }
 
@@ -80,17 +80,17 @@ final class MahjongScenes {
         });
         Vec3 stool = Vec3.atCenterOf(TableGeometry.stool(TABLE, 0));
         scene.overlay().showControls(CONTROLS, Pointing.DOWN, 80).rightClick();
-        say(scene, "Click a stool to sit and open the table controls. Click it again to reopen the controls while seated.", stool);
-        say(scene, "Choose three- or four-player mahjong and a rule preset in the lobby, then have every player ready up.", FELT);
-        say(scene, "On an ordinary table, sweep the loose tiles to shuffle, drag them toward your wall, then pull wall tiles toward your hand.", FELT);
+        say(scene, "Right-click a stool to sit down and open the table screen; right-click the stool again while seated to reopen it.", stool);
+        say(scene, "Pick a three- or four-player preset in the lobby, then have everyone click Ready.", FELT);
+        say(scene, "On ordinary tables, sweep the loose tiles to shuffle, drag stacks in front of you to build the wall, then drag tiles from the wall into your hand.", FELT);
         scene.world().setBlock(TABLE, MahjongContent.AUTO_TABLE.defaultBlockState(), false);
         scene.world().modifyBlockEntity(TABLE, MahjongTableBlockEntity.class, table -> {
             table.equipment().installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
             table.equipment().boxes().setItem(0, MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE));
         });
-        say(scene, "An automatic table handles shuffling, wall construction, dealing and drawing for you.", FELT);
-        say(scene, "Select tiles on the table to discard. The controls offer legal calls, riichi and winning actions.", FELT);
-        say(scene, "Close the overlay to look around while seated. Use Minecraft's sneak control after closing it to dismount.", stool);
+        say(scene, "Automatic tables shuffle, build walls, deal, and draw all by themselves.", FELT);
+        say(scene, "Click a table tile to discard it. The screen lists the chi, pon, kan, riichi, and win options available right now.", FELT);
+        say(scene, "Close the screen and you can look around while staying seated; press sneak to stand up.", stool);
         scene.markAsFinished();
     }
 
