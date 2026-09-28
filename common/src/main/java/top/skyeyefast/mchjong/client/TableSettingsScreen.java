@@ -9,17 +9,17 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 public final class TableSettingsScreen extends Screen {
-    private final TableScreen parent;
+    private final Screen parent;
     private final TableSettings settings = TableSettings.get();
     private int tab;
     private int page;
     private boolean saveFailed;
 
-    public TableSettingsScreen(TableScreen parent) {
+    public TableSettingsScreen(Screen parent) {
         super(Component.translatable("settings.mchjong.title"));
         this.parent = parent;
     }
-    public TableScreen tableScreen() { return parent; }
+    public TableScreen tableScreen() { return parent instanceof TableScreen table ? table : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics) {}
 
@@ -83,7 +83,7 @@ public final class TableSettingsScreen extends Screen {
         } else if (tab == 2) {
             addRenderableWidget(new CameraSlider(left, 65, span, true));
             addRenderableWidget(new CameraSlider(left, 91, span, false));
-            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> parent.resetView())
+            addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_view"), ignored -> resetView())
                 .bounds(left, 117, span, 20).build());
             addToggle(left, 143, span, "settings.mchjong.river", settings.showRiver, () -> settings.showRiver = !settings.showRiver);
         } else {
@@ -101,7 +101,7 @@ public final class TableSettingsScreen extends Screen {
                 .bounds(left + column + 6, 117, column, 20).build());
         }
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
-            settings.reset(); TableAudio.settingsChanged(); parent.resetView(); init();
+            settings.reset(); TableAudio.settingsChanged(); resetView(); init();
             RiichiStickPresets.sendChoice();
             VoicePresets.sendChoice();
         }).bounds(left, height - 30, column, 20).build());
@@ -120,6 +120,11 @@ public final class TableSettingsScreen extends Screen {
     private static Component value(String key, Enum<?> value) {
         return Component.translatable("settings.mchjong.toggle", Component.translatable(key),
             Component.translatable(key + "." + value.name().toLowerCase(Locale.ROOT)));
+    }
+
+    private void resetView() {
+        if (parent instanceof TableScreen table) table.resetView();
+        else settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -144,7 +149,7 @@ public final class TableSettingsScreen extends Screen {
     @Override public void onClose() {
         try {
             settings.save(TableSettings.configPath());
-            minecraft.setScreen(minecraft.level == null ? null : parent);
+            minecraft.setScreen(minecraft.level == null && parent instanceof TableScreen ? null : parent);
         } catch (IOException failure) {
             org.slf4j.LoggerFactory.getLogger("mchjong").error("Cannot save table settings", failure);
             saveFailed = true;

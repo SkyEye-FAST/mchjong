@@ -5,7 +5,8 @@ time allowances, invitations and participants. The primary button fills empty se
 and starts seat preparation. Leave room and the host's Close room control stay
 in the top toolbar. The Settings button groups additional controls into World, Room and Personal.
 Administrators can edit world values in the World tab; other players can inspect them. Personal
-display, input, camera and audio settings remain local to each player. Automatic
+display, input, camera and audio settings remain local to each player and are also
+available through MChjong's mod-list Config button. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 

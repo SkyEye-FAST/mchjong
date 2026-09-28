@@ -84,12 +84,17 @@ Use the following flags with `:fabric:runSmokeClient` and `:forge:runSmokeClient
 | --- | --- |
 | `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets; `room-evidence` |
 | `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language standings with uma, resizing and result navigation; `settlement-evidence` |
-| `-PsmokeInterface=true` | Box transactions, carrier synchronization, keyboard/disabled states, immersive controls; `interface-evidence` |
+| `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, camera clearance, immersive controls, closed-screen camera and third-person stool; `seating-evidence` |
 | `-PsmokeVisibility=true` | Four room policies, private packets and unmounted spectator permissions; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
 | `-PsmokeItems=true` | Native held/dropped supplies and exact inventory changes; `items-evidence` |
 | `-PsmokePalette=true` | Material, dye, furniture and player head-slot presentation; `palette-evidence` |
+
+Use `:fabric:runSmokeClient -PsmokeInterface=true -PwithModMenu=true` to
+exercise the installed Mod Menu config factory. The base Fabric interface run
+checks the client without Mod Menu. Forge's client bootstrap verifies its native
+config-screen factory.
 
 ## Test ownership and acceptance
 

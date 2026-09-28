@@ -13,6 +13,8 @@ import top.skyeyefast.mchjong.client.MahjongBoxScreen;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.MahjongEditBox;
 import top.skyeyefast.mchjong.client.MahjongSlider;
+import top.skyeyefast.mchjong.client.PersonalSettingsScreen;
+import top.skyeyefast.mchjong.client.PersonalPresetsScreen;
 import top.skyeyefast.mchjong.client.TableClockScreen;
 import top.skyeyefast.mchjong.client.TableInviteScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
@@ -128,7 +130,17 @@ final class InterfaceSmoke {
             client.resizeDisplay();
             settingsParent = new TableScreen(table.getBlockPos());
             client.setScreen(settingsParent);
-            client.setScreen(new TableSettingsScreen(settingsParent));
+            client.setScreen(new PersonalSettingsScreen(settingsParent));
+            settingsStage = -1; settingsTicks = 0;
+        } else if (settingsStage == -1 && settingsTicks > 12) {
+            checkBounds(client);
+            require(client.screen.width == 320 && client.screen.height == 240, "Personal settings entry viewport was not 320x240");
+            capture(client, output, "33-personal-entry-320x240.png");
+            click(client, "settings.mchjong.personal_presets");
+            require(client.screen instanceof PersonalPresetsScreen, "Personal presets did not open from mod settings");
+            client.screen.onClose();
+            require(client.screen instanceof PersonalSettingsScreen, "Personal presets did not return to mod settings");
+            click(client, "settings.mchjong.preferences");
             settingsStage = 1; settingsTicks = 0;
         } else if (settingsStage >= 1 && settingsStage <= 4 && settingsTicks > 12) {
             checkBounds(client);
@@ -137,7 +149,11 @@ final class InterfaceSmoke {
             require(client.screen.getFocused() != null, "Tab cannot focus a custom control");
             capture(client, output, "33-settings-tab-" + (settingsStage - 1) + ".png");
             if (settingsStage < 4) click(client, "settings.mchjong.tab." + settingsStage);
-            else client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
+            else {
+                client.screen.onClose();
+                require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
+                client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
+            }
             settingsStage++; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);

@@ -27,6 +27,8 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongForge {
     public MchjongForge(FMLJavaModLoadingContext context) {
+        if (net.minecraftforge.fml.loading.FMLEnvironment.dist == net.minecraftforge.api.distmarker.Dist.CLIENT)
+            MchjongForgeClient.registerConfigScreen(context);
         var bus = context.getModEventBus();
         if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
             top.skyeyefast.mchjong.compat.create.CreatePlatform.register(bus);

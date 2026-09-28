@@ -142,6 +142,9 @@ boundaries come from the native container screens themselves. See
 
 `MahjongUi`, `MahjongButton`, `MahjongSlider` and `MahjongEditBox` share the
 project's presentation vocabulary without replacing native input machinery.
+The loader mod-list configuration entry opens the shared client-local personal
+settings and preset screens; Fabric uses optional Mod Menu while Forge
+registers its native config-screen factory.
 `MahjongBoxMenu` has its own registered type on both loaders, with ordinary slot
 and carrier-index synchronization. `MahjongBoxScreen` reads that menu to paint
 inventory wells and a packing summary; it never writes stored components.

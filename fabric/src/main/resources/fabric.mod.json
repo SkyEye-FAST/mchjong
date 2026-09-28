@@ -23,6 +23,9 @@
     "client": [
       "top.skyeyefast.mchjong.MchjongClient"
     ],
+    "modmenu": [
+      "top.skyeyefast.mchjong.compat.modmenu.MchjongModMenu"
+    ],
     "jei_mod_plugin": [
       "top.skyeyefast.mchjong.compat.jei.MahjongJeiPlugin",
       "top.skyeyefast.mchjong.compat.create.CreateWorkshopJei"
@@ -42,6 +45,7 @@
   ],
   "suggests": {
     "create": ">=${create_min_version}",
+    "modmenu": "*",
     "patchouli": "*",
     "ponder": ">=${ponder_version}",
     "jei": ">=${jei_version}",

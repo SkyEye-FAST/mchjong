@@ -29,6 +29,12 @@ development flags add the matching runtime. MChjong bundles its own adapters
 and shared engine, not the optional mods. Cross-loader distributions share their
 parent integration's table row.
 
+Fabric and Quilt use the optional Mod Menu 7.2.2 integration for the personal
+settings button in the mod list. `-PwithModMenu=true` adds Mod Menu to Fabric
+development runs. Forge provides the button through its native mod-list
+config-screen API. Both open the same local settings and preset pages, which
+save to `config/mchjong-client.toml`.
+
 ### Recipe viewers and Create
 
 JEI, EMI and REI expose the same finite supply recipe examples on both loaders.

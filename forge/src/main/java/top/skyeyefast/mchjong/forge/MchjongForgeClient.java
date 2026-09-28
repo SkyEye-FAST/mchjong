@@ -24,6 +24,11 @@ public final class MchjongForgeClient {
     private static final boolean PATCHOULI = net.minecraftforge.fml.ModList.get().isLoaded("patchouli");
     private MchjongForgeClient() {}
 
+    public static void registerConfigScreen(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext context) {
+        context.registerExtensionPoint(net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory.class,
+            () -> new net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory(PersonalSettingsScreen::new));
+    }
+
     @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event) {
         event.register(RiichiStickModel.ID);
     }

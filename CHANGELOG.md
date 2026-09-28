@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Open personal settings and presets from the mod-list configuration button on Fabric/Quilt and Forge.
 - Make tenpai hints a host controlled room option shared by all participants.
 - Show parent scopes and inset preset choices in secondary menus.
 - Move Touhou Little Maid integration out of the invitation entry into a dedicated handbook chapter, and rewrite handbook, rule, and interface texts across all four languages in native style.

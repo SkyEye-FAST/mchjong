@@ -1,13 +1,13 @@
 # Audio and voice presets
 
-Table settings → Audio controls effect volume, countdown warnings, voice playback
+Personal settings → Audio controls effect volume, countdown warnings, voice playback
 and voice volume. Effects are positional and also respect Minecraft's Blocks
 volume. Countdown warnings and recorded voices respect Master volume. Setting a
 volume to zero mutes that category. The preview button plays one effect and the
 selected `ron` recording. Minecraft's accessibility narration has independent
 controls.
 
-Choose a voice preset in room Settings → Personal → Personal presets. The
+Choose a voice preset in MChjong's mod-list Config → Personal presets. The
 selection belongs to the player, while playback volume belongs to each listener.
 **Selected preset** plays declarations and winning-hand recordings with the
 speaker's selected server voice. Players hear their own local voice selection on
