@@ -101,6 +101,7 @@ interface smoke verify their native config-screen factories.
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
+`McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
 `McrHandAnalyzerTest` owns the explicit tile/meld/context conversions, basic
 library calls, flower exclusion and fan-result projection. `ScoringBridgeTest`
 owns the existing Riichi scoring adapter. Run these engine boundaries with:

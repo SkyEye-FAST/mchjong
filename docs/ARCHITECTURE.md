@@ -90,6 +90,15 @@ already collected. Its conservation check covers the remaining physical wall and
 all player-owned zones. The Riichi `Wall` independently owns its 136/108-tile
 composition, 14-tile dead wall, replacement slots and dora/ura indicators.
 
+`McrWall.drawRaw` takes a physical tile from the front without replacing flowers,
+so initial packets can be distributed before any player starts supplementary draws.
+Normal `draw` and `replace` retain automatic flower collection and tail replacement.
+`McrSettlement` keeps normal wins and exhaustive draws in its `Result` contract;
+below-minimum declarations produce separate `Penalty` events. Self-draw charges
+each opponent eight plus total fan points; discard wins charge the discarder that
+amount and the other opponents eight each. A wrong-win penalty transfers ten
+points to each opponent, independently of hand results.
+
 ## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native

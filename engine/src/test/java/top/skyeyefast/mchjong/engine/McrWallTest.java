@@ -8,6 +8,18 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class McrWallTest {
+    @Test void rawDealingDoesNotReplaceOrSkipFlowers() {
+        var order = new ArrayList<>(Tile.mcrSet());
+        Collections.swap(order, 0, order.indexOf(FlowerTile.SPRING.id()));
+        var wall = new McrWall(order);
+        assertEquals(FlowerTile.SPRING.id(), wall.drawRaw());
+        assertEquals(143, wall.remaining());
+        assertEquals(order.get(1), wall.drawRaw());
+        assertEquals(order.get(143), wall.tiles().get(143), "Raw dealing leaves the tail untouched");
+        for (int i = 2; i < 144; i++) assertEquals(order.get(i), wall.drawRaw());
+        assertEquals(Tile.ABSENT, wall.drawRaw());
+    }
+
     @Test void standardStockSeparatesEightPhysicalFlowersFromTheOrdinaryKinds() {
         var stock = Tile.mcrSet();
         assertEquals(144, stock.size());

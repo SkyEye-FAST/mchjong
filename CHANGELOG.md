@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add raw MCR dealing and independent zero-sum win, wrong-win penalty and exhaustive-draw payment records.
 - Add the engine's standard 144-tile MCR stock, separate physical flower area and finite wall with automatic tail replacement and complete tile accounting.
 - Add a privately bundled MCR hand-analysis boundary with explicit tile, meld and winning-context conversion and separate fan results; name the existing Riichi adapter `RiichiHandAnalyzer`.
 

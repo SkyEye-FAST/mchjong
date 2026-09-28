@@ -30,6 +30,11 @@ final class McrWall {
     /** Private physical slots, including ABSENT for tiles already taken. */
     List<Integer> tiles() { return List.copyOf(tiles); }
 
+    /** Initial dealing only: take one physical tile without exposing or replacing flowers. */
+    int drawRaw() {
+        return remaining() == 0 ? Tile.ABSENT : tiles.set(head++, Tile.ABSENT);
+    }
+
     int draw(PlayerState player) { return draw(player, false); }
 
     int replace(PlayerState player) { return draw(player, true); }
