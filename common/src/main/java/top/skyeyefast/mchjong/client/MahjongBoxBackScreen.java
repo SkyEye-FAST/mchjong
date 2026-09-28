@@ -25,11 +25,11 @@ public final class MahjongBoxBackScreen extends MahjongBoxPresetScreen {
         int top = 62;
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
             ResourceLocation id = choices.get(page * rows + i);
-            var button = MahjongButton.create(TileBackPresets.source(id).caption(TileBackPresets.label(id)), ignored -> {
+            var button = MahjongButton.create(TileBackPresets.label(id), ignored -> {
                 parent.selectBack(id);
                 onClose();
             }).bounds(left + 38, top + i * 25, span - 42, 20)
-                .tooltip(PresetSource.tooltip(TileBackPresets.label(id), id)).build().selected(id.equals(parent.backPreset()));
+                .tooltip(TileBackPresets.source(id).tooltip(TileBackPresets.label(id), id)).build().selected(id.equals(parent.backPreset()));
             addRenderableWidget(button);
         }
         int navY = height - 56;

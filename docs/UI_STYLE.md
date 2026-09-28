@@ -306,7 +306,8 @@ the same local settings and preset screens. The preset screen lets a player choo
 riichi stick and voice. The stick category shows the strip texture beside each name;
 the voice category lists recording sets. Both selections are saved locally. Keep the
 lists paginated at small window sizes. All four preset selectors have Server
-and Local source navigation, mark built-in entries in Server, automatically refresh loaded entries, and show
+and Local source navigation, mark built-in entries only with a gray parenthetical
+in their tooltips, automatically refresh loaded entries, and show
 the full name and persistent ID in each choice's tooltip.
 
 Native supply containers reserve a 24-pixel logical bottom strip for optional

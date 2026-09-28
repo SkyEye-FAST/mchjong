@@ -301,6 +301,7 @@
   "preset.mchjong.m_league": "M.League",
   "preset.mchjong.mahjong_soul": "Mahjong Soul",
   "preset.mchjong.source.builtin": "Built-in",
+  "preset.mchjong.source.builtin.annotation": " (Built-in)",
   "preset.mchjong.source.local": "Local",
   "preset.mchjong.source.server": "Server",
   "preset.mchjong.tenhou": "Tenhou",
