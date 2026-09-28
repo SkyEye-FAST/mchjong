@@ -59,8 +59,8 @@ final class BoxInterfaceSmoke {
                 var option = client.screen.children().stream()
                     .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
                     .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
-                    .filter(child -> child.getMessage().getString().equals(top.skyeyefast.mchjong.client.TileFacePresets.source(preset)
-                        .caption(top.skyeyefast.mchjong.client.TileFacePresets.label(preset)).getString()))
+                    .filter(child -> child.getMessage().getString().equals(
+                        top.skyeyefast.mchjong.client.TileFacePresets.label(preset).getString()))
                     .findFirst().orElseThrow();
                 client.screen.setFocused(option);
                 option.setFocused(true);
