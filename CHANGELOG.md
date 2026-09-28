@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Show parent scopes and inset preset choices in secondary menus.
+
 ### Fixed
 
 - Keep immersive view active when an exit vote opens.

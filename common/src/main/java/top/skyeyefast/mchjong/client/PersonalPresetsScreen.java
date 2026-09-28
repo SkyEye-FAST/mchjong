@@ -80,7 +80,8 @@ public final class PersonalPresetsScreen extends Screen {
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 464);
         int span = Math.min(440, width - 24), left = (width - span) / 2;
-        MahjongUi.text(graphics, font, title, left + 10, 16, span - 20, MahjongUi.TEXT, false);
+        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
+            left + 10, 16, span - 20, MahjongUi.ACCENT, false);
         var choices = choices();
         int rows = Math.max(1, (height - 156) / 25);
         if (tab == 0) for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {

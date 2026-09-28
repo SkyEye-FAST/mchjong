@@ -105,7 +105,7 @@ public final class TableRulesScreen extends Screen {
                 var choice = addRenderableWidget(MahjongButton.create(name, ignored -> {
                     draft = draft.withPreset(rule); mode = Mode.PRESET; numbers.clear(); page = 0; rejected = false;
                     presetExpanded = false; init();
-                }).bounds(left, 56 + i * 24, span, 20).build().selected(draft.preset() == rule));
+                }).bounds(left + 12, 56 + i * 24, span - 12, 20).build().selected(draft.preset() == rule));
                 presetButtons.put(rule, choice);
             }
             addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
@@ -267,8 +267,14 @@ public final class TableRulesScreen extends Screen {
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         updateControls();
         MahjongUi.backdrop(graphics, width, height, 580);
-        MahjongUi.text(graphics, font, draft.custom() ? Component.translatable("rules.mchjong.custom") : title,
-            12, 12, width - 24, MahjongUi.TEXT, true);
+        Component path = Component.translatable("settings.mchjong.scope.room").append(" › ").append(title);
+        if (presetExpanded) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.mode.preset"));
+        else if (draft.custom()) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.custom"));
+        MahjongUi.text(graphics, font, path, 12, 12, width - 24, MahjongUi.ACCENT, true);
+        if (presetExpanded) {
+            int left = (width - Math.min(540, width - 24)) / 2;
+            graphics.fill(left + 5, 56, left + 6, height - 58, MahjongUi.EDGE);
+        }
         for (var label : labels) {
             MahjongUi.text(graphics, font, label.text(), label.x(), label.y(), label.width(), MahjongUi.TEXT, false);
             if (mouseX >= label.x() && mouseX < label.x() + label.width() && mouseY >= label.y() - 4 && mouseY < label.y() + 12)

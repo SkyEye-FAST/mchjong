@@ -127,7 +127,8 @@ public final class TableSettingsScreen extends Screen {
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 560);
-        MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
+        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
+            12, 16, width - 24, MahjongUi.ACCENT, true);
         if (tab == 0) {
             int pages = (TableSettings.Information.values().length - 1) / (Math.max(1, (height - 130) / 26) * 2) + 1;
             if (pages > 1) graphics.centeredText(font, (page + 1) + " / " + pages, width / 2, height - 55, MahjongUi.MUTED);

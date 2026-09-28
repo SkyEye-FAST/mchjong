@@ -115,7 +115,10 @@ public final class TableOptionsScreen extends Screen {
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 464);
-        MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
+        String[] scopes = {"world", "room", "personal"};
+        MahjongUi.text(graphics, font, title.copy().append(" › ")
+            .append(Component.translatable("settings.mchjong.scope." + scopes[tab])),
+            12, 16, width - 24, MahjongUi.ACCENT, true);
         var view = parent.view();
         var room = parent.room();
         Component note = Component.translatable("settings.mchjong.personal_note");

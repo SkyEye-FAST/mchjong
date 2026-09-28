@@ -53,7 +53,8 @@ public final class MahjongBoxFaceScreen extends MahjongBoxPresetScreen {
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 304);
         int span = Math.min(304, width - 24), left = (width - span) / 2;
-        MahjongUi.text(graphics, font, title, left + 10, 16, span - 20, MahjongUi.TEXT, false);
+        MahjongUi.text(graphics, font, Component.translatable("item.mchjong.mahjong_box").append(" › ").append(title),
+            left + 10, 16, span - 20, MahjongUi.ACCENT, false);
         var choices = choices();
         int rows = Math.max(1, Math.min(5, (height - 128) / 25));
         for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
