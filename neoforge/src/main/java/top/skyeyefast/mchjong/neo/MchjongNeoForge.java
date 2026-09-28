@@ -30,7 +30,9 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 
 @Mod(MahjongContent.MOD_ID)
 public final class MchjongNeoForge {
-    public MchjongNeoForge(IEventBus bus) {
+    public MchjongNeoForge(IEventBus bus, net.neoforged.fml.ModContainer container) {
+        if (net.neoforged.fml.loading.FMLEnvironment.dist == net.neoforged.api.distmarker.Dist.CLIENT)
+            MchjongNeoForgeClient.registerConfigScreen(container);
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.tick.ServerTickEvent.Post event) ->
                 top.skyeyefast.mchjong.config.ServerPresets.tick(event.getServer()));

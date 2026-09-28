@@ -37,6 +37,12 @@ All dependency versions live in `gradle.properties`. Viewer API dependencies are
 compile-only. Each optional profile adds its viewer to the development runtime;
 distributed MChjong jars contain the MChjong adapters and the shared engine.
 
+Fabric and Quilt use the optional Mod Menu 11.0.5 integration for the personal
+settings button in the mod list. `-PwithModMenu=true` adds Mod Menu to Fabric
+development runs. Forge and NeoForge provide the button through their native
+mod-list config-screen APIs. All three open the same local settings and preset
+pages, which save to `config/mchjong-client.toml`.
+
 Forge selects JEI from the shared viewer flag and otherwise stays on its base
 profile, so configuring Forge does not prevent an EMI run on another loader.
 `-PforgeRecipeBrowser=none` or `jei` can override its profile explicitly.

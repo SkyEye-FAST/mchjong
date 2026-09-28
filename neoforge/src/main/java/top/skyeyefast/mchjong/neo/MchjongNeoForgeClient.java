@@ -12,6 +12,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 public final class MchjongNeoForgeClient {
     private static final boolean PATCHOULI = net.neoforged.fml.ModList.get().isLoaded("patchouli");
     private MchjongNeoForgeClient() {}
+    public static void registerConfigScreen(net.neoforged.fml.ModContainer container) {
+        container.registerExtensionPoint(net.neoforged.neoforge.client.gui.IConfigScreenFactory.class,
+            (ignored, parent) -> new top.skyeyefast.mchjong.client.PersonalSettingsScreen(parent));
+    }
     @SubscribeEvent public static void models(net.neoforged.neoforge.client.event.ModelEvent.RegisterAdditional event) {
         event.register(net.minecraft.client.resources.model.ModelResourceLocation.standalone(top.skyeyefast.mchjong.client.RiichiStickModel.ID));
     }

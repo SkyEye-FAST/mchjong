@@ -8,10 +8,13 @@ import net.minecraft.client.gui.screens.TitleScreen;
 import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.client.ConfigScreenHandler;
 import net.minecraftforge.client.extensions.common.IClientItemExtensions;
 import net.minecraftforge.event.TickEvent;
 import net.minecraftforge.eventbus.api.SubscribeEvent;
 import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.ModList;
+import top.skyeyefast.mchjong.client.PersonalSettingsScreen;
 import top.skyeyefast.mchjong.client.MahjongItemRenderer;
 import top.skyeyefast.mchjong.client.RiichiStickModel;
 import top.skyeyefast.mchjong.world.MahjongContent;
@@ -42,6 +45,10 @@ public final class ForgeClientBootstrap {
         var models = client.getModelManager();
         if (models.getModel(new ModelResourceLocation(RiichiStickModel.ID, "standalone")) == models.getMissingModel())
             throw new IllegalStateException("Forge additional riichi-stick model is missing");
+        var modInfo = ModList.get().getModContainerById(MahjongContent.MOD_ID).orElseThrow().getModInfo();
+        var configScreen = ConfigScreenHandler.getScreenFactoryFor(modInfo).orElseThrow().apply(client, client.screen);
+        if (!(configScreen instanceof PersonalSettingsScreen))
+            throw new IllegalStateException("Forge personal settings screen is missing from the mod list");
         Path output = Path.of(System.getProperty("mchjong.smoke.output"));
         Files.createDirectories(output);
         SmokeScreenshots.grab(output.toFile(), "forge-bootstrap.png", client.getMainRenderTarget(), message -> {});

@@ -25,6 +25,11 @@ public final class MchjongForgeClient {
     private static final ModelResourceLocation RIICHI = new ModelResourceLocation(RiichiStickModel.ID, "standalone");
     private MchjongForgeClient() {}
 
+    public static void registerConfigScreen(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext context) {
+        context.registerExtensionPoint(net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory.class,
+            () -> new net.minecraftforge.client.ConfigScreenHandler.ConfigScreenFactory(PersonalSettingsScreen::new));
+    }
+
     @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event) {
         event.register(RIICHI);
     }

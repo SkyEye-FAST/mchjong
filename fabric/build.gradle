@@ -7,6 +7,11 @@ group = rootProject.maven_group
 base.archivesName = "mchjong-fabric-${minecraft_version}"
 
 repositories {
+    maven {
+        name = 'Terraformers'
+        url = 'https://maven.terraformersmc.com/'
+        content { includeGroup 'com.terraformersmc' }
+    }
     exclusiveContent {
         forRepository { maven { name = 'Ladysnake'; url = 'https://maven.ladysnake.org/releases' } }
         filter { includeGroup 'org.ladysnake.cardinal-components-api' }
@@ -22,6 +27,10 @@ dependencies {
     mappings loom.officialMojangMappings()
     modImplementation "net.fabricmc:fabric-loader:${loader_version}"
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
+    modCompileOnly "com.terraformersmc:modmenu:${modmenu_version}"
+    if (providers.gradleProperty('withModMenu').getOrElse('false').toBoolean()) {
+        modLocalRuntime "com.terraformersmc:modmenu:${modmenu_version}"
+    }
     implementation "com.electronwill.night-config:toml:${night_config_version}"
     include "com.electronwill.night-config:core:${night_config_version}"
     include "com.electronwill.night-config:toml:${night_config_version}"
