@@ -547,7 +547,7 @@ public final class Game {
                     actions.add(new Action(DRAW_WIND, tile));
             if (seat == host()) {
                 if (!fullRoom()) actions.add(new Action(FILL_BOTS));
-                if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING) actions.add(new Action(BEGIN_SEATING));
+                if (fullRoom() && seating.stage == RoomSeating.Stage.GATHERING && equipped()) actions.add(new Action(BEGIN_SEATING));
                 for (int target = 0; target < rules.players(); target++) {
                     var player = players[target];
                     if (target != seat && (player.id == null || player.bot || player.presence == PlayerPresence.DISCONNECTED)) {

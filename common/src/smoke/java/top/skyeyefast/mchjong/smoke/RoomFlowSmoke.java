@@ -81,17 +81,37 @@ final class RoomFlowSmoke {
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                serverTable.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(rules.defaultRedFives()));
+                serverTable.equipment().boxes().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
                 var game = serverTable.participantGame(player);
                 game.configureRules(id, game.view(id).decision(), rules.config());
             });
             resize(client, false);
             next(8);
-        } else if (stage == 8 && preparation.tick(client, table, output, "room")) {
+        } else if (stage == 8 && ticks > 10 && view.actions().stream().anyMatch(action -> action.type()
+            == top.skyeyefast.mchjong.engine.Action.Type.FILL_BOTS)) {
+            click(client, "room.mchjong.start_bots");
+            next(9);
+        } else if (stage == 9 && view.seats().stream().allMatch(seat -> seat.occupied())) {
+            require(view.actions().stream().noneMatch(action -> action.type()
+                == top.skyeyefast.mchjong.engine.Action.Type.BEGIN_SEATING), "Empty box allowed seat confirmation");
+            var blocked = buttonOrNull(client, "ui.mchjong.equipment_needed");
+            require(blocked != null && !blocked.active, "Lobby did not explain missing equipment");
+            check(client);
+            capture(client, output, "equipment-needed.png");
+            var id = client.player.getUUID();
+            var pos = table.getBlockPos();
+            var rules = view.rules().preset();
+            work = client.getSingleplayerServer().submit(() -> {
+                var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
+                serverTable.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(rules.defaultRedFives()));
+            });
+            next(10);
+        } else if (stage == 10 && preparation.tick(client, table, output, "room")) {
             hand = view.handNumber();
             work = settlement(client, table, false);
-            next(9);
-        } else if (stage == 9 && view.phase() == Game.Phase.HAND_END) {
+            next(11);
+        } else if (stage == 11 && view.phase() == Game.Phase.HAND_END) {
             require(table.clientRoom().settlementTicks() > 0 && table.clientRoom().settlementTicks() <= Game.SETTLEMENT_TICKS,
                 "Wrong hand settlement duration");
             if (!capturedHand && ticks > 10) {
@@ -99,11 +119,11 @@ final class RoomFlowSmoke {
                 capture(client, output, "hand-countdown.png");
                 capturedHand = true;
             }
-        } else if (stage == 9 && capturedHand && view.phase() == Game.Phase.TURN && view.handNumber() > hand) {
+        } else if (stage == 11 && capturedHand && view.phase() == Game.Phase.TURN && view.handNumber() > hand) {
             work = settlement(client, table, true);
             capturedHand = false;
-            next(10);
-        } else if (stage == 10 && view.phase() == Game.Phase.MATCH_END) {
+            next(12);
+        } else if (stage == 12 && view.phase() == Game.Phase.MATCH_END) {
             int remaining = table.clientRoom().settlementTicks();
             require(buttonOrNull(client, "room.mchjong.dissolve") == null && buttonOrNull(client, "ui.mchjong.exit") == null,
                 "Settlement exposes room termination");
@@ -126,9 +146,9 @@ final class RoomFlowSmoke {
                 capturedFinal = true;
             } else if (capturedFinal && remaining <= 100 && remaining > 60) {
                 capture(client, output, "final-standings.png");
-                next(11);
+                next(13);
             }
-        } else if ((stage == 10 || stage == 11) && view.phase() == Game.Phase.LOBBY
+        } else if ((stage == 12 || stage == 13) && view.phase() == Game.Phase.LOBBY
             && buttonOrNull(client, "action.mchjong.leave_room") != null) {
             require(capturedFinal, "Final standings were skipped");
             require(view.viewerSeat() >= 0 && view.seats().stream().filter(seat -> seat.occupied()).count() == 4,
@@ -137,8 +157,8 @@ final class RoomFlowSmoke {
             check(client);
             capture(client, output, "returned-lobby.png");
             click(client, "action.mchjong.leave_room");
-            next(12);
-        } else if (stage == 12 && view.viewerSeat() < 0) {
+            next(14);
+        } else if (stage == 14 && view.viewerSeat() < 0) {
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
@@ -146,12 +166,15 @@ final class RoomFlowSmoke {
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                 serverTable.sit(player, 0);
             });
-            next(13);
-        } else if (stage == 13 && view.viewerSeat() >= 0) {
+            next(15);
+        } else if (stage == 15 && view.viewerSeat() >= 0) {
             click(client, "room.mchjong.dissolve");
-            next(14);
-        } else if (stage == 14 && view.seats().stream().noneMatch(seat -> seat.occupied())) {
-            require(!client.player.isPassenger(), "Dissolved room retained the physical seat");
+            next(16);
+        } else if (stage == 16 && view.seats().stream().noneMatch(seat -> seat.occupied())) {
+            if (client.player.isPassenger()) {
+                require(ticks < 40, "Dissolved room retained the physical seat");
+                return false;
+            }
             return true;
         }
         return false;
