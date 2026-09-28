@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Keep immersive view active when an exit vote opens.
 - Disable invitations for friends who are already seated in the room.
 - Allow a nearby owner's maid to take an empty lobby seat before the owner sits down.
 - Advance each settlement stage early only after every human player confirms, and show its remaining seconds in the single top action.
