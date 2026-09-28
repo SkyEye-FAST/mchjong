@@ -404,7 +404,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.8.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.8.1...HEAD
+[0.8.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.1
 [0.8.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.0
 [0.7.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.2
 [0.7.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.1
