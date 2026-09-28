@@ -102,12 +102,15 @@ interface smoke verify their native config-screen factories.
 tail replacements, exhaustion and conservation across player-owned zones.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
+`McrGameTest` owns fixed-wall dealing, ordered supplementary draws, action
+arbitration, wrong-win continuation/stop-win, kong transaction boundaries,
+server-derived winning facts and the complete sixteen-hand lifecycle.
 `McrHandAnalyzerTest` owns the explicit tile/meld/context conversions, basic
 library calls, flower exclusion and fan-result projection. `ScoringBridgeTest`
 owns the existing Riichi scoring adapter. Run these engine boundaries with:
 
 ```text
-gradlew.bat :engine:test --tests "*McrHandAnalyzerTest" --tests "*McrWallTest" --tests "*WallInvariantTest" --tests "*ScoringBridgeTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
+gradlew.bat :engine:test --tests "*Mcr*Test" --tests "*WallInvariantTest" --tests "*ScoringBridgeTest" --tests "*GameLifecycleTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
 ```
 
 Engine tests own scoring, reaction priority, exits, ballots, saved state and

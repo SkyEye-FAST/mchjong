@@ -9,7 +9,7 @@ gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
-  stateful `Game` orchestration, simple records/DTOs and the JVM interop shim for
+  stateful `Game` and `McrGame` orchestration, simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
   including tile identity/set composition, wall layout, visible-tile accounting,
@@ -55,8 +55,8 @@ suppliers and winds. Physical IDs are validated and deduplicated before conversi
 The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` from Maven Central and
 relocates its `top.skyeyefast.mcr` package to `top.skyeyefast.mchjong.internal.mcr`.
 The library's MIT license and upstream attribution remain in the bundled archive.
-`Game`, `RuleConfig`, public views and table actions retain their Riichi contracts;
-the MCR foundation is an independent engine service, not a selectable table mode.
+`Game`, `RuleConfig`, public views and table actions retain their Riichi contracts.
+`McrGame` independently runs four-player MCR matches through engine-owned actions.
 
 MCR analysis takes the concealed hand before drawing or winning:
 `concealed.size() + 3 * melds.size() == 13`, with the winning tile supplied
@@ -98,6 +98,53 @@ below-minimum declarations produce separate `Penalty` events. Self-draw charges
 each opponent eight plus total fan points; discard wins charge the discarder that
 amount and the other opponents eight each. A wrong-win penalty transfers ten
 points to each opponent, independently of hand results.
+
+## MCR match orchestration
+
+`McrGame` owns one fixed four-player, sixteen-hand match. Seats are indices in
+turn order, with seat zero as the opening dealer. Each completed hand advances
+the dealer once. Four hands advance the prevalent wind, and the sixteenth hand
+ends the match. Points start at zero and retain both win payments and penalties.
+
+Construction deals three four-tile packets to each player, then the dealer's
+two upper tiles and each other player's thirteenth tile, through `McrWall.drawRaw`.
+Only after these 53 physical tiles have been allocated does the game replace
+flowers, completing each seat in East, South, West, North order. The wall supplies
+every replacement from the tail. Normal draws use the existing automatic
+replacement path. The game tracks the actual draw origin separately from the
+end of the wall; a flower replacement is distinct from a kong replacement,
+including a flower drawn after declaring a kong.
+
+`McrLegalActions` derives the current `Action` choices. `McrGame.act` accepts a
+seat, the current decision token and one issued action index. A reaction window
+collects each eligible seat's response once before arbitration: qualifying wins
+take precedence over pung/kong, then chow. Simultaneous qualifying wins select
+the nearest seat after the supplier, independently of response arrival order.
+An added kong retains its original pung and the fourth tile in the owner's hand
+until the robbing window closes. A winning claim transfers the physical tile to
+the winner's hand. Ordinary claimed discards remain historical aliases; robbing
+a kong does not create a discard. The winning result also references the same
+tile without creating another owned copy.
+
+`McrGame` is the source of `McrWinContext`: seat and prevalent winds, draw/claim
+method, last-wall status, kong/robbing origin and collected flower count all come
+from its current state. Last-copy detection deduplicates actual public river and
+exposed-meld identities, excluding the winning tile and concealed information.
+
+A structural score produces a win action even below the eight-point minimum.
+The declaration then either settles the hand or appends a separate wrong-win
+`Penalty` and sets the MCR-only `winForbidden` state for that seat. The hand
+continues and ordinary tile actions remain available. Each new hand clears the
+stop-win flags while preserving points and the match's penalty events.
+Exhaustive draws have zero payment. `result()` describes only the completed hand;
+`penalties()` describes the independent penalty events.
+
+The host starts with `new McrGame(seed)`, inspects `actions(seat)` and submits
+`act(seat, decision, index)`. `nextHand()` advances only from `HAND_END`;
+`MATCH_END` is terminal. Hand, meld, river and flower accessors are immutable
+private-engine inspection values. Recipient authorization and redaction belong
+to the Minecraft-facing boundary, not these accessors. `validate()` checks hand
+sizes, drawn-tile aliases, all 144 physical identities and zero-sum points.
 
 ## Networking and authority
 
