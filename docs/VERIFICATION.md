@@ -98,6 +98,10 @@ interface smoke verify their native config-screen factories.
 
 ## Test ownership and acceptance
 
+`McrWallTest` owns the 144-tile domain, independent flower identities, repeated
+tail replacements, exhaustion and conservation across player-owned zones.
+`WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
+
 Engine tests own scoring, reaction priority, exits, ballots, saved state and
 recipient privacy. Lifecycle/manual checks exercise both player counts; enumerate
 presets only where rules differ. `CompactTableLayoutTest` owns hand clearance and

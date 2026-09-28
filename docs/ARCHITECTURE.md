@@ -42,6 +42,23 @@ on `main`. It targets Fabric and Forge. Features and engine changes originate on
 metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
 
+## Physical tile domains
+
+`Tile.kind` covers the 34 ordinary kinds. `FlowerTile` assigns one physical ID to
+each of Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo and Chrysanthemum;
+`Tile.mcrSet` combines those eight identities with 136 ordinary tiles. Flowers
+have their own `PlayerState.flowers` area and are included by the shared
+`PlayerState.physicalTiles` accounting, separately from concealed tiles and
+extracted norths. A hand reset clears all these zones.
+
+`McrWall` owns a finite 144-tile wall with front draws and tail replacements.
+A drawn flower moves to the player's flower area and causes another tail draw,
+repeating until an ordinary tile is returned. The caller places that returned
+tile in the concealed hand. Exhaustion returns `Tile.ABSENT` and retains flowers
+already collected. Its conservation check covers the remaining physical wall and
+all player-owned zones. The Riichi `Wall` independently owns its 136/108-tile
+composition, 14-tile dead wall, replacement slots and dora/ura indicators.
+
 ## Networking and authority
 
 `PayloadPackets` is the outgoing wire boundary. Fabric and NeoForge use native

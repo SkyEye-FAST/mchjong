@@ -1295,11 +1295,7 @@ public final class Game {
         for (int tile : wall.tiles) if (tile >= 0 && !seen.add(tile)) throw new IllegalStateException("Duplicated wall tile");
         for (int seat = 0; seat < rules.players(); seat++) {
             PlayerState player = players[seat];
-            var physical = new ArrayList<>(player.hand);
-            player.melds.forEach(meld -> physical.addAll(meld.tiles()));
-            physical.addAll(player.norths);
-            player.river.stream().filter(discard -> !discard.called()).forEach(discard -> physical.add(discard.tile()));
-            for (int tile : physical) if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
+            for (int tile : player.physicalTiles()) if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
         }
         var supplied = suppliedTiles;
         if (!seen.equals(new HashSet<>(supplied))) throw new IllegalStateException("Tile conservation failed");

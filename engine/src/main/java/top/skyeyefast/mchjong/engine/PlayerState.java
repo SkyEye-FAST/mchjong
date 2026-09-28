@@ -20,6 +20,7 @@ final class PlayerState {
     List<Meld> melds = new ArrayList<>();
     List<Discard> river = new ArrayList<>();
     List<Integer> norths = new ArrayList<>();
+    List<Integer> flowers = new ArrayList<>();
     int drawn = Tile.ABSENT;
     boolean riichi;
     boolean doubleRiichi;
@@ -39,9 +40,19 @@ final class PlayerState {
 
     boolean closed() { return melds.stream().allMatch(Meld::closed); }
 
+    /** Every owned physical tile once; drawn and called discards are aliases. */
+    List<Integer> physicalTiles() {
+        var result = new ArrayList<>(hand);
+        melds.forEach(meld -> result.addAll(meld.tiles()));
+        result.addAll(norths);
+        result.addAll(flowers);
+        river.stream().filter(discard -> !discard.called()).forEach(discard -> result.add(discard.tile()));
+        return result;
+    }
+
     void resetHand() {
         autoPlay = AutoPlay.DEFAULT;
-        hand.clear(); melds.clear(); river.clear(); norths.clear(); forbiddenDiscards.clear();
+        hand.clear(); melds.clear(); river.clear(); norths.clear(); flowers.clear(); forbiddenDiscards.clear();
         drawn = Tile.ABSENT;
         riichi = doubleRiichi = ippatsu = riichiFuriten = temporaryFuriten = false;
         firstTurn = canDeclare = true;
