@@ -100,6 +100,10 @@ interface smoke verify their native config-screen factories.
 
 `McrWallTest` owns the 144-tile domain, independent flower identities, repeated
 tail replacements, exhaustion and conservation across player-owned zones.
+The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
+identities, appearance matching, separate-case selection and the supplied-stock
+session boundary. Run them with
+`gradlew.bat :neoforge:test --tests "*PhysicalSuppliesTest.mcr*" --warning-mode fail --console=plain`.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,

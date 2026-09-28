@@ -90,6 +90,11 @@ already collected. Its conservation check covers the remaining physical wall and
 all player-owned zones. The Riichi `Wall` independently owns its 136/108-tile
 composition, 14-tile dead wall, replacement slots and dora/ura indicators.
 
+The Minecraft item boundary uses `McrDeck` and `TableEquipment.mcrStock` to
+select a complete, uniform 144-tile subset from one case and supply the physical
+identities to `McrSession.start`. Selection is read-only and keeps flower
+item faces separate from ordinary analysis kinds. See [Supply data](SUPPLIES.md#mcr-stock-boundary).
+
 `McrWall.drawRaw` takes a physical tile from the front without replacing flowers,
 so initial packets can be distributed before any player starts supplementary draws.
 Normal `draw` and `replace` retain automatic flower collection and tail replacement.

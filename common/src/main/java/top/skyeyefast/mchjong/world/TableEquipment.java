@@ -51,6 +51,22 @@ public final class TableEquipment {
     public net.minecraft.resources.ResourceLocation backPreset() { return backPreset; }
     public MahjongSupplies.Deck deck() { return deck; }
     public int activeBox() { return activeBox; }
+
+    /** Inspect each case independently; this does not change the selected Riichi deck or appearance. */
+    public McrStock mcrStock() {
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var candidate = top.skyeyefast.mchjong.item.McrDeck.select(boxes.getItem(slot));
+            if (candidate != null) return new McrStock(slot, candidate);
+        }
+        return null;
+    }
+
+    public record McrStock(int boxSlot, top.skyeyefast.mchjong.item.McrDeck deck) {
+        public McrStock {
+            if (boxSlot < 0 || boxSlot >= BOX_SLOTS) throw new IllegalArgumentException("Invalid MCR case slot");
+            java.util.Objects.requireNonNull(deck);
+        }
+    }
     public boolean matchActive() { return !matchSticks.isEmpty(); }
 
     public void beginMatch() {

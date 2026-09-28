@@ -78,6 +78,23 @@ NeoForge defers intrusive object creation until registry events.
 server data through `SurvivalRecipes` and `FurnitureData`, with separate
 synchronized Gradle outputs and reproducibility checks.
 
+## MCR stock boundary
+
+`McrDeck.select` uses the existing box/component validation and inspects one case
+without consuming or rewriting its contents. A selected set contains four
+ordinary copies of each of the 34 kinds and one of each of the eight flowers.
+All selected tiles share material, back color, face preset and back preset.
+Spare tiles remain in the case; red markings do not substitute for missing
+ordinary fives. Each returned deck supplies the standard 144 physical engine
+identities. `McrDeck.tile` explicitly maps physical flower IDs to their item
+faces, independently of ordinary `Tile.kind` analysis.
+
+`TableEquipment.mcrStock` checks its two cases independently and returns the
+source slot and deck. Stock selection leaves the Riichi selection, public
+appearance and point-stick reservations unchanged. It is a supply check;
+cloth, room readiness, active-match locking and start authorization belong to
+the table lifecycle that consumes the selection.
+
 ## Recipe catalogue and identity
 
 `MahjongCatalog` is shared by the loaders. Empty and complete 144-tile cases are
