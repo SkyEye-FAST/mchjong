@@ -460,19 +460,23 @@ public final class TableScreen extends Screen {
                 ignored -> { TableAudio.finishResult(); resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10 * scale, uiHeight() - 48 * scale, boxWidth, 20 * scale).build());
             if (resultsExpanded) {
                 int tabs = view.phase() == Game.Phase.MATCH_END ? 3 : 2;
-                int tabWidth = (layoutWidth - 20 * scale) / tabs;
+                int panelWidth = Math.min(layoutWidth - 20 * scale, 520 * scale);
+                int panelLeft = (layoutWidth - panelWidth) / 2;
+                int tabWidth = panelWidth / tabs;
                 for (int i = 0; i < tabs; i++) {
                     var page = TableResults.Page.values()[i];
                     var button = MahjongButton.create(Component.translatable("ui.mchjong.result_page." + i), ignored -> {
                         TableAudio.finishResult();
                         resultPage = page; results = null; rebuild();
-                    }).bounds(10 * scale + i * tabWidth, 34 * scale, tabWidth - 3 * scale, 20 * scale).build();
+                    }).bounds(panelLeft + i * tabWidth, 34 * scale, tabWidth - 3 * scale, 20 * scale).build();
                     button.selected(page == resultPage);
                     addRenderableWidget(button);
                 }
                 int panelTop = 58 * scale;
+                int panelHeight = layoutHeight - panelTop - 54 * scale;
+                if (resultPage != TableResults.Page.HAND) panelHeight = Math.min(panelHeight, (48 + view.seats().size() * 26) * scale);
                 results = addRenderableWidget(new TableResults(font, view, facePreset(), tileMaterial(), tileBack(), tileBackPreset(),
-                    10 * scale, panelTop, layoutWidth - 20 * scale, layoutHeight - panelTop - 54 * scale,
+                    panelLeft, panelTop, panelWidth, panelHeight,
                     selectedWinner, resultPage, resultStarted, immersive ? 2 : 1).readout(TableAudio.result(view)));
             }
         }

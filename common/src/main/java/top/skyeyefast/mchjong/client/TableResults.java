@@ -284,17 +284,22 @@ public final class TableResults extends AbstractWidget {
             : new int[]{span * 38 / 100, span * 59 / 100, span * 78 / 100, span - 4};
         String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.uma.short", "ui.mchjong.final.short"}
             : new String[]{"ui.mchjong.player", "ui.mchjong.before", "ui.mchjong.change", "ui.mchjong.after"};
+        graphics.fill(x, y, x + span, y + 17, MahjongUi.INPUT);
+        graphics.fill(x, y + 16, x + span, y + 17, MahjongUi.EDGE);
         for (int i = 0; i < labels.length; i++) {
             Component label = Component.translatable(labels[i]);
-            int start = i == 0 ? 4 : ends[i - 1] + 4;
-            text(graphics, label, x + start, y, ends[i] - start, MUTED);
+            int start = i == 0 ? 18 : ends[i - 1] + 4;
+            if (i == 0) line(graphics, label, x + start, y + 4, ends[i] - start - 4, MUTED);
+            else tableNumber(graphics, label, x + start, y + 4, ends[i] - start - 4, MUTED);
         }
-        int rowHeight = Math.min(36, (available - 13) / order.size());
+        int rowHeight = Math.min(26, (available - 18) / Math.max(1, order.size()));
         for (int row = 0; row < order.size(); row++) {
-            int seat = order.get(row), cy = y + 13 + row * rowHeight;
+            int seat = order.get(row), cy = y + 18 + row * rowHeight;
             var player = view.seats().get(seat);
             int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
-            graphics.fill(x, cy, x + span, cy + rowHeight - 2, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
+            graphics.fill(x, cy, x + span, cy + rowHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
+            graphics.fill(x, cy + rowHeight - 1, x + span, cy + rowHeight, MahjongUi.EDGE);
+            if (seat == view.viewerSeat()) graphics.fill(x, cy, x + 2, cy + rowHeight - 1, GOLD);
             Component name = TableScreen.playerName(view, seat);
             if (standings && seat < view.finalRanks().size()) name = Component.literal(view.finalRanks().get(seat) + ". ").append(name);
             int textY = cy + Math.max(2, (rowHeight - 9) / 2);
@@ -308,10 +313,16 @@ public final class TableResults extends AbstractWidget {
                 String value = values.get(i);
                 int color = standings ? i > 0 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT
                     : i == 1 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT;
-                graphics.text(font, value, x + ends[i + 1] - font.width(value) - 3, textY, color, false);
+                tableNumber(graphics, Component.literal(value), x + ends[i] + 4, textY, ends[i + 1] - ends[i] - 8, color);
             }
             hits.add(new Hit(x, cy, span, rowHeight, name.copy().append("  ").append(Component.translatable("ui.mchjong.points", player.points()))));
         }
+    }
+
+    private void tableNumber(GuiGraphicsExtractor graphics, Component value, int x, int y, int span, int color) {
+        int measured = font.width(value);
+        MahjongUi.text(graphics, font, value, x + Math.max(0, span - measured), y, span, color, false);
+        if (measured > span) hits.add(new Hit(x, y, span, 10, value));
     }
 
     private void scores(GuiGraphicsExtractor graphics, int x, int y, int span, int available, boolean horizontal) {
