@@ -30,6 +30,12 @@ class BotServicePositionTest {
                 && lobby.actions().get(i).tiles().equals(java.util.List.of(0, 2))) external = i;
         assertTrue(external >= 0);
         assertTrue(game.act(host, lobby.decision(), external));
+        String saved = new com.google.gson.Gson().toJson(game);
+        assertTrue(saved.contains("\"externalBotId\":\"mortal-4p\""));
+        assertFalse(saved.contains("externalBots"));
+        Game restored = new com.google.gson.Gson().fromJson(saved, Game.class);
+        restored.validate();
+        assertEquals("mortal-4p", restored.externalBotId(0));
         GameLifecycleTest.startPositioned(game);
         assertNull(game.replay);
         assertNotNull(game.recorder);

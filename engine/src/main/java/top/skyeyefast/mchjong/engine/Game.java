@@ -109,6 +109,7 @@ public final class Game {
         externalBots = available;
         if (phase == Phase.LOBBY) { decision++; revision++; }
     }
+    private List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
 
     /** Snapshot one active bot choice without disclosing other players' draws. */
     public BotPosition botPosition(int seat, UUID sessionId) {
@@ -316,7 +317,7 @@ public final class Game {
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
                 seating.winds[i], player.bot ? player.botDifficulty : null, player.externalBotId));
         }
-        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, externalBots, settlementTicks(),
+        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, externalBots(), settlementTicks(),
             skippedDecision == decision ? skippedSeats : 0);
     }
 
@@ -654,8 +655,8 @@ public final class Game {
                         if (worldPolicy.allowBots()) for (var difficulty : BotDifficulty.values())
                             if (!player.bot || player.externalBotId != null || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
-                        if (worldPolicy.allowBots() && !manual) for (int bot = 0; bot < externalBots.size(); bot++) {
-                            ExternalBot available = externalBots.get(bot);
+                        if (worldPolicy.allowBots() && !manual) for (int bot = 0; bot < externalBots().size(); bot++) {
+                            ExternalBot available = externalBots().get(bot);
                             if (available.supports(rules) && !available.id().equals(player.externalBotId))
                                 actions.add(new Action(SET_BOT, List.of(target, BotDifficulty.values().length + bot)));
                         }
@@ -705,7 +706,7 @@ public final class Game {
                 case SET_BOT -> {
                     int target = action.tiles().get(0), difficulty = action.tiles().get(1);
                     if (difficulty < BotDifficulty.values().length) setBot(target, BotDifficulty.values()[difficulty]);
-                    else setExternalBot(target, externalBots.get(difficulty - BotDifficulty.values().length));
+                    else setExternalBot(target, externalBots().get(difficulty - BotDifficulty.values().length));
                 }
                 case REMOVE_BOT -> {
                     int target = action.tiles().get(0);
@@ -822,7 +823,7 @@ public final class Game {
         for (int i = 0; i < rules.players(); i++) {
             if (players[i].id == null || !players[i].ready) return false;
             String botId = players[i].externalBotId;
-            if (botId != null && (manual || externalBots.stream().noneMatch(bot -> bot.id().equals(botId) && bot.supports(rules)))) return false;
+            if (botId != null && (manual || externalBots().stream().noneMatch(bot -> bot.id().equals(botId) && bot.supports(rules)))) return false;
         }
         if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++)
             if ((!players[i].bot || players[i].entityBot) && players[i].presence != PlayerPresence.SEATED) return false;
