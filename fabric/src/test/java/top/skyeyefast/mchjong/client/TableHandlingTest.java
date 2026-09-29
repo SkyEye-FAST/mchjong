@@ -5,6 +5,7 @@ import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -15,18 +16,18 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableHandlingTest {
     private static UUID player(int seat) { return new UUID(391, seat); }
     private static RiichiGame start(RiichiPreset rules) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules, 12);
-        game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
+        RiichiSession session = new RiichiSession(UUID.randomUUID(), rules, 12);
+        session.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
-            game.join(player(seat), "Player " + seat, seat);
+            session.join(player(seat), "Player " + seat, seat);
         }
-        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(session);
         for (int seat = 0; seat < rules.players(); seat++) {
-            var room = game.roomView(player(seat));
+            var room = session.roomView(player(seat));
             int ready = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
-            assertTrue(game.actRoom(player(seat), room.tableId(), room.incarnation(), room.decision(), ready));
+            assertTrue(session.actRoom(player(seat), room.tableId(), room.incarnation(), room.decision(), ready));
         }
-        return game;
+        return session.game();
     }
     private static void act(RiichiGame game, int seat, Action.Type type) {
         TableView view = game.view(player(seat));
@@ -99,7 +100,7 @@ class TableHandlingTest {
                 act(game, view.viewerSeat(), Action.Type.TAKE_PACKET);
             }
             var draw = game.view(player(dealer));
-            assertEquals(RiichiGame.Phase.DRAW, draw.phase());
+            assertEquals(TableView.Phase.DRAW, draw.phase());
             assertNotNull(TableHandling.source(draw, TableScene.build(draw)));
             assertEquals(1, TableScene.build(draw).stream().filter(piece -> TableHandling.source(draw, piece)).count());
             assertTrue(TableHandling.completes(draw, Vec3.ZERO, TableHandling.destination(draw)));

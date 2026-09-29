@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RoomAction;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RoomSeating;
@@ -32,7 +33,7 @@ final class RoomPreparationSmoke {
             originalAutoSeat = TableSettings.get().autoSeat;
             TableSettings.get().autoSeat = table.automatic();
         }
-        if (view != null && view.phase() != RiichiGame.Phase.LOBBY) {
+        if (view != null && view.phase() != TableView.Phase.LOBBY) {
             TableSettings.get().autoSeat = originalAutoSeat;
             return true;
         }
@@ -95,7 +96,7 @@ final class RoomPreparationSmoke {
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                    var game = serverTable.participantGame(player);
+                    var game = serverTable.participantSession(player);
                     var bag = TableNetworking.JSON.toJsonTree(game).getAsJsonObject().getAsJsonObject("seating").getAsJsonArray("concealed");
                     for (int slot = 0; slot < bag.size(); slot++) if (bag.get(slot).getAsInt() == 0) return slot;
                     throw new IllegalStateException("Wind bag has no east");
@@ -117,11 +118,11 @@ final class RoomPreparationSmoke {
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                    var game = serverTable.participantGame(player);
+                    var game = serverTable.participantSession(player);
                     int seat = game.seatOf(id);
                     player.stopRiding();
                     serverTable.sit(player, seat);
-                    if (serverTable.participantGame(player) == null || game.roomView(id).seats().get(seat).presence()
+                    if (serverTable.participantSession(player) == null || game.roomView(id).seats().get(seat).presence()
                         != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED)
                         throw new IllegalStateException("Could not occupy the assigned stool");
                     return -1;

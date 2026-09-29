@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.engine;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonParser;
 import java.util.*;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Timeout;
@@ -14,12 +15,13 @@ class GameLifecycleTest {
         Action.Type.NUKI, Action.Type.CLOSED_KAN, Action.Type.ADDED_KAN, Action.Type.NEXT);
 
     static RiichiGame started(RiichiPreset rules, long seed) {
-        RiichiGame game = new RiichiGame(new UUID(seed, seed + 1), rules, seed);
+        RiichiSession session = new RiichiSession(new UUID(seed, seed + 1), rules, seed);
         for (int seat = 0; seat < rules.players(); seat++) {
             UUID id = new UUID(1, seat + 1);
-            assertTrue(game.join(id, "Player " + seat, seat));
+            assertTrue(session.join(id, "Player " + seat, seat));
         }
-        startPositioned(game);
+        startPositioned(session);
+        RiichiGame game = session.game();
         assertEquals(RiichiGame.Phase.TURN, game.phase());
         game.validate();
         return game;
@@ -27,84 +29,111 @@ class GameLifecycleTest {
 
     /** Simulate the server reobserving physical mounts after a private save is restored. */
     static RiichiGame reloadMounted(RiichiGame game) {
+        return reloadMounted(game.session).game();
+    }
+
+    static RiichiSession reloadMounted(RiichiSession session) {
         var mounts = new HashMap<UUID, Integer>();
         var connected = new HashSet<UUID>();
-        for (int seat = 0; seat < game.capacity(); seat++) {
-            var member = game.participants[seat];
+        for (int seat = 0; seat < session.capacity(); seat++) {
+            var member = session.participants[seat];
             if (member.id == null || member.bot && !member.entityBot) continue;
             if (!member.entityBot && member.presence != PlayerPresence.DISCONNECTED) connected.add(member.id);
             if (member.presence == PlayerPresence.SEATED) mounts.put(member.id, seat);
         }
-        var restored = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
+        var restored = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(session));
         restored.synchronizeSeats(mounts, connected);
         return restored;
+    }
+
+    @Test void riichiSaveContainsOnlyDetachedStateAndRejectsRuntimeFields() {
+        var session = started(RiichiPreset.TENHOU_4, 206).session;
+        String encoded = TableSessionCodec.save(session);
+        var envelope = JsonParser.parseString(encoded).getAsJsonObject();
+        var state = envelope.getAsJsonObject("state");
+        assertTrue(state.has("room"));
+        assertTrue(state.has("game"));
+        assertFalse(state.has("worldPolicy"));
+        assertFalse(state.has("lobbyTicks"));
+        assertFalse(state.getAsJsonObject("game").has("session"));
+        var restored = (RiichiSession) TableSessionCodec.restore(encoded);
+        assertEquals(session.rules(), restored.rules());
+        assertEquals(session.game().phase(), restored.game().phase());
+        assertEquals(session.game().view(null).wall(), restored.game().view(null).wall());
+        assertNotEquals(session.incarnation(), restored.incarnation());
+
+        state.addProperty("lobbyTicks", 0);
+        assertThrows(IllegalArgumentException.class, () -> TableSessionCodec.restore(envelope.toString()));
+        state.remove("lobbyTicks");
+        state.getAsJsonObject("game").addProperty("session", "runtime");
+        assertThrows(IllegalArgumentException.class, () -> TableSessionCodec.restore(envelope.toString()));
     }
 
     @Test void emptyActiveTablePausesAndLastDismounterChoosesItsFate() {
         var game = started(RiichiPreset.TENHOU_4, 201);
         UUID last = game.players[3].member.id;
-        for (int seat = 0; seat < 3; seat++) game.unseat(game.players[seat].member.id);
-        assertFalse(game.leaveDecision(game.players[0].member.id));
-        game.unseat(last);
-        assertTrue(game.leaveDecision(last));
-        assertFalse(game.resolveLeave(game.players[0].member.id, false));
+        for (int seat = 0; seat < 3; seat++) game.session.unseat(game.players[seat].member.id);
+        assertFalse(game.session.leaveDecision(game.players[0].member.id));
+        game.session.unseat(last);
+        assertTrue(game.session.leaveDecision(last));
+        assertFalse(game.session.resolveLeave(game.players[0].member.id, false));
         int age = game.age;
-        long decision = game.decision;
+        long decision = game.session.decision();
         int[] move = game.moveTicks.clone(), reserve = game.reserveTicks.clone();
-        for (int tick = 0; tick < RiichiGame.AWAY_GRACE_TICKS + 30; tick++) game.tick();
+        for (int tick = 0; tick < TableSession.AWAY_GRACE_TICKS + 30; tick++) game.tick();
         assertEquals(age, game.age);
-        assertEquals(decision, game.decision);
+        assertEquals(decision, game.session.decision());
         assertArrayEquals(move, game.moveTicks);
         assertArrayEquals(reserve, game.reserveTicks);
-        assertTrue(game.resolveLeave(last, true));
-        assertFalse(game.leaveDecision(last));
-        game.synchronizeSeats(Map.of(last, 3), Set.of(last));
+        assertTrue(game.session.resolveLeave(last, true));
+        assertFalse(game.session.leaveDecision(last));
+        game.session.synchronizeSeats(Map.of(last, 3), Set.of(last));
         game.tick();
         assertEquals(age + 1, game.age);
         game.validate();
 
-        game.unseat(last);
-        assertTrue(game.resolveLeave(last, false));
-        assertEquals(RiichiGame.Phase.LOBBY, game.phase());
-        assertEquals(-1, game.seatOf(last));
-        game.validate();
+        game.session.unseat(last);
+        assertTrue(game.session.resolveLeave(last, false));
+        assertEquals(TableSession.Lifecycle.LOBBY, game.session.lifecycle());
+        assertEquals(-1, game.session.seatOf(last));
+        game.session.validateRoom();
     }
 
     @Test void lostConnectionsKeepTheEmptyMatchPausedWithoutALeaveDecision() {
         var game = started(RiichiPreset.TENHOU_3, 202);
         int age = game.age;
-        game.synchronizeSeats(Map.of(), Set.of());
+        game.session.synchronizeSeats(Map.of(), Set.of());
         for (int tick = 0; tick < 40; tick++) game.tick();
         assertEquals(age, game.age);
         assertEquals(RiichiGame.Phase.TURN, game.phase());
-        for (int seat = 0; seat < 3; seat++) assertFalse(game.leaveDecision(game.players[seat].member.id));
+        for (int seat = 0; seat < 3; seat++) assertFalse(game.session.leaveDecision(game.players[seat].member.id));
         game.validate();
-        game = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
-        game.synchronizeSeats(Map.of(), Set.of());
+        game = ((RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(game.session))).game();
+        game.session.synchronizeSeats(Map.of(), Set.of());
         game.tick();
         assertEquals(age, game.age);
 
         var displaced = started(RiichiPreset.TENHOU_3, 203);
-        for (int seat = 0; seat < 3; seat++) displaced.unseat(displaced.players[seat].member.id, false);
-        assertFalse(displaced.leaveDecision(displaced.players[2].member.id));
+        for (int seat = 0; seat < 3; seat++) displaced.session.unseat(displaced.players[seat].member.id, false);
+        assertFalse(displaced.session.leaveDecision(displaced.players[2].member.id));
         int displacedAge = displaced.age;
         displaced.tick();
         assertEquals(displacedAge, displaced.age);
     }
 
     /** Match-rule fixtures start with an assigned roster; RoomSeatingTest exercises the lottery. */
-    static void startPositioned(RiichiGame game) {
+    static void startPositioned(RiichiSession game) {
         UUID host = game.hostId;
         int fill = game.roomView(host).actions().indexOf(new RoomAction(RoomAction.Type.FILL_BOTS));
         if (fill >= 0) assertTrue(game.actRoom(host, game.tableId(), game.incarnation(), game.decision(), fill));
         game.seating.positioned(game.rules.players());
         for (int seat = 0; seat < game.rules.players(); seat++) {
-            var player = game.players[seat];
-            assertTrue(game.join(player.member.id, player.member.name, seat));
-            if (!player.member.bot) {
-                var room = game.roomView(player.member.id);
+            var player = game.participants[seat];
+            assertTrue(game.join(player.id, player.name, seat));
+            if (!player.bot) {
+                var room = game.roomView(player.id);
                 int ready = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
-                assertTrue(game.actRoom(player.member.id, room.tableId(), room.incarnation(), room.decision(), ready));
+                assertTrue(game.actRoom(player.id, room.tableId(), room.incarnation(), room.decision(), ready));
             }
         }
     }
@@ -120,7 +149,7 @@ class GameLifecycleTest {
             if (index >= 0) return index;
         }
         TableView.Seat player = view.seats().get(view.viewerSeat());
-        if (view.phase() == RiichiGame.Phase.TURN) {
+        if (view.phase() == TableView.Phase.TURN) {
             Set<Integer> best = RiichiHandAnalyzer.bestDiscardKinds(player.hand(), player.melds());
             for (int i = view.actions().size() - 1; i >= 0; i--) {
                 Action action = view.actions().get(i);
@@ -162,7 +191,7 @@ class GameLifecycleTest {
         game.wins = List.of(new TableView.Win(0, 1, 4,
             new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
         int maximum = ScoreAnnouncements.maximumTicks(game.wins);
-        assertEquals(maximum + RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
+        assertEquals(maximum + RiichiGame.SETTLEMENT_TICKS, game.view(null).settlementTicks());
         var deltas = List.copyOf(game.deltas);
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
@@ -171,13 +200,13 @@ class GameLifecycleTest {
             assertFalse(game.act(id, view.decision() - 1, done));
             assertTrue(game.act(id, view.decision(), done));
             game.tick();
-            if (seat < 3) assertTrue(game.roomView(null).settlementTicks() > RiichiGame.SETTLEMENT_TICKS * 2);
+            if (seat < 3) assertTrue(game.view(null).settlementTicks() > RiichiGame.SETTLEMENT_TICKS * 2);
         }
-        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.view(null).settlementTicks());
         game = reloadMounted(game);
         for (int i = 0; i < RiichiGame.SETTLEMENT_TICKS; i++) game.tick();
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
-        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.view(null).settlementTicks());
         assertEquals(deltas, game.deltas);
         assertFalse(game.view(game.players[0].member.id).actions().stream().anyMatch(a -> a.type() == Action.Type.SETTLEMENT_DONE));
         assertEquals(RiichiGame.SETTLEMENT_TICKS, ScoreAnnouncements.maximumTicks(List.of()));
@@ -200,10 +229,10 @@ class GameLifecycleTest {
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         assertEquals(skip, index(game.view(player), Action.Type.SKIP_SETTLEMENT));
         assertEquals(done, index(game.view(player), Action.Type.SETTLEMENT_DONE));
-        assertEquals(1, game.roomView(null).settlementSkippedSeats());
+        assertEquals(1, game.view(null).settlementSkippedSeats());
         assertFalse(game.act(player, hand.decision(), skip));
         game = reloadMounted(game);
-        assertEquals(1, game.roomView(null).settlementSkippedSeats());
+        assertEquals(1, game.view(null).settlementSkippedSeats());
         for (int seat = 1; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
             TableView view = game.view(id);
@@ -217,15 +246,15 @@ class GameLifecycleTest {
         Settlement.abort(game, "nine_terminals");
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
         TableView results = game.view(player);
-        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.view(null).settlementTicks());
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
             TableView view = game.view(id);
             assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
-            if (seat < 3) assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
+            if (seat < 3) assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.view(null).settlementTicks());
         }
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
-        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.view(null).settlementTicks());
         assertFalse(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
@@ -233,12 +262,13 @@ class GameLifecycleTest {
             assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
             if (seat < 3) assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
         }
-        assertEquals(RiichiGame.Phase.LOBBY, game.phase());
+        assertEquals(TableSession.Lifecycle.LOBBY, game.session.lifecycle());
 
-        RiichiGame practice = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 205);
+        RiichiSession practiceRoom = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 205);
         UUID solo = UUID.randomUUID();
-        assertTrue(practice.join(solo, "Solo", 0));
-        startPositioned(practice);
+        assertTrue(practiceRoom.join(solo, "Solo", 0));
+        startPositioned(practiceRoom);
+        RiichiGame practice = practiceRoom.game();
         Settlement.abort(practice, "nine_terminals");
         TableView practiceHand = practice.view(solo);
         assertTrue(practice.act(solo, practiceHand.decision(), index(practiceHand, Action.Type.SKIP_SETTLEMENT)));
@@ -295,7 +325,7 @@ class GameLifecycleTest {
                 assertPrivateViews(game);
             }
             if (game.phase() == RiichiGame.Phase.HAND_END) {
-                int remaining = game.roomView(null).settlementTicks();
+                int remaining = game.view(null).settlementTicks();
                 for (int tick = 0; tick < remaining; tick++) game.tick();
                 continue;
             }
@@ -319,27 +349,27 @@ class GameLifecycleTest {
         RiichiGame game = started(RiichiPreset.TENHOU_4, 19);
         UUID id = game.players[game.turn].member.id;
         TableView view = game.view(id);
-        String before = JSON.toJson(game);
+        String before = TableSessionCodec.save(game.session);
         assertFalse(game.act(UUID.randomUUID(), view.decision(), 0));
         assertFalse(game.act(id, view.decision() - 1, 0));
         assertFalse(game.act(id, view.decision(), -1));
         assertFalse(game.act(id, view.decision(), Integer.MAX_VALUE));
         assertFalse(game.act(game.players[game.next(game.turn)].member.id, view.decision(), 0));
-        assertEquals(before, JSON.toJson(game));
+        assertEquals(before, TableSessionCodec.save(game.session));
         assertTrue(game.act(id, view.decision(), index(view, Action.Type.DISCARD)));
-        String after = JSON.toJson(game);
+        String after = TableSessionCodec.save(game.session);
         assertFalse(game.act(id, view.decision(), 0));
-        assertEquals(after, JSON.toJson(game));
+        assertEquals(after, TableSessionCodec.save(game.session));
     }
 
     @Test void emptySeatReconnectionDoesNotTransferAnotherPlayersHand() {
         RiichiGame game = started(RiichiPreset.MAHJONG_SOUL_3, 45);
         UUID owner = game.players[0].member.id;
         var before = game.view(owner).seats().getFirst().hand();
-        game.unseat(owner);
-        assertTrue(game.join(owner, "Reconnected", 0));
-        assertFalse(game.join(UUID.randomUUID(), "Intruder", 0));
-        assertFalse(game.join(owner, "Other seat", 1));
+        game.session.unseat(owner);
+        assertTrue(game.session.join(owner, "Reconnected", 0));
+        assertFalse(game.session.join(UUID.randomUUID(), "Intruder", 0));
+        assertFalse(game.session.join(owner, "Other seat", 1));
         assertEquals(before, game.view(owner).seats().getFirst().hand());
     }
 
@@ -382,8 +412,12 @@ class GameLifecycleTest {
     }
 
     private static RiichiGame endFixture(RiichiRules rules, int round, int firstPoints, boolean target, boolean repeats) {
-        var game = new RiichiGame(new UUID(0, 1), rules.preset(), 1);
-        game.rules = rules;
+        var session = new RiichiSession(new UUID(0, 1), rules, 1);
+        for (int seat = 0; seat < rules.players(); seat++) session.join(new UUID(40, seat), "Player " + seat, seat);
+        session.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
+        session.startMatch();
+        var game = session.game();
+        for (var player : game.players) player.resetHand();
         game.round = round;
         game.dealer = 0;
         for (var player : game.players) player.points = rules.targetPoints() - 10000;
@@ -420,44 +454,48 @@ class GameLifecycleTest {
 
     @Test void matchUmaRewardsRespectWorldExperiencePolicyAndPayOnce() {
         var rules = RiichiPreset.WRC.config();
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules.preset(), 1);
-        game.rules = rules;
-        game.configureWorld(new WorldPolicy(true, true, true, 5_000, true, true, true, true, null));
-        game.round = 7;
-        int[] scores = {40000, 30000, 20000, 10000};
+        var session = new RiichiSession(UUID.randomUUID(), rules, 1);
         UUID[] ids = {UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID(), UUID.randomUUID()};
+        for (int seat = 0; seat < rules.players(); seat++) session.join(ids[seat], "Player " + seat, seat);
+        session.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
+        session.startMatch();
+        RiichiGame game = session.game();
+        session.configureWorld(new WorldPolicy(true, true, true, 5_000, true, true, true, true, null));
+        game.round = 7;
+        int[] scores = {50000, 40000, 20000, 10000};
         for (int seat = 0; seat < 4; seat++) {
             game.players[seat].points = scores[seat];
-            game.players[seat].member.id = ids[seat];
-            game.players[seat].member.name = "Player " + seat;
         }
         game.players[2].member.bot = true;
         Settlement.exhaustive(game);
         assertEquals(List.of(15.0, 5.0, -5.0, -15.0), game.finalUma);
-        assertEquals(Map.of(ids[0], 1500, ids[1], 500, ids[3], -1500), game.pendingExperience());
-        RiichiGame restored = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
-        assertEquals(game.pendingExperience(), restored.pendingExperience());
+        assertEquals(Map.of(ids[0], 1500, ids[1], 500, ids[3], -1500), session.pendingExperience());
+        RiichiSession restored = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(session));
+        assertEquals(session.pendingExperience(), restored.pendingExperience());
         restored.configureWorld(new WorldPolicy(true, true, false, 500, true, true, true, true, null));
         assertEquals(500, restored.takeExperience(ids[0]));
         assertEquals(0, restored.takeExperience(ids[3]));
         assertEquals(0, restored.takeExperience(ids[0]));
 
-        RiichiGame noDeductions = new RiichiGame(UUID.randomUUID(), rules.preset(), 2);
-        noDeductions.rules = rules;
-        noDeductions.configureWorld(new WorldPolicy(true, true, false, 500, true, true, true, true, null));
+        var noDeductionsSession = new RiichiSession(UUID.randomUUID(), rules, 2);
+        for (int seat = 0; seat < rules.players(); seat++) noDeductionsSession.join(ids[seat], "Player " + seat, seat);
+        noDeductionsSession.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
+        noDeductionsSession.startMatch();
+        RiichiGame noDeductions = noDeductionsSession.game();
+        noDeductionsSession.configureWorld(new WorldPolicy(true, true, false, 500, true, true, true, true, null));
         noDeductions.round = 7;
         for (int seat = 0; seat < 4; seat++) {
             noDeductions.players[seat].points = scores[seat];
-            noDeductions.players[seat].member.id = ids[seat];
-            noDeductions.players[seat].member.name = "Player " + seat;
         }
         Settlement.exhaustive(noDeductions);
-        assertEquals(Map.of(ids[0], 500, ids[1], 500), noDeductions.pendingExperience());
+        assertEquals(Map.of(ids[0], 500, ids[1], 500), noDeductionsSession.pendingExperience());
     }
 
     private static RiichiGame finish(RiichiRules rules, int[] scores, int deposits) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules.preset(), 1);
-        game.rules = rules;
+        var session = new RiichiSession(UUID.randomUUID(), rules, 1);
+        for (int seat = 0; seat < rules.players(); seat++) session.join(new UUID(40, seat), "Player " + seat, seat);
+        session.startMatch();
+        RiichiGame game = session.game();
         game.round = 7;
         game.riichiSticks = deposits;
         for (int seat = 0; seat < 4; seat++) game.players[seat].points = scores[seat];

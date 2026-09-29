@@ -25,6 +25,7 @@ import top.skyeyefast.mchjong.engine.BotPosition;
 import top.skyeyefast.mchjong.engine.ExternalBot;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 
 /** Nonblocking server-thread bridge to the administrator-configured bot service. */
 public final class BotServiceClient {
@@ -130,7 +131,7 @@ public final class BotServiceClient {
         return answer.actionIndex();
     }
 
-    BotServiceState state(RiichiGame game) {
+    BotServiceState state(RiichiSession game) {
         var seatErrors = new ArrayList<String>();
         for (int seat = 0; seat < game.rules().players(); seat++) {
             String id = game.externalBotId(seat);
@@ -140,14 +141,15 @@ public final class BotServiceClient {
         return new BotServiceState(discoveryError, seatErrors);
     }
 
-    void tick(RiichiGame game) {
-        for (int seat = 0; seat < game.rules().players(); seat++) {
-            String selected = game.externalBotId(seat);
+    void tick(RiichiSession session) {
+        RiichiGame game = session.game();
+        for (int seat = 0; seat < session.rules().players(); seat++) {
+            String selected = session.externalBotId(seat);
             if (!java.util.Objects.equals(selectedBots[seat], selected)) {
                 selectedBots[seat] = selected;
                 errors[seat] = null;
             }
-            BotPosition position = game.botPosition(seat, sessionId);
+            BotPosition position = game == null ? null : game.botPosition(seat, sessionId);
             Pending current = pending[seat];
             if (current != null && (position == null || current.position().decision() != position.decision()
                 || current.position().handNumber() != position.handNumber()

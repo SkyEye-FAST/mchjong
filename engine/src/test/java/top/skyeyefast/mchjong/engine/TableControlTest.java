@@ -8,6 +8,17 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableControlTest {
     private static UUID id(int seat) { return new UUID(42, seat); }
 
+    @Test void nearbyLobbyHostKeepsRiichiRuleChoicesWhileRelocating() {
+        var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        assertTrue(lobby.join(id(0), "Host", 0));
+        lobby.synchronizeSeats(java.util.Map.of(), java.util.Set.of(id(0)));
+        var view = lobby.view(id(0));
+        assertEquals(0, view.viewerSeat());
+        assertFalse(view.actions().isEmpty());
+        assertTrue(lobby.actLobby(id(0), view.decision(), 0));
+        assertNotEquals(RiichiPreset.TENHOU_4, lobby.rules().preset());
+    }
+
     @Test void customRulesAreAtomicHostOnlyAndPersistWithCompletedHands() {
         var json = new Gson();
         for (var preset : RiichiPreset.values()) {
@@ -34,9 +45,9 @@ class TableControlTest {
         assertThrows(IllegalArgumentException.class, () -> custom.with(RiichiRuleOption.STARTING_POINTS, 28001));
         assertThrows(IllegalArgumentException.class, () -> new RiichiRules(RiichiPreset.WRC, java.util.Map.of()));
         assertThrows(UnsupportedOperationException.class, () -> custom.settings().put(RiichiRuleOption.IPPATSU, 1));
-        RiichiGame lobby = new RiichiGame(UUID.randomUUID(), RiichiPreset.M_LEAGUE, 1);
+        RiichiSession lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.M_LEAGUE, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
-        lobby.players[1].member.ready = true;
+        lobby.participants[1].ready = true;
         long token = lobby.decision;
         var before = json.toJson(lobby);
         assertFalse(lobby.configureRules(id(1), token, custom));
@@ -44,9 +55,9 @@ class TableControlTest {
         assertFalse(lobby.configureRules(id(0), token - 1, custom));
         assertEquals(before, json.toJson(lobby));
         assertTrue(lobby.configureRules(id(0), token, custom));
-        assertFalse(lobby.players[1].member.ready);
-        assertEquals(28000, lobby.points(0));
-        assertEquals(28000, lobby.points(1));
+        assertFalse(lobby.participants[1].ready);
+        assertEquals(28000, lobby.view(null).seats().get(0).points());
+        assertEquals(28000, lobby.view(null).seats().get(1).points());
         assertFalse(lobby.equipped(), "Changing rules cannot recolor the physical tiles");
         assertFalse(lobby.configureRules(id(0), token, RiichiPreset.M_LEAGUE.config()));
         lobby = GameLifecycleTest.reloadMounted(lobby);
@@ -59,18 +70,21 @@ class TableControlTest {
         assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RiichiPreset.M_LEAGUE.config()));
-        assertEquals(custom, lobby.replay.rules());
-        Settlement.abort(lobby, "nine_terminals");
+        assertEquals(custom, lobby.game().replay.rules());
+        Settlement.abort(lobby.game(), "nine_terminals");
         var replay = lobby.pendingReplays().getFirst();
         assertEquals(custom, json.fromJson(json.toJson(replay), ReplayMatch.class).rules());
         lobby.validate();
     }
 
-    private static RiichiGame game(int humans, RiichiPreset rules, boolean openHands) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules, 123);
-        for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Player " + seat, seat));
-        if (openHands) assertTrue(game.configureOpenHands(id(0), game.decision, true));
-        GameLifecycleTest.startPositioned(game);
+    private static RiichiGame game(int humans, RiichiPreset rules, boolean openHands, PlayerHandVisibility visibility) {
+        RiichiSession session = new RiichiSession(UUID.randomUUID(), rules, 123);
+        for (int seat = 0; seat < humans; seat++) assertTrue(session.join(id(seat), "Player " + seat, seat));
+        if (openHands) assertTrue(session.configureOpenHands(id(0), session.decision, true));
+        if (visibility != PlayerHandVisibility.SELF)
+            assertTrue(session.configureHandVisibility(id(0), session.decision, visibility));
+        GameLifecycleTest.startPositioned(session);
+        RiichiGame game = session.game();
         assertEquals(RiichiGame.Phase.TURN, game.phase());
         return game;
     }
@@ -78,46 +92,46 @@ class TableControlTest {
     @Test void handVisibilityIsHostOnlyClearsReadinessAndPersistsPerRoom() {
         assertArrayEquals(new PlayerHandVisibility[]{PlayerHandVisibility.SELF, PlayerHandVisibility.RIICHI,
             PlayerHandVisibility.ALL}, PlayerHandVisibility.values());
-        RiichiGame lobby = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        RiichiSession lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0); lobby.join(id(1), "Guest", 1);
-        lobby.players[1].member.ready = true;
+        lobby.participants[1].ready = true;
         long token = lobby.decision;
         assertFalse(lobby.configureHandVisibility(id(1), token, PlayerHandVisibility.ALL));
         assertFalse(lobby.configureHandVisibility(null, token, PlayerHandVisibility.ALL));
         assertFalse(lobby.configureHandVisibility(id(0), token - 1, PlayerHandVisibility.ALL));
-        assertTrue(lobby.players[1].member.ready);
+        assertTrue(lobby.participants[1].ready);
         assertTrue(lobby.configureHandVisibility(id(0), token, PlayerHandVisibility.ALL));
-        assertFalse(lobby.players[1].member.ready);
+        assertFalse(lobby.participants[1].ready);
         assertNotEquals(token, lobby.decision);
         assertTrue(lobby.configureRules(id(0), lobby.decision, RiichiPreset.WRC.config()));
         assertEquals(PlayerHandVisibility.ALL, lobby.playerHandVisibility);
         assertTrue(lobby.configureOpenHands(id(0), lobby.decision, true));
-        var saved = GameLifecycleTest.reloadMounted(lobby);
+        var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
         assertEquals(PlayerHandVisibility.ALL, saved.playerHandVisibility);
         assertTrue(saved.openHands);
-        assertEquals(PlayerHandVisibility.SELF, new RiichiGame(UUID.randomUUID(), RiichiPreset.WRC, 2).playerHandVisibility);
-        assertFalse(new RiichiGame(UUID.randomUUID(), RiichiPreset.WRC, 2).openHands);
+        assertEquals(PlayerHandVisibility.SELF, new RiichiSession(UUID.randomUUID(), RiichiPreset.WRC, 2).playerHandVisibility);
+        assertFalse(new RiichiSession(UUID.randomUUID(), RiichiPreset.WRC, 2).openHands);
     }
 
     @Test void convenienceHintsAreControlledByTheLobbyHostAndPersistWithTheRoom() {
-        var lobby = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         lobby.join(id(0), "Host", 0);
         lobby.join(id(1), "Guest", 1);
         long token = lobby.decision;
-        assertFalse(lobby.roomView(null).convenienceHints());
+        assertFalse(lobby.view(null).convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(1), token, true));
         assertFalse(lobby.configureConvenienceHints(id(0), token - 1, true));
         assertTrue(lobby.configureConvenienceHints(id(0), token, true));
-        assertTrue(lobby.roomView(null).convenienceHints());
+        assertTrue(lobby.view(null).convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(0), token, true));
-        var saved = GameLifecycleTest.reloadMounted(lobby);
-        assertTrue(saved.roomView(null).convenienceHints());
+        var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
+        assertTrue(saved.view(null).convenienceHints());
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
     }
 
     @Test void worldPolicyInvalidatesLobbyActionsWhenTheirAvailabilityChanges() {
-        var lobby = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         assertTrue(lobby.join(id(0), "Host", 0));
         var before = lobby.roomView(id(0));
         int fillBots = java.util.stream.IntStream.range(0, before.actions().size())
@@ -133,26 +147,25 @@ class TableControlTest {
 
     @Test void stockCompositionChangeClearsLobbyReadinessAndRespectsPreset() {
         var rules = RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.RED_FIVES, RedFives.NONE.ordinal());
-        var lobby = new RiichiGame(UUID.randomUUID(), rules, 1);
+        var lobby = new RiichiSession(UUID.randomUUID(), rules, 1);
         lobby.join(id(0), "Host", 0);
-        lobby.players[0].member.ready = true;
+        lobby.participants[0].ready = true;
         long token = lobby.decision;
         assertTrue(lobby.configureStockRedFives(RedFives.THREE));
         assertEquals(RedFives.THREE, lobby.rules().redFives());
-        assertFalse(lobby.players[0].member.ready);
+        assertFalse(lobby.participants[0].ready);
         assertNotEquals(token, lobby.decision);
         assertFalse(lobby.configureStockRedFives(RedFives.THREE));
 
-        var fixed = new RiichiGame(UUID.randomUUID(), RiichiPreset.WRC, 1);
+        var fixed = new RiichiSession(UUID.randomUUID(), RiichiPreset.WRC, 1);
         assertFalse(fixed.configureStockRedFives(RedFives.THREE));
         assertEquals(RedFives.NONE, fixed.rules().redFives());
     }
 
     @Test void participantAndSpectatorVisibilityAreRedactedIndependentlyBeforeSerialization() {
         for (var mode : PlayerHandVisibility.values()) {
-            RiichiGame game = game(2, RiichiPreset.MAHJONG_SOUL_3, false);
-            assertFalse(game.configureHandVisibility(id(0), game.decision, mode));
-            game.playerHandVisibility = mode;
+            RiichiGame game = game(2, RiichiPreset.MAHJONG_SOUL_3, false, mode);
+            assertFalse(game.session.configureHandVisibility(id(0), game.decision(), mode));
             game.players[1].riichi = true;
             for (int viewer : new int[]{0, 1}) {
                 var view = game.view(id(viewer));
@@ -175,21 +188,21 @@ class TableControlTest {
             game.exposed[2] = true;
             assertTrue(game.spectatorView(SpectatorHandVisibility.HIDDEN).seats().get(2).hand().stream().allMatch(tile -> tile >= 0));
         }
-        RiichiGame open = game(2, RiichiPreset.MAHJONG_SOUL_3, true);
+        RiichiGame open = game(2, RiichiPreset.MAHJONG_SOUL_3, true, PlayerHandVisibility.SELF);
         assertTrue(open.spectatorView(SpectatorHandVisibility.HIDDEN).seats().stream()
             .flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0));
     }
 
     @Test void reloadPreservesVoteAndExitDoesNotDiscardCompletedReplayQueue() {
-        RiichiGame game = game(2, RiichiPreset.TENHOU_4, true);
+        RiichiGame game = game(2, RiichiPreset.TENHOU_4, true, PlayerHandVisibility.SELF);
         Settlement.abort(game, "nine_terminals");
-        assertFalse(game.pendingReplays().isEmpty());
-        var replays = game.pendingReplays();
-        game.requestExit(id(0));
+        assertFalse(game.session.pendingReplays().isEmpty());
+        var replays = game.session.pendingReplays();
+        game.session.requestExit(id(0));
         game = GameLifecycleTest.reloadMounted(game);
         assertTrue(game.openHands);
-        assertTrue(game.answerExit(id(1), game.exitVote.id(), true));
-        assertEquals(replays, game.pendingReplays());
-        game.validate();
+        assertTrue(game.session.answerExit(id(1), game.session.exitVote.id(), true));
+        assertEquals(replays, game.session.pendingReplays());
+        game.session.validate();
     }
 }

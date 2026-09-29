@@ -19,6 +19,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.FurnitureWood;
@@ -80,7 +81,7 @@ final class EquipmentSmoke {
             player.teleportTo(level, POS.getX() + .5, POS.getY(), POS.getZ() + 3.5, 180, 30);
             var table = (MahjongTableBlockEntity) level.getBlockEntity(POS);
             table.sit(player, 0);
-            var game = table.participantGame(player);
+            var game = table.participantSession(player);
             check(game != null && game.roomView(player.getUUID()).actions().stream().noneMatch(a ->
                 a.type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY), "Empty table offered a playable game");
 
@@ -104,7 +105,7 @@ final class EquipmentSmoke {
             check(!player.containerMenu.quickMoveStack(player, 29).isEmpty(), "Shift-click did not store the box");
             player.closeContainer();
             check(inventory.getItem(0).isEmpty(), "Storage did not move exactly one box");
-            check(!table.participantGame(player).equipped(), "A complete box without a cloth could start a game");
+            check(!table.participantSession(player).equipped(), "A complete box without a cloth could start a game");
             table.useEquipment(player, inventory.getItem(1));
             TableStorageSmoke.put(player, table, 1, inventory.getItem(3));
             check(ItemStack.matches(original, table.equipment().boxes().getItem(0))
@@ -138,9 +139,9 @@ final class EquipmentSmoke {
             if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RiichiPreset.MAHJONG_SOUL_3.ordinal());
             var staleMenu = TableStorageSmoke.open(player, table);
             PointStickMenuSmoke.stockDrawers(table);
-            SeatingFixtures.startPositioned(table.participantGame(player), player.getUUID());
-            game = table.participantGame(player);
-            check(game.phase() == (table.automatic() ? RiichiGame.Phase.TURN : RiichiGame.Phase.SHUFFLE), "Wrong table handling mode");
+            SeatingFixtures.startPositioned(table.participantSession(player), player.getUUID());
+            game = table.participantSession(player);
+            check(game.view(null).phase() == (table.automatic() ? TableView.Phase.TURN : TableView.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
             staleMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
             check(staleMenu.getCarried().isEmpty() && staleMenu.quickMoveStack(player, 1).isEmpty(),
@@ -166,7 +167,7 @@ final class EquipmentSmoke {
             check(before.seats().stream().map(s -> s.points()).toList().equals(after.seats().stream().map(s -> s.points()).toList())
                 && before.riichiSticks() == after.riichiSticks(), "Physical point stick changed engine scores or deposits");
             table.control(player, new TableControlPayload(POS, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
-            check(game.phase() == RiichiGame.Phase.LOBBY && !player.isPassenger(), "Exit did not release the player");
+            check(game.lobby() && !player.isPassenger(), "Exit did not release the player");
             check(ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,
                 "Exit lost the full set or unused sanma tiles");
@@ -205,7 +206,7 @@ final class EquipmentSmoke {
     }
 
     private static void act(MahjongTableBlockEntity table, ServerPlayer player, Action.Type type, int rule) {
-        var view = table.participantGame(player).view(player.getUUID());
+        var view = table.participantSession(player).view(player.getUUID());
         for (int i = 0; i < view.actions().size(); i++) {
             var action = view.actions().get(i);
             if (action.type() == type && (rule < 0 || action.tiles().contains(rule))) {

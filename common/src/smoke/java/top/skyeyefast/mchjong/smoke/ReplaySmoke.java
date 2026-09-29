@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
@@ -36,7 +37,7 @@ final class ReplaySmoke {
             UUID viewer = client.player.getUUID();
             client.getSingleplayerServer().execute(() -> {
                 try {
-                    RiichiGame game = createHand(viewer);
+                    RiichiSession game = createHand(viewer);
                     ReplayMatch record = game.pendingReplays().getFirst();
                     ReplayServer.flush(client.getSingleplayerServer(), game);
                     require(game.pendingReplays().isEmpty(), "Archive was not acknowledged");
@@ -136,15 +137,16 @@ final class ReplaySmoke {
         return false;
     }
 
-    private static RiichiGame createHand(UUID viewer) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(),RiichiPreset.TENHOU_4,73519);
+    private static RiichiSession createHand(UUID viewer) {
+        RiichiSession session = new RiichiSession(UUID.randomUUID(),RiichiPreset.TENHOU_4,73519);
         UUID[] ids = {viewer,UUID.randomUUID(),UUID.randomUUID(),UUID.randomUUID()};
         for (int seat = 0; seat < 4; seat++) {
-            require(game.join(ids[seat], "Replay player " + (seat+1),seat),"Cannot join replay fixture");
+            require(session.join(ids[seat], "Replay player " + (seat+1),seat),"Cannot join replay fixture");
         }
-        SeatingFixtures.startPositioned(game, ids);
+        SeatingFixtures.startPositioned(session, ids);
+        RiichiGame game = session.game();
         for (int step = 0; step < 2000; step++) {
-            if (game.phase() == RiichiGame.Phase.HAND_END || game.phase() == RiichiGame.Phase.MATCH_END) return game;
+            if (game.phase() == RiichiGame.Phase.HAND_END || game.phase() == RiichiGame.Phase.MATCH_END) return session;
             boolean acted = false;
             for (UUID id : ids) {
                 TableView view = game.view(id);

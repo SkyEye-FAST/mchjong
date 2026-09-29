@@ -31,24 +31,24 @@ class TableAnimationTest {
         var seats = new ArrayList<TableView.Seat>();
         seats.add(seat(IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), false));
         for (int i = 1; i < rules.players(); i++) seats.add(seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(), List.of(), false));
-        return new TableView(TABLE, 2, 2, 1, rules, RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0,
+        return new TableView(TABLE, 2, 2, 1, rules, TableView.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
 
     private static TableView lobby(RiichiRules rules) {
-        return new TableView(TABLE, 1, 1, 0, rules, RiichiGame.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
+        return new TableView(TABLE, 1, 1, 0, rules, TableView.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
 
     private static TableView update(TableView old, List<TableView.Seat> seats, int viewer) {
         return new TableView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
             old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(), old.finalUma(),
-            old.timeControl(), old.clocks(), old.finalRanks(), old.playerHandVisibility(), old.openHands(), old.exitVote(), old.handling(), old.autoPlay(), old.ronBlocked(), old.riichiHan(), old.riichiSafeTiles());
+            old.timeControl(), old.clocks(), old.finalRanks(), old.playerHandVisibility(), old.openHands(), old.exitVote(), old.handling(), old.autoPlay(), old.ronBlocked(), old.riichiHan(), old.riichiSafeTiles(), old.convenienceHints(), old.externalBots(), old.settlementTicks(), old.settlementSkippedSeats());
     }
 
     private static TableAnimation.Frame tile(List<TableAnimation.Frame> frames, int tile) {
@@ -242,15 +242,15 @@ class TableAnimationTest {
             int players = preset.players(), size = preset.sanma() ? 108 : 136;
             var wall = Collections.nCopies(size, Tile.HIDDEN);
             var handling = new TableView.Handling((1 << players) - 1, -1, 0, 0, 0, false);
-            var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), RiichiGame.Phase.BUILD_WALL, 0,
+            var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), TableView.Phase.BUILD_WALL, 0,
                 0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                handling, null, false, 1, java.util.Map.of());
+                handling, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             int wallBreak = 2 * (size / (2 * players) + 3);
-            var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), RiichiGame.Phase.DEAL, 0,
+            var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), TableView.Phase.DEAL, 0,
                 0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                new TableView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of());
+                new TableView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             var animation = new TableAnimation();
             animation.accept(built, 0);
             var positions = animation.sample(0).stream().filter(frame -> frame.piece().area() == TableScene.Area.WALL)

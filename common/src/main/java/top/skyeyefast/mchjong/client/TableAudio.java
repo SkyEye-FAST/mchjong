@@ -101,8 +101,8 @@ public final class TableAudio {
         if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
             var view = table.clientView();
             if (result != null && result.matches(view)) {
-                boolean finalStage = view.phase() == RiichiGame.Phase.MATCH_END && table.clientRoom() != null
-                    && table.clientRoom().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS;
+                boolean finalStage = view.phase() == TableView.Phase.MATCH_END
+                    && view.settlementTicks() <= RiichiGame.SETTLEMENT_TICKS;
                 if (finalStage && !finalVoicePlayed) {
                     finishResult();
                     finalVoicePlayed = true;

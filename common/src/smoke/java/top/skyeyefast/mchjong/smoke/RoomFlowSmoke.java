@@ -8,6 +8,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -82,7 +83,7 @@ final class RoomFlowSmoke {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                 serverTable.equipment().boxes().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
-                var game = serverTable.participantGame(player);
+                var game = serverTable.participantSession(player);
                 game.configureRules(id, game.view(id).decision(), rules.config());
             });
             resize(client, false);
@@ -111,20 +112,20 @@ final class RoomFlowSmoke {
             hand = view.handNumber();
             work = settlement(client, table, false);
             next(11);
-        } else if (stage == 11 && view.phase() == RiichiGame.Phase.HAND_END) {
-            require(table.clientRoom().settlementTicks() > 0 && table.clientRoom().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS,
+        } else if (stage == 11 && view.phase() == TableView.Phase.HAND_END) {
+            require(table.clientView().settlementTicks() > 0 && table.clientView().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS,
                 "Wrong hand settlement duration");
             if (!capturedHand && ticks > 10) {
                 check(client);
                 capture(client, output, "hand-countdown.png");
                 capturedHand = true;
             }
-        } else if (stage == 11 && capturedHand && view.phase() == RiichiGame.Phase.TURN && view.handNumber() > hand) {
+        } else if (stage == 11 && capturedHand && view.phase() == TableView.Phase.TURN && view.handNumber() > hand) {
             work = settlement(client, table, true);
             capturedHand = false;
             next(12);
-        } else if (stage == 12 && view.phase() == RiichiGame.Phase.MATCH_END) {
-            int remaining = table.clientRoom().settlementTicks();
+        } else if (stage == 12 && view.phase() == TableView.Phase.MATCH_END) {
+            int remaining = table.clientView().settlementTicks();
             require(buttonOrNull(client, "room.mchjong.dissolve") == null && buttonOrNull(client, "ui.mchjong.exit") == null,
                 "Settlement exposes room termination");
             if (!capturedHand && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 10) {
@@ -148,7 +149,7 @@ final class RoomFlowSmoke {
                 capture(client, output, "final-standings.png");
                 next(13);
             }
-        } else if ((stage == 12 || stage == 13) && view.phase() == RiichiGame.Phase.LOBBY
+        } else if ((stage == 12 || stage == 13) && view.phase() == TableView.Phase.LOBBY
             && buttonOrNull(client, "action.mchjong.leave_room") != null) {
             require(capturedFinal, "Final standings were skipped");
             require(view.viewerSeat() >= 0 && view.seats().stream().filter(seat -> seat.occupied()).count() == 4,
@@ -186,24 +187,26 @@ final class RoomFlowSmoke {
         return client.getSingleplayerServer().submit(() -> {
             var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
             var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-            var game = serverTable.participantGame(player);
+            var game = serverTable.participantSession(player);
             require(game != null, "Settlement fixture has no participant");
             var saved = serverTable.saveWithoutMetadata(player.registryAccess());
             var envelope = com.google.gson.JsonParser.parseString(saved.getString("session")).getAsJsonObject();
-            var json = envelope.getAsJsonObject("state");
-            json.addProperty("phase", end ? "MATCH_END" : "HAND_END");
-            json.addProperty("lifecycle", end ? "FINISHED" : "PLAYING");
-            json.addProperty("age", 0);
-            json.addProperty("revision", game.revision() + 100);
-            json.addProperty("decision", game.view(id).decision() + 1);
-            json.addProperty("result", "exhaustive");
-            json.add("wins", TableNetworking.JSON.toJsonTree(List.of()));
-            json.add("deltas", TableNetworking.JSON.toJsonTree(List.of(0, 0, 0, 0)));
-            json.add("finalScores", TableNetworking.JSON.toJsonTree(end ? List.of(0.0, 0.0, 0.0, 0.0) : List.of()));
-            json.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
+            var state = envelope.getAsJsonObject("state");
+            var room = state.getAsJsonObject("room");
+            var match = state.getAsJsonObject("game");
+            match.addProperty("phase", end ? "MATCH_END" : "HAND_END");
+            room.addProperty("lifecycle", end ? "FINISHED" : "PLAYING");
+            match.addProperty("age", 0);
+            room.addProperty("revision", game.revision() + 100);
+            room.addProperty("decision", game.view(id).decision() + 1);
+            match.addProperty("result", "exhaustive");
+            match.add("wins", TableNetworking.JSON.toJsonTree(List.of()));
+            match.add("deltas", TableNetworking.JSON.toJsonTree(List.of(0, 0, 0, 0)));
+            match.add("finalScores", TableNetworking.JSON.toJsonTree(end ? List.of(0.0, 0.0, 0.0, 0.0) : List.of()));
+            match.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
             saved.putString("session", envelope.toString());
             serverTable.loadWithComponents(saved, player.registryAccess());
-            require(serverTable.participantGame(player).phase() == (end ? RiichiGame.Phase.MATCH_END : RiichiGame.Phase.HAND_END),
+            require(serverTable.participantSession(player).view(id).phase() == (end ? TableView.Phase.MATCH_END : TableView.Phase.HAND_END),
                 "Saved settlement fixture did not load");
             serverTable.open(player);
         });

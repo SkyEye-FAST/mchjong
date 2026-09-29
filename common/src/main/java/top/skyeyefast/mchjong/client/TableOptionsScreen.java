@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.TableView;
 
 /** Scope navigation. Administrator edits use the server's permission-checked world commands. */
 public final class TableOptionsScreen extends Screen {
@@ -57,7 +57,7 @@ public final class TableOptionsScreen extends Screen {
         }
         List<Entry> entries = new ArrayList<>();
         boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
-        boolean lobby = view.phase() == RiichiGame.Phase.LOBBY;
+        boolean lobby = view.phase() == TableView.Phase.LOBBY;
         if (tab == 0) {
             boolean edit = canEditWorld();
             entries.add(Entry.toggle("settings.mchjong.invitations_enabled", world.invitationsEnabled(), edit,
@@ -98,10 +98,10 @@ public final class TableOptionsScreen extends Screen {
                 setWorldValue("forcedPreset", next == null ? "none" : next.name().toLowerCase(java.util.Locale.ROOT));
             }));
         } else if (tab == 1) {
-            entries.add(Entry.toggle("settings.mchjong.convenience_hints", room.convenienceHints(),
+            entries.add(Entry.toggle("settings.mchjong.convenience_hints", view.convenienceHints(),
                 host && lobby && world.allowConvenienceHints(),
                 () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
-                    view.decision(), !room.convenienceHints())));
+                    view.decision(), !view.convenienceHints())));
             entries.add(Entry.choice("settings.mchjong.hand_visibility",
                 Component.translatable("settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
                 host && lobby, () -> {

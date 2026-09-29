@@ -44,7 +44,7 @@ public final class ClientTableNetworking {
             client.setScreen(null);
         TableScreen active = TableScreen.active(client.screen);
         if (previous != null && previous.viewerSeat() >= 0 && view.viewerSeat() < 0
-            && view.phase() == top.skyeyefast.mchjong.engine.RiichiGame.Phase.LOBBY
+            && view.phase() == top.skyeyefast.mchjong.engine.TableView.Phase.LOBBY
             && active != null && active.tablePos().equals(payload.pos())) {
             client.setScreen(null);
             return;

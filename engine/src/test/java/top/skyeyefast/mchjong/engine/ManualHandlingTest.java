@@ -12,13 +12,13 @@ class ManualHandlingTest {
     private static UUID id(int seat) { return new UUID(812, seat); }
 
     private static RiichiGame game(RiichiPreset rules, boolean manual) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules, 8192);
-        assertTrue(game.configureEquipment(manual, Tile.set(rules.sanma(), rules.defaultRedFives())));
+        RiichiSession session = new RiichiSession(UUID.randomUUID(), rules, 8192);
+        assertTrue(session.configureEquipment(manual, Tile.set(rules.sanma(), rules.defaultRedFives())));
         for (int seat = 0; seat < rules.players(); seat++) {
-            assertTrue(game.join(id(seat), "Player " + seat, seat));
+            assertTrue(session.join(id(seat), "Player " + seat, seat));
         }
-        GameLifecycleTest.startPositioned(game);
-        return game;
+        GameLifecycleTest.startPositioned(session);
+        return session.game();
     }
 
     private static void act(RiichiGame game, int seat, Action.Type action) {
@@ -91,7 +91,7 @@ class ManualHandlingTest {
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(automatic.players[seat].hand, game.players[seat].hand);
             assertEquals(automatic.wall.tiles, game.wall.tiles);
             assertEquals(automatic.wall.breakOffset, game.wall.breakOffset);
-            assertFalse(game.configureEquipment(false, List.of()), "Cannot unload a set during a match");
+            assertFalse(game.session.configureEquipment(false, List.of()), "Cannot unload a set during a match");
         }
     }
 
@@ -138,7 +138,7 @@ class ManualHandlingTest {
     }
 
     @Test void emptyOrInvalidEquipmentCannotStartADeal() {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         assertTrue(game.configureEquipment(true, List.of()));
         assertTrue(game.join(id(0), "Host", 0));
         assertFalse(game.equipped());
@@ -183,14 +183,14 @@ class ManualHandlingTest {
             RiichiGame game = game(rules, true);
             for (int seat = 1; seat < rules.players(); seat++) game.players[seat].member.bot = true;
             int ticks = 0;
-            while (game.pendingReplays().isEmpty() && ticks++ < 50_000) {
-                if (!game.actions(0).isEmpty()) assertTrue(game.act(id(0), game.decision, 0));
+            while (game.session.pendingReplays().isEmpty() && ticks++ < 50_000) {
+                if (!game.actions(0).isEmpty()) assertTrue(game.act(id(0), game.decision(), 0));
                 game.tick();
                 game.validate();
                 concealed(game);
             }
-            assertFalse(game.pendingReplays().isEmpty(), "Manual game never completed: " + rules);
-            var replay = game.pendingReplays().getFirst();
+            assertFalse(game.session.pendingReplays().isEmpty(), "Manual game never completed: " + rules);
+            var replay = game.session.pendingReplays().getFirst();
             assertEquals(1, replay.hands().size());
         }
     }

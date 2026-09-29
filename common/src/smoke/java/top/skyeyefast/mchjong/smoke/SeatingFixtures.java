@@ -2,14 +2,14 @@ package top.skyeyefast.mchjong.smoke;
 
 import java.util.UUID;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 
 /** Fixed-seat fixtures for equipment, currency and replay checks; never included in a release jar. */
 public final class SeatingFixtures {
     private SeatingFixtures() {}
 
-    public static void startPositioned(RiichiGame game, UUID... humans) {
+    public static void startPositioned(RiichiSession game, UUID... humans) {
         var host = game.roomView(humans[0]);
         for (int i = 0; i < host.actions().size(); i++) if (host.actions().get(i).type() == RoomAction.Type.FILL_BOTS)
             if (!game.actRoom(humans[0], host.tableId(), host.incarnation(), host.decision(), i))

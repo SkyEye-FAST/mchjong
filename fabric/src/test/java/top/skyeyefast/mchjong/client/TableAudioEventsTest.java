@@ -21,10 +21,10 @@ class TableAudioEventsTest {
         return new TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(), -2, melds, river, norths, false, false, false);
     }
-    private static TableView view(long revision, int hand, RiichiGame.Phase phase, List<TableView.Seat> seats, String result) {
+    private static TableView view(long revision, int hand, TableView.Phase phase, List<TableView.Seat> seats, String result) {
         return new TableView(TABLE, revision, 1, hand, RiichiPreset.TENHOU_4.config(), phase, 0,
             0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
     private static List<TableView.Seat> seats() {
         return new ArrayList<>(Collections.nCopies(4, seat(List.of(), List.of(), List.of())));
@@ -38,9 +38,9 @@ class TableAudioEventsTest {
     }
     private static TableView receipt(long revision, int hand, List<TableView.Win> wins,
                                      List<TableView.Seat> seats, List<Integer> wall) {
-        return new TableView(TABLE, revision, revision, hand, RiichiPreset.TENHOU_4.config(), RiichiGame.Phase.HAND_END, 0,
+        return new TableView(TABLE, revision, revision, hand, RiichiPreset.TENHOU_4.config(), TableView.Phase.HAND_END, 0,
             0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
 
     @Test void receiptWaitsForEachRecordingThenShowsPointsBeforeTheGrade() {
@@ -164,11 +164,11 @@ class TableAudioEventsTest {
     }
 
     @Test void doubleRiichiVoiceCarriesTheDeclaringSeatForEveryListener() {
-        var before = view(1, 1, RiichiGame.Phase.TURN, seats(), "playing");
+        var before = view(1, 1, TableView.Phase.TURN, seats(), "playing");
         var seats = seats();
         seats.set(1, new TableView.Seat(false, "Player", true, false, false, 24000,
             List.of(), -2, List.of(), List.of(new Discard(12, true, false, true)), List.of(), true, false, true));
-        var after = view(2, 1, RiichiGame.Phase.REACTION, seats, "playing");
+        var after = view(2, 1, TableView.Phase.REACTION, seats, "playing");
         var cue = TableAudioEvents.between(before, after).getLast();
         assertEquals("riichi", cue.sound());
         assertEquals("double_riichi", cue.voice());
@@ -176,45 +176,45 @@ class TableAudioEventsTest {
         var ownSeats = seats();
         ownSeats.set(0, seats.get(1));
         assertEquals("double_riichi", TableAudioEvents.between(before,
-            view(2, 1, RiichiGame.Phase.REACTION, ownSeats, "playing")).getLast().voice());
+            view(2, 1, TableView.Phase.REACTION, ownSeats, "playing")).getLast().voice());
         assertEquals("yaku.double_riichi", ScoreAnnouncements.yaku("WRichi"));
-        assertTrue(TableAudioEvents.between(after, view(3, 1, RiichiGame.Phase.REACTION, seats, "playing")).isEmpty());
+        assertTrue(TableAudioEvents.between(after, view(3, 1, TableView.Phase.REACTION, seats, "playing")).isEmpty());
     }
 
     @Test void firstObservationRepeatedAndCosmeticSnapshotsAreSilent() {
-        var view = view(1, 1, RiichiGame.Phase.TURN, seats(), "playing");
+        var view = view(1, 1, TableView.Phase.TURN, seats(), "playing");
         assertTrue(sounds(null, view).isEmpty());
         assertTrue(sounds(view, view).isEmpty());
-        assertTrue(sounds(view, view(2, 1, RiichiGame.Phase.TURN, seats(), "playing")).isEmpty());
+        assertTrue(sounds(view, view(2, 1, TableView.Phase.TURN, seats(), "playing")).isEmpty());
     }
 
     @Test void openingPlaysOneWallAndOneDealRatherThanDozensOfTileSounds() {
-        var cues = TableAudioEvents.between(view(1, 0, RiichiGame.Phase.LOBBY, seats(), "lobby"),
-            view(2, 1, RiichiGame.Phase.TURN, seats(), "playing"));
+        var cues = TableAudioEvents.between(view(1, 0, TableView.Phase.LOBBY, seats(), "lobby"),
+            view(2, 1, TableView.Phase.TURN, seats(), "playing"));
         assertEquals(List.of("wall", "deal"), cues.stream().map(TableAudioEvents.Cue::sound).toList());
         assertEquals(10, cues.getLast().delay());
     }
 
     @Test void riichiAndBothDiscardTypesAreEmittedOnlyForNewRiverEntries() {
-        var before = view(1, 1, RiichiGame.Phase.TURN, seats(), "playing");
+        var before = view(1, 1, TableView.Phase.TURN, seats(), "playing");
         var seats = seats();
         seats.set(0, seat(List.of(new Discard(12, true, false, true)), List.of(), List.of()));
-        var after = view(2, 1, RiichiGame.Phase.REACTION, seats, "playing");
+        var after = view(2, 1, TableView.Phase.REACTION, seats, "playing");
         assertEquals(List.of("tsumogiri", "riichi"), sounds(before, after));
         seats.set(0, seat(List.of(new Discard(12, true, true, true)), List.of(), List.of()));
-        assertTrue(sounds(after, view(3, 1, RiichiGame.Phase.REACTION, seats, "playing")).isEmpty());
+        assertTrue(sounds(after, view(3, 1, TableView.Phase.REACTION, seats, "playing")).isEmpty());
         seats.set(0, seat(List.of(new Discard(12, false, false, false)), List.of(), List.of()));
-        assertEquals(List.of("tedashi"), sounds(before, view(2, 1, RiichiGame.Phase.REACTION, seats, "playing")));
+        assertEquals(List.of("tedashi"), sounds(before, view(2, 1, TableView.Phase.REACTION, seats, "playing")));
     }
 
     @Test void addedKanDoesNotRepeatPonAndNukiHasItsOwnVoice() {
         var seats = seats();
         seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(40, 41, 42), 0, 40)), List.of()));
-        var before = view(1, 1, RiichiGame.Phase.TURN, seats, "playing");
+        var before = view(1, 1, TableView.Phase.TURN, seats, "playing");
         seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.ADDED_QUAD, List.of(40, 41, 42, 43), 0, 40)), List.of()));
         seats.set(2, seat(List.of(), List.of(), List.of(120)));
-        assertEquals(List.of("kan", "nuki"), sounds(before, view(2, 1, RiichiGame.Phase.TURN, seats, "playing")));
-        var cues = TableAudioEvents.between(before, view(2, 1, RiichiGame.Phase.TURN, seats, "playing"));
+        assertEquals(List.of("kan", "nuki"), sounds(before, view(2, 1, TableView.Phase.TURN, seats, "playing")));
+        var cues = TableAudioEvents.between(before, view(2, 1, TableView.Phase.TURN, seats, "playing"));
         assertEquals(List.of(1, 2), cues.stream().map(TableAudioEvents.Cue::seat).toList());
         assertEquals(List.of("kan", "nuki"), cues.stream().map(TableAudioEvents.Cue::voice).toList());
     }
@@ -224,20 +224,20 @@ class TableAudioEventsTest {
         var called = new Discard(12, true, true, true);
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
             List.of(), List.of(called), List.of(), true, false, false));
-        var before = view(1, 1, RiichiGame.Phase.TURN, seats, "playing");
+        var before = view(1, 1, TableView.Phase.TURN, seats, "playing");
         seats.set(0, new TableView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
             List.of(), List.of(called, new Discard(20, true, false, true)), List.of(), true, false, false));
-        assertEquals(List.of("tsumogiri"), sounds(before, view(2, 1, RiichiGame.Phase.REACTION, seats, "playing")));
+        assertEquals(List.of("tsumogiri"), sounds(before, view(2, 1, TableView.Phase.REACTION, seats, "playing")));
     }
 
     @Test void winDrawAndFinalMatchCuesAreDistinctAndDoNotRepeatForReadyVotes() {
-        var before = view(1, 1, RiichiGame.Phase.TURN, seats(), "playing");
+        var before = view(1, 1, TableView.Phase.TURN, seats(), "playing");
         for (String reason : List.of("exhaustive", "four_kans", "nagashi"))
-            assertEquals(List.of("draw_end"), sounds(before, view(2, 1, RiichiGame.Phase.HAND_END, seats(), reason)));
+            assertEquals(List.of("draw_end"), sounds(before, view(2, 1, TableView.Phase.HAND_END, seats(), reason)));
         for (String reason : List.of("ron", "tsumo")) {
-            var after = view(2, 1, RiichiGame.Phase.MATCH_END, seats(), reason);
+            var after = view(2, 1, TableView.Phase.MATCH_END, seats(), reason);
             assertEquals(List.of(reason), sounds(before, after));
-            assertTrue(sounds(after, view(3, 1, RiichiGame.Phase.MATCH_END, seats(), reason)).isEmpty());
+            assertTrue(sounds(after, view(3, 1, TableView.Phase.MATCH_END, seats(), reason)).isEmpty());
         }
         var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
         var multiple = receipt(2, 1, List.of(new TableView.Win(1, 0, 4, score), new TableView.Win(2, 0, 4, score)));

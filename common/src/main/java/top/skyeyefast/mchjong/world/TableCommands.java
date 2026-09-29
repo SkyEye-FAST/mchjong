@@ -81,8 +81,8 @@ public final class TableCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     ServerPlayer successor = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
                     MahjongTableBlockEntity table = table(player);
-                    if (table.participantGame(successor) == null
-                        || !table.participantGame(player).transferHost(player.getUUID(), successor.getUUID()))
+                    if (table.participantSession(successor) == null
+                        || !table.participantSession(player).transferHost(player.getUUID(), successor.getUUID()))
                         throw error("message.mchjong.host_transfer_failed");
                     table.setChanged();
                     player.sendSystemMessage(Component.translatable("message.mchjong.host_transferred", successor.getDisplayName()));
@@ -113,7 +113,7 @@ public final class TableCommands {
                     .then(Commands.argument("move", IntegerArgumentType.integer(1, 120)).executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
                         MahjongTableBlockEntity table = table(player);
-                        boolean changed = table.participantGame(player).configureClock(player.getUUID(), new TimeControl(
+                        boolean changed = table.participantSession(player).configureClock(player.getUUID(), new TimeControl(
                             IntegerArgumentType.getInteger(context, "reserve"), IntegerArgumentType.getInteger(context, "move")));
                         if (!changed) throw error("message.mchjong.host_lobby");
                         table.setChanged();
@@ -156,7 +156,7 @@ public final class TableCommands {
     static MahjongTableBlockEntity table(ServerPlayer player) throws CommandSyntaxException {
         if (player.isAlive() && !player.isSpectator() && player.getVehicle() instanceof SeatEntity seat
             && player.serverLevel().getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table
-            && table.participantGame(player) != null) return table;
+            && table.participantSession(player) != null) return table;
         throw error("message.mchjong.seat_required");
     }
 }

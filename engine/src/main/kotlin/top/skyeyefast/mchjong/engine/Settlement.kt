@@ -253,8 +253,8 @@ internal object Settlement {
                 game.finalUma[seat] = umaShare
                 val player = game.players[seat]
                 if (player.member.id != null && !player.member.bot) {
-                    val experience = game.worldPolicy.experienceChange(umaShare)
-                    if (experience != 0) game.pendingExperience.merge(player.member.id, experience, Integer::sum)
+                    val experience = game.session.worldPolicy.experienceChange(umaShare)
+                    if (experience != 0) game.session.pendingExperience.merge(player.member.id, experience, Integer::sum)
                 }
             }
         }

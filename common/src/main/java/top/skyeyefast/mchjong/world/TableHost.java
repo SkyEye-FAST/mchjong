@@ -9,6 +9,7 @@ import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.TableSessionCodec;
 import top.skyeyefast.mchjong.engine.WorldPolicy;
@@ -19,7 +20,7 @@ final class TableHost {
     private final BotServiceClient bots = new BotServiceClient();
 
     TableHost(UUID tableId, long seed) {
-        this(new RiichiGame(tableId, RiichiPreset.MAHJONG_SOUL_4.config()
+        this(new RiichiSession(tableId, RiichiPreset.MAHJONG_SOUL_4.config()
             .with(RiichiRuleOption.RED_FIVES, RedFives.NONE.ordinal()), seed));
     }
 
@@ -28,14 +29,15 @@ final class TableHost {
     static TableHost restore(String encoded) { return new TableHost(TableSessionCodec.restore(encoded)); }
     String save() { return TableSessionCodec.save(session); }
     TableSession session() { return session; }
-    RiichiGame riichi() { return session instanceof RiichiGame riichi ? riichi : null; }
+    RiichiSession riichi() { return session instanceof RiichiSession riichi ? riichi : null; }
+    RiichiGame riichiGame() { return riichi() == null ? null : riichi().game(); }
     McrSession mcr() { return session instanceof McrSession mcr ? mcr : null; }
     BotServiceState botState() { return riichi() == null ? null : bots.state(riichi()); }
 
     /** Returns whether equipment selection changed its public appearance. */
     boolean prepare(TableEquipment equipment, boolean automatic, WorldPolicy policy) {
         session.configureWorld(policy);
-        if (session instanceof RiichiGame riichi) {
+        if (session instanceof RiichiSession riichi) {
             riichi.configureExternalBots(BotServiceClient.availableBots());
             if (riichi.lobby() && !equipment.canSupplyReds(riichi.rules().sanma(), riichi.rules().redFives()))
                 for (var reds : new RedFives[]{RedFives.THREE, RedFives.FOUR, RedFives.NONE})
@@ -63,12 +65,12 @@ final class TableHost {
 
     void tick() {
         session.tick();
-        if (session instanceof RiichiGame riichi) bots.tick(riichi);
+        if (session instanceof RiichiSession riichi) bots.tick(riichi);
     }
 
     boolean selectVariant(UUID actor, long decision, MahjongVariant variant) {
         // Completed side effects must be acknowledged before releasing their owning runtime.
-        if (session instanceof RiichiGame riichi && (!riichi.pendingReplays().isEmpty() || !riichi.pendingExperience().isEmpty()))
+        if (session instanceof RiichiSession riichi && (!riichi.pendingReplays().isEmpty() || !riichi.pendingExperience().isEmpty()))
             return false;
         TableSession replacement = session.selectVariant(actor, decision, variant);
         if (replacement == null) return false;

@@ -93,7 +93,7 @@ internal class TrainingBot private constructor(
             }
         }
         if (choices.isEmpty()) throw IllegalStateException("No evaluated legal bot action")
-        val finalDiscards = if (view.remaining() == 0 && view.phase() == RiichiGame.Phase.TURN) {
+        val finalDiscards = if (view.remaining() == 0 && view.phase() == TableView.Phase.TURN) {
             choices.filter { view.actions()[it.index].type() == DISCARD }
         } else emptyList()
         val baseline = choices.asSequence()

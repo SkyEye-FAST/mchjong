@@ -26,7 +26,7 @@ final class TableAutomation {
 
     static boolean available(TableView view) {
         return view != null && view.viewerSeat() >= 0 && view.autoPlay() != null
-            && (view.phase() == RiichiGame.Phase.TURN || view.phase() == RiichiGame.Phase.REACTION) && view.exitVote() == null;
+            && (view.phase() == TableView.Phase.TURN || view.phase() == TableView.Phase.REACTION) && view.exitVote() == null;
     }
 
     int width(int screenWidth) { return expanded ? Math.min(124, Math.max(96, (screenWidth - 28) / 3)) : 44; }

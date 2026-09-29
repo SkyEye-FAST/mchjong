@@ -82,7 +82,7 @@ public final class TableResults extends AbstractWidget {
     }
     private boolean pointsVisible() { return readout == null || readout.pointsAt() >= 0; }
     public static boolean available(TableView view) {
-        return view.phase() == RiichiGame.Phase.HAND_END || view.phase() == RiichiGame.Phase.MATCH_END;
+        return view.phase() == TableView.Phase.HAND_END || view.phase() == TableView.Phase.MATCH_END;
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

@@ -45,13 +45,13 @@ public final class TableSeatsScreen extends Screen {
                 label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
                 int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-                enabled = host && seat != room.host() && (view.phase() != RiichiGame.Phase.LOBBY || index >= 0);
+                enabled = host && seat != room.host() && (view.phase() != TableView.Phase.LOBBY || index >= 0);
                 action = () -> {
-                    if (view.phase() == RiichiGame.Phase.LOBBY) parent.sendRoom(room, index);
+                    if (view.phase() == TableView.Phase.LOBBY) parent.sendRoom(room, index);
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
-                label = player.bot() ? botName(room, seat)
+                label = player.bot() ? botName(room, view.externalBots(), seat)
                     : Component.translatable(player.occupied() ? presenceKey(state.presence()) : "room.mchjong.empty");
                 hint = label;
                 enabled = false;
@@ -77,9 +77,9 @@ public final class TableSeatsScreen extends Screen {
         return -1;
     }
 
-    static Component botName(TableRoomView room, int seat) {
+    static Component botName(TableRoomView room, List<top.skyeyefast.mchjong.engine.ExternalBot> externalBots, int seat) {
         var state = room.seats().get(seat);
-        if (state.participant().externalBotId() != null) return room.externalBots().stream()
+        if (state.participant().externalBotId() != null) return externalBots.stream()
             .filter(bot -> bot.id().equals(state.participant().externalBotId()))
             .findFirst().<Component>map(bot -> Component.literal(bot.name()))
             .orElse(Component.literal(state.participant().externalBotId()));

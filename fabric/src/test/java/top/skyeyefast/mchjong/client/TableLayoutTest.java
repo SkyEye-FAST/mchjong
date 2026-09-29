@@ -10,7 +10,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableLayoutTest {
     private static TableView start(RiichiPreset rules) {
         UUID player = new UUID(10, 15);
-        var game = new RiichiGame(UUID.randomUUID(), rules, 15);
+        var game = new RiichiSession(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(player, "Test", 0));
         act(game, player, RoomAction.Type.FILL_BOTS);
         act(game, player, RoomAction.Type.BEGIN_SEATING);
@@ -19,7 +19,7 @@ class TableLayoutTest {
         return game.view(null);
     }
 
-    private static void act(RiichiGame game, UUID player, RoomAction.Type type) {
+    private static void act(RiichiSession game, UUID player, RoomAction.Type type) {
         var view = game.roomView(player);
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) {
             assertTrue(game.actRoom(player, view.tableId(), view.incarnation(), view.decision(), i));
@@ -34,13 +34,13 @@ class TableLayoutTest {
             melds, river, List.of(), false, false, false));
         return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
     }
 
     @Test void informationVisibilityNeverLaysHandsFlatAndOpenHandsDoes() {
         var id = new UUID(10, 15);
         for (var mode : PlayerHandVisibility.values()) {
-            var game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 15);
+            var game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 15);
             assertTrue(game.join(id, "Host", 0));
             if (mode != PlayerHandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.view(id).decision(), mode));
             act(game, id, RoomAction.Type.FILL_BOTS);
@@ -54,7 +54,7 @@ class TableLayoutTest {
                 assertTrue(pieces.stream().noneMatch(TableScene.Piece::flat));
             }
         }
-        var open = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 16);
+        var open = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 16);
         assertTrue(open.join(id, "Host", 0));
         assertTrue(open.configureOpenHands(id, open.view(id).decision(), true));
         act(open, id, RoomAction.Type.FILL_BOTS);
@@ -134,7 +134,7 @@ class TableLayoutTest {
             }
             var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
             for (var north : pieces.stream().filter(p -> p.area() == TableScene.Area.NORTH).toList()) {
                 var local = top.skyeyefast.mchjong.world.TableGeometry.orient(north.position().x, north.position().y,

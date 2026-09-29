@@ -64,15 +64,14 @@ class BotScenarioTest {
         assertEquals("nagashi", game.result);
         assertEquals(12000, game.deltas.getFirst());
 
-        var disabled = TrainingBotTest.hand("123456789m45p11z2p");
-        disabled.rules = disabled.rules.with(RiichiRuleOption.NAGASHI_MANGAN, 0);
+        var disabled = TrainingBotTest.hand("123456789m45p11z2p",
+            RiichiPreset.TENHOU_4.config().with(RiichiRuleOption.NAGASHI_MANGAN, 0));
         disabled.wall.cursor = disabled.wall.liveEnd;
         assertEquals(Tile.parseKind("2p"), Tile.kind(choose(disabled).tiles().getFirst()));
     }
 
     @Test void sanmaLastDiscardKeepsFormalTenpai() {
-        var game = TrainingBotTest.hand("123456789p45s11z2z");
-        game.rules = RiichiPreset.MAHJONG_SOUL_3.config();
+        var game = TrainingBotTest.hand("123456789p45s11z2z", RiichiPreset.MAHJONG_SOUL_3.config());
         game.wall = new Wall(game.rules, 24, 0);
         game.wall.cursor = game.wall.liveEnd;
         game.players[0].river.add(new Discard(Tile.id(25, 0, false), false, false, false));

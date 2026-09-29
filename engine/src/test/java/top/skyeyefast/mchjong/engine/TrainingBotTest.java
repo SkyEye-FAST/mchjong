@@ -8,8 +8,24 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TrainingBotTest {
     static RiichiGame hand(String text) {
-        var game = new RiichiGame(new UUID(1, 2), RiichiPreset.TENHOU_4, 17);
-        for (int seat = 0; seat < 4; seat++) game.join(new UUID(2, seat + 1), "Player " + seat, seat);
+        return hand(text, RiichiPreset.TENHOU_4.config());
+    }
+
+    static RiichiGame hand(String text, RiichiRules rules) {
+        return hand(text, rules, 17, PlayerHandVisibility.SELF);
+    }
+
+    static RiichiGame hand(String text, RiichiRules rules, long seed, PlayerHandVisibility visibility) {
+        var session = new RiichiSession(new UUID(1, 2), rules, seed);
+        for (int seat = 0; seat < rules.players(); seat++) session.join(new UUID(2, seat + 1), "Player " + seat, seat);
+        if (visibility != PlayerHandVisibility.SELF)
+            session.configureHandVisibility(session.participants[0].id, session.decision(), visibility);
+        session.startMatch();
+        var game = session.game();
+        for (var player : game.players) player.resetHand();
+        game.replay = null;
+        game.recorder = null;
+        game.age = 0;
         game.phase = RiichiGame.Phase.TURN;
         game.turn = 0;
         game.wall = new Wall(game.rules(), 24, game.dealer);
@@ -158,8 +174,9 @@ class TrainingBotTest {
         var value = new BotValue(game.view(game.players[0].member.id));
         value.dora[Tile.WHITE] = 3;
         assertNull(value.score(state, Tile.id(3, 1, false), false, false));
-        game.rules = game.rules.with(RiichiRuleOption.MIN_HAN, 4);
-        value = new BotValue(game.view(game.players[0].member.id));
+        var highMinimum = hand("123m456p789s23m55z",
+            game.rules.with(RiichiRuleOption.MIN_HAN, 4));
+        value = new BotValue(highMinimum.view(highMinimum.players[0].member.id));
         var closed = new BotAnalysis.State(TestHands.tiles("234m345p456s678s2p"), List.of(), List.of(), 0, true, false, 1);
         value.dora[13] = 4;
         assertNull(value.score(closed, Tile.id(10, 1, false), false, false), "Dora do not satisfy four-yaku-han minimum");
@@ -211,12 +228,10 @@ class TrainingBotTest {
         for (var difficulty : BotDifficulty.values())
             assertEquals(min, shapes.get(Tile.kind(choice(game, difficulty).tiles().getFirst())).shanten());
         var first = choice(game, BotDifficulty.HARD);
-        game.seed = Long.MAX_VALUE;
-        game.players[1].hand = TestHands.tiles("111222333m45677p");
-        game.players[2].hand = TestHands.tiles("789m123456p11122z");
-        assertEquals(first, choice(game, BotDifficulty.HARD));
-        game.playerHandVisibility = PlayerHandVisibility.ALL;
-        assertEquals(first, choice(game, BotDifficulty.HARD), "Open-hand permission cannot improve a bot's information");
+        var changed = hand("123456m234p456s12z", game.rules, Long.MAX_VALUE, PlayerHandVisibility.ALL);
+        changed.players[1].hand = TestHands.tiles("111222333m45677p");
+        changed.players[2].hand = TestHands.tiles("789m123456p11122z");
+        assertEquals(first, choice(changed, BotDifficulty.HARD), "Open-hand permission cannot improve a bot's information");
     }
 
     @Test void allLevelsCanFoldAWeakHandWithGenbutsu() {
@@ -354,8 +369,7 @@ class TrainingBotTest {
         assertEquals(Action.Type.PON, choice(call, BotDifficulty.HARD).type(),
             "Compare a valuable fast called hand before deciding to fold the unchanged hand");
 
-        var ready = hand("123789p123789s5z4p");
-        ready.rules = RiichiPreset.MAHJONG_SOUL_3.config();
+        var ready = hand("123789p123789s5z4p", RiichiPreset.MAHJONG_SOUL_3.config());
         ready.wall = new Wall(ready.rules, 24, 0);
         ready.players[1].riichi = true;
         ready.players[1].norths.addAll(List.of(Tile.id(Tile.NORTH, 0, false), Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 2, false)));
@@ -436,15 +450,16 @@ class TrainingBotTest {
         assertEquals(RiichiHandAnalyzer.bonusPayment(ron, 2, true, game.rules),
             twoIndicators.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001,
             "Two remaining indicators are selected without replacement");
-        game.rules = game.rules.with(RiichiRuleOption.URA_DORA, 0);
-        var disabled = new BotValue(game.view(game.players[0].member.id));
+        var noUra = hand("123m456p789s23m55z1z", game.rules.with(RiichiRuleOption.URA_DORA, 0));
+        noUra.wall.revealed = 2;
+        var disabled = new BotValue(noUra.view(noUra.players[0].member.id));
         remaining[17] = 0; remaining[0] = 2;
         assertEquals(ron.ron(), disabled.waits(declared, java.util.Set.of(3), remaining).ron(), 0.001);
     }
 
     @Test void sanmaNorthExtractionPreservesValuableShapesAndUsesThePlayingSet() {
-        var game = hand("19m19p19s1234567z4z");
-        game.rules = RiichiPreset.MAHJONG_SOUL_3.config();
+        var game = hand("19m19p19s1234567z4z", RiichiPreset.MAHJONG_SOUL_3.config());
+        for (int seat = 0; seat < 3; seat++) game.players[seat].points = 25000;
         game.wall = new Wall(game.rules, 24, 0);
         game.players[0].firstTurn = false;
         game.players[0].hand = new ArrayList<>(TestHands.tiles("19m19p19s1234567z2p"));
@@ -475,8 +490,7 @@ class TrainingBotTest {
 
         // From an observed opening: 62 tiles returning a three-shanten hand to
         // two-shanten must not beat 16 tiles advancing two-shanten to one-shanten.
-        var speed = hand("123479p230s11226z");
-        speed.rules = RiichiPreset.MAHJONG_SOUL_3.config();
+        var speed = hand("123479p230s11226z", RiichiPreset.MAHJONG_SOUL_3.config());
         speed.wall = new Wall(speed.rules, 24, 0);
         speed.players[0].norths.addAll(List.of(Tile.id(Tile.NORTH, 1, false), Tile.id(Tile.NORTH, 3, false)));
         var shapes = RiichiHandAnalyzer.discardEfficiency(speed.players[0].hand, List.of(), false);

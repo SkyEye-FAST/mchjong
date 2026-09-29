@@ -11,6 +11,20 @@ final class ManualHandling {
     boolean kan;
     boolean diceHeld;
 
+    record Saved(int builtWalls, int packets, boolean replacement, boolean kan, boolean diceHeld) {}
+
+    Saved save() { return new Saved(builtWalls, packets, replacement, kan, diceHeld); }
+
+    static ManualHandling restore(Saved saved) {
+        var handling = new ManualHandling();
+        handling.builtWalls = saved.builtWalls();
+        handling.packets = saved.packets();
+        handling.replacement = saved.replacement();
+        handling.kan = saved.kan();
+        handling.diceHeld = saved.diceHeld();
+        return handling;
+    }
+
     static boolean active(RiichiGame.Phase phase) {
         return phase == RiichiGame.Phase.SHUFFLE || phase == RiichiGame.Phase.BUILD_WALL
             || phase == RiichiGame.Phase.DEAL || phase == RiichiGame.Phase.DRAW;
@@ -57,7 +71,7 @@ final class ManualHandling {
                 builtWalls |= 1 << seat;
                 if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(RiichiGame.Phase.BUILD_WALL);
                 // Each seat builds its own wall independently. Keep other players' held drags valid.
-                else game.revision++;
+                else game.session.revision++;
             }
             case ROLL_DICE -> {
                 game.wall.open(game.rules, game.dealer);

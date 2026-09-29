@@ -33,7 +33,7 @@ public final class ResultReadout {
     public boolean matches(TableView view) {
         return view != null && table.equals(view.tableId()) && hand == view.handNumber()
             && viewer == view.viewerSeat() && wins.equals(view.wins())
-            && (view.phase() == RiichiGame.Phase.HAND_END || view.phase() == RiichiGame.Phase.MATCH_END);
+            && (view.phase() == TableView.Phase.HAND_END || view.phase() == TableView.Phase.MATCH_END);
     }
 
     public int winner() { return winner; }

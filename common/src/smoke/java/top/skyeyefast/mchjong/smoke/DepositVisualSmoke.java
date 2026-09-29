@@ -46,10 +46,10 @@ final class DepositVisualSmoke {
                     hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
-                base.handNumber(), rules, RiichiGame.Phase.TURN, 0, 0, 0, 0, count,
+                base.handNumber(), rules, TableView.Phase.TURN, 0, 0, 0, 0, count,
                 0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of());
+                table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             table.acceptView(fixture);
             var screen = new TableScreen(table.getBlockPos());
             client.setScreen(screen);

@@ -14,9 +14,9 @@ class TableDecisionTest {
     private static final List<Action> DISCARD = List.of(new Action(Action.Type.DISCARD, 13));
 
     private static TableView view(UUID table, long revision, long decision, int viewer, List<Action> actions) {
-        return new TableView(table, revision, decision, 1, RiichiPreset.MAHJONG_SOUL_4.config(), RiichiGame.Phase.TURN,
+        return new TableView(table, revision, decision, 1, RiichiPreset.MAHJONG_SOUL_4.config(), TableView.Phase.TURN,
             viewer, 0, 0, 0, 0, 0, 70, 0, List.of(), null, List.of(), actions, List.of(), "playing", List.of(), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
 
     @Test void aRequestCanOnlyBeSentOnceAndHeartbeatsDoNotUnlockIt() {

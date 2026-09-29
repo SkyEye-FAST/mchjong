@@ -20,6 +20,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -122,7 +123,7 @@ final class EquipmentLifecycleSmoke {
         level.getBlockState(stool).useWithoutItem(level, player,
             new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
         check(player.isPassenger(), "The stool did not find its table");
-        RiichiGame game = table.participantGame(player);
+        top.skyeyefast.mchjong.engine.RiichiSession game = table.participantSession(player);
         check(game != null && !game.equipped() && game.roomView(player.getUUID()).actions().stream()
             .noneMatch(action -> action.type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY), "Empty table could start a game");
 
@@ -150,13 +151,13 @@ final class EquipmentLifecycleSmoke {
         var redOnly = MahjongSupplies.stockedBox(RedFives.THREE);
         TableStorageSmoke.put(player, table, 0, redOnly);
         check(!table.equipment().canSupplyReds(false, RedFives.NONE), "Three-red stock incorrectly supplies no-red play");
-        check(table.participantGame(player).rules().redFives() == RedFives.THREE,
+        check(table.participantSession(player).rules().redFives() == RedFives.THREE,
             "Three-red stock left the room on an unavailable no-red setting");
         TableStorageSmoke.take(player, table, 0);
         var first = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var firstExpected = first.copy();
         TableStorageSmoke.put(player, table, 0, first);
-        check(table.participantGame(player).rules().redFives() == RedFives.NONE,
+        check(table.participantSession(player).rules().redFives() == RedFives.NONE,
             "Replacing three-red stock with no-red stock did not update the room");
         check(first.isEmpty(), "Storage transfer did not move exactly one box");
         var installed = complete.copy();
@@ -165,7 +166,7 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.take(player, table, 1);
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Moving the cases lost or duplicated their contents");
-        check(!table.participantGame(player).equipped(), "Table started without a cloth");
+        check(!table.participantSession(player).equipped(), "Table started without a cloth");
         var green = new ItemStack(MahjongContent.CLOTH_ITEM);
         var greenExpected = green.copy();
         table.useEquipment(player, green);
@@ -176,9 +177,9 @@ final class EquipmentLifecycleSmoke {
         check(green.isEmpty() && red.isEmpty() && countInventory(player, greenExpected) == 1, "Replacing cloth did not conserve items");
 
         PointStickMenuSmoke.stockDrawers(table);
-        game = table.participantGame(player);
+        game = table.participantSession(player);
         SeatingFixtures.startPositioned(game, player.getUUID());
-        check(game.phase() != RiichiGame.Phase.LOBBY, "Equipped table did not start");
+        check(!game.lobby(), "Equipped table did not start");
         game.validate();
         var lockedCloth = redExpected.copy();
         table.useEquipment(player, lockedCloth);
@@ -209,9 +210,9 @@ final class EquipmentLifecycleSmoke {
         check(scoresBefore.equals(TableNetworking.JSON.toJson(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
-        check(game.phase() != RiichiGame.Phase.LOBBY && player.isPassenger(), "A stale exit token changed the game");
+        check(!game.lobby() && player.isPassenger(), "A stale exit token changed the game");
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
-        check(game.phase() == RiichiGame.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
+        check(game.lobby() && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
         if (!table.automatic()) {
             for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);

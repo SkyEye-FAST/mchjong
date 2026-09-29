@@ -93,6 +93,9 @@ public final class McrSession extends TableSession {
 
     public void tick() { tickRoom(); }
 
+    @Override protected boolean pauseForAbsence() { return seated() != 15; }
+    @Override protected boolean canReturnToLobby(int seat) { return seat == host(); }
+
     /** An absent participant gets the same concealed-data protection as an unprivileged spectator. */
     public View view(UUID recipient) {
         if (game == null) return null;
@@ -112,7 +115,8 @@ public final class McrSession extends TableSession {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");
             Objects.requireNonNull(room);
             stock = List.copyOf(stock);
-            if (room.variant() != MahjongVariant.MCR || !stock.isEmpty() && !Tile.validMcrSet(stock)
+            if (room.variant() != MahjongVariant.MCR || room.capacity() != 4 || room.manual()
+                || !stock.isEmpty() && !Tile.validMcrSet(stock)
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != McrGame.Phase.HAND_END)
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)
                 || game != null && (!Tile.validMcrSet(stock)

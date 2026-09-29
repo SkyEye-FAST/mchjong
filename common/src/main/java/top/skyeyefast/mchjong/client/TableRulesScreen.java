@@ -71,7 +71,7 @@ public final class TableRulesScreen extends Screen {
     private boolean host() {
         var view = parent.view();
         var room = parent.room();
-        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == RiichiGame.Phase.LOBBY
+        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == TableView.Phase.LOBBY
             && view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
     }
     private boolean stale() {

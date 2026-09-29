@@ -7,7 +7,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class BotServicePositionTest {
     @Test void lobbyOffersOnlyBotsMatchingTheCurrentPreset() {
         var bot = new ExternalBot("mortal-4p", "Mortal 4P", 4, java.util.List.of(RiichiPreset.TENHOU_4));
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1);
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1);
         game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         game.configureExternalBots(java.util.List.of(bot));
         UUID host = UUID.randomUUID();
@@ -17,26 +17,27 @@ class BotServicePositionTest {
     }
 
     @Test void botPositionKeepsPrivateDrawsAndRejectsStaleOrIllegalResponses() {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 83);
-        game.configureExternalBots(java.util.List.of(new ExternalBot("mortal-4p", "Mortal 4P", 4,
+        RiichiSession room = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 83);
+        room.configureExternalBots(java.util.List.of(new ExternalBot("mortal-4p", "Mortal 4P", 4,
             java.util.List.of(RiichiPreset.TENHOU_4))));
-        game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
+        room.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         UUID host = UUID.randomUUID();
-        assertTrue(game.join(host, "Host", 1));
-        var lobby = game.roomView(host);
+        assertTrue(room.join(host, "Host", 1));
+        var lobby = room.roomView(host);
         int external = -1;
         for (int i = 0; i < lobby.actions().size(); i++)
             if (lobby.actions().get(i).type() == RoomAction.Type.SET_BOT
                 && lobby.actions().get(i).arguments().equals(java.util.List.of(0, 2))) external = i;
         assertTrue(external >= 0);
-        assertTrue(game.actRoom(host, lobby.tableId(), lobby.incarnation(), lobby.decision(), external));
-        String saved = new com.google.gson.Gson().toJson(game);
+        assertTrue(room.actRoom(host, lobby.tableId(), lobby.incarnation(), lobby.decision(), external));
+        String saved = TableSessionCodec.save(room);
         assertTrue(saved.contains("\"externalBotId\":\"mortal-4p\""));
         assertFalse(saved.contains("externalBots"));
-        RiichiGame restored = new com.google.gson.Gson().fromJson(saved, RiichiGame.class);
+        RiichiSession restored = (RiichiSession) TableSessionCodec.restore(saved);
         restored.validate();
         assertEquals("mortal-4p", restored.externalBotId(0));
-        GameLifecycleTest.startPositioned(game);
+        GameLifecycleTest.startPositioned(room);
+        RiichiGame game = room.game();
         assertNull(game.replay);
         assertNotNull(game.recorder);
 

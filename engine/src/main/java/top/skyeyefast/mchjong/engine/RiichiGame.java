@@ -12,19 +12,27 @@ import java.util.UUID;
 
 import static top.skyeyefast.mchjong.engine.Action.Type.*;
 
-/** One server-owned table. All methods are called on the server thread. */
-public final class RiichiGame extends TableSession {
+/** One already-started Riichi match. The owning session provides room authority. */
+public final class RiichiGame {
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     public static final int DEAL_TICKS = 56;
     public static final int AUTO_ACTION_TICKS = 12;
     public static final int SETTLEMENT_TICKS = 10 * 20;
-    public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
+    public enum Phase { SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
-    RiichiRules rules;
+    final RiichiSession session;
+    final RiichiRules rules;
+    final UUID tableId;
+    final long seed;
+    final boolean manual;
+    final List<Integer> suppliedTiles;
+    final TimeControl timeControl;
+    final PlayerHandVisibility playerHandVisibility;
+    final boolean openHands;
     int handNumber;
     int age;
     PlayerState[] players = new PlayerState[4];
-    Phase phase = Phase.LOBBY;
+    Phase phase;
     int dealer;
     int initialDealer;
     int round;
@@ -48,35 +56,123 @@ public final class RiichiGame extends TableSession {
     private int presentedSeats;
     private long skippedDecision = -1;
     private int skippedSeats;
-    String result = "lobby";
+    String result = "playing";
     List<Integer> deltas = new ArrayList<>(Collections.nCopies(4, 0));
     List<Double> finalScores = new ArrayList<>();
     List<Double> finalUma = new ArrayList<>();
     List<Integer> finalRanks = new ArrayList<>();
-    Map<UUID, Integer> pendingExperience = new java.util.HashMap<>();
     ReplayMatch replay;
     ReplayRecorder recorder;
-    List<ReplayMatch> archiveQueue = new ArrayList<>();
-    TimeControl timeControl = TimeControl.DEFAULT;
     int[] moveTicks = new int[4];
     int[] reserveTicks = new int[4];
-    PlayerHandVisibility playerHandVisibility = PlayerHandVisibility.SELF;
-    boolean openHands;
-    boolean convenienceHints;
-    transient List<ExternalBot> externalBots = List.of();
     ManualHandling handling = new ManualHandling();
-    List<Integer> suppliedTiles;
-    public RiichiGame(UUID tableId, RiichiPreset rules, long seed) {
-        this(tableId, rules.config(), seed);
+
+    /** Detached private match state; room identity and configuration live in RiichiSession.State. */
+    public record State(int handNumber, int age, List<PlayerState.Saved> players, Phase phase,
+                        int dealer, int initialDealer, int round, int honba, int riichiSticks, int turn,
+                        Wall.Saved wall, int lastTile, int lastFrom, Action pending,
+                        boolean uninterrupted, boolean fourKanAbort, boolean dealerRepeats,
+                        boolean drawResult, boolean abortResult, List<Boolean> exposed,
+                        List<Integer> replies, List<List<Action>> options, List<TableView.Win> wins,
+                        long presentedDecision, int presentedSeats, long skippedDecision, int skippedSeats,
+                        String result, List<Integer> deltas, List<Double> finalScores,
+                        List<Double> finalUma, List<Integer> finalRanks, ReplayMatch replay,
+                        ReplayRecorderState recorder, List<Integer> moveTicks, List<Integer> reserveTicks,
+                        ManualHandling.Saved handling) {
+        public State {
+            players = List.copyOf(players);
+            exposed = List.copyOf(exposed);
+            replies = List.copyOf(replies);
+            options = options.stream().map(List::copyOf).toList();
+            wins = List.copyOf(wins);
+            deltas = List.copyOf(deltas);
+            finalScores = List.copyOf(finalScores);
+            finalUma = List.copyOf(finalUma);
+            finalRanks = List.copyOf(finalRanks);
+            moveTicks = List.copyOf(moveTicks);
+            reserveTicks = List.copyOf(reserveTicks);
+            Objects.requireNonNull(phase);
+            Objects.requireNonNull(result);
+            Objects.requireNonNull(handling);
+            if (handNumber < 1 || players.size() != 4 || exposed.size() != 4 || replies.size() != 4
+                || options.size() != 4 || moveTicks.size() != 4 || reserveTicks.size() != 4
+                || presentedSeats < 0 || presentedSeats > 15 || skippedSeats < 0 || skippedSeats > 15
+                || recorder != null && wall == null)
+                throw new IllegalArgumentException("Invalid Riichi match state");
+        }
     }
 
-    public RiichiGame(UUID tableId, RiichiRules rules, long seed) {
-        super(tableId, MahjongVariant.RIICHI, rules.players(), seed);
-        this.rules = Objects.requireNonNull(rules);
-        suppliedTiles = Tile.set(rules.sanma(), rules.redFives());
-        this.seed = seed;
+    public State save() {
+        validate();
+        return new State(handNumber, age, Arrays.stream(players).map(PlayerState::save).toList(), phase,
+            dealer, initialDealer, round, honba, riichiSticks, turn, wall == null ? null : wall.save(),
+            lastTile, lastFrom, pending, uninterrupted, fourKanAbort, dealerRepeats, drawResult, abortResult,
+            java.util.stream.IntStream.range(0, 4).mapToObj(i -> exposed[i]).toList(),
+            Arrays.stream(replies).boxed().toList(), options, wins,
+            presentedDecision, presentedSeats, skippedDecision, skippedSeats, result, deltas,
+            finalScores, finalUma, finalRanks, replay, recorder == null ? null : recorder.save(),
+            Arrays.stream(moveTicks).boxed().toList(), Arrays.stream(reserveTicks).boxed().toList(), handling.save());
+    }
+
+    static RiichiGame restore(RiichiSession session, State state, long savedDecision) {
+        var game = new RiichiGame(session);
+        game.handNumber = state.handNumber();
+        game.age = state.age();
+        game.players = new PlayerState[4];
+        for (int seat = 0; seat < 4; seat++)
+            game.players[seat] = PlayerState.restore(state.players().get(seat), session.participants[seat]);
+        game.phase = state.phase();
+        game.dealer = state.dealer();
+        game.initialDealer = state.initialDealer();
+        game.round = state.round();
+        game.honba = state.honba();
+        game.riichiSticks = state.riichiSticks();
+        game.turn = state.turn();
+        game.wall = state.wall() == null ? null : Wall.restore(state.wall());
+        game.lastTile = state.lastTile();
+        game.lastFrom = state.lastFrom();
+        game.pending = state.pending();
+        game.uninterrupted = state.uninterrupted();
+        game.fourKanAbort = state.fourKanAbort();
+        game.dealerRepeats = state.dealerRepeats();
+        game.drawResult = state.drawResult();
+        game.abortResult = state.abortResult();
+        for (int seat = 0; seat < 4; seat++) {
+            game.exposed[seat] = state.exposed().get(seat);
+            game.replies[seat] = state.replies().get(seat);
+            game.moveTicks[seat] = state.moveTicks().get(seat);
+            game.reserveTicks[seat] = state.reserveTicks().get(seat);
+        }
+        game.options = new ArrayList<>(state.options());
+        game.wins = new ArrayList<>(state.wins());
+        game.presentedDecision = state.presentedDecision();
+        game.presentedSeats = state.presentedSeats();
+        game.skippedDecision = state.skippedDecision();
+        game.skippedSeats = state.skippedSeats();
+        game.result = state.result();
+        game.deltas = new ArrayList<>(state.deltas());
+        game.finalScores = new ArrayList<>(state.finalScores());
+        game.finalUma = new ArrayList<>(state.finalUma());
+        game.finalRanks = new ArrayList<>(state.finalRanks());
+        game.replay = state.replay();
+        game.handling = ManualHandling.restore(state.handling());
+        if (state.recorder() != null) game.recorder = ReplayRecorder.restore(game, state.recorder());
+        game.restored(savedDecision);
+        game.validate();
+        return game;
+    }
+    RiichiGame(RiichiSession session) {
+        this.session = Objects.requireNonNull(session);
+        rules = session.rules;
+        tableId = session.tableId;
+        seed = session.seed;
+        manual = session.manual;
+        suppliedTiles = List.copyOf(session.suppliedTiles);
+        timeControl = session.timeControl;
+        playerHandVisibility = session.playerHandVisibility;
+        openHands = session.openHands;
         for (int i = 0; i < 4; i++) {
-            players[i] = new PlayerState(participants[i]);
+            players[i] = new PlayerState(session.participants[i]);
             players[i].points = rules.startingPoints();
             options.add(List.of());
         }
@@ -85,24 +181,22 @@ public final class RiichiGame extends TableSession {
     public Phase phase() { return phase; }
     public RiichiRules rules() { return rules; }
     public int points(int seat) { return players[seat].points; }
-    public void configureExternalBots(List<ExternalBot> bots) {
-        var available = List.copyOf(bots);
-        if (available.equals(externalBots)) return;
-        externalBots = available;
-        if (phase == Phase.LOBBY) { decision++; revision++; }
-    }
-    @Override protected List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
+    public UUID tableId() { return tableId; }
+    public long decision() { return session.decision; }
+    public long revision() { return session.revision; }
+    public String externalBotId(int seat) { return session.externalBotId(seat); }
+    public boolean equipped() { return session.equipped(); }
 
     /** Snapshot one active bot choice without disclosing other players' draws. */
     public BotPosition botPosition(int seat, UUID sessionId) {
-        if (recorder == null || manual || age <= 0 || exitVote != null
-            || !hasSeatedHuman() || externalBotId(seat) == null
+        if (recorder == null || manual || age <= 0 || session.exitVote != null
+            || !session.hasSeatedHuman() || externalBotId(seat) == null
             || phase != Phase.TURN && phase != Phase.REACTION || actions(seat).isEmpty()) return null;
         PlayerState player = players[seat];
         var pons = player.melds.stream().filter(meld -> meld.type() == Meld.Type.TRIPLET)
             .map(meld -> new BotPosition.Pon("PON", meld.tiles())).toList();
         return new BotPosition(1, player.member.externalBotId, rules.preset(), tableId, sessionId,
-            handNumber, seat, rules.players(), decision,
+            handNumber, seat, rules.players(), session.decision,
             recorder.botOpening(seat), recorder.botEvents(seat), actions(seat),
             phase == Phase.REACTION ? new BotPosition.Focus(lastFrom, lastTile) : null,
             player.drawn < 0 ? null : player.drawn, pons);
@@ -111,154 +205,17 @@ public final class RiichiGame extends TableSession {
     public boolean actBot(int seat, long expectedDecision, int actionIndex) {
         return externalBotId(seat) != null && act(players[seat].member.id, expectedDecision, actionIndex);
     }
-    public boolean equipped() {
-        return suppliedTiles.size() == (rules.sanma() ? 108 : 136) && rules.allows(RedFives.of(suppliedTiles));
-    }
-
-    /** The Minecraft adapter supplies checked physical tiles, or an empty list for an empty table. */
-    public boolean configureEquipment(boolean manual, List<Integer> tiles) {
-        Objects.requireNonNull(tiles);
-        if (phase != Phase.LOBBY || exitVote != null) return false;
-        if (!tiles.isEmpty() && (!Tile.validSet(tiles) || tiles.size() != (rules.sanma() ? 108 : 136)))
-            throw new IllegalArgumentException("Equipment must contain one complete physical tile set");
-        if (this.manual == manual && suppliedTiles.equals(tiles)) return true;
-        if (this.manual != manual) {
-            seating = new RoomSeating();
-            timeControl = manual ? TimeControl.MANUAL : TimeControl.DEFAULT;
-            Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
-        }
-        this.manual = manual;
-        suppliedTiles = List.copyOf(tiles);
-        handling = new ManualHandling();
-        for (PlayerState player : players) player.member.ready = false;
-        newDecision(Phase.LOBBY);
-        return true;
-    }
-    public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
-    public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
-
     void finishReplay() {
         if (recorder == null) return;
         if (replay == null) { recorder = null; return; }
         var completed = recorder.finish(this);
         replay = replay.append(completed, phase == Phase.MATCH_END);
-        archiveQueue.removeIf(match -> match.id().equals(replay.id()));
-        archiveQueue.add(replay);
+        session.archiveQueue.removeIf(match -> match.id().equals(replay.id()));
+        session.archiveQueue.add(replay);
         recorder = null;
     }
-    public boolean configureRules(UUID actor, long expectedDecision, RiichiRules config) {
-        if (config == null || !worldPolicy.permitsRules(config) || phase != Phase.LOBBY || exitVote != null || !isHost(actor)
-            || expectedDecision != decision || rules.equals(config) || config.players() == 3 && players[3].member.id != null) return false;
-        applyRules(config);
-        newDecision(Phase.LOBBY);
-        return true;
-    }
 
-    /** The server's equipment adapter uses this when the selected red stock cannot be supplied. */
-    public boolean configureStockRedFives(RedFives reds) {
-        if (phase != Phase.LOBBY || exitVote != null || !rules.preset().allows(reds) || rules.redFives() == reds) return false;
-        applyRules(rules.with(RiichiRuleOption.RED_FIVES, reds.ordinal()));
-        newDecision(Phase.LOBBY);
-        return true;
-    }
-
-    private void applyRules(RiichiRules config) {
-        if (rules.players() != config.players()) seating = new RoomSeating();
-        rules = config;
-        capacity = config.players();
-        handling = new ManualHandling();
-        for (PlayerState player : players) {
-            player.points = rules.startingPoints();
-            player.member.ready = false;
-        }
-    }
-
-    /** Called only by the server's world-policy adapter, never by a room control. */
-    public void configureWorld(WorldPolicy policy) {
-        Objects.requireNonNull(policy);
-        WorldPolicy previous = worldPolicy;
-        boolean changed = !policy.equals(previous);
-        boolean decisionChanged = phase == Phase.LOBBY
-            && (policy.allowBots() != previous.allowBots() || policy.forcedPreset() != previous.forcedPreset());
-        worldPolicy = policy;
-        if (!policy.allowConvenienceHints() && convenienceHints) {
-            convenienceHints = false;
-            changed = true;
-        }
-        if (!policy.allowExperienceRewards() && !pendingExperience.isEmpty()) {
-            pendingExperience.clear();
-            changed = true;
-        }
-        if (!policy.replaysEnabled() && (replay != null || recorder != null && !hasExternalBot() || !archiveQueue.isEmpty())) {
-            replay = null;
-            if (!hasExternalBot()) recorder = null;
-            archiveQueue.clear();
-            changed = true;
-        }
-        if (phase == Phase.LOBBY) {
-            boolean rosterChanged = false;
-            for (int seat = 0; seat < rules.players(); seat++) {
-                PlayerState player = players[seat];
-                if (player.member.bot && (!player.member.entityBot && !policy.allowBots()
-                    || player.member.entityBot && !policy.allowCompanionPlayers())) {
-                    participants[seat] = new Participant();
-                    players[seat] = new PlayerState(participants[seat]);
-                    players[seat].points = rules.startingPoints();
-                    rosterChanged = true;
-                }
-            }
-            if (rosterChanged) {
-                seating = new RoomSeating();
-                for (PlayerState player : players) player.member.ready = false;
-                changed = true;
-                decisionChanged = true;
-            }
-            RiichiRules constrained = rules;
-            if (policy.forcedPreset() != null && rules.preset() != policy.forcedPreset()
-                && (policy.forcedPreset().players() == rules.players()
-                    || java.util.stream.IntStream.range(policy.forcedPreset().players(), rules.players())
-                        .allMatch(seat -> players[seat].member.id == null)))
-                constrained = rules.withPreset(policy.forcedPreset());
-            if (!policy.allowCustomRules() && constrained.custom())
-                constrained = constrained.withPreset(constrained.preset());
-            if (!rules.equals(constrained)) {
-                applyRules(constrained);
-                changed = true;
-                decisionChanged = true;
-            }
-        }
-        if (decisionChanged) newDecision(Phase.LOBBY);
-        else if (changed) revision++;
-    }
-
-    public boolean configureHandVisibility(UUID actor, long expectedDecision, PlayerHandVisibility visibility) {
-        if (visibility == null || visibility == playerHandVisibility || phase != Phase.LOBBY || exitVote != null
-            || !isHost(actor) || expectedDecision != decision) return false;
-        playerHandVisibility = visibility;
-        for (PlayerState player : players) player.member.ready = false;
-        newDecision(Phase.LOBBY);
-        return true;
-    }
-
-    public boolean configureOpenHands(UUID actor, long expectedDecision, boolean enabled) {
-        if (openHands == enabled || phase != Phase.LOBBY || exitVote != null
-            || !isHost(actor) || expectedDecision != decision) return false;
-        openHands = enabled;
-        for (PlayerState player : players) player.member.ready = false;
-        newDecision(Phase.LOBBY);
-        return true;
-    }
-
-    public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
-        if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || phase != Phase.LOBBY || exitVote != null
-            || !isHost(actor) || expectedDecision != decision) return false;
-        convenienceHints = enabled;
-        revision++;
-        return true;
-    }
-
-    boolean convenienceHints() { return convenienceHints; }
-    int settlementSkippedSeats() { return skippedDecision == decision ? skippedSeats : 0; }
+    int settlementSkippedSeats() { return skippedDecision == session.decision ? skippedSeats : 0; }
 
     int settlementTicks() {
         int duration = phase == Phase.MATCH_END ? ScoreAnnouncements.maximumTicks(wins) + SETTLEMENT_TICKS
@@ -268,7 +225,7 @@ public final class RiichiGame extends TableSession {
 
     private boolean presentationComplete() {
         if (wins.isEmpty()) return true;
-        if (presentedDecision != decision) return false;
+        if (presentedDecision != session.decision) return false;
         for (int seat = 0; seat < rules.players(); seat++) {
             var player = players[seat];
             if (!player.member.bot && player.member.presence == PlayerPresence.SEATED && (presentedSeats & (1 << seat)) == 0) return false;
@@ -283,39 +240,9 @@ public final class RiichiGame extends TableSession {
         }
         return true;
     }
-
-    @Override protected void clearMatch() {
-        // Completed hands remain queued for archival; an unfinished hand is not a settlement.
-        recorder = null;
-        replay = null;
-        wall = null;
-        pending = null;
-        handling = new ManualHandling();
-        players = new PlayerState[4];
-        rosterChanged();
-        dealer = initialDealer = round = honba = riichiSticks = turn = 0;
-        lastFrom = -1;
-        lastTile = Tile.ABSENT;
-        wins.clear(); finalScores.clear(); finalUma.clear(); finalRanks.clear();
-        exposed = new boolean[4];
-        deltas = new ArrayList<>(Collections.nCopies(4, 0));
-        result = "lobby";
-        Arrays.fill(reserveTicks, timeControl.reserveSeconds() * 20);
-        newDecision(Phase.LOBBY);
-    }
-
-    public boolean configureClock(UUID actor, TimeControl control) {
-        if (phase != Phase.LOBBY || exitVote != null || !isHost(actor)) return false;
-        timeControl = Objects.requireNonNull(control);
-        for (PlayerState player : players) player.member.ready = player.member.bot;
-        newDecision(Phase.LOBBY);
-        Arrays.fill(reserveTicks, control.reserveSeconds() * 20);
-        return true;
-    }
-
     public boolean configureAutoPlay(UUID actor, long expectedDecision, AutoPlay.Option option, boolean enabled) {
-        int seat = seatOf(actor);
-        if (manual || seat < 0 || players[seat].member.bot || exitVote != null || expectedDecision != decision
+        int seat = session.seatOf(actor);
+        if (manual || seat < 0 || players[seat].member.bot || session.exitVote != null || expectedDecision != session.decision
             || option == AutoPlay.Option.KITA && !rules.sanma()
             || players[seat].autoPlay.enabled(option) == enabled) return false;
         if (option == AutoPlay.Option.SORT && !enabled) {
@@ -325,64 +252,28 @@ public final class RiichiGame extends TableSession {
         }
         players[seat].autoPlay = players[seat].autoPlay.with(option, enabled);
         // Other responders retain their decision token and remaining time.
-        revision++;
+        session.revision++;
         return true;
     }
 
     public boolean reorderHand(UUID actor, long expectedDecision, int source, int target, boolean after) {
-        int seat = seatOf(actor);
+        int seat = session.seatOf(actor);
         if (seat < 0 || players[seat].member.bot || manual || players[seat].autoPlay.sort()
-            || exitVote != null || expectedDecision != decision || source == target
+            || session.exitVote != null || expectedDecision != session.decision || source == target
             || !players[seat].hand.contains(source) || !players[seat].hand.contains(target)) return false;
         var hand = players[seat].hand;
         hand.remove(Integer.valueOf(source));
         hand.add(hand.indexOf(target) + (after ? 1 : 0), source);
-        revision++;
+        session.revision++;
         return true;
     }
 
-    private boolean hasExternalBot() {
-        for (int seat = 0; seat < rules.players(); seat++) if (externalBotId(seat) != null) return true;
-        return false;
-    }
-
-    @Override protected void rosterChanged() {
-        var previous = new java.util.IdentityHashMap<Participant, PlayerState>();
-        if (players != null) for (PlayerState player : players)
-            if (player != null && player.member != null) previous.put(player.member, player);
-        players = new PlayerState[4];
-        for (int seat = 0; seat < 4; seat++) {
-            PlayerState player = previous.get(participants[seat]);
-            if (player == null) {
-                player = new PlayerState(participants[seat]);
-                player.points = rules.startingPoints();
-            }
-            players[seat] = player;
-        }
-    }
-
-    @Override protected boolean supportsExternalBot(ExternalBot bot) { return bot.supports(rules); }
-
-    @Override protected boolean canStartMatch() {
-        if (!worldPolicy.permitsRules(rules)) return false;
-        for (int seat = 0; seat < capacity; seat++) {
-            String botId = externalBotId(seat);
-            if (botId != null && (manual || externalBots().stream()
-                .noneMatch(bot -> bot.id().equals(botId) && bot.supports(rules)))) return false;
-        }
-        return true;
+    void rebindPlayers() {
+        for (int seat = 0; seat < 4; seat++) players[seat].member = session.participants[seat];
     }
 
     List<Action> actions(int seat) {
-        if (seat < 0 || seat >= rules.players() || players[seat].member.id == null || exitVote != null) return List.of();
-        if (phase == Phase.LOBBY) {
-            var actions = new ArrayList<Action>();
-            if (seat == host() && worldPolicy.forcedPreset() == null)
-                for (RiichiPreset preset : RiichiPreset.values())
-                    if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || players[3].member.id == null))
-                        actions.add(new Action(CHANGE_RULE, preset.ordinal()));
-            return List.copyOf(actions);
-        }
+        if (seat < 0 || seat >= rules.players() || players[seat].member.id == null || session.exitVote != null) return List.of();
         if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             if (players[seat].member.bot) return List.of();
@@ -398,8 +289,8 @@ public final class RiichiGame extends TableSession {
 
     /** Reject stale, replayed, out-of-range, and out-of-turn requests without mutating state. */
     public boolean act(UUID actor, long expectedDecision, int actionIndex) {
-        int seat = seatOf(actor);
-        if (seat < 0 || expectedDecision != decision) return false;
+        int seat = session.seatOf(actor);
+        if (seat < 0 || expectedDecision != session.decision) return false;
         var legal = actions(seat);
         if (actionIndex < 0 || actionIndex >= legal.size()) return false;
         Action action = legal.get(actionIndex);
@@ -407,38 +298,30 @@ public final class RiichiGame extends TableSession {
             handling.act(this, seat, action);
             return true;
         }
-        if (phase == Phase.LOBBY) {
-            if (action.type() == CHANGE_RULE) {
-                applyRules(rules.withPreset(RiichiPreset.values()[action.tiles().get(0)]));
-                newDecision(Phase.LOBBY);
-                return true;
-            }
-            return false;
-        }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             if (action.type() == SKIP_SETTLEMENT) {
-                if (skippedDecision == decision && (skippedSeats & (1 << seat)) != 0) return false;
-                if (skippedDecision != decision) {
-                    skippedDecision = decision;
+                if (skippedDecision == session.decision && (skippedSeats & (1 << seat)) != 0) return false;
+                if (skippedDecision != session.decision) {
+                    skippedDecision = session.decision;
                     skippedSeats = 0;
                 }
                 skippedSeats |= 1 << seat;
                 if (settlementSkipped()) advanceSettlement();
-                else revision++;
+                else session.revision++;
             }
             else if (action.type() == SETTLEMENT_DONE) {
-                if (presentedDecision != decision) {
-                    presentedDecision = decision;
+                if (presentedDecision != session.decision) {
+                    presentedDecision = session.decision;
                     presentedSeats = 0;
                 }
                 if ((presentedSeats & (1 << seat)) == 0) {
                     presentedSeats |= 1 << seat;
-                    revision++;
+                    session.revision++;
                 }
             }
             else {
                 players[seat].member.ready = true;
-                revision++;
+                session.revision++;
             }
             return true;
         }
@@ -450,7 +333,7 @@ public final class RiichiGame extends TableSession {
                 players[seat].temporaryFuriten = true;
                 if (players[seat].riichi) players[seat].riichiFuriten = true;
             }
-            revision++;
+            session.revision++;
             if (reactionsReady()) resolveReactions();
             return true;
         }
@@ -473,7 +356,7 @@ public final class RiichiGame extends TableSession {
 
     private void finishSettlement() {
         if (phase == Phase.MATCH_END) {
-            returnToLobby(true);
+            session.returnToLobby(true);
         } else {
             if (!dealerRepeats) { dealer = next(dealer); round++; }
             honba = drawResult || dealerRepeats ? honba + 1 : 0;
@@ -490,17 +373,16 @@ public final class RiichiGame extends TableSession {
     private void beginFinalStandings() {
         age = ScoreAnnouncements.maximumTicks(wins);
         for (PlayerState player : players) player.member.ready = false;
-        decision++;
-        revision++;
+        session.decision++;
+        session.revision++;
     }
 
-    @Override protected void startMatch() {
-        renewIncarnation();
+    void startMatch() {
         initialDealer = dealer = 0;
         round = honba = riichiSticks = 0;
         for (PlayerState player : players) player.points = rules.startingPoints();
         long now = System.currentTimeMillis();
-        replay = worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
+        replay = session.worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.member.id, player.member.name, player.member.bot)).toList(),
             List.of(), false, RedFives.of(suppliedTiles)) : null;
         startHand();
@@ -527,7 +409,7 @@ public final class RiichiGame extends TableSession {
             for (int i = 0; i < 4; i++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
         }
         for (int offset = 0; offset < rules.players(); offset++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
-        recorder = replay == null && !hasExternalBot() ? null : new ReplayRecorder(this);
+        recorder = replay == null && !session.hasExternalBot() ? null : new ReplayRecorder(this);
         draw(dealer, false, false);
         // Give the initial wall/deal presentation time before a training opponent acts.
         // This is not an animation-driven game state: explicit legal actions still work.
@@ -547,11 +429,9 @@ public final class RiichiGame extends TableSession {
 
     void newDecision(Phase nextPhase) {
         phase = nextPhase;
-        lifecycle = phase == Phase.LOBBY ? Lifecycle.LOBBY : phase == Phase.MATCH_END ? Lifecycle.FINISHED : Lifecycle.PLAYING;
         age = 0;
         Arrays.fill(moveTicks, timeControl.moveSeconds() * 20);
-        decision++;
-        revision++;
+        session.matchPhaseChanged(phase);
         Arrays.fill(replies, -1);
         for (int i = 0; i < 4; i++) options.set(i, List.of());
     }
@@ -628,7 +508,7 @@ public final class RiichiGame extends TableSession {
         for (int i = 0; i < rules.players(); i++) if (players[i].member.bot && players[i].member.externalBotId == null) {
             int ron = indexOf(options.get(i), RON);
             if (ron >= 0) {
-                act(players[i].member.id, decision, ron);
+                act(players[i].member.id, session.decision, ron);
                 if (phase != Phase.REACTION) return;
             }
         }
@@ -785,7 +665,7 @@ public final class RiichiGame extends TableSession {
 
     /** Server-owned automation and timeouts, paced independently from client animations. */
     public void tick() {
-        if (!tickRoom()) return;
+        if (!session.tickRoom()) return;
         age++;
         if (age <= 0) return;
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
@@ -793,17 +673,17 @@ public final class RiichiGame extends TableSession {
             // Completion can shorten the fallback, but always leaves a server-timed reading tail.
             if (!wins.isEmpty() && age < handTicks - SETTLEMENT_TICKS && presentationComplete()) {
                 age = handTicks - SETTLEMENT_TICKS;
-                revision++;
+                session.revision++;
             }
             if (age == handTicks) {
                 if (phase == Phase.MATCH_END) beginFinalStandings();
                 else finishSettlement();
             }
             else if (settlementTicks() == 0) advanceSettlement();
-            else if (age % 20 == 0) revision++;
+            else if (age % 20 == 0) session.revision++;
             return;
         }
-        long token = decision;
+        long token = session.decision;
         // Charge every eligible seat before processing any response, including bot responses.
         // Otherwise a bot acting first would grant all humans a free tick.
         for (int seat = 0; seat < rules.players(); seat++) if (clockActive(seat)) {
@@ -829,7 +709,7 @@ public final class RiichiGame extends TableSession {
                 }
             }
         }
-        for (int seat = 0; seat < rules.players() && decision == token; seat++) {
+        for (int seat = 0; seat < rules.players() && session.decision == token; seat++) {
             if (!clockActive(seat)) continue;
             if (moveTicks[seat] + reserveTicks[seat] > 0) continue;
             var legal = actions(seat);
@@ -839,34 +719,21 @@ public final class RiichiGame extends TableSession {
             }
             if (index >= 0) act(players[seat].member.id, token, index);
         }
-        if ((phase == Phase.TURN || phase == Phase.REACTION) && (age == 1 || age % 10 == 0)) revision++;
+        if ((phase == Phase.TURN || phase == Phase.REACTION) && (age == 1 || age % 10 == 0)) session.revision++;
         if (age > 0 && age % 12 == 0) {
-            if (phase == Phase.LOBBY && seating.stage == RoomSeating.Stage.DRAWING)
-                for (int seat = 0; seat < rules.players(); seat++)
-                    if (players[seat].member.id != null && !players[seat].member.bot && seating.winds[seat] < 0) return;
-            if (phase == Phase.LOBBY) for (int seat = 0; seat < rules.players(); seat++)
-                if (players[seat].member.bot && players[seat].member.externalBotId == null) {
-                    var room = roomActions(seat);
-                    int ready = room.indexOf(new RoomAction(RoomAction.Type.READY));
-                    if (ready >= 0) { actRoom(players[seat].member.id, decision, room.get(ready)); return; }
-                    for (RoomAction choice : room) if (choice.type() == RoomAction.Type.DRAW_WIND) {
-                        actRoom(players[seat].member.id, decision, choice);
-                        return;
-                    }
-                }
-            for (int seat = 0; seat < rules.players(); seat++) if (players[seat].member.bot && phase != Phase.LOBBY) {
-                var actions = actions(seat);
-                if (!actions.isEmpty()) {
+            for (int seat = 0; seat < rules.players(); seat++) if (players[seat].member.bot) {
+                var legal = actions(seat);
+                if (!legal.isEmpty()) {
                     if (players[seat].member.externalBotId != null) continue;
-                    act(players[seat].member.id, decision, TrainingBot.choose(view(players[seat].member.id), players[seat].member.botDifficulty));
+                    act(players[seat].member.id, session.decision,
+                        TrainingBot.choose(view(players[seat].member.id), players[seat].member.botDifficulty));
                     return;
                 }
             }
         }
     }
-
     private boolean clockActive(int seat) {
-        return age >= 0 && hasSeatedHuman() && !players[seat].member.bot && players[seat].member.presence != PlayerPresence.DISCONNECTED
+        return age >= 0 && session.hasSeatedHuman() && !players[seat].member.bot && players[seat].member.presence != PlayerPresence.DISCONNECTED
             && (phase == Phase.TURN || phase == Phase.REACTION)
             && !actions(seat).isEmpty();
     }
@@ -893,7 +760,7 @@ public final class RiichiGame extends TableSession {
     }
 
     public TableView view(UUID authorizedViewer) {
-        return view(seatOf(authorizedViewer), SpectatorHandVisibility.HIDDEN);
+        return view(session.seatOf(authorizedViewer), SpectatorHandVisibility.HIDDEN);
     }
 
     public TableView spectatorView(SpectatorHandVisibility visibility) {
@@ -924,41 +791,32 @@ public final class RiichiGame extends TableSession {
         var clocks = new ArrayList<TimeControl.Clock>();
         for (int seat = 0; seat < rules.players(); seat++)
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
-        return new TableView(tableId, revision, decision, handNumber, rules, phase, viewer, dealer, round, honba, riichiSticks,
+        return new TableView(tableId, session.revision, session.decision, handNumber, rules, TableView.Phase.valueOf(phase.name()), viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores, finalUma,
-            timeControl, clocks, finalRanks, playerHandVisibility, openHands, exitVote, manual ? handling.view(this) : null,
+            timeControl, clocks, finalRanks, playerHandVisibility, openHands, session.exitVote, manual ? handling.view(this) : null,
             viewer < 0 || manual ? null : players[viewer].autoPlay,
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1,
-            recorder == null ? Map.of() : recorder.riichiSafeTiles());
-    }
-
-    /** Rewards remain queued for disconnected participants until their player is online. */
-    public Map<UUID, Integer> pendingExperience() { return Map.copyOf(pendingExperience); }
-    public int takeExperience(UUID player) {
-        Integer amount = pendingExperience.remove(player);
-        return amount == null ? 0 : worldPolicy.limitExperienceChange(amount);
+            recorder == null ? Map.of() : recorder.riichiSafeTiles(),
+            session.convenienceHints, session.externalBots(), settlementTicks(), settlementSkippedSeats());
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */
     public void validate() {
-        validateRoom();
+        session.validateRoom();
         if (players == null || players.length != 4 || Arrays.stream(players).anyMatch(Objects::isNull))
             throw new IllegalStateException("Invalid Riichi player state");
-        for (int seat = 0; seat < 4; seat++) players[seat].member = participants[seat];
-        if (capacity != rules.players() || variant != MahjongVariant.RIICHI)
+        rebindPlayers();
+        if (session.capacity != rules.players() || session.variant != MahjongVariant.RIICHI)
             throw new IllegalStateException("Riichi rules do not match the room");
         Objects.requireNonNull(tableId); Objects.requireNonNull(rules); Objects.requireNonNull(phase);
-        if (lifecycle != (phase == Phase.LOBBY ? Lifecycle.LOBBY
-            : phase == Phase.MATCH_END ? Lifecycle.FINISHED : Lifecycle.PLAYING))
+        if (session.lifecycle != (phase == Phase.MATCH_END ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING))
             throw new IllegalStateException("Riichi phase does not match the room lifecycle");
-        Objects.requireNonNull(seating).validate(rules.players());
+        Objects.requireNonNull(session.seating).validate(rules.players());
         Objects.requireNonNull(timeControl); Objects.requireNonNull(finalRanks);
-        Objects.requireNonNull(finalUma); Objects.requireNonNull(pendingExperience);
-        Objects.requireNonNull(archiveQueue);
+        Objects.requireNonNull(finalUma);
         Objects.requireNonNull(playerHandVisibility);
-        if (worldPolicy == null) worldPolicy = WorldPolicy.DEFAULT;
         Objects.requireNonNull(suppliedTiles); Objects.requireNonNull(handling);
         if (!suppliedTiles.isEmpty() && !Tile.validSet(suppliedTiles)) throw new IllegalStateException("Invalid physical set");
         handling.validate(this);
@@ -989,10 +847,8 @@ public final class RiichiGame extends TableSession {
         if (points != (long) rules.players() * rules.startingPoints()) throw new IllegalStateException("Point conservation failed");
     }
 
-    @Override void restored() {
-        long previous = decision;
-        super.restored();
-        if (presentedDecision == previous) presentedDecision = decision;
-        if (skippedDecision == previous) skippedDecision = decision;
+    void restored(long previous) {
+        if (presentedDecision == previous) presentedDecision = session.decision;
+        if (skippedDecision == previous) skippedDecision = session.decision;
     }
 }

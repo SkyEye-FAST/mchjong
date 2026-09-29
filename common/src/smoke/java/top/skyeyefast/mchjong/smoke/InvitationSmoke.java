@@ -38,7 +38,7 @@ final class InvitationSmoke {
                     "Invitation failed in selector parsing instead of player validation: " + expected.getMessage());
             }
         }
-        var game = table.participantGame(sender);
+        var game = table.participantSession(sender);
         try {
             recipient.setPos(sender.getX() + 32, sender.getY(), sender.getZ());
             policy.set("invitationTeleport", true);

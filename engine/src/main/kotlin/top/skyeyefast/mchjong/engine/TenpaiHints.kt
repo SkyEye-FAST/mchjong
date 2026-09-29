@@ -24,7 +24,7 @@ class TenpaiHints {
     private fun calculate(view: TableView, discard: Int): List<Wait> {
         if (
             view.viewerSeat() !in view.seats().indices || view.exitVote() != null ||
-            view.phase() != RiichiGame.Phase.TURN && view.phase() != RiichiGame.Phase.REACTION && view.phase() != RiichiGame.Phase.DRAW
+            view.phase() != TableView.Phase.TURN && view.phase() != TableView.Phase.REACTION && view.phase() != TableView.Phase.DRAW
         ) return emptyList()
         val self = view.seats()[view.viewerSeat()]
         val size = self.hand().size + self.melds().size * 3

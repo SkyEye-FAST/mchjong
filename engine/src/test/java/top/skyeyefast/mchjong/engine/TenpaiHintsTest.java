@@ -9,13 +9,12 @@ class TenpaiHintsTest {
     private static final UUID OWNER = new UUID(1, 1);
 
     @Test void countsDeduplicateCalledTilesAndIgnoreOtherHandsEvenWhenRevealed() {
-        var game = fixture("123456m456p22s78s");
+        var game = fixture("123456m456p22s78s", RiichiPreset.MAHJONG_SOUL_4.config(), PlayerHandVisibility.ALL);
         var hints = new TenpaiHints();
         int six = Tile.id(23, 0, false);
         game.players[1].river.add(new Discard(six, false, false, true));
         game.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666s"));
         game.players[1].hand.add(Tile.id(23, 3, false));
-        game.playerHandVisibility = PlayerHandVisibility.ALL;
         var view = game.view(OWNER);
         var waits = hints.waits(view, Tile.ABSENT);
         assertEquals(List.of(new TenpaiHints.Wait(23, 1), new TenpaiHints.Wait(26, 4)), waits);
@@ -34,8 +33,8 @@ class TenpaiHintsTest {
 
     @Test void specialAndOpenHandsUseStructuralWaitsWithoutImpossibleFifthCopies() {
         var hints = new TenpaiHints();
-        var game = fixture("19m19p19s1234567z");
-        game.rules = RiichiPreset.MAHJONG_SOUL_3.config().with(RiichiRuleOption.MIN_HAN, 4);
+        var game = fixture("19m19p19s1234567z",
+            RiichiPreset.MAHJONG_SOUL_3.config().with(RiichiRuleOption.MIN_HAN, 4), PlayerHandVisibility.SELF);
         assertEquals(13, hints.waits(game.view(OWNER), Tile.ABSENT).size());
         game.players[0].hand.clear();
         game.players[0].hand.addAll(TestHands.tiles("1122p3344s55667z"));
@@ -46,10 +45,18 @@ class TenpaiHintsTest {
         assertEquals(List.of(new TenpaiHints.Wait(20, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
     }
 
-    private static RiichiGame fixture(String hand) {
-        var game = new RiichiGame(new UUID(0, 1), RiichiPreset.MAHJONG_SOUL_4, 1);
-        game.join(OWNER, "Player", 0);
+    private static RiichiGame fixture(String hand, RiichiRules rules, PlayerHandVisibility visibility) {
+        var session = new RiichiSession(new UUID(0, 1), rules, 1);
+        session.join(OWNER, "Player", 0);
+        for (int seat = 1; seat < rules.players(); seat++)
+            session.join(new UUID(1, seat + 1), "Player " + seat, seat);
+        if (visibility != PlayerHandVisibility.SELF)
+            session.configureHandVisibility(OWNER, session.decision(), visibility);
+        session.startMatch();
+        var game = session.game();
         game.phase = RiichiGame.Phase.TURN;
+        for (int seat = 0; seat < rules.players(); seat++) game.players[seat].resetHand();
+        game.wall = null;
         game.players[0].hand.addAll(TestHands.tiles(hand));
         return game;
     }

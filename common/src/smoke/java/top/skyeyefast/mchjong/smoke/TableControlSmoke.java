@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TableRulesScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
@@ -55,7 +56,7 @@ final class TableControlSmoke {
             capture(client, output, "23-hidden-river.png");
             click(client, "ui.mchjong.exit");
             next(2);
-        } else if (stage == 2 && view.phase() == RiichiGame.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+        } else if (stage == 2 && view.phase() == TableView.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
             require(client.screen == null, "Exiting the table did not close its controls");
             require(view.seats().stream().noneMatch(seat -> seat.occupied()), "Exiting left a seat reserved");
             require(view.wall().isEmpty(), "Exiting left the old wall on the table");
@@ -176,7 +177,7 @@ final class TableControlSmoke {
             reseated = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                var game = serverTable.participantGame(player);
+                var game = serverTable.participantSession(player);
                 var original = game.rules();
                 long decision = game.view(id).decision();
                 serverTable.configureRules(player, new TableRulesPayload(pos, game.tableId(), decision,
@@ -310,7 +311,7 @@ final class TableControlSmoke {
                     require(policy.policy().invitationTeleport(), "World policy did not persist");
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                     InvitationSmoke.verify(player, serverTable);
-                    var game = serverTable.participantGame(player);
+                    var game = serverTable.participantSession(player);
                     require(game.configureOpenHands(id, game.view(id).decision(), true),
                         "Host cannot configure room open hands");
                     require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
@@ -326,7 +327,7 @@ final class TableControlSmoke {
             next(28);
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);
-        } else if (stage == 7 && view.phase() == RiichiGame.Phase.TURN && ticks > 60
+        } else if (stage == 7 && view.phase() == TableView.Phase.TURN && ticks > 60
             && !TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             require(view.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0),
                 "Server did not deliver the agreed open hands to the seated player");
@@ -349,7 +350,7 @@ final class TableControlSmoke {
             });
             next(32);
         } else if (stage == 32 && reseated.isDone() && client.screen instanceof TableLeaveScreen && ticks > 5) {
-            require(view.viewerSeat() < 0 && view.phase() == RiichiGame.Phase.TURN, "Last dismount did not pause the active match");
+            require(view.viewerSeat() < 0 && view.phase() == TableView.Phase.TURN, "Last dismount did not pause the active match");
             capture(client, output, "26-paused-leave-choice.png");
             click(client, "ui.mchjong.leave_match_keep");
             next(33);

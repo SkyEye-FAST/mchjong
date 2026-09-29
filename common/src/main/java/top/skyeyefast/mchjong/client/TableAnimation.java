@@ -109,8 +109,8 @@ public final class TableAnimation {
         List<Frame> before = sample(now);
         List<Frame> targets = TableScene.build(next).stream().map(TableAnimation::frame).toList();
         boolean newHand = sameViewer && next.handNumber() != view.handNumber()
-            && next.phase() == RiichiGame.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
-        if (!sameViewer || next.phase() == RiichiGame.Phase.LOBBY || next.handNumber() != view.handNumber() && !newHand) {
+            && next.phase() == TableView.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
+        if (!sameViewer || next.phase() == TableView.Phase.LOBBY || next.handNumber() != view.handNumber() && !newHand) {
             // Rejoining or changing viewing permission must not replay or expose the old private hand.
             settled = targets;
             motions = Map.of();
@@ -230,7 +230,7 @@ public final class TableAnimation {
         settled = targets;
         motions = updates;
         ending = Math.max(finish, openingUntil);
-        if (next.phase() == RiichiGame.Phase.HAND_END || next.phase() == RiichiGame.Phase.MATCH_END) openingUntil = now;
+        if (next.phase() == TableView.Phase.HAND_END || next.phase() == TableView.Phase.MATCH_END) openingUntil = now;
     }
 
     private void announce(TableView next, long now) {

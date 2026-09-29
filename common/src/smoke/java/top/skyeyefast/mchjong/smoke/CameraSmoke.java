@@ -123,12 +123,12 @@ final class CameraSmoke {
         }
         table.acceptView(new top.skyeyefast.mchjong.engine.TableView(base.tableId(), base.revision() + 1, base.decision(),
             base.handNumber(), top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config(),
-            top.skyeyefast.mchjong.engine.RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
+            top.skyeyefast.mchjong.engine.TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
             new top.skyeyefast.mchjong.engine.TableView.Focus(1, 64, false, 0),
             seats, java.util.List.of(new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.RIICHI, 0),
                 new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.PASS)),
             java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), java.util.List.of(), base.timeControl(),
-            java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of()));
+            java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, java.util.List.of(), 0, 0));
     }
 
     private static void require(boolean condition, String message) {

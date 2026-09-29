@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** The closed, server-owned room boundary shared by the two built-in rule runtimes. */
-public abstract sealed class TableSession permits RiichiGame, McrSession {
+public abstract sealed class TableSession permits RiichiSession, McrSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
 
@@ -145,8 +145,10 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
 
     public boolean paused() {
         if (lobby() || lifecycle == Lifecycle.FINISHED) return false;
-        return variant == MahjongVariant.MCR ? seated() != (1 << capacity) - 1 : !hasSeatedHuman();
+        return pauseForAbsence();
     }
+
+    protected abstract boolean pauseForAbsence();
 
     public int viewerSeat(UUID recipient) {
         int seat = seatOf(recipient);
@@ -195,7 +197,7 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
         for (Participant participant : participants) if (participant.bot) return null;
         TableSession replacement = selected == MahjongVariant.MCR
             ? new McrSession(tableId, seed)
-            : new RiichiGame(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
+            : new RiichiSession(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
         for (int seat = 0; seat < replacement.capacity; seat++)
             if (seat < capacity && participants[seat].id != null)
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
@@ -217,15 +219,18 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
     /** Rebind rule-only seat state after a roster replacement or permutation. */
     protected void rosterChanged() {}
     protected boolean canStartMatch() { return true; }
-    protected List<ExternalBot> externalBots() { return List.of(); }
-    protected boolean supportsExternalBot(ExternalBot bot) { return false; }
+    protected boolean allowsCompanionPlayers() { return false; }
+    protected boolean allowsBots() { return false; }
+    protected void addBotChoices(List<RoomAction> actions, int target, Participant member) {}
+    protected boolean canReturnToLobby(int seat) { return false; }
+    protected void setBotChoice(int target, int choice) { throw new IllegalStateException("Bots are unavailable"); }
 
     public boolean trainingSeat(int seat) { return occupied(seat) && participants[seat].bot; }
     public boolean entityBot(UUID id) { int seat = seatOf(id); return seat >= 0 && participants[seat].entityBot; }
     public String externalBotId(int seat) { return trainingSeat(seat) ? participants[seat].externalBotId : null; }
 
     public boolean joinEntityBot(UUID owner, UUID id, String name, int seat) {
-        if (variant != MahjongVariant.RIICHI || !worldPolicy.allowCompanionPlayers()
+        if (!allowsCompanionPlayers()
             || owner == null || id == null || owner.equals(id) || name == null || name.isBlank()
             || name.chars().anyMatch(Character::isISOControl) || seat < 0 || seat >= capacity || seatOf(id) >= 0
             || hostId != null && seatOf(owner) < 0 || seatOf(owner) >= 0 && participants[seatOf(owner)].bot
@@ -449,15 +454,12 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
         }
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
-            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
-            this instanceof RiichiGame riichi && riichi.convenienceHints(), externalBots(),
-            this instanceof RiichiGame riichi ? riichi.settlementTicks() : 0,
-            this instanceof RiichiGame riichi ? riichi.settlementSkippedSeats() : 0);
+            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient));
     }
 
     protected final List<RoomAction> roomActions(int seat) {
         if (!occupied(seat) || exitVote != null) return List.of();
-        if (lifecycle == Lifecycle.FINISHED) return variant == MahjongVariant.MCR && seat == host()
+        if (lifecycle == Lifecycle.FINISHED) return canReturnToLobby(seat)
             ? List.of(new RoomAction(RoomAction.Type.RETURN_TO_LOBBY)) : List.of();
         if (!lobby()) return List.of();
         var actions = new ArrayList<RoomAction>();
@@ -469,21 +471,14 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
             for (int tile = 0; tile < capacity; tile++) if ((seating.available & 1 << tile) != 0)
                 actions.add(new RoomAction(RoomAction.Type.DRAW_WIND, tile));
         if (seat != host()) return List.copyOf(actions);
-        boolean bots = variant == MahjongVariant.RIICHI && worldPolicy.allowBots();
+        boolean bots = allowsBots();
         if (!full() && bots) actions.add(new RoomAction(RoomAction.Type.FILL_BOTS));
         if (full() && seating.stage == RoomSeating.Stage.GATHERING && equipped())
             actions.add(new RoomAction(RoomAction.Type.BEGIN_SEATING));
         for (int target = 0; target < capacity; target++) {
             var member = participants[target];
             if (target != seat && (member.id == null || member.bot || member.presence == PlayerPresence.DISCONNECTED)) {
-                if (bots) for (var difficulty : BotDifficulty.values())
-                    if (!member.bot || member.externalBotId != null || difficulty != member.botDifficulty)
-                        actions.add(new RoomAction(RoomAction.Type.SET_BOT, List.of(target, difficulty.ordinal())));
-                if (bots && !manual) for (int bot = 0; bot < externalBots().size(); bot++) {
-                    var choice = externalBots().get(bot);
-                    if (supportsExternalBot(choice) && !choice.id().equals(member.externalBotId))
-                        actions.add(new RoomAction(RoomAction.Type.SET_BOT, List.of(target, BotDifficulty.values().length + bot)));
-                }
+                if (bots) addBotChoices(actions, target, member);
                 if (member.bot) actions.add(new RoomAction(RoomAction.Type.REMOVE_BOT, target));
             }
             if (target != seat && member.id != null && !member.bot)
@@ -517,9 +512,7 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
                 for (int target = 0; target < capacity; target++) if (!occupied(target)) setBot(target, BotDifficulty.EASY);
             }
             case SET_BOT -> {
-                int target = action.arguments().get(0), choice = action.arguments().get(1);
-                if (choice < BotDifficulty.values().length) setBot(target, BotDifficulty.values()[choice]);
-                else setExternalBot(target, externalBots().get(choice - BotDifficulty.values().length));
+                setBotChoice(action.arguments().get(0), action.arguments().get(1));
             }
             case REMOVE_BOT -> removeMember(action.arguments().get(0));
             case TRANSFER_HOST -> hostId = participants[action.arguments().get(0)].id;
@@ -544,7 +537,7 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
         Objects.requireNonNull(tableId);
         Objects.requireNonNull(variant);
         Objects.requireNonNull(lifecycle);
-        if (capacity != 3 && capacity != 4 || variant == MahjongVariant.MCR && capacity != 4
+        if (capacity != 3 && capacity != 4
             || participants == null || participants.length != 4 || revision < 1 || decision < 1)
             throw new IllegalStateException("Invalid table room");
         Objects.requireNonNull(seating).validate(capacity);
@@ -626,7 +619,7 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
             Objects.requireNonNull(seating);
             Objects.requireNonNull(lifecycle);
             participants = List.copyOf(participants);
-            if (capacity != 3 && capacity != 4 || variant == MahjongVariant.MCR && (capacity != 4 || manual)
+            if (capacity != 3 && capacity != 4
                 || participants.size() != 4 || revision < 1 || revision >= Long.MAX_VALUE - 1
                 || decision < 1 || decision >= Long.MAX_VALUE - 1 || exitVoteSequence < 0
                 || exitCooldown < 0 || exitCooldown > ExitVote.DURATION_TICKS)

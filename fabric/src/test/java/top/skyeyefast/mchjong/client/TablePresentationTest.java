@@ -120,7 +120,7 @@ class TablePresentationTest {
 
     @Test void livePresentationUsesPerspectiveWithoutReplayDiscardColors() {
         var id = java.util.UUID.randomUUID();
-        var game = new top.skyeyefast.mchjong.engine.RiichiGame(java.util.UUID.randomUUID(),
+        var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(),
             top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, 19);
         assertTrue(game.join(id, "Viewer", 0));
         var state = TableBoardState.live(game.view(id));
@@ -180,7 +180,7 @@ class TablePresentationTest {
     @Test void immersiveCardsStayOnTheFixedCanvasPerimeterAndClearEveryRiver() {
         for (var rules : List.of(top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_3)) {
             var id = java.util.UUID.randomUUID();
-            var game = new top.skyeyefast.mchjong.engine.RiichiGame(java.util.UUID.randomUUID(), rules, 15);
+            var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(), rules, 15);
             assertTrue(game.join(id, "Viewer", 0));
             var view = game.view(id);
             int left = 20, right = 1260, top = 68, bottom = 620;
@@ -214,7 +214,7 @@ class TablePresentationTest {
     @Test void denseRiversKeepReadablePixelsAndMeldsReflowBeforeShrinking() {
         var rules = top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4;
         var id = java.util.UUID.randomUUID();
-        var game = new top.skyeyefast.mchjong.engine.RiichiGame(java.util.UUID.randomUUID(), rules, 15);
+        var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(), rules, 15);
         game.join(id, "Viewer", 0);
         var base = game.view(id);
         var seats = new java.util.ArrayList<>(base.seats());
@@ -226,9 +226,9 @@ class TablePresentationTest {
                 25000, List.of(), -1, List.of(), river, List.of(), false, false, false));
         }
         var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
-            top.skyeyefast.mchjong.engine.RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
+            top.skyeyefast.mchjong.engine.TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
-            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of());
+            base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
         assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
             "The local river grows subtly toward the foreground");
@@ -297,10 +297,10 @@ class TablePresentationTest {
         var seat = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
             List.of(), top.skyeyefast.mchjong.engine.Tile.ABSENT, List.of(), List.of(), List.of(), false, false, false);
         var view = new top.skyeyefast.mchjong.engine.TableView(new java.util.UUID(1, 1), 1, 1, 1, rules,
-            top.skyeyefast.mchjong.engine.RiichiGame.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
+            top.skyeyefast.mchjong.engine.TableView.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
+            top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         var results = new TableResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
             top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, net.minecraft.world.item.DyeColor.PURPLE,
             0, 0, 300, 200, 0, TableResults.Page.HAND, 0L, 1);

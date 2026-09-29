@@ -7,11 +7,15 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TimeControlTest {
     private static RiichiGame game(int reserve, int move) {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 31);
-        for (int seat = 0; seat < 4; seat++) game.join(new UUID(1, seat), "Player " + seat, seat);
-        assertTrue(game.configureClock(game.players[0].member.id, new TimeControl(reserve, move)));
-        GameLifecycleTest.startPositioned(game);
-        return game;
+        return game(reserve, move, false);
+    }
+    private static RiichiGame game(int reserve, int move, boolean manual) {
+        RiichiSession session = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 31);
+        if (manual) session.configureEquipment(true, Tile.set(false));
+        for (int seat = 0; seat < 4; seat++) session.join(new UUID(1, seat), "Player " + seat, seat);
+        assertTrue(session.configureClock(session.participants[0].id, new TimeControl(reserve, move)));
+        GameLifecycleTest.startPositioned(session);
+        return session.game();
     }
     private static void tick(RiichiGame game, int ticks) { for (int i = 0; i < ticks; i++) game.tick(); }
 
@@ -33,9 +37,9 @@ class TimeControlTest {
     @Test void timeoutDiscardsTheDrawnTileWithoutClaimingAWin() {
         RiichiGame game = game(1, 1);
         int seat = game.turn, drawn = game.players[seat].drawn;
-        long decision = game.decision;
+        long decision = game.decision();
         tick(game, RiichiGame.DEAL_TICKS + 39);
-        assertEquals(decision, game.decision);
+        assertEquals(decision, game.decision());
         game.tick();
         assertEquals(drawn, game.players[seat].river.getLast().tile());
         assertTrue(game.players[seat].river.getLast().tsumogiri());
@@ -50,7 +54,7 @@ class TimeControlTest {
         tick(game, 30);
         assertEquals(30, game.reserveTicks[1]);
         assertEquals(30, game.reserveTicks[2]);
-        assertTrue(game.act(game.players[1].member.id, game.decision, 0));
+        assertTrue(game.act(game.players[1].member.id, game.decision(), 0));
         tick(game, 10);
         assertEquals(30, game.reserveTicks[1]);
         assertEquals(20, game.reserveTicks[2]);
@@ -79,14 +83,14 @@ class TimeControlTest {
         int[] reserve = restored.reserveTicks.clone();
         tick(restored, 99);
         restored = GameLifecycleTest.reloadMounted(restored);
-        assertEquals(101, restored.roomView(null).settlementTicks());
+        assertEquals(101, restored.view(null).settlementTicks());
         tick(restored, 100);
         assertArrayEquals(reserve, restored.reserveTicks);
         assertEquals(RiichiGame.Phase.HAND_END, restored.phase());
         assertTrue(restored.view(null).clocks().stream().noneMatch(TimeControl.Clock::active));
         restored.tick();
         assertEquals(RiichiGame.Phase.TURN, restored.phase());
-        assertEquals(0, restored.roomView(null).settlementTicks());
+        assertEquals(0, restored.view(null).settlementTicks());
     }
 
     @Test void winningReceiptsKeepAFiniteServerDeadlineWithoutAcknowledgements() {
@@ -96,7 +100,7 @@ class TimeControlTest {
             new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
         int limit = ScoreAnnouncements.maximumTicks(game.wins);
         int[] reserve = game.reserveTicks.clone();
-        assertEquals(limit, game.roomView(null).settlementTicks());
+        assertEquals(limit, game.view(null).settlementTicks());
         tick(game, limit - 2);
         game = GameLifecycleTest.reloadMounted(game);
         game.tick();
@@ -107,10 +111,9 @@ class TimeControlTest {
     }
 
     @Test void manualCollectionCannotSkipSettlementAndUncollectedHandsStillAdvance() {
-        RiichiGame game = game(2, 1);
-        game.manual = true;
+        RiichiGame game = game(2, 1, true);
         Settlement.abort(game, "nine_terminals");
-        for (var player : game.players) assertTrue(game.act(player.member.id, game.decision, 0));
+        for (var player : game.players) assertTrue(game.act(player.member.id, game.decision(), 0));
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         tick(game, RiichiGame.SETTLEMENT_TICKS - 1);
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
@@ -122,16 +125,16 @@ class TimeControlTest {
     }
 
     @Test void onlyLobbyHostCanConfigureAndChangingSettingsClearsReadiness() {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         UUID host = UUID.randomUUID(), guest = UUID.randomUUID();
         game.join(host, "Host", 0); game.join(guest, "Guest", 1);
-        game.players[1].member.ready = true;
+        game.participants[1].ready = true;
         assertFalse(game.configureClock(guest, new TimeControl(0, 1)));
         assertFalse(game.configureClock(UUID.randomUUID(), new TimeControl(0, 1)));
         assertTrue(game.configureClock(host, new TimeControl(0, 1)));
-        assertFalse(game.players[1].member.ready);
+        assertFalse(game.participants[1].ready);
         RiichiGame started = game(2, 1);
-        assertFalse(started.configureClock(started.players[0].member.id, new TimeControl(20, 5)));
+        assertFalse(started.session.configureClock(started.players[0].member.id, new TimeControl(20, 5)));
     }
 
     @Test void invalidSettingsAreRejectedAndInterpolationNeverBecomesNegative() {

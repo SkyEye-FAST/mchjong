@@ -11,7 +11,7 @@ import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
@@ -41,8 +41,8 @@ class ServerIntegrationTest {
             assertNotNull(commands.getChild(name), "Missing command: " + name);
     }
 
-    private static RiichiGame startedGame() {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1892);
+    private static RiichiSession startedGame() {
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1892);
         for (int seat = 0; seat < 4; seat++) {
             UUID id = new UUID(5, seat);
             game.join(id, "Player " + seat, seat);
@@ -66,7 +66,7 @@ class ServerIntegrationTest {
     }
 
     @Test void privateSavedHandsNeverEnterAChunkUpdate(MinecraftServer server) {
-        RiichiGame game = startedGame();
+        RiichiSession game = startedGame();
         CompoundTag saved = new CompoundTag();
         saved.putString("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game));
         MahjongTableBlockEntity table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
@@ -82,7 +82,7 @@ class ServerIntegrationTest {
         assertTrue(restored.contains("session"));
         assertTrue(restored.contains("boxes"));
         assertTrue(restored.contains("cloth"));
-        RiichiGame copy = (RiichiGame) top.skyeyefast.mchjong.engine.TableSessionCodec.restore(restored.getString("session"));
+        RiichiSession copy = (RiichiSession) top.skyeyefast.mchjong.engine.TableSessionCodec.restore(restored.getString("session"));
         assertEquals(game.view(null).seats(), copy.view(null).seats());
         assertEquals(game.view(null).wall(), copy.view(null).wall());
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
@@ -133,7 +133,7 @@ class ServerIntegrationTest {
                 top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.encode(buffer, proposal);
                 assertEquals(proposal, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.decode(buffer));
             }
-            RiichiGame game = startedGame();
+            RiichiSession game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
                 game.roomView(null), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
                 top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);

@@ -25,9 +25,8 @@ public final class TableSessionCodec {
         var envelope = new JsonObject();
         envelope.addProperty("format", FORMAT);
         envelope.addProperty("variant", session.variant().name());
-        if (session instanceof RiichiGame riichi) {
-            riichi.validate();
-            envelope.add("state", JSON.toJsonTree(riichi));
+        if (session instanceof RiichiSession riichi) {
+            envelope.add("state", RiichiCodec.save(riichi));
         } else if (session instanceof McrSession mcr) {
             envelope.add("state", parse(McrCodec.saveSession(mcr)));
         } else throw new IllegalArgumentException("Unsupported table session");
@@ -44,12 +43,7 @@ public final class TableSessionCodec {
             throw new IllegalArgumentException("Unsupported table session save");
         MahjongVariant variant = MahjongVariant.valueOf(envelope.get("variant").getAsString());
         TableSession session = switch (variant) {
-            case RIICHI -> {
-                RiichiGame riichi = JSON.fromJson(envelope.get("state"), RiichiGame.class);
-                riichi.validate();
-                riichi.restored();
-                yield riichi;
-            }
+            case RIICHI -> RiichiCodec.restore(envelope.get("state"));
             case MCR -> McrCodec.restoreSession(envelope.get("state").toString());
         };
         if (session.variant() != variant) throw new IllegalArgumentException("Table variant does not match its state");

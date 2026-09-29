@@ -8,6 +8,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableOptionsScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -30,7 +31,7 @@ final class HandVisibilitySmoke {
         if (view == null) return false;
         var visibility = PlayerHandVisibility.values()[mode];
         if (stage == 0) {
-            if (view.viewerSeat() < 0 || view.phase() != RiichiGame.Phase.LOBBY) return false;
+            if (view.viewerSeat() < 0 || view.phase() != TableView.Phase.LOBBY) return false;
             var parent = new TableScreen(table.getBlockPos());
             client.setScreen(parent);
             client.setScreen(new TableOptionsScreen(parent));
@@ -61,7 +62,7 @@ final class HandVisibilitySmoke {
             next(4);
         } else if (stage == 4) {
             if (preparation.tick(client, table, output, "visibility-" + visibility)) next(5);
-        } else if (stage == 5 && view.phase() == RiichiGame.Phase.TURN && ticks > 25
+        } else if (stage == 5 && view.phase() == TableView.Phase.TURN && ticks > 25
             && !top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");
@@ -79,7 +80,7 @@ final class HandVisibilitySmoke {
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                 player.stopRiding();
                 player.teleportTo(player.serverLevel(), pos.getX() + .5, pos.getY() + .3, pos.getZ() + 2.6, 180, 35);
-                require(serverTable.participantGame(player) == null, "Unmounted observer retained action authority");
+                require(serverTable.participantSession(player) == null, "Unmounted observer retained action authority");
                 serverTable.open(player);
             });
             next(6);
@@ -105,7 +106,7 @@ final class HandVisibilitySmoke {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                 serverTable.sit(player, seat);
-                var game = serverTable.participantGame(player);
+                var game = serverTable.participantSession(player);
                 require(game != null && game.requestExit(id), "Cannot finish visibility fixture");
                 player.stopRiding();
                 serverTable.sit(player, 0);

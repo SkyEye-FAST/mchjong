@@ -32,7 +32,7 @@ public final class TableIndicator {
         TileMesh.box(pose, vertices, -.265f, (float) TableGeometry.FELT_Y, -.265f,
             .265f, SURFACE - .004f, .265f, 0xff243c40, light);
         TileMesh.box(pose, vertices, -.25f, SURFACE - .004f, -.25f, .25f, SURFACE, .25f, 0xff101e23, light);
-        boolean playing = view.phase() == RiichiGame.Phase.TURN || view.phase() == RiichiGame.Phase.REACTION;
+        boolean playing = view.phase() == TableView.Phase.TURN || view.phase() == TableView.Phase.REACTION;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));

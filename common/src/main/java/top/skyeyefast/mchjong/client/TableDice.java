@@ -27,9 +27,9 @@ final class TableDice extends MahjongButton {
 
     static boolean onTable(TableView view) {
         return view != null && view.handling() != null && !view.handling().diceHeld()
-            && view.phase() != RiichiGame.Phase.LOBBY && view.phase() != RiichiGame.Phase.SHUFFLE
-            && view.phase() != RiichiGame.Phase.MATCH_END
-            && (view.phase() != RiichiGame.Phase.BUILD_WALL
+            && view.phase() != TableView.Phase.LOBBY && view.phase() != TableView.Phase.SHUFFLE
+            && view.phase() != TableView.Phase.MATCH_END
+            && (view.phase() != TableView.Phase.BUILD_WALL
                 || view.handling().builtWalls() == (1 << view.rules().players()) - 1);
     }
 

@@ -5,14 +5,17 @@ import java.util.Map;
 import java.util.UUID;
 
 /** The live S2C view. Private hands are redacted; completed replays use a separate authorized channel. */
-public record TableView(UUID tableId, long revision, long decision, int handNumber, RiichiRules rules, RiichiGame.Phase phase,
+public record TableView(UUID tableId, long revision, long decision, int handNumber, RiichiRules rules, Phase phase,
                         int viewerSeat, int dealer, int round, int honba, int riichiSticks,
                         int turn, int remaining, int wallBreak, List<Integer> wall, Focus focus,
                         List<Seat> seats, List<Action> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
                         PlayerHandVisibility playerHandVisibility, boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
-                        boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles) {
+                        boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles,
+                        boolean convenienceHints, List<ExternalBot> externalBots, int settlementTicks, int settlementSkippedSeats) {
+    /** Client presentation includes the room's lobby; the match runtime starts after it. */
+    public enum Phase { LOBBY, SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
     // ronBlocked and riichiHan describe only the recipient. riichiHan is the
     // established declaration, or the current declaration's one/two-han value.
     // riichiSafeTiles contains public passed-discard kind masks, keyed by target seat.
@@ -35,5 +38,7 @@ public record TableView(UUID tableId, long revision, long decision, int handNumb
         finalUma = List.copyOf(finalUma);
         clocks = List.copyOf(clocks); finalRanks = List.copyOf(finalRanks);
         riichiSafeTiles = Map.copyOf(riichiSafeTiles);
+        externalBots = List.copyOf(externalBots);
+        if (settlementTicks < 0 || settlementSkippedSeats < 0) throw new IllegalArgumentException("Invalid settlement view");
     }
 }

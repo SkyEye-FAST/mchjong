@@ -9,19 +9,25 @@ import top.skyeyefast.mchjong.engine.ReplayHand.Kind.RIICHI
 
 /** Private recorder, persisted alongside the live game and sealed only after settlement. */
 internal class ReplayRecorder(game: RiichiGame) {
-    private val number = game.handNumber
-    private val round = game.round
-    private val dealer = game.dealer
-    private val honba = game.honba
-    private val sticks = game.riichiSticks
-    private val initialPoints = points(game)
-    private val initialHands = game.players.take(game.rules.players()).map { java.util.List.copyOf(it.hand) }
-    private val initialDora = java.util.List.copyOf(game.wall.indicators(false))
+    private var number = game.handNumber
+    private var round = game.round
+    private var dealer = game.dealer
+    private var honba = game.honba
+    private var sticks = game.riichiSticks
+    private var initialPoints = points(game)
+    private var initialHands = game.players.take(game.rules.players()).map { java.util.List.copyOf(it.hand) }
+    private var initialDora = java.util.List.copyOf(game.wall.indicators(false))
     private val events = mutableListOf<ReplayHand.Event>()
     private val decisions = mutableListOf<ReplayHand.Decision>()
     private val wins = mutableListOf<ReplayHand.Win>()
     private var pendingDeclaration = -1
     private var indicators = 1
+
+    fun save(): ReplayRecorderState = ReplayRecorderState(
+        number, round, dealer, honba, sticks, initialPoints, initialHands, initialDora,
+        java.util.List.copyOf(events), java.util.List.copyOf(decisions), java.util.List.copyOf(wins),
+        pendingDeclaration, indicators,
+    )
 
     fun riichiSafeTiles(): Map<Int, Long> = RiichiSafety.from(events)
 
@@ -205,5 +211,22 @@ internal class ReplayRecorder(game: RiichiGame) {
 
     companion object {
         fun points(game: RiichiGame): List<Int> = List(game.rules.players()) { game.players[it].points }
+
+        @JvmStatic
+        fun restore(game: RiichiGame, saved: ReplayRecorderState): ReplayRecorder = ReplayRecorder(game).apply {
+            number = saved.number()
+            round = saved.round()
+            dealer = saved.dealer()
+            honba = saved.honba()
+            sticks = saved.sticks()
+            initialPoints = saved.initialPoints()
+            initialHands = saved.initialHands()
+            initialDora = saved.initialDora()
+            events.clear(); events.addAll(saved.events())
+            decisions.clear(); decisions.addAll(saved.decisions())
+            wins.clear(); wins.addAll(saved.wins())
+            pendingDeclaration = saved.pendingDeclaration()
+            indicators = saved.indicators()
+        }
     }
 }

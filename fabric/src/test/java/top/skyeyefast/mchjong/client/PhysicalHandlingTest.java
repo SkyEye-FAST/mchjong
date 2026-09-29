@@ -8,6 +8,7 @@ import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -19,14 +20,14 @@ class PhysicalHandlingTest {
     private static UUID id(int seat) { return new UUID(904, seat); }
 
     private static RiichiGame manual(RiichiPreset rules) {
-        var game = new RiichiGame(UUID.randomUUID(), rules, 4432);
-        game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
+        var session = new RiichiSession(UUID.randomUUID(), rules, 4432);
+        session.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
-            assertTrue(game.join(id(seat), "Player " + seat, seat));
+            assertTrue(session.join(id(seat), "Player " + seat, seat));
         }
-        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
-        for (int seat = 0; seat < rules.players(); seat++) ready(game, seat);
-        return game;
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(session);
+        for (int seat = 0; seat < rules.players(); seat++) ready(session, seat);
+        return session.game();
     }
 
     private static void act(RiichiGame game, int seat, Action.Type type) {
@@ -39,7 +40,7 @@ class PhysicalHandlingTest {
         }
     }
 
-    private static void ready(RiichiGame game, int seat) {
+    private static void ready(RiichiSession game, int seat) {
         var room = game.roomView(id(seat));
         int index = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
         assertTrue(game.actRoom(id(seat), room.tableId(), room.incarnation(), room.decision(), index));
@@ -101,7 +102,7 @@ class PhysicalHandlingTest {
             }
             view = game.view(id(dealer));
             conserved(view);
-            assertEquals(RiichiGame.Phase.DRAW, view.phase());
+            assertEquals(TableView.Phase.DRAW, view.phase());
             source = TableHandling.source(view, TableScene.build(view));
             assertNotNull(source);
             assertEquals(view.handling().sourceSlot(), source.index());
@@ -113,14 +114,14 @@ class PhysicalHandlingTest {
     }
 
     @Test void automaticTablesKeepTheirOwnControlsAndHaveNoLoosePile() {
-        var game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 4432);
-        game.configureEquipment(false, Tile.set(false));
+        var session = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 4432);
+        session.configureEquipment(false, Tile.set(false));
         for (int seat = 0; seat < 4; seat++) {
-            game.join(id(seat), "Player " + seat, seat);
+            session.join(id(seat), "Player " + seat, seat);
         }
-        top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
-        for (int seat = 0; seat < 4; seat++) ready(game, seat);
-        var view = game.view(id(0));
+        top.skyeyefast.mchjong.engine.PositionedFixture.assign(session);
+        for (int seat = 0; seat < 4; seat++) ready(session, seat);
+        var view = session.view(id(0));
         assertNull(view.handling());
         assertEquals(-1, TableHandling.action(view));
         assertFalse(TableHandling.physical(view, new Action(Action.Type.NEXT)));
@@ -153,7 +154,7 @@ class PhysicalHandlingTest {
         for (int packet = 0; packet < 12; packet++) act(game, game.view(null).turn(), Action.Type.TAKE_PACKET);
         var base = game.view(id(dealer));
         int deadSlot = base.wall().size() - 1;
-        var before = snapshot(base, base.revision() + 1, RiichiGame.Phase.DRAW, base.wall(), base.seats(),
+        var before = snapshot(base, base.revision() + 1, TableView.Phase.DRAW, base.wall(), base.seats(),
             new TableView.Handling(7, deadSlot, 1, 1, 1, false), List.of(new Action(Action.Type.DRAW)));
         var wall = new ArrayList<>(before.wall());
         wall.set(deadSlot, Tile.ABSENT);
@@ -164,7 +165,7 @@ class PhysicalHandlingTest {
         hand.add(drawn);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, false, player.points(), hand, drawn,
             player.melds(), player.river(), player.norths(), false, false, false));
-        var after = snapshot(before, before.revision() + 1, RiichiGame.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
+        var after = snapshot(before, before.revision() + 1, TableView.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
         var animation = new TableAnimation();
         animation.accept(before, 0);
         animation.accept(after, 1000);
@@ -180,7 +181,7 @@ class PhysicalHandlingTest {
         for (int seat = 0; seat < 4; seat++) act(game, seat, Action.Type.BUILD_WALL);
         for (int packet = 0; packet < 16; packet++) act(game, game.view(null).turn(), Action.Type.TAKE_PACKET);
         var base = game.view(id(dealer));
-        var receipt = snapshot(base, base.revision() + 1, RiichiGame.Phase.HAND_END, base.wall(), base.seats(),
+        var receipt = snapshot(base, base.revision() + 1, TableView.Phase.HAND_END, base.wall(), base.seats(),
             new TableView.Handling(15, -1, 0, 1, 1, false), List.of(new Action(Action.Type.NEXT)));
         var before = TableScene.build(receipt);
         var source = TableHandling.source(receipt, before);
@@ -192,7 +193,7 @@ class PhysicalHandlingTest {
         var player = seats.get(dealer);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, true, player.points(), player.hand(),
             player.drawn(), player.melds(), player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
-        var collected = snapshot(receipt, receipt.revision() + 1, RiichiGame.Phase.HAND_END, receipt.wall(), seats,
+        var collected = snapshot(receipt, receipt.revision() + 1, TableView.Phase.HAND_END, receipt.wall(), seats,
             receipt.handling(), List.of());
         var after = TableScene.build(collected);
         conserved(collected);
@@ -214,12 +215,12 @@ class PhysicalHandlingTest {
         assertEquals(-1, TableGeometry.drawerSide(new Vec3(0, TableGeometry.FELT_Y, 0)));
     }
 
-    private static TableView snapshot(TableView base, long revision, RiichiGame.Phase phase, List<Integer> wall,
+    private static TableView snapshot(TableView base, long revision, TableView.Phase phase, List<Integer> wall,
             List<TableView.Seat> seats, TableView.Handling handling, List<Action> actions) {
         return new TableView(base.tableId(), revision, revision, base.handNumber(), base.rules(), phase, base.viewerSeat(),
             base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(), base.remaining(), base.wallBreak(), wall,
             base.focus(), seats, actions, base.wins(), base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(),
-            base.clocks(), base.finalRanks(), base.playerHandVisibility(), base.openHands(), base.exitVote(), handling, null, base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles());
+            base.clocks(), base.finalRanks(), base.playerHandVisibility(), base.openHands(), base.exitVote(), handling, null, base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles(), base.convenienceHints(), base.externalBots(), base.settlementTicks(), base.settlementSkippedSeats());
     }
 
     private static void assertPickable(TableView view) {

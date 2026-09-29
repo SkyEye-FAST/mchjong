@@ -50,7 +50,7 @@ final class TableHud {
                 net.minecraft.resources.ResourceLocation backPreset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
-        boolean lobby = view.phase() == RiichiGame.Phase.LOBBY;
+        boolean lobby = view.phase() == TableView.Phase.LOBBY;
         int headerWidth = board == null ? Math.min(280, Math.max(84, width - 224))
             : Math.min(220, Math.max(110, width - 190));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
@@ -117,7 +117,7 @@ final class TableHud {
             Component shortLine = Component.empty();
             Component hover = lobby && !player.occupied() ? name.copy() : TableScreen.playerName(view, seat).copy();
             if (room != null && seat < room.seats().size() && room.seats().get(seat).participant().externalBotId() != null)
-                hover = TableSeatsScreen.botName(room, seat);
+                hover = TableSeatsScreen.botName(room, view.externalBots(), seat);
             String botError = botService == null || seat >= botService.seatErrors().size()
                 ? null : botService.seatErrors().get(seat);
             if (botError != null) {
@@ -279,7 +279,7 @@ final class TableHud {
         furitenView = view;
         furiten = false;
         if (view.viewerSeat() < 0 || view.viewerSeat() >= view.seats().size()
-            || view.phase() != RiichiGame.Phase.TURN && view.phase() != RiichiGame.Phase.REACTION && view.phase() != RiichiGame.Phase.DRAW) return false;
+            || view.phase() != TableView.Phase.TURN && view.phase() != TableView.Phase.REACTION && view.phase() != TableView.Phase.DRAW) return false;
         if (view.ronBlocked()) return furiten = true;
         var self = view.seats().get(view.viewerSeat());
         var concealed = new ArrayList<>(self.hand());

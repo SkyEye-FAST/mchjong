@@ -194,11 +194,11 @@ final class SettlementSmoke {
                     player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
             }
             fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber() + 1, fixture.rules(), RiichiGame.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+                fixture.handNumber() + 1, fixture.rules(), TableView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, seats, List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
                 List.of(win), "ron", changes, List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
-                fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+                fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), ScoreAnnouncements.maximumTicks(List.of(win)), 0);
             acceptFixture(table, fixture);
             TableAudio.finishResult();
             client.setScreen(new TableScreen(table.getBlockPos()));
@@ -212,11 +212,11 @@ final class SettlementSmoke {
         } else if (ticks == 95) {
             checkBounds(client);
             fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber(), fixture.rules(), RiichiGame.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+                fixture.handNumber(), fixture.rules(), TableView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
                 fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(), List.of(),
-                fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+                fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             acceptFixture(table, fixture);
             client.setScreen(new TableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
@@ -270,15 +270,6 @@ final class SettlementSmoke {
 
     static void acceptFixture(MahjongTableBlockEntity table, TableView view) {
         table.acceptView(view);
-        var room = table.clientRoom();
-        table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(), room.revision(),
-            room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), room.manual(),
-            room.equipped(), room.paused(), room.seating(), room.availableWinds(), room.seats(), room.actions(),
-            room.exitVote(), room.leaveDecision(), room.convenienceHints(), room.externalBots(),
-            view.phase() == RiichiGame.Phase.MATCH_END
-                ? ScoreAnnouncements.maximumTicks(view.wins()) + RiichiGame.SETTLEMENT_TICKS
-                : view.phase() == RiichiGame.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0,
-            room.settlementSkippedSeats()));
         if (table.clientView() == view) TableAudio.accept(table, view);
     }
 
@@ -302,9 +293,9 @@ final class SettlementSmoke {
         var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
                 List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),
             new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
-        return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), RiichiGame.Phase.MATCH_END,
+        return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), TableView.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
             List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
-            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of());
+            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), ScoreAnnouncements.maximumTicks(wins) + RiichiGame.SETTLEMENT_TICKS, 0);
     }
 }

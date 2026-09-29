@@ -9,8 +9,9 @@ gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
-  shared `TableSession` room lifecycle, stateful `RiichiGame` and `McrGame`
-  orchestration, simple records/DTOs and the JVM interop shim for
+  shared `TableSession` room lifecycle, rule-specific `RiichiSession` and
+  `McrSession` ownership, active `RiichiGame` and `McrGame` orchestration,
+  simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
   including tile identity/set composition, wall layout, visible-tile accounting,
@@ -244,10 +245,15 @@ concealed wind lottery. `TableRoomView` projects this state and recipient-specif
 `RoomAction` choices for both rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
 A variant change creates a new concrete session with the target variant's capacity,
-retaining eligible human seats and fresh preparation state. `RiichiGame` and
-`McrSession` retain their own rules, match actions, private views and settlement state.
+retaining eligible human seats and fresh preparation state. `RiichiSession`
+owns Riichi room rules, equipment, visibility, bot choices, rewards, replay queue
+and match lifecycle. It creates one `RiichiGame` when play begins and clears it
+on return to the lobby. `RiichiGame` has only active match phases; its private
+actions, wall, scores, replay recording and settlement belong to that match.
+Riichi-only convenience hints, external bot choices and settlement timing travel
+in `TableView`, while `TableRoomView` contains only common room state.
 
-`McrSession` adds a complete 144-tile stock, `McrGame` and completed-hand
+`McrSession` owns a complete 144-tile stock, `McrGame` and completed-hand
 acknowledgements. The shared room starts the match once all four distinct humans
 are ready at their assigned stools. Only a participant mounted at the assigned
 seat receives that seat's private view. A missing, displaced or ambiguously
@@ -258,12 +264,13 @@ acknowledge a completed hand before the next hand begins.
 `TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
 `MahjongTableBlockEntity` owns only that host. It observes stools and authenticated
 connections, validates world and equipment boundaries, sends recipient snapshots
-and stores one private `session` field. `TableSessionCodec` encodes exactly one
-concrete session and its current match in that field. Presence is reconstructed
-from live mounts after loading; a fresh incarnation and decision invalidate
-requests from before restoration. MCR's structured state contains the common
-room state and its own match record. Riichi's private state contains the common
-room and its own rule state, with participant identity held only by the room.
+and stores one private `session` field. `TableSessionCodec` owns the bounded
+envelope and variant dispatch. Each rule codec serializes an explicit session
+state containing the common room record and its own match record when play has
+started. Runtime game objects are reconstructed by the owning session; participant
+identity lives only in the room record. Presence is reconstructed from live
+mounts after loading; a fresh incarnation and decision invalidate requests from
+before restoration.
 
 `TableRoomActionPayload` carries a common room-action index. Riichi
 `TableActionPayload` and `McrActionPayload` carry only their respective issued
@@ -443,7 +450,7 @@ non-participant may open an active table's spectator screen.
 `WorldSettings` owns administrator policy per world save, across dimensions. It
 also controls invitations and invitation teleportation, Minecraft experience
 rewards, replay availability, bots and companion participants, convenience hints,
-and the thin custom-rule/forced-preset boundary. `RiichiGame` receives only the pure
+and the thin custom-rule/forced-preset boundary. `RiichiSession` receives only the pure
 runtime `WorldPolicy`; Minecraft UI and storage behavior stay outside the engine.
 `TableViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
 room state. The World settings UI uses the server-advertised administrator command
@@ -551,7 +558,7 @@ change points or advance the stage immediately. Bots need no acknowledgement;
 the fallback still expires if a client never acknowledges. Each settlement stage
 advances early when every human player confirms its skip action. Match settlement
 then adds a 200-tick final-standings stage before restoring the roster.
-`TableRoomView` synchronizes the remaining duration and skip confirmations; the saved decision
+`TableView` synchronizes the remaining duration and skip confirmations; the saved decision
 age preserves the countdown across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 

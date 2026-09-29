@@ -119,11 +119,11 @@ final class TableInterfaceSmoke {
             new Action(Action.Type.PASS, List.of())) : state == 4 ? List.<Action>of()
             : List.of(new Action(Action.Type.RIICHI, List.of(126)));
         var normal = new TableView(base.tableId(), Long.MAX_VALUE / 2 + sample * 100000, base.decision() + sample + 1,
-            1, base.rules(), RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
+            1, base.rules(), TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
             null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
                 new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false,
-            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1, java.util.Map.of());
+            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         return state == 2 ? SettlementSmoke.fixture(normal) : normal;
     }
 

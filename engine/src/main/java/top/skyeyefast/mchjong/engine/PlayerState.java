@@ -33,6 +33,58 @@ final class PlayerState {
     PlayerState(TableSession.Participant member) { this.member = member; }
     PlayerState() { this(null); }
 
+    record Saved(AutoPlay autoPlay, int points, List<Integer> hand, List<Meld> melds,
+                 List<Discard> river, List<Integer> norths, List<Integer> flowers, int drawn,
+                 boolean riichi, boolean doubleRiichi, boolean ippatsu, boolean riichiFuriten,
+                 boolean temporaryFuriten, boolean firstTurn, boolean lastDraw, boolean rinshan,
+                 boolean canDeclare, boolean pendingRiichi, boolean nextDiscardSideways,
+                 List<Integer> forbiddenDiscards, int dragonPao, int windPao, int kanPao) {
+        Saved {
+            java.util.Objects.requireNonNull(autoPlay);
+            hand = List.copyOf(hand);
+            melds = List.copyOf(melds);
+            river = List.copyOf(river);
+            norths = List.copyOf(norths);
+            flowers = List.copyOf(flowers);
+            forbiddenDiscards = List.copyOf(forbiddenDiscards);
+        }
+    }
+
+    Saved save() {
+        return new Saved(autoPlay, points, hand, melds, river, norths, flowers, drawn,
+            riichi, doubleRiichi, ippatsu, riichiFuriten, temporaryFuriten, firstTurn,
+            lastDraw, rinshan, canDeclare, pendingRiichi, nextDiscardSideways,
+            forbiddenDiscards, dragonPao, windPao, kanPao);
+    }
+
+    static PlayerState restore(Saved saved, TableSession.Participant member) {
+        var player = new PlayerState(member);
+        player.autoPlay = saved.autoPlay();
+        player.points = saved.points();
+        player.hand.addAll(saved.hand());
+        player.melds.addAll(saved.melds());
+        player.river.addAll(saved.river());
+        player.norths.addAll(saved.norths());
+        player.flowers.addAll(saved.flowers());
+        player.drawn = saved.drawn();
+        player.riichi = saved.riichi();
+        player.doubleRiichi = saved.doubleRiichi();
+        player.ippatsu = saved.ippatsu();
+        player.riichiFuriten = saved.riichiFuriten();
+        player.temporaryFuriten = saved.temporaryFuriten();
+        player.firstTurn = saved.firstTurn();
+        player.lastDraw = saved.lastDraw();
+        player.rinshan = saved.rinshan();
+        player.canDeclare = saved.canDeclare();
+        player.pendingRiichi = saved.pendingRiichi();
+        player.nextDiscardSideways = saved.nextDiscardSideways();
+        player.forbiddenDiscards.addAll(saved.forbiddenDiscards());
+        player.dragonPao = saved.dragonPao();
+        player.windPao = saved.windPao();
+        player.kanPao = saved.kanPao();
+        return player;
+    }
+
     boolean closed() { return melds.stream().allMatch(Meld::closed); }
 
     /** Every owned physical tile once; drawn and called discards are aliases. */

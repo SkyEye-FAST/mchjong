@@ -5,15 +5,16 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.BotPosition;
+import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.ExternalBot;
-import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.WorldPolicy;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BotServiceClientTest {
     @Test void selectedBotExposesUnavailableServiceWithoutChangingItsIdentity() {
-        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         game.configureExternalBots(List.of(new ExternalBot("mortal-4p", "Mortal 4P", 4, List.of(RiichiPreset.TENHOU_4))));
         UUID host = UUID.randomUUID();

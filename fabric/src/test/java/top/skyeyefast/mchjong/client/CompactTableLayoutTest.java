@@ -12,7 +12,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class CompactTableLayoutTest {
     private static TableView base(RiichiPreset rules) {
         var id = new UUID(15, 20);
-        var game = new RiichiGame(UUID.randomUUID(), rules, 15);
+        var game = new RiichiSession(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(id, "Test", 0));
         return game.view(id);
     }
@@ -34,7 +34,7 @@ class CompactTableLayoutTest {
             drawn ? hand.getLast() : Tile.ABSENT, melds, List.of(), List.of(), false, exposed, false));
         var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
         return TableScene.build(view).stream().filter(p -> p.seat() == owner).toList();
     }
 
@@ -137,7 +137,7 @@ class CompactTableLayoutTest {
             base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
             base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(), base.clocks(),
             base.finalRanks(), base.playerHandVisibility(), base.openHands(), base.exitVote(), base.handling(), base.autoPlay(),
-            base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles());
+            base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles(), base.convenienceHints(), base.externalBots(), base.settlementTicks(), base.settlementSkippedSeats());
         var pieces = TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0).toList();
         assertEquals(TableScene.HAND_STEP, pieces.get(2).position().distanceTo(pieces.get(1).position()), 1e-9);
     }

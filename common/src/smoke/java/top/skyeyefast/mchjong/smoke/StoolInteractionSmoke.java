@@ -51,7 +51,7 @@ final class StoolInteractionSmoke {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var level = player.serverLevel();
                 require(!player.isPassenger(), "Sneak-click mounted the server player");
-                require(((MahjongTableBlockEntity) level.getBlockEntity(center)).participantGame(player) == null,
+                require(((MahjongTableBlockEntity) level.getBlockEntity(center)).participantSession(player) == null,
                     "Sneak-click joined the room");
                 require(level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(1)).isEmpty(),
                     "Sneak-click created a seat entity");
