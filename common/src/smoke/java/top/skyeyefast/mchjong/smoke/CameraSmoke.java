@@ -100,7 +100,7 @@ final class CameraSmoke {
 
     private static void readabilityFixture(MahjongTableBlockEntity table) {
         var base = table.clientView();
-        var seats = new java.util.ArrayList<top.skyeyefast.mchjong.engine.TableView.Seat>();
+        var seats = new java.util.ArrayList<top.skyeyefast.mchjong.engine.RiichiView.Seat>();
         int first = 40;
         for (int seat = 0; seat < 4; seat++) {
             int owner = seat;
@@ -118,15 +118,15 @@ final class CameraSmoke {
             first += riverSize;
             var hand = seat == 0 ? java.util.stream.IntStream.range(0, 14).boxed().toList()
                 : java.util.Collections.nCopies(13 - count * 3, top.skyeyefast.mchjong.engine.Tile.HIDDEN);
-            seats.add(new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player " + (seat + 1), true, false, false,
+            seats.add(new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player " + (seat + 1), true, false, false,
                 25000, hand, seat == 0 ? 13 : -1, melds, river, java.util.List.of(), false, false, false));
         }
-        table.acceptView(new top.skyeyefast.mchjong.engine.TableView(base.tableId(), base.revision() + 1, base.decision(),
+        table.acceptView(new top.skyeyefast.mchjong.engine.RiichiView(base.tableId(), base.revision() + 1, base.decision(),
             base.handNumber(), top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config(),
-            top.skyeyefast.mchjong.engine.TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
-            new top.skyeyefast.mchjong.engine.TableView.Focus(1, 64, false, 0),
-            seats, java.util.List.of(new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.RIICHI, 0),
-                new top.skyeyefast.mchjong.engine.Action(top.skyeyefast.mchjong.engine.Action.Type.PASS)),
+            top.skyeyefast.mchjong.engine.RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 2, base.wallBreak(), java.util.List.of(),
+            new top.skyeyefast.mchjong.engine.RiichiView.Focus(1, 64, false, 0),
+            seats, java.util.List.of(new top.skyeyefast.mchjong.engine.RiichiAction(top.skyeyefast.mchjong.engine.RiichiAction.Type.RIICHI, 0),
+                new top.skyeyefast.mchjong.engine.RiichiAction(top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS)),
             java.util.List.of(), "playing", java.util.List.of(), java.util.List.of(), java.util.List.of(), base.timeControl(),
             java.util.List.of(), java.util.List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, java.util.List.of(), 0, 0));
     }

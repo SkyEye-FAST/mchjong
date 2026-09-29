@@ -4,10 +4,10 @@ import java.util.List;
 import java.util.Locale;
 
 /** Only the index of a server-issued action is accepted from the client. */
-public record Action(Type type, List<Integer> tiles) {
+public record RiichiAction(Type type, List<Integer> tiles) {
     public enum Type {
         DISCARD, RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI,
-        RON, TSUMO, PASS, ABORT_NINE, NEXT, SKIP_SETTLEMENT, CHANGE_RULE,
+        RON, TSUMO, PASS, ABORT_NINE, NEXT, SKIP_SETTLEMENT,
         SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW, SETTLEMENT_DONE;
 
         /** Riichi declaration to neutral physical structure; never match enum names or ordinals. */
@@ -33,8 +33,8 @@ public record Action(Type type, List<Integer> tiles) {
         }
     }
 
-    public Action { tiles = List.copyOf(tiles); }
-    public Action(Type type) { this(type, List.of()); }
-    public Action(Type type, int tile) { this(type, List.of(tile)); }
+    public RiichiAction { tiles = List.copyOf(tiles); }
+    public RiichiAction(Type type) { this(type, List.of()); }
+    public RiichiAction(Type type, int tile) { this(type, List.of(tile)); }
     public String translationKey() { return "action.mchjong." + type.name().toLowerCase(Locale.ROOT); }
 }

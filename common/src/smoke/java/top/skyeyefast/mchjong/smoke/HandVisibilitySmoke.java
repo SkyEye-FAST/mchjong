@@ -8,7 +8,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableOptionsScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -28,21 +28,23 @@ final class HandVisibilitySmoke {
             work.join(); work = null;
         }
         var view = table.clientView();
-        if (view == null) return false;
+        var room = table.clientRoom();
+        var configuration = table.clientRiichiSettings();
+        if (room == null || configuration == null || view == null && stage >= 5) return false;
         var visibility = PlayerHandVisibility.values()[mode];
         if (stage == 0) {
-            if (view.viewerSeat() < 0 || view.phase() != TableView.Phase.LOBBY) return false;
+            if (room.viewerSeat() < 0 || !room.lobby()) return false;
             var parent = new TableScreen(table.getBlockPos());
             client.setScreen(parent);
             client.setScreen(new TableOptionsScreen(parent));
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
-                "settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
+                "settings.mchjong.hand_visibility." + configuration.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
             var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
                 .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
             require(button.active, "Host visibility control is disabled");
-            if (view.playerHandVisibility() != visibility) button.onPress();
+            if (configuration.playerHandVisibility() != visibility) button.onPress();
             next(1);
-        } else if (stage == 1 && view.playerHandVisibility() == visibility && ticks > 5) {
+        } else if (stage == 1 && configuration.playerHandVisibility() == visibility && ticks > 5) {
             next(2);
         } else if (stage == 2) {
             resize(client, true);
@@ -62,7 +64,7 @@ final class HandVisibilitySmoke {
             next(4);
         } else if (stage == 4) {
             if (preparation.tick(client, table, output, "visibility-" + visibility)) next(5);
-        } else if (stage == 5 && view.phase() == TableView.Phase.TURN && ticks > 25
+        } else if (stage == 5 && view.phase() == RiichiView.Phase.TURN && ticks > 25
             && !top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");

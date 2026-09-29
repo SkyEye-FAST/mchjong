@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.AutoPlay;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -18,15 +18,22 @@ final class AutomationControlsSmoke {
     private int stage, ticks, totalTicks, toggle;
     private long decision;
     private AutoPlay initial, expected;
+    private final RoomPreparationSmoke opening = new RoomPreparationSmoke();
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<Void> reseated;
     private boolean sanma;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
+        if (stage == 11) return true;
         require(++totalTicks < 2400, "Automatic controls timed out at stage " + stage + ", toggle " + toggle);
         ticks++;
         var view = table.clientView();
-        require(view != null, "Automatic controls lost their table view");
+        if (stage == 0 && view == null) {
+            if (TableScreen.active(client.screen) == null) client.setScreen(new TableScreen(table.getBlockPos()));
+            if (!opening.tick(client, table, output, "52-automatic-room")) return false;
+            view = table.clientView();
+        }
+        require(view != null || stage >= 8, "Automatic controls lost their table view");
         if (stage < 8) require(view.autoPlay() != null, "Seated automatic-table preferences are missing");
         if (stage == 0) {
             initial = view.autoPlay();
@@ -102,9 +109,11 @@ final class AutomationControlsSmoke {
         } else if (stage == 7 && ticks > 3) {
             checkOptions(client, 5);
             checkBounds(client);
+            next(11);
             client.screen.onClose();
             return true;
-        } else if (stage == 8 && view.phase() == TableView.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+        } else if (stage == 8 && table.clientRoom() != null && table.clientRoom().lobby()
+            && table.clientRoom().viewerSeat() < 0 && !client.player.isPassenger()) {
             client.setScreen(new TableScreen(table.getBlockPos()));
             checkOptions(client, 0);
             var id = client.player.getUUID();
@@ -114,12 +123,13 @@ final class AutomationControlsSmoke {
                 ((MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos)).sit(player, 0);
             });
             next(9);
-        } else if (stage == 9 && reseated.isDone() && view.viewerSeat() == 0 && ticks > 5) {
+        } else if (stage == 9 && reseated.isDone() && table.clientRoom().viewerSeat() == 0 && ticks > 5) {
             reseated.join();
             checkOptions(client, 0);
             click(client, Component.translatable("ui.mchjong.players.3").getString());
             next(10);
-        } else if (stage == 10 && view.rules().sanma() && preparation.tick(client, table, output, "53-sanma-controls")) {
+        } else if (stage == 10 && table.clientRiichiSettings().rules().sanma()
+            && preparation.tick(client, table, output, "53-sanma-controls")) {
             sanma = true;
             toggle = 0;
             client.getWindow().setWindowed(1280, 800);

@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -233,23 +233,23 @@ final class TableBoard {
         graphics.pose().popPose();
     }
 
-    private static int stripWidth(TableView.Seat player, int seat, int width) {
+    private static int stripWidth(RiichiView.Seat player, int seat, int width) {
         return player.hand().size() * width + 8
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, seat, width)).sum()
             + player.norths().size() * width;
     }
 
-    static int outerTileWidth(TableView.Seat player, int seat, int length) {
+    static int outerTileWidth(RiichiView.Seat player, int seat, int length) {
         return outerTileWidth(player, seat, length, 14);
     }
 
-    private static int outerTileWidth(TableView.Seat player, int seat, int length, int maximum) {
+    private static int outerTileWidth(RiichiView.Seat player, int seat, int length, int maximum) {
         int width = maximum;
         while (width > MIN_MELD_WIDTH && stripWidth(player, seat, width) > length) width--;
         return width;
     }
 
-    static java.util.List<java.util.List<Meld>> meldRails(TableView.Seat player, int seat, int width, int length) {
+    static java.util.List<java.util.List<Meld>> meldRails(RiichiView.Seat player, int seat, int width, int length) {
         var rails = new java.util.ArrayList<java.util.List<Meld>>();
         java.util.List<Meld> row = new java.util.ArrayList<>();
         rails.add(row);

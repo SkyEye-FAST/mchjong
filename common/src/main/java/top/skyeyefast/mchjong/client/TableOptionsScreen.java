@@ -6,7 +6,6 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.TableView;
 
 /** Scope navigation. Administrator edits use the server's permission-checked world commands. */
 public final class TableOptionsScreen extends Screen {
@@ -40,11 +39,11 @@ public final class TableOptionsScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets();
-        var view = parent.view();
         var room = parent.room();
+        var settings = parent.roomSettings();
         var world = parent.worldPolicy();
-        if (view == null || room == null || world == null) return;
-        revision = view.revision();
+        if (room == null || settings == null || world == null) return;
+        revision = room.revision();
         policy = world;
         layout = SettingsLayout.of(width, height);
         int span = layout.bodyWidth(), left = layout.bodyLeft();
@@ -56,8 +55,8 @@ public final class TableOptionsScreen extends Screen {
             }).bounds(layout.left(), 38 + i * 24, layout.rail(), 22).build().navigation().selected(tab == i));
         }
         List<Entry> entries = new ArrayList<>();
-        boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
-        boolean lobby = view.phase() == TableView.Phase.LOBBY;
+        boolean host = room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
+        boolean lobby = room.lobby();
         if (tab == 0) {
             boolean edit = canEditWorld();
             entries.add(Entry.toggle("settings.mchjong.invitations_enabled", world.invitationsEnabled(), edit,
@@ -98,27 +97,27 @@ public final class TableOptionsScreen extends Screen {
                 setWorldValue("forcedPreset", next == null ? "none" : next.name().toLowerCase(java.util.Locale.ROOT));
             }));
         } else if (tab == 1) {
-            entries.add(Entry.toggle("settings.mchjong.convenience_hints", view.convenienceHints(),
+            entries.add(Entry.toggle("settings.mchjong.convenience_hints", settings.convenienceHints(),
                 host && lobby && world.allowConvenienceHints(),
-                () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
-                    view.decision(), !view.convenienceHints())));
+                () -> parent.control(room, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
+                    room.decision(), !settings.convenienceHints())));
             entries.add(Entry.choice("settings.mchjong.hand_visibility",
-                Component.translatable("settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
+                Component.translatable("settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
                 host && lobby, () -> {
                     var modes = top.skyeyefast.mchjong.engine.PlayerHandVisibility.values();
                     int direction = Screen.hasShiftDown() ? -1 : 1;
-                    parent.configureVisibility(modes[Math.floorMod(view.playerHandVisibility().ordinal() + direction, modes.length)]);
+                    parent.configureVisibility(modes[Math.floorMod(settings.playerHandVisibility().ordinal() + direction, modes.length)]);
                 }));
-            entries.add(Entry.toggle("settings.mchjong.open_hands", view.openHands(), host && lobby,
-                () -> parent.control(view, top.skyeyefast.mchjong.network.TableControlPayload.Operation.OPEN_HANDS,
-                    view.decision(), !view.openHands())));
+            entries.add(Entry.toggle("settings.mchjong.open_hands", settings.openHands(), host && lobby,
+                () -> parent.control(room, top.skyeyefast.mchjong.network.TableControlPayload.Operation.OPEN_HANDS,
+                    room.decision(), !settings.openHands())));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
                 () -> minecraft.setScreen(new TableSeatsScreen(parent))));
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
-                () -> minecraft.setScreen(new TableRulesScreen(parent, view))));
+                () -> minecraft.setScreen(new TableRulesScreen(parent, room, settings))));
             entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
-                () -> minecraft.setScreen(new TableClockScreen(parent, view.timeControl()))));
-            entries.add(new Entry(Component.translatable("ui.mchjong.invite"), view.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
+                () -> minecraft.setScreen(new TableClockScreen(parent, settings.timeControl()))));
+            entries.add(new Entry(Component.translatable("ui.mchjong.invite"), room.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
                 () -> minecraft.setScreen(new TableInviteScreen(parent))));
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
@@ -188,21 +187,20 @@ public final class TableOptionsScreen extends Screen {
     }
 
     @Override public void tick() {
-        var view = parent.view();
-        if (view == null) { onClose(); return; }
-        if (revision != view.revision() || !java.util.Objects.equals(policy, parent.worldPolicy())) init();
+        var room = parent.room();
+        if (room == null) { onClose(); return; }
+        if (revision != room.revision() || !java.util.Objects.equals(policy, parent.worldPolicy())) init();
     }
 
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
         if (layout == null) return;
         String[] scopes = {"world", "room", "personal"};
         layout.paint(graphics, font, width, title, Component.translatable("settings.mchjong.scope." + scopes[tab]));
-        var view = parent.view();
         var room = parent.room();
         Component note = Component.translatable("settings.mchjong.personal_note");
         if (tab == 0) note = Component.translatable(canEditWorld() ? "settings.mchjong.world_admin" : "settings.mchjong.world_locked");
-        if (tab == 1 && view != null && room != null) note = Component.translatable("room.mchjong.host",
-            room.host() < 0 ? "—" : view.seats().get(room.host()).name());
+        if (tab == 1 && room != null) note = Component.translatable("room.mchjong.host",
+            room.host() < 0 ? "—" : room.seats().get(room.host()).participant().name());
         int noteY = 118;
         for (var line : font.split(note, layout.rail() - 12)) {
             graphics.drawString(font, line, layout.left() + 6, noteY, MahjongUi.MUTED, false);

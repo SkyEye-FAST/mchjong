@@ -4,7 +4,7 @@ import java.util.List;
 import net.minecraft.client.gui.Font;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -28,7 +28,7 @@ final class TableHints extends MahjongButton {
 
     void clearPreview() { previewDiscard = lastSelected = Tile.ABSENT; waits = List.of(); visible = active = false; }
 
-    void update(TableView view, int hovered, int selected, int screenWidth, int buttonTop,
+    void update(RiichiView view, int hovered, int selected, int screenWidth, int buttonTop,
                 int leftBound, int rightBound, int bottom, int topBound, int scale) {
         this.scale = scale;
         if (hovered >= 0) previewDiscard = hovered;

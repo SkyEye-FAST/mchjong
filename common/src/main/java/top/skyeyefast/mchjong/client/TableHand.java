@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import net.minecraft.client.gui.GuiGraphics;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -17,11 +17,11 @@ final class TableHand {
     private final int right, owner;
     private final boolean perspective;
 
-    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth) {
+    TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth) {
         this(player, owner, width, height, maxTileWidth, false);
     }
 
-    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
+    TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
         this.owner = owner;
         this.melds = player.melds();
         this.perspective = perspective;

@@ -8,15 +8,15 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableControlTest {
     private static UUID id(int seat) { return new UUID(42, seat); }
 
-    @Test void nearbyLobbyHostKeepsRiichiRuleChoicesWhileRelocating() {
+    @Test void nearbyLobbyHostCanChangeRiichiRulesWhileRelocating() {
         var lobby = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         assertTrue(lobby.join(id(0), "Host", 0));
         lobby.synchronizeSeats(java.util.Map.of(), java.util.Set.of(id(0)));
-        var view = lobby.view(id(0));
-        assertEquals(0, view.viewerSeat());
-        assertFalse(view.actions().isEmpty());
-        assertTrue(lobby.actLobby(id(0), view.decision(), 0));
-        assertNotEquals(RiichiPreset.TENHOU_4, lobby.rules().preset());
+        var room = lobby.roomView(id(0));
+        assertEquals(0, room.viewerSeat());
+        assertNull(lobby.view(id(0)));
+        assertTrue(lobby.configureRules(id(0), room.decision(), RiichiPreset.WRC.config()));
+        assertEquals(RiichiPreset.WRC, lobby.rules().preset());
     }
 
     @Test void customRulesAreAtomicHostOnlyAndPersistWithCompletedHands() {
@@ -56,8 +56,8 @@ class TableControlTest {
         assertEquals(before, json.toJson(lobby));
         assertTrue(lobby.configureRules(id(0), token, custom));
         assertFalse(lobby.participants[1].ready);
-        assertEquals(28000, lobby.view(null).seats().get(0).points());
-        assertEquals(28000, lobby.view(null).seats().get(1).points());
+        assertEquals(28000, lobby.roomSettings().rules().startingPoints());
+        assertNull(lobby.view(null));
         assertFalse(lobby.equipped(), "Changing rules cannot recolor the physical tiles");
         assertFalse(lobby.configureRules(id(0), token, RiichiPreset.M_LEAGUE.config()));
         lobby = GameLifecycleTest.reloadMounted(lobby);
@@ -71,7 +71,7 @@ class TableControlTest {
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RiichiPreset.M_LEAGUE.config()));
         assertEquals(custom, lobby.game().replay.rules());
-        Settlement.abort(lobby.game(), "nine_terminals");
+        RiichiSettlement.abort(lobby.game(), "nine_terminals");
         var replay = lobby.pendingReplays().getFirst();
         assertEquals(custom, json.fromJson(json.toJson(replay), ReplayMatch.class).rules());
         lobby.validate();
@@ -118,14 +118,14 @@ class TableControlTest {
         lobby.join(id(0), "Host", 0);
         lobby.join(id(1), "Guest", 1);
         long token = lobby.decision;
-        assertFalse(lobby.view(null).convenienceHints());
+        assertFalse(lobby.roomSettings().convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(1), token, true));
         assertFalse(lobby.configureConvenienceHints(id(0), token - 1, true));
         assertTrue(lobby.configureConvenienceHints(id(0), token, true));
-        assertTrue(lobby.view(null).convenienceHints());
+        assertTrue(lobby.roomSettings().convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(0), token, true));
         var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
-        assertTrue(saved.view(null).convenienceHints());
+        assertTrue(saved.roomSettings().convenienceHints());
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
     }
@@ -195,7 +195,7 @@ class TableControlTest {
 
     @Test void reloadPreservesVoteAndExitDoesNotDiscardCompletedReplayQueue() {
         RiichiGame game = game(2, RiichiPreset.TENHOU_4, true, PlayerHandVisibility.SELF);
-        Settlement.abort(game, "nine_terminals");
+        RiichiSettlement.abort(game, "nine_terminals");
         assertFalse(game.session.pendingReplays().isEmpty());
         var replays = game.session.pendingReplays();
         game.session.requestExit(id(0));

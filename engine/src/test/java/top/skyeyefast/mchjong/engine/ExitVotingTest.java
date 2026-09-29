@@ -25,11 +25,11 @@ class ExitVotingTest {
             assertTrue(session.requestExit(HOST), phase.name());
             assertEquals(TableSession.Lifecycle.LOBBY, session.lifecycle());
             assertEquals(-1, session.seatOf(HOST));
-            var view = session.view(null);
-            assertNull(view.exitVote());
-            assertTrue(view.wall().isEmpty());
-            assertTrue(view.seats().stream().noneMatch(TableView.Seat::occupied));
-            assertTrue(view.openHands());
+            var room = session.roomView(null);
+            assertNull(room.exitVote());
+            assertNull(session.view(null));
+            assertTrue(room.seats().stream().noneMatch(seat -> seat.participant().id() != null));
+            assertTrue(session.roomSettings().openHands());
             session.validate();
             assertTrue(session.join(HOST, "Host", 0));
             GameLifecycleTest.startPositioned(session);
@@ -69,7 +69,7 @@ class ExitVotingTest {
             }
         }
         assertEquals(TableSession.Lifecycle.LOBBY, session.lifecycle());
-        assertTrue(session.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
+        assertTrue(session.roomView(null).seats().stream().noneMatch(seat -> seat.participant().id() != null));
         session.validate();
     }
 
@@ -112,12 +112,12 @@ class ExitVotingTest {
         assertFalse(game.requestExit(GUEST));
         game.unseat(GUEST);
         assertEquals(-1, game.seatOf(GUEST));
-        assertNull(game.view(HOST).exitVote());
+        assertNull(game.roomView(HOST).exitVote());
         assertTrue(game.join(UUID.randomUUID(), "Late join", 2));
         assertTrue(game.configureClock(HOST, new TimeControl(30, 10)));
         assertFalse(game.transferHost(HOST, GUEST));
         assertTrue(game.requestExit(HOST));
-        assertTrue(game.view(null).seats().stream().noneMatch(TableView.Seat::occupied));
+        assertTrue(game.roomView(null).seats().stream().noneMatch(seat -> seat.participant().id() != null));
         game.validate();
     }
 

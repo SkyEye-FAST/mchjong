@@ -67,7 +67,7 @@ final class InvitationSmoke {
                 throw new IllegalStateException("An accepted invitation could be replayed");
             } catch (CommandSyntaxException expected) { /* Consumed tokens cannot travel twice. */ }
             int seat = java.util.stream.IntStream.range(0, game.rules().players())
-                .filter(index -> !game.view(null).seats().get(index).occupied()).findFirst().orElseThrow();
+                .filter(index -> game.roomView(null).seats().get(index).participant().id() == null).findFirst().orElseThrow();
             table.sit(recipient, seat);
             check(game.seatOf(recipient.getUUID()) == seat && recipient.isPassenger(), "Sitting did not join the invited room");
             check(game.transferHost(sender.getUUID(), recipient.getUUID()), "Host transfer rejected an invited participant");

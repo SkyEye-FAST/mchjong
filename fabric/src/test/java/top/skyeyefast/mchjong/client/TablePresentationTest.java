@@ -120,9 +120,7 @@ class TablePresentationTest {
 
     @Test void livePresentationUsesPerspectiveWithoutReplayDiscardColors() {
         var id = java.util.UUID.randomUUID();
-        var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(),
-            top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, 19);
-        assertTrue(game.join(id, "Viewer", 0));
+        var game = TableLayoutTest.startSession(top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, id);
         var state = TableBoardState.live(game.view(id));
         assertFalse(state.dimTsumogiri());
         assertFalse(state.markTedashi());
@@ -131,7 +129,7 @@ class TablePresentationTest {
     }
 
     @Test void foregroundPickingIncludesTileBodyAndKeepsTheDrawGapEmpty() {
-        var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Viewer", true, false, false,
+        var player = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Viewer", true, false, false,
             25000, List.of(0, 4, 8), 8, List.of(), List.of(), List.of(), false, false, false);
         var hand = new TableHand(player, 0, 1280, 752, 58, true);
         var drawn = hand.point(8);
@@ -163,7 +161,7 @@ class TablePresentationTest {
         assertTrue(tedashi.y() < tsumogiri.y(), "Tedashi has a higher arc");
         assertTrue(ImmersiveMotion.duration(true) < ImmersiveMotion.duration(false));
         assertEquals(TileMesh.DEPTH / TileMesh.WIDTH, ImmersiveTable.thickness(32) / 32, 1e-6);
-        var hidden = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Opponent", true, false, false,
+        var hidden = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Opponent", true, false, false,
             25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
             top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false, false);
         assertEquals(195, ImmersiveTable.discardSourceX(hidden, 1, 0, 4, 60, true));
@@ -180,13 +178,12 @@ class TablePresentationTest {
     @Test void immersiveCardsStayOnTheFixedCanvasPerimeterAndClearEveryRiver() {
         for (var rules : List.of(top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_3)) {
             var id = java.util.UUID.randomUUID();
-            var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(), rules, 15);
-            assertTrue(game.join(id, "Viewer", 0));
+            var game = TableLayoutTest.startSession(rules, id);
             var view = game.view(id);
             int left = 20, right = 1260, top = 68, bottom = 620;
             var board = new TableBoard(TableBoardState.live(view), left, right, top, bottom, 800, true);
             assertTrue(board.perspective());
-            var local = board.card(0);
+            var local = board.card(view.viewerSeat());
             assertTrue(local.x() < TableScreen.IMMERSIVE_WIDTH / 4, "Local plaque belongs on the lower-left perimeter");
             assertTrue(local.y() > bottom - 80);
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -214,19 +211,18 @@ class TablePresentationTest {
     @Test void denseRiversKeepReadablePixelsAndMeldsReflowBeforeShrinking() {
         var rules = top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4;
         var id = java.util.UUID.randomUUID();
-        var game = new top.skyeyefast.mchjong.engine.RiichiSession(java.util.UUID.randomUUID(), rules, 15);
-        game.join(id, "Viewer", 0);
+        var game = TableLayoutTest.startSession(rules, id);
         var base = game.view(id);
         var seats = new java.util.ArrayList<>(base.seats());
         for (int seat = 0; seat < 4; seat++) {
             int rows = seat % 2 == 0 ? 4 : 2;
             var river = java.util.stream.IntStream.range(0, rows * 6)
                 .mapToObj(tile -> new top.skyeyefast.mchjong.engine.Discard(tile, tile == 3, false, false)).toList();
-            seats.set(seat, new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false,
+            seats.set(seat, new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false,
                 25000, List.of(), -1, List.of(), river, List.of(), false, false, false));
         }
-        var view = new top.skyeyefast.mchjong.engine.TableView(base.tableId(), 1, 1, 1, base.rules(),
-            top.skyeyefast.mchjong.engine.TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
+        var view = new top.skyeyefast.mchjong.engine.RiichiView(base.tableId(), 1, 1, 1, base.rules(),
+            top.skyeyefast.mchjong.engine.RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
@@ -254,7 +250,7 @@ class TablePresentationTest {
         var melds = java.util.stream.IntStream.range(0, 4).mapToObj(i ->
             new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 1, i * 4)).toList();
-        var player = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
+        var player = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false, 25000,
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
         int meldWidth = melds.stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum();
         for (int side = 0; side < 4; side++) {
@@ -294,10 +290,10 @@ class TablePresentationTest {
 
     @Test void tableResultsRetainsMaterialAndBackDye() {
         var rules = top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config();
-        var seat = new top.skyeyefast.mchjong.engine.TableView.Seat(false, "Player", true, false, false, 25000,
+        var seat = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false, 25000,
             List.of(), top.skyeyefast.mchjong.engine.Tile.ABSENT, List.of(), List.of(), List.of(), false, false, false);
-        var view = new top.skyeyefast.mchjong.engine.TableView(new java.util.UUID(1, 1), 1, 1, 1, rules,
-            top.skyeyefast.mchjong.engine.TableView.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
+        var view = new top.skyeyefast.mchjong.engine.RiichiView(new java.util.UUID(1, 1), 1, 1, 1, rules,
+            top.skyeyefast.mchjong.engine.RiichiView.Phase.HAND_END, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
             top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);

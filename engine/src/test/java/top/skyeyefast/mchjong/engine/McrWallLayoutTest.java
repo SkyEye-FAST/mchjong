@@ -72,7 +72,7 @@ class McrWallLayoutTest {
         for (int slot : new int[]{139, 140, 141}) assertEquals(slot, wall.drawRaw());
         assertEquals(143, wall.nextDrawSlot());
         assertEquals(16, wall.nextReplacementSlot());
-        var player = new PlayerState();
+        var player = new McrPlayerState();
         assertEquals(16, wall.replace(player));
         assertEquals(17, wall.replace(player));
         var restored = McrWall.restore(wall.save());
@@ -80,7 +80,7 @@ class McrWallLayoutTest {
         assertEquals(143, restored.nextDrawSlot());
         assertEquals(14, restored.nextReplacementSlot());
         assertEquals(wall.drawRaw(), restored.drawRaw());
-        assertEquals(wall.replace(player), restored.replace(new PlayerState()));
+        assertEquals(wall.replace(player), restored.replace(new McrPlayerState()));
         assertEquals(wall.save(), restored.save());
         var game = McrGameTest.fixed(5, new McrGameTest.Fixture().build());
         assertEquals(game.opening(), game.view(-1).opening());

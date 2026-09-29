@@ -19,7 +19,7 @@ class ReactionRulesTest {
             game = session.game();
             game.wall = new Wall(rules.config(), 7788, game.dealer);
             for (int s = 0; s < rules.players(); s++) {
-                PlayerState p = game.players[s];
+                RiichiPlayerState p = game.players[s];
                 p.resetHand();
                 p.member.id = new UUID(40, s); p.member.name = "Player " + s;
                 p.member.presence = PlayerPresence.SEATED;
@@ -70,11 +70,11 @@ class ReactionRulesTest {
             game.players[seat].points -= 1000;
             game.riichiSticks++;
         }
-        void act(int seat, Action.Type type) { act(seat, type, null); }
-        void act(int seat, Action.Type type, Integer tile) {
-            TableView view = game.view(game.players[seat].member.id);
+        void act(int seat, RiichiAction.Type type) { act(seat, type, null); }
+        void act(int seat, RiichiAction.Type type, Integer tile) {
+            RiichiView view = game.view(game.players[seat].member.id);
             for (int i = 0; i < view.actions().size(); i++) {
-                Action action = view.actions().get(i);
+                RiichiAction action = view.actions().get(i);
                 if (action.type() == type && (tile == null || action.tiles().contains(tile))) {
                     assertTrue(game.act(game.players[seat].member.id, view.decision(), i));
                     game.validate();
@@ -88,8 +88,8 @@ class ReactionRulesTest {
             while (game.phase() == RiichiGame.Phase.REACTION && guard++ < 4) {
                 boolean passed = false;
                 for (int s = 0; s < game.rules.players(); s++) {
-                    if (game.view(game.players[s].member.id).actions().stream().anyMatch(a -> a.type() == Action.Type.PASS)) {
-                        act(s, Action.Type.PASS); passed = true; break;
+                    if (game.view(game.players[s].member.id).actions().stream().anyMatch(a -> a.type() == RiichiAction.Type.PASS)) {
+                        act(s, RiichiAction.Type.PASS); passed = true; break;
                     }
                 }
                 if (!passed) break;
@@ -106,7 +106,7 @@ class ReactionRulesTest {
             int discard = f.game.players[0].hand.getLast();
             f.start(0, discard);
             assertFalse(f.game.view(null).seats().getFirst().doubleRiichi());
-            f.act(0, Action.Type.RIICHI, discard);
+            f.act(0, RiichiAction.Type.RIICHI, discard);
             assertEquals(state == 0, f.game.view(null).seats().getFirst().doubleRiichi());
             assertEquals(state == 0, f.game.view(f.game.players[1].member.id).seats().getFirst().doubleRiichi());
         }
@@ -122,10 +122,10 @@ class ReactionRulesTest {
             assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), AutoPlay.Option.WIN, true));
             assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), AutoPlay.Option.NO_CALLS, true));
         }
-        f.act(0, Action.Type.CLOSED_KAN, fourth);
+        f.act(0, RiichiAction.Type.CLOSED_KAN, fourth);
         for (int tick = 0; tick < RiichiGame.AUTO_ACTION_TICKS + 3; tick++) f.game.tick();
         f.game.validate();
-        assertEquals(List.of(1), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertEquals(List.of(1), f.game.view(null).wins().stream().map(RiichiView.Win::seat).toList());
         assertTrue(f.game.players[0].melds.isEmpty());
         assertEquals(0, f.game.wall.replacementIndex);
     }
@@ -144,9 +144,9 @@ class ReactionRulesTest {
             assertTrue(f.game.configureAutoPlay(player, f.game.decision(), AutoPlay.Option.WIN, true));
             assertTrue(f.game.configureAutoPlay(player, f.game.decision(), AutoPlay.Option.NO_CALLS, true));
         }
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
         for (int i = 0; i < RiichiGame.AUTO_ACTION_TICKS + 3; i++) { f.game.tick(); f.game.validate(); }
-        assertEquals(List.of(1, 2, 3), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertEquals(List.of(1, 2, 3), f.game.view(null).wins().stream().map(RiichiView.Win::seat).toList());
         assertTrue(f.game.view(null).wins().stream().allMatch(win -> win.score().ron() > 0));
     }
 
@@ -178,19 +178,19 @@ class ReactionRulesTest {
         f.game.honba = 2;
         f.start(0, discarded);
         int[] before = Arrays.stream(f.game.players).mapToInt(p -> p.points).toArray();
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
         long token = f.game.view(f.game.players[1].member.id).decision();
-        f.act(3, Action.Type.RON);
+        f.act(3, RiichiAction.Type.RON);
         assertEquals(token, f.game.view(f.game.players[1].member.id).decision(), "Another response must not stale a simultaneous choice");
-        f.act(2, Action.Type.RON);
-        f.act(1, Action.Type.RON);
+        f.act(2, RiichiAction.Type.RON);
+        f.act(1, RiichiAction.Type.RON);
         if (rules == RiichiPreset.TENHOU_4) {
             assertEquals("triple_ron", f.game.view(null).result());
             assertTrue(f.game.view(null).wins().isEmpty());
             assertArrayEquals(before, Arrays.stream(f.game.players).mapToInt(p -> p.points).toArray());
         } else {
             var winners = f.game.view(null).wins();
-            assertEquals(rules.headBump() ? List.of(1) : List.of(1,2,3), winners.stream().map(TableView.Win::seat).toList());
+            assertEquals(rules.headBump() ? List.of(1) : List.of(1,2,3), winners.stream().map(RiichiView.Win::seat).toList());
             for (var win : winners) {
                 int extra = win.seat() == 1 ? 3600 : 0;
                 assertEquals(win.score().ron() + extra, f.game.players[win.seat()].points - before[win.seat()]);
@@ -207,11 +207,11 @@ class ReactionRulesTest {
         int discarded = f.take("6p").getFirst();
         f.game.players[0].hand.add(discarded);
         f.start(0, discarded);
-        f.act(0, Action.Type.DISCARD, discarded);
-        f.act(3, Action.Type.PON);
-        f.act(1, Action.Type.CHI);
-        f.act(2, Action.Type.RON);
-        assertEquals(List.of(2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
+        f.act(3, RiichiAction.Type.PON);
+        f.act(1, RiichiAction.Type.CHI);
+        f.act(2, RiichiAction.Type.RON);
+        assertEquals(List.of(2), f.game.view(null).wins().stream().map(RiichiView.Win::seat).toList());
         assertTrue(f.game.players[1].melds.isEmpty()); assertTrue(f.game.players[3].melds.isEmpty());
     }
 
@@ -226,12 +226,12 @@ class ReactionRulesTest {
         f.game.players[0].hand.add(discarded);
         f.start(0, discarded);
 
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
 
-        assertEquals(List.of(2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertEquals(List.of(2), f.game.view(null).wins().stream().map(RiichiView.Win::seat).toList());
         assertTrue(f.game.players[1].melds.isEmpty());
         assertTrue(f.game.players[3].melds.isEmpty());
-        assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT), new Action(Action.Type.SETTLEMENT_DONE)),
+        assertEquals(List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT), new RiichiAction(RiichiAction.Type.SETTLEMENT_DONE)),
             f.game.view(f.game.players[1].member.id).actions());
     }
 
@@ -246,12 +246,12 @@ class ReactionRulesTest {
         f.game.players[2].member.bot = true;
         f.start(0, discarded);
 
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
         assertEquals(RiichiGame.Phase.REACTION, f.game.phase());
-        assertTrue(f.game.view(f.game.players[1].member.id).actions().stream().anyMatch(a -> a.type() == Action.Type.RON));
-        f.act(1, Action.Type.RON);
+        assertTrue(f.game.view(f.game.players[1].member.id).actions().stream().anyMatch(a -> a.type() == RiichiAction.Type.RON));
+        f.act(1, RiichiAction.Type.RON);
 
-        assertEquals(List.of(1, 2), f.game.view(null).wins().stream().map(TableView.Win::seat).toList());
+        assertEquals(List.of(1, 2), f.game.view(null).wins().stream().map(RiichiView.Win::seat).toList());
     }
 
     @Test void equivalentPhysicalCopiesYieldOnePonChoice() {
@@ -260,10 +260,10 @@ class ReactionRulesTest {
         int discarded = f.take("6p").getFirst();
         f.game.players[0].hand.add(discarded);
         f.start(0, discarded);
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
 
         assertEquals(1, f.game.view(f.game.players[3].member.id).actions().stream()
-            .filter(a -> a.type() == Action.Type.PON).count());
+            .filter(a -> a.type() == RiichiAction.Type.PON).count());
     }
 
     @Test void redFiveConsumptionRemainsASeparatePonAndChiChoice() {
@@ -272,9 +272,9 @@ class ReactionRulesTest {
         int ponDiscard = pon.take("5p").getFirst();
         pon.game.players[0].hand.add(ponDiscard);
         pon.start(0, ponDiscard);
-        pon.act(0, Action.Type.DISCARD, ponDiscard);
+        pon.act(0, RiichiAction.Type.DISCARD, ponDiscard);
         var ponChoices = pon.game.view(pon.game.players[3].member.id).actions().stream()
-            .filter(a -> a.type() == Action.Type.PON).toList();
+            .filter(a -> a.type() == RiichiAction.Type.PON).toList();
         assertEquals(2, ponChoices.size());
         assertEquals(Set.of(0L, 1L), ponChoices.stream()
             .map(a -> a.tiles().stream().filter(Tile::red).count()).collect(java.util.stream.Collectors.toSet()));
@@ -284,9 +284,9 @@ class ReactionRulesTest {
         int chiDiscard = chi.take("6p").getFirst();
         chi.game.players[0].hand.add(chiDiscard);
         chi.start(0, chiDiscard);
-        chi.act(0, Action.Type.DISCARD, chiDiscard);
+        chi.act(0, RiichiAction.Type.DISCARD, chiDiscard);
         var chiChoices = chi.game.view(chi.game.players[1].member.id).actions().stream()
-            .filter(a -> a.type() == Action.Type.CHI).toList();
+            .filter(a -> a.type() == RiichiAction.Type.CHI).toList();
         assertEquals(2, chiChoices.size());
         assertEquals(Set.of(0L, 1L), chiChoices.stream()
             .map(a -> a.tiles().stream().filter(Tile::red).count()).collect(java.util.stream.Collectors.toSet()));
@@ -299,14 +299,14 @@ class ReactionRulesTest {
         int discarded = f.take("5z").getFirst();
         f.game.players[0].hand.add(discarded);
         f.start(0, discarded);
-        f.act(0, Action.Type.DISCARD, discarded);
-        assertTrue(f.game.view(f.game.players[3].member.id).actions().stream().anyMatch(a -> a.type() == Action.Type.RON));
-        f.act(3, Action.Type.PON);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
+        assertTrue(f.game.view(f.game.players[3].member.id).actions().stream().anyMatch(a -> a.type() == RiichiAction.Type.RON));
+        f.act(3, RiichiAction.Type.PON);
         f.passOthers();
         assertEquals(RiichiGame.Phase.TURN, f.game.phase());
         assertEquals(3, f.game.turn);
         assertEquals(rules != RiichiPreset.WRC, f.game.players[3].temporaryFuriten);
-        f.act(3, Action.Type.DISCARD);
+        f.act(3, RiichiAction.Type.DISCARD);
         assertEquals(rules != RiichiPreset.WRC, f.game.players[3].temporaryFuriten);
     }
 
@@ -317,12 +317,12 @@ class ReactionRulesTest {
         f.hand(0, "9999m");
         int fourth = f.game.players[0].hand.getLast();
         f.start(0, fourth);
-        f.act(0, Action.Type.CLOSED_KAN, fourth);
+        f.act(0, RiichiAction.Type.CLOSED_KAN, fourth);
         if (rules.mahjongSoul()) {
             assertEquals(RiichiGame.Phase.REACTION, f.game.phase());
             assertTrue(f.game.view(null).focus().declaration());
             assertEquals(fourth, f.game.view(null).focus().tile());
-            f.act(1, Action.Type.RON); f.passOthers();
+            f.act(1, RiichiAction.Type.RON); f.passOthers();
             assertEquals(1, f.game.view(null).wins().size());
             assertTrue(f.game.players[0].melds.isEmpty());
             assertEquals(0, f.game.wall.replacementIndex);
@@ -341,9 +341,9 @@ class ReactionRulesTest {
         int discarded = f.take("6m").getFirst();
         f.game.players[0].hand.add(discarded);
         f.start(0, discarded);
-        f.act(0, Action.Type.DISCARD, discarded);
+        f.act(0, RiichiAction.Type.DISCARD, discarded);
         assertTrue(f.game.players[3].temporaryFuriten);
-        assertTrue(f.game.view(f.game.players[3].member.id).actions().stream().noneMatch(a -> a.type() == Action.Type.RON));
+        assertTrue(f.game.view(f.game.players[3].member.id).actions().stream().noneMatch(a -> a.type() == RiichiAction.Type.RON));
     }
 
     @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"MAHJONG_SOUL_3", "TENHOU_3"})
@@ -374,7 +374,7 @@ class ReactionRulesTest {
         assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), AutoPlay.Option.KITA, true));
         for (int tick = 0; tick < RiichiGame.AUTO_ACTION_TICKS; tick++) f.game.tick();
         f.game.validate();
-        f.act(1, Action.Type.RON); f.passOthers();
+        f.act(1, RiichiAction.Type.RON); f.passOthers();
         assertTrue(f.game.players[0].norths.isEmpty());
         assertEquals(0, f.game.wall.replacementIndex);
         assertFalse(f.game.view(null).wins().getFirst().score().yaku().contains("Chankan"));

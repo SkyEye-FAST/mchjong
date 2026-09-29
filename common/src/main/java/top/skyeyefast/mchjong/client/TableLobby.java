@@ -10,7 +10,8 @@ import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
+import top.skyeyefast.mchjong.engine.TableRoomView;
 
 /** The room's frequent controls share one page, including at 320 by 240. */
 final class TableLobby {
@@ -18,12 +19,10 @@ final class TableLobby {
     static int top(int height) { return height < 300 ? 82 : 94; }
     static int primaryY(int height) { return top(height) + 124; }
 
-    static List<MahjongButton> controls(TableScreen parent, TableView view, int width, int height) {
+    static List<MahjongButton> controls(TableScreen parent, TableRoomView room, RiichiRoomSettings settings, int width, int height) {
         var client = Minecraft.getInstance();
-        var room = parent.room();
-        if (room == null) return List.of();
-        boolean member = view.viewerSeat() >= 0;
-        boolean host = member && room != null && view.viewerSeat() == room.host() && view.exitVote() == null;
+        boolean member = room.viewerSeat() >= 0;
+        boolean host = member && room.viewerSeat() == room.host() && room.exitVote() == null;
         var buttons = new ArrayList<MahjongButton>();
         int span = Math.min(440, width - 20), left = (width - span) / 2, y = top(height);
         int third = (span - 8) / 3, half = (span - 4) / 2;
@@ -38,7 +37,7 @@ final class TableLobby {
                 () -> client.setScreen(new TableSeatsScreen(parent))));
             int index = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
             var primary = button(Component.translatable(index >= 0 ? "room.mchjong.start_auto"
-                : view.seats().stream().allMatch(TableView.Seat::occupied) ? "ui.mchjong.equipment_needed" : "room.mchjong.wait_host"),
+                : room.seats().stream().allMatch(seat -> seat.participant().id() != null) ? "ui.mchjong.equipment_needed" : "room.mchjong.wait_host"),
                 left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();
             primary.setHeight(26);
             primary.active = index >= 0;
@@ -46,31 +45,31 @@ final class TableLobby {
             return buttons;
         }
         for (int count : new int[]{4, 3}) {
-            var preset = view.rules().preset().tenhou() ? count == 4 ? RiichiPreset.TENHOU_4 : RiichiPreset.TENHOU_3
+            var preset = settings.rules().preset().tenhou() ? count == 4 ? RiichiPreset.TENHOU_4 : RiichiPreset.TENHOU_3
                 : count == 4 ? RiichiPreset.MAHJONG_SOUL_4 : RiichiPreset.MAHJONG_SOUL_3;
-            int index = TableScreen.ruleAction(view, preset);
-            var config = view.rules().withPreset(preset);
+            var config = settings.rules().withPreset(preset);
             boolean supplied = parent.canSupplyReds(config.sanma(), config.redFives());
             var button = button(Component.translatable("ui.mchjong.players." + count),
-                left + (4 - count) * (third + 4), y, third, () -> parent.send(view, index));
-            button.active = host && index >= 0 && count != view.rules().players() && supplied;
-            button.selected(count == view.rules().players());
+                left + (4 - count) * (third + 4), y, third, () -> parent.configureRules(room, config));
+            button.active = host && count != settings.rules().players() && supplied
+                && (count == 4 || room.seats().size() < 4 || room.seats().get(3).participant().id() == null);
+            button.selected(count == settings.rules().players());
             if (!supplied) button.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.insufficient_reds")));
             buttons.add(button);
         }
         var clock = button(Component.translatable("ui.mchjong.clock_settings"), left + 2 * (third + 4), y,
-            span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, view.timeControl())));
+            span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, settings.timeControl())));
         clock.active = host;
         buttons.add(clock);
-        var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(view.rules().preset().presetKey())).append(" ▼"),
-            left, y + 24, half, () -> client.setScreen(new TableRulesScreen(parent, view, true)));
+        var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(settings.rules().preset().presetKey())).append(" ▼"),
+            left, y + 24, half, () -> client.setScreen(new TableRulesScreen(parent, room, settings, true)));
         preset.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help")));
         buttons.add(preset);
         buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24, half,
-            () -> client.setScreen(new TableRulesScreen(parent, view))).selected(view.rules().custom()));
+            () -> client.setScreen(new TableRulesScreen(parent, room, settings))).selected(settings.rules().custom()));
         var visibility = button(Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
-            "settings.mchjong.hand_visibility." + view.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
-            () -> parent.configureVisibility(PlayerHandVisibility.values()[Math.floorMod(view.playerHandVisibility().ordinal()
+            "settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
+            () -> parent.configureVisibility(PlayerHandVisibility.values()[Math.floorMod(settings.playerHandVisibility().ordinal()
                 + (Screen.hasShiftDown() ? -1 : 1), PlayerHandVisibility.values().length)]));
         visibility.active = host;
         buttons.add(visibility);
@@ -87,7 +86,7 @@ final class TableLobby {
         String label;
         if (index >= 0) label = room.actions().get(index).type() == RoomAction.Type.FILL_BOTS
             ? "room.mchjong.start_bots" : parent.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual";
-        else if (host && view.seats().stream().allMatch(TableView.Seat::occupied))
+        else if (host && room.seats().stream().allMatch(seat -> seat.participant().id() != null))
             label = parent.automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed";
         else label = "room.mchjong.wait_host";
         var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();

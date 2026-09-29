@@ -17,7 +17,8 @@ import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.engine.RiichiRules;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
+import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.TableRulesPayload;
 
 /** Local draft with explicit apply/cancel; only an acknowledged server snapshot becomes active rules. */
@@ -32,7 +33,8 @@ public final class TableRulesScreen extends Screen {
         RiichiRuleOption.KAN_DORA, RiichiRuleOption.KAZOE_YAKUMAN, RiichiRuleOption.KIRIAGE_MANGAN, RiichiRuleOption.DOUBLE_YAKUMAN,
         RiichiRuleOption.HEAD_BUMP, RiichiRuleOption.UMA_1, RiichiRuleOption.UMA_2, RiichiRuleOption.UMA_3, RiichiRuleOption.UMA_4);
     private final TableScreen parent;
-    private TableView baseline;
+    private TableRoomView baseline;
+    private RiichiRoomSettings baselineSettings;
     private RiichiRules draft;
     private RiichiRules pending;
     private final Map<RiichiRuleOption, String> numbers = new EnumMap<>(RiichiRuleOption.class);
@@ -53,14 +55,15 @@ public final class TableRulesScreen extends Screen {
         Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
     }
 
-    public TableRulesScreen(TableScreen parent, TableView initial) {
-        this(parent, initial, false);
+    public TableRulesScreen(TableScreen parent, TableRoomView room, RiichiRoomSettings settings) {
+        this(parent, room, settings, false);
     }
-    public TableRulesScreen(TableScreen parent, TableView initial, boolean presetExpanded) {
+    public TableRulesScreen(TableScreen parent, TableRoomView room, RiichiRoomSettings settings, boolean presetExpanded) {
         super(Component.translatable("rules.mchjong.title"));
         this.parent = parent;
-        baseline = initial;
-        draft = initial.rules();
+        baseline = room;
+        baselineSettings = settings;
+        draft = settings.rules();
         mode = draft.custom() ? Mode.CUSTOM : Mode.PRESET;
         this.presetExpanded = presetExpanded;
     }
@@ -69,14 +72,13 @@ public final class TableRulesScreen extends Screen {
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     private boolean host() {
-        var view = parent.view();
         var room = parent.room();
-        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == TableView.Phase.LOBBY
-            && view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
+        return room != null && room.tableId().equals(baseline.tableId()) && room.lobby()
+            && room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
     }
     private boolean stale() {
-        var view = parent.view();
-        return view == null || !view.tableId().equals(baseline.tableId()) || view.decision() != baseline.decision();
+        var room = parent.room();
+        return room == null || !room.tableId().equals(baseline.tableId()) || room.decision() != baseline.decision();
     }
     private boolean invalid() {
         for (var entry : numbers.entrySet()) {
@@ -210,9 +212,11 @@ public final class TableRulesScreen extends Screen {
             .bounds(width / 2 + 45, height - 59, 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
         next.active = page + 1 < pages;
         addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.reload"), ignored -> {
-            var current = parent.view();
-            if (current != null && pending == null) {
-                baseline = current; draft = current.rules(); numbers.clear(); rejected = false; page = 0; init();
+            var current = parent.room();
+            var settings = parent.roomSettings();
+            if (current != null && settings != null && pending == null) {
+                baseline = current; baselineSettings = settings; draft = settings.rules();
+                numbers.clear(); rejected = false; page = 0; init();
             }
         }).bounds(left, height - 30, tabWidth, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
@@ -244,7 +248,7 @@ public final class TableRulesScreen extends Screen {
                     : Component.translatable("rules.mchjong.insufficient_reds")));
         });
         if (apply != null) apply.active = editable && allowedByWorld(draft) && !invalid() && !missingReds()
-            && !draft.equals(baseline.rules());
+            && !draft.equals(baselineSettings.rules());
     }
     private boolean allowedByWorld(RiichiRules config) {
         var world = parent.worldPolicy();
@@ -263,8 +267,10 @@ public final class TableRulesScreen extends Screen {
     }
     void receivedReply() {
         if (pending == null) return;
-        var view = parent.view();
-        boolean accepted = view != null && view.tableId().equals(baseline.tableId()) && view.rules().equals(pending);
+        var room = parent.room();
+        var settings = parent.roomSettings();
+        boolean accepted = room != null && settings != null
+            && room.tableId().equals(baseline.tableId()) && settings.rules().equals(pending);
         pending = null;
         if (accepted) onClose();
         else { rejected = true; updateControls(); }

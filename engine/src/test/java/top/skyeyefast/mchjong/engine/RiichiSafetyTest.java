@@ -57,7 +57,7 @@ class RiichiSafetyTest {
         var json = new Gson();
         var restored = GameLifecycleTest.reloadMounted(game);
         assertEquals(view.riichiSafeTiles(), restored.view(game.players[0].member.id).riichiSafeTiles());
-        assertEquals(view.riichiSafeTiles(), json.fromJson(json.toJson(view), TableView.class).riichiSafeTiles());
+        assertEquals(view.riichiSafeTiles(), json.fromJson(json.toJson(view), RiichiView.class).riichiSafeTiles());
         game.startHand();
         assertTrue(game.view(game.players[0].member.id).riichiSafeTiles().isEmpty());
     }

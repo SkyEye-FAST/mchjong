@@ -49,8 +49,8 @@ class TimeControlTest {
     @Test void respondersUseIndependentClocksAndAnAnswerStopsChargingReserve() {
         RiichiGame game = game(2, 1);
         game.newDecision(RiichiGame.Phase.REACTION);
-        game.options.set(1, List.of(new Action(Action.Type.PASS)));
-        game.options.set(2, List.of(new Action(Action.Type.PASS)));
+        game.options.set(1, List.of(new RiichiAction(RiichiAction.Type.PASS)));
+        game.options.set(2, List.of(new RiichiAction(RiichiAction.Type.PASS)));
         tick(game, 30);
         assertEquals(30, game.reserveTicks[1]);
         assertEquals(30, game.reserveTicks[2]);
@@ -79,7 +79,7 @@ class TimeControlTest {
         assertArrayEquals(game.reserveTicks, restored.reserveTicks);
         assertArrayEquals(game.moveTicks, restored.moveTicks);
         restored.validate();
-        Settlement.abort(restored, "nine_terminals");
+        RiichiSettlement.abort(restored, "nine_terminals");
         int[] reserve = restored.reserveTicks.clone();
         tick(restored, 99);
         restored = GameLifecycleTest.reloadMounted(restored);
@@ -95,8 +95,8 @@ class TimeControlTest {
 
     @Test void winningReceiptsKeepAFiniteServerDeadlineWithoutAcknowledgements() {
         RiichiGame game = game(2, 1);
-        Settlement.abort(game, "nine_terminals");
-        game.wins = List.of(new TableView.Win(0, 1, 0,
+        RiichiSettlement.abort(game, "nine_terminals");
+        game.wins = List.of(new RiichiView.Win(0, 1, 0,
             new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
         int limit = ScoreAnnouncements.maximumTicks(game.wins);
         int[] reserve = game.reserveTicks.clone();
@@ -112,14 +112,14 @@ class TimeControlTest {
 
     @Test void manualCollectionCannotSkipSettlementAndUncollectedHandsStillAdvance() {
         RiichiGame game = game(2, 1, true);
-        Settlement.abort(game, "nine_terminals");
+        RiichiSettlement.abort(game, "nine_terminals");
         for (var player : game.players) assertTrue(game.act(player.member.id, game.decision(), 0));
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         tick(game, RiichiGame.SETTLEMENT_TICKS - 1);
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         game.tick();
         assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
-        Settlement.abort(game, "nine_terminals");
+        RiichiSettlement.abort(game, "nine_terminals");
         tick(game, RiichiGame.SETTLEMENT_TICKS);
         assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
     }

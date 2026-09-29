@@ -1,15 +1,15 @@
 package top.skyeyefast.mchjong.client;
 
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 
 /** One outstanding action per authoritative choice set; heartbeats are not acknowledgements. */
 public final class TableDecision {
-    private TableView view;
+    private RiichiView view;
     private boolean pending;
 
     public boolean pending() { return pending; }
 
-    public boolean receive(TableView next) {
+    public boolean receive(RiichiView next) {
         if (view != null && next != null && view.tableId().equals(next.tableId()) && next.revision() < view.revision()) return false;
         boolean changed = !sameDecision(view, next);
         if (changed) pending = false;
@@ -17,13 +17,13 @@ public final class TableDecision {
         return changed;
     }
 
-    public boolean submit(TableView offered, int index) {
+    public boolean submit(RiichiView offered, int index) {
         if (pending || !sameDecision(view, offered) || index < 0 || index >= view.actions().size()) return false;
         pending = true;
         return true;
     }
 
-    private static boolean sameDecision(TableView first, TableView second) {
+    private static boolean sameDecision(RiichiView first, RiichiView second) {
         return first != null && second != null && first.tableId().equals(second.tableId())
             && first.viewerSeat() == second.viewerSeat() && first.decision() == second.decision()
             && first.actions().equals(second.actions());

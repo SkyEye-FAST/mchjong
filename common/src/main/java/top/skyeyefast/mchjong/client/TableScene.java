@@ -6,7 +6,7 @@ import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -35,10 +35,10 @@ public final class TableScene {
             seat * 90 + additionalYaw, flat, back);
     }
 
-    public static List<Piece> build(TableView view) {
+    public static List<Piece> build(RiichiView view) {
         List<Piece> result = new ArrayList<>(200);
-        if (view.handling() != null && (view.phase() == TableView.Phase.SHUFFLE
-            || view.phase() == TableView.Phase.BUILD_WALL)) {
+        if (view.handling() != null && (view.phase() == RiichiView.Phase.SHUFFLE
+            || view.phase() == RiichiView.Phase.BUILD_WALL)) {
             int size = view.rules().sanma() ? 108 : 136;
             for (int index = 0; index < size; index++) {
                 int side = WallLayout.side(index, view.wallBreak(), size, view.rules().players());
@@ -47,7 +47,7 @@ public final class TableScene {
         }
         double top = TableGeometry.FELT_Y;
         for (int seat = 0; seat < view.seats().size(); seat++) {
-            TableView.Seat player = view.seats().get(seat);
+            RiichiView.Seat player = view.seats().get(seat);
             var melds = new ArrayList<MeldLayout>(player.melds().size());
             double meldLeft = MELD_RIGHT;
             for (Meld meld : player.melds()) {
@@ -110,8 +110,8 @@ public final class TableScene {
                 if (view.wall().get(i) != Tile.ABSENT) result.add(wallPiece(view, i, false));
             }
         }
-        if (view.handling() != null && (view.phase() == TableView.Phase.HAND_END
-            || view.phase() == TableView.Phase.MATCH_END)) {
+        if (view.handling() != null && (view.phase() == RiichiView.Phase.HAND_END
+            || view.phase() == RiichiView.Phase.MATCH_END)) {
             int[] collected = new int[4];
             for (int i = 0; i < result.size(); i++) {
                 Piece old = result.get(i);
@@ -128,12 +128,12 @@ public final class TableScene {
     }
 
     /** Scatter a complete set in two shallow layers. All faces stay hidden before dealing. */
-    private static Piece loosePiece(TableView view, int index, int side) {
+    private static Piece loosePiece(RiichiView view, int index, int side) {
         // A stable permutation distributes each wall's share over the pile without exposing its order.
         int slot = index * 53 % (view.rules().sanma() ? 108 : 136);
         int column = slot % 10, row = slot / 10 % 7, layer = slot / 70;
         java.util.Random random = new java.util.Random(index * 193L + view.handNumber() * 71L
-            + (view.phase() == TableView.Phase.SHUFFLE ? 0 : 3109));
+            + (view.phase() == RiichiView.Phase.SHUFFLE ? 0 : 3109));
         return new Piece(Tile.HIDDEN, side, Area.LOOSE, index,
             new Vec3((column - 4.5) * .135 + (random.nextDouble() - .5) * .02,
                 TableGeometry.FELT_Y + (FLAT_CENTER + layer * TileMesh.DEPTH) * TILE_SCALE,
@@ -142,7 +142,7 @@ public final class TableScene {
     }
 
     /** A complete wall is reconstructed with hidden sentinels, never guessed tile identities. */
-    public static Piece wallPiece(TableView view, int index, boolean complete) {
+    public static Piece wallPiece(RiichiView view, int index, boolean complete) {
         int size = view.wall().size();
         int stacksPerSide = size / (view.rules().sanma() ? 6 : 8);
         int stack = WallLayout.stack(index, view.wallBreak(), size);

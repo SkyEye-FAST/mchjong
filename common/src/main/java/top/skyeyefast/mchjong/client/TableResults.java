@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.item.DyeColor;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -25,7 +25,7 @@ public final class TableResults extends AbstractWidget {
     public enum Page { HAND, POINTS, MATCH }
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
-    private final TableView view;
+    private final RiichiView view;
     private final List<List<ScoreAnnouncements.Row>> receipts;
     private final TileFacePreset preset;
     private final TileMaterial material;
@@ -41,12 +41,12 @@ public final class TableResults extends AbstractWidget {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
 
-    public TableResults(Font font, TableView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
                         int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
         this(font, view, preset, material, dye, TileBackPresets.DEFAULT, x, y, width, height, winner, page, started, contentScale);
     }
 
-    public TableResults(Font font, TableView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
                         net.minecraft.resources.ResourceLocation backPreset,
                         int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
@@ -63,7 +63,7 @@ public final class TableResults extends AbstractWidget {
         this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
     }
 
-    public TableResults(Font font, TableView view, TileFacePreset preset, int x, int y, int width, int height,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, int x, int y, int width, int height,
                         int winner, Page page, long started, int contentScale) {
         this(font, view, preset, TileMaterial.BONE, null, x, y, width, height, winner, page, started, contentScale);
     }
@@ -81,8 +81,8 @@ public final class TableResults extends AbstractWidget {
         return view.seats().get(seat).points() - delta + (int) Math.round(delta * progress);
     }
     private boolean pointsVisible() { return readout == null || readout.pointsAt() >= 0; }
-    public static boolean available(TableView view) {
-        return view.phase() == TableView.Phase.HAND_END || view.phase() == TableView.Phase.MATCH_END;
+    public static boolean available(RiichiView view) {
+        return view.phase() == RiichiView.Phase.HAND_END || view.phase() == RiichiView.Phase.MATCH_END;
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -223,7 +223,7 @@ public final class TableResults extends AbstractWidget {
         return y + 2;
     }
 
-    private int handWidth(int tiles, TableView.Seat player, int owner, int tileWidth, int handGap) {
+    private int handWidth(int tiles, RiichiView.Seat player, int owner, int tileWidth, int handGap) {
         return tiles * (tileWidth + 1) + handGap
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }
@@ -382,7 +382,7 @@ public final class TableResults extends AbstractWidget {
         if (graphics != null) MahjongUi.text(graphics, font, text, x, y, span, color, false);
         if (font.width(text) > span) hits.add(new Hit(x, y, span, 10, text));
     }
-    private Component winnerSummary(TableView.Win win) {
+    private Component winnerSummary(RiichiView.Win win) {
         var summary = TableScreen.playerName(view, win.seat()).copy();
         for (var row : receipts.get(view.wins().indexOf(win))) {
             summary.append("  ").append(Component.translatable(row.translationKey()));

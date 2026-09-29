@@ -4,13 +4,13 @@ import java.util.List;
 import java.util.UUID;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 
 /** Client presentation only: one row/recording at a time, then points, then the limit. */
 public final class ResultReadout {
     private final UUID table;
     private final int hand, viewer;
-    private final List<TableView.Win> wins;
+    private final List<RiichiView.Win> wins;
     private final List<List<String>> rows;
     private final List<String> limits;
     private final int[] visible;
@@ -19,7 +19,7 @@ public final class ResultReadout {
     private boolean limitSpoken, complete;
     private long next, pointsAt = -1;
 
-    public ResultReadout(TableView view, long now) {
+    public ResultReadout(RiichiView view, long now) {
         table = view.tableId(); hand = view.handNumber(); viewer = view.viewerSeat(); wins = view.wins();
         rows = wins.stream().map(win -> ScoreAnnouncements.rows(view, win).stream().map(ScoreAnnouncements.Row::voice).toList()).toList();
         limits = wins.stream().map(win -> ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer())).toList();
@@ -30,10 +30,10 @@ public final class ResultReadout {
         if (wins.isEmpty()) finish(now);
     }
 
-    public boolean matches(TableView view) {
+    public boolean matches(RiichiView view) {
         return view != null && table.equals(view.tableId()) && hand == view.handNumber()
             && viewer == view.viewerSeat() && wins.equals(view.wins())
-            && (view.phase() == TableView.Phase.HAND_END || view.phase() == TableView.Phase.MATCH_END);
+            && (view.phase() == RiichiView.Phase.HAND_END || view.phase() == RiichiView.Phase.MATCH_END);
     }
 
     public int winner() { return winner; }

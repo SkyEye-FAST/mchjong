@@ -18,15 +18,14 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.TableRulesPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlock;
@@ -136,12 +135,20 @@ final class EquipmentSmoke {
             check(table.wood() == FurnitureWood.WARPED && table.equipment().clothColor() == DyeColor.LIME
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
-            if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RiichiPreset.MAHJONG_SOUL_3.ordinal());
+            if (block == MahjongContent.AUTO_TABLE) {
+                var session = table.participantSession(player);
+                table.configureRules(player, new TableRulesPayload(table.getBlockPos(), session.tableId(),
+                    session.roomView(player.getUUID()).decision(), RiichiPreset.MAHJONG_SOUL_3.config()
+                        .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES,
+                            top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal())));
+                check(table.participantSession(player).rules().players() == 3,
+                    "Three-player rules were not accepted by the equipped table");
+            }
             var staleMenu = TableStorageSmoke.open(player, table);
             PointStickMenuSmoke.stockDrawers(table);
             SeatingFixtures.startPositioned(table.participantSession(player), player.getUUID());
             game = table.participantSession(player);
-            check(game.view(null).phase() == (table.automatic() ? TableView.Phase.TURN : TableView.Phase.SHUFFLE), "Wrong table handling mode");
+            check(game.view(null).phase() == (table.automatic() ? RiichiView.Phase.TURN : RiichiView.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
             staleMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
             check(staleMenu.getCarried().isEmpty() && staleMenu.quickMoveStack(player, 1).isEmpty(),
@@ -203,18 +210,6 @@ final class EquipmentSmoke {
             for (int seat = 0; seat < 4; seat++) level.removeBlock(TableGeometry.stool(POS, seat), false);
             for (var drop : level.getEntitiesOfClass(ItemEntity.class, bounds)) if (!existing.contains(drop)) drop.discard();
         }
-    }
-
-    private static void act(MahjongTableBlockEntity table, ServerPlayer player, Action.Type type, int rule) {
-        var view = table.participantSession(player).view(player.getUUID());
-        for (int i = 0; i < view.actions().size(); i++) {
-            var action = view.actions().get(i);
-            if (action.type() == type && (rule < 0 || action.tiles().contains(rule))) {
-                table.act(player, new TableActionPayload(table.getBlockPos(), view.tableId(), view.decision(), i));
-                return;
-            }
-        }
-        throw new IllegalStateException("Required action missing: " + type);
     }
 
     private static int find(net.minecraft.world.entity.player.Inventory inventory, ItemStack expected) {

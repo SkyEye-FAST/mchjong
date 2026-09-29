@@ -38,7 +38,7 @@ internal class ReplayRecorder(game: RiichiGame) {
     fun botEvents(viewer: Int): List<BotPosition.Event> = events.map { event ->
         val meld = event.meld
         val kind = if (event.kind == RIICHI) "RIICHI_ACCEPTED"
-            else if (event.kind == MELD) Action.Type.fromMeld(meld!!.type()).name
+            else if (event.kind == MELD) RiichiAction.Type.fromMeld(meld!!.type()).name
             else event.kind.name
         val call = meld != null && meld.type() in setOf(Meld.Type.SEQUENCE, Meld.Type.TRIPLET, Meld.Type.OPEN_QUAD)
         val consumed = if (meld == null) emptyList() else meld.tiles().toMutableList().apply {
@@ -74,11 +74,11 @@ internal class ReplayRecorder(game: RiichiGame) {
         events += ReplayHand.Event(MELD, seat, meld.calledTile(), meld, false, false, true)
     }
 
-    fun declare(game: RiichiGame, seat: Int, action: Action) {
+    fun declare(game: RiichiGame, seat: Int, action: RiichiAction) {
         val tile = game.lastTile
         val meld = when (action.type()) {
-            Action.Type.CLOSED_KAN -> Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT)
-            Action.Type.ADDED_KAN -> {
+            RiichiAction.Type.CLOSED_KAN -> Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT)
+            RiichiAction.Type.ADDED_KAN -> {
                 val pon = game.players[seat].melds.first {
                     it.type() == Meld.Type.TRIPLET && it.kind() == Tile.kind(tile)
                 }
@@ -89,7 +89,7 @@ internal class ReplayRecorder(game: RiichiGame) {
             else -> null
         }
         pendingDeclaration = events.size
-        events += ReplayHand.Event(if (action.type() == Action.Type.NUKI) NUKI else MELD, seat, tile, meld, false, false, false)
+        events += ReplayHand.Event(if (action.type() == RiichiAction.Type.NUKI) NUKI else MELD, seat, tile, meld, false, false, false)
     }
 
     fun confirmDeclaration() {
@@ -104,7 +104,7 @@ internal class ReplayRecorder(game: RiichiGame) {
         }
     }
 
-    fun decision(seat: Int, options: List<Action>, selected: Int) {
+    fun decision(seat: Int, options: List<RiichiAction>, selected: Int) {
         decisions += ReplayHand.Decision(seat, events.size, java.util.List.copyOf(options), selected)
     }
 
@@ -158,14 +158,14 @@ internal class ReplayRecorder(game: RiichiGame) {
 
     fun finish(game: RiichiGame): ReplayHand {
         val publicSeats = game.view(null).seats()
-        val allSeats = mutableListOf<TableView.Seat>()
+        val allSeats = mutableListOf<RiichiView.Seat>()
         for (i in 0 until game.rules.players()) {
             val visible = publicSeats[i]
             val player = game.players[i]
             val hand = player.hand.toMutableList()
             hand.sortWith(Tile.ORDER)
             if (player.drawn >= 0 && hand.remove(player.drawn)) hand += player.drawn
-            allSeats += TableView.Seat(
+            allSeats += RiichiView.Seat(
                 visible.entityBot(),
                 visible.name(),
                 visible.occupied(),

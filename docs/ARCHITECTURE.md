@@ -53,7 +53,7 @@ Artifact names include both loader and Minecraft version to keep releases distin
 
 `Meld.Type` names physical structures: sequence, triplet, open quad, concealed
 quad and added quad. The last preserves the original triplet's supplier and
-fourth-tile provenance. Riichi declarations map explicitly at the `Action`
+fourth-tile provenance. Riichi declarations map explicitly at the `RiichiAction`
 boundary; library notation belongs to `MahjongUtilsInterop`.
 
 `McrAction` is the MCR declaration contract. `WIN` obtains its draw/claim method
@@ -72,7 +72,7 @@ suppliers and winds. Physical IDs are validated and deduplicated before conversi
 The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` from Maven Central and
 relocates its `top.skyeyefast.mcr` package to `top.skyeyefast.mchjong.internal.mcr`.
 The library's MIT license and upstream attribution remain in the bundled archive.
-`RiichiGame`, `RiichiRules`, `TableView` and `Action` retain their Riichi contracts.
+`RiichiGame`, `RiichiRules`, `RiichiView` and `RiichiAction` own the Riichi match contract.
 `McrGame` independently runs four-player MCR matches through engine-owned actions.
 
 MCR analysis takes the concealed hand before drawing or winning:
@@ -95,9 +95,11 @@ payments.
 `Tile.kind` covers the 34 ordinary kinds. `FlowerTile` assigns one physical ID to
 each of Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo and Chrysanthemum;
 `Tile.mcrSet` combines those eight identities with 136 ordinary tiles. Flowers
-have their own `PlayerState.flowers` area and are included by the shared
-`PlayerState.physicalTiles` accounting, separately from concealed tiles and
-extracted norths. A hand reset clears all these zones.
+have their own `McrPlayerState.flowers` area and are included by
+`McrPlayerState.physicalTiles` accounting, separately from concealed tiles.
+`RiichiPlayerState` tracks extracted norths and Riichi-only declarations.
+MCR rivers use `McrDiscard` without Riichi declaration state.
+A hand reset clears the corresponding rule-specific zones.
 
 `McrWall` owns 144 fixed physical slots, with front draws and tail replacements.
 A drawn flower moves to the player's flower area and causes another tail draw,
@@ -250,8 +252,10 @@ owns Riichi room rules, equipment, visibility, bot choices, rewards, replay queu
 and match lifecycle. It creates one `RiichiGame` when play begins and clears it
 on return to the lobby. `RiichiGame` has only active match phases; its private
 actions, wall, scores, replay recording and settlement belong to that match.
-Riichi-only convenience hints, external bot choices and settlement timing travel
-in `TableView`, while `TableRoomView` contains only common room state.
+`TableRoomView` contains only common room state. `RiichiRoomSettings` projects
+Riichi rules and lobby configuration; `RiichiView` projects only an active match,
+including private actions, convenience hints and settlement timing. Lobby
+updates carry no `RiichiView`.
 
 `McrSession` owns a complete 144-tile stock, `McrGame` and completed-hand
 acknowledgements. The shared room starts the match once all four distinct humans
@@ -334,8 +338,11 @@ See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 `RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
 wind permutation is persisted server-side; `TableRoomView` sends only revealed winds,
-available choices, host seat, seated/away/disconnected presence and Bot choice. `PlayerState`
-follows a participant through seat reassignment. Mount presence is transient and
+available choices, host seat, seated/away/disconnected presence and Bot choice.
+Rule-specific player state stays in the active match, while `TableSession` keeps
+the room roster through wind assignment. A lobby member retains their assigned
+room seat while moving between stools; active private views require a matching mount.
+Mount presence is transient and
 is reconstructed from `SeatEntity` passengers; it is never accepted from a client
 or a saved room. Nearby room members retain preparation controls while relocating,
 but active-game actions and private hands require the correct physical seat.
@@ -506,7 +513,7 @@ Training opponents receive an opening grace period; the engine never waits for
 client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
 
-`TableView.Handling` publishes wall-build bits, the next physical source slot
+`RiichiView.Handling` publishes wall-build bits, the next physical source slot
 and packet size, plus the two public dice faces and dealer-held status. `TableDice`
 shares those faces across physical cubes, native pickup focus and compact hover
 equations. Dice randomness and wall opening remain server-owned.
@@ -558,7 +565,7 @@ change points or advance the stage immediately. Bots need no acknowledgement;
 the fallback still expires if a client never acknowledges. Each settlement stage
 advances early when every human player confirms its skip action. Match settlement
 then adds a 200-tick final-standings stage before restoring the roster.
-`TableView` synchronizes the remaining duration and skip confirmations; the saved decision
+`RiichiView` synchronizes the remaining duration and skip confirmations; the saved decision
 age preserves the countdown across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 

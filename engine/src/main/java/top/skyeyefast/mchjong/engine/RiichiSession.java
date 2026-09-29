@@ -38,47 +38,15 @@ public final class RiichiSession extends TableSession {
     public boolean convenienceHints() { return convenienceHints; }
     public List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
 
-    /** Rule-specific room controls retain their issued game-action indices in the lobby. */
-    public List<Action> lobbyActions(UUID recipient) {
-        int seat = seatOf(recipient);
-        if (!lobby() || seat != host() || worldPolicy.forcedPreset() != null) return List.of();
-        var actions = new ArrayList<Action>();
-        for (RiichiPreset preset : RiichiPreset.values())
-            if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || participants[3].id == null))
-                actions.add(new Action(Action.Type.CHANGE_RULE, preset.ordinal()));
-        return List.copyOf(actions);
+    public RiichiRoomSettings roomSettings() {
+        return new RiichiRoomSettings(rules, timeControl, playerHandVisibility, openHands,
+            convenienceHints, externalBots());
     }
 
-    public boolean actLobby(UUID actor, long expectedDecision, int actionIndex) {
-        if (!lobby() || expectedDecision != decision) return false;
-        var actions = lobbyActions(actor);
-        if (actionIndex < 0 || actionIndex >= actions.size()) return false;
-        applyRules(rules.withPreset(RiichiPreset.values()[actions.get(actionIndex).tiles().get(0)]));
-        changed(true);
-        return true;
-    }
+    public RiichiView view(UUID recipient) { return game == null ? null : game.view(recipient); }
 
-    public TableView view(UUID recipient) {
-        if (game != null) return game.view(recipient);
-        int viewer = seatOf(recipient);
-        var seats = new ArrayList<TableView.Seat>();
-        var clocks = new ArrayList<TimeControl.Clock>();
-        for (int seat = 0; seat < capacity; seat++) {
-            var member = participants[seat];
-            seats.add(new TableView.Seat(member.entityBot, member.name, member.id != null, member.bot, member.ready,
-                rules.startingPoints(), List.of(), Tile.ABSENT, List.of(), List.of(), List.of(), false, false, false));
-            clocks.add(new TimeControl.Clock(timeControl.moveSeconds() * 20, timeControl.reserveSeconds() * 20, false));
-        }
-        return new TableView(tableId, revision, decision, 0, rules, TableView.Phase.LOBBY,
-            viewer, 0, 0, 0, 0, 0, 0, 0, List.of(), null, seats,
-            viewer < 0 ? List.of() : lobbyActions(recipient), List.of(), "lobby", List.of(0, 0, 0, 0),
-            List.of(), List.of(), timeControl, clocks, List.of(), playerHandVisibility, openHands,
-            exitVote, null, null, false, 0, Map.of(), convenienceHints, externalBots(), 0, 0);
-    }
-
-    public TableView spectatorView(SpectatorHandVisibility visibility) {
-        if (game != null) return game.spectatorView(visibility);
-        return view(null);
+    public RiichiView spectatorView(SpectatorHandVisibility visibility) {
+        return game == null ? null : game.spectatorView(visibility);
     }
 
     public void configureExternalBots(List<ExternalBot> bots) {
@@ -296,7 +264,7 @@ public final class RiichiSession extends TableSession {
                         TimeControl timeControl, PlayerHandVisibility playerHandVisibility,
                         boolean openHands, boolean convenienceHints, List<ReplayMatch> archiveQueue,
                         Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
-        public static final int FORMAT = 1;
+        public static final int FORMAT = 2;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported Riichi session format");

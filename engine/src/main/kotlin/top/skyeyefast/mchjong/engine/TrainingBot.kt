@@ -1,29 +1,29 @@
 package top.skyeyefast.mchjong.engine
 
-import top.skyeyefast.mchjong.engine.Action.Type.ABORT_NINE
-import top.skyeyefast.mchjong.engine.Action.Type.ADDED_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.BUILD_WALL
-import top.skyeyefast.mchjong.engine.Action.Type.CHI
-import top.skyeyefast.mchjong.engine.Action.Type.CLOSED_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.DISCARD
-import top.skyeyefast.mchjong.engine.Action.Type.DRAW
-import top.skyeyefast.mchjong.engine.Action.Type.NEXT
-import top.skyeyefast.mchjong.engine.Action.Type.NUKI
-import top.skyeyefast.mchjong.engine.Action.Type.OPEN_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.PASS
-import top.skyeyefast.mchjong.engine.Action.Type.PICK_UP_DICE
-import top.skyeyefast.mchjong.engine.Action.Type.ROLL_DICE
-import top.skyeyefast.mchjong.engine.Action.Type.PON
-import top.skyeyefast.mchjong.engine.Action.Type.RIICHI
-import top.skyeyefast.mchjong.engine.Action.Type.RON
-import top.skyeyefast.mchjong.engine.Action.Type.SHUFFLE
-import top.skyeyefast.mchjong.engine.Action.Type.SKIP_SETTLEMENT
-import top.skyeyefast.mchjong.engine.Action.Type.TAKE_PACKET
-import top.skyeyefast.mchjong.engine.Action.Type.TSUMO
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ABORT_NINE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ADDED_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.BUILD_WALL
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.CHI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.CLOSED_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.DRAW
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.NEXT
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.NUKI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.OPEN_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PICK_UP_DICE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ROLL_DICE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PON
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.RIICHI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.RON
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.SHUFFLE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.SKIP_SETTLEMENT
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.TAKE_PACKET
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.TSUMO
 
 /** Deterministic decisions from own/public information and engine-issued legal actions. */
 internal class TrainingBot private constructor(
-    private val view: TableView,
+    private val view: RiichiView,
     private val level: BotDifficulty,
 ) {
     private val analysis = BotAnalysis(view, level)
@@ -93,7 +93,7 @@ internal class TrainingBot private constructor(
             }
         }
         if (choices.isEmpty()) throw IllegalStateException("No evaluated legal bot action")
-        val finalDiscards = if (view.remaining() == 0 && view.phase() == TableView.Phase.TURN) {
+        val finalDiscards = if (view.remaining() == 0 && view.phase() == RiichiView.Phase.TURN) {
             choices.filter { view.actions()[it.index].type() == DISCARD }
         } else emptyList()
         val baseline = choices.asSequence()
@@ -183,11 +183,11 @@ internal class TrainingBot private constructor(
         val own = view.seats()[view.viewerSeat()]
         val otherNagashi = view.seats().indices.any { seat ->
             val player = view.seats()[seat]
-            seat != view.viewerSeat() && Settlement.nagashiEligible(view.rules(), player.melds(), player.river())
+            seat != view.viewerSeat() && RiichiSettlement.nagashiEligible(view.rules(), player.melds(), player.river())
         }
         fun settlement(candidate: Choice): Int {
             val river = own.river() + Discard(candidate.discard, false, false, false)
-            if (Settlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
+            if (RiichiSettlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
             return if (!otherNagashi && LegalActions.formalTenpai(candidate.state.hand(), candidate.state.melds(), view.rules())) 1 else 0
         }
         // No future draws remain. Prefer a better draw settlement only when the
@@ -259,7 +259,7 @@ internal class TrainingBot private constructor(
             if (type == CHI || type == PON) defence.pressure() * 2 else 0.0)
     }
 
-    private fun addCall(choices: MutableList<Choice>, index: Int, action: Action) {
+    private fun addCall(choices: MutableList<Choice>, index: Int, action: RiichiAction) {
         val next = declaration(action)
         val forbidden = LegalActions.forbiddenAfterCall(action, view.focus().tile())
         val shapes = analysis.discards(next)
@@ -270,7 +270,7 @@ internal class TrainingBot private constructor(
         }
     }
 
-    private fun declaration(action: Action): BotAnalysis.State {
+    private fun declaration(action: RiichiAction): BotAnalysis.State {
         val hand = initial.hand().toMutableList()
         for (tile in action.tiles()) hand.remove(tile)
         val melds = initial.melds().toMutableList()
@@ -313,7 +313,7 @@ internal class TrainingBot private constructor(
         )
     }
 
-    private fun declarationCost(action: Action, after: BotAnalysis.State): Double {
+    private fun declarationCost(action: RiichiAction, after: BotAnalysis.State): Double {
         val tile = action.tiles().first()
         val nuki = action.type() == NUKI
         var risk = if (action.type() == OPEN_KAN) 0.0 else defence.danger(tile)
@@ -354,7 +354,7 @@ internal class TrainingBot private constructor(
 
     companion object {
         @JvmStatic
-        fun choose(view: TableView, level: BotDifficulty): Int {
+        fun choose(view: RiichiView, level: BotDifficulty): Int {
             if (view.actions().isEmpty()) throw IllegalArgumentException("A bot needs a legal decision")
             for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
                 val index = index(view.actions(), type)
@@ -364,9 +364,9 @@ internal class TrainingBot private constructor(
             return TrainingBot(view, level).choose()
         }
 
-        private fun index(actions: List<Action>, type: Action.Type): Int = actions.indexOfFirst { it.type() == type }
+        private fun index(actions: List<RiichiAction>, type: RiichiAction.Type): Int = actions.indexOfFirst { it.type() == type }
 
-        private fun stable(action: Action): String =
+        private fun stable(action: RiichiAction): String =
             action.type().name + action.tiles().map(BotAnalysis::face).sorted()
     }
 }

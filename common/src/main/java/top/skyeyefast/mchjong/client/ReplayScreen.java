@@ -172,7 +172,7 @@ public final class ReplayScreen extends Screen {
         if (decision.seat() != viewer) return false;
         if (decision.options().size() > 1) return true;
         var type = decision.options().get(decision.selected()).type();
-        return type != top.skyeyefast.mchjong.engine.Action.Type.DISCARD && type != top.skyeyefast.mchjong.engine.Action.Type.PASS;
+        return type != top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD && type != top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS;
     }
 
     private int decisionCursor(ReplayHand.Decision decision) {

@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.engine;
 
 import java.util.List;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.RiichiAction.Type.*;
 
 /** Physical handling only; the existing engine still judges claims and settles points. */
 final class ManualHandling {
@@ -39,29 +39,29 @@ final class ManualHandling {
         game.newDecision(RiichiGame.Phase.SHUFFLE);
     }
 
-    List<Action> actions(RiichiGame game, int seat) {
+    List<RiichiAction> actions(RiichiGame game, int seat) {
         return switch (game.phase) {
-            case SHUFFLE -> seat == game.dealer ? List.of(new Action(SHUFFLE)) : List.of();
+            case SHUFFLE -> seat == game.dealer ? List.of(new RiichiAction(SHUFFLE)) : List.of();
             case BUILD_WALL -> builtWalls == (1 << game.rules.players()) - 1
-                ? seat == game.dealer ? List.of(new Action(diceHeld ? ROLL_DICE : PICK_UP_DICE)) : List.of()
-                : (builtWalls & 1 << seat) == 0 ? List.of(new Action(BUILD_WALL)) : List.of();
-            case DEAL -> seat == game.turn ? List.of(new Action(TAKE_PACKET)) : List.of();
-            case DRAW -> seat == game.turn ? List.of(new Action(DRAW)) : List.of();
+                ? seat == game.dealer ? List.of(new RiichiAction(diceHeld ? ROLL_DICE : PICK_UP_DICE)) : List.of()
+                : (builtWalls & 1 << seat) == 0 ? List.of(new RiichiAction(BUILD_WALL)) : List.of();
+            case DEAL -> seat == game.turn ? List.of(new RiichiAction(TAKE_PACKET)) : List.of();
+            case DRAW -> seat == game.turn ? List.of(new RiichiAction(DRAW)) : List.of();
             default -> List.of();
         };
     }
 
-    TableView.Handling view(RiichiGame game) {
+    RiichiView.Handling view(RiichiGame game) {
         int count = game.phase == RiichiGame.Phase.DEAL ? packetSize(game) : game.phase == RiichiGame.Phase.DRAW ? 1 : 0;
         int source = count == 0 ? -1 : game.phase == RiichiGame.Phase.DRAW && replacement
             ? game.wall.nextReplacementSlot() : game.wall.cursor;
-        return new TableView.Handling(builtWalls, source, count,
+        return new RiichiView.Handling(builtWalls, source, count,
             game.wall == null ? 0 : game.wall.diceOne, game.wall == null ? 0 : game.wall.diceTwo, diceHeld);
     }
 
     private int packetSize(RiichiGame game) { return packets < 3 * game.rules.players() ? 4 : 1; }
 
-    void act(RiichiGame game, int seat, Action action) {
+    void act(RiichiGame game, int seat, RiichiAction action) {
         switch (action.type()) {
             case SHUFFLE -> {
                 game.createWall();

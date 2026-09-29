@@ -88,13 +88,13 @@ class TenhouFormatTest {
         int count = rules.players();
         var participants = new ArrayList<ReplayMatch.Participant>();
         var hands = new ArrayList<List<Integer>>();
-        var seats = new ArrayList<TableView.Seat>();
+        var seats = new ArrayList<RiichiView.Seat>();
         var points = new ArrayList<Integer>();
         for (int seat = 0; seat < count; seat++) {
             var tiles = Tile.set(rules.sanma(), rules.defaultRedFives()).subList(seat * 13, seat * 13 + 13);
             participants.add(new ReplayMatch.Participant(new UUID(1, seat + 1), "Player " + seat, false));
             hands.add(tiles); points.add(rules.startingPoints() + seat);
-            seats.add(new TableView.Seat(false, "Player " + seat, true,false,false,points.get(seat),tiles,-2,List.of(),List.of(),List.of(),false,false,false));
+            seats.add(new RiichiView.Seat(false, "Player " + seat, true,false,false,points.get(seat),tiles,-2,List.of(),List.of(),List.of(),false,false,false));
         }
         ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),wall(rules),events,List.of(),seats,
             List.of(),result,Collections.nCopies(count,0),List.of(132),List.of(),List.of(),List.of());

@@ -5,7 +5,7 @@ import java.util.Collections
 import java.util.LinkedHashMap
 
 /** Payments and match progression are separate from action legality and transport. */
-internal object Settlement {
+internal object RiichiSettlement {
     @JvmStatic
     fun win(game: RiichiGame, winners: List<Int>, from: Int, tile: Int) {
         val before = points(game)
@@ -13,7 +13,7 @@ internal object Settlement {
         for ((index, seat) in winners.withIndex()) {
             val score = LegalActions.score(game, seat, tile, from < 0)
                 ?: throw IllegalStateException("Settlement requires a legal winning hand")
-            game.wins.add(TableView.Win(seat, from, tile, score))
+            game.wins.add(RiichiView.Win(seat, from, tile, score))
             game.exposed[seat] = true
             val receiveHonba = index == 0
             val winBefore = ReplayRecorder.points(game)
@@ -140,7 +140,7 @@ internal object Settlement {
                     listOf("Nagashi"),
                     0,
                 )
-                game.wins.add(TableView.Win(seat, -1, Tile.ABSENT, score))
+                game.wins.add(RiichiView.Win(seat, -1, Tile.ABSENT, score))
                 // Nagashi replaces noten payments. It does not take the riichi pot or honba.
                 payWin(game, seat, -1, score, 0)
             }

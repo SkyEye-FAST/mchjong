@@ -7,7 +7,7 @@ import java.util.List;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.world.level.block.Blocks;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Physical deposits share four central lanes, above the machine panel or directly on the felt. */
@@ -19,9 +19,9 @@ public final class TableDeposits {
     public record Stick(int seat, int layer, boolean declared) {}
     private TableDeposits() {}
 
-    public static List<Stick> sticks(TableView view) {
+    public static List<Stick> sticks(RiichiView view) {
         int count = view.riichiSticks();
-        int declarations = (int) view.seats().stream().filter(TableView.Seat::riichi).count();
+        int declarations = (int) view.seats().stream().filter(RiichiView.Seat::riichi).count();
         int carried = Math.max(0, count - declarations);
         int[] layers = new int[view.seats().size()];
         var result = new ArrayList<Stick>();
@@ -34,7 +34,7 @@ public final class TableDeposits {
         return List.copyOf(result);
     }
 
-    public static void render(TableView view, boolean automatic, TableAnimation animation, boolean animated, long now,
+    public static void render(RiichiView view, boolean automatic, TableAnimation animation, boolean animated, long now,
                               PoseStack pose, MultiBufferSource buffers, int light) {
         for (var stick : sticks(view)) {
             double progress = animated && stick.declared() ? animation.riichiProgress(stick.seat(), now) : 1;

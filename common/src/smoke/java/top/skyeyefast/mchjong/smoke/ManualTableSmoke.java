@@ -19,10 +19,10 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableAnimation;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -35,7 +35,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Real world-space pointer gestures travel through the normal client/server action packets. */
 final class ManualTableSmoke {
-    private static AbstractWidget dice(Minecraft client, TableView view) {
+    private static AbstractWidget dice(Minecraft client, RiichiView view) {
         String label = Component.translatable("ui.mchjong.dice_result", view.handling().diceOne(),
             view.handling().diceTwo(), view.handling().diceOne() + view.handling().diceTwo()).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
@@ -96,8 +96,8 @@ final class ManualTableSmoke {
             return false;
         }
         var view = table.clientView();
-        if (view == null) return false;
-        privateHands(view);
+        if (view == null && (stage >= 2 && stage <= 12 || stage >= 20 && stage <= 24)) return false;
+        if (view != null) privateHands(view);
         if (draggingScreen != null) {
             if (++dragTicks < 4) return false;
             check(client.screen == draggingScreen, "Physical drag lost its screen before release");
@@ -106,7 +106,7 @@ final class ManualTableSmoke {
                 .filter(frame -> draggingScreen.handlingOffset(CENTER, frame.piece()).lengthSqr() > 0).toList();
             check(!held.isEmpty() && held.stream().allMatch(frame -> draggingScreen.highlight(CENTER, frame.piece()) != 0),
                 "Held physical source lost its outline in " + view.phase() + ", decision=" + view.decision());
-            if (view.phase() == TableView.Phase.DEAL || view.phase() == TableView.Phase.DRAW)
+            if (view.phase() == RiichiView.Phase.DEAL || view.phase() == RiichiView.Phase.DRAW)
                 check(held.size() == view.handling().packetSize(), "Held packet must include every source tile");
             draggingScreen.mouseReleased(dragEnd.x, dragEnd.y, 0);
             draggingScreen = null;
@@ -114,13 +114,16 @@ final class ManualTableSmoke {
         }
         switch (stage) {
             case 15 -> {
-                if (!(client.screen instanceof TableScreen) || view.viewerSeat() != 0 || ticks < 15) return false;
+                var room = table.clientRoom();
+                var settings = table.clientRiichiSettings();
+                if (!(client.screen instanceof TableScreen) || room == null || room.viewerSeat() != 0
+                    || settings == null || ticks < 15) return false;
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
-                check(view.timeControl().equals(top.skyeyefast.mchjong.engine.TimeControl.MANUAL), "Ordinary lobby clock defaults differ from the server");
-                check(view.autoPlay() == null, "Ordinary table exposed automatic controls");
+                check(settings.timeControl().equals(top.skyeyefast.mchjong.engine.TimeControl.MANUAL), "Ordinary lobby clock defaults differ from the server");
+                check(view == null, "Ordinary lobby exposed a match view");
                 check(table.equipment().clothColor() == DyeColor.RED && table.equipment().material() == TileMaterial.GLASS,
                     "Ordinary table lost equipment appearance");
-                check(table.equipment().drawer(0).isEmpty() && view.riichiSticks() == 0,
+                check(table.equipment().drawer(0).isEmpty(),
                     "Private drawer contents leaked through the appearance update");
                 capture(client, output, "30-manual-lobby.png");
                 client.screen.keyPressed(GLFW.GLFW_KEY_E, 0, 0);
@@ -145,7 +148,7 @@ final class ManualTableSmoke {
                 if (preparation.tick(client, table, output, "30-room")) next(2);
             }
             case 2 -> {
-                if (view.phase() != TableView.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
+                if (view.phase() != RiichiView.Phase.SHUFFLE || ticks < 40 || !hasControl(client, "action.mchjong.shuffle")) return false;
                 check(view.wall().isEmpty() && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table shuffled itself");
                 check(!diceVisible(client), "Dice appeared before shuffling");
                 checkSeatedPreparation(client);
@@ -154,7 +157,7 @@ final class ManualTableSmoke {
                 next(3);
             }
             case 3 -> {
-                if (view.phase() != TableView.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
+                if (view.phase() != RiichiView.Phase.BUILD_WALL || ticks < 15 || !hasControl(client, "action.mchjong.build_wall")) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Ordinary table dealt before walls were built");
                 check(!diceVisible(client), "Dice appeared before the wall was complete");
                 checkSeatedPreparation(client);
@@ -163,7 +166,7 @@ final class ManualTableSmoke {
                 next(20);
             }
             case 20 -> {
-                if (!offered(view, Action.Type.PICK_UP_DICE) || ticks < 30
+                if (!offered(view, RiichiAction.Type.PICK_UP_DICE) || ticks < 30
                     || TableAnimation.of(table).moving(net.minecraft.Util.getMillis())
                     || !hasControl(client, "action.mchjong.pick_up_dice")) return false;
                 check(view.handling().diceOne() == 0 && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Dice or dealing advanced before the dealer");
@@ -173,13 +176,13 @@ final class ManualTableSmoke {
                 next(21);
             }
             case 21 -> {
-                if (!offered(view, Action.Type.ROLL_DICE) || ticks < 10 || !hasControl(client, "action.mchjong.roll_dice")) return false;
+                if (!offered(view, RiichiAction.Type.ROLL_DICE) || ticks < 10 || !hasControl(client, "action.mchjong.roll_dice")) return false;
                 check(view.handling().diceHeld(), "Dealer did not pick up both dice");
                 click(client, "action.mchjong.roll_dice");
                 next(22);
             }
             case 22 -> {
-                if (view.phase() != TableView.Phase.DEAL || ticks < 15) return false;
+                if (view.phase() != RiichiView.Phase.DEAL || ticks < 15) return false;
                 check(view.handling().diceOne() >= 1 && view.handling().diceOne() <= 6
                     && view.handling().diceTwo() >= 1 && view.handling().diceTwo() <= 6 && !view.handling().diceHeld(), "Invalid public dice roll");
                 var dice = dice(client, view);
@@ -191,7 +194,7 @@ final class ManualTableSmoke {
                 next(4);
             }
             case 4 -> {
-                if (!offered(view, Action.Type.TAKE_PACKET) || ticks < 10 || !hasControl(client, "action.mchjong.take_packet")) return false;
+                if (!offered(view, RiichiAction.Type.TAKE_PACKET) || ticks < 10 || !hasControl(client, "action.mchjong.take_packet")) return false;
                 click(client, "action.mchjong.take_packet");
                 next(5);
             }
@@ -203,7 +206,7 @@ final class ManualTableSmoke {
                 next(packets == 4 ? 6 : 4);
             }
             case 6 -> {
-                if (!offered(view, Action.Type.DRAW) || ticks < 40) return false;
+                if (!offered(view, RiichiAction.Type.DRAW) || ticks < 40) return false;
                 check(view.seats().stream().allMatch(seat -> seat.hand().size() == 13), "Packet dealing did not leave thirteen tiles each");
                 remaining = view.remaining();
                 capture(client, output, "34-manual-waiting-draw.png");
@@ -211,13 +214,13 @@ final class ManualTableSmoke {
                 next(7);
             }
             case 7 -> {
-                check(view.phase() == TableView.Phase.DRAW && view.remaining() == remaining, "Draw advanced without the player's action");
+                check(view.phase() == RiichiView.Phase.DRAW && view.remaining() == remaining, "Draw advanced without the player's action");
                 if (!hasControl(client, "action.mchjong.draw")) return false;
                 click(client, "action.mchjong.draw");
                 next(8);
             }
             case 8 -> {
-                if (view.phase() != TableView.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
+                if (view.phase() != RiichiView.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
                 check(view.seats().getFirst().hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
                 client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
@@ -250,30 +253,40 @@ final class ManualTableSmoke {
                 next(10);
             }
             case 10 -> {
-                if (offered(view, Action.Type.PASS) && hasControl(client, "action.mchjong.pass")) click(client, "action.mchjong.pass");
-                if (!offered(view, Action.Type.DRAW)) return false;
+                if (offered(view, RiichiAction.Type.PASS) && hasControl(client, "action.mchjong.pass")) click(client, "action.mchjong.pass");
+                if (!offered(view, RiichiAction.Type.DRAW)) return false;
                 check(view.seats().getFirst().river().size() == 1 && view.seats().getFirst().hand().size() == 13,
                     "Manual discard/draw cycle did not reach the server");
                 remaining = view.remaining();
                 next(11);
             }
             case 11 -> {
-                check(view.phase() == TableView.Phase.DRAW && view.remaining() == remaining, "Normal draw ran automatically on an ordinary table");
+                check(view.phase() == RiichiView.Phase.DRAW && view.remaining() == remaining, "Normal draw ran automatically on an ordinary table");
                 if (ticks < 40 || !hasControl(client, "action.mchjong.draw")) return false;
                 capture(client, output, "36-manual-normal-draw.png");
                 click(client, "action.mchjong.draw");
                 next(12);
             }
             case 12 -> {
-                if (view.phase() != TableView.Phase.TURN || view.seats().getFirst().hand().size() != 14 || ticks < 10) return false;
+                if (view.phase() != RiichiView.Phase.TURN || view.seats().getFirst().hand().size() != 14 || ticks < 10) return false;
                 check(view.remaining() == remaining - 1, "Normal draw did not consume exactly one wall tile");
                 capture(client, output, "37-manual-complete-turn.png");
+                next(25);
+            }
+            case 25 -> {
+                if (!deposits.tick(client, table, output)) return false;
+                client.setScreen(new TableScreen(table.getBlockPos()));
+                next(26);
+            }
+            case 26 -> {
+                if (ticks < 5) return false;
                 click(client, "ui.mchjong.exit");
                 next(13);
             }
             case 13 -> {
-                if (view.phase() != TableView.Phase.LOBBY || view.viewerSeat() >= 0 || client.player.isPassenger()) return false;
-                check(view.wall().isEmpty(), "Exiting left a playable manual wall behind");
+                var room = table.clientRoom();
+                if (room == null || !room.lobby() || room.viewerSeat() >= 0 || client.player.isPassenger()) return false;
+                check(view == null, "Exiting left a playable manual match behind");
                 capture(client, output, "38-manual-exited.png");
                 serverWork = onServer(client, player -> {
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
@@ -293,10 +306,10 @@ final class ManualTableSmoke {
                 next(18);
             }
             case 18 -> {
-                if (!client.player.isPassenger() || view.viewerSeat() < 0 || ticks < 10) return false;
-                boolean complete = deposits.tick(client, table, output);
-                if (complete) TableSettings.get().animations = originalAnimations;
-                return complete;
+                if (!client.player.isPassenger() || table.clientRoom() == null
+                    || table.clientRoom().viewerSeat() < 0 || ticks < 10) return false;
+                TableSettings.get().animations = originalAnimations;
+                return true;
             }
             default -> throw new IllegalStateException("Unknown manual smoke stage");
         }
@@ -360,19 +373,31 @@ final class ManualTableSmoke {
     private static void verifySavedHandling(ServerPlayer player, BlockPos pos) {
         var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
         var game = table.participantSession(player);
-        check(game != null && game.view(null).phase() == TableView.Phase.DRAW && game.manual(), "Manual server was not waiting for the draw");
+        check(game != null && game.view(null).phase() == RiichiView.Phase.DRAW && game.manual(), "Manual server was not waiting for the draw");
         game.validate();
         var saved = table.saveWithoutMetadata(player.registryAccess());
         var loaded = new MahjongTableBlockEntity(pos, table.getBlockState());
         loaded.setLevel(player.serverLevel());
         loaded.loadWithComponents(saved, player.registryAccess());
-        check(saved.equals(loaded.saveWithoutMetadata(player.registryAccess())), "Manual handling or equipment did not survive world serialization");
+        var restored = loaded.saveWithoutMetadata(player.registryAccess());
+        var before = com.google.gson.JsonParser.parseString(saved.getString("session")).getAsJsonObject();
+        var after = com.google.gson.JsonParser.parseString(restored.getString("session")).getAsJsonObject();
+        var beforeRoom = before.getAsJsonObject("state").getAsJsonObject("room");
+        var afterRoom = after.getAsJsonObject("state").getAsJsonObject("room");
+        check(afterRoom.get("revision").getAsLong() == beforeRoom.get("revision").getAsLong() + 1
+            && afterRoom.get("decision").getAsLong() == beforeRoom.get("decision").getAsLong() + 1,
+            "Reload did not renew room request tokens");
+        afterRoom.add("revision", beforeRoom.get("revision"));
+        afterRoom.add("decision", beforeRoom.get("decision"));
+        check(before.equals(after), "Manual match state changed during world serialization");
+        restored.putString("session", saved.getString("session"));
+        check(saved.equals(restored), "Manual equipment changed during world serialization");
         table.loadWithComponents(table.getUpdateTag(player.registryAccess()), player.registryAccess());
         check(saved.equals(table.saveWithoutMetadata(player.registryAccess())), "Public appearance update erased private game/equipment state");
         check(!TableNetworking.JSON.toJson(game.view(null)).contains("suppliedTiles"), "Physical/private wall leaked to spectators");
     }
 
-    private static void privateHands(TableView view) {
+    private static void privateHands(RiichiView view) {
         for (int seat = 0; seat < view.seats().size(); seat++) if (seat != view.viewerSeat() && !view.seats().get(seat).exposed())
             check(view.seats().get(seat).hand().stream().allMatch(tile -> tile == Tile.HIDDEN), "Unauthorized manual hand reached the client");
     }
@@ -387,7 +412,7 @@ final class ManualTableSmoke {
         return result;
     }
 
-    private static boolean offered(TableView view, Action.Type type) { return view.actions().stream().anyMatch(action -> action.type() == type); }
+    private static boolean offered(RiichiView view, RiichiAction.Type type) { return view.actions().stream().anyMatch(action -> action.type() == type); }
     private void next(int value) { stage = value; ticks = 0; }
     private static boolean hasControl(Minecraft client, String key) {
         if (!(client.screen instanceof TableScreen)) return false;
@@ -417,10 +442,10 @@ final class ManualTableSmoke {
         client.screen.mouseClicked(widget.getX() + 5, widget.getY() + 5, 0);
     }
 
-    private void dragTiles(Minecraft client, MahjongTableBlockEntity table, TableView view) {
+    private void dragTiles(Minecraft client, MahjongTableBlockEntity table, RiichiView view) {
         var screen = (TableScreen) client.screen;
         var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
-        if (view.phase() == TableView.Phase.DEAL || view.phase() == TableView.Phase.DRAW)
+        if (view.phase() == RiichiView.Phase.DEAL || view.phase() == RiichiView.Phase.DRAW)
             check(frames.stream().filter(frame -> frame.piece().area() == top.skyeyefast.mchjong.client.TableScene.Area.WALL
                 && screen.highlight(CENTER, frame.piece()) != 0).count() == view.handling().packetSize(),
                 "Pickup hint must highlight the complete packet");
@@ -429,7 +454,7 @@ final class ManualTableSmoke {
             var piece = frame.piece();
             if (!top.skyeyefast.mchjong.client.TableHandling.source(view, piece)) continue;
             var destination = top.skyeyefast.mchjong.client.TableHandling.destination(view);
-            if (view.phase() == TableView.Phase.SHUFFLE)
+            if (view.phase() == RiichiView.Phase.SHUFFLE)
                 destination = new net.minecraft.world.phys.Vec3(piece.position().x < 0 ? .6 : -.6, TableGeometry.FELT_Y, 0);
             var start = project(client, top.skyeyefast.mchjong.client.TableHandling.grip(piece, camera));
             var end = project(client, destination);

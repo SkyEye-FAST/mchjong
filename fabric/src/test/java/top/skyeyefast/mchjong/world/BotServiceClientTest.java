@@ -5,7 +5,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.BotPosition;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.ExternalBot;
 import top.skyeyefast.mchjong.engine.RiichiSession;
@@ -49,7 +49,7 @@ class BotServiceClientTest {
             new BotPosition.Opening(0, 0, 0, 0, List.of(25000, 25000, 25000, 25000),
                 List.of(0, 4, 8, 12, 16, 20, 24, 28, 32, 36, 40, 44, 48), 108),
             List.of(new BotPosition.Event("DRAW", 0, 52, false, false, null, null, List.of())),
-            List.of(new Action(Action.Type.DISCARD, 52)), null, 52, List.of());
+            List.of(new RiichiAction(RiichiAction.Type.DISCARD, 52)), null, 52, List.of());
         var request = JsonParser.parseString(BotServiceClient.requestBody(position)).getAsJsonObject();
         assertEquals(4, request.get("player_count").getAsInt());
         assertEquals("mortal-4p", request.get("bot_id").getAsString());

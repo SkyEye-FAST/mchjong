@@ -5,12 +5,12 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.TableRoomView;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Participant presence and ownership. Bot controls live on the room's seat cards. */
@@ -28,31 +28,30 @@ public final class TableSeatsScreen extends Screen {
 
     @Override protected void init() {
         clearWidgets();
-        var view = parent.view();
         var room = parent.room();
-        if (view == null || room == null) return;
-        revision = view.revision();
+        if (room == null) return;
+        revision = room.revision();
         int span = Math.min(440, width - 24), left = (width - span) / 2;
-        boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
-        for (int seat = 0; seat < view.seats().size(); seat++) {
-            var player = view.seats().get(seat);
+        boolean host = room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
+        for (int seat = 0; seat < room.seats().size(); seat++) {
             var state = room.seats().get(seat);
+            var player = state.participant();
             Component label;
             Component hint;
             Runnable action;
             boolean enabled;
-            if (seat == room.host() || player.occupied() && !player.bot() && state.presence() == PlayerPresence.SEATED) {
+            if (seat == room.host() || player.id() != null && !player.bot() && state.presence() == PlayerPresence.SEATED) {
                 label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
                 int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
-                enabled = host && seat != room.host() && (view.phase() != TableView.Phase.LOBBY || index >= 0);
+                enabled = host && seat != room.host() && (!room.lobby() || index >= 0);
                 action = () -> {
-                    if (view.phase() == TableView.Phase.LOBBY) parent.sendRoom(room, index);
+                    if (room.lobby()) parent.sendRoom(room, index);
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
-                label = player.bot() ? botName(room, view.externalBots(), seat)
-                    : Component.translatable(player.occupied() ? presenceKey(state.presence()) : "room.mchjong.empty");
+                label = player.bot() ? botName(room, parent.roomSettings().externalBots(), seat)
+                    : Component.translatable(player.id() != null ? presenceKey(state.presence()) : "room.mchjong.empty");
                 hint = label;
                 enabled = false;
                 action = () -> {};
@@ -69,7 +68,7 @@ public final class TableSeatsScreen extends Screen {
             .bounds(left, height - 30, span, 20).build().primary());
     }
 
-    static int find(TableView view, Action.Type type, List<Integer> arguments) {
+    static int find(RiichiView view, RiichiAction.Type type, List<Integer> arguments) {
         for (int index = 0; index < view.actions().size(); index++) {
             var action = view.actions().get(index);
             if (action.type() == type && action.tiles().equals(arguments)) return index;
@@ -97,23 +96,22 @@ public final class TableSeatsScreen extends Screen {
     }
 
     @Override public void tick() {
-        var view = parent.view();
-        if (view == null || view.viewerSeat() < 0) { onClose(); return; }
-        if (view.revision() != revision) init();
+        var room = parent.room();
+        if (room == null || room.viewerSeat() < 0) { onClose(); return; }
+        if (room.revision() != revision) init();
     }
 
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, 464);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
-        var view = parent.view();
         TableRoomView room = parent.room();
-        if (view != null && room != null) {
+        if (room != null) {
             int span = Math.min(440, width - 24), left = (width - span) / 2;
-            for (int seat = 0; seat < view.seats().size(); seat++) {
+            for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat);
-                var player = view.seats().get(seat);
-                Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(view, seat));
-                Component status = wind(state.wind()).copy().append("  ").append(!player.occupied()
+                var player = state.participant();
+                Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(room, seat));
+                Component status = wind(state.wind()).copy().append("  ").append(player.id() == null
                     ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
                     : presence(state.presence()));
                 int inset = PlayerPortrait.draw(graphics, player, left, 42 + seat * 37, 10);

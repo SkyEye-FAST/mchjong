@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -29,7 +29,9 @@ final class RoomFlowSmoke {
             work.join(); work = null;
         }
         var view = table.clientView();
-        if (view == null || table.clientRoom() == null) return false;
+        var room = table.clientRoom();
+        var configuration = table.clientRiichiSettings();
+        if (room == null || configuration == null) return false;
         if (stage == 0) {
             client.getLanguageManager().setSelected(LANGUAGES[locale]);
             work = client.reloadResourcePacks();
@@ -59,32 +61,32 @@ final class RoomFlowSmoke {
                 click(client, "settings.mchjong.hand_visibility", Component.translatable("settings.mchjong.hand_visibility.self"));
                 next(4);
             }
-        } else if (stage == 4 && view.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
-            originalPreset = view.rules().preset();
+        } else if (stage == 4 && configuration.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
+            originalPreset = configuration.rules().preset();
             clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
             var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RiichiPreset.values())
                 .filter(preset -> preset.players() == originalPreset.players() && preset != originalPreset).findFirst().orElseThrow();
             click(client, nextPreset.presetKey());
             click(client, "rules.mchjong.apply");
             next(5);
-        } else if (stage == 5 && view.rules().preset() != originalPreset && client.screen instanceof TableScreen) {
+        } else if (stage == 5 && configuration.rules().preset() != originalPreset && client.screen instanceof TableScreen) {
             click(client, "ui.mchjong.players.3");
             next(6);
-        } else if (stage == 6 && view.rules().players() == 3) {
+        } else if (stage == 6 && configuration.rules().players() == 3) {
             check(client);
             capture(client, output, "lobby-three-small.png");
             click(client, "ui.mchjong.players.4");
             next(7);
-        } else if (stage == 7 && view.rules().players() == 4) {
+        } else if (stage == 7 && configuration.rules().players() == 4) {
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
-            var rules = view.rules().preset();
+            var rules = configuration.rules().preset();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
                 serverTable.equipment().boxes().setItem(0, net.minecraft.world.item.ItemStack.EMPTY);
                 var game = serverTable.participantSession(player);
-                game.configureRules(id, game.view(id).decision(), rules.config());
+                game.configureRules(id, game.roomView(id).decision(), rules.config());
             });
             resize(client, false);
             next(8);
@@ -92,7 +94,7 @@ final class RoomFlowSmoke {
             == top.skyeyefast.mchjong.engine.RoomAction.Type.FILL_BOTS)) {
             click(client, "room.mchjong.start_bots");
             next(9);
-        } else if (stage == 9 && view.seats().stream().allMatch(seat -> seat.occupied())) {
+        } else if (stage == 9 && room.seats().stream().allMatch(seat -> seat.participant().id() != null)) {
             require(table.clientRoom().actions().stream().noneMatch(action -> action.type()
                 == top.skyeyefast.mchjong.engine.RoomAction.Type.BEGIN_SEATING), "Empty box allowed seat confirmation");
             var blocked = buttonOrNull(client, "ui.mchjong.equipment_needed");
@@ -101,7 +103,7 @@ final class RoomFlowSmoke {
             capture(client, output, "equipment-needed.png");
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
-            var rules = view.rules().preset();
+            var rules = configuration.rules().preset();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
@@ -109,10 +111,10 @@ final class RoomFlowSmoke {
             });
             next(10);
         } else if (stage == 10 && preparation.tick(client, table, output, "room")) {
-            hand = view.handNumber();
+            hand = table.clientView().handNumber();
             work = settlement(client, table, false);
             next(11);
-        } else if (stage == 11 && view.phase() == TableView.Phase.HAND_END) {
+        } else if (stage == 11 && view != null && view.phase() == RiichiView.Phase.HAND_END) {
             require(table.clientView().settlementTicks() > 0 && table.clientView().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS,
                 "Wrong hand settlement duration");
             if (!capturedHand && ticks > 10) {
@@ -120,11 +122,11 @@ final class RoomFlowSmoke {
                 capture(client, output, "hand-countdown.png");
                 capturedHand = true;
             }
-        } else if (stage == 11 && capturedHand && view.phase() == TableView.Phase.TURN && view.handNumber() > hand) {
+        } else if (stage == 11 && capturedHand && view != null && view.phase() == RiichiView.Phase.TURN && view.handNumber() > hand) {
             work = settlement(client, table, true);
             capturedHand = false;
             next(12);
-        } else if (stage == 12 && view.phase() == TableView.Phase.MATCH_END) {
+        } else if (stage == 12 && view != null && view.phase() == RiichiView.Phase.MATCH_END) {
             int remaining = table.clientView().settlementTicks();
             require(buttonOrNull(client, "room.mchjong.dissolve") == null && buttonOrNull(client, "ui.mchjong.exit") == null,
                 "Settlement exposes room termination");
@@ -149,17 +151,17 @@ final class RoomFlowSmoke {
                 capture(client, output, "final-standings.png");
                 next(13);
             }
-        } else if ((stage == 12 || stage == 13) && view.phase() == TableView.Phase.LOBBY
+        } else if ((stage == 12 || stage == 13) && room.lobby()
             && buttonOrNull(client, "action.mchjong.leave_room") != null) {
             require(capturedFinal, "Final standings were skipped");
-            require(view.viewerSeat() >= 0 && view.seats().stream().filter(seat -> seat.occupied()).count() == 4,
+            require(room.viewerSeat() >= 0 && room.seats().stream().filter(seat -> seat.participant().id() != null).count() == 4,
                 "Returning to lobby lost the room roster");
-            require(table.clientRoom().host() == view.viewerSeat(), "Returning to lobby lost its host");
+            require(room.host() == room.viewerSeat(), "Returning to lobby lost its host");
             check(client);
             capture(client, output, "returned-lobby.png");
             click(client, "action.mchjong.leave_room");
             next(14);
-        } else if (stage == 14 && view.viewerSeat() < 0) {
+        } else if (stage == 14 && room.viewerSeat() < 0) {
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
@@ -168,10 +170,10 @@ final class RoomFlowSmoke {
                 serverTable.sit(player, 0);
             });
             next(15);
-        } else if (stage == 15 && view.viewerSeat() >= 0) {
+        } else if (stage == 15 && room.viewerSeat() >= 0) {
             click(client, "room.mchjong.dissolve");
             next(16);
-        } else if (stage == 16 && view.seats().stream().noneMatch(seat -> seat.occupied())) {
+        } else if (stage == 16 && room.seats().stream().noneMatch(seat -> seat.participant().id() != null)) {
             if (client.player.isPassenger()) {
                 require(ticks < 40, "Dissolved room retained the physical seat");
                 return false;
@@ -206,7 +208,7 @@ final class RoomFlowSmoke {
             match.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
             saved.putString("session", envelope.toString());
             serverTable.loadWithComponents(saved, player.registryAccess());
-            require(serverTable.participantSession(player).view(id).phase() == (end ? TableView.Phase.MATCH_END : TableView.Phase.HAND_END),
+            require(serverTable.participantSession(player).view(id).phase() == (end ? RiichiView.Phase.MATCH_END : RiichiView.Phase.HAND_END),
                 "Saved settlement fixture did not load");
             serverTable.open(player);
         });

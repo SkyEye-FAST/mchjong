@@ -10,7 +10,7 @@ import java.util.WeakHashMap;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -41,7 +41,9 @@ public final class TableAnimation {
         }
     }
 
-    private TableView view;
+    private RiichiView view;
+    private java.util.UUID lobbyTable;
+    private int lobbyViewer = -1;
     private Map<Key, Motion> motions = Map.of();
     private List<Frame> settled = List.of();
     private long ending;
@@ -96,8 +98,19 @@ public final class TableAnimation {
         return settled.stream().map(target -> motions.get(key(target.piece())).at(now)).toList();
     }
 
-    public void accept(TableView next, long now) {
-        if (next == null) return;
+    public void accept(RiichiView next, long now) {
+        if (next == null) {
+            view = null;
+            settled = List.of();
+            motions = Map.of();
+            cues = List.of();
+            ending = openingUntil = now;
+            return;
+        }
+        boolean openingFromLobby = next.tableId().equals(lobbyTable) && next.viewerSeat() == lobbyViewer
+            && next.handNumber() == 1 && next.phase() == RiichiView.Phase.TURN
+            && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
+        lobbyTable = null;
         if (view != null && view.tableId().equals(next.tableId()) && next.revision() < view.revision()) return;
         boolean sameViewer = view != null && view.tableId().equals(next.tableId())
             && view.viewerSeat() == next.viewerSeat() && view.rules().equals(next.rules())
@@ -109,15 +122,15 @@ public final class TableAnimation {
         List<Frame> before = sample(now);
         List<Frame> targets = TableScene.build(next).stream().map(TableAnimation::frame).toList();
         boolean newHand = sameViewer && next.handNumber() != view.handNumber()
-            && next.phase() == TableView.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
-        if (!sameViewer || next.phase() == TableView.Phase.LOBBY || next.handNumber() != view.handNumber() && !newHand) {
+            && next.phase() == RiichiView.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
+        if (!sameViewer && !openingFromLobby || sameViewer && next.handNumber() != view.handNumber() && !newHand) {
             // Rejoining or changing viewing permission must not replay or expose the old private hand.
             settled = targets;
             motions = Map.of();
             ending = openingUntil = now;
             cues = List.of();
             java.util.Arrays.fill(riichiStarted, now - 1000);
-        } else if (newHand) {
+        } else if (newHand || openingFromLobby) {
             deal(next, targets, now);
         } else {
             transition(next, before, targets, now);
@@ -126,7 +139,13 @@ public final class TableAnimation {
         view = next;
     }
 
-    private void deal(TableView next, List<Frame> targets, long now) {
+    public void acceptLobby(java.util.UUID tableId, int viewerSeat, long now) {
+        accept(null, now);
+        lobbyTable = tableId;
+        lobbyViewer = viewerSeat;
+    }
+
+    private void deal(RiichiView next, List<Frame> targets, long now) {
         var updates = new HashMap<Key, Motion>();
         int players = next.rules().players();
         for (Frame target : targets) {
@@ -153,7 +172,7 @@ public final class TableAnimation {
         java.util.Arrays.fill(riichiStarted, now - 1000);
     }
 
-    private void transition(TableView next, List<Frame> before, List<Frame> targets, long now) {
+    private void transition(RiichiView next, List<Frame> before, List<Frame> targets, long now) {
         Map<Key, Frame> sources = new HashMap<>();
         Map<Vec3, Frame> wallSlots = new HashMap<>();
         // The key must describe the authoritative tile, not the hidden face mid-flip.
@@ -230,10 +249,10 @@ public final class TableAnimation {
         settled = targets;
         motions = updates;
         ending = Math.max(finish, openingUntil);
-        if (next.phase() == TableView.Phase.HAND_END || next.phase() == TableView.Phase.MATCH_END) openingUntil = now;
+        if (next.phase() == RiichiView.Phase.HAND_END || next.phase() == RiichiView.Phase.MATCH_END) openingUntil = now;
     }
 
-    private void announce(TableView next, long now) {
+    private void announce(RiichiView next, long now) {
         var announcements = new ArrayList<>(cues(now));
         for (int seat = 0; seat < next.seats().size(); seat++) {
             var old = view.seats().get(seat);
@@ -244,8 +263,8 @@ public final class TableAnimation {
             for (int i = 0; i < player.melds().size(); i++) {
                 var meld = player.melds().get(i);
                 if (i >= old.melds().size() || meld.type() != old.melds().get(i).type())
-                    announcements.add(new Cue(seat, new top.skyeyefast.mchjong.engine.Action(
-                        top.skyeyefast.mchjong.engine.Action.Type.fromMeld(meld.type())).translationKey(), now));
+                    announcements.add(new Cue(seat, new top.skyeyefast.mchjong.engine.RiichiAction(
+                        top.skyeyefast.mchjong.engine.RiichiAction.Type.fromMeld(meld.type())).translationKey(), now));
             }
             if (player.norths().size() > old.norths().size()) announcements.add(new Cue(seat, "action.mchjong.nuki", now));
         }

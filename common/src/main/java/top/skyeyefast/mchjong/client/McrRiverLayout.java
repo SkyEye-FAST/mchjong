@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.McrDiscard;
 
 /** Six-column, face-up MCR discard grid in unscaled seat-local tile units. */
 public final class McrRiverLayout {
@@ -10,7 +10,7 @@ public final class McrRiverLayout {
     public record Part(int tile, int historyIndex, int column, int row, double x, double z) {}
     private McrRiverLayout() {}
 
-    public static List<Part> of(List<Discard> river) {
+    public static List<Part> of(List<McrDiscard> river) {
         var parts = new ArrayList<Part>();
         for (int history = 0; history < river.size(); history++) {
             var discard = river.get(history);

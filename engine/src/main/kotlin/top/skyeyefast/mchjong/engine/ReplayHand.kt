@@ -14,7 +14,7 @@ data class ReplayHand(
     val wall: ReplayWall,
     val events: List<Event>,
     val decisions: List<Decision>,
-    val finalSeats: List<TableView.Seat>,
+    val finalSeats: List<RiichiView.Seat>,
     val wins: List<Win>,
     val result: String,
     val deltas: List<Int>,
@@ -29,7 +29,7 @@ data class ReplayHand(
     data class Decision(
         val seat: Int,
         val eventCursor: Int,
-        val options: List<Action>,
+        val options: List<RiichiAction>,
         val selected: Int,
     ) {
         init {
@@ -37,9 +37,9 @@ data class ReplayHand(
                 "Invalid replay decision"
             }
             val allowed = setOf(
-                Action.Type.DISCARD, Action.Type.RIICHI, Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN,
-                Action.Type.CLOSED_KAN, Action.Type.ADDED_KAN, Action.Type.NUKI, Action.Type.RON, Action.Type.TSUMO,
-                Action.Type.PASS, Action.Type.ABORT_NINE,
+                RiichiAction.Type.DISCARD, RiichiAction.Type.RIICHI, RiichiAction.Type.CHI, RiichiAction.Type.PON, RiichiAction.Type.OPEN_KAN,
+                RiichiAction.Type.CLOSED_KAN, RiichiAction.Type.ADDED_KAN, RiichiAction.Type.NUKI, RiichiAction.Type.RON, RiichiAction.Type.TSUMO,
+                RiichiAction.Type.PASS, RiichiAction.Type.ABORT_NINE,
             )
             require(options.all { it.type() in allowed }) { "Non-game action in replay decision" }
             options.flatMap { it.tiles() }.forEach(Tile::kind)

@@ -18,7 +18,7 @@ object ReplayDecisionAnalysis {
         val known = visibleCounts(frame, decision.seat, match.rules.sanma())
         val byDiscard = RiichiHandAnalyzer.discardEfficiency(self.hand(), self.melds(), false)
         return decision.options.map { action ->
-            if (action.type() != Action.Type.DISCARD && action.type() != Action.Type.RIICHI || action.tiles().isEmpty()) {
+            if (action.type() != RiichiAction.Type.DISCARD && action.type() != RiichiAction.Type.RIICHI || action.tiles().isEmpty()) {
                 null
             } else {
                 val shape = byDiscard[Tile.kind(action.tiles().first())] ?: return@map null

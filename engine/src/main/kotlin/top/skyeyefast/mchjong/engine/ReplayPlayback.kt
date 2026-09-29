@@ -4,7 +4,7 @@ package top.skyeyefast.mchjong.engine
 object ReplayPlayback {
     @JvmRecord
     data class Frame(
-        val seats: List<TableView.Seat>,
+        val seats: List<RiichiView.Seat>,
         val dora: List<Int>,
         val cursor: Int,
         val steps: Int,
@@ -102,7 +102,7 @@ object ReplayPlayback {
             seat.hand.sortWith(Tile.ORDER)
             if (seat.drawn >= 0 && seat.hand.remove(seat.drawn)) seat.hand += seat.drawn
             val player = match.participants[i]
-            TableView.Seat(
+            RiichiView.Seat(
                 hand.finalSeats[i].entityBot(),
                 player.name,
                 true,

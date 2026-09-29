@@ -10,9 +10,9 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -29,7 +29,7 @@ final class TenpaiHintsSmoke {
     private TableSettings.DiscardMode discardMode;
     private String language;
     private CompletableFuture<Void> reload;
-    private TableView original, fixture;
+    private RiichiView original, fixture;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         var settings = TableSettings.get();
@@ -93,7 +93,7 @@ final class TenpaiHintsSmoke {
             settings.animations = animations; settings.discardMode = discardMode;
             client.getWindow().setWindowed(width, height); client.options.guiScale().set(scale); client.resizeDisplay();
             client.getLanguageManager().setSelected(language); reload = client.reloadResourcePacks(); ticks = 0;
-            table.acceptView(new TableView(original.tableId(), original.revision() + 13, original.decision(),
+            table.acceptView(new RiichiView(original.tableId(), original.revision() + 13, original.decision(),
                 original.handNumber(), original.rules(), original.phase(), original.viewerSeat(), original.dealer(),
                 original.round(), original.honba(), original.riichiSticks(), original.turn(), original.remaining(),
                 original.wallBreak(), original.wall(), original.focus(), original.seats(), original.actions(), original.wins(),
@@ -111,7 +111,7 @@ final class TenpaiHintsSmoke {
         var hand = new ArrayList<>(List.of(0, 32, 36, 68, 72, 104, 108, 112, 116, 120, 124, 128, 132));
         if (preview) hand.add(125);
         var seats = new ArrayList<>(original.seats());
-        seats.set(0, new TableView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
+        seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 25000, hand, preview ? 125 : Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false, false));
         for (int seat = 1; seat < seats.size(); seat++) {
             int owner = seat;
@@ -120,16 +120,16 @@ final class TenpaiHintsSmoke {
                 return new Meld(seatType(owner), List.of(tile, tile + 1, tile + 2, tile + 3),
                     owner >= 2 ? owner : 0, owner >= 2 ? Tile.ABSENT : tile);
             }).toList();
-            seats.set(seat, new TableView.Seat(false, "Long player name " + seat, true, false, false, 25000,
+            seats.set(seat, new RiichiView.Seat(false, "Long player name " + seat, true, false, false, 25000,
                 java.util.Collections.nCopies(13 - melds.size() * 3, Tile.HIDDEN), Tile.ABSENT,
                 melds, List.of(), List.of(), seat == seats.size() - 1, false, false));
         }
         var wall = new ArrayList<>(java.util.Collections.nCopies(136, Tile.HIDDEN));
         for (int i = 0; i < 5; i++) wall.set(131 - i * 2, 40 + i * 4);
         // Advance the display snapshot so rendering updates while live lobby heartbeats stay stale.
-        fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
-            original.rules(), TableView.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
-            original.wallBreak(), wall, null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125), new Action(Action.Type.DISCARD, 0)) : List.of(),
+        fixture = new RiichiView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
+            original.rules(), RiichiView.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
+            original.wallBreak(), wall, null, seats, preview ? List.of(new RiichiAction(RiichiAction.Type.DISCARD, 125), new RiichiAction(RiichiAction.Type.DISCARD, 0)) : List.of(),
             List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, original.autoPlay(), true, 1, java.util.Map.of(), true, List.of(), 0, 0);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");

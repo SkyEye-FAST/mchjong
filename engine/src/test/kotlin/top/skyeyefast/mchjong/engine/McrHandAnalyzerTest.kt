@@ -99,7 +99,7 @@ class McrHandAnalyzerTest {
     }
 
     @Test fun collectedFlowersReachWinContextWithoutQualifyingALowFanHand() {
-        val player = PlayerState()
+        val player = McrPlayerState()
         val wall = McrWall(McrGameTest.physical(Tile.mcrSet()), McrGameTest.OPENING)
         wall.replace(player)
         assertEquals(8, player.flowers.size)

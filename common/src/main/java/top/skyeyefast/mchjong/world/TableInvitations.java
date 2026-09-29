@@ -44,7 +44,8 @@ public final class TableInvitations {
         RiichiSession game = table.participantSession(sender);
         if (!WorldSettings.of(sender.server).policy().invitationsEnabled()
             || !game.lobby() || recipient == sender || recipient.isSpectator()
-            || game.seatOf(recipient.getUUID()) >= 0 || game.view(null).seats().stream().allMatch(seat -> seat.occupied()))
+            || game.seatOf(recipient.getUUID()) >= 0 || game.roomView(null).seats().stream()
+                .allMatch(seat -> seat.participant().id() != null))
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var server = sender.server;
         var inbox = of(server);
@@ -99,14 +100,14 @@ public final class TableInvitations {
         }
         if (!recipient.isAlive() || recipient.isSpectator() || recipient.isPassenger())
             throw TableCommands.error("message.mchjong.invite_unavailable");
-        var view = table.participantSession(sender).view(null);
+        var view = table.participantSession(sender).roomView(null);
         boolean remote = recipient.serverLevel() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
         if (remote && (!invitation.teleportOffered() || !WorldSettings.of(server).policy().invitationTeleport()))
             throw TableCommands.error("message.mchjong.invite_approach");
         int nearest = TableGeometry.nearestSide(recipient.position().subtract(pos.getCenter()));
         for (int offset = 0; offset < 4; offset++) {
             int seat = (nearest + offset) % 4;
-            if (seat >= view.seats().size() || view.seats().get(seat).occupied()
+            if (seat >= view.seats().size() || view.seats().get(seat).participant().id() != null
                 || !level.getBlockState(TableGeometry.stool(pos, seat)).is(MahjongContent.STOOL)) continue;
             if (remote) {
                 var safe = safeArrival(level, pos, seat, recipient);

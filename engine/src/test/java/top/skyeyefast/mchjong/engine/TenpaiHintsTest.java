@@ -23,7 +23,7 @@ class TenpaiHintsTest {
         assertEquals(0, hints.waits(game.view(OWNER), Tile.ABSENT).getFirst().remaining());
         int drawn = Tile.id(Tile.WHITE, 0, false);
         game.players[0].hand.add(drawn);
-        game.options.set(0, List.of(new Action(Action.Type.DISCARD, drawn)));
+        game.options.set(0, List.of(new RiichiAction(RiichiAction.Type.DISCARD, drawn)));
         assertEquals(0, hints.waits(game.view(OWNER), drawn).getFirst().remaining());
         assertTrue(hints.waits(game.view(OWNER), game.players[0].hand.getFirst()).isEmpty());
         assertTrue(hints.waits(game.view(null), drawn).isEmpty());

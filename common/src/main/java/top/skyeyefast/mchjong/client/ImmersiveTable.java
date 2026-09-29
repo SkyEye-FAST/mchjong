@@ -8,7 +8,7 @@ import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
@@ -142,7 +142,7 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    private void outer(TableView.Seat player, int seat, boolean layHandsOpen, TableAnimation deal, long now) {
+    private void outer(RiichiView.Seat player, int seat, boolean layHandsOpen, TableAnimation deal, long now) {
         int side = side(seat), w = 30;
         double rail = outerRail(side);
         double handX = handLeft(player, seat, side);
@@ -210,14 +210,14 @@ final class ImmersiveTable {
         return (side % 2 == 0 ? 425 : 510) - 3 - 30 * RATIO / 2;
     }
 
-    static double handLeft(TableView.Seat player, int seat, int side) {
+    static double handLeft(RiichiView.Seat player, int seat, int side) {
         int handWidth = player.hand().size() * 30;
         double meldLeft = meldCorner(side);
         for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(meld, seat, 30) + 5;
         return Math.min(-handWidth / 2.0, meldLeft - 18 - handWidth);
     }
 
-    static double discardSourceX(TableView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
+    static double discardSourceX(RiichiView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
         int index = player.hand().indexOf(tile);
         // Hidden identities remain unknown; a draw still has a public end-of-hand position.
         double slot = index >= 0 ? index + .5 : tsumogiri ? player.hand().size() - .5 : player.hand().size() / 2.0;

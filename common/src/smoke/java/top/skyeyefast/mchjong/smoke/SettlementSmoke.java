@@ -5,7 +5,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableAudio;
@@ -15,13 +15,13 @@ import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.HandScore;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Visual fixtures only; never replace the authoritative game or send fabricated actions. */
 final class SettlementSmoke {
-    private TableView fixture;
+    private RiichiView fixture;
     private int ticks;
     private boolean animations;
     private boolean sequenceComplete, heardRecording;
@@ -183,20 +183,20 @@ final class SettlementSmoke {
             click(client, "Final standings");
         } else if (ticks == 80) {
             capture(client, output, "13-settlement-ranking.png");
-            var win = new TableView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
+            var win = new RiichiView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
                 List.of("Daisushi", "SuankoTanki", "Tsuiso", "Tenhou"), 0));
             var changes = List.of(288000, 0, -288000, 0);
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < fixture.seats().size(); seat++) {
                 var player = fixture.seats().get(seat);
-                seats.add(new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(),
+                seats.add(new RiichiView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(),
                     player.ready(), 25000 + changes.get(seat), player.hand(), player.drawn(), player.melds(),
                     player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
             }
-            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber() + 1, fixture.rules(), TableView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+            fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber() + 1, fixture.rules(), RiichiView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, seats, List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
+                fixture.wallBreak(), fixture.wall(), null, seats, List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)),
                 List.of(win), "ron", changes, List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
                 fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), ScoreAnnouncements.maximumTicks(List.of(win)), 0);
             acceptFixture(table, fixture);
@@ -211,10 +211,10 @@ final class SettlementSmoke {
             capture(client, output, "13-yakuman-smallest.png");
         } else if (ticks == 95) {
             checkBounds(client);
-            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber(), fixture.rules(), TableView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+            fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber(), fixture.rules(), RiichiView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
+                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(), List.of(),
                 fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             acceptFixture(table, fixture);
@@ -268,13 +268,13 @@ final class SettlementSmoke {
         SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 
-    static void acceptFixture(MahjongTableBlockEntity table, TableView view) {
+    static void acceptFixture(MahjongTableBlockEntity table, RiichiView view) {
         table.acceptView(view);
         if (table.clientView() == view) TableAudio.accept(table, view);
     }
 
-    static TableView fixture(TableView base) {
-        var seats = new ArrayList<TableView.Seat>();
+    static RiichiView fixture(RiichiView base) {
+        var seats = new ArrayList<RiichiView.Seat>();
         int[] points = {49000, 33000, -7000, 25000};
         for (int seat = 0; seat < 4; seat++) {
             var original = base.seats().get(seat);
@@ -287,15 +287,15 @@ final class SettlementSmoke {
                 case 2 -> List.of(new Meld(Meld.Type.SEQUENCE, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
-            seats.add(new TableView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
+            seats.add(new RiichiView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
                 true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat == 0, seat < 2, false));
         }
-        var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
+        var wins = List.of(new RiichiView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
                 List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),
-            new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
-        return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), TableView.Phase.MATCH_END,
+            new RiichiView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
+        return new RiichiView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), RiichiView.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
-            List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
+            List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)), wins, "ron",
             List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), ScoreAnnouncements.maximumTicks(wins) + RiichiGame.SETTLEMENT_TICKS, 0);
     }
 }

@@ -14,7 +14,7 @@ import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -23,7 +23,8 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 final class DepositVisualSmoke {
     private final boolean showWall;
     private int sample, ticks;
-    private TableView fixture;
+    private RiichiView fixture;
+    private RiichiView originalView;
     private ResourceLocation originalStick;
 
     DepositVisualSmoke() { this(false); }
@@ -32,24 +33,27 @@ final class DepositVisualSmoke {
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         if (sample == BuiltinPresets.STICKS.size() + 1) return true;
         if (ticks == 0) {
-            if (sample == 0) originalStick = TableSettings.get().riichiStickPreset;
+            if (sample == 0) {
+                originalStick = TableSettings.get().riichiStickPreset;
+                originalView = table.clientView();
+            }
             TableSettings.get().riichiStickPreset = sample == 0 ? originalStick : BuiltinPresets.STICKS.get(sample - 1);
             var base = table.clientView();
             var rules = RiichiPreset.MAHJONG_SOUL_4.config();
             int count = 8;
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
                 var hand = seat == 0 ? IntStream.range(80, 93).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN);
                 var river = IntStream.range(seat * 12, seat * 12 + 12)
                     .mapToObj(tile -> new Discard(tile, false, false, false)).toList();
-                seats.add(new TableView.Seat(false, "Player " + (seat + 1), true, false, false, 25000,
+                seats.add(new RiichiView.Seat(false, "Player " + (seat + 1), true, false, false, 25000,
                     hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }
-            fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
-                base.handNumber(), rules, TableView.Phase.TURN, 0, 0, 0, 0, count,
+            fixture = new RiichiView(base.tableId(), base.revision() + 1_000_000, base.decision(),
+                base.handNumber(), rules, RiichiView.Phase.TURN, 0, 0, 0, 0, count,
                 0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+                table.automatic() ? null : new RiichiView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             table.acceptView(fixture);
             var screen = new TableScreen(table.getBlockPos());
             client.setScreen(screen);
@@ -65,6 +69,8 @@ final class DepositVisualSmoke {
             ticks = 0;
             if (sample == BuiltinPresets.STICKS.size() + 1) {
                 TableSettings.get().riichiStickPreset = originalStick;
+                table.acceptView(null);
+                table.acceptView(originalView);
                 client.setScreen(null);
                 return true;
             }

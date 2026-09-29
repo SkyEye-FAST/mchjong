@@ -10,10 +10,10 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -50,16 +50,16 @@ final class InputSmoke {
     }
 
     private static void verifyFocused(Minecraft client, MahjongTableBlockEntity table) {
-        TableView base = table.clientView();
+        RiichiView base = table.clientView();
         var seats = new ArrayList<>(base.seats());
-        seats.set(0, new TableView.Seat(false, "Input test", true, false, false, 25000,
+        seats.set(0, new RiichiView.Seat(false, "Input test", true, false, false, 25000,
             IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), List.of(), false, false, false));
-        var actions = new ArrayList<Action>();
-        for (int tile = 0; tile < 14; tile++) actions.add(new Action(Action.Type.DISCARD, tile));
-        actions.add(new Action(Action.Type.RIICHI, 0));
-        actions.add(new Action(Action.Type.RIICHI, 4));
-        TableView fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
-            base.handNumber(), base.rules(), TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
+        var actions = new ArrayList<RiichiAction>();
+        for (int tile = 0; tile < 14; tile++) actions.add(new RiichiAction(RiichiAction.Type.DISCARD, tile));
+        actions.add(new RiichiAction(RiichiAction.Type.RIICHI, 0));
+        actions.add(new RiichiAction(RiichiAction.Type.RIICHI, 4));
+        RiichiView fixture = new RiichiView(base.tableId(), base.revision() + 1, base.decision() + 1,
+            base.handNumber(), base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
             base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         table.acceptView(fixture);
         TableScreen screen = new TableScreen(table.getBlockPos());
@@ -140,18 +140,18 @@ final class InputSmoke {
         screen.resetView();
     }
 
-    static void clickHand(TableScreen screen, TableView view, int tile) {
+    static void clickHand(TableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
         screen.mouseClicked(point.x(), point.y(), 0);
     }
 
-    static void pointerHand(Minecraft client, TableScreen screen, TableView view, int tile) {
+    static void pointerHand(Minecraft client, TableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
         pointer(client, point.x(), point.y());
     }
 
     private record HandPoint(double x, double y) {}
-    private static HandPoint handPoint(TableScreen screen, TableView view, int tile) {
+    private static HandPoint handPoint(TableScreen screen, RiichiView view, int tile) {
         int layoutWidth = screen.immersive() ? TableScreen.IMMERSIVE_WIDTH : screen.width;
         int layoutHeight = screen.immersive() ? TableScreen.IMMERSIVE_HEIGHT : screen.height;
         int tileWidth = Math.min(screen.immersive() ? 58 : layoutHeight < 360 ? 24 : 32, (layoutWidth - 36) / 14);
@@ -172,13 +172,13 @@ final class InputSmoke {
             (screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + point.y() * scale);
     }
 
-    private static boolean selected(TableScreen screen, TableView view, int tile) {
+    private static boolean selected(TableScreen screen, RiichiView view, int tile) {
         return TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0 && piece.tile() == tile)
             .anyMatch(piece -> screen.selected(screen.tablePos(), piece));
     }
 
     /** Focus real call buttons while mouse highlighting is disabled; never submit a fixture action. */
-    static void verifyCallFocus(Minecraft client, MahjongTableBlockEntity table, Action.Type type) {
+    static void verifyCallFocus(Minecraft client, MahjongTableBlockEntity table, RiichiAction.Type type) {
         var base = table.clientView();
         var consumed = switch (type) {
             case CHI -> List.of(4, 8);
@@ -187,18 +187,18 @@ final class InputSmoke {
             default -> throw new IllegalArgumentException("Expected an open call");
         };
         var seats = new ArrayList<>(base.seats());
-        seats.set(0, new TableView.Seat(false, "Keyboard focus", true, false, false, 25000,
+        seats.set(0, new RiichiView.Seat(false, "Keyboard focus", true, false, false, 25000,
             List.of(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 12, 13, 15), Tile.ABSENT,
             List.of(), List.of(), List.of(), false, false, false));
         int from = base.rules().players() - 1;
         var source = seats.get(from);
-        seats.set(from, new TableView.Seat(false, source.name(), true, false, false, 25000,
+        seats.set(from, new RiichiView.Seat(false, source.name(), true, false, false, 25000,
             java.util.Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT,
             List.of(), List.of(new Discard(14, false, false, false)), List.of(), false, false, false));
-        var action = new Action(type, consumed);
-        var fixture = new TableView(base.tableId(), base.revision() + 1, base.decision() + 1,
-            base.handNumber(), base.rules(), TableView.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),
-            base.wall(), new TableView.Focus(from, 14, false, 0), seats, List.of(new Action(Action.Type.PASS), action),
+        var action = new RiichiAction(type, consumed);
+        var fixture = new RiichiView(base.tableId(), base.revision() + 1, base.decision() + 1,
+            base.handNumber(), base.rules(), RiichiView.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),
+            base.wall(), new RiichiView.Focus(from, 14, false, 0), seats, List.of(new RiichiAction(RiichiAction.Type.PASS), action),
             List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         table.acceptView(fixture);
         TableSettings.get().animations = false;

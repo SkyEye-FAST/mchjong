@@ -37,7 +37,7 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
 
     @Override protected void renderLabels(GuiGraphics graphics, int mouseX, int mouseY) {
         MahjongUi.text(graphics, font, title, 10, 8, 266, MahjongUi.TEXT, true);
-        top.skyeyefast.mchjong.engine.TableView view = parent != null && minecraft.level != null
+        top.skyeyefast.mchjong.engine.RiichiView view = parent != null && minecraft.level != null
             && minecraft.level.getBlockEntity(parent.tablePos()) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table
             ? table.clientView() : null;
         for (int row = 0; row < 4; row++) {

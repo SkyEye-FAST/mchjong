@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.engine
 
 /** Complete hands use the engine scorer. Incomplete hands have explicitly heuristic potential. */
-internal class BotValue(private val view: TableView) {
+internal class BotValue(private val view: RiichiView) {
     @JvmField
     val dora: IntArray = HandBonuses.indicators(view.wall(), view.rules().sanma())
 

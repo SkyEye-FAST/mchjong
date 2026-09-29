@@ -57,7 +57,7 @@ class BotServicePositionTest {
 
         int discard = -1;
         for (int i = 0; i < position.legalActions().size(); i++)
-            if (position.legalActions().get(i).type() == Action.Type.DISCARD) { discard = i; break; }
+            if (position.legalActions().get(i).type() == RiichiAction.Type.DISCARD) { discard = i; break; }
         assertTrue(discard >= 0);
         assertFalse(game.actBot(0, position.decision(), -1));
         assertFalse(game.actBot(0, position.decision() - 1, discard));

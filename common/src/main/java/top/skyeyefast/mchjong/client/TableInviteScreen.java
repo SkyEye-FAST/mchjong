@@ -54,9 +54,10 @@ public final class TableInviteScreen extends Screen {
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        var view = parent.view();
-        if (view != null) invitations.forEach((name, button) -> button.active = view.seats().stream()
-            .noneMatch(seat -> seat.occupied() && !seat.bot() && seat.name().equals(name)));
+        var room = parent.room();
+        if (room != null) invitations.forEach((name, button) -> button.active = room.seats().stream()
+            .noneMatch(seat -> seat.participant().id() != null && !seat.participant().bot()
+                && seat.participant().name().equals(name)));
         MahjongUi.backdrop(graphics, width, height, 320);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.invite_hint"), 12, 34, width - 24, MahjongUi.MUTED, true);

@@ -9,9 +9,9 @@ import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -25,17 +25,17 @@ final class TableDice extends MahjongButton {
         setTooltip(null);
     }
 
-    static boolean onTable(TableView view) {
+    static boolean onTable(RiichiView view) {
         return view != null && view.handling() != null && !view.handling().diceHeld()
-            && view.phase() != TableView.Phase.LOBBY && view.phase() != TableView.Phase.SHUFFLE
-            && view.phase() != TableView.Phase.MATCH_END
-            && (view.phase() != TableView.Phase.BUILD_WALL
+            && view.phase() != RiichiView.Phase.SHUFFLE
+            && view.phase() != RiichiView.Phase.MATCH_END
+            && (view.phase() != RiichiView.Phase.BUILD_WALL
                 || view.handling().builtWalls() == (1 << view.rules().players()) - 1);
     }
 
-    void update(TableView view, int x, int y, int width, int height, boolean seated, boolean pending) {
+    void update(RiichiView view, int x, int y, int width, int height, boolean seated, boolean pending) {
         visible = seated && onTable(view);
-        active = visible && !pending && view.actions().stream().anyMatch(action -> action.type() == Action.Type.PICK_UP_DICE);
+        active = visible && !pending && view.actions().stream().anyMatch(action -> action.type() == RiichiAction.Type.PICK_UP_DICE);
         first = view.handling() == null ? 0 : view.handling().diceOne();
         second = view.handling() == null ? 0 : view.handling().diceTwo();
         setRectangle(width, height, x, y);
@@ -73,7 +73,7 @@ final class TableDice extends MahjongButton {
         graphics.blit(MahjongContent.id("textures/item/dice_" + face + ".png"), x, y, 16, 16, 0, 0, 32, 32, 32, 32);
     }
 
-    static void renderWorld(TableView view, PoseStack pose, MultiBufferSource buffers, int light) {
+    static void renderWorld(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
         if (!onTable(view)) return;
         for (int index = 0; index < 2; index++) {
             int face = Math.max(1, index == 0 ? view.handling().diceOne() : view.handling().diceTwo());

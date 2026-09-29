@@ -6,7 +6,7 @@ import kotlin.math.ln1p
 import kotlin.math.pow
 
 /** Decision-local shape cache and bounded draw/discard search. All draws are face categories. */
-internal class BotAnalysis(private val view: TableView, private val level: BotDifficulty) {
+internal class BotAnalysis(private val view: RiichiView, private val level: BotDifficulty) {
     @JvmField
     val value = BotValue(view)
 
@@ -188,7 +188,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     /** One draw and best discard; unseen tiles are an exchangeable sampling approximation,
      * including opponents' tiles/dead wall, never a claim about the actual live wall. */
     private fun distance(state: State): Int = if (
-            view.phase() == TableView.Phase.REACTION &&
+            view.phase() == RiichiView.Phase.REACTION &&
             state.melds().size == view.seats()[view.viewerSeat()].melds().size
         ) {
             Math.floorMod(view.viewerSeat() - view.turn(), view.rules().players())

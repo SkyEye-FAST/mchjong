@@ -10,13 +10,13 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ReplayScreen;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.world.MahjongSounds;
@@ -149,17 +149,17 @@ final class ReplaySmoke {
             if (game.phase() == RiichiGame.Phase.HAND_END || game.phase() == RiichiGame.Phase.MATCH_END) return session;
             boolean acted = false;
             for (UUID id : ids) {
-                TableView view = game.view(id);
-                int action = find(view,Action.Type.PASS);
-                if (action < 0) action = find(view,Action.Type.TSUMO);
-                if (action < 0) action = find(view,Action.Type.DISCARD);
+                RiichiView view = game.view(id);
+                int action = find(view,RiichiAction.Type.PASS);
+                if (action < 0) action = find(view,RiichiAction.Type.TSUMO);
+                if (action < 0) action = find(view,RiichiAction.Type.DISCARD);
                 if (action >= 0) { require(game.act(id,view.decision(),action),"Replay fixture rejected a legal move"); acted = true; break; }
             }
             require(acted,"Replay fixture deadlocked");
         }
         throw new IllegalStateException("Replay fixture never settled");
     }
-    private static int find(TableView view, Action.Type type) {
+    private static int find(RiichiView view, RiichiAction.Type type) {
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) return i;
         return -1;
     }

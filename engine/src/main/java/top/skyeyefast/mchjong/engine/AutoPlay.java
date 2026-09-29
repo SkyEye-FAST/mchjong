@@ -1,7 +1,7 @@
 package top.skyeyefast.mchjong.engine;
 
 import java.util.List;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.RiichiAction.Type.*;
 
 /** Per-seat preferences. Decisions use the referee's legal actions and current token. */
 public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean discard, boolean kita) {
@@ -25,7 +25,7 @@ public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean disca
     }
 
     /** Never discard or pass a legal win while waiting for an explicit win decision. */
-    public int action(RiichiGame.Phase phase, boolean riichi, int drawn, List<Action> legal) {
+    public int action(RiichiGame.Phase phase, boolean riichi, int drawn, List<RiichiAction> legal) {
         for (int i = 0; i < legal.size(); i++)
             if (legal.get(i).type() == TSUMO || legal.get(i).type() == RON) return win ? i : -1;
         if (phase == RiichiGame.Phase.REACTION && (noCalls || riichi)) return RiichiGame.indexOf(legal, PASS);

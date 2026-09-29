@@ -1,46 +1,46 @@
 package top.skyeyefast.mchjong.engine
 
-import top.skyeyefast.mchjong.engine.Action.Type.*
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.*
 
 /** Computes all choices, including alternate red-five consumption, before issuing a decision. */
 internal object LegalActions {
     @JvmStatic
-    fun onTurn(game: RiichiGame, seat: Int): List<Action> {
+    fun onTurn(game: RiichiGame, seat: Int): List<RiichiAction> {
         val player = game.players[seat]
-        val actions = ArrayList<Action>()
+        val actions = ArrayList<RiichiAction>()
         if (player.drawn >= 0 && score(game, seat, player.drawn, true) != null) {
-            actions += Action(TSUMO, player.drawn)
+            actions += RiichiAction(TSUMO, player.drawn)
         }
         val ordered = ArrayList(player.hand)
         ordered.sortWith(Tile.ORDER)
         for (tile in ordered) {
             if (player.riichi && tile != player.drawn) continue
-            if (Tile.kind(tile) !in player.forbiddenDiscards) actions += Action(DISCARD, tile)
+            if (Tile.kind(tile) !in player.forbiddenDiscards) actions += RiichiAction(DISCARD, tile)
         }
         if (!player.canDeclare) return actions.toList()
         if (!player.riichi && player.closed() && game.wall.remaining() >= game.rules.minRiichiWall() &&
             (!game.rules.needsRiichiDeposit() || player.points >= 1000)
         ) {
             val tenpai = RiichiHandAnalyzer.tenpaiDiscards(player.hand, player.melds)
-            for (tile in ordered) if (Tile.kind(tile) in tenpai) actions += Action(RIICHI, tile)
+            for (tile in ordered) if (Tile.kind(tile) in tenpai) actions += RiichiAction(RIICHI, tile)
         }
         if (game.rules.abortiveDraws() && player.firstTurn && game.uninterrupted &&
             player.hand.asSequence().map(Tile::kind).filter(Tile::terminalOrHonor).distinct().count() >= 9
-        ) actions += Action(ABORT_NINE)
+        ) actions += RiichiAction(ABORT_NINE)
 
         if (!game.wall.canReplace()) return actions.toList()
         if (game.rules.sanma()) for (tile in ordered) {
-            if (Tile.kind(tile) == Tile.NORTH && (!player.riichi || tile == player.drawn)) actions += Action(NUKI, tile)
+            if (Tile.kind(tile) == Tile.NORTH && (!player.riichi || tile == player.drawn)) actions += RiichiAction(NUKI, tile)
         }
         if (game.kanCount() >= 4) return actions.toList()
         for (kind in 0..<34) {
             val matching = matching(player.hand, kind)
             if (matching.size == 4 && (!player.riichi || legalRiichiKan(game, seat, kind, matching))) {
-                actions += Action(CLOSED_KAN, matching)
+                actions += RiichiAction(CLOSED_KAN, matching)
             }
         }
         if (!player.riichi) for (meld in player.melds) if (meld.type() == Meld.Type.TRIPLET) {
-            for (tile in matching(player.hand, meld.kind())) actions += Action(ADDED_KAN, tile)
+            for (tile in matching(player.hand, meld.kind())) actions += RiichiAction(ADDED_KAN, tile)
         }
         return actions.toList()
     }
@@ -72,9 +72,9 @@ internal object LegalActions {
     }
 
     @JvmStatic
-    fun onReaction(game: RiichiGame, seat: Int): List<Action> {
+    fun onReaction(game: RiichiGame, seat: Int): List<RiichiAction> {
         val player = game.players[seat]
-        val actions = ArrayList<Action>()
+        val actions = ArrayList<RiichiAction>()
         val kind = Tile.kind(game.lastTile)
         val waits = RiichiHandAnalyzer.waits(player.hand, player.melds)
         if (kind in waits && !player.temporaryFuriten && !player.riichiFuriten &&
@@ -89,16 +89,16 @@ internal object LegalActions {
                 NUKI -> game.rules.robNorthWithoutKokushi() || kokushi
                 else -> false
             }
-            if (score != null && permitted) actions += Action(RON, game.lastTile)
+            if (score != null && permitted) actions += RiichiAction(RON, game.lastTile)
         }
         if (game.pending == null && !player.riichi && game.wall.remaining() > 0 && !game.fourKanAbort) {
             val matching = matching(player.hand, kind)
             for (a in matching.indices) for (b in a + 1..<matching.size) {
                 val used = listOf(matching[a], matching[b])
-                if (canDiscardAfter(player, used, setOf(kind))) actions += Action(PON, used)
+                if (canDiscardAfter(player, used, setOf(kind))) actions += RiichiAction(PON, used)
             }
             if (matching.size == 3 && game.wall.canReplace() && game.kanCount() < 4) {
-                actions += Action(OPEN_KAN, matching)
+                actions += RiichiAction(OPEN_KAN, matching)
             }
             if (!game.rules.sanma() && seat == game.next(game.lastFrom) && kind < 27) {
                 for (low in maxOf(kind / 9 * 9, kind - 2)..minOf(kind, kind / 9 * 9 + 6)) {
@@ -106,25 +106,25 @@ internal object LegalActions {
                     for (tileKind in low..low + 2) if (tileKind != kind) others += tileKind
                     for (first in matching(player.hand, others[0])) for (second in matching(player.hand, others[1])) {
                         val used = listOf(first, second)
-                        val action = Action(CHI, used)
+                        val action = RiichiAction(CHI, used)
                         if (canDiscardAfter(player, used, forbiddenAfterCall(action, game.lastTile))) actions += action
                     }
                 }
             }
         }
-        if (actions.isNotEmpty()) actions += Action(PASS)
+        if (actions.isNotEmpty()) actions += RiichiAction(PASS)
         // Physical copies with the same face and red status make the same call.
         return actions.distinctBy { action ->
             action.type() to action.tiles().map { Tile.kind(it) to Tile.red(it) }
         }
     }
 
-    private fun canDiscardAfter(player: PlayerState, used: List<Int>, forbidden: Set<Int>): Boolean =
+    private fun canDiscardAfter(player: RiichiPlayerState, used: List<Int>, forbidden: Set<Int>): Boolean =
         player.hand.any { it !in used && Tile.kind(it) !in forbidden }
 
     /** Shared by legal generation, call execution and bot simulation. */
     @JvmStatic
-    fun forbiddenAfterCall(action: Action, claimed: Int): Set<Int> {
+    fun forbiddenAfterCall(action: RiichiAction, claimed: Int): Set<Int> {
         val called = Tile.kind(claimed)
         val forbidden = HashSet<Int>()
         forbidden += called

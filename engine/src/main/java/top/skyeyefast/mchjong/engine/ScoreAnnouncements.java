@@ -45,7 +45,7 @@ public final class ScoreAnnouncements {
     }
 
     /** One shared receipt order for the visible rows and their recordings. */
-    public static List<Row> rows(TableView view, TableView.Win win) {
+    public static List<Row> rows(RiichiView view, RiichiView.Win win) {
         var score = win.score();
         var player = view.seats().get(win.seat());
         var result = new ArrayList<Row>();
@@ -104,7 +104,7 @@ public final class ScoreAnnouncements {
     }
 
     /** A finite server fallback also covers missing/disconnected presentation clients. */
-    public static int maximumTicks(List<TableView.Win> wins) {
+    public static int maximumTicks(List<RiichiView.Win> wins) {
         if (wins.isEmpty()) return RiichiGame.SETTLEMENT_TICKS;
         int recordings = 1; // Opening ron/tsumo, then every winner's rows and final grade.
         for (var win : wins) recordings += win.score().yaku().size() + Math.min(4, win.score().dora()) + 2;

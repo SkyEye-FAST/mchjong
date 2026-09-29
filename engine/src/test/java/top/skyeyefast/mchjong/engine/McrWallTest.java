@@ -48,7 +48,7 @@ class McrWallTest {
 
     @Test void allZonesConserve144TilesAcrossFrontAndTailDraws() {
         var wall = new McrWall(711);
-        var players = new PlayerState[]{new PlayerState(), new PlayerState(), new PlayerState(), new PlayerState()};
+        var players = new McrPlayerState[]{new McrPlayerState(), new McrPlayerState(), new McrPlayerState(), new McrPlayerState()};
         int draws = 0;
         wall.assertConservation(players);
         while (wall.remaining() > 0) {
@@ -68,9 +68,9 @@ class McrWallTest {
         var meldTiles = List.of(0, 1, 2);
         for (var player : players) player.hand.removeAll(meldTiles);
         players[0].melds.add(new Meld(Meld.Type.TRIPLET, meldTiles, 3, 0));
-        players[3].river.add(new Discard(0, false, true, false));
+        players[3].river.add(new McrDiscard(0, true, false));
         int discarded = players[1].hand.removeFirst();
-        players[1].river.add(new Discard(discarded, false, false, false));
+        players[1].river.add(new McrDiscard(discarded, false, false));
         wall.assertConservation(players); // The called discard aliases the meld, not another owned tile.
         int duplicate = players[0].hand.getFirst();
         players[1].hand.add(duplicate);
@@ -85,7 +85,7 @@ class McrWallTest {
         var order = new ArrayList<>(Tile.mcrSet());
         Collections.swap(order, 0, order.indexOf(FlowerTile.SUMMER.id()));
         var wall = new McrWall(physical(order), OPENING);
-        var player = new PlayerState();
+        var player = new McrPlayerState();
         int tile = wall.draw(player);
         assertEquals(Tile.id(0, 0, false), tile);
         assertTrue(player.hand.isEmpty());
@@ -103,7 +103,7 @@ class McrWallTest {
 
     @Test void flowerOnlyExhaustionKeepsOwnershipAndResetClearsTheFlowerArea() {
         var wall = new McrWall(physical(Tile.mcrSet()), OPENING);
-        var player = new PlayerState();
+        var player = new McrPlayerState();
         for (int i = 0; i < 136; i++) player.hand.add(wall.draw(player));
         assertEquals(8, wall.remaining());
         assertEquals(Tile.ABSENT, wall.draw(player));

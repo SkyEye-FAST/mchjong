@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 
 /** Pure snapshot comparison, shared by playback and tests. A newly observed table is silent. */
@@ -11,13 +11,19 @@ public final class TableAudioEvents {
     public record Cue(String sound, String voice, int delay, int seat) {}
     private TableAudioEvents() {}
 
-    public static List<Cue> between(TableView before, TableView after) {
+    public static List<Cue> opening(RiichiView view) {
+        return view.phase() == RiichiView.Phase.TURN && view.handNumber() == 1
+            && view.seats().stream().allMatch(seat -> seat.river().isEmpty())
+            ? List.of(effect("wall", 0), effect("deal", 10)) : List.of();
+    }
+
+    public static List<Cue> between(RiichiView before, RiichiView after) {
         if (before == null || after == null || !before.tableId().equals(after.tableId())
             || before.viewerSeat() != after.viewerSeat() || !before.rules().equals(after.rules())
             || after.revision() <= before.revision()) return List.of();
         var cues = new ArrayList<Cue>();
         if (before.handNumber() != after.handNumber()) {
-            if (after.phase() == TableView.Phase.TURN) {
+            if (after.phase() == RiichiView.Phase.TURN) {
                 cues.add(effect("wall", 0));
                 cues.add(effect("deal", 10));
             }
@@ -48,8 +54,8 @@ public final class TableAudioEvents {
             if (next.drawn() != Tile.ABSENT && (old.drawn() == Tile.ABSENT || next.hand().size() > old.hand().size()))
                 cues.add(effect("draw", 0));
         }
-        boolean ended = after.phase() == TableView.Phase.HAND_END || after.phase() == TableView.Phase.MATCH_END;
-        boolean wasEnded = before.phase() == TableView.Phase.HAND_END || before.phase() == TableView.Phase.MATCH_END;
+        boolean ended = after.phase() == RiichiView.Phase.HAND_END || after.phase() == RiichiView.Phase.MATCH_END;
+        boolean wasEnded = before.phase() == RiichiView.Phase.HAND_END || before.phase() == RiichiView.Phase.MATCH_END;
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
             if (result.equals("draw_end")) cues.add(voice(result, -1));
@@ -57,7 +63,7 @@ public final class TableAudioEvents {
                 cues.add(effect(result, 0));
                 for (var win : after.wins()) cues.add(new Cue(null, result, 0, win.seat()));
             }
-        } else if (after.phase() == TableView.Phase.TURN && after.viewerSeat() == after.turn()
+        } else if (after.phase() == RiichiView.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);
     }

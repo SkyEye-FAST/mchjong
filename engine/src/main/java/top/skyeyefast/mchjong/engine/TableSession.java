@@ -443,7 +443,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession {
     public List<RoomAction> roomActions(UUID actor) { return roomActions(seatOf(actor)); }
 
     public final TableRoomView roomView(UUID recipient) {
-        int viewer = viewerSeat(recipient);
+        int viewer = lobby() ? seatOf(recipient) : viewerSeat(recipient);
         var seats = new ArrayList<TableRoomView.Seat>();
         var available = new ArrayList<Integer>();
         for (int seat = 0; seat < capacity; seat++) {

@@ -18,7 +18,7 @@ import top.skyeyefast.mchjong.client.FurnitureMesh;
 import top.skyeyefast.mchjong.client.MahjongUi;
 import top.skyeyefast.mchjong.client.McrSceneRenderer;
 import top.skyeyefast.mchjong.client.McrTableScene;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.McrDiscard;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrOpening;
 import top.skyeyefast.mchjong.engine.McrView;
@@ -121,11 +121,11 @@ final class McrDisplaySmoke {
             int size = (seat == 0 ? 14 : 13) - melds.get(seat).size() * 3;
             var hand = new ArrayList<Integer>();
             for (int i = 0; i < size; i++) hand.add(stock.remove(0));
-            var river = new ArrayList<Discard>();
-            for (int i = 0; i < (seat == 0 ? 19 : 13); i++) river.add(new Discard(stock.remove(0), false, false, false));
+            var river = new ArrayList<McrDiscard>();
+            for (int i = 0; i < (seat == 0 ? 19 : 13); i++) river.add(new McrDiscard(stock.remove(0), false, false));
             // These history entries refer to physical tiles already allocated to another player's meld.
             int called = switch (seat) { case 0 -> 72; case 1 -> 48; case 2 -> 124; default -> 0; };
-            river.add(4, new Discard(called, false, true, false));
+            river.add(4, new McrDiscard(called, true, false));
             var flowers = List.of(136 + seat * 2, 137 + seat * 2);
             stock.removeAll(flowers);
             var publicMelds = melds.get(seat).stream().map(meld -> meld.closed()

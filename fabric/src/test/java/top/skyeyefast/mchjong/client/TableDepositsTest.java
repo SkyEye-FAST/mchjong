@@ -6,20 +6,20 @@ import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.TimeControl;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableDepositsTest {
-    private TableView view(RiichiPreset rules, int deposits, int declared, boolean manual) {
-        var seats = new ArrayList<TableView.Seat>();
+    private RiichiView view(RiichiPreset rules, int deposits, int declared, boolean manual) {
+        var seats = new ArrayList<RiichiView.Seat>();
         for (int seat = 0; seat < rules.players(); seat++)
-            seats.add(new TableView.Seat(false, "Player", true, false, false, 25000, List.of(), Tile.ABSENT,
+            seats.add(new RiichiView.Seat(false, "Player", true, false, false, 25000, List.of(), Tile.ABSENT,
                 List.of(), List.of(), List.of(), (declared & 1 << seat) != 0, false, false));
-        return new TableView(new UUID(0, 1), 1, 1, 1, rules.config(), TableView.Phase.TURN, 0, 0, 0, 0, deposits,
+        return new RiichiView(new UUID(0, 1), 1, 1, 1, rules.config(), RiichiView.Phase.TURN, 0, 0, 0, 0, deposits,
             0, 50, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, manual ? new TableView.Handling(15, -1, 0, 1, 1, false) : null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, manual ? new RiichiView.Handling(15, -1, 0, 1, 1, false) : null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
     }
 
     @Test void bothTablesDisplayTheEntirePotAndRetainCarriedDepositsForThreeAndFourPlayers() {

@@ -8,7 +8,7 @@ import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.AutoPlay;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 
 /** Collapsible match controls backed by the seated player's authoritative preferences. */
@@ -24,9 +24,9 @@ final class TableAutomation {
         this.rebuild = rebuild;
     }
 
-    static boolean available(TableView view) {
+    static boolean available(RiichiView view) {
         return view != null && view.viewerSeat() >= 0 && view.autoPlay() != null
-            && (view.phase() == TableView.Phase.TURN || view.phase() == TableView.Phase.REACTION) && view.exitVote() == null;
+            && (view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION) && view.exitVote() == null;
     }
 
     int width(int screenWidth) { return expanded ? Math.min(124, Math.max(96, (screenWidth - 28) / 3)) : 44; }
@@ -43,7 +43,7 @@ final class TableAutomation {
         rebuild.run();
     }
 
-    List<MahjongButton> build(TableView view, int screenWidth, int bottom, boolean horizontal) {
+    List<MahjongButton> build(RiichiView view, int screenWidth, int bottom, boolean horizontal) {
         buttons = new ArrayList<>();
         if (!available(view)) { pending = false; return buttons; }
         int count = view.rules().sanma() ? 5 : 4;

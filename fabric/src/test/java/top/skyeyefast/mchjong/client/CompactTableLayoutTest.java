@@ -10,11 +10,9 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CompactTableLayoutTest {
-    private static TableView base(RiichiPreset rules) {
+    private static RiichiView base(RiichiPreset rules) {
         var id = new UUID(15, 20);
-        var game = new RiichiSession(UUID.randomUUID(), rules, 15);
-        assertTrue(game.join(id, "Test", 0));
-        return game.view(id);
+        return TableLayoutTest.startSession(rules, id).view(id);
     }
 
     private static List<Meld> melds(Meld.Type type, int count, int owner, int source) {
@@ -26,13 +24,13 @@ class CompactTableLayoutTest {
         }).toList();
     }
 
-    private static List<TableScene.Piece> scene(TableView v, int owner, List<Meld> melds,
+    private static List<TableScene.Piece> scene(RiichiView v, int owner, List<Meld> melds,
                                                int handSize, boolean drawn, boolean exposed) {
         var seats = new ArrayList<>(v.seats());
         var hand = IntStream.range(80, 80 + handSize).boxed().toList();
-        seats.set(owner, new TableView.Seat(false, "Test", true, false, false, 25000, hand,
+        seats.set(owner, new RiichiView.Seat(false, "Test", true, false, false, 25000, hand,
             drawn ? hand.getLast() : Tile.ABSENT, melds, List.of(), List.of(), false, exposed, false));
-        var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
+        var view = new RiichiView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
             seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
         return TableScene.build(view).stream().filter(p -> p.seat() == owner).toList();
@@ -124,7 +122,7 @@ class CompactTableLayoutTest {
 
     @Test void aDrawnTileMovedIntoTheHandHasNoStrayDrawGap() {
         var base = base(RiichiPreset.TENHOU_4);
-        var player = new TableView.Seat(false, "Test", true, false, false, 25000,
+        var player = new RiichiView.Seat(false, "Test", true, false, false, 25000,
             List.of(0, 4, 8), 4, List.of(), List.of(), List.of(), false, false, false);
         var hand = new TableHand(player, 0, 640, 400, 32, true);
         assertEquals(hand.tileWidth(), hand.centerX(8) - hand.centerX(4));
@@ -132,7 +130,7 @@ class CompactTableLayoutTest {
         assertEquals(4, hand.pick(point.x(), point.y(), Tile.ABSENT));
         var seats = new ArrayList<>(base.seats());
         seats.set(0, player);
-        var view = new TableView(base.tableId(), base.revision(), base.decision(), base.handNumber(), base.rules(),
+        var view = new RiichiView(base.tableId(), base.revision(), base.decision(), base.handNumber(), base.rules(),
             base.phase(), 0, base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(),
             base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
             base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(), base.clocks(),

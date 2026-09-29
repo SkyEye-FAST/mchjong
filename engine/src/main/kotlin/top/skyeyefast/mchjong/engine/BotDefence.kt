@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.engine
 
 /** Public per-opponent evidence. Risk, pressure and estimated value are ordinal heuristics. */
 internal class BotDefence(
-    private val view: TableView,
+    private val view: RiichiView,
     private val level: BotDifficulty,
     private val value: BotValue,
     unseen: IntArray,

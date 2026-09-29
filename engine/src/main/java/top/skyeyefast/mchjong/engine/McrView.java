@@ -55,7 +55,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
     }
 
     public record Seat(int wind, int points, List<Integer> hand, int drawn, List<Meld> melds,
-                       List<Discard> river, List<Integer> flowers, boolean winForbidden) {
+                       List<McrDiscard> river, List<Integer> flowers, boolean winForbidden) {
         public Seat {
             hand = List.copyOf(hand);
             melds = List.copyOf(melds);
@@ -66,7 +66,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
                 || hand.stream().anyMatch(tile -> tile != Tile.HIDDEN && !ordinary(tile))
                 || drawn != Tile.ABSENT && drawn != Tile.HIDDEN && (!ordinary(drawn) || !hand.contains(drawn))
                 || flowers.stream().anyMatch(tile -> !Tile.isFlower(tile))
-                || river.stream().anyMatch(discard -> !ordinary(discard.tile()) || discard.riichi()))
+                || river.stream().anyMatch(discard -> !ordinary(discard.tile())))
                 throw new IllegalArgumentException("Invalid MCR seat view");
             for (var meld : melds) {
                 boolean kong = switch (meld.type()) {

@@ -6,7 +6,7 @@ import java.util.UUID;
 /** Server-issued position for a remote bot; physical tiles and legal choices stay authoritative here. */
 public record BotPosition(int protocolVersion, String botId, RiichiPreset preset,
                           UUID tableId, UUID sessionId, int handNumber, int seat, int playerCount,
-                          long decision, Opening opening, List<Event> events, List<Action> legalActions,
+                          long decision, Opening opening, List<Event> events, List<RiichiAction> legalActions,
                           Focus focus, Integer drawnTile, List<Pon> melds) {
     public record Opening(int round, int dealer, int honba, int riichiSticks,
                           List<Integer> scores, List<Integer> hand, int doraMarker) {}

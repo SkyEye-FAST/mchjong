@@ -27,8 +27,8 @@ public final class SeatingFixtures {
             throw new IllegalStateException("Cannot assign fixture seats", failure);
         }
         for (UUID human : humans) {
-            var view = game.view(human);
-            if (!game.join(human, view.seats().get(view.viewerSeat()).name(), view.viewerSeat()))
+            var room = game.roomView(human);
+            if (!game.join(human, room.seats().get(room.viewerSeat()).participant().name(), room.viewerSeat()))
                 throw new IllegalStateException("Cannot position fixture");
         }
         for (UUID human : humans) {

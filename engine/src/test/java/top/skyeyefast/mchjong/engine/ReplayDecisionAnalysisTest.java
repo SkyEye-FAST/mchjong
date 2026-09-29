@@ -52,16 +52,16 @@ class ReplayDecisionAnalysisTest {
             }
             hands.add(List.copyOf(hand));
         }
-        var seats = new ArrayList<TableView.Seat>();
+        var seats = new ArrayList<RiichiView.Seat>();
         var participants = new ArrayList<ReplayMatch.Participant>();
         for (int seat = 0; seat < 4; seat++) {
             participants.add(new ReplayMatch.Participant(new UUID(8, seat + 1), "Player " + seat, false));
-            seats.add(new TableView.Seat(false, "Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
+            seats.add(new RiichiView.Seat(false, "Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false, false));
         }
         var events = List.of(new ReplayHand.Event(ReplayHand.Kind.DRAW, 0, draw, null, false, false, true));
         var decisions = List.of(new ReplayHand.Decision(0, 1,
-            List.of(new Action(Action.Type.DISCARD, draw), new Action(Action.Type.DISCARD, self.getFirst())), 0));
+            List.of(new RiichiAction(RiichiAction.Type.DISCARD, draw), new RiichiAction(RiichiAction.Type.DISCARD, self.getFirst())), 0));
         var replayHand = new ReplayHand(1, 0, 0, 0, 0, List.of(25000,25000,25000,25000), hands,
             List.of(tile(Tile.WHITE, 0)), wall, events, decisions, seats, List.of(), "exhaustive",
             List.of(0,0,0,0), List.of(tile(Tile.WHITE,0)), List.of(), List.of(), List.of());

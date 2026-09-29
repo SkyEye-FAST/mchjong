@@ -73,16 +73,16 @@ final class McrWall {
         return tile;
     }
 
-    int draw(PlayerState player) { return draw(player, false); }
+    int draw(McrPlayerState player) { return draw(player, false); }
 
-    int replace(PlayerState player) { return draw(player, true); }
+    int replace(McrPlayerState player) { return draw(player, true); }
 
     /**
      * Moves flowers directly to their owner's flower area. The caller receives an ordinary
      * tile to add to the concealed hand, or ABSENT on exhaustion. Collected flowers remain
      * owned even when the wall ends during replacement; no dead wall is reserved.
      */
-    private int draw(PlayerState player, boolean fromTail) {
+    private int draw(McrPlayerState player, boolean fromTail) {
         Objects.requireNonNull(player);
         while (remaining() > 0) {
             int tile = takeRaw(fromTail ? nextReplacementSlot() : nextDrawSlot());
@@ -94,7 +94,7 @@ final class McrWall {
     }
 
     /** Call after placing the returned ordinary tile in its destination zone. */
-    void assertConservation(PlayerState... players) {
+    void assertConservation(McrPlayerState... players) {
         var seen = new HashSet<Integer>();
         for (int tile : tiles) {
             if (tile != Tile.ABSENT && !seen.add(tile)) throw new IllegalStateException("Duplicated wall tile: " + tile);
@@ -104,8 +104,7 @@ final class McrWall {
                 throw new IllegalStateException("Only flowers belong in the flower area");
             if (player.hand.stream().anyMatch(Tile::isFlower)
                 || player.melds.stream().flatMap(meld -> meld.tiles().stream()).anyMatch(Tile::isFlower)
-                || player.river.stream().anyMatch(discard -> Tile.isFlower(discard.tile()))
-                || player.norths.stream().anyMatch(Tile::isFlower))
+                || player.river.stream().anyMatch(discard -> Tile.isFlower(discard.tile())))
                 throw new IllegalStateException("Flowers belong only in the flower area");
             for (int tile : player.physicalTiles()) {
                 if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);

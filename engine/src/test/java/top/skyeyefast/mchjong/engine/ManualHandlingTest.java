@@ -21,8 +21,8 @@ class ManualHandlingTest {
         return session.game();
     }
 
-    private static void act(RiichiGame game, int seat, Action.Type action) {
-        TableView view = game.view(id(seat));
+    private static void act(RiichiGame game, int seat, RiichiAction.Type action) {
+        RiichiView view = game.view(id(seat));
         int index = RiichiGame.indexOf(view.actions(), action);
         assertTrue(index >= 0, () -> action + " is not offered in " + game.phase());
         assertTrue(game.act(id(seat), view.decision(), index));
@@ -38,7 +38,7 @@ class ManualHandlingTest {
     }
 
     private static void concealed(RiichiGame game) {
-        TableView view = game.view(null);
+        RiichiView view = game.view(null);
         assertTrue(view.actions().isEmpty());
         assertTrue(view.seats().stream().filter(seat -> !seat.exposed()).flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == Tile.HIDDEN));
         assertFalse(JSON.toJson(view).contains("suppliedTiles"));
@@ -50,13 +50,13 @@ class ManualHandlingTest {
             RiichiGame game = game(rules, true);
             assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
-            assertEquals(new TableView.Handling(0, -1, 0, 0, 0, false), game.view(null).handling());
+            assertEquals(new RiichiView.Handling(0, -1, 0, 0, 0, false), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
-            act(game, game.dealer, Action.Type.SHUFFLE);
+            act(game, game.dealer, RiichiAction.Type.SHUFFLE);
             assertTrue(game.view(null).wall().stream().allMatch(tile -> tile == Tile.ABSENT));
             for (int seat = 0; seat < rules.players(); seat++) {
-                act(game, seat, Action.Type.BUILD_WALL);
+                act(game, seat, RiichiAction.Type.BUILD_WALL);
                 assertEquals((1 << (seat + 1)) - 1, game.view(null).handling().builtWalls());
                 assertEquals((seat + 1L) * Tile.set(rules.sanma()).size() / rules.players(),
                     game.view(null).wall().stream().filter(tile -> tile == Tile.HIDDEN).count());
@@ -70,18 +70,18 @@ class ManualHandlingTest {
                 assertEquals(game.wall.cursor, handling.sourceSlot());
                 assertEquals(packet < 3 * rules.players() ? 4 : 1, handling.packetSize());
                 assertEquals(handling, game.view(null).handling(), "Spectators see positions, never private tile identities");
-                act(game, game.turn, Action.Type.TAKE_PACKET);
+                act(game, game.turn, RiichiAction.Type.TAKE_PACKET);
                 game = reload(game);
                 concealed(game);
             }
             assertEquals(RiichiGame.Phase.DRAW, game.phase());
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(13, game.players[seat].hand.size());
             int remaining = game.wall.remaining();
-            assertEquals(new TableView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1,
+            assertEquals(new RiichiView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1,
                 game.wall.diceOne, game.wall.diceTwo, false), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
             assertEquals(remaining, game.wall.remaining(), "Human draw must not happen on a timeout");
-            act(game, game.dealer, Action.Type.DRAW);
+            act(game, game.dealer, RiichiAction.Type.DRAW);
             assertEquals(14, game.players[game.dealer].hand.size());
             assertEquals(remaining - 1, game.wall.remaining());
             assertEquals(RiichiGame.Phase.TURN, game.phase());
@@ -98,14 +98,14 @@ class ManualHandlingTest {
     @Test void concurrentWallBuildingPreservesOtherSeatsDecisionAndRejectsDuplicateBuilds() {
         for (RiichiPreset rules : MODES) {
             RiichiGame game = game(rules, true);
-            act(game, game.dealer, Action.Type.SHUFFLE);
+            act(game, game.dealer, RiichiAction.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
             for (int seat = 1; seat < rules.players(); seat++) {
                 long revision = game.view(id(0)).revision();
-                act(game, seat, Action.Type.BUILD_WALL);
+                act(game, seat, RiichiAction.Type.BUILD_WALL);
                 assertEquals(token, game.view(id(0)).decision(), "Another wall cancelled the pending local drag");
                 assertTrue(game.view(id(0)).revision() > revision);
-                assertEquals(List.of(new Action(Action.Type.BUILD_WALL)), game.view(id(0)).actions());
+                assertEquals(List.of(new RiichiAction(RiichiAction.Type.BUILD_WALL)), game.view(id(0)).actions());
                 assertTrue(game.view(id(seat)).actions().isEmpty());
                 assertFalse(game.act(id(seat), token, 0), "The shared token must not allow rebuilding a completed wall");
                 game = reload(game);
@@ -124,7 +124,7 @@ class ManualHandlingTest {
     @Test void practiceBotsCanBuildWhileThePlayerHoldsTheirWall() {
         for (RiichiPreset rules : MODES) {
             RiichiGame game = game(rules, true);
-            act(game, game.dealer, Action.Type.SHUFFLE);
+            act(game, game.dealer, RiichiAction.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
             for (int seat = 1; seat < rules.players(); seat++) game.players[seat].member.bot = true;
             for (int tick = 0; tick < 48; tick++) { game.tick(); game.validate(); }
@@ -152,10 +152,10 @@ class ManualHandlingTest {
 
     @Test void replacementDrawWaitsForPlayerAndSurvivesReload() {
         RiichiGame game = game(RiichiPreset.MAHJONG_SOUL_3, true);
-        act(game, game.dealer, Action.Type.SHUFFLE);
-        for (int seat = 0; seat < game.rules.players(); seat++) act(game, seat, Action.Type.BUILD_WALL);
+        act(game, game.dealer, RiichiAction.Type.SHUFFLE);
+        for (int seat = 0; seat < game.rules.players(); seat++) act(game, seat, RiichiAction.Type.BUILD_WALL);
         openWall(game);
-        for (int packet = 0; packet < 4 * game.rules.players(); packet++) act(game, game.turn, Action.Type.TAKE_PACKET);
+        for (int packet = 0; packet < 4 * game.rules.players(); packet++) act(game, game.turn, RiichiAction.Type.TAKE_PACKET);
         game.draw(game.dealer, true, true);
         int remaining = game.wall.remaining();
         assertEquals(0, game.wall.replacementIndex);
@@ -171,7 +171,7 @@ class ManualHandlingTest {
         assertEquals(game.wall.tiles.size() - 1, source.sourceSlot());
         assertEquals(1, source.packetSize());
         int replacementTile = game.wall.tiles.get(source.sourceSlot());
-        act(game, game.dealer, Action.Type.DRAW);
+        act(game, game.dealer, RiichiAction.Type.DRAW);
         assertTrue(game.players[game.dealer].hand.contains(replacementTile));
         assertEquals(1, game.wall.replacementIndex);
         assertEquals(remaining - 1, game.wall.remaining());
@@ -200,10 +200,10 @@ class ManualHandlingTest {
         assertEquals(0, game.wall.cursor);
         for (int seat = 0; seat < game.rules.players(); seat++) if (seat != game.dealer)
             assertTrue(game.view(id(seat)).actions().isEmpty());
-        act(game, game.dealer, Action.Type.PICK_UP_DICE);
+        act(game, game.dealer, RiichiAction.Type.PICK_UP_DICE);
         assertTrue(game.view(null).handling().diceHeld());
         reload(game);
-        act(game, game.dealer, Action.Type.ROLL_DICE);
+        act(game, game.dealer, RiichiAction.Type.ROLL_DICE);
         assertFalse(game.view(null).handling().diceHeld());
         assertTrue(game.wall.diceOne >= 1 && game.wall.diceOne <= 6);
         assertTrue(game.wall.diceTwo >= 1 && game.wall.diceTwo <= 6);

@@ -2,16 +2,16 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 
 /** Public tile presentation only; this never creates or changes an actionable server choice. */
 public record ActionPreview(List<Integer> tiles, Meld meld) {
     public ActionPreview { tiles = List.copyOf(tiles); }
 
-    public static ActionPreview of(TableView view, Action action) {
+    public static ActionPreview of(RiichiView view, RiichiAction action) {
         var tiles = new ArrayList<Integer>();
         Meld meld = null;
         switch (action.type()) {
@@ -44,14 +44,14 @@ public record ActionPreview(List<Integer> tiles, Meld meld) {
         return new ActionPreview(tiles, meld);
     }
 
-    public static boolean consumesHand(Action action) {
+    public static boolean consumesHand(RiichiAction action) {
         return switch (action.type()) {
             case CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, RIICHI, NUKI -> true;
             default -> false;
         };
     }
 
-    public static boolean hasGuide(Action action) {
+    public static boolean hasGuide(RiichiAction action) {
         return switch (action.type()) {
             case CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, RIICHI, NUKI, RON, TSUMO -> true;
             default -> false;

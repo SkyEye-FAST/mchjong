@@ -142,7 +142,7 @@ final class PointStickMenuSmoke {
         check(game.join(recipient, "Recipient", 1), "Recipient could not join the payment fixture");
         table.equipment().drawer(0).setItem(8, stick(1000, 3));
         SeatingFixtures.startPositioned(game, player.getUUID(), recipient);
-        check(game.view(null).phase() == top.skyeyefast.mchjong.engine.TableView.Phase.SHUFFLE, "Payment fixture did not start");
+        check(game.view(null).phase() == top.skyeyefast.mchjong.engine.RiichiView.Phase.SHUFFLE, "Payment fixture did not start");
         var menu = open(player, table, 0);
         check(menu.clickMenuButton(player, 1) && menu.recipientSide() == 1, "Recipient row could not be selected");
         var initial = new CompoundTag();

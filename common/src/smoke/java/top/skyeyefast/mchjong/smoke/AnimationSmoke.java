@@ -13,11 +13,11 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -27,7 +27,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 final class AnimationSmoke {
     private final boolean layoutsOnly;
     private final DepositVisualSmoke deposits = new DepositVisualSmoke();
-    private TableView fixture;
+    private RiichiView fixture;
     private int ticks;
     private int windowWidth, windowHeight, guiScale;
     private boolean originalHighlight;
@@ -38,19 +38,19 @@ final class AnimationSmoke {
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
         if (fixture == null) {
-            TableView base = table.clientView();
+            RiichiView base = table.clientView();
             TableSettings.get().animations = true;
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < base.rules().players(); seat++) seats.add(seat(seat == 0
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN), List.of(), List.of(), false));
             var wall = new ArrayList<>(Collections.nCopies(136, Tile.HIDDEN));
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
             // Display-only fixtures must not be replaced by live game heartbeats during the captures.
-            fixture = new TableView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
-                base.rules(), TableView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
+            fixture = new RiichiView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
+                base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
                 "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             if (layoutsOnly) {
-                var previous = new TableView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
+                var previous = new RiichiView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
                     fixture.rules(), fixture.phase(), 0, 0, 0, 0, 0, 0, fixture.remaining(), fixture.wallBreak(), fixture.wall(),
                     null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(),
                     fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
@@ -163,7 +163,7 @@ final class AnimationSmoke {
                 int first = 40 + side * 20;
                 var river = IntStream.range(first, first + (side % 2 == 0 ? 24 : 12))
                     .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
-                seats.set(side, new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
+                seats.set(side, new RiichiView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
                     player.points(), player.hand(), player.drawn(), player.melds(), river,
                     side == 0 ? List.of(120) : side == 1 ? List.of(121, 122, 123) : List.of(),
                     player.riichi(), player.exposed(), player.doubleRiichi()));
@@ -171,13 +171,13 @@ final class AnimationSmoke {
             var right = seats.get(1);
             var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
-            seats.set(1, new TableView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
+            seats.set(1, new RiichiView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
                 List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false, right.doubleRiichi()));
             int leftSeat = seats.size() - 1;
             var left = seats.get(leftSeat);
             var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(108 + i * 4, 109 + i * 4, 110 + i * 4, 111 + i * 4), 2, 108 + i * 4)).toList();
-            seats.set(leftSeat, new TableView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
+            seats.set(leftSeat, new RiichiView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -211,7 +211,7 @@ final class AnimationSmoke {
         if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
         if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
-            var calls = new Action.Type[]{Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN};
+            var calls = new RiichiAction.Type[]{RiichiAction.Type.CHI, RiichiAction.Type.PON, RiichiAction.Type.OPEN_KAN};
             InputSmoke.verifyCallFocus(client, table, calls[(ticks - 328) / 12]);
         }
         if (ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
@@ -258,19 +258,19 @@ final class AnimationSmoke {
         return false;
     }
 
-    private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall) {
+    private void update(MahjongTableBlockEntity table, List<RiichiView.Seat> seats, List<Integer> wall) {
         update(table, seats, wall, 0);
     }
 
-    private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall, int turn) {
-        fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
-            TableView.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
+    private void update(MahjongTableBlockEntity table, List<RiichiView.Seat> seats, List<Integer> wall, int turn) {
+        fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
+            RiichiView.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
             seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         table.acceptView(fixture);
     }
 
-    private static TableView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
-        return new TableView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
+    private static RiichiView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
+        return new RiichiView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
             hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false, false);
     }
 

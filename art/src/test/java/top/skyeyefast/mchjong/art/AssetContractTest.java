@@ -13,7 +13,7 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -81,8 +81,8 @@ class AssetContractTest {
             }
             for (RiichiPreset rules : RiichiPreset.values())
                 assertTrue(translated.has(rules.translationKey()), language + ": " + rules);
-            for (Action.Type action : Action.Type.values())
-                assertTrue(translated.has(new Action(action).translationKey()), language + ": " + action);
+            for (RiichiAction.Type action : RiichiAction.Type.values())
+                assertTrue(translated.has(new RiichiAction(action).translationKey()), language + ": " + action);
         }
     }
 

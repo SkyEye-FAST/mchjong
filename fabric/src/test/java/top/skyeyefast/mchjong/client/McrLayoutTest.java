@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.phys.AABB;
 import org.junit.jupiter.api.Test;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.McrDiscard;
 import top.skyeyefast.mchjong.engine.FlowerTile;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrView;
@@ -43,8 +43,8 @@ class McrLayoutTest {
     }
 
     @Test void riversCompactCalledHistoryIntoCenteredSixColumns() {
-        var history = new ArrayList<Discard>();
-        for (int i = 0; i < 26; i++) history.add(new Discard(i, false, i == 2 || i == 7, false));
+        var history = new ArrayList<McrDiscard>();
+        for (int i = 0; i < 26; i++) history.add(new McrDiscard(i, i == 2 || i == 7, false));
         var parts = McrRiverLayout.of(history);
         assertEquals(24, parts.size());
         for (int index = 0; index < parts.size(); index++) {
@@ -118,7 +118,7 @@ class McrLayoutTest {
             }
             seats.add(new McrView.Seat(Tile.EAST + seat, 0,
                 seat == 0 ? List.of(16, 17) : List.of(Tile.HIDDEN, Tile.HIDDEN), seat == 0 ? 17 : Tile.HIDDEN,
-                melds, List.of(new Discard(seat * 32 + 18, false, false, false)),
+                melds, List.of(new McrDiscard(seat * 32 + 18, false, false)),
                 seat == 0 ? java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList() : List.of(), false));
         }
         var view = new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, 0, base.opening(),

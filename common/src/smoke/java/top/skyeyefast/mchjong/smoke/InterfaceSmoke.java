@@ -169,7 +169,7 @@ final class InterfaceSmoke {
             require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            client.setScreen(new TableClockScreen(settingsParent, table.clientView().timeControl()));
+            client.setScreen(new TableClockScreen(settingsParent, table.clientRiichiSettings().timeControl()));
             settingsStage = 5; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);

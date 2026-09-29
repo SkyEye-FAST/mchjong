@@ -2,15 +2,15 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiAction;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Physical action targets derived exclusively from the recipient's public snapshot. */
 public final class TableHandling {
     private TableHandling() {}
 
-    public static boolean physical(TableView view, Action action) {
+    public static boolean physical(RiichiView view, RiichiAction action) {
         if (view.handling() == null) return false;
         return switch (action.type()) {
             case SHUFFLE, BUILD_WALL, TAKE_PACKET, DRAW, NEXT -> true;
@@ -18,13 +18,13 @@ public final class TableHandling {
         };
     }
 
-    public static int action(TableView view) {
+    public static int action(RiichiView view) {
         if (view == null || view.viewerSeat() < 0 || view.exitVote() != null) return -1;
         for (int i = 0; i < view.actions().size(); i++) if (physical(view, view.actions().get(i))) return i;
         return -1;
     }
 
-    public static boolean source(TableView view, TableScene.Piece piece) {
+    public static boolean source(RiichiView view, TableScene.Piece piece) {
         int index = action(view);
         if (index < 0 || piece == null) return false;
         return switch (view.actions().get(index).type()) {
@@ -38,7 +38,7 @@ public final class TableHandling {
         };
     }
 
-    public static TableScene.Piece source(TableView view, List<TableScene.Piece> scene) {
+    public static TableScene.Piece source(RiichiView view, List<TableScene.Piece> scene) {
         return scene.stream().filter(piece -> source(view, piece))
             .max(java.util.Comparator.comparingDouble(piece -> piece.position().y)).orElse(null);
     }
@@ -53,7 +53,7 @@ public final class TableHandling {
         return piece.position().add(normal.scale(edge)).add(0, height / 2 - .001, 0);
     }
 
-    public static Vec3 destination(TableView view) {
+    public static Vec3 destination(RiichiView view) {
         int index = action(view);
         if (index < 0) return Vec3.ZERO;
         double z = switch (view.actions().get(index).type()) {
@@ -64,23 +64,23 @@ public final class TableHandling {
         return TableGeometry.orient(0, TableGeometry.FELT_Y, z, view.viewerSeat());
     }
 
-    public static boolean completes(TableView view, Vec3 start, Vec3 end) {
+    public static boolean completes(RiichiView view, Vec3 start, Vec3 end) {
         int index = action(view);
         if (index < 0 || start == null || end == null || !Double.isFinite(start.x) || !Double.isFinite(start.z)
             || !Double.isFinite(end.x) || !Double.isFinite(end.z) || start.distanceToSqr(end) < .0144) return false;
         Vec3 local = TableGeometry.orient(end.x, end.y, end.z, (4 - view.viewerSeat()) % 4);
-        Action.Type type = view.actions().get(index).type();
-        if (type == Action.Type.SHUFFLE)
+        RiichiAction.Type type = view.actions().get(index).type();
+        if (type == RiichiAction.Type.SHUFFLE)
             return Math.abs(end.x) < .8 && Math.abs(end.z) < .8 && start.distanceToSqr(end) >= .09;
-        if (type == Action.Type.NEXT) return Math.abs(end.x) < .65 && Math.abs(end.z) < .65;
+        if (type == RiichiAction.Type.NEXT) return Math.abs(end.x) < .65 && Math.abs(end.z) < .65;
         return Math.abs(local.x) <= 1.05 && Math.abs(local.z - destinationLocalZ(type)) <= .30;
     }
 
-    private static double destinationLocalZ(Action.Type type) {
-        return type == Action.Type.BUILD_WALL ? TableScene.WALL_Z : TableScene.HAND_Z;
+    private static double destinationLocalZ(RiichiAction.Type type) {
+        return type == RiichiAction.Type.BUILD_WALL ? TableScene.WALL_Z : TableScene.HAND_Z;
     }
 
-    public static String help(TableView view) {
+    public static String help(RiichiView view) {
         return switch (view.phase()) {
             case SHUFFLE -> "handling.mchjong.shuffle";
             case BUILD_WALL -> "handling.mchjong.wall";

@@ -13,7 +13,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -135,11 +135,12 @@ class ServerIntegrationTest {
             }
             RiichiSession game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
-                game.roomView(null), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
+                game.roomView(null), game.roomSettings(),
+                new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
                 top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
-            TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);
+            RiichiView decoded = TableNetworking.JSON.fromJson(payload.view(), RiichiView.class);
             assertTrue(decoded.actions().isEmpty());
             assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == -1));
             assertFalse(payload.view().contains("\"seed\""));

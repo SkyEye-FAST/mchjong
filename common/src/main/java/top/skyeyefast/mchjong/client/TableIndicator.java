@@ -9,7 +9,7 @@ import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** A machine display with large seven-segment scores, localized wind letters and seat lamps. */
@@ -27,12 +27,12 @@ public final class TableIndicator {
         return DIGITS[character - '0'];
     }
 
-    public static void render(TableView view, PoseStack pose, MultiBufferSource buffers, int light) {
+    public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
         TileMesh.box(pose, vertices, -.265f, (float) TableGeometry.FELT_Y, -.265f,
             .265f, SURFACE - .004f, .265f, 0xff243c40, light);
         TileMesh.box(pose, vertices, -.25f, SURFACE - .004f, -.25f, .25f, SURFACE, .25f, 0xff101e23, light);
-        boolean playing = view.phase() == TableView.Phase.TURN || view.phase() == TableView.Phase.REACTION;
+        boolean playing = view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));

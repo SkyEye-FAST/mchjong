@@ -131,7 +131,7 @@ class McrPersistenceTest {
             .getAsJsonObject("action").addProperty("type", "NEXT"));
         rejected(json, object -> object.getAsJsonArray("replies").add(object.getAsJsonArray("replies").get(0).deepCopy()));
         for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"),
-            json.replace("\"format\":3", "\"format\":3,\"format\":3"),
+            json.replace("\"format\":4", "\"format\":4,\"format\":4"),
             "{\"nested\":" + "[".repeat(1000) + "0" + "]".repeat(1000) + "}", " ".repeat(65_537)})
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(invalid));
         assertEquals(json, McrCodec.save(game));

@@ -10,7 +10,7 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.RiichiAction.Type.*;
 
 /** One already-started Riichi match. The owning session provides room authority. */
 public final class RiichiGame {
@@ -31,7 +31,7 @@ public final class RiichiGame {
     final boolean openHands;
     int handNumber;
     int age;
-    PlayerState[] players = new PlayerState[4];
+    RiichiPlayerState[] players = new RiichiPlayerState[4];
     Phase phase;
     int dealer;
     int initialDealer;
@@ -42,7 +42,7 @@ public final class RiichiGame {
     Wall wall;
     int lastTile = Tile.ABSENT;
     int lastFrom = -1;
-    Action pending;
+    RiichiAction pending;
     boolean uninterrupted = true;
     boolean fourKanAbort;
     boolean dealerRepeats;
@@ -50,8 +50,8 @@ public final class RiichiGame {
     boolean abortResult;
     boolean[] exposed = new boolean[4];
     int[] replies = {-1, -1, -1, -1};
-    List<List<Action>> options = new ArrayList<>();
-    List<TableView.Win> wins = new ArrayList<>();
+    List<List<RiichiAction>> options = new ArrayList<>();
+    List<RiichiView.Win> wins = new ArrayList<>();
     private long presentedDecision = -1;
     private int presentedSeats;
     private long skippedDecision = -1;
@@ -68,12 +68,12 @@ public final class RiichiGame {
     ManualHandling handling = new ManualHandling();
 
     /** Detached private match state; room identity and configuration live in RiichiSession.State. */
-    public record State(int handNumber, int age, List<PlayerState.Saved> players, Phase phase,
+    public record State(int handNumber, int age, List<RiichiPlayerState.Saved> players, Phase phase,
                         int dealer, int initialDealer, int round, int honba, int riichiSticks, int turn,
-                        Wall.Saved wall, int lastTile, int lastFrom, Action pending,
+                        Wall.Saved wall, int lastTile, int lastFrom, RiichiAction pending,
                         boolean uninterrupted, boolean fourKanAbort, boolean dealerRepeats,
                         boolean drawResult, boolean abortResult, List<Boolean> exposed,
-                        List<Integer> replies, List<List<Action>> options, List<TableView.Win> wins,
+                        List<Integer> replies, List<List<RiichiAction>> options, List<RiichiView.Win> wins,
                         long presentedDecision, int presentedSeats, long skippedDecision, int skippedSeats,
                         String result, List<Integer> deltas, List<Double> finalScores,
                         List<Double> finalUma, List<Integer> finalRanks, ReplayMatch replay,
@@ -104,7 +104,7 @@ public final class RiichiGame {
 
     public State save() {
         validate();
-        return new State(handNumber, age, Arrays.stream(players).map(PlayerState::save).toList(), phase,
+        return new State(handNumber, age, Arrays.stream(players).map(RiichiPlayerState::save).toList(), phase,
             dealer, initialDealer, round, honba, riichiSticks, turn, wall == null ? null : wall.save(),
             lastTile, lastFrom, pending, uninterrupted, fourKanAbort, dealerRepeats, drawResult, abortResult,
             java.util.stream.IntStream.range(0, 4).mapToObj(i -> exposed[i]).toList(),
@@ -118,9 +118,9 @@ public final class RiichiGame {
         var game = new RiichiGame(session);
         game.handNumber = state.handNumber();
         game.age = state.age();
-        game.players = new PlayerState[4];
+        game.players = new RiichiPlayerState[4];
         for (int seat = 0; seat < 4; seat++)
-            game.players[seat] = PlayerState.restore(state.players().get(seat), session.participants[seat]);
+            game.players[seat] = RiichiPlayerState.restore(state.players().get(seat), session.participants[seat]);
         game.phase = state.phase();
         game.dealer = state.dealer();
         game.initialDealer = state.initialDealer();
@@ -172,7 +172,7 @@ public final class RiichiGame {
         playerHandVisibility = session.playerHandVisibility;
         openHands = session.openHands;
         for (int i = 0; i < 4; i++) {
-            players[i] = new PlayerState(session.participants[i]);
+            players[i] = new RiichiPlayerState(session.participants[i]);
             players[i].points = rules.startingPoints();
             options.add(List.of());
         }
@@ -192,7 +192,7 @@ public final class RiichiGame {
         if (recorder == null || manual || age <= 0 || session.exitVote != null
             || !session.hasSeatedHuman() || externalBotId(seat) == null
             || phase != Phase.TURN && phase != Phase.REACTION || actions(seat).isEmpty()) return null;
-        PlayerState player = players[seat];
+        RiichiPlayerState player = players[seat];
         var pons = player.melds.stream().filter(meld -> meld.type() == Meld.Type.TRIPLET)
             .map(meld -> new BotPosition.Pon("PON", meld.tiles())).toList();
         return new BotPosition(1, player.member.externalBotId, rules.preset(), tableId, sessionId,
@@ -272,15 +272,15 @@ public final class RiichiGame {
         for (int seat = 0; seat < 4; seat++) players[seat].member = session.participants[seat];
     }
 
-    List<Action> actions(int seat) {
+    List<RiichiAction> actions(int seat) {
         if (seat < 0 || seat >= rules.players() || players[seat].member.id == null || session.exitVote != null) return List.of();
         if (ManualHandling.active(phase)) return handling.actions(this, seat);
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
             if (players[seat].member.bot) return List.of();
-            var actions = new ArrayList<Action>();
-            if (manual && !players[seat].member.ready) actions.add(new Action(NEXT));
-            actions.add(new Action(SKIP_SETTLEMENT));
-            if (!wins.isEmpty() && age < ScoreAnnouncements.maximumTicks(wins)) actions.add(new Action(SETTLEMENT_DONE));
+            var actions = new ArrayList<RiichiAction>();
+            if (manual && !players[seat].member.ready) actions.add(new RiichiAction(NEXT));
+            actions.add(new RiichiAction(SKIP_SETTLEMENT));
+            if (!wins.isEmpty() && age < ScoreAnnouncements.maximumTicks(wins)) actions.add(new RiichiAction(SETTLEMENT_DONE));
             return List.copyOf(actions);
         }
         if (phase == Phase.REACTION && replies[seat] >= 0) return List.of();
@@ -293,7 +293,7 @@ public final class RiichiGame {
         if (seat < 0 || expectedDecision != session.decision) return false;
         var legal = actions(seat);
         if (actionIndex < 0 || actionIndex >= legal.size()) return false;
-        Action action = legal.get(actionIndex);
+        RiichiAction action = legal.get(actionIndex);
         if (ManualHandling.active(phase)) {
             handling.act(this, seat, action);
             return true;
@@ -339,7 +339,7 @@ public final class RiichiGame {
         }
         switch (action.type()) {
             case DISCARD, RIICHI -> discard(seat, action);
-            case TSUMO -> Settlement.win(this, List.of(seat), -1, players[seat].drawn);
+            case TSUMO -> RiichiSettlement.win(this, List.of(seat), -1, players[seat].drawn);
             case CLOSED_KAN, ADDED_KAN, NUKI -> {
                 pending = action;
                 lastTile = action.type() == CLOSED_KAN && action.tiles().contains(players[seat].drawn)
@@ -348,7 +348,7 @@ public final class RiichiGame {
                 if (recorder != null) recorder.declare(this, seat, action);
                 beginReactions();
             }
-            case ABORT_NINE -> Settlement.abort(this, "nine_terminals");
+            case ABORT_NINE -> RiichiSettlement.abort(this, "nine_terminals");
             default -> throw new IllegalStateException("Invalid turn action");
         }
         return true;
@@ -372,7 +372,7 @@ public final class RiichiGame {
 
     private void beginFinalStandings() {
         age = ScoreAnnouncements.maximumTicks(wins);
-        for (PlayerState player : players) player.member.ready = false;
+        for (RiichiPlayerState player : players) player.member.ready = false;
         session.decision++;
         session.revision++;
     }
@@ -380,7 +380,7 @@ public final class RiichiGame {
     void startMatch() {
         initialDealer = dealer = 0;
         round = honba = riichiSticks = 0;
-        for (PlayerState player : players) player.points = rules.startingPoints();
+        for (RiichiPlayerState player : players) player.points = rules.startingPoints();
         long now = System.currentTimeMillis();
         replay = session.worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.member.id, player.member.name, player.member.bot)).toList(),
@@ -389,7 +389,7 @@ public final class RiichiGame {
     }
 
     void startHand() {
-        for (PlayerState player : players) player.resetHand();
+        for (RiichiPlayerState player : players) player.resetHand();
         handNumber++;
         recorder = null;
         uninterrupted = true;
@@ -438,7 +438,7 @@ public final class RiichiGame {
 
     void draw(int seat, boolean replacement, boolean kan) {
         if ((!replacement && wall.remaining() == 0) || (replacement && !wall.canReplace())) {
-            Settlement.exhaustive(this);
+            RiichiSettlement.exhaustive(this);
             return;
         }
         turn = seat;
@@ -453,7 +453,7 @@ public final class RiichiGame {
 
     void drawNow(int seat, boolean replacement, boolean kan) {
         turn = seat;
-        PlayerState player = players[seat];
+        RiichiPlayerState player = players[seat];
         if (rules.callsClearFuriten()) player.temporaryFuriten = false;
         player.drawn = replacement ? wall.replace() : wall.draw();
         player.hand.add(player.drawn);
@@ -465,8 +465,8 @@ public final class RiichiGame {
         options.set(seat, LegalActions.onTurn(this, seat));
     }
 
-    private void discard(int seat, Action action) {
-        PlayerState player = players[seat];
+    private void discard(int seat, RiichiAction action) {
+        RiichiPlayerState player = players[seat];
         int tile = action.tiles().get(0);
         boolean declare = action.type() == RIICHI;
         if (!player.hand.remove(Integer.valueOf(tile))) throw new IllegalStateException("Missing discarded tile");
@@ -533,23 +533,23 @@ public final class RiichiGame {
     private void resolveReactions() {
         List<Integer> winners = new ArrayList<>();
         int caller = -1;
-        Action call = null;
+        RiichiAction call = null;
         for (int offset = 1; offset < rules.players(); offset++) {
             int seat = (lastFrom + offset) % rules.players();
             if (replies[seat] < 0) continue;
-            Action choice = options.get(seat).get(replies[seat]);
+            RiichiAction choice = options.get(seat).get(replies[seat]);
             if (choice.type() == RON) winners.add(seat);
             if (choice.type() == CHI || choice.type() == PON || choice.type() == OPEN_KAN) {
                 if (call == null || call.type() == CHI && choice.type() != CHI) { call = choice; caller = seat; }
             }
         }
         if (!winners.isEmpty()) {
-            if (rules.tripleRonDraw() && winners.size() == 3) Settlement.abort(this, "triple_ron");
-            else Settlement.win(this, rules.headBump() ? List.of(winners.get(0)) : winners, lastFrom, lastTile);
+            if (rules.tripleRonDraw() && winners.size() == 3) RiichiSettlement.abort(this, "triple_ron");
+            else RiichiSettlement.win(this, rules.headBump() ? List.of(winners.get(0)) : winners, lastFrom, lastTile);
             return;
         }
         if (pending != null) { completeDeclaration(); return; }
-        PlayerState source = players[lastFrom];
+        RiichiPlayerState source = players[lastFrom];
         if (source.pendingRiichi) {
             source.pendingRiichi = false;
             source.riichi = true;
@@ -559,15 +559,15 @@ public final class RiichiGame {
             if (recorder != null) recorder.riichi(lastFrom);
         }
         if (rules.abortiveDraws()) {
-            if (fourKanAbort) { Settlement.abort(this, "four_kans"); return; }
+            if (fourKanAbort) { RiichiSettlement.abort(this, "four_kans"); return; }
             if (!rules.sanma() && Arrays.stream(players).allMatch(p -> p.riichi)) {
-                Settlement.abort(this, "four_riichi"); return;
+                RiichiSettlement.abort(this, "four_riichi"); return;
             }
             if (!rules.sanma() && uninterrupted && Arrays.stream(players).allMatch(p -> p.river.size() == 1)) {
                 int kind = Tile.kind(players[0].river.get(0).tile());
                 if (kind >= Tile.EAST && kind <= Tile.NORTH && Arrays.stream(players)
                     .allMatch(p -> Tile.kind(p.river.get(0).tile()) == kind)) {
-                    Settlement.abort(this, "four_winds"); return;
+                    RiichiSettlement.abort(this, "four_winds"); return;
                 }
             }
         }
@@ -577,13 +577,13 @@ public final class RiichiGame {
 
     private void interrupt() {
         uninterrupted = false;
-        for (PlayerState player : players) { player.ippatsu = false; player.firstTurn = false; }
+        for (RiichiPlayerState player : players) { player.ippatsu = false; player.firstTurn = false; }
     }
 
-    private void completeCall(int seat, Action action) {
-        PlayerState player = players[seat];
+    private void completeCall(int seat, RiichiAction action) {
+        RiichiPlayerState player = players[seat];
         if (rules.callsClearFuriten()) player.temporaryFuriten = false;
-        PlayerState source = players[lastFrom];
+        RiichiPlayerState source = players[lastFrom];
         Discard discarded = source.river.get(source.river.size() - 1);
         source.river.set(source.river.size() - 1, discarded.markCalled());
         if (discarded.riichi()) source.nextDiscardSideways = true;
@@ -612,8 +612,8 @@ public final class RiichiGame {
 
     private void completeDeclaration() {
         int seat = lastFrom;
-        PlayerState player = players[seat];
-        Action action = pending;
+        RiichiPlayerState player = players[seat];
+        RiichiAction action = pending;
         pending = null;
         if (recorder != null) recorder.confirmDeclaration();
         interrupt();
@@ -655,7 +655,7 @@ public final class RiichiGame {
     }
 
     private void recordPao(int seat, int from, boolean openKan) {
-        PlayerState player = players[seat];
+        RiichiPlayerState player = players[seat];
         long dragons = player.melds.stream().filter(m -> m.kind() >= Tile.WHITE).count();
         long winds = player.melds.stream().filter(m -> m.kind() >= Tile.EAST && m.kind() <= Tile.NORTH).count();
         if (dragons == 3 && player.dragonPao < 0) player.dragonPao = from;
@@ -692,7 +692,7 @@ public final class RiichiGame {
         }
         if (age >= AUTO_ACTION_TICKS) {
             for (int seat = 0; seat < rules.players(); seat++) {
-                PlayerState player = players[seat];
+                RiichiPlayerState player = players[seat];
                 if (player.member.id == null || player.member.bot) continue;
                 var legal = actions(seat);
                 int index;
@@ -738,13 +738,13 @@ public final class RiichiGame {
             && !actions(seat).isEmpty();
     }
 
-    static int disconnectedAction(Phase phase, int drawn, List<Action> legal) {
+    static int disconnectedAction(Phase phase, int drawn, List<RiichiAction> legal) {
         int win = indexOf(legal, phase == Phase.REACTION ? RON : TSUMO);
         if (win >= 0) return win;
         if (phase == Phase.REACTION) return indexOf(legal, PASS);
         if (phase == Phase.TURN) {
             for (int i = 0; i < legal.size(); i++) {
-                Action action = legal.get(i);
+                RiichiAction action = legal.get(i);
                 if (action.type() == DISCARD && action.tiles().get(0) == drawn) return i;
             }
             int discard = indexOf(legal, DISCARD);
@@ -754,24 +754,24 @@ public final class RiichiGame {
             ? legal.isEmpty() ? -1 : 0 : -1;
     }
 
-    static int indexOf(List<Action> actions, Action.Type type) {
+    static int indexOf(List<RiichiAction> actions, RiichiAction.Type type) {
         for (int i = 0; i < actions.size(); i++) if (actions.get(i).type() == type) return i;
         return -1;
     }
 
-    public TableView view(UUID authorizedViewer) {
+    public RiichiView view(UUID authorizedViewer) {
         return view(session.seatOf(authorizedViewer), SpectatorHandVisibility.HIDDEN);
     }
 
-    public TableView spectatorView(SpectatorHandVisibility visibility) {
+    public RiichiView spectatorView(SpectatorHandVisibility visibility) {
         return view(-1, Objects.requireNonNull(visibility));
     }
 
-    private TableView view(int viewer, SpectatorHandVisibility spectatorVisibility) {
-        var seats = new ArrayList<TableView.Seat>();
-        TableView.Focus focus = null;
+    private RiichiView view(int viewer, SpectatorHandVisibility spectatorVisibility) {
+        var seats = new ArrayList<RiichiView.Seat>();
+        RiichiView.Focus focus = null;
         for (int seat = 0; seat < rules.players(); seat++) {
-            PlayerState player = players[seat];
+            RiichiPlayerState player = players[seat];
             boolean visible = openHands || seat == viewer || exposed[seat]
                 || viewer >= 0 && playerHandVisibility.reveals(players[viewer].riichi)
                 || viewer < 0 && spectatorVisibility.reveals(playerHandVisibility);
@@ -780,10 +780,10 @@ public final class RiichiGame {
             if (player.drawn >= 0 && (seat != viewer || manual || player.autoPlay.sort())
                 && hand.remove(Integer.valueOf(player.drawn))) hand.add(player.drawn);
             if (phase == Phase.REACTION && seat == lastFrom)
-                focus = new TableView.Focus(seat, lastTile, pending != null,
+                focus = new RiichiView.Focus(seat, lastTile, pending != null,
                     pending == null ? player.river.size() - 1 : hand.indexOf(lastTile));
             if (!visible) hand.replaceAll(tile -> Tile.HIDDEN);
-            seats.add(new TableView.Seat(player.member.entityBot, player.member.name, player.member.id != null, player.member.bot, player.member.ready, player.points,
+            seats.add(new RiichiView.Seat(player.member.entityBot, player.member.name, player.member.id != null, player.member.bot, player.member.ready, player.points,
                 hand, player.drawn < 0 ? Tile.ABSENT : visible ? player.drawn : Tile.HIDDEN,
                 player.melds, player.river, player.norths, player.riichi, exposed[seat], player.doubleRiichi));
         }
@@ -791,7 +791,7 @@ public final class RiichiGame {
         var clocks = new ArrayList<TimeControl.Clock>();
         for (int seat = 0; seat < rules.players(); seat++)
             clocks.add(new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], clockActive(seat)));
-        return new TableView(tableId, session.revision, session.decision, handNumber, rules, TableView.Phase.valueOf(phase.name()), viewer, dealer, round, honba, riichiSticks,
+        return new RiichiView(tableId, session.revision, session.decision, handNumber, rules, RiichiView.Phase.valueOf(phase.name()), viewer, dealer, round, honba, riichiSticks,
             turn, wall == null ? 0 : wall.remaining(), wall == null ? 0 : wall.breakOffset,
             wall == null ? List.of() : manual ? handling.wallView(this, ura) : wall.publicTiles(ura), focus, seats, actions(viewer), wins, result, deltas, finalScores, finalUma,
             timeControl, clocks, finalRanks, playerHandVisibility, openHands, session.exitVote, manual ? handling.view(this) : null,
@@ -830,14 +830,14 @@ public final class RiichiGame {
             || round < 0 || round >= rules.scheduledRounds() + rules.players() || honba < 0 || riichiSticks < 0) {
             throw new IllegalStateException("Invalid saved table");
         }
-        for (PlayerState player : players) {
+        for (RiichiPlayerState player : players) {
             Objects.requireNonNull(player.autoPlay);
         }
         if (wall == null) return;
         Set<Integer> seen = new HashSet<>();
         for (int tile : wall.tiles) if (tile >= 0 && !seen.add(tile)) throw new IllegalStateException("Duplicated wall tile");
         for (int seat = 0; seat < rules.players(); seat++) {
-            PlayerState player = players[seat];
+            RiichiPlayerState player = players[seat];
             for (int tile : player.physicalTiles()) if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
         }
         var supplied = suppliedTiles;

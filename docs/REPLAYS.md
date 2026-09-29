@@ -63,13 +63,13 @@ and nothing is uploaded to an external service.
 
 ## Privacy and persistence
 
-The live table continues to send only recipient-redacted `TableView` snapshots.
+The live table continues to send only recipient-redacted `RiichiView` snapshots.
 An independent server recorder stores initial hands, actual committed actions and
 the legal choices selected at each game decision. Only when a hand settles is an
 immutable `ReplayHand` appended to its match. At that point the completed hand also
 seals its initial physical wall order, break position, replacement slots and
 indicator slots for post-game review. The replay archive never contains an active
-hand or RNG seed, and no complete future wall is sent through the live `TableView`
+hand or RNG seed, and no complete future wall is sent through the live `RiichiView`
 channel. The server's normal private world save still retains the wall state needed
 to resume an unfinished game after a restart.
 

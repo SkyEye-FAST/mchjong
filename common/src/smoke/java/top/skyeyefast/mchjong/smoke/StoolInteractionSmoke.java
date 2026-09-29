@@ -70,8 +70,10 @@ final class StoolInteractionSmoke {
         } else if (step == 7) {
             require(client.player.getVehicle() instanceof SeatEntity && client.screen instanceof TableScreen,
                 "Ordinary stool click did not mount and open controls");
-            var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(center)).clientView();
-            require(view != null && view.viewerSeat() == 0, "Ordinary stool click opened a spectator view");
+            var table = (MahjongTableBlockEntity) client.level.getBlockEntity(center);
+            var room = table.clientRoom();
+            require(room != null && room.viewerSeat() == 0 && table.clientView() == null,
+                "Ordinary stool click opened an incorrect lobby view");
             var id = client.player.getUUID();
             verification = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);

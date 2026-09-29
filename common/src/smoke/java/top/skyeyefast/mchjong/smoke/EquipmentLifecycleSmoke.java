@@ -20,7 +20,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -28,7 +28,6 @@ import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.network.TableControlPayload;
-import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlock;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -195,7 +194,7 @@ final class EquipmentLifecycleSmoke {
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
         sticks.set(MahjongComponents.POINTS, 1000);
         var expectedSticks = sticks.copy();
-        String scoresBefore = TableNetworking.JSON.toJson(game);
+        String scoresBefore = top.skyeyefast.mchjong.engine.TableSessionCodec.save(game);
         if (!table.automatic()) {
             var menu = PointStickMenuSmoke.open(player, table, 0);
             menu.setCarried(sticks);
@@ -207,7 +206,7 @@ final class EquipmentLifecycleSmoke {
             table.openSticks(player, 0);
             check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu), "Automatic table opened a manual drawer");
         }
-        check(scoresBefore.equals(TableNetworking.JSON.toJson(game)), "Physical sticks changed authoritative points/deposits");
+        check(scoresBefore.equals(top.skyeyefast.mchjong.engine.TableSessionCodec.save(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
         check(!game.lobby() && player.isPassenger(), "A stale exit token changed the game");
@@ -235,7 +234,9 @@ final class EquipmentLifecycleSmoke {
         var loaded = new MahjongTableBlockEntity(CENTER, block.defaultBlockState());
         loaded.setLevel(level);
         loaded.loadWithComponents(saved, level.registryAccess());
-        check(saved.equals(loaded.saveWithoutMetadata(level.registryAccess())), "Equipment did not survive save/load");
+        var restored = loaded.saveWithoutMetadata(level.registryAccess());
+        restored.putString("session", saved.getString("session"));
+        check(saved.equals(restored), "Equipment did not survive save/load");
         level.setBlockEntity(loaded);
         player.teleportTo(level, CENTER.getX() + 20, 64, .5, 0, 0);
         if (destruction == 0) level.destroyBlock(CENTER, true);

@@ -25,7 +25,7 @@ import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -352,8 +352,8 @@ public final class TableClientSmoke {
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining calls and continuing early abortive draws through the actual UI.
-                if (view.phase() == TableView.Phase.HAND_END) return;
-                if (view.phase() == TableView.Phase.REACTION) {
+                if (view.phase() == RiichiView.Phase.HAND_END) return;
+                if (view.phase() == RiichiView.Phase.REACTION) {
                     var key = "action.mchjong.pass";
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                             && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()) && widget.active) {
@@ -362,7 +362,7 @@ public final class TableClientSmoke {
                     }
                     return;
                 }
-                if (view.phase() != TableView.Phase.TURN || view.turn() != view.viewerSeat()) return;
+                if (view.phase() != RiichiView.Phase.TURN || view.turn() != view.viewerSeat()) return;
                 require(view.seats().get(view.viewerSeat()).hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
                 if (seatingOnly || settlementOnly) {
@@ -426,6 +426,8 @@ public final class TableClientSmoke {
                 require(fixtureSeat.join(), "Display-only fixture did not obtain its fixed seat");
                 require(client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0,
                     "Fixed display seat has not reached the client");
+                var table = (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER);
+                if (table.clientView() == null || table.clientView().viewerSeat() != 0) return;
                 step = seatingOnly ? 11 : 10; entered = ticks;
             } else if (step == 10 && settlementSmoke.tick(client, (MahjongTableBlockEntity) client.level.getBlockEntity(CENTER), output)) {
                 if (settlementOnly) {
@@ -530,7 +532,9 @@ public final class TableClientSmoke {
             require(game != null && game.requestExit(id) && game.lobby(), "Cannot finish live smoke match");
             player.stopRiding();
             table.sit(player, 0);
-            return game.seatOf(id) == 0 && player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0;
+            SeatingFixtures.startPositioned(game, id);
+            return game.seatOf(id) == 0 && game.game() != null
+                && player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0;
         });
         step = 28; entered = ticks;
     }

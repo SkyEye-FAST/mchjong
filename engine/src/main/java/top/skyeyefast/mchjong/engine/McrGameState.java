@@ -9,7 +9,7 @@ public record McrGameState(int format, long seed, long revision, long decision, 
                            int claimTile, int claimFrom, McrAction pendingKong, boolean drawWallLast,
                            McrWinContext.KongWin drawKong, List<Reply> replies,
                            List<McrSettlement.Penalty> penalties, McrSettlement.Result result) {
-    public static final int FORMAT = 3;
+    public static final int FORMAT = 4;
 
     public McrGameState {
         if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR save format: " + format);
@@ -51,7 +51,7 @@ public record McrGameState(int format, long seed, long revision, long decision, 
     }
 
     /** Only MCR's shared physical zones and MCR-specific stop-win state are persisted. */
-    public record Player(List<Integer> hand, List<Meld> melds, List<Discard> river, List<Integer> flowers,
+    public record Player(List<Integer> hand, List<Meld> melds, List<McrDiscard> river, List<Integer> flowers,
                          int drawn, int points, boolean winForbidden) {
         public Player {
             hand = List.copyOf(hand);

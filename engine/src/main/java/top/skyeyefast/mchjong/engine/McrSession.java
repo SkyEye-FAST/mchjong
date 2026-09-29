@@ -109,7 +109,7 @@ public final class McrSession extends TableSession {
 
     /** A private envelope, not a wire view. No mount state or reusable request incarnation is persisted. */
     public record State(int format, TableSession.State room, List<Integer> stock, int confirmed, McrGameState game) {
-        public static final int FORMAT = 4;
+        public static final int FORMAT = 5;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");

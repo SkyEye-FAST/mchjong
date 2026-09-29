@@ -8,11 +8,11 @@ class TenpaiHints {
     private var hand: List<Int> = emptyList()
     private var melds: List<Meld> = emptyList()
     private val byDiscard = HashMap<Int, Set<Int>>()
-    private var snapshot: TableView? = null
+    private var snapshot: RiichiView? = null
     private var lastDiscard = Tile.ABSENT
     private var result: List<Wait> = emptyList()
 
-    fun waits(view: TableView, discard: Int): List<Wait> {
+    fun waits(view: RiichiView, discard: Int): List<Wait> {
         if (snapshot !== view || lastDiscard != discard) {
             result = calculate(view, discard)
             snapshot = view
@@ -21,10 +21,10 @@ class TenpaiHints {
         return result
     }
 
-    private fun calculate(view: TableView, discard: Int): List<Wait> {
+    private fun calculate(view: RiichiView, discard: Int): List<Wait> {
         if (
             view.viewerSeat() !in view.seats().indices || view.exitVote() != null ||
-            view.phase() != TableView.Phase.TURN && view.phase() != TableView.Phase.REACTION && view.phase() != TableView.Phase.DRAW
+            view.phase() != RiichiView.Phase.TURN && view.phase() != RiichiView.Phase.REACTION && view.phase() != RiichiView.Phase.DRAW
         ) return emptyList()
         val self = view.seats()[view.viewerSeat()]
         val size = self.hand().size + self.melds().size * 3
@@ -33,7 +33,7 @@ class TenpaiHints {
         if (size == 14) {
             if (
                 discard !in self.hand() || view.actions().none {
-                    (it.type() == Action.Type.DISCARD || it.type() == Action.Type.RIICHI) && discard in it.tiles()
+                    (it.type() == RiichiAction.Type.DISCARD || it.type() == RiichiAction.Type.RIICHI) && discard in it.tiles()
                 }
             ) return emptyList()
             key = Tile.kind(discard)

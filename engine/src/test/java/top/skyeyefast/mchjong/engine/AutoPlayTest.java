@@ -6,7 +6,7 @@ import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
-import static top.skyeyefast.mchjong.engine.Action.Type.*;
+import static top.skyeyefast.mchjong.engine.RiichiAction.Type.*;
 
 class AutoPlayTest {
     private static void ticks(RiichiGame game, int count) { for (int i = 0; i < count; i++) game.tick(); }
@@ -75,38 +75,38 @@ class AutoPlayTest {
 
     @Test void winAndKanOpportunitiesAreNotSilentlyThrownAway() {
         AutoPlay all = new AutoPlay(true, true, true, true, true);
-        List<Action> tsumo = List.of(new Action(DISCARD, 7), new Action(TSUMO));
-        List<Action> ron = List.of(new Action(PASS), new Action(PON, List.of(1, 2)), new Action(RON));
+        List<RiichiAction> tsumo = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(TSUMO));
+        List<RiichiAction> ron = List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)), new RiichiAction(RON));
         assertEquals(1, all.action(RiichiGame.Phase.TURN, true, 7, tsumo));
         assertEquals(2, all.action(RiichiGame.Phase.REACTION, false, -1, ron));
         assertEquals(-1, all.with(AutoPlay.Option.WIN, false).action(RiichiGame.Phase.TURN, true, 7, tsumo));
         assertEquals(-1, all.with(AutoPlay.Option.WIN, false).action(RiichiGame.Phase.REACTION, false, -1, ron));
-        assertEquals(0, all.action(RiichiGame.Phase.REACTION, false, -1, List.of(new Action(PASS), new Action(PON, List.of(1, 2)))));
-        List<Action> kan = List.of(new Action(DISCARD, 7), new Action(CLOSED_KAN, List.of(4, 5, 6, 7)));
+        assertEquals(0, all.action(RiichiGame.Phase.REACTION, false, -1, List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)))));
+        List<RiichiAction> kan = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(CLOSED_KAN, List.of(4, 5, 6, 7)));
         assertEquals(-1, AutoPlay.DEFAULT.action(RiichiGame.Phase.TURN, true, 7, kan));
         assertEquals(0, all.action(RiichiGame.Phase.TURN, true, 7, kan));
-        List<Action> north = List.of(new Action(DISCARD, 7), new Action(NUKI, 7));
+        List<RiichiAction> north = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(NUKI, 7));
         assertEquals(1, all.action(RiichiGame.Phase.TURN, true, 7, north));
         assertEquals(-1, all.with(AutoPlay.Option.KITA, false).action(RiichiGame.Phase.TURN, true, 7, north));
         var kitaOnly = AutoPlay.DEFAULT.with(AutoPlay.Option.KITA, true);
         assertEquals(1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, north));
-        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new Action(DISCARD, 7))));
+        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(DISCARD, 7))));
         assertEquals(-1, kitaOnly.action(RiichiGame.Phase.REACTION, false, 7, north));
-        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new Action(NUKI, 7), new Action(TSUMO))));
-        assertEquals(1, all.action(RiichiGame.Phase.TURN, false, 7, List.of(new Action(NUKI, 7), new Action(TSUMO))));
-        assertEquals(-1, all.action(RiichiGame.Phase.TURN, false, Tile.ABSENT, List.of(new Action(DISCARD, 7))));
-        assertEquals(-1, all.action(RiichiGame.Phase.HAND_END, false, -1, List.of(new Action(NEXT))));
+        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
+        assertEquals(1, all.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
+        assertEquals(-1, all.action(RiichiGame.Phase.TURN, false, Tile.ABSENT, List.of(new RiichiAction(DISCARD, 7))));
+        assertEquals(-1, all.action(RiichiGame.Phase.HAND_END, false, -1, List.of(new RiichiAction(NEXT))));
     }
 
     @Test void disconnectedTrusteeUsesNetworkMahjongDefaultsWithoutChangingPreferencesOrClocks() {
         assertEquals(1, RiichiGame.disconnectedAction(RiichiGame.Phase.TURN, 7,
-            List.of(new Action(CLOSED_KAN, List.of(4, 5, 6, 7)), new Action(TSUMO))));
+            List.of(new RiichiAction(CLOSED_KAN, List.of(4, 5, 6, 7)), new RiichiAction(TSUMO))));
         assertEquals(2, RiichiGame.disconnectedAction(RiichiGame.Phase.REACTION, Tile.ABSENT,
-            List.of(new Action(PASS), new Action(PON, List.of(1, 2)), new Action(RON))));
+            List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)), new RiichiAction(RON))));
         assertEquals(0, RiichiGame.disconnectedAction(RiichiGame.Phase.REACTION, Tile.ABSENT,
-            List.of(new Action(PASS), new Action(PON, List.of(1, 2)))));
+            List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)))));
         assertEquals(1, RiichiGame.disconnectedAction(RiichiGame.Phase.TURN, 7,
-            List.of(new Action(DISCARD, 3), new Action(DISCARD, 7), new Action(RIICHI, 3))));
+            List.of(new RiichiAction(DISCARD, 3), new RiichiAction(DISCARD, 7), new RiichiAction(RIICHI, 3))));
 
         RiichiGame game = GameLifecycleTest.started(RiichiPreset.TENHOU_4, 37);
         int seat = game.turn, drawn = game.players[seat].drawn;
@@ -175,9 +175,9 @@ class AutoPlayTest {
     @Test void preferencesAreSeatPrivateAndDoNotResetClocksOrInvalidateOtherResponders() {
         RiichiGame game = GameLifecycleTest.started(RiichiPreset.TENHOU_4, 51);
         game.newDecision(RiichiGame.Phase.REACTION);
-        game.options.set(1, List.of(new Action(PASS), new Action(PON, List.of(1, 2))));
-        game.options.set(2, List.of(new Action(PASS)));
-        game.options.set(3, List.of(new Action(PASS)));
+        game.options.set(1, List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2))));
+        game.options.set(2, List.of(new RiichiAction(PASS)));
+        game.options.set(3, List.of(new RiichiAction(PASS)));
         long decision = game.decision();
         ticks(game, 5);
         int[] move = game.moveTicks.clone(), reserve = game.reserveTicks.clone();
@@ -282,13 +282,13 @@ class AutoPlayTest {
         UUID host = UUID.randomUUID();
         game.join(host, "Host", 0);
         game.configureEquipment(true, List.of());
-        assertEquals(new TimeControl(120, 30), game.view(host).timeControl());
-        assertNull(game.view(host).autoPlay());
+        assertEquals(new TimeControl(120, 30), game.roomSettings().timeControl());
+        assertNull(game.view(host));
         assertNull(game.game());
         var custom = new TimeControl(240, 60);
         assertTrue(game.configureClock(host, custom));
         game.configureEquipment(true, Tile.set(false));
-        assertEquals(custom, game.view(host).timeControl());
+        assertEquals(custom, game.roomSettings().timeControl());
         game.validate();
     }
 

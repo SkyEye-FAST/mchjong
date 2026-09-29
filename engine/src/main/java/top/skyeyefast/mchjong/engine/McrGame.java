@@ -12,8 +12,7 @@ public final class McrGame {
 
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final long seed;
-    // Only the physical zones, drawn-tile alias and points are shared with Riichi.
-    private final PlayerState[] players = {new PlayerState(), new PlayerState(), new PlayerState(), new PlayerState()};
+    private final McrPlayerState[] players = {new McrPlayerState(), new McrPlayerState(), new McrPlayerState(), new McrPlayerState()};
     private final boolean[] winForbidden = new boolean[4];
     private final List<McrSettlement.Penalty> penalties = new ArrayList<>();
     private final McrAction[] replies = new McrAction[4];
@@ -119,7 +118,7 @@ public final class McrGame {
     public boolean winForbidden(int seat) { checkSeat(seat); return winForbidden[seat]; }
     public List<Integer> hand(int seat) { return List.copyOf(player(seat).hand); }
     public List<Meld> melds(int seat) { return List.copyOf(player(seat).melds); }
-    public List<Discard> river(int seat) { return List.copyOf(player(seat).river); }
+    public List<McrDiscard> river(int seat) { return List.copyOf(player(seat).river); }
     public List<Integer> flowers(int seat) { return List.copyOf(player(seat).flowers); }
     public McrSettlement.Result result() { return result; }
     public List<McrSettlement.Penalty> penalties() { return List.copyOf(penalties); }
@@ -227,7 +226,7 @@ public final class McrGame {
     private void discard(int tile) {
         var player = players[turn];
         player.hand.remove(Integer.valueOf(tile));
-        player.river.add(new Discard(tile, false, false, tile == player.drawn));
+        player.river.add(new McrDiscard(tile, false, tile == player.drawn));
         player.drawn = Tile.ABSENT;
         claimTile = tile;
         claimFrom = turn;
@@ -417,7 +416,7 @@ public final class McrGame {
         return null;
     }
 
-    PlayerState player(int seat) { checkSeat(seat); return players[seat]; }
+    McrPlayerState player(int seat) { checkSeat(seat); return players[seat]; }
     int claimFrom() { return claimFrom; }
     int claimTile() { return claimTile; }
     boolean robbingKong() { return pendingKong != null; }
@@ -475,8 +474,6 @@ public final class McrGame {
                 || result instanceof McrSettlement.Win win && win.fromSeat() == -1 && win.winner() == seat;
             if (player.drawn != Tile.ABSENT && (!canHaveDraw || !player.hand.contains(player.drawn)))
                 throw new IllegalStateException("Invalid drawn-tile ownership");
-            if (!player.norths.isEmpty() || player.river.stream().anyMatch(Discard::riichi))
-                throw new IllegalStateException("Riichi state in an MCR hand");
             var concealed = new ArrayList<>(player.hand);
             if (extra) concealed.remove(concealed.size() - 1);
             McrHandAnalyzer.validateHand(concealed, player.melds, seat);

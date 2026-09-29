@@ -8,15 +8,18 @@ import top.skyeyefast.mchjong.engine.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableLayoutTest {
-    private static TableView start(RiichiPreset rules) {
-        UUID player = new UUID(10, 15);
+    private static RiichiView start(RiichiPreset rules) {
+        return startSession(rules, new UUID(10, 15)).view(null);
+    }
+
+    static RiichiSession startSession(RiichiPreset rules, UUID player) {
         var game = new RiichiSession(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(player, "Test", 0));
         act(game, player, RoomAction.Type.FILL_BOTS);
         act(game, player, RoomAction.Type.BEGIN_SEATING);
         assertTrue(game.join(player, "Test", game.seatOf(player)));
         act(game, player, RoomAction.Type.READY);
-        return game.view(null);
+        return game;
     }
 
     private static void act(RiichiSession game, UUID player, RoomAction.Type type) {
@@ -28,11 +31,11 @@ class TableLayoutTest {
         fail("Missing " + type);
     }
 
-    private static TableView replace(TableView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {
+    private static RiichiView replace(RiichiView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {
         var seats = new ArrayList<>(v.seats());
-        seats.set(0, new TableView.Seat(false, "Test", true, false, false, 25000, hand, Tile.ABSENT,
+        seats.set(0, new RiichiView.Seat(false, "Test", true, false, false, 25000, hand, Tile.ABSENT,
             melds, river, List.of(), false, false, false));
-        return new TableView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
+        return new RiichiView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
             seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
     }
@@ -42,7 +45,7 @@ class TableLayoutTest {
         for (var mode : PlayerHandVisibility.values()) {
             var game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 15);
             assertTrue(game.join(id, "Host", 0));
-            if (mode != PlayerHandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.view(id).decision(), mode));
+            if (mode != PlayerHandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.roomView(id).decision(), mode));
             act(game, id, RoomAction.Type.FILL_BOTS);
             act(game, id, RoomAction.Type.BEGIN_SEATING);
             assertTrue(game.join(id, "Host", game.seatOf(id)));
@@ -56,7 +59,7 @@ class TableLayoutTest {
         }
         var open = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 16);
         assertTrue(open.join(id, "Host", 0));
-        assertTrue(open.configureOpenHands(id, open.view(id).decision(), true));
+        assertTrue(open.configureOpenHands(id, open.roomView(id).decision(), true));
         act(open, id, RoomAction.Type.FILL_BOTS);
         act(open, id, RoomAction.Type.BEGIN_SEATING);
         assertTrue(open.join(id, "Host", open.seatOf(id)));
@@ -123,16 +126,16 @@ class TableLayoutTest {
     @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
         for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) for (int count = 0; count <= 4; count++) {
             var v = start(rules);
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
                 var melds = new ArrayList<Meld>();
                 for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_QUAD,
                     List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
                 var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
-                seats.add(new TableView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
+                seats.add(new RiichiView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
                     melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true, false));
             }
-            var view = new TableView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
+            var view = new RiichiView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
                 seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());

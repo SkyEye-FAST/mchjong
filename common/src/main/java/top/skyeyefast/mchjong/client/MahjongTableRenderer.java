@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderer;
 import net.minecraft.client.renderer.blockentity.BlockEntityRendererProvider;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTableBlockEntity> {
@@ -16,7 +16,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
 
     @Override public void render(MahjongTableBlockEntity table, float partialTick, PoseStack pose,
             MultiBufferSource buffers, int light, int overlay) {
-        TableView view = table.clientView();
+        RiichiView view = table.clientView();
         pose.pushPose();
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, light, table.wood(), table.equipment().hasCloth() ? table.equipment().clothColor() : null,

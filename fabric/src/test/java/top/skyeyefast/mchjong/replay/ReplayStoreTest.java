@@ -14,7 +14,7 @@ import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayWall;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import static org.junit.jupiter.api.Assertions.*;
 
@@ -27,12 +27,12 @@ class ReplayStoreTest {
         var players = List.of(new ReplayMatch.Participant(owner, "Owner", false),
             new ReplayMatch.Participant(other, "Guest", false), new ReplayMatch.Participant(bot, "Bot", true));
         List<List<Integer>> dealt = new ArrayList<>();
-        List<TableView.Seat> seats = new ArrayList<>();
+        List<RiichiView.Seat> seats = new ArrayList<>();
         var available = Tile.set(true);
         for (int seat = 0; seat < 3; seat++) {
             var tiles = List.copyOf(available.subList(seat * 13, (seat + 1) * 13));
             dealt.add(tiles);
-            seats.add(new TableView.Seat(false, players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
+            seats.add(new RiichiView.Seat(false, players.get(seat).name(), true, seat == 2, false, 35000, tiles, Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false, false));
         }
         var wall = wall();

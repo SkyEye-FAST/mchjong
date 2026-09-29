@@ -5,7 +5,7 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BotScenarioTest {
-    private static Action choose(RiichiGame game) {
+    private static RiichiAction choose(RiichiGame game) {
         var view = game.view(game.players[0].member.id);
         return view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
     }
@@ -31,7 +31,7 @@ class BotScenarioTest {
         assertEquals(Tile.SOUTH, Tile.kind(chosen.tiles().getFirst()), "Dead waits still receive noten payments");
         game.players[0].hand.remove(chosen.tiles().getFirst());
         assertTrue(LegalActions.formalTenpai(game, 0));
-        Settlement.exhaustive(game);
+        RiichiSettlement.exhaustive(game);
         assertEquals(3000, game.deltas.getFirst());
     }
 
@@ -60,7 +60,7 @@ class BotScenarioTest {
         assertTrue(Tile.terminalOrHonor(Tile.kind(chosen.tiles().getFirst())));
         game.players[0].hand.remove(chosen.tiles().getFirst());
         game.players[0].river.add(new Discard(chosen.tiles().getFirst(), false, false, false));
-        Settlement.exhaustive(game);
+        RiichiSettlement.exhaustive(game);
         assertEquals("nagashi", game.result);
         assertEquals(12000, game.deltas.getFirst());
 
@@ -85,7 +85,7 @@ class BotScenarioTest {
         var chosen = choose(game);
         assertEquals(Tile.SOUTH, Tile.kind(chosen.tiles().getFirst()));
         game.players[0].hand.remove(chosen.tiles().getFirst());
-        Settlement.exhaustive(game);
+        RiichiSettlement.exhaustive(game);
         assertEquals(2000, game.deltas.getFirst());
     }
 

@@ -11,9 +11,9 @@ import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.world.MahjongSounds;
@@ -22,7 +22,8 @@ import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Client-local effects and optional recorded voices. Never invokes a speech backend. */
 public final class TableAudio {
-    private static final Map<MahjongTableBlockEntity, TableView> VIEWS = new WeakHashMap<>();
+    private static final Map<MahjongTableBlockEntity, RiichiView> VIEWS = new WeakHashMap<>();
+    private static final Map<MahjongTableBlockEntity, java.util.UUID> LOBBIES = new WeakHashMap<>();
     private static final ArrayList<Speech> SPEECH = new ArrayList<>();
     private record Speech(long tick, String voice, net.minecraft.resources.ResourceLocation preset, boolean remote) {}
     private static ClientLevel level;
@@ -40,6 +41,7 @@ public final class TableAudio {
         var current = Minecraft.getInstance().level;
         if (current == level) return;
         VIEWS.clear();
+        LOBBIES.clear();
         SPEECH.clear();
         VoicePresets.stop();
         result = null;
@@ -49,9 +51,19 @@ public final class TableAudio {
         level = current;
     }
 
-    public static void accept(MahjongTableBlockEntity table, TableView view) {
+    public static void accept(MahjongTableBlockEntity table, RiichiView view) {
         world();
-        TableView before = VIEWS.put(table, view);
+        if (view == null) {
+            VIEWS.remove(table);
+            var room = table.clientRoom();
+            if (room != null && room.lobby()) LOBBIES.put(table, room.tableId());
+            SPEECH.clear();
+            VoicePresets.stop();
+            result = null;
+            return;
+        }
+        RiichiView before = VIEWS.put(table, view);
+        boolean fromLobby = view.tableId().equals(LOBBIES.remove(table));
         if (before != null && (!before.tableId().equals(view.tableId()) || before.viewerSeat() != view.viewerSeat())) {
             SPEECH.clear();
         }
@@ -71,7 +83,7 @@ public final class TableAudio {
             VoicePresets.stop();
             result = null;
         }
-        for (var cue : TableAudioEvents.between(before, view)) {
+        for (var cue : fromLobby && before == null ? TableAudioEvents.opening(view) : TableAudioEvents.between(before, view)) {
             if (cue.sound() != null) effect(cue.sound(), table.getBlockPos(), cue.delay());
             if (cue.voice() != null && Minecraft.getInstance().player != null
                     && Minecraft.getInstance().player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table.getBlockPos())) <= 256)
@@ -101,7 +113,7 @@ public final class TableAudio {
         if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
             var view = table.clientView();
             if (result != null && result.matches(view)) {
-                boolean finalStage = view.phase() == TableView.Phase.MATCH_END
+                boolean finalStage = view.phase() == RiichiView.Phase.MATCH_END
                     && view.settlementTicks() <= RiichiGame.SETTLEMENT_TICKS;
                 if (finalStage && !finalVoicePlayed) {
                     finishResult();
@@ -113,7 +125,7 @@ public final class TableAudio {
                     if (event != null) speak(speech(view, view.wins().get(result.winner()).seat(), event, ticks));
                 }
                 if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
-                    for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.SETTLEMENT_DONE) {
+                    for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == RiichiAction.Type.SETTLEMENT_DONE) {
                         client.getConnection().send(PayloadPackets.serverbound(
                             new TableActionPayload(table.getBlockPos(), view.tableId(), view.decision(), i)));
                         acknowledged = view.decision();
@@ -147,7 +159,7 @@ public final class TableAudio {
         speak(new Speech(ticks, event, TableSettings.get().voicePreset, false));
     }
 
-    private static Speech speech(TableView view, int seat, String event, long tick) {
+    private static Speech speech(RiichiView view, int seat, String event, long tick) {
         boolean remote = seat >= 0 && seat != view.viewerSeat();
         var preset = remote ? VoicePresets.forPlayer(view.seats().get(seat).name()) : TableSettings.get().voicePreset;
         return new Speech(tick, event, preset, remote);
@@ -168,7 +180,7 @@ public final class TableAudio {
         VoicePresets.stop();
     }
 
-    public static ResultReadout result(TableView view) {
+    public static ResultReadout result(RiichiView view) {
         return result != null && result.matches(view) ? result : null;
     }
 
