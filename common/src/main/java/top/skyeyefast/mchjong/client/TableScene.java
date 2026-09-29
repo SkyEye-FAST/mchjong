@@ -98,11 +98,11 @@ public final class TableScene {
                 }
                 meldRight = start;
             }
-            // Two short rows leave the adjacent player's right-corner melds clear as well.
+            // The north run shares the hand rail, clear of the adjacent player's right-corner melds.
             double northLeft = -HAND_Z + RIVER_ROW / 2 + .035;
             for (int i = 0; i < player.norths().size(); i++)
-                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, northLeft + (i % 2 + .5) * RIVER_STEP,
-                    top + FLAT_CENTER * TILE_SCALE, HAND_Z - i / 2 * RIVER_ROW, 0, true, false));
+                result.add(piece(player.norths().get(i), seat, Area.NORTH, i, northLeft + (i + .5) * RIVER_STEP,
+                    top + FLAT_CENTER * TILE_SCALE, HAND_Z, 0, true, false));
         }
         int size = view.wall().size();
         if (size > 0) {

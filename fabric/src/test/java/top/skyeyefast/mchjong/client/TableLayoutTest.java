@@ -136,6 +136,11 @@ class TableLayoutTest {
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
                 seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles());
             var pieces = new ArrayList<>(TableScene.build(view).stream().filter(p -> p.area() != TableScene.Area.WALL).toList());
+            for (var north : pieces.stream().filter(p -> p.area() == TableScene.Area.NORTH).toList()) {
+                var local = top.skyeyefast.mchjong.world.TableGeometry.orient(north.position().x, north.position().y,
+                    north.position().z, (4 - north.seat()) % 4);
+                assertEquals(TableScene.HAND_Z, local.z, 1e-8, "Extracted norths share the hand rail");
+            }
             for (int i = 0; i < v.wall().size(); i++) pieces.add(TableScene.wallPiece(v, i, true));
             for (int i = 0; i < pieces.size(); i++) {
                 var bounds = bounds(pieces.get(i));

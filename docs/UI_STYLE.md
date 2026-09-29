@@ -71,9 +71,10 @@ and turns face up after the hand ends. Open quads and
 supplemented triplets use the same four-tile flat row; the fourth tile does
 not form a separate raised or forward stack.
 
-Flowers lie face up in a separate four-column, two-row area on the owner's left,
-just toward the center from the melds, using short rows like extracted norths.
-They never occupy standing-hand, meld or river positions.
+Flowers lie face up in one continuous run between the left-corner melds and the
+hand, at the same depth. Their actual width participates in hand clearance.
+When a full flower run and kongs fill the rail, scale that seat's hand, melds and
+flowers together just enough to fit between the neighboring corners.
 The scene preserves the source indices in its pieces and does not reconstruct
 hidden tile identities to arrange them. `McrView` remains the visibility authority.
 
@@ -244,7 +245,8 @@ The viewer's
 large interactive hand and raised tile rack form the foreground along the bottom. Place
 the viewer's melds flat on the table at the right-hand corner, with the earliest
 meld nearest that corner and later melds extending left. Apply the same owner-relative
-right-end rule to every seat.
+right-end rule to every seat. Extracted norths lie in one run at the left end
+of the same outer rail as the melds.
 Place immersive automation in a compact centered horizontal strip below the hand, with
 action buttons above the right end of the hand, clear of the central rivers and table melds. Seated automation keeps its
 side column. Three-player layouts place both opponents at the sides and do not reserve
@@ -390,8 +392,8 @@ entire remaining space. Do not
 reserve absent melds or drawn tiles. Drawing can move a constrained hand only as
 far as the additional tile requires; an unconstrained hand does not move.
 Account for open/closed/added kans and sideways calls without moving
-earlier melds away from their corner. Extracted norths form two short rows on
-the left, with clearance from the adjacent player's right-corner melds.
+earlier melds away from their corner. Extracted norths form one continuous run on
+the left at the hand's depth, with clearance from the adjacent player's right-corner melds.
 
 Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called

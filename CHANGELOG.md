@@ -13,6 +13,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Keep MCR flowers and Riichi extracted norths in the same horizontal rail as hands and melds.
 - Center MCR rivers like Riichi, place melds and flowers on the owner's left, and omit walls from the immersive MCR table.
 - Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.
 - Highlight every tile in a wall pickup packet and allow grabbing any tile in that packet.

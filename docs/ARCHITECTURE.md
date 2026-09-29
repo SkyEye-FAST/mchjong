@@ -563,7 +563,7 @@ occupied width, including sideways calls and front-aligned added kans, to both h
 clearance and meld rendering.
 The table reserves a 3 x 3 footprint with dimensions shared by placement,
 colliders, furniture and seating. Melds are anchored at the owner's right-hand
-corner, beside the hand at the same depth. Extracted norths form two short rows
+corner, beside the hand at the same depth. Extracted norths form one continuous run
 to the left of the hand, clear of the adjacent player's corner. The table's
 two-slot inventory stores up to two cases inside the furniture.
 Rivers pack six visible tiles per row, close gaps

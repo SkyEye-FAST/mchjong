@@ -23,19 +23,17 @@ public final class McrTableScene {
     public static final double WALL_OFFSET = WALL_LENGTH / 2 - WALL_Z + HEIGHT / 2 + (WALL_STEP - WIDTH);
     public static final double HAND_Z = TableScene.HAND_Z;
     public static final double MELD_LEFT = -TableScene.MELD_RIGHT;
-    public static final double FLOWER_LEFT = MELD_LEFT;
-    public static final double FLOWER_Z = HAND_Z - HEIGHT - DEPTH / 4;
     public static final double RIVER_Z = TableScene.RIVER_Z;
     public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
-                        float yaw, boolean flat, boolean back) {}
+                        float yaw, boolean flat, boolean back, float scale) {}
 
     private McrTableScene() {}
 
     private static Piece piece(int tile, int seat, Area area, int index, double x, double height, double z,
-                               float yaw, boolean flat, boolean back) {
+                               float yaw, boolean flat, boolean back, float scale) {
         return new Piece(tile, seat, area, index, TableGeometry.orient(x, TableGeometry.FELT_Y + height, z, seat),
-            seat * 90 + yaw, flat, back);
+            seat * 90 + yaw, flat, back, scale);
     }
 
     public static Piece wallPiece(int physicalSlot, int tile) {
@@ -43,7 +41,7 @@ public final class McrTableScene {
         boolean upper = McrWallLayout.layer(physicalSlot) == McrWallLayout.Layer.UPPER;
         return piece(tile, McrWallLayout.seat(stack), Area.WALL, physicalSlot,
             ((McrWallLayout.STACKS_PER_SIDE - 1) / 2.0 - McrWallLayout.column(stack)) * WALL_STEP - WALL_OFFSET,
-            (upper ? 1.5 : .5) * DEPTH, WALL_Z, 0, true, true);
+            (upper ? 1.5 : .5) * DEPTH, WALL_Z, 0, true, true, TILE_SCALE);
     }
 
     /** A built, unopened wall contains no private tile identities. */
@@ -71,36 +69,43 @@ public final class McrTableScene {
                 indices.remove(Integer.valueOf(original));
                 indices.add(original);
             }
-            double handLeft = -(hand.size() - 1) * WIDTH / 2;
             var melds = new ArrayList<McrMeldLayout>();
             for (var meld : player.melds()) melds.add(McrMeldLayout.of(meld, seat, ended));
-            if (!melds.isEmpty() && !hand.isEmpty()) {
-                double meldRight = MELD_LEFT + melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
-                handLeft = Math.max(handLeft, meldRight + TableScene.HAND_MELD_GAP + WIDTH / 2);
-            }
+            double meldWidth = melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
+            double flowerStart = meldWidth + (!melds.isEmpty() && !player.flowers().isEmpty() ? DEPTH / 4 : 0);
+            double publicWidth = flowerStart + player.flowers().size() * WIDTH;
+            double handGap = publicWidth > 0 && !hand.isEmpty() ? TableScene.HAND_MELD_GAP : 0;
+            double rowWidth = publicWidth + handGap + hand.size() * WIDTH + (drawn ? DEPTH / 2 : 0);
+            // A full flower run and four kongs share one rail, clear of the adjacent seat's corner.
+            double rowRight = HAND_Z - HEIGHT / 2 - .035;
+            double fit = Math.min(1, (rowRight - MELD_LEFT) / rowWidth);
+            float rowScale = (float) (TILE_SCALE * fit);
+            fit = rowScale / (double) TILE_SCALE;
+            double handLeft = Math.max(-(hand.size() - 1) * WIDTH * fit / 2,
+                MELD_LEFT + (publicWidth + handGap + WIDTH / 2) * fit);
             for (int index = 0; index < hand.size(); index++) {
                 boolean flat = seat == winner;
                 int original = indices.get(index);
                 result.add(piece(hand.get(original), seat, Area.HAND, original,
-                    handLeft + index * WIDTH + (drawn && index == hand.size() - 1 ? DEPTH / 2 : 0),
-                    (flat ? DEPTH : HEIGHT) / 2, HAND_Z, 0, flat, false));
+                    handLeft + (index * WIDTH + (drawn && index == hand.size() - 1 ? DEPTH / 2 : 0)) * fit,
+                    (flat ? DEPTH : HEIGHT) * fit / 2, HAND_Z, 0, flat, false, rowScale));
             }
             for (var part : McrRiverLayout.of(player.river()))
                 result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), part.x() * TILE_SCALE,
-                    DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false));
+                    DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false, TILE_SCALE));
             double left = MELD_LEFT;
             for (int group = 0; group < player.melds().size(); group++) {
                 var layout = melds.get(group);
                 for (int index = 0; index < layout.parts().size(); index++) {
                     var part = layout.parts().get(index);
-                    result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * TILE_SCALE,
-                        DEPTH / 2, HAND_Z + part.z() * TILE_SCALE, part.sideways() ? 90 : 0, true, part.back()));
+                    result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * rowScale,
+                        DEPTH * fit / 2, HAND_Z + part.z() * rowScale, part.sideways() ? 90 : 0, true, part.back(), rowScale));
                 }
-                left += layout.width() * TILE_SCALE;
+                left += layout.width() * rowScale;
             }
             for (var part : McrFlowerLayout.of(player.flowers()))
-                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), FLOWER_LEFT + part.x() * TILE_SCALE,
-                    DEPTH / 2, FLOWER_Z + part.z() * TILE_SCALE, 0, true, false));
+                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), MELD_LEFT + flowerStart * fit + part.x() * rowScale,
+                    DEPTH * fit / 2, HAND_Z, 0, true, false, rowScale));
         }
         return List.copyOf(result);
     }

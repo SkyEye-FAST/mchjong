@@ -29,7 +29,7 @@ public final class McrSceneRenderer {
                 pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
                 boolean faceDown = piece.flat() && piece.back();
                 if (piece.flat()) pose.mulPose(Axis.XP.rotationDegrees(faceDown ? 90 : -90));
-                pose.scale(McrTableScene.TILE_SCALE, McrTableScene.TILE_SCALE, McrTableScene.TILE_SCALE);
+                pose.scale(piece.scale(), piece.scale(), piece.scale());
                 switch (layer) {
                     case BACK -> TileMesh.drawBack(pose, vertices, faceDown, light, deck.material(), deck.back());
                     case BODY -> TileMesh.drawBody(pose, vertices, light, deck.material(), deck.back());

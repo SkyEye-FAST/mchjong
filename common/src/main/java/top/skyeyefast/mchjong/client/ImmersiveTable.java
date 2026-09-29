@@ -110,8 +110,7 @@ final class ImmersiveTable {
         for (int seat = 0; seat < players; seat++) {
             if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen(), deal, now);
             else {
-                int n = 0;
-                for (int tile : view.seats().get(seat).norths()) tile(tile, 0, -270 + n++ * 29, 340, 27, false, false, false, 0);
+                norths(seat, view.seats().get(seat).norths());
                 melds(seat, view.seats().get(seat).melds());
             }
             if (TableSettings.get().showRiver) river(view, seat, suppressed);
@@ -145,7 +144,7 @@ final class ImmersiveTable {
 
     private void outer(TableView.Seat player, int seat, boolean layHandsOpen, TableAnimation deal, long now) {
         int side = side(seat), w = 30;
-        double rail = outerRail(side), halfLength = 300;
+        double rail = outerRail(side);
         double handX = handLeft(player, seat, side);
         for (int index = 0; index < player.hand().size(); index++) {
             int tile = player.hand().get(index);
@@ -158,10 +157,15 @@ final class ImmersiveTable {
             handX += w;
         }
         melds(seat, player.melds());
-        double x = -halfLength;
-        for (int tile : player.norths()) {
-            tile(tile, side, x, rail - 55, w, false, false, false, 0);
-            x += w;
+        norths(seat, player.norths());
+    }
+
+    private void norths(int seat, List<Integer> norths) {
+        int side = side(seat);
+        double x = -meldCorner(side) + 30 * RATIO + 5;
+        for (int tile : norths) {
+            tile(tile, side, x + 15, outerRail(side), 30, false, false, false, 0);
+            x += 30;
         }
     }
 

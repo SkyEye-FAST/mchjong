@@ -164,7 +164,8 @@ final class AnimationSmoke {
                 var river = IntStream.range(first, first + (side % 2 == 0 ? 24 : 12))
                     .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
                 seats.set(side, new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
-                    player.points(), player.hand(), player.drawn(), player.melds(), river, player.norths(),
+                    player.points(), player.hand(), player.drawn(), player.melds(), river,
+                    side == 0 ? List.of(120) : side == 1 ? List.of(121, 122, 123) : List.of(),
                     player.riichi(), player.exposed(), player.doubleRiichi()));
             }
             var right = seats.get(1);
@@ -175,7 +176,7 @@ final class AnimationSmoke {
             int leftSeat = seats.size() - 1;
             var left = seats.get(leftSeat);
             var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
-                List.of(116 + i * 4, 117 + i * 4, 118 + i * 4, 119 + i * 4), 2, 116 + i * 4)).toList();
+                List.of(108 + i * 4, 109 + i * 4, 110 + i * 4, 111 + i * 4), 2, 108 + i * 4)).toList();
             seats.set(leftSeat, new TableView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);

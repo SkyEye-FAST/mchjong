@@ -89,9 +89,8 @@ class McrLayoutTest {
         var flowers = java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList();
         var layout = McrFlowerLayout.of(flowers);
         assertEquals(8, layout.size());
-        assertTrue(layout.get(4).z() < layout.get(0).z());
-        assertTrue(McrTableScene.FLOWER_Z + McrTableScene.HEIGHT / 2
-            < McrTableScene.HAND_Z - McrTableScene.HEIGHT / 2);
+        assertTrue(layout.stream().allMatch(part -> part.z() == 0));
+        assertEquals(7 * (double) TileMesh.WIDTH, layout.getLast().x() - layout.getFirst().x(), 1e-8);
         assertThrows(IllegalArgumentException.class, () -> McrFlowerLayout.of(List.of(0)));
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
@@ -117,8 +116,9 @@ class McrLayoutTest {
                 melds.add(new Meld(Meld.Type.OPEN_QUAD, List.of(tile, tile + 1, tile + 2, tile + 3),
                     (seat + 3) % 4, tile));
             }
-            seats.add(new McrView.Seat(Tile.EAST + seat, 0, List.of(seat == 0 ? 16 : Tile.HIDDEN), Tile.ABSENT,
-                melds, List.of(new Discard(seat * 32 + 17, false, false, false)),
+            seats.add(new McrView.Seat(Tile.EAST + seat, 0,
+                seat == 0 ? List.of(16, 17) : List.of(Tile.HIDDEN, Tile.HIDDEN), seat == 0 ? 17 : Tile.HIDDEN,
+                melds, List.of(new Discard(seat * 32 + 18, false, false, false)),
                 seat == 0 ? java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList() : List.of(), false));
         }
         var view = new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, 0, base.opening(),
@@ -129,33 +129,30 @@ class McrLayoutTest {
         for (var piece : scene) {
             var local = TableGeometry.orient(piece.position().x, piece.position().y, piece.position().z, (4 - piece.seat()) % 4);
             if (piece.area() == McrTableScene.Area.MELD && piece.index() == 0)
-                assertEquals(-TableScene.MELD_RIGHT + McrTableScene.HEIGHT / 2, local.x, 1e-8);
+                assertEquals(-TableScene.MELD_RIGHT + TileMesh.HEIGHT * (double) piece.scale() / 2, local.x, 1e-8);
             if (piece.area() == McrTableScene.Area.RIVER) {
                 assertEquals(-2.5 * TableScene.RIVER_STEP, local.x, 1e-8);
                 assertEquals(TableScene.RIVER_Z, local.z, 1e-8);
             }
-            if (piece.area() == McrTableScene.Area.FLOWER) assertTrue(local.x < 0);
+            if (piece.area() == McrTableScene.Area.FLOWER) assertEquals(McrTableScene.HAND_Z, local.z, 1e-8);
+            var bounds = bounds(piece);
+            assertTrue(Math.max(Math.abs(bounds.minX), Math.abs(bounds.maxX)) <= TableGeometry.FELT_HALF_WIDTH);
+            assertTrue(Math.max(Math.abs(bounds.minZ), Math.abs(bounds.maxZ)) <= TableGeometry.FELT_HALF_WIDTH);
         }
-        var publicTiles = scene.stream().filter(piece -> piece.area() != McrTableScene.Area.HAND).toList();
-        for (int i = 0; i < publicTiles.size(); i++) for (int j = i + 1; j < publicTiles.size(); j++)
-            assertFalse(bounds(publicTiles.get(i)).deflate(1e-7).intersects(bounds(publicTiles.get(j)).deflate(1e-7)),
-                "Public tile areas overlap");
-        for (var hand : scene.stream().filter(piece -> piece.area() == McrTableScene.Area.HAND).toList()) {
-            var p = hand.position();
-            double halfX = (hand.seat() % 2 == 0 ? McrTableScene.WIDTH : McrTableScene.DEPTH) / 2;
-            double halfZ = (hand.seat() % 2 == 0 ? McrTableScene.DEPTH : McrTableScene.WIDTH) / 2;
-            var handBounds = new AABB(p.x - halfX, TableGeometry.FELT_Y, p.z - halfZ,
-                p.x + halfX, TableGeometry.FELT_Y + McrTableScene.HEIGHT, p.z + halfZ);
-            for (var tile : publicTiles) assertFalse(handBounds.intersects(bounds(tile).deflate(1e-7)), "Hand overlaps public tiles");
-        }
+        for (int i = 0; i < scene.size(); i++) for (int j = i + 1; j < scene.size(); j++)
+            assertFalse(bounds(scene.get(i)).deflate(1e-7).intersects(bounds(scene.get(j)).deflate(1e-7)),
+                "Hand, flower and meld areas overlap");
     }
 
     private static AABB bounds(McrTableScene.Piece piece) {
         boolean sideways = Math.floorMod(Math.round(piece.yaw()), 180) == 90;
-        double halfX = (sideways ? McrTableScene.HEIGHT : McrTableScene.WIDTH) / 2;
-        double halfZ = (sideways ? McrTableScene.WIDTH : McrTableScene.HEIGHT) / 2;
+        double width = TileMesh.WIDTH * (double) piece.scale();
+        double height = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale();
+        double depth = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale();
+        double halfX = (sideways ? depth : width) / 2;
+        double halfZ = (sideways ? width : depth) / 2;
         var p = piece.position();
-        return new AABB(p.x - halfX, p.y - McrTableScene.DEPTH / 2, p.z - halfZ,
-            p.x + halfX, p.y + McrTableScene.DEPTH / 2, p.z + halfZ);
+        return new AABB(p.x - halfX, p.y - height / 2, p.z - halfZ,
+            p.x + halfX, p.y + height / 2, p.z + halfZ);
     }
 }

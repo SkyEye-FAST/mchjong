@@ -4,9 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import top.skyeyefast.mchjong.engine.Tile;
 
-/** Two public rows of four flowers, separate from the meld rail and the standing hand. */
+/** A single public flower run alongside the melds and standing hand. */
 public final class McrFlowerLayout {
-    public static final int COLUMNS = 4;
     public record Part(int tile, int index, double x, double z) {}
     private McrFlowerLayout() {}
 
@@ -17,8 +16,7 @@ public final class McrFlowerLayout {
         for (int index = 0; index < flowers.size(); index++) {
             int tile = flowers.get(index);
             if (!Tile.isFlower(tile)) throw new IllegalArgumentException("Only flowers belong in the flower area");
-            parts.add(new Part(tile, index, (index % COLUMNS + .5) * TileMesh.WIDTH,
-                -(index / COLUMNS) * (double) TileMesh.HEIGHT));
+            parts.add(new Part(tile, index, (index + .5) * TileMesh.WIDTH, 0));
         }
         return List.copyOf(parts);
     }
