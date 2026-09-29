@@ -706,6 +706,17 @@ public final class TableScreen extends Screen {
         return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table && table.automatic();
     }
 
+    top.skyeyefast.mchjong.engine.GameType gameType() {
+        return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
+            ? table.clientGameType() : top.skyeyefast.mchjong.engine.GameType.RIICHI;
+    }
+
+    void chooseGameType(TableView view, top.skyeyefast.mchjong.engine.GameType type) {
+        if (minecraft.getConnection() != null)
+            minecraft.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableGameTypePayload(
+                pos, view.tableId(), view.decision(), type)));
+    }
+
     private void buildSeatControls(TableView view) {
         var room = room();
         if (room == null) return;
@@ -723,6 +734,7 @@ public final class TableScreen extends Screen {
                     && (world == null || world.invitationsEnabled());
                 addRenderableWidget(invite);
             }
+            if (gameType() == top.skyeyefast.mchjong.engine.GameType.MCR) continue;
             if (player.occupied() && !player.bot()
                 && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var state = room.seats().get(seat);

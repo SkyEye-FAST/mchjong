@@ -124,6 +124,20 @@ The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
 identities, appearance matching, separate-case selection and the supplied-stock
 session boundary. Run them with
 `gradlew.bat :neoforge:test --tests "*PhysicalSuppliesTest.mcr*" --warning-mode fail --console=plain`.
+
+The focused automatic-table MCR smoke uses one real client and three server-side
+human participants. It selects MCR through the registered payload, seats four
+players, checks the standard 144-tile stock, then drives a discard and response
+through the independent MCR view and action path, opens settlement and confirms
+the next hand. On Fabric, run:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-auto-play.png,mcr-auto-results.png" --warning-mode fail --console=plain
+```
+
+Inspect the two selected captures in `fabric/build/smoke/mcr-auto-evidence/`
+and its fresh `PASS.txt` or `FAIL.txt` marker. Omit `smokeScreenshots` for an
+assertion-only run.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,

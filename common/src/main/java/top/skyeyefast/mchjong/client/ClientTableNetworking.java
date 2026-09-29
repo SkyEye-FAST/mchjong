@@ -24,6 +24,7 @@ public final class ClientTableNetworking {
         var previousRoom = table.clientRoom();
         table.acceptView(view);
         if (table.clientView() != view) return;
+        table.acceptGameType(payload.gameType());
         table.acceptRedOptions(payload.redOptions());
         table.acceptRoom(payload.room());
         table.acceptBotService(payload.botService());

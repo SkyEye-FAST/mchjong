@@ -73,7 +73,7 @@ final class TableInterfaceSmoke {
                 TableScreen opened = (TableScreen) client.screen;
                 ClientTableNetworking.receive(new TableViewPayload(table.getBlockPos(),
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
-                    table.clientRedOptions(), table.clientRoom(), table.clientBotService(), table.clientWorldPolicy()));
+                    table.clientRedOptions(), table.clientRoom(), table.clientBotService(), table.clientWorldPolicy(), table.clientGameType()));
                 require(client.screen == opened && opened.immersive(),
                     "Opening the exit vote replaced the immersive table screen");
             }

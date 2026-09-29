@@ -64,8 +64,8 @@ the wall footprint without touching the neighboring player's river.
 Melds lie face up in a rail in front of the standing hand, between hand and
 river. The claimed tile is rotated ninety degrees: left for the previous
 player, middle for the opposite player and right for the next player. A chow
-uses the left source only. A concealed kong has four face-down tiles until
-the recipient view exposes the completed winning hand. Open quads and
+uses the left source only. A concealed kong has four face-down tiles during play
+and turns face up after the hand ends. Open quads and
 supplemented triplets use the same four-tile flat row; the fourth tile does
 not form a separate raised or forward stack.
 

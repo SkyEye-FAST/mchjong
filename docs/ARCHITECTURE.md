@@ -264,6 +264,18 @@ not the saved game. The Minecraft host remains responsible for authenticating th
 sender and checking the dimension, loaded table, live mount and server policies
 before calling these methods.
 
+`GameType` is the top-level automatic-table lobby choice. Riichi presets remain
+in `RuleSet`; selecting MCR uses the fixed `wmo-2014-zh` four-player, sixteen-hand
+profile. The shared table retains its room seating and physical equipment boundary,
+then hands the four seated human identities and `TableEquipment.mcrStock()` to
+`McrTableHost`. That host owns the `McrSession`, observes live stool mounts, saves
+the private session independently and refreshes its incarnation on restore.
+`McrActionPayload` carries only table/session identity, decision and an issued
+action index; the server resolves the seat from the authenticated sender. The
+independent `McrViewPayload` carries only an encoded recipient-safe session view
+and public tile appearance. `McrTableScreen` and `McrResultsScreen` consume this
+projection and the MCR scene, with no Riichi settlement fields.
+
 ### MCR physical presentation
 
 The engine's `McrWallLayout` contains stack/slot topology, traversal and initial

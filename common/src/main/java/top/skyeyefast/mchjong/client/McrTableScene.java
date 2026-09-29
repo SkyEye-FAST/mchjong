@@ -61,6 +61,8 @@ public final class McrTableScene {
     public static List<Piece> build(McrView view) {
         var result = new ArrayList<>(wall(view.wall()));
         int winner = view.result() instanceof McrSettlement.Win win ? win.winner() : -1;
+        boolean ended = view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.HAND_END
+            || view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.MATCH_END;
         for (int seat = 0; seat < 4; seat++) {
             var player = view.seats().get(seat);
             var hand = player.hand();
@@ -84,7 +86,7 @@ public final class McrTableScene {
                     DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false));
             double left = MELD_LEFT;
             for (int group = 0; group < player.melds().size(); group++) {
-                var layout = McrMeldLayout.of(player.melds().get(group), seat, seat == winner);
+                var layout = McrMeldLayout.of(player.melds().get(group), seat, ended);
                 for (int index = 0; index < layout.parts().size(); index++) {
                     var part = layout.parts().get(index);
                     result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * TILE_SCALE,

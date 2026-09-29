@@ -136,18 +136,66 @@ class ServerIntegrationTest {
             Game game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
                 game.roomView(), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
-                top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
+                top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT, top.skyeyefast.mchjong.engine.GameType.RIICHI);
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
             TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);
             assertTrue(decoded.actions().isEmpty());
             assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == -1));
             assertFalse(payload.view().contains("\"seed\""));
+            var choice = new top.skyeyefast.mchjong.network.TableGameTypePayload(request.pos(), request.tableId(), 17,
+                top.skyeyefast.mchjong.engine.GameType.MCR);
+            top.skyeyefast.mchjong.network.TableGameTypePayload.CODEC.encode(buffer, choice);
+            assertEquals(choice, top.skyeyefast.mchjong.network.TableGameTypePayload.CODEC.decode(buffer));
+            var action = new top.skyeyefast.mchjong.network.McrActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
+            top.skyeyefast.mchjong.network.McrActionPayload.CODEC.encode(buffer, action);
+            assertEquals(action, top.skyeyefast.mchjong.network.McrActionPayload.CODEC.decode(buffer));
+            var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
+                new top.skyeyefast.mchjong.engine.McrSession.Participant(UUID.randomUUID(), "Player " + seat)).toList();
+            var session = top.skyeyefast.mchjong.engine.McrSession.start(request.tableId(), roster, 7,
+                top.skyeyefast.mchjong.engine.Tile.mcrSet());
+            var spectator = session.view(UUID.randomUUID());
+            var mcrView = new top.skyeyefast.mchjong.network.McrViewPayload(request.pos(),
+                top.skyeyefast.mchjong.engine.McrCodec.encodeSessionView(spectator),
+                new top.skyeyefast.mchjong.item.McrDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
+                    net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
+                net.minecraft.world.item.DyeColor.CYAN, true);
+            top.skyeyefast.mchjong.network.McrViewPayload.CODEC.encode(buffer, mcrView);
+            assertEquals(mcrView, top.skyeyefast.mchjong.network.McrViewPayload.CODEC.decode(buffer));
+            assertTrue(top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(mcrView.view()).game().actions().isEmpty());
+            assertFalse(mcrView.view().contains("seed"));
             for (var chunk : top.skyeyefast.mchjong.network.ReplayPayload.split(
                     top.skyeyefast.mchjong.network.ReplayPayload.Kind.MATCH, "牌譜🀄".repeat(10_000))) {
                 top.skyeyefast.mchjong.network.ReplayPayload.CODEC.encode(buffer, chunk);
                 assertEquals(chunk, top.skyeyefast.mchjong.network.ReplayPayload.CODEC.decode(buffer));
             }
         } finally { buffer.release(); }
+    }
+
+    @Test void mcrSessionSurvivesPrivateTableSaveAndPublicAppearanceUpdate(MinecraftServer server) {
+        UUID tableId = UUID.randomUUID();
+        var source = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        source.equipment().boxes().setItem(0, top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(
+            top.skyeyefast.mchjong.engine.RedFives.NONE));
+        source.equipment().installCloth(new net.minecraft.world.item.ItemStack(MahjongContent.CLOTH_ITEM));
+        var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
+            new top.skyeyefast.mchjong.engine.McrSession.Participant(UUID.randomUUID(), "Player " + seat)).toList();
+        var session = top.skyeyefast.mchjong.world.McrTableHost.start(tableId, roster, 7,
+            source.equipment().mcrStock().deck().tiles());
+        var privateTag = source.saveWithoutMetadata(server.registryAccess());
+        privateTag.putString("game_type", "MCR");
+        privateTag.putString("game", TableNetworking.JSON.toJson(new Game(tableId, RuleSet.MAHJONG_SOUL_4, 7)));
+        privateTag.putString("mcr_session", session.save());
+        var table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
+        table.loadWithComponents(privateTag, server.registryAccess());
+        var saved = table.saveWithoutMetadata(server.registryAccess());
+        assertEquals("MCR", saved.getString("game_type"));
+        assertNotEquals(session.save(), saved.getString("mcr_session"));
+        assertEquals(144, table.equipment().mcrStock().deck().tiles().size());
+        var appearance = table.getUpdateTag(server.registryAccess());
+        assertFalse(appearance.contains("mcr_session"));
+        table.loadWithComponents(appearance, server.registryAccess());
+        assertEquals(saved.getString("mcr_session"), table.saveWithoutMetadata(server.registryAccess()).getString("mcr_session"));
     }
 }

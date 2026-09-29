@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.GameType;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.RuleSet;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -15,7 +16,7 @@ import top.skyeyefast.mchjong.engine.TableView;
 final class TableLobby {
     private TableLobby() {}
     static int top(int height) { return height < 300 ? 82 : 94; }
-    static int primaryY(int height) { return top(height) + 100; }
+    static int primaryY(int height) { return top(height) + 124; }
 
     static List<MahjongButton> controls(TableScreen parent, TableView view, int width, int height) {
         var client = Minecraft.getInstance();
@@ -25,6 +26,31 @@ final class TableLobby {
         var buttons = new ArrayList<MahjongButton>();
         int span = Math.min(440, width - 20), left = (width - span) / 2, y = top(height);
         int third = (span - 8) / 3, half = (span - 4) / 2;
+        for (var type : GameType.values()) {
+            var choice = button(Component.translatable("mcr.mchjong.game_type." + type.name().toLowerCase(java.util.Locale.ROOT)),
+                left + type.ordinal() * (half + 4), y, half, () -> parent.chooseGameType(view, type));
+            choice.selected(parent.gameType() == type);
+            choice.active = host && parent.automatic() && parent.gameType() != type
+                && (type != GameType.MCR || view.rules().players() == 4
+                    && view.seats().stream().noneMatch(TableView.Seat::bot));
+            buttons.add(choice);
+        }
+        y += 24;
+        if (parent.gameType() == GameType.MCR) {
+            var stock = button(Component.translatable("mcr.mchjong.stock_hint"), left, y, span, () -> {});
+            stock.active = false;
+            buttons.add(stock);
+            buttons.add(button(Component.translatable("room.mchjong.participants"), left, y + 24, span,
+                () -> client.setScreen(new TableSeatsScreen(parent))));
+            int index = TableSeatsScreen.find(view, Action.Type.BEGIN_SEATING, List.of());
+            var primary = button(Component.translatable(index >= 0 ? "room.mchjong.start_auto"
+                : view.seats().stream().allMatch(TableView.Seat::occupied) ? "ui.mchjong.equipment_needed" : "room.mchjong.wait_host"),
+                left, primaryY(height), span, () -> parent.send(view, index)).primary();
+            primary.setHeight(26);
+            primary.active = index >= 0;
+            buttons.add(primary);
+            return buttons;
+        }
         for (int count : new int[]{4, 3}) {
             var preset = view.rules().preset().tenhou() ? count == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
                 : count == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;

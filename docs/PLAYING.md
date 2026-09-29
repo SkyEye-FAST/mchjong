@@ -2,7 +2,8 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-MChjong features three- and four-player riichi mahjong. See
+MChjong features three- and four-player riichi mahjong and four-player MCR on
+automatic tables. See
 [Rules and presets](RULES.md) for available presets and custom settings.
 
 ## Equipment and seating
@@ -45,6 +46,21 @@ When no equipment is collected, crouch-clicking opens the spectator view.
 Clicking your stool again reopens the controls
 without creating another seat. Press Esc to close the overlay while staying seated;
 dismount with Minecraft's sneak control after closing it.
+
+### Automatic-table MCR
+
+In the automatic-table lobby, the host selects MCR. Seat four human players and
+store a complete standard 144-tile box with eight flowers and a cloth. Assign
+seats, let all four players take their assigned stools, then each player presses
+Ready. The table runs a fixed sixteen-hand `wmo-2014-zh` match.
+
+The MCR screen shows the physical walls, six-column rivers, melds, flowers, winds,
+scores and remaining tiles. Choose a server-issued Draw, Discard, Chow, Pung,
+Melded Kong, Concealed Kong, Win or Pass action. A structural win remains
+declarable below eight non-flower points; declaring it applies the wrong-win
+penalty and marks that player as forbidden to win again during the current hand.
+After settlement, all four seated players confirm the next hand. The match ends
+after the sixteenth hand.
 
 ## Point-stick payments
 

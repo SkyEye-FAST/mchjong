@@ -112,7 +112,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("12");
+        var registrar = event.registrar("13");
         registrar.playToServer(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToClient(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC,
@@ -124,6 +124,14 @@ public final class MchjongNeoForge {
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
+        registrar.playToServer(top.skyeyefast.mchjong.network.McrActionPayload.TYPE,
+            top.skyeyefast.mchjong.network.McrActionPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableGameTypePayload.TYPE,
+            top.skyeyefast.mchjong.network.TableGameTypePayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
         registrar.playToServer(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
@@ -142,6 +150,9 @@ public final class MchjongNeoForge {
         });
         registrar.playToClient(TableViewPayload.TYPE, TableViewPayload.CODEC,
             (payload, context) -> ClientTableNetworking.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
+            top.skyeyefast.mchjong.network.McrViewPayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC,
