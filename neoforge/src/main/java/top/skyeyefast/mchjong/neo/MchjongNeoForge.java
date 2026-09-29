@@ -42,6 +42,7 @@ public final class MchjongNeoForge {
             (net.neoforged.neoforge.event.server.ServerStartingEvent event) -> {
                 top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
                 top.skyeyefast.mchjong.config.ServerPresets.load(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
+                top.skyeyefast.mchjong.world.BotServiceClient.load(net.neoforged.fml.loading.FMLPaths.CONFIGDIR.get());
             });
         net.neoforged.neoforge.common.NeoForge.EVENT_BUS.addListener(
             (net.neoforged.neoforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {

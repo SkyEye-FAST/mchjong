@@ -35,6 +35,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private WorldSettings.Policy sentWorldPolicy;
     private TableView clientView;
     private top.skyeyefast.mchjong.engine.RoomView clientRoom;
+    private BotServiceState clientBotService;
     private WorldSettings.Policy clientWorldPolicy;
     private int clientRedOptions;
     private long clientViewReceivedNanos;
@@ -53,7 +54,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
-        game.configureBotService(BotServiceClient.enabled());
+        game.configureExternalBots(BotServiceClient.availableBots());
         game.configureWorld(policy.gamePolicy());
         synchronizeEquipment();
         if (game.phase() == Game.Phase.LOBBY && !equipment.canSupplyReds(game.rules().sanma(), game.rules().redFives()))
@@ -130,6 +131,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
 
     public TableView clientView() { return clientView; }
     public top.skyeyefast.mchjong.engine.RoomView clientRoom() { return clientRoom; }
+    public BotServiceState clientBotService() { return clientBotService; }
+    public void acceptBotService(BotServiceState state) {
+        if (level == null || !level.isClientSide) throw new IllegalStateException("Client bot service state on server");
+        clientBotService = java.util.Objects.requireNonNull(state);
+    }
     public void acceptRoom(top.skyeyefast.mchjong.engine.RoomView room) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client room state on server");
         clientRoom = java.util.Objects.requireNonNull(room);
@@ -212,7 +218,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         TableView snapshot = viewer == null ? game.spectatorView(policy.spectatorHandVisibility()) : game.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply,
-                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView(), policy)));
+                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView(), botService.state(game), policy)));
     }
 
     public void open(ServerPlayer player) {

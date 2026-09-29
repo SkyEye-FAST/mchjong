@@ -2,25 +2,37 @@
 
 ## Local bot service
 
-Set the server JVM property `-Dmchjong.botServiceEndpoint=http://127.0.0.1:8791`
-to route automatic Riichi table opponents through a local Bot Service. With no
-endpoint configured, the built-in EASY and HARD opponents play as usual. The
-property takes the service base URL; the game posts to `/v1/decisions` without
-blocking the Minecraft server thread. Run one service process for all tables.
+The server administrator can enable external opponents with
+`config/mchjong/bot-service.json`:
+
+```json
+{
+  "endpoint": "http://127.0.0.1:8791",
+  "timeout_ms": 10000
+}
+```
+
+Restart the Minecraft server after changing the file. At startup it requests
+`GET /v1/bots` and offers each discovered Bot as a separate automatic-table
+room seat choice beside EASY and HARD. The room offers external Bots only for their advertised
+player count and exact rule preset. The adapter currently advertises `TENHOU_4`
+and `TENHOU_3` for its respective models. The room save keeps only the stable
+Bot ID; the endpoint remains in administrator-owned configuration.
 
 The server sends each bot's opening hand, public hand events, current legal
 actions and decision token. Other players' drawn tile identities are hidden.
 Each table runtime has a session UUID, while the service keeps separate state
-for each seat and hand. The reply contains only an index from that request's
-legal actions. The server checks the echoed table, session, hand, seat and
-decision before applying it. A failed request is logged and retried after five
-seconds; an unavailable configured service leaves its bot waiting for a legal
-decision. Lobby and settlement automation stays in the game engine.
+for each seat and hand. Requests include `protocol_version: 1`, the selected
+`bot_id` and exact `preset`. The reply contains only an index from that request's
+legal actions. The server checks the echoed version, Bot ID, table, session,
+hand, seat and decision before applying it. An unavailable service, timeout or
+invalid reply appears as a short room error; the selected external seat waits
+for administrator intervention. EASY and HARD continue to use
+the built-in engine bot. Lobby and settlement automation stays in the game engine.
 
 The service API exposes `GET /v1/health`, `GET /v1/bots` and
 `POST /v1/decisions`. Its request/response schema and startup arguments are
-documented in the service repository. The endpoint is read when the server
-starts, so change the JVM property before restarting the server.
+documented in the service repository.
 
 The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `RiichiHandAnalyzer`. Its
 `ShantenWithGot.discardToAdvance` and `ShantenWithoutGot.advance` provide

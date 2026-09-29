@@ -26,8 +26,10 @@ allows it.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
-  `BotServiceClient` sends engine-owned `BotPosition` snapshots asynchronously
-  and applies only validated action indices on the server thread.
+  `BotServiceClient` discovers external Bot IDs and exact preset support from
+  the administrator-configured service, sends engine-owned `BotPosition`
+  snapshots asynchronously, and applies only validated action indices on the
+  server thread. Service failures are synchronized as room status.
 * `fabric/src/main/java`: Fabric registration/networking only.
 * `forge/src/main/java`: Forge registration/networking and client extension binding.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
@@ -314,7 +316,7 @@ See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 `RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
 wind permutation is persisted server-side; `RoomView` sends only revealed winds,
-available choices, host seat, seated/away/disconnected presence and bot difficulty. `PlayerState`
+available choices, host seat, seated/away/disconnected presence and Bot choice. `PlayerState`
 follows a participant through seat reassignment. Mount presence is transient and
 is reconstructed from `SeatEntity` passengers; it is never accepted from a client
 or a saved room. Nearby room members retain preparation controls while relocating,

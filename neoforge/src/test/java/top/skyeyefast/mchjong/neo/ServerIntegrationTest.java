@@ -135,7 +135,8 @@ class ServerIntegrationTest {
             }
             Game game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
-                game.roomView(), top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
+                game.roomView(), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
+                top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
             TableView decoded = TableNetworking.JSON.fromJson(payload.view(), TableView.class);

@@ -26,6 +26,7 @@ public final class ClientTableNetworking {
         if (table.clientView() != view) return;
         table.acceptRedOptions(payload.redOptions());
         table.acceptRoom(payload.room());
+        table.acceptBotService(payload.botService());
         table.acceptWorldPolicy(payload.world());
         boolean assigned = payload.room().seating() == RoomSeating.Stage.POSITIONING
             && (previous == null || !previous.tableId().equals(view.tableId()) || previousRoom == null

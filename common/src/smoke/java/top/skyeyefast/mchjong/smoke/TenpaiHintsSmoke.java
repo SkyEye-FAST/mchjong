@@ -43,7 +43,7 @@ final class TenpaiHintsSmoke {
             settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
             original = table.clientView();
             originalRoom = table.clientRoom();
-            table.acceptRoom(new RoomView(originalRoom.host(), true, originalRoom.seating(), originalRoom.availableWinds(), originalRoom.seats(),
+            table.acceptRoom(new RoomView(originalRoom.host(), true, originalRoom.seating(), originalRoom.availableWinds(), originalRoom.seats(), originalRoom.externalBots(),
                 originalRoom.settlementTicks(), originalRoom.settlementSkippedSeats()));
             sample = 0;
             show(client, table);

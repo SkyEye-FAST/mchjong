@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
+import top.skyeyefast.mchjong.world.BotServiceState;
 
 /** Edge-aligned, compact information. Detailed counts and status belong in hover text, not over the hand. */
 final class TableHud {
@@ -39,11 +40,12 @@ final class TableHud {
     }
 
     void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
-        render(font, graphics, view, room, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null,
+        render(font, graphics, view, room, null, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null,
             TileBackPresets.DEFAULT, board);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset,
+    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, BotServiceState botService,
+                int width, TileFacePreset preset,
                 top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye,
                 net.minecraft.resources.ResourceLocation backPreset, TableBoard board) {
         clear();
@@ -114,6 +116,14 @@ final class TableHud {
                     : player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
             Component hover = lobby && !player.occupied() ? name.copy() : TableScreen.playerName(view, seat).copy();
+            if (room != null && seat < room.seats().size() && room.seats().get(seat).externalBotId() != null)
+                hover = TableSeatsScreen.botName(room, seat);
+            String botError = botService == null || seat >= botService.seatErrors().size()
+                ? null : botService.seatErrors().get(seat);
+            if (botError != null) {
+                name = name.copy().append(" !");
+                hover = hover.copy().append("\n").append(Component.translatable("bot.mchjong.service." + botError));
+            }
             if (settings.show(TableSettings.Information.WINDS)) {
                 shortLine = !lobby
                     ? Component.translatable("wind.mchjong." + WINDS[Math.floorMod(seat - view.dealer(), view.rules().players())] + ".short")

@@ -103,7 +103,7 @@ the south-side stool; the other winds follow the physical table order. The inter
 shows each destination's coordinates so wind assignments cannot be confused with
 world compass directions.
 
-Assignment keeps the host, personal preferences and bot difficulty attached to
+Assignment keeps the host, personal preferences and bot choice attached to
 their respective participants. A player whose stool changed is dismounted and
 must sit on the assigned stool. The server verifies actual mounts, including after
 reload; a Ready packet cannot substitute for being there. All humans must be in
@@ -118,14 +118,18 @@ up during repositioning preserves the reservation; Leave room releases it.
 
 ## Computer players
 
-Each bot can be set to Easy or Hard during any waiting-room stage.
-Changing the roster or difficulty clears human readiness. Bots remain ready while
-humans reposition themselves.
+Each bot can be set to Easy or Hard during any waiting-room stage. Automatic
+tables also offer the external Bots discovered from the administrator's
+[Bot Service configuration](BOTS.md#local-bot-service) when their player count
+and rule preset match the room. Changing the roster or Bot choice clears human
+readiness. Bots remain ready while humans reposition themselves.
 
-The control in each empty or bot-occupied top seat card cycles through Easy, Hard
-and Empty.
-A physically seated human cannot be replaced; their control is
-reserved for transferring room ownership. Fill empty seats adds Easy bots.
+The control in each empty or bot-occupied top seat card cycles through Easy,
+Hard, compatible external Bots and Empty. External choices retain their stable
+Bot ID in the room save. A service error appears on the affected seat card and
+its hover details while that Bot waits for a decision. A physically seated human
+cannot be replaced; their control is reserved for transferring room ownership.
+Fill empty seats adds Easy bots.
 
 Easy prioritizes current shanten, live improving tiles and retaining value, with
 productive calls and basic defense against clear threats. Hard adds bounded
@@ -135,9 +139,10 @@ trade a little immediate efficiency for better development or retain safe tiles
 while advancing a valuable hand. Both compare legal calls, riichi, kans and north
 extraction under the table's rules.
 
-Both use only their own hand and public tiles. They do not read opponents'
-concealed tiles, even when room visibility allows players to see those hands, and do
-not inspect the wall seed. Bot decisions use deterministic heuristic evaluation.
+The built-in levels use only their own hand and public tiles. They do not read
+opponents' concealed tiles, even when room visibility allows players to see
+those hands, and do not inspect the wall seed. Their decisions use deterministic
+heuristic evaluation.
 
 ## Invitations
 

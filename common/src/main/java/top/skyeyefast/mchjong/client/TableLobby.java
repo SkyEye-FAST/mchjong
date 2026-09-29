@@ -74,6 +74,14 @@ final class TableLobby {
         primary.setHeight(26);
         primary.active = index >= 0;
         buttons.add(primary);
+        var service = parent.botService();
+        if (service != null && service.discoveryError() != null && !"discovering".equals(service.discoveryError())) {
+            var status = button(Component.translatable("bot.mchjong.service_status",
+                Component.translatable("bot.mchjong.service." + service.discoveryError())),
+                left, primaryY(height) + 30, span, () -> {});
+            status.active = false;
+            buttons.add(status);
+        }
         return buttons;
     }
 

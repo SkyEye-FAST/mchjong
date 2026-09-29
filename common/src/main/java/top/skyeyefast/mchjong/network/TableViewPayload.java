@@ -9,6 +9,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Contains only an already-redacted TableView, never the persistent Game object. */
 public record TableViewPayload(BlockPos pos, String view, boolean open, boolean controlReply, boolean leaveDecision, int redOptions,
                                top.skyeyefast.mchjong.engine.RoomView room,
+                               top.skyeyefast.mchjong.world.BotServiceState botService,
                                top.skyeyefast.mchjong.world.WorldSettings.Policy world) implements CustomPacketPayload {
     public TableViewPayload {
         if ((redOptions & ~63) != 0) throw new IllegalArgumentException("Invalid red-five capabilities");
@@ -18,6 +19,7 @@ public record TableViewPayload(BlockPos pos, String view, boolean open, boolean 
         @Override public TableViewPayload decode(RegistryFriendlyByteBuf buffer) {
             return new TableViewPayload(buffer.readBlockPos(), buffer.readUtf(32767), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(), buffer.readUnsignedByte(),
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.engine.RoomView.class),
+                TableNetworking.JSON.fromJson(buffer.readUtf(2048), top.skyeyefast.mchjong.world.BotServiceState.class),
                 TableNetworking.JSON.fromJson(buffer.readUtf(8192), top.skyeyefast.mchjong.world.WorldSettings.Policy.class));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, TableViewPayload value) {
@@ -26,6 +28,7 @@ public record TableViewPayload(BlockPos pos, String view, boolean open, boolean 
             buffer.writeBoolean(value.leaveDecision());
             buffer.writeByte(value.redOptions());
             buffer.writeUtf(TableNetworking.JSON.toJson(value.room()), 8192);
+            buffer.writeUtf(TableNetworking.JSON.toJson(value.botService()), 2048);
             buffer.writeUtf(TableNetworking.JSON.toJson(value.world()), 8192);
         }
     };

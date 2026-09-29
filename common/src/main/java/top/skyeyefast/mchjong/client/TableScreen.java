@@ -191,6 +191,11 @@ public final class TableScreen extends Screen {
             ? table.clientRoom() : null;
     }
 
+    top.skyeyefast.mchjong.world.BotServiceState botService() {
+        return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
+            ? table.clientBotService() : null;
+    }
+
     top.skyeyefast.mchjong.world.WorldSettings.Policy worldPolicy() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientWorldPolicy() : null;
@@ -721,21 +726,32 @@ public final class TableScreen extends Screen {
             if (player.occupied() && !player.bot()
                 && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var state = room.seats().get(seat);
-            int current = !player.bot() ? -1 : state.difficulty().ordinal();
+            int current = -1;
+            if (player.bot()) {
+                if (state.externalBotId() == null) current = state.difficulty().ordinal();
+                else for (int candidate = 0; candidate < room.externalBots().size(); candidate++)
+                    if (room.externalBots().get(candidate).id().equals(state.externalBotId())) current = 2 + candidate;
+            }
             int next = -1, index = -1;
-            for (int candidate = current + 1; candidate < top.skyeyefast.mchjong.engine.BotDifficulty.values().length; candidate++) {
+            for (int candidate = current + 1; candidate < 2 + room.externalBots().size(); candidate++) {
                 int action = TableSeatsScreen.find(view, Action.Type.SET_BOT, List.of(seat, candidate));
                 if (action >= 0) { next = candidate; index = action; break; }
             }
             if (index < 0) index = TableSeatsScreen.find(view, Action.Type.REMOVE_BOT, List.of(seat));
             final int selected = index;
             var label = player.bot() ? TableSeatsScreen.botName(room, seat).copy() : Component.translatable("room.mchjong.add_bot");
+            var service = botService();
+            String error = service != null && seat < service.seatErrors().size() ? service.seatErrors().get(seat) : null;
+            if (error != null) label.append(" !");
             label.append(" ›");
             var button = MahjongButton.create(label, ignored -> send(view, selected))
                 .bounds(8 + seat * (cardWidth + 4), 56, cardWidth, 20)
-                .tooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable("room.mchjong.bot_next", next < 0
-                    ? Component.translatable("room.mchjong.empty")
-                    : Component.translatable(top.skyeyefast.mchjong.engine.BotDifficulty.values()[next].translationKey()))))).build();
+                .tooltip(Tooltip.create(label.copy().append("\n").append(error == null ? Component.empty()
+                    : Component.translatable("bot.mchjong.service." + error).copy().append("\n"))
+                    .append(Component.translatable("room.mchjong.bot_next", next < 0
+                        ? Component.translatable("room.mchjong.empty") : next < 2
+                        ? Component.translatable(top.skyeyefast.mchjong.engine.BotDifficulty.values()[next].translationKey())
+                        : Component.literal(room.externalBots().get(next - 2).name()))))).build();
             button.active = index >= 0 && view.exitVote() == null;
             addRenderableWidget(button);
         }
@@ -1031,7 +1047,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!TableResults.available(view) || immersive && results == null)
-            information.render(font, graphics, view, room(), layoutWidth, facePreset(), tileMaterial(), tileBack(), tileBackPreset(), board);
+            information.render(font, graphics, view, room(), botService(), layoutWidth, facePreset(), tileMaterial(), tileBack(), tileBackPreset(), board);
         if (view.phase() == Game.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {

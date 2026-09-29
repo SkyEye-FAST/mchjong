@@ -78,6 +78,10 @@ public final class TableSeatsScreen extends Screen {
 
     static Component botName(RoomView room, int seat) {
         var state = room.seats().get(seat);
+        if (state.externalBotId() != null) return room.externalBots().stream()
+            .filter(bot -> bot.id().equals(state.externalBotId()))
+            .findFirst().<Component>map(bot -> Component.literal(bot.name()))
+            .orElse(Component.literal(state.externalBotId()));
         return Component.translatable(state.difficulty().translationKey());
     }
 

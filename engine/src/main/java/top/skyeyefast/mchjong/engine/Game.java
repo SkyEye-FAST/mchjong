@@ -71,7 +71,7 @@ public final class Game {
     boolean openHands;
     boolean convenienceHints;
     transient WorldPolicy worldPolicy = WorldPolicy.DEFAULT;
-    transient boolean botServiceEnabled;
+    transient List<ExternalBot> externalBots = List.of();
     ExitVote exitVote;
     UUID pendingLeaveDecision;
     long exitVoteSequence;
@@ -102,24 +102,31 @@ public final class Game {
     public boolean manual() { return manual; }
     public int points(int seat) { return players[seat].points; }
     public boolean trainingSeat(int seat) { return seat >= 0 && seat < rules.players() && players[seat].bot; }
-    public void configureBotService(boolean enabled) { botServiceEnabled = enabled; }
+    public String externalBotId(int seat) { return trainingSeat(seat) ? players[seat].externalBotId : null; }
+    public void configureExternalBots(List<ExternalBot> bots) {
+        var available = List.copyOf(bots);
+        if (available.equals(externalBots)) return;
+        externalBots = available;
+        if (phase == Phase.LOBBY) { decision++; revision++; }
+    }
 
     /** Snapshot one active bot choice without disclosing other players' draws. */
     public BotPosition botPosition(int seat, UUID sessionId) {
-        if (!botServiceEnabled || recorder == null || manual || age <= 0 || exitVote != null
-            || !hasSeatedHuman() || !trainingSeat(seat)
+        if (recorder == null || manual || age <= 0 || exitVote != null
+            || !hasSeatedHuman() || externalBotId(seat) == null
             || phase != Phase.TURN && phase != Phase.REACTION || actions(seat).isEmpty()) return null;
         PlayerState player = players[seat];
         var pons = player.melds.stream().filter(meld -> meld.type() == Meld.Type.TRIPLET)
             .map(meld -> new BotPosition.Pon("PON", meld.tiles())).toList();
-        return new BotPosition(tableId, sessionId, handNumber, seat, rules.players(), decision,
+        return new BotPosition(1, player.externalBotId, rules.preset(), tableId, sessionId,
+            handNumber, seat, rules.players(), decision,
             recorder.botOpening(seat), recorder.botEvents(seat), actions(seat),
             phase == Phase.REACTION ? new BotPosition.Focus(lastFrom, lastTile) : null,
             player.drawn < 0 ? null : player.drawn, pons);
     }
 
     public boolean actBot(int seat, long expectedDecision, int actionIndex) {
-        return trainingSeat(seat) && act(players[seat].id, expectedDecision, actionIndex);
+        return externalBotId(seat) != null && act(players[seat].id, expectedDecision, actionIndex);
     }
     public boolean entityBot(UUID id) { int seat = seatOf(id); return seat >= 0 && players[seat].entityBot; }
 
@@ -235,9 +242,9 @@ public final class Game {
             pendingExperience.clear();
             changed = true;
         }
-        if (!policy.replaysEnabled() && (replay != null || recorder != null && !botServiceEnabled || !archiveQueue.isEmpty())) {
+        if (!policy.replaysEnabled() && (replay != null || recorder != null && !hasExternalBot() || !archiveQueue.isEmpty())) {
             replay = null;
-            if (!botServiceEnabled) recorder = null;
+            if (!hasExternalBot()) recorder = null;
             archiveQueue.clear();
             changed = true;
         }
@@ -307,9 +314,9 @@ public final class Game {
         for (int i = 0; i < rules.players(); i++) {
             var player = players[i];
             seats.add(new RoomView.Seat(player.id == null ? null : player.bot && !player.entityBot ? PlayerPresence.SEATED : player.presence,
-                seating.winds[i], player.bot ? player.botDifficulty : null));
+                seating.winds[i], player.bot ? player.botDifficulty : null, player.externalBotId));
         }
-        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, settlementTicks(),
+        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, externalBots, settlementTicks(),
             skippedDecision == decision ? skippedSeats : 0);
     }
 
@@ -587,6 +594,17 @@ public final class Game {
         if (!bot.entityBot) bot.name = "Bot " + (seat + 1);
         bot.bot = bot.ready = true;
         bot.botDifficulty = difficulty;
+        bot.externalBotId = null;
+    }
+
+    private void setExternalBot(int seat, ExternalBot external) {
+        setBot(seat, BotDifficulty.EASY);
+        players[seat].externalBotId = external.id();
+    }
+
+    private boolean hasExternalBot() {
+        for (int seat = 0; seat < rules.players(); seat++) if (externalBotId(seat) != null) return true;
+        return false;
     }
 
     private boolean fullRoom() {
@@ -634,8 +652,13 @@ public final class Game {
                     var player = players[target];
                     if (target != seat && (player.id == null || player.bot || player.presence == PlayerPresence.DISCONNECTED)) {
                         if (worldPolicy.allowBots()) for (var difficulty : BotDifficulty.values())
-                            if (!player.bot || difficulty != player.botDifficulty)
+                            if (!player.bot || player.externalBotId != null || difficulty != player.botDifficulty)
                             actions.add(new Action(SET_BOT, List.of(target, difficulty.ordinal())));
+                        if (worldPolicy.allowBots() && !manual) for (int bot = 0; bot < externalBots.size(); bot++) {
+                            ExternalBot available = externalBots.get(bot);
+                            if (available.supports(rules) && !available.id().equals(player.externalBotId))
+                                actions.add(new Action(SET_BOT, List.of(target, BotDifficulty.values().length + bot)));
+                        }
                         if (player.bot) actions.add(new Action(REMOVE_BOT, target));
                     }
                     if (target != seat && player.id != null && !player.bot) actions.add(new Action(TRANSFER_HOST, target));
@@ -681,7 +704,8 @@ public final class Game {
                 }
                 case SET_BOT -> {
                     int target = action.tiles().get(0), difficulty = action.tiles().get(1);
-                    setBot(target, BotDifficulty.values()[difficulty]);
+                    if (difficulty < BotDifficulty.values().length) setBot(target, BotDifficulty.values()[difficulty]);
+                    else setExternalBot(target, externalBots.get(difficulty - BotDifficulty.values().length));
                 }
                 case REMOVE_BOT -> {
                     int target = action.tiles().get(0);
@@ -795,7 +819,11 @@ public final class Game {
     private boolean allReady() {
         if (!equipped() || !worldPolicy.permitsRules(rules)) return false;
         if (phase == Phase.LOBBY && seating.stage != RoomSeating.Stage.POSITIONING) return false;
-        for (int i = 0; i < rules.players(); i++) if (players[i].id == null || !players[i].ready) return false;
+        for (int i = 0; i < rules.players(); i++) {
+            if (players[i].id == null || !players[i].ready) return false;
+            String botId = players[i].externalBotId;
+            if (botId != null && (manual || externalBots.stream().noneMatch(bot -> bot.id().equals(botId) && bot.supports(rules)))) return false;
+        }
         if (phase == Phase.LOBBY) for (int i = 0; i < rules.players(); i++)
             if ((!players[i].bot || players[i].entityBot) && players[i].presence != PlayerPresence.SEATED) return false;
         return true;
@@ -833,7 +861,7 @@ public final class Game {
             for (int i = 0; i < 4; i++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
         }
         for (int offset = 0; offset < rules.players(); offset++) players[(dealer + offset) % rules.players()].hand.add(wall.draw());
-        recorder = replay == null && !botServiceEnabled ? null : new ReplayRecorder(this);
+        recorder = replay == null && !hasExternalBot() ? null : new ReplayRecorder(this);
         draw(dealer, false, false);
         // Give the initial wall/deal presentation time before a training opponent acts.
         // This is not an animation-driven game state: explicit legal actions still work.
@@ -930,7 +958,7 @@ public final class Game {
         }
         // The built-in bot takes a legal ron before publishing call-only choices,
         // so a lower-priority call cannot hold up the settlement.
-        for (int i = 0; i < rules.players(); i++) if (players[i].bot && !(botServiceEnabled && recorder != null && !manual)) {
+        for (int i = 0; i < rules.players(); i++) if (players[i].bot && players[i].externalBotId == null) {
             int ron = indexOf(options.get(i), RON);
             if (ron >= 0) {
                 act(players[i].id, decision, ron);
@@ -1161,8 +1189,7 @@ public final class Game {
             for (int seat = 0; seat < rules.players(); seat++) if (players[seat].bot) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
-                    if (botServiceEnabled && recorder != null && !manual
-                        && (phase == Phase.TURN || phase == Phase.REACTION)) continue;
+                    if (players[seat].externalBotId != null) continue;
                     act(players[seat].id, decision, TrainingBot.choose(view(players[seat].id), players[seat].botDifficulty));
                     return;
                 }
@@ -1308,6 +1335,9 @@ public final class Game {
         for (PlayerState player : players) {
             Objects.requireNonNull(player.autoPlay);
             Objects.requireNonNull(player.botDifficulty);
+            if (player.externalBotId != null && (!player.bot || player.entityBot
+                || !player.externalBotId.matches("[a-z0-9][a-z0-9_-]{0,63}")))
+                throw new IllegalStateException("Invalid external bot ID");
             if (player.entityBot && (!player.bot || player.id == null)) throw new IllegalStateException("Invalid entity bot");
             if (player.presence == null) player.presence = PlayerPresence.SEATED;
             if (player.presence != PlayerPresence.AWAY) player.awayTicks = 0;
