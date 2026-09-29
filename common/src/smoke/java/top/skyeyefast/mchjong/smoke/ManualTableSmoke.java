@@ -27,7 +27,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -320,8 +320,8 @@ final class ManualTableSmoke {
         if (player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat) {
             var previous = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(seat.tablePos());
             var game = previous.participantSession(player);
-            if (game != null) previous.control(player, new TableControlPayload(previous.getBlockPos(), game.tableId(),
-                TableControlPayload.Operation.REQUEST_EXIT, game.view(player.getUUID()).decision(), false));
+            if (game != null) previous.sessionControl(player, new TableSessionControlPayload(previous.getBlockPos(), game.tableId(),
+                TableSessionControlPayload.Operation.REQUEST_EXIT, game.view(player.getUUID()).decision(), false));
         }
         player.stopRiding();
         player.closeContainer();

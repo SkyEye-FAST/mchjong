@@ -119,8 +119,8 @@ class ReactionRulesTest {
         int fourth = f.game.players[0].hand.getLast();
         f.start(0, fourth);
         for (int seat = 1; seat < 4; seat++) {
-            assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), AutoPlay.Option.WIN, true));
-            assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), AutoPlay.Option.NO_CALLS, true));
+            assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), RiichiAutoPlay.Option.WIN, true));
+            assertTrue(f.game.configureAutoPlay(f.game.players[seat].member.id, f.game.decision(), RiichiAutoPlay.Option.NO_CALLS, true));
         }
         f.act(0, RiichiAction.Type.CLOSED_KAN, fourth);
         for (int tick = 0; tick < RiichiGame.AUTO_ACTION_TICKS + 3; tick++) f.game.tick();
@@ -141,8 +141,8 @@ class ReactionRulesTest {
         f.start(0, discarded);
         for (int seat = 1; seat <= 3; seat++) {
             UUID player = f.game.players[seat].member.id;
-            assertTrue(f.game.configureAutoPlay(player, f.game.decision(), AutoPlay.Option.WIN, true));
-            assertTrue(f.game.configureAutoPlay(player, f.game.decision(), AutoPlay.Option.NO_CALLS, true));
+            assertTrue(f.game.configureAutoPlay(player, f.game.decision(), RiichiAutoPlay.Option.WIN, true));
+            assertTrue(f.game.configureAutoPlay(player, f.game.decision(), RiichiAutoPlay.Option.NO_CALLS, true));
         }
         f.act(0, RiichiAction.Type.DISCARD, discarded);
         for (int i = 0; i < RiichiGame.AUTO_ACTION_TICKS + 3; i++) { f.game.tick(); f.game.validate(); }
@@ -156,8 +156,8 @@ class ReactionRulesTest {
         f.riichi(0);
         int drawn = f.game.players[0].hand.getLast();
         f.start(0, drawn);
-        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), AutoPlay.Option.WIN, true));
-        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), AutoPlay.Option.DISCARD, true));
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), RiichiAutoPlay.Option.WIN, true));
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), RiichiAutoPlay.Option.DISCARD, true));
         for (int i = 0; i < RiichiGame.AUTO_ACTION_TICKS; i++) f.game.tick();
         f.game.validate();
         assertEquals(1, f.game.view(null).wins().size());
@@ -353,7 +353,7 @@ class ReactionRulesTest {
         int north = f.take("4z").getFirst();
         f.game.players[0].hand.add(north);
         f.start(0, north);
-        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), AutoPlay.Option.KITA, true));
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), RiichiAutoPlay.Option.KITA, true));
         for (int tick = 0; tick < RiichiGame.AUTO_ACTION_TICKS; tick++) f.game.tick();
         f.passOthers();
         assertEquals(List.of(north), f.game.players[0].norths);
@@ -371,7 +371,7 @@ class ReactionRulesTest {
         int north = f.take("4z").getFirst();
         f.game.players[0].hand.add(north);
         f.start(0, north);
-        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), AutoPlay.Option.KITA, true));
+        assertTrue(f.game.configureAutoPlay(f.game.players[0].member.id, f.game.decision(), RiichiAutoPlay.Option.KITA, true));
         for (int tick = 0; tick < RiichiGame.AUTO_ACTION_TICKS; tick++) f.game.tick();
         f.game.validate();
         f.act(1, RiichiAction.Type.RON); f.passOthers();

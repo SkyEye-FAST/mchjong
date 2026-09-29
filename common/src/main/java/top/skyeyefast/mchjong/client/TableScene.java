@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -77,7 +77,7 @@ public final class TableScene {
             int riverSlot = 0;
             double riverX = -2.5 * RIVER_STEP;
             for (int i = 0; i < player.river().size(); i++) {
-                Discard discard = player.river().get(i);
+                RiichiDiscard discard = player.river().get(i);
                 if (discard.called()) continue;
                 if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
                 double extra = discard.riichi() ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) * TILE_SCALE : 0;

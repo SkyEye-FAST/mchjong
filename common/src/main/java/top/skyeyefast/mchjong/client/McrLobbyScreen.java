@@ -10,6 +10,7 @@ import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableSeatPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
@@ -43,6 +44,13 @@ public final class McrLobbyScreen extends Screen {
         if (room == null) return;
         int x = (width - 230) / 2;
         int top = panelTop();
+        if (room.viewerSeat() >= 0 && room.viewerSeat() == room.host()) {
+            var dissolve = RoomLobbyControls.button(Component.translatable("room.mchjong.dissolve"),
+                x + 152, top + 7, 78, () -> TableExitControls.send(pos, room,
+                    TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false));
+            dissolve.active = !pending;
+            addRenderableWidget(dissolve);
+        }
         var mcr = RoomLobbyControls.variantButton(pos, room, MahjongVariant.MCR, x, top + 32, 113, true);
         mcr.setTooltip(Tooltip.create(Component.translatable("mcr.mchjong.stock_hint")));
         addRenderableWidget(mcr);

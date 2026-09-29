@@ -31,7 +31,7 @@ class TableLayoutTest {
         fail("Missing " + type);
     }
 
-    private static RiichiView replace(RiichiView v, List<Integer> hand, List<Meld> melds, List<Discard> river) {
+    private static RiichiView replace(RiichiView v, List<Integer> hand, List<Meld> melds, List<RiichiDiscard> river) {
         var seats = new ArrayList<>(v.seats());
         seats.set(0, new RiichiView.Seat(false, "Test", true, false, false, 25000, hand, Tile.ABSENT,
             melds, river, List.of(), false, false, false));
@@ -214,8 +214,8 @@ class TableLayoutTest {
     }
 
     @Test void riverSlotsCloseCalledGapsWithoutLosingDiscardIdentityOrOverlappingRiichi() {
-        var discards = new ArrayList<Discard>();
-        for (int i = 0; i < 26; i++) discards.add(new Discard(i, i == 2, i == 1 || i == 9, false));
+        var discards = new ArrayList<RiichiDiscard>();
+        for (int i = 0; i < 26; i++) discards.add(new RiichiDiscard(i, i == 2, i == 1 || i == 9, false));
         var view = replace(start(RiichiPreset.TENHOU_4), List.of(80, 81), List.of(), discards);
         var river = TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.RIVER && piece.seat() == 0).toList();
         assertEquals(24, river.size());
@@ -284,8 +284,8 @@ class TableLayoutTest {
 
     @Test void normalRiverRowsTouchAndRiichiAtEveryColumnPreservesEdgeContact() {
         for (int riichi = 0; riichi < 12; riichi++) {
-            var discards = new ArrayList<Discard>();
-            for (int i = 0; i < 18; i++) discards.add(new Discard(i, i == riichi, false, false));
+            var discards = new ArrayList<RiichiDiscard>();
+            for (int i = 0; i < 18; i++) discards.add(new RiichiDiscard(i, i == riichi, false, false));
             var river = TableScene.build(replace(start(RiichiPreset.TENHOU_4), List.of(), List.of(), discards)).stream()
                 .filter(piece -> piece.area() == TableScene.Area.RIVER && piece.seat() == 0).toList();
             for (int i = 0; i < river.size(); i++) {

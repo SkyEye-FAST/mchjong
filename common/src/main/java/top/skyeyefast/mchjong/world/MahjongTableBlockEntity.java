@@ -23,16 +23,17 @@ import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.McrViewPayload;
 import top.skyeyefast.mchjong.network.TableRoomActionPayload;
-import top.skyeyefast.mchjong.network.TableLifecyclePayload;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.McrNextHandPayload;
+import top.skyeyefast.mchjong.network.RiichiControlPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.network.TableVariantPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableSeatPayload;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 
 public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger("mchjong");
@@ -264,7 +265,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         UUID viewer = authorizedViewer(player);
         RiichiView snapshot = viewer == null ? session.spectatorView(policy.spectatorHandVisibility()) : session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
-            new TableViewPayload(worldPosition, snapshot == null ? "" : TableNetworking.JSON.toJson(snapshot), open, controlReply,
+            new RiichiViewPayload(worldPosition, snapshot == null ? "" : TableNetworking.JSON.toJson(snapshot), open, controlReply,
                 session.leaveDecision(player.getUUID()), equipment.redOptions(), session.roomView(viewer),
                 session.roomSettings(), host.botState(), policy,
                 session.variant())));
@@ -278,7 +279,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var snapshot = session.view(player.getUUID());
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
-            session.roomView(authorizedViewer(player)), stock == null ? null : stock.deck(), equipment.clothColor(), open)));
+            session.roomView(authorizedViewer(player)),
+            stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()))));
     }
 
     public void open(ServerPlayer player) {
@@ -584,7 +586,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
     }
 
-    public void act(ServerPlayer player, TableActionPayload payload) {
+    public void act(ServerPlayer player, RiichiActionPayload payload) {
         RiichiSession session = serverRiichiSession();
         if (session == null || !session.tableId().equals(payload.tableId()) || authorizedViewer(player) == null) return;
         boolean changed = session.game() != null
@@ -625,12 +627,11 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, false);
     }
 
-    public void actLifecycle(ServerPlayer player, TableLifecyclePayload payload) {
+    public void confirmMcrNextHand(ServerPlayer player, McrNextHandPayload payload) {
         TableSession session = serverSession();
         if (!(session instanceof McrSession mcr) || player.serverLevel() != level || !player.isAlive()
             || player.isSpectator() || authorizedViewer(player) == null) return;
-        if (payload.operation() == TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND
-            && mcr.confirmNextHand(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision())) {
+        if (mcr.confirmNextHand(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision())) {
             sentRevision = -1;
             setChanged();
         }
@@ -660,7 +661,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, true);
     }
 
-    public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.TableRulesPayload payload) {
+    public void configureRules(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiRulesPayload payload) {
         var current = participantSession(player);
         if (current != null && current.tableId().equals(payload.tableId())
             && equipment.canSupplyReds(payload.rules().sanma(), payload.rules().redFives())
@@ -673,7 +674,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, true);
     }
 
-    public void configureVisibility(ServerPlayer player, top.skyeyefast.mchjong.network.TableVisibilityPayload payload) {
+    public void configureVisibility(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiVisibilityPayload payload) {
         var current = participantSession(player);
         if (current != null && current.tableId().equals(payload.tableId())
             && current.configureHandVisibility(player.getUUID(), payload.decision(), payload.visibility())) {
@@ -684,7 +685,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, true);
     }
 
-    public void reorderHand(ServerPlayer player, top.skyeyefast.mchjong.network.TableHandOrderPayload payload) {
+    public void reorderHand(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiHandOrderPayload payload) {
         RiichiGame current = participantGame(player);
         if (current != null && current.tableId().equals(payload.tableId())
             && current.reorderHand(player.getUUID(), payload.decision(), payload.source(), payload.target(), payload.after())) {
@@ -694,35 +695,52 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, false);
     }
 
-    public void control(ServerPlayer player, TableControlPayload payload) {
-        RiichiSession session = payload.operation() == TableControlPayload.Operation.RESOLVE_LEAVE
-            && player.serverLevel() == level && player.isAlive() && !player.isSpectator()
-            ? serverRiichiSession() : participantSession(player);
+    public void sessionControl(ServerPlayer player, TableSessionControlPayload payload) {
+        TableSession session = player.serverLevel() == level && player.isAlive() && !player.isSpectator()
+            && (payload.operation() == TableSessionControlPayload.Operation.RESOLVE_LEAVE
+                || authorizedViewer(player) != null) ? serverSession() : null;
+        if (session == null || !session.tableId().equals(payload.tableId())) {
+            sendView(player, false, true);
+            return;
+        }
+        boolean changed = switch (payload.operation()) {
+            case REQUEST_EXIT -> payload.token() == session.decision() && session.requestExit(player.getUUID());
+            case ANSWER_EXIT -> session.answerExit(player.getUUID(), payload.token(), payload.enabled());
+            case RESOLVE_LEAVE -> payload.token() == session.decision()
+                && session.resolveLeave(player.getUUID(), payload.enabled());
+        };
+        if (changed) {
+            refreshParticipants(payload.operation() == TableSessionControlPayload.Operation.REQUEST_EXIT);
+            setChanged();
+            sentRevision = -1;
+            flushReplays();
+        } else if (payload.operation() == TableSessionControlPayload.Operation.REQUEST_EXIT) {
+            player.displayClientMessage(Component.translatable("message.mchjong.exit_unavailable"), false);
+        }
+        sendView(player, false, true);
+    }
+
+    public void riichiControl(ServerPlayer player, RiichiControlPayload payload) {
+        RiichiSession session = participantSession(player);
         if (session == null || !session.tableId().equals(payload.tableId())) {
             sendView(player, false, true);
             return;
         }
         RiichiGame game = session.game();
         boolean changed = switch (payload.operation()) {
-            case REQUEST_EXIT -> payload.token() == session.decision() && session.requestExit(player.getUUID());
-            case ANSWER_EXIT -> session.answerExit(player.getUUID(), payload.token(), payload.enabled());
-            case RESOLVE_LEAVE -> payload.token() == session.decision()
-                && session.resolveLeave(player.getUUID(), payload.enabled());
-            case AUTO_SORT -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.SORT, payload.enabled());
-            case AUTO_WIN -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.WIN, payload.enabled());
-            case NO_CALLS -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.NO_CALLS, payload.enabled());
-            case AUTO_DISCARD -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.DISCARD, payload.enabled());
-            case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.AutoPlay.Option.KITA, payload.enabled());
+            case AUTO_SORT -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.SORT, payload.enabled());
+            case AUTO_WIN -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.WIN, payload.enabled());
+            case NO_CALLS -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.NO_CALLS, payload.enabled());
+            case AUTO_DISCARD -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.DISCARD, payload.enabled());
+            case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.KITA, payload.enabled());
             case CONVENIENCE_HINTS -> session.configureConvenienceHints(player.getUUID(), payload.token(), payload.enabled());
             case OPEN_HANDS -> session.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
         };
         if (changed) {
-            refreshParticipants(payload.operation() == TableControlPayload.Operation.REQUEST_EXIT);
+            refreshParticipants(false);
             setChanged();
             sentRevision = -1;
             flushReplays();
-        } else if (payload.operation() == TableControlPayload.Operation.REQUEST_EXIT) {
-            player.displayClientMessage(Component.translatable("message.mchjong.exit_unavailable"), false);
         }
         sendView(player, false, true);
     }
@@ -732,8 +750,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         for (ServerPlayer participant : ((ServerLevel) level).players()) {
             if (!(participant.getVehicle() instanceof SeatEntity seat) || !seat.tablePos().equals(worldPosition)) continue;
             if (session.seatOf(participant.getUUID()) < 0) participant.stopRiding();
-            sendView(participant, openVote && host.riichi() != null
-                && host.riichi().roomView(participant.getUUID()).exitVote() != null, false);
+            sendView(participant, openVote && session.roomView(participant.getUUID()).exitVote() != null, false);
         }
     }
 

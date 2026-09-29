@@ -14,7 +14,7 @@ import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -88,13 +88,13 @@ final class AnimationSmoke {
         if (ticks == 61) {
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), List.of(),
-                List.of(new Discard(13, true, false, true)), false));
+                List.of(new RiichiDiscard(13, true, false, true)), false));
             update(table, seats, fixture.wall());
         }
         if (ticks == 65) capture(client, output, "15-riichi-discard-moving.png");
         if (ticks == 74) {
             var seats = new ArrayList<>(fixture.seats());
-            seats.set(0, seat(seats.getFirst().hand(), List.of(), List.of(new Discard(13, true, true, true)), true));
+            seats.set(0, seat(seats.getFirst().hand(), List.of(), List.of(new RiichiDiscard(13, true, true, true)), true));
             seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN),
                 List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
             update(table, seats, fixture.wall());
@@ -162,7 +162,7 @@ final class AnimationSmoke {
                 var player = seats.get(side);
                 int first = 40 + side * 20;
                 var river = IntStream.range(first, first + (side % 2 == 0 ? 24 : 12))
-                    .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
+                    .mapToObj(tile -> new RiichiDiscard(tile, tile == first + 2, false, false)).toList();
                 seats.set(side, new RiichiView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
                     player.points(), player.hand(), player.drawn(), player.melds(), river,
                     side == 0 ? List.of(120) : side == 1 ? List.of(121, 122, 123) : List.of(),
@@ -236,7 +236,7 @@ final class AnimationSmoke {
             if (owner == 0) hand.remove(Integer.valueOf(tile));
             else hand.removeLast();
             var river = new ArrayList<>(player.river());
-            river.add(new Discard(tile, ticks == 364, false, tsumogiri));
+            river.add(new RiichiDiscard(tile, ticks == 364, false, tsumogiri));
             seats.set(owner, seat(hand, player.melds(), river, player.riichi() || ticks == 364));
             update(table, seats, fixture.wall(), owner);
         }
@@ -269,7 +269,7 @@ final class AnimationSmoke {
         table.acceptView(fixture);
     }
 
-    private static RiichiView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
+    private static RiichiView.Seat seat(List<Integer> hand, List<Meld> melds, List<RiichiDiscard> river, boolean riichi) {
         return new RiichiView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
             hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false, false);
     }

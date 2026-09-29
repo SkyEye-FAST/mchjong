@@ -6,11 +6,11 @@ import java.util.List;
 /** Server-only state. It must never be serialized into a client payload. */
 final class RiichiPlayerState {
     transient TableSession.Participant member;
-    AutoPlay autoPlay = AutoPlay.DEFAULT;
+    RiichiAutoPlay autoPlay = RiichiAutoPlay.DEFAULT;
     int points;
     List<Integer> hand = new ArrayList<>();
     List<Meld> melds = new ArrayList<>();
-    List<Discard> river = new ArrayList<>();
+    List<RiichiDiscard> river = new ArrayList<>();
     List<Integer> norths = new ArrayList<>();
     int drawn = Tile.ABSENT;
     boolean riichi;
@@ -31,8 +31,8 @@ final class RiichiPlayerState {
 
     RiichiPlayerState(TableSession.Participant member) { this.member = member; }
 
-    record Saved(AutoPlay autoPlay, int points, List<Integer> hand, List<Meld> melds,
-                 List<Discard> river, List<Integer> norths, int drawn,
+    record Saved(RiichiAutoPlay autoPlay, int points, List<Integer> hand, List<Meld> melds,
+                 List<RiichiDiscard> river, List<Integer> norths, int drawn,
                  boolean riichi, boolean doubleRiichi, boolean ippatsu, boolean riichiFuriten,
                  boolean temporaryFuriten, boolean firstTurn, boolean lastDraw, boolean rinshan,
                  boolean canDeclare, boolean pendingRiichi, boolean nextDiscardSideways,
@@ -93,7 +93,7 @@ final class RiichiPlayerState {
     }
 
     void resetHand() {
-        autoPlay = AutoPlay.DEFAULT;
+        autoPlay = RiichiAutoPlay.DEFAULT;
         hand.clear(); melds.clear(); river.clear(); norths.clear(); forbiddenDiscards.clear();
         drawn = Tile.ABSENT;
         riichi = doubleRiichi = ippatsu = riichiFuriten = temporaryFuriten = false;

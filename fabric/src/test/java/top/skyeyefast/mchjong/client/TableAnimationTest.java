@@ -7,7 +7,7 @@ import java.util.UUID;
 import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RiichiRules;
@@ -20,7 +20,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class TableAnimationTest {
     private static final UUID TABLE = new UUID(10, 20);
 
-    private static RiichiView.Seat seat(List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river, boolean riichi) {
+    private static RiichiView.Seat seat(List<Integer> hand, int drawn, List<Meld> melds, List<RiichiDiscard> river, boolean riichi) {
         return new RiichiView.Seat(false, "Player", true, false, false, 25000, hand, drawn, melds, river, List.of(), riichi, false, false);
     }
 
@@ -67,7 +67,7 @@ class TableAnimationTest {
             var source = animation.sample(0).stream().filter(frame -> frame.piece().seat() == 1
                 && frame.piece().area() == TableScene.Area.HAND && frame.piece().index() == slot).findFirst().orElseThrow();
             seats.set(1, seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(),
-                List.of(new Discard(40, false, false, tsumogiri)), false));
+                List.of(new RiichiDiscard(40, false, false, tsumogiri)), false));
             animation.accept(update(base, seats, 0), 100);
             var start = animation.sample(100).stream().filter(frame -> frame.piece().area() == TableScene.Area.RIVER).findFirst().orElseThrow();
             assertEquals(source.piece().position(), start.piece().position());
@@ -124,7 +124,7 @@ class TableAnimationTest {
         animation.accept(playing, 0);
         var origin = tile(animation.sample(0), 13).piece().position();
         var seats = new ArrayList<>(playing.seats());
-        seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(), List.of(new Discard(13, true, false, true)), true));
+        seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(), List.of(new RiichiDiscard(13, true, false, true)), true));
         animation.accept(update(playing, seats, 0), 100);
         var start = tile(animation.sample(100), 13);
         var middle = tile(animation.sample(250), 13);
@@ -143,12 +143,12 @@ class TableAnimationTest {
     @Test void calledTileTravelsFromTheRiverIntoTheCallersMeld() {
         var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         var seats = new ArrayList<>(base.seats());
-        seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(), List.of(new Discard(13, false, false, true)), false));
+        seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(), List.of(new RiichiDiscard(13, false, false, true)), false));
         var discarded = update(base, seats, 0);
         var animation = new TableAnimation();
         animation.accept(discarded, 0);
         var origin = tile(animation.sample(0), 13).piece().position();
-        seats.set(0, seat(seats.getFirst().hand(), Tile.ABSENT, List.of(), List.of(new Discard(13, false, true, true)), false));
+        seats.set(0, seat(seats.getFirst().hand(), Tile.ABSENT, List.of(), List.of(new RiichiDiscard(13, false, true, true)), false));
         seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN), Tile.ABSENT, List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
         animation.accept(update(discarded, seats, 0), 100);
         assertEquals(origin, tile(animation.sample(100), 13).piece().position());
@@ -197,12 +197,12 @@ class TableAnimationTest {
         animation.accept(base, 0);
         var seats = new ArrayList<>(base.seats());
         seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(),
-            List.of(new Discard(13, false, false, true)), false));
+            List.of(new RiichiDiscard(13, false, false, true)), false));
         var discarded = update(base, seats, 0);
         animation.accept(discarded, 100);
         var moving = tile(animation.sample(220), 13);
         seats.set(0, seat(seats.getFirst().hand(), Tile.ABSENT, List.of(),
-            List.of(new Discard(13, false, true, true)), false));
+            List.of(new RiichiDiscard(13, false, true, true)), false));
         seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN), Tile.ABSENT,
             List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
         animation.accept(update(discarded, seats, 0), 220);

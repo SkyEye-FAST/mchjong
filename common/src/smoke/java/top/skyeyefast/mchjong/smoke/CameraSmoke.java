@@ -114,7 +114,7 @@ final class CameraSmoke {
             int riverSize = new int[]{24, 12, 20, 12}[seat];
             int start = first;
             var river = java.util.stream.IntStream.range(first, first + riverSize)
-                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.Discard(tile, tile == start + 2, false, false)).toList();
+                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.RiichiDiscard(tile, tile == start + 2, false, false)).toList();
             first += riverSize;
             var hand = seat == 0 ? java.util.stream.IntStream.range(0, 14).boxed().toList()
                 : java.util.Collections.nCopies(13 - count * 3, top.skyeyefast.mchjong.engine.Tile.HIDDEN);

@@ -8,8 +8,9 @@ import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.McrSettlement;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.network.TableLifecyclePayload;
+import top.skyeyefast.mchjong.network.McrNextHandPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** MCR fan and payment receipt, independent of Riichi result terminology. */
@@ -45,8 +46,19 @@ public final class McrResultsScreen extends Screen {
         clearWidgets();
         var view = view();
         if (view == null) return;
+        var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
+        var room = table.clientTableRoom();
+        if (room == null) return;
         if (view.revision() != shownRevision) pending = false;
         shownRevision = view.revision();
+        if (room.exitVote() != null) {
+            TableExitControls.voteButtons(pos, room, width, height).forEach(this::addRenderableWidget);
+            return;
+        }
+        if (room.viewerSeat() >= 0 && room.lifecycle() != top.skyeyefast.mchjong.engine.TableSession.Lifecycle.FINISHED)
+            addRenderableWidget(MahjongButton.create(Component.translatable("ui.mchjong.exit"), ignored ->
+                TableExitControls.send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false))
+                .bounds(width - 60, 6, 52, 20).build());
         int pages = Math.max(1, (rows(view).size() + rowsPerPage() - 1) / rowsPerPage());
         page = Math.min(page, pages - 1);
         if (pages > 1) {
@@ -58,8 +70,6 @@ public final class McrResultsScreen extends Screen {
             }).bounds((width - 60) / 2 + 34, height - 56, 26, 20).build());
         }
         if (view.game().phase() == McrGame.Phase.MATCH_END) {
-            var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
-            var room = table.clientTableRoom();
             int action = room == null ? -1 : room.actions().indexOf(new RoomAction(RoomAction.Type.RETURN_TO_LOBBY));
             if (action >= 0) {
                 var button = MahjongButton.create(Component.translatable("action.mchjong.return_to_lobby"), ignored -> {
@@ -78,8 +88,8 @@ public final class McrResultsScreen extends Screen {
         var button = MahjongButton.create(Component.translatable("mcr.mchjong.next_hand"), ignored -> {
             if (pending || minecraft.getConnection() == null) return;
             pending = true;
-            minecraft.getConnection().send(PayloadPackets.serverbound(new TableLifecyclePayload(pos, view.tableId(),
-                view.incarnation(), view.game().decision(), TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND)));
+            minecraft.getConnection().send(PayloadPackets.serverbound(new McrNextHandPayload(pos, view.tableId(),
+                view.incarnation(), view.game().decision())));
             rebuild();
         }).bounds((width - Math.min(260, width - 24)) / 2, height - 32, Math.min(260, width - 24), 22).build().primary();
         button.active = !pending;
@@ -127,6 +137,8 @@ public final class McrResultsScreen extends Screen {
             MahjongUi.text(graphics, font, row.text(), x, 28 + (index % rowsPerPage()) * 12,
                 span, row.color(), false);
         }
+        var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
+        TableExitControls.renderVote(graphics, font, table.clientTableRoom(), width, height);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 }

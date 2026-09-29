@@ -128,9 +128,10 @@ session boundary. Run them with
 
 The focused automatic-table MCR smoke uses one real client and three server-side
 human participants. It selects MCR through the registered payload, seats four
-players, checks the standard 144-tile stock, then drives a discard and response
-through the independent MCR view and action path, opens settlement and confirms
-the next hand. On Fabric, run:
+players, checks the standard 144-tile stock and shared exit vote, then drives a
+discard and response through the independent MCR view and action path, opens
+settlement and confirms the next hand. It also keeps a match paused after the
+last dismount and resumes it when everyone returns. On Fabric, run:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-auto-play.png,mcr-auto-results.png" --warning-mode fail --console=plain

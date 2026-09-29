@@ -76,6 +76,57 @@ class McrSessionTest {
         assertFalse(session.act(id(0), TABLE, offered.incarnation(), offered.game().decision(), 0));
     }
 
+    @Test void sharedExitVotePausesMcrActionsAndSurvivesRestore() {
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        session.synchronizeSeats(MOUNTS);
+        var before = session.view(id(0));
+        assertTrue(session.requestExit(id(0)));
+        var vote = session.roomView(id(1)).exitVote();
+        assertNotNull(vote);
+        assertEquals(4, vote.required());
+        assertTrue(session.view(id(0)).game().actions().isEmpty());
+        assertFalse(session.act(id(0), TABLE, before.incarnation(), before.game().decision(), 0));
+        assertFalse(session.answerExit(OUTSIDER, vote.id(), true));
+        assertTrue(session.answerExit(id(1), vote.id(), false));
+        assertFalse(session.requestExit(id(0)), "A rejected vote starts the shared cooldown");
+        for (int tick = 0; tick < ExitVote.DURATION_TICKS; tick++) session.tick();
+        assertTrue(session.requestExit(id(0)));
+        String saved = McrCodec.saveSession(session);
+        var restored = McrCodec.restoreSession(saved);
+        assertNotEquals(session.incarnation(), restored.incarnation());
+        assertTrue(restored.paused());
+        assertEquals(session.roomView(id(1)).exitVote(), restored.roomView(id(1)).exitVote());
+        assertTrue(restored.synchronizeSeats(MOUNTS));
+        assertTrue(restored.answerExit(id(1), restored.roomView(id(1)).exitVote().id(), true));
+        assertTrue(restored.answerExit(id(2), restored.roomView(id(2)).exitVote().id(), true));
+        assertTrue(restored.answerExit(id(3), restored.roomView(id(3)).exitVote().id(), true));
+        assertTrue(restored.lobby());
+    }
+
+    @Test void lastPlayerMayKeepOrEndPausedMcrMatchAfterDismount() {
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        session.synchronizeSeats(MOUNTS);
+        session.unseat(id(0));
+        assertTrue(session.paused());
+        assertFalse(session.leaveDecision(id(0)));
+        session.unseat(id(1));
+        session.unseat(id(2));
+        session.unseat(id(3));
+        assertTrue(session.leaveDecision(id(3)));
+        var restored = McrCodec.restoreSession(McrCodec.saveSession(session));
+        assertTrue(restored.leaveDecision(id(3)));
+        assertTrue(restored.resolveLeave(id(3), true));
+        assertTrue(restored.paused());
+        assertTrue(restored.synchronizeSeats(MOUNTS));
+        assertFalse(restored.paused());
+        restored.unseat(id(0));
+        restored.unseat(id(1));
+        restored.unseat(id(2));
+        restored.unseat(id(3));
+        assertTrue(restored.resolveLeave(id(3), false));
+        assertTrue(restored.lobby());
+    }
+
     @Test void pendingResponsesRestoreWithFreshIncarnationsAndNoAssumedPresence() {
         var game = fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
@@ -133,6 +184,10 @@ class McrSessionTest {
         }
         assertEquals(McrGame.Phase.HAND_END, session.view(null).game().phase());
         var end = session.view(id(0));
+        assertTrue(session.requestExit(id(0)));
+        assertFalse(session.confirmNextHand(id(0), TABLE, end.incarnation(), end.game().decision()),
+            "A completed hand cannot advance during an exit vote");
+        assertTrue(session.answerExit(id(1), session.roomView(id(1)).exitVote().id(), false));
         assertFalse(session.confirmNextHand(OUTSIDER, TABLE, end.incarnation(), end.game().decision()));
         for (int seat = 0; seat < 3; seat++) {
             assertTrue(session.confirmNextHand(id(seat), TABLE, end.incarnation(), end.game().decision()));

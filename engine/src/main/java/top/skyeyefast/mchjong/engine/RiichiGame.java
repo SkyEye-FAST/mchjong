@@ -240,12 +240,12 @@ public final class RiichiGame {
         }
         return true;
     }
-    public boolean configureAutoPlay(UUID actor, long expectedDecision, AutoPlay.Option option, boolean enabled) {
+    public boolean configureAutoPlay(UUID actor, long expectedDecision, RiichiAutoPlay.Option option, boolean enabled) {
         int seat = session.seatOf(actor);
         if (manual || seat < 0 || players[seat].member.bot || session.exitVote != null || expectedDecision != session.decision
-            || option == AutoPlay.Option.KITA && !rules.sanma()
+            || option == RiichiAutoPlay.Option.KITA && !rules.sanma()
             || players[seat].autoPlay.enabled(option) == enabled) return false;
-        if (option == AutoPlay.Option.SORT && !enabled) {
+        if (option == RiichiAutoPlay.Option.SORT && !enabled) {
             var player = players[seat];
             player.hand.sort(Tile.ORDER);
             if (player.drawn >= 0 && player.hand.remove(Integer.valueOf(player.drawn))) player.hand.add(player.drawn);
@@ -471,7 +471,7 @@ public final class RiichiGame {
         boolean declare = action.type() == RIICHI;
         if (!player.hand.remove(Integer.valueOf(tile))) throw new IllegalStateException("Missing discarded tile");
         boolean sideways = declare || player.nextDiscardSideways;
-        player.river.add(new Discard(tile, sideways, false, tile == player.drawn));
+        player.river.add(new RiichiDiscard(tile, sideways, false, tile == player.drawn));
         if (recorder != null) recorder.discard(seat, tile, tile == player.drawn, declare);
         player.nextDiscardSideways = false;
         player.pendingRiichi = declare;
@@ -584,7 +584,7 @@ public final class RiichiGame {
         RiichiPlayerState player = players[seat];
         if (rules.callsClearFuriten()) player.temporaryFuriten = false;
         RiichiPlayerState source = players[lastFrom];
-        Discard discarded = source.river.get(source.river.size() - 1);
+        RiichiDiscard discarded = source.river.get(source.river.size() - 1);
         source.river.set(source.river.size() - 1, discarded.markCalled());
         if (discarded.riichi()) source.nextDiscardSideways = true;
         var tiles = new ArrayList<>(action.tiles());
@@ -699,7 +699,7 @@ public final class RiichiGame {
                 if (player.member.presence == PlayerPresence.DISCONNECTED) {
                     index = disconnectedAction(phase, player.drawn, legal);
                 } else {
-                    AutoPlay preference = manual ? AutoPlay.DEFAULT : player.autoPlay;
+                    RiichiAutoPlay preference = manual ? RiichiAutoPlay.DEFAULT : player.autoPlay;
                     index = manual && phase == Phase.DRAW && player.riichi ? indexOf(legal, DRAW)
                         : preference.action(phase, player.riichi, player.drawn, legal);
                 }

@@ -4,8 +4,8 @@ import java.util.List;
 import static top.skyeyefast.mchjong.engine.RiichiAction.Type.*;
 
 /** Per-seat preferences. Decisions use the referee's legal actions and current token. */
-public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean discard, boolean kita) {
-    public static final AutoPlay DEFAULT = new AutoPlay(true, false, false, false, false);
+public record RiichiAutoPlay(boolean sort, boolean win, boolean noCalls, boolean discard, boolean kita) {
+    public static final RiichiAutoPlay DEFAULT = new RiichiAutoPlay(true, false, false, false, false);
     public enum Option { SORT, WIN, NO_CALLS, DISCARD, KITA }
 
     public boolean enabled(Option option) {
@@ -18,8 +18,8 @@ public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean disca
         };
     }
 
-    public AutoPlay with(Option option, boolean enabled) {
-        return new AutoPlay(option == Option.SORT ? enabled : sort, option == Option.WIN ? enabled : win,
+    public RiichiAutoPlay with(Option option, boolean enabled) {
+        return new RiichiAutoPlay(option == Option.SORT ? enabled : sort, option == Option.WIN ? enabled : win,
             option == Option.NO_CALLS ? enabled : noCalls, option == Option.DISCARD ? enabled : discard,
             option == Option.KITA ? enabled : kita);
     }

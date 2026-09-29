@@ -12,6 +12,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -51,8 +52,14 @@ public final class McrTableScreen extends Screen {
         clearWidgets();
         var view = view();
         if (view == null) return;
+        var room = table().clientTableRoom();
+        if (room == null) return;
         if (shownRevision != view.revision()) pending = false;
         shownRevision = view.revision();
+        if (room.exitVote() != null) {
+            TableExitControls.voteButtons(pos, room, width, height).forEach(this::addRenderableWidget);
+            return;
+        }
         var actions = view.game().actions();
         int pages = Math.max(1, (actions.size() + 7) / 8);
         page = Math.min(page, pages - 1);
@@ -71,6 +78,10 @@ public final class McrTableScreen extends Screen {
             button.active = !pending;
             addRenderableWidget(button);
         }
+        if (room.viewerSeat() >= 0) addRenderableWidget(
+            MahjongButton.create(Component.translatable("ui.mchjong.exit"), ignored ->
+                TableExitControls.send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false))
+                .bounds(width - 60, 6, 52, 20).build());
         if (pages > 1) {
             addRenderableWidget(MahjongButton.create(Component.literal("‹"), ignored -> { page = Math.floorMod(page - 1, pages); rebuild(); })
                 .bounds(x, y - 22, 28, 20).build());
@@ -128,6 +139,12 @@ public final class McrTableScreen extends Screen {
             if (player.winForbidden()) state.append(" · ").append(Component.translatable("mcr.mchjong.win_forbidden"));
             MahjongUi.text(graphics, font, state, x, y + 11, Math.min(150, width / 3), player.winForbidden() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, false);
         }
-        super.render(graphics, mouseX, mouseY, partialTick);
+        if (table.clientTableRoom().exitVote() != null) {
+            graphics.pose().pushPose();
+            graphics.pose().translate(0, 0, 600);
+            TableExitControls.renderVote(graphics, font, table.clientTableRoom(), width, height);
+            super.render(graphics, mouseX, mouseY, partialTick);
+            graphics.pose().popPose();
+        } else super.render(graphics, mouseX, mouseY, partialTick);
     }
 }

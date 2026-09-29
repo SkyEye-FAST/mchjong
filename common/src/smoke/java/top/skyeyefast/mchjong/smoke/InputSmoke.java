@@ -11,7 +11,7 @@ import top.skyeyefast.mchjong.client.TableScene;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -194,7 +194,7 @@ final class InputSmoke {
         var source = seats.get(from);
         seats.set(from, new RiichiView.Seat(false, source.name(), true, false, false, 25000,
             java.util.Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT,
-            List.of(), List.of(new Discard(14, false, false, false)), List.of(), false, false, false));
+            List.of(), List.of(new RiichiDiscard(14, false, false, false)), List.of(), false, false, false));
         var action = new RiichiAction(type, consumed);
         var fixture = new RiichiView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), RiichiView.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),

@@ -12,14 +12,14 @@ class TenpaiHintsTest {
         var game = fixture("123456m456p22s78s", RiichiPreset.MAHJONG_SOUL_4.config(), PlayerHandVisibility.ALL);
         var hints = new TenpaiHints();
         int six = Tile.id(23, 0, false);
-        game.players[1].river.add(new Discard(six, false, false, true));
+        game.players[1].river.add(new RiichiDiscard(six, false, false, true));
         game.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666s"));
         game.players[1].hand.add(Tile.id(23, 3, false));
         var view = game.view(OWNER);
         var waits = hints.waits(view, Tile.ABSENT);
         assertEquals(List.of(new TenpaiHints.Wait(23, 1), new TenpaiHints.Wait(26, 4)), waits);
         assertSame(waits, hints.waits(view, Tile.ABSENT), "Rendering the same snapshot reuses the complete result");
-        game.players[1].river.add(new Discard(Tile.id(23, 3, false), false, false, false));
+        game.players[1].river.add(new RiichiDiscard(Tile.id(23, 3, false), false, false, false));
         assertEquals(0, hints.waits(game.view(OWNER), Tile.ABSENT).getFirst().remaining());
         int drawn = Tile.id(Tile.WHITE, 0, false);
         game.players[0].hand.add(drawn);

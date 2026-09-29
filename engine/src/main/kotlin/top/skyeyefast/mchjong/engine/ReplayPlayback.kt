@@ -23,7 +23,7 @@ object ReplayPlayback {
     private class Seat(hand: List<Int>, var points: Int) {
         val hand = hand.toMutableList()
         val melds = mutableListOf<Meld>()
-        val river = mutableListOf<Discard>()
+        val river = mutableListOf<RiichiDiscard>()
         val norths = mutableListOf<Int>()
         var drawn = Tile.ABSENT
         var riichi = false
@@ -60,7 +60,7 @@ object ReplayPlayback {
                 ReplayHand.Kind.DISCARD -> {
                     seat.remove(event.tile)
                     seat.drawn = Tile.ABSENT
-                    seat.river += Discard(event.tile, event.riichi || seat.nextSideways, false, event.tsumogiri)
+                    seat.river += RiichiDiscard(event.tile, event.riichi || seat.nextSideways, false, event.tsumogiri)
                     seat.nextSideways = false
                 }
                 ReplayHand.Kind.RIICHI -> {

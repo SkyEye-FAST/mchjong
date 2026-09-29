@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(14)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(15)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
@@ -21,13 +21,13 @@ final class ForgeNetworking {
             .addMain(StickChoicePayload.TYPE, StickChoicePayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) payload.handle(context.getSender());
             })
-            .addMain(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
+            .addMain(RiichiActionPayload.TYPE, RiichiActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableRoomActionPayload.TYPE, TableRoomActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableLifecyclePayload.TYPE, TableLifecyclePayload.CODEC, (payload, context) -> {
+            .addMain(McrNextHandPayload.TYPE, McrNextHandPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(McrActionPayload.TYPE, McrActionPayload.CODEC, (payload, context) -> {
@@ -36,26 +36,29 @@ final class ForgeNetworking {
             .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {
+            .addMain(RiichiControlPayload.TYPE, RiichiControlPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableHandOrderPayload.TYPE, TableHandOrderPayload.CODEC, (payload, context) -> {
+            .addMain(TableSessionControlPayload.TYPE, TableSessionControlPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
+            })
+            .addMain(RiichiHandOrderPayload.TYPE, RiichiHandOrderPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableSeatPayload.TYPE, TableSeatPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableRulesPayload.TYPE, TableRulesPayload.CODEC, (payload, context) -> {
+            .addMain(RiichiRulesPayload.TYPE, RiichiRulesPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableVisibilityPayload.TYPE, TableVisibilityPayload.CODEC, (payload, context) -> {
+            .addMain(RiichiVisibilityPayload.TYPE, RiichiVisibilityPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .clientbound()
             .addMain(VoiceAppearancePayload.TYPE, VoiceAppearancePayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload))
-            .addMain(TableViewPayload.TYPE, TableViewPayload.CODEC,
-                (payload, context) -> top.skyeyefast.mchjong.client.ClientTableNetworking.receive(payload))
+            .addMain(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.ClientRiichiNetworking.receive(payload))
             .addMain(McrViewPayload.TYPE, McrViewPayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload))
             .addMain(ReplayPayload.TYPE, ReplayPayload.CODEC,

@@ -27,7 +27,7 @@ import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlock;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -208,9 +208,9 @@ final class EquipmentLifecycleSmoke {
         }
         check(scoresBefore.equals(top.skyeyefast.mchjong.engine.TableSessionCodec.save(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
-        table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
+        table.sessionControl(player, new TableSessionControlPayload(CENTER, game.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
         check(!game.lobby() && player.isPassenger(), "A stale exit token changed the game");
-        table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
+        table.sessionControl(player, new TableSessionControlPayload(CENTER, game.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, exitToken, false));
         check(game.lobby() && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
         if (!table.automatic()) {

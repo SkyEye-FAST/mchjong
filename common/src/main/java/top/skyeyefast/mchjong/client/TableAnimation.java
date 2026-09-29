@@ -9,7 +9,7 @@ import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.RiichiGame;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -208,7 +208,7 @@ public final class TableAnimation {
                 if (physical != null) source = moved(target, physical.piece().position(), physical.piece().yaw(), physical.pitch(),
                     target.piece().tile(), target.piece().back());
             }
-            Discard discard = null;
+            RiichiDiscard discard = null;
             if (target.piece().area() == TableScene.Area.RIVER) {
                 int seat = target.piece().seat(), index = target.piece().index();
                 if (index >= view.seats().get(seat).river().size()) {

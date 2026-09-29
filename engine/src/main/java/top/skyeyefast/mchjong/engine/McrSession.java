@@ -41,7 +41,7 @@ public final class McrSession extends TableSession {
 
     /** Authenticated sender only; no seat number or tile identity is accepted from the request. */
     public boolean act(UUID actor, UUID expectedTable, UUID expectedIncarnation, long decision, int actionIndex) {
-        if (game == null) return false;
+        if (game == null || exitVote != null) return false;
         int seat = authorize(actor, expectedTable, expectedIncarnation, decision, game.decision(), true);
         if (seat < 0 || !game.act(seat, decision, actionIndex)) return false;
         if (game.phase() == McrGame.Phase.MATCH_END) lifecycle = Lifecycle.FINISHED;
@@ -51,7 +51,7 @@ public final class McrSession extends TableSession {
 
     /** All four participants acknowledge the completed hand before the next one is dealt. */
     public boolean confirmNextHand(UUID actor, UUID expectedTable, UUID expectedIncarnation, long decision) {
-        if (game == null) return false;
+        if (game == null || exitVote != null) return false;
         int seat = authorize(actor, expectedTable, expectedIncarnation, decision, game.decision(), true);
         if (seat < 0 || game.phase() != McrGame.Phase.HAND_END || (confirmed & (1 << seat)) != 0) return false;
         confirmed |= 1 << seat;
@@ -100,7 +100,7 @@ public final class McrSession extends TableSession {
     public View view(UUID recipient) {
         if (game == null) return null;
         return new View(tableId, incarnation, revision, participants(), seated(), confirmed,
-            McrView.project(game, viewerSeat(recipient), seated() == 15));
+            McrView.project(game, viewerSeat(recipient), seated() == 15 && exitVote == null));
     }
 
     public State save() {

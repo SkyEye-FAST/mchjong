@@ -14,10 +14,10 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.network.TableActionPayload;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
+import top.skyeyefast.mchjong.network.RiichiControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import static org.junit.jupiter.api.Assertions.*;
@@ -110,36 +110,42 @@ class ServerIntegrationTest {
     @Test void actualMinecraftCodecsRoundTripOnlyDeclaredPayloads(MinecraftServer server) {
         var buffer = new RegistryFriendlyByteBuf(Unpooled.buffer(), server.registryAccess(), ConnectionType.NEOFORGE);
         try {
-            var request = new TableActionPayload(new BlockPos(-5, 72, 9), UUID.randomUUID(), 17, 3);
-            TableActionPayload.CODEC.encode(buffer, request);
-            assertEquals(request, TableActionPayload.CODEC.decode(buffer));
+            var request = new RiichiActionPayload(new BlockPos(-5, 72, 9), UUID.randomUUID(), 17, 3);
+            RiichiActionPayload.CODEC.encode(buffer, request);
+            assertEquals(request, RiichiActionPayload.CODEC.decode(buffer));
             var seatRequest = new top.skyeyefast.mchjong.network.TableSeatPayload(request.pos(), request.tableId());
             top.skyeyefast.mchjong.network.TableSeatPayload.CODEC.encode(buffer, seatRequest);
             assertEquals(seatRequest, top.skyeyefast.mchjong.network.TableSeatPayload.CODEC.decode(buffer));
-            var handOrder = new top.skyeyefast.mchjong.network.TableHandOrderPayload(
+            var handOrder = new top.skyeyefast.mchjong.network.RiichiHandOrderPayload(
                 request.pos(), request.tableId(), request.decision(), 13, 27, true);
-            top.skyeyefast.mchjong.network.TableHandOrderPayload.CODEC.encode(buffer, handOrder);
-            assertEquals(handOrder, top.skyeyefast.mchjong.network.TableHandOrderPayload.CODEC.decode(buffer));
-            for (var operation : TableControlPayload.Operation.values()) for (boolean enabled : new boolean[]{false, true}) {
-                var control = new TableControlPayload(new BlockPos(-6, 70, 20), UUID.randomUUID(), operation, Long.MAX_VALUE, enabled);
-                TableControlPayload.CODEC.encode(buffer, control);
-                assertEquals(control, TableControlPayload.CODEC.decode(buffer));
+            top.skyeyefast.mchjong.network.RiichiHandOrderPayload.CODEC.encode(buffer, handOrder);
+            assertEquals(handOrder, top.skyeyefast.mchjong.network.RiichiHandOrderPayload.CODEC.decode(buffer));
+            for (var operation : RiichiControlPayload.Operation.values()) for (boolean enabled : new boolean[]{false, true}) {
+                var control = new RiichiControlPayload(new BlockPos(-6, 70, 20), UUID.randomUUID(), operation, Long.MAX_VALUE, enabled);
+                RiichiControlPayload.CODEC.encode(buffer, control);
+                assertEquals(control, RiichiControlPayload.CODEC.decode(buffer));
+            }
+            for (var operation : top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.values()) {
+                var control = new top.skyeyefast.mchjong.network.TableSessionControlPayload(
+                    request.pos(), request.tableId(), operation, 23, true);
+                top.skyeyefast.mchjong.network.TableSessionControlPayload.CODEC.encode(buffer, control);
+                assertEquals(control, top.skyeyefast.mchjong.network.TableSessionControlPayload.CODEC.decode(buffer));
             }
             for (boolean maximum : new boolean[]{false, true}) {
                 var rules = RiichiPreset.WRC.config();
                 for (var option : top.skyeyefast.mchjong.engine.RiichiRuleOption.values())
                     rules = rules.with(option, maximum ? option.max() : option.min());
-                var proposal = new top.skyeyefast.mchjong.network.TableRulesPayload(request.pos(), request.tableId(), Long.MAX_VALUE, rules);
-                top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.encode(buffer, proposal);
-                assertEquals(proposal, top.skyeyefast.mchjong.network.TableRulesPayload.CODEC.decode(buffer));
+                var proposal = new top.skyeyefast.mchjong.network.RiichiRulesPayload(request.pos(), request.tableId(), Long.MAX_VALUE, rules);
+                top.skyeyefast.mchjong.network.RiichiRulesPayload.CODEC.encode(buffer, proposal);
+                assertEquals(proposal, top.skyeyefast.mchjong.network.RiichiRulesPayload.CODEC.decode(buffer));
             }
             RiichiSession game = startedGame();
-            var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
+            var payload = new RiichiViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
                 game.roomView(null), game.roomSettings(),
                 new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
                 top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
-            TableViewPayload.CODEC.encode(buffer, payload);
-            assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
+            RiichiViewPayload.CODEC.encode(buffer, payload);
+            assertEquals(payload, RiichiViewPayload.CODEC.decode(buffer));
             RiichiView decoded = TableNetworking.JSON.fromJson(payload.view(), RiichiView.class);
             assertTrue(decoded.actions().isEmpty());
             assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == -1));
@@ -157,10 +163,10 @@ class ServerIntegrationTest {
                 UUID.randomUUID(), 9, 2);
             top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.encode(buffer, roomAction);
             assertEquals(roomAction, top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.decode(buffer));
-            var lifecycle = new top.skyeyefast.mchjong.network.TableLifecyclePayload(request.pos(), request.tableId(),
-                UUID.randomUUID(), 9, top.skyeyefast.mchjong.network.TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND);
-            top.skyeyefast.mchjong.network.TableLifecyclePayload.CODEC.encode(buffer, lifecycle);
-            assertEquals(lifecycle, top.skyeyefast.mchjong.network.TableLifecyclePayload.CODEC.decode(buffer));
+            var lifecycle = new top.skyeyefast.mchjong.network.McrNextHandPayload(request.pos(), request.tableId(),
+                UUID.randomUUID(), 9);
+            top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.encode(buffer, lifecycle);
+            assertEquals(lifecycle, top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.decode(buffer));
             var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
                 new top.skyeyefast.mchjong.engine.TableParticipant(UUID.randomUUID(), "Player " + seat)).toList();
             var session = top.skyeyefast.mchjong.engine.McrSession.start(request.tableId(), roster, 7,
@@ -172,7 +178,7 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.McrDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true);
+                net.minecraft.world.item.DyeColor.CYAN, true, false);
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC.encode(buffer, mcrView);
             assertEquals(mcrView, top.skyeyefast.mchjong.network.McrViewPayload.CODEC.decode(buffer));
             assertTrue(top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(mcrView.view()).game().actions().isEmpty());

@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Share exit voting and paused-match leave confirmation between Riichi and MCR, with explicitly named rule-specific network protocols and Riichi state.
 - Keep Riichi lobby settings outside match views, name rule-specific state explicitly, and give MCR independent player persistence.
 - Separate Riichi room and match ownership into `RiichiSession` and `RiichiGame`, with explicit restore state and Riichi-only view fields.
 - Use one room view and action protocol for Riichi and MCR, with target-variant capacity and explicit MCR hand confirmation.

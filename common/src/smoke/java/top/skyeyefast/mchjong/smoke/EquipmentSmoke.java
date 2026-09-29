@@ -25,8 +25,8 @@ import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableRulesPayload;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.RiichiRulesPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlock;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -137,7 +137,7 @@ final class EquipmentSmoke {
                 && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
             if (block == MahjongContent.AUTO_TABLE) {
                 var session = table.participantSession(player);
-                table.configureRules(player, new TableRulesPayload(table.getBlockPos(), session.tableId(),
+                table.configureRules(player, new RiichiRulesPayload(table.getBlockPos(), session.tableId(),
                     session.roomView(player.getUUID()).decision(), RiichiPreset.MAHJONG_SOUL_3.config()
                         .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES,
                             top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal())));
@@ -173,7 +173,7 @@ final class EquipmentSmoke {
             var after = game.view(player.getUUID());
             check(before.seats().stream().map(s -> s.points()).toList().equals(after.seats().stream().map(s -> s.points()).toList())
                 && before.riichiSticks() == after.riichiSticks(), "Physical point stick changed engine scores or deposits");
-            table.control(player, new TableControlPayload(POS, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
+            table.sessionControl(player, new TableSessionControlPayload(POS, game.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
             check(game.lobby() && !player.isPassenger(), "Exit did not release the player");
             check(ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,

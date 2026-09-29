@@ -186,7 +186,7 @@ internal class TrainingBot private constructor(
             seat != view.viewerSeat() && RiichiSettlement.nagashiEligible(view.rules(), player.melds(), player.river())
         }
         fun settlement(candidate: Choice): Int {
-            val river = own.river() + Discard(candidate.discard, false, false, false)
+            val river = own.river() + RiichiDiscard(candidate.discard, false, false, false)
             if (RiichiSettlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
             return if (!otherNagashi && LegalActions.formalTenpai(candidate.state.hand(), candidate.state.melds(), view.rules())) 1 else 0
         }

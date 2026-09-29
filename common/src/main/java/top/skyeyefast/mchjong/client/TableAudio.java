@@ -15,7 +15,7 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.world.MahjongSounds;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
@@ -127,7 +127,7 @@ public final class TableAudio {
                 if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
                     for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == RiichiAction.Type.SETTLEMENT_DONE) {
                         client.getConnection().send(PayloadPackets.serverbound(
-                            new TableActionPayload(table.getBlockPos(), view.tableId(), view.decision(), i)));
+                            new RiichiActionPayload(table.getBlockPos(), view.tableId(), view.decision(), i)));
                         acknowledged = view.decision();
                         break;
                     }

@@ -11,7 +11,7 @@ public record RiichiView(UUID tableId, long revision, long decision, int handNum
                         List<Seat> seats, List<RiichiAction> actions, List<Win> wins,
                         String result, List<Integer> deltas, List<Double> finalScores, List<Double> finalUma,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
-                        PlayerHandVisibility playerHandVisibility, boolean openHands, ExitVote exitVote, Handling handling, AutoPlay autoPlay,
+                        PlayerHandVisibility playerHandVisibility, boolean openHands, ExitVote exitVote, Handling handling, RiichiAutoPlay autoPlay,
                         boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles,
                         boolean convenienceHints, List<ExternalBot> externalBots, int settlementTicks, int settlementSkippedSeats) {
     public enum Phase { SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
@@ -21,7 +21,7 @@ public record RiichiView(UUID tableId, long revision, long decision, int handNum
     /** Public physical positions only: slot indices never reveal a concealed tile identity. */
     public record Handling(int builtWalls, int sourceSlot, int packetSize, int diceOne, int diceTwo, boolean diceHeld) {}
     public record Seat(boolean entityBot, String name, boolean occupied, boolean bot, boolean ready, int points,
-                       List<Integer> hand, int drawn, List<Meld> melds, List<Discard> river,
+                       List<Integer> hand, int drawn, List<Meld> melds, List<RiichiDiscard> river,
                        List<Integer> norths, boolean riichi, boolean exposed, boolean doubleRiichi) {
         public Seat {
             hand = List.copyOf(hand); melds = List.copyOf(melds); river = List.copyOf(river);

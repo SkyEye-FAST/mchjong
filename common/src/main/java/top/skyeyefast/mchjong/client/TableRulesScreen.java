@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
 import top.skyeyefast.mchjong.engine.TableRoomView;
-import top.skyeyefast.mchjong.network.TableRulesPayload;
+import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 
 /** Local draft with explicit apply/cancel; only an acknowledged server snapshot becomes active rules. */
 public final class TableRulesScreen extends Screen {
@@ -262,7 +262,7 @@ public final class TableRulesScreen extends Screen {
         pending = draft;
         pendingTicks = 0;
         minecraft.getConnection().send(PayloadPackets.serverbound(
-            new TableRulesPayload(parent.tablePos(), baseline.tableId(), baseline.decision(), pending)));
+            new RiichiRulesPayload(parent.tablePos(), baseline.tableId(), baseline.decision(), pending)));
         updateControls();
     }
     void receivedReply() {

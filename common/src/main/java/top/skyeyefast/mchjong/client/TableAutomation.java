@@ -6,10 +6,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.AutoPlay;
+import top.skyeyefast.mchjong.engine.RiichiAutoPlay;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.RiichiControlPayload;
 
 /** Collapsible match controls backed by the seated player's authoritative preferences. */
 final class TableAutomation {
@@ -54,8 +54,8 @@ final class TableAutomation {
         int height = horizontal ? buttonHeight : count * 20 + (count - 1) * gap, top = bottom - height;
         int horizontalSpan = count * width + count * gap + toggleWidth;
         int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8;
-        for (var option : AutoPlay.Option.values()) {
-            if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
+        for (var option : RiichiAutoPlay.Option.values()) {
+            if (option == RiichiAutoPlay.Option.KITA && !view.rules().sanma()) continue;
             String key = switch (option) {
                 case SORT -> "ui.mchjong.auto_sort";
                 case WIN -> "ui.mchjong.auto_win";
@@ -64,11 +64,11 @@ final class TableAutomation {
                 case KITA -> "ui.mchjong.auto_kita";
             };
             var operation = switch (option) {
-                case SORT -> TableControlPayload.Operation.AUTO_SORT;
-                case WIN -> TableControlPayload.Operation.AUTO_WIN;
-                case NO_CALLS -> TableControlPayload.Operation.NO_CALLS;
-                case DISCARD -> TableControlPayload.Operation.AUTO_DISCARD;
-                case KITA -> TableControlPayload.Operation.AUTO_KITA;
+                case SORT -> RiichiControlPayload.Operation.AUTO_SORT;
+                case WIN -> RiichiControlPayload.Operation.AUTO_WIN;
+                case NO_CALLS -> RiichiControlPayload.Operation.NO_CALLS;
+                case DISCARD -> RiichiControlPayload.Operation.AUTO_DISCARD;
+                case KITA -> RiichiControlPayload.Operation.AUTO_KITA;
             };
             boolean enabled = view.autoPlay().enabled(option);
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),

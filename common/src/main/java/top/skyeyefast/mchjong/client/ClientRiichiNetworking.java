@@ -8,14 +8,14 @@ import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableSeatPayload;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
-public final class ClientTableNetworking {
-    private ClientTableNetworking() {}
+public final class ClientRiichiNetworking {
+    private ClientRiichiNetworking() {}
 
-    public static void receive(TableViewPayload payload) {
+    public static void receive(RiichiViewPayload payload) {
         Minecraft client = Minecraft.getInstance();
         if (client.level == null || !(client.level.getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)) return;
         var room = payload.room();
@@ -73,7 +73,7 @@ public final class ClientTableNetworking {
         }
     }
 
-    private static void requestAssignedSeat(Minecraft client, TableViewPayload payload,
+    private static void requestAssignedSeat(Minecraft client, RiichiViewPayload payload,
                                              top.skyeyefast.mchjong.engine.TableRoomView room, boolean assigned) {
         if (!TableSettings.get().autoSeat || room.viewerSeat() < 0 || client.player == null || client.getConnection() == null) return;
         if (!assigned && !payload.open()) return;

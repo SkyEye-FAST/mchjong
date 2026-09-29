@@ -17,7 +17,7 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TrainingBot;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -149,7 +149,7 @@ final class MaidIntegrationSmoke {
                     return false;
                 }
                 var view = game.view(ownerId);
-                if (!view.actions().isEmpty()) table.act(owner, new TableActionPayload(center, game.tableId(), view.decision(), TrainingBot.choose(view, BotDifficulty.EASY)));
+                if (!view.actions().isEmpty()) table.act(owner, new RiichiActionPayload(center, game.tableId(), view.decision(), TrainingBot.choose(view, BotDifficulty.EASY)));
                 maidSeat = game.seatOf(maidId);
                 game.validate();
                 return !game.view(null).seats().get(maidSeat).river().isEmpty();

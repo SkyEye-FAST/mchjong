@@ -5,7 +5,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.HandScore;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
@@ -17,7 +17,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TableAudioEventsTest {
     private static final UUID TABLE = new UUID(6, 12);
-    private static RiichiView.Seat seat(List<Discard> river, List<Meld> melds, List<Integer> norths) {
+    private static RiichiView.Seat seat(List<RiichiDiscard> river, List<Meld> melds, List<Integer> norths) {
         return new RiichiView.Seat(false, "Player", true, false, false, 25000,
             List.of(), -2, melds, river, norths, false, false, false);
     }
@@ -167,7 +167,7 @@ class TableAudioEventsTest {
         var before = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
         var seats = seats();
         seats.set(1, new RiichiView.Seat(false, "Player", true, false, false, 24000,
-            List.of(), -2, List.of(), List.of(new Discard(12, true, false, true)), List.of(), true, false, true));
+            List.of(), -2, List.of(), List.of(new RiichiDiscard(12, true, false, true)), List.of(), true, false, true));
         var after = view(2, 1, RiichiView.Phase.REACTION, seats, "playing");
         var cue = TableAudioEvents.between(before, after).getLast();
         assertEquals("riichi", cue.sound());
@@ -197,12 +197,12 @@ class TableAudioEventsTest {
     @Test void riichiAndBothDiscardTypesAreEmittedOnlyForNewRiverEntries() {
         var before = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
         var seats = seats();
-        seats.set(0, seat(List.of(new Discard(12, true, false, true)), List.of(), List.of()));
+        seats.set(0, seat(List.of(new RiichiDiscard(12, true, false, true)), List.of(), List.of()));
         var after = view(2, 1, RiichiView.Phase.REACTION, seats, "playing");
         assertEquals(List.of("tsumogiri", "riichi"), sounds(before, after));
-        seats.set(0, seat(List.of(new Discard(12, true, true, true)), List.of(), List.of()));
+        seats.set(0, seat(List.of(new RiichiDiscard(12, true, true, true)), List.of(), List.of()));
         assertTrue(sounds(after, view(3, 1, RiichiView.Phase.REACTION, seats, "playing")).isEmpty());
-        seats.set(0, seat(List.of(new Discard(12, false, false, false)), List.of(), List.of()));
+        seats.set(0, seat(List.of(new RiichiDiscard(12, false, false, false)), List.of(), List.of()));
         assertEquals(List.of("tedashi"), sounds(before, view(2, 1, RiichiView.Phase.REACTION, seats, "playing")));
     }
 
@@ -220,12 +220,12 @@ class TableAudioEventsTest {
 
     @Test void replacingACalledRiichiDiscardDoesNotRepeatTheDeclarationVoice() {
         var seats = seats();
-        var called = new Discard(12, true, true, true);
+        var called = new RiichiDiscard(12, true, true, true);
         seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
             List.of(), List.of(called), List.of(), true, false, false));
         var before = view(1, 1, RiichiView.Phase.TURN, seats, "playing");
         seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
-            List.of(), List.of(called, new Discard(20, true, false, true)), List.of(), true, false, false));
+            List.of(), List.of(called, new RiichiDiscard(20, true, false, true)), List.of(), true, false, false));
         assertEquals(List.of("tsumogiri"), sounds(before, view(2, 1, RiichiView.Phase.REACTION, seats, "playing")));
     }
 

@@ -6,7 +6,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.engine.AutoPlay;
+import top.skyeyefast.mchjong.engine.RiichiAutoPlay;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -17,7 +17,7 @@ final class AutomationControlsSmoke {
         "ui.mchjong.no_calls", "ui.mchjong.auto_discard", "ui.mchjong.auto_kita"};
     private int stage, ticks, totalTicks, toggle;
     private long decision;
-    private AutoPlay initial, expected;
+    private RiichiAutoPlay initial, expected;
     private final RoomPreparationSmoke opening = new RoomPreparationSmoke();
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<Void> reseated;
@@ -69,7 +69,7 @@ final class AutomationControlsSmoke {
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             next(3);
         } else if (stage == 3 && ticks > 2) {
-            var option = AutoPlay.Option.values()[toggle / 2];
+            var option = RiichiAutoPlay.Option.values()[toggle / 2];
             boolean enabled = view.autoPlay().enabled(option);
             expected = view.autoPlay().with(option, !enabled);
             decision = view.decision();
@@ -93,7 +93,7 @@ final class AutomationControlsSmoke {
                 return false;
             }
             checkBounds(client);
-            require(client.screen.getFocused() == optionButton(client, AutoPlay.Option.values()[toggle / 2]),
+            require(client.screen.getFocused() == optionButton(client, RiichiAutoPlay.Option.values()[toggle / 2]),
                 "Automatic option lost keyboard focus on server acknowledgement");
             if (++toggle == (sanma ? 10 : 8)) {
                 require(initial.equals(view.autoPlay()), "Preference round-trip changed another option");
@@ -147,7 +147,7 @@ final class AutomationControlsSmoke {
             client.getMainRenderTarget(), ignored -> {});
     }
 
-    static AbstractWidget optionButton(Minecraft client, AutoPlay.Option option) {
+    static AbstractWidget optionButton(Minecraft client, RiichiAutoPlay.Option option) {
         String name = Component.translatable(KEYS[option.ordinal()]).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().startsWith(name)).findFirst().orElseThrow();

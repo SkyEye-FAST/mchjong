@@ -25,8 +25,9 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
-import top.skyeyefast.mchjong.network.TableActionPayload;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
+import top.skyeyefast.mchjong.network.RiichiControlPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -604,7 +605,7 @@ public final class TableScreen extends Screen {
         int leave = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM, List.of());
         Runnable[] actions = {() -> ClientReplays.list(0, "", false),
             () -> minecraft.setScreen(new TableOptionsScreen(this)), () -> sendRoom(room, leave),
-            () -> control(room, TableControlPayload.Operation.REQUEST_EXIT, room.decision(), false)};
+            () -> sessionControl(room.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)};
         for (int i = 0; i < labels.length; i++) {
             int index = i;
             var button = MahjongButton.create(Component.translatable(labels[i]), ignored -> actions[index].run())
@@ -659,7 +660,7 @@ public final class TableScreen extends Screen {
         right -= menuWidth + gap;
         if (view.viewerSeat() >= 0) {
             var exit = MahjongButton.create(exitLabel, ignored ->
-                control(view, TableControlPayload.Operation.REQUEST_EXIT, view.decision(), false))
+                sessionControl(view.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, view.decision(), false))
                 .bounds(right - exitWidth, immersive ? 16 : 8, exitWidth, controlHeight)
                 .tooltip(Tooltip.create(Component.translatable("ui.mchjong.exit"))).build();
             exit.active = view.exitVote() == null;
@@ -689,23 +690,29 @@ public final class TableScreen extends Screen {
         var room = room();
         if (minecraft.getConnection() == null || room == null) return;
         minecraft.getConnection().send(PayloadPackets.serverbound(
-            new top.skyeyefast.mchjong.network.TableVisibilityPayload(pos, room.tableId(), room.decision(), visibility)));
+            new top.skyeyefast.mchjong.network.RiichiVisibilityPayload(pos, room.tableId(), room.decision(), visibility)));
     }
 
     void configureRules(TableRoomView room, RiichiRules rules) {
         if (minecraft.getConnection() == null || room == null || !room.lobby()) return;
         minecraft.getConnection().send(PayloadPackets.serverbound(
-            new top.skyeyefast.mchjong.network.TableRulesPayload(pos, room.tableId(), room.decision(), rules)));
+            new top.skyeyefast.mchjong.network.RiichiRulesPayload(pos, room.tableId(), room.decision(), rules)));
     }
 
-    void control(TableRoomView room, TableControlPayload.Operation operation, long token, boolean enabled) {
+    void control(TableRoomView room, RiichiControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new TableControlPayload(pos, room.tableId(), operation, token, enabled)));
+        minecraft.getConnection().send(PayloadPackets.serverbound(new RiichiControlPayload(pos, room.tableId(), operation, token, enabled)));
     }
 
-    void control(RiichiView view, TableControlPayload.Operation operation, long token, boolean enabled) {
+    void control(RiichiView view, RiichiControlPayload.Operation operation, long token, boolean enabled) {
         if (minecraft.getConnection() == null) return;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new TableControlPayload(pos, view.tableId(), operation, token, enabled)));
+        minecraft.getConnection().send(PayloadPackets.serverbound(new RiichiControlPayload(pos, view.tableId(), operation, token, enabled)));
+    }
+
+    private void sessionControl(java.util.UUID tableId, TableSessionControlPayload.Operation operation, long token, boolean enabled) {
+        if (minecraft.getConnection() == null) return;
+        minecraft.getConnection().send(PayloadPackets.serverbound(
+            new TableSessionControlPayload(pos, tableId, operation, token, enabled)));
     }
 
     private void buildExitVote(RiichiView view) {
@@ -716,11 +723,11 @@ public final class TableScreen extends Screen {
         int span = Math.min(360 * scale, layoutWidth - 24 * scale), left = (layoutWidth - span) / 2;
         int y = layoutHeight / 2 + 30 * scale;
         var agree = MahjongButton.create(Component.translatable("ui.mchjong.exit_agree"), ignored ->
-            control(view, TableControlPayload.Operation.ANSWER_EXIT, vote.id(), true)).bounds(left, y, (span - 4 * scale) / 2, 20 * scale).build().textScale(scale);
+            sessionControl(view.tableId(), TableSessionControlPayload.Operation.ANSWER_EXIT, vote.id(), true)).bounds(left, y, (span - 4 * scale) / 2, 20 * scale).build().textScale(scale);
         agree.active = !vote.agreed().contains(view.viewerSeat());
         addRenderableWidget(agree);
         addRenderableWidget(MahjongButton.create(Component.translatable("ui.mchjong.exit_reject"), ignored ->
-            control(view, TableControlPayload.Operation.ANSWER_EXIT, vote.id(), false)).bounds(left + (span + 4 * scale) / 2, y, (span - 4 * scale) / 2, 20 * scale).build().textScale(scale));
+            sessionControl(view.tableId(), TableSessionControlPayload.Operation.ANSWER_EXIT, vote.id(), false)).bounds(left + (span + 4 * scale) / 2, y, (span - 4 * scale) / 2, 20 * scale).build().textScale(scale));
     }
 
     private void buildLobby(TableRoomView room, RiichiRoomSettings settings) {
@@ -850,7 +857,7 @@ public final class TableScreen extends Screen {
             return;
         }
         if (!decision.submit(snapshot, index)) return;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
+        minecraft.getConnection().send(PayloadPackets.serverbound(new RiichiActionPayload(pos, snapshot.tableId(), snapshot.decision(), index)));
         callouts.forEach(button -> button.active = false);
         selectedTile = lastClickedTile = Tile.ABSENT;
         choosingRiichi = false;
@@ -1511,7 +1518,7 @@ public final class TableScreen extends Screen {
                 if (target >= 0 && target != tile && minecraft.getConnection() != null) {
                     double center = hand == null ? handTileCenterX(target) : hand.centerX(target);
                     minecraft.getConnection().send(PayloadPackets.serverbound(
-                        new top.skyeyefast.mchjong.network.TableHandOrderPayload(pos, current.tableId(),
+                        new top.skyeyefast.mchjong.network.RiichiHandOrderPayload(pos, current.tableId(),
                             current.decision(), tile, target, mouseX > center)));
                 }
             }

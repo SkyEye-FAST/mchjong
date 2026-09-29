@@ -99,7 +99,7 @@ public final class TableOptionsScreen extends Screen {
         } else if (tab == 1) {
             entries.add(Entry.toggle("settings.mchjong.convenience_hints", settings.convenienceHints(),
                 host && lobby && world.allowConvenienceHints(),
-                () -> parent.control(room, top.skyeyefast.mchjong.network.TableControlPayload.Operation.CONVENIENCE_HINTS,
+                () -> parent.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.CONVENIENCE_HINTS,
                     room.decision(), !settings.convenienceHints())));
             entries.add(Entry.choice("settings.mchjong.hand_visibility",
                 Component.translatable("settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
@@ -109,7 +109,7 @@ public final class TableOptionsScreen extends Screen {
                     parent.configureVisibility(modes[Math.floorMod(settings.playerHandVisibility().ordinal() + direction, modes.length)]);
                 }));
             entries.add(Entry.toggle("settings.mchjong.open_hands", settings.openHands(), host && lobby,
-                () -> parent.control(room, top.skyeyefast.mchjong.network.TableControlPayload.Operation.OPEN_HANDS,
+                () -> parent.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.OPEN_HANDS,
                     room.decision(), !settings.openHands())));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
                 () -> minecraft.setScreen(new TableSeatsScreen(parent))));

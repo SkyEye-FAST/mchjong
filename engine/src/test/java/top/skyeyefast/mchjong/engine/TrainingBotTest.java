@@ -152,12 +152,12 @@ class TrainingBotTest {
         int discard = state.hand().getFirst();
         int before = analysis.unseen[BotAnalysis.face(discard)];
         game.players[0].hand.remove(Integer.valueOf(discard));
-        game.players[0].river.add(new Discard(discard, false, false, false));
+        game.players[0].river.add(new RiichiDiscard(discard, false, false, false));
         assertEquals(before, new BotAnalysis(game.view(game.players[0].member.id), BotDifficulty.HARD).unseen[BotAnalysis.face(discard)]);
         var pon = TestHands.meld(Meld.Type.TRIPLET, "777z");
         game.players[2].melds.add(pon);
         game.lastTile = pon.calledTile(); game.lastFrom = 1; game.phase = RiichiGame.Phase.REACTION;
-        game.players[1].river.add(new Discard(game.lastTile, false, false, true));
+        game.players[1].river.add(new RiichiDiscard(game.lastTile, false, false, true));
         game.players[2].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "1111z"));
         game.players[0].norths.add(Tile.id(Tile.NORTH, 0, false));
         var known = VisibleTiles.counts(game.view(game.players[0].member.id));
@@ -238,12 +238,12 @@ class TrainingBotTest {
         var game = hand("123568m2458p147s1z");
         game.players[1].riichi = true;
         // Break a completed group to use a known-safe tile when the hand is far from ready.
-        game.players[1].river.add(new Discard(Tile.id(0, 3, false), true, false, false));
+        game.players[1].river.add(new RiichiDiscard(Tile.id(0, 3, false), true, false, false));
         assertEquals(0, Tile.kind(choice(game, BotDifficulty.EASY).tiles().getFirst()));
         assertEquals(0, Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst()));
         game.players[2].riichi = true;
-        game.players[1].river.add(new Discard(Tile.id(Tile.EAST, 2, false), false, false, false));
-        game.players[2].river.add(new Discard(Tile.id(Tile.EAST, 3, false), true, false, false));
+        game.players[1].river.add(new RiichiDiscard(Tile.id(Tile.EAST, 2, false), false, false, false));
+        game.players[2].river.add(new RiichiDiscard(Tile.id(Tile.EAST, 3, false), true, false, false));
         assertEquals(Tile.EAST, Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst()),
             "Fold with a tile safe to both opponents, not one opponent's genbutsu");
     }
@@ -253,7 +253,7 @@ class TrainingBotTest {
         game.phase = RiichiGame.Phase.REACTION;
         game.lastFrom = 1;
         game.lastTile = Tile.id(Tile.WHITE, 3, false);
-        game.players[1].river.add(new Discard(game.lastTile, false, false, false));
+        game.players[1].river.add(new RiichiDiscard(game.lastTile, false, false, false));
         game.players[0].drawn = Tile.ABSENT;
         var pon = new RiichiAction(RiichiAction.Type.PON, game.players[0].hand.stream().filter(tile -> Tile.kind(tile) == Tile.WHITE).toList());
         game.options.set(0, List.of(pon, new RiichiAction(RiichiAction.Type.PASS)));
@@ -268,7 +268,7 @@ class TrainingBotTest {
         var noYaku = hand("123m456p23s33442z");
         noYaku.phase = RiichiGame.Phase.REACTION; noYaku.lastFrom = 1;
         noYaku.lastTile = Tile.id(Tile.WEST, 3, false);
-        noYaku.players[1].river.add(new Discard(noYaku.lastTile, false, false, false));
+        noYaku.players[1].river.add(new RiichiDiscard(noYaku.lastTile, false, false, false));
         var useless = new RiichiAction(RiichiAction.Type.PON, noYaku.players[0].hand.stream().filter(t -> Tile.kind(t) == Tile.WEST).toList());
         noYaku.options.set(0, List.of(useless, new RiichiAction(RiichiAction.Type.PASS)));
         for (var difficulty : BotDifficulty.values()) assertEquals(RiichiAction.Type.PASS, choice(noYaku, difficulty).type());
@@ -278,7 +278,7 @@ class TrainingBotTest {
         ready.phase = RiichiGame.Phase.REACTION; ready.lastFrom = 1;
         ready.lastTile = Tile.id(22, 3, false);
         for (int tile : List.of(Tile.id(19, 2, false), Tile.id(19, 3, false), Tile.id(22, 0, true), ready.lastTile))
-            ready.players[1].river.add(new Discard(tile, false, false, false));
+            ready.players[1].river.add(new RiichiDiscard(tile, false, false, false));
         var improve = new RiichiAction(RiichiAction.Type.PON, ready.players[0].hand.stream().filter(t -> Tile.kind(t) == 22).toList());
         ready.options.set(0, List.of(improve, new RiichiAction(RiichiAction.Type.PASS)));
         assertEquals(0, RiichiHandAnalyzer.handEfficiency(ready.players[0].hand, ready.players[0].melds).shanten());
@@ -289,7 +289,7 @@ class TrainingBotTest {
         game.phase = RiichiGame.Phase.REACTION;
         game.turn = game.lastFrom = 3;
         game.lastTile = Tile.id(Tile.WHITE, 3, false);
-        game.players[3].river.add(new Discard(game.lastTile, false, false, false));
+        game.players[3].river.add(new RiichiDiscard(game.lastTile, false, false, false));
         game.players[0].drawn = Tile.ABSENT;
         game.options.set(0, LegalActions.onReaction(game, 0));
     }
@@ -334,10 +334,10 @@ class TrainingBotTest {
         game.wall.tiles.set(game.wall.dora.get(0), Tile.id(12, 2, false));
         game.wall.tiles.set(game.wall.dora.get(1), Tile.id(12, 3, false));
         game.players[1].riichi = true;
-        game.players[1].river.add(new Discard(Tile.id(1, 3, false), true, false, false));
+        game.players[1].river.add(new RiichiDiscard(Tile.id(1, 3, false), true, false, false));
         assertEquals(Tile.EAST, Tile.kind(choice(game, BotDifficulty.HARD).tiles().getFirst()), "Keep the valuable two-sided tenpai");
         game.players[2].riichi = true;
-        game.players[2].river.add(new Discard(Tile.id(2, 3, false), true, false, false));
+        game.players[2].river.add(new RiichiDiscard(Tile.id(2, 3, false), true, false, false));
         var analysis = new BotAnalysis(game.view(game.players[0].member.id), BotDifficulty.HARD);
         assertEquals(0, analysis.defence.riskAgainst(1, 1));
         assertTrue(analysis.defence.riskAgainst(2, 1) > 0);
@@ -350,7 +350,7 @@ class TrainingBotTest {
         uncertain.players[1].melds.add(TestHands.meld(Meld.Type.TRIPLET, "555z"));
         uncertain.players[2].melds.add(TestHands.meld(Meld.Type.TRIPLET, "666z"));
         for (int seat = 1; seat <= 2; seat++)
-            uncertain.players[seat].river.add(new Discard(Tile.id(0, seat + 1, false), false, false, false));
+            uncertain.players[seat].river.add(new RiichiDiscard(Tile.id(0, seat + 1, false), false, false, false));
         var shapes = RiichiHandAnalyzer.discardEfficiency(uncertain.players[0].hand, List.of(), false);
         int minimum = shapes.values().stream().mapToInt(TileEfficiency::shanten).min().orElseThrow();
         assertEquals(minimum, shapes.get(Tile.kind(choice(uncertain, BotDifficulty.HARD).tiles().getFirst())).shanten(),
@@ -377,9 +377,9 @@ class TrainingBotTest {
         ready.players[2].melds.add(TestHands.meld(Meld.Type.CONCEALED_QUAD, "2222z"));
         ready.wall.revealed = 3;
         for (int i = 0; i < 3; i++) ready.wall.tiles.set(ready.wall.dora.get(i), Tile.id(Tile.WEST, i, false));
-        ready.players[1].river.add(new Discard(Tile.id(17, 3, false), true, false, false));
-        ready.players[2].river.add(new Discard(Tile.id(Tile.WHITE, 1, false), false, false, false));
-        ready.players[2].river.add(new Discard(Tile.id(Tile.WHITE, 2, false), false, false, false));
+        ready.players[1].river.add(new RiichiDiscard(Tile.id(17, 3, false), true, false, false));
+        ready.players[2].river.add(new RiichiDiscard(Tile.id(Tile.WHITE, 1, false), false, false, false));
+        ready.players[2].river.add(new RiichiDiscard(Tile.id(Tile.WHITE, 2, false), false, false, false));
         assertEquals(17, Tile.kind(choice(ready, BotDifficulty.HARD).tiles().getFirst()),
             "Retreat from a cheap live wait using genbutsu against a publicly expensive riichi");
         assertTrue(RiichiHandAnalyzer.discardEfficiency(ready.players[0].hand, List.of(), false).get(17).shanten() > 0);

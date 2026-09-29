@@ -10,7 +10,7 @@ public final class TableNetworking {
     private TableNetworking() {}
 
     /** Both loader handlers enqueue this on the server thread. Do not force-load chunks. */
-    public static void receive(ServerPlayer player, TableActionPayload payload) {
+    public static void receive(ServerPlayer player, RiichiActionPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.act(player, payload);
@@ -28,10 +28,10 @@ public final class TableNetworking {
             table.actRoom(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableLifecyclePayload payload) {
+    public static void receive(ServerPlayer player, McrNextHandPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.actLifecycle(player, payload);
+            table.confirmMcrNextHand(player, payload);
     }
 
     public static void receive(ServerPlayer player, TableVariantPayload payload) {
@@ -40,13 +40,19 @@ public final class TableNetworking {
             table.configureVariant(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableControlPayload payload) {
+    public static void receive(ServerPlayer player, RiichiControlPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.control(player, payload);
+            table.riichiControl(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableHandOrderPayload payload) {
+    public static void receive(ServerPlayer player, TableSessionControlPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.sessionControl(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, RiichiHandOrderPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.reorderHand(player, payload);
@@ -58,13 +64,13 @@ public final class TableNetworking {
             table.autoSeat(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableRulesPayload payload) {
+    public static void receive(ServerPlayer player, RiichiRulesPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.configureRules(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableVisibilityPayload payload) {
+    public static void receive(ServerPlayer player, RiichiVisibilityPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
             table.configureVisibility(player, payload);

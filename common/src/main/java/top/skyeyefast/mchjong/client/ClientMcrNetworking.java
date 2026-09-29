@@ -16,6 +16,13 @@ public final class ClientMcrNetworking {
         var view = payload.view().isEmpty() ? null : McrCodec.decodeSessionView(payload.view());
         table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth());
         if (table.clientTableRoom() != payload.room()) return;
+        if (payload.leaveDecision()) {
+            if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), payload.room().tableId())))
+                client.setScreen(new TableLeaveScreen(payload.pos(), payload.room().tableId(), payload.room().decision()));
+            return;
+        }
+        if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), payload.room().tableId()))
+            client.setScreen(null);
         if (view == null) {
             if (payload.open() || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
                 || client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())

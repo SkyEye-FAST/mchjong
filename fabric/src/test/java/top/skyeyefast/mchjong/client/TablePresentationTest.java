@@ -217,7 +217,7 @@ class TablePresentationTest {
         for (int seat = 0; seat < 4; seat++) {
             int rows = seat % 2 == 0 ? 4 : 2;
             var river = java.util.stream.IntStream.range(0, rows * 6)
-                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.Discard(tile, tile == 3, false, false)).toList();
+                .mapToObj(tile -> new top.skyeyefast.mchjong.engine.RiichiDiscard(tile, tile == 3, false, false)).toList();
             seats.set(seat, new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Player", true, false, false,
                 25000, List.of(), -1, List.of(), river, List.of(), false, false, false));
         }

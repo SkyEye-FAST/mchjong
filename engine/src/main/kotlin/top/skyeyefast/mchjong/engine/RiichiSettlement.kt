@@ -153,7 +153,7 @@ internal object RiichiSettlement {
         finish(game, tenpai[game.dealer], true, false, if (nagashi.isEmpty()) "exhaustive" else "nagashi", before)
     }
 
-    fun nagashiEligible(rules: RiichiRules, melds: List<Meld>, river: List<Discard>): Boolean =
+    fun nagashiEligible(rules: RiichiRules, melds: List<Meld>, river: List<RiichiDiscard>): Boolean =
         rules.nagashiMangan() && river.isNotEmpty() &&
             (rules.nagashiAllowsCalls() || melds.all { it.closed() }) &&
             river.all { !it.called() && Tile.terminalOrHonor(Tile.kind(it.tile())) }

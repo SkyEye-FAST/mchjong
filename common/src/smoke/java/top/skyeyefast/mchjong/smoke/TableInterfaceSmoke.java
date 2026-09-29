@@ -10,7 +10,7 @@ import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
-import top.skyeyefast.mchjong.client.ClientTableNetworking;
+import top.skyeyefast.mchjong.client.ClientRiichiNetworking;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
@@ -22,7 +22,7 @@ import top.skyeyefast.mchjong.engine.TimeControl;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.network.TableNetworking;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Display-only fixtures for both table views; never submit their fabricated game actions. */
@@ -71,7 +71,7 @@ final class TableInterfaceSmoke {
             require(((TableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
             if (state == 1) {
                 TableScreen opened = (TableScreen) client.screen;
-                ClientTableNetworking.receive(new TableViewPayload(table.getBlockPos(),
+                ClientRiichiNetworking.receive(new RiichiViewPayload(table.getBlockPos(),
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
                     table.clientRedOptions(), table.clientRoom(), table.clientRiichiSettings(),
                     table.clientBotService(), table.clientWorldPolicy(), table.clientVariant()));

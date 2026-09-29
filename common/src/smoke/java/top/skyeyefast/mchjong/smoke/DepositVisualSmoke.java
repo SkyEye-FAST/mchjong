@@ -11,7 +11,7 @@ import top.skyeyefast.mchjong.client.TableDeposits;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
-import top.skyeyefast.mchjong.engine.Discard;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -45,7 +45,7 @@ final class DepositVisualSmoke {
             for (int seat = 0; seat < rules.players(); seat++) {
                 var hand = seat == 0 ? IntStream.range(80, 93).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN);
                 var river = IntStream.range(seat * 12, seat * 12 + 12)
-                    .mapToObj(tile -> new Discard(tile, false, false, false)).toList();
+                    .mapToObj(tile -> new RiichiDiscard(tile, false, false, false)).toList();
                 seats.add(new RiichiView.Seat(false, "Player " + (seat + 1), true, false, false, 25000,
                     hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }

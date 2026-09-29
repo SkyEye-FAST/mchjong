@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
-import top.skyeyefast.mchjong.network.TableRulesPayload;
+import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Uses the live integrated server and real control packets before any display-only fixtures. */
@@ -183,7 +183,7 @@ final class TableControlSmoke {
                 var game = serverTable.participantSession(player);
                 var original = game.rules();
                 long decision = game.roomView(id).decision();
-                serverTable.configureRules(player, new TableRulesPayload(pos, game.tableId(), decision,
+                serverTable.configureRules(player, new RiichiRulesPayload(pos, game.tableId(), decision,
                     original.with(RiichiRuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
                 require(game.rules().equals(original) && game.roomView(id).decision() == decision,
                     "Forged red selection bypassed physical stock checks");

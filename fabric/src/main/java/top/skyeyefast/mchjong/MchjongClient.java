@@ -4,10 +4,10 @@ import net.fabricmc.api.ClientModInitializer;
 import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.minecraft.client.renderer.blockentity.BlockEntityRenderers;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
-import top.skyeyefast.mchjong.client.ClientTableNetworking;
+import top.skyeyefast.mchjong.client.ClientRiichiNetworking;
 import top.skyeyefast.mchjong.client.MahjongTableRenderer;
 import top.skyeyefast.mchjong.client.SeatRenderer;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
 public final class MchjongClient implements ClientModInitializer {
@@ -49,8 +49,8 @@ public final class MchjongClient implements ClientModInitializer {
         for (var item : top.skyeyefast.mchjong.client.MahjongItemRenderer.items())
             net.fabricmc.fabric.api.client.rendering.v1.BuiltinItemRendererRegistry.INSTANCE.register(item, itemRenderer::renderByItem);
         EntityRendererRegistry.register(MahjongContent.SEAT_ENTITY, SeatRenderer::new);
-        ClientPlayNetworking.registerGlobalReceiver(TableViewPayload.TYPE,
-            (payload, context) -> context.client().execute(() -> ClientTableNetworking.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(RiichiViewPayload.TYPE,
+            (payload, context) -> context.client().execute(() -> ClientRiichiNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE,

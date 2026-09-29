@@ -98,6 +98,7 @@ each of Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo and Chrysanthemum;
 have their own `McrPlayerState.flowers` area and are included by
 `McrPlayerState.physicalTiles` accounting, separately from concealed tiles.
 `RiichiPlayerState` tracks extracted norths and Riichi-only declarations.
+Riichi rivers use `RiichiDiscard` for declaration and draw provenance.
 MCR rivers use `McrDiscard` without Riichi declaration state.
 A hand reset clears the corresponding rule-specific zones.
 
@@ -193,7 +194,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 3 and the session format is 4. Restore rejects earlier
+The MCR game format is 4 and the session format is 5. Restore rejects earlier
 experimental formats directly. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
@@ -262,8 +263,11 @@ acknowledgements. The shared room starts the match once all four distinct humans
 are ready at their assigned stools. Only a participant mounted at the assigned
 seat receives that seat's private view. A missing, displaced or ambiguously
 occupied mount grants spectator access. MCR play pauses while any participant is
-absent; pending responses and scores remain intact. All four participants
-acknowledge a completed hand before the next hand begins.
+absent; pending responses and scores remain intact. Shared exit votes pause actions
+and completed-hand acknowledgements. The last player to leave their stool chooses
+whether to keep the match paused or close it; a retained match resumes when all
+four players return. Both the vote and leave decision survive private table saves.
+All four participants acknowledge a completed hand before the next hand begins.
 
 `TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
 `MahjongTableBlockEntity` owns only that host. It observes stools and authenticated
@@ -276,12 +280,17 @@ identity lives only in the room record. Presence is reconstructed from live
 mounts after loading; a fresh incarnation and decision invalidate requests from
 before restoration.
 
-`TableRoomActionPayload` carries a common room-action index. Riichi
-`TableActionPayload` and `McrActionPayload` carry only their respective issued
-match-action indices. `TableLifecyclePayload` carries MCR completed-hand
-confirmation separately; the server resolves the acting seat from the
-authenticated sender. `TableViewPayload` and `McrViewPayload` carry the public
+`TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`
+and `McrActionPayload` carry only their respective issued match-action indices.
+`McrNextHandPayload` carries MCR completed-hand confirmation separately; the
+server resolves the acting seat from the authenticated sender.
+`RiichiViewPayload` and `McrViewPayload` carry the public
 `TableRoomView` alongside their rule-specific recipient-safe projections.
+Both view payloads send the last-player leave decision directly to its
+unmounted recipient.
+`RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
+preparation and private-hand changes. `ClientRiichiNetworking` and
+`ClientMcrNetworking` decode and apply their respective views.
 `TableLobby` and `McrLobbyScreen` share room-control lookup and sending while
 retaining their own rule settings. Match and settlement screens remain separate.
 
@@ -314,7 +323,7 @@ Forge's item extension field without importing loader types into shared items.
 validated snapshot used by the engine, public views, saves and native replays. `RiichiRuleOption`
 defines field bounds, translation keys, categories and preset defaults. Runtime
 logic reads individual settings instead of branching on a preset identity.
-`TableRulesPayload` carries a bounded proposal and the current table identity and
+`RiichiRulesPayload` carries a bounded proposal and the current table identity and
 decision. Only the room host can apply it before play; clients retain a draft
 until server acknowledgement. Rule changes clear all readiness and recheck boxes.
 Preset metadata distinguishes supported table options from custom changes; the
@@ -349,7 +358,7 @@ but active-game actions and private hands require the correct physical seat.
 Physical dismount in the lobby releases room membership immediately. During an
 active match it retains membership with a five-second grace period; expiry or a
 lost server connection enables temporary win/pass/tsumogiri automation while another
-human remains seated, without changing personal AutoPlay settings or spending the disconnected player's clock.
+human remains seated, without changing personal `RiichiAutoPlay` settings or spending the disconnected player's clock.
 Returning to the assigned stool restores control. Explicit lobby leave releases
 membership; hosts may replace disconnected guests with bots after the grace period.
 An idle lobby closes and releases all seats once every human is disconnected,
@@ -459,7 +468,7 @@ also controls invitations and invitation teleportation, Minecraft experience
 rewards, replay availability, bots and companion participants, convenience hints,
 and the thin custom-rule/forced-preset boundary. `RiichiSession` receives only the pure
 runtime `WorldPolicy`; Minecraft UI and storage behavior stay outside the engine.
-`TableViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
+`RiichiViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
 room state. The World settings UI uses the server-advertised administrator command
 tree to enable controls and submits the existing permission-checked commands;
 only synchronized table snapshots update the displayed policy values.
@@ -590,9 +599,13 @@ left by calls and account for the width of sideways riichi discards. Hiding rive
 is a local rendering preference; it also forces the remaining-wall count and
 current claimed-tile preview to remain visible, without changing game records.
 
-`TableControlPayload` carries administrative controls separately from tile-action
-indices. Both loaders use the same server authorization: loaded table, physical
-seat, table identity and current decision or vote token. In the lobby only the host
+`TableSessionControlPayload` carries shared exit requests, votes and last-player
+leave decisions directly to `TableSession`. `RiichiControlPayload` carries
+automatic play, convenience hints and open hands only for Riichi. These controls
+remain separate from match-action indices. Every loader checks the loaded table,
+table identity and current decision or vote token. Exit requests and votes require
+the sender's physical seat; a leave decision requires the pending actor. In the
+lobby only the host
 can dissolve the room. During play, one human can end the table immediately.
 Otherwise every human must agree, including reserved seats;
 bots, spectators, duplicate replies and stale ballots cannot supply approvals.
