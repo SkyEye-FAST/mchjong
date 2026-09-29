@@ -105,7 +105,8 @@ public final class McrTableScreen extends Screen {
         pose.translate(0, -TableGeometry.FELT_Y, 0);
         RenderSystem.enableDepthTest();
         FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, table.clientMcrCloth(), true);
-        McrSceneRenderer.render(McrTableScene.build(game), table.clientMcrDeck(), pose, graphics.bufferSource(), 0xf000f0);
+        McrSceneRenderer.render(McrTableScene.immersive(game),
+            table.clientMcrDeck(), pose, graphics.bufferSource(), 0xf000f0);
         graphics.flush();
         pose.popPose();
         var header = Component.translatable("mcr.mchjong.hand", game.handNumber(), game.remaining());

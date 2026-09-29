@@ -22,6 +22,7 @@ public final class TableScene {
     public static final double WALL_Z = 0.91;
     public static final double RIVER_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double RIVER_ROW = (double) TileMesh.HEIGHT * TILE_SCALE;
+    public static final double RIVER_Z = 0.355;
     public static final double WALL_STEP = RIVER_STEP;
     private static final double FLAT_CENTER = TileMesh.DEPTH / 2.0;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH, LOOSE }
@@ -81,7 +82,7 @@ public final class TableScene {
                 if (riverSlot % 6 == 0) riverX = -2.5 * RIVER_STEP;
                 double extra = discard.riichi() ? ((double) TileMesh.HEIGHT - TileMesh.WIDTH) * TILE_SCALE : 0;
                 result.add(piece(discard.tile(), seat, Area.RIVER, i, riverX + extra / 2,
-                    top + FLAT_CENTER * TILE_SCALE, 0.355 + riverSlot / 6 * RIVER_ROW - extra / 2, discard.riichi() ? 90 : 0, true, false));
+                    top + FLAT_CENTER * TILE_SCALE, RIVER_Z + riverSlot / 6 * RIVER_ROW - extra / 2, discard.riichi() ? 90 : 0, true, false));
                 riverX += RIVER_STEP + extra;
                 riverSlot++;
             }

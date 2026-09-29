@@ -58,19 +58,22 @@ Each river packs only physically present discards, six per row from left to
 right. The first row is closest to the table center and further rows expand
 toward the player. A called-away history entry occupies no river position.
 Every river tile has the same upright face orientation and width.
-The group origin has a uniform seat-local offset so four full rows fit inside
-the wall footprint without touching the neighboring player's river.
+The group is centered in front of its owner at the same origin and row spacing
+as the Riichi river. The immersive MCR table uses these positions and omits walls.
 
-Melds lie face up in a rail in front of the standing hand, between hand and
-river. The claimed tile is rotated ninety degrees: left for the previous
+Melds lie face up at the owner's left-hand corner, at the same depth as the hand.
+The earliest meld starts at the corner and later melds extend right. The hand
+stays centered when possible and shifts right only enough to clear the actual
+meld bounds. The claimed tile is rotated ninety degrees: left for the previous
 player, middle for the opposite player and right for the next player. A chow
 uses the left source only. A concealed kong has four face-down tiles during play
 and turns face up after the hand ends. Open quads and
 supplemented triplets use the same four-tile flat row; the fourth tile does
 not form a separate raised or forward stack.
 
-Flowers lie face up in a separate four-column, two-row area in front of the
-hand, beside the meld rail. They never occupy standing-hand or river positions.
+Flowers lie face up in a separate four-column, two-row area on the owner's left,
+just toward the center from the melds, using short rows like extracted norths.
+They never occupy standing-hand, meld or river positions.
 The scene preserves the source indices in its pieces and does not reconstruct
 hidden tile identities to arrange them. `McrView` remains the visibility authority.
 

@@ -21,13 +21,11 @@ public final class McrTableScene {
     public static final double WALL_Z = (WALL_LENGTH - HEIGHT + DEPTH) / 2;
     // The short end meets the next wall with the same seam as adjacent stacks.
     public static final double WALL_OFFSET = WALL_LENGTH / 2 - WALL_Z + HEIGHT / 2 + (WALL_STEP - WIDTH);
-    public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - DEPTH;
-    public static final double PUBLIC_Z = HAND_Z - (HEIGHT + DEPTH) / 2 - DEPTH;
-    public static final double PUBLIC_LEFT = -PUBLIC_Z + HEIGHT / 2;
-    public static final double MELD_LEFT = PUBLIC_LEFT + McrFlowerLayout.COLUMNS * WIDTH + DEPTH;
-    // A uniform local offset leaves four complete discard rows inside the wall footprint.
-    public static final double RIVER_X = -HEIGHT;
-    public static final double RIVER_Z = (McrRiverLayout.COLUMNS * WIDTH - HEIGHT) / 2 + DEPTH / 4;
+    public static final double HAND_Z = TableScene.HAND_Z;
+    public static final double MELD_LEFT = -TableScene.MELD_RIGHT;
+    public static final double FLOWER_LEFT = MELD_LEFT;
+    public static final double FLOWER_Z = HAND_Z - HEIGHT - DEPTH / 4;
+    public static final double RIVER_Z = TableScene.RIVER_Z;
     public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back) {}
@@ -74,6 +72,12 @@ public final class McrTableScene {
                 indices.add(original);
             }
             double handLeft = -(hand.size() - 1) * WIDTH / 2;
+            var melds = new ArrayList<McrMeldLayout>();
+            for (var meld : player.melds()) melds.add(McrMeldLayout.of(meld, seat, ended));
+            if (!melds.isEmpty() && !hand.isEmpty()) {
+                double meldRight = MELD_LEFT + melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
+                handLeft = Math.max(handLeft, meldRight + TableScene.HAND_MELD_GAP + WIDTH / 2);
+            }
             for (int index = 0; index < hand.size(); index++) {
                 boolean flat = seat == winner;
                 int original = indices.get(index);
@@ -82,22 +86,26 @@ public final class McrTableScene {
                     (flat ? DEPTH : HEIGHT) / 2, HAND_Z, 0, flat, false));
             }
             for (var part : McrRiverLayout.of(player.river()))
-                result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), RIVER_X + part.x() * TILE_SCALE,
+                result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), part.x() * TILE_SCALE,
                     DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false));
             double left = MELD_LEFT;
             for (int group = 0; group < player.melds().size(); group++) {
-                var layout = McrMeldLayout.of(player.melds().get(group), seat, ended);
+                var layout = melds.get(group);
                 for (int index = 0; index < layout.parts().size(); index++) {
                     var part = layout.parts().get(index);
                     result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * TILE_SCALE,
-                        DEPTH / 2, PUBLIC_Z + part.z() * TILE_SCALE, part.sideways() ? 90 : 0, true, part.back()));
+                        DEPTH / 2, HAND_Z + part.z() * TILE_SCALE, part.sideways() ? 90 : 0, true, part.back()));
                 }
-                left += layout.width() * TILE_SCALE + DEPTH / 4;
+                left += layout.width() * TILE_SCALE;
             }
             for (var part : McrFlowerLayout.of(player.flowers()))
-                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), PUBLIC_LEFT + part.x() * TILE_SCALE,
-                    DEPTH / 2, PUBLIC_Z + part.z() * TILE_SCALE, 0, true, false));
+                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), FLOWER_LEFT + part.x() * TILE_SCALE,
+                    DEPTH / 2, FLOWER_Z + part.z() * TILE_SCALE, 0, true, false));
         }
         return List.copyOf(result);
+    }
+
+    public static List<Piece> immersive(McrView view) {
+        return build(view).stream().filter(piece -> piece.area() != Area.WALL).toList();
     }
 }

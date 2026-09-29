@@ -103,21 +103,22 @@ tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
 and first/third jump sources, front/tail traversal and restored physical cursors.
 `McrLayoutTest` owns the rotated hash-shaped wall clearance, compact six-column
-rivers, source-marked flat melds, flower separation and scene source indices.
+rivers, left-corner source-marked flat melds, flower/hand separation and scene source indices.
 Run the shared presentation checks with
 `gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain`.
 
 The focused shared-client MCR display fixture draws the unopened 144-tile wall
 and a complete physical stock distributed across walls, hands, rivers, melds
-and flowers. It exercises the shared renderer without starting a room or a
+and flowers, plus its wall-free immersive projection. It exercises the shared renderer without starting a room or a
 second game simulation. On Fabric, run:
 
 ```text
-gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr-wall.png,mcr-play.png" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr-play.png,mcr-immersive.png" --warning-mode fail --console=plain
 ```
 
 Inspect the two images in `fabric/build/smoke/mcr-layout-evidence/screenshots`
-and the fresh `PASS.txt`/`FAIL.txt` marker. Omit `smokeScreenshots` for assertion-only
+and the fresh `PASS.txt`/`FAIL.txt` marker. Select `mcr-wall.png` when changing the
+built wall. Omit `smokeScreenshots` for assertion-only
 runs. Compile the other affected loaders without duplicating these shared images.
 
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item

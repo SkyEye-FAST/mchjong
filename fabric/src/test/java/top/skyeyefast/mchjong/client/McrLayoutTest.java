@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.FlowerTile;
 import top.skyeyefast.mchjong.engine.McrGame;
+import top.skyeyefast.mchjong.engine.McrView;
 import top.skyeyefast.mchjong.engine.McrWallLayout;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -41,7 +42,7 @@ class McrLayoutTest {
                 "Wall slots intersect: " + i + ", " + j);
     }
 
-    @Test void riversCompactCalledHistoryIntoSixColumnsAndStayInsideTheWalls() {
+    @Test void riversCompactCalledHistoryIntoCenteredSixColumns() {
         var history = new ArrayList<Discard>();
         for (int i = 0; i < 26; i++) history.add(new Discard(i, false, i == 2 || i == 7, false));
         var parts = McrRiverLayout.of(history);
@@ -53,13 +54,12 @@ class McrLayoutTest {
             assertEquals(index / 6, part.row());
             assertEquals((index % 6 - 2.5) * TileMesh.WIDTH, part.x(), 1e-8);
             assertEquals(index / 6 * (double) TileMesh.HEIGHT, part.z(), 1e-8);
-            assertTrue(McrTableScene.RIVER_Z + part.z() * McrTableScene.TILE_SCALE + McrTableScene.HEIGHT / 2
-                < McrTableScene.WALL_Z - McrTableScene.HEIGHT / 2);
         }
         assertEquals(3, parts.get(2).historyIndex());
         assertEquals(14, parts.get(12).historyIndex());
         assertEquals(25, parts.get(23).historyIndex());
-        assertTrue(McrTableScene.RIVER_X + McrRiverLayout.COLUMNS * McrTableScene.WIDTH / 2
+        assertEquals(TableScene.RIVER_Z, McrTableScene.RIVER_Z);
+        assertTrue(McrRiverLayout.COLUMNS * McrTableScene.WIDTH / 2
             < McrTableScene.RIVER_Z - McrTableScene.HEIGHT / 2, "Adjacent rotated rivers must not meet at their corners");
     }
 
@@ -90,8 +90,8 @@ class McrLayoutTest {
         var layout = McrFlowerLayout.of(flowers);
         assertEquals(8, layout.size());
         assertTrue(layout.get(4).z() < layout.get(0).z());
-        assertTrue(McrTableScene.PUBLIC_Z + McrTableScene.HEIGHT / 2
-            < McrTableScene.HAND_Z - McrTableScene.DEPTH / 2);
+        assertTrue(McrTableScene.FLOWER_Z + McrTableScene.HEIGHT / 2
+            < McrTableScene.HAND_Z - McrTableScene.HEIGHT / 2);
         assertThrows(IllegalArgumentException.class, () -> McrFlowerLayout.of(List.of(0)));
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
@@ -104,6 +104,49 @@ class McrLayoutTest {
                 assertTrue(piece.flat());
                 assertFalse(piece.back());
             }
+        }
+    }
+
+    @Test void leftCornerMeldsClearHandsAndFlowersAtEverySeat() {
+        var base = new McrGame(711).view(0);
+        var seats = new ArrayList<McrView.Seat>();
+        for (int seat = 0; seat < 4; seat++) {
+            var melds = new ArrayList<Meld>();
+            for (int group = 0; group < 4; group++) {
+                int tile = seat * 32 + group * 4;
+                melds.add(new Meld(Meld.Type.OPEN_QUAD, List.of(tile, tile + 1, tile + 2, tile + 3),
+                    (seat + 3) % 4, tile));
+            }
+            seats.add(new McrView.Seat(Tile.EAST + seat, 0, List.of(seat == 0 ? 16 : Tile.HIDDEN), Tile.ABSENT,
+                melds, List.of(new Discard(seat * 32 + 17, false, false, false)),
+                seat == 0 ? java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList() : List.of(), false));
+        }
+        var view = new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, 0, base.opening(),
+            java.util.Collections.nCopies(144, Tile.ABSENT), null, seats, List.of(), false, null, List.of());
+        var scene = McrTableScene.build(view);
+        assertEquals(scene, McrTableScene.immersive(view));
+        assertTrue(McrTableScene.immersive(base).stream().noneMatch(piece -> piece.area() == McrTableScene.Area.WALL));
+        for (var piece : scene) {
+            var local = TableGeometry.orient(piece.position().x, piece.position().y, piece.position().z, (4 - piece.seat()) % 4);
+            if (piece.area() == McrTableScene.Area.MELD && piece.index() == 0)
+                assertEquals(-TableScene.MELD_RIGHT + McrTableScene.HEIGHT / 2, local.x, 1e-8);
+            if (piece.area() == McrTableScene.Area.RIVER) {
+                assertEquals(-2.5 * TableScene.RIVER_STEP, local.x, 1e-8);
+                assertEquals(TableScene.RIVER_Z, local.z, 1e-8);
+            }
+            if (piece.area() == McrTableScene.Area.FLOWER) assertTrue(local.x < 0);
+        }
+        var publicTiles = scene.stream().filter(piece -> piece.area() != McrTableScene.Area.HAND).toList();
+        for (int i = 0; i < publicTiles.size(); i++) for (int j = i + 1; j < publicTiles.size(); j++)
+            assertFalse(bounds(publicTiles.get(i)).deflate(1e-7).intersects(bounds(publicTiles.get(j)).deflate(1e-7)),
+                "Public tile areas overlap");
+        for (var hand : scene.stream().filter(piece -> piece.area() == McrTableScene.Area.HAND).toList()) {
+            var p = hand.position();
+            double halfX = (hand.seat() % 2 == 0 ? McrTableScene.WIDTH : McrTableScene.DEPTH) / 2;
+            double halfZ = (hand.seat() % 2 == 0 ? McrTableScene.DEPTH : McrTableScene.WIDTH) / 2;
+            var handBounds = new AABB(p.x - halfX, TableGeometry.FELT_Y, p.z - halfZ,
+                p.x + halfX, TableGeometry.FELT_Y + McrTableScene.HEIGHT, p.z + halfZ);
+            for (var tile : publicTiles) assertFalse(handBounds.intersects(bounds(tile).deflate(1e-7)), "Hand overlaps public tiles");
         }
     }
 

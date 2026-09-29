@@ -31,9 +31,9 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Two real shared-client render fixtures, without creating a second gameplay smoke. */
+/** Shared-client physical and immersive render fixtures, without a second gameplay smoke. */
 final class McrDisplaySmoke {
-    private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png"};
+    private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png", "mcr-immersive.png"};
     private Display display;
     private int ticks;
     private int frameTicks;
@@ -53,12 +53,14 @@ final class McrDisplaySmoke {
             return false;
         }
         if (client.getOverlay() != null) return false;
-        if (++frameTicks == 20)
+        if (display.frames < 20) return false;
+        if (++frameTicks == 1)
             SmokeScreenshots.grab(output.toFile(), IMAGES[stage], client.getMainRenderTarget(), message -> {});
         boolean capture = List.of(System.getProperty("mchjong.smoke.screenshots", "").split(",")).contains(IMAGES[stage]);
-        if (frameTicks > 22 && (!capture || Files.isRegularFile(output.resolve("screenshots").resolve(IMAGES[stage])))) {
+        if (frameTicks > 2 && (!capture || Files.isRegularFile(output.resolve("screenshots").resolve(IMAGES[stage])))) {
             if (++stage == IMAGES.length) return true;
-            display.playing = true;
+            display.stage = stage;
+            display.frames = 0;
             frameTicks = 0;
         }
         return false;
@@ -69,7 +71,8 @@ final class McrDisplaySmoke {
         private final List<McrTableScene.Piece> play = McrTableScene.build(position());
         private final McrDeck deck = new McrDeck(TileMaterial.BONE, DyeColor.BLUE, TileFacePreset.KANSAI,
             ResourceLocation.fromNamespaceAndPath("mchjong", "default"));
-        private boolean playing;
+        private int stage;
+        private int frames;
 
         Display() {
             super(Component.literal("MCR layout verification"));
@@ -77,8 +80,9 @@ final class McrDisplaySmoke {
         }
 
         @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+            frames++;
             graphics.fill(0, 0, width, height, MahjongUi.PANEL);
-            graphics.drawCenteredString(font, playing ? "MCR | six-column rivers, public melds and flowers"
+            graphics.drawCenteredString(font, stage > 0 ? "MCR | six-column rivers, public melds and flowers"
                 : "MCR | 144 tiles / 72 stacks / four 18-stack walls", width / 2, 12, MahjongUi.TEXT);
             graphics.flush();
             var pose = graphics.pose();
@@ -91,7 +95,8 @@ final class McrDisplaySmoke {
             pose.translate(0, -TableGeometry.FELT_Y, 0);
             RenderSystem.enableDepthTest();
             FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
-            McrSceneRenderer.render(playing ? play : wall, deck, pose, graphics.bufferSource(), 0xf000f0);
+            McrSceneRenderer.render(stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
+                deck, pose, graphics.bufferSource(), 0xf000f0);
             graphics.flush();
             pose.popPose();
             graphics.drawCenteredString(font, "Shared tile mesh and physical-slot scene; no room mode is enabled",
