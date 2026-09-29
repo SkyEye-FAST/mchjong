@@ -212,8 +212,9 @@ to the storage caller; the codec never substitutes a new match.
 The engine host resolves the authorized participant seat; `-1` requests the
 unprivileged spectator view. Ordinary concealed hands and drawn identities are
 visible only to their owner. Concealed kongs use four hidden sentinels for other
-recipients. A normal winning result exposes that winner's hand and melds, while
-other hands and every remaining wall tile stay hidden. Wall slots retain only
+recipients during play and become public at `HAND_END` or `MATCH_END`. A normal
+winning result exposes that winner's hand, while other hands and every remaining
+wall tile stay hidden. Wall slots retain only
 hidden/absent occupancy in fixed physical order; public opening metadata exposes
 the dice, second roller and break, not the seed or tile identities.
 Flowers, rivers, exposed melds, points, stop-win flags,

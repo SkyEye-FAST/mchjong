@@ -47,7 +47,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
                 : player.hand().stream().anyMatch(tile -> tile != Tile.HIDDEN) || player.drawn() >= 0)
                 throw new IllegalArgumentException("MCR concealed hand escaped recipient filtering");
             for (var meld : player.melds()) {
-                boolean hidden = meld.closed() && !visible;
+                boolean hidden = meld.closed() && !visible && !ended;
                 if (meld.tiles().stream().anyMatch(tile -> hidden ? tile != Tile.HIDDEN : !ordinary(tile)))
                     throw new IllegalArgumentException("Invalid MCR meld visibility");
             }
@@ -94,12 +94,13 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
     static McrView project(McrGame game, int viewerSeat, boolean allowActions) {
         if (viewerSeat < -1 || viewerSeat > 3) throw new IllegalArgumentException("Invalid MCR viewer seat");
         int winner = game.result() instanceof McrSettlement.Win win ? win.winner() : -1;
+        boolean ended = game.phase() == McrGame.Phase.HAND_END || game.phase() == McrGame.Phase.MATCH_END;
         var seats = new ArrayList<Seat>(4);
         for (int seat = 0; seat < 4; seat++) {
             boolean visible = seat == viewerSeat || seat == winner;
             var hand = game.hand(seat);
             var melds = new ArrayList<Meld>();
-            for (var meld : game.melds(seat)) melds.add(meld.closed() && !visible
+            for (var meld : game.melds(seat)) melds.add(meld.closed() && !visible && !ended
                 ? new Meld(meld.type(), Collections.nCopies(4, Tile.HIDDEN), meld.fromSeat(), Tile.ABSENT) : meld);
             int drawn = game.drawn(seat);
             seats.add(new Seat(game.seatWind(seat), game.points(seat), visible ? hand : Collections.nCopies(hand.size(), Tile.HIDDEN),

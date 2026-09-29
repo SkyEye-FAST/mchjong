@@ -38,6 +38,20 @@ class McrViewTest {
         assertHidden(before.seats().get(0)); // A later reveal cannot mutate an earlier recipient view.
     }
 
+    @Test void completedDrawRevealsConcealedKongWithoutExposingOtherHands() {
+        var game = fixed(14, new Fixture().hand(0, "1111m123456p78s22z")
+            .tail(0, Tile.parseKind("9s")).build());
+        play(game, 0, CONCEALED_KONG);
+        assertTrue(game.view(-1).seats().get(0).melds().getFirst().tiles().stream()
+            .allMatch(tile -> tile == Tile.HIDDEN));
+        exhaust(game);
+        var finished = game.view(-1);
+        assertInstanceOf(McrSettlement.Draw.class, finished.result());
+        assertEquals(game.melds(0), finished.seats().get(0).melds());
+        finished.seats().forEach(McrViewTest::assertHidden);
+        roundTrip(finished);
+    }
+
     @Test void responseProgressIsPrivateAndAddedKongFocusIsPublic() {
         var game = fixed(4, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
