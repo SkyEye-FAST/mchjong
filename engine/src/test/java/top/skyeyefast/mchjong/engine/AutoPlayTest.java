@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.engine;
 
-import com.google.gson.Gson;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
@@ -38,7 +37,6 @@ class AutoPlayTest {
         int seat = game.turn, drawn = game.players[seat].drawn;
         riichi(game, seat);
         game.options.set(seat, LegalActions.onTurn(game, seat));
-        Gson json = new Gson();
         game = GameLifecycleTest.reloadMounted(game);
         assertFalse(game.players[seat].autoPlay.discard());
         ticks(game, RiichiGame.DEAL_TICKS + RiichiGame.AUTO_ACTION_TICKS);
@@ -233,7 +231,6 @@ class AutoPlayTest {
             assertTrue(game.configureAutoPlay(actor, game.decision, option, option != AutoPlay.Option.SORT));
         AutoPlay expected = new AutoPlay(false, true, true, true, true);
         assertEquals(expected, game.view(actor).autoPlay());
-        Gson json = new Gson();
         game = GameLifecycleTest.reloadMounted(game);
         game.validate();
         assertEquals(expected, game.view(actor).autoPlay());
@@ -266,7 +263,6 @@ class AutoPlayTest {
         assertEquals(0, game.moveTicks[seat]);
         assertEquals(2400, game.reserveTicks[seat]);
         ticks(game, 37);
-        Gson json = new Gson();
         game = GameLifecycleTest.reloadMounted(game);
         assertEquals(TimeControl.MANUAL, game.timeControl);
         assertEquals(2363, game.reserveTicks[seat]);
@@ -302,7 +298,6 @@ class AutoPlayTest {
         assertEquals(0, game.moveTicks[seat]);
         assertEquals(120 * 20, game.reserveTicks[seat]);
         ticks(game, 119 * 20 + 19);
-        var json = new Gson();
         game = GameLifecycleTest.reloadMounted(game);
         assertEquals(TimeControl.MANUAL, game.view(null).timeControl());
         assertEquals(1, game.reserveTicks[seat]);
