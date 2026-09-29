@@ -46,7 +46,7 @@ class TranslationReferenceTest {
             used.add("item.mchjong." + item);
         for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) used.add(composition.translationKey());
         used.addAll(top.skyeyefast.mchjong.engine.YakuCatalog.allTranslationKeys());
-        for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
+        for (String preset : List.of("kansai", "kanto", "hong_kong")) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
         used.add("itemGroup.mchjong");
         for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped")) {

@@ -90,7 +90,7 @@ class AssetContractTest {
     void atlasContainsEveryDistinctFaceAtItsDeclaredCoordinates() throws Exception {
         Set<String> designs = new HashSet<>();
         for (String preset : TileArtwork.PRESETS) {
-            String prefix = preset.equals("kanto") ? "kanto/" : "";
+            String prefix = preset.equals("kansai") ? "" : preset + "/";
             BufferedImage atlas = ImageIO
                     .read(resources.resolve("assets/mchjong/textures/" + prefix + "tiles.png").toFile());
             assertEquals(2048, atlas.getWidth());
@@ -112,7 +112,7 @@ class AssetContractTest {
                 hashes.add(hash);
                 if (i == 0)
                     designs.add(hash);
-                if (i == 31)
+                if (i == 31 && (preset.equals("kansai") || preset.equals("kanto")))
                     assertTrue(Arrays.stream(tile.getRGB(8, 8, 240, 368, null, 0, 240))
                             .allMatch(pixel -> pixel == 0xffffffff), "White dragon remains blank");
             }
@@ -120,7 +120,7 @@ class AssetContractTest {
             assertTrue(Arrays.stream(atlas.getRGB(2016, 4064, 32, 32, null, 0, 32))
                     .allMatch(pixel -> pixel == 0xffffffff), "Neutral material swatch");
         }
-        assertEquals(2, designs.size(), "The presets must not render the same ordinary faces");
+        assertEquals(TileArtwork.PRESETS.size(), designs.size(), "The presets must not render the same ordinary faces");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
     }
 
@@ -197,6 +197,7 @@ class AssetContractTest {
         assertFalse(
                 Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
+        assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
     }
 
     @Test

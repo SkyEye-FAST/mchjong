@@ -38,7 +38,7 @@ data, shared across dimensions and retained across player deaths and reconnects.
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
-| `mchjong:face_preset` | Built-in `kansai` or `kanto`, or a configured ZIP preset | Tile-face design |
+| `mchjong:face_preset` | Built-in `kansai`, `kanto` or `hong_kong`, or a configured ZIP preset | Tile-face design |
 | `mchjong:back_preset` | Default or a configured ZIP preset | Tile-back pattern |
 | `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
@@ -47,7 +47,8 @@ data, shared across dimensions and retained across player deaths and reconnects.
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
 are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
 autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
-Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
+Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴); Hong Kong's
+`5q..8q` show plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
 Only faces `4`, `13`, `22` can have `red = true`. Material is one of the eleven
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or

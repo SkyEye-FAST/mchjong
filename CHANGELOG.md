@@ -21,6 +21,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add built-in Hong Kong tile-face preset with recolored traditional flower engravings and white dragon frame.
 - Play a fixed four-player, sixteen-hand MCR match on automatic tables using a complete 144-tile case, recipient-safe controls and separate fan settlement.
 - Add discoverable external Riichi Bot choices with preset matching, server configuration and visible service errors.
 - Add independent MCR physical scenes with offset four-wall geometry, compact six-column rivers, source-marked flat melds and a separate public flower area.

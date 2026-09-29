@@ -112,7 +112,7 @@ public final class GenerateAssets {
             g.dispose();
             glyphGraphics.dispose();
         }
-        String path = preset.equals("kanto") ? "kanto/" : "";
+        String path = preset.equals("kansai") ? "" : preset + "/";
         text("assets/mchjong/tile_face_presets/" + preset + ".json",
             "{\"atlas\":\"mchjong:textures/" + path + "tiles.png\",\"glyphs\":\"mchjong:textures/" + path + "tile_glyphs.png\"}");
         png(path + "tiles", atlas);

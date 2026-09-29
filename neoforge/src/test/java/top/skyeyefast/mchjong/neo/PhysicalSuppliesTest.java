@@ -277,6 +277,7 @@ class PhysicalSuppliesTest {
                 assertEquals(data.notation(), data.label(true, TileFacePreset.KANSAI).getString());
                 assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum").get(flower), data.flowerKey(TileFacePreset.KANSAI));
                 assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "fortune", "prosperity", "longevity", "nobility").get(flower), data.flowerKey(TileFacePreset.KANTO));
+                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "chrysanthemum", "bamboo").get(flower), data.flowerKey(TileFacePreset.HONG_KONG));
                 assertEquals(data, TileData.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,
                     TileData.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, data).getOrThrow()).getOrThrow());
                 contents.set(37 + flower, stack);

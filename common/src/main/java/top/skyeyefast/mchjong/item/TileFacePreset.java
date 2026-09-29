@@ -7,6 +7,7 @@ import net.minecraft.resources.ResourceLocation;
 public record TileFacePreset(ResourceLocation id) {
     public static final TileFacePreset KANSAI = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kansai"));
     public static final TileFacePreset KANTO = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "kanto"));
+    public static final TileFacePreset HONG_KONG = new TileFacePreset(ResourceLocation.fromNamespaceAndPath("mchjong", "hong_kong"));
     public static final Codec<TileFacePreset> CODEC = ResourceLocation.CODEC.xmap(TileFacePreset::new, TileFacePreset::id);
     public TileFacePreset {
         java.util.Objects.requireNonNull(id);

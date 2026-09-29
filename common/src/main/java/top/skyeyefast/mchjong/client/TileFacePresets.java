@@ -65,7 +65,8 @@ public final class TileFacePresets {
             try (var reader = resource.openAsReader()) {
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
                 var id = new TileFacePreset(ResourceLocation.fromNamespaceAndPath(path.getNamespace(), name));
-                if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)) return;
+                if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)
+                    && !id.equals(TileFacePreset.HONG_KONG)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
                 Definition definition = new Definition(ResourceLocation.parse(json.get("atlas").getAsString()),
                     ResourceLocation.parse(json.get("glyphs").getAsString()));
