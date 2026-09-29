@@ -25,6 +25,33 @@ internal class ReplayRecorder(game: Game) {
 
     fun riichiSafeTiles(): Map<Int, Long> = RiichiSafety.from(events)
 
+    fun botOpening(seat: Int): BotPosition.Opening = BotPosition.Opening(
+        round, dealer, honba, sticks, initialPoints, initialHands[seat], initialDora.first(),
+    )
+
+    fun botEvents(viewer: Int): List<BotPosition.Event> = events.map { event ->
+        val meld = event.meld
+        val kind = if (event.kind == RIICHI) "RIICHI_ACCEPTED"
+            else if (event.kind == MELD) Action.Type.fromMeld(meld!!.type()).name
+            else event.kind.name
+        val call = meld != null && meld.type() in setOf(Meld.Type.SEQUENCE, Meld.Type.TRIPLET, Meld.Type.OPEN_QUAD)
+        val consumed = if (meld == null) emptyList() else meld.tiles().toMutableList().apply {
+            if (call) remove(meld.calledTile())
+            if (meld.type() == Meld.Type.ADDED_QUAD) remove(event.tile)
+        }
+        BotPosition.Event(
+            kind,
+            if (event.kind == DORA) null else event.seat,
+            if (event.kind == RIICHI || event.kind == DRAW && event.seat != viewer || event.kind == MELD && call) null
+                else event.tile.takeIf { it >= 0 },
+            event.tsumogiri,
+            event.riichi,
+            if (call) meld.fromSeat() else null,
+            if (call) meld.calledTile() else null,
+            consumed,
+        )
+    }
+
     fun draw(seat: Int, tile: Int) {
         events += ReplayHand.Event(DRAW, seat, tile, null, false, false, true)
     }

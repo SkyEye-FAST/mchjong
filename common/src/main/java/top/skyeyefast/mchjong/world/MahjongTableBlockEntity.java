@@ -28,6 +28,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger("mchjong");
     private static final SecureRandom SEEDS = new SecureRandom();
     private Game game;
+    private final BotServiceClient botService = new BotServiceClient();
     private String unreadableSave;
     private int ticks;
     private long sentRevision = -1;
@@ -52,6 +53,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         if (game == null) game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), SEEDS.nextLong());
         var policy = WorldSettings.of(level.getServer()).policy();
+        game.configureBotService(BotServiceClient.enabled());
         game.configureWorld(policy.gamePolicy());
         synchronizeEquipment();
         if (game.phase() == Game.Phase.LOBBY && !equipment.canSupplyReds(game.rules().sanma(), game.rules().redFives()))
@@ -154,6 +156,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         Game game = table.serverGame();
         if (game == null) return;
         game.tick();
+        table.botService.tick(game);
         table.flushExperience();
         table.synchronizeEquipment();
         table.ticks++;

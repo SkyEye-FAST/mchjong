@@ -73,7 +73,7 @@ final class ManualHandling {
                 for (int i = 0; i < count; i++) game.players[seat].hand.add(game.wall.draw());
                 packets++;
                 if (packets == 4 * game.rules.players()) {
-                    game.recorder = game.replay == null ? null : new ReplayRecorder(game);
+                    game.recorder = game.replay == null && !game.botServiceEnabled ? null : new ReplayRecorder(game);
                     game.draw(game.dealer, false, false);
                 } else {
                     game.turn = game.next(seat);

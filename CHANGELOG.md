@@ -14,6 +14,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Route configured automatic Riichi opponents through a local Bot Service using private seat snapshots and server-validated legal action indices.
 - Add independent MCR physical scenes with offset four-wall geometry, compact six-column rivers, source-marked flat melds and a separate public flower area.
 - Keep MCR walls in physical slots with two-roll opening metadata, first/third-stack dealer jumps and upper-before-lower front and tail traversal.
 - Separate MCR declarations from Riichi actions and name shared meld structures independently of rules, with explicit library and presentation mappings.

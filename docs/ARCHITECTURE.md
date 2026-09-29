@@ -26,6 +26,8 @@ allows it.
 * `common`: blocks, seats, server authorization, private snapshots, rendering,
   world-anchored interaction and translations for a Minecraft build profile.
   Both loaders for that profile compile these Java sources.
+  `BotServiceClient` sends engine-owned `BotPosition` snapshots asynchronously
+  and applies only validated action indices on the server thread.
 * `fabric/src/main/java`: Fabric registration/networking only.
 * `forge/src/main/java`: Forge registration/networking and client extension binding.
 * `neoforge/src/main/java`: NeoForge registration/networking only.
