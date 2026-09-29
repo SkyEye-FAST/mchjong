@@ -19,7 +19,6 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
@@ -124,8 +123,8 @@ final class EquipmentLifecycleSmoke {
             new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
         check(player.isPassenger(), "The stool did not find its table");
         RiichiGame game = table.participantGame(player);
-        check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
-            .noneMatch(action -> action.type() == Action.Type.READY), "Empty table could start a game");
+        check(game != null && !game.equipped() && game.roomView(player.getUUID()).actions().stream()
+            .noneMatch(action -> action.type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY), "Empty table could start a game");
 
         var complete = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
         var shortSet = complete.copy();

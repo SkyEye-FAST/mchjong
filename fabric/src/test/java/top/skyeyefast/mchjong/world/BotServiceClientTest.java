@@ -4,7 +4,6 @@ import com.google.gson.JsonParser;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.BotPosition;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.ExternalBot;
@@ -19,14 +18,14 @@ class BotServiceClientTest {
         game.configureExternalBots(List.of(new ExternalBot("mortal-4p", "Mortal 4P", 4, List.of(RiichiPreset.TENHOU_4))));
         UUID host = UUID.randomUUID();
         assertTrue(game.join(host, "Host", 0));
-        var view = game.view(host);
+        var view = game.roomView(host);
         int choice = -1;
         for (int i = 0; i < view.actions().size(); i++)
-            if (view.actions().get(i).type() == Action.Type.SET_BOT
-                && view.actions().get(i).tiles().equals(List.of(1, 2))) choice = i;
+            if (view.actions().get(i).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.SET_BOT
+                && view.actions().get(i).arguments().equals(List.of(1, 2))) choice = i;
         assertTrue(choice >= 0);
-        assertTrue(game.act(host, view.decision(), choice));
-        assertEquals("mortal-4p", game.roomView().seats().get(1).externalBotId());
+        assertTrue(game.actRoom(host, view.tableId(), view.incarnation(), view.decision(), choice));
+        assertEquals("mortal-4p", game.roomView(null).seats().get(1).participant().externalBotId());
         assertEquals("unavailable", new BotServiceClient().state(game).seatErrors().get(1));
     }
 

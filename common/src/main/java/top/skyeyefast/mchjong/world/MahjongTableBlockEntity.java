@@ -25,6 +25,8 @@ import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.McrViewPayload;
+import top.skyeyefast.mchjong.network.TableRoomActionPayload;
+import top.skyeyefast.mchjong.network.TableLifecyclePayload;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 import top.skyeyefast.mchjong.network.TableVariantPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -45,7 +47,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private top.skyeyefast.mchjong.item.McrDeck clientMcrDeck;
     private net.minecraft.world.item.DyeColor clientMcrCloth;
     private MahjongVariant clientVariant = MahjongVariant.RIICHI;
-    private top.skyeyefast.mchjong.engine.RoomView clientRoom;
     private BotServiceState clientBotService;
     private WorldSettings.Policy clientWorldPolicy;
     private int clientRedOptions;
@@ -158,15 +159,15 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         clientMcrCloth = cloth;
         clientVariant = MahjongVariant.MCR;
     }
-    public top.skyeyefast.mchjong.engine.RoomView clientRoom() { return clientRoom; }
+    public top.skyeyefast.mchjong.engine.TableRoomView clientRoom() { return clientTableRoom; }
     public BotServiceState clientBotService() { return clientBotService; }
     public void acceptBotService(BotServiceState state) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client bot service state on server");
         clientBotService = java.util.Objects.requireNonNull(state);
     }
-    public void acceptRoom(top.skyeyefast.mchjong.engine.RoomView room) {
+    public void acceptRoom(top.skyeyefast.mchjong.engine.TableRoomView room) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client room state on server");
-        clientRoom = java.util.Objects.requireNonNull(room);
+        clientTableRoom = java.util.Objects.requireNonNull(room);
     }
     public WorldSettings.Policy clientWorldPolicy() { return clientWorldPolicy; }
     public void acceptWorldPolicy(WorldSettings.Policy policy) {
@@ -248,7 +249,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         TableView snapshot = viewer == null ? game.spectatorView(policy.spectatorHandVisibility()) : game.view(viewer);
         player.connection.send(PayloadPackets.clientbound(
             new TableViewPayload(worldPosition, TableNetworking.JSON.toJson(snapshot), open, controlReply,
-                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView(), host.botState(), policy,
+                game.leaveDecision(player.getUUID()), equipment.redOptions(), game.roomView(viewer), host.botState(), policy,
                 game.variant())));
     }
 
@@ -570,10 +571,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         RiichiGame game = serverGame();
         if (game == null || !game.tableId().equals(payload.tableId()) || authorizedViewer(player) == null) return;
         var actions = game.view(player.getUUID()).actions();
-        top.skyeyefast.mchjong.engine.Action.Type requested = null;
         if (payload.action() >= 0 && payload.action() < actions.size()) {
             var action = actions.get(payload.action());
-            requested = action.type();
             if (action.type() == top.skyeyefast.mchjong.engine.Action.Type.CHANGE_RULE) {
                 var proposed = game.rules().withPreset(RiichiPreset.values()[action.tiles().getFirst()]);
                 if (!equipment.canSupplyReds(proposed.sanma(), proposed.redFives())) {
@@ -584,7 +583,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         }
         if (game.act(player.getUUID(), payload.decision(), payload.action())) {
             flushExperience();
-            if (requested == top.skyeyefast.mchjong.engine.Action.Type.LEAVE_ROOM) refreshParticipants(false);
             setChanged();
             flushReplays();
         }
@@ -595,12 +593,36 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         McrSession session = serverSession() instanceof McrSession mcr ? mcr : null;
         if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
             || authorizedViewer(player) == null) return;
-        boolean changed = session.lobby() || session.lifecycle() == TableSession.Lifecycle.FINISHED
-            ? session.actRoom(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision(), payload.actionIndex())
-            : payload.actionIndex() == -1
-                ? session.confirmNextHand(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision())
-                : session.act(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision(), payload.actionIndex());
+        boolean changed = session.act(player.getUUID(), payload.tableId(), payload.incarnation(),
+            payload.decision(), payload.actionIndex());
         if (changed) {
+            sentRevision = -1;
+            setChanged();
+        }
+        sendMcrView(player, false);
+    }
+
+    public void actRoom(ServerPlayer player, TableRoomActionPayload payload) {
+        TableSession session = serverSession();
+        if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
+            || authorizedViewer(player) == null) return;
+        var offered = session.roomView(player.getUUID()).actions();
+        boolean leaving = payload.actionIndex() < offered.size()
+            && offered.get(payload.actionIndex()).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM;
+        if (session.actRoom(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision(), payload.actionIndex())) {
+            sentRevision = -1;
+            setChanged();
+            if (leaving) refreshParticipants(false);
+        }
+        sendView(player, false, false);
+    }
+
+    public void actLifecycle(ServerPlayer player, TableLifecyclePayload payload) {
+        TableSession session = serverSession();
+        if (!(session instanceof McrSession mcr) || player.serverLevel() != level || !player.isAlive()
+            || player.isSpectator() || authorizedViewer(player) == null) return;
+        if (payload.operation() == TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND
+            && mcr.confirmNextHand(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision())) {
             sentRevision = -1;
             setChanged();
         }

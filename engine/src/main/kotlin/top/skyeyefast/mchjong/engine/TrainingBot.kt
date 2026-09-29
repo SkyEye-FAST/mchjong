@@ -7,7 +7,6 @@ import top.skyeyefast.mchjong.engine.Action.Type.CHI
 import top.skyeyefast.mchjong.engine.Action.Type.CLOSED_KAN
 import top.skyeyefast.mchjong.engine.Action.Type.DISCARD
 import top.skyeyefast.mchjong.engine.Action.Type.DRAW
-import top.skyeyefast.mchjong.engine.Action.Type.DRAW_WIND
 import top.skyeyefast.mchjong.engine.Action.Type.NEXT
 import top.skyeyefast.mchjong.engine.Action.Type.NUKI
 import top.skyeyefast.mchjong.engine.Action.Type.OPEN_KAN
@@ -15,7 +14,6 @@ import top.skyeyefast.mchjong.engine.Action.Type.PASS
 import top.skyeyefast.mchjong.engine.Action.Type.PICK_UP_DICE
 import top.skyeyefast.mchjong.engine.Action.Type.ROLL_DICE
 import top.skyeyefast.mchjong.engine.Action.Type.PON
-import top.skyeyefast.mchjong.engine.Action.Type.READY
 import top.skyeyefast.mchjong.engine.Action.Type.RIICHI
 import top.skyeyefast.mchjong.engine.Action.Type.RON
 import top.skyeyefast.mchjong.engine.Action.Type.SHUFFLE
@@ -358,7 +356,7 @@ internal class TrainingBot private constructor(
         @JvmStatic
         fun choose(view: TableView, level: BotDifficulty): Int {
             if (view.actions().isEmpty()) throw IllegalArgumentException("A bot needs a legal decision")
-            for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, READY, DRAW_WIND, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
+            for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
                 val index = index(view.actions(), type)
                 if (index >= 0) return index
             }

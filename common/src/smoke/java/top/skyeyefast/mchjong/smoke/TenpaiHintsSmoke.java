@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.RoomView;
+import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.TenpaiHints;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -32,7 +32,7 @@ final class TenpaiHintsSmoke {
     private String language;
     private CompletableFuture<Void> reload;
     private TableView original, fixture;
-    private RoomView originalRoom;
+    private TableRoomView originalRoom;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         var settings = TableSettings.get();
@@ -43,7 +43,11 @@ final class TenpaiHintsSmoke {
             settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
             original = table.clientView();
             originalRoom = table.clientRoom();
-            table.acceptRoom(new RoomView(originalRoom.host(), true, originalRoom.seating(), originalRoom.availableWinds(), originalRoom.seats(), originalRoom.externalBots(),
+            table.acceptRoom(new TableRoomView(originalRoom.tableId(), originalRoom.incarnation(), originalRoom.revision(),
+                originalRoom.decision(), originalRoom.variant(), originalRoom.lifecycle(), originalRoom.host(),
+                originalRoom.viewerSeat(), originalRoom.manual(), originalRoom.equipped(), originalRoom.paused(),
+                originalRoom.seating(), originalRoom.availableWinds(), originalRoom.seats(), originalRoom.actions(),
+                originalRoom.exitVote(), originalRoom.leaveDecision(), true, originalRoom.externalBots(),
                 originalRoom.settlementTicks(), originalRoom.settlementSkippedSeats()));
             sample = 0;
             show(client, table);

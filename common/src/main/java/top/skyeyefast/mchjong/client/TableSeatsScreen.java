@@ -6,9 +6,10 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
-import top.skyeyefast.mchjong.engine.RoomView;
+import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -43,10 +44,10 @@ public final class TableSeatsScreen extends Screen {
             if (seat == room.host() || player.occupied() && !player.bot() && state.presence() == PlayerPresence.SEATED) {
                 label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
-                int index = find(view, Action.Type.TRANSFER_HOST, List.of(seat));
+                int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
                 enabled = host && seat != room.host() && (view.phase() != RiichiGame.Phase.LOBBY || index >= 0);
                 action = () -> {
-                    if (view.phase() == RiichiGame.Phase.LOBBY) parent.send(view, index);
+                    if (view.phase() == RiichiGame.Phase.LOBBY) parent.sendRoom(room, index);
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
@@ -61,8 +62,8 @@ public final class TableSeatsScreen extends Screen {
             button.active = enabled;
             addRenderableWidget(button);
         }
-        int leave = find(view, Action.Type.LEAVE_ROOM, List.of());
-        if (leave >= 0) addRenderableWidget(MahjongButton.create(Component.translatable("action.mchjong.leave_room"), ignored -> parent.send(view, leave))
+        int leave = RoomLobbyControls.find(room, RoomAction.Type.LEAVE_ROOM, List.of());
+        if (leave >= 0) addRenderableWidget(MahjongButton.create(Component.translatable("action.mchjong.leave_room"), ignored -> parent.sendRoom(room, leave))
             .bounds(left, height - 54, span, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
             .bounds(left, height - 30, span, 20).build().primary());
@@ -76,13 +77,13 @@ public final class TableSeatsScreen extends Screen {
         return -1;
     }
 
-    static Component botName(RoomView room, int seat) {
+    static Component botName(TableRoomView room, int seat) {
         var state = room.seats().get(seat);
-        if (state.externalBotId() != null) return room.externalBots().stream()
-            .filter(bot -> bot.id().equals(state.externalBotId()))
+        if (state.participant().externalBotId() != null) return room.externalBots().stream()
+            .filter(bot -> bot.id().equals(state.participant().externalBotId()))
             .findFirst().<Component>map(bot -> Component.literal(bot.name()))
-            .orElse(Component.literal(state.externalBotId()));
-        return Component.translatable(state.difficulty().translationKey());
+            .orElse(Component.literal(state.participant().externalBotId()));
+        return Component.translatable(state.participant().difficulty().translationKey());
     }
 
     static Component wind(int wind) {
@@ -105,7 +106,7 @@ public final class TableSeatsScreen extends Screen {
         MahjongUi.backdrop(graphics, width, height, 464);
         MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
         var view = parent.view();
-        RoomView room = parent.room();
+        TableRoomView room = parent.room();
         if (view != null && room != null) {
             int span = Math.min(440, width - 24), left = (width - span) / 2;
             for (int seat = 0; seat < view.seats().size(); seat++) {

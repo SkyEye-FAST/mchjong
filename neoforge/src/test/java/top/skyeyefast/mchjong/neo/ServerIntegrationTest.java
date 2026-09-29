@@ -11,7 +11,6 @@ import net.neoforged.neoforge.network.connection.ConnectionType;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -49,17 +48,18 @@ class ServerIntegrationTest {
             game.join(id, "Player " + seat, seat);
         }
         var host = new UUID(5, 0);
-        TableView lobby = game.view(host);
+        var lobby = game.roomView(host);
         int begin = java.util.stream.IntStream.range(0, lobby.actions().size())
-            .filter(i -> lobby.actions().get(i).type() == Action.Type.BEGIN_SEATING).findFirst().orElseThrow();
-        assertTrue(game.act(host, lobby.decision(), begin));
+            .filter(i -> lobby.actions().get(i).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.BEGIN_SEATING).findFirst().orElseThrow();
+        assertTrue(game.actRoom(host, lobby.tableId(), lobby.incarnation(), lobby.decision(), begin));
         for (int seat = 0; seat < 4; seat++) {
             UUID id = new UUID(5, seat);
             assertTrue(game.join(id, "Player " + seat, game.seatOf(id)));
-            TableView view = game.view(id);
+            var view = game.roomView(id);
             int ready = -1;
-            for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.READY) ready = i;
-            assertTrue(game.act(id, view.decision(), ready));
+            for (int i = 0; i < view.actions().size(); i++)
+                if (view.actions().get(i).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY) ready = i;
+            assertTrue(game.actRoom(id, view.tableId(), view.incarnation(), view.decision(), ready));
         }
         game.validate();
         return game;
@@ -135,7 +135,7 @@ class ServerIntegrationTest {
             }
             RiichiGame game = startedGame();
             var payload = new TableViewPayload(BlockPos.ZERO, TableNetworking.JSON.toJson(game.view(null)), false, true, false, 63,
-                game.roomView(), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
+                game.roomView(null), new top.skyeyefast.mchjong.world.BotServiceState(null, java.util.Arrays.asList(null, null, null, null)),
                 top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
             TableViewPayload.CODEC.encode(buffer, payload);
             assertEquals(payload, TableViewPayload.CODEC.decode(buffer));
@@ -150,6 +150,16 @@ class ServerIntegrationTest {
             var action = new top.skyeyefast.mchjong.network.McrActionPayload(request.pos(), request.tableId(), UUID.randomUUID(), 9, 2);
             top.skyeyefast.mchjong.network.McrActionPayload.CODEC.encode(buffer, action);
             assertEquals(action, top.skyeyefast.mchjong.network.McrActionPayload.CODEC.decode(buffer));
+            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.McrActionPayload(
+                request.pos(), request.tableId(), UUID.randomUUID(), 9, -1));
+            var roomAction = new top.skyeyefast.mchjong.network.TableRoomActionPayload(request.pos(), request.tableId(),
+                UUID.randomUUID(), 9, 2);
+            top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.encode(buffer, roomAction);
+            assertEquals(roomAction, top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC.decode(buffer));
+            var lifecycle = new top.skyeyefast.mchjong.network.TableLifecyclePayload(request.pos(), request.tableId(),
+                UUID.randomUUID(), 9, top.skyeyefast.mchjong.network.TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND);
+            top.skyeyefast.mchjong.network.TableLifecyclePayload.CODEC.encode(buffer, lifecycle);
+            assertEquals(lifecycle, top.skyeyefast.mchjong.network.TableLifecyclePayload.CODEC.decode(buffer));
             var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
                 new top.skyeyefast.mchjong.engine.TableParticipant(UUID.randomUUID(), "Player " + seat)).toList();
             var session = top.skyeyefast.mchjong.engine.McrSession.start(request.tableId(), roster, 7,

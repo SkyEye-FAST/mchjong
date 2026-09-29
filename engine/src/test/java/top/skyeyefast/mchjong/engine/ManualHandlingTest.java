@@ -142,7 +142,7 @@ class ManualHandlingTest {
         assertTrue(game.configureEquipment(true, List.of()));
         assertTrue(game.join(id(0), "Host", 0));
         assertFalse(game.equipped());
-        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.READY));
+        assertTrue(game.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.READY));
         assertThrows(IllegalArgumentException.class, () -> game.configureEquipment(true, java.util.Collections.nCopies(136, 0)));
         assertThrows(IllegalArgumentException.class, () -> game.configureEquipment(true, Tile.set(true)));
         assertTrue(game.configureEquipment(true, Tile.set(false)));

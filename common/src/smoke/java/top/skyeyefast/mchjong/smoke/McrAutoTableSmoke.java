@@ -89,7 +89,7 @@ final class McrAutoTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
-                client.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, lobby.tableId(),
+                client.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableRoomActionPayload(pos, lobby.tableId(),
                     lobby.incarnation(), lobby.decision(), index)));
                 stage++;
             }
@@ -119,7 +119,7 @@ final class McrAutoTableSmoke {
                         var view = table.roomView(guest);
                         int index = view.actions().indexOf(new RoomAction(RoomAction.Type.READY));
                         check(index >= 0, "Guest has no Ready action");
-                        TableNetworking.receive(guest, new McrActionPayload(pos, view.tableId(), view.incarnation(), view.decision(), index));
+                        TableNetworking.receive(guest, new top.skyeyefast.mchjong.network.TableRoomActionPayload(pos, view.tableId(), view.incarnation(), view.decision(), index));
                     }
                     table.open(main);
                 });
@@ -131,7 +131,7 @@ final class McrAutoTableSmoke {
                     .filter(seat -> seat.participant().ready()).count() != 3) break;
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.READY));
                 check(index >= 0, "Last player has no Ready action");
-                client.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, lobby.tableId(),
+                client.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableRoomActionPayload(pos, lobby.tableId(),
                     lobby.incarnation(), lobby.decision(), index)));
                 stage++;
             }
@@ -203,8 +203,9 @@ final class McrAutoTableSmoke {
                     var table = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
                     for (var guest : guests) {
                         var result = table.mcrView(guest);
-                        TableNetworking.receive(guest, new McrActionPayload(pos, result.tableId(), result.incarnation(),
-                            result.game().decision(), -1));
+                        TableNetworking.receive(guest, new top.skyeyefast.mchjong.network.TableLifecyclePayload(pos,
+                            result.tableId(), result.incarnation(), result.game().decision(),
+                            top.skyeyefast.mchjong.network.TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND));
                     }
                 });
                 stage++;

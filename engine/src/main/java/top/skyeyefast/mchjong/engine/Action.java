@@ -7,8 +7,7 @@ import java.util.Locale;
 public record Action(Type type, List<Integer> tiles) {
     public enum Type {
         DISCARD, RIICHI, CHI, PON, OPEN_KAN, CLOSED_KAN, ADDED_KAN, NUKI,
-        RON, TSUMO, PASS, ABORT_NINE, READY, NEXT, SKIP_SETTLEMENT, FILL_BOTS, CHANGE_RULE,
-        BEGIN_SEATING, DRAW_WIND, SET_BOT, REMOVE_BOT, LEAVE_ROOM, TRANSFER_HOST,
+        RON, TSUMO, PASS, ABORT_NINE, NEXT, SKIP_SETTLEMENT, CHANGE_RULE,
         SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW, SETTLEMENT_DONE;
 
         /** Riichi declaration to neutral physical structure; never match enum names or ordinals. */

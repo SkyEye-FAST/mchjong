@@ -87,13 +87,13 @@ final class RoomFlowSmoke {
             });
             resize(client, false);
             next(8);
-        } else if (stage == 8 && ticks > 10 && view.actions().stream().anyMatch(action -> action.type()
-            == top.skyeyefast.mchjong.engine.Action.Type.FILL_BOTS)) {
+        } else if (stage == 8 && ticks > 10 && table.clientRoom().actions().stream().anyMatch(action -> action.type()
+            == top.skyeyefast.mchjong.engine.RoomAction.Type.FILL_BOTS)) {
             click(client, "room.mchjong.start_bots");
             next(9);
         } else if (stage == 9 && view.seats().stream().allMatch(seat -> seat.occupied())) {
-            require(view.actions().stream().noneMatch(action -> action.type()
-                == top.skyeyefast.mchjong.engine.Action.Type.BEGIN_SEATING), "Empty box allowed seat confirmation");
+            require(table.clientRoom().actions().stream().noneMatch(action -> action.type()
+                == top.skyeyefast.mchjong.engine.RoomAction.Type.BEGIN_SEATING), "Empty box allowed seat confirmation");
             var blocked = buttonOrNull(client, "ui.mchjong.equipment_needed");
             require(blocked != null && !blocked.active, "Lobby did not explain missing equipment");
             check(client);

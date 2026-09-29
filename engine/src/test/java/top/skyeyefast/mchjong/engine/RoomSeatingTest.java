@@ -9,6 +9,20 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class RoomSeatingTest {
+    @Test void threeSeatRiichiCanSwitchToFourSeatMcrWithoutLosingHumans() {
+        var riichi = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_3, 19);
+        for (int seat = 0; seat < 3; seat++) assertTrue(riichi.join(id(seat), "Human " + seat, seat));
+        var mcr = riichi.selectVariant(id(0), riichi.decision(), MahjongVariant.MCR);
+        assertInstanceOf(McrSession.class, mcr);
+        assertEquals(4, mcr.capacity());
+        for (int seat = 0; seat < 3; seat++) assertEquals(seat, mcr.seatOf(id(seat)));
+        assertFalse(mcr.occupied(3));
+        var returned = mcr.selectVariant(id(0), mcr.decision(), MahjongVariant.RIICHI);
+        assertInstanceOf(RiichiGame.class, returned);
+        assertEquals(4, returned.capacity());
+        for (int seat = 0; seat < 3; seat++) assertEquals(seat, returned.seatOf(id(seat)));
+    }
+
     @Test void variantSwitchKeepsOneRoomAndRestoresOneMcrMatch() {
         UUID tableId = UUID.randomUUID();
         var riichi = new RiichiGame(tableId, RiichiPreset.TENHOU_4, 71);
@@ -55,33 +69,33 @@ class RoomSeatingTest {
         for (int seat = 0; seat < humans; seat++) assertTrue(game.join(id(seat), "Human " + seat, seat));
         return game;
     }
-    private static void act(RiichiGame game, UUID actor, Action.Type type, int... values) {
-        var expected = new Action(type, Arrays.stream(values).boxed().toList());
-        int index = game.view(actor).actions().indexOf(expected);
-        assertTrue(index >= 0, () -> "Missing " + expected + " in " + game.view(actor).actions());
-        assertTrue(game.act(actor, game.decision, index));
+    private static void act(RiichiGame game, UUID actor, RoomAction.Type type, int... values) {
+        var expected = new RoomAction(type, Arrays.stream(values).boxed().toList());
+        int index = game.roomView(actor).actions().indexOf(expected);
+        assertTrue(index >= 0, () -> "Missing " + expected + " in " + game.roomView(actor).actions());
+        assertTrue(game.actRoom(actor, game.tableId(), game.incarnation(), game.decision(), index));
     }
     private static void arriveAndReady(RiichiGame game) {
         var humans = Arrays.stream(game.players).filter(player -> player.member.id != null && !player.member.bot).map(player -> player.member.id).toList();
         for (var human : humans) assertTrue(game.join(human, "Human", game.seatOf(human)));
-        for (var human : humans) act(game, human, Action.Type.READY);
+        for (var human : humans) act(game, human, RoomAction.Type.READY);
     }
 
     @Test void seatingRequiresEquipmentBeforeLeavingTheLobby() {
         var game = room(true, 4);
         var tiles = game.suppliedTiles;
-        int begin = game.view(id(0)).actions().indexOf(new Action(Action.Type.BEGIN_SEATING));
+        int begin = game.roomView(id(0)).actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
         long decision = game.decision;
         assertTrue(begin >= 0);
 
         assertTrue(game.configureEquipment(true, List.of()));
-        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.BEGIN_SEATING));
-        assertFalse(game.act(id(0), decision, begin));
-        assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
+        assertTrue(game.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.BEGIN_SEATING));
+        assertFalse(game.actRoom(id(0), game.tableId(), game.incarnation(), decision, begin));
+        assertEquals(RoomSeating.Stage.GATHERING, game.roomView(null).seating());
 
         assertTrue(game.configureEquipment(true, tiles));
-        act(game, id(0), Action.Type.BEGIN_SEATING);
-        assertEquals(RoomSeating.Stage.DRAWING, game.roomView().seating());
+        act(game, id(0), RoomAction.Type.BEGIN_SEATING);
+        assertEquals(RoomSeating.Stage.DRAWING, game.roomView(null).seating());
     }
 
     @Test void companionsKeepTheirIdentityThroughSeatingDifficultyChangesAndReloads() {
@@ -95,15 +109,15 @@ class RoomSeatingTest {
         assertTrue(game.joinEntityBot(id(0), maid, modelName, 1));
         assertFalse(game.joinEntityBot(id(0), maid, "Duplicate", 2));
         assertFalse(game.transferHost(id(0), maid));
-        act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
+        act(game, id(0), RoomAction.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
         assertEquals(modelName, game.view(null).seats().get(1).name());
-        act(game, id(0), Action.Type.FILL_BOTS);
-        act(game, id(0), Action.Type.BEGIN_SEATING);
+        act(game, id(0), RoomAction.Type.FILL_BOTS);
+        act(game, id(0), RoomAction.Type.BEGIN_SEATING);
         game = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
         int seat = game.seatOf(maid);
         assertTrue(game.entityBot(maid));
         assertEquals(modelName, game.view(null).seats().get(seat).name());
-        assertEquals(BotDifficulty.HARD, game.roomView().seats().get(seat).difficulty());
+        assertEquals(BotDifficulty.HARD, game.roomView(null).seats().get(seat).participant().difficulty());
         game.synchronizeSeats(Map.of(id(0), game.seatOf(id(0))), java.util.Set.of(id(0)));
         arriveAndReady(game);
         assertEquals(RiichiGame.Phase.LOBBY, game.phase(), "A missing companion cannot start a match");
@@ -127,9 +141,9 @@ class RoomSeatingTest {
         UUID owner = id(0), maid = id(8);
         assertTrue(game.joinEntityBot(owner, maid, "Reimu", 1));
         assertEquals(1, game.seatOf(maid));
-        assertEquals(-1, game.roomView().host());
+        assertEquals(-1, game.roomView(null).host());
         assertTrue(game.join(owner, "Owner", 0));
-        assertEquals(0, game.roomView().host());
+        assertEquals(0, game.roomView(null).host());
         game.leaveEntityBot(maid);
         assertEquals(-1, game.seatOf(maid));
     }
@@ -143,7 +157,7 @@ class RoomSeatingTest {
         assertEquals(-1, game.seatOf(maid));
         assertFalse(game.view(null).seats().get(1).occupied());
         assertTrue(game.joinEntityBot(id(0), maid, "Marisa", 1));
-        act(game, id(0), Action.Type.REMOVE_BOT, 1);
+        act(game, id(0), RoomAction.Type.REMOVE_BOT, 1);
         assertFalse(game.entityBot(maid));
         assertTrue(game.isHost(id(0)));
         game.validate();
@@ -165,37 +179,38 @@ class RoomSeatingTest {
 
     @Test void windDrawingSurvivesVacanciesAndCannotStartUntilAssignedPlayersActuallyArrive() {
         var game = room(true, 4);
-        act(game, id(0), Action.Type.BEGIN_SEATING);
-        assertEquals(RoomSeating.Stage.DRAWING, game.roomView().seating());
-        assertFalse(new Gson().toJson(game.roomView()).contains("concealed"));
-        act(game, id(0), Action.Type.DRAW_WIND, 0);
-        act(game, id(1), Action.Type.DRAW_WIND, 1);
-        int available = game.roomView().availableWinds();
+        act(game, id(0), RoomAction.Type.BEGIN_SEATING);
+        assertEquals(RoomSeating.Stage.DRAWING, game.roomView(null).seating());
+        assertFalse(new Gson().toJson(game.roomView(null)).contains("concealed"));
+        act(game, id(0), RoomAction.Type.DRAW_WIND, 0);
+        act(game, id(1), RoomAction.Type.DRAW_WIND, 1);
+        var available = game.roomView(null).availableWinds();
         int[] concealed = game.seating.concealed.clone();
         game = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
-        assertEquals(available, game.roomView().availableWinds());
+        assertEquals(available, game.roomView(null).availableWinds());
+        game.synchronizeSeats(Map.of(id(0), 0, id(2), 2, id(3), 3), java.util.Set.of(id(0), id(2), id(3)));
         assertArrayEquals(concealed, game.seating.concealed, "Reloading must not reshuffle unturned winds");
-        int inheritedWind = game.roomView().seats().get(1).wind();
+        int inheritedWind = game.roomView(null).seats().get(1).wind();
         game.unseat(id(1));
         assertEquals(-1, game.seatOf(id(1)), "Standing in the lobby must leave the room");
-        act(game, id(0), Action.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
-        assertEquals(inheritedWind, game.roomView().seats().get(1).wind());
-        assertTrue(game.actions(1).stream().noneMatch(action -> action.type() == Action.Type.DRAW_WIND));
-        act(game, id(2), Action.Type.DRAW_WIND, 2);
-        act(game, id(3), Action.Type.DRAW_WIND, 3);
-        assertEquals(RoomSeating.Stage.POSITIONING, game.roomView().seating());
+        act(game, id(0), RoomAction.Type.SET_BOT, 1, BotDifficulty.HARD.ordinal());
+        assertEquals(inheritedWind, game.roomView(null).seats().get(1).wind());
+        assertTrue(game.roomActions(1).stream().noneMatch(action -> action.type() == RoomAction.Type.DRAW_WIND));
+        act(game, id(2), RoomAction.Type.DRAW_WIND, 2);
+        act(game, id(3), RoomAction.Type.DRAW_WIND, 3);
+        assertEquals(RoomSeating.Stage.POSITIONING, game.roomView(null).seating());
         assertTrue(game.isHost(id(0)), "Ownership must follow the human, not the old seat");
-        for (int seat = 0; seat < 4; seat++) assertEquals(seat, game.roomView().seats().get(seat).wind());
+        for (int seat = 0; seat < 4; seat++) assertEquals(seat, game.roomView(null).seats().get(seat).wind());
         game.synchronizeSeats(Map.of(), java.util.Set.of(id(0), id(2), id(3)));
         for (UUID human : List.of(id(0), id(2), id(3))) {
-            assertTrue(game.view(human).actions().stream().noneMatch(action -> action.type() == Action.Type.READY));
+            assertTrue(game.roomView(human).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.READY));
             assertFalse(game.join(human, "Human", (game.seatOf(human) + 1) % 4));
         }
         game = (RiichiGame) TableSessionCodec.restore(TableSessionCodec.save(game));
-        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() == null)
+        assertTrue(game.roomView(null).seats().stream().filter(seat -> seat.participant().difficulty() == null)
             .allMatch(seat -> seat.presence() == PlayerPresence.DISCONNECTED));
         game.synchronizeSeats(Map.of(), java.util.Set.of(id(0), id(2), id(3)));
-        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() == null)
+        assertTrue(game.roomView(null).seats().stream().filter(seat -> seat.participant().difficulty() == null)
             .allMatch(seat -> seat.presence() == PlayerPresence.AWAY));
         arriveAndReady(game);
         assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
@@ -209,8 +224,8 @@ class RoomSeatingTest {
             game.configureEquipment(false, game.suppliedTiles);
             assertTrue(game.join(id(0), "Host", 0));
             assertTrue(game.join(id(1), "Guest", 1));
-            act(game, id(0), Action.Type.FILL_BOTS);
-            act(game, id(0), Action.Type.BEGIN_SEATING);
+            act(game, id(0), RoomAction.Type.FILL_BOTS);
+            act(game, id(0), RoomAction.Type.BEGIN_SEATING);
             arriveAndReady(game);
             assertNotEquals(RiichiGame.Phase.LOBBY, game.phase());
             var preference = new AutoPlay(false, true, false, false, false);
@@ -218,23 +233,23 @@ class RoomSeatingTest {
             long revision = game.revision();
             game.unseat(id(0));
             assertTrue(game.revision() > revision);
-            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            assertEquals(PlayerPresence.AWAY, game.roomView(null).seats().getFirst().presence());
             for (int tick = 1; tick < RiichiGame.AWAY_GRACE_TICKS; tick++) game.tick();
-            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            assertEquals(PlayerPresence.AWAY, game.roomView(null).seats().getFirst().presence());
             assertFalse(game.join(id(0), "Host", 2));
             game.synchronizeSeats(Map.of(id(0), 0, id(1), 1), java.util.Set.of(id(0), id(1)));
             game.tick();
-            assertEquals(PlayerPresence.SEATED, game.roomView().seats().getFirst().presence());
+            assertEquals(PlayerPresence.SEATED, game.roomView(null).seats().getFirst().presence());
             assertEquals(preference, game.players[0].autoPlay);
             assertTrue(game.isHost(id(0)));
 
             game.unseat(id(0));
             for (int tick = 1; tick < RiichiGame.AWAY_GRACE_TICKS; tick++) game.tick();
             revision = game.revision();
-            assertEquals(PlayerPresence.AWAY, game.roomView().seats().getFirst().presence());
+            assertEquals(PlayerPresence.AWAY, game.roomView(null).seats().getFirst().presence());
             game.tick();
             assertTrue(game.revision() > revision);
-            assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().getFirst().presence());
+            assertEquals(PlayerPresence.DISCONNECTED, game.roomView(null).seats().getFirst().presence());
             assertEquals(0, game.seatOf(id(0)));
             assertEquals(preference, game.players[0].autoPlay);
             assertTrue(game.isHost(id(0)));
@@ -246,7 +261,7 @@ class RoomSeatingTest {
         game.unseat(id(0));
         assertEquals(-1, game.seatOf(id(0)));
         assertTrue(game.isHost(id(1)));
-        assertNull(game.roomView().seats().getFirst().presence());
+        assertNull(game.roomView(null).seats().getFirst().presence());
         assertTrue(game.join(id(2), "Replacement", 0));
         game.validate();
     }
@@ -256,15 +271,15 @@ class RoomSeatingTest {
             var game = new RiichiGame(new UUID(11, 18), preset, 17);
             assertTrue(game.join(id(0), "Host", 0));
             assertTrue(game.join(id(1), "Guest", 1));
-            act(game, id(0), Action.Type.FILL_BOTS);
-            act(game, id(0), Action.Type.BEGIN_SEATING);
+            act(game, id(0), RoomAction.Type.FILL_BOTS);
+            act(game, id(0), RoomAction.Type.BEGIN_SEATING);
             game.synchronizeSeats(Map.of(), java.util.Set.of(id(1)));
             for (int tick = 1; tick < RiichiGame.AWAY_GRACE_TICKS; tick++) game.tick();
             assertTrue(game.isHost(id(0)));
             assertEquals(PlayerPresence.AWAY, game.players[game.seatOf(id(1))].member.presence);
             game.tick();
             assertEquals(-1, game.host());
-            assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
+            assertEquals(RoomSeating.Stage.GATHERING, game.roomView(null).seating());
             assertTrue(Arrays.stream(game.players).allMatch(player -> player.member.id == null));
             long revision = game.revision();
             game.tick();
@@ -279,7 +294,7 @@ class RoomSeatingTest {
         for (boolean active : new boolean[]{false, true}) {
             var game = room(false, 4);
             if (active) {
-                act(game, id(0), Action.Type.BEGIN_SEATING);
+                act(game, id(0), RoomAction.Type.BEGIN_SEATING);
                 arriveAndReady(game);
             }
             game.synchronizeSeats(Map.of(), java.util.Set.of());
@@ -300,19 +315,19 @@ class RoomSeatingTest {
 
     @Test void automaticSeatingAllowsAllBotTiersAndReplacementOnlyForDisconnectedHumans() {
         var game = room(false, 2);
-        assertTrue(game.view(id(1)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT));
-        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.SET_BOT && action.tiles().getFirst() == 1));
-        act(game, id(0), Action.Type.FILL_BOTS);
-        assertTrue(game.roomView().seats().stream().filter(seat -> seat.difficulty() != null)
-            .allMatch(seat -> seat.difficulty() == BotDifficulty.EASY));
-        act(game, id(0), Action.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
-        assertEquals(BotDifficulty.HARD, game.roomView().seats().get(3).difficulty());
-        act(game, id(0), Action.Type.REMOVE_BOT, 3);
+        assertTrue(game.roomView(id(1)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.SET_BOT));
+        assertTrue(game.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.SET_BOT && action.arguments().getFirst() == 1));
+        act(game, id(0), RoomAction.Type.FILL_BOTS);
+        assertTrue(game.roomView(null).seats().stream().filter(seat -> seat.participant().difficulty() != null)
+            .allMatch(seat -> seat.participant().difficulty() == BotDifficulty.EASY));
+        act(game, id(0), RoomAction.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
+        assertEquals(BotDifficulty.HARD, game.roomView(null).seats().get(3).participant().difficulty());
+        act(game, id(0), RoomAction.Type.REMOVE_BOT, 3);
         assertFalse(game.view(id(0)).seats().get(3).occupied());
-        act(game, id(0), Action.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
-        act(game, id(0), Action.Type.BEGIN_SEATING);
-        assertEquals(RoomSeating.Stage.POSITIONING, game.roomView().seating());
-        assertTrue(game.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.DRAW_WIND));
+        act(game, id(0), RoomAction.Type.SET_BOT, 3, BotDifficulty.HARD.ordinal());
+        act(game, id(0), RoomAction.Type.BEGIN_SEATING);
+        assertEquals(RoomSeating.Stage.POSITIONING, game.roomView(null).seating());
+        assertTrue(game.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.DRAW_WIND));
         for (int tick = 0; tick < 60; tick++) game.tick();
         assertTrue(Arrays.stream(game.players).filter(player -> player.member.bot).allMatch(player -> player.member.ready));
         assertEquals(RiichiGame.Phase.LOBBY, game.phase());
@@ -322,13 +337,13 @@ class RoomSeatingTest {
         assertTrue(game.join(id(1), "Returning guest", guest));
         var mounted = Map.of(id(0), game.seatOf(id(0)));
         game.synchronizeSeats(mounted, java.util.Set.of(id(0)));
-        assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().get(guest).presence());
-        act(game, id(0), Action.Type.SET_BOT, guest, BotDifficulty.EASY.ordinal());
+        assertEquals(PlayerPresence.DISCONNECTED, game.roomView(null).seats().get(guest).presence());
+        act(game, id(0), RoomAction.Type.SET_BOT, guest, BotDifficulty.EASY.ordinal());
         assertEquals(-1, game.seatOf(id(1)));
-        assertEquals(BotDifficulty.EASY, game.roomView().seats().get(guest).difficulty());
-        act(game, id(0), Action.Type.REMOVE_BOT, guest);
+        assertEquals(BotDifficulty.EASY, game.roomView(null).seats().get(guest).participant().difficulty());
+        act(game, id(0), RoomAction.Type.REMOVE_BOT, guest);
         assertTrue(game.join(id(4), "New human", guest));
-        assertEquals(guest, game.roomView().seats().get(guest).wind());
+        assertEquals(guest, game.roomView(null).seats().get(guest).wind());
         assertEquals(4, Arrays.stream(game.players).map(player -> player.member.id).distinct().count());
         assertEquals(RiichiGame.Phase.LOBBY, game.phase());
         game.validate();
@@ -345,28 +360,29 @@ class RoomSeatingTest {
         long token = game.decision;
         assertTrue(game.transferHost(id(0), id(2)));
         assertNotEquals(token, game.decision);
-        act(game, id(2), Action.Type.BEGIN_SEATING);
+        act(game, id(2), RoomAction.Type.BEGIN_SEATING);
         arriveAndReady(game);
         var roster = Arrays.stream(game.players).map(player -> player.member.id).toList();
         game.newDecision(RiichiGame.Phase.MATCH_END);
         for (var player : game.players) player.member.ready = false;
+        assertTrue(game.roomView(id(2)).actions().isEmpty());
         for (UUID human : roster)
             assertEquals(List.of(new Action(Action.Type.SKIP_SETTLEMENT)), game.view(human).actions());
         assertFalse(game.requestExit(id(2)));
         for (int tick = 0; tick < RiichiGame.SETTLEMENT_TICKS; tick++) game.tick();
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
-        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
         for (int tick = 0; tick < RiichiGame.SETTLEMENT_TICKS - 1; tick++) game.tick();
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
         game.tick();
         assertEquals(RiichiGame.Phase.LOBBY, game.phase());
-        assertEquals(RoomSeating.Stage.GATHERING, game.roomView().seating());
+        assertEquals(RoomSeating.Stage.GATHERING, game.roomView(null).seating());
         assertEquals(roster, Arrays.stream(game.players).map(player -> player.member.id).toList());
         assertTrue(game.isHost(id(2)));
         assertEquals(PlayerHandVisibility.ALL, game.playerHandVisibility);
         assertEquals(policy, game.worldPolicy);
         assertNull(game.wall);
-        assertTrue(game.view(id(2)).actions().stream().noneMatch(action -> action.type() == Action.Type.READY));
+        assertTrue(game.roomView(id(2)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.READY));
         game.validate();
     }
 }

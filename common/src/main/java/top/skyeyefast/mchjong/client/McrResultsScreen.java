@@ -8,7 +8,7 @@ import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.McrSettlement;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.network.McrActionPayload;
+import top.skyeyefast.mchjong.network.TableLifecyclePayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
@@ -65,8 +65,7 @@ public final class McrResultsScreen extends Screen {
                 var button = MahjongButton.create(Component.translatable("action.mchjong.return_to_lobby"), ignored -> {
                     if (pending || minecraft.getConnection() == null) return;
                     pending = true;
-                    minecraft.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, room.tableId(),
-                        room.incarnation(), room.decision(), action)));
+                    RoomLobbyControls.send(pos, room, action);
                     rebuild();
                 }).bounds((width - Math.min(260, width - 24)) / 2, height - 32,
                     Math.min(260, width - 24), 22).build().primary();
@@ -79,8 +78,8 @@ public final class McrResultsScreen extends Screen {
         var button = MahjongButton.create(Component.translatable("mcr.mchjong.next_hand"), ignored -> {
             if (pending || minecraft.getConnection() == null) return;
             pending = true;
-            minecraft.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, view.tableId(),
-                view.incarnation(), view.game().decision(), -1)));
+            minecraft.getConnection().send(PayloadPackets.serverbound(new TableLifecyclePayload(pos, view.tableId(),
+                view.incarnation(), view.game().decision(), TableLifecyclePayload.Operation.CONFIRM_NEXT_HAND)));
             rebuild();
         }).bounds((width - Math.min(260, width - 24)) / 2, height - 32, Math.min(260, width - 24), 22).build().primary();
         button.active = !pending;

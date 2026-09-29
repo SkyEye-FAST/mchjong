@@ -53,8 +53,9 @@ class TableControlTest {
         assertEquals(custom, lobby.rules());
         assertTrue(lobby.join(id(3), "Fourth seat", 3));
         assertFalse(lobby.configureRules(id(0), lobby.decision, RiichiPreset.TENHOU_3.config()));
-        int leave = GameLifecycleTest.index(lobby.view(id(3)), Action.Type.LEAVE_ROOM);
-        assertTrue(lobby.act(id(3), lobby.decision, leave));
+        var room = lobby.roomView(id(3));
+        int leave = room.actions().indexOf(new RoomAction(RoomAction.Type.LEAVE_ROOM));
+        assertTrue(lobby.actRoom(id(3), room.tableId(), room.incarnation(), room.decision(), leave));
         assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RiichiPreset.M_LEAGUE.config()));
@@ -103,14 +104,14 @@ class TableControlTest {
         lobby.join(id(0), "Host", 0);
         lobby.join(id(1), "Guest", 1);
         long token = lobby.decision;
-        assertFalse(lobby.roomView().convenienceHints());
+        assertFalse(lobby.roomView(null).convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(1), token, true));
         assertFalse(lobby.configureConvenienceHints(id(0), token - 1, true));
         assertTrue(lobby.configureConvenienceHints(id(0), token, true));
-        assertTrue(lobby.roomView().convenienceHints());
+        assertTrue(lobby.roomView(null).convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(0), token, true));
         var saved = GameLifecycleTest.reloadMounted(lobby);
-        assertTrue(saved.roomView().convenienceHints());
+        assertTrue(saved.roomView(null).convenienceHints());
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
     }
@@ -118,16 +119,16 @@ class TableControlTest {
     @Test void worldPolicyInvalidatesLobbyActionsWhenTheirAvailabilityChanges() {
         var lobby = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         assertTrue(lobby.join(id(0), "Host", 0));
-        var before = lobby.view(id(0));
+        var before = lobby.roomView(id(0));
         int fillBots = java.util.stream.IntStream.range(0, before.actions().size())
-            .filter(index -> before.actions().get(index).type() == Action.Type.FILL_BOTS).findFirst().orElseThrow();
+            .filter(index -> before.actions().get(index).type() == RoomAction.Type.FILL_BOTS).findFirst().orElseThrow();
 
         lobby.configureWorld(new WorldPolicy(true, false, true, 5_000, true, false, true, true, null));
 
         assertNotEquals(before.decision(), lobby.decision);
-        assertTrue(lobby.view(id(0)).actions().stream().noneMatch(action -> action.type() == Action.Type.FILL_BOTS
-            || action.type() == Action.Type.SET_BOT));
-        assertFalse(lobby.act(id(0), before.decision(), fillBots));
+        assertTrue(lobby.roomView(id(0)).actions().stream().noneMatch(action -> action.type() == RoomAction.Type.FILL_BOTS
+            || action.type() == RoomAction.Type.SET_BOT));
+        assertFalse(lobby.actRoom(id(0), before.tableId(), before.incarnation(), before.decision(), fillBots));
     }
 
     @Test void stockCompositionChangeClearsLobbyReadinessAndRespectsPreset() {

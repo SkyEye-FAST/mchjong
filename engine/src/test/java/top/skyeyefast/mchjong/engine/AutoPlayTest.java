@@ -118,7 +118,7 @@ class AutoPlayTest {
             connected.add(game.players[other].member.id);
         }
         game.synchronizeSeats(mounted, connected);
-        assertEquals(PlayerPresence.DISCONNECTED, game.roomView().seats().get(seat).presence());
+        assertEquals(PlayerPresence.DISCONNECTED, game.roomView(null).seats().get(seat).presence());
         int move = game.moveTicks[seat], reserve = game.reserveTicks[seat];
         ticks(game, RiichiGame.DEAL_TICKS + RiichiGame.AUTO_ACTION_TICKS);
         assertEquals(drawn, game.players[seat].river.getLast().tile());
@@ -128,7 +128,7 @@ class AutoPlayTest {
         assertEquals(preference, game.players[seat].autoPlay);
 
         game.join(actor, "Reconnected", seat);
-        assertEquals(PlayerPresence.SEATED, game.roomView().seats().get(seat).presence());
+        assertEquals(PlayerPresence.SEATED, game.roomView(null).seats().get(seat).presence());
         game.age = 1;
         if (!game.actions(seat).isEmpty()) assertTrue(game.view(actor).clocks().get(seat).active());
     }
@@ -238,7 +238,9 @@ class AutoPlayTest {
         assertEquals(AutoPlay.DEFAULT, game.view(actor).autoPlay());
         game.wall = null;
         game.newDecision(RiichiGame.Phase.LOBBY);
-        assertTrue(game.act(actor, game.decision, RiichiGame.indexOf(game.actions(game.seatOf(actor)), LEAVE_ROOM)));
+        var room = game.roomView(actor);
+        assertTrue(game.actRoom(actor, room.tableId(), room.incarnation(), room.decision(),
+            room.actions().indexOf(new RoomAction(RoomAction.Type.LEAVE_ROOM))));
         UUID newcomer = UUID.randomUUID();
         assertTrue(game.join(newcomer, "New player", 0));
         assertEquals(AutoPlay.DEFAULT, game.view(newcomer).autoPlay());

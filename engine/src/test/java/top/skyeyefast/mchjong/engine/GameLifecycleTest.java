@@ -95,15 +95,16 @@ class GameLifecycleTest {
     /** Match-rule fixtures start with an assigned roster; RoomSeatingTest exercises the lottery. */
     static void startPositioned(RiichiGame game) {
         UUID host = game.hostId;
-        int fill = index(game.view(host), Action.Type.FILL_BOTS);
-        if (fill >= 0) assertTrue(game.act(host, game.decision, fill));
+        int fill = game.roomView(host).actions().indexOf(new RoomAction(RoomAction.Type.FILL_BOTS));
+        if (fill >= 0) assertTrue(game.actRoom(host, game.tableId(), game.incarnation(), game.decision(), fill));
         game.seating.positioned(game.rules.players());
         for (int seat = 0; seat < game.rules.players(); seat++) {
             var player = game.players[seat];
             assertTrue(game.join(player.member.id, player.member.name, seat));
             if (!player.member.bot) {
-                var view = game.view(player.member.id);
-                assertTrue(game.act(player.member.id, view.decision(), index(view, Action.Type.READY)));
+                var room = game.roomView(player.member.id);
+                int ready = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
+                assertTrue(game.actRoom(player.member.id, room.tableId(), room.incarnation(), room.decision(), ready));
             }
         }
     }
@@ -161,7 +162,7 @@ class GameLifecycleTest {
         game.wins = List.of(new TableView.Win(0, 1, 4,
             new HandScore(5, 30, 0, 12000, 0, 0, List.of("Richi"), 4)));
         int maximum = ScoreAnnouncements.maximumTicks(game.wins);
-        assertEquals(maximum + RiichiGame.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(maximum + RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
         var deltas = List.copyOf(game.deltas);
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
@@ -170,13 +171,13 @@ class GameLifecycleTest {
             assertFalse(game.act(id, view.decision() - 1, done));
             assertTrue(game.act(id, view.decision(), done));
             game.tick();
-            if (seat < 3) assertTrue(game.roomView().settlementTicks() > RiichiGame.SETTLEMENT_TICKS * 2);
+            if (seat < 3) assertTrue(game.roomView(null).settlementTicks() > RiichiGame.SETTLEMENT_TICKS * 2);
         }
-        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
         game = reloadMounted(game);
         for (int i = 0; i < RiichiGame.SETTLEMENT_TICKS; i++) game.tick();
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
-        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
         assertEquals(deltas, game.deltas);
         assertFalse(game.view(game.players[0].member.id).actions().stream().anyMatch(a -> a.type() == Action.Type.SETTLEMENT_DONE));
         assertEquals(RiichiGame.SETTLEMENT_TICKS, ScoreAnnouncements.maximumTicks(List.of()));
@@ -199,10 +200,10 @@ class GameLifecycleTest {
         assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         assertEquals(skip, index(game.view(player), Action.Type.SKIP_SETTLEMENT));
         assertEquals(done, index(game.view(player), Action.Type.SETTLEMENT_DONE));
-        assertEquals(1, game.roomView().settlementSkippedSeats());
+        assertEquals(1, game.roomView(null).settlementSkippedSeats());
         assertFalse(game.act(player, hand.decision(), skip));
         game = reloadMounted(game);
-        assertEquals(1, game.roomView().settlementSkippedSeats());
+        assertEquals(1, game.roomView(null).settlementSkippedSeats());
         for (int seat = 1; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
             TableView view = game.view(id);
@@ -216,15 +217,15 @@ class GameLifecycleTest {
         Settlement.abort(game, "nine_terminals");
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
         TableView results = game.view(player);
-        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
             TableView view = game.view(id);
             assertTrue(game.act(id, view.decision(), index(view, Action.Type.SKIP_SETTLEMENT)));
-            if (seat < 3) assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView().settlementTicks());
+            if (seat < 3) assertEquals(RiichiGame.SETTLEMENT_TICKS * 2, game.roomView(null).settlementTicks());
         }
         assertEquals(RiichiGame.Phase.MATCH_END, game.phase());
-        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView().settlementTicks());
+        assertEquals(RiichiGame.SETTLEMENT_TICKS, game.roomView(null).settlementTicks());
         assertFalse(game.act(player, results.decision(), index(results, Action.Type.SKIP_SETTLEMENT)));
         for (int seat = 0; seat < 4; seat++) {
             UUID id = game.players[seat].member.id;
@@ -294,7 +295,7 @@ class GameLifecycleTest {
                 assertPrivateViews(game);
             }
             if (game.phase() == RiichiGame.Phase.HAND_END) {
-                int remaining = game.roomView().settlementTicks();
+                int remaining = game.roomView(null).settlementTicks();
                 for (int tick = 0; tick < remaining; tick++) game.tick();
                 continue;
             }

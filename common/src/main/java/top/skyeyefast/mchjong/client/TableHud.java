@@ -9,7 +9,7 @@ import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
-import top.skyeyefast.mchjong.engine.RoomView;
+import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.BotServiceState;
@@ -39,12 +39,12 @@ final class TableHud {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, int width, TileFacePreset preset, TableBoard board) {
+    void render(Font font, GuiGraphics graphics, TableView view, TableRoomView room, int width, TileFacePreset preset, TableBoard board) {
         render(font, graphics, view, room, null, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null,
             TileBackPresets.DEFAULT, board);
     }
 
-    void render(Font font, GuiGraphics graphics, TableView view, RoomView room, BotServiceState botService,
+    void render(Font font, GuiGraphics graphics, TableView view, TableRoomView room, BotServiceState botService,
                 int width, TileFacePreset preset,
                 top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye,
                 net.minecraft.resources.ResourceLocation backPreset, TableBoard board) {
@@ -116,7 +116,7 @@ final class TableHud {
                     : player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1) : TableScreen.playerName(view, seat) : Component.empty();
             Component shortLine = Component.empty();
             Component hover = lobby && !player.occupied() ? name.copy() : TableScreen.playerName(view, seat).copy();
-            if (room != null && seat < room.seats().size() && room.seats().get(seat).externalBotId() != null)
+            if (room != null && seat < room.seats().size() && room.seats().get(seat).participant().externalBotId() != null)
                 hover = TableSeatsScreen.botName(room, seat);
             String botError = botService == null || seat >= botService.seatErrors().size()
                 ? null : botService.seatErrors().get(seat);

@@ -7,11 +7,11 @@ import net.minecraft.network.codec.StreamCodec;
 import net.minecraft.network.protocol.common.custom.CustomPacketPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-/** An issued action index, or -1 for next-hand confirmation; the sender's UUID determines the seat. */
+/** An issued MCR game action index; the sender's UUID determines the seat. */
 public record McrActionPayload(BlockPos pos, UUID tableId, UUID incarnation, long decision, int actionIndex)
     implements CustomPacketPayload {
     public McrActionPayload {
-        if (actionIndex < -1) throw new IllegalArgumentException("Invalid MCR action index");
+        if (actionIndex < 0) throw new IllegalArgumentException("Invalid MCR action index");
     }
     public static final Type<McrActionPayload> TYPE = new Type<>(MahjongContent.id("mcr_action"));
     public static final StreamCodec<RegistryFriendlyByteBuf, McrActionPayload> CODEC = new StreamCodec<>() {

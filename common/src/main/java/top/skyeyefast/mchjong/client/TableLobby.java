@@ -6,10 +6,10 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableView;
 
 /** The room's frequent controls share one page, including at 320 by 240. */
@@ -21,20 +21,14 @@ final class TableLobby {
     static List<MahjongButton> controls(TableScreen parent, TableView view, int width, int height) {
         var client = Minecraft.getInstance();
         var room = parent.room();
+        if (room == null) return List.of();
         boolean member = view.viewerSeat() >= 0;
         boolean host = member && room != null && view.viewerSeat() == room.host() && view.exitVote() == null;
         var buttons = new ArrayList<MahjongButton>();
         int span = Math.min(440, width - 20), left = (width - span) / 2, y = top(height);
         int third = (span - 8) / 3, half = (span - 4) / 2;
-        for (var type : MahjongVariant.values()) {
-            var choice = button(Component.translatable("mcr.mchjong.game_type." + type.name().toLowerCase(java.util.Locale.ROOT)),
-                left + type.ordinal() * (half + 4), y, half, () -> parent.chooseVariant(view, type));
-            choice.selected(parent.variant() == type);
-            choice.active = host && parent.automatic() && parent.variant() != type
-                && (type != MahjongVariant.MCR || view.rules().players() == 4
-                    && view.seats().stream().noneMatch(TableView.Seat::bot));
-            buttons.add(choice);
-        }
+        for (var type : MahjongVariant.values()) buttons.add(RoomLobbyControls.variantButton(parent.tablePos(), room,
+            type, left + type.ordinal() * (half + 4), y, half, parent.automatic()));
         y += 24;
         if (parent.variant() == MahjongVariant.MCR) {
             var stock = button(Component.translatable("mcr.mchjong.stock_hint"), left, y, span, () -> {});
@@ -42,10 +36,10 @@ final class TableLobby {
             buttons.add(stock);
             buttons.add(button(Component.translatable("room.mchjong.participants"), left, y + 24, span,
                 () -> client.setScreen(new TableSeatsScreen(parent))));
-            int index = TableSeatsScreen.find(view, Action.Type.BEGIN_SEATING, List.of());
+            int index = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
             var primary = button(Component.translatable(index >= 0 ? "room.mchjong.start_auto"
                 : view.seats().stream().allMatch(TableView.Seat::occupied) ? "ui.mchjong.equipment_needed" : "room.mchjong.wait_host"),
-                left, primaryY(height), span, () -> parent.send(view, index)).primary();
+                left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();
             primary.setHeight(26);
             primary.active = index >= 0;
             buttons.add(primary);
@@ -87,16 +81,16 @@ final class TableLobby {
         buttons.add(invite);
         buttons.add(button(Component.translatable("room.mchjong.participants"), left + half + 4, y + 72, half,
             () -> client.setScreen(new TableSeatsScreen(parent))));
-        int start = TableSeatsScreen.find(view, Action.Type.BEGIN_SEATING, List.of());
-        if (start < 0) start = TableSeatsScreen.find(view, Action.Type.FILL_BOTS, List.of());
+        int start = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
+        if (start < 0) start = RoomLobbyControls.find(room, RoomAction.Type.FILL_BOTS, List.of());
         int index = start;
         String label;
-        if (index >= 0) label = view.actions().get(index).type() == Action.Type.FILL_BOTS
+        if (index >= 0) label = room.actions().get(index).type() == RoomAction.Type.FILL_BOTS
             ? "room.mchjong.start_bots" : parent.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual";
         else if (host && view.seats().stream().allMatch(TableView.Seat::occupied))
             label = parent.automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed";
         else label = "room.mchjong.wait_host";
-        var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.send(view, index)).primary();
+        var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();
         primary.setHeight(26);
         primary.active = index >= 0;
         buttons.add(primary);
@@ -112,6 +106,6 @@ final class TableLobby {
     }
 
     private static MahjongButton button(Component text, int x, int y, int width, Runnable action) {
-        return MahjongButton.create(text, ignored -> action.run()).bounds(x, y, width, 20).tooltip(Tooltip.create(text)).build();
+        return RoomLobbyControls.button(text, x, y, width, action);
     }
 }

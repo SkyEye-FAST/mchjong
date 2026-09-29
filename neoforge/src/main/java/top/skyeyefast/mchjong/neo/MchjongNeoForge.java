@@ -112,7 +112,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("13");
+        var registrar = event.registrar("14");
         registrar.playToServer(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToClient(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC,
@@ -124,6 +124,14 @@ public final class MchjongNeoForge {
         registrar.playToServer(TableActionPayload.TYPE, TableActionPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableRoomActionPayload.TYPE,
+            top.skyeyefast.mchjong.network.TableRoomActionPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableLifecyclePayload.TYPE,
+            top.skyeyefast.mchjong.network.TableLifecyclePayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
         registrar.playToServer(top.skyeyefast.mchjong.network.McrActionPayload.TYPE,
             top.skyeyefast.mchjong.network.McrActionPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);

@@ -9,7 +9,9 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
                             MahjongVariant variant, TableSession.Lifecycle lifecycle,
                             int host, int viewerSeat, boolean manual, boolean equipped, boolean paused,
                             RoomSeating.Stage seating, List<Integer> availableWinds, List<Seat> seats,
-                            List<RoomAction> actions, ExitVote exitVote, boolean leaveDecision) {
+                            List<RoomAction> actions, ExitVote exitVote, boolean leaveDecision,
+                            boolean convenienceHints, List<ExternalBot> externalBots,
+                            int settlementTicks, int settlementSkippedSeats) {
     public TableRoomView {
         Objects.requireNonNull(tableId);
         Objects.requireNonNull(incarnation);
@@ -19,10 +21,12 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
         availableWinds = List.copyOf(availableWinds);
         seats = List.copyOf(seats);
         actions = List.copyOf(actions);
+        externalBots = List.copyOf(externalBots);
         if (revision < 1 || decision < 1 || seats.size() < 3 || seats.size() > 4
             || host < -1 || host >= seats.size() || viewerSeat < -1 || viewerSeat >= seats.size()
             || viewerSeat < 0 && (!actions.isEmpty() || leaveDecision)
-            || variant == MahjongVariant.MCR && (manual || seats.size() != 4))
+            || variant == MahjongVariant.MCR && (manual || seats.size() != 4)
+            || settlementTicks < 0 || settlementSkippedSeats < 0)
             throw new IllegalArgumentException("Invalid room view");
     }
 
@@ -31,7 +35,6 @@ public record TableRoomView(UUID tableId, UUID incarnation, long revision, long 
     public record Seat(TableParticipant participant, PlayerPresence presence, int wind) {
         public Seat {
             Objects.requireNonNull(participant);
-            Objects.requireNonNull(presence);
             if (wind < -1 || wind > 3) throw new IllegalArgumentException("Invalid room wind");
         }
     }

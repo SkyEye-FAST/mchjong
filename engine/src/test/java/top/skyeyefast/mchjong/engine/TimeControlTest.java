@@ -79,14 +79,14 @@ class TimeControlTest {
         int[] reserve = restored.reserveTicks.clone();
         tick(restored, 99);
         restored = GameLifecycleTest.reloadMounted(restored);
-        assertEquals(101, restored.roomView().settlementTicks());
+        assertEquals(101, restored.roomView(null).settlementTicks());
         tick(restored, 100);
         assertArrayEquals(reserve, restored.reserveTicks);
         assertEquals(RiichiGame.Phase.HAND_END, restored.phase());
         assertTrue(restored.view(null).clocks().stream().noneMatch(TimeControl.Clock::active));
         restored.tick();
         assertEquals(RiichiGame.Phase.TURN, restored.phase());
-        assertEquals(0, restored.roomView().settlementTicks());
+        assertEquals(0, restored.roomView(null).settlementTicks());
     }
 
     @Test void winningReceiptsKeepAFiniteServerDeadlineWithoutAcknowledgements() {
@@ -96,7 +96,7 @@ class TimeControlTest {
             new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
         int limit = ScoreAnnouncements.maximumTicks(game.wins);
         int[] reserve = game.reserveTicks.clone();
-        assertEquals(limit, game.roomView().settlementTicks());
+        assertEquals(limit, game.roomView(null).settlementTicks());
         tick(game, limit - 2);
         game = GameLifecycleTest.reloadMounted(game);
         game.tick();

@@ -257,18 +257,10 @@ public final class RiichiGame extends TableSession {
         return true;
     }
 
-    public RoomView roomView() {
-        var seats = new ArrayList<RoomView.Seat>();
-        for (int i = 0; i < rules.players(); i++) {
-            var player = players[i];
-            seats.add(new RoomView.Seat(player.member.id == null ? null : player.member.bot && !player.member.entityBot ? PlayerPresence.SEATED : player.member.presence,
-                seating.winds[i], player.member.bot ? player.member.botDifficulty : null, player.member.externalBotId));
-        }
-        return new RoomView(host(), convenienceHints, seating.stage, seating.available, seats, externalBots(), settlementTicks(),
-            skippedDecision == decision ? skippedSeats : 0);
-    }
+    boolean convenienceHints() { return convenienceHints; }
+    int settlementSkippedSeats() { return skippedDecision == decision ? skippedSeats : 0; }
 
-    private int settlementTicks() {
+    int settlementTicks() {
         int duration = phase == Phase.MATCH_END ? ScoreAnnouncements.maximumTicks(wins) + SETTLEMENT_TICKS
             : phase == Phase.HAND_END ? ScoreAnnouncements.maximumTicks(wins) : 0;
         return Math.max(0, duration - Math.max(0, age));
@@ -381,27 +373,10 @@ public final class RiichiGame extends TableSession {
         return true;
     }
 
-    /** Only preparation controls cross this boundary; no MCR tile action is a Riichi Action. */
-    private static Action riichiRoomAction(RoomAction action) {
-        Action.Type type = switch (action.type()) {
-            case READY -> READY;
-            case LEAVE_ROOM -> LEAVE_ROOM;
-            case BEGIN_SEATING -> BEGIN_SEATING;
-            case DRAW_WIND -> DRAW_WIND;
-            case FILL_BOTS -> FILL_BOTS;
-            case SET_BOT -> SET_BOT;
-            case REMOVE_BOT -> REMOVE_BOT;
-            case TRANSFER_HOST -> TRANSFER_HOST;
-            case RETURN_TO_LOBBY -> throw new IllegalStateException("Riichi returns after its settlement readout");
-        };
-        return new Action(type, action.arguments());
-    }
-
     List<Action> actions(int seat) {
         if (seat < 0 || seat >= rules.players() || players[seat].member.id == null || exitVote != null) return List.of();
         if (phase == Phase.LOBBY) {
             var actions = new ArrayList<Action>();
-            for (RoomAction action : roomActions(seat)) actions.add(riichiRoomAction(action));
             if (seat == host() && worldPolicy.forcedPreset() == null)
                 for (RiichiPreset preset : RiichiPreset.values())
                     if (!rules.withPreset(preset).equals(rules) && (preset.players() == 4 || players[3].member.id == null))
@@ -438,8 +413,6 @@ public final class RiichiGame extends TableSession {
                 newDecision(Phase.LOBBY);
                 return true;
             }
-            for (RoomAction offered : roomActions(seat))
-                if (riichiRoomAction(offered).equals(action)) return actRoom(actor, expectedDecision, offered);
             return false;
         }
         if (phase == Phase.HAND_END || phase == Phase.MATCH_END) {
@@ -871,7 +844,17 @@ public final class RiichiGame extends TableSession {
             if (phase == Phase.LOBBY && seating.stage == RoomSeating.Stage.DRAWING)
                 for (int seat = 0; seat < rules.players(); seat++)
                     if (players[seat].member.id != null && !players[seat].member.bot && seating.winds[seat] < 0) return;
-            for (int seat = 0; seat < rules.players(); seat++) if (players[seat].member.bot) {
+            if (phase == Phase.LOBBY) for (int seat = 0; seat < rules.players(); seat++)
+                if (players[seat].member.bot && players[seat].member.externalBotId == null) {
+                    var room = roomActions(seat);
+                    int ready = room.indexOf(new RoomAction(RoomAction.Type.READY));
+                    if (ready >= 0) { actRoom(players[seat].member.id, decision, room.get(ready)); return; }
+                    for (RoomAction choice : room) if (choice.type() == RoomAction.Type.DRAW_WIND) {
+                        actRoom(players[seat].member.id, decision, choice);
+                        return;
+                    }
+                }
+            for (int seat = 0; seat < rules.players(); seat++) if (players[seat].member.bot && phase != Phase.LOBBY) {
                 var actions = actions(seat);
                 if (!actions.isEmpty()) {
                     if (players[seat].member.externalBotId != null) continue;

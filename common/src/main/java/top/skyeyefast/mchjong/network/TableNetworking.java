@@ -22,6 +22,18 @@ public final class TableNetworking {
             table.mcrAction(player, payload);
     }
 
+    public static void receive(ServerPlayer player, TableRoomActionPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.actRoom(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, TableLifecyclePayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.actLifecycle(player, payload);
+    }
+
     public static void receive(ServerPlayer player, TableVariantPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

@@ -81,8 +81,8 @@ final class EquipmentSmoke {
             var table = (MahjongTableBlockEntity) level.getBlockEntity(POS);
             table.sit(player, 0);
             var game = table.participantGame(player);
-            check(game != null && game.view(player.getUUID()).actions().stream().noneMatch(a ->
-                a.type() == Action.Type.READY), "Empty table offered a playable game");
+            check(game != null && game.roomView(player.getUUID()).actions().stream().noneMatch(a ->
+                a.type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY), "Empty table offered a playable game");
 
             var original = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.BLUE);
             var replacement = PointStickMenuSmoke.stockedBox(TileMaterial.QUARTZ, DyeColor.CYAN);

@@ -131,8 +131,9 @@ class ExitVotingTest {
         assertTrue(game.configureClock(GUEST, TimeControl.DEFAULT));
         game = GameLifecycleTest.reloadMounted(game);
         assertTrue(game.isHost(GUEST));
-        int leave = GameLifecycleTest.index(game.view(GUEST), Action.Type.LEAVE_ROOM);
-        assertTrue(game.act(GUEST, game.decision, leave));
+        var room = game.roomView(GUEST);
+        int leave = room.actions().indexOf(new RoomAction(RoomAction.Type.LEAVE_ROOM));
+        assertTrue(game.actRoom(GUEST, room.tableId(), room.incarnation(), room.decision(), leave));
         assertTrue(game.isHost(HOST));
         game.validate();
     }

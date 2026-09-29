@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -20,7 +21,11 @@ class TableHandlingTest {
             game.join(player(seat), "Player " + seat, seat);
         }
         top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
-        for (int seat = 0; seat < rules.players(); seat++) act(game, seat, Action.Type.READY);
+        for (int seat = 0; seat < rules.players(); seat++) {
+            var room = game.roomView(player(seat));
+            int ready = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
+            assertTrue(game.actRoom(player(seat), room.tableId(), room.incarnation(), room.decision(), ready));
+        }
         return game;
     }
     private static void act(RiichiGame game, int seat, Action.Type type) {

@@ -12,17 +12,17 @@ class TableLayoutTest {
         UUID player = new UUID(10, 15);
         var game = new RiichiGame(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(player, "Test", 0));
-        act(game, player, Action.Type.FILL_BOTS);
-        act(game, player, Action.Type.BEGIN_SEATING);
+        act(game, player, RoomAction.Type.FILL_BOTS);
+        act(game, player, RoomAction.Type.BEGIN_SEATING);
         assertTrue(game.join(player, "Test", game.seatOf(player)));
-        act(game, player, Action.Type.READY);
+        act(game, player, RoomAction.Type.READY);
         return game.view(null);
     }
 
-    private static void act(RiichiGame game, UUID player, Action.Type type) {
-        var view = game.view(player);
+    private static void act(RiichiGame game, UUID player, RoomAction.Type type) {
+        var view = game.roomView(player);
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) {
-            assertTrue(game.act(player, view.decision(), i));
+            assertTrue(game.actRoom(player, view.tableId(), view.incarnation(), view.decision(), i));
             return;
         }
         fail("Missing " + type);
@@ -43,10 +43,10 @@ class TableLayoutTest {
             var game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 15);
             assertTrue(game.join(id, "Host", 0));
             if (mode != PlayerHandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.view(id).decision(), mode));
-            act(game, id, Action.Type.FILL_BOTS);
-            act(game, id, Action.Type.BEGIN_SEATING);
+            act(game, id, RoomAction.Type.FILL_BOTS);
+            act(game, id, RoomAction.Type.BEGIN_SEATING);
             assertTrue(game.join(id, "Host", game.seatOf(id)));
-            act(game, id, Action.Type.READY);
+            act(game, id, RoomAction.Type.READY);
             assertFalse(TableBoardState.live(game.view(id)).layHandsOpen());
             for (var viewer : new UUID[]{null, id}) {
                 var pieces = TableScene.build(game.view(viewer)).stream().filter(p -> p.area() == TableScene.Area.HAND).toList();
@@ -57,10 +57,10 @@ class TableLayoutTest {
         var open = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 16);
         assertTrue(open.join(id, "Host", 0));
         assertTrue(open.configureOpenHands(id, open.view(id).decision(), true));
-        act(open, id, Action.Type.FILL_BOTS);
-        act(open, id, Action.Type.BEGIN_SEATING);
+        act(open, id, RoomAction.Type.FILL_BOTS);
+        act(open, id, RoomAction.Type.BEGIN_SEATING);
         assertTrue(open.join(id, "Host", open.seatOf(id)));
-        act(open, id, Action.Type.READY);
+        act(open, id, RoomAction.Type.READY);
         assertTrue(TableBoardState.live(open.view(id)).layHandsOpen());
         assertTrue(TableScene.build(open.view(id)).stream().filter(p -> p.area() == TableScene.Area.HAND)
             .allMatch(TableScene.Piece::flat));

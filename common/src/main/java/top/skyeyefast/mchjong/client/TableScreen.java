@@ -186,7 +186,7 @@ public final class TableScreen extends Screen {
             ? table.clientView() : null;
     }
 
-    top.skyeyefast.mchjong.engine.RoomView room() {
+    top.skyeyefast.mchjong.engine.TableRoomView room() {
         return minecraft != null && minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientRoom() : null;
     }
@@ -581,9 +581,9 @@ public final class TableScreen extends Screen {
         if (view.phase() == RiichiGame.Phase.LOBBY) {
             int cell = (width - 28) / 4;
             String[] labels = {"replay.mchjong.title", "settings.mchjong.scopes", "action.mchjong.leave_room", "room.mchjong.dissolve"};
-            int leave = TableSeatsScreen.find(view, Action.Type.LEAVE_ROOM, List.of());
+            int leave = RoomLobbyControls.find(room(), top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM, List.of());
             Runnable[] actions = {() -> ClientReplays.list(0, "", false),
-                () -> minecraft.setScreen(new TableOptionsScreen(this)), () -> send(view, leave),
+                () -> minecraft.setScreen(new TableOptionsScreen(this)), () -> sendRoom(room(), leave),
                 () -> control(view, TableControlPayload.Operation.REQUEST_EXIT, view.decision(), false)};
             for (int i = 0; i < labels.length; i++) {
                 int index = i;
@@ -711,12 +711,6 @@ public final class TableScreen extends Screen {
             ? table.clientVariant() : top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
     }
 
-    void chooseVariant(TableView view, top.skyeyefast.mchjong.engine.MahjongVariant type) {
-        if (minecraft.getConnection() != null)
-            minecraft.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableVariantPayload(
-                pos, view.tableId(), view.decision(), type)));
-    }
-
     private void buildSeatControls(TableView view) {
         var room = room();
         if (room == null) return;
@@ -740,23 +734,23 @@ public final class TableScreen extends Screen {
             var state = room.seats().get(seat);
             int current = -1;
             if (player.bot()) {
-                if (state.externalBotId() == null) current = state.difficulty().ordinal();
+                if (state.participant().externalBotId() == null) current = state.participant().difficulty().ordinal();
                 else for (int candidate = 0; candidate < room.externalBots().size(); candidate++)
-                    if (room.externalBots().get(candidate).id().equals(state.externalBotId())) current = 2 + candidate;
+                    if (room.externalBots().get(candidate).id().equals(state.participant().externalBotId())) current = 2 + candidate;
             }
             int next = -1, index = -1;
             for (int candidate = current + 1; candidate < 2 + room.externalBots().size(); candidate++) {
-                int action = TableSeatsScreen.find(view, Action.Type.SET_BOT, List.of(seat, candidate));
+                int action = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.SET_BOT, List.of(seat, candidate));
                 if (action >= 0) { next = candidate; index = action; break; }
             }
-            if (index < 0) index = TableSeatsScreen.find(view, Action.Type.REMOVE_BOT, List.of(seat));
+            if (index < 0) index = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.REMOVE_BOT, List.of(seat));
             final int selected = index;
             var label = player.bot() ? TableSeatsScreen.botName(room, seat).copy() : Component.translatable("room.mchjong.add_bot");
             var service = botService();
             String error = service != null && seat < service.seatErrors().size() ? service.seatErrors().get(seat) : null;
             if (error != null) label.append(" !");
             label.append(" ›");
-            var button = MahjongButton.create(label, ignored -> send(view, selected))
+            var button = MahjongButton.create(label, ignored -> sendRoom(room, selected))
                 .bounds(8 + seat * (cardWidth + 4), 56, cardWidth, 20)
                 .tooltip(Tooltip.create(label.copy().append("\n").append(error == null ? Component.empty()
                     : Component.translatable("bot.mchjong.service." + error).copy().append("\n"))
@@ -769,7 +763,7 @@ public final class TableScreen extends Screen {
         }
     }
 
-    private void buildSeating(TableView view, top.skyeyefast.mchjong.engine.RoomView room) {
+    private void buildSeating(TableView view, top.skyeyefast.mchjong.engine.TableRoomView room) {
         int span = Math.min(440, width - 24), left = (width - span) / 2;
         boolean drawing = room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.DRAWING;
         var heading = MahjongButton.create(Component.translatable(drawing ? "room.mchjong.draw_winds" : "room.mchjong.take_seats"), ignored -> {})
@@ -792,20 +786,20 @@ public final class TableScreen extends Screen {
         if (drawing) {
             int count = view.seats().size(), cell = (span - 4 * (count - 1)) / count;
             for (int slot = 0; slot < count; slot++) {
-                int index = TableSeatsScreen.find(view, Action.Type.DRAW_WIND, List.of(slot));
-                var button = MahjongButton.create(Component.translatable("room.mchjong.wind_tile", slot + 1), ignored -> send(view, index))
+                int index = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.DRAW_WIND, List.of(slot));
+                var button = MahjongButton.create(Component.translatable("room.mchjong.wind_tile", slot + 1), ignored -> sendRoom(room, index))
                     .bounds(left + slot * (cell + 4), actionY, cell, 22).build();
                 button.active = index >= 0;
                 addRenderableWidget(button);
             }
         } else {
-            int ready = TableSeatsScreen.find(view, Action.Type.READY, List.of());
+            int ready = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.READY, List.of());
             boolean present = view.viewerSeat() >= 0 && room.seats().get(view.viewerSeat()).presence()
                 == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED;
             boolean alreadyReady = view.viewerSeat() >= 0 && view.seats().get(view.viewerSeat()).ready();
             var button = MahjongButton.create(Component.translatable(ready >= 0
                 ? alreadyReady ? "action.mchjong.unready" : "action.mchjong.ready"
-                : present ? automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed" : "room.mchjong.take_seats"), ignored -> send(view, ready))
+                : present ? automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed" : "room.mchjong.take_seats"), ignored -> sendRoom(room, ready))
                 .bounds(left, actionY, span, 22).build().primary();
             button.active = ready >= 0;
             addRenderableWidget(button);
@@ -839,6 +833,10 @@ public final class TableScreen extends Screen {
         selectedTile = lastClickedTile = Tile.ABSENT;
         choosingRiichi = false;
         if (confirmButton != null) confirmButton.active = false;
+    }
+
+    void sendRoom(top.skyeyefast.mchjong.engine.TableRoomView room, int index) {
+        RoomLobbyControls.send(pos, room, index);
     }
 
     private static boolean showsConsumed(Action action) {
@@ -1639,7 +1637,7 @@ public final class TableScreen extends Screen {
         CalloutButton(int x, int y, int w, int h, Component label, Action action, Runnable click) {
             super(x, y, w, h, label, ignored -> click.run());
             this.action = action;
-            if (action.type() == Action.Type.RON || action.type() == Action.Type.TSUMO || action.type() == Action.Type.READY) primary();
+            if (action.type() == Action.Type.RON || action.type() == Action.Type.TSUMO) primary();
         }
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             renderSurface(graphics);

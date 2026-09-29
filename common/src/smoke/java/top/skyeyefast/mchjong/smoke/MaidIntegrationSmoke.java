@@ -12,7 +12,7 @@ import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import top.skyeyefast.mchjong.compat.maid.MaidMahjongTask;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TrainingBot;
@@ -125,8 +125,8 @@ final class MaidIntegrationSmoke {
                 require(joined.view(null).seats().get(seat.seat()).name()
                     .equals("model.touhou_little_maid.hakurei_reimu.name"), "Maid model translation key was lost");
                 if (currentStep == 5) {
-                    act(table, owner, Action.Type.FILL_BOTS);
-                    act(table, owner, Action.Type.BEGIN_SEATING);
+                    act(table, owner, RoomAction.Type.FILL_BOTS);
+                    act(table, owner, RoomAction.Type.BEGIN_SEATING);
                 }
                 return true;
             }
@@ -144,7 +144,7 @@ final class MaidIntegrationSmoke {
                 require(maid.getVehicle() instanceof SeatEntity seat && seat.seat() == game.seatOf(maidId),
                     "Wind assignment failed to move the maid: assigned=" + game.seatOf(maidId) + ", vehicle=" + maid.getVehicle());
                 if (game.phase() == RiichiGame.Phase.LOBBY) {
-                    act(table, owner, Action.Type.READY);
+                    act(table, owner, RoomAction.Type.READY);
                     return false;
                 }
                 var view = game.view(ownerId);
@@ -169,11 +169,12 @@ final class MaidIntegrationSmoke {
         return false;
     }
 
-    private static void act(MahjongTableBlockEntity table, ServerPlayer owner, Action.Type type) {
+    private static void act(MahjongTableBlockEntity table, ServerPlayer owner, RoomAction.Type type) {
         var game = table.participantGame(owner);
-        var view = game.view(owner.getUUID());
+        var view = game.roomView(owner.getUUID());
         for (int index = 0; index < view.actions().size(); index++) if (view.actions().get(index).type() == type) {
-            table.act(owner, new TableActionPayload(table.getBlockPos(), game.tableId(), view.decision(), index));
+            table.actRoom(owner, new top.skyeyefast.mchjong.network.TableRoomActionPayload(table.getBlockPos(),
+                game.tableId(), view.incarnation(), view.decision(), index));
             return;
         }
     }

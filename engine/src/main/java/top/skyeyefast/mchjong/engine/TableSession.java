@@ -191,14 +191,14 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
     public TableSession selectVariant(UUID actor, long expectedDecision, MahjongVariant selected) {
         if (selected == null || selected == variant || !lobby() || !isHost(actor)
             || expectedDecision != decision || exitVote != null || manual
-            || seating.stage != RoomSeating.Stage.GATHERING
-            || selected == MahjongVariant.MCR && capacity != 4) return null;
+            || seating.stage != RoomSeating.Stage.GATHERING) return null;
         for (Participant participant : participants) if (participant.bot) return null;
         TableSession replacement = selected == MahjongVariant.MCR
             ? new McrSession(tableId, seed)
             : new RiichiGame(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
-        for (int seat = 0; seat < 4; seat++)
-            replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
+        for (int seat = 0; seat < replacement.capacity; seat++)
+            if (seat < capacity && participants[seat].id != null)
+                replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
         replacement.hostId = hostId;
         replacement.worldPolicy = worldPolicy;
         replacement.revision = revision;
@@ -443,17 +443,21 @@ public abstract sealed class TableSession permits RiichiGame, McrSession {
         var available = new ArrayList<Integer>();
         for (int seat = 0; seat < capacity; seat++) {
             var participant = participants[seat];
-            seats.add(new TableRoomView.Seat(participant.snapshot(), participant.presence, seating.winds[seat]));
+            seats.add(new TableRoomView.Seat(participant.snapshot(), participant.id == null ? null : participant.presence,
+                seating.winds[seat]));
             if ((seating.available & 1 << seat) != 0) available.add(seat);
         }
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
-            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient));
+            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
+            this instanceof RiichiGame riichi && riichi.convenienceHints(), externalBots(),
+            this instanceof RiichiGame riichi ? riichi.settlementTicks() : 0,
+            this instanceof RiichiGame riichi ? riichi.settlementSkippedSeats() : 0);
     }
 
     protected final List<RoomAction> roomActions(int seat) {
         if (!occupied(seat) || exitVote != null) return List.of();
-        if (lifecycle == Lifecycle.FINISHED) return seat == host()
+        if (lifecycle == Lifecycle.FINISHED) return variant == MahjongVariant.MCR && seat == host()
             ? List.of(new RoomAction(RoomAction.Type.RETURN_TO_LOBBY)) : List.of();
         if (!lobby()) return List.of();
         var actions = new ArrayList<RoomAction>();

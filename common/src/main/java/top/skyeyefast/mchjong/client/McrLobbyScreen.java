@@ -7,12 +7,9 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.engine.TableRoomView;
-import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableSeatPayload;
-import top.skyeyefast.mchjong.network.TableVariantPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
@@ -46,16 +43,10 @@ public final class McrLobbyScreen extends Screen {
         if (room == null) return;
         int x = (width - 230) / 2;
         int top = panelTop();
-        var mcr = MahjongButton.create(Component.translatable("mcr.mchjong.game_type.mcr"), ignored -> {})
-            .bounds(x, top + 32, 113, 20).tooltip(Tooltip.create(Component.translatable("mcr.mchjong.stock_hint")))
-            .build().selected(true);
+        var mcr = RoomLobbyControls.variantButton(pos, room, MahjongVariant.MCR, x, top + 32, 113, true);
+        mcr.setTooltip(Tooltip.create(Component.translatable("mcr.mchjong.stock_hint")));
         addRenderableWidget(mcr);
-        var riichi = MahjongButton.create(Component.translatable("mcr.mchjong.game_type.riichi"), ignored -> {
-            if (minecraft.getConnection() != null) minecraft.getConnection().send(PayloadPackets.serverbound(
-                new TableVariantPayload(pos, room.tableId(), room.decision(), MahjongVariant.RIICHI)));
-        }).bounds(x + 117, top + 32, 113, 20).build();
-        riichi.active = room.viewerSeat() == room.host()
-            && room.seating() == RoomSeating.Stage.GATHERING;
+        var riichi = RoomLobbyControls.variantButton(pos, room, MahjongVariant.RIICHI, x + 117, top + 32, 113, true);
         addRenderableWidget(riichi);
         int actionTop = top + (room.actions().size() > 6 ? 138 : 151);
         for (int index = 0; index < room.actions().size(); index++) {
@@ -67,9 +58,8 @@ public final class McrLobbyScreen extends Screen {
             if (action.type() == RoomAction.Type.TRANSFER_HOST)
                 label = Component.translatable("room.mchjong.transfer_host",
                     room.seats().get(action.arguments().getFirst()).participant().name());
-            var button = MahjongButton.create(label, ignored -> send(room, actionIndex))
-                .bounds(x + index % 2 * 117, actionTop + index / 2 * 23, 113, 20)
-                .tooltip(Tooltip.create(label)).build();
+            var button = RoomLobbyControls.button(label, x + index % 2 * 117,
+                actionTop + index / 2 * 23, 113, () -> send(room, actionIndex));
             button.active = !pending;
             addRenderableWidget(button);
         }
@@ -82,8 +72,7 @@ public final class McrLobbyScreen extends Screen {
     private void send(TableRoomView room, int index) {
         if (pending || minecraft.getConnection() == null) return;
         pending = true;
-        minecraft.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, room.tableId(),
-            room.incarnation(), room.decision(), index)));
+        RoomLobbyControls.send(pos, room, index);
         rebuild();
     }
 

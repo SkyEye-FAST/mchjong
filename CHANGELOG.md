@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Use one room view and action protocol for Riichi and MCR, with target-variant capacity and explicit MCR hand confirmation.
 - Give Riichi and MCR one shared room lifecycle and one private table session save, with rule-specific match state and explicit Riichi naming.
 
 ### Fixed

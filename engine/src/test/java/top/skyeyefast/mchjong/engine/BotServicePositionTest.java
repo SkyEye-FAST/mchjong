@@ -12,8 +12,8 @@ class BotServicePositionTest {
         game.configureExternalBots(java.util.List.of(bot));
         UUID host = UUID.randomUUID();
         assertTrue(game.join(host, "Host", 0));
-        assertTrue(game.view(host).actions().stream().noneMatch(action ->
-            action.type() == Action.Type.SET_BOT && action.tiles().get(1) == 2));
+        assertTrue(game.roomView(host).actions().stream().noneMatch(action ->
+            action.type() == RoomAction.Type.SET_BOT && action.arguments().get(1) == 2));
     }
 
     @Test void botPositionKeepsPrivateDrawsAndRejectsStaleOrIllegalResponses() {
@@ -23,13 +23,13 @@ class BotServicePositionTest {
         game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         UUID host = UUID.randomUUID();
         assertTrue(game.join(host, "Host", 1));
-        var lobby = game.view(host);
+        var lobby = game.roomView(host);
         int external = -1;
         for (int i = 0; i < lobby.actions().size(); i++)
-            if (lobby.actions().get(i).type() == Action.Type.SET_BOT
-                && lobby.actions().get(i).tiles().equals(java.util.List.of(0, 2))) external = i;
+            if (lobby.actions().get(i).type() == RoomAction.Type.SET_BOT
+                && lobby.actions().get(i).arguments().equals(java.util.List.of(0, 2))) external = i;
         assertTrue(external >= 0);
-        assertTrue(game.act(host, lobby.decision(), external));
+        assertTrue(game.actRoom(host, lobby.tableId(), lobby.incarnation(), lobby.decision(), external));
         String saved = new com.google.gson.Gson().toJson(game);
         assertTrue(saved.contains("\"externalBotId\":\"mortal-4p\""));
         assertFalse(saved.contains("externalBots"));

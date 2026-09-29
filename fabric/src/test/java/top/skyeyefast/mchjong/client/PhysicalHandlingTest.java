@@ -9,6 +9,7 @@ import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -24,7 +25,7 @@ class PhysicalHandlingTest {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
         }
         top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
-        for (int seat = 0; seat < rules.players(); seat++) act(game, seat, Action.Type.READY);
+        for (int seat = 0; seat < rules.players(); seat++) ready(game, seat);
         return game;
     }
 
@@ -36,6 +37,12 @@ class PhysicalHandlingTest {
             act(game, game.view(null).dealer(), Action.Type.PICK_UP_DICE);
             act(game, game.view(null).dealer(), Action.Type.ROLL_DICE);
         }
+    }
+
+    private static void ready(RiichiGame game, int seat) {
+        var room = game.roomView(id(seat));
+        int index = room.actions().indexOf(new RoomAction(RoomAction.Type.READY));
+        assertTrue(game.actRoom(id(seat), room.tableId(), room.incarnation(), room.decision(), index));
     }
 
     private static void conserved(TableView view) {
@@ -112,7 +119,7 @@ class PhysicalHandlingTest {
             game.join(id(seat), "Player " + seat, seat);
         }
         top.skyeyefast.mchjong.engine.PositionedFixture.assign(game);
-        for (int seat = 0; seat < 4; seat++) act(game, seat, Action.Type.READY);
+        for (int seat = 0; seat < 4; seat++) ready(game, seat);
         var view = game.view(id(0));
         assertNull(view.handling());
         assertEquals(-1, TableHandling.action(view));

@@ -235,14 +235,17 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
-### Shared rooms and MCR sessions
+### Shared rooms and rule sessions
 
 `MahjongVariant` selects one of the two built-in runtimes. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
 request incarnation, exit controls and room lifecycle. `RoomSeating` owns the
-concealed wind lottery. A variant change creates a new concrete session with the
-same human roster and fresh preparation state. `RiichiGame` and `McrSession`
-retain their own rules, actions, private views and settlement state.
+concealed wind lottery. `TableRoomView` projects this state and recipient-specific
+`RoomAction` choices for both rules. `TableSession.actRoom` resolves only issued
+room-action indices against the table, incarnation and current room decision.
+A variant change creates a new concrete session with the target variant's capacity,
+retaining eligible human seats and fresh preparation state. `RiichiGame` and
+`McrSession` retain their own rules, match actions, private views and settlement state.
 
 `McrSession` adds a complete 144-tile stock, `McrGame` and completed-hand
 acknowledgements. The shared room starts the match once all four distinct humans
@@ -262,12 +265,14 @@ requests from before restoration. MCR's structured state contains the common
 room state and its own match record. Riichi's private state contains the common
 room and its own rule state, with participant identity held only by the room.
 
-`McrActionPayload` carries the table UUID, incarnation, decision and an issued
-action index. The server resolves the acting seat from the authenticated sender.
-`McrViewPayload` carries the public `TableRoomView`, an encoded recipient-safe
-`McrSession.View` during play and public equipment appearance. `McrLobbyScreen`,
-`McrTableScreen` and `McrResultsScreen` consume those projections. Riichi retains
-its own `Action`, `TableView` and settlement presentation.
+`TableRoomActionPayload` carries a common room-action index. Riichi
+`TableActionPayload` and `McrActionPayload` carry only their respective issued
+match-action indices. `TableLifecyclePayload` carries MCR completed-hand
+confirmation separately; the server resolves the acting seat from the
+authenticated sender. `TableViewPayload` and `McrViewPayload` carry the public
+`TableRoomView` alongside their rule-specific recipient-safe projections.
+`TableLobby` and `McrLobbyScreen` share room-control lookup and sending while
+retaining their own rule settings. Match and settlement screens remain separate.
 
 ### MCR physical presentation
 
@@ -321,7 +326,7 @@ without duplicating scoring or inventing client authority.
 See [SURVIVAL.md](SURVIVAL.md) for the lifecycle and exact component contract.
 
 `RoomSeating` owns the gathering, wind-drawing and positioning stages. Its concealed
-wind permutation is persisted server-side; `RoomView` sends only revealed winds,
+wind permutation is persisted server-side; `TableRoomView` sends only revealed winds,
 available choices, host seat, seated/away/disconnected presence and Bot choice. `PlayerState`
 follows a participant through seat reassignment. Mount presence is transient and
 is reconstructed from `SeatEntity` passengers; it is never accepted from a client
@@ -546,7 +551,7 @@ change points or advance the stage immediately. Bots need no acknowledgement;
 the fallback still expires if a client never acknowledges. Each settlement stage
 advances early when every human player confirms its skip action. Match settlement
 then adds a 200-tick final-standings stage before restoring the roster.
-`RoomView` synchronizes the remaining duration and skip confirmations; the saved decision
+`TableRoomView` synchronizes the remaining duration and skip confirmations; the saved decision
 age preserves the countdown across reloads. `TableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 

@@ -74,10 +74,10 @@ final class InvitationSmoke {
             check(game.transferHost(recipient.getUUID(), sender.getUUID()), "New host did not acquire ownership permissions");
         } finally {
             recipient.stopRiding();
-            var view = game.view(recipient.getUUID());
+            var view = game.roomView(recipient.getUUID());
             for (int index = 0; index < view.actions().size(); index++) {
-                if (view.actions().get(index).type() == top.skyeyefast.mchjong.engine.Action.Type.LEAVE_ROOM) {
-                    game.act(recipient.getUUID(), view.decision(), index);
+                if (view.actions().get(index).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM) {
+                    game.actRoom(recipient.getUUID(), view.tableId(), view.incarnation(), view.decision(), index);
                     break;
                 }
             }
