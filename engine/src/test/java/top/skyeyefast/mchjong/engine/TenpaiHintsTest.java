@@ -28,14 +28,14 @@ class TenpaiHintsTest {
         assertEquals(0, hints.waits(game.view(OWNER), drawn).getFirst().remaining());
         assertTrue(hints.waits(game.view(OWNER), game.players[0].hand.getFirst()).isEmpty());
         assertTrue(hints.waits(game.view(null), drawn).isEmpty());
-        game.phase = Game.Phase.HAND_END;
+        game.phase = RiichiGame.Phase.HAND_END;
         assertTrue(hints.waits(game.view(OWNER), drawn).isEmpty());
     }
 
     @Test void specialAndOpenHandsUseStructuralWaitsWithoutImpossibleFifthCopies() {
         var hints = new TenpaiHints();
         var game = fixture("19m19p19s1234567z");
-        game.rules = RuleSet.MAHJONG_SOUL_3.config().with(RuleOption.MIN_HAN, 4);
+        game.rules = RiichiPreset.MAHJONG_SOUL_3.config().with(RiichiRuleOption.MIN_HAN, 4);
         assertEquals(13, hints.waits(game.view(OWNER), Tile.ABSENT).size());
         game.players[0].hand.clear();
         game.players[0].hand.addAll(TestHands.tiles("1122p3344s55667z"));
@@ -46,10 +46,10 @@ class TenpaiHintsTest {
         assertEquals(List.of(new TenpaiHints.Wait(20, 3)), hints.waits(game.view(OWNER), Tile.ABSENT));
     }
 
-    private static Game fixture(String hand) {
-        var game = new Game(new UUID(0, 1), RuleSet.MAHJONG_SOUL_4, 1);
+    private static RiichiGame fixture(String hand) {
+        var game = new RiichiGame(new UUID(0, 1), RiichiPreset.MAHJONG_SOUL_4, 1);
         game.join(OWNER, "Player", 0);
-        game.phase = Game.Phase.TURN;
+        game.phase = RiichiGame.Phase.TURN;
         game.players[0].hand.addAll(TestHands.tiles(hand));
         return game;
     }

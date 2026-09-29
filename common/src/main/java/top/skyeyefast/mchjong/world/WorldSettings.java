@@ -11,7 +11,7 @@ import java.util.WeakHashMap;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.world.level.storage.LevelResource;
 import top.skyeyefast.mchjong.config.TomlFiles;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.SpectatorHandVisibility;
 import top.skyeyefast.mchjong.engine.WorldPolicy;
 
@@ -26,7 +26,7 @@ public final class WorldSettings {
                          SpectatorHandVisibility spectatorHandVisibility, boolean allowConvenienceHints,
                          boolean allowExperienceRewards, boolean deductNegativeExperience, int maxExperienceChange,
                          boolean replaysEnabled, boolean allowBots, boolean allowCompanionPlayers,
-                         boolean allowCustomRules, RuleSet forcedPreset) {
+                         boolean allowCustomRules, RiichiPreset forcedPreset) {
         public static final Policy DEFAULT = new Policy(false, true, true, SpectatorHandVisibility.HIDDEN,
             true, false, true, 5_000, true, true, true, true, null);
 
@@ -114,7 +114,7 @@ public final class WorldSettings {
             p.replaysEnabled(), p.allowBots(), p.allowCompanionPlayers(), p.allowCustomRules(), p.forcedPreset()));
     }
 
-    public void setForcedPreset(RuleSet preset) throws IOException {
+    public void setForcedPreset(RiichiPreset preset) throws IOException {
         Policy p = policy;
         update(new Policy(p.invitationTeleport(), p.invitationsEnabled(), p.spectatingEnabled(), p.spectatorHandVisibility(),
             p.allowConvenienceHints(), p.allowExperienceRewards(), p.deductNegativeExperience(), p.maxExperienceChange(),
@@ -162,9 +162,9 @@ public final class WorldSettings {
         return Enum.valueOf(type, name.toUpperCase(Locale.ROOT));
     }
 
-    private static RuleSet forcedPreset(Config config) {
+    private static RiichiPreset forcedPreset(Config config) {
         Object value = config.get("forcedPreset");
         if (!(value instanceof String name)) throw new IllegalArgumentException("Expected string: forcedPreset");
-        return name.equalsIgnoreCase("none") ? null : RuleSet.valueOf(name.toUpperCase(Locale.ROOT));
+        return name.equalsIgnoreCase("none") ? null : RiichiPreset.valueOf(name.toUpperCase(Locale.ROOT));
     }
 }

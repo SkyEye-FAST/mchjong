@@ -14,11 +14,11 @@ import static top.skyeyefast.mchjong.engine.McrAction.Type.*;
 class McrSessionTest {
     private static final UUID TABLE = new UUID(10, 1);
     private static final UUID OUTSIDER = new UUID(2, 1);
-    private static final List<McrSession.Participant> ROSTER = List.of(
-        new McrSession.Participant(new UUID(1, 1), "Same name"),
-        new McrSession.Participant(new UUID(1, 2), "Same name"),
-        new McrSession.Participant(new UUID(1, 3), "West"),
-        new McrSession.Participant(new UUID(1, 4), "North"));
+    private static final List<TableParticipant> ROSTER = List.of(
+        new TableParticipant(new UUID(1, 1), "Same name"),
+        new TableParticipant(new UUID(1, 2), "Same name"),
+        new TableParticipant(new UUID(1, 3), "West"),
+        new TableParticipant(new UUID(1, 4), "North"));
     private static final Map<UUID, Integer> MOUNTS = Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3);
 
     @Test void preparedRosterAndCompleteStockStartOneShuffledMatch() {
@@ -36,7 +36,7 @@ class McrSessionTest {
         var reference = new McrGame(711);
         for (int seat = 0; seat < 4; seat++)
             assertEquals(reference.hand(seat), session.view(id(seat)).game().seats().get(seat).hand());
-        assertThrows(UnsupportedOperationException.class, () -> session.save().participants().clear());
+        assertThrows(UnsupportedOperationException.class, () -> session.save().room().participants().clear());
         assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE, ROSTER, 1, Tile.set(false)));
         assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE, ROSTER.subList(0, 3), 1, Tile.mcrSet()));
         assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE,
@@ -169,11 +169,12 @@ class McrSessionTest {
         assertThrows(IllegalArgumentException.class, () -> McrCodec.decodeSessionView(saved));
         for (String invalid : new String[]{"1-1-1-1-1", "not-a-uuid"}) {
             var json = JsonParser.parseString(saved).getAsJsonObject();
-            json.addProperty("tableId", invalid);
+            json.getAsJsonObject("room").addProperty("tableId", invalid);
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restoreSession(json.toString()));
         }
         var duplicate = JsonParser.parseString(saved).getAsJsonObject();
-        duplicate.getAsJsonArray("participants").set(3, duplicate.getAsJsonArray("participants").get(0));
+        duplicate.getAsJsonObject("room").getAsJsonArray("participants").set(3,
+            duplicate.getAsJsonObject("room").getAsJsonArray("participants").get(0));
         assertThrows(IllegalArgumentException.class, () -> McrCodec.restoreSession(duplicate.toString()));
         var missing = JsonParser.parseString(saved).getAsJsonObject();
         missing.remove("confirmed");
@@ -182,7 +183,11 @@ class McrSessionTest {
     }
 
     private static McrSession session(McrGame game) {
-        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, TABLE, 1, ROSTER, 0, game.save()));
+        var seating = new RoomSeating();
+        seating.positioned(4);
+        var room = new TableSession.State(TABLE, MahjongVariant.MCR, 4, ROSTER.getFirst().id(),
+            ROSTER, seating.save(), TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0);
+        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0, game.save()));
         session.synchronizeSeats(MOUNTS);
         return session;
     }

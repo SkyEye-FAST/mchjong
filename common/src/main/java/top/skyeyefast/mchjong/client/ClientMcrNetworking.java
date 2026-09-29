@@ -13,14 +13,24 @@ public final class ClientMcrNetworking {
     public static void receive(McrViewPayload payload) {
         var client = Minecraft.getInstance();
         if (client.level == null || !(client.level.getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)) return;
-        var view = McrCodec.decodeSessionView(payload.view());
-        table.acceptMcrView(view, payload.deck(), payload.cloth());
-        if (table.clientMcrView() != view) return;
+        var view = payload.view().isEmpty() ? null : McrCodec.decodeSessionView(payload.view());
+        table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth());
+        if (table.clientTableRoom() != payload.room()) return;
+        if (view == null) {
+            if (payload.open() || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+                || client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())
+                || TableScreen.active(client.screen) != null
+                    && TableScreen.active(client.screen).tablePos().equals(payload.pos())) {
+                if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();
+                else client.setScreen(new McrLobbyScreen(payload.pos()));
+            }
+            return;
+        }
         boolean ended = view.game().phase() == McrGame.Phase.HAND_END || view.game().phase() == McrGame.Phase.MATCH_END;
         if (ended && (payload.open() || client.screen instanceof McrTableScreen || client.screen instanceof McrResultsScreen)) {
             if (client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new McrResultsScreen(payload.pos()));
-        } else if (payload.open()) {
+        } else if (payload.open() || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) {
             if (client.screen instanceof McrTableScreen screen && screen.tablePos().equals(payload.pos())) screen.receivedView();
             else client.setScreen(new McrTableScreen(payload.pos()));
         } else if (client.screen instanceof McrTableScreen screen && screen.tablePos().equals(payload.pos())) screen.receivedView();

@@ -27,7 +27,7 @@ final class ForgeNetworking {
             .addMain(McrActionPayload.TYPE, McrActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
-            .addMain(TableGameTypePayload.TYPE, TableGameTypePayload.CODEC, (payload, context) -> {
+            .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {

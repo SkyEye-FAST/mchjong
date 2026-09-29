@@ -14,7 +14,7 @@ import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import net.minecraft.world.item.DyeColor;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.item.TileFacePreset;
@@ -82,7 +82,7 @@ public final class TableResults extends AbstractWidget {
     }
     private boolean pointsVisible() { return readout == null || readout.pointsAt() >= 0; }
     public static boolean available(TableView view) {
-        return view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END;
+        return view.phase() == RiichiGame.Phase.HAND_END || view.phase() == RiichiGame.Phase.MATCH_END;
     }
 
     @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {

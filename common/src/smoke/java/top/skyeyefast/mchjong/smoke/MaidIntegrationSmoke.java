@@ -14,7 +14,7 @@ import net.minecraft.server.level.ServerPlayer;
 import top.skyeyefast.mchjong.compat.maid.MaidMahjongTask;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TrainingBot;
 import top.skyeyefast.mchjong.network.TableActionPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -85,7 +85,7 @@ final class MaidIntegrationSmoke {
             ServerPlayer owner = client.getSingleplayerServer().getPlayerList().getPlayer(ownerId);
             var level = owner.serverLevel();
             var table = (MahjongTableBlockEntity) level.getBlockEntity(center);
-            Game game = table.participantGame(owner);
+            RiichiGame game = table.participantGame(owner);
             if (currentStep == 0) {
                 require(game != null, "Owner is not a participant");
                 var task = TaskManager.findTask(MaidMahjongTask.ID).orElseThrow(() -> new IllegalStateException("Maid task extension not discovered"));
@@ -119,7 +119,7 @@ final class MaidIntegrationSmoke {
                         "Maid did not join before her owner sat down");
                     table.sit(owner, seat.seat() == 0 ? 1 : 0);
                 }
-                Game joined = table.participantGame(owner);
+                RiichiGame joined = table.participantGame(owner);
                 require(joined != null && joined.entityBot(maidId) && joined.seatOf(maidId) == seat.seat(),
                     "Maid mount and game membership differ");
                 require(joined.view(null).seats().get(seat.seat()).name()
@@ -143,7 +143,7 @@ final class MaidIntegrationSmoke {
                 if (game == null) return false;
                 require(maid.getVehicle() instanceof SeatEntity seat && seat.seat() == game.seatOf(maidId),
                     "Wind assignment failed to move the maid: assigned=" + game.seatOf(maidId) + ", vehicle=" + maid.getVehicle());
-                if (game.phase() == Game.Phase.LOBBY) {
+                if (game.phase() == RiichiGame.Phase.LOBBY) {
                     act(table, owner, Action.Type.READY);
                     return false;
                 }

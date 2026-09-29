@@ -4,7 +4,7 @@ import kotlin.math.exp
 
 /** Incomplete-hand evidence, not a scorer or a second shanten implementation.
  * Targets consume actual copies; alternatives compete instead of adding their han. */
-internal class BotYakuPotential(private val rules: RuleConfig, private val yakuhai: (Int) -> Int) {
+internal class BotYakuPotential(private val rules: RiichiRules, private val yakuhai: (Int) -> Int) {
     companion object {
         private val SEQUENCES = (0 until 27).filter { it % 9 <= 6 }.map { intArrayOf(it, it + 1, it + 2) }
         private val TERMINALS = (0 until 27).filter { it % 9 == 0 || it % 9 == 8 }

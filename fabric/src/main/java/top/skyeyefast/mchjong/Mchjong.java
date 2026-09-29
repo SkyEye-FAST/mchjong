@@ -84,8 +84,8 @@ public class Mchjong implements ModInitializer {
         PayloadTypeRegistry.playC2S().register(TableActionPayload.TYPE, TableActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.McrActionPayload.TYPE,
             top.skyeyefast.mchjong.network.McrActionPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableGameTypePayload.TYPE,
-            top.skyeyefast.mchjong.network.TableGameTypePayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
+            top.skyeyefast.mchjong.network.TableVariantPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC);
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
@@ -112,7 +112,7 @@ public class Mchjong implements ModInitializer {
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
-        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableGameTypePayload.TYPE,
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(TableControlPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));

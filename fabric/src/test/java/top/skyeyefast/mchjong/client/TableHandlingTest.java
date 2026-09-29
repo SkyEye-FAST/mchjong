@@ -4,8 +4,8 @@ import java.util.UUID;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -13,8 +13,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class TableHandlingTest {
     private static UUID player(int seat) { return new UUID(391, seat); }
-    private static Game start(RuleSet rules) {
-        Game game = new Game(UUID.randomUUID(), rules, 12);
+    private static RiichiGame start(RiichiPreset rules) {
+        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules, 12);
         game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             game.join(player(seat), "Player " + seat, seat);
@@ -23,7 +23,7 @@ class TableHandlingTest {
         for (int seat = 0; seat < rules.players(); seat++) act(game, seat, Action.Type.READY);
         return game;
     }
-    private static void act(Game game, int seat, Action.Type type) {
+    private static void act(RiichiGame game, int seat, Action.Type type) {
         TableView view = game.view(player(seat));
         int index = -1;
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) index = i;
@@ -36,8 +36,8 @@ class TableHandlingTest {
     }
 
     @Test void everyPhysicalTileIsPresentAndHiddenThroughoutShuffleAndWallBuilding() {
-        for (RuleSet rules : RuleSet.values()) {
-            Game game = start(rules);
+        for (RiichiPreset rules : RiichiPreset.values()) {
+            RiichiGame game = start(rules);
             int size = rules.sanma() ? 108 : 136;
             for (int step = -1; step < rules.players(); step++) {
                 var view = game.view(player(game.view(null).dealer()));
@@ -55,8 +55,8 @@ class TableHandlingTest {
     }
 
     @Test void gesturesRequireTheCorrectObjectAndDestinationForEverySeat() {
-        for (RuleSet rules : RuleSet.values()) {
-            Game game = start(rules);
+        for (RiichiPreset rules : RiichiPreset.values()) {
+            RiichiGame game = start(rules);
             int dealer = game.view(null).dealer();
             var shuffle = game.view(player(dealer));
             assertEquals(-1, TableHandling.action(game.view(null)));
@@ -94,7 +94,7 @@ class TableHandlingTest {
                 act(game, view.viewerSeat(), Action.Type.TAKE_PACKET);
             }
             var draw = game.view(player(dealer));
-            assertEquals(Game.Phase.DRAW, draw.phase());
+            assertEquals(RiichiGame.Phase.DRAW, draw.phase());
             assertNotNull(TableHandling.source(draw, TableScene.build(draw)));
             assertEquals(1, TableScene.build(draw).stream().filter(piece -> TableHandling.source(draw, piece)).count());
             assertTrue(TableHandling.completes(draw, Vec3.ZERO, TableHandling.destination(draw)));

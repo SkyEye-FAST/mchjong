@@ -20,7 +20,7 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
@@ -123,7 +123,7 @@ final class EquipmentLifecycleSmoke {
         level.getBlockState(stool).useWithoutItem(level, player,
             new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
         check(player.isPassenger(), "The stool did not find its table");
-        Game game = table.participantGame(player);
+        RiichiGame game = table.participantGame(player);
         check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
             .noneMatch(action -> action.type() == Action.Type.READY), "Empty table could start a game");
 
@@ -179,7 +179,7 @@ final class EquipmentLifecycleSmoke {
         PointStickMenuSmoke.stockDrawers(table);
         game = table.participantGame(player);
         SeatingFixtures.startPositioned(game, player.getUUID());
-        check(game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
+        check(game.phase() != RiichiGame.Phase.LOBBY, "Equipped table did not start");
         game.validate();
         var lockedCloth = redExpected.copy();
         table.useEquipment(player, lockedCloth);
@@ -210,9 +210,9 @@ final class EquipmentLifecycleSmoke {
         check(scoresBefore.equals(TableNetworking.JSON.toJson(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
-        check(game.phase() != Game.Phase.LOBBY && player.isPassenger(), "A stale exit token changed the game");
+        check(game.phase() != RiichiGame.Phase.LOBBY && player.isPassenger(), "A stale exit token changed the game");
         table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
-        check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
+        check(game.phase() == RiichiGame.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
         if (!table.automatic()) {
             for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);

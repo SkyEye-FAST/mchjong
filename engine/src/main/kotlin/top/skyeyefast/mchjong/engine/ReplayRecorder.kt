@@ -8,7 +8,7 @@ import top.skyeyefast.mchjong.engine.ReplayHand.Kind.NUKI
 import top.skyeyefast.mchjong.engine.ReplayHand.Kind.RIICHI
 
 /** Private recorder, persisted alongside the live game and sealed only after settlement. */
-internal class ReplayRecorder(game: Game) {
+internal class ReplayRecorder(game: RiichiGame) {
     private val number = game.handNumber
     private val round = game.round
     private val dealer = game.dealer
@@ -68,7 +68,7 @@ internal class ReplayRecorder(game: Game) {
         events += ReplayHand.Event(MELD, seat, meld.calledTile(), meld, false, false, true)
     }
 
-    fun declare(game: Game, seat: Int, action: Action) {
+    fun declare(game: RiichiGame, seat: Int, action: Action) {
         val tile = game.lastTile
         val meld = when (action.type()) {
             Action.Type.CLOSED_KAN -> Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT)
@@ -91,7 +91,7 @@ internal class ReplayRecorder(game: Game) {
         pendingDeclaration = -1
     }
 
-    fun dora(game: Game) {
+    fun dora(game: RiichiGame) {
         val revealed = game.wall.indicators(false)
         while (indicators < revealed.size) {
             events += ReplayHand.Event(DORA, -1, revealed[indicators++], null, false, false, true)
@@ -103,7 +103,7 @@ internal class ReplayRecorder(game: Game) {
     }
 
     fun win(
-        game: Game,
+        game: RiichiGame,
         seat: Int,
         from: Int,
         tile: Int,
@@ -150,7 +150,7 @@ internal class ReplayRecorder(game: Game) {
         if (wins.isNotEmpty()) wins[0] = wins.first().withDeposit(amount)
     }
 
-    fun finish(game: Game): ReplayHand {
+    fun finish(game: RiichiGame): ReplayHand {
         val publicSeats = game.view(null).seats()
         val allSeats = mutableListOf<TableView.Seat>()
         for (i in 0 until game.rules.players()) {
@@ -204,6 +204,6 @@ internal class ReplayRecorder(game: Game) {
     }
 
     companion object {
-        fun points(game: Game): List<Int> = List(game.rules.players()) { game.players[it].points }
+        fun points(game: RiichiGame): List<Int> = List(game.rules.players()) { game.players[it].points }
     }
 }

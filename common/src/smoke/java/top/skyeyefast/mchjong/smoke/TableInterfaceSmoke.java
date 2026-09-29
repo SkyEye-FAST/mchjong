@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.ExitVote;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TimeControl;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -73,7 +73,7 @@ final class TableInterfaceSmoke {
                 TableScreen opened = (TableScreen) client.screen;
                 ClientTableNetworking.receive(new TableViewPayload(table.getBlockPos(),
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
-                    table.clientRedOptions(), table.clientRoom(), table.clientBotService(), table.clientWorldPolicy(), table.clientGameType()));
+                    table.clientRedOptions(), table.clientRoom(), table.clientBotService(), table.clientWorldPolicy(), table.clientVariant()));
                 require(client.screen == opened && opened.immersive(),
                     "Opening the exit vote replaced the immersive table screen");
             }
@@ -119,7 +119,7 @@ final class TableInterfaceSmoke {
             new Action(Action.Type.PASS, List.of())) : state == 4 ? List.<Action>of()
             : List.of(new Action(Action.Type.RIICHI, List.of(126)));
         var normal = new TableView(base.tableId(), Long.MAX_VALUE / 2 + sample * 100000, base.decision() + sample + 1,
-            1, base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
+            1, base.rules(), RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
             null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
                 new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false,

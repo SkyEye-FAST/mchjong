@@ -15,7 +15,7 @@ import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -47,7 +47,7 @@ final class AnimationSmoke {
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
             // Display-only fixtures must not be replaced by live game heartbeats during the captures.
             fixture = new TableView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
-                base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
+                base.rules(), RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
                 "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of());
             if (layoutsOnly) {
                 var previous = new TableView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
@@ -263,7 +263,7 @@ final class AnimationSmoke {
 
     private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall, int turn) {
         fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
-            Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
+            RiichiGame.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
             seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
         table.acceptView(fixture);
     }

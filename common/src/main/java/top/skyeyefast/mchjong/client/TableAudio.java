@@ -12,7 +12,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
 import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableActionPayload;
@@ -101,8 +101,8 @@ public final class TableAudio {
         if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
             var view = table.clientView();
             if (result != null && result.matches(view)) {
-                boolean finalStage = view.phase() == Game.Phase.MATCH_END && table.clientRoom() != null
-                    && table.clientRoom().settlementTicks() <= Game.SETTLEMENT_TICKS;
+                boolean finalStage = view.phase() == RiichiGame.Phase.MATCH_END && table.clientRoom() != null
+                    && table.clientRoom().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS;
                 if (finalStage && !finalVoicePlayed) {
                     finishResult();
                     finalVoicePlayed = true;

@@ -8,10 +8,10 @@ import java.util.stream.IntStream;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.RuleConfig;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiRules;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -24,21 +24,21 @@ class TableAnimationTest {
         return new TableView.Seat(false, "Player", true, false, false, 25000, hand, drawn, melds, river, List.of(), riichi, false, false);
     }
 
-    private static TableView playing(RuleSet preset) {
+    private static TableView playing(RiichiPreset preset) {
         var rules = preset.config();
         var wall = new ArrayList<>(Collections.nCopies(rules.sanma() ? 108 : 136, Tile.HIDDEN));
         for (int i = 0; i < rules.players() * 13 + 1; i++) wall.set(i, Tile.ABSENT);
         var seats = new ArrayList<TableView.Seat>();
         seats.add(seat(IntStream.range(0, 14).boxed().toList(), 13, List.of(), List.of(), false));
         for (int i = 1; i < rules.players(); i++) seats.add(seat(Collections.nCopies(13, Tile.HIDDEN), Tile.ABSENT, List.of(), List.of(), false));
-        return new TableView(TABLE, 2, 2, 1, rules, Game.Phase.TURN, 0, 0, 0, 0, 0, 0,
+        return new TableView(TABLE, 2, 2, 1, rules, RiichiGame.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new Action(Action.Type.DISCARD, 13)),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
     }
 
-    private static TableView lobby(RuleConfig rules) {
-        return new TableView(TABLE, 1, 1, 0, rules, Game.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
+    private static TableView lobby(RiichiRules rules) {
+        return new TableView(TABLE, 1, 1, 0, rules, RiichiGame.Phase.LOBBY, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "lobby", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of());
@@ -57,7 +57,7 @@ class TableAnimationTest {
 
     @Test void hiddenTsumogiriComesFromTheDrawSlotWhileTedashiComesFromTheHand() {
         for (boolean tsumogiri : List.of(false, true)) {
-            var base = playing(RuleSet.MAHJONG_SOUL_4);
+            var base = playing(RiichiPreset.MAHJONG_SOUL_4);
             var seats = new ArrayList<>(base.seats());
             seats.set(1, seat(Collections.nCopies(14, Tile.HIDDEN), Tile.HIDDEN, List.of(), List.of(), false));
             base = update(base, seats, 0);
@@ -82,14 +82,14 @@ class TableAnimationTest {
 
     @Test void lateJoinDoesNotReplayAnOpening() {
         var animation = new TableAnimation();
-        animation.accept(playing(RuleSet.MAHJONG_SOUL_4), 1000);
+        animation.accept(playing(RiichiPreset.MAHJONG_SOUL_4), 1000);
         assertFalse(animation.dealing(1000));
         assertEquals(1, animation.dealProgress(0, 0, 1000));
         assertEquals(animation.settled(), animation.sample(1000));
     }
 
     @Test void fullWallsRiseAndDealWithoutRevealingOpponentsForBothPlayerCounts() {
-        for (var rules : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
+        for (var rules : List.of(RiichiPreset.MAHJONG_SOUL_4, RiichiPreset.MAHJONG_SOUL_3)) {
             var animation = new TableAnimation();
             animation.accept(lobby(rules.config()), 0);
             animation.accept(playing(rules), 100);
@@ -107,7 +107,7 @@ class TableAnimationTest {
 
     @Test void cosmeticSnapshotsDoNotRestartTheDeal() {
         var animation = new TableAnimation();
-        var playing = playing(RuleSet.MAHJONG_SOUL_4);
+        var playing = playing(RiichiPreset.MAHJONG_SOUL_4);
         animation.accept(lobby(playing.rules()), 0);
         animation.accept(playing, 100);
         var midway = animation.sample(1000);
@@ -119,7 +119,7 @@ class TableAnimationTest {
     }
 
     @Test void discardedTileMovesFromTheHandAndTurnsSidewaysForRiichi() {
-        var playing = playing(RuleSet.MAHJONG_SOUL_4);
+        var playing = playing(RiichiPreset.MAHJONG_SOUL_4);
         var animation = new TableAnimation();
         animation.accept(playing, 0);
         var origin = tile(animation.sample(0), 13).piece().position();
@@ -141,7 +141,7 @@ class TableAnimationTest {
     }
 
     @Test void calledTileTravelsFromTheRiverIntoTheCallersMeld() {
-        var base = playing(RuleSet.MAHJONG_SOUL_4);
+        var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         var seats = new ArrayList<>(base.seats());
         seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), Tile.ABSENT, List.of(), List.of(new Discard(13, false, false, true)), false));
         var discarded = update(base, seats, 0);
@@ -157,7 +157,7 @@ class TableAnimationTest {
     }
 
     @Test void changingToSpectatorDropsAllPreviouslyPrivateAnimationFrames() {
-        var base = playing(RuleSet.MAHJONG_SOUL_4);
+        var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         var animation = new TableAnimation();
         animation.accept(lobby(base.rules()), 0);
         animation.accept(base, 100);
@@ -170,7 +170,7 @@ class TableAnimationTest {
     }
 
     @Test void meldPieceIndicesStayUniqueAcrossMultipleMeldsAndAddedKans() {
-        var base = playing(RuleSet.MAHJONG_SOUL_4);
+        var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         var seats = new ArrayList<>(base.seats());
         seats.set(0, seat(List.of(0, 1, 2, 3, 4, 5, 6), Tile.ABSENT,
             List.of(new Meld(Meld.Type.TRIPLET, List.of(40, 41, 42), 1, 40), new Meld(Meld.Type.ADDED_QUAD, List.of(80, 81, 82, 83), 2, 80)), List.of(), false));
@@ -182,7 +182,7 @@ class TableAnimationTest {
 
     @Test void staleSnapshotsCannotRewindAnOpeningOrItsViewingPermissions() {
         var animation = new TableAnimation();
-        var base = playing(RuleSet.MAHJONG_SOUL_4);
+        var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         animation.accept(lobby(base.rules()), 0);
         animation.accept(base, 100);
         var middle = animation.sample(900);
@@ -194,7 +194,7 @@ class TableAnimationTest {
     }
 
     @Test void interruptedDiscardStartsItsMeldFlightAtTheCurrentAnimatedPosition() {
-        var base = playing(RuleSet.MAHJONG_SOUL_4);
+        var base = playing(RiichiPreset.MAHJONG_SOUL_4);
         var animation = new TableAnimation();
         animation.accept(base, 0);
         var seats = new ArrayList<>(base.seats());
@@ -217,7 +217,7 @@ class TableAnimationTest {
     }
 
     @Test void openingHasOneHiddenTilePerWallSlotAndDealsEarlierPacketsFirst() {
-        for (var rules : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
+        for (var rules : List.of(RiichiPreset.MAHJONG_SOUL_4, RiichiPreset.MAHJONG_SOUL_3)) {
             var animation = new TableAnimation();
             animation.accept(lobby(rules.config()), 0);
             animation.accept(playing(rules), 100);
@@ -237,17 +237,17 @@ class TableAnimationTest {
     }
 
     @Test void rollingDiceReindexesTheBuiltWallWithoutMovingIt() {
-        for (var preset : List.of(RuleSet.MAHJONG_SOUL_4, RuleSet.MAHJONG_SOUL_3)) {
+        for (var preset : List.of(RiichiPreset.MAHJONG_SOUL_4, RiichiPreset.MAHJONG_SOUL_3)) {
             var base = lobby(preset.config());
             int players = preset.players(), size = preset.sanma() ? 108 : 136;
             var wall = Collections.nCopies(size, Tile.HIDDEN);
             var handling = new TableView.Handling((1 << players) - 1, -1, 0, 0, 0, false);
-            var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), Game.Phase.BUILD_WALL, 0,
+            var built = new TableView(base.tableId(), 2, 2, 1, base.rules(), RiichiGame.Phase.BUILD_WALL, 0,
                 0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
                 handling, null, false, 1, java.util.Map.of());
             int wallBreak = 2 * (size / (2 * players) + 3);
-            var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), Game.Phase.DEAL, 0,
+            var opened = new TableView(base.tableId(), 3, 3, 1, base.rules(), RiichiGame.Phase.DEAL, 0,
                 0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
                 new TableView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of());

@@ -25,15 +25,15 @@ public record AutoPlay(boolean sort, boolean win, boolean noCalls, boolean disca
     }
 
     /** Never discard or pass a legal win while waiting for an explicit win decision. */
-    public int action(Game.Phase phase, boolean riichi, int drawn, List<Action> legal) {
+    public int action(RiichiGame.Phase phase, boolean riichi, int drawn, List<Action> legal) {
         for (int i = 0; i < legal.size(); i++)
             if (legal.get(i).type() == TSUMO || legal.get(i).type() == RON) return win ? i : -1;
-        if (phase == Game.Phase.REACTION && (noCalls || riichi)) return Game.indexOf(legal, PASS);
-        if (phase == Game.Phase.TURN && kita) {
-            int north = Game.indexOf(legal, NUKI);
+        if (phase == RiichiGame.Phase.REACTION && (noCalls || riichi)) return RiichiGame.indexOf(legal, PASS);
+        if (phase == RiichiGame.Phase.TURN && kita) {
+            int north = RiichiGame.indexOf(legal, NUKI);
             if (north >= 0) return north;
         }
-        if (phase != Game.Phase.TURN || drawn < 0 || !(riichi || discard)) return -1;
+        if (phase != RiichiGame.Phase.TURN || drawn < 0 || !(riichi || discard)) return -1;
         // A legal concealed kan or north extraction after riichi remains an explicit choice.
         if (riichi && legal.stream().anyMatch(action -> action.type() == NUKI
             || !noCalls && action.type() == CLOSED_KAN)) return -1;

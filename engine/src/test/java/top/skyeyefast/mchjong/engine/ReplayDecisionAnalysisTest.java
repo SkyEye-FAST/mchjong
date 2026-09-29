@@ -25,7 +25,7 @@ class ReplayDecisionAnalysisTest {
     }
 
     private ReplayMatch fixture(boolean hideSouths) {
-        RuleConfig rules = RuleSet.TENHOU_4.config();
+        RiichiRules rules = RiichiPreset.TENHOU_4.config();
         var wall = wall(rules);
         var self = List.of(
             tile(0,0), tile(1,0), tile(2,0),
@@ -69,7 +69,7 @@ class ReplayDecisionAnalysisTest {
             List.of(replayHand), false, rules.redFives());
     }
 
-    private static ReplayWall wall(RuleConfig rules) {
+    private static ReplayWall wall(RiichiRules rules) {
         var tiles = Tile.set(false, rules.redFives());
         int end = tiles.size();
         var replacements = new ArrayList<Integer>();

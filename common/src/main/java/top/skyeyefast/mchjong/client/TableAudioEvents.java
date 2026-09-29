@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 
@@ -17,7 +17,7 @@ public final class TableAudioEvents {
             || after.revision() <= before.revision()) return List.of();
         var cues = new ArrayList<Cue>();
         if (before.handNumber() != after.handNumber()) {
-            if (after.phase() == Game.Phase.TURN) {
+            if (after.phase() == RiichiGame.Phase.TURN) {
                 cues.add(effect("wall", 0));
                 cues.add(effect("deal", 10));
             }
@@ -48,8 +48,8 @@ public final class TableAudioEvents {
             if (next.drawn() != Tile.ABSENT && (old.drawn() == Tile.ABSENT || next.hand().size() > old.hand().size()))
                 cues.add(effect("draw", 0));
         }
-        boolean ended = after.phase() == Game.Phase.HAND_END || after.phase() == Game.Phase.MATCH_END;
-        boolean wasEnded = before.phase() == Game.Phase.HAND_END || before.phase() == Game.Phase.MATCH_END;
+        boolean ended = after.phase() == RiichiGame.Phase.HAND_END || after.phase() == RiichiGame.Phase.MATCH_END;
+        boolean wasEnded = before.phase() == RiichiGame.Phase.HAND_END || before.phase() == RiichiGame.Phase.MATCH_END;
         if (ended && !wasEnded) {
             String result = after.result().equals("ron") || after.result().equals("tsumo") ? after.result() : "draw_end";
             if (result.equals("draw_end")) cues.add(voice(result, -1));
@@ -57,7 +57,7 @@ public final class TableAudioEvents {
                 cues.add(effect(result, 0));
                 for (var win : after.wins()) cues.add(new Cue(null, result, 0, win.seat()));
             }
-        } else if (after.phase() == Game.Phase.TURN && after.viewerSeat() == after.turn()
+        } else if (after.phase() == RiichiGame.Phase.TURN && after.viewerSeat() == after.turn()
             && after.decision() != before.decision()) cues.add(effect("turn", 0));
         return List.copyOf(cues);
     }

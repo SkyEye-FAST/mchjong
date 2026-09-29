@@ -3,33 +3,33 @@ package top.skyeyefast.mchjong.engine;
 import java.util.EnumMap;
 import java.util.Map;
 import java.util.Objects;
-import static top.skyeyefast.mchjong.engine.RuleOption.*;
+import static top.skyeyefast.mchjong.engine.RiichiRuleOption.*;
 
 /** A complete immutable rules snapshot. Presets supply values, never hidden runtime exceptions. */
-public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
-    public RuleConfig {
+public record RiichiRules(RiichiPreset preset, Map<RiichiRuleOption, Integer> settings) {
+    public RiichiRules {
         Objects.requireNonNull(preset);
-        var copy = new EnumMap<RuleOption, Integer>(RuleOption.class);
+        var copy = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
         copy.putAll(settings);
         settings = java.util.Collections.unmodifiableMap(copy);
-        if (settings.size() != RuleOption.values().length) throw new IllegalArgumentException("Incomplete rules");
-        for (var option : RuleOption.values()) {
+        if (settings.size() != RiichiRuleOption.values().length) throw new IllegalArgumentException("Incomplete rules");
+        for (var option : RiichiRuleOption.values()) {
             var value = settings.get(option);
             if (value == null || !option.valid(value)) throw new IllegalArgumentException("Invalid rule: " + option);
         }
     }
 
-    public static RuleConfig from(RuleSet preset) {
-        var values = new EnumMap<RuleOption, Integer>(RuleOption.class);
-        for (var option : RuleOption.values()) values.put(option, option.defaultValue(preset));
-        return new RuleConfig(preset, values);
+    public static RiichiRules from(RiichiPreset preset) {
+        var values = new EnumMap<RiichiRuleOption, Integer>(RiichiRuleOption.class);
+        for (var option : RiichiRuleOption.values()) values.put(option, option.defaultValue(preset));
+        return new RiichiRules(preset, values);
     }
-    public int get(RuleOption option) { return settings.get(option); }
-    public boolean enabled(RuleOption option) { return get(option) != 0; }
-    public RuleConfig with(RuleOption option, int value) {
+    public int get(RiichiRuleOption option) { return settings.get(option); }
+    public boolean enabled(RiichiRuleOption option) { return get(option) != 0; }
+    public RiichiRules with(RiichiRuleOption option, int value) {
         var values = new EnumMap<>(settings);
         values.put(option, value);
-        return new RuleConfig(preset, values);
+        return new RiichiRules(preset, values);
     }
     public boolean custom() {
         return settings.entrySet().stream().anyMatch(entry -> !preset.adjustable(entry.getKey())
@@ -37,9 +37,9 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
     }
 
     /** Retain supported table variants while replacing all fixed rules with the new preset. */
-    public RuleConfig withPreset(RuleSet next) {
+    public RiichiRules withPreset(RiichiPreset next) {
         var config = next.config();
-        for (var option : RuleOption.values())
+        for (var option : RiichiRuleOption.values())
             if (next.adjustable(option)) config = config.with(option, get(option));
         return config;
     }
@@ -57,7 +57,7 @@ public record RuleConfig(RuleSet preset, Map<RuleOption, Integer> settings) {
     public int[] placementPoints(int floating) {
         int[] points = new int[players()];
         for (int rank = 0; rank < points.length; rank++)
-            points[rank] = get(RuleOption.placement(floatingPlacement() ? floating : -1, rank));
+            points[rank] = get(RiichiRuleOption.placement(floatingPlacement() ? floating : -1, rank));
         return points;
     }
     public boolean kuitan() { return enabled(KUITAN); }

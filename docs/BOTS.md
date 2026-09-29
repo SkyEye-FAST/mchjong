@@ -37,7 +37,7 @@ documented in the service repository.
 The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `RiichiHandAnalyzer`. Its
 `ShantenWithGot.discardToAdvance` and `ShantenWithoutGot.advance` provide
 structural efficiency; `waits` supplies structural
-tenpai and `score` supplies legal yaku, fu and actual payments under `RuleConfig`.
+tenpai and `score` supplies legal yaku, fu and actual payments under `RiichiRules`.
 Incomplete hands use labelled yaku potential, never the complete-hand scorer.
 The existing Java interop boundary selects the pinned library's JVM-visible
 analysis switches: it keeps input validation, every discard and the existing

@@ -5,7 +5,7 @@ import top.skyeyefast.mchjong.engine.Action.Type.*
 /** Computes all choices, including alternate red-five consumption, before issuing a decision. */
 internal object LegalActions {
     @JvmStatic
-    fun onTurn(game: Game, seat: Int): List<Action> {
+    fun onTurn(game: RiichiGame, seat: Int): List<Action> {
         val player = game.players[seat]
         val actions = ArrayList<Action>()
         if (player.drawn >= 0 && score(game, seat, player.drawn, true) != null) {
@@ -45,7 +45,7 @@ internal object LegalActions {
         return actions.toList()
     }
 
-    private fun legalRiichiKan(game: Game, seat: Int, kind: Int, quad: List<Int>): Boolean {
+    private fun legalRiichiKan(game: RiichiGame, seat: Int, kind: Int, quad: List<Int>): Boolean {
         val player = game.players[seat]
         if (player.drawn < 0 || Tile.kind(player.drawn) != kind) return false
         val before = ArrayList(player.hand)
@@ -72,7 +72,7 @@ internal object LegalActions {
     }
 
     @JvmStatic
-    fun onReaction(game: Game, seat: Int): List<Action> {
+    fun onReaction(game: RiichiGame, seat: Int): List<Action> {
         val player = game.players[seat]
         val actions = ArrayList<Action>()
         val kind = Tile.kind(game.lastTile)
@@ -139,7 +139,7 @@ internal object LegalActions {
     private fun matching(hand: List<Int>, kind: Int): List<Int> = hand.filter { Tile.kind(it) == kind }.sorted()
 
     @JvmStatic
-    fun score(game: Game, seat: Int, tile: Int, tsumo: Boolean): HandScore? {
+    fun score(game: RiichiGame, seat: Int, tile: Int, tsumo: Boolean): HandScore? {
         val player = game.players[seat]
         val extra = ArrayList<String>()
         if (player.riichi) {
@@ -166,12 +166,12 @@ internal object LegalActions {
     }
 
     @JvmStatic
-    fun formalTenpai(game: Game, seat: Int): Boolean {
+    fun formalTenpai(game: RiichiGame, seat: Int): Boolean {
         val player = game.players[seat]
         return formalTenpai(player.hand, player.melds, game.rules)
     }
 
     @JvmStatic
-    fun formalTenpai(hand: List<Int>, melds: List<Meld>, rules: RuleConfig): Boolean =
+    fun formalTenpai(hand: List<Int>, melds: List<Meld>, rules: RiichiRules): Boolean =
         RiichiHandAnalyzer.waits(hand, if (rules.formalTenpaiIgnoresMelds()) emptyList() else melds).isNotEmpty()
 }

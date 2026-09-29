@@ -6,7 +6,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -44,9 +44,9 @@ public final class TableSeatsScreen extends Screen {
                 label = Component.translatable(seat == room.host() ? "room.mchjong.host.short" : "room.mchjong.transfer");
                 hint = Component.translatable("room.mchjong.transfer_host", player.name());
                 int index = find(view, Action.Type.TRANSFER_HOST, List.of(seat));
-                enabled = host && seat != room.host() && (view.phase() != Game.Phase.LOBBY || index >= 0);
+                enabled = host && seat != room.host() && (view.phase() != RiichiGame.Phase.LOBBY || index >= 0);
                 action = () -> {
-                    if (view.phase() == Game.Phase.LOBBY) parent.send(view, index);
+                    if (view.phase() == RiichiGame.Phase.LOBBY) parent.send(view, index);
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {

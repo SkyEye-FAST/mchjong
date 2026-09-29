@@ -7,7 +7,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -18,7 +18,7 @@ final class RoomFlowSmoke {
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private int stage, ticks, locale, hand;
     private CompletableFuture<?> work;
-    private top.skyeyefast.mchjong.engine.RuleSet originalPreset;
+    private top.skyeyefast.mchjong.engine.RiichiPreset originalPreset;
     private boolean capturedHand, capturedFinal, capturedImmersive;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
@@ -61,7 +61,7 @@ final class RoomFlowSmoke {
         } else if (stage == 4 && view.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
             originalPreset = view.rules().preset();
             clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
-            var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RuleSet.values())
+            var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RiichiPreset.values())
                 .filter(preset -> preset.players() == originalPreset.players() && preset != originalPreset).findFirst().orElseThrow();
             click(client, nextPreset.presetKey());
             click(client, "rules.mchjong.apply");
@@ -111,35 +111,35 @@ final class RoomFlowSmoke {
             hand = view.handNumber();
             work = settlement(client, table, false);
             next(11);
-        } else if (stage == 11 && view.phase() == Game.Phase.HAND_END) {
-            require(table.clientRoom().settlementTicks() > 0 && table.clientRoom().settlementTicks() <= Game.SETTLEMENT_TICKS,
+        } else if (stage == 11 && view.phase() == RiichiGame.Phase.HAND_END) {
+            require(table.clientRoom().settlementTicks() > 0 && table.clientRoom().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS,
                 "Wrong hand settlement duration");
             if (!capturedHand && ticks > 10) {
                 check(client);
                 capture(client, output, "hand-countdown.png");
                 capturedHand = true;
             }
-        } else if (stage == 11 && capturedHand && view.phase() == Game.Phase.TURN && view.handNumber() > hand) {
+        } else if (stage == 11 && capturedHand && view.phase() == RiichiGame.Phase.TURN && view.handNumber() > hand) {
             work = settlement(client, table, true);
             capturedHand = false;
             next(12);
-        } else if (stage == 12 && view.phase() == Game.Phase.MATCH_END) {
+        } else if (stage == 12 && view.phase() == RiichiGame.Phase.MATCH_END) {
             int remaining = table.clientRoom().settlementTicks();
             require(buttonOrNull(client, "room.mchjong.dissolve") == null && buttonOrNull(client, "ui.mchjong.exit") == null,
                 "Settlement exposes room termination");
-            if (!capturedHand && remaining > Game.SETTLEMENT_TICKS && ticks > 10) {
+            if (!capturedHand && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 10) {
                 check(client);
                 capture(client, output, "match-hand-countdown.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 capturedHand = true;
-            } else if (capturedHand && !capturedImmersive && remaining > Game.SETTLEMENT_TICKS && ticks > 25) {
+            } else if (capturedHand && !capturedImmersive && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 25) {
                 require(((TableScreen) client.screen).immersive(), "Settlement cannot enter immersive view");
                 check(client);
                 capture(client, output, "match-hand-immersive.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 resize(client, true);
                 capturedImmersive = true;
-            } else if (capturedImmersive && !capturedFinal && remaining <= Game.SETTLEMENT_TICKS && remaining > 20) {
+            } else if (capturedImmersive && !capturedFinal && remaining <= RiichiGame.SETTLEMENT_TICKS && remaining > 20) {
                 check(client);
                 capture(client, output, "final-standings-small.png");
                 resize(client, false);
@@ -148,7 +148,7 @@ final class RoomFlowSmoke {
                 capture(client, output, "final-standings.png");
                 next(13);
             }
-        } else if ((stage == 12 || stage == 13) && view.phase() == Game.Phase.LOBBY
+        } else if ((stage == 12 || stage == 13) && view.phase() == RiichiGame.Phase.LOBBY
             && buttonOrNull(client, "action.mchjong.leave_room") != null) {
             require(capturedFinal, "Final standings were skipped");
             require(view.viewerSeat() >= 0 && view.seats().stream().filter(seat -> seat.occupied()).count() == 4,
@@ -189,8 +189,10 @@ final class RoomFlowSmoke {
             var game = serverTable.participantGame(player);
             require(game != null, "Settlement fixture has no participant");
             var saved = serverTable.saveWithoutMetadata(player.registryAccess());
-            var json = TableNetworking.JSON.toJsonTree(game).getAsJsonObject();
+            var envelope = com.google.gson.JsonParser.parseString(saved.getString("session")).getAsJsonObject();
+            var json = envelope.getAsJsonObject("state");
             json.addProperty("phase", end ? "MATCH_END" : "HAND_END");
+            json.addProperty("lifecycle", end ? "FINISHED" : "PLAYING");
             json.addProperty("age", 0);
             json.addProperty("revision", game.revision() + 100);
             json.addProperty("decision", game.view(id).decision() + 1);
@@ -199,9 +201,9 @@ final class RoomFlowSmoke {
             json.add("deltas", TableNetworking.JSON.toJsonTree(List.of(0, 0, 0, 0)));
             json.add("finalScores", TableNetworking.JSON.toJsonTree(end ? List.of(0.0, 0.0, 0.0, 0.0) : List.of()));
             json.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
-            saved.putString("game", json.toString());
+            saved.putString("session", envelope.toString());
             serverTable.loadWithComponents(saved, player.registryAccess());
-            require(serverTable.participantGame(player).phase() == (end ? Game.Phase.MATCH_END : Game.Phase.HAND_END),
+            require(serverTable.participantGame(player).phase() == (end ? RiichiGame.Phase.MATCH_END : RiichiGame.Phase.HAND_END),
                 "Saved settlement fixture did not load");
             serverTable.open(player);
         });

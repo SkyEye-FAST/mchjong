@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.List;
 import java.util.UUID;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
 import top.skyeyefast.mchjong.engine.TableView;
 
@@ -33,7 +33,7 @@ public final class ResultReadout {
     public boolean matches(TableView view) {
         return view != null && table.equals(view.tableId()) && hand == view.handNumber()
             && viewer == view.viewerSeat() && wins.equals(view.wins())
-            && (view.phase() == Game.Phase.HAND_END || view.phase() == Game.Phase.MATCH_END);
+            && (view.phase() == RiichiGame.Phase.HAND_END || view.phase() == RiichiGame.Phase.MATCH_END);
     }
 
     public int winner() { return winner; }

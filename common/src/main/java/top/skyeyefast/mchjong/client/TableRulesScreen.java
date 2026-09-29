@@ -12,11 +12,11 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
-import top.skyeyefast.mchjong.engine.RuleConfig;
-import top.skyeyefast.mchjong.engine.RuleOption;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiRules;
+import top.skyeyefast.mchjong.engine.RiichiRuleOption;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableRulesPayload;
 
@@ -26,23 +26,23 @@ public final class TableRulesScreen extends Screen {
         PRESET, DETAILS, CUSTOM;
         String key() { return "rules.mchjong.mode." + name().toLowerCase(java.util.Locale.ROOT); }
     }
-    private static final List<RuleOption> OVERVIEW = List.of(RuleOption.KUITAN, RuleOption.RED_FIVES,
-        RuleOption.MIN_HAN, RuleOption.MATCH_LENGTH, RuleOption.BANKRUPTCY,
-        RuleOption.STARTING_POINTS, RuleOption.RETURN_POINTS, RuleOption.IPPATSU, RuleOption.URA_DORA,
-        RuleOption.KAN_DORA, RuleOption.KAZOE_YAKUMAN, RuleOption.KIRIAGE_MANGAN, RuleOption.DOUBLE_YAKUMAN,
-        RuleOption.HEAD_BUMP, RuleOption.UMA_1, RuleOption.UMA_2, RuleOption.UMA_3, RuleOption.UMA_4);
+    private static final List<RiichiRuleOption> OVERVIEW = List.of(RiichiRuleOption.KUITAN, RiichiRuleOption.RED_FIVES,
+        RiichiRuleOption.MIN_HAN, RiichiRuleOption.MATCH_LENGTH, RiichiRuleOption.BANKRUPTCY,
+        RiichiRuleOption.STARTING_POINTS, RiichiRuleOption.RETURN_POINTS, RiichiRuleOption.IPPATSU, RiichiRuleOption.URA_DORA,
+        RiichiRuleOption.KAN_DORA, RiichiRuleOption.KAZOE_YAKUMAN, RiichiRuleOption.KIRIAGE_MANGAN, RiichiRuleOption.DOUBLE_YAKUMAN,
+        RiichiRuleOption.HEAD_BUMP, RiichiRuleOption.UMA_1, RiichiRuleOption.UMA_2, RiichiRuleOption.UMA_3, RiichiRuleOption.UMA_4);
     private final TableScreen parent;
     private TableView baseline;
-    private RuleConfig draft;
-    private RuleConfig pending;
-    private final Map<RuleOption, String> numbers = new EnumMap<>(RuleOption.class);
+    private RiichiRules draft;
+    private RiichiRules pending;
+    private final Map<RiichiRuleOption, String> numbers = new EnumMap<>(RiichiRuleOption.class);
     private final List<AbstractWidget> editors = new ArrayList<>();
     private final Map<RedFives, Button> redButtons = new EnumMap<>(RedFives.class);
     private final Map<RedFives, Boolean> redAvailability = new EnumMap<>(RedFives.class);
-    private final Map<RuleSet, Button> presetButtons = new EnumMap<>(RuleSet.class);
-    private final Map<RuleSet, Boolean> presetAvailability = new EnumMap<>(RuleSet.class);
+    private final Map<RiichiPreset, Button> presetButtons = new EnumMap<>(RiichiPreset.class);
+    private final Map<RiichiPreset, Boolean> presetAvailability = new EnumMap<>(RiichiPreset.class);
     private final List<Label> labels = new ArrayList<>();
-    private RuleOption.Group group = RuleOption.Group.POINTS;
+    private RiichiRuleOption.Group group = RiichiRuleOption.Group.POINTS;
     private Mode mode;
     private int page, pages, pendingTicks;
     private Button apply;
@@ -71,7 +71,7 @@ public final class TableRulesScreen extends Screen {
     private boolean host() {
         var view = parent.view();
         var room = parent.room();
-        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == Game.Phase.LOBBY
+        return view != null && room != null && view.tableId().equals(baseline.tableId()) && view.phase() == RiichiGame.Phase.LOBBY
             && view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
     }
     private boolean stale() {
@@ -98,7 +98,7 @@ public final class TableRulesScreen extends Screen {
         }).bounds(left, 30, span, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help"))).build());
         editors.add(presetButton);
         if (presetExpanded) {
-            var presets = Arrays.stream(RuleSet.values()).filter(rule -> rule.players() == draft.players()).toList();
+            var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
             for (int i = 0; i < presets.size(); i++) {
                 var rule = presets.get(i);
                 var name = Component.translatable(rule.presetKey());
@@ -120,7 +120,7 @@ public final class TableRulesScreen extends Screen {
                 .bounds(left + section.ordinal() * (tabWidth + 4), 56, tabWidth, 20)
                 .tooltip(Tooltip.create(text)).build().selected(mode == section));
         }
-        var groups = RuleOption.Group.values();
+        var groups = RiichiRuleOption.Group.values();
         int groupWidth = (span - (groups.length - 1) * 4) / groups.length;
         for (int i = 0; mode != Mode.PRESET && i < groups.length; i++) {
             var category = groups[i];
@@ -131,7 +131,7 @@ public final class TableRulesScreen extends Screen {
         }
         if (mode == Mode.PRESET) labels.add(new Label(Component.translatable(
             draft.custom() ? "rules.mchjong.custom_note" : "rules.mchjong.preset_note"), left, 85, span));
-        var options = (mode == Mode.PRESET ? OVERVIEW.stream() : Arrays.stream(RuleOption.values())
+        var options = (mode == Mode.PRESET ? OVERVIEW.stream() : Arrays.stream(RiichiRuleOption.values())
             .filter(option -> option.group() == group))
             .filter(option -> option.visible(draft)).toList();
         int rows = Math.max(1, (height - 182) / 24);
@@ -147,11 +147,11 @@ public final class TableRulesScreen extends Screen {
             boolean editable = mode == Mode.CUSTOM || mode == Mode.PRESET && draft.preset().adjustable(option);
             if (!editable) {
                 Component value = option.toggle() ? Component.translatable(draft.enabled(option) ? "rules.mchjong.yes" : "rules.mchjong.no")
-                    : option == RuleOption.RED_FIVES ? Component.translatable(draft.redFives().translationKey())
+                    : option == RiichiRuleOption.RED_FIVES ? Component.translatable(draft.redFives().translationKey())
                     : !option.choices().isEmpty() ? Component.translatable(option.translationKey() + "." + draft.get(option))
                     : Component.literal(Integer.toString(draft.get(option)));
                 labels.add(new Label(Component.translatable("settings.mchjong.toggle", label, value), description, left, y + 6, span));
-            } else if (option == RuleOption.RED_FIVES) {
+            } else if (option == RiichiRuleOption.RED_FIVES) {
                 int caption = Math.min(92, span / 4), choiceWidth = (span - caption - 8) / 3;
                 labels.add(new Label(label, description, left, y + 6, caption - 4));
                 for (var reds : RedFives.values()) {
@@ -246,7 +246,7 @@ public final class TableRulesScreen extends Screen {
         if (apply != null) apply.active = editable && allowedByWorld(draft) && !invalid() && !missingReds()
             && !draft.equals(baseline.rules());
     }
-    private boolean allowedByWorld(RuleConfig config) {
+    private boolean allowedByWorld(RiichiRules config) {
         var world = parent.worldPolicy();
         return world != null && (world.forcedPreset() == null || world.forcedPreset() == config.preset())
             && (world.allowCustomRules() || !config.custom());

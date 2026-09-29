@@ -3,22 +3,22 @@ package top.skyeyefast.mchjong.engine;
 import java.util.Locale;
 
 /** Named rule presets. Source versions and settlement conventions are in docs/RULES.md. */
-public enum RuleSet {
+public enum RiichiPreset {
     MAHJONG_SOUL_4(4), MAHJONG_SOUL_3(3), TENHOU_4(4), TENHOU_3(3), M_LEAGUE(4), JPML_A(4), WRC(4);
 
     private final int players;
 
-    RuleSet(int players) { this.players = players; }
-    public RuleConfig config() { return RuleConfig.from(this); }
+    RiichiPreset(int players) { this.players = players; }
+    public RiichiRules config() { return RiichiRules.from(this); }
     public int players() { return players; }
     public boolean sanma() { return players == 3; }
     public boolean mLeague() { return this == M_LEAGUE; }
     public boolean tenhou() { return this == TENHOU_3 || this == TENHOU_4; }
     public boolean mahjongSoul() { return this == MAHJONG_SOUL_3 || this == MAHJONG_SOUL_4; }
     private boolean online() { return tenhou() || mahjongSoul(); }
-    public boolean adjustable(RuleOption option) {
-        return online() && (option == RuleOption.KUITAN || option == RuleOption.RED_FIVES
-            || option == RuleOption.MIN_HAN || option == RuleOption.MATCH_LENGTH);
+    public boolean adjustable(RiichiRuleOption option) {
+        return online() && (option == RiichiRuleOption.KUITAN || option == RiichiRuleOption.RED_FIVES
+            || option == RiichiRuleOption.MIN_HAN || option == RiichiRuleOption.MATCH_LENGTH);
     }
     public int startingPoints() { return this == JPML_A || this == WRC ? 30000 : sanma() ? 35000 : 25000; }
     public int returnPoints() { return mahjongSoul() ? startingPoints() : sanma() ? 40000 : 30000; }

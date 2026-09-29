@@ -19,6 +19,7 @@
   "action.mchjong.pon": "ポン",
   "action.mchjong.ready": "準備する",
   "action.mchjong.remove_bot": "CPUを外す",
+  "action.mchjong.return_to_lobby": "部屋に戻る",
   "action.mchjong.riichi": "リーチ",
   "action.mchjong.roll_dice": "サイコロを2個振る",
   "action.mchjong.ron": "ロン",

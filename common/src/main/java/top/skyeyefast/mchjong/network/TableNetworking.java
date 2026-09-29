@@ -22,10 +22,10 @@ public final class TableNetworking {
             table.mcrAction(player, payload);
     }
 
-    public static void receive(ServerPlayer player, TableGameTypePayload payload) {
+    public static void receive(ServerPlayer player, TableVariantPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
-            table.configureGameType(player, payload);
+            table.configureVariant(player, payload);
     }
 
     public static void receive(ServerPlayer player, TableControlPayload payload) {

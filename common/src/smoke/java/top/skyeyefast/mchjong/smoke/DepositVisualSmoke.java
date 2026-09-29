@@ -12,8 +12,8 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -35,7 +35,7 @@ final class DepositVisualSmoke {
             if (sample == 0) originalStick = TableSettings.get().riichiStickPreset;
             TableSettings.get().riichiStickPreset = sample == 0 ? originalStick : BuiltinPresets.STICKS.get(sample - 1);
             var base = table.clientView();
-            var rules = RuleSet.MAHJONG_SOUL_4.config();
+            var rules = RiichiPreset.MAHJONG_SOUL_4.config();
             int count = 8;
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -46,7 +46,7 @@ final class DepositVisualSmoke {
                     hand, Tile.ABSENT, List.of(), river, List.of(), false, false, false));
             }
             fixture = new TableView(base.tableId(), base.revision() + 1_000_000, base.decision(),
-                base.handNumber(), rules, Game.Phase.TURN, 0, 0, 0, 0, count,
+                base.handNumber(), rules, RiichiGame.Phase.TURN, 0, 0, 0, 0, count,
                 0, 0, 0, showWall ? Collections.nCopies(136, Tile.HIDDEN) : List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
                 table.automatic() ? null : new TableView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of());

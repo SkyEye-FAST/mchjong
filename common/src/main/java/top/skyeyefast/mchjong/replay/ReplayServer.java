@@ -18,7 +18,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 
@@ -31,8 +31,8 @@ public final class ReplayServer {
             server.getWorldPath(LevelResource.ROOT).resolve("data/mchjong/replays"), TableNetworking.JSON), new HashMap<>()));
     }
 
-    /** Failed writes remain in Game's persisted queue and can be retried without losing a finished hand. */
-    public static boolean flush(MinecraftServer server, Game game) throws IOException {
+    /** Failed writes remain in RiichiGame's persisted queue and can be retried without losing a finished hand. */
+    public static boolean flush(MinecraftServer server, RiichiGame game) throws IOException {
         if (!top.skyeyefast.mchjong.world.WorldSettings.of(server).policy().replaysEnabled()) return false;
         boolean changed = false;
         for (var match : game.pendingReplays()) {

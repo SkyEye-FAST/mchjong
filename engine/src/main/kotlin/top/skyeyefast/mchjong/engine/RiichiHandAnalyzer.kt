@@ -19,12 +19,12 @@ import mahjongutils.yaku.Yakus
 
 /** Riichi-only mahjong-utils boundary. No Minecraft or network types are accepted here. */
 object RiichiHandAnalyzer {
-    private fun options(rules: RuleConfig) = HoraOptions(aotenjou = false, allowKuitan = rules.kuitan(),
+    private fun options(rules: RiichiRules) = HoraOptions(aotenjou = false, allowKuitan = rules.kuitan(),
         hasRenpuuJyantouHu = rules.doubleWindPairFu(), hasKiriageMangan = rules.kiriageMangan(),
         hasKazoeYakuman = rules.kazoeYakuman(), hasMultipleYakuman = rules.doubleYakuman(), hasComplexYakuman = rules.compoundYakuman())
 
     @JvmStatic
-    fun yakuValues(names: List<String>, closed: Boolean, rules: RuleConfig): List<ReplayHand.Yaku> {
+    fun yakuValues(names: List<String>, closed: Boolean, rules: RiichiRules): List<ReplayHand.Yaku> {
         val yakus = Yakus(options(rules))
         return names.map { name ->
             if (name == "Nagashi") return@map ReplayHand.Yaku(name, 5, false)
@@ -102,7 +102,7 @@ object RiichiHandAnalyzer {
         efficiency(analyze(hand, melds, false, goodShape).shantenInfo as ShantenWithoutGot)
 
     /** Hypothetical 30/40-fu payout scenarios, not a yaku or completed-hand claim. */
-    fun estimatedPayment(han: Double, dealer: Boolean, ronOnly: Boolean, rules: RuleConfig): Double {
+    fun estimatedPayment(han: Double, dealer: Boolean, ronOnly: Boolean, rules: RiichiRules): Double {
         val lower = kotlin.math.floor(han).toInt().coerceAtLeast(1)
         val fraction = (han - lower).coerceIn(0.0, 1.0)
         val pointOptions = HanHuOptions(hasKiriageMangan = rules.kiriageMangan(), hasKazoeYakuman = rules.kazoeYakuman())
@@ -119,7 +119,7 @@ object RiichiHandAnalyzer {
 
     /** Conditional extra-dora payout using an already legal hand's yaku and fu. */
     @JvmStatic
-    fun bonusPayment(score: HandScore, extraDora: Int, dealer: Boolean, rules: RuleConfig): Int {
+    fun bonusPayment(score: HandScore, extraDora: Int, dealer: Boolean, rules: RiichiRules): Int {
         require(extraDora >= 0)
         if (score.yakuman() > 0 || extraDora == 0) return if (score.ron() > 0) score.ron()
             else if (dealer) score.tsumoDealer() * (rules.players() - 1)
@@ -150,7 +150,7 @@ object RiichiHandAnalyzer {
 
     @JvmStatic
     fun score(hand: List<Int>, melds: List<Meld>, winningTile: Int, tsumo: Boolean,
-              selfWind: Int, roundWind: Int, dora: Int, extra: List<String>, rules: RuleConfig): HandScore? {
+              selfWind: Int, roundWind: Int, dora: Int, extra: List<String>, rules: RiichiRules): HandScore? {
         val complete = if (hand.size + melds.size * 3 == 13) hand + winningTile else hand
         val analysis = analyze(complete, melds, true)
         if (analysis.shantenInfo.shantenNum != -1) return null

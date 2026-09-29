@@ -24,7 +24,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -351,8 +351,8 @@ public final class TableClientSmoke {
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining calls and continuing early abortive draws through the actual UI.
-                if (view.phase() == Game.Phase.HAND_END) return;
-                if (view.phase() == Game.Phase.REACTION) {
+                if (view.phase() == RiichiGame.Phase.HAND_END) return;
+                if (view.phase() == RiichiGame.Phase.REACTION) {
                     var key = "action.mchjong.pass";
                     for (var child : client.screen.children()) if (child instanceof AbstractWidget widget
                             && widget.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(key).getString()) && widget.active) {
@@ -361,7 +361,7 @@ public final class TableClientSmoke {
                     }
                     return;
                 }
-                if (view.phase() != Game.Phase.TURN || view.turn() != view.viewerSeat()) return;
+                if (view.phase() != RiichiGame.Phase.TURN || view.turn() != view.viewerSeat()) return;
                 require(view.seats().get(view.viewerSeat()).hand().size() == 14, "Active player did not receive fourteen tiles");
                 capture(client, "02-dealt-table.png");
                 if (seatingOnly || settlementOnly) {
@@ -526,7 +526,7 @@ public final class TableClientSmoke {
             var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
             var table = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(CENTER);
             var game = table.participantGame(player);
-            require(game != null && game.requestExit(id) && game.phase() == Game.Phase.LOBBY, "Cannot finish live smoke match");
+            require(game != null && game.requestExit(id) && game.phase() == RiichiGame.Phase.LOBBY, "Cannot finish live smoke match");
             player.stopRiding();
             table.sit(player, 0);
             return game.seatOf(id) == 0 && player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat && seat.seat() == 0;

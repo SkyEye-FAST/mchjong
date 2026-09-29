@@ -7,7 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.engine.AutoPlay;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Exercise every preference through its real button, C2S packet and authoritative S2C snapshot. */
@@ -103,7 +103,7 @@ final class AutomationControlsSmoke {
             checkBounds(client);
             client.screen.onClose();
             return true;
-        } else if (stage == 8 && view.phase() == Game.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+        } else if (stage == 8 && view.phase() == RiichiGame.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
             client.setScreen(new TableScreen(table.getBlockPos()));
             checkOptions(client, 0);
             var id = client.player.getUUID();

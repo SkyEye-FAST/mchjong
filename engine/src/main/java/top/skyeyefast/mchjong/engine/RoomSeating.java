@@ -14,6 +14,30 @@ public final class RoomSeating {
     int[] concealed = {};
     int available;
 
+    /** A private snapshot; concealed choices must never be sent in a room view. */
+    public record Saved(Stage stage, java.util.List<Integer> winds, java.util.List<Integer> concealed, int available) {
+        public Saved {
+            java.util.Objects.requireNonNull(stage);
+            winds = java.util.List.copyOf(winds);
+            concealed = java.util.List.copyOf(concealed);
+        }
+    }
+
+    Saved save() {
+        return new Saved(stage, Arrays.stream(winds).boxed().toList(),
+            Arrays.stream(concealed).boxed().toList(), available);
+    }
+
+    static RoomSeating restore(Saved saved, int players) {
+        var seating = new RoomSeating();
+        seating.stage = saved.stage();
+        seating.winds = saved.winds().stream().mapToInt(Integer::intValue).toArray();
+        seating.concealed = saved.concealed().stream().mapToInt(Integer::intValue).toArray();
+        seating.available = saved.available();
+        seating.validate(players);
+        return seating;
+    }
+
     void begin(int players, boolean manual, long seed) {
         var order = new ArrayList<Integer>();
         for (int wind = 0; wind < players; wind++) order.add(wind);

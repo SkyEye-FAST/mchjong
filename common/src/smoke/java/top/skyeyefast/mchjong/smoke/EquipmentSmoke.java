@@ -19,8 +19,8 @@ import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
@@ -123,9 +123,9 @@ final class EquipmentSmoke {
 
             var saved = table.saveWithoutMetadata(level.registryAccess());
             var appearance = table.getUpdatePacket().getTag();
-            check(!appearance.contains("game") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
+            check(!appearance.contains("session") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
             table.loadWithComponents(appearance, level.registryAccess());
-            check(saved.getString("game").equals(table.saveWithoutMetadata(level.registryAccess()).getString("game"))
+            check(saved.getString("session").equals(table.saveWithoutMetadata(level.registryAccess()).getString("session"))
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Public update destroyed private state");
             level.removeBlockEntity(POS);
             table = new MahjongTableBlockEntity(POS, block.defaultBlockState());
@@ -135,12 +135,12 @@ final class EquipmentSmoke {
             check(table.wood() == FurnitureWood.WARPED && table.equipment().clothColor() == DyeColor.LIME
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && ItemStack.matches(original, table.equipment().boxes().getItem(1)), "World reload lost equipment or components");
-            if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RuleSet.MAHJONG_SOUL_3.ordinal());
+            if (block == MahjongContent.AUTO_TABLE) act(table, player, Action.Type.CHANGE_RULE, RiichiPreset.MAHJONG_SOUL_3.ordinal());
             var staleMenu = TableStorageSmoke.open(player, table);
             PointStickMenuSmoke.stockDrawers(table);
             SeatingFixtures.startPositioned(table.participantGame(player), player.getUUID());
             game = table.participantGame(player);
-            check(game.phase() == (table.automatic() ? Game.Phase.TURN : Game.Phase.SHUFFLE), "Wrong table handling mode");
+            check(game.phase() == (table.automatic() ? RiichiGame.Phase.TURN : RiichiGame.Phase.SHUFFLE), "Wrong table handling mode");
             if (table.automatic()) check(game.view(null).wall().size() == 108, "Three-player game did not use 108 physical tiles");
             staleMenu.clicked(0, 0, net.minecraft.world.inventory.ClickType.PICKUP, player);
             check(staleMenu.getCarried().isEmpty() && staleMenu.quickMoveStack(player, 1).isEmpty(),
@@ -166,7 +166,7 @@ final class EquipmentSmoke {
             check(before.seats().stream().map(s -> s.points()).toList().equals(after.seats().stream().map(s -> s.points()).toList())
                 && before.riichiSticks() == after.riichiSticks(), "Physical point stick changed engine scores or deposits");
             table.control(player, new TableControlPayload(POS, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, after.decision(), false));
-            check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exit did not release the player");
+            check(game.phase() == RiichiGame.Phase.LOBBY && !player.isPassenger(), "Exit did not release the player");
             check(ItemStack.matches(replacement, table.equipment().boxes().getItem(0))
                 && MahjongSupplies.tileCount(MahjongSupplies.contents(table.equipment().boxes().getItem(0))) == 136,
                 "Exit lost the full set or unused sanma tiles");

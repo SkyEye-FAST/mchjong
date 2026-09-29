@@ -128,8 +128,8 @@ public final class MchjongNeoForge {
             top.skyeyefast.mchjong.network.McrActionPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
             });
-        registrar.playToServer(top.skyeyefast.mchjong.network.TableGameTypePayload.TYPE,
-            top.skyeyefast.mchjong.network.TableGameTypePayload.CODEC, (payload, context) -> {
+        registrar.playToServer(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
+            top.skyeyefast.mchjong.network.TableVariantPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
             });
         registrar.playToServer(TableControlPayload.TYPE, TableControlPayload.CODEC, (payload, context) -> {

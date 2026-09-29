@@ -5,12 +5,12 @@ import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class BotScenarioTest {
-    private static Action choose(Game game) {
-        var view = game.view(game.players[0].id);
+    private static Action choose(RiichiGame game) {
+        var view = game.view(game.players[0].member.id);
         return view.actions().get(TrainingBot.choose(view, BotDifficulty.HARD));
     }
 
-    private static Game deadTenpai() {
+    private static RiichiGame deadTenpai() {
         var game = TrainingBotTest.hand("123456789m45p11z2z");
         game.wall.cursor = game.wall.liveEnd;
         game.players[0].river.add(new Discard(Tile.id(16, 0, false), false, false, false));
@@ -65,14 +65,14 @@ class BotScenarioTest {
         assertEquals(12000, game.deltas.getFirst());
 
         var disabled = TrainingBotTest.hand("123456789m45p11z2p");
-        disabled.rules = disabled.rules.with(RuleOption.NAGASHI_MANGAN, 0);
+        disabled.rules = disabled.rules.with(RiichiRuleOption.NAGASHI_MANGAN, 0);
         disabled.wall.cursor = disabled.wall.liveEnd;
         assertEquals(Tile.parseKind("2p"), Tile.kind(choose(disabled).tiles().getFirst()));
     }
 
     @Test void sanmaLastDiscardKeepsFormalTenpai() {
         var game = TrainingBotTest.hand("123456789p45s11z2z");
-        game.rules = RuleSet.MAHJONG_SOUL_3.config();
+        game.rules = RiichiPreset.MAHJONG_SOUL_3.config();
         game.wall = new Wall(game.rules, 24, 0);
         game.wall.cursor = game.wall.liveEnd;
         game.players[0].river.add(new Discard(Tile.id(25, 0, false), false, false, false));
@@ -98,13 +98,13 @@ class BotScenarioTest {
         game.players[1].hand.add(Tile.id(15, 0, false));
         for (int copy = 1; copy < 4; copy++)
             game.players[2].river.add(new Discard(Tile.id(0, copy, false), false, false, false));
-        var defence = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD).defence;
+        var defence = new BotAnalysis(game.view(game.players[0].member.id), BotDifficulty.HARD).defence;
         assertEquals(0, defence.riskAgainst(1, 0), "All four visible copies exclude a tanki wait");
         assertEquals(defence.riskAgainst(1, 25), defence.riskAgainst(1, Tile.WEST), 1e-9,
             "A numbered tile has no additional sequence wait after four fixed melds");
         assertTrue(defence.riskAgainst(3, 0) > 0, "A concealed opponent can still complete kokushi");
         game.players[1].melds.removeLast();
-        var threeMelds = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD).defence;
+        var threeMelds = new BotAnalysis(game.view(game.players[0].member.id), BotDifficulty.HARD).defence;
         assertTrue(threeMelds.riskAgainst(1, 0) > 0, "Three fixed melds still allow a sequence wait");
     }
 
@@ -115,7 +115,7 @@ class BotScenarioTest {
             TestHands.meld(Meld.Type.TRIPLET, "444s")));
         game.players[1].hand.add(Tile.id(15, 0, false));
         game.wall.tiles.set(game.wall.dora.get(0), Tile.id(Tile.WEST, 3, false));
-        var defence = new BotAnalysis(game.view(game.players[0].id), BotDifficulty.HARD).defence;
+        var defence = new BotAnalysis(game.view(game.players[0].member.id), BotDifficulty.HARD).defence;
         assertTrue(defence.threats.getFirst().getValue() >= 2000, "A winning four-pon hand has at least two yaku han");
     }
 }

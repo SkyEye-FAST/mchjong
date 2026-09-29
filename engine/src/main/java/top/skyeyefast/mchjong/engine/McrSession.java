@@ -2,130 +2,128 @@ package top.skyeyefast.mchjong.engine;
 
 import java.util.HashSet;
 import java.util.List;
-import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/** One room's fixed four-player match. The host supplies authenticated identities and live mounts. */
-public final class McrSession {
-    private final UUID tableId;
-    private final UUID incarnation = UUID.randomUUID();
-    private final List<Participant> participants;
-    private final McrGame game;
-    private long revision;
-    private int seated;
+/** MCR match state and hand acknowledgements; room authority belongs to TableSession. */
+public final class McrSession extends TableSession {
+    private McrGame game;
+    private List<Integer> stock = List.of();
     private int confirmed;
 
-    /** Copy the prepared room roster in seat order; never populate it from a client action. */
-    public static McrSession start(UUID tableId, List<Participant> participants, long seed, List<Integer> stock) {
-        Objects.requireNonNull(tableId);
-        var roster = roster(participants);
-        return new McrSession(tableId, roster, McrGame.fromStock(seed, stock), 1, 0);
+    public McrSession(UUID tableId, long seed) {
+        super(tableId, MahjongVariant.MCR, 4, seed);
     }
 
-    private McrSession(UUID tableId, List<Participant> participants, McrGame game, long revision, int confirmed) {
-        this.tableId = tableId;
-        this.participants = participants;
-        this.game = game;
-        this.revision = revision;
-        this.confirmed = confirmed;
+    /** Copy the prepared room roster in seat order; never populate it from a client action. */
+    public static McrSession start(UUID tableId, List<TableParticipant> participants, long seed, List<Integer> stock) {
+        var roster = roster(participants);
+        var session = new McrSession(tableId, seed);
+        for (int seat = 0; seat < 4; seat++) session.participants[seat] = Participant.restore(roster.get(seat));
+        session.hostId = roster.get(0).id();
+        session.seating.positioned(4);
+        session.configureEquipment(false, stock);
+        session.startMatch();
+        return session;
     }
 
     /** Presence is deliberately not restored. Old requests cannot target the new incarnation. */
     public static McrSession restore(State state) {
         Objects.requireNonNull(state);
-        return new McrSession(state.tableId(), state.participants(), McrGame.restore(state.game()),
-            Math.addExact(state.revision(), 1), state.confirmed());
-    }
-
-    public UUID tableId() { return tableId; }
-    public UUID incarnation() { return incarnation; }
-
-    public int seatOf(UUID player) {
-        if (player != null) for (int seat = 0; seat < 4; seat++)
-            if (participants.get(seat).id().equals(player)) return seat;
-        return -1;
-    }
-
-    /** Server-observed UUID -> physical seat at this table. Foreign or displaced mounts grant no access. */
-    public boolean synchronizeSeats(Map<UUID, Integer> mounted) {
-        var observed = Map.copyOf(mounted);
-        int next = 0;
-        for (int seat = 0; seat < 4; seat++) {
-            int expected = seat;
-            long occupants = observed.values().stream().filter(value -> value == expected).count();
-            if (occupants == 1 && Objects.equals(observed.get(participants.get(seat).id()), seat)) next |= 1 << seat;
-        }
-        if (seated == next) return false;
-        seated = next;
-        revision = Math.addExact(revision, 1);
-        return true;
+        var session = new McrSession(state.room().tableId(), state.room().seed());
+        session.restoreRoom(state.room());
+        session.stock = state.stock();
+        session.game = state.game() == null ? null : McrGame.restore(state.game());
+        session.confirmed = state.confirmed();
+        if (session.game != null) roster(session.participants());
+        return session;
     }
 
     /** Authenticated sender only; no seat number or tile identity is accepted from the request. */
     public boolean act(UUID actor, UUID expectedTable, UUID expectedIncarnation, long decision, int actionIndex) {
-        int seat = authorized(actor, expectedTable, expectedIncarnation, decision);
+        if (game == null) return false;
+        int seat = authorize(actor, expectedTable, expectedIncarnation, decision, game.decision(), true);
         if (seat < 0 || !game.act(seat, decision, actionIndex)) return false;
-        revision = Math.addExact(revision, 1);
+        if (game.phase() == McrGame.Phase.MATCH_END) lifecycle = Lifecycle.FINISHED;
+        changed(false);
         return true;
     }
 
     /** All four participants acknowledge the completed hand before the next one is dealt. */
     public boolean confirmNextHand(UUID actor, UUID expectedTable, UUID expectedIncarnation, long decision) {
-        int seat = authorized(actor, expectedTable, expectedIncarnation, decision);
+        if (game == null) return false;
+        int seat = authorize(actor, expectedTable, expectedIncarnation, decision, game.decision(), true);
         if (seat < 0 || game.phase() != McrGame.Phase.HAND_END || (confirmed & (1 << seat)) != 0) return false;
         confirmed |= 1 << seat;
         if (confirmed == 15) {
             game.nextHand();
             confirmed = 0;
         }
-        revision = Math.addExact(revision, 1);
+        changed(false);
         return true;
     }
 
-    private int authorized(UUID actor, UUID expectedTable, UUID expectedIncarnation, long decision) {
-        if (!tableId.equals(expectedTable) || !incarnation.equals(expectedIncarnation)
-            || decision != game.decision() || seated != 15) return -1;
-        return seatOf(actor);
+    public boolean equipped() { return Tile.validMcrSet(stock); }
+
+    public boolean configureEquipment(boolean manual, List<Integer> tiles) {
+        Objects.requireNonNull(tiles);
+        if (manual || !lobby()) return false;
+        if (!tiles.isEmpty() && !Tile.validMcrSet(tiles))
+            throw new IllegalArgumentException("An MCR table requires all 144 physical tiles");
+        if (stock.equals(tiles)) return false;
+        stock = List.copyOf(tiles);
+        resetReadiness();
+        changed(true);
+        return true;
     }
+
+    protected void startMatch() {
+        if (!equipped()) throw new IllegalStateException("Cannot start MCR without its complete stock");
+        roster(participants());
+        game = McrGame.fromStock(seed, stock);
+        confirmed = 0;
+        lifecycle = Lifecycle.PLAYING;
+        renewIncarnation();
+    }
+
+    protected void clearMatch() {
+        game = null;
+        confirmed = 0;
+    }
+
+    public void tick() { tickRoom(); }
 
     /** An absent participant gets the same concealed-data protection as an unprivileged spectator. */
     public View view(UUID recipient) {
-        int seat = seatOf(recipient);
-        if (seat >= 0 && (seated & (1 << seat)) == 0) seat = -1;
-        return new View(tableId, incarnation, revision, participants, seated, confirmed,
-            McrView.project(game, seat, seated == 15));
+        if (game == null) return null;
+        return new View(tableId, incarnation, revision, participants(), seated(), confirmed,
+            McrView.project(game, viewerSeat(recipient), seated() == 15));
     }
 
-    public State save() { return new State(State.FORMAT, tableId, revision, participants, confirmed, game.save()); }
-
-    public record Participant(UUID id, String name) {
-        public Participant {
-            Objects.requireNonNull(id);
-            Objects.requireNonNull(name);
-            if (name.isBlank() || name.length() > 64 || name.chars().anyMatch(Character::isISOControl))
-                throw new IllegalArgumentException("Invalid MCR participant name");
-        }
+    public State save() {
+        return new State(State.FORMAT, saveRoom(), stock, confirmed, game == null ? null : game.save());
     }
 
     /** A private envelope, not a wire view. No mount state or reusable request incarnation is persisted. */
-    public record State(int format, UUID tableId, long revision, List<Participant> participants,
-                        int confirmed, McrGameState game) {
-        public static final int FORMAT = 3;
+    public record State(int format, TableSession.State room, List<Integer> stock, int confirmed, McrGameState game) {
+        public static final int FORMAT = 4;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");
-            Objects.requireNonNull(tableId);
-            participants = roster(participants);
-            Objects.requireNonNull(game);
-            if (revision < 1 || revision >= Long.MAX_VALUE - 1 || confirmed < 0 || confirmed >= 15
-                || confirmed != 0 && game.phase() != McrGame.Phase.HAND_END)
+            Objects.requireNonNull(room);
+            stock = List.copyOf(stock);
+            if (room.variant() != MahjongVariant.MCR || !stock.isEmpty() && !Tile.validMcrSet(stock)
+                || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != McrGame.Phase.HAND_END)
+                || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)
+                || game != null && (!Tile.validMcrSet(stock)
+                    || (room.lifecycle() == Lifecycle.FINISHED) != (game.phase() == McrGame.Phase.MATCH_END)))
                 throw new IllegalArgumentException("Invalid MCR session state");
+            if (game != null) roster(room.participants());
         }
     }
 
     /** Identity-bound recipient projection. Access to private game state is never part of this contract. */
-    public record View(UUID tableId, UUID incarnation, long revision, List<Participant> participants,
+    public record View(UUID tableId, UUID incarnation, long revision, List<TableParticipant> participants,
                        int seated, int confirmed, McrView game) {
         public View {
             Objects.requireNonNull(tableId);
@@ -146,10 +144,10 @@ public final class McrSession {
         }
     }
 
-    private static List<Participant> roster(List<Participant> participants) {
+    private static List<TableParticipant> roster(List<TableParticipant> participants) {
         var copy = List.copyOf(participants);
         var identities = new HashSet<UUID>();
-        if (copy.size() != 4 || copy.stream().anyMatch(player -> !identities.add(player.id())))
+        if (copy.size() != 4 || copy.stream().anyMatch(player -> player.id() == null || player.bot() || !identities.add(player.id())))
             throw new IllegalArgumentException("An MCR session requires four distinct participants in seat order");
         return copy;
     }

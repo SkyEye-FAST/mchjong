@@ -8,11 +8,11 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class ManualHandlingTest {
     private static final Gson JSON = new Gson();
-    private static final List<RuleSet> MODES = List.of(RuleSet.TENHOU_4, RuleSet.MAHJONG_SOUL_3);
+    private static final List<RiichiPreset> MODES = List.of(RiichiPreset.TENHOU_4, RiichiPreset.MAHJONG_SOUL_3);
     private static UUID id(int seat) { return new UUID(812, seat); }
 
-    private static Game game(RuleSet rules, boolean manual) {
-        Game game = new Game(UUID.randomUUID(), rules, 8192);
+    private static RiichiGame game(RiichiPreset rules, boolean manual) {
+        RiichiGame game = new RiichiGame(UUID.randomUUID(), rules, 8192);
         assertTrue(game.configureEquipment(manual, Tile.set(rules.sanma(), rules.defaultRedFives())));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
@@ -21,23 +21,23 @@ class ManualHandlingTest {
         return game;
     }
 
-    private static void act(Game game, int seat, Action.Type action) {
+    private static void act(RiichiGame game, int seat, Action.Type action) {
         TableView view = game.view(id(seat));
-        int index = Game.indexOf(view.actions(), action);
+        int index = RiichiGame.indexOf(view.actions(), action);
         assertTrue(index >= 0, () -> action + " is not offered in " + game.phase());
         assertTrue(game.act(id(seat), view.decision(), index));
         assertFalse(game.act(id(seat), view.decision(), index), "Replayed packet changed physical state");
         game.validate();
     }
 
-    private static Game reload(Game game) {
-        Game restored = JSON.fromJson(JSON.toJson(game), Game.class);
-        restored.validate();
-        assertEquals(JSON.toJson(game.view(null)), JSON.toJson(restored.view(null)));
+    private static RiichiGame reload(RiichiGame game) {
+        RiichiGame restored = GameLifecycleTest.reloadMounted(game);
+        assertEquals(game.view(null).seats(), restored.view(null).seats());
+        assertEquals(game.view(null).wall(), restored.view(null).wall());
         return restored;
     }
 
-    private static void concealed(Game game) {
+    private static void concealed(RiichiGame game) {
         TableView view = game.view(null);
         assertTrue(view.actions().isEmpty());
         assertTrue(view.seats().stream().filter(seat -> !seat.exposed()).flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == Tile.HIDDEN));
@@ -46,13 +46,13 @@ class ManualHandlingTest {
     }
 
     @Test void handlingSurvivesReloadAndMatchesTheAutomaticDealForBothPlayerCounts() {
-        for (RuleSet rules : MODES) {
-            Game game = game(rules, true);
-            assertEquals(Game.Phase.SHUFFLE, game.phase());
+        for (RiichiPreset rules : MODES) {
+            RiichiGame game = game(rules, true);
+            assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             assertNull(game.wall);
             assertEquals(new TableView.Handling(0, -1, 0, 0, 0, false), game.view(null).handling());
             for (int tick = 0; tick < 2400; tick++) game.tick();
-            assertEquals(Game.Phase.SHUFFLE, game.phase());
+            assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
             act(game, game.dealer, Action.Type.SHUFFLE);
             assertTrue(game.view(null).wall().stream().allMatch(tile -> tile == Tile.ABSENT));
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -63,7 +63,7 @@ class ManualHandlingTest {
                 game = reload(game);
             }
             openWall(game);
-            assertEquals(Game.Phase.DEAL, game.phase());
+            assertEquals(RiichiGame.Phase.DEAL, game.phase());
             for (int packet = 0; packet < 4 * rules.players(); packet++) {
                 assertTrue(game.view(id(game.next(game.turn))).actions().isEmpty());
                 var handling = game.view(id(game.turn)).handling();
@@ -74,7 +74,7 @@ class ManualHandlingTest {
                 game = reload(game);
                 concealed(game);
             }
-            assertEquals(Game.Phase.DRAW, game.phase());
+            assertEquals(RiichiGame.Phase.DRAW, game.phase());
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(13, game.players[seat].hand.size());
             int remaining = game.wall.remaining();
             assertEquals(new TableView.Handling((1 << rules.players()) - 1, 13 * rules.players(), 1,
@@ -84,9 +84,9 @@ class ManualHandlingTest {
             act(game, game.dealer, Action.Type.DRAW);
             assertEquals(14, game.players[game.dealer].hand.size());
             assertEquals(remaining - 1, game.wall.remaining());
-            assertEquals(Game.Phase.TURN, game.phase());
+            assertEquals(RiichiGame.Phase.TURN, game.phase());
             concealed(game);
-            Game automatic = game(rules, false);
+            RiichiGame automatic = game(rules, false);
             assertNull(automatic.view(null).handling());
             for (int seat = 0; seat < rules.players(); seat++) assertEquals(automatic.players[seat].hand, game.players[seat].hand);
             assertEquals(automatic.wall.tiles, game.wall.tiles);
@@ -96,8 +96,8 @@ class ManualHandlingTest {
     }
 
     @Test void concurrentWallBuildingPreservesOtherSeatsDecisionAndRejectsDuplicateBuilds() {
-        for (RuleSet rules : MODES) {
-            Game game = game(rules, true);
+        for (RiichiPreset rules : MODES) {
+            RiichiGame game = game(rules, true);
             act(game, game.dealer, Action.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
             for (int seat = 1; seat < rules.players(); seat++) {
@@ -109,9 +109,11 @@ class ManualHandlingTest {
                 assertTrue(game.view(id(seat)).actions().isEmpty());
                 assertFalse(game.act(id(seat), token, 0), "The shared token must not allow rebuilding a completed wall");
                 game = reload(game);
+                assertFalse(game.act(id(0), token, 0), "A request from before restoration must expire");
+                token = game.view(id(0)).decision();
             }
-            assertTrue(game.act(id(0), token, 0), "The original held wall action must remain valid");
-            assertEquals(Game.Phase.BUILD_WALL, game.phase());
+            assertTrue(game.act(id(0), token, 0), "The restored wall action remains available");
+            assertEquals(RiichiGame.Phase.BUILD_WALL, game.phase());
             assertNotEquals(token, game.view(id(0)).decision());
             assertFalse(game.act(id(0), token, 0), "A wall action must not replay into packet dealing");
             openWall(game);
@@ -120,13 +122,13 @@ class ManualHandlingTest {
     }
 
     @Test void practiceBotsCanBuildWhileThePlayerHoldsTheirWall() {
-        for (RuleSet rules : MODES) {
-            Game game = game(rules, true);
+        for (RiichiPreset rules : MODES) {
+            RiichiGame game = game(rules, true);
             act(game, game.dealer, Action.Type.SHUFFLE);
             long token = game.view(id(0)).decision();
-            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].bot = true;
+            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].member.bot = true;
             for (int tick = 0; tick < 48; tick++) { game.tick(); game.validate(); }
-            assertEquals(Game.Phase.BUILD_WALL, game.phase());
+            assertEquals(RiichiGame.Phase.BUILD_WALL, game.phase());
             assertEquals((1 << rules.players()) - 2, game.view(id(0)).handling().builtWalls());
             assertEquals(token, game.view(id(0)).decision());
             assertTrue(game.act(id(0), token, 0));
@@ -136,7 +138,7 @@ class ManualHandlingTest {
     }
 
     @Test void emptyOrInvalidEquipmentCannotStartADeal() {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         assertTrue(game.configureEquipment(true, List.of()));
         assertTrue(game.join(id(0), "Host", 0));
         assertFalse(game.equipped());
@@ -149,7 +151,7 @@ class ManualHandlingTest {
     }
 
     @Test void replacementDrawWaitsForPlayerAndSurvivesReload() {
-        Game game = game(RuleSet.MAHJONG_SOUL_3, true);
+        RiichiGame game = game(RiichiPreset.MAHJONG_SOUL_3, true);
         act(game, game.dealer, Action.Type.SHUFFLE);
         for (int seat = 0; seat < game.rules.players(); seat++) act(game, seat, Action.Type.BUILD_WALL);
         openWall(game);
@@ -160,7 +162,7 @@ class ManualHandlingTest {
         assertEquals(game.wall.nextReplacementSlot(), game.view(null).handling().sourceSlot());
         assertEquals(1, game.view(null).handling().packetSize());
         game = reload(game);
-        assertEquals(Game.Phase.DRAW, game.phase());
+        assertEquals(RiichiGame.Phase.DRAW, game.phase());
         assertTrue(game.handling.replacement);
         assertTrue(game.handling.kan);
         assertEquals(13, game.players[game.dealer].hand.size());
@@ -177,9 +179,9 @@ class ManualHandlingTest {
     }
 
     @Test void manualPracticeBotsAdvanceHandlingAndAWholeHandConservesTilesAndArchives() {
-        for (RuleSet rules : MODES) {
-            Game game = game(rules, true);
-            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].bot = true;
+        for (RiichiPreset rules : MODES) {
+            RiichiGame game = game(rules, true);
+            for (int seat = 1; seat < rules.players(); seat++) game.players[seat].member.bot = true;
             int ticks = 0;
             while (game.pendingReplays().isEmpty() && ticks++ < 50_000) {
                 if (!game.actions(0).isEmpty()) assertTrue(game.act(id(0), game.decision, 0));
@@ -193,7 +195,7 @@ class ManualHandlingTest {
         }
     }
 
-    private static void openWall(Game game) {
+    private static void openWall(RiichiGame game) {
         assertEquals(0, game.wall.diceOne);
         assertEquals(0, game.wall.cursor);
         for (int seat = 0; seat < game.rules.players(); seat++) if (seat != game.dealer)

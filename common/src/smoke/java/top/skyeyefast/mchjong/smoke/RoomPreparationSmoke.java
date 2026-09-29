@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -32,7 +32,7 @@ final class RoomPreparationSmoke {
             originalAutoSeat = TableSettings.get().autoSeat;
             TableSettings.get().autoSeat = table.automatic();
         }
-        if (view != null && view.phase() != Game.Phase.LOBBY) {
+        if (view != null && view.phase() != RiichiGame.Phase.LOBBY) {
             TableSettings.get().autoSeat = originalAutoSeat;
             return true;
         }

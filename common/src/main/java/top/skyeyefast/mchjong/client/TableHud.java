@@ -7,7 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.ResourceLocation;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -50,7 +50,7 @@ final class TableHud {
                 net.minecraft.resources.ResourceLocation backPreset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
-        boolean lobby = view.phase() == Game.Phase.LOBBY;
+        boolean lobby = view.phase() == RiichiGame.Phase.LOBBY;
         int headerWidth = board == null ? Math.min(280, Math.max(84, width - 224))
             : Math.min(220, Math.max(110, width - 190));
         Component details = Component.translatable(view.rules().translationKey()).append("\n").append(TableScreen.roundName(view))
@@ -279,7 +279,7 @@ final class TableHud {
         furitenView = view;
         furiten = false;
         if (view.viewerSeat() < 0 || view.viewerSeat() >= view.seats().size()
-            || view.phase() != Game.Phase.TURN && view.phase() != Game.Phase.REACTION && view.phase() != Game.Phase.DRAW) return false;
+            || view.phase() != RiichiGame.Phase.TURN && view.phase() != RiichiGame.Phase.REACTION && view.phase() != RiichiGame.Phase.DRAW) return false;
         if (view.ronBlocked()) return furiten = true;
         var self = view.seats().get(view.viewerSeat());
         var concealed = new ArrayList<>(self.hand());

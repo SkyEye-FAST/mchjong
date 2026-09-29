@@ -9,7 +9,8 @@ gameplay, presentation, assets, and tests wherever their target Minecraft API
 allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
-  stateful `Game` and `McrGame` orchestration, simple records/DTOs and the JVM interop shim for
+  shared `TableSession` room lifecycle, stateful `RiichiGame` and `McrGame`
+  orchestration, simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
   including tile identity/set composition, wall layout, visible-tile accounting,
@@ -60,7 +61,7 @@ reaction, or one owned tile when supplementing a public triplet on a draw turn.
 The latter keeps the original triplet and fourth tile pending until robbery
 responses finish. MCR save and session records accept only their current format.
 
-`RiichiHandAnalyzer` owns the Riichi scoring and shape adapter used by `Game`,
+`RiichiHandAnalyzer` owns the Riichi scoring and shape adapter used by `RiichiGame`,
 legal actions, hints, replays and bots. `McrHandAnalyzer` is the sole production
 boundary to mcr-mahjong. Its public methods accept engine tile IDs, `Meld` values
 and JDK collections, and return ordinary kind sets or `McrHandScore` records.
@@ -70,7 +71,7 @@ suppliers and winds. Physical IDs are validated and deduplicated before conversi
 The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` from Maven Central and
 relocates its `top.skyeyefast.mcr` package to `top.skyeyefast.mchjong.internal.mcr`.
 The library's MIT license and upstream attribution remain in the bundled archive.
-`Game`, `RuleConfig`, public views and table actions retain their Riichi contracts.
+`RiichiGame`, `RiichiRules`, `TableView` and `Action` retain their Riichi contracts.
 `McrGame` independently runs four-player MCR matches through engine-owned actions.
 
 MCR analysis takes the concealed hand before drawing or winning:
@@ -107,7 +108,7 @@ composition, 14-tile dead wall, replacement slots and dora/ura indicators.
 
 The Minecraft item boundary uses `McrDeck` and `TableEquipment.mcrStock` to
 select a complete, uniform 144-tile subset from one case and supply the physical
-identities to `McrSession.start`. Selection is read-only and keeps flower
+identities to `McrSession.configureEquipment`. Selection is read-only and keeps flower
 item faces separate from ordinary analysis kinds. See [Supply data](SUPPLIES.md#mcr-stock-boundary).
 
 `McrWallLayout` owns four walls of eighteen stacks, with upper/lower slots in
@@ -189,8 +190,8 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The current game and session format is 3. Restore rejects earlier experimental
-formats directly. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 3 and the session format is 4. Restore rejects earlier
+experimental formats directly. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -234,47 +235,39 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
-### MCR room-to-match sessions
+### Shared rooms and MCR sessions
 
-`McrSession` binds a prepared room's four distinct participant UUIDs to fixed
-engine seats. Display names are metadata, not authorization. Its start operation
-accepts a complete standard 144-tile stock and delegates shuffling to `McrGame`;
-it owns the match without owning lobby configuration or seating assignment.
+`MahjongVariant` selects one of the two built-in runtimes. `TableSession` owns
+the table UUID, host, participants, seats, readiness, observed presence, variant,
+request incarnation, exit controls and room lifecycle. `RoomSeating` owns the
+concealed wind lottery. A variant change creates a new concrete session with the
+same human roster and fresh preparation state. `RiichiGame` and `McrSession`
+retain their own rules, actions, private views and settlement state.
 
-The server host supplies observed UUID-to-seat mounts through `synchronizeSeats`.
-Only a participant mounted at their assigned seat receives that seat's private
-view. A missing, displaced or ambiguously occupied mount grants spectator access.
-Play pauses while any of the four participants is absent; issued actions are
-withheld until the full roster is seated again. Pending responses and scores
-remain intact. After a completed hand, all four participants acknowledge before
-the session advances the dealer and deals the next hand.
+`McrSession` adds a complete 144-tile stock, `McrGame` and completed-hand
+acknowledgements. The shared room starts the match once all four distinct humans
+are ready at their assigned stools. Only a participant mounted at the assigned
+seat receives that seat's private view. A missing, displaced or ambiguously
+occupied mount grants spectator access. MCR play pauses while any participant is
+absent; pending responses and scores remain intact. All four participants
+acknowledge a completed hand before the next hand begins.
 
-Requests contain the table UUID, runtime incarnation UUID, current game decision
-and action index. The authenticated sender's UUID determines the acting seat.
-Every newly created or restored session generates a fresh incarnation, so requests
-from another match or another restoration of the same save remain invalid even
-when their numeric decisions coincide. Partial responses and presence changes
-advance the session view revision without invalidating other responders' decisions.
+`TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
+`MahjongTableBlockEntity` owns only that host. It observes stools and authenticated
+connections, validates world and equipment boundaries, sends recipient snapshots
+and stores one private `session` field. `TableSessionCodec` encodes exactly one
+concrete session and its current match in that field. Presence is reconstructed
+from live mounts after loading; a fresh incarnation and decision invalidate
+requests from before restoration. MCR's structured state contains the common
+room state and its own match record. Riichi's private state contains the common
+room and its own rule state, with participant identity held only by the room.
 
-`McrCodec.saveSession` stores the fixed roster, table identity, hand confirmations
-and private game state; `restoreSession` validates them together. Mount presence
-is re-established by the server, never restored from disk. `encodeSessionView`
-and `decodeSessionView` carry the identity envelope and already-redacted `McrView`,
-not the saved game. The Minecraft host remains responsible for authenticating the
-sender and checking the dimension, loaded table, live mount and server policies
-before calling these methods.
-
-`GameType` is the top-level automatic-table lobby choice. Riichi presets remain
-in `RuleSet`; selecting MCR uses the fixed `wmo-2014-zh` four-player, sixteen-hand
-profile. The shared table retains its room seating and physical equipment boundary,
-then hands the four seated human identities and `TableEquipment.mcrStock()` to
-`McrTableHost`. That host owns the `McrSession`, observes live stool mounts, saves
-the private session independently and refreshes its incarnation on restore.
-`McrActionPayload` carries only table/session identity, decision and an issued
-action index; the server resolves the seat from the authenticated sender. The
-independent `McrViewPayload` carries only an encoded recipient-safe session view
-and public tile appearance. `McrTableScreen` and `McrResultsScreen` consume this
-projection and the MCR scene, with no Riichi settlement fields.
+`McrActionPayload` carries the table UUID, incarnation, decision and an issued
+action index. The server resolves the acting seat from the authenticated sender.
+`McrViewPayload` carries the public `TableRoomView`, an encoded recipient-safe
+`McrSession.View` during play and public equipment appearance. `McrLobbyScreen`,
+`McrTableScreen` and `McrResultsScreen` consume those projections. Riichi retains
+its own `Action`, `TableView` and settlement presentation.
 
 ### MCR physical presentation
 
@@ -301,8 +294,8 @@ channel encoder. All receivers dispatch to the existing authorized server handle
 on the game thread. Forge's client-only item accessor binds the shared renderer to
 Forge's item extension field without importing loader types into shared items.
 
-`RuleSet` defines named presets; `RuleConfig` is the complete immutable, validated
-snapshot used by the engine, public views, saves and native replays. `RuleOption`
+`RiichiPreset` defines named presets; `RiichiRules` is the complete immutable,
+validated snapshot used by the engine, public views, saves and native replays. `RiichiRuleOption`
 defines field bounds, translation keys, categories and preset defaults. Runtime
 logic reads individual settings instead of branching on a preset identity.
 `TableRulesPayload` carries a bounded proposal and the current table identity and
@@ -445,7 +438,7 @@ non-participant may open an active table's spectator screen.
 `WorldSettings` owns administrator policy per world save, across dimensions. It
 also controls invitations and invitation teleportation, Minecraft experience
 rewards, replay availability, bots and companion participants, convenience hints,
-and the thin custom-rule/forced-preset boundary. `Game` receives only the pure
+and the thin custom-rule/forced-preset boundary. `RiichiGame` receives only the pure
 runtime `WorldPolicy`; Minecraft UI and storage behavior stay outside the engine.
 `TableViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
 room state. The World settings UI uses the server-advertised administrator command
@@ -547,7 +540,7 @@ engine bounds recordings and does not derive or modify any score.
 Draw settlements retain their 200-tick timer. Winning receipts have a finite
 server fallback derived from their recording count and the eight-second clip
 limit. Seated human clients acknowledge completion using the server-issued
-`SETTLEMENT_DONE` action; once all seated humans finish, `Game` shortens the
+`SETTLEMENT_DONE` action; once all seated humans finish, `RiichiGame` shortens the
 remaining hand stage to a 200-tick reading tail. This acknowledgement cannot
 change points or advance the stage immediately. Bots need no acknowledgement;
 the fallback still expires if a client never acknowledges. Each settlement stage
@@ -649,7 +642,7 @@ dimensions are bounded before transfer, while each player stores a personal
 selection in the client TOML settings. The server broadcasts only selections
 from its own stick presets; a client-only selection stays on that player's client.
 
-`TimeControl` is enforced entirely in `Game`: per-hand reserves and fresh decision
+`TimeControl` is enforced entirely in `RiichiGame`: per-hand reserves and fresh decision
 allowances are independent for each active responder. Client interpolation and
 warning sounds have no authority over deadlines. Lobby changes require the host
 and invalidate ready votes. `TableInvitations` binds expiring requests to player
@@ -669,6 +662,6 @@ Replay recording and playback live in the Minecraft-independent engine.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
-The viewer never feeds recorded actions back into a live `Game`. `TenhouReplay`
+The viewer never feeds recorded actions back into a live `RiichiGame`. `TenhouReplay`
 is the only export encoder; it consumes completed records and does not rerun
 scoring. See `REPLAYS.md` for the storage layout and interchange details.

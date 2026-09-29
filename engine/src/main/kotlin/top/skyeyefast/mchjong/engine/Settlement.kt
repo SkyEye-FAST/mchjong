@@ -7,7 +7,7 @@ import java.util.LinkedHashMap
 /** Payments and match progression are separate from action legality and transport. */
 internal object Settlement {
     @JvmStatic
-    fun win(game: Game, winners: List<Int>, from: Int, tile: Int) {
+    fun win(game: RiichiGame, winners: List<Int>, from: Int, tile: Int) {
         val before = points(game)
         game.wins.clear()
         for ((index, seat) in winners.withIndex()) {
@@ -35,7 +35,7 @@ internal object Settlement {
         finish(game, game.dealer in winners, false, false, if (from < 0) "tsumo" else "ron", before)
     }
 
-    private fun payWin(game: Game, winner: Int, from: Int, score: HandScore, honba: Int) {
+    private fun payWin(game: RiichiGame, winner: Int, from: Int, score: HandScore, honba: Int) {
         val liable = pao(game, winner, score)
         val liableUnits = liable.values.sum()
         val normalUnits = score.yakuman() - liableUnits
@@ -78,7 +78,7 @@ internal object Settlement {
         }
     }
 
-    private fun pao(game: Game, seat: Int, score: HandScore): LinkedHashMap<Int, Int> {
+    private fun pao(game: RiichiGame, seat: Int, score: HandScore): LinkedHashMap<Int, Int> {
         val liable = LinkedHashMap<Int, Int>()
         if (score.yakuman() == 0) return liable
         val player = game.players[seat]
@@ -109,12 +109,12 @@ internal object Settlement {
     }
 
     @JvmStatic
-    fun abort(game: Game, reason: String) {
+    fun abort(game: RiichiGame, reason: String) {
         finish(game, true, true, true, reason, points(game))
     }
 
     @JvmStatic
-    fun exhaustive(game: Game) {
+    fun exhaustive(game: RiichiGame) {
         val before = points(game)
         val tenpai = BooleanArray(4)
         val nagashi = mutableListOf<Int>()
@@ -153,34 +153,34 @@ internal object Settlement {
         finish(game, tenpai[game.dealer], true, false, if (nagashi.isEmpty()) "exhaustive" else "nagashi", before)
     }
 
-    fun nagashiEligible(rules: RuleConfig, melds: List<Meld>, river: List<Discard>): Boolean =
+    fun nagashiEligible(rules: RiichiRules, melds: List<Meld>, river: List<Discard>): Boolean =
         rules.nagashiMangan() && river.isNotEmpty() &&
             (rules.nagashiAllowsCalls() || melds.all { it.closed() }) &&
             river.all { !it.called() && Tile.terminalOrHonor(Tile.kind(it.tile())) }
 
-    private fun transfer(game: Game, payer: Int, recipient: Int, points: Int) {
+    private fun transfer(game: RiichiGame, payer: Int, recipient: Int, points: Int) {
         if (payer == recipient || points < 0) throw IllegalStateException("Invalid point transfer")
         game.players[payer].points -= points
         game.players[recipient].points += points
     }
 
-    private fun points(game: Game): IntArray = IntArray(game.players.size) { game.players[it].points }
+    private fun points(game: RiichiGame): IntArray = IntArray(game.players.size) { game.players[it].points }
 
-    private fun finish(game: Game, repeats: Boolean, draw: Boolean, abort: Boolean, reason: String, before: IntArray) {
+    private fun finish(game: RiichiGame, repeats: Boolean, draw: Boolean, abort: Boolean, reason: String, before: IntArray) {
         game.dealerRepeats = repeats
         game.drawResult = draw
         game.abortResult = abort
         game.result = reason
-        for (player in game.players) player.ready = false
+        for (player in game.players) player.member.ready = false
         val end = matchEnds(game)
-        game.newDecision(if (end) Game.Phase.MATCH_END else Game.Phase.HAND_END)
+        game.newDecision(if (end) RiichiGame.Phase.MATCH_END else RiichiGame.Phase.HAND_END)
         if (end) finalScores(game)
         game.deltas = ArrayList()
         for (seat in 0 until 4) game.deltas.add(game.players[seat].points - before[seat])
         game.finishReplay()
     }
 
-    private fun matchEnds(game: Game): Boolean {
+    private fun matchEnds(game: RiichiGame): Boolean {
         val n = game.rules.players()
         if (game.rules.bankruptcy()) {
             for (seat in 0 until n) if (game.players[seat].points < 0) return true
@@ -194,13 +194,13 @@ internal object Settlement {
         return game.players[top].points >= game.rules.targetPoints() || game.round >= game.rules.scheduledRounds() + n - 1
     }
 
-    private fun ranking(game: Game): List<Int> =
+    private fun ranking(game: RiichiGame): List<Int> =
         (0 until game.rules.players()).sortedWith(
             compareBy<Int> { -game.players[it].points }
                 .thenBy { Math.floorMod(it - game.initialDealer, game.rules.players()) },
         )
 
-    private fun finalScores(game: Game) {
+    private fun finalScores(game: RiichiGame) {
         val ranking = ranking(game)
         val groups = mutableListOf<MutableList<Int>>()
         for (seat in ranking) {
@@ -252,9 +252,9 @@ internal object Settlement {
                 }
                 game.finalUma[seat] = umaShare
                 val player = game.players[seat]
-                if (player.id != null && !player.bot) {
+                if (player.member.id != null && !player.member.bot) {
                     val experience = game.worldPolicy.experienceChange(umaShare)
-                    if (experience != 0) game.pendingExperience.merge(player.id, experience, Integer::sum)
+                    if (experience != 0) game.pendingExperience.merge(player.member.id, experience, Integer::sum)
                 }
             }
         }

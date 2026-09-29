@@ -6,8 +6,8 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class BotServicePositionTest {
     @Test void lobbyOffersOnlyBotsMatchingTheCurrentPreset() {
-        var bot = new ExternalBot("mortal-4p", "Mortal 4P", 4, java.util.List.of(RuleSet.TENHOU_4));
-        Game game = new Game(UUID.randomUUID(), RuleSet.MAHJONG_SOUL_4, 1);
+        var bot = new ExternalBot("mortal-4p", "Mortal 4P", 4, java.util.List.of(RiichiPreset.TENHOU_4));
+        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 1);
         game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         game.configureExternalBots(java.util.List.of(bot));
         UUID host = UUID.randomUUID();
@@ -17,9 +17,9 @@ class BotServicePositionTest {
     }
 
     @Test void botPositionKeepsPrivateDrawsAndRejectsStaleOrIllegalResponses() {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 83);
+        RiichiGame game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 83);
         game.configureExternalBots(java.util.List.of(new ExternalBot("mortal-4p", "Mortal 4P", 4,
-            java.util.List.of(RuleSet.TENHOU_4))));
+            java.util.List.of(RiichiPreset.TENHOU_4))));
         game.configureWorld(new WorldPolicy(true, false, true, 5_000, false, true, true, true, null));
         UUID host = UUID.randomUUID();
         assertTrue(game.join(host, "Host", 1));
@@ -33,7 +33,7 @@ class BotServicePositionTest {
         String saved = new com.google.gson.Gson().toJson(game);
         assertTrue(saved.contains("\"externalBotId\":\"mortal-4p\""));
         assertFalse(saved.contains("externalBots"));
-        Game restored = new com.google.gson.Gson().fromJson(saved, Game.class);
+        RiichiGame restored = new com.google.gson.Gson().fromJson(saved, RiichiGame.class);
         restored.validate();
         assertEquals("mortal-4p", restored.externalBotId(0));
         GameLifecycleTest.startPositioned(game);
@@ -42,7 +42,7 @@ class BotServicePositionTest {
 
         UUID session = UUID.randomUUID();
         assertNull(game.botPosition(0, session));
-        for (int tick = 0; tick <= Game.DEAL_TICKS; tick++) game.tick();
+        for (int tick = 0; tick <= RiichiGame.DEAL_TICKS; tick++) game.tick();
         BotPosition position = game.botPosition(0, session);
         assertNotNull(position);
         assertEquals(13, position.opening().hand().size());

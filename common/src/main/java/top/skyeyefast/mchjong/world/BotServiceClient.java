@@ -23,8 +23,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.BotPosition;
 import top.skyeyefast.mchjong.engine.ExternalBot;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 
 /** Nonblocking server-thread bridge to the administrator-configured bot service. */
 public final class BotServiceClient {
@@ -97,8 +97,8 @@ public final class BotServiceClient {
         var ids = new HashSet<String>();
         for (var element : root.getAsJsonArray("bots")) {
             JsonObject value = element.getAsJsonObject();
-            var presets = new ArrayList<RuleSet>();
-            for (var preset : value.getAsJsonArray("presets")) presets.add(RuleSet.valueOf(preset.getAsString()));
+            var presets = new ArrayList<RiichiPreset>();
+            for (var preset : value.getAsJsonArray("presets")) presets.add(RiichiPreset.valueOf(preset.getAsString()));
             var bot = new ExternalBot(value.get("id").getAsString(), value.get("name").getAsString(),
                 value.get("player_count").getAsInt(), presets);
             if (!ids.add(bot.id())) throw new IllegalArgumentException("Duplicate Bot Service ID");
@@ -130,7 +130,7 @@ public final class BotServiceClient {
         return answer.actionIndex();
     }
 
-    BotServiceState state(Game game) {
+    BotServiceState state(RiichiGame game) {
         var seatErrors = new ArrayList<String>();
         for (int seat = 0; seat < game.rules().players(); seat++) {
             String id = game.externalBotId(seat);
@@ -140,7 +140,7 @@ public final class BotServiceClient {
         return new BotServiceState(discoveryError, seatErrors);
     }
 
-    void tick(Game game) {
+    void tick(RiichiGame game) {
         for (int seat = 0; seat < game.rules().players(); seat++) {
             String selected = game.externalBotId(seat);
             if (!java.util.Objects.equals(selectedBots[seat], selected)) {

@@ -4,26 +4,26 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.TimeControl;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableDepositsTest {
-    private TableView view(RuleSet rules, int deposits, int declared, boolean manual) {
+    private TableView view(RiichiPreset rules, int deposits, int declared, boolean manual) {
         var seats = new ArrayList<TableView.Seat>();
         for (int seat = 0; seat < rules.players(); seat++)
             seats.add(new TableView.Seat(false, "Player", true, false, false, 25000, List.of(), Tile.ABSENT,
                 List.of(), List.of(), List.of(), (declared & 1 << seat) != 0, false, false));
-        return new TableView(new UUID(0, 1), 1, 1, 1, rules.config(), Game.Phase.TURN, 0, 0, 0, 0, deposits,
+        return new TableView(new UUID(0, 1), 1, 1, 1, rules.config(), RiichiGame.Phase.TURN, 0, 0, 0, 0, deposits,
             0, 50, 0, List.of(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
             TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, manual ? new TableView.Handling(15, -1, 0, 1, 1, false) : null, null, false, 1, java.util.Map.of());
     }
 
     @Test void bothTablesDisplayTheEntirePotAndRetainCarriedDepositsForThreeAndFourPlayers() {
-        for (var rules : List.of(RuleSet.MAHJONG_SOUL_3, RuleSet.MAHJONG_SOUL_4))
+        for (var rules : List.of(RiichiPreset.MAHJONG_SOUL_3, RiichiPreset.MAHJONG_SOUL_4))
             for (boolean manual : new boolean[]{false, true}) for (int carried : new int[]{0, 1, 4, 12}) {
                 int declared = (1 << rules.players()) - 1;
                 var sticks = TableDeposits.sticks(view(rules, carried + rules.players(), declared, manual));
@@ -38,7 +38,7 @@ class TableDepositsTest {
     }
 
     @Test void awardedPotIsEmptyEvenWhenTheWinningHandStillDisplaysRiichiFlags() {
-        assertTrue(TableDeposits.sticks(view(RuleSet.MAHJONG_SOUL_4, 0, 15, false)).isEmpty());
+        assertTrue(TableDeposits.sticks(view(RiichiPreset.MAHJONG_SOUL_4, 0, 15, false)).isEmpty());
     }
 
     @Test void lanesFitBetweenTheMachineCountersAndScoresWithoutIntersectingEachOther() {

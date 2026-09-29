@@ -19,11 +19,11 @@ class TenhouFormatTest {
         assertEquals(47, TenhouReplay.tile(135));
         assertThrows(IllegalArgumentException.class, () -> TenhouReplay.tile(-1));
         assertThrows(IllegalArgumentException.class, () -> TenhouReplay.tile(136));
-        var match = fixture(RuleSet.TENHOU_4, 0, 0, List.of(), "exhaustive");
+        var match = fixture(RiichiPreset.TENHOU_4, 0, 0, List.of(), "exhaustive");
         for (var reds : RedFives.values()) for (int length : List.of(1, 2)) {
             var configured = new ReplayMatch(match.id(), match.tableId(), match.startedAt(), match.updatedAt(),
-                match.rules().with(RuleOption.RED_FIVES, reds.ordinal()).with(RuleOption.KUITAN, 0)
-                    .with(RuleOption.MATCH_LENGTH, length).with(RuleOption.MIN_HAN, 4),
+                match.rules().with(RiichiRuleOption.RED_FIVES, reds.ordinal()).with(RiichiRuleOption.KUITAN, 0)
+                    .with(RiichiRuleOption.MATCH_LENGTH, length).with(RiichiRuleOption.MIN_HAN, 4),
                 match.initialDealer(), match.participants(), match.hands(), false, reds);
             var rule = (java.util.Map<?, ?>) TenhouReplay.export(configured).get("rule");
             for (int suit = 0; suit < 3; suit++) assertEquals(reds.count(suit), rule.get("aka5" + (suit + 1)));
@@ -48,7 +48,7 @@ class TenhouFormatTest {
     }
 
     @Test void sanmaPadsTheFourthSeatRotatesStartingDealerAndSkipsTheFourthRoundId() {
-        ReplayMatch match = fixture(RuleSet.TENHOU_3, 2, 3, List.of(
+        ReplayMatch match = fixture(RiichiPreset.TENHOU_3, 2, 3, List.of(
             new ReplayHand.Event(ReplayHand.Kind.DRAW, 2, Tile.id(13, 0, true), null, false, false, true),
             new ReplayHand.Event(ReplayHand.Kind.DISCARD, 2, Tile.id(13, 0, true), null, true, true, true)), "exhaustive");
         var root = TenhouReplay.export(match);
@@ -77,14 +77,14 @@ class TenhouFormatTest {
             new ReplayHand.Event(ReplayHand.Kind.MELD, 0, Tile.id(22, 0, true), new Meld(Meld.Type.ADDED_QUAD,
                 List.of(89,90,91,Tile.id(22, 0, true)), 3, 89), false,false,false),
             new ReplayHand.Event(ReplayHand.Kind.NUKI, 0, 120, null, false,false,false));
-        var root = TenhouReplay.export(fixture(RuleSet.TENHOU_4, 0, 0, events, "four_kans"));
+        var root = TenhouReplay.export(fixture(RiichiPreset.TENHOU_4, 0, 0, events, "four_kans"));
         List<?> row = (List<?>) ((List<?>) root.get("log")).getFirst();
         assertEquals(List.of("m51151515"), row.get(5));
         assertEquals(List.of(0, "252525a52", "k53353535", "f44"), row.get(6));
         assertEquals("四開槓", ((List<?>) row.getLast()).getFirst());
     }
 
-    static ReplayMatch fixture(RuleSet rules, int dealer, int round, List<ReplayHand.Event> events, String result) {
+    static ReplayMatch fixture(RiichiPreset rules, int dealer, int round, List<ReplayHand.Event> events, String result) {
         int count = rules.players();
         var participants = new ArrayList<ReplayMatch.Participant>();
         var hands = new ArrayList<List<Integer>>();
@@ -101,7 +101,7 @@ class TenhouFormatTest {
         return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1,2,rules.config(),dealer,participants,List.of(hand),false,rules.defaultRedFives());
     }
 
-    private static ReplayWall wall(RuleSet rules) {
+    private static ReplayWall wall(RiichiPreset rules) {
         var tiles = Tile.set(rules.sanma(), rules.defaultRedFives());
         int end = tiles.size();
         var replacements = new ArrayList<Integer>();

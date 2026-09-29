@@ -8,9 +8,9 @@ import top.skyeyefast.mchjong.engine.*;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TableLayoutTest {
-    private static TableView start(RuleSet rules) {
+    private static TableView start(RiichiPreset rules) {
         UUID player = new UUID(10, 15);
-        var game = new Game(UUID.randomUUID(), rules, 15);
+        var game = new RiichiGame(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(player, "Test", 0));
         act(game, player, Action.Type.FILL_BOTS);
         act(game, player, Action.Type.BEGIN_SEATING);
@@ -19,7 +19,7 @@ class TableLayoutTest {
         return game.view(null);
     }
 
-    private static void act(Game game, UUID player, Action.Type type) {
+    private static void act(RiichiGame game, UUID player, Action.Type type) {
         var view = game.view(player);
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) {
             assertTrue(game.act(player, view.decision(), i));
@@ -40,7 +40,7 @@ class TableLayoutTest {
     @Test void informationVisibilityNeverLaysHandsFlatAndOpenHandsDoes() {
         var id = new UUID(10, 15);
         for (var mode : PlayerHandVisibility.values()) {
-            var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 15);
+            var game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 15);
             assertTrue(game.join(id, "Host", 0));
             if (mode != PlayerHandVisibility.SELF) assertTrue(game.configureHandVisibility(id, game.view(id).decision(), mode));
             act(game, id, Action.Type.FILL_BOTS);
@@ -54,7 +54,7 @@ class TableLayoutTest {
                 assertTrue(pieces.stream().noneMatch(TableScene.Piece::flat));
             }
         }
-        var open = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 16);
+        var open = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 16);
         assertTrue(open.join(id, "Host", 0));
         assertTrue(open.configureOpenHands(id, open.view(id).decision(), true));
         act(open, id, Action.Type.FILL_BOTS);
@@ -67,7 +67,7 @@ class TableLayoutTest {
     }
 
     @Test void meldsStayFramedAndBottomAlignedAtTheRightCorner() {
-        var view = start(RuleSet.TENHOU_4);
+        var view = start(RiichiPreset.TENHOU_4);
         for (Meld.Type type : Meld.Type.values()) for (int count : new int[]{1, 4}) {
             for (int source = 1; source <= 3; source++) {
                 var melds = new ArrayList<Meld>();
@@ -100,7 +100,7 @@ class TableLayoutTest {
     }
 
     @Test void existingMeldsStayAtTheCornerAsAdditionalGroupsAreDeclared() {
-        var view = start(RuleSet.TENHOU_4);
+        var view = start(RiichiPreset.TENHOU_4);
         var melds = List.of(
             new Meld(Meld.Type.TRIPLET, List.of(0, 1, 2), 1, 0),
             new Meld(Meld.Type.ADDED_QUAD, List.of(4, 5, 6, 7), 2, 4),
@@ -121,7 +121,7 @@ class TableLayoutTest {
     }
 
     @Test void rotatedSeatsKeepHandsMeldsNorthsAndCompleteWallsInsideTheFeltWithoutIntersection() {
-        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) for (int count = 0; count <= 4; count++) {
+        for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) for (int count = 0; count <= 4; count++) {
             var v = start(rules);
             var seats = new ArrayList<TableView.Seat>();
             for (int seat = 0; seat < rules.players(); seat++) {
@@ -208,7 +208,7 @@ class TableLayoutTest {
     @Test void riverSlotsCloseCalledGapsWithoutLosingDiscardIdentityOrOverlappingRiichi() {
         var discards = new ArrayList<Discard>();
         for (int i = 0; i < 26; i++) discards.add(new Discard(i, i == 2, i == 1 || i == 9, false));
-        var view = replace(start(RuleSet.TENHOU_4), List.of(80, 81), List.of(), discards);
+        var view = replace(start(RiichiPreset.TENHOU_4), List.of(80, 81), List.of(), discards);
         var river = TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.RIVER && piece.seat() == 0).toList();
         assertEquals(24, river.size());
         assertEquals(2, river.get(1).index());
@@ -225,7 +225,7 @@ class TableLayoutTest {
     }
 
     @Test void completeWallsTouchHorizontallyAndVerticallyForBothPlayerCountsAndEverySeat() {
-        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
+        for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) {
             var view = start(rules);
             int stacks = view.wall().size() / (rules.sanma() ? 6 : 8);
             var wall = java.util.stream.IntStream.range(0, view.wall().size())
@@ -245,7 +245,7 @@ class TableLayoutTest {
     }
 
     @Test void wallDrawsRunClockwiseWhileSeatsAdvanceCounterclockwiseAndTopTilesComeFirst() {
-        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
+        for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) {
             var view = start(rules);
             int size = view.wall().size();
             var live = TableScene.wallPiece(view, 0, true);
@@ -278,7 +278,7 @@ class TableLayoutTest {
         for (int riichi = 0; riichi < 12; riichi++) {
             var discards = new ArrayList<Discard>();
             for (int i = 0; i < 18; i++) discards.add(new Discard(i, i == riichi, false, false));
-            var river = TableScene.build(replace(start(RuleSet.TENHOU_4), List.of(), List.of(), discards)).stream()
+            var river = TableScene.build(replace(start(RiichiPreset.TENHOU_4), List.of(), List.of(), discards)).stream()
                 .filter(piece -> piece.area() == TableScene.Area.RIVER && piece.seat() == 0).toList();
             for (int i = 0; i < river.size(); i++) {
                 if (i % 6 > 0) {

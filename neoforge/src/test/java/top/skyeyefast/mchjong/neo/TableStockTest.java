@@ -9,8 +9,8 @@ import net.minecraft.world.item.component.ItemContainerContents;
 import net.neoforged.testframework.junit.EphemeralTestServerProvider;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import top.skyeyefast.mchjong.engine.RuleOption;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiRuleOption;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -25,7 +25,7 @@ class TableStockTest {
         assertEquals(Map.of(100, 10, 1000, 4, 5000, 3, 10000, 1), TableEquipment.startingKit(30000));
         assertEquals(Map.of(100, 10, 1000, 4, 5000, 2, 10000, 2), TableEquipment.startingKit(35000));
         var table = new TableEquipment(() -> {});
-        table.selectRules(RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.BANKRUPTCY, 0));
+        table.selectRules(RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.BANKRUPTCY, 0));
         var box = stock(15, 4);
         table.boxes().setItem(0, box);
         assertFalse(table.prepareMatch(), "Extra large sticks cannot replace missing thousand-point sticks");
@@ -55,15 +55,15 @@ class TableStockTest {
     @Test void onlyRulesWithoutBankruptcyRequireBustReserves(MinecraftServer server) {
         var table = new TableEquipment(() -> {});
         table.boxes().setItem(0, stock(16, 0));
-        table.selectRules(RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.BANKRUPTCY, 1));
+        table.selectRules(RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.BANKRUPTCY, 1));
         assertTrue(table.manualSuppliesReady());
-        table.selectRules(RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.BANKRUPTCY, 0));
+        table.selectRules(RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.BANKRUPTCY, 0));
         assertFalse(table.manualSuppliesReady());
     }
 
     @Test void drawerSticksCannotSubstituteForMissingBoxStock(MinecraftServer server) {
         var table = new TableEquipment(() -> {});
-        table.selectRules(RuleSet.MAHJONG_SOUL_4.config().with(RuleOption.BANKRUPTCY, 0));
+        table.selectRules(RiichiPreset.MAHJONG_SOUL_4.config().with(RiichiRuleOption.BANKRUPTCY, 0));
         var box = stock(15, 4);
         var drawerStick = new ItemStack(MahjongContent.POINT_STICK);
         drawerStick.set(MahjongComponents.POINTS, 1000);

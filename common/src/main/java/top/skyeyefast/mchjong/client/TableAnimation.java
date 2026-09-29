@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.Set;
 import java.util.WeakHashMap;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Discard;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Recipient-safe, interruptible presentation. Sampling never advances the game or sends a packet. */
 public final class TableAnimation {
-    public static final long DEAL_MILLIS = Game.DEAL_TICKS * 50L;
+    public static final long DEAL_MILLIS = RiichiGame.DEAL_TICKS * 50L;
     private static final Map<MahjongTableBlockEntity, TableAnimation> TABLES = new WeakHashMap<>();
     public record Frame(TableScene.Piece piece, float pitch) {}
     public record Cue(int seat, String key, long started) {}
@@ -109,8 +109,8 @@ public final class TableAnimation {
         List<Frame> before = sample(now);
         List<Frame> targets = TableScene.build(next).stream().map(TableAnimation::frame).toList();
         boolean newHand = sameViewer && next.handNumber() != view.handNumber()
-            && next.phase() == Game.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
-        if (!sameViewer || next.phase() == Game.Phase.LOBBY || next.handNumber() != view.handNumber() && !newHand) {
+            && next.phase() == RiichiGame.Phase.TURN && next.seats().stream().allMatch(seat -> seat.river().isEmpty());
+        if (!sameViewer || next.phase() == RiichiGame.Phase.LOBBY || next.handNumber() != view.handNumber() && !newHand) {
             // Rejoining or changing viewing permission must not replay or expose the old private hand.
             settled = targets;
             motions = Map.of();
@@ -230,7 +230,7 @@ public final class TableAnimation {
         settled = targets;
         motions = updates;
         ending = Math.max(finish, openingUntil);
-        if (next.phase() == Game.Phase.HAND_END || next.phase() == Game.Phase.MATCH_END) openingUntil = now;
+        if (next.phase() == RiichiGame.Phase.HAND_END || next.phase() == RiichiGame.Phase.MATCH_END) openingUntil = now;
     }
 
     private void announce(TableView next, long now) {

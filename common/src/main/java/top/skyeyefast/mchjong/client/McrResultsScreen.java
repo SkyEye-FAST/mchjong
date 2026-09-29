@@ -7,6 +7,7 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.McrSettlement;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -55,6 +56,24 @@ public final class McrResultsScreen extends Screen {
             addRenderableWidget(MahjongButton.create(Component.literal("›"), ignored -> {
                 page = (page + 1) % pages; rebuild();
             }).bounds((width - 60) / 2 + 34, height - 56, 26, 20).build());
+        }
+        if (view.game().phase() == McrGame.Phase.MATCH_END) {
+            var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
+            var room = table.clientTableRoom();
+            int action = room == null ? -1 : room.actions().indexOf(new RoomAction(RoomAction.Type.RETURN_TO_LOBBY));
+            if (action >= 0) {
+                var button = MahjongButton.create(Component.translatable("action.mchjong.return_to_lobby"), ignored -> {
+                    if (pending || minecraft.getConnection() == null) return;
+                    pending = true;
+                    minecraft.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, room.tableId(),
+                        room.incarnation(), room.decision(), action)));
+                    rebuild();
+                }).bounds((width - Math.min(260, width - 24)) / 2, height - 32,
+                    Math.min(260, width - 24), 22).build().primary();
+                button.active = !pending;
+                addRenderableWidget(button);
+            }
+            return;
         }
         if (!view.canConfirmNextHand()) return;
         var button = MahjongButton.create(Component.translatable("mcr.mchjong.next_hand"), ignored -> {

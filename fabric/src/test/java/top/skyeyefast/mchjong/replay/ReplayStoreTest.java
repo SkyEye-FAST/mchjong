@@ -13,7 +13,7 @@ import org.junit.jupiter.api.io.TempDir;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayWall;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import static org.junit.jupiter.api.Assertions.*;
@@ -39,14 +39,14 @@ class ReplayStoreTest {
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,
             List.of(35000,35000,35000), dealt, List.of(132), wall, List.of(), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
-        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RuleSet.TENHOU_3.config(), 0, players, records, false,
+        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RiichiPreset.TENHOU_3.config(), 0, players, records, false,
             top.skyeyefast.mchjong.engine.RedFives.THREE);
     }
 
     private ReplayWall wall() {
         var tiles = Tile.set(true);
         int end = tiles.size();
-        return new ReplayWall(tiles, 0, IntStream.range(0, RuleSet.TENHOU_3.replacementCapacity())
+        return new ReplayWall(tiles, 0, IntStream.range(0, RiichiPreset.TENHOU_3.replacementCapacity())
             .map(i -> end - 1 - i % 4).boxed().toList(),
             List.of(end - 5, end - 7, end - 9, end - 11, end - 13),
             List.of(end - 6, end - 8, end - 10, end - 12, end - 14));

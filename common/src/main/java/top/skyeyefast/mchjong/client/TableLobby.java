@@ -7,9 +7,9 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.GameType;
+import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 
 /** The room's frequent controls share one page, including at 320 by 240. */
@@ -26,17 +26,17 @@ final class TableLobby {
         var buttons = new ArrayList<MahjongButton>();
         int span = Math.min(440, width - 20), left = (width - span) / 2, y = top(height);
         int third = (span - 8) / 3, half = (span - 4) / 2;
-        for (var type : GameType.values()) {
+        for (var type : MahjongVariant.values()) {
             var choice = button(Component.translatable("mcr.mchjong.game_type." + type.name().toLowerCase(java.util.Locale.ROOT)),
-                left + type.ordinal() * (half + 4), y, half, () -> parent.chooseGameType(view, type));
-            choice.selected(parent.gameType() == type);
-            choice.active = host && parent.automatic() && parent.gameType() != type
-                && (type != GameType.MCR || view.rules().players() == 4
+                left + type.ordinal() * (half + 4), y, half, () -> parent.chooseVariant(view, type));
+            choice.selected(parent.variant() == type);
+            choice.active = host && parent.automatic() && parent.variant() != type
+                && (type != MahjongVariant.MCR || view.rules().players() == 4
                     && view.seats().stream().noneMatch(TableView.Seat::bot));
             buttons.add(choice);
         }
         y += 24;
-        if (parent.gameType() == GameType.MCR) {
+        if (parent.variant() == MahjongVariant.MCR) {
             var stock = button(Component.translatable("mcr.mchjong.stock_hint"), left, y, span, () -> {});
             stock.active = false;
             buttons.add(stock);
@@ -52,8 +52,8 @@ final class TableLobby {
             return buttons;
         }
         for (int count : new int[]{4, 3}) {
-            var preset = view.rules().preset().tenhou() ? count == 4 ? RuleSet.TENHOU_4 : RuleSet.TENHOU_3
-                : count == 4 ? RuleSet.MAHJONG_SOUL_4 : RuleSet.MAHJONG_SOUL_3;
+            var preset = view.rules().preset().tenhou() ? count == 4 ? RiichiPreset.TENHOU_4 : RiichiPreset.TENHOU_3
+                : count == 4 ? RiichiPreset.MAHJONG_SOUL_4 : RiichiPreset.MAHJONG_SOUL_3;
             int index = TableScreen.ruleAction(view, preset);
             var config = view.rules().withPreset(preset);
             boolean supplied = parent.canSupplyReds(config.sanma(), config.redFives());

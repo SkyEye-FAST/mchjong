@@ -16,8 +16,8 @@ import top.skyeyefast.mchjong.network.PayloadPackets;
 import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -56,7 +56,7 @@ public final class TableScreen extends Screen {
     private int lastClickedTile = Tile.ABSENT;
     private TableResults results;
     private boolean resultsExpanded = true;
-    private Game.Phase lastPhase;
+    private RiichiGame.Phase lastPhase;
     private TableResults.Page resultPage = TableResults.Page.HAND;
     private long resultStarted;
     private boolean finalSummaryShown;
@@ -145,9 +145,9 @@ public final class TableScreen extends Screen {
         return cx >= 0 && cx < IMMERSIVE_WIDTH && cy >= 0 && cy < IMMERSIVE_HEIGHT;
     }
 
-    private static boolean immersivePhase(Game.Phase phase) {
-        return phase != Game.Phase.LOBBY && phase != Game.Phase.SHUFFLE
-            && phase != Game.Phase.BUILD_WALL && phase != Game.Phase.DEAL;
+    private static boolean immersivePhase(RiichiGame.Phase phase) {
+        return phase != RiichiGame.Phase.LOBBY && phase != RiichiGame.Phase.SHUFFLE
+            && phase != RiichiGame.Phase.BUILD_WALL && phase != RiichiGame.Phase.DEAL;
     }
 
     private void toggleView() {
@@ -306,7 +306,7 @@ public final class TableScreen extends Screen {
             if (handlingDrag != null)
                 return handlingOffset(table, piece).lengthSqr() > 0 ? MahjongUi.POSITIVE : 0;
             if (!handlingMoving() && TableHandling.source(view, piece)
-                && (view.phase() != Game.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene))))
+                && (view.phase() != RiichiGame.Phase.SHUFFLE || piece.equals(TableHandling.source(view, scene))))
                 return MahjongUi.ACCENT;
         }
         return 0;
@@ -318,7 +318,7 @@ public final class TableScreen extends Screen {
         if (!minecraft.isWindowActive()) clearCameraInput();
         var current = view();
         var world = worldPolicy();
-        if (current != null && world != null && current.viewerSeat() < 0 && current.phase() != Game.Phase.LOBBY
+        if (current != null && world != null && current.viewerSeat() < 0 && current.phase() != RiichiGame.Phase.LOBBY
             && !world.spectatingEnabled()) {
             onClose();
             return;
@@ -364,8 +364,8 @@ public final class TableScreen extends Screen {
             resultStarted = Util.getMillis();
             finalSummaryShown = false;
         }
-        if (view.phase() == Game.Phase.MATCH_END && room() != null
-            && room().settlementTicks() <= Game.SETTLEMENT_TICKS && !finalSummaryShown) {
+        if (view.phase() == RiichiGame.Phase.MATCH_END && room() != null
+            && room().settlementTicks() <= RiichiGame.SETTLEMENT_TICKS && !finalSummaryShown) {
             TableAudio.finishResult();
             resultPage = TableResults.Page.MATCH;
             resultsExpanded = true;
@@ -392,7 +392,7 @@ public final class TableScreen extends Screen {
             immersive).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         if (view.exitVote() != null) { buildExitVote(view); return; }
-        if (view.phase() == Game.Phase.LOBBY) { buildLobby(view); return; }
+        if (view.phase() == RiichiGame.Phase.LOBBY) { buildLobby(view); return; }
         int physical = TableHandling.action(view);
         if (physical >= 0 && !immersive) addRenderableWidget(new PhysicalHandle(view, physical));
         List<Integer> choices = new ArrayList<>();
@@ -462,7 +462,7 @@ public final class TableScreen extends Screen {
             addRenderableWidget(MahjongButton.create(Component.translatable(resultsExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"),
                 ignored -> { TableAudio.finishResult(); resultsExpanded = !resultsExpanded; rebuild(); }).bounds(10 * scale, uiHeight() - 48 * scale, boxWidth, 20 * scale).build());
             if (resultsExpanded) {
-                int tabs = view.phase() == Game.Phase.MATCH_END ? 3 : 2;
+                int tabs = view.phase() == RiichiGame.Phase.MATCH_END ? 3 : 2;
                 int panelWidth = Math.min(layoutWidth - 20 * scale, 520 * scale);
                 int panelLeft = (layoutWidth - panelWidth) / 2;
                 int tabWidth = panelWidth / tabs;
@@ -578,7 +578,7 @@ public final class TableScreen extends Screen {
     }
 
     private void buildToolbar(TableView view) {
-        if (view.phase() == Game.Phase.LOBBY) {
+        if (view.phase() == RiichiGame.Phase.LOBBY) {
             int cell = (width - 28) / 4;
             String[] labels = {"replay.mchjong.title", "settings.mchjong.scopes", "action.mchjong.leave_room", "room.mchjong.dissolve"};
             int leave = TableSeatsScreen.find(view, Action.Type.LEAVE_ROOM, List.of());
@@ -601,14 +601,14 @@ public final class TableScreen extends Screen {
             boolean skipped = room() != null && view.viewerSeat() >= 0
                 && (room().settlementSkippedSeats() & (1 << view.viewerSeat())) != 0;
             int ticks = room() == null ? 0 : room().settlementTicks();
-            boolean standings = view.phase() == Game.Phase.MATCH_END && ticks > Game.SETTLEMENT_TICKS;
-            int seconds = (Math.max(0, ticks - (standings ? Game.SETTLEMENT_TICKS : 0)) + 19) / 20;
-            String key = view.phase() == Game.Phase.HAND_END ? "ui.mchjong.next_hand"
+            boolean standings = view.phase() == RiichiGame.Phase.MATCH_END && ticks > RiichiGame.SETTLEMENT_TICKS;
+            int seconds = (Math.max(0, ticks - (standings ? RiichiGame.SETTLEMENT_TICKS : 0)) + 19) / 20;
+            String key = view.phase() == RiichiGame.Phase.HAND_END ? "ui.mchjong.next_hand"
                 : standings ? "ui.mchjong.final_scores" : "ui.mchjong.lobby";
             int scale = immersive ? 2 : 1;
             int countdownWidth = uiWidth() - 20 * scale;
             var readout = TableAudio.result(view);
-            boolean reading = !view.wins().isEmpty() && ticks - (standings ? Game.SETTLEMENT_TICKS : 0) > Game.SETTLEMENT_TICKS;
+            boolean reading = !view.wins().isEmpty() && ticks - (standings ? RiichiGame.SETTLEMENT_TICKS : 0) > RiichiGame.SETTLEMENT_TICKS;
             Component caption = Component.translatable(key, seconds);
             Component help = Component.translatable(skip < 0 || skipped
                 ? "ui.mchjong.readout_waiting" : "action.mchjong.skip_settlement");
@@ -706,14 +706,14 @@ public final class TableScreen extends Screen {
         return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table && table.automatic();
     }
 
-    top.skyeyefast.mchjong.engine.GameType gameType() {
+    top.skyeyefast.mchjong.engine.MahjongVariant variant() {
         return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
-            ? table.clientGameType() : top.skyeyefast.mchjong.engine.GameType.RIICHI;
+            ? table.clientVariant() : top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
     }
 
-    void chooseGameType(TableView view, top.skyeyefast.mchjong.engine.GameType type) {
+    void chooseVariant(TableView view, top.skyeyefast.mchjong.engine.MahjongVariant type) {
         if (minecraft.getConnection() != null)
-            minecraft.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableGameTypePayload(
+            minecraft.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableVariantPayload(
                 pos, view.tableId(), view.decision(), type)));
     }
 
@@ -734,7 +734,7 @@ public final class TableScreen extends Screen {
                     && (world == null || world.invitationsEnabled());
                 addRenderableWidget(invite);
             }
-            if (gameType() == top.skyeyefast.mchjong.engine.GameType.MCR) continue;
+            if (variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR) continue;
             if (player.occupied() && !player.bot()
                 && room.seats().get(seat).presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
             var state = room.seats().get(seat);
@@ -815,7 +815,7 @@ public final class TableScreen extends Screen {
         actionTop = actionY;
     }
 
-    static int ruleAction(TableView view, RuleSet rule) {
+    static int ruleAction(TableView view, RiichiPreset rule) {
         for (int i = 0; i < view.actions().size(); i++) {
             var action = view.actions().get(i);
             if (action.type() == Action.Type.CHANGE_RULE && action.tiles().getFirst() == rule.ordinal()) return i;
@@ -1047,7 +1047,7 @@ public final class TableScreen extends Screen {
             renderImmersiveDiscard(graphics, now);
             renderImmersiveDraw(graphics, now);
         }
-        if (view.phase() == Game.Phase.LOBBY && room() != null
+        if (view.phase() == RiichiGame.Phase.LOBBY && room() != null
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
             int span = Math.min(440, layoutWidth - 20), left = (layoutWidth - span) / 2;
             int top = 78;
@@ -1060,7 +1060,7 @@ public final class TableScreen extends Screen {
         }
         if (!TableResults.available(view) || immersive && results == null)
             information.render(font, graphics, view, room(), botService(), layoutWidth, facePreset(), tileMaterial(), tileBack(), tileBackPreset(), board);
-        if (view.phase() == Game.Phase.LOBBY && room() != null
+        if (view.phase() == RiichiGame.Phase.LOBBY && room() != null
             && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING
             && view.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
             var lines = font.split(Component.translatable("rules.mchjong.no_red_warning"), layoutWidth - 24);
@@ -1070,7 +1070,7 @@ public final class TableScreen extends Screen {
                 y += font.lineHeight;
             }
         }
-        if (layoutHeight >= 300 && view.phase() == Game.Phase.LOBBY && room() != null
+        if (layoutHeight >= 300 && view.phase() == RiichiGame.Phase.LOBBY && room() != null
                 && room().seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
             int span = Math.min(400, layoutWidth - 20), left = (layoutWidth - span) / 2;
             MahjongUi.text(graphics, font, Component.translatable(automatic() ? "room.mchjong.flow_auto" : "room.mchjong.flow_manual"),
@@ -1136,7 +1136,7 @@ public final class TableScreen extends Screen {
                 cueY += 13 * statusScale;
             }
         }
-        if (view.phase() != Game.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
+        if (view.phase() != RiichiGame.Phase.LOBBY && !turnClock.visible && settings.show(TableSettings.Information.HELP)) {
             String helpKey = TableResults.available(view) ? "ui.mchjong.result_help" : view.viewerSeat() < 0 ? "ui.mchjong.spectator_help"
                 : choosingRiichi ? "ui.mchjong.riichi_help" : "ui.mchjong.help." + settings.discardMode.name().toLowerCase(java.util.Locale.ROOT);
             Component help = choosingRiichi || TableResults.available(view) || view.viewerSeat() < 0
@@ -1163,7 +1163,7 @@ public final class TableScreen extends Screen {
     }
 
     private void layoutTurnControls(TableView view) {
-        if (TableResults.available(view) || view.phase() == Game.Phase.LOBBY || view.viewerSeat() < 0) return;
+        if (TableResults.available(view) || view.phase() == RiichiGame.Phase.LOBBY || view.viewerSeat() < 0) return;
         int scale = immersive ? 2 : 1;
         privateHandBounds = privateHandBounds(view);
         int bottom = privateHandBounds.top() - 6 * scale;

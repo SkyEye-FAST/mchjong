@@ -14,7 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 
 /** Recipient-bound requests; only world policy can permit safe, explicit invitation teleportation. */
 public final class TableInvitations {
@@ -41,9 +41,9 @@ public final class TableInvitations {
 
     public static int invite(ServerPlayer sender, ServerPlayer recipient) throws CommandSyntaxException {
         MahjongTableBlockEntity table = TableCommands.table(sender);
-        Game game = table.participantGame(sender);
+        RiichiGame game = table.participantGame(sender);
         if (!WorldSettings.of(sender.server).policy().invitationsEnabled()
-            || game.phase() != Game.Phase.LOBBY || recipient == sender || recipient.isSpectator()
+            || game.phase() != RiichiGame.Phase.LOBBY || recipient == sender || recipient.isSpectator()
             || game.seatOf(recipient.getUUID()) >= 0 || game.view(null).seats().stream().allMatch(seat -> seat.occupied()))
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var server = sender.server;
@@ -93,7 +93,7 @@ public final class TableInvitations {
         if (level == null || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
             || !(level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) || sender == null
             || table.participantGame(sender) == null || !table.participantGame(sender).tableId().equals(invitation.tableId())
-            || table.participantGame(sender).phase() != Game.Phase.LOBBY) {
+            || table.participantGame(sender).phase() != RiichiGame.Phase.LOBBY) {
             inbox.pending.remove(token);
             throw TableCommands.error("message.mchjong.invite_expired");
         }

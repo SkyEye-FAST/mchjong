@@ -251,9 +251,9 @@ class PhysicalSuppliesTest {
             assertEquals(converted, deck.tiles().stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
             assertEquals(136, new java.util.HashSet<>(deck.tiles()).size());
             equipment.boxes().setItem(1, updated);
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.M_LEAGUE.config());
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RiichiPreset.M_LEAGUE.config());
             assertEquals(converted == 3 ? 1 : -1, equipment.activeBox());
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC.config());
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RiichiPreset.WRC.config());
             assertEquals(0, equipment.activeBox());
             if (converted == 4) {
                 assertEquals(top.skyeyefast.mchjong.engine.RedFives.FOUR, MahjongSupplies.deck(printed).redFives());
@@ -390,7 +390,7 @@ class PhysicalSuppliesTest {
         assertThrows(IllegalArgumentException.class, () -> deck.tile(top.skyeyefast.mchjong.engine.Tile.id(4, 0, true)));
 
         var participants = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
-            new top.skyeyefast.mchjong.engine.McrSession.Participant(new java.util.UUID(1, seat + 1), "Player " + seat)).toList();
+            new top.skyeyefast.mchjong.engine.TableParticipant(new java.util.UUID(1, seat + 1), "Player " + seat)).toList();
         var session = top.skyeyefast.mchjong.engine.McrSession.start(new java.util.UUID(2, 1), participants, 711, deck.tiles());
         var mounts = new java.util.HashMap<java.util.UUID, Integer>();
         for (int seat = 0; seat < 4; seat++) mounts.put(participants.get(seat).id(), seat);

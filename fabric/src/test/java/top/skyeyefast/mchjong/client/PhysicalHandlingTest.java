@@ -7,8 +7,8 @@ import java.util.stream.IntStream;
 import net.minecraft.world.phys.Vec3;
 import org.junit.jupiter.api.Test;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -17,8 +17,8 @@ import static org.junit.jupiter.api.Assertions.*;
 class PhysicalHandlingTest {
     private static UUID id(int seat) { return new UUID(904, seat); }
 
-    private static Game manual(RuleSet rules) {
-        var game = new Game(UUID.randomUUID(), rules, 4432);
+    private static RiichiGame manual(RiichiPreset rules) {
+        var game = new RiichiGame(UUID.randomUUID(), rules, 4432);
         game.configureEquipment(true, Tile.set(rules.sanma(), rules.defaultRedFives()));
         for (int seat = 0; seat < rules.players(); seat++) {
             assertTrue(game.join(id(seat), "Player " + seat, seat));
@@ -28,7 +28,7 @@ class PhysicalHandlingTest {
         return game;
     }
 
-    private static void act(Game game, int seat, Action.Type type) {
+    private static void act(RiichiGame game, int seat, Action.Type type) {
         var view = game.view(id(seat));
         int index = IntStream.range(0, view.actions().size()).filter(i -> view.actions().get(i).type() == type).findFirst().orElseThrow();
         assertTrue(game.act(id(seat), view.decision(), index));
@@ -43,7 +43,7 @@ class PhysicalHandlingTest {
     }
 
     @Test void everyPresetUsesRealSourcesAndTheCorrectSeatDestination() {
-        for (var rules : RuleSet.values()) {
+        for (var rules : RiichiPreset.values()) {
             var game = manual(rules);
             int dealer = game.view(null).dealer();
             var view = game.view(id(dealer));
@@ -94,7 +94,7 @@ class PhysicalHandlingTest {
             }
             view = game.view(id(dealer));
             conserved(view);
-            assertEquals(Game.Phase.DRAW, view.phase());
+            assertEquals(RiichiGame.Phase.DRAW, view.phase());
             source = TableHandling.source(view, TableScene.build(view));
             assertNotNull(source);
             assertEquals(view.handling().sourceSlot(), source.index());
@@ -106,7 +106,7 @@ class PhysicalHandlingTest {
     }
 
     @Test void automaticTablesKeepTheirOwnControlsAndHaveNoLoosePile() {
-        var game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 4432);
+        var game = new RiichiGame(UUID.randomUUID(), RiichiPreset.TENHOU_4, 4432);
         game.configureEquipment(false, Tile.set(false));
         for (int seat = 0; seat < 4; seat++) {
             game.join(id(seat), "Player " + seat, seat);
@@ -121,7 +121,7 @@ class PhysicalHandlingTest {
     }
 
     @Test void buildingMovesTheExistingLooseTilesRatherThanSpawningAnotherWall() {
-        var game = manual(RuleSet.TENHOU_4);
+        var game = manual(RiichiPreset.TENHOU_4);
         int dealer = game.view(null).dealer();
         act(game, dealer, Action.Type.SHUFFLE);
         var before = game.view(id(0));
@@ -139,14 +139,14 @@ class PhysicalHandlingTest {
     }
 
     @Test void replacementAnimationStartsAtTheVacatedDeadWallSlot() {
-        var game = manual(RuleSet.MAHJONG_SOUL_3);
+        var game = manual(RiichiPreset.MAHJONG_SOUL_3);
         int dealer = game.view(null).dealer();
         act(game, dealer, Action.Type.SHUFFLE);
         for (int seat = 0; seat < 3; seat++) act(game, seat, Action.Type.BUILD_WALL);
         for (int packet = 0; packet < 12; packet++) act(game, game.view(null).turn(), Action.Type.TAKE_PACKET);
         var base = game.view(id(dealer));
         int deadSlot = base.wall().size() - 1;
-        var before = snapshot(base, base.revision() + 1, Game.Phase.DRAW, base.wall(), base.seats(),
+        var before = snapshot(base, base.revision() + 1, RiichiGame.Phase.DRAW, base.wall(), base.seats(),
             new TableView.Handling(7, deadSlot, 1, 1, 1, false), List.of(new Action(Action.Type.DRAW)));
         var wall = new ArrayList<>(before.wall());
         wall.set(deadSlot, Tile.ABSENT);
@@ -157,7 +157,7 @@ class PhysicalHandlingTest {
         hand.add(drawn);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, false, player.points(), hand, drawn,
             player.melds(), player.river(), player.norths(), false, false, false));
-        var after = snapshot(before, before.revision() + 1, Game.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
+        var after = snapshot(before, before.revision() + 1, RiichiGame.Phase.TURN, wall, seats, new TableView.Handling(7, -1, 0, 1, 1, false), List.of());
         var animation = new TableAnimation();
         animation.accept(before, 0);
         animation.accept(after, 1000);
@@ -167,13 +167,13 @@ class PhysicalHandlingTest {
     }
 
     @Test void settlementCollectionMovesOnlyTheReadyPlayersTilesAndKeepsEveryTile() {
-        var game = manual(RuleSet.TENHOU_4);
+        var game = manual(RiichiPreset.TENHOU_4);
         int dealer = game.view(null).dealer();
         act(game, dealer, Action.Type.SHUFFLE);
         for (int seat = 0; seat < 4; seat++) act(game, seat, Action.Type.BUILD_WALL);
         for (int packet = 0; packet < 16; packet++) act(game, game.view(null).turn(), Action.Type.TAKE_PACKET);
         var base = game.view(id(dealer));
-        var receipt = snapshot(base, base.revision() + 1, Game.Phase.HAND_END, base.wall(), base.seats(),
+        var receipt = snapshot(base, base.revision() + 1, RiichiGame.Phase.HAND_END, base.wall(), base.seats(),
             new TableView.Handling(15, -1, 0, 1, 1, false), List.of(new Action(Action.Type.NEXT)));
         var before = TableScene.build(receipt);
         var source = TableHandling.source(receipt, before);
@@ -185,7 +185,7 @@ class PhysicalHandlingTest {
         var player = seats.get(dealer);
         seats.set(dealer, new TableView.Seat(false, player.name(), true, false, true, player.points(), player.hand(),
             player.drawn(), player.melds(), player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
-        var collected = snapshot(receipt, receipt.revision() + 1, Game.Phase.HAND_END, receipt.wall(), seats,
+        var collected = snapshot(receipt, receipt.revision() + 1, RiichiGame.Phase.HAND_END, receipt.wall(), seats,
             receipt.handling(), List.of());
         var after = TableScene.build(collected);
         conserved(collected);
@@ -207,7 +207,7 @@ class PhysicalHandlingTest {
         assertEquals(-1, TableGeometry.drawerSide(new Vec3(0, TableGeometry.FELT_Y, 0)));
     }
 
-    private static TableView snapshot(TableView base, long revision, Game.Phase phase, List<Integer> wall,
+    private static TableView snapshot(TableView base, long revision, RiichiGame.Phase phase, List<Integer> wall,
             List<TableView.Seat> seats, TableView.Handling handling, List<Action> actions) {
         return new TableView(base.tableId(), revision, revision, base.handNumber(), base.rules(), phase, base.viewerSeat(),
             base.dealer(), base.round(), base.honba(), base.riichiSticks(), base.turn(), base.remaining(), base.wallBreak(), wall,

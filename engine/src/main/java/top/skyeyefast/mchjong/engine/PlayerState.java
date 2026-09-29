@@ -2,19 +2,10 @@ package top.skyeyefast.mchjong.engine;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
 
 /** Server-only state. It must never be serialized into a client payload. */
 final class PlayerState {
-    UUID id;
-    String name = "";
-    boolean bot;
-    boolean entityBot;
-    BotDifficulty botDifficulty = BotDifficulty.EASY;
-    String externalBotId;
-    transient PlayerPresence presence = PlayerPresence.SEATED;
-    transient int awayTicks;
-    boolean ready;
+    transient TableSession.Participant member;
     AutoPlay autoPlay = AutoPlay.DEFAULT;
     int points;
     List<Integer> hand = new ArrayList<>();
@@ -39,6 +30,9 @@ final class PlayerState {
     int windPao = -1;
     int kanPao = -1;
 
+    PlayerState(TableSession.Participant member) { this.member = member; }
+    PlayerState() { this(null); }
+
     boolean closed() { return melds.stream().allMatch(Meld::closed); }
 
     /** Every owned physical tile once; drawn and called discards are aliases. */
@@ -59,6 +53,5 @@ final class PlayerState {
         firstTurn = canDeclare = true;
         lastDraw = rinshan = pendingRiichi = nextDiscardSideways = false;
         dragonPao = windPao = kanPao = -1;
-        ready = false;
     }
 }

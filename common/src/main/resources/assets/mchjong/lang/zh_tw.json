@@ -19,6 +19,7 @@
   "action.mchjong.pon": "碰",
   "action.mchjong.ready": "準備",
   "action.mchjong.remove_bot": "移除電腦玩家",
+  "action.mchjong.return_to_lobby": "返回房間",
   "action.mchjong.riichi": "立直",
   "action.mchjong.roll_dice": "擲兩枚骰子",
   "action.mchjong.ron": "榮和",

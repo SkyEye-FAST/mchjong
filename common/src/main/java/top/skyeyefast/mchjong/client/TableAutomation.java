@@ -7,7 +7,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.AutoPlay;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.network.TableControlPayload;
 
@@ -26,7 +26,7 @@ final class TableAutomation {
 
     static boolean available(TableView view) {
         return view != null && view.viewerSeat() >= 0 && view.autoPlay() != null
-            && (view.phase() == Game.Phase.TURN || view.phase() == Game.Phase.REACTION) && view.exitVote() == null;
+            && (view.phase() == RiichiGame.Phase.TURN || view.phase() == RiichiGame.Phase.REACTION) && view.exitVote() == null;
     }
 
     int width(int screenWidth) { return expanded ? Math.min(124, Math.max(96, (screenWidth - 28) / 3)) : 44; }

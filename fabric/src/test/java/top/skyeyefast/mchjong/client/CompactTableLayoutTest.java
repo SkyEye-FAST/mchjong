@@ -10,9 +10,9 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class CompactTableLayoutTest {
-    private static TableView base(RuleSet rules) {
+    private static TableView base(RiichiPreset rules) {
         var id = new UUID(15, 20);
-        var game = new Game(UUID.randomUUID(), rules, 15);
+        var game = new RiichiGame(UUID.randomUUID(), rules, 15);
         assertTrue(game.join(id, "Test", 0));
         return game.view(id);
     }
@@ -54,7 +54,7 @@ class CompactTableLayoutTest {
 
     @Test void openKanClearanceKeepsWaitingDrawnAndExposedHandsCenteredAndPickable() {
         // Open kans occupy the widest corner. TableLayoutTest owns per-meld geometry.
-        for (RuleSet rules : List.of(RuleSet.TENHOU_4, RuleSet.TENHOU_3)) {
+        for (RiichiPreset rules : List.of(RiichiPreset.TENHOU_4, RiichiPreset.TENHOU_3)) {
             var v = base(rules);
             for (int owner = 0; owner < rules.players(); owner++) for (int count = 0; count <= 4; count++)
                 for (int state = 0; state < 4; state++) {
@@ -92,7 +92,7 @@ class CompactTableLayoutTest {
     }
 
     @Test void twoOpenKansDoNotMoveAWaitingHandForAnAbsentDraw() {
-        var v = base(RuleSet.TENHOU_4);
+        var v = base(RiichiPreset.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
             var melds = melds(Meld.Type.OPEN_QUAD, 2, owner, (owner + 1) % 4);
             var waiting = scene(v, owner, melds, 7, false, false);
@@ -111,7 +111,7 @@ class CompactTableLayoutTest {
     }
 
     @Test void upgradingAPonOnlyMovesTheHandWhenTheKanReallyWidensTheCorner() {
-        var v = base(RuleSet.TENHOU_4);
+        var v = base(RiichiPreset.TENHOU_4);
         for (int owner = 0; owner < 4; owner++) {
             int source = (owner + 1) % 4;
             var pons = scene(v, owner, melds(Meld.Type.TRIPLET, 3, owner, source), 5, true, false);
@@ -123,7 +123,7 @@ class CompactTableLayoutTest {
     }
 
     @Test void aDrawnTileMovedIntoTheHandHasNoStrayDrawGap() {
-        var base = base(RuleSet.TENHOU_4);
+        var base = base(RiichiPreset.TENHOU_4);
         var player = new TableView.Seat(false, "Test", true, false, false, 25000,
             List.of(0, 4, 8), 4, List.of(), List.of(), List.of(), false, false, false);
         var hand = new TableHand(player, 0, 640, 400, 32, true);

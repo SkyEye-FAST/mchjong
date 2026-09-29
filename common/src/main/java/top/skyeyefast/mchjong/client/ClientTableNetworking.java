@@ -24,7 +24,7 @@ public final class ClientTableNetworking {
         var previousRoom = table.clientRoom();
         table.acceptView(view);
         if (table.clientView() != view) return;
-        table.acceptGameType(payload.gameType());
+        table.acceptVariant(payload.variant());
         table.acceptRedOptions(payload.redOptions());
         table.acceptRoom(payload.room());
         table.acceptBotService(payload.botService());
@@ -44,7 +44,7 @@ public final class ClientTableNetworking {
             client.setScreen(null);
         TableScreen active = TableScreen.active(client.screen);
         if (previous != null && previous.viewerSeat() >= 0 && view.viewerSeat() < 0
-            && view.phase() == top.skyeyefast.mchjong.engine.Game.Phase.LOBBY
+            && view.phase() == top.skyeyefast.mchjong.engine.RiichiGame.Phase.LOBBY
             && active != null && active.tablePos().equals(payload.pos())) {
             client.setScreen(null);
             return;
@@ -61,6 +61,8 @@ public final class ClientTableNetworking {
                 client.setScreen(screen);
                 screen.resetView();
             }
+        } else if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) {
+            client.setScreen(new TableScreen(payload.pos()));
         }
     }
 

@@ -8,7 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.SpectatorHandVisibility;
 import top.skyeyefast.mchjong.engine.TimeControl;
 
@@ -62,13 +62,13 @@ public final class TableCommands {
         world.then(Commands.literal("forcedPreset")
             .then(Commands.argument("preset", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                    java.util.stream.Stream.concat(java.util.stream.Stream.of("none"), java.util.Arrays.stream(RuleSet.values())
+                    java.util.stream.Stream.concat(java.util.stream.Stream.of("none"), java.util.Arrays.stream(RiichiPreset.values())
                         .map(value -> value.name().toLowerCase(java.util.Locale.ROOT))).toList(), builder))
                 .executes(context -> {
                     try {
                         String value = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "preset");
                         WorldSettings.of(context.getSource().getServer()).setForcedPreset(value.equalsIgnoreCase("none") ? null
-                            : RuleSet.valueOf(value.toUpperCase(java.util.Locale.ROOT)));
+                            : RiichiPreset.valueOf(value.toUpperCase(java.util.Locale.ROOT)));
                     } catch (java.io.IOException | IllegalArgumentException failure) {
                         throw error("message.mchjong.world_settings_failed");
                     }

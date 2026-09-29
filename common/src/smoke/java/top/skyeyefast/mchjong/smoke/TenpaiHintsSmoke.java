@@ -11,7 +11,7 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RoomView;
 import top.skyeyefast.mchjong.engine.TableView;
@@ -135,7 +135,7 @@ final class TenpaiHintsSmoke {
         for (int i = 0; i < 5; i++) wall.set(131 - i * 2, 40 + i * 4);
         // Advance the display snapshot so rendering updates while live lobby heartbeats stay stale.
         fixture = new TableView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
-            original.rules(), Game.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
+            original.rules(), RiichiGame.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
             original.wallBreak(), wall, null, seats, preview ? List.of(new Action(Action.Type.DISCARD, 125), new Action(Action.Type.DISCARD, 0)) : List.of(),
             List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, original.autoPlay(), true, 1, java.util.Map.of());
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)

@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
 import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -36,8 +36,8 @@ public final class TableScene {
 
     public static List<Piece> build(TableView view) {
         List<Piece> result = new ArrayList<>(200);
-        if (view.handling() != null && (view.phase() == Game.Phase.SHUFFLE
-            || view.phase() == Game.Phase.BUILD_WALL)) {
+        if (view.handling() != null && (view.phase() == RiichiGame.Phase.SHUFFLE
+            || view.phase() == RiichiGame.Phase.BUILD_WALL)) {
             int size = view.rules().sanma() ? 108 : 136;
             for (int index = 0; index < size; index++) {
                 int side = WallLayout.side(index, view.wallBreak(), size, view.rules().players());
@@ -109,8 +109,8 @@ public final class TableScene {
                 if (view.wall().get(i) != Tile.ABSENT) result.add(wallPiece(view, i, false));
             }
         }
-        if (view.handling() != null && (view.phase() == Game.Phase.HAND_END
-            || view.phase() == Game.Phase.MATCH_END)) {
+        if (view.handling() != null && (view.phase() == RiichiGame.Phase.HAND_END
+            || view.phase() == RiichiGame.Phase.MATCH_END)) {
             int[] collected = new int[4];
             for (int i = 0; i < result.size(); i++) {
                 Piece old = result.get(i);
@@ -132,7 +132,7 @@ public final class TableScene {
         int slot = index * 53 % (view.rules().sanma() ? 108 : 136);
         int column = slot % 10, row = slot / 10 % 7, layer = slot / 70;
         java.util.Random random = new java.util.Random(index * 193L + view.handNumber() * 71L
-            + (view.phase() == Game.Phase.SHUFFLE ? 0 : 3109));
+            + (view.phase() == RiichiGame.Phase.SHUFFLE ? 0 : 3109));
         return new Piece(Tile.HIDDEN, side, Area.LOOSE, index,
             new Vec3((column - 4.5) * .135 + (random.nextDouble() - .5) * .02,
                 TableGeometry.FELT_Y + (FLAT_CENTER + layer * TileMesh.DEPTH) * TILE_SCALE,

@@ -14,7 +14,7 @@ import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AssetContractTest {
@@ -79,7 +79,7 @@ class AssetContractTest {
                                 .toList(),
                         format.matcher(value).results().map(m -> m.group()).sorted().toList(), language + ": " + key);
             }
-            for (RuleSet rules : RuleSet.values())
+            for (RiichiPreset rules : RiichiPreset.values())
                 assertTrue(translated.has(rules.translationKey()), language + ": " + rules);
             for (Action.Type action : Action.Type.values())
                 assertTrue(translated.has(new Action(action).translationKey()), language + ": " + action);

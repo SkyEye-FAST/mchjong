@@ -11,21 +11,21 @@ final class ManualHandling {
     boolean kan;
     boolean diceHeld;
 
-    static boolean active(Game.Phase phase) {
-        return phase == Game.Phase.SHUFFLE || phase == Game.Phase.BUILD_WALL
-            || phase == Game.Phase.DEAL || phase == Game.Phase.DRAW;
+    static boolean active(RiichiGame.Phase phase) {
+        return phase == RiichiGame.Phase.SHUFFLE || phase == RiichiGame.Phase.BUILD_WALL
+            || phase == RiichiGame.Phase.DEAL || phase == RiichiGame.Phase.DRAW;
     }
 
-    void begin(Game game) {
+    void begin(RiichiGame game) {
         builtWalls = packets = 0;
         replacement = kan = false;
         diceHeld = false;
         game.wall = null;
         game.turn = game.dealer;
-        game.newDecision(Game.Phase.SHUFFLE);
+        game.newDecision(RiichiGame.Phase.SHUFFLE);
     }
 
-    List<Action> actions(Game game, int seat) {
+    List<Action> actions(RiichiGame game, int seat) {
         return switch (game.phase) {
             case SHUFFLE -> seat == game.dealer ? List.of(new Action(SHUFFLE)) : List.of();
             case BUILD_WALL -> builtWalls == (1 << game.rules.players()) - 1
@@ -37,36 +37,36 @@ final class ManualHandling {
         };
     }
 
-    TableView.Handling view(Game game) {
-        int count = game.phase == Game.Phase.DEAL ? packetSize(game) : game.phase == Game.Phase.DRAW ? 1 : 0;
-        int source = count == 0 ? -1 : game.phase == Game.Phase.DRAW && replacement
+    TableView.Handling view(RiichiGame game) {
+        int count = game.phase == RiichiGame.Phase.DEAL ? packetSize(game) : game.phase == RiichiGame.Phase.DRAW ? 1 : 0;
+        int source = count == 0 ? -1 : game.phase == RiichiGame.Phase.DRAW && replacement
             ? game.wall.nextReplacementSlot() : game.wall.cursor;
         return new TableView.Handling(builtWalls, source, count,
             game.wall == null ? 0 : game.wall.diceOne, game.wall == null ? 0 : game.wall.diceTwo, diceHeld);
     }
 
-    private int packetSize(Game game) { return packets < 3 * game.rules.players() ? 4 : 1; }
+    private int packetSize(RiichiGame game) { return packets < 3 * game.rules.players() ? 4 : 1; }
 
-    void act(Game game, int seat, Action action) {
+    void act(RiichiGame game, int seat, Action action) {
         switch (action.type()) {
             case SHUFFLE -> {
                 game.createWall();
-                game.newDecision(Game.Phase.BUILD_WALL);
+                game.newDecision(RiichiGame.Phase.BUILD_WALL);
             }
             case BUILD_WALL -> {
                 builtWalls |= 1 << seat;
-                if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(Game.Phase.BUILD_WALL);
+                if (builtWalls == (1 << game.rules.players()) - 1) game.newDecision(RiichiGame.Phase.BUILD_WALL);
                 // Each seat builds its own wall independently. Keep other players' held drags valid.
                 else game.revision++;
             }
             case ROLL_DICE -> {
                 game.wall.open(game.rules, game.dealer);
                 diceHeld = false;
-                game.newDecision(Game.Phase.DEAL);
+                game.newDecision(RiichiGame.Phase.DEAL);
             }
             case PICK_UP_DICE -> {
                 diceHeld = true;
-                game.newDecision(Game.Phase.BUILD_WALL);
+                game.newDecision(RiichiGame.Phase.BUILD_WALL);
             }
             case TAKE_PACKET -> {
                 int count = packetSize(game);
@@ -77,7 +77,7 @@ final class ManualHandling {
                     game.draw(game.dealer, false, false);
                 } else {
                     game.turn = game.next(seat);
-                    game.newDecision(Game.Phase.DEAL);
+                    game.newDecision(RiichiGame.Phase.DEAL);
                 }
             }
             case DRAW -> game.drawNow(seat, replacement, kan);
@@ -85,30 +85,30 @@ final class ManualHandling {
         }
     }
 
-    List<Integer> wallView(Game game, boolean ura) {
+    List<Integer> wallView(RiichiGame game, boolean ura) {
         var view = game.wall.publicTiles(ura);
-        if (game.phase == Game.Phase.BUILD_WALL || game.phase == Game.Phase.DEAL) {
+        if (game.phase == RiichiGame.Phase.BUILD_WALL || game.phase == RiichiGame.Phase.DEAL) {
             for (int i = 0; i < view.size(); i++) {
                 int side = WallLayout.side(i, game.wall.breakOffset, view.size(), game.rules.players());
-                if (game.phase == Game.Phase.BUILD_WALL && (builtWalls & 1 << side) == 0) view.set(i, Tile.ABSENT);
+                if (game.phase == RiichiGame.Phase.BUILD_WALL && (builtWalls & 1 << side) == 0) view.set(i, Tile.ABSENT);
                 else if (view.get(i) >= 0) view.set(i, Tile.HIDDEN);
             }
         }
         return view;
     }
 
-    void validate(Game game) {
+    void validate(RiichiGame game) {
         if (builtWalls < 0 || builtWalls >= 1 << game.rules.players() || packets < 0 || packets > 4 * game.rules.players())
             throw new IllegalStateException("Invalid manual handling state");
         if (active(game.phase) && !game.manual) throw new IllegalStateException("Automatic table in manual phase");
         if (game.manual && game.wall != null && (game.wall.diceOne < 0 || game.wall.diceOne > 6
             || game.wall.diceTwo < 0 || game.wall.diceTwo > 6
             || (game.wall.diceOne == 0) != (game.wall.diceTwo == 0)
-            || game.phase == Game.Phase.BUILD_WALL && game.wall.diceOne != 0
-            || game.phase != Game.Phase.BUILD_WALL && game.wall.diceOne == 0))
+            || game.phase == RiichiGame.Phase.BUILD_WALL && game.wall.diceOne != 0
+            || game.phase != RiichiGame.Phase.BUILD_WALL && game.wall.diceOne == 0))
             throw new IllegalStateException("Invalid wall opening dice");
-        if (game.phase == Game.Phase.SHUFFLE && game.wall != null) throw new IllegalStateException("Unshuffled wall already exists");
-        if ((game.phase == Game.Phase.BUILD_WALL || game.phase == Game.Phase.DEAL || game.phase == Game.Phase.DRAW) && game.wall == null)
+        if (game.phase == RiichiGame.Phase.SHUFFLE && game.wall != null) throw new IllegalStateException("Unshuffled wall already exists");
+        if ((game.phase == RiichiGame.Phase.BUILD_WALL || game.phase == RiichiGame.Phase.DEAL || game.phase == RiichiGame.Phase.DRAW) && game.wall == null)
             throw new IllegalStateException("Manual wall missing");
     }
 }

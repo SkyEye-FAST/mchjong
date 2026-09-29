@@ -16,17 +16,19 @@ import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.McrResultsScreen;
+import top.skyeyefast.mchjong.client.McrLobbyScreen;
 import top.skyeyefast.mchjong.client.McrTableScreen;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.GameType;
+import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.McrAction;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.RoomSeating;
+import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableActionPayload;
-import top.skyeyefast.mchjong.network.TableGameTypePayload;
+import top.skyeyefast.mchjong.network.TableVariantPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
@@ -58,12 +60,12 @@ final class McrAutoTableSmoke {
             case 1 -> {
                 var lobby = clientTable.clientView();
                 if (lobby == null || lobby.viewerSeat() < 0 || client.getConnection() == null) break;
-                client.getConnection().send(PayloadPackets.serverbound(new TableGameTypePayload(pos, lobby.tableId(),
-                    lobby.decision(), GameType.MCR)));
+                client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, lobby.tableId(),
+                    lobby.decision(), MahjongVariant.MCR)));
                 stage++;
             }
             case 2 -> {
-                if (clientTable.clientGameType() != GameType.MCR) break;
+                if (clientTable.clientVariant() != MahjongVariant.MCR) break;
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var level = main.serverLevel();
@@ -83,19 +85,22 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 3 -> {
-                var lobby = clientTable.clientView();
-                if (lobby == null || lobby.seats().stream().anyMatch(seat -> !seat.occupied())) break;
-                int index = lobby.actions().indexOf(new Action(Action.Type.BEGIN_SEATING));
+                var lobby = clientTable.clientTableRoom();
+                if (lobby == null || lobby.seats().stream().anyMatch(seat -> seat.participant().id() == null)) break;
+                check(client.screen instanceof McrLobbyScreen, "MCR preparation did not open its room screen");
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
+                int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
-                client.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, lobby.tableId(), lobby.decision(), index)));
+                client.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, lobby.tableId(),
+                    lobby.incarnation(), lobby.decision(), index)));
                 stage++;
             }
             case 4 -> {
-                var lobby = clientTable.clientView();
-                if (lobby == null || clientTable.clientRoom().seating() != RoomSeating.Stage.POSITIONING) break;
+                var lobby = clientTable.clientTableRoom();
+                if (lobby == null || lobby.seating() != RoomSeating.Stage.POSITIONING) break;
                 var assigned = new java.util.HashMap<UUID, Integer>();
                 for (int seat = 0; seat < 4; seat++) {
-                    String name = lobby.seats().get(seat).name();
+                    String name = lobby.seats().get(seat).participant().name();
                     if (name.equals(client.player.getGameProfile().getName())) assigned.put(mainId, seat);
                     else for (var guest : guests) if (name.equals(guest.getGameProfile().getName())) assigned.put(guest.getUUID(), seat);
                 }
@@ -113,22 +118,23 @@ final class McrAutoTableSmoke {
                     }
                     for (var player : everyone) table.sit(player, assigned.get(player.getUUID()));
                     for (var guest : guests) {
-                        var view = table.participantGame(guest).view(guest.getUUID());
-                        int index = view.actions().indexOf(new Action(Action.Type.READY));
+                        var view = table.roomView(guest);
+                        int index = view.actions().indexOf(new RoomAction(RoomAction.Type.READY));
                         check(index >= 0, "Guest has no Ready action");
-                        TableNetworking.receive(guest, new TableActionPayload(pos, view.tableId(), view.decision(), index));
+                        TableNetworking.receive(guest, new McrActionPayload(pos, view.tableId(), view.incarnation(), view.decision(), index));
                     }
                     table.open(main);
                 });
                 stage++;
             }
             case 5 -> {
-                var lobby = clientTable.clientView();
+                var lobby = clientTable.clientTableRoom();
                 if (lobby == null || lobby.viewerSeat() < 0 || lobby.seats().stream()
-                    .filter(seat -> seat.ready()).count() != 3) break;
-                int index = lobby.actions().indexOf(new Action(Action.Type.READY));
+                    .filter(seat -> seat.participant().ready()).count() != 3) break;
+                int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.READY));
                 check(index >= 0, "Last player has no Ready action");
-                client.getConnection().send(PayloadPackets.serverbound(new TableActionPayload(pos, lobby.tableId(), lobby.decision(), index)));
+                client.getConnection().send(PayloadPackets.serverbound(new McrActionPayload(pos, lobby.tableId(),
+                    lobby.incarnation(), lobby.decision(), index)));
                 stage++;
             }
             case 6 -> {

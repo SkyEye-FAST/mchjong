@@ -19,8 +19,8 @@ public final class TableEquipment {
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
-    private top.skyeyefast.mchjong.engine.RuleConfig rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config()
-        .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
+    private top.skyeyefast.mchjong.engine.RiichiRules rules = top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config()
+        .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
     private int activeBox = -1;
     private boolean loading;
     private java.util.List<ItemStack> matchSticks = java.util.List.of();
@@ -205,7 +205,7 @@ public final class TableEquipment {
         return mask;
     }
 
-    public boolean selectRules(top.skyeyefast.mchjong.engine.RuleConfig rules) {
+    public boolean selectRules(top.skyeyefast.mchjong.engine.RiichiRules rules) {
         if (this.rules.equals(rules)) return false;
         this.rules = rules;
         var previous = deck;

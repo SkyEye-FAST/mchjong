@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Give Riichi and MCR one shared room lifecycle and one private table session save, with rule-specific match state and explicit Riichi naming.
+
 ### Fixed
 
 - Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.

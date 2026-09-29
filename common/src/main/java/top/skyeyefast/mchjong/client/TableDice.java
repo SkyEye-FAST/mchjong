@@ -10,7 +10,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.item.ItemDisplayContext;
 import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TableView;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -27,9 +27,9 @@ final class TableDice extends MahjongButton {
 
     static boolean onTable(TableView view) {
         return view != null && view.handling() != null && !view.handling().diceHeld()
-            && view.phase() != Game.Phase.LOBBY && view.phase() != Game.Phase.SHUFFLE
-            && view.phase() != Game.Phase.MATCH_END
-            && (view.phase() != Game.Phase.BUILD_WALL
+            && view.phase() != RiichiGame.Phase.LOBBY && view.phase() != RiichiGame.Phase.SHUFFLE
+            && view.phase() != RiichiGame.Phase.MATCH_END
+            && (view.phase() != RiichiGame.Phase.BUILD_WALL
                 || view.handling().builtWalls() == (1 << view.rules().players()) - 1);
     }
 

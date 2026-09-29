@@ -12,10 +12,10 @@ import top.skyeyefast.mchjong.client.TableLeaveScreen;
 import top.skyeyefast.mchjong.client.TableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TableRulesScreen;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RedFives;
-import top.skyeyefast.mchjong.engine.RuleOption;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiRuleOption;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.network.TableRulesPayload;
@@ -55,7 +55,7 @@ final class TableControlSmoke {
             capture(client, output, "23-hidden-river.png");
             click(client, "ui.mchjong.exit");
             next(2);
-        } else if (stage == 2 && view.phase() == Game.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+        } else if (stage == 2 && view.phase() == RiichiGame.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
             require(client.screen == null, "Exiting the table did not close its controls");
             require(view.seats().stream().noneMatch(seat -> seat.occupied()), "Exiting left a seat reserved");
             require(view.wall().isEmpty(), "Exiting left the old wall on the table");
@@ -80,17 +80,17 @@ final class TableControlSmoke {
             AutomationControlsSmoke.checkOptions(client, 0);
             click(client, "ui.mchjong.players.4");
             next(5);
-        } else if (stage == 5 && view.rules().players() == 4 && selectPreset(client, view, RuleSet.JPML_A)) {
+        } else if (stage == 5 && view.rules().players() == 4 && selectPreset(client, view, RiichiPreset.JPML_A)) {
             require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "JPML A initial points");
             capture(client, output, "25a-league-a-lobby.png");
             next(8);
-        } else if (stage == 8 && selectPreset(client, view, RuleSet.WRC)) {
+        } else if (stage == 8 && selectPreset(client, view, RiichiPreset.WRC)) {
             require((table.clientRedOptions() & 1) != 0, "WRC rejected the default no-red box");
             capture(client, output, "25b-wrc-lobby.png");
             next(9);
-        } else if (stage == 9 && selectPreset(client, view, RuleSet.MAHJONG_SOUL_4)) {
+        } else if (stage == 9 && selectPreset(client, view, RiichiPreset.MAHJONG_SOUL_4)) {
             next(11);
-        } else if (stage == 11 && view.rules().preset() == RuleSet.MAHJONG_SOUL_4 && ticks > 5) {
+        } else if (stage == 11 && view.rules().preset() == RiichiPreset.MAHJONG_SOUL_4 && ticks > 5) {
             click(client, "rules.mchjong.title");
             next(12);
         } else if (stage == 12 && client.screen instanceof TableRulesScreen && ticks > 5) {
@@ -121,7 +121,7 @@ final class TableControlSmoke {
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
                     Component.translatable(view.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
             client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
-            var unavailablePreset = widget(client, RuleSet.M_LEAGUE.presetKey());
+            var unavailablePreset = widget(client, RiichiPreset.M_LEAGUE.presetKey());
             require(!unavailablePreset.active, "Unavailable preset is enabled");
             AutomationControlsSmoke.checkBounds(client);
             double scale = client.getWindow().getGuiScale();
@@ -132,7 +132,7 @@ final class TableControlSmoke {
             finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
             next(31);
         } else if (stage == 31 && ticks > 10) {
-            require(widget(client, RuleSet.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
+            require(widget(client, RiichiPreset.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
             capture(client, output, "25m-presets-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
@@ -180,7 +180,7 @@ final class TableControlSmoke {
                 var original = game.rules();
                 long decision = game.view(id).decision();
                 serverTable.configureRules(player, new TableRulesPayload(pos, game.tableId(), decision,
-                    original.with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
+                    original.with(RiichiRuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
                 require(game.rules().equals(original) && game.view(id).decision() == decision,
                     "Forged red selection bypassed physical stock checks");
                 var box = serverTable.equipment().boxes().getItem(0).copy();
@@ -326,7 +326,7 @@ final class TableControlSmoke {
             next(28);
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);
-        } else if (stage == 7 && view.phase() == Game.Phase.TURN && ticks > 60
+        } else if (stage == 7 && view.phase() == RiichiGame.Phase.TURN && ticks > 60
             && !TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             require(view.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0),
                 "Server did not deliver the agreed open hands to the seated player");
@@ -349,7 +349,7 @@ final class TableControlSmoke {
             });
             next(32);
         } else if (stage == 32 && reseated.isDone() && client.screen instanceof TableLeaveScreen && ticks > 5) {
-            require(view.viewerSeat() < 0 && view.phase() == Game.Phase.TURN, "Last dismount did not pause the active match");
+            require(view.viewerSeat() < 0 && view.phase() == RiichiGame.Phase.TURN, "Last dismount did not pause the active match");
             capture(client, output, "26-paused-leave-choice.png");
             click(client, "ui.mchjong.leave_match_keep");
             next(33);
@@ -373,8 +373,8 @@ final class TableControlSmoke {
         languageReload = client.reloadResourcePacks();
     }
     private void next(int value) { stage = value; ticks = 0; }
-    private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.TableView view, RuleSet target) {
-        require(view.rules().preset() != RuleSet.M_LEAGUE, "Preset selector selected unavailable red fives");
+    private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.TableView view, RiichiPreset target) {
+        require(view.rules().preset() != RiichiPreset.M_LEAGUE, "Preset selector selected unavailable red fives");
         require(view.rules().preset().players() == target.players(), "Preset selector changed player count");
         if (ticks < 10) return false;
         if (view.rules().preset() == target && client.screen instanceof TableScreen) return true;

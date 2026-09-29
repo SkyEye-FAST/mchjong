@@ -6,7 +6,7 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 
 /** Scope navigation. Administrator edits use the server's permission-checked world commands. */
 public final class TableOptionsScreen extends Screen {
@@ -57,7 +57,7 @@ public final class TableOptionsScreen extends Screen {
         }
         List<Entry> entries = new ArrayList<>();
         boolean host = view.viewerSeat() >= 0 && view.viewerSeat() == room.host() && view.exitVote() == null;
-        boolean lobby = view.phase() == Game.Phase.LOBBY;
+        boolean lobby = view.phase() == RiichiGame.Phase.LOBBY;
         if (tab == 0) {
             boolean edit = canEditWorld();
             entries.add(Entry.toggle("settings.mchjong.invitations_enabled", world.invitationsEnabled(), edit,
@@ -180,8 +180,8 @@ public final class TableOptionsScreen extends Screen {
         return values[values.length - 1];
     }
 
-    private static top.skyeyefast.mchjong.engine.RuleSet nextPreset(top.skyeyefast.mchjong.engine.RuleSet current, int direction) {
-        var values = top.skyeyefast.mchjong.engine.RuleSet.values();
+    private static top.skyeyefast.mchjong.engine.RiichiPreset nextPreset(top.skyeyefast.mchjong.engine.RiichiPreset current, int direction) {
+        var values = top.skyeyefast.mchjong.engine.RiichiPreset.values();
         int slot = current == null ? 0 : current.ordinal() + 1;
         slot = Math.floorMod(slot + direction, values.length + 1);
         return slot == 0 ? null : values[slot - 1];
