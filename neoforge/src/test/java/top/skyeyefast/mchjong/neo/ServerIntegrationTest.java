@@ -1,6 +1,7 @@
 package top.skyeyefast.mchjong.neo;
 
 import io.netty.buffer.Unpooled;
+import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -68,7 +69,7 @@ class ServerIntegrationTest {
     @Test void privateSavedHandsNeverEnterAChunkUpdate(MinecraftServer server) {
         RiichiSession game = startedGame();
         CompoundTag saved = new CompoundTag();
-        saved.putString("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game));
+        saved.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game).getBytes(StandardCharsets.UTF_8));
         MahjongTableBlockEntity table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         table.loadWithComponents(saved, server.registryAccess());
         var box = top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
@@ -82,7 +83,8 @@ class ServerIntegrationTest {
         assertTrue(restored.contains("session"));
         assertTrue(restored.contains("boxes"));
         assertTrue(restored.contains("cloth"));
-        RiichiSession copy = (RiichiSession) top.skyeyefast.mchjong.engine.TableSessionCodec.restore(restored.getString("session"));
+        RiichiSession copy = (RiichiSession) top.skyeyefast.mchjong.engine.TableSessionCodec.restore(
+            new String(restored.getByteArray("session"), StandardCharsets.UTF_8));
         assertEquals(game.view(null).seats(), copy.view(null).seats());
         assertEquals(game.view(null).wall(), copy.view(null).wall());
         CompoundTag appearance = table.getUpdateTag(server.registryAccess());
@@ -92,7 +94,7 @@ class ServerIntegrationTest {
         assertEquals("mchjong:default", appearance.getString("tile_back_preset"));
         table.loadWithComponents(appearance, server.registryAccess());
         CompoundTag afterPublicUpdate = table.saveWithoutMetadata(server.registryAccess());
-        assertEquals(restored.getString("session"), afterPublicUpdate.getString("session"));
+        assertArrayEquals(restored.getByteArray("session"), afterPublicUpdate.getByteArray("session"));
         assertTrue(net.minecraft.world.item.ItemStack.matches(box, table.equipment().boxes().getItem(0)));
         // The ephemeral server provides registries but no loaded level. Live packet delivery is
         // exercised by both client smoke runs; here the exact packet-tag whitelist is the contract.
@@ -103,7 +105,7 @@ class ServerIntegrationTest {
         assertEquals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO, loaded.equipment().preset());
         var empty = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         loaded.loadWithComponents(empty.saveWithoutMetadata(server.registryAccess()), server.registryAccess());
-        assertFalse(loaded.saveWithoutMetadata(server.registryAccess()).contains("game"));
+        assertFalse(loaded.saveWithoutMetadata(server.registryAccess()).contains("session"));
         assertTrue(loaded.equipment().boxes().isEmpty());
     }
 
@@ -178,7 +180,7 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.McrDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true, false);
+                net.minecraft.world.item.DyeColor.CYAN, true, false, session.timeControl());
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC.encode(buffer, mcrView);
             assertEquals(mcrView, top.skyeyefast.mchjong.network.McrViewPayload.CODEC.decode(buffer));
             assertTrue(top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(mcrView.view()).game().actions().isEmpty());
@@ -202,17 +204,17 @@ class ServerIntegrationTest {
         var session = top.skyeyefast.mchjong.engine.McrSession.start(tableId, roster, 7,
             source.equipment().mcrStock().deck().tiles());
         var privateTag = source.saveWithoutMetadata(server.registryAccess());
-        privateTag.putString("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(session));
+        privateTag.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(session).getBytes(StandardCharsets.UTF_8));
         var table = new MahjongTableBlockEntity(BlockPos.ZERO, MahjongContent.AUTO_TABLE.defaultBlockState());
         table.loadWithComponents(privateTag, server.registryAccess());
         var saved = table.saveWithoutMetadata(server.registryAccess());
         assertEquals(top.skyeyefast.mchjong.engine.MahjongVariant.MCR,
-            top.skyeyefast.mchjong.engine.TableSessionCodec.restore(saved.getString("session")).variant());
-        assertNotEquals(privateTag.getString("session"), saved.getString("session"));
+            top.skyeyefast.mchjong.engine.TableSessionCodec.restore(new String(saved.getByteArray("session"), StandardCharsets.UTF_8)).variant());
+        assertFalse(java.util.Arrays.equals(privateTag.getByteArray("session"), saved.getByteArray("session")));
         assertEquals(144, table.equipment().mcrStock().deck().tiles().size());
         var appearance = table.getUpdateTag(server.registryAccess());
         assertFalse(appearance.contains("session"));
         table.loadWithComponents(appearance, server.registryAccess());
-        assertEquals(saved.getString("session"), table.saveWithoutMetadata(server.registryAccess()).getString("session"));
+        assertArrayEquals(saved.getByteArray("session"), table.saveWithoutMetadata(server.registryAccess()).getByteArray("session"));
     }
 }

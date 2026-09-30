@@ -352,7 +352,7 @@ final class ManualTableSmoke {
             .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), seed);
         game.configureEquipment(true, table.equipment().deck().tiles());
         var saved = table.saveWithoutMetadata(level.registryAccess());
-        saved.putString("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game));
+        saved.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game).getBytes(java.nio.charset.StandardCharsets.UTF_8));
         table.loadWithComponents(saved, level.registryAccess());
         var stool = new ItemStack(MahjongContent.STOOL_ITEM);
         stool.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
@@ -380,8 +380,8 @@ final class ManualTableSmoke {
         loaded.setLevel(player.serverLevel());
         loaded.loadWithComponents(saved, player.registryAccess());
         var restored = loaded.saveWithoutMetadata(player.registryAccess());
-        var before = com.google.gson.JsonParser.parseString(saved.getString("session")).getAsJsonObject();
-        var after = com.google.gson.JsonParser.parseString(restored.getString("session")).getAsJsonObject();
+        var before = com.google.gson.JsonParser.parseString(new String(saved.getByteArray("session"), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
+        var after = com.google.gson.JsonParser.parseString(new String(restored.getByteArray("session"), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
         var beforeRoom = before.getAsJsonObject("state").getAsJsonObject("room");
         var afterRoom = after.getAsJsonObject("state").getAsJsonObject("room");
         check(afterRoom.get("revision").getAsLong() == beforeRoom.get("revision").getAsLong() + 1
@@ -390,7 +390,7 @@ final class ManualTableSmoke {
         afterRoom.add("revision", beforeRoom.get("revision"));
         afterRoom.add("decision", beforeRoom.get("decision"));
         check(before.equals(after), "Manual match state changed during world serialization");
-        restored.putString("session", saved.getString("session"));
+        restored.putByteArray("session", saved.getByteArray("session"));
         check(saved.equals(restored), "Manual equipment changed during world serialization");
         table.loadWithComponents(table.getUpdateTag(player.registryAccess()), player.registryAccess());
         check(saved.equals(table.saveWithoutMetadata(player.registryAccess())), "Public appearance update erased private game/equipment state");

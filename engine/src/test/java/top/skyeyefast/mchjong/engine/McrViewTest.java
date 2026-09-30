@@ -13,18 +13,18 @@ class McrViewTest {
             .tail(0, Tile.parseKind("9s")).build());
         play(game, 0, CONCEALED_KONG);
         var before = game.view(-1);
-        for (int viewer = -1; viewer < 4; viewer++) {
+        for (int viewer = -2; viewer < 4; viewer++) {
             var view = game.view(viewer);
             roundTrip(view);
             assertTrue(view.wall().stream().allMatch(tile -> tile == Tile.HIDDEN || tile == Tile.ABSENT));
             assertEquals(game.remaining(), view.wall().stream().filter(tile -> tile == Tile.HIDDEN).count());
-            assertEquals(viewer == -1 ? List.of() : game.actions(viewer), view.actions());
+            assertEquals(viewer < 0 ? List.of() : game.actions(viewer), view.actions());
             for (int seat = 0; seat < 4; seat++) {
-                if (seat == viewer) assertEquals(game.hand(seat), view.seats().get(seat).hand());
+                if (viewer == -2 || seat == viewer) assertEquals(game.hand(seat), view.seats().get(seat).hand());
                 else assertHidden(view.seats().get(seat));
             }
             var kong = view.seats().get(0).melds().get(0);
-            if (viewer == 0) assertEquals(game.melds(0).get(0), kong);
+            if (viewer == -2 || viewer == 0) assertEquals(game.melds(0).get(0), kong);
             else assertEquals(List.of(Tile.HIDDEN, Tile.HIDDEN, Tile.HIDDEN, Tile.HIDDEN), kong.tiles());
         }
         assertThrows(UnsupportedOperationException.class, () -> before.seats().get(0).hand().clear());
@@ -125,7 +125,7 @@ class McrViewTest {
         assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(encoded));
         assertThrows(IllegalArgumentException.class, () -> McrCodec.decodeView(McrCodec.save(game)));
         assertThrows(IllegalArgumentException.class, () -> game.view(4));
-        assertThrows(IllegalArgumentException.class, () -> game.view(-2));
+        assertThrows(IllegalArgumentException.class, () -> game.view(-3));
         var leaked = JsonParser.parseString(encoded).getAsJsonObject();
         leaked.getAsJsonArray("seats").get(0).getAsJsonObject().getAsJsonArray("hand")
             .set(0, JsonParser.parseString("0"));

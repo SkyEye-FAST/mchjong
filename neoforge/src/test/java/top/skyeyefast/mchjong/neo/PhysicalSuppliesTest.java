@@ -398,7 +398,8 @@ class PhysicalSuppliesTest {
         session.synchronizeSeats(mounts);
         var east = participants.getFirst().id();
         var view = session.view(east);
-        assertEquals(14, view.game().seats().getFirst().hand().size());
+        var dealer = view.game().seats().getFirst();
+        assertEquals(14, dealer.hand().size() + dealer.flowers().size(), "Initial flowers are held separately before replacement");
         assertEquals(view, top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(
             top.skyeyefast.mchjong.engine.McrCodec.encodeSessionView(view)));
         assertTrue(session.act(east, view.tableId(), view.incarnation(), view.game().decision(), 0));
@@ -626,7 +627,7 @@ class PhysicalSuppliesTest {
             publicData.getAllKeys());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
-        assertFalse(saved.contains("game"));
+        assertFalse(saved.contains("session"));
     }
 
     @Test void equipmentSnapshotsOwnTheirDrawerStacks(MinecraftServer server) {

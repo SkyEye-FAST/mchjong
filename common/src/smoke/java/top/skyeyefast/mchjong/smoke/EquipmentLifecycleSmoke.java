@@ -235,7 +235,7 @@ final class EquipmentLifecycleSmoke {
         loaded.setLevel(level);
         loaded.loadWithComponents(saved, level.registryAccess());
         var restored = loaded.saveWithoutMetadata(level.registryAccess());
-        restored.putString("session", saved.getString("session"));
+        restored.putByteArray("session", saved.getByteArray("session"));
         check(saved.equals(restored), "Equipment did not survive save/load");
         level.setBlockEntity(loaded);
         player.teleportTo(level, CENTER.getX() + 20, 64, .5, 0, 0);

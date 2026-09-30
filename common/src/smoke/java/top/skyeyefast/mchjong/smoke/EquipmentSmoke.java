@@ -125,7 +125,7 @@ final class EquipmentSmoke {
             var appearance = table.getUpdatePacket().getTag();
             check(!appearance.contains("session") && !appearance.contains("boxes") && !appearance.contains("cloth"), "Private equipment leaked into a block packet");
             table.loadWithComponents(appearance, level.registryAccess());
-            check(saved.getString("session").equals(table.saveWithoutMetadata(level.registryAccess()).getString("session"))
+            check(java.util.Arrays.equals(saved.getByteArray("session"), table.saveWithoutMetadata(level.registryAccess()).getByteArray("session"))
                 && ItemStack.matches(replacement, table.equipment().boxes().getItem(0)), "Public update destroyed private state");
             level.removeBlockEntity(POS);
             table = new MahjongTableBlockEntity(POS, block.defaultBlockState());

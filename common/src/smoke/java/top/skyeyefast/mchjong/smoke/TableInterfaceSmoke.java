@@ -37,13 +37,11 @@ final class TableInterfaceSmoke {
         new Sample("zh_cn", 5, true, true)
     };
     private int sample, ticks;
-    private RiichiView base;
     private CompletableFuture<Void> reload;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
-        if (base == null) {
-            base = table.clientView();
-            require(base != null, "Missing interface base snapshot");
+        if (sample == 0 && ticks == 0) {
+            require(table.clientRoom() != null && table.clientRiichiSettings() != null, "Missing interface room snapshot");
             TableSettings.get().animations = false;
         }
         if (sample == SAMPLES.length) return true;
@@ -62,7 +60,13 @@ final class TableInterfaceSmoke {
             client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
             client.options.guiScale().set(small ? 3 : 2);
             client.resizeDisplay();
-            SettlementSmoke.acceptFixture(table, snapshot(state));
+            var view = snapshot(table, state);
+            var room = table.clientRoom();
+            table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(),
+                view.revision(), view.decision(), room.variant(), top.skyeyefast.mchjong.engine.TableSession.Lifecycle.PLAYING,
+                room.host(), view.viewerSeat(), room.manual(), room.equipped(), false, room.seating(),
+                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false));
+            SettlementSmoke.acceptFixture(table, view);
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
@@ -107,7 +111,9 @@ final class TableInterfaceSmoke {
         return false;
     }
 
-    private RiichiView snapshot(int state) {
+    private RiichiView snapshot(MahjongTableBlockEntity table, int state) {
+        var room = table.clientRoom();
+        var settings = table.clientRiichiSettings();
         var seats = new ArrayList<RiichiView.Seat>();
         var hand = List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125, 126);
         if (state == 4) hand = hand.subList(3, 14);
@@ -119,12 +125,13 @@ final class TableInterfaceSmoke {
         var actions = state == 5 ? List.of(new RiichiAction(RiichiAction.Type.PON, List.of(108, 109)),
             new RiichiAction(RiichiAction.Type.PASS, List.of())) : state == 4 ? List.<RiichiAction>of()
             : List.of(new RiichiAction(RiichiAction.Type.RIICHI, List.of(126)));
-        var normal = new RiichiView(base.tableId(), Long.MAX_VALUE / 2 + sample * 100000, base.decision() + sample + 1,
-            1, base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
+        var normal = new RiichiView(room.tableId(), Long.MAX_VALUE / 2 + sample * 100000, room.decision() + sample + 1,
+            1, settings.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, Collections.nCopies(136, Tile.HIDDEN),
             null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(),
-            base.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
+            settings.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
                 new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false,
-            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null,
+            top.skyeyefast.mchjong.engine.RiichiAutoPlay.DEFAULT, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         return state == 2 ? SettlementSmoke.fixture(normal) : normal;
     }
 

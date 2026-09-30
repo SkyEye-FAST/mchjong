@@ -32,7 +32,7 @@ class PonderStructureTest {
                 int state = block.getInt("state");
                 if (state == 1) { assertEquals("3,1,3", coordinates); tables++; }
                 if (state == 2) seats.add(coordinates);
-                assertFalse(block.getCompound("nbt").contains("game"), "Structure must only contain display furniture");
+                assertFalse(block.getCompound("nbt").contains("session"), "Structure must only contain display furniture");
             }
             assertEquals(1, tables);
             assertEquals(java.util.Set.of("1,1,3", "5,1,3", "3,1,1", "3,1,5"), seats);
