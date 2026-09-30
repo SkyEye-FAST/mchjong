@@ -27,6 +27,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add an independent Sichuan SBR 2025 hand engine, explicit rules, blood-battle payments and draw checks, private save/restore, and a shared three-variant lobby with Sichuan action controls.
+
 - Add Sichuan, Taiwan and Fujian tile faces with regional flowers and framed white dragons; list regional presets in Sichuan, Hong Kong, Taiwan and Fujian order.
 - Record native MCR replays with physical openings, authoritative decisions, penalties and settlement, and play them back on the MCR table through the shared archive.
 - Add a built-in MCR Bot through shared room controls, supporting one human and three Bots through a complete sixteen-hand match with private-view decisions and persistent server scheduling.

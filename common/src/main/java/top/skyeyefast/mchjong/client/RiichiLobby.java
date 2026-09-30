@@ -6,7 +6,6 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RoomAction;
@@ -26,8 +25,7 @@ final class RiichiLobby {
         var buttons = new ArrayList<MahjongButton>();
         int span = Math.min(440, width - 20), left = (width - span) / 2, y = top(height);
         int third = (span - 8) / 3, half = (span - 4) / 2;
-        for (var type : MahjongVariant.values()) buttons.add(RoomLobbyControls.variantButton(parent.tablePos(), room,
-            type, left + type.ordinal() * (half + 4), y, half, parent.automatic()));
+        buttons.addAll(RoomLobbyControls.variantButtons(parent.tablePos(), room, left, y, span, parent.automatic()));
         y += 24;
         for (int count : new int[]{4, 3}) {
             var preset = settings.rules().preset().tenhou() ? count == 4 ? RiichiPreset.TENHOU_4 : RiichiPreset.TENHOU_3

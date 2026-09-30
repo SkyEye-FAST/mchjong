@@ -35,7 +35,7 @@ data class ReplayMatch(
     ) {
         init {
             require(
-                startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
+                variant != MahjongVariant.SICHUAN && startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
                     (variant == MahjongVariant.RIICHI) == (riichiRules != null) &&
                     names.size == (riichiRules?.players() ?: 4) &&
                     names.none { it.isBlank() || it.length > 128 } &&
@@ -53,7 +53,7 @@ data class ReplayMatch(
     }
 
     init {
-        require(startedAt > 0 && updatedAt >= startedAt &&
+        require(variant != MahjongVariant.SICHUAN && startedAt > 0 && updatedAt >= startedAt &&
             (variant == MahjongVariant.RIICHI) == (riichi != null) &&
             (variant == MahjongVariant.MCR) == (mcr != null) &&
             participants.size == (riichi?.rules?.players() ?: 4) &&

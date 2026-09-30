@@ -67,6 +67,13 @@ public final class TableEquipment {
             java.util.Objects.requireNonNull(deck);
         }
     }
+    public top.skyeyefast.mchjong.item.SichuanDeck sichuanStock() {
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var candidate = top.skyeyefast.mchjong.item.SichuanDeck.select(boxes.getItem(slot));
+            if (candidate != null) return candidate;
+        }
+        return null;
+    }
     public boolean matchActive() { return !matchSticks.isEmpty(); }
 
     public void beginMatch() {

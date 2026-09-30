@@ -10,6 +10,7 @@ import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiRuleOption;
 import top.skyeyefast.mchjong.engine.RiichiSession;
+import top.skyeyefast.mchjong.engine.SichuanSession;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.TableSessionCodec;
 import top.skyeyefast.mchjong.engine.WorldPolicy;
@@ -32,12 +33,15 @@ final class TableHost {
     RiichiSession riichi() { return session instanceof RiichiSession riichi ? riichi : null; }
     RiichiGame riichiGame() { return riichi() == null ? null : riichi().game(); }
     McrSession mcr() { return session instanceof McrSession mcr ? mcr : null; }
+    SichuanSession sichuan() { return session instanceof SichuanSession sichuan ? sichuan : null; }
     BotServiceState botState() { return riichi() == null ? null : bots.state(riichi()); }
 
     /** Returns whether equipment selection changed its public appearance. */
     boolean prepare(TableEquipment equipment, boolean automatic, WorldPolicy policy) {
         session.configureWorld(policy);
-        if (session instanceof RiichiSession riichi) {
+        return switch (session.variant()) {
+        case RIICHI -> {
+            var riichi = (RiichiSession) session;
             riichi.configureExternalBots(BotServiceClient.availableBots());
             if (riichi.lobby() && !equipment.canSupplyReds(riichi.rules().sanma(), riichi.rules().redFives()))
                 for (var reds : new RedFives[]{RedFives.THREE, RedFives.FOUR, RedFives.NONE})
@@ -49,18 +53,32 @@ final class TableHost {
             if (riichi.lobby()) riichi.configureEquipment(!automatic,
                 !equipment.hasCloth() || equipment.deck() == null || !automatic && !equipment.manualSuppliesReady()
                     ? List.of() : equipment.deck().tiles());
-            return changed;
+            yield changed;
         }
-        var mcr = (McrSession) session;
-        var stock = equipment.mcrStock();
-        if (mcr.lobby()) mcr.configureEquipment(false,
-            automatic && equipment.hasCloth() && stock != null ? stock.deck().tiles() : List.of());
-        return false;
+        case MCR -> {
+            var mcr = (McrSession) session;
+            var stock = equipment.mcrStock();
+            if (mcr.lobby()) mcr.configureEquipment(false,
+                automatic && equipment.hasCloth() && stock != null ? stock.deck().tiles() : List.of());
+            yield false;
+        }
+        case SICHUAN -> {
+            var sichuan = (SichuanSession) session;
+            var stock = equipment.sichuanStock();
+            if (sichuan.lobby()) sichuan.configureEquipment(false,
+                automatic && equipment.hasCloth() && stock != null ? stock.tiles() : List.of());
+            yield false;
+        }
+        };
     }
 
     boolean available(TableEquipment equipment) {
         if (session.lobby()) return true;
-        return equipment.hasCloth() && (session instanceof McrSession ? equipment.mcrStock() != null : equipment.deck() != null);
+        return equipment.hasCloth() && switch (session.variant()) {
+            case RIICHI -> equipment.deck() != null;
+            case MCR -> equipment.mcrStock() != null;
+            case SICHUAN -> equipment.sichuanStock() != null;
+        };
     }
 
     void tick() {

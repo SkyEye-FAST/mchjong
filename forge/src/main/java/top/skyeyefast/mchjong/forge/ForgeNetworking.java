@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(15)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(16)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
@@ -31,6 +31,9 @@ final class ForgeNetworking {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(McrActionPayload.TYPE, McrActionPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
+            })
+            .addMain(SichuanActionPayload.TYPE, SichuanActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {
@@ -61,6 +64,8 @@ final class ForgeNetworking {
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientRiichiNetworking.receive(payload))
             .addMain(McrViewPayload.TYPE, McrViewPayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload))
+            .addMain(SichuanViewPayload.TYPE, SichuanViewPayload.CODEC,
+                (payload, context) -> top.skyeyefast.mchjong.client.ClientSichuanNetworking.receive(payload))
             .addMain(ReplayPayload.TYPE, ReplayPayload.CODEC,
                 (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload))
             .addMain(PresetBundlePayload.TYPE, PresetBundlePayload.CODEC,

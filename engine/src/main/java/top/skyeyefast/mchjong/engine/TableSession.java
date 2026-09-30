@@ -9,8 +9,8 @@ import java.util.Objects;
 import java.util.Set;
 import java.util.UUID;
 
-/** The closed, server-owned room boundary shared by the two built-in rule runtimes. */
-public abstract sealed class TableSession permits RiichiSession, McrSession {
+/** The closed, server-owned room boundary shared by the built-in rule runtimes. */
+public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
 
@@ -198,9 +198,11 @@ public abstract sealed class TableSession permits RiichiSession, McrSession {
             || expectedDecision != decision || exitVote != null || manual
             || seating.stage != RoomSeating.Stage.GATHERING) return null;
         for (Participant participant : participants) if (participant.bot) return null;
-        TableSession replacement = selected == MahjongVariant.MCR
-            ? new McrSession(tableId, seed)
-            : new RiichiSession(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
+        TableSession replacement = switch (selected) {
+            case RIICHI -> new RiichiSession(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
+            case MCR -> new McrSession(tableId, seed);
+            case SICHUAN -> new SichuanSession(tableId, seed);
+        };
         for (int seat = 0; seat < replacement.capacity; seat++)
             if (seat < capacity && participants[seat].id != null)
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());

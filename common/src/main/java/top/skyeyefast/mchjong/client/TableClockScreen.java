@@ -22,6 +22,7 @@ public final class TableClockScreen extends Screen {
     }
     public RiichiTableScreen tableScreen() { return parent instanceof RiichiTableScreen table ? table : null; }
     public McrLobbyScreen mcrLobby() { return parent instanceof McrLobbyScreen lobby ? lobby : null; }
+    public SichuanScreen sichuanScreen() { return parent instanceof SichuanScreen screen ? screen : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 

@@ -85,6 +85,10 @@ class AssetContractTest {
                 assertTrue(translated.has(new RiichiAction(action).translationKey()), language + ": " + action);
             for (var action : top.skyeyefast.mchjong.engine.McrAction.Type.values())
                 assertTrue(translated.has("mcr.mchjong.action." + action.name().toLowerCase(Locale.ROOT)), language + ": " + action);
+            for (var action : top.skyeyefast.mchjong.engine.SichuanAction.Type.values())
+                assertTrue(translated.has("sichuan.mchjong.action." + action.name().toLowerCase(Locale.ROOT)), language + ": " + action);
+            for (var variant : top.skyeyefast.mchjong.engine.MahjongVariant.values())
+                assertTrue(translated.has("variant.mchjong." + variant.name().toLowerCase(Locale.ROOT)), language + ": " + variant);
         }
     }
 

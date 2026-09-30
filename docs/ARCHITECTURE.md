@@ -10,7 +10,8 @@ allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   shared `TableSession` room lifecycle, rule-specific `RiichiSession` and
-  `McrSession` ownership, active `RiichiGame` and `McrGame` orchestration,
+  `McrSession` and `SichuanSession` ownership, active `RiichiGame`, `McrGame`
+  and `SichuanGame` orchestration,
   simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
@@ -240,13 +241,65 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
+## Sichuan SBR hand orchestration
+
+`SichuanSession` owns a four-human room, the explicit `SichuanRules` contract,
+physical stock, independent decision clocks and one `SichuanGame`. `SichuanPreset.SBR_2025`
+uses the MIL Rules Committee's 2025 Chinese competition rules: Chapter II for
+opening and play, Chapter III for payments and draw checks, and Chapter IV for
+active-flower-pig deductions. T/TFMJ 01—2024 cross-checks stock, terms and the
+24-point penalty. The Chinese competition text takes precedence over condensed
+reference tables. The preset caps basic value at three fan, adds one base point
+for self-draw payments and distinguishes timely from delayed added kongs.
+
+`Tile.sichuanSet()` contains four physical copies of each suited kind, 108 in all.
+`SichuanDeck` admits a uniform subset from a single case without modifying it.
+`SichuanWall` and `SichuanWallLayout` own the 14/13/14/13-stack opening, dice cut,
+dealer jump tile, clockwise wall traversal and front-end kong replacement. The
+initial deal enters simultaneous concealed void-suit selection directly. All
+choices become public together when `VOIDING` completes.
+
+`SichuanPlayerState` stores void suit, concealed tiles, melds, river, drawn tile,
+passed-win fan and retirement. `SichuanAction` is an independent issued-action
+contract. Its legal-actions layer admits void-suit discards first, permits pung
+and kong only in the other suits, and requires the void suit to be cleared before
+winning. Ordinary shapes use the existing library's common-hand analysis; Sichuan
+seven pairs, roots, fan and ready-value interpretation belong to `SichuanHandAnalyzer`.
+
+`SichuanGame` follows `VOIDING → TURN ↔ REACTION → HAND_END`. Reactions collect
+each eligible player's response under one decision token and resolve all winning
+claims together. The last winning claimant owns the one physical discard;
+earlier winners retain an immutable winning-tile reference. Winners retire from
+play while their payments remain in the ledger, and play resumes after the last
+winner. Three winners finish the hand; wall exhaustion runs flower-pig and
+maximum-ready-value checks for the remaining players.
+
+`SichuanSettlement` retains scored wins and ordered transfers for self-draw,
+discard wins, kongs, linked kong refunds and ready payments. `FLOWER_PIG` records
+the competition deduction with recipient `-1`, rather than transferring penalty
+points to opponents. The baseline deducts 24 points for an active flower pig;
+a passive flower pig participates in draw checks as not ready. Ordinary payments
+balance across players, while competition deductions reduce the table total.
+The completed result derives deltas from the retained ledger.
+
+`SichuanCodec` encodes explicit game/session saves separately from recipient views,
+requiring complete typed records and bounding size and nesting. Restoration checks
+all 108 physical identities, melds, pending reactions, winner scores and payment
+links, then refreshes decision and incarnation authority. Partial declarations
+and reactions, front-wall cursor, clock reserves and kong context survive saves.
+`SichuanView` hides opponent hands, private declarations and wall identities;
+concealed kongs show their middle tiles, and winning hands remain concealed until
+hand completion. A mounted authenticated participant receives only their own
+actions. `SichuanScreen` presents the shared lobby, private declarations, issued
+actions and the completed point result through the independent Sichuan protocol.
+
 ### Shared rooms and rule sessions
 
-`MahjongVariant` selects one of the two built-in runtimes. `TableSession` owns
+`MahjongVariant` selects Riichi, MCR or Sichuan through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
 request incarnation, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
-`RoomAction` choices for both rules. `TableSession.actRoom` resolves only issued
+`RoomAction` choices for all three rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
 A variant change creates a new concrete session with the target variant's capacity,
 retaining eligible human seats and fresh preparation state. `RiichiSession`
@@ -298,18 +351,20 @@ mounts after loading; a fresh incarnation and decision invalidate requests from
 before restoration. The block entity stores the private session JSON as UTF-8
 NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 
-`TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`
-and `McrActionPayload` carry only their respective issued match-action indices.
+`TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`,
+`McrActionPayload` and `SichuanActionPayload` carry only their respective issued
+match-action indices. Lobby selectors share `variant.mchjong.*` labels and divide
+their available width across the built-in variants.
 `McrNextHandPayload` carries MCR completed-hand confirmation separately; the
 server resolves the acting seat from the authenticated sender.
-`RiichiViewPayload` and `McrViewPayload` carry the public
+`RiichiViewPayload`, `McrViewPayload` and `SichuanViewPayload` carry the public
 `TableRoomView` alongside their rule-specific recipient-safe projections.
-Both view payloads send the last-player leave decision directly to its
+All three view payloads send the last-player leave decision directly to its
 unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
-`ClientMcrNetworking` decode and apply their respective views.
-`RiichiLobby` and `McrLobbyScreen` share room-control lookup and sending while
+`ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
+`RiichiLobby`, `McrLobbyScreen` and `SichuanScreen` share room-control lookup and sending while
 retaining their own rule settings. Match and settlement screens remain separate.
 
 ### MCR physical presentation
@@ -712,8 +767,8 @@ dimensions are bounded before transfer, while each player stores a personal
 selection in the client TOML settings. The server broadcasts only selections
 from its own stick presets; a client-only selection stays on that player's client.
 
-`TimeControl` is enforced by `RiichiGame` and `McrSession`: per-hand reserves and fresh decision
-allowances are independent for each active responder. Both use `TimeControl.Clock`
+`TimeControl` is enforced by `RiichiGame`, `McrSession` and `SichuanSession`: per-hand reserves and fresh decision
+allowances are independent for each active responder. They use `TimeControl.Clock`
 to spend move time before reserve. Client interpolation and
 warning sounds have no authority over deadlines. Lobby changes require the host
 and invalidate ready votes. `TableInvitations` binds expiring requests to player

@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableRoomActionPayload;
 import top.skyeyefast.mchjong.network.TableVariantPayload;
 
-/** Shared room controls used by both rule-specific lobby screens. */
+/** Shared room controls and variant layout. */
 final class RoomLobbyControls {
     private RoomLobbyControls() {}
 
@@ -24,7 +24,7 @@ final class RoomLobbyControls {
 
     static MahjongButton variantButton(BlockPos pos, TableRoomView room, MahjongVariant choice,
                                        int x, int y, int width, boolean automatic) {
-        var label = Component.translatable("mcr.mchjong.game_type." + choice.name().toLowerCase(java.util.Locale.ROOT));
+        var label = Component.translatable("variant.mchjong." + choice.name().toLowerCase(java.util.Locale.ROOT));
         var button = button(label, x, y, width, () -> {
             var connection = Minecraft.getInstance().getConnection();
             if (connection != null) connection.send(PayloadPackets.serverbound(new TableVariantPayload(pos,
@@ -34,6 +34,18 @@ final class RoomLobbyControls {
             && room.seating() == RoomSeating.Stage.GATHERING && room.variant() != choice
             && room.seats().stream().noneMatch(seat -> seat.participant().bot());
         return button;
+    }
+
+    static List<MahjongButton> variantButtons(BlockPos pos, TableRoomView room, int x, int y, int width, boolean automatic) {
+        var variants = MahjongVariant.values();
+        var buttons = new java.util.ArrayList<MahjongButton>();
+        int available = width - (variants.length - 1) * 4;
+        for (int index = 0; index < variants.length; index++) {
+            int start = index * available / variants.length;
+            int end = (index + 1) * available / variants.length;
+            buttons.add(variantButton(pos, room, variants[index], x + start + index * 4, y, end - start, automatic));
+        }
+        return buttons;
     }
 
     static int find(TableRoomView room, RoomAction.Type type, List<Integer> arguments) {

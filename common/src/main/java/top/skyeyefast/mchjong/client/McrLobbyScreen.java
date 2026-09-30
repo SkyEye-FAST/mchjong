@@ -5,7 +5,6 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.PayloadPackets;
@@ -51,11 +50,7 @@ public final class McrLobbyScreen extends Screen {
             dissolve.active = !pending;
             addRenderableWidget(dissolve);
         }
-        var mcr = RoomLobbyControls.variantButton(pos, room, MahjongVariant.MCR, x, top + 32, 113, true);
-        mcr.setTooltip(Tooltip.create(Component.translatable("mcr.mchjong.stock_hint")));
-        addRenderableWidget(mcr);
-        var riichi = RoomLobbyControls.variantButton(pos, room, MahjongVariant.RIICHI, x + 117, top + 32, 113, true);
-        addRenderableWidget(riichi);
+        RoomLobbyControls.variantButtons(pos, room, x, top + 32, 230, true).forEach(this::addRenderableWidget);
         if (minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
             var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), x, top + 78, 230,
                 () -> minecraft.setScreen(new TableClockScreen(this, table.clientMcrTimeControl())));

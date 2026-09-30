@@ -20,12 +20,16 @@ import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.McrCodec;
 import top.skyeyefast.mchjong.engine.McrSession;
+import top.skyeyefast.mchjong.engine.SichuanSession;
+import top.skyeyefast.mchjong.engine.SichuanCodec;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.McrViewPayload;
+import top.skyeyefast.mchjong.network.SichuanActionPayload;
+import top.skyeyefast.mchjong.network.SichuanViewPayload;
 import top.skyeyefast.mchjong.network.TableRoomActionPayload;
 import top.skyeyefast.mchjong.network.McrNextHandPayload;
 import top.skyeyefast.mchjong.network.RiichiControlPayload;
@@ -46,6 +50,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private RiichiView clientView;
     private top.skyeyefast.mchjong.engine.RiichiRoomSettings clientRiichiSettings;
     private McrSession.View clientMcrView;
+    private SichuanSession.View clientSichuanView;
+    private top.skyeyefast.mchjong.engine.TimeControl clientSichuanTimeControl;
     private top.skyeyefast.mchjong.engine.TimeControl clientMcrTimeControl;
     private top.skyeyefast.mchjong.engine.TableRoomView clientTableRoom;
     private top.skyeyefast.mchjong.item.McrDeck clientMcrDeck;
@@ -177,6 +183,19 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         clientVariant = MahjongVariant.MCR;
     }
     public top.skyeyefast.mchjong.engine.TableRoomView clientRoom() { return clientTableRoom; }
+    public SichuanSession.View clientSichuanView() { return clientSichuanView; }
+    public top.skyeyefast.mchjong.engine.TimeControl clientSichuanTimeControl() { return clientSichuanTimeControl; }
+    public void acceptSichuanView(SichuanSession.View view, top.skyeyefast.mchjong.engine.TableRoomView room,
+                                  top.skyeyefast.mchjong.engine.TimeControl timeControl) {
+        if (level == null || !level.isClientSide) throw new IllegalStateException("Client Sichuan snapshot on server");
+        if (clientTableRoom != null && clientTableRoom.tableId().equals(room.tableId())
+            && clientTableRoom.incarnation().equals(room.incarnation()) && room.revision() < clientTableRoom.revision()) return;
+        clientSichuanView = view;
+        clientSichuanTimeControl = timeControl;
+        clientTableRoom = room;
+        clientViewReceivedNanos = System.nanoTime();
+        clientVariant = MahjongVariant.SICHUAN;
+    }
     public BotServiceState clientBotService() { return clientBotService; }
     public void acceptBotService(BotServiceState state) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client bot service state on server");
@@ -263,7 +282,12 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
-        if (serverSession() instanceof McrSession) { sendMcrView(player, open); return; }
+        TableSession current = serverSession();
+        if (current != null) switch (current.variant()) {
+            case MCR -> { sendMcrView(player, open); return; }
+            case SICHUAN -> { sendSichuanView(player, open); return; }
+            case RIICHI -> { }
+        }
         RiichiSession session = serverRiichiSession();
         if (session == null) {
             if (open) player.displayClientMessage(Component.translatable("message.mchjong.corrupt"), false);
@@ -291,23 +315,24 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()), session.timeControl())));
     }
 
+    private void sendSichuanView(ServerPlayer player, boolean open) {
+        SichuanSession session = host == null ? null : host.sichuan();
+        if (session == null || player.serverLevel() != level) return;
+        synchronizeSeats();
+        UUID viewer = authorizedViewer(player);
+        var snapshot = session.view(viewer);
+        player.connection.send(PayloadPackets.clientbound(new SichuanViewPayload(worldPosition,
+            snapshot == null ? "" : SichuanCodec.encodeSessionView(snapshot), session.roomView(viewer),
+            open, session.leaveDecision(player.getUUID()), session.timeControl())));
+    }
+
     public void open(ServerPlayer player) {
         if (unreadableSave != null) {
             player.displayClientMessage(Component.translatable("message.mchjong.corrupt"), false);
             return;
         }
         TableSession session = serverSession();
-        if (session instanceof McrSession) {
-            if (!session.lobby() && session.seatOf(player.getUUID()) < 0
-                && !WorldSettings.of(level.getServer()).policy().spectatingEnabled()) {
-                player.displayClientMessage(Component.translatable("message.mchjong.spectating_disabled"), true);
-                return;
-            }
-            sendMcrView(player, true);
-            return;
-        }
-        RiichiSession current = serverRiichiSession();
-        if (current != null && !current.lobby() && authorizedViewer(player) == null
+        if (session != null && !session.lobby() && authorizedViewer(player) == null
             && !WorldSettings.of(level.getServer()).policy().spectatingEnabled()) {
             player.displayClientMessage(Component.translatable("message.mchjong.spectating_disabled"), true);
             return;
@@ -635,6 +660,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             if (leaving) refreshParticipants(false);
         }
         sendView(player, false, false);
+    }
+
+    public void sichuanAction(ServerPlayer player, SichuanActionPayload payload) {
+        SichuanSession session = serverSession() instanceof SichuanSession sichuan ? sichuan : null;
+        if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
+            || authorizedViewer(player) == null) return;
+        if (session.act(player.getUUID(), payload.tableId(), payload.incarnation(), payload.decision(), payload.actionIndex())) {
+            sentRevision = -1;
+            setChanged();
+        }
+        sendSichuanView(player, false);
     }
 
     public void confirmMcrNextHand(ServerPlayer player, McrNextHandPayload payload) {

@@ -307,6 +307,32 @@ class PhysicalSuppliesTest {
         assertFalse(new TileData(34, TileMaterial.BONE, true).valid());
     }
 
+    @Test void sichuanStockUsesAllThreeSuitsFromOneUniformCase() {
+        var source = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
+        var original = source.copy();
+        var stock = top.skyeyefast.mchjong.item.SichuanDeck.select(source);
+        assertNotNull(stock);
+        assertEquals(top.skyeyefast.mchjong.engine.Tile.sichuanSet(), stock.tiles());
+        assertTrue(ItemStack.matches(original, source));
+        var contents = MahjongSupplies.contents(source);
+        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
+            var tile = MahjongSupplies.tile(contents.get(slot));
+            if (!contents.get(slot).isEmpty() && tile.face() == 1) contents.set(slot, ItemStack.EMPTY);
+        }
+        MahjongSupplies.setContents(source, contents);
+        assertNull(top.skyeyefast.mchjong.item.SichuanDeck.select(source));
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, source);
+        var complement = MahjongSupplies.contents(original);
+        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++)
+            if (!complement.get(slot).isEmpty() && MahjongSupplies.tile(complement.get(slot)).face() != 1) complement.set(slot, ItemStack.EMPTY);
+        var partial = original.copy(); MahjongSupplies.setContents(partial, complement);
+        equipment.boxes().setItem(1, partial);
+        assertNull(equipment.sichuanStock());
+        equipment.boxes().setItem(1, original);
+        assertNotNull(equipment.sichuanStock());
+    }
+
     @Test void mcrStockSelectsOneUniform144TileSetWithoutChangingEitherCase() {
         var complete = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
         complete.set(DataComponents.CUSTOM_NAME, Component.literal("MCR stock"));

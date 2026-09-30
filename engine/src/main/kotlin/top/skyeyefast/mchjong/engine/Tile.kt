@@ -49,6 +49,12 @@ object Tile {
     fun validMcrSet(tiles: List<Int>): Boolean = tiles.size == 144 && tiles.toSet() == mcrSet().toSet()
 
     @JvmStatic
+    fun sichuanSet(): List<Int> = java.util.List.copyOf((0..<108).toList())
+
+    @JvmStatic
+    fun validSichuanSet(tiles: List<Int>): Boolean = tiles.size == 108 && tiles.toSet() == sichuanSet().toSet()
+
+    @JvmStatic
     fun id(kind: Int, copy: Int, red: Boolean): Int {
         if (kind !in 0..<34 || copy !in 0..<4) throw IllegalArgumentException("Invalid tile identity")
         val id = kind * 4 + copy or if (red) RED_FLAG else 0
