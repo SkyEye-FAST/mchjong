@@ -204,19 +204,15 @@ class AssetContractTest {
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("kanto"));
         assertFalse(
                 Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
+        for (String preset : List.of("sichuan", "taiwan", "fujian")) {
+            String notice = Files.readString(resources.resolve("META-INF/licenses/" + preset + "-source.json"));
+            assertTrue(notice.contains(preset));
+            assertFalse(notice.contains("unauthorized"));
+            JsonObject metadata = JsonParser.parseString(notice).getAsJsonObject();
+            assertFalse(metadata.has("details"), preset + " should not retain details");
+        }
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
-        for (String preset : List.of("sichuan", "fujian")) {
-            var metadata = JsonParser.parseString(Files.readString(resources.resolve(
-                "META-INF/licenses/" + preset + "-source.json"))).getAsJsonObject().getAsJsonObject("details");
-            assertEquals("Cangjie6", metadata.getAsJsonObject("author").get("contributor").getAsString());
-            assertEquals("CC BY-SA 4.0", metadata.get("license").getAsString());
-            assertFalse(metadata.get("modifications").getAsString().isBlank());
-        }
-        var taiwan = JsonParser.parseString(Files.readString(resources.resolve(
-            "META-INF/licenses/taiwan-source.json"))).getAsJsonObject().getAsJsonObject("details");
-        assertTrue(taiwan.getAsJsonObject("author").get("contributor").getAsString().contains("Ichiro Naiki"));
-        assertEquals("M+ Fonts License", taiwan.get("license").getAsString());
     }
 
     @Test

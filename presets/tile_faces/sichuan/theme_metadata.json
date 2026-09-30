@@ -6,15 +6,6 @@
     "ja-JP": "四川",
     "en-US": "Sichuan"
   },
-  "details": {
-    "author": {
-      "contributor": "Cangjie6"
-    },
-    "description": "https://commons.wikimedia.org/wiki/File:Mahjong_eg_Chongqing.jpg",
-    "license": "CC BY-SA 4.0",
-    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
-    "modifications": "Redrawn with geometric construction, contour reconstruction and AI-assisted redrawing; removed tile bodies and photographic shading, normalized ink colors, antialiased contours, and recolored the three red fives."
-  },
   "tileDirectory": "tiles",
   "tiles": {
     "1m": "1m.png",

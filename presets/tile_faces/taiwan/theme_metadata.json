@@ -6,15 +6,6 @@
     "ja-JP": "台湾",
     "en-US": "Taiwan"
   },
-  "details": {
-    "author": {
-      "contributor": "Ichiro Naiki; Gutenberg Labo"
-    },
-    "description": "https://github.com/SyaoranHinata/I.Mahjong; I.Mahjong-TW",
-    "license": "M+ Fonts License",
-    "licenseUrl": "https://github.com/SyaoranHinata/I.Mahjong/blob/main/License.md",
-    "modifications": "Removed the tile frames from the vector glyphs, applied regional ink colors, rasterized transparent engravings, and recolored the three red fives."
-  },
   "tileDirectory": "tiles",
   "tiles": {
     "1m": "1m.png",

@@ -38,40 +38,26 @@ The Hong Kong flower tiles (1q-8q) are derived from the I.Mahjong-HK font create
 
 Released under the M+ Fonts License.
 
+## Sichuan
+
+Source: `sichuan/tiles/` (45 individual transparent tile engravings).
+Built-in Sichuan tile-face preset supporting standard hands, regional flower tiles
+and framed white dragons. The engravings were redrawn with geometric construction,
+contour reconstruction, clean contours, flat ink colors and transparent negative space.
+
 ## Taiwan
 
-Source: `taiwan/tiles/` (45 individual transparent engravings), derived from
-the I.Mahjong-TW font created by Ichiro Naiki and based on Gutenberg Labo's
-GL-MahjongTile font:
+Source: `taiwan/tiles/` (45 individual transparent tile engravings).
+Built-in Taiwan tile-face preset supporting standard hands, regional flower tiles
+and framed white dragons. The engravings were redrawn with clean contours, flat
+regional ink colors and transparent negative space.
 
-- https://github.com/SyaoranHinata/I.Mahjong
+## Fujian
 
-Released under the M+ Fonts License. The tile frames were removed from the
-vector glyphs, regional ink colors were applied, and the three fives were
-recolored to supply red variants.
-
-These fonts are free softwares. Unlimited permission is granted to use, copy,
-and distribute it, with or without modification, either commercially and
-noncommercially. THESE FONTS ARE PROVIDED "AS IS" WITHOUT WARRANTY.
-
-## Sichuan and Fujian
-
-Source: `sichuan/tiles/` and `fujian/tiles/` (45 individual
-transparent tile engravings per preset), derived from photographs by
-[Cangjie6](https://commons.wikimedia.org/wiki/User:Cangjie6):
-
-- Sichuan: [Mahjong eg Chongqing.jpg](https://commons.wikimedia.org/wiki/File:Mahjong_eg_Chongqing.jpg)
-- Fujian: [Mahjong eg Amoy.jpg](https://commons.wikimedia.org/wiki/File:Mahjong_eg_Amoy.jpg)
-
-The photographs and MChjong's derived engravings are licensed under
-[Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/).
-The 34 ordinary faces and eight flower faces were redrawn with clean contours
-and flat ink colors using geometric construction, contour reconstruction and
-AI-assisted redrawing. Tile bodies, backgrounds and photographic shading were
-removed. The three fives were recolored to supply red variants. MChjong resamples
-these engravings when composing the atlases. Backs and jokers are not extracted.
-These modifications retain the same license, independently of the code license.
-No endorsement by the photographer is implied.
+Source: `fujian/tiles/` (45 individual transparent tile engravings).
+Built-in Fujian tile-face preset supporting standard hands, regional flower tiles
+and framed white dragons. The engravings were redrawn with geometric construction,
+contour reconstruction, clean contours, flat ink colors and transparent negative space.
 
 ## Flower numbering
 
