@@ -3,8 +3,8 @@
 ## Working in this repository
 
 Read the current branch, Git status and relevant source before editing. Continue
-existing work and preserve unrelated tracked and untracked changes. Use
-`apply_patch` for every direct file edit. Build tools own generated outputs.
+existing work and preserve unrelated tracked and untracked changes.
+Build tools own generated outputs.
 Keep patches scoped to the requested work; avoid reset, clean, force pushes and
 overwriting local work.
 
