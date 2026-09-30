@@ -7,11 +7,11 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableAnimation;
+import top.skyeyefast.mchjong.client.RiichiAnimation;
 import top.skyeyefast.mchjong.client.TableLeaveScreen;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.client.TableRulesScreen;
+import top.skyeyefast.mchjong.client.RiichiRulesScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
@@ -53,7 +53,7 @@ final class TableControlSmoke {
             if (!remainingHidden) settings.toggle(TableSettings.Information.REMAINING);
             settings.showRiver = false;
             require(settings.show(TableSettings.Information.REMAINING), "Hidden river removed the remaining wall count");
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             next(1);
         } else if (stage == 1 && ticks > 10) {
             capture(client, output, "23-hidden-river.png");
@@ -75,7 +75,7 @@ final class TableControlSmoke {
                 } catch (Throwable failure) { reseated.completeExceptionally(failure); }
             });
             next(3);
-        } else if (stage == 3 && client.screen instanceof TableScreen && room.viewerSeat() == 0 && ticks > 10) {
+        } else if (stage == 3 && client.screen instanceof RiichiTableScreen && room.viewerSeat() == 0 && ticks > 10) {
             if (!configuration.rules().sanma()) click(client, "ui.mchjong.players.3");
             next(4);
         } else if (stage == 4 && configuration.rules().players() == 3) {
@@ -97,7 +97,7 @@ final class TableControlSmoke {
         } else if (stage == 11 && configuration.rules().preset() == RiichiPreset.MAHJONG_SOUL_4 && ticks > 5) {
             click(client, "rules.mchjong.title");
             next(12);
-        } else if (stage == 12 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 12 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             require(!widget(client, RedFives.THREE.translationKey()).active && !widget(client, RedFives.FOUR.translationKey()).active,
                 "Unavailable red choices are enabled");
             require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Preset options exposed fixed numeric editors");
@@ -115,7 +115,7 @@ final class TableControlSmoke {
             languageReload.join();
             require(client.screen.width == 320 && client.screen.height == 240, "Preset options minimum viewport");
             client.screen.onClose();
-            require(client.screen instanceof TableScreen, "Rules screen did not return to lobby");
+            require(client.screen instanceof RiichiTableScreen, "Rules screen did not return to lobby");
             next(30);
         } else if (stage == 30 && ticks > 5) {
             capture(client, output, "25n-no-red-lobby-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
@@ -214,7 +214,7 @@ final class TableControlSmoke {
             capture(client, output, "25i-red-stock-options.png");
             click(client, "rules.mchjong.apply");
             next(23);
-        } else if (stage == 23 && client.screen instanceof TableScreen && configuration.rules().redFives() == RedFives.FOUR && ticks > 5) {
+        } else if (stage == 23 && client.screen instanceof RiichiTableScreen && configuration.rules().redFives() == RedFives.FOUR && ticks > 5) {
             require(!configuration.rules().custom() && !configuration.rules().kuitan(), "Preset variants were classified as custom");
             require(configuration.rules().minHan() == 4 && configuration.rules().matchLength() == 1, "Match options were not acknowledged");
             require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
@@ -229,7 +229,7 @@ final class TableControlSmoke {
             click(client, "rules.mchjong.mode.custom");
             click(client, "rules.mchjong.group.points");
             next(24);
-        } else if (stage == 24 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 24 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             var start = field(client, "rules.mchjong.option.starting_points");
             start.setValue("32101");
             client.screen.tick();
@@ -270,7 +270,7 @@ final class TableControlSmoke {
             client.screen.mouseClicked(bankruptcy.getX() + 5, bankruptcy.getY() + 5, 0);
             click(client, "rules.mchjong.apply");
             next(17);
-        } else if (stage == 17 && client.screen instanceof TableScreen && configuration.rules().custom() && ticks > 5) {
+        } else if (stage == 17 && client.screen instanceof RiichiTableScreen && configuration.rules().custom() && ticks > 5) {
             require(configuration.rules().startingPoints() == 32100 && configuration.rules().returnPoints() == 33300 && !configuration.rules().ippatsu(),
                 "Custom rule proposal was not synchronized");
             require(!configuration.rules().bankruptcy(), "Custom bankruptcy setting was not acknowledged");
@@ -278,11 +278,11 @@ final class TableControlSmoke {
             capture(client, output, "25g-custom-lobby.png");
             click(client, "rules.mchjong.title");
             next(18);
-        } else if (stage == 18 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 18 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             field(client, "rules.mchjong.option.starting_points").setValue("40000");
             click(client, "gui.cancel");
             next(19);
-        } else if (stage == 19 && client.screen instanceof TableScreen && ticks > 5) {
+        } else if (stage == 19 && client.screen instanceof RiichiTableScreen && ticks > 5) {
             require(configuration.rules().startingPoints() == 32100, "Cancel changed server rules");
             click(client, "settings.mchjong.scopes");
             click(client, "settings.mchjong.scope.world");
@@ -331,7 +331,7 @@ final class TableControlSmoke {
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);
         } else if (stage == 7 && view != null && view.phase() == RiichiView.Phase.TURN && ticks > 60
-            && !TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
+            && !RiichiAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             require(view.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0),
                 "Server did not deliver the agreed open hands to the seated player");
             capture(client, output, "26-open-hands.png");
@@ -381,15 +381,15 @@ final class TableControlSmoke {
         require(configuration.rules().preset() != RiichiPreset.M_LEAGUE, "Preset selector selected unavailable red fives");
         require(configuration.rules().preset().players() == target.players(), "Preset selector changed player count");
         if (ticks < 10) return false;
-        if (configuration.rules().preset() == target && client.screen instanceof TableScreen) return true;
-        if (client.screen instanceof TableScreen && ticks % 10 == 0) {
+        if (configuration.rules().preset() == target && client.screen instanceof RiichiTableScreen) return true;
+        if (client.screen instanceof RiichiTableScreen && ticks % 10 == 0) {
             String label = Component.translatable("rules.mchjong.preset",
                 Component.translatable(configuration.rules().preset().presetKey())).getString();
             var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(label)).findFirst().orElseThrow();
             require(button.active, "Host preset selector is disabled");
             client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
-        } else if (client.screen instanceof TableRulesScreen && ticks % 10 == 0) {
+        } else if (client.screen instanceof RiichiRulesScreen && ticks % 10 == 0) {
             String choice = Component.translatable(target.presetKey()).getString();
             if (client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .anyMatch(widget -> widget.getMessage().getString().equals(choice))) {

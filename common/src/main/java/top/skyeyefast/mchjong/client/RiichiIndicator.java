@@ -13,13 +13,13 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** A machine display with large seven-segment scores, localized wind letters and seat lamps. */
-public final class TableIndicator {
+public final class RiichiIndicator {
     private static final float SURFACE = (float) TableGeometry.FELT_Y + .039f;
     private static final int LAMP = 0xffffd58a;
     private static final int DIGIT = 0xffb9efcf;
     private static final int[] DIGITS = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
     private static final String[] WINDS = {"east", "south", "west", "north"};
-    private TableIndicator() {}
+    private RiichiIndicator() {}
 
     public static int segments(char character) {
         if (character == '-') return 0x40;

@@ -12,7 +12,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientRiichiNetworking;
 import top.skyeyefast.mchjong.client.MahjongButton;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.ExitVote;
@@ -66,11 +66,11 @@ final class TableInterfaceSmoke {
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             if (immersive) client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-            require(((TableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
+            require(((RiichiTableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
             if (state == 1) {
-                TableScreen opened = (TableScreen) client.screen;
+                RiichiTableScreen opened = (RiichiTableScreen) client.screen;
                 ClientRiichiNetworking.receive(new RiichiViewPayload(table.getBlockPos(),
                     TableNetworking.JSON.toJson(table.clientView()), true, false, false,
                     table.clientRedOptions(), table.clientRoom(), table.clientRiichiSettings(),

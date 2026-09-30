@@ -10,7 +10,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Native focus target for an on-demand wait preview above the private hand. */
-final class TableHints extends MahjongButton {
+final class RiichiHints extends MahjongButton {
     private final TenpaiHints hints = new TenpaiHints();
     private List<TenpaiHints.Wait> waits = List.of();
     private List<TenpaiHints.Wait> narrated = List.of();
@@ -20,7 +20,7 @@ final class TableHints extends MahjongButton {
     private int scale = 1;
     private Component heading = Component.empty();
 
-    TableHints() {
+    RiichiHints() {
         super(0, 0, 20, 16, Component.translatable("hints.mchjong.button"), ignored -> {});
         visible = active = false;
         setTooltip(null);

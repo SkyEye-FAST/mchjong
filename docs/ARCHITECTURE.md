@@ -291,7 +291,7 @@ unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking` decode and apply their respective views.
-`TableLobby` and `McrLobbyScreen` share room-control lookup and sending while
+`RiichiLobby` and `McrLobbyScreen` share room-control lookup and sending while
 retaining their own rule settings. Match and settlement screens remain separate.
 
 ### MCR physical presentation
@@ -311,11 +311,13 @@ separate public flower area. `McrSceneRenderer` consumes the scene and `McrDeck`
 sharing tile meshes, materials and artwork lookup while retaining MCR geometry.
 The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mcr-physical-layout).
 
-`McrTableScreen` opens over the seated world and shares the seat camera, key
-bindings, discard preferences and opaque 1280 × 800 immersive canvas. The world
-renderer consumes `McrTableScene.build`; immersive solids consume the same public
-rail and river poses through `TableProjection`, with a private `TableHand` in the
-foreground. `TilePicking` intersects the MCR piece's actual scale and orientation.
+`McrTableScreen` opens over the seated world and composes `TableViewController`
+for camera input and view switching, and `TableCanvas` for the opaque 1280 × 800
+canvas, letterboxing and pointer conversion. The world renderer consumes
+`McrTableScene.build`; `McrImmersiveTable` consumes its public immersive rail and
+river poses through `ImmersiveTable` primitives and `TableProjection`, with a
+private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
+actual scale and orientation.
 Hand selection resolves only issued discard indices; other declarations use
 native action buttons with localized names and tile previews. View changes retain
 selection and leave the world camera pose intact. Settlement carries the selected
@@ -486,20 +488,28 @@ Ownership follows a UUID, not the lowest numbered human seat.
 Persistent server NBT is separate
 from the client update tag. A table is not a global singleton.
 
-The seated overlay projects the actual 3D table, with `TableSettings` supplying
+The seated overlays project the actual 3D table, with `TableSettings` supplying
 the matching eye and FOV to world rendering and picking. `SeatedCameraState` owns
 seat-local distance, height, yaw/pitch, target translation and interpolated inspect
-progress. `SeatedCamera` bridges native free look and the loader tick lifecycle;
-`TableKeys` supplies registered, rebindable actions to both loaders. Immersive play uses an
-opaque GUI surface: `ImmersiveTable` builds recipient-safe tile solids and projects
-the cloth, standing hands, rivers and public melds through `TableProjection`.
-`TableBoard` supplies the information and animation anchors, while `TableHand`
-supplies the private clickable hand. The viewer's melds lie flat on the immersive
-table at their right-hand corner. The compact replay diagram
-retains its separate flat layout. Neither world visibility nor camera orientation
-controls the immersive camera. Guide anchors and input use GUI coordinates. Ordinary-table handling
-uses the existing server-issued action buttons; seated play retains physical
-gestures. Rendering is read-only and cannot advance play.
+progress. `SeatedCamera` bridges native free look and the loader tick lifecycle.
+`RiichiTableScreen` and `McrTableScreen` compose `TableViewController`, which owns
+view mode, inspect/reset, held arrows, right-drag look/pan and wheel distance/height.
+Each screen controls when switching is allowed and retains its own actions, HUD,
+hand selection and settlement. `TableKeys` supplies registered, rebindable actions;
+`SeatedTableProjection` derives screen anchors and picking rays from the rendered
+camera. `TableCanvas` owns the fixed 1280 × 800 immersive transform and black bars,
+so rendering and pointer input use the same coordinates.
+
+`ImmersiveTable` owns tile solids, material/artwork lookup, contact shadows and
+depth painting through `TableProjection`. `RiichiImmersiveTable` owns Riichi rails,
+rivers, extracted norths, center device and draw/discard motion;
+`McrImmersiveTable` owns the MCR scene adapter. Both compose the same primitives.
+`RiichiBoard` supplies Riichi information and animation anchors, including the
+separate flat replay layout. `TableHand`, `TileMesh` and `TilePicking` retain their
+shared hand, mesh and intersection responsibilities. Riichi scene, animation,
+HUD, action and result components use the `Riichi*` prefix; shared camera,
+settings and session-exit components keep neutral names. Rendering consumes
+recipient-safe views and remains read-only.
 
 `PlayerPortrait` draws Minecraft's cached player-list skins before names in table,
 room and settlement views. Missing player-list entries use the native default
@@ -511,7 +521,7 @@ Portrait rendering does not add network requests or store skin data in engine sn
 kind, separately from snapshot-based availability. `VisibleTiles` deduplicates
 physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
 and pending declarations. Training bots share this accounting. Opponents' concealed
-hands are ignored even when room hand visibility reveals them. `TableHints` renders
+hands are ignored even when room hand visibility reveals them. `RiichiHints` renders
 this information when the room host enables convenience hints during preparation;
 the room view synchronizes that choice to every participant.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
@@ -522,7 +532,7 @@ restrictions are shared with engine execution. Recipient-only furiten and
 riichi-han fields support exact self-state simulation. See [BOTS.md](BOTS.md)
 for the search boundary.
 
-`TableAnimation` tracks recipient-safe snapshots by table identity, hand number,
+`RiichiAnimation` tracks recipient-safe snapshots by table identity, hand number,
 and viewing permission. Visible physical tile identities follow hand/river/meld
 transitions; hidden slots never acquire guessed identities. Wall assembly and
 packet dealing reconstruct hidden source poses without sending private wall data.
@@ -533,10 +543,10 @@ client animation callbacks. `TilePicking` clips a camera ray against the same
 animated oriented tile box used by the renderer.
 
 `RiichiView.Handling` publishes wall-build bits, the next physical source slot
-and packet size, plus the two public dice faces and dealer-held status. `TableDice`
+and packet size, plus the two public dice faces and dealer-held status. `RiichiDice`
 shares those faces across physical cubes, native pickup focus and compact hover
 equations. Dice randomness and wall opening remain server-owned.
-`TableHandling` derives legal physical targets and drop regions
+`RiichiHandling` derives legal physical targets and drop regions
 from this recipient-safe view. Pointer gestures grab scattered tiles or the
 source wall stack, preview their movement, and submit the existing action index
 and decision token on a valid release. A token change or cancellation discards
@@ -556,10 +566,10 @@ wall slot empty while the last live tile becomes dead in place. Revealing dora o
 does not change their physical layers. This follows the deal in the
 [EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).
 
-`TableResults` is a separate, narrated single-screen receipt widget. It uses compact
+`RiichiResults` is a separate, narrated single-screen receipt widget. It uses compact
 hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
 winners have a mouse/keyboard selector. It displays server-authored deltas and final scores without recalculating settlement or
-inventing a private tie-break order. Input stays in `TableScreen`; requests are
+inventing a private tie-break order. Input stays in `RiichiTableScreen`; requests are
 suppressed while one is awaiting a response and stale decisions are rejected by
 the server. Riichi selection always uses the server's legal discard candidates.
 Final standings also show the server's separate uma shares. The table queues
@@ -585,12 +595,12 @@ the fallback still expires if a client never acknowledges. Each settlement stage
 advances early when every human player confirms its skip action. Match settlement
 then adds a 200-tick final-standings stage before restoring the roster.
 `RiichiView` synchronizes the remaining duration and skip confirmations; the saved decision
-age preserves the countdown across reloads. `TableScreen` switches to final standings at the
+age preserves the countdown across reloads. `RiichiTableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 
-`TableLobby` groups player count, matching rule presets, rule details, visibility,
+`RiichiLobby` groups player count, matching rule presets, rule details, visibility,
 clocks, invitations and participants on one page. The top toolbar offers individual
-leave and host-only dissolution. `TableHud` keeps player summaries along the screen edge and puts
+leave and host-only dissolution. `RiichiHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
 the lower edge rather than covering the table center. The concealed run stays
 centered whenever the right-corner melds leave enough space; otherwise it shifts
@@ -690,7 +700,7 @@ warning sounds have no authority over deadlines. Lobby changes require the host
 and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.
 
-`TableAudioEvents` is a pure snapshot-to-cue transformation, while `TableAudio`
+`RiichiAudioEvents` is a pure snapshot-to-cue transformation, while `RiichiAudio`
 owns client effects and recorded voice playback. Voice ZIPs use the client and
 server `voices/` directories; the client decodes them through Minecraft's sound
 engine and enforces an eight-second limit. Server-authorized voice selections

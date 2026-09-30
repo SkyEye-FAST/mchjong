@@ -14,15 +14,15 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Participant presence and ownership. Bot controls live on the room's seat cards. */
-public final class TableSeatsScreen extends Screen {
-    private final TableScreen parent;
+public final class RiichiSeatsScreen extends Screen {
+    private final RiichiTableScreen parent;
     private long revision = -1;
 
-    public TableSeatsScreen(TableScreen parent) {
+    public RiichiSeatsScreen(RiichiTableScreen parent) {
         super(Component.translatable("room.mchjong.participants"));
         this.parent = parent;
     }
-    public TableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
 
@@ -90,7 +90,7 @@ public final class TableSeatsScreen extends Screen {
             : "wind.mchjong." + new String[]{"east", "south", "west", "north"}[wind]);
     }
 
-    static Component position(TableScreen table, int seat) {
+    static Component position(RiichiTableScreen table, int seat) {
         var pos = TableGeometry.stool(table.tablePos(), seat);
         return Component.translatable("room.mchjong.position", wind(seat), pos.getX(), pos.getY(), pos.getZ());
     }
@@ -110,7 +110,7 @@ public final class TableSeatsScreen extends Screen {
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat);
                 var player = state.participant();
-                Component label = Component.translatable("room.mchjong.member", seat + 1, TableScreen.playerName(room, seat));
+                Component label = Component.translatable("room.mchjong.member", seat + 1, RiichiTableScreen.playerName(room, seat));
                 Component status = wind(state.wind()).copy().append("  ").append(player.id() == null
                     ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
                     : presence(state.presence()));

@@ -198,14 +198,14 @@ final class ResourcePackSmoke {
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2);
             client.resizeDisplay();
-            var screen = new top.skyeyefast.mchjong.client.TableScreen(table.getBlockPos());
+            var screen = new top.skyeyefast.mchjong.client.RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
             stage = 8; ticks = 0;
         } else if (stage == 8 && ticks > 20) {
             SmokeScreenshots.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
-            var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
-            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(screen));
+            var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
+            client.setScreen(new top.skyeyefast.mchjong.client.RiichiOptionsScreen(screen));
             stage = 81; ticks = 0;
         } else if (stage == 81 && ticks > 5) {
             button(client, "settings.mchjong.scope.personal").onPress();
@@ -255,7 +255,7 @@ final class ResourcePackSmoke {
             var path = VoicePresets.audioPath(ResourceLocation.parse("smoke:custom_voice"), "ron");
             require(path != null, "Selected voice recording was missing");
             voiceDecode = new net.minecraft.client.sounds.SoundBufferLibrary(client.getResourceManager()).getCompleteBuffer(path);
-            top.skyeyefast.mchjong.client.TableAudio.preview();
+            top.skyeyefast.mchjong.client.RiichiAudio.preview();
             stage = 87; ticks = 0;
         } else if (stage == 87 && voiceDecode.isDone() && ticks > 5) {
             voiceDecode.join();
@@ -280,11 +280,11 @@ final class ResourcePackSmoke {
                 "Client-only stick selection was shared with the server");
             require(VoicePresets.forPlayer(client.player.getGameProfile().getName()).equals(VoicePresets.DEFAULT),
                 "Client-only voice selection was shared with the server");
-            var screen = (top.skyeyefast.mchjong.client.TableScreen) client.screen;
+            var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
             screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
-            require(client.screen instanceof top.skyeyefast.mchjong.client.TableScreen screen && screen.immersive(), "Resource fixture did not enter immersive view");
+            require(client.screen instanceof top.skyeyefast.mchjong.client.RiichiTableScreen screen && screen.immersive(), "Resource fixture did not enter immersive view");
             SmokeScreenshots.grab(output.toFile(), "61-resource-custom-immersive.png", client.getMainRenderTarget(), ignored -> {});
             client.getWindow().setWindowed(640, 480);
             client.resizeDisplay();

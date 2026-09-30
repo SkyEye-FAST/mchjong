@@ -22,7 +22,7 @@ import net.minecraft.world.level.levelgen.WorldOptions;
 import net.minecraft.world.level.levelgen.presets.WorldPresets;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -324,7 +324,7 @@ public final class TableClientSmoke {
                 step = 24; entered = ticks;
             } else if (step == 24 && stoolInteractionSmoke.tick(client, CENTER, output)) {
                 step = 3; entered = ticks;
-            } else if (step == 3 && client.screen instanceof TableScreen && ticks - entered > 40) {
+            } else if (step == 3 && client.screen instanceof RiichiTableScreen && ticks - entered > 40) {
                 require(client.player.isPassenger(), "Player did not mount the stool");
                 if (maidOnly) { step = 36; entered = ticks; return; }
                 if (visibilityOnly) { step = 33; entered = ticks; return; }
@@ -348,7 +348,7 @@ public final class TableClientSmoke {
                 if (!preparation.tick(client, table, output, "01-room")) return;
                 var view = table.clientView();
                 if (view == null) return;
-                if (top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
+                if (top.skyeyefast.mchjong.client.RiichiAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return;
                 require(view.viewerSeat() >= 0, "Private seat snapshot not delivered");
                 // Initial dealership is randomized. Wait for the seated player's turn,
                 // declining calls and continuing early abortive draws through the actual UI.
@@ -379,7 +379,7 @@ public final class TableClientSmoke {
                 client.screen.mouseClicked(client.screen.width / 2.0, client.screen.height - 52, 0);
                 step = 5; entered = ticks;
             } else if (step == 5 && ticks - entered > 15) {
-                require(((TableScreen) client.screen).immersive(), "Immersive hand selection was not enabled");
+                require(((RiichiTableScreen) client.screen).immersive(), "Immersive hand selection was not enabled");
                 require(client.level.getBlockState(CENTER.above(3)).is(Blocks.STONE), "Occluding roof did not reach the client");
                 var seat = (top.skyeyefast.mchjong.world.SeatEntity) client.player.getVehicle();
                 require(client.gameRenderer.getMainCamera().getPosition().distanceTo(TableSettings.get().cameraPosition(seat)) < 1e-6,
@@ -399,7 +399,7 @@ public final class TableClientSmoke {
                 require(view.seats().get(view.viewerSeat()).river().size() == 1, "Discard confirmation did not reach the server");
                 capture(client, "04-immersive-river-under-roof.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-                require(!((TableScreen) client.screen).immersive(), "Cannot return to the seated view");
+                require(!((RiichiTableScreen) client.screen).immersive(), "Cannot return to the seated view");
                 client.getSingleplayerServer().execute(() -> {
                     var level = client.getSingleplayerServer().overworld();
                     for (int x = -2; x <= 2; x++) for (int z = -2; z <= 2; z++)

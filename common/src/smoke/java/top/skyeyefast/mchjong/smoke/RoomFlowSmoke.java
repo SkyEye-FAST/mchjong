@@ -6,7 +6,7 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
@@ -38,7 +38,7 @@ final class RoomFlowSmoke {
             next(1);
         } else if (stage == 1) {
             resize(client, false);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             next(2);
         } else if (stage == 2 && ticks > 10) {
             check(client);
@@ -51,10 +51,10 @@ final class RoomFlowSmoke {
             for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite.short", "ui.mchjong.invite",
                     "room.mchjong.participants", "settings.mchjong.scopes")) {
                 click(client, key);
-                require(!(client.screen instanceof TableScreen), "Room shortcut failed: " + key);
+                require(!(client.screen instanceof RiichiTableScreen), "Room shortcut failed: " + key);
                 AutomationControlsSmoke.checkBounds(client);
                 client.screen.onClose();
-                require(client.screen instanceof TableScreen, "Room shortcut lost its parent: " + key);
+                require(client.screen instanceof RiichiTableScreen, "Room shortcut lost its parent: " + key);
             }
             if (++locale < LANGUAGES.length) next(0);
             else {
@@ -69,7 +69,7 @@ final class RoomFlowSmoke {
             click(client, nextPreset.presetKey());
             click(client, "rules.mchjong.apply");
             next(5);
-        } else if (stage == 5 && configuration.rules().preset() != originalPreset && client.screen instanceof TableScreen) {
+        } else if (stage == 5 && configuration.rules().preset() != originalPreset && client.screen instanceof RiichiTableScreen) {
             click(client, "ui.mchjong.players.3");
             next(6);
         } else if (stage == 6 && configuration.rules().players() == 3) {
@@ -136,7 +136,7 @@ final class RoomFlowSmoke {
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 capturedHand = true;
             } else if (capturedHand && !capturedImmersive && remaining > RiichiGame.SETTLEMENT_TICKS && ticks > 25) {
-                require(((TableScreen) client.screen).immersive(), "Settlement cannot enter immersive view");
+                require(((RiichiTableScreen) client.screen).immersive(), "Settlement cannot enter immersive view");
                 check(client);
                 capture(client, output, "match-hand-immersive.png");
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -236,7 +236,7 @@ final class RoomFlowSmoke {
     }
     private static void check(Minecraft client) {
         AutomationControlsSmoke.checkBounds(client);
-        if (client.screen instanceof TableScreen screen && screen.immersive()) return;
+        if (client.screen instanceof RiichiTableScreen screen && screen.immersive()) return;
         for (var child : client.screen.children()) if (child instanceof AbstractButton button && button.visible)
             require(client.font.width(button.getMessage()) <= button.getWidth() - 12,
                 "Truncated room control: " + button.getMessage().getString());

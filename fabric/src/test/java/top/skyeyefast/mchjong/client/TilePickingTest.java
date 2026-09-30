@@ -6,14 +6,14 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TilePickingTest {
-    private static TableAnimation.Frame tile(Vec3 position, float yaw, float pitch) {
-        return new TableAnimation.Frame(new TableScene.Piece(0, 0, TableScene.Area.HAND, 0, position, yaw, false, false), pitch);
+    private static RiichiAnimation.Frame tile(Vec3 position, float yaw, float pitch) {
+        return new RiichiAnimation.Frame(new RiichiTableScene.Piece(0, 0, RiichiTableScene.Area.HAND, 0, position, yaw, false, false), pitch);
     }
 
     @Test void picksAllSeatOrientationsAndAnimatedTilts() {
         var settings = new TableSettings();
         for (int seat = 0; seat < 4; seat++) for (float pitch : new float[]{0, -30, -60, -90}) {
-            var position = TableGeometry.orient(0, TableGeometry.FELT_Y + .081 * TableScene.TILE_SCALE, TableScene.HAND_Z, seat);
+            var position = TableGeometry.orient(0, TableGeometry.FELT_Y + .081 * RiichiTableScene.TILE_SCALE, RiichiTableScene.HAND_Z, seat);
             var origin = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat);
             assertTrue(Double.isFinite(TilePicking.distanceSquared(tile(position, seat * 90, pitch), origin, position.subtract(origin), false)));
         }
@@ -23,12 +23,12 @@ class TilePickingTest {
         var settings = new TableSettings();
         for (int seat = 0; seat < 4; seat++) for (boolean sideways : new boolean[]{false, true})
             for (boolean stacked : new boolean[]{false, true}) {
-                double width = (sideways ? TileMesh.HEIGHT : TileMesh.WIDTH) * TableScene.TILE_SCALE;
-                var position = TableGeometry.orient(TableScene.MELD_RIGHT - width / 2,
-                    TableGeometry.FELT_Y + TileMesh.DEPTH * TableScene.TILE_SCALE * (stacked ? 1.5 : .5), TableScene.HAND_Z, seat);
-                var piece = new TableScene.Piece(0, seat, TableScene.Area.MELD, 0, position,
+                double width = (sideways ? TileMesh.HEIGHT : TileMesh.WIDTH) * RiichiTableScene.TILE_SCALE;
+                var position = TableGeometry.orient(RiichiTableScene.MELD_RIGHT - width / 2,
+                    TableGeometry.FELT_Y + TileMesh.DEPTH * RiichiTableScene.TILE_SCALE * (stacked ? 1.5 : .5), RiichiTableScene.HAND_Z, seat);
+                var piece = new RiichiTableScene.Piece(0, seat, RiichiTableScene.Area.MELD, 0, position,
                     seat * 90 + (sideways ? 90 : 0), true, false);
-                var frame = new TableAnimation.Frame(piece, -90);
+                var frame = new RiichiAnimation.Frame(piece, -90);
                 var origin = TableGeometry.orient(0, settings.cameraHeight, settings.cameraDistance, seat);
                 assertTrue(Double.isFinite(TilePicking.distanceSquared(frame, origin, position.subtract(origin), false)), piece.toString());
             }
@@ -40,6 +40,22 @@ class TilePickingTest {
         assertEquals(Double.POSITIVE_INFINITY, TilePicking.distanceSquared(tile, new Vec3(0, 0, 2), new Vec3(0, 0, 1), false));
     }
 
+    @Test void projectedWorldTileReturnsTheSamePickingRay() {
+        var origin = new Vec3(.2, 2.1, 2);
+        var forward = new Vec3(-.1, -.65, -1).normalize();
+        var right = new Vec3(-forward.z, 0, forward.x).normalize();
+        var projection = new SeatedTableProjection(origin, forward, right, 350, 640, 400);
+        var position = new Vec3(.4, TableGeometry.FELT_Y, .5);
+        var point = projection.project(position, .05);
+        assertNotNull(point);
+        var pointer = projection.pointer(point.x(), point.y());
+        assertEquals(origin, pointer.origin());
+        assertTrue(pointer.ray().normalize().distanceTo(position.subtract(origin).normalize()) < 1e-9);
+        assertTrue(Double.isFinite(TilePicking.distanceSquared(tile(position, 0, 0),
+            pointer.origin(), pointer.ray(), false)));
+        assertNull(projection.project(origin.subtract(forward), .05));
+    }
+
     @Test void pannedAndInspectingCamerasPickFarPublicFacesFromEverySeat() {
         var camera = new SeatedCameraState(2, 2.2);
         camera.pan(.2, -.15);
@@ -47,15 +63,15 @@ class TilePickingTest {
         for (boolean inspect : new boolean[]{false, true}) {
             for (int tick = 0; tick < 30; tick++) camera.tick(inspect);
             camera.sample(1);
-            for (int seat = 0; seat < 4; seat++) for (TableScene.Area area :
-                new TableScene.Area[]{TableScene.Area.RIVER, TableScene.Area.MELD}) {
+            for (int seat = 0; seat < 4; seat++) for (RiichiTableScene.Area area :
+                new RiichiTableScene.Area[]{RiichiTableScene.Area.RIVER, RiichiTableScene.Area.MELD}) {
                 int opposite = (seat + 2) % 4;
-                var position = TableGeometry.orient(area == TableScene.Area.RIVER ? .25 : TableScene.MELD_RIGHT - .1,
-                    TableGeometry.FELT_Y + TileMesh.DEPTH * TableScene.TILE_SCALE / 2,
-                    area == TableScene.Area.RIVER ? .45 : TableScene.HAND_Z, opposite);
-                var piece = new TableScene.Piece(0, opposite, area, 0, position, opposite * 90, true, false);
+                var position = TableGeometry.orient(area == RiichiTableScene.Area.RIVER ? .25 : RiichiTableScene.MELD_RIGHT - .1,
+                    TableGeometry.FELT_Y + TileMesh.DEPTH * RiichiTableScene.TILE_SCALE / 2,
+                    area == RiichiTableScene.Area.RIVER ? .45 : RiichiTableScene.HAND_Z, opposite);
+                var piece = new RiichiTableScene.Piece(0, opposite, area, 0, position, opposite * 90, true, false);
                 var origin = camera.eye(seat);
-                assertTrue(Double.isFinite(TilePicking.distanceSquared(new TableAnimation.Frame(piece, -90),
+                assertTrue(Double.isFinite(TilePicking.distanceSquared(new RiichiAnimation.Frame(piece, -90),
                     origin, position.subtract(origin), false)), seat + " " + area + " inspect=" + inspect);
             }
         }

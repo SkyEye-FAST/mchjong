@@ -82,7 +82,7 @@ public final class PersonalPresetsScreen extends Screen {
             settings.voicePreset = id;
             settings.voiceSource = TableSettings.VoiceSource.SELECTED;
             VoicePresets.sendChoice();
-            TableAudio.settingsChanged();
+            RiichiAudio.settingsChanged();
         }
         try { settings.save(TableSettings.configPath()); saveFailed = false; }
         catch (IOException failure) { saveFailed = true; }

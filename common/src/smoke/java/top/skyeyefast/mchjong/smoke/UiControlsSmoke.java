@@ -10,13 +10,13 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.MahjongEditBox;
 import top.skyeyefast.mchjong.client.MahjongSlider;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettingsScreen;
 
 /** Exercise the themed widgets with the actual game's input and font implementations. */
 final class UiControlsSmoke {
     static void verify(Minecraft client) {
-        var settings = new TableSettingsScreen(new TableScreen(BlockPos.ZERO));
+        var settings = new TableSettingsScreen(new RiichiTableScreen(BlockPos.ZERO));
         settings.init(client, 320, 240);
         for (int tab = 0; tab < 4; tab++) {
             String label = Component.translatable("settings.mchjong.tab." + tab).getString();

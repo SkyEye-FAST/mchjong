@@ -33,7 +33,7 @@ public final class ReplayScreen extends Screen {
     private boolean roundsOpen;
     private boolean wallOpen;
     private ReplayPlayback.Timeline playback;
-    private TableBoard board;
+    private RiichiBoard board;
     private TableHand viewerHand;
     private Timeline timeline;
     private Button play;
@@ -142,7 +142,7 @@ public final class ReplayScreen extends Screen {
         int controlsTop = height - 78;
         viewerHand = new TableHand(frame.seats().get(viewer), viewer, width, controlsTop, height < 360 ? 17 : 21);
         int boardBottom = Math.max(120, viewerHand.top() - 5);
-        board = new TableBoard(TableBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
+        board = new RiichiBoard(RiichiBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
         result.visible = result.active = frame.settled() && !wallOpen;
         result.setViewer(viewer);
         var decision = currentDecision();
@@ -325,7 +325,7 @@ public final class ReplayScreen extends Screen {
         MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 11, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, eventName(), 12, 54, width - 24, MahjongUi.ACCENT, true);
         if (!frame().settled() && !wallOpen) {
-            board.render(graphics, TableBoardState.replay(match, hand(), frame(), viewer), PRESET);
+            board.render(graphics, RiichiBoardState.replay(match, hand(), frame(), viewer), PRESET);
             renderPlayerCards(graphics);
             viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, PRESET);
             renderDora(graphics);

@@ -11,7 +11,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.engine.TimeControl;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TableDepositsTest {
+class RiichiDepositsTest {
     private RiichiView view(RiichiPreset rules, int deposits, int declared, boolean manual) {
         var seats = new ArrayList<RiichiView.Seat>();
         for (int seat = 0; seat < rules.players(); seat++)
@@ -26,24 +26,24 @@ class TableDepositsTest {
         for (var rules : List.of(RiichiPreset.MAHJONG_SOUL_3, RiichiPreset.MAHJONG_SOUL_4))
             for (boolean manual : new boolean[]{false, true}) for (int carried : new int[]{0, 1, 4, 12}) {
                 int declared = (1 << rules.players()) - 1;
-                var sticks = TableDeposits.sticks(view(rules, carried + rules.players(), declared, manual));
+                var sticks = RiichiDeposits.sticks(view(rules, carried + rules.players(), declared, manual));
                 assertEquals(carried + rules.players(), sticks.size());
-                assertEquals(rules.players(), sticks.stream().filter(TableDeposits.Stick::declared).count());
+                assertEquals(rules.players(), sticks.stream().filter(RiichiDeposits.Stick::declared).count());
                 var positions = new java.util.HashSet<List<Integer>>();
                 for (var stick : sticks) assertTrue(positions.add(List.of(stick.seat(), stick.layer())));
-                var nextHand = TableDeposits.sticks(view(rules, carried + rules.players(), 0, manual));
+                var nextHand = RiichiDeposits.sticks(view(rules, carried + rules.players(), 0, manual));
                 assertEquals(sticks.size(), nextHand.size());
-                assertTrue(nextHand.stream().noneMatch(TableDeposits.Stick::declared));
+                assertTrue(nextHand.stream().noneMatch(RiichiDeposits.Stick::declared));
             }
     }
 
     @Test void awardedPotIsEmptyEvenWhenTheWinningHandStillDisplaysRiichiFlags() {
-        assertTrue(TableDeposits.sticks(view(RiichiPreset.MAHJONG_SOUL_4, 0, 15, false)).isEmpty());
+        assertTrue(RiichiDeposits.sticks(view(RiichiPreset.MAHJONG_SOUL_4, 0, 15, false)).isEmpty());
     }
 
     @Test void lanesFitBetweenTheMachineCountersAndScoresWithoutIntersectingEachOther() {
-        assertTrue(TableDeposits.LANE_Z - TableDeposits.HALF_WIDTH > TableDeposits.HALF_LENGTH);
-        assertTrue(TableDeposits.LANE_Z + TableDeposits.HALF_WIDTH < .166);
-        assertTrue(TableDeposits.LANE_Z - TableDeposits.HALF_WIDTH > .10);
+        assertTrue(RiichiDeposits.LANE_Z - RiichiDeposits.HALF_WIDTH > RiichiDeposits.HALF_LENGTH);
+        assertTrue(RiichiDeposits.LANE_Z + RiichiDeposits.HALF_WIDTH < .166);
+        assertTrue(RiichiDeposits.LANE_Z - RiichiDeposits.HALF_WIDTH > .10);
     }
 }

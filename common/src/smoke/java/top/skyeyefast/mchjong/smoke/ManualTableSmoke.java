@@ -16,8 +16,8 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.GameType;
 import net.minecraft.world.level.block.Blocks;
 import org.lwjgl.glfw.GLFW;
-import top.skyeyefast.mchjong.client.TableAnimation;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiAnimation;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiGame;
@@ -47,13 +47,13 @@ final class ManualTableSmoke {
             .findFirst().orElseThrow();
         check(!button.active, "Immersive button enabled before dealing completed");
         client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        check(!((TableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
+        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
     }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;
     private CompletableFuture<Void> serverWork;
     private ItemStack installedBox;
-    private TableScreen draggingScreen;
+    private RiichiTableScreen draggingScreen;
     private net.minecraft.world.phys.Vec3 dragEnd;
     private int dragTicks;
     private String dragCapture;
@@ -102,7 +102,7 @@ final class ManualTableSmoke {
             if (++dragTicks < 4) return false;
             check(client.screen == draggingScreen, "Physical drag lost its screen before release");
             capture(client, output, dragCapture);
-            var held = TableAnimation.of(table).sample(net.minecraft.Util.getMillis()).stream()
+            var held = RiichiAnimation.of(table).sample(net.minecraft.Util.getMillis()).stream()
                 .filter(frame -> draggingScreen.handlingOffset(CENTER, frame.piece()).lengthSqr() > 0).toList();
             check(!held.isEmpty() && held.stream().allMatch(frame -> draggingScreen.highlight(CENTER, frame.piece()) != 0),
                 "Held physical source lost its outline in " + view.phase() + ", decision=" + view.decision());
@@ -116,7 +116,7 @@ final class ManualTableSmoke {
             case 15 -> {
                 var room = table.clientRoom();
                 var settings = table.clientRiichiSettings();
-                if (!(client.screen instanceof TableScreen) || room == null || room.viewerSeat() != 0
+                if (!(client.screen instanceof RiichiTableScreen) || room == null || room.viewerSeat() != 0
                     || settings == null || ticks < 15) return false;
                 check(!table.automatic() && table.wood() == FurnitureWood.WARPED, "Ordinary table appearance did not synchronize");
                 check(settings.timeControl().equals(top.skyeyefast.mchjong.engine.TimeControl.MANUAL), "Ordinary lobby clock defaults differ from the server");
@@ -140,7 +140,7 @@ final class ManualTableSmoke {
                 next(17);
             }
             case 17 -> {
-                if (!(client.screen instanceof TableScreen) || ticks < 10) return false;
+                if (!(client.screen instanceof RiichiTableScreen) || ticks < 10) return false;
                 click(client, "room.mchjong.start_bots");
                 next(19);
             }
@@ -167,7 +167,7 @@ final class ManualTableSmoke {
             }
             case 20 -> {
                 if (!offered(view, RiichiAction.Type.PICK_UP_DICE) || ticks < 30
-                    || TableAnimation.of(table).moving(net.minecraft.Util.getMillis())
+                    || RiichiAnimation.of(table).moving(net.minecraft.Util.getMillis())
                     || !hasControl(client, "action.mchjong.pick_up_dice")) return false;
                 check(view.handling().diceOne() == 0 && view.seats().stream().allMatch(seat -> seat.hand().isEmpty()), "Dice or dealing advanced before the dealer");
                 check(diceVisible(client), "Dice did not appear after the wall was complete");
@@ -220,11 +220,11 @@ final class ManualTableSmoke {
                 next(8);
             }
             case 8 -> {
-                if (view.phase() != RiichiView.Phase.TURN || view.turn() != 0 || TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
+                if (view.phase() != RiichiView.Phase.TURN || view.turn() != 0 || RiichiAnimation.of(table).dealing(net.minecraft.Util.getMillis())) return false;
                 check(view.seats().getFirst().hand().size() == 14 && view.remaining() == remaining - 1, "Explicit dealer draw changed the wrong number of tiles");
                 capture(client, output, "35-manual-dealer-draw.png");
                 client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-                check(((TableScreen) client.screen).immersive(), "Immersive view remained locked after dealing");
+                check(((RiichiTableScreen) client.screen).immersive(), "Immersive view remained locked after dealing");
                 next(23);
             }
             case 23 -> {
@@ -240,8 +240,8 @@ final class ManualTableSmoke {
             case 24 -> {
                 if (ticks < 5) return false;
                 TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
-                var piece = top.skyeyefast.mchjong.client.TableScene.build(view).stream()
-                    .filter(value -> value.area() == top.skyeyefast.mchjong.client.TableScene.Area.HAND && value.seat() == view.viewerSeat())
+                var piece = top.skyeyefast.mchjong.client.RiichiTableScene.build(view).stream()
+                    .filter(value -> value.area() == top.skyeyefast.mchjong.client.RiichiTableScene.Area.HAND && value.seat() == view.viewerSeat())
                     .findFirst().orElseThrow();
                 var pointer = project(client, piece.position());
                 client.screen.mouseClicked(pointer.x, pointer.y, 0);
@@ -275,7 +275,7 @@ final class ManualTableSmoke {
             }
             case 25 -> {
                 if (!deposits.tick(client, table, output)) return false;
-                client.setScreen(new TableScreen(table.getBlockPos()));
+                client.setScreen(new RiichiTableScreen(table.getBlockPos()));
                 next(26);
             }
             case 26 -> {
@@ -415,13 +415,13 @@ final class ManualTableSmoke {
     private static boolean offered(RiichiView view, RiichiAction.Type type) { return view.actions().stream().anyMatch(action -> action.type() == type); }
     private void next(int value) { stage = value; ticks = 0; }
     private static boolean hasControl(Minecraft client, String key) {
-        if (!(client.screen instanceof TableScreen)) return false;
+        if (!(client.screen instanceof RiichiTableScreen)) return false;
         String label = Component.translatable(key).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(button -> button.getMessage().getString().equals(label) && button.active && button.visible);
     }
     private static boolean diceVisible(Minecraft client) {
-        if (!(client.screen instanceof TableScreen)) return false;
+        if (!(client.screen instanceof RiichiTableScreen)) return false;
         String label = Component.translatable("action.mchjong.pick_up_dice").getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(button -> button.visible && button.getMessage().getString().equals(label));
@@ -429,7 +429,7 @@ final class ManualTableSmoke {
     private void click(Minecraft client, String key) {
         if (client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity table) {
             var view = table.clientView();
-            int index = top.skyeyefast.mchjong.client.TableHandling.action(view);
+            int index = top.skyeyefast.mchjong.client.RiichiHandling.action(view);
             if (index >= 0 && view.actions().get(index).translationKey().equals(key)) {
                 dragTiles(client, table, view);
                 return;
@@ -443,20 +443,20 @@ final class ManualTableSmoke {
     }
 
     private void dragTiles(Minecraft client, MahjongTableBlockEntity table, RiichiView view) {
-        var screen = (TableScreen) client.screen;
-        var frames = TableAnimation.of(table).sample(net.minecraft.Util.getMillis());
+        var screen = (RiichiTableScreen) client.screen;
+        var frames = RiichiAnimation.of(table).sample(net.minecraft.Util.getMillis());
         if (view.phase() == RiichiView.Phase.DEAL || view.phase() == RiichiView.Phase.DRAW)
-            check(frames.stream().filter(frame -> frame.piece().area() == top.skyeyefast.mchjong.client.TableScene.Area.WALL
+            check(frames.stream().filter(frame -> frame.piece().area() == top.skyeyefast.mchjong.client.RiichiTableScene.Area.WALL
                 && screen.highlight(CENTER, frame.piece()) != 0).count() == view.handling().packetSize(),
                 "Pickup hint must highlight the complete packet");
         var camera = client.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(CENTER, net.minecraft.world.phys.Vec3.ZERO));
         for (var frame : frames) {
             var piece = frame.piece();
-            if (!top.skyeyefast.mchjong.client.TableHandling.source(view, piece)) continue;
-            var destination = top.skyeyefast.mchjong.client.TableHandling.destination(view);
+            if (!top.skyeyefast.mchjong.client.RiichiHandling.source(view, piece)) continue;
+            var destination = top.skyeyefast.mchjong.client.RiichiHandling.destination(view);
             if (view.phase() == RiichiView.Phase.SHUFFLE)
                 destination = new net.minecraft.world.phys.Vec3(piece.position().x < 0 ? .6 : -.6, TableGeometry.FELT_Y, 0);
-            var start = project(client, top.skyeyefast.mchjong.client.TableHandling.grip(piece, camera));
+            var start = project(client, top.skyeyefast.mchjong.client.RiichiHandling.grip(piece, camera));
             var end = project(client, destination);
             if (start.x < 0 || start.x >= screen.width || start.y < 0 || start.y >= screen.height) continue;
             screen.mouseClicked(start.x, start.y, 0);
@@ -471,15 +471,15 @@ final class ManualTableSmoke {
             }
             screen.mouseReleased(end.x, end.y, 0);
         }
-        var sources = frames.stream().filter(frame -> top.skyeyefast.mchjong.client.TableHandling.source(view, frame.piece()))
+        var sources = frames.stream().filter(frame -> top.skyeyefast.mchjong.client.RiichiHandling.source(view, frame.piece()))
             .map(frame -> {
-                var ray = top.skyeyefast.mchjong.client.TableHandling.grip(frame.piece(), camera).subtract(camera);
+                var ray = top.skyeyefast.mchjong.client.RiichiHandling.grip(frame.piece(), camera).subtract(camera);
                 var nearest = frames.stream().min(java.util.Comparator.comparingDouble(other ->
                     top.skyeyefast.mchjong.client.TilePicking.distanceSquared(other, camera, ray, false))).orElseThrow();
                 return frame.piece() + " screen=" + project(client, frame.piece().position()) + " nearest=" + nearest.piece();
             }).toList();
         throw new IllegalStateException("No physical source could be picked for " + view.phase() + " moving="
-            + TableAnimation.of(table).moving(net.minecraft.Util.getMillis()) + " sources=" + sources);
+            + RiichiAnimation.of(table).moving(net.minecraft.Util.getMillis()) + " sources=" + sources);
     }
 
     private static net.minecraft.world.phys.Vec3 project(Minecraft client, net.minecraft.world.phys.Vec3 point) {

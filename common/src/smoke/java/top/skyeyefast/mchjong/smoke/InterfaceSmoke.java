@@ -15,9 +15,9 @@ import top.skyeyefast.mchjong.client.MahjongEditBox;
 import top.skyeyefast.mchjong.client.MahjongSlider;
 import top.skyeyefast.mchjong.client.PersonalSettingsScreen;
 import top.skyeyefast.mchjong.client.PersonalPresetsScreen;
-import top.skyeyefast.mchjong.client.TableClockScreen;
-import top.skyeyefast.mchjong.client.TableInviteScreen;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiClockScreen;
+import top.skyeyefast.mchjong.client.RiichiInviteScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -25,7 +25,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 /** Real client menu packets and rendered controls; no screen-only inventory mutations. */
 final class InterfaceSmoke {
     private final AutomationControlsSmoke automation = new AutomationControlsSmoke();
-    private TableScreen settingsParent;
+    private RiichiTableScreen settingsParent;
     private int boxStage, boxTicks, settingsStage, settingsTicks, storageStage, storageTicks;
     private int windowWidth, windowHeight, guiScale, originalTiles;
     private ItemStack moved = ItemStack.EMPTY;
@@ -127,7 +127,7 @@ final class InterfaceSmoke {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            settingsParent = new TableScreen(table.getBlockPos());
+            settingsParent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(settingsParent);
             client.setScreen(new PersonalSettingsScreen(settingsParent));
             settingsStage = -1; settingsTicks = 0;
@@ -169,7 +169,7 @@ final class InterfaceSmoke {
             require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            client.setScreen(new TableClockScreen(settingsParent, table.clientRiichiSettings().timeControl()));
+            client.setScreen(new RiichiClockScreen(settingsParent, table.clientRiichiSettings().timeControl()));
             settingsStage = 5; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);
@@ -191,13 +191,13 @@ final class InterfaceSmoke {
             require(button(client, "gui.done").active, "Valid numeric input cannot be applied");
             capture(client, output, "34-clock-keyboard.png");
             client.screen.onClose(); // Do not send edited clock values into a running table.
-            client.setScreen(new TableInviteScreen(settingsParent));
+            client.setScreen(new RiichiInviteScreen(settingsParent));
             settingsStage = 8; settingsTicks = 0;
         } else if (settingsStage == 8 && settingsTicks > 10) {
             checkBounds(client);
             capture(client, output, "35-invite-small.png");
             client.screen.onClose();
-            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(settingsParent));
+            client.setScreen(new top.skyeyefast.mchjong.client.RiichiOptionsScreen(settingsParent));
             settingsStage = 11; settingsTicks = 0;
         } else if (settingsStage >= 11 && settingsStage <= 13 && settingsTicks > 10) {
             checkBounds(client);
@@ -211,7 +211,7 @@ final class InterfaceSmoke {
             }
             else {
                 client.screen.onClose();
-                client.setScreen(new top.skyeyefast.mchjong.client.TableSeatsScreen(settingsParent));
+                client.setScreen(new top.skyeyefast.mchjong.client.RiichiSeatsScreen(settingsParent));
                 settingsStage = 14; settingsTicks = 0;
                 return false;
             }

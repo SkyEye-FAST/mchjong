@@ -10,10 +10,10 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
     public net.minecraft.client.gui.navigation.ScreenRectangle browserBounds() {
         return new net.minecraft.client.gui.navigation.ScreenRectangle(leftPos, topPos, imageWidth, imageHeight);
     }
-    private final TableScreen parent;
+    private final RiichiTableScreen parent;
     public PointStickScreen(PointStickMenu menu, Inventory inventory, Component title) {
         super(menu, inventory, title);
-        parent = TableScreen.active(net.minecraft.client.Minecraft.getInstance().screen);
+        parent = RiichiTableScreen.active(net.minecraft.client.Minecraft.getInstance().screen);
         imageWidth = 304;
         imageHeight = 216;
     }
@@ -42,7 +42,7 @@ public final class PointStickScreen extends AbstractContainerScreen<PointStickMe
             ? table.clientView() : null;
         for (int row = 0; row < 4; row++) {
             int y = 22 + row * 24;
-            Component name = view != null && row < view.seats().size() ? TableScreen.playerName(view, row)
+            Component name = view != null && row < view.seats().size() ? RiichiTableScreen.playerName(view, row)
                 : Component.translatable("sticks.mchjong.seat", row + 1);
             MahjongUi.text(graphics, font, name, 10, y, 96, menu.canWithdraw(row) ? MahjongUi.POSITIVE : MahjongUi.TEXT, false);
             int total = menu.totalPoints(row);

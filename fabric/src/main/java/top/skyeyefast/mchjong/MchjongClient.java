@@ -36,13 +36,13 @@ public final class MchjongClient implements ClientModInitializer {
         net.minecraft.client.gui.screens.MenuScreens.register(MahjongContent.STICK_MENU, top.skyeyefast.mchjong.client.PointStickScreen::new);
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientTickEvents.END_CLIENT_TICK.register(client -> {
             top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(patchouli);
-            top.skyeyefast.mchjong.client.TableAudio.tick();
+            top.skyeyefast.mchjong.client.RiichiAudio.tick();
             top.skyeyefast.mchjong.client.SeatedCamera.tick();
             top.skyeyefast.mchjong.client.ClientReplays.tick();
             top.skyeyefast.mchjong.client.TileFacePresets.tick();
         });
         net.fabricmc.fabric.api.client.event.lifecycle.v1.ClientLifecycleEvents.CLIENT_STOPPING.register(client ->
-            top.skyeyefast.mchjong.client.TableAudio.close());
+            top.skyeyefast.mchjong.client.RiichiAudio.close());
         BlockEntityRenderers.register(MahjongContent.TABLE_ENTITY, MahjongTableRenderer::new);
         BlockEntityRenderers.register(MahjongContent.STOOL_ENTITY, top.skyeyefast.mchjong.client.FurnitureRenderer::new);
         var itemRenderer = new top.skyeyefast.mchjong.client.MahjongItemRenderer();

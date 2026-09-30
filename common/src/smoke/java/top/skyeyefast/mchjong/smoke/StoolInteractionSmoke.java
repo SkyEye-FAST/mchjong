@@ -10,7 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -68,7 +68,7 @@ final class StoolInteractionSmoke {
             use(client, stool);
             step = 7;
         } else if (step == 7) {
-            require(client.player.getVehicle() instanceof SeatEntity && client.screen instanceof TableScreen,
+            require(client.player.getVehicle() instanceof SeatEntity && client.screen instanceof RiichiTableScreen,
                 "Ordinary stool click did not mount and open controls");
             var table = (MahjongTableBlockEntity) client.level.getBlockEntity(center);
             var room = table.clientRoom();

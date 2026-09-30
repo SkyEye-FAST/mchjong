@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.smoke;
 import java.nio.file.Path;
 import net.minecraft.client.Minecraft;
 import org.lwjgl.glfw.GLFW;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -54,12 +54,12 @@ final class CameraSmoke {
             require(pose.distance() == distance, "Third-person wheel changed the seated camera");
             client.player.turn(20, 10);
             float yaw = client.player.getYRot(), pitch = client.player.getXRot();
-            ((TableScreen) client.screen).resetView();
+            ((RiichiTableScreen) client.screen).resetView();
             require(client.player.getYRot() == yaw && client.player.getXRot() == pitch,
                 "Resetting the seated pose overwrote native third-person rotation");
             SmokeScreenshots.grab(output.toFile(), "59-camera-third-person.png", client.getMainRenderTarget(), ignored -> {});
         } else {
-            require(((TableScreen) client.screen).immersive(), "Dense readability fixture lost immersive view");
+            require(((RiichiTableScreen) client.screen).immersive(), "Dense readability fixture lost immersive view");
             SmokeScreenshots.grab(output.toFile(), "59-readable-dense-" + client.screen.width + "x" + client.screen.height + ".png",
                 client.getMainRenderTarget(), ignored -> {});
         }
@@ -70,7 +70,7 @@ final class CameraSmoke {
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
             client.resizeDisplay();
-            ((TableScreen) client.screen).resetView();
+            ((RiichiTableScreen) client.screen).resetView();
             return true;
         }
         show(client, table);
@@ -85,7 +85,7 @@ final class CameraSmoke {
             client.options.guiScale().set(2);
             client.resizeDisplay();
         }
-        var screen = new TableScreen(table.getBlockPos());
+        var screen = new RiichiTableScreen(table.getBlockPos());
         client.setScreen(screen);
         screen.resetView();
         if (sample >= 7) screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);

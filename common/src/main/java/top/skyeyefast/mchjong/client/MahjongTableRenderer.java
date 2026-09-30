@@ -35,7 +35,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         }
         if (view == null) return;
         long now = Util.getMillis();
-        TableAnimation animation = TableAnimation.of(table);
+        RiichiAnimation animation = RiichiAnimation.of(table);
         animation.accept(view, now);
         boolean animated = TableSettings.get().animations;
         var frames = animated ? animation.sample(now) : animation.settled();
@@ -49,9 +49,9 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         }
         tiles(table, frames, pose, buffers, light, Layer.FACE);
         if (table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE))
-            TableIndicator.render(view, pose, buffers, light);
-        TableDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
-        TableDice.renderWorld(view, pose, buffers, light);
+            RiichiIndicator.render(view, pose, buffers, light);
+        RiichiDeposits.render(view, table.automatic(), animation, animated, now, pose, buffers, light);
+        RiichiDice.renderWorld(view, pose, buffers, light);
         if (glass) {
             tiles(table, frames, pose, buffers, light, Layer.BACK);
             tiles(table, frames, pose, buffers, light, Layer.BODY);
@@ -61,7 +61,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         pose.popPose();
     }
 
-    private static void tiles(MahjongTableBlockEntity table, java.util.List<TableAnimation.Frame> frames,
+    private static void tiles(MahjongTableBlockEntity table, java.util.List<RiichiAnimation.Frame> frames,
             PoseStack pose, MultiBufferSource buffers, int light, Layer layer) {
         var material = table.equipment().material();
         var back = table.equipment().back();
@@ -72,10 +72,10 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             case PATTERN -> TileRenderTypes.backPattern(table.equipment().backPreset());
             case OUTLINE -> net.minecraft.client.renderer.RenderType.lines();
         });
-        TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
-        for (TableAnimation.Frame frame : frames) {
-            TableScene.Piece piece = frame.piece();
-            if (piece.area() == TableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
+        RiichiTableScreen screen = RiichiTableScreen.active(Minecraft.getInstance().screen);
+        for (RiichiAnimation.Frame frame : frames) {
+            RiichiTableScene.Piece piece = frame.piece();
+            if (piece.area() == RiichiTableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
             int highlight = layer == Layer.OUTLINE && screen != null ? screen.highlight(table.getBlockPos(), piece) : 0;
             if (layer == Layer.OUTLINE && highlight == 0) continue;
             pose.pushPose();
@@ -84,7 +84,7 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
             pose.translate(position.x, position.y + (selected ? 0.035 : 0), position.z);
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
-            pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
             // A face-down tile turns the back image toward the table center, including during a flip.
             boolean faceDown = frame.pitch() > 0;
             switch (layer) {

@@ -7,8 +7,8 @@ import java.util.List;
 import java.util.stream.IntStream;
 import net.minecraft.client.Minecraft;
 import net.minecraft.resources.ResourceLocation;
-import top.skyeyefast.mchjong.client.TableDeposits;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiDeposits;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 import top.skyeyefast.mchjong.engine.RiichiDiscard;
@@ -55,14 +55,14 @@ final class DepositVisualSmoke {
                 base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
                 table.automatic() ? null : new RiichiView.Handling(15, -1, 0, 1, 1, false), base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             table.acceptView(fixture);
-            var screen = new TableScreen(table.getBlockPos());
+            var screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
         }
         table.acceptView(fixture);
         ticks++;
         if (ticks == 20) {
-            if (TableDeposits.sticks(fixture).size() != fixture.riichiSticks())
+            if (RiichiDeposits.sticks(fixture).size() != fixture.riichiSticks())
                 throw new IllegalStateException("Rendered deposit count differs from the public pot");
             capture(client, table, output, sample == 0 ? "carried" : BuiltinPresets.STICKS.get(sample - 1).getPath());
             sample++;

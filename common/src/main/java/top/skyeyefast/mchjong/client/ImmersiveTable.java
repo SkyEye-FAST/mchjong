@@ -2,29 +2,23 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.Comparator;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;
-import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
-/** Recipient-safe miniature 3D scene, projected into the fixed immersive canvas. */
+/** Rule-independent tile solids, materials and depth painting through TableProjection. */
 final class ImmersiveTable {
-    static final int RIVER_WIDTH = 32;
-    private static final int RIVER_START = 120;
-    private static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
+    static final double RATIO = TileMesh.HEIGHT / TileMesh.WIDTH;
     static double thickness(double width) { return width * TileMesh.DEPTH / TileMesh.WIDTH; }
     private int backColor;
     private int bodyColor;
     private ResourceLocation backTexture;
     private ResourceLocation backPattern;
     private boolean depthTest;
-    private record Vertex(double x, double z, double h) {}
-    private record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
+    record Vertex(double x, double z, double h) {}
+    record Face(Vertex[] vertices, ResourceLocation texture, float u0, float v0, float u1, float v1, int color, boolean contact) {
         double depth() {
             double sum = 0;
             for (var v : vertices) sum += .694 * v.z() + .72 * v.h();
@@ -32,141 +26,49 @@ final class ImmersiveTable {
         }
     }
     private final List<Face> faces = new ArrayList<>();
-    private final Map<Integer, TableBoard.Point> points = new HashMap<>();
-    private final Map<Integer, Integer> widths = new HashMap<>();
-    private record RiverPose(int side, double x, double z) {}
-    private final Map<Integer, RiverPose> rivers = new HashMap<>();
-    private final int viewer, players;
-    private final int[] rows = new int[4];
+
     private TileFacePreset preset;
-    private java.util.function.IntUnaryOperator artworkIndex = TileMesh::face;
+    private java.util.function.IntUnaryOperator artworkIndex;
 
-    ImmersiveTable(int viewer) {
-        this.viewer = Math.max(0, viewer);
-        this.players = 4;
-    }
-
-    /** Preserve MCR's physical left-corner melds, flowers and rivers in the shared perspective camera. */
-    void renderMcr(GuiGraphics graphics, top.skyeyefast.mchjong.engine.McrView view,
-                   top.skyeyefast.mchjong.item.McrDeck deck, net.minecraft.world.item.DyeColor cloth) {
-        preset = deck.preset();
-        artworkIndex = tile -> TileMesh.artwork(deck.tile(tile));
-        backColor = TileMesh.backColor(deck.material(), deck.back());
-        bodyColor = TileMesh.bodyColor(deck.material(), deck.back());
-        backTexture = TileRenderTypes.backTexture(deck.material(), deck.back());
-        backPattern = TileBackPresets.texture(deck.backPreset());
-        depthTest = deck.material() != TileMaterial.GLASS;
-        faces.clear(); points.clear(); widths.clear();
-        graphics.flush();
-        if (depthTest) com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT,
-            net.minecraft.client.Minecraft.ON_OSX);
-        double edge = top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH * 300;
-        box(0, 0, 0, edge * 2 + 36, edge * 2 + 36, -18, -2, 0xff0e252a, 0xff263f43);
-        int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
-        flat(0, -edge, -edge, edge, edge, 0, felt);
-        faces.add(new Face(rectangle(0, -edge, -edge, edge, edge, .05), FurnitureMesh.CLOTH_PATTERN,
-            0, 0, 1, 1, 0xffffffff, false));
-        paint(graphics);
-        for (var piece : McrTableScene.immersive(view)) {
-            if (piece.area() == McrTableScene.Area.HAND && piece.seat() == view.viewerSeat()) continue;
-            var local = top.skyeyefast.mchjong.world.TableGeometry.orient(piece.position().x, 0,
-                piece.position().z, Math.floorMod(-piece.seat(), 4));
-            int side = Math.floorMod(piece.seat() - viewer, 4);
-            int w = Math.max(1, Math.round(TileMesh.WIDTH * piece.scale() * 300));
-            double x = local.x * 300, z = local.z * 300;
-            if (piece.flat()) {
-                if (view.focus() != null && view.focus().tile() == piece.tile())
-                    flat(side, x - w / 2.0 - 2, z - w * RATIO / 2 - 2, x + w / 2.0 + 2,
-                        z + w * RATIO / 2 + 2, .1, MahjongUi.ACCENT);
-                tile(piece.tile(), side, x, z, w, piece.back(), piece.yaw() != piece.seat() * 90, false, 0);
-            } else standing(piece.tile(), side, x, z, w);
-        }
-        paint(graphics);
-    }
-
-    ImmersiveTable(TableBoardState view) {
-        viewer = view.viewerSeat();
-        players = view.players();
-        for (int seat = 0; seat < players; seat++) rows[side(seat)] = Math.max(2,
-            ((int) view.seats().get(seat).river().stream().filter(d -> !d.called()).count() + 5) / 6);
-    }
-
-    private int side(int seat) { return TableBoard.side(seat, viewer, players); }
-    TableBoard.Point point(int tile) { return points.get(tile); }
-    int width(int tile, int fallback) { return widths.getOrDefault(tile, fallback); }
-    int riverWidth(int seat, int row) {
-        var a = TableProjection.seat(side(seat), -16, RIVER_START + row * 50, thickness(RIVER_WIDTH));
-        var b = TableProjection.seat(side(seat), 16, RIVER_START + row * 50, thickness(RIVER_WIDTH));
-        return (int) Math.round(Math.hypot(b.x() - a.x(), b.y() - a.y()));
-    }
-
-    TableBoard.Rect riverArea(int seat) {
-        int side = side(seat);
-        float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
-        for (double x : new double[]{-114, 114}) for (double z : new double[]{RIVER_START, RIVER_START + rows[side] * 50})
-            for (double h : new double[]{0, thickness(RIVER_WIDTH)}) {
-                var p = TableProjection.seat(side, x, z, h);
-                minX = Math.min(minX, p.x()); maxX = Math.max(maxX, p.x());
-                minY = Math.min(minY, p.y()); maxY = Math.max(maxY, p.y());
-            }
-        return new TableBoard.Rect((int) minX, (int) minY, (int) Math.ceil(maxX - minX), (int) Math.ceil(maxY - minY));
-    }
-
-    static TableBoard.Rect card(int side) {
-        return switch (side) {
-            case 1 -> new TableBoard.Rect(1106, 108, 166, 48);
-            case 3 -> new TableBoard.Rect(8, 108, 166, 48);
-            case 2 -> new TableBoard.Rect(557, 8, 166, 48);
-            default -> new TableBoard.Rect(12, 722, 180, 48);
-        };
-    }
-
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressed,
-                TileMaterial material, net.minecraft.world.item.DyeColor dye, ResourceLocation backPreset,
-                net.minecraft.world.item.DyeColor cloth, TableAnimation deal, long now) {
+    void begin(GuiGraphics graphics, TileFacePreset preset, TileMaterial material,
+               net.minecraft.world.item.DyeColor dye, ResourceLocation backPreset,
+               java.util.function.IntUnaryOperator artworkIndex) {
         this.preset = preset;
+        this.artworkIndex = artworkIndex;
         backColor = TileMesh.backColor(material, dye);
         bodyColor = TileMesh.bodyColor(material, dye);
         backTexture = TileRenderTypes.backTexture(material, dye);
         backPattern = TileBackPresets.texture(backPreset);
-        // Side hands overlap in projection; opaque shells need per-pixel occlusion.
         depthTest = material != TileMaterial.GLASS;
-        points.clear(); widths.clear(); rivers.clear(); faces.clear();
-        if (depthTest) {
-            graphics.flush();
-            com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT,
-                net.minecraft.client.Minecraft.ON_OSX);
-        }
-        // The frame and cloth use exactly the same camera as the tile geometry.
-        box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
-        int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
-        flat(0, -510, -425, 510, 425, 0, felt);
-        faces.add(new Face(rectangle(0, -510, -425, 510, 425, .05), FurnitureMesh.CLOTH_PATTERN, 0, 0, 1, 1, 0xffffffff, false));
-        flat(0, -508, -423, 508, -420, .1, shade(felt, .82));
-        flat(0, -508, 420, 508, 423, .1, shade(felt, .82));
-        paint(graphics);
-        box(0, 0, 0, 190, 192, 0, 8, 0xff101d23, 0xff52666b);
-        flat(0, -87, -88, 87, 88, 8.1, 0xff30464c);
-        flat(0, -72, -69, 72, 69, 8.2, 0xff101f29);
-        paint(graphics);
-        if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
-            flat(side(view.turn()), -57, 81, 57, 88, 8.5, MahjongUi.ACCENT);
-        for (int seat = 0; seat < players; seat++) {
-            if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen(), deal, now);
-            else {
-                norths(seat, view.seats().get(seat).norths());
-                melds(seat, view.seats().get(seat).melds());
-            }
-            if (TableSettings.get().showRiver) river(view, seat, suppressed);
-        }
-        paint(graphics);
+        faces.clear();
+        graphics.flush();
+        if (depthTest) com.mojang.blaze3d.systems.RenderSystem.clear(
+            org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT, net.minecraft.client.Minecraft.ON_OSX);
     }
 
-    private void paint(GuiGraphics graphics) {
+    int size() { return faces.size(); }
+
+    /** Transform a queued solid while removing its stationary contact shadow. */
+    void transformFrom(int first, java.util.function.UnaryOperator<Vertex> transform) {
+        for (int i = faces.size() - 1; i >= first; i--) {
+            var face = faces.get(i);
+            if (face.contact()) { faces.remove(i); continue; }
+            var vertices = new Vertex[4];
+            for (int j = 0; j < 4; j++) vertices[j] = transform.apply(face.vertices()[j]);
+            faces.set(i, new Face(vertices, face.texture(), face.u0(), face.v0(), face.u1(), face.v1(), face.color(), false));
+        }
+    }
+
+    void cloth(int side, double x0, double z0, double x1, double z1, double h) {
+        faces.add(new Face(rectangle(side, x0, z0, x1, z1, h),
+            FurnitureMesh.CLOTH_PATTERN, 0, 0, 1, 1, 0xffffffff, false));
+    }
+
+    void paint(GuiGraphics graphics) {
         paint(graphics, v -> TableProjection.project(v.x(), v.z(), v.h()), Face::depth, depthTest);
     }
 
-    private void paint(GuiGraphics graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
+    void paint(GuiGraphics graphics, java.util.function.Function<Vertex, TableProjection.Point> projection,
                        java.util.function.ToDoubleFunction<Face> depth, boolean useDepth) {
         graphics.flush();
         faces.sort(Comparator.comparingInt((Face face) -> face.contact() ? 0 : 1).thenComparingDouble(depth));
@@ -186,118 +88,7 @@ final class ImmersiveTable {
         faces.clear();
     }
 
-    private void outer(RiichiView.Seat player, int seat, boolean layHandsOpen, TableAnimation deal, long now) {
-        int side = side(seat), w = 30;
-        double rail = outerRail(side);
-        double handX = handLeft(player, seat, side);
-        for (int index = 0; index < player.hand().size(); index++) {
-            int tile = player.hand().get(index);
-            double fraction = deal == null ? 1 : deal.dealProgress(seat, index, now);
-            if (fraction > 0) {
-                if (fraction < 1) dealTile(tile, side, handX + w / 2.0, rail, player.exposed() || layHandsOpen, fraction);
-                else if (player.exposed() || layHandsOpen) tile(tile, side, handX + w / 2.0, rail, w, false, false, false, 0);
-                else standing(tile, side, handX + w / 2.0, rail, w);
-            }
-            handX += w;
-        }
-        melds(seat, player.melds());
-        norths(seat, player.norths());
-    }
-
-    private void norths(int seat, List<Integer> norths) {
-        int side = side(seat);
-        double x = -meldCorner(side) + 30 * RATIO + 5;
-        for (int tile : norths) {
-            tile(tile, side, x + 15, outerRail(side), 30, false, false, false, 0);
-            x += 30;
-        }
-    }
-
-    private void dealTile(int tile, int side, double x, double z, boolean open, double fraction) {
-        int first = faces.size();
-        if (open) tile(tile, 0, 0, 0, 30, fraction < .45, false, false, 0);
-        else standing(fraction < .45 ? -1 : tile, 0, 0, 0, 30);
-        double progress = ImmersiveMotion.smooth(fraction);
-        for (int i = faces.size() - 1; i >= first; i--) {
-            var face = faces.get(i);
-            if (face.contact()) { faces.remove(i); continue; }
-            var vertices = new Vertex[4];
-            for (int j = 0; j < 4; j++) {
-                var v = face.vertices()[j];
-                double sourceZ = open ? v.z() : 30 * RATIO / 2 - v.h();
-                double sourceH = open ? v.h() : thickness(30) / 2 + v.z();
-                vertices[j] = vertex(side, 170 + (x - 170) * progress + v.x(),
-                    z - 75 + sourceZ + (75 + v.z() - sourceZ) * progress,
-                    sourceH + (v.h() - sourceH) * progress + Math.sin(Math.PI * fraction) * 24);
-            }
-            faces.set(i, new Face(vertices, face.texture(), face.u0(), face.v0(), face.u1(), face.v1(), face.color(), false));
-        }
-    }
-
-    private void melds(int seat, List<Meld> melds) {
-        int side = side(seat), w = 30;
-        double x = meldCorner(side);
-        double z = outerRail(side);
-        for (var meld : melds) {
-            x -= TileGui.meldWidth(meld, seat, w);
-            for (var part : MeldLayout.of(meld, seat).parts()) {
-                double scale = w / (double) TileMesh.WIDTH;
-                tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
-            }
-            x -= 5;
-        }
-    }
-
-    static double meldCorner(int side) { return (side % 2 == 0 ? 510 : 425) - 3; }
-
-    static double outerRail(int side) {
-        return (side % 2 == 0 ? 425 : 510) - 3 - 30 * RATIO / 2;
-    }
-
-    static double handLeft(RiichiView.Seat player, int seat, int side) {
-        int handWidth = player.hand().size() * 30;
-        double meldLeft = meldCorner(side);
-        for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(meld, seat, 30) + 5;
-        return Math.min(-handWidth / 2.0, meldLeft - 18 - handWidth);
-    }
-
-    static double discardSourceX(RiichiView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
-        int index = player.hand().indexOf(tile);
-        // Hidden identities remain unknown; a draw still has a public end-of-hand position.
-        double slot = index >= 0 ? index + .5 : tsumogiri ? player.hand().size() - .5 : player.hand().size() / 2.0;
-        return handLeft(player, seat, TableBoard.side(seat, viewer, players)) + slot * 30;
-    }
-
-    private void river(TableBoardState view, int seat, int suppressed) {
-        var river = view.seats().get(seat).river().stream().filter(d -> !d.called()).toList();
-        for (int i = 0; i < river.size(); i++) {
-            int row = i / 6, start = row * 6;
-            double x = -96;
-            for (int j = start; j < i; j++) x += river.get(j).riichi() ? RIVER_WIDTH * RATIO : RIVER_WIDTH;
-            var discard = river.get(i);
-            double width = discard.riichi() ? RIVER_WIDTH * RATIO : RIVER_WIDTH;
-            double depth = discard.riichi() ? RIVER_WIDTH : RIVER_WIDTH * RATIO;
-            double z = RIVER_START + row * 50 + depth / 2;
-            rivers.put(discard.tile(), new RiverPose(side(seat), x + width / 2, z));
-            anchor(discard.tile(), side(seat), x + width / 2, z, thickness(RIVER_WIDTH), RIVER_WIDTH);
-            if (discard.tile() == suppressed) continue;
-            boolean focus = view.focus() != null && view.focus().tile() == discard.tile();
-            if (focus || view.markTedashi() && !discard.tsumogiri())
-                flat(side(seat), x - 2, z - depth / 2 - 2, x + width + 2, z + depth / 2 + 2, .2, MahjongUi.ACCENT);
-            tile(discard.tile(), side(seat), x + width / 2, z, RIVER_WIDTH, false, discard.riichi(),
-                view.dimTsumogiri() && discard.tsumogiri(), 0);
-        }
-    }
-
-    private void anchor(int tile, int side, double x, double z, double h, int width) {
-        if (tile < 0) return;
-        var p = TableProjection.seat(side, x, z, h);
-        points.put(tile, new TableBoard.Point(Math.round(p.x()), Math.round(p.y())));
-        var world = vertex(side, x, z, h);
-        widths.put(tile, (int) Math.round(width * TableProjection.scale(world.z(), h)));
-    }
-
-    private void tile(int tile, int side, double x, double z, int width, boolean back, boolean sideways, boolean dim, double h) {
+    void tile(int tile, int side, double x, double z, int width, boolean back, boolean sideways, boolean dim, double h) {
         double w = sideways ? width * RATIO : width, d = sideways ? width : width * RATIO;
         double top = h + thickness(width);
         double scale = thickness(width) / TileMesh.DEPTH;
@@ -316,10 +107,9 @@ final class ImmersiveTable {
         Vertex[] face = rectangle(side, x - w / 2 + 1, z - d / 2 + 1, x + w / 2 - 1, z + d / 2 - 1, top + .2);
         if (sideways) face = new Vertex[]{face[1], face[2], face[3], face[0]};
         artwork(face, tile, back, dim);
-        anchor(tile, side, x, z, top, width);
     }
 
-    private void standing(int tile, int side, double x, double z, int w) {
+    void standing(int tile, int side, double x, double z, int w) {
         double d = thickness(w), h = w * RATIO;
         double scale = w / (double) TileMesh.WIDTH;
         double coreBack = TileMesh.CORE_BACK * scale, coreFront = TileMesh.CORE_FRONT * scale;
@@ -345,48 +135,7 @@ final class ImmersiveTable {
         }
     }
 
-    /** The moving tile lands using exactly the river's solid, camera and material. */
-    void discard(GuiGraphics graphics, int tile, TableHand.Point source, int sourceWidth,
-                 double opponentX, boolean tsumogiri, boolean riichi, double fraction) {
-        var target = rivers.get(tile);
-        if (target == null) return;
-        tile(tile, 0, 0, 0, RIVER_WIDTH, false, riichi, false, 0);
-        faces.removeIf(Face::contact);
-        anchor(tile, target.side(), target.x(), target.z(), thickness(RIVER_WIDTH), RIVER_WIDTH);
-        double progress = ImmersiveMotion.smooth(fraction);
-        double angle = riichi ? Math.PI / 2 * ImmersiveMotion.smooth((fraction - .65) / .35) : 0;
-        paint(graphics, v -> {
-            double localX = riichi ? v.z() : v.x(), localZ = riichi ? -v.x() : v.z();
-            double x = localX * Math.cos(angle) - localZ * Math.sin(angle);
-            double z = localX * Math.sin(angle) + localZ * Math.cos(angle);
-            var end = TableProjection.seat(target.side(), target.x() + x, target.z() + z, v.h());
-            TableProjection.Point start;
-            if (source != null) {
-                double scale = sourceWidth / (double) RIVER_WIDTH;
-                start = new TableProjection.Point((float) (source.x() + localX * scale),
-                    (float) (source.y() + localZ * scale + (thickness(RIVER_WIDTH) - v.h())
-                        / thickness(RIVER_WIDTH) * Math.max(2, sourceWidth / 8)));
-            } else {
-                double scale = 30.0 / RIVER_WIDTH;
-                start = TableProjection.seat(target.side(), opponentX + localX * scale,
-                    outerRail(target.side()) + (thickness(RIVER_WIDTH) / 2 - v.h()) * scale,
-                    (RIVER_WIDTH * RATIO / 2 - localZ) * scale);
-            }
-            return ImmersiveMotion.interpolate(start, end, progress, fraction, tsumogiri);
-        }, face -> {
-            double depth = 0;
-            for (var v : face.vertices()) {
-                double localX = riichi ? v.z() : v.x(), localZ = riichi ? -v.x() : v.z();
-                double x = localX * Math.cos(angle) - localZ * Math.sin(angle);
-                double z = localX * Math.sin(angle) + localZ * Math.cos(angle);
-                var world = vertex(target.side(), target.x() + x, target.z() + z, v.h());
-                depth += .694 * world.z() + .72 * world.h();
-            }
-            return depth / 4;
-        }, false);
-    }
-
-    private void box(int side, double x, double z, double w, double d, double bottom, double top, int body, int cap) {
+    void box(int side, double x, double z, double w, double d, double bottom, double top, int body, int cap) {
         Vertex[] low = rectangle(side, x - w / 2, z - d / 2, x + w / 2, z + d / 2, bottom);
         Vertex[] high = rectangle(side, x - w / 2, z - d / 2, x + w / 2, z + d / 2, top);
         for (int i = 0; i < 4; i++) {
@@ -396,12 +145,12 @@ final class ImmersiveTable {
         solid(high, cap);
     }
 
-    private static int shade(int color, double scale) {
+    static int shade(int color, double scale) {
         return (color & 0xff000000) | (int) (((color >> 16) & 255) * scale) << 16
             | (int) (((color >> 8) & 255) * scale) << 8 | (int) ((color & 255) * scale);
     }
 
-    private void flat(int side, double x0, double z0, double x1, double z1, double h, int color) {
+    void flat(int side, double x0, double z0, double x1, double z1, double h, int color) {
         solid(rectangle(side, x0, z0, x1, z1, h), color);
     }
     private void solid(Vertex[] vertices, int color) {
@@ -424,7 +173,7 @@ final class ImmersiveTable {
     private static Vertex[] rectangle(int side, double x0, double z0, double x1, double z1, double h) {
         return new Vertex[]{vertex(side, x0, z0, h), vertex(side, x1, z0, h), vertex(side, x1, z1, h), vertex(side, x0, z1, h)};
     }
-    private static Vertex vertex(int side, double x, double z, double h) {
+    static Vertex vertex(int side, double x, double z, double h) {
         return switch (side) {
             case 1 -> new Vertex(z, -x, h);
             case 2 -> new Vertex(-x, -z, h);
@@ -432,4 +181,5 @@ final class ImmersiveTable {
             default -> new Vertex(x, z, h);
         };
     }
+
 }

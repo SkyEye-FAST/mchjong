@@ -7,8 +7,8 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Physical action targets derived exclusively from the recipient's public snapshot. */
-public final class TableHandling {
-    private TableHandling() {}
+public final class RiichiHandling {
+    private RiichiHandling() {}
 
     public static boolean physical(RiichiView view, RiichiAction action) {
         if (view.handling() == null) return false;
@@ -24,29 +24,29 @@ public final class TableHandling {
         return -1;
     }
 
-    public static boolean source(RiichiView view, TableScene.Piece piece) {
+    public static boolean source(RiichiView view, RiichiTableScene.Piece piece) {
         int index = action(view);
         if (index < 0 || piece == null) return false;
         return switch (view.actions().get(index).type()) {
-            case SHUFFLE -> piece.area() == TableScene.Area.LOOSE;
-            case BUILD_WALL -> piece.area() == TableScene.Area.LOOSE && piece.seat() == view.viewerSeat();
-            case TAKE_PACKET, DRAW -> piece.area() == TableScene.Area.WALL
+            case SHUFFLE -> piece.area() == RiichiTableScene.Area.LOOSE;
+            case BUILD_WALL -> piece.area() == RiichiTableScene.Area.LOOSE && piece.seat() == view.viewerSeat();
+            case TAKE_PACKET, DRAW -> piece.area() == RiichiTableScene.Area.WALL
                 && piece.index() >= view.handling().sourceSlot()
                 && piece.index() < view.handling().sourceSlot() + view.handling().packetSize() && piece.tile() < 0;
-            case NEXT -> piece.seat() == view.viewerSeat() && piece.area() != TableScene.Area.WALL;
+            case NEXT -> piece.seat() == view.viewerSeat() && piece.area() != RiichiTableScene.Area.WALL;
             default -> false;
         };
     }
 
-    public static TableScene.Piece source(RiichiView view, List<TableScene.Piece> scene) {
+    public static RiichiTableScene.Piece source(RiichiView view, List<RiichiTableScene.Piece> scene) {
         return scene.stream().filter(piece -> source(view, piece))
             .max(java.util.Comparator.comparingDouble(piece -> piece.position().y)).orElse(null);
     }
 
     /** Use the camera-facing long edge so the next tall stack cannot hide a lower single tile. */
-    public static Vec3 grip(TableScene.Piece piece, Vec3 eye) {
-        double height = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE;
-        double depth = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * TableScene.TILE_SCALE;
+    public static Vec3 grip(RiichiTableScene.Piece piece, Vec3 eye) {
+        double height = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE;
+        double depth = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE;
         double yaw = Math.toRadians(piece.yaw());
         Vec3 normal = new Vec3(Math.sin(yaw), 0, Math.cos(yaw));
         double edge = Math.copySign(depth / 2 - .003, eye.subtract(piece.position()).dot(normal));
@@ -57,8 +57,8 @@ public final class TableHandling {
         int index = action(view);
         if (index < 0) return Vec3.ZERO;
         double z = switch (view.actions().get(index).type()) {
-            case BUILD_WALL -> TableScene.WALL_Z;
-            case TAKE_PACKET, DRAW -> TableScene.HAND_Z;
+            case BUILD_WALL -> RiichiTableScene.WALL_Z;
+            case TAKE_PACKET, DRAW -> RiichiTableScene.HAND_Z;
             default -> 0;
         };
         return TableGeometry.orient(0, TableGeometry.FELT_Y, z, view.viewerSeat());
@@ -77,7 +77,7 @@ public final class TableHandling {
     }
 
     private static double destinationLocalZ(RiichiAction.Type type) {
-        return type == RiichiAction.Type.BUILD_WALL ? TableScene.WALL_Z : TableScene.HAND_Z;
+        return type == RiichiAction.Type.BUILD_WALL ? RiichiTableScene.WALL_Z : RiichiTableScene.HAND_Z;
     }
 
     public static String help(RiichiView view) {

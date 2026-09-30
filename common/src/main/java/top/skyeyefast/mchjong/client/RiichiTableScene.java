@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.engine.WallLayout;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** One geometric description drives both the 3D meshes and the interaction anchors. */
-public final class TableScene {
+public final class RiichiTableScene {
     public static final float TILE_SCALE = 0.82f;
     public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - 0.09;
     public static final double HAND_STEP = (double) TileMesh.WIDTH * TILE_SCALE;
@@ -27,7 +27,7 @@ public final class TableScene {
     private static final double FLAT_CENTER = TileMesh.DEPTH / 2.0;
     public enum Area { HAND, WALL, RIVER, MELD, NORTH, LOOSE }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position, float yaw, boolean flat, boolean back) {}
-    private TableScene() {}
+    private RiichiTableScene() {}
 
     private static Piece piece(int tile, int seat, Area area, int index, double x, double y, double z,
             float additionalYaw, boolean flat, boolean back) {

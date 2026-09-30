@@ -89,7 +89,7 @@ final class TableHand {
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
                 TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye,
-                net.minecraft.resources.ResourceLocation backPreset, TableAnimation deal, TableBoard.Point source, long now) {
+                net.minecraft.resources.ResourceLocation backPreset, RiichiAnimation deal, RiichiBoard.Point source, long now) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);

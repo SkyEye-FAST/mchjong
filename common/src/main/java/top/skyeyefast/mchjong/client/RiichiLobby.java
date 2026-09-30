@@ -14,12 +14,12 @@ import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 
 /** The room's frequent controls share one page, including at 320 by 240. */
-final class TableLobby {
-    private TableLobby() {}
+final class RiichiLobby {
+    private RiichiLobby() {}
     static int top(int height) { return height < 300 ? 82 : 94; }
     static int primaryY(int height) { return top(height) + 124; }
 
-    static List<MahjongButton> controls(TableScreen parent, TableRoomView room, RiichiRoomSettings settings, int width, int height) {
+    static List<MahjongButton> controls(RiichiTableScreen parent, TableRoomView room, RiichiRoomSettings settings, int width, int height) {
         var client = Minecraft.getInstance();
         boolean member = room.viewerSeat() >= 0;
         boolean host = member && room.viewerSeat() == room.host() && room.exitVote() == null;
@@ -29,21 +29,6 @@ final class TableLobby {
         for (var type : MahjongVariant.values()) buttons.add(RoomLobbyControls.variantButton(parent.tablePos(), room,
             type, left + type.ordinal() * (half + 4), y, half, parent.automatic()));
         y += 24;
-        if (parent.variant() == MahjongVariant.MCR) {
-            var stock = button(Component.translatable("mcr.mchjong.stock_hint"), left, y, span, () -> {});
-            stock.active = false;
-            buttons.add(stock);
-            buttons.add(button(Component.translatable("room.mchjong.participants"), left, y + 24, span,
-                () -> client.setScreen(new TableSeatsScreen(parent))));
-            int index = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
-            var primary = button(Component.translatable(index >= 0 ? "room.mchjong.start_auto"
-                : room.seats().stream().allMatch(seat -> seat.participant().id() != null) ? "ui.mchjong.equipment_needed" : "room.mchjong.wait_host"),
-                left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();
-            primary.setHeight(26);
-            primary.active = index >= 0;
-            buttons.add(primary);
-            return buttons;
-        }
         for (int count : new int[]{4, 3}) {
             var preset = settings.rules().preset().tenhou() ? count == 4 ? RiichiPreset.TENHOU_4 : RiichiPreset.TENHOU_3
                 : count == 4 ? RiichiPreset.MAHJONG_SOUL_4 : RiichiPreset.MAHJONG_SOUL_3;
@@ -58,15 +43,15 @@ final class TableLobby {
             buttons.add(button);
         }
         var clock = button(Component.translatable("ui.mchjong.clock_settings"), left + 2 * (third + 4), y,
-            span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, settings.timeControl())));
+            span - 2 * (third + 4), () -> client.setScreen(new RiichiClockScreen(parent, settings.timeControl())));
         clock.active = host;
         buttons.add(clock);
         var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(settings.rules().preset().presetKey())).append(" ▼"),
-            left, y + 24, half, () -> client.setScreen(new TableRulesScreen(parent, room, settings, true)));
+            left, y + 24, half, () -> client.setScreen(new RiichiRulesScreen(parent, room, settings, true)));
         preset.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help")));
         buttons.add(preset);
         buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24, half,
-            () -> client.setScreen(new TableRulesScreen(parent, room, settings))).selected(settings.rules().custom()));
+            () -> client.setScreen(new RiichiRulesScreen(parent, room, settings))).selected(settings.rules().custom()));
         var visibility = button(Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
             "settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
             () -> parent.configureVisibility(PlayerHandVisibility.values()[Math.floorMod(settings.playerHandVisibility().ordinal()
@@ -74,12 +59,12 @@ final class TableLobby {
         visibility.active = host;
         buttons.add(visibility);
         var invite = button(Component.translatable("ui.mchjong.invite"), left, y + 72, half,
-            () -> client.setScreen(new TableInviteScreen(parent)));
+            () -> client.setScreen(new RiichiInviteScreen(parent)));
         var world = parent.worldPolicy();
         invite.active = member && (world == null || world.invitationsEnabled());
         buttons.add(invite);
         buttons.add(button(Component.translatable("room.mchjong.participants"), left + half + 4, y + 72, half,
-            () -> client.setScreen(new TableSeatsScreen(parent))));
+            () -> client.setScreen(new RiichiSeatsScreen(parent))));
         int start = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
         if (start < 0) start = RoomLobbyControls.find(room, RoomAction.Type.FILL_BOTS, List.of());
         int index = start;

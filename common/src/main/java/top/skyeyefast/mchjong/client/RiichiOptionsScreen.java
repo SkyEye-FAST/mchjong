@@ -8,8 +8,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Scope navigation. Administrator edits use the server's permission-checked world commands. */
-public final class TableOptionsScreen extends Screen {
-    private final TableScreen parent;
+public final class RiichiOptionsScreen extends Screen {
+    private final RiichiTableScreen parent;
     private int tab = 1;
     private int page;
     private int pages = 1;
@@ -29,11 +29,11 @@ public final class TableOptionsScreen extends Screen {
         }
     }
 
-    public TableOptionsScreen(TableScreen parent) {
+    public RiichiOptionsScreen(RiichiTableScreen parent) {
         super(Component.translatable("settings.mchjong.scopes"));
         this.parent = parent;
     }
-    public TableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
 
@@ -112,13 +112,13 @@ public final class TableOptionsScreen extends Screen {
                 () -> parent.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.OPEN_HANDS,
                     room.decision(), !settings.openHands())));
             entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
-                () -> minecraft.setScreen(new TableSeatsScreen(parent))));
+                () -> minecraft.setScreen(new RiichiSeatsScreen(parent))));
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
-                () -> minecraft.setScreen(new TableRulesScreen(parent, room, settings))));
+                () -> minecraft.setScreen(new RiichiRulesScreen(parent, room, settings))));
             entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
-                () -> minecraft.setScreen(new TableClockScreen(parent, settings.timeControl()))));
+                () -> minecraft.setScreen(new RiichiClockScreen(parent, settings.timeControl()))));
             entries.add(new Entry(Component.translatable("ui.mchjong.invite"), room.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
-                () -> minecraft.setScreen(new TableInviteScreen(parent))));
+                () -> minecraft.setScreen(new RiichiInviteScreen(parent))));
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
                 () -> minecraft.setScreen(new TableSettingsScreen(parent))));

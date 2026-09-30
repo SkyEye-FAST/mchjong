@@ -69,12 +69,12 @@ public final class MchjongForgeClient {
         private Lifecycle() {}
 
         @SubscribeEvent public static void tick(TickEvent.ClientTickEvent.Post event) {
-            TableAudio.tick();
+            RiichiAudio.tick();
             SeatedCamera.tick();
             ClientReplays.tick();
             top.skyeyefast.mchjong.client.TileFacePresets.tick();
         }
 
-        @SubscribeEvent public static void close(GameShuttingDownEvent event) { TableAudio.close(); }
+        @SubscribeEvent public static void close(GameShuttingDownEvent event) { RiichiAudio.close(); }
     }
 }

@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RoomAction;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -46,7 +46,7 @@ final class RoomPreparationSmoke {
         }
         var room = table.clientRoom();
         if (room == null) return false;
-        if (TableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
+        if (RiichiTableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             boolean full = room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.BEGIN_SEATING);
             if (full && botCycle < 4 && botCycle != 2) {

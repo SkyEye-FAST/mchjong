@@ -11,13 +11,13 @@ public final class TilePicking {
         TileMesh.WIDTH / 2.0, TileMesh.HEIGHT / 2.0, TileMesh.DEPTH / 2.0);
     private TilePicking() {}
 
-    public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
+    public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
         return distanceSquared(frame, origin, direction, lifted, 0);
     }
 
-    public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
+    public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var piece = frame.piece();
-        return distanceSquared(piece.position(), piece.yaw(), frame.pitch(), TableScene.TILE_SCALE, origin, direction, lifted, padding);
+        return distanceSquared(piece.position(), piece.yaw(), frame.pitch(), RiichiTableScene.TILE_SCALE, origin, direction, lifted, padding);
     }
 
     public static double distanceSquared(McrTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {

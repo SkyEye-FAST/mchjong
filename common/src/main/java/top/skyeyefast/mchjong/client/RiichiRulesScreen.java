@@ -22,7 +22,7 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 
 /** Local draft with explicit apply/cancel; only an acknowledged server snapshot becomes active rules. */
-public final class TableRulesScreen extends Screen {
+public final class RiichiRulesScreen extends Screen {
     private enum Mode {
         PRESET, DETAILS, CUSTOM;
         String key() { return "rules.mchjong.mode." + name().toLowerCase(java.util.Locale.ROOT); }
@@ -32,7 +32,7 @@ public final class TableRulesScreen extends Screen {
         RiichiRuleOption.STARTING_POINTS, RiichiRuleOption.RETURN_POINTS, RiichiRuleOption.IPPATSU, RiichiRuleOption.URA_DORA,
         RiichiRuleOption.KAN_DORA, RiichiRuleOption.KAZOE_YAKUMAN, RiichiRuleOption.KIRIAGE_MANGAN, RiichiRuleOption.DOUBLE_YAKUMAN,
         RiichiRuleOption.HEAD_BUMP, RiichiRuleOption.UMA_1, RiichiRuleOption.UMA_2, RiichiRuleOption.UMA_3, RiichiRuleOption.UMA_4);
-    private final TableScreen parent;
+    private final RiichiTableScreen parent;
     private TableRoomView baseline;
     private RiichiRoomSettings baselineSettings;
     private RiichiRules draft;
@@ -55,10 +55,10 @@ public final class TableRulesScreen extends Screen {
         Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
     }
 
-    public TableRulesScreen(TableScreen parent, TableRoomView room, RiichiRoomSettings settings) {
+    public RiichiRulesScreen(RiichiTableScreen parent, TableRoomView room, RiichiRoomSettings settings) {
         this(parent, room, settings, false);
     }
-    public TableRulesScreen(TableScreen parent, TableRoomView room, RiichiRoomSettings settings, boolean presetExpanded) {
+    public RiichiRulesScreen(RiichiTableScreen parent, TableRoomView room, RiichiRoomSettings settings, boolean presetExpanded) {
         super(Component.translatable("rules.mchjong.title"));
         this.parent = parent;
         baseline = room;
@@ -67,7 +67,7 @@ public final class TableRulesScreen extends Screen {
         mode = draft.custom() ? Mode.CUSTOM : Mode.PRESET;
         this.presetExpanded = presetExpanded;
     }
-    public TableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 

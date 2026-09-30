@@ -7,9 +7,9 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 
 /** Pure snapshot comparison, shared by playback and tests. A newly observed table is silent. */
-public final class TableAudioEvents {
+public final class RiichiAudioEvents {
     public record Cue(String sound, String voice, int delay, int seat) {}
-    private TableAudioEvents() {}
+    private RiichiAudioEvents() {}
 
     public static List<Cue> opening(RiichiView view) {
         return view.phase() == RiichiView.Phase.TURN && view.handNumber() == 1

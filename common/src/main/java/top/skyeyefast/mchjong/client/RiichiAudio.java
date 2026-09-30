@@ -21,7 +21,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
 /** Client-local effects and optional recorded voices. Never invokes a speech backend. */
-public final class TableAudio {
+public final class RiichiAudio {
     private static final Map<MahjongTableBlockEntity, RiichiView> VIEWS = new WeakHashMap<>();
     private static final Map<MahjongTableBlockEntity, java.util.UUID> LOBBIES = new WeakHashMap<>();
     private static final ArrayList<Speech> SPEECH = new ArrayList<>();
@@ -35,7 +35,7 @@ public final class TableAudio {
     private static boolean finalVoicePlayed;
     private static long acknowledged = -1;
     private static boolean seated;
-    private TableAudio() {}
+    private RiichiAudio() {}
 
     private static void world() {
         var current = Minecraft.getInstance().level;
@@ -67,13 +67,13 @@ public final class TableAudio {
         if (before != null && (!before.tableId().equals(view.tableId()) || before.viewerSeat() != view.viewerSeat())) {
             SPEECH.clear();
         }
-        if (view.viewerSeat() >= 0 && TableResults.available(view)) {
+        if (view.viewerSeat() >= 0 && RiichiResults.available(view)) {
             if (result == null || !result.matches(view)) {
                 SPEECH.clear();
                 VoicePresets.stop();
                 result = new ResultReadout(view, Util.getMillis());
                 acknowledged = -1;
-                finalVoicePlayed = before == null || TableResults.available(before);
+                finalVoicePlayed = before == null || RiichiResults.available(before);
                 // Joining/reopening an already completed hand must not replay its announcements.
                 if (finalVoicePlayed) result.finish(Util.getMillis());
             }
@@ -83,7 +83,7 @@ public final class TableAudio {
             VoicePresets.stop();
             result = null;
         }
-        for (var cue : fromLobby && before == null ? TableAudioEvents.opening(view) : TableAudioEvents.between(before, view)) {
+        for (var cue : fromLobby && before == null ? RiichiAudioEvents.opening(view) : RiichiAudioEvents.between(before, view)) {
             if (cue.sound() != null) effect(cue.sound(), table.getBlockPos(), cue.delay());
             if (cue.voice() != null && Minecraft.getInstance().player != null
                     && Minecraft.getInstance().player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table.getBlockPos())) <= 256)

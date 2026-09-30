@@ -10,17 +10,17 @@ import net.minecraft.client.multiplayer.PlayerInfo;
 import net.minecraft.network.chat.Component;
 
 /** Uses the connection's online roster; server-side commands resolve and authorize the target. */
-public final class TableInviteScreen extends Screen {
-    private final TableScreen parent;
+public final class RiichiInviteScreen extends Screen {
+    private final RiichiTableScreen parent;
     private final Map<String, MahjongButton> invitations = new HashMap<>();
     private int page;
     private int pages = 1;
 
-    public TableInviteScreen(TableScreen parent) {
+    public RiichiInviteScreen(RiichiTableScreen parent) {
         super(Component.translatable("ui.mchjong.invite"));
         this.parent = parent;
     }
-    public TableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 

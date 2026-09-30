@@ -6,9 +6,9 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.client.TableResults;
-import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableAudio;
+import top.skyeyefast.mchjong.client.RiichiResults;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
+import top.skyeyefast.mchjong.client.RiichiAudio;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.VoicePresets;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
@@ -61,7 +61,7 @@ final class SettlementSmoke {
             fixture = fixture(table.clientView());
             client.setScreen(null);
             acceptFixture(table, fixture);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         }
         acceptFixture(table, fixture);
         if (ticks >= 110) {
@@ -75,7 +75,7 @@ final class SettlementSmoke {
             if (localeTicks++ == 0) {
                 client.options.guiScale().set(4);
                 client.resizeDisplay();
-                client.setScreen(new TableScreen(table.getBlockPos()));
+                client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             }
             if (localeTicks < 8) return false;
             if (localeTicks == 8) {
@@ -94,7 +94,7 @@ final class SettlementSmoke {
         if (!sequenceComplete) {
             if (++sequenceTicks > 900) throw new IllegalStateException("Settlement readout stalled");
             if (voiceDecode.isDone()) voiceDecode.join();
-            var readout = TableAudio.result(fixture);
+            var readout = RiichiAudio.result(fixture);
             if (readout == null) throw new IllegalStateException("Missing settlement readout");
             heardRecording |= VoicePresets.playing();
             int visible = readout.visibleRows(0);
@@ -119,7 +119,7 @@ final class SettlementSmoke {
             voiceDecode.join();
             if (!heardRecording || captureStage != 4) throw new IllegalStateException("Readout did not visit every recorded stage");
             checkSettledPoints(client);
-            TableResults panel = panel(client);
+            RiichiResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 15, panel.getY() + 25, 0);
             sequenceComplete = true;
         }
@@ -132,7 +132,7 @@ final class SettlementSmoke {
         } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
-            TableResults panel = panel(client);
+            RiichiResults panel = panel(client);
             int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
             client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
         } else if (ticks == 20) {
@@ -145,11 +145,11 @@ final class SettlementSmoke {
             capture(client, output, "10-settlement-small.png");
             click(client, "View table");
         } else if (ticks == 35) {
-            if (client.screen.children().stream().anyMatch(TableResults.class::isInstance))
+            if (client.screen.children().stream().anyMatch(RiichiResults.class::isInstance))
                 throw new IllegalStateException("Settlement could not be collapsed");
             click(client, "Show results");
         } else if (ticks == 40) {
-            TableResults panel = panel(client);
+            RiichiResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
         } else if (ticks == 45) {
@@ -164,7 +164,7 @@ final class SettlementSmoke {
             checkSettledPoints(client);
             click(client, "Point changes");
             checkSettledPoints(client);
-            ((TableScreen) client.screen).receivedView();
+            ((RiichiTableScreen) client.screen).receivedView();
         } else if (ticks == 55) {
             checkBounds(client);
             checkSettledPoints(client);
@@ -200,8 +200,8 @@ final class SettlementSmoke {
                 List.of(win), "ron", changes, List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
                 fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), ScoreAnnouncements.maximumTicks(List.of(win)), 0);
             acceptFixture(table, fixture);
-            TableAudio.finishResult();
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            RiichiAudio.finishResult();
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 85) {
             capture(client, output, "13-yakuman.png");
             client.options.guiScale().set(4);
@@ -218,10 +218,10 @@ final class SettlementSmoke {
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(), List.of(),
                 fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
             acceptFixture(table, fixture);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
         } else if (ticks == 105) {
             capture(client, output, "14-settlement-draw-immersive.png");
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -235,13 +235,13 @@ final class SettlementSmoke {
             VoicePresets.stop();
             fixture = fixture(fixture);
             acceptFixture(table, fixture);
-            TableAudio.finishResult();
+            RiichiAudio.finishResult();
         }
         return false;
     }
 
-    private static TableResults panel(Minecraft client) {
-        return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
+    private static RiichiResults panel(Minecraft client) {
+        return client.screen.children().stream().filter(RiichiResults.class::isInstance).map(RiichiResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
     }
 
@@ -270,7 +270,7 @@ final class SettlementSmoke {
 
     static void acceptFixture(MahjongTableBlockEntity table, RiichiView view) {
         table.acceptView(view);
-        if (table.clientView() == view) TableAudio.accept(table, view);
+        if (table.clientView() == view) RiichiAudio.accept(table, view);
     }
 
     static RiichiView fixture(RiichiView base) {

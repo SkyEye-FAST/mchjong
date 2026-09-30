@@ -12,14 +12,14 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.network.RiichiControlPayload;
 
 /** Collapsible match controls backed by the seated player's authoritative preferences. */
-final class TableAutomation {
-    private final TableScreen parent;
+final class RiichiAutomation {
+    private final RiichiTableScreen parent;
     private final Runnable rebuild;
     private boolean expanded;
     private boolean pending;
     private List<MahjongButton> buttons = List.of();
 
-    TableAutomation(TableScreen parent, Runnable rebuild) {
+    RiichiAutomation(RiichiTableScreen parent, Runnable rebuild) {
         this.parent = parent;
         this.rebuild = rebuild;
     }

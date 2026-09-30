@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import static org.junit.jupiter.api.Assertions.*;
 
-class TableDecisionTest {
+class RiichiDecisionTest {
     private static final UUID TABLE = new UUID(1, 7);
     private static final List<RiichiAction> DISCARD = List.of(new RiichiAction(RiichiAction.Type.DISCARD, 13));
 
@@ -20,7 +20,7 @@ class TableDecisionTest {
     }
 
     @Test void aRequestCanOnlyBeSentOnceAndHeartbeatsDoNotUnlockIt() {
-        var gate = new TableDecision();
+        var gate = new RiichiDecision();
         var base = view(TABLE, 2, 2, 0, DISCARD);
         assertTrue(gate.receive(base));
         assertTrue(gate.submit(base, 0));
@@ -32,7 +32,7 @@ class TableDecisionTest {
     }
 
     @Test void anAcknowledgedReactionUnlocksWithoutChangingTheSharedDecision() {
-        var gate = new TableDecision();
+        var gate = new RiichiDecision();
         var base = view(TABLE, 2, 2, 0, List.of(new RiichiAction(RiichiAction.Type.PASS)));
         gate.receive(base);
         assertTrue(gate.submit(base, 0));
@@ -42,7 +42,7 @@ class TableDecisionTest {
     }
 
     @Test void oldButtonIndicesCannotBeSubmittedForANewDecision() {
-        var gate = new TableDecision();
+        var gate = new RiichiDecision();
         var before = view(TABLE, 2, 2, 0, DISCARD);
         var after = view(TABLE, 3, 3, 0, DISCARD);
         gate.receive(before);
@@ -56,7 +56,7 @@ class TableDecisionTest {
     }
 
     @Test void tableIdentityViewingPermissionAndActionBoundsAreValidated() {
-        var gate = new TableDecision();
+        var gate = new RiichiDecision();
         var base = view(TABLE, 2, 2, 0, DISCARD);
         gate.receive(base);
         assertFalse(gate.submit(base, -1));

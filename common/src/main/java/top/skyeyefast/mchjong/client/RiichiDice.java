@@ -16,10 +16,10 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** The same public roll drives the physical dice, native pickup target and face tooltip. */
-final class TableDice extends MahjongButton {
+final class RiichiDice extends MahjongButton {
     private int first, second;
 
-    TableDice(Runnable pickup) {
+    RiichiDice(Runnable pickup) {
         super(0, 0, 40, 20, Component.translatable("action.mchjong.pick_up_dice"), ignored -> pickup.run());
         visible = active = false;
         setTooltip(null);

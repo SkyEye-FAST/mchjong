@@ -58,7 +58,7 @@ class McrLayoutTest {
         assertEquals(3, parts.get(2).historyIndex());
         assertEquals(14, parts.get(12).historyIndex());
         assertEquals(25, parts.get(23).historyIndex());
-        assertEquals(TableScene.RIVER_Z, McrTableScene.RIVER_Z);
+        assertEquals(RiichiTableScene.RIVER_Z, McrTableScene.RIVER_Z);
         assertTrue(McrRiverLayout.COLUMNS * McrTableScene.WIDTH / 2
             < McrTableScene.RIVER_Z - McrTableScene.HEIGHT / 2, "Adjacent rotated rivers must not meet at their corners");
     }
@@ -129,10 +129,10 @@ class McrLayoutTest {
         for (var piece : scene) {
             var local = TableGeometry.orient(piece.position().x, piece.position().y, piece.position().z, (4 - piece.seat()) % 4);
             if (piece.area() == McrTableScene.Area.MELD && piece.index() == 0)
-                assertEquals(-TableScene.MELD_RIGHT + TileMesh.HEIGHT * (double) piece.scale() / 2, local.x, 1e-8);
+                assertEquals(-RiichiTableScene.MELD_RIGHT + TileMesh.HEIGHT * (double) piece.scale() / 2, local.x, 1e-8);
             if (piece.area() == McrTableScene.Area.RIVER) {
-                assertEquals(-2.5 * TableScene.RIVER_STEP, local.x, 1e-8);
-                assertEquals(TableScene.RIVER_Z, local.z, 1e-8);
+                assertEquals(-2.5 * RiichiTableScene.RIVER_STEP, local.x, 1e-8);
+                assertEquals(RiichiTableScene.RIVER_Z, local.z, 1e-8);
             }
             if (piece.area() == McrTableScene.Area.FLOWER) assertEquals(McrTableScene.HAND_Z, local.z, 1e-8);
             var bounds = bounds(piece);

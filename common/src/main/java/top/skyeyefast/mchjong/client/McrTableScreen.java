@@ -8,35 +8,30 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import net.minecraft.world.phys.Vec3;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.McrAction;
 import top.skyeyefast.mchjong.engine.McrSession;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.network.McrActionPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
-import top.skyeyefast.mchjong.world.SeatEntity;
-import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Seated world interaction and the fixed immersive canvas share server-issued MCR decisions. */
 public final class McrTableScreen extends Screen {
     private final BlockPos pos;
     private long shownRevision = -1, decision = -1, lastClickAt;
     private int page, selected = Tile.ABSENT, hovered = Tile.ABSENT, lastClicked = Tile.ABSENT;
-    private boolean pending, immersive, inspecting, dragging;
-    private double dragDistance;
+    private boolean pending;
+    private final TableViewController presentation = new TableViewController();
     private float framePartial;
-    private final boolean[] lookKeys = new boolean[4];
     private TableHand hand;
-    private ImmersiveTable board;
+    private McrImmersiveTable board;
 
     public McrTableScreen(BlockPos pos) { this(pos, false); }
     public McrTableScreen(BlockPos pos, boolean immersive) {
         super(Component.translatable("mcr.mchjong.title"));
-        this.pos = pos.immutable(); this.immersive = immersive;
+        this.pos = pos.immutable(); presentation.immersive(immersive);
     }
     public BlockPos tablePos() { return pos; }
     public static McrTableScreen active(Screen screen) {
@@ -46,23 +41,17 @@ public final class McrTableScreen extends Screen {
     public static boolean isOpen(Screen screen) {
         return active(screen) != null || screen instanceof McrResultsScreen || screen instanceof McrLobbyScreen;
     }
-    public boolean immersive() { return immersive; }
-    public boolean inspecting() { return inspecting && cameraEnabled(); }
+    public boolean immersive() { return presentation.immersive(); }
+    public boolean inspecting() { return presentation.inspecting(); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics g, int x, int y, float partialTick) {}
-    @Override public void removed() { clearCameraInput(); }
-    private int uiWidth() { return immersive ? 1280 : width; }
-    private int uiHeight() { return immersive ? 800 : height; }
-    private int contentScale() { return immersive ? 2 : 1; }
-    private double canvasX(double x) {
-        var canvas = TableScreen.immersiveCanvas(width, height);
-        return immersive ? (x - canvas.x()) / canvas.scale() : x;
-    }
-    private double canvasY(double y) {
-        var canvas = TableScreen.immersiveCanvas(width, height);
-        return immersive ? (y - canvas.y()) / canvas.scale() : y;
-    }
-    private boolean inside(double x, double y) { return x >= 0 && x < uiWidth() && y >= 0 && y < uiHeight(); }
+    @Override public void removed() { presentation.clearInput(); }
+    private TableCanvas canvas() { return presentation.canvas(width, height); }
+    private int uiWidth() { return canvas().width(); }
+    private int uiHeight() { return canvas().height(); }
+    private int contentScale() { return immersive() ? 2 : 1; }
+    private double canvasX(double x) { return canvas().localX(x); }
+    private double canvasY(double y) { return canvas().localY(y); }
     private MahjongTableBlockEntity table() {
         return minecraft != null && minecraft.level != null
             && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table ? table : null;
@@ -83,19 +72,19 @@ public final class McrTableScreen extends Screen {
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT; page = 0;
         }
         hand = null;
-        board = immersive ? new ImmersiveTable(game.viewerSeat()) : null;
-        if (immersive && game.viewerSeat() >= 0) {
+        board = immersive() ? new McrImmersiveTable(game.viewerSeat()) : null;
+        if (immersive() && game.viewerSeat() >= 0) {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-            hand = new TableHand(tiles, player.drawn(), List.of(), game.viewerSeat(), 1280, 780, 52, true);
+            hand = new TableHand(tiles, player.drawn(), List.of(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 20, 52, true);
         }
         if (room.exitVote() != null) {
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
             return;
         }
         int s = contentScale(), w = uiWidth();
-        int x = toolbar("ui.mchjong.view_" + (immersive ? "seated" : "immersive"), 8, this::toggleView);
+        int x = toolbar("ui.mchjong.view_" + (immersive() ? "seated" : "immersive"), 8, this::toggleView);
         toolbar("settings.mchjong.title", x, () -> minecraft.setScreen(new TableSettingsScreen(this)));
         if (room.viewerSeat() >= 0) addRenderableWidget(new MahjongButton(w - 60 * s, 6, 52 * s, 20 * s,
             Component.translatable("ui.mchjong.exit"), ignored -> TableExitControls.send(pos, room,
@@ -106,8 +95,8 @@ public final class McrTableScreen extends Screen {
             if (game.actions().get(i).type() != McrAction.Type.DISCARD) choices.add(i);
         int pages = Math.max(1, (choices.size() + 3) / 4);
         page = Math.min(page, pages - 1);
-        int cell = immersive ? 224 : Math.min(110, (w - 28) / 3);
-        int actionY = immersive ? 562 : uiHeight() - 112;
+        int cell = immersive() ? 224 : Math.min(110, (w - 28) / 3);
+        int actionY = immersive() ? 562 : uiHeight() - 112;
         for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {
             int index = choices.get(page * 4 + slot);
             var button = new ActionButton(w - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * s,
@@ -165,12 +154,12 @@ public final class McrTableScreen extends Screen {
         return table().clientMcrDeck().tile(tile).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ,
             table().clientMcrDeck().preset());
     }
-    public boolean selected(McrTableScene.Piece piece) { return !immersive && ownHand(piece) && piece.tile() == selected; }
+    public boolean selected(McrTableScene.Piece piece) { return !immersive() && ownHand(piece) && piece.tile() == selected; }
     private boolean ownHand(McrTableScene.Piece piece) {
         return view() != null && piece.area() == McrTableScene.Area.HAND && piece.seat() == view().game().viewerSeat();
     }
     public int highlight(McrTableScene.Piece piece) {
-        if (immersive || !TableSettings.get().highlightTiles || !ownHand(piece)) return 0;
+        if (immersive() || !TableSettings.get().highlightTiles || !ownHand(piece)) return 0;
         int focus = getFocused() instanceof HandTarget target ? target.tile : hovered;
         return piece.tile() == selected ? MahjongUi.ACCENT : piece.tile() == focus ? MahjongUi.POSITIVE : 0;
     }
@@ -179,30 +168,16 @@ public final class McrTableScreen extends Screen {
             .anyMatch(widget -> !(widget instanceof HandTarget) && widget.visible
                 && x >= widget.getX() && x < widget.getRight() && y >= widget.getY() && y < widget.getBottom());
     }
-    private Vec3 forward() {
-        var camera = minecraft.gameRenderer.getMainCamera();
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
-        return new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
-    }
-    private Vec3 right() {
-        double yaw = Math.toRadians(minecraft.gameRenderer.getMainCamera().getYRot());
-        return new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
-    }
-    private double focal() {
-        var camera = minecraft.gameRenderer.getMainCamera();
-        double fov = ((GameRendererAccessor) minecraft.gameRenderer).mchjong$getFov(camera, framePartial, true);
-        return height / (2 * Math.tan(Math.toRadians(fov) / 2));
-    }
+    private SeatedTableProjection projection() { return SeatedTableProjection.capture(pos, width, height, framePartial); }
     private int pick(double x, double y) {
         var view = view();
         if (view == null || view.game().viewerSeat() < 0 || table().clientTableRoom().exitVote() != null || overWidget(x, y)) return Tile.ABSENT;
         if (hand != null) return hand.pick(x, y, selected);
-        if (immersive) return Tile.ABSENT;
-        var ray = forward().add(right().scale((x - width / 2.0) / focal())).add(right().cross(forward()).scale((height / 2.0 - y) / focal()));
-        var origin = minecraft.gameRenderer.getMainCamera().getPosition().subtract(TableGeometry.world(pos, Vec3.ZERO));
+        if (immersive()) return Tile.ABSENT;
+        var pointer = projection().pointer(x, y);
         double closest = Double.POSITIVE_INFINITY; int tile = Tile.ABSENT;
         for (var piece : McrTableScene.build(view.game())) if (ownHand(piece)) {
-            double distance = TilePicking.distanceSquared(piece, origin, ray, selected(piece));
+            double distance = TilePicking.distanceSquared(piece, pointer.origin(), pointer.ray(), selected(piece));
             if (distance < closest) { closest = distance; tile = piece.tile(); }
         }
         return tile;
@@ -211,11 +186,8 @@ public final class McrTableScreen extends Screen {
         if (hand != null) return hand.point(tile, selected, hovered);
         var view = view(); if (view == null) return null;
         for (var piece : McrTableScene.build(view.game())) if (ownHand(piece) && piece.tile() == tile) {
-            var delta = TableGeometry.world(pos, piece.position().add(0, selected(piece) ? .035 : 0, 0))
-                .subtract(minecraft.gameRenderer.getMainCamera().getPosition());
-            double depth = delta.dot(forward()); if (depth <= .01) return null;
-            return new TableHand.Point((int) (width / 2.0 + delta.dot(right()) * focal() / depth),
-                (int) (height / 2.0 - delta.dot(right().cross(forward())) * focal() / depth));
+            var point = projection().project(piece.position().add(0, selected(piece) ? .035 : 0, 0), .01);
+            return point == null ? null : new TableHand.Point((int) point.x(), (int) point.y());
         }
         return null;
     }
@@ -224,30 +196,28 @@ public final class McrTableScreen extends Screen {
         framePartial = partialTick;
         var view = view(); if (view == null || table().clientMcrDeck() == null) return;
         if (view.revision() != shownRevision) rebuild();
-        int mx = (int) canvasX(mouseX), my = (int) canvasY(mouseY);
-        if (immersive) {
-            g.fill(0, 0, width, height, 0xff000000);
-            var canvas = TableScreen.immersiveCanvas(width, height);
-            g.pose().pushPose(); g.pose().translate(canvas.x(), canvas.y(), 0);
-            g.pose().scale((float) canvas.scale(), (float) canvas.scale(), 1);
-            g.fill(0, 0, 1280, 800, MahjongUi.INPUT);
-            board.renderMcr(g, view.game(), table().clientMcrDeck(), table().clientMcrCloth());
-        }
+        var transform = canvas();
+        int mx = (int) Math.floor(transform.localX(mouseX)), my = (int) Math.floor(transform.localY(mouseY));
+        transform.begin(g);
         try {
-            hovered = inside(mx, my) ? pick(mx, my) : Tile.ABSENT;
+            if (immersive()) {
+                g.fill(0, 0, TableCanvas.WIDTH, TableCanvas.HEIGHT, MahjongUi.INPUT);
+                board.render(g, view.game(), table().clientMcrDeck(), table().clientMcrCloth());
+            }
+            hovered = transform.contains(mouseX, mouseY) ? pick(mx, my) : Tile.ABSENT;
             int s = contentScale();
             g.pose().pushPose(); g.pose().translate(0, 0, 400); g.pose().scale(s, s, 1);
             int w = uiWidth() / s;
             g.drawCenteredString(font, Component.translatable("mcr.mchjong.hand", view.game().handNumber(), view.game().remaining()),
-                w / 2, immersive ? 170 : 32, MahjongUi.TEXT);
+                w / 2, immersive() ? 170 : 32, MahjongUi.TEXT);
             if (view.paused()) g.drawCenteredString(font, Component.translatable("mcr.mchjong.paused"), w / 2,
-                immersive ? 183 : 43, MahjongUi.NEGATIVE);
+                immersive() ? 183 : 43, MahjongUi.NEGATIVE);
             else if (view.game().responded()) g.drawCenteredString(font, Component.translatable("mcr.mchjong.responded"),
-                w / 2, immersive ? 183 : 43, MahjongUi.MUTED);
+                w / 2, immersive() ? 183 : 43, MahjongUi.MUTED);
             else if (view.game().phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.INITIAL_FLOWERS
                 || view.game().phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.REPLACE_FLOWER)
                 g.drawCenteredString(font, Component.translatable("mcr.mchjong.flower_replacement",
-                    view.participants().get(view.game().turn()).name()), w / 2, immersive ? 183 : 43, MahjongUi.ACCENT);
+                    view.participants().get(view.game().turn()).name()), w / 2, immersive() ? 183 : 43, MahjongUi.ACCENT);
             g.pose().popPose();
             renderSeats(g, view, mx, my);
             if (hand != null) {
@@ -263,23 +233,23 @@ public final class McrTableScreen extends Screen {
                 var help = Component.translatable("mcr.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT),
                     TableKeys.VIEW.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
                 g.pose().pushPose(); g.pose().scale(s, s, 1);
-                MahjongUi.text(g, font, help, immersive ? 106 : 8, uiHeight() / s - 11,
-                    uiWidth() / s - (immersive ? 118 : 16), MahjongUi.MUTED, false);
+                MahjongUi.text(g, font, help, immersive() ? 106 : 8, uiHeight() / s - 11,
+                    uiWidth() / s - (immersive() ? 118 : 16), MahjongUi.MUTED, false);
                 g.pose().popPose();
             }
             if (hovered >= 0 && table().clientTableRoom().exitVote() == null) g.renderTooltip(font, tileLabel(hovered), mx, my);
             g.pose().popPose();
-        } finally { if (immersive) g.pose().popPose(); }
+        } finally { transform.end(g); }
     }
     private void renderSeats(GuiGraphics g, McrSession.View view, int mouseX, int mouseY) {
         int viewer = Math.max(0, view.game().viewerSeat());
         for (int seat = 0; seat < 4; seat++) {
             int side = Math.floorMod(seat - viewer, 4), s = contentScale();
-            int cardWidth = immersive ? 180 : Math.min(120, width / 3), x, y;
-            if (immersive) { var rect = ImmersiveTable.card(side); x = rect.x(); y = rect.y(); }
+            int cardWidth = immersive() ? 180 : Math.min(120, width / 3), x, y;
+            if (immersive()) { var rect = TableCanvas.card(side); x = rect.left(); y = rect.top(); }
             else { x = side == 1 || side == 2 ? width - cardWidth - 8 : 8; y = side == 0 || side == 1 ? 82 : 54; }
             var player = view.game().seats().get(seat); var participant = view.participants().get(seat);
-            int cardHeight = (immersive ? 34 : 24) * s;
+            int cardHeight = (immersive() ? 34 : 24) * s;
             g.fill(x, y, x + cardWidth, y + cardHeight, MahjongUi.PANEL);
             if (view.game().turn() == seat) g.fill(x, y, x + 2 * s, y + cardHeight, MahjongUi.ACCENT);
             PlayerPortrait.draw(g, participant, x + 4, y + 4, 10 * s);
@@ -288,105 +258,67 @@ public final class McrTableScreen extends Screen {
             var wind = Component.translatable("wind.mchjong." + new String[]{"east", "south", "west", "north"}[player.wind() - Tile.EAST]);
             MahjongUi.text(g, font, wind.copy().append("  " + player.points()), 0, 11, cardWidth / s - 8, MahjongUi.TEXT, false);
             var state = Component.translatable(player.winForbidden() ? "mcr.mchjong.win_forbidden" : "mcr.mchjong.flowers", player.flowers().size());
-            if (immersive) MahjongUi.text(g, font, state, 0, 22, cardWidth / s - 8,
+            if (immersive()) MahjongUi.text(g, font, state, 0, 22, cardWidth / s - 8,
                 player.winForbidden() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, false);
             g.pose().popPose();
-            if (!immersive && player.winForbidden()) g.fill(x, y + cardHeight - 2, x + cardWidth, y + cardHeight, MahjongUi.NEGATIVE);
+            if (!immersive() && player.winForbidden()) g.fill(x, y + cardHeight - 2, x + cardWidth, y + cardHeight, MahjongUi.NEGATIVE);
             if (mouseX >= x && mouseX < x + cardWidth && mouseY >= y && mouseY < y + cardHeight)
                 g.renderTooltip(font, Component.literal(participant.name()).append(" · ").append(wind).append(" · " + player.points())
                     .append(" · ").append(state), mouseX, mouseY);
         }
     }
-    private void clearCameraInput() { inspecting = dragging = false; java.util.Arrays.fill(lookKeys, false); }
-    private boolean cameraEnabled() {
-        return !immersive && minecraft != null && minecraft.player != null
-            && minecraft.player.getVehicle() instanceof SeatEntity && minecraft.options.getCameraType().isFirstPerson();
-    }
-    private void syncCamera() { if (minecraft.player.getVehicle() instanceof SeatEntity seat) SeatedCamera.sync(seat); }
-    private void toggleView() { immersive = !immersive; clearCameraInput(); rebuild(); }
-    private void resetView() {
-        if (minecraft.player.getVehicle() instanceof SeatEntity seat) SeatedCamera.state(seat);
-        var settings = TableSettings.get(); settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
-        clearCameraInput(); syncCamera();
-    }
-    @Override public void tick() {
-        if (cameraEnabled()) {
-            TableSettings.get().camera().look((lookKeys[1] ? 1 : 0) - (lookKeys[0] ? 1 : 0),
-                (lookKeys[3] ? 1 : 0) - (lookKeys[2] ? 1 : 0)); syncCamera();
-        }
-    }
+    private void toggleView() { presentation.toggle(); rebuild(); }
+    public void resetView() { presentation.reset(); }
+    @Override public void tick() { presentation.tick(); }
+    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
     @Override public boolean mouseClicked(double x, double y, int button) {
-        if (TableKeys.VIEW.matchesMouse(button)) { toggleView(); return true; }
-        if (TableKeys.RESET.matchesMouse(button)) { resetView(); return true; }
-        if (TableKeys.INSPECT.matchesMouse(button) && cameraEnabled()) { inspecting = true; return true; }
+        if (presentation.mouseBinding(button, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matchesMouse(button)) { pass(); return true; }
+        if (!canvas().contains(x, y)) return false;
         x = canvasX(x); y = canvasY(y);
-        if (!inside(x, y)) return false;
         if (super.mouseClicked(x, y, button)) return true;
         if (button == 1) {
-            if (cameraEnabled()) { dragging = true; dragDistance = 0; }
-            else { selected = lastClicked = Tile.ABSENT; rebuild(); }
+            if (presentation.cameraEnabled()) presentation.startDrag();
+            else cancelSelection();
             return true;
         }
         if (button == 0) { int tile = pick(x, y); if (tile >= 0) { choose(tile); return true; } }
         return false;
     }
     @Override public boolean mouseReleased(double x, double y, int button) {
-        if (TableKeys.INSPECT.matchesMouse(button)) { inspecting = false; return true; }
-        if (button == 1 && dragging) {
-            dragging = false;
-            if (dragDistance < 4) { selected = lastClicked = Tile.ABSENT; rebuild(); }
-            return true;
-        }
+        if (presentation.releaseInspect(button)) return true;
+        if (presentation.releaseDrag(button, this::cancelSelection)) return true;
         return super.mouseReleased(canvasX(x), canvasY(y), button);
     }
     @Override public boolean mouseDragged(double x, double y, int button, double dx, double dy) {
-        if (button == 1 && dragging && cameraEnabled()) {
-            double before = dragDistance; dragDistance += Math.abs(dx) + Math.abs(dy);
-            if (dragDistance > 4) {
-                double fraction = before >= 4 ? 1 : (dragDistance - 4) / (dragDistance - before);
-                if (hasShiftDown()) TableSettings.get().camera().pan(-dx * fraction * .004, -dy * fraction * .004);
-                else TableSettings.get().camera().look(dx * fraction * .35, dy * fraction * .35);
-                syncCamera();
-            }
-            return true;
-        }
-        double scale = immersive ? TableScreen.immersiveCanvas(width, height).scale() : 1;
+        if (presentation.drag(button, dx, dy, hasShiftDown())) return true;
+        double scale = canvas().scale();
         return super.mouseDragged(canvasX(x), canvasY(y), button, dx / scale, dy / scale);
     }
     @Override public boolean mouseScrolled(double x, double y, double horizontal, double vertical) {
-        if (cameraEnabled() && !overWidget(x, y)) {
-            if (hasShiftDown()) TableSettings.get().camera().raise(vertical); else TableSettings.get().camera().scroll(vertical);
-            return true;
-        }
-        return super.mouseScrolled(canvasX(x), canvasY(y), horizontal, vertical);
+        if (!canvas().contains(x, y)) return false;
+        x = canvasX(x); y = canvasY(y);
+        if (!overWidget(x, y) && presentation.scroll(vertical, hasShiftDown())) return true;
+        return super.mouseScrolled(x, y, horizontal, vertical);
     }
+
     private void pass() {
         var view = view();
         if (view != null) for (int i = 0; i < view.game().actions().size(); i++)
             if (view.game().actions().get(i).type() == McrAction.Type.PASS) { send(view, i); return; }
     }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
-        if (TableKeys.VIEW.matches(key, scanCode)) { toggleView(); return true; }
-        if (TableKeys.RESET.matches(key, scanCode)) { resetView(); return true; }
-        if (TableKeys.INSPECT.matches(key, scanCode) && cameraEnabled()) { inspecting = true; return true; }
+        if (presentation.keyPressed(key, scanCode, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matches(key, scanCode)) { pass(); return true; }
         if (key == GLFW.GLFW_KEY_ESCAPE && selected >= 0) { selected = lastClicked = Tile.ABSENT; rebuild(); return true; }
         if ((key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) && selected >= 0 && getFocused() == null) {
             send(view(), discardAction(selected)); return true;
         }
-        int arrow = arrow(key);
-        if (arrow >= 0 && cameraEnabled() && getFocused() == null) { lookKeys[arrow] = true; return true; }
+        if (getFocused() == null && presentation.lookPressed(key)) return true;
         return super.keyPressed(key, scanCode, modifiers);
     }
     @Override public boolean keyReleased(int key, int scanCode, int modifiers) {
-        if (TableKeys.INSPECT.matches(key, scanCode)) { inspecting = false; return true; }
-        int arrow = arrow(key); if (arrow >= 0) lookKeys[arrow] = false;
-        return super.keyReleased(key, scanCode, modifiers);
-    }
-    private static int arrow(int key) {
-        return switch (key) { case GLFW.GLFW_KEY_LEFT -> 0; case GLFW.GLFW_KEY_RIGHT -> 1;
-            case GLFW.GLFW_KEY_UP -> 2; case GLFW.GLFW_KEY_DOWN -> 3; default -> -1; };
+        return presentation.keyReleased(key, scanCode) || super.keyReleased(key, scanCode, modifiers);
     }
     private final class HandTarget extends MahjongButton {
         private final int tile;

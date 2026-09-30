@@ -7,8 +7,8 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
-import top.skyeyefast.mchjong.client.TableScene;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScene;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RiichiDiscard;
@@ -33,11 +33,11 @@ final class InputSmoke {
     static void pointerWidget(Minecraft client, AbstractWidget widget) {
         double x = widget.getX() + widget.getWidth() / 2.0;
         double y = widget.getY() + widget.getHeight() / 2.0;
-        if (client.screen instanceof TableScreen table && table.immersive()) {
-            double scale = Math.min(client.screen.width / (double) TableScreen.IMMERSIVE_WIDTH,
-                client.screen.height / (double) TableScreen.IMMERSIVE_HEIGHT);
-            x = (client.screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + x * scale;
-            y = (client.screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + y * scale;
+        if (client.screen instanceof RiichiTableScreen table && table.immersive()) {
+            double scale = Math.min(client.screen.width / (double) top.skyeyefast.mchjong.client.TableCanvas.WIDTH,
+                client.screen.height / (double) top.skyeyefast.mchjong.client.TableCanvas.HEIGHT);
+            x = (client.screen.width - top.skyeyefast.mchjong.client.TableCanvas.WIDTH * scale) / 2.0 + x * scale;
+            y = (client.screen.height - top.skyeyefast.mchjong.client.TableCanvas.HEIGHT * scale) / 2.0 + y * scale;
         }
         pointer(client, x, y);
     }
@@ -62,7 +62,7 @@ final class InputSmoke {
             base.handNumber(), base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
             base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
         table.acceptView(fixture);
-        TableScreen screen = new TableScreen(table.getBlockPos());
+        RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
         client.setScreen(screen);
         TableSettings.get().animations = false;
         screen.resetView();
@@ -121,8 +121,8 @@ final class InputSmoke {
         TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
         clickHand(screen, fixture, 13);
         require(selected(screen, fixture, 13), "Mouse did not select the drawn tile");
-        var cancelPoint = screenPoint(screen, new HandPoint(TableScreen.IMMERSIVE_WIDTH / 2.0,
-            TableScreen.IMMERSIVE_HEIGHT - 19));
+        var cancelPoint = screenPoint(screen, new HandPoint(top.skyeyefast.mchjong.client.TableCanvas.WIDTH / 2.0,
+            top.skyeyefast.mchjong.client.TableCanvas.HEIGHT - 19));
         screen.mouseClicked(cancelPoint.x(), cancelPoint.y(), 1);
         screen.mouseReleased(cancelPoint.x(), cancelPoint.y(), 1);
         require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
@@ -140,20 +140,20 @@ final class InputSmoke {
         screen.resetView();
     }
 
-    static void clickHand(TableScreen screen, RiichiView view, int tile) {
+    static void clickHand(RiichiTableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
         screen.mouseClicked(point.x(), point.y(), 0);
     }
 
-    static void pointerHand(Minecraft client, TableScreen screen, RiichiView view, int tile) {
+    static void pointerHand(Minecraft client, RiichiTableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
         pointer(client, point.x(), point.y());
     }
 
     private record HandPoint(double x, double y) {}
-    private static HandPoint handPoint(TableScreen screen, RiichiView view, int tile) {
-        int layoutWidth = screen.immersive() ? TableScreen.IMMERSIVE_WIDTH : screen.width;
-        int layoutHeight = screen.immersive() ? TableScreen.IMMERSIVE_HEIGHT : screen.height;
+    private static HandPoint handPoint(RiichiTableScreen screen, RiichiView view, int tile) {
+        int layoutWidth = screen.immersive() ? top.skyeyefast.mchjong.client.TableCanvas.WIDTH : screen.width;
+        int layoutHeight = screen.immersive() ? top.skyeyefast.mchjong.client.TableCanvas.HEIGHT : screen.height;
         int tileWidth = Math.min(screen.immersive() ? 58 : layoutHeight < 360 ? 24 : 32, (layoutWidth - 36) / 14);
         var hand = view.seats().get(view.viewerSeat()).hand();
         int drawGap = screen.immersive() ? Math.max(18, tileWidth / 2) : Math.max(4, tileWidth / 3);
@@ -164,16 +164,16 @@ final class InputSmoke {
         return new HandPoint(x, layoutHeight - footer - 15 - Math.round(tileWidth * 1.53846f) / 2.0);
     }
 
-    private static HandPoint screenPoint(TableScreen screen, HandPoint point) {
+    private static HandPoint screenPoint(RiichiTableScreen screen, HandPoint point) {
         if (!screen.immersive()) return point;
-        double scale = Math.min(screen.width / (double) TableScreen.IMMERSIVE_WIDTH,
-            screen.height / (double) TableScreen.IMMERSIVE_HEIGHT);
-        return new HandPoint((screen.width - TableScreen.IMMERSIVE_WIDTH * scale) / 2.0 + point.x() * scale,
-            (screen.height - TableScreen.IMMERSIVE_HEIGHT * scale) / 2.0 + point.y() * scale);
+        double scale = Math.min(screen.width / (double) top.skyeyefast.mchjong.client.TableCanvas.WIDTH,
+            screen.height / (double) top.skyeyefast.mchjong.client.TableCanvas.HEIGHT);
+        return new HandPoint((screen.width - top.skyeyefast.mchjong.client.TableCanvas.WIDTH * scale) / 2.0 + point.x() * scale,
+            (screen.height - top.skyeyefast.mchjong.client.TableCanvas.HEIGHT * scale) / 2.0 + point.y() * scale);
     }
 
-    private static boolean selected(TableScreen screen, RiichiView view, int tile) {
-        return TableScene.build(view).stream().filter(piece -> piece.area() == TableScene.Area.HAND && piece.seat() == 0 && piece.tile() == tile)
+    private static boolean selected(RiichiTableScreen screen, RiichiView view, int tile) {
+        return RiichiTableScene.build(view).stream().filter(piece -> piece.area() == RiichiTableScene.Area.HAND && piece.seat() == 0 && piece.tile() == tile)
             .anyMatch(piece -> screen.selected(screen.tablePos(), piece));
     }
 
@@ -203,19 +203,19 @@ final class InputSmoke {
         table.acceptView(fixture);
         TableSettings.get().animations = false;
         TableSettings.get().highlightTiles = false;
-        var screen = new TableScreen(table.getBlockPos());
+        var screen = new RiichiTableScreen(table.getBlockPos());
         client.setScreen(screen);
         screen.resetView();
         String label = Component.translatable(action.translationKey()).getString();
         var button = screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
         screen.setFocused(button);
-        for (var piece : TableScene.build(fixture)) if (piece.area() == TableScene.Area.HAND && piece.seat() == 0)
+        for (var piece : RiichiTableScene.build(fixture)) if (piece.area() == RiichiTableScene.Area.HAND && piece.seat() == 0)
             require((screen.highlight(table.getBlockPos(), piece) != 0) == consumed.contains(piece.tile()),
                 "Keyboard call focus highlighted the wrong physical tiles: " + type);
     }
 
-    private static boolean button(TableScreen screen, String key) {
+    private static boolean button(RiichiTableScreen screen, String key) {
         String label = Component.translatable(key).getString();
         return screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .anyMatch(widget -> widget.getMessage().getString().equals(label));

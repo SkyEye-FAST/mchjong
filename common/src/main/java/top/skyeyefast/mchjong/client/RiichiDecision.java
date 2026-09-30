@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import top.skyeyefast.mchjong.engine.RiichiView;
 
 /** One outstanding action per authoritative choice set; heartbeats are not acknowledgements. */
-public final class TableDecision {
+public final class RiichiDecision {
     private RiichiView view;
     private boolean pending;
 

@@ -11,13 +11,13 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Physical deposits share four central lanes, above the machine panel or directly on the felt. */
-public final class TableDeposits {
+public final class RiichiDeposits {
     public static final float LANE_Z = .136f;
     public static final float HALF_LENGTH = .11f;
     public static final float HALF_WIDTH = .011f;
     public static final float HEIGHT = .012f;
     public record Stick(int seat, int layer, boolean declared) {}
-    private TableDeposits() {}
+    private RiichiDeposits() {}
 
     public static List<Stick> sticks(RiichiView view) {
         int count = view.riichiSticks();
@@ -34,7 +34,7 @@ public final class TableDeposits {
         return List.copyOf(result);
     }
 
-    public static void render(RiichiView view, boolean automatic, TableAnimation animation, boolean animated, long now,
+    public static void render(RiichiView view, boolean automatic, RiichiAnimation animation, boolean animated, long now,
                               PoseStack pose, MultiBufferSource buffers, int light) {
         for (var stick : sticks(view)) {
             double progress = animated && stick.declared() ? animation.riichiProgress(stick.seat(), now) : 1;
@@ -50,7 +50,7 @@ public final class TableDeposits {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(stick.seat() * 90));
             pose.translate(0, TableGeometry.FELT_Y + (automatic ? .044 : .002) + stick.layer() * (renderedHeight + .002)
-                + Math.sin(progress * Math.PI) * .09, TableScene.HAND_Z + (LANE_Z - TableScene.HAND_Z) * progress);
+                + Math.sin(progress * Math.PI) * .09, RiichiTableScene.HAND_Z + (LANE_Z - RiichiTableScene.HAND_Z) * progress);
             if (nativeStick) {
                 // Vanilla block models stand upright. Lay their long axis along the deposit lane.
                 float nativeLength = bamboo ? HALF_LENGTH * 2 : HALF_LENGTH * 1.45f;

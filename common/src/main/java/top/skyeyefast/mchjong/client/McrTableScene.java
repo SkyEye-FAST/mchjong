@@ -21,9 +21,9 @@ public final class McrTableScene {
     public static final double WALL_Z = (WALL_LENGTH - HEIGHT + DEPTH) / 2;
     // The short end meets the next wall with the same seam as adjacent stacks.
     public static final double WALL_OFFSET = WALL_LENGTH / 2 - WALL_Z + HEIGHT / 2 + (WALL_STEP - WIDTH);
-    public static final double HAND_Z = TableScene.HAND_Z;
-    public static final double MELD_LEFT = -TableScene.MELD_RIGHT;
-    public static final double RIVER_Z = TableScene.RIVER_Z;
+    public static final double HAND_Z = RiichiTableScene.HAND_Z;
+    public static final double MELD_LEFT = -RiichiTableScene.MELD_RIGHT;
+    public static final double RIVER_Z = RiichiTableScene.RIVER_Z;
     public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back, float scale) {}
@@ -74,7 +74,7 @@ public final class McrTableScene {
             double meldWidth = melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
             double flowerStart = meldWidth + (!melds.isEmpty() && !player.flowers().isEmpty() ? DEPTH / 4 : 0);
             double publicWidth = flowerStart + player.flowers().size() * WIDTH;
-            double handGap = publicWidth > 0 && !hand.isEmpty() ? TableScene.HAND_MELD_GAP : 0;
+            double handGap = publicWidth > 0 && !hand.isEmpty() ? RiichiTableScene.HAND_MELD_GAP : 0;
             double rowWidth = publicWidth + handGap + hand.size() * WIDTH + (drawn ? DEPTH / 2 : 0);
             // A full flower run and four kongs share one rail, clear of the adjacent seat's corner.
             double rowRight = HAND_Z - HEIGHT / 2 - .035;

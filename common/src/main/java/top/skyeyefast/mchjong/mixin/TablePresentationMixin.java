@@ -9,19 +9,19 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 
 @Mixin(GameRenderer.class)
 public abstract class TablePresentationMixin {
     @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableHands(Camera camera, float delta, Matrix4f projection, CallbackInfo callback) {
         var screen = Minecraft.getInstance().screen;
-        if (TableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)) callback.cancel();
+        if (RiichiTableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)) callback.cancel();
     }
 
     @Inject(method = "shouldRenderBlockOutline", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableOutline(CallbackInfoReturnable<Boolean> callback) {
         var screen = Minecraft.getInstance().screen;
-        if (TableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)) callback.setReturnValue(false);
+        if (RiichiTableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)) callback.setReturnValue(false);
     }
 }

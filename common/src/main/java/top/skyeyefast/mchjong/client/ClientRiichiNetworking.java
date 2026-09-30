@@ -39,9 +39,9 @@ public final class ClientRiichiNetworking {
             && (previousRoom == null || !previousRoom.tableId().equals(room.tableId())
                 || previousRoom.seating() != RoomSeating.Stage.POSITIONING);
         requestAssignedSeat(client, payload, room, assigned);
-        TableAudio.accept(table, view);
-        if (view == null) TableAnimation.of(table).acceptLobby(room.tableId(), room.viewerSeat(), Util.getMillis());
-        else TableAnimation.of(table).accept(view, Util.getMillis());
+        RiichiAudio.accept(table, view);
+        if (view == null) RiichiAnimation.of(table).acceptLobby(room.tableId(), room.viewerSeat(), Util.getMillis());
+        else RiichiAnimation.of(table).accept(view, Util.getMillis());
         if (payload.leaveDecision()) {
             if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())))
                 client.setScreen(new TableLeaveScreen(payload.pos(), room.tableId(), room.decision()));
@@ -49,7 +49,7 @@ public final class ClientRiichiNetworking {
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId()))
             client.setScreen(null);
-        TableScreen active = TableScreen.active(client.screen);
+        RiichiTableScreen active = RiichiTableScreen.active(client.screen);
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && room.viewerSeat() < 0
             && room.lobby()
             && active != null && active.tablePos().equals(payload.pos())) {
@@ -64,12 +64,12 @@ public final class ClientRiichiNetworking {
             if (active != null && active.tablePos().equals(payload.pos())) {
                 if (client.screen != active) client.setScreen(active);
             } else {
-                TableScreen screen = new TableScreen(payload.pos());
+                RiichiTableScreen screen = new RiichiTableScreen(payload.pos());
                 client.setScreen(screen);
                 screen.resetView();
             }
         } else if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) {
-            client.setScreen(new TableScreen(payload.pos()));
+            client.setScreen(new RiichiTableScreen(payload.pos()));
         }
     }
 

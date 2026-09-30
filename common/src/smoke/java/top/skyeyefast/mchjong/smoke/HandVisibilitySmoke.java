@@ -5,8 +5,8 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableOptionsScreen;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiOptionsScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.PlayerHandVisibility;
@@ -34,9 +34,9 @@ final class HandVisibilitySmoke {
         var visibility = PlayerHandVisibility.values()[mode];
         if (stage == 0) {
             if (room.viewerSeat() < 0 || !room.lobby()) return false;
-            var parent = new TableScreen(table.getBlockPos());
+            var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
-            client.setScreen(new TableOptionsScreen(parent));
+            client.setScreen(new RiichiOptionsScreen(parent));
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
                 "settings.mchjong.hand_visibility." + configuration.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
             var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
@@ -48,9 +48,9 @@ final class HandVisibilitySmoke {
             next(2);
         } else if (stage == 2) {
             resize(client, true);
-            var parent = new TableScreen(table.getBlockPos());
+            var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
-            client.setScreen(new TableOptionsScreen(parent));
+            client.setScreen(new RiichiOptionsScreen(parent));
             next(3);
         } else if (stage == 3 && ticks > 10) {
             AutomationControlsSmoke.checkBounds(client);
@@ -60,19 +60,19 @@ final class HandVisibilitySmoke {
                 .anyMatch(button -> button.active && button.getMessage().getString().equals(label)), "Missing room visibility control");
             capture(client, output, "room-" + visibility + "-small.png");
             resize(client, false);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             next(4);
         } else if (stage == 4) {
             if (preparation.tick(client, table, output, "visibility-" + visibility)) next(5);
         } else if (stage == 5 && view.phase() == RiichiView.Phase.TURN && ticks > 25
-            && !top.skyeyefast.mchjong.client.TableAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
+            && !top.skyeyefast.mchjong.client.RiichiAnimation.of(table).dealing(net.minecraft.Util.getMillis())) {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");
             capture(client, output, "seated-" + visibility + ".png");
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             next(9);
         } else if (stage == 9 && ticks > 10) {
-            require(client.screen instanceof TableScreen screen && screen.immersive(), "Missing immersive view");
+            require(client.screen instanceof RiichiTableScreen screen && screen.immersive(), "Missing immersive view");
             capture(client, output, "immersive-" + visibility + ".png");
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             var id = client.player.getUUID();

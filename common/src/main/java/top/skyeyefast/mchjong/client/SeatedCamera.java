@@ -38,7 +38,7 @@ public final class SeatedCamera {
         var pose = state(seat);
         boolean firstPerson = client.options.getCameraType().isFirstPerson() && client.isWindowActive();
         if (firstPerson) sync(seat);
-        boolean inspect = firstPerson && (client.screen instanceof TableScreen table
+        boolean inspect = firstPerson && (client.screen instanceof RiichiTableScreen table
             ? table.inspecting() : client.screen instanceof McrTableScreen mcr ? mcr.inspecting()
             : client.screen == null && TableKeys.INSPECT.isDown());
         pose.tick(inspect);

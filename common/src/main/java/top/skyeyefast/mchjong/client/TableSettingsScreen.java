@@ -25,7 +25,7 @@ public final class TableSettingsScreen extends Screen {
         super(Component.translatable("settings.mchjong.title"));
         this.parent = parent;
     }
-    public TableScreen tableScreen() { return parent instanceof TableScreen table ? table : null; }
+    public RiichiTableScreen tableScreen() { return parent instanceof RiichiTableScreen table ? table : null; }
     public McrTableScreen mcrTableScreen() { return parent instanceof McrTableScreen table ? table : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
@@ -77,11 +77,11 @@ public final class TableSettingsScreen extends Screen {
         } else {
             options.add(new VolumeSlider(left, 0, span, false));
             addToggle("settings.mchjong.countdown", settings.countdownSounds, () -> settings.countdownSounds = !settings.countdownSounds);
-            addAction("settings.mchjong.audio_preview", TableAudio::preview);
+            addAction("settings.mchjong.audio_preview", RiichiAudio::preview);
             addChoice("settings.mchjong.voice", settings.voiceSource, () -> {
                 var modes = TableSettings.VoiceSource.values();
                 settings.voiceSource = modes[Math.floorMod(settings.voiceSource.ordinal() + (hasShiftDown() ? -1 : 1), modes.length)];
-                TableAudio.settingsChanged();
+                RiichiAudio.settingsChanged();
             }).setTooltip(Tooltip.create(Component.translatable("settings.mchjong.voice_preset_note")));
             var voiceVolume = new VolumeSlider(left, 0, span, true);
             voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.SELECTED;
@@ -107,7 +107,7 @@ public final class TableSettingsScreen extends Screen {
         }
         int column = (span - 6) / 2;
         addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
-            settings.reset(); TableAudio.settingsChanged(); resetView(); init();
+            settings.reset(); RiichiAudio.settingsChanged(); resetView(); init();
             RiichiStickPresets.sendChoice();
             VoicePresets.sendChoice();
         }).bounds(left, height - 30, column, 20).build());
@@ -141,7 +141,8 @@ public final class TableSettingsScreen extends Screen {
     }
 
     private void resetView() {
-        if (parent instanceof TableScreen table) table.resetView();
+        if (parent instanceof RiichiTableScreen table) table.resetView();
+        else if (parent instanceof McrTableScreen table) table.resetView();
         else settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
     }
 
@@ -160,7 +161,7 @@ public final class TableSettingsScreen extends Screen {
     @Override public void onClose() {
         try {
             settings.save(TableSettings.configPath());
-            minecraft.setScreen(minecraft.level == null && parent instanceof TableScreen ? null : parent);
+            minecraft.setScreen(minecraft.level == null && parent instanceof RiichiTableScreen ? null : parent);
         } catch (IOException failure) {
             org.slf4j.LoggerFactory.getLogger("mchjong").error("Cannot save table settings", failure);
             saveFailed = true;

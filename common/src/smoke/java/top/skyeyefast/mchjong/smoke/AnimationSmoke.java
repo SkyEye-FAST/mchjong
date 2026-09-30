@@ -8,9 +8,9 @@ import java.util.stream.IntStream;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.client.TableAnimation;
-import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableScene;
+import top.skyeyefast.mchjong.client.RiichiAnimation;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
 import top.skyeyefast.mchjong.engine.RiichiAction;
@@ -55,9 +55,9 @@ final class AnimationSmoke {
                     null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(),
                     fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
                 table.acceptView(previous);
-                TableAnimation.of(table).accept(previous, Util.getMillis() - TableAnimation.DEAL_MILLIS);
+                RiichiAnimation.of(table).accept(previous, Util.getMillis() - RiichiAnimation.DEAL_MILLIS);
             }
-            TableScreen screen = new TableScreen(table.getBlockPos());
+            RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
             if (layoutsOnly) screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -70,19 +70,20 @@ final class AnimationSmoke {
                     TableSettings.get().toggle(information);
                 }
         }
-        if (layoutsOnly && ticks <= 60 && !((TableScreen) client.screen).immersive())
+        if (layoutsOnly && ticks <= 60 && !((RiichiTableScreen) client.screen).immersive())
             throw new IllegalStateException("Automatic dealing exited immersive view");
         if (ticks == 6 && !layoutsOnly) capture(client, output, "12-wall-rising.png");
         if (ticks == 18) capture(client, output, layoutsOnly ? "13-immersive-dealing-packets.png" : "13-dealing-packets.png");
         if (ticks == 60) {
-            if (TableAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
+            if (RiichiAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
             capture(client, output, layoutsOnly ? "14-immersive-deal-complete.png" : "14-animated-deal-complete.png");
             if (layoutsOnly) {
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 hidden.forEach(TableSettings.get()::toggle);
                 hidden.clear();
                 TableSettings.get().animations = false;
-                ticks = 115;
+                // Keep the shared camera and hand-input checks in the focused seated run.
+                ticks = 109;
             }
         }
         if (ticks == 61) {
@@ -135,7 +136,7 @@ final class AnimationSmoke {
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(List.of(80, 81), melds, List.of(), false));
             update(table, seats, fixture.wall());
-            var screen = new TableScreen(table.getBlockPos());
+            var screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
         }
@@ -181,7 +182,7 @@ final class AnimationSmoke {
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
             AutomationControlsSmoke.click(client, label);
         }
@@ -190,19 +191,19 @@ final class AnimationSmoke {
             client.getWindow().setWindowed(960, 600);
             client.options.guiScale().set(2);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
         }
         if (ticks == 327) {
             capture(client, output, "57-immersive-rivers-melds-480x300.png");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
             capture(client, output, "57-immersive-rivers-melds-320x240-gui3-letterbox.png");
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
         }
         if (ticks == 328) {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
@@ -223,7 +224,7 @@ final class AnimationSmoke {
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(14, Tile.HIDDEN), List.of(), List.of(), false));
             update(table, seats, fixture.wall());
             TableSettings.get().animations = true;
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         }
         if (ticks == 364 || ticks == 384 || ticks == 404) {
@@ -283,11 +284,11 @@ final class AnimationSmoke {
         var up = right.cross(forward);
         double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
-        for (var piece : TableScene.build(table.clientView())) {
-            if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;
-            double x = TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
-            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2;
-            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * TableScene.TILE_SCALE / 2;
+        for (var piece : RiichiTableScene.build(table.clientView())) {
+            if (piece.seat() != 0 || piece.area() != RiichiTableScene.Area.HAND && piece.area() != RiichiTableScene.Area.MELD) continue;
+            double x = TileMesh.WIDTH * RiichiTableScene.TILE_SCALE / 2;
+            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2;
+            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE / 2;
             if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
             for (int dx : new int[]{-1, 1}) for (int dy : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
                 var point = TableGeometry.world(table.getBlockPos(), piece.position().add(dx * x, dy * y, dz * z))

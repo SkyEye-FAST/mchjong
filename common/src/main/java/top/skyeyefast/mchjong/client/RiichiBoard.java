@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** Screen-space play surface. It consumes only the recipient's view, never world geometry or camera rays. */
-final class TableBoard {
+final class RiichiBoard {
     record Rect(int x, int y, int width, int height) {
         int right() { return x + width; }
         int bottom() { return y + height; }
@@ -27,7 +27,7 @@ final class TableBoard {
     private final Rect bounds, center;
     private final int viewer, players, actionsTop, riverWidth;
     private final boolean perspective;
-    private final ImmersiveTable immersive;
+    private final RiichiImmersiveTable immersive;
     private final int[] riverRows = new int[4];
     private final Map<Integer, Point> tiles = new HashMap<>();
     private final Map<Integer, Integer> tileWidths = new HashMap<>();
@@ -35,21 +35,21 @@ final class TableBoard {
     private net.minecraft.world.item.DyeColor back;
     private net.minecraft.resources.ResourceLocation backPreset = TileBackPresets.DEFAULT;
 
-    TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop) {
+    RiichiBoard(RiichiBoardState view, int left, int right, int top, int bottom, int actionsTop) {
         this(view, left, right, top, bottom, actionsTop, false);
     }
 
-    TableBoard(TableBoardState view, int left, int right, int top, int bottom, int actionsTop, boolean perspective) {
+    RiichiBoard(RiichiBoardState view, int left, int right, int top, int bottom, int actionsTop, boolean perspective) {
         bounds = new Rect(left, top, Math.max(1, right - left), Math.max(1, bottom - top));
         viewer = view.viewerSeat();
         players = view.players();
         this.actionsTop = actionsTop;
         this.perspective = perspective;
-        immersive = perspective ? new ImmersiveTable(view) : null;
+        immersive = perspective ? new RiichiImmersiveTable(view) : null;
         for (int seat = 0; seat < players; seat++) riverRows[side(seat, viewer, players)] = Math.max(2,
             ((int) view.seats().get(seat).river().stream().filter(discard -> !discard.called()).count() + 5) / 6);
         if (perspective) {
-            riverWidth = ImmersiveTable.RIVER_WIDTH;
+            riverWidth = RiichiImmersiveTable.RIVER_WIDTH;
             center = new Rect(568, 299, 144, 85);
             return;
         }
@@ -92,7 +92,8 @@ final class TableBoard {
 
     Rect card(int seat) {
         if (perspective) {
-            return ImmersiveTable.card(side(seat, viewer, players));
+            var card = TableCanvas.card(side(seat, viewer, players));
+            return new Rect(card.left(), card.top(), card.width(), card.height());
         }
         int width = Math.min(108, Math.max(48, (bounds.width() - center.width()) / 2
             - Math.max(riverRows[1], riverRows[3]) * tileHeight(riverWidth) - 66));
@@ -141,14 +142,14 @@ final class TableBoard {
         return new Point(bounds.x() + bounds.width() / 2 + offset, bounds.bottom() - Math.max(84, bounds.height() / 6));
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset) {
+    void render(GuiGraphics graphics, RiichiBoardState view, TileFacePreset preset) {
         render(graphics, view, preset, Tile.ABSENT, TileMaterial.BONE, null, TileBackPresets.DEFAULT, null, null, 0);
     }
 
-    void render(GuiGraphics graphics, TableBoardState view, TileFacePreset preset, int suppressedTile,
+    void render(GuiGraphics graphics, RiichiBoardState view, TileFacePreset preset, int suppressedTile,
                 TileMaterial material, net.minecraft.world.item.DyeColor back,
                 net.minecraft.resources.ResourceLocation backPreset, net.minecraft.world.item.DyeColor cloth,
-                TableAnimation deal, long now) {
+                RiichiAnimation deal, long now) {
         this.material = material;
         this.back = back;
         this.backPreset = backPreset;
@@ -166,7 +167,7 @@ final class TableBoard {
         center(graphics, view);
     }
 
-    private void outerTiles(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset) {
+    private void outerTiles(GuiGraphics graphics, RiichiBoardState view, int seat, TileFacePreset preset) {
         var player = view.seats().get(seat);
         int side = side(seat, viewer, players);
         if (seat == viewer) {
@@ -267,7 +268,7 @@ final class TableBoard {
         return rails;
     }
 
-    private void river(GuiGraphics graphics, TableBoardState view, int seat, TileFacePreset preset, int suppressedTile) {
+    private void river(GuiGraphics graphics, RiichiBoardState view, int seat, TileFacePreset preset, int suppressedTile) {
         var river = view.seats().get(seat).river().stream().filter(discard -> !discard.called()).toList();
         if (river.isEmpty()) return;
         int side = side(seat, viewer, players);
@@ -319,7 +320,7 @@ final class TableBoard {
         return immersive == null ? riverWidth : immersive.riverWidth(seat, row);
     }
 
-    private void immersiveCenter(GuiGraphics graphics, TableBoardState view) {
+    private void immersiveCenter(GuiGraphics graphics, RiichiBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         graphics.pose().pushPose();
@@ -331,15 +332,15 @@ final class TableBoard {
         if (settings.show(TableSettings.Information.REMAINING) && view.remaining() >= 0) MahjongUi.text(graphics, font,
             Component.translatable("ui.mchjong.remaining.short", view.remaining()), -42, 17, 84, MahjongUi.TEXT, true);
         if (settings.show(TableSettings.Information.DEPOSITS)) {
-            TableHud.stick(graphics, -30, 39, false);
-            TableHud.stick(graphics, 5, 39, true);
+            RiichiHud.stick(graphics, -30, 39, false);
+            RiichiHud.stick(graphics, 5, 39, true);
             graphics.drawString(font, Integer.toString(view.honba()), -12, 36, MahjongUi.MUTED, false);
             graphics.drawString(font, Integer.toString(view.riichiSticks()), 23, 36, MahjongUi.MUTED, false);
         }
         graphics.pose().popPose();
     }
 
-    private void center(GuiGraphics graphics, TableBoardState view) {
+    private void center(GuiGraphics graphics, RiichiBoardState view) {
         var settings = TableSettings.get();
         var font = Minecraft.getInstance().font;
         int cx = center.x() + center.width() / 2, cy = center.y() + center.height() / 2;
