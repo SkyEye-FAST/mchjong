@@ -562,7 +562,7 @@ class SichuanGameTest {
         var control = new TimeControl(1, 1);
         var clocks = Collections.nCopies(4, new TimeControl.Clock(20, 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),
-            control, clocks, 0, 0, game.save()));
+            control, clocks, 0, 0, game.save(), null, null, List.of()));
         session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3), java.util.Set.of(id(0), id(1), id(2), id(3)));
         return session;
     }

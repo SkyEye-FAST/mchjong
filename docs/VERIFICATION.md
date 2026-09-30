@@ -150,6 +150,11 @@ deductions, maximum ready payments, eight-hand lifecycle, session confirmations,
 private views and explicit save/restore. The clause mapping is in
 [Sichuan match orchestration](ARCHITECTURE.md#sichuan-sbr-match-orchestration). Run
 `gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
+`SichuanReplayTest` owns sealed physical openings, recorder restoration,
+serialization and rule-executed event consistency, multi-win and sequential-win
+retirement, kong robbery and call transfers, flower-pig/ready checks, cumulative
+scores and dealer succession, queue acknowledgement and altered-record rejection.
+Run `gradlew.bat :engine:test --tests "*SichuanReplayTest" --warning-mode fail --console=plain`.
 `PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
 `SichuanPresentationTest` owns the 108-slot physical layout, recipient-safe scene
 projection, multi-win aliases and faithful result-ledger formatting. Run
@@ -158,7 +163,8 @@ The focused real-client Sichuan smoke checks three-way lobby selection, the
 108-tile subset, private declarations, NBT restoration, seated and immersive
 physical-tile selection and discard, exit
 voting, result screens, duplicate confirmation packets, next-hand privacy,
-eight-hand completion and return to the lobby:
+eight-hand completion, shared-browser retrieval, Sichuan replay event/hand
+navigation, final standings and return to the lobby:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --console=plain
@@ -166,8 +172,9 @@ gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --con
 
 Inspect the fresh marker in `fabric/build/smoke/sichuan-evidence`. This focused
 profile runs assertions without captures. Add
-`-PsmokeScreenshots=sichuan-table.png,sichuan-results.png` to inspect only the
-affected table and hand-result states.
+`-PsmokeScreenshots=sichuan-table.png,sichuan-results.png` for table and hand-result
+changes, or `-PsmokeScreenshots=sichuan-replay.png,sichuan-replay-settlement.png`
+for the affected replay states.
 
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
@@ -198,6 +205,9 @@ recipient privacy. Lifecycle/manual checks exercise both player counts; enumerat
 presets only where rules differ. `CompactTableLayoutTest` owns hand clearance and
 picking; `TableLayoutTest` owns melds, rivers and walls. Replay storage/authorization
 belongs to `ReplayStoreTest`, and bounded chunk reassembly to `ReplayTransferTest`.
+The storage suite also checks Sichuan browser headers, final standings, participant
+permissions and altered-event rejection. Run
+`gradlew.bat :fabric:test --tests "*ReplayStoreTest" --warning-mode fail --console=plain`.
 Asset tests cover deterministic output, texture/model contracts, translation key
 parity, duplicate keys, placeholders and literal source references.
 

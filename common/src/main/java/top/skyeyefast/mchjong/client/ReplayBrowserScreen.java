@@ -125,8 +125,11 @@ public final class ReplayBrowserScreen extends Screen {
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
                 MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
-                graphics.drawString(font, Component.translatable(match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR
-                    ? "mcr.mchjong.title" : match.riichiRules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
+                graphics.drawString(font, Component.translatable(switch (match.variant()) {
+                    case RIICHI -> match.riichiRules().translationKey();
+                    case MCR -> "mcr.mchjong.title";
+                    case SICHUAN -> "sichuan.mchjong.title";
+                }), getX() + 9, y + 33, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }
             graphics.disableScissor();

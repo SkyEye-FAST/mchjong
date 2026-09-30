@@ -66,7 +66,7 @@ class ReplayDecisionAnalysisTest {
             List.of(tile(Tile.WHITE, 0)), wall, events, decisions, seats, List.of(), "exhaustive",
             List.of(0,0,0,0), List.of(tile(Tile.WHITE,0)), List.of(), List.of(), List.of());
         return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, participants, MahjongVariant.RIICHI, false,
-            new RiichiReplay(rules, 0, rules.redFives(), List.of(replayHand)), null);
+            new RiichiReplay(rules, 0, rules.redFives(), List.of(replayHand)), null, null);
     }
 
     private static ReplayWall wall(RiichiRules rules) {

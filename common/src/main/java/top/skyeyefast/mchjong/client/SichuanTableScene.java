@@ -51,10 +51,18 @@ public final class SichuanTableScene {
     }
 
     public static List<Piece> build(SichuanView view) {
-        var pieces = new ArrayList<>(wall(view.wall().slots()));
         boolean ended = view.phase() == SichuanGame.Phase.HAND_END || view.phase() == SichuanGame.Phase.MATCH_END;
+        return build(view.wall().slots(), view.seats(), ended);
+    }
+
+    static List<Piece> replay(top.skyeyefast.mchjong.engine.SichuanReplayPlayback.Frame frame) {
+        return build(frame.state().wall().slots(), frame.seats(), true).stream().filter(piece -> piece.area() != Area.WALL).toList();
+    }
+
+    private static List<Piece> build(List<Integer> slots, List<SichuanView.Seat> seats, boolean ended) {
+        var pieces = new ArrayList<>(wall(slots));
         for (int seat = 0; seat < 4; seat++) {
-            var player = view.seats().get(seat);
+            var player = seats.get(seat);
             double meldWidth = player.melds().stream().mapToDouble(meld -> meld.tiles().size() * WIDTH + DEPTH / 4).sum();
             boolean drawn = player.drawn() != Tile.ABSENT && !player.hand().isEmpty();
             double handWidth = player.hand().size() * WIDTH + (drawn ? DEPTH / 2 : 0);

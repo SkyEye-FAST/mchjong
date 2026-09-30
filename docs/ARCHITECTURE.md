@@ -320,8 +320,8 @@ lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room 
 `SichuanCodec` encodes explicit game/session saves separately from recipient views,
 requiring complete typed records and bounding size and nesting. Restoration checks
 all 108 physical identities, melds, pending reactions, winner scores and payment
-links, then refreshes decision and incarnation authority. Game and session formats
-are 2, with complete typed fields, a 1 MiB document bound and sixteen nesting
+links, then refreshes decision and incarnation authority. Game format is 2 and
+session format is 3, with complete typed fields, an 8 MiB document bound and sixteen nesting
 levels. Hand number, current dealer, completed ledgers, current result, future-wall
 seed, partial confirmations and remaining reading time survive saves. Restoration
 derives cumulative scores without paying again and validates the dealer chain.
@@ -859,14 +859,27 @@ completion callback. See `AUDIO.md` for the recording contract.
 
 Replay recording and playback live in the Minecraft-independent engine.
 `ReplayMatch` holds shared identity, participants, variant, timestamps and
-completion state; `RiichiReplay` and `McrReplay` own independent completed-hand
-types. MCR records a complete physical opening and accepted server decisions,
-then reconstructs read-only event frames with the MCR game rules. A completed
-hand enters the existing archive queue once; the session save retains both
-unfinished recording state and unacknowledged completed archives.
+completion state; `RiichiReplay`, `McrReplay` and `SichuanReplay` own independent
+completed-hand types, and exactly one payload matches the selected variant.
+MCR and Sichuan record complete physical openings and accepted server decisions,
+then reconstruct read-only event frames by executing their own game rules and
+checking each event. `SichuanReplayHand` seals the 108 physical wall slots, dice
+and dealer, starting cumulative scores, initial hands, void suits, issued choices,
+public events, complete settlement ledger and ending cumulative scores. Its hand
+chain checks dealer succession and cumulative scores independently of live views.
+`SichuanSession` retains sealed hands throughout the match and queues the completed
+match once; closing a match queues its already sealed hands. Private session saves
+retain the current recorder, sealed hands and unacknowledged archives. Restoration
+reexecutes the recorder and verifies it against the saved game, and validates queued
+archives without applying payments or requeuing acknowledged records.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
+`ReplayCodec` checks complete typed JSON fields and validates rule-specific timelines.
+The shared browser lists each variant and final standings; `SichuanReplayScreen`
+uses the Sichuan scene and ledger receipt for event/hand navigation and final totals.
+Sealed playback exposes all four hands through replay frames, while running
+`SichuanView` projections continue to enforce recipient-safe privacy.
 The viewer never feeds recorded actions back into a live match. `TenhouReplay`
 consumes completed Riichi records and does not rerun
 scoring. See `REPLAYS.md` for the storage layout and interchange details.

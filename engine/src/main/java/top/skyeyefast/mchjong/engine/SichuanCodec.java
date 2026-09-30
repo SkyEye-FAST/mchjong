@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class SichuanCodec {
-    private static final int MAX_CHARS = 1024 * 1024;
+    private static final int MAX_CHARS = 8 * 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().disableJdkUnsafe().serializeNulls().create();
     private SichuanCodec() {}
     public static String save(SichuanGame game) { return encode(game.save()); }
@@ -37,7 +37,10 @@ public final class SichuanCodec {
         return json;
     }
     private static <T> T decode(String json, Class<T> type) {
-        if (json == null || json.isEmpty() || json.length() > MAX_CHARS) throw new IllegalArgumentException("Invalid Sichuan document size");
+        return decode(json, type, MAX_CHARS);
+    }
+    static <T> T decode(String json, Class<T> type, int limit) {
+        if (json == null || json.isEmpty() || json.length() > limit) throw new IllegalArgumentException("Invalid document size");
         try {
             validateDocument(json);
             try (var reader = new JsonReader(new StringReader(json))) {
@@ -96,6 +99,9 @@ public final class SichuanCodec {
         } else if (type == int.class || type == Integer.class || type == long.class) {
             if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber()) throw new JsonParseException("Expected integer");
             if (type == long.class) value.getAsBigDecimal().longValueExact(); else value.getAsBigDecimal().intValueExact();
+        } else if (type == double.class || type == Double.class) {
+            if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isNumber() || !Double.isFinite(value.getAsDouble()))
+                throw new JsonParseException("Expected finite number");
         } else if (type == boolean.class) {
             if (!value.isJsonPrimitive() || !value.getAsJsonPrimitive().isBoolean()) throw new JsonParseException("Expected boolean");
         } else if (type == String.class || type == UUID.class || type instanceof Class<?> field && field.isEnum()) {

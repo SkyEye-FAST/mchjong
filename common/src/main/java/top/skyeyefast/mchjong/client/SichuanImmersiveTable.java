@@ -12,6 +12,14 @@ final class SichuanImmersiveTable {
     SichuanImmersiveTable(int viewer) { this.viewer = Math.max(0, viewer); }
 
     void render(GuiGraphics graphics, SichuanView view, SichuanDeck deck, net.minecraft.world.item.DyeColor cloth) {
+        render(graphics, SichuanTableScene.immersive(view), view.viewerSeat(), deck, cloth);
+    }
+    void renderReplay(GuiGraphics graphics, top.skyeyefast.mchjong.engine.SichuanReplayPlayback.Frame frame,
+                      SichuanDeck deck, net.minecraft.world.item.DyeColor cloth) {
+        render(graphics, SichuanTableScene.replay(frame), -1, deck, cloth);
+    }
+    private void render(GuiGraphics graphics, java.util.List<SichuanTableScene.Piece> pieces, int privateSeat,
+                        SichuanDeck deck, net.minecraft.world.item.DyeColor cloth) {
         mesh.begin(graphics, deck.preset(), deck.material(), deck.back(), deck.backPreset(),
             tile -> TileMesh.artwork(deck.tile(tile)));
         double edge = TableGeometry.FELT_HALF_WIDTH * 300;
@@ -20,8 +28,8 @@ final class SichuanImmersiveTable {
         mesh.flat(0, -edge, -edge, edge, edge, 0, felt);
         mesh.cloth(0, -edge, -edge, edge, edge, .05);
         mesh.paint(graphics);
-        for (var piece : SichuanTableScene.immersive(view)) {
-            if (piece.area() == SichuanTableScene.Area.HAND && piece.seat() == view.viewerSeat()) continue;
+        for (var piece : pieces) {
+            if (piece.area() == SichuanTableScene.Area.HAND && piece.seat() == privateSeat) continue;
             var local = TableGeometry.orient(piece.position().x, 0, piece.position().z, Math.floorMod(-piece.seat(), 4));
             int side = Math.floorMod(piece.seat() - viewer, 4);
             int span = Math.max(1, Math.round(TileMesh.WIDTH * piece.scale() * 300));

@@ -28,6 +28,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.
 - Add seated and immersive Sichuan tables, recipient-safe hand and void-suit displays, shared exit voting, detailed ledger results and explicit next-hand confirmations through the eight-hand match.
 - Add an independent Sichuan SBR 2025 hand engine, explicit rules, blood-battle payments and draw checks, private save/restore, and a shared three-variant lobby with Sichuan action controls.
 

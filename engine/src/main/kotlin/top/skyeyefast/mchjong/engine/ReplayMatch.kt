@@ -14,6 +14,7 @@ data class ReplayMatch(
     val complete: Boolean,
     val riichi: RiichiReplay?,
     val mcr: McrReplay?,
+    val sichuan: SichuanReplay?,
 ) {
     @JvmRecord
     data class Participant(val id: UUID, val name: String, val bot: Boolean) {
@@ -27,6 +28,7 @@ data class ReplayMatch(
         val updatedAt: Long,
         val variant: MahjongVariant,
         val riichiRules: RiichiRules?,
+        val sichuanRules: SichuanRules?,
         val hands: Int,
         val complete: Boolean,
         val names: List<String>,
@@ -35,14 +37,19 @@ data class ReplayMatch(
     ) {
         init {
             require(
-                variant != MahjongVariant.SICHUAN && startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
+                startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
                     (variant == MahjongVariant.RIICHI) == (riichiRules != null) &&
+                    (variant == MahjongVariant.SICHUAN) == (sichuanRules != null) &&
+                    (variant != MahjongVariant.MCR || hands <= 16 && (!complete || hands == 16)) &&
+                    (sichuanRules == null || hands <= sichuanRules.matchHands() && (!complete || hands == sichuanRules.matchHands())) &&
                     names.size == (riichiRules?.players() ?: 4) &&
                     names.none { it.isBlank() || it.length > 128 } &&
-                    (finalScores.isEmpty() || finalScores.size == names.size) &&
-                    (finalRanks.isEmpty() || finalRanks.size == names.size) &&
+                    finalScores.size == finalRanks.size &&
                     finalScores.none { !it.isFinite() } && finalRanks.none { it !in 1..names.size } &&
-                    (!complete || finalScores.size == names.size && finalRanks.size == names.size),
+                    (if (complete) finalScores.size == names.size else finalScores.isEmpty()) &&
+                    (variant == MahjongVariant.RIICHI || finalScores.indices.all { seat ->
+                        finalRanks[seat] == 1 + finalScores.count { it > finalScores[seat] }
+                    }),
             ) { "Invalid replay header" }
         }
     }
@@ -53,28 +60,29 @@ data class ReplayMatch(
     }
 
     init {
-        require(variant != MahjongVariant.SICHUAN && startedAt > 0 && updatedAt >= startedAt &&
+        require(startedAt > 0 && updatedAt >= startedAt &&
             (variant == MahjongVariant.RIICHI) == (riichi != null) &&
             (variant == MahjongVariant.MCR) == (mcr != null) &&
+            (variant == MahjongVariant.SICHUAN) == (sichuan != null) &&
             participants.size == (riichi?.rules?.players() ?: 4) &&
             participants.map { it.id }.distinct().size == participants.size &&
             handCount() <= 1024 && (!complete || handCount() > 0)) { "Invalid replay match" }
         if (complete) {
             require(riichi?.hands?.lastOrNull()?.let { it.finalScores.size == participants.size && it.finalRanks.size == participants.size }
-                ?: (mcr!!.hands.size == 16)) { "Missing final replay standings" }
+                ?: (mcr?.hands?.size?.let { it == 16 } ?: (sichuan!!.hands.size == sichuan.rules.matchHands()))) { "Missing final replay standings" }
         }
     }
 
-    fun handCount(): Int = riichi?.hands?.size ?: mcr!!.hands.size
+    fun handCount(): Int = riichi?.hands?.size ?: mcr?.hands?.size ?: sichuan!!.hands.size
 
     fun header(): Header {
         val scores = if (!complete) emptyList() else riichi?.hands?.last()?.finalScores
-            ?: mcr!!.hands.last().finalPoints.map(Int::toDouble)
+            ?: (mcr?.hands?.last()?.finalPoints ?: sichuan!!.hands.last().finalPoints).map(Int::toDouble)
         val ranks = if (!complete) emptyList() else riichi?.hands?.last()?.finalRanks ?: run {
-            val points = mcr!!.hands.last().finalPoints
+            val points = mcr?.hands?.last()?.finalPoints ?: sichuan!!.hands.last().finalPoints
             points.map { score -> 1 + points.count { it > score } }
         }
-        return Header(id, startedAt, updatedAt, variant, riichi?.rules, handCount(), complete,
+        return Header(id, startedAt, updatedAt, variant, riichi?.rules, sichuan?.rules, handCount(), complete,
             java.util.List.copyOf(participants.map { it.name }), java.util.List.copyOf(scores), java.util.List.copyOf(ranks))
     }
 
@@ -88,5 +96,10 @@ data class ReplayMatch(
     fun appendMcr(hand: McrReplayHand, ended: Boolean): ReplayMatch = copy(
         updatedAt = System.currentTimeMillis(), complete = ended,
         mcr = requireNotNull(mcr).copy(hands = java.util.List.copyOf(mcr.hands + hand)),
+    )
+
+    fun appendSichuan(hand: SichuanReplayHand, ended: Boolean): ReplayMatch = copy(
+        updatedAt = System.currentTimeMillis(), complete = ended,
+        sichuan = SichuanReplay(requireNotNull(sichuan).rules, java.util.List.copyOf(sichuan.hands + hand)),
     )
 }

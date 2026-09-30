@@ -20,6 +20,7 @@ import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.McrSession;
+import top.skyeyefast.mchjong.engine.SichuanSession;
 import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -37,11 +38,13 @@ public final class ReplayServer {
     public static boolean flush(MinecraftServer server, TableSession game) throws IOException {
         if (!top.skyeyefast.mchjong.world.WorldSettings.of(server).policy().replaysEnabled()) return false;
         boolean changed = false;
-        var pending = game instanceof RiichiSession riichi ? riichi.pendingReplays() : ((McrSession) game).pendingReplays();
+        var pending = game instanceof RiichiSession riichi ? riichi.pendingReplays()
+            : game instanceof McrSession mcr ? mcr.pendingReplays() : ((SichuanSession) game).pendingReplays();
         for (var match : pending) {
             state(server).store().save(match);
             if (game instanceof RiichiSession riichi) riichi.acknowledgeReplay(match.id());
-            else ((McrSession) game).acknowledgeReplay(match.id());
+            else if (game instanceof McrSession mcr) mcr.acknowledgeReplay(match.id());
+            else ((SichuanSession) game).acknowledgeReplay(match.id());
             changed = true;
         }
         return changed;
@@ -88,7 +91,7 @@ public final class ReplayServer {
             Object value = match == null || remove ? state.store().list(player.getUUID(), page, search, oldestFirst)
                 : state.store().load(player.getUUID(), match);
             for (var chunk : ReplayPayload.split(match == null || remove ? ReplayPayload.Kind.INDEX : ReplayPayload.Kind.MATCH,
-                    TableNetworking.JSON.toJson(value))) player.connection.send(PayloadPackets.clientbound(chunk));
+                    top.skyeyefast.mchjong.engine.ReplayCodec.encode(value))) player.connection.send(PayloadPackets.clientbound(chunk));
             return 1;
         } catch (IOException | RuntimeException failure) {
             LoggerFactory.getLogger("mchjong").warn("Cannot {} replay {} for {}", remove ? "delete" : "read", match, player.getUUID(), failure);

@@ -12,6 +12,8 @@ public final class SichuanGame {
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final SichuanRules rules;
     private SichuanWall wall;
+    private SichuanWall.State initialOpening;
+    private List<List<Integer>> initialHands;
     private long nextWallSeed;
     private int handNumber = 1;
     private final List<Hand> completedHands = new ArrayList<>();
@@ -41,6 +43,7 @@ public final class SichuanGame {
 
     private void startHand(SichuanWall nextWall) {
         wall = nextWall;
+        initialOpening = wall.save();
         phase = Phase.VOIDING; turn = wall.save().dealer(); result = null;
         clearReaction(); afterKong = false; replacementDraw = false; kongLedgerStart = -1;
         wins.clear(); ledger.clear();
@@ -53,7 +56,22 @@ public final class SichuanGame {
         players[turn].hand.add(players[turn].drawn);
         for (int step = 1; step < 4; step++) players[(turn + step) % 4].hand.add(wall.draw());
         for (var player : players) player.hand.sort(Tile.ORDER);
+        initialHands = Arrays.stream(players).map(player -> List.copyOf(player.hand)).toList();
     }
+
+    private SichuanGame(SichuanRules rules, List<Hand> completed, SichuanWall.State opening) {
+        this.rules = Objects.requireNonNull(rules);
+        completedHands.addAll(completed);
+        handNumber = completed.size() + 1;
+        if (opening.cursor() != 0 || !Tile.validSichuanSet(opening.slots())) throw new IllegalArgumentException("Invalid replay wall");
+        startHand(SichuanWall.restore(opening));
+        validate();
+    }
+    static SichuanGame replayHand(SichuanRules rules, List<Hand> completed, SichuanWall.State opening) {
+        return new SichuanGame(rules, completed, opening);
+    }
+    SichuanWall.State initialOpening() { return Objects.requireNonNull(initialOpening); }
+    List<List<Integer>> initialHands() { return Objects.requireNonNull(initialHands); }
 
     private SichuanGame(State state) {
         rules = state.rules(); wall = SichuanWall.restore(state.wall());

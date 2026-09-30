@@ -15,21 +15,26 @@ final class SichuanResults {
     private SichuanResults() {}
 
     static List<Row> rows(SichuanView game, TableRoomView room) {
-        if (game.result() == null) return List.of();
+        return rows(game.result(), game.seats(), game.scores(), game.viewerSeat(),
+            room.seats().stream().map(seat -> seat.participant().name()).toList());
+    }
+    static List<Row> rows(top.skyeyefast.mchjong.engine.SichuanSettlement.Result result, List<SichuanView.Seat> seats,
+                          List<Integer> scores, int viewer, List<String> names) {
+        if (result == null) return List.of();
         var rows = new ArrayList<Row>();
         rows.add(new Row(Component.translatable("sichuan.mchjong.score_heading"), MahjongUi.MUTED));
         for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.translatable("sichuan.mchjong.score_row",
-            name(room, seat), signed(game.result().deltas().get(seat)), game.scores().get(seat)),
-            seat == game.viewerSeat() ? MahjongUi.ACCENT : MahjongUi.TEXT));
-        rows.add(new Row(Component.translatable(game.result().exhaustive() ? "sichuan.mchjong.exhaustive" : "sichuan.mchjong.three_winners"), MahjongUi.ACCENT));
-        for (var win : game.result().wins()) {
-            rows.add(new Row(Component.translatable("sichuan.mchjong.win_row", name(room, win.seat()),
+            names.get(seat), signed(result.deltas().get(seat)), scores.get(seat)),
+            seat == viewer ? MahjongUi.ACCENT : MahjongUi.TEXT));
+        rows.add(new Row(Component.translatable(result.exhaustive() ? "sichuan.mchjong.exhaustive" : "sichuan.mchjong.three_winners"), MahjongUi.ACCENT));
+        for (var win : result.wins()) {
+            rows.add(new Row(Component.translatable("sichuan.mchjong.win_row", names.get(win.seat()),
                 Component.translatable(win.selfDraw() ? "sichuan.mchjong.self_draw" : win.robbingKong()
                     ? "sichuan.mchjong.robbing_kong" : "sichuan.mchjong.discard_win"),
-                name(room, win.supplier()), win.score().fan(), win.score().value()), MahjongUi.TEXT));
-            var tiles = new ArrayList<>(game.seats().get(win.seat()).hand());
+                names.get(win.supplier()), win.score().fan(), win.score().value()), MahjongUi.TEXT));
+            var tiles = new ArrayList<>(seats.get(win.seat()).hand());
             if (!tiles.contains(win.tile())) tiles.add(win.tile());
-            for (var meld : game.seats().get(win.seat()).melds()) tiles.addAll(meld.tiles());
+            for (var meld : seats.get(win.seat()).melds()) tiles.addAll(meld.tiles());
             rows.add(new Row(Component.empty(), tiles, MahjongUi.TEXT));
             if (win.score().patterns().isEmpty()) rows.add(new Row(Component.translatable("sichuan.mchjong.fan.basic"), MahjongUi.MUTED));
             for (var pattern : win.score().patterns().stream().distinct().toList()) {
@@ -38,14 +43,14 @@ final class SichuanResults {
                     .append(" ×" + count), MahjongUi.MUTED));
             }
         }
-        if (game.result().exhaustive()) for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.literal(name(room, seat) + " · ")
-            .append(Component.translatable("sichuan.mchjong.draw." + game.result().drawStatus().get(seat).name().toLowerCase(Locale.ROOT))), MahjongUi.MUTED));
+        if (result.exhaustive()) for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.literal(names.get(seat) + " · ")
+            .append(Component.translatable("sichuan.mchjong.draw." + result.drawStatus().get(seat).name().toLowerCase(Locale.ROOT))), MahjongUi.MUTED));
         rows.add(new Row(Component.translatable("sichuan.mchjong.ledger"), MahjongUi.ACCENT));
-        for (var entry : game.result().ledger()) {
+        for (var entry : result.ledger()) {
             var text = Component.literal("#" + (entry.id() + 1) + " ")
                 .append(Component.translatable("sichuan.mchjong.payment." + entry.type().name().toLowerCase(Locale.ROOT)))
-                .append(" · " + name(room, entry.payer()) + " → ")
-                .append(entry.recipient() < 0 ? Component.translatable("sichuan.mchjong.competition") : Component.literal(name(room, entry.recipient())))
+                .append(" · " + names.get(entry.payer()) + " → ")
+                .append(entry.recipient() < 0 ? Component.translatable("sichuan.mchjong.competition") : Component.literal(names.get(entry.recipient())))
                 .append(" · " + entry.amount());
             if (entry.relatedEntry() >= 0) text.append(" · ").append(Component.translatable("sichuan.mchjong.related", entry.relatedEntry() + 1));
             rows.add(new Row(text, entry.recipient() < 0 ? MahjongUi.NEGATIVE : MahjongUi.TEXT));
@@ -53,6 +58,5 @@ final class SichuanResults {
         return List.copyOf(rows);
     }
 
-    private static String name(TableRoomView room, int seat) { return room.seats().get(seat).participant().name(); }
     private static String signed(int amount) { return amount > 0 ? "+" + amount : Integer.toString(amount); }
 }

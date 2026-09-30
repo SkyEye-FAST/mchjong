@@ -91,6 +91,7 @@ final class TableHost {
         if (session instanceof RiichiSession riichi && (!riichi.pendingReplays().isEmpty() || !riichi.pendingExperience().isEmpty()))
             return false;
         if (session instanceof McrSession mcr && !mcr.pendingReplays().isEmpty()) return false;
+        if (session instanceof SichuanSession sichuan && !sichuan.pendingReplays().isEmpty()) return false;
         TableSession replacement = session.selectVariant(actor, decision, variant);
         if (replacement == null) return false;
         session = replacement;

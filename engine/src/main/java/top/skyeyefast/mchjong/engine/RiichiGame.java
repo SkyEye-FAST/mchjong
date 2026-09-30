@@ -384,7 +384,7 @@ public final class RiichiGame {
         long now = System.currentTimeMillis();
         replay = session.worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.member.id, player.member.name, player.member.bot)).toList(),
-            MahjongVariant.RIICHI, false, new RiichiReplay(rules, initialDealer, RedFives.of(suppliedTiles), List.of()), null) : null;
+            MahjongVariant.RIICHI, false, new RiichiReplay(rules, initialDealer, RedFives.of(suppliedTiles), List.of()), null, null) : null;
         startHand();
     }
 

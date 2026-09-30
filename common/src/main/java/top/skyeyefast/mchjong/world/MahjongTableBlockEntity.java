@@ -462,7 +462,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private void flushReplays() {
         TableSession game = host == null ? null : host.session();
         boolean pending = game instanceof RiichiSession riichi && !riichi.pendingReplays().isEmpty()
-            || game instanceof McrSession mcr && !mcr.pendingReplays().isEmpty();
+            || game instanceof McrSession mcr && !mcr.pendingReplays().isEmpty()
+            || game instanceof SichuanSession sichuan && !sichuan.pendingReplays().isEmpty();
         if (!(level instanceof ServerLevel server) || !pending
             || server.getGameTime() < nextArchiveRetry) return;
         try {

@@ -11,6 +11,7 @@ import java.util.Comparator;
 import java.util.Locale;
 import java.util.UUID;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
+import top.skyeyefast.mchjong.engine.ReplayCodec;
 
 /** One canonical replay, plus small per-participant indexes. No live hand is persisted here. */
 public final class ReplayStore {
@@ -19,10 +20,11 @@ public final class ReplayStore {
     private final Path root;
     private final Gson json;
 
-    public ReplayStore(Path root, Gson json) { this.root = root; this.json = json; }
+    public ReplayStore(Path root, Gson json) { this.root = root; this.json = json.newBuilder().serializeNulls().create(); }
 
     public void save(ReplayMatch match) throws IOException {
         if (match.handCount() == 0) throw new IllegalArgumentException("Only completed hands can be archived");
+        ReplayCodec.validate(match);
         if (match.participants().stream().filter(player -> !player.bot())
                 .allMatch(player -> Files.exists(deleted(player.id(), match.id())))) {
             Files.deleteIfExists(root.resolve(match.id() + ".json"));
@@ -43,6 +45,8 @@ public final class ReplayStore {
         ReplayMatch match = read(root.resolve(matchId + ".json"), ReplayMatch.class, MAX_BYTES);
         if (!match.id().equals(matchId) || !match.permits(player) || match.handCount() == 0)
             throw new IOException("Replay is not available to this player");
+        try { ReplayCodec.validate(match); }
+        catch (RuntimeException invalid) { throw new IOException("Invalid replay timeline", invalid); }
         return match;
     }
 
@@ -85,7 +89,7 @@ public final class ReplayStore {
     private <T> T read(Path path, Class<T> type, int limit) throws IOException {
         if (Files.size(path) > limit) throw new IOException("Replay file exceeds its size limit");
         try {
-            T value = json.fromJson(Files.readString(path, StandardCharsets.UTF_8), type);
+            T value = ReplayCodec.decode(Files.readString(path, StandardCharsets.UTF_8), type);
             if (value == null) throw new IOException("Empty replay file");
             return value;
         } catch (RuntimeException failure) { throw new IOException("Invalid replay file", failure); }

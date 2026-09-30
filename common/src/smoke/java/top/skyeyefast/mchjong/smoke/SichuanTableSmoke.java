@@ -21,6 +21,9 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.SichuanLobbyScreen;
 import top.skyeyefast.mchjong.client.SichuanTableScreen;
 import top.skyeyefast.mchjong.client.SichuanResultsScreen;
+import top.skyeyefast.mchjong.client.SichuanReplayScreen;
+import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
+import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.engine.SichuanAction;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.RoomAction;
@@ -45,6 +48,7 @@ final class SichuanTableSmoke {
     private CompletableFuture<?> task;
     private int stage, choice, ticks, settled;
     private UUID incarnation;
+    private UUID replayId;
     private boolean picked;
     private int selectedTile;
     private long discardDecision;
@@ -296,6 +300,11 @@ final class SichuanTableSmoke {
                         for (var seat : session.roomView(mainId).seats()) require(session.confirmNextHand(seat.participant().id(),
                             end.tableId(), end.incarnation(), end.game().decision()), "Eight-hand progression rejected confirmation");
                     }
+                    require(session.save().replay().handCount() == 8, "Sichuan replay lost completed hands");
+                    replayId = session.save().replay().id();
+                    try { top.skyeyefast.mchjong.replay.ReplayServer.flush(server, session); }
+                    catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
+                    require(session.pendingReplays().isEmpty(), "Sichuan archive was not acknowledged");
                     target.open(main);
                 });
                 stage++;
@@ -313,6 +322,41 @@ final class SichuanTableSmoke {
             case 16 -> {
                 if (!room.lobby() || !(client.screen instanceof SichuanLobbyScreen)) break;
                 require(table.clientSichuanView() == null, "Lobby retained finished Sichuan decisions");
+                ClientReplays.list(0, replayId.toString(), false);
+                settled = 0;
+                stage = 18;
+            }
+            case 18 -> {
+                if (!(client.screen instanceof ReplayBrowserScreen)) break;
+                if (++settled < 12) break;
+                press(client, "replay.mchjong.open");
+                stage++;
+            }
+            case 19 -> {
+                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                require(replay.match().id().equals(replayId) && replay.match().complete() && replay.match().handCount() == 8,
+                    "Browser did not fetch the completed Sichuan replay");
+                require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                require(replay.cursor() == 1, "Sichuan replay did not step one event");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                stage++;
+            }
+            case 20 -> {
+                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), ignored -> {});
+                for (int hand = 1; hand < 8; hand++) replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0);
+                require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+                stage++;
+            }
+            case 21 -> {
+                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                require(replay.cursor() > 1 && replay.match().header().finalScores().size() == 4,
+                    "Sichuan replay did not seek to final standings");
+                SmokeScreenshots.grab(output.toFile(), "sichuan-replay-settlement.png", client.getMainRenderTarget(), ignored -> {});
+                replay.onClose();
+                require(client.screen instanceof ReplayBrowserScreen, "Sichuan replay did not return to the shared browser");
                 return true;
             }
             default -> throw new IllegalStateException("Unknown Sichuan smoke stage");

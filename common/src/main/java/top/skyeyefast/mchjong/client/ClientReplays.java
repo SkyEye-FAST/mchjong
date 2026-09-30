@@ -10,9 +10,8 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
-import top.skyeyefast.mchjong.engine.ReplayPlayback;
+import top.skyeyefast.mchjong.engine.ReplayCodec;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
-import top.skyeyefast.mchjong.engine.McrReplayPlayback;
 import top.skyeyefast.mchjong.engine.TenhouReplay;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -38,19 +37,19 @@ public final class ClientReplays {
             var completed = TRANSFER.accept(payload, Util.getMillis());
             if (completed == null) return;
             if (completed.kind() == ReplayPayload.Kind.INDEX) {
-                var index = TableNetworking.JSON.fromJson(completed.text(), ReplayMatch.Index.class);
+                var index = ReplayCodec.decode(completed.text(), ReplayMatch.Index.class);
                 Screen parent = client.screen instanceof ReplayBrowserScreen browser ? browser.parent() : client.screen;
                 client.setScreen(new ReplayBrowserScreen(parent, index));
             } else {
-                var match = TableNetworking.JSON.fromJson(completed.text(), ReplayMatch.class);
+                var match = ReplayCodec.decode(completed.text(), ReplayMatch.class);
                 if (match == null || match.handCount() == 0) throw new IllegalArgumentException("Empty replay");
                 // Compile and validate every completed hand before user-controlled seeking can render it.
-                for (int hand = 0; hand < match.handCount(); hand++) {
-                    if (match.variant() == MahjongVariant.MCR) McrReplayPlayback.timeline(match, hand);
-                    else ReplayPlayback.timeline(match, hand);
-                }
-                client.setScreen(match.variant() == MahjongVariant.MCR
-                    ? new McrReplayScreen(client.screen, match) : new ReplayScreen(client.screen, match));
+                ReplayCodec.validate(match);
+                client.setScreen(switch (match.variant()) {
+                    case RIICHI -> new ReplayScreen(client.screen, match);
+                    case MCR -> new McrReplayScreen(client.screen, match);
+                    case SICHUAN -> new SichuanReplayScreen(client.screen, match);
+                });
             }
         } catch (RuntimeException failure) {
             TRANSFER.reset();
