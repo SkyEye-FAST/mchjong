@@ -24,6 +24,15 @@ class McrGameTest {
             .at(8, FlowerTile.AUTUMN.id()).at(12, FlowerTile.WINTER.id())
             .tail(0, FlowerTile.PLUM.id()).tail(1, 0).tail(2, 1).tail(3, 2).tail(4, 3).build();
         var game = fixed(1, order);
+        assertEquals(McrGame.Phase.INITIAL_FLOWERS, game.phase());
+        assertEquals(91, game.remaining());
+        assertFalse(game.act(1, game.decision(), 0), "Only the current flower owner may replace");
+        long first = game.decision();
+        play(game, 0, REPLACE_FLOWER);
+        assertEquals(0, game.turn(), "Another flower keeps the same owner's replacement turn");
+        assertFalse(game.act(0, first, 0), "A replacement cannot be repeated with an old token");
+        game = McrPersistenceTest.roundTrip(game);
+        replaceFlowers(game);
         for (int seat = 0; seat < 4; seat++) {
             var expected = new HashSet<Integer>();
             for (int i = 0; i < (seat == 0 ? 14 : 13); i++) {
@@ -50,6 +59,12 @@ class McrGameTest {
         discard(game, 0, game.drawn(0));
         passAll(game);
         play(game, 1, DRAW);
+        assertEquals(McrGame.Phase.REPLACE_FLOWER, game.phase());
+        assertEquals(List.of(new McrAction(REPLACE_FLOWER)), game.actions(1));
+        assertEquals(13, game.hand(1).size());
+        play(game, 1, REPLACE_FLOWER);
+        assertEquals(McrGame.Phase.REPLACE_FLOWER, game.phase());
+        play(game, 1, REPLACE_FLOWER);
         assertEquals(List.of(FlowerTile.SPRING.id(), FlowerTile.SUMMER.id()), game.flowers(1));
         assertEquals(14, game.hand(1).size());
         var context = game.winningContext(1);
@@ -229,6 +244,7 @@ class McrGameTest {
         for (int steps = 0; steps < 500 && !(game.phase() == McrGame.Phase.TURN && game.remaining() == 0); steps++) {
             switch (game.phase()) {
                 case DRAW -> play(game, game.turn(), DRAW);
+                case INITIAL_FLOWERS, REPLACE_FLOWER -> play(game, game.turn(), REPLACE_FLOWER);
                 case TURN -> discard(game, game.turn(), game.drawn(game.turn()));
                 case REACTION -> passAll(game);
                 default -> fail("Ended before the last ordinary wall draw");
@@ -305,6 +321,8 @@ class McrGameTest {
             .tail(0, FlowerTile.SPRING.id()).tail(1, FlowerTile.SUMMER.id())
             .tail(2, Tile.parseKind("9s")).build());
         play(game, 0, CONCEALED_KONG);
+        assertEquals(McrGame.Phase.REPLACE_FLOWER, game.phase());
+        replaceFlowers(game);
         assertEquals(List.of(FlowerTile.SPRING.id(), FlowerTile.SUMMER.id()), game.flowers(0));
         assertEquals(McrWinContext.KongWin.NONE, game.winningContext(0).kongWin());
         assertEquals(2, game.winningContext(0).flowerCount());
@@ -387,6 +405,7 @@ class McrGameTest {
         assertEquals(1, game.dealer());
         assertEquals(Tile.NORTH, game.seatWind(0));
         assertEquals(Tile.EAST, game.seatWind(1));
+        replaceFlowers(game);
         assertEquals(14, game.hand(1).size());
         assertFalse(game.nextHand());
         game.validate();
@@ -395,6 +414,7 @@ class McrGameTest {
     @Test @Timeout(20) void sixteenExhaustiveHandsRotateAllWindsWithoutNotenPayments() {
         var game = new McrGame(711);
         for (int hand = 1; hand <= 16; hand++) {
+            replaceFlowers(game);
             assertEquals(hand, game.handNumber());
             assertEquals((hand - 1) % 4, game.dealer());
             assertEquals(Tile.EAST + (hand - 1) / 4, game.roundWind());
@@ -454,11 +474,19 @@ class McrGameTest {
                 case TURN -> discard(game, game.turn(), game.drawn(game.turn()) >= 0
                     ? game.drawn(game.turn()) : game.hand(game.turn()).get(0));
                 case DRAW -> play(game, game.turn(), DRAW);
+                case INITIAL_FLOWERS, REPLACE_FLOWER -> play(game, game.turn(), REPLACE_FLOWER);
                 case REACTION -> passAll(game);
                 case HAND_END, MATCH_END -> { return; }
             }
         }
         fail("MCR hand did not finish");
+    }
+
+    static void replaceFlowers(McrGame game) {
+        for (int i = 0; i < 16 && (game.phase() == McrGame.Phase.INITIAL_FLOWERS || game.phase() == McrGame.Phase.REPLACE_FLOWER); i++)
+            play(game, game.turn(), REPLACE_FLOWER);
+        assertNotEquals(McrGame.Phase.INITIAL_FLOWERS, game.phase());
+        assertNotEquals(McrGame.Phase.REPLACE_FLOWER, game.phase());
     }
 
     private static int dealSlot(int seat, int index) {

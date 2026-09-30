@@ -78,6 +78,14 @@ flowers together just enough to fit between the neighboring corners.
 The scene preserves the source indices in its pieces and does not reconstruct
 hidden tile identities to arrange them. `McrView` remains the visibility authority.
 
+The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
+Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
+foreground hand. Left-corner melds and flowers retain their MCR rail positions.
+Compact edge cards show player names, winds and scores; the current turn is marked
+with brass. Flower replacement has an explicit action button and names the player
+currently replacing. Discards come from hand selection, while draw, claims, kongs,
+wins and pass use localized native buttons with tile previews.
+
 ## Components and interaction
 
 Use `MahjongButton`, `MahjongSlider` and `MahjongEditBox`. These specialize the

@@ -52,14 +52,24 @@ dismount with Minecraft's sneak control after closing it.
 In the automatic-table lobby, the host selects MCR. Seat four human players and
 store a complete standard 144-tile box with eight flowers and a cloth. Assign
 seats, let all four players take their assigned stools, then each player presses
-Ready. The table runs a fixed sixteen-hand `wmo-2014-zh` match.
+Ready. The table runs a fixed sixteen-hand match.
 
-The MCR screen shows the physical walls, six-column rivers, melds, flowers, winds,
-scores and remaining tiles. Choose a server-issued Draw, Discard, Chow, Pung,
-Melded Kong, Concealed Kong, Win or Pass action. A structural win remains
+The seated view shows physical walls, six-column rivers, left-corner melds,
+flowers, winds, scores and remaining tiles. Press V or the view button to switch
+to the immersive table. Select and discard hand tiles with your personal
+single-click, double-click or confirmation preference; Enter confirms selection.
+Tab focuses tiles and actions, P passes, and the seated camera supports inspect,
+right-drag, zoom and Home reset through the shared bindings.
+
+Use the Draw, Flower replacement, Chow, Pung, Melded Kong, Added Kong, Concealed
+Kong, Win and Pass buttons when offered. Initial flower replacements proceed in
+East, South, West, North order. Each Flower replacement takes one tile from the
+wall's tail; another flower offers another replacement. Flowers stay visible in
+their own area. A structural win remains
 declarable below eight non-flower points; declaring it applies the wrong-win
 penalty and marks that player as forbidden to win again during the current hand.
-After settlement, all four seated players confirm the next hand. The match ends
+Settlement shows localized fan names and payments. All four seated players
+confirm the next hand, retaining their chosen view. The match ends
 after the sixteenth hand.
 
 ## Point-stick payments

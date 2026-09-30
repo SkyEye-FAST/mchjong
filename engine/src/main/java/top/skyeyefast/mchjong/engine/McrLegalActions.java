@@ -9,6 +9,8 @@ final class McrLegalActions {
     private McrLegalActions() {}
 
     static List<McrAction> forSeat(McrGame game, int seat) {
+        if (game.phase() == McrGame.Phase.INITIAL_FLOWERS || game.phase() == McrGame.Phase.REPLACE_FLOWER)
+            return seat == game.turn() ? List.of(new McrAction(REPLACE_FLOWER)) : List.of();
         if (game.phase() == McrGame.Phase.DRAW)
             return seat == game.turn() ? List.of(new McrAction(DRAW)) : List.of();
         if (game.phase() == McrGame.Phase.TURN)

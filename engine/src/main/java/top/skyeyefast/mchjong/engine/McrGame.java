@@ -8,7 +8,7 @@ import java.util.Objects;
 
 /** A single-threaded, server-owned MCR match. Seats are fixed indices in turn order. */
 public final class McrGame {
-    public enum Phase { DRAW, TURN, REACTION, HAND_END, MATCH_END }
+    public enum Phase { INITIAL_FLOWERS, REPLACE_FLOWER, DRAW, TURN, REACTION, HAND_END, MATCH_END }
 
     private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final long seed;
@@ -146,6 +146,7 @@ public final class McrGame {
         } else {
             switch (action.type()) {
                 case DRAW -> draw(false);
+                case REPLACE_FLOWER -> replaceFlower();
                 case DISCARD -> discard(action.tiles().get(0));
                 case WIN -> declareSelfDraw();
                 case CONCEALED_KONG -> concealedKong(action);
@@ -189,37 +190,66 @@ public final class McrGame {
             players[take.seat()].hand.add(tile);
             if (take.seat() == dealer()) players[dealer()].drawn = tile;
         }
-        // Finish each seat's complete replacement chain before moving East -> South -> West -> North.
-        for (int wind = 0; wind < 4; wind++) {
-            int seat = (dealer() + wind) % 4;
-            var player = players[seat];
+        // Expose flowers in their public area; each owner explicitly takes their tail replacements.
+        for (var player : players) {
             for (int tile : List.copyOf(player.hand)) if (Tile.isFlower(tile)) {
                 player.hand.remove(Integer.valueOf(tile));
                 player.flowers.add(tile);
-                int replacement = wall.replace(player);
-                if (replacement == Tile.ABSENT) { finish(new McrSettlement.Draw()); return; }
-                player.hand.add(replacement);
-                if (seat == dealer()) player.drawn = replacement;
+                if (player.drawn == tile) player.drawn = Tile.ABSENT;
             }
             player.hand.sort(Tile.ORDER);
         }
-        changePhase(Phase.TURN);
+        advanceInitialFlowers();
         validate();
+    }
+
+    private void advanceInitialFlowers() {
+        for (int wind = 0; wind < 4; wind++) {
+            int seat = (dealer() + wind) % 4;
+            if (players[seat].hand.size() < (seat == dealer() ? 14 : 13)) {
+                turn = seat;
+                changePhase(Phase.INITIAL_FLOWERS);
+                return;
+            }
+        }
+        turn = dealer();
+        changePhase(Phase.TURN);
+    }
+
+    private void replaceFlower() {
+        boolean initial = phase == Phase.INITIAL_FLOWERS;
+        var player = players[turn];
+        int tile = wall.replaceRaw();
+        if (tile == Tile.ABSENT) { finish(new McrSettlement.Draw()); return; }
+        if (Tile.isFlower(tile)) player.flowers.add(tile);
+        else {
+            player.hand.add(tile);
+            player.hand.sort(Tile.ORDER);
+            if (!initial || turn == dealer()) player.drawn = tile;
+        }
+        drawWallLast = wall.remaining() == 0;
+        drawKong = McrWinContext.KongWin.NONE;
+        if (initial) advanceInitialFlowers();
+        else changePhase(Tile.isFlower(tile) ? Phase.REPLACE_FLOWER : Phase.TURN);
     }
 
     private void draw(boolean afterKong) {
         var player = players[turn];
         player.drawn = Tile.ABSENT;
-        int flowersBefore = player.flowers.size();
-        int tile = afterKong ? wall.replace(player) : wall.draw(player);
+        int tile = afterKong ? wall.replaceRaw() : wall.drawRaw();
         if (tile == Tile.ABSENT) { finish(new McrSettlement.Draw()); return; }
+        drawWallLast = wall.remaining() == 0;
+        if (Tile.isFlower(tile)) {
+            player.flowers.add(tile);
+            drawKong = McrWinContext.KongWin.NONE;
+            changePhase(Phase.REPLACE_FLOWER);
+            return;
+        }
         player.hand.add(tile);
         player.hand.sort(Tile.ORDER);
         player.drawn = tile;
         drawWallLast = wall.remaining() == 0;
-        // A flower starts its own supplementary chain, even when the first tail draw followed a kong.
-        drawKong = afterKong && player.flowers.size() == flowersBefore
-            ? McrWinContext.KongWin.REPLACEMENT : McrWinContext.KongWin.NONE;
+        drawKong = afterKong ? McrWinContext.KongWin.REPLACEMENT : McrWinContext.KongWin.NONE;
         changePhase(Phase.TURN);
     }
 
@@ -459,21 +489,31 @@ public final class McrGame {
             throw new IllegalStateException("Kong replacement has no completed kong");
         if (result instanceof McrSettlement.Draw && wall.remaining() != 0)
             throw new IllegalStateException("Exhaustive draw still has wall tiles");
+        boolean initial = phase == Phase.INITIAL_FLOWERS;
+        if (initial && (claimTile != Tile.ABSENT || pendingKong != null || drawKong != McrWinContext.KongWin.NONE
+            || Arrays.stream(players).anyMatch(player -> !player.river.isEmpty() || !player.melds.isEmpty())
+            || players[turn].hand.size() >= (turn == dealer() ? 14 : 13)))
+            throw new IllegalStateException("Invalid initial flower replacement");
+        if (phase == Phase.REPLACE_FLOWER && (players[turn].flowers.isEmpty() || players[turn].drawn != Tile.ABSENT
+            || drawKong != McrWinContext.KongWin.NONE)) throw new IllegalStateException("Invalid flower replacement");
         wall.assertConservation(players);
         if (Arrays.stream(players).mapToLong(player -> player.points).sum() != 0)
             throw new IllegalStateException("MCR point conservation failed");
         for (int seat = 0; seat < 4; seat++) {
             var player = players[seat];
-            boolean extra = phase == Phase.TURN && seat == turn
+            boolean extra = initial && seat == dealer() || phase == Phase.TURN && seat == turn
                 || phase == Phase.REACTION && pendingKong != null && seat == claimFrom
                 || result instanceof McrSettlement.Win win && win.winner() == seat;
-            if (player.hand.size() + 3 * player.melds.size() != (extra ? 14 : 13))
+            int missing = (extra ? 14 : 13) - player.hand.size() - 3 * player.melds.size();
+            if (initial ? missing < 0 || missing > player.flowers.size()
+                || Math.floorMod(seat - dealer(), 4) < Math.floorMod(turn - dealer(), 4) && missing != 0 : missing != 0)
                 throw new IllegalStateException("Invalid MCR concealed hand size at seat " + seat);
-            boolean canHaveDraw = phase == Phase.TURN && seat == turn
+            boolean canHaveDraw = initial && seat == dealer() || phase == Phase.TURN && seat == turn
                 || phase == Phase.REACTION && pendingKong != null && seat == claimFrom
                 || result instanceof McrSettlement.Win win && win.fromSeat() == -1 && win.winner() == seat;
             if (player.drawn != Tile.ABSENT && (!canHaveDraw || !player.hand.contains(player.drawn)))
                 throw new IllegalStateException("Invalid drawn-tile ownership");
+            if (initial) continue;
             var concealed = new ArrayList<>(player.hand);
             if (extra) concealed.remove(concealed.size() - 1);
             McrHandAnalyzer.validateHand(concealed, player.melds, seat);

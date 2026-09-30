@@ -56,10 +56,12 @@ final class McrWall {
     /** Private physical slots, including ABSENT for tiles already taken. */
     List<Integer> tiles() { return List.copyOf(tiles); }
 
-    /** Initial dealing only: take one physical tile without exposing or replacing flowers. */
+    /** Take exactly one physical tile; the game owns flower declarations and replacement decisions. */
     int drawRaw() {
         return remaining == 0 ? Tile.ABSENT : takeRaw(nextDrawSlot());
     }
+
+    int replaceRaw() { return remaining == 0 ? Tile.ABSENT : takeRaw(nextReplacementSlot()); }
 
     /** A packet or jump explicitly takes its real source position before flowers are processed. */
     int takeRaw(int slot) {
@@ -71,26 +73,6 @@ final class McrWall {
         while (front < McrWallLayout.SLOTS && tiles.get(McrWallLayout.drawSlot(opening, front)) == Tile.ABSENT) front++;
         while (back < McrWallLayout.SLOTS && tiles.get(McrWallLayout.replacementSlot(opening, back)) == Tile.ABSENT) back++;
         return tile;
-    }
-
-    int draw(McrPlayerState player) { return draw(player, false); }
-
-    int replace(McrPlayerState player) { return draw(player, true); }
-
-    /**
-     * Moves flowers directly to their owner's flower area. The caller receives an ordinary
-     * tile to add to the concealed hand, or ABSENT on exhaustion. Collected flowers remain
-     * owned even when the wall ends during replacement; no dead wall is reserved.
-     */
-    private int draw(McrPlayerState player, boolean fromTail) {
-        Objects.requireNonNull(player);
-        while (remaining() > 0) {
-            int tile = takeRaw(fromTail ? nextReplacementSlot() : nextDrawSlot());
-            if (!Tile.isFlower(tile)) return tile;
-            player.flowers.add(tile);
-            fromTail = true;
-        }
-        return Tile.ABSENT;
     }
 
     /** Call after placing the returned ordinary tile in its destination zone. */

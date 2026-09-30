@@ -180,7 +180,11 @@ class McrSessionTest {
                     var view = session.view(id(seat));
                     if (view.game().phase() == McrGame.Phase.REACTION && !view.game().actions().isEmpty()) play(session, seat, PASS);
                 }
-            } else play(session, state.turn(), state.phase() == McrGame.Phase.DRAW ? DRAW : DISCARD);
+            } else play(session, state.turn(), switch (state.phase()) {
+                case DRAW -> DRAW;
+                case INITIAL_FLOWERS, REPLACE_FLOWER -> REPLACE_FLOWER;
+                default -> DISCARD;
+            });
         }
         assertEquals(McrGame.Phase.HAND_END, session.view(null).game().phase());
         var end = session.view(id(0));

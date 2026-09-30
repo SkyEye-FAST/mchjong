@@ -19,12 +19,20 @@ public final class McrResultsScreen extends Screen {
     private long shownRevision = -1;
     private boolean pending;
     private int page;
+    private final boolean immersive;
     private record Row(Component text, int color) {}
 
     public McrResultsScreen(BlockPos pos) {
+        this(pos, false);
+    }
+
+    public McrResultsScreen(BlockPos pos, boolean immersive) {
         super(Component.translatable("mcr.mchjong.results"));
         this.pos = pos.immutable();
+        this.immersive = immersive;
     }
+
+    public boolean immersive() { return immersive; }
 
     public BlockPos tablePos() { return pos; }
     @Override public boolean isPauseScreen() { return false; }
@@ -104,10 +112,8 @@ public final class McrResultsScreen extends Screen {
         if (game.result() instanceof McrSettlement.Win win) {
             rows.add(new Row(Component.translatable("mcr.mchjong.winner", view.participants().get(win.winner()).name()), MahjongUi.TEXT));
             for (var fan : win.score().fans()) {
-                String name = java.util.Arrays.stream(fan.id().toLowerCase(java.util.Locale.ROOT).split("_"))
-                    .map(word -> Character.toUpperCase(word.charAt(0)) + word.substring(1))
-                    .collect(java.util.stream.Collectors.joining(" "));
-                rows.add(new Row(Component.literal(name + " ×" + fan.count() + "  " + fan.points()), MahjongUi.MUTED));
+                rows.add(new Row(Component.translatable("mcr.mchjong.fan." + fan.id().toLowerCase(java.util.Locale.ROOT))
+                    .append(" ×" + fan.count() + "  " + fan.points()), MahjongUi.MUTED));
             }
             rows.add(new Row(Component.translatable("mcr.mchjong.total_fan", win.score().totalFan()), MahjongUi.ACCENT));
             rows.add(new Row(Component.translatable("mcr.mchjong.flowers", game.seats().get(win.winner()).flowers().size()), MahjongUi.TEXT));

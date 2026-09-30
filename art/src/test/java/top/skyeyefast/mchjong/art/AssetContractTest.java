@@ -83,6 +83,8 @@ class AssetContractTest {
                 assertTrue(translated.has(rules.translationKey()), language + ": " + rules);
             for (RiichiAction.Type action : RiichiAction.Type.values())
                 assertTrue(translated.has(new RiichiAction(action).translationKey()), language + ": " + action);
+            for (var action : top.skyeyefast.mchjong.engine.McrAction.Type.values())
+                assertTrue(translated.has("mcr.mchjong.action." + action.name().toLowerCase(Locale.ROOT)), language + ": " + action);
         }
     }
 

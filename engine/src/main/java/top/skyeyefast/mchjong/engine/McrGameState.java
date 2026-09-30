@@ -9,7 +9,7 @@ public record McrGameState(int format, long seed, long revision, long decision, 
                            int claimTile, int claimFrom, McrAction pendingKong, boolean drawWallLast,
                            McrWinContext.KongWin drawKong, List<Reply> replies,
                            List<McrSettlement.Penalty> penalties, McrSettlement.Result result) {
-    public static final int FORMAT = 4;
+    public static final int FORMAT = 5;
 
     public McrGameState {
         if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR save format: " + format);

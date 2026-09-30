@@ -25,6 +25,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add seated and immersive MCR play with physical hand selection, explicit flower replacement, shared camera controls and localized actions and fan names in all four languages.
 - Add built-in Hong Kong tile-face preset with multicolored traditional flower engravings and white dragon frame.
 - Play a fixed four-player, sixteen-hand MCR match on automatic tables using a complete 144-tile case, recipient-safe controls and separate fan settlement.
 - Add discoverable external Riichi Bot choices with preset matching, server configuration and visible service errors.

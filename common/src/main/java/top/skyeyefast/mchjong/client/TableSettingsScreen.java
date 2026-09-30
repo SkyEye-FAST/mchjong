@@ -26,6 +26,7 @@ public final class TableSettingsScreen extends Screen {
         this.parent = parent;
     }
     public TableScreen tableScreen() { return parent instanceof TableScreen table ? table : null; }
+    public McrTableScreen mcrTableScreen() { return parent instanceof McrTableScreen table ? table : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 

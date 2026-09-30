@@ -116,7 +116,10 @@ class McrViewTest {
         play(game, 1, DRAW);
         var observer = game.view(-1);
         assertEquals(game.flowers(1), observer.seats().get(1).flowers());
-        assertEquals(Tile.HIDDEN, observer.seats().get(1).drawn());
+        assertEquals(Tile.ABSENT, observer.seats().get(1).drawn());
+        assertEquals(McrGame.Phase.REPLACE_FLOWER, observer.phase());
+        assertTrue(observer.actions().isEmpty());
+        assertEquals(List.of(new McrAction(REPLACE_FLOWER)), game.view(1).actions());
         roundTrip(observer);
         String encoded = McrCodec.encodeView(observer);
         assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(encoded));

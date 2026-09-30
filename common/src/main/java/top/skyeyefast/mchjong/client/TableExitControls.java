@@ -20,6 +20,12 @@ final class TableExitControls {
     }
 
     static List<MahjongButton> voteButtons(BlockPos pos, TableRoomView room, int width, int height) {
+        return voteButtons(pos, room, width, height, 1);
+    }
+
+    static List<MahjongButton> voteButtons(BlockPos pos, TableRoomView room, int width, int height, int scale) {
+        width /= scale;
+        height /= scale;
         var vote = room.exitVote();
         if (vote == null || room.viewerSeat() < 0) return List.of();
         int span = Math.min(320, width - 24), left = (width - span) / 2, y = height / 2 + 30;
@@ -30,12 +36,25 @@ final class TableExitControls {
         var reject = MahjongButton.create(Component.translatable("ui.mchjong.exit_reject"), ignored ->
             send(pos, room, TableSessionControlPayload.Operation.ANSWER_EXIT, vote.id(), false))
             .bounds(left + (span + 4) / 2, y, (span - 4) / 2, 20).build();
+        for (var button : List.of(agree, reject)) {
+            button.setX(button.getX() * scale); button.setY(button.getY() * scale);
+            button.setWidth(button.getWidth() * scale); button.setHeight(button.getHeight() * scale);
+            button.textScale(scale);
+        }
         return List.of(agree, reject);
     }
 
     static void renderVote(GuiGraphics graphics, Font font, TableRoomView room, int width, int height) {
+        renderVote(graphics, font, room, width, height, 1);
+    }
+
+    static void renderVote(GuiGraphics graphics, Font font, TableRoomView room, int width, int height, int scale) {
         var vote = room.exitVote();
         if (vote == null || room.viewerSeat() < 0) return;
+        width /= scale;
+        height /= scale;
+        graphics.pose().pushPose();
+        graphics.pose().scale(scale, scale, 1);
         int span = Math.min(320, width - 24), left = (width - span) / 2, top = height / 2 - 64;
         graphics.fill(left - 6, top, left + span + 6, height / 2 + 56, MahjongUi.PANEL);
         graphics.renderOutline(left - 6, top, span + 12, 120, MahjongUi.ACCENT);
@@ -54,5 +73,6 @@ final class TableExitControls {
             graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.MUTED);
             y += 10;
         }
+        graphics.pose().popPose();
     }
 }

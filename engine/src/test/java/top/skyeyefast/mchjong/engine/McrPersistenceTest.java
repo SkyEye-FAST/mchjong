@@ -88,6 +88,10 @@ class McrPersistenceTest {
         play(restored, 1, DRAW);
         assertSamePosition(game, restored);
         restored = roundTrip(restored);
+        assertEquals(McrGame.Phase.REPLACE_FLOWER, restored.phase());
+        play(restored, 1, REPLACE_FLOWER);
+        restored = roundTrip(restored);
+        play(restored, 1, REPLACE_FLOWER);
         assertEquals(2, restored.winningContext(1).flowerCount());
         assertEquals(McrWinContext.KongWin.NONE, restored.winningContext(1).kongWin());
         play(restored, 1, WIN);
@@ -131,7 +135,7 @@ class McrPersistenceTest {
             .getAsJsonObject("action").addProperty("type", "NEXT"));
         rejected(json, object -> object.getAsJsonArray("replies").add(object.getAsJsonArray("replies").get(0).deepCopy()));
         for (String invalid : new String[]{"null", "{}", json + "{}", json.replace("\"format\"", "format"),
-            json.replace("\"format\":4", "\"format\":4,\"format\":4"),
+            json.replace("\"format\":5", "\"format\":5,\"format\":5"),
             "{\"nested\":" + "[".repeat(1000) + "0" + "]".repeat(1000) + "}", " ".repeat(65_537)})
             assertThrows(IllegalArgumentException.class, () -> McrCodec.restore(invalid));
         assertEquals(json, McrCodec.save(game));

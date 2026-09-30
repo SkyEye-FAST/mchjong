@@ -99,12 +99,8 @@ class McrHandAnalyzerTest {
     }
 
     @Test fun collectedFlowersReachWinContextWithoutQualifyingALowFanHand() {
-        val player = McrPlayerState()
-        val wall = McrWall(McrGameTest.physical(Tile.mcrSet()), McrGameTest.OPENING)
-        wall.replace(player)
-        assertEquals(8, player.flowers.size)
-        val facts = context(flowers = player.flowers.size)
-        assertEquals(player.flowers.size, McrHandAnalyzer.libraryContext(facts).flowerCount)
+        val facts = context(flowers = 8)
+        assertEquals(8, McrHandAnalyzer.libraryContext(facts).flowerCount)
         val score = requireNotNull(McrHandAnalyzer.score(TestHands.tiles("445566m2277779s"), emptyList(), 0,
             Tile.id(Tile.parseKind("8s"), 0, false), facts))
         assertEquals(15, score.totalFan())

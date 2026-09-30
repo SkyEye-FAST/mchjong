@@ -103,10 +103,10 @@ MCR rivers use `McrDiscard` without Riichi declaration state.
 A hand reset clears the corresponding rule-specific zones.
 
 `McrWall` owns 144 fixed physical slots, with front draws and tail replacements.
-A drawn flower moves to the player's flower area and causes another tail draw,
-repeating until an ordinary tile is returned. The caller places that returned
-tile in the concealed hand. Exhaustion returns `Tile.ABSENT` and retains flowers
-already collected. Its conservation check covers the remaining physical wall and
+A drawn flower moves to the player's flower area. `McrGame` issues a
+`REPLACE_FLOWER` decision to its owner; each accepted declaration takes exactly one
+tail tile, issuing another decision if it is a flower. Exhaustion returns
+`Tile.ABSENT` and retains flowers already collected. The wall's conservation check covers the remaining physical wall and
 all player-owned zones. The Riichi `Wall` independently owns its 136/108-tile
 composition, 14-tile dead wall, replacement slots and dora/ura indicators.
 
@@ -125,10 +125,9 @@ clockwise onto the next wall when the count exceeds eighteen. Shuffling and
 both rolls use the server-owned seed.
 
 `McrWall.takeRaw` takes a named physical slot for initial packets and the dealer's
-jump. `drawRaw` takes the next occupied front slot. Independent front and back
+jump. `drawRaw` takes the next occupied front slot and `replaceRaw` takes the next tail slot. Independent front and back
 cursors skip taken slots; both traversals take a stack's upper tile before its
-lower tile. `draw` and `replace` retain automatic flower collection and tail
-replacement. Tile identities remain in their physical slots until taken.
+lower tile. Tile identities remain in their physical slots until taken.
 `McrSettlement` keeps normal wins and exhaustive draws in its `Result` contract;
 below-minimum declarations produce separate `Penalty` events. Self-draw charges
 each opponent eight plus total fan points; discard wins charge the discarder that
@@ -146,10 +145,12 @@ Construction follows `McrWallLayout.initialDeal`: three four-tile packets to eac
 player, then the dealer takes the first and third remaining stacks' upper tiles.
 South, West and North take the next available front slots. In traversal indices,
 the final five raw takes are 48, 52, 49, 50 and 51; the next front take is 53.
-Only after these 53 physical tiles have been allocated does the game replace
-flowers, completing each seat in East, South, West, North order. The wall supplies
-every replacement from the tail. Normal draws use the existing automatic
-replacement path. The game tracks the actual draw origin separately from the
+Only after these 53 physical tiles have been allocated does the game expose
+flowers. `INITIAL_FLOWERS` issues replacement decisions in East, South, West,
+North order, completing each seat's chain before advancing. Ordinary and kong
+draws that encounter a flower enter `REPLACE_FLOWER`; the owner explicitly takes
+each replacement from the tail. Pending hand deficits and the phase/turn survive
+save and restore without consuming another tile. The game tracks the actual draw origin separately from the
 end of the wall; a flower replacement is distinct from a kong replacement,
 including a flower drawn after declaring a kong.
 
@@ -194,8 +195,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 4 and the session format is 5. Restore rejects earlier
-experimental formats directly. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 5 and the session format is 5. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -310,6 +310,16 @@ four tiles of a supplemented triplet in one row. `McrFlowerLayout` reserves a
 separate public flower area. `McrSceneRenderer` consumes the scene and `McrDeck`,
 sharing tile meshes, materials and artwork lookup while retaining MCR geometry.
 The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mcr-physical-layout).
+
+`McrTableScreen` opens over the seated world and shares the seat camera, key
+bindings, discard preferences and opaque 1280 × 800 immersive canvas. The world
+renderer consumes `McrTableScene.build`; immersive solids consume the same public
+rail and river poses through `TableProjection`, with a private `TableHand` in the
+foreground. `TilePicking` intersects the MCR piece's actual scale and orientation.
+Hand selection resolves only issued discard indices; other declarations use
+native action buttons with localized names and tile previews. View changes retain
+selection and leave the world camera pose intact. Settlement carries the selected
+view into the next hand.
 
 ## Networking and authority
 

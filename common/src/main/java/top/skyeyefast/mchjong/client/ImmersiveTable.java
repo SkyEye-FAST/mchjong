@@ -39,6 +39,50 @@ final class ImmersiveTable {
     private final int viewer, players;
     private final int[] rows = new int[4];
     private TileFacePreset preset;
+    private java.util.function.IntUnaryOperator artworkIndex = TileMesh::face;
+
+    ImmersiveTable(int viewer) {
+        this.viewer = Math.max(0, viewer);
+        this.players = 4;
+    }
+
+    /** Preserve MCR's physical left-corner melds, flowers and rivers in the shared perspective camera. */
+    void renderMcr(GuiGraphics graphics, top.skyeyefast.mchjong.engine.McrView view,
+                   top.skyeyefast.mchjong.item.McrDeck deck, net.minecraft.world.item.DyeColor cloth) {
+        preset = deck.preset();
+        artworkIndex = tile -> TileMesh.artwork(deck.tile(tile));
+        backColor = TileMesh.backColor(deck.material(), deck.back());
+        bodyColor = TileMesh.bodyColor(deck.material(), deck.back());
+        backTexture = TileRenderTypes.backTexture(deck.material(), deck.back());
+        backPattern = TileBackPresets.texture(deck.backPreset());
+        depthTest = deck.material() != TileMaterial.GLASS;
+        faces.clear(); points.clear(); widths.clear();
+        graphics.flush();
+        if (depthTest) com.mojang.blaze3d.systems.RenderSystem.clear(org.lwjgl.opengl.GL11.GL_DEPTH_BUFFER_BIT,
+            net.minecraft.client.Minecraft.ON_OSX);
+        double edge = top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH * 300;
+        box(0, 0, 0, edge * 2 + 36, edge * 2 + 36, -18, -2, 0xff0e252a, 0xff263f43);
+        int felt = cloth == null ? 0xff20584f : 0xff000000 | cloth.getTextureDiffuseColor();
+        flat(0, -edge, -edge, edge, edge, 0, felt);
+        faces.add(new Face(rectangle(0, -edge, -edge, edge, edge, .05), FurnitureMesh.CLOTH_PATTERN,
+            0, 0, 1, 1, 0xffffffff, false));
+        paint(graphics);
+        for (var piece : McrTableScene.immersive(view)) {
+            if (piece.area() == McrTableScene.Area.HAND && piece.seat() == view.viewerSeat()) continue;
+            var local = top.skyeyefast.mchjong.world.TableGeometry.orient(piece.position().x, 0,
+                piece.position().z, Math.floorMod(-piece.seat(), 4));
+            int side = Math.floorMod(piece.seat() - viewer, 4);
+            int w = Math.max(1, Math.round(TileMesh.WIDTH * piece.scale() * 300));
+            double x = local.x * 300, z = local.z * 300;
+            if (piece.flat()) {
+                if (view.focus() != null && view.focus().tile() == piece.tile())
+                    flat(side, x - w / 2.0 - 2, z - w * RATIO / 2 - 2, x + w / 2.0 + 2,
+                        z + w * RATIO / 2 + 2, .1, MahjongUi.ACCENT);
+                tile(piece.tile(), side, x, z, w, piece.back(), piece.yaw() != piece.seat() * 90, false, 0);
+            } else standing(piece.tile(), side, x, z, w);
+        }
+        paint(graphics);
+    }
 
     ImmersiveTable(TableBoardState view) {
         viewer = view.viewerSeat();
@@ -373,7 +417,7 @@ final class ImmersiveTable {
             faces.add(new Face(vertices, backPattern, 0, 0, 1, 1, 0xffffffff, false));
             return;
         }
-        int face = TileMesh.face(tile);
+        int face = artworkIndex.applyAsInt(tile);
         faces.add(new Face(vertices, TileMesh.atlas(preset), (face % 8 * 256 + .5f) / 2048, (face / 8 * 384 + .5f) / 4096,
             (face % 8 * 256 + 255.5f) / 2048, (face / 8 * 384 + 383.5f) / 4096, dim ? 0xffa5afa9 : 0xffffffff, false));
     }

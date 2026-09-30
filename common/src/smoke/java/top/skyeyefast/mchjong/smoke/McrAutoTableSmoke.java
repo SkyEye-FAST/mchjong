@@ -46,6 +46,7 @@ final class McrAutoTableSmoke {
     private boolean voteAnswered;
     private Map<UUID, Integer> assignedSeats;
     private long leaveRevision;
+    private int presentationStep;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         check(++ticks < 2200, "MCR automatic-table smoke timed out at " + stage);
@@ -209,10 +210,29 @@ final class McrAutoTableSmoke {
                 var view = clientTable.clientMcrView();
                 if (view == null || view.game().phase() != McrGame.Phase.TURN || view.game().actions().isEmpty()) break;
                 int index = first(view, McrAction.Type.DISCARD);
-                check(index >= 0 && index < 8, "Client discard is not on the first action page");
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), message -> {});
+                check(index >= 0, "Client has no discard action");
+                if (presentationStep == 0) {
+                    check(!screen.immersive(), "MCR play must open in the seated world view");
+                    SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), message -> {});
+                    top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM;
+                    var piece = top.skyeyefast.mchjong.client.McrTableScene.build(view.game()).stream()
+                        .filter(p -> p.area() == top.skyeyefast.mchjong.client.McrTableScene.Area.HAND
+                            && p.seat() == view.game().viewerSeat() && p.tile() == view.game().actions().get(index).tiles().getFirst())
+                        .findFirst().orElseThrow();
+                    var pointer = project(client, pos, piece.position());
+                    check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated MCR hand picking failed");
+                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    check(screen.immersive(), "MCR view binding did not open the immersive canvas");
+                    presentationStep++;
+                    break;
+                }
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
+                double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
+                double x = (screen.width - 1280 * scale) / 2 + 289 * scale;
+                double y = (screen.height - 800 * scale) / 2 + 726 * scale;
                 firstDecision = view.game().decision();
-                ((MahjongButton) screen.children().get(index)).onPress();
+                check(screen.mouseClicked(x, y, 0), "Immersive hand did not accept canvas coordinates");
+                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
                 stage++;
             }
             case 8 -> {
@@ -265,7 +285,9 @@ final class McrAutoTableSmoke {
                 if (!(client.screen instanceof McrTableScreen)) break;
                 var view = clientTable.clientMcrView();
                 if (view == null || view.game().handNumber() != 2) break;
-                check(view.game().phase() == McrGame.Phase.TURN, "Second MCR hand did not start");
+                check(view.game().phase() == McrGame.Phase.TURN || view.game().phase() == McrGame.Phase.INITIAL_FLOWERS,
+                    "Second MCR hand did not start");
+                check(((McrTableScreen) client.screen).immersive(), "Next hand lost the selected MCR view");
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var table = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
@@ -318,6 +340,7 @@ final class McrAutoTableSmoke {
         var phase = table.mcrView(main).game().phase();
         if (phase == McrGame.Phase.HAND_END || phase == McrGame.Phase.MATCH_END) return false;
         McrAction.Type target = switch (phase) {
+            case INITIAL_FLOWERS, REPLACE_FLOWER -> McrAction.Type.REPLACE_FLOWER;
             case DRAW -> McrAction.Type.DRAW;
             case TURN -> McrAction.Type.DISCARD;
             case REACTION -> McrAction.Type.PASS;
@@ -337,6 +360,18 @@ final class McrAutoTableSmoke {
     private static int first(McrSession.View view, McrAction.Type type) {
         for (int i = 0; i < view.game().actions().size(); i++) if (view.game().actions().get(i).type() == type) return i;
         return -1;
+    }
+
+    private static net.minecraft.world.phys.Vec3 project(Minecraft client, BlockPos pos, net.minecraft.world.phys.Vec3 point) {
+        var camera = client.gameRenderer.getMainCamera();
+        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
+        var right = new net.minecraft.world.phys.Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
+        var delta = top.skyeyefast.mchjong.world.TableGeometry.world(pos, point).subtract(camera.getPosition());
+        double fov = ((top.skyeyefast.mchjong.mixin.GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
+        return new net.minecraft.world.phys.Vec3(client.screen.width / 2.0 + delta.dot(right) * focal / delta.dot(forward),
+            client.screen.height / 2.0 - delta.dot(right.cross(forward)) * focal / delta.dot(forward), 0);
     }
 
     private static final class Guest extends ServerPlayer {

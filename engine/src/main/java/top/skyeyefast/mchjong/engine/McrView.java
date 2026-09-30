@@ -32,7 +32,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             || focus != null && focus.seat() != turn
             || ended && ((phase == McrGame.Phase.MATCH_END) != (handNumber == 16) || !actions.isEmpty() || responded)
             || phase != McrGame.Phase.REACTION && responded
-            || (phase == McrGame.Phase.TURN || phase == McrGame.Phase.DRAW) && viewerSeat != turn && !actions.isEmpty()
+            || phase != McrGame.Phase.REACTION && viewerSeat != turn && !actions.isEmpty()
             || phase == McrGame.Phase.REACTION && viewerSeat == turn && (!actions.isEmpty() || responded))
             throw new IllegalArgumentException("Inconsistent MCR view phase");
         int winner = result instanceof McrSettlement.Win win ? win.winner() : -1;

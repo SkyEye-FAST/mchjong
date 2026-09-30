@@ -53,9 +53,9 @@ class McrWallTest {
         wall.assertConservation(players);
         while (wall.remaining() > 0) {
             var player = players[draws % 4];
-            int tile = draws % 2 == 0 ? wall.draw(player) : wall.replace(player);
-            if (tile != Tile.ABSENT) {
-                assertFalse(Tile.isFlower(tile));
+            int tile = draws % 2 == 0 ? wall.drawRaw() : wall.replaceRaw();
+            if (Tile.isFlower(tile)) player.flowers.add(tile);
+            else {
                 player.hand.add(tile);
                 player.drawn = tile; // Alias, never a second owned copy.
             }
@@ -81,35 +81,27 @@ class McrWallTest {
         assertThrows(IllegalStateException.class, () -> wall.assertConservation(players));
     }
 
-    @Test void aFrontFlowerReplacesRepeatedlyFromTheTailWithoutEnteringTheHand() {
+    @Test void rawTailTakesExactlyOneTileWithoutSkippingFlowers() {
         var order = new ArrayList<>(Tile.mcrSet());
         Collections.swap(order, 0, order.indexOf(FlowerTile.SUMMER.id()));
         var wall = new McrWall(physical(order), OPENING);
-        var player = new McrPlayerState();
-        int tile = wall.draw(player);
-        assertEquals(Tile.id(0, 0, false), tile);
-        assertTrue(player.hand.isEmpty());
-        assertEquals(List.of(FlowerTile.SUMMER.id(), FlowerTile.BAMBOO.id(), FlowerTile.CHRYSANTHEMUM.id(),
-            FlowerTile.PLUM.id(), FlowerTile.ORCHID.id(), FlowerTile.AUTUMN.id(), FlowerTile.WINTER.id(),
-            FlowerTile.SPRING.id()), player.flowers);
-        assertEquals(135, wall.remaining());
-        player.hand.add(tile);
-        wall.assertConservation(player);
-        int next = wall.draw(player);
-        assertEquals(0, Tile.kind(next), "The next front tile is still the second ordinary copy");
-        player.hand.add(next);
-        wall.assertConservation(player);
+        assertEquals(FlowerTile.SUMMER.id(), wall.drawRaw());
+        assertEquals(FlowerTile.BAMBOO.id(), wall.replaceRaw());
+        assertEquals(142, wall.remaining());
+        assertEquals(FlowerTile.CHRYSANTHEMUM.id(), wall.replaceRaw());
+        assertEquals(0, Tile.kind(wall.drawRaw()), "The next front tile is still the second ordinary copy");
     }
 
     @Test void flowerOnlyExhaustionKeepsOwnershipAndResetClearsTheFlowerArea() {
         var wall = new McrWall(physical(Tile.mcrSet()), OPENING);
         var player = new McrPlayerState();
-        for (int i = 0; i < 136; i++) player.hand.add(wall.draw(player));
+        for (int i = 0; i < 136; i++) player.hand.add(wall.drawRaw());
         assertEquals(8, wall.remaining());
-        assertEquals(Tile.ABSENT, wall.draw(player));
+        for (int i = 0; i < 8; i++) player.flowers.add(wall.replaceRaw());
+        assertEquals(Tile.ABSENT, wall.drawRaw());
         assertEquals(0, wall.remaining());
         assertEquals(8, player.flowers.size());
-        assertEquals(Tile.ABSENT, wall.replace(player));
+        assertEquals(Tile.ABSENT, wall.replaceRaw());
         wall.assertConservation(player);
         player.resetHand();
         assertTrue(player.flowers.isEmpty());

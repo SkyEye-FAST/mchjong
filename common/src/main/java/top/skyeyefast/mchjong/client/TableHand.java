@@ -22,12 +22,17 @@ final class TableHand {
     }
 
     TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
+        this(player.hand(), player.drawn(), player.melds(), owner, width, height, maxTileWidth, perspective);
+    }
+
+    TableHand(List<Integer> tiles, int drawn, List<top.skyeyefast.mchjong.engine.Meld> melds,
+              int owner, int width, int height, int maxTileWidth, boolean perspective) {
         this.owner = owner;
-        this.melds = player.melds();
+        this.melds = melds;
         this.perspective = perspective;
         right = width - (perspective ? 24 : 8);
-        tiles = player.hand();
-        drawn = player.drawn();
+        this.tiles = tiles;
+        this.drawn = drawn;
         tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / 14));
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.getLast() != drawn ? 0 : Math.max(18, tileWidth / 2);

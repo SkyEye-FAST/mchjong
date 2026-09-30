@@ -22,6 +22,17 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         FurnitureMesh.table(pose, buffers, light, table.wood(), table.equipment().hasCloth() ? table.equipment().clothColor() : null,
             table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE));
         pose.popPose();
+        if (table.clientMcrView() != null && table.clientMcrDeck() != null) {
+            var screen = Minecraft.getInstance().screen instanceof McrTableScreen mcr
+                && mcr.tablePos().equals(table.getBlockPos()) ? mcr : null;
+            pose.pushPose();
+            pose.translate(.5, 0, .5);
+            McrSceneRenderer.render(McrTableScene.build(table.clientMcrView().game()), table.clientMcrDeck(),
+                pose, buffers, light, piece -> screen == null ? 0 : screen.highlight(piece),
+                piece -> screen != null && screen.selected(piece));
+            pose.popPose();
+            return;
+        }
         if (view == null) return;
         long now = Util.getMillis();
         TableAnimation animation = TableAnimation.of(table);
