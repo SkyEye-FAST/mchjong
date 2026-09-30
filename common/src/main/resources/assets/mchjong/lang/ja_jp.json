@@ -764,6 +764,7 @@
   "sichuan.mchjong.action.void_suit": "定缺",
   "sichuan.mchjong.action.win": "和了",
   "sichuan.mchjong.phase.hand_end": "局の精算",
+  "sichuan.mchjong.phase.match_end": "対局の精算",
   "sichuan.mchjong.phase.reaction": "応答待ち",
   "sichuan.mchjong.phase.turn": "血戦到底",
   "sichuan.mchjong.phase.voiding": "定缺の色を選択",

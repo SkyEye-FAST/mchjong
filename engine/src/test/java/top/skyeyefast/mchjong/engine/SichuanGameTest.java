@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.Map;
+import com.google.gson.JsonParser;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
@@ -122,7 +124,7 @@ class SichuanGameTest {
         kong.validate();
     }
 
-    @Test void kongTakesFrontReplacementAndIsRefundedOnShoot() {
+    @Test void kongTakesFrontReplacementAndTransfersOnShoot() {
         var game = position(new int[]{2, 2, 2, 2}, false,
             "9m 9m 9m 9m 9p", WAIT, "", "");
         choose(game, 0, CONCEALED_KONG, 8);
@@ -136,7 +138,8 @@ class SichuanGameTest {
         choose(game, 0, DISCARD, Tile.parseKind("9p"));
         choose(game, 1, WIN, -1); passAll(game);
         assertTrue(game.save().wins().get(0).score().patterns().contains(SichuanSettlement.Fan.SHOOT_AFTER_KONG));
-        assertEquals(3, game.save().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND).count());
+        assertEquals(3, game.save().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER).count());
+        assertTrue(game.save().ledger().stream().noneMatch(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND));
         game.validate();
     }
 
@@ -221,7 +224,10 @@ class SichuanGameTest {
     }
 
     private static SichuanGame pungPosition(boolean timely, String second, String third) {
-        var state = position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m", second, third, "").save();
+        return pungPosition(position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m", second, third, ""), timely);
+    }
+    private static SichuanGame pungPosition(SichuanGame game, boolean timely) {
+        var state = game.save();
         var players = new ArrayList<>(state.players());
         var player = players.get(0);
         var hand = new ArrayList<>(player.hand());
@@ -247,6 +253,326 @@ class SichuanGameTest {
         assertNotEquals(session.incarnation(), restored.incarnation());
         assertTrue(restored.equipped());
         assertInstanceOf(McrSession.class, restored.selectVariant(id, restored.decision(), MahjongVariant.MCR));
+    }
+
+    @Test void consecutiveKongsTransferTheWholeChainToMultipleWinners() {
+        var game = position(new int[]{2, 2, 2, 2}, false,
+            "9m 9m 9m 9m 7m 7m 7m 7m 9p", WAIT, WAIT, "");
+        choose(game, 0, CONCEALED_KONG, 8); choose(game, 0, DRAW, -1);
+        choose(game, 0, CONCEALED_KONG, 6);
+        game = SichuanCodec.restore(SichuanCodec.save(game));
+        assertEquals(0, game.save().kongLedgerStart());
+        choose(game, 0, DRAW, -1); choose(game, 0, DISCARD, Tile.parseKind("9p"));
+        choose(game, 2, WIN, -1); choose(game, 1, WIN, -1); passAll(game);
+        var transfers = game.save().ledger().stream().filter(SichuanSettlement.Entry::kongTransfer).toList();
+        assertEquals(12, transfers.stream().mapToInt(SichuanSettlement.Entry::amount).sum());
+        for (int winner : new int[]{1, 2})
+            assertEquals(6, transfers.stream().filter(entry -> entry.recipient() == winner).mapToInt(SichuanSettlement.Entry::amount).sum());
+        assertEquals(List.of(0, 1, 2, 3, 4, 5), transfers.stream().map(SichuanSettlement.Entry::relatedEntry).toList());
+        assertEquals(List.of(-4, 4, 4, -4), game.scores());
+        var malformed = JsonParser.parseString(SichuanCodec.save(game)).getAsJsonObject();
+        malformed.getAsJsonArray("ledger").get(8).getAsJsonObject().addProperty("relatedEntry", 6);
+        assertThrows(IllegalArgumentException.class, () -> SichuanCodec.restore(malformed.toString()));
+        game.validate();
+    }
+
+    @Test void multipleWinnersShareKongIncomeAndShooterSuppliesIntegerRounding() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m 9p", WAIT, WAIT, "");
+        var state = game.save();
+        var rules = new SichuanRules(3, 1, 1, 2, 1, 24, true, true, 8);
+        game = SichuanGame.restore(new SichuanGame.State(state.format(), rules, state.nextWallSeed(), 1, List.of(), state.phase(),
+            state.revision(), state.decision(), state.turn(), state.wall(), state.players(), state.focus(), state.supplier(),
+            state.pendingKong(), state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result()));
+        choose(game, 0, CONCEALED_KONG, 8); choose(game, 0, DRAW, -1);
+        choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, WIN, -1); choose(game, 2, WIN, -1); passAll(game);
+        var ledger = game.save().ledger();
+        assertEquals(List.of(new SichuanSettlement.Entry(8, SichuanSettlement.Type.KONG_TRANSFER_TOP_UP, 0, 2, 1, 0)),
+            ledger.stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER_TOP_UP).toList());
+        assertEquals(3, ledger.stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER).mapToInt(SichuanSettlement.Entry::amount).sum());
+        assertEquals(List.of(-5, 3, 3, -1), game.scores());
+        assertEquals(game.save().ledger(), SichuanCodec.restore(SichuanCodec.save(game)).save().ledger());
+    }
+
+    @Test void addedKongChainsIncludeOnlySettledIncomeAndRobberyIsNotAShootingDiscard() {
+        for (boolean timely : new boolean[]{true, false}) {
+            var game = position(new int[]{2, 2, 2, 2}, false,
+                "9m 9m 9m 9m 7m 7m 7m 7m 9p", WAIT, WAIT, "");
+            game = pungPosition(game, timely);
+            choose(game, 0, ADDED_KONG, 8); passAll(game); choose(game, 0, DRAW, -1);
+            choose(game, 0, CONCEALED_KONG, 6); choose(game, 0, DRAW, -1);
+            choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, WIN, -1); choose(game, 2, WIN, -1); passAll(game);
+            assertEquals(timely ? 9 : 6, game.save().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER).mapToInt(SichuanSettlement.Entry::amount).sum());
+            assertEquals(timely ? 1 : 0, game.save().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER_TOP_UP).mapToInt(SichuanSettlement.Entry::amount).sum());
+        }
+
+        String wait = "1m 2m 3m 4m 5m 6m 7m 8m 1p 2p 3p 9p 9p";
+        var game = position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m 5p 5p 5p 5p", wait, wait, "");
+        game = pungPosition(game, false);
+        choose(game, 0, CONCEALED_KONG, Tile.parseKind("5p")); choose(game, 0, DRAW, -1);
+        choose(game, 0, ADDED_KONG, 8); choose(game, 1, WIN, -1); choose(game, 2, WIN, -1); passAll(game);
+        assertTrue(game.save().wins().stream().allMatch(win -> win.robbingKong() && win.score().fan() == 1
+            && !win.score().patterns().contains(SichuanSettlement.Fan.SHOOT_AFTER_KONG)));
+        assertTrue(game.save().ledger().stream().noneMatch(SichuanSettlement.Entry::kongTransfer));
+        assertEquals(Meld.Type.TRIPLET, game.save().players().get(0).melds().get(0).type());
+    }
+
+    @Test void thirdWinnerEndsWithoutDrawChecksOrKongRefundsEvenForTheLastNonReadyPlayer() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m 9p", WAIT, WAIT, WAIT);
+        choose(game, 0, CONCEALED_KONG, 8); choose(game, 0, DRAW, -1);
+        choose(game, 0, DISCARD, Tile.parseKind("9p"));
+        choose(game, 3, WIN, -1); choose(game, 2, WIN, -1); choose(game, 1, WIN, -1);
+        assertFalse(game.result().exhaustive());
+        assertTrue(game.result().drawStatus().isEmpty());
+        assertEquals(List.of(-6, 2, 2, 2), game.result().deltas());
+        assertEquals(3, game.result().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER).count());
+        assertTrue(game.result().ledger().stream().noneMatch(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND));
+        assertTrue(game.nextHand());
+        assertEquals(0, game.dealer());
+    }
+
+    @Test void exhaustiveChecksRetainReadyKongsAndDoNotRefundAlreadyTransferredIncome() {
+        var ready = position(new int[]{2, 2, 2, 2}, false,
+            "9m 9m 9m 9m 1m 2m 3m 4m 5m 6m 1p 2p 3p 9p", WAIT, "", "");
+        choose(ready, 0, CONCEALED_KONG, 8);
+        ready = nextDraw(ready, Tile.parseKind("9s"));
+        choose(ready, 0, DRAW, -1);
+        ready = emptyWall(ready);
+        choose(ready, 0, DISCARD, Tile.parseKind("9s")); passAll(ready);
+        assertEquals(SichuanSettlement.DrawStatus.READY, ready.result().drawStatus().get(0));
+        assertTrue(ready.result().ledger().stream().noneMatch(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND));
+        assertEquals(2, SichuanHandAnalyzer.readyValue(ready.save().players().get(0).hand(), ready.save().players().get(0).melds(), 2, ready.rules()));
+
+        var transferred = position(new int[]{2, 2, 2, 2}, false, "9m 9m 9m 9m 9p 1m 2m 4m 5m 7m 8m 1p 3p 5p", WAIT, "", "");
+        choose(transferred, 0, CONCEALED_KONG, 8); transferred = nextDraw(transferred, Tile.parseKind("8p")); choose(transferred, 0, DRAW, -1);
+        choose(transferred, 0, DISCARD, Tile.parseKind("9p")); choose(transferred, 1, WIN, -1); passAll(transferred);
+        transferred = emptyWall(transferred); choose(transferred, transferred.turn(), DRAW, -1);
+        assertEquals(SichuanSettlement.DrawStatus.NOT_READY, transferred.result().drawStatus().get(0));
+        assertEquals(3, transferred.result().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_TRANSFER).count());
+        assertTrue(transferred.result().ledger().stream().noneMatch(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND));
+        transferred.validate();
+    }
+
+    @Test void passedWinsBlockSameFanUntilDrawingAndSurviveRestore() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, "9p", "");
+        choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, PASS, -1); passAll(game);
+        game = SichuanCodec.restore(SichuanCodec.save(game));
+        game = nextDraw(game, Tile.parseKind("9p"));
+        choose(game, 1, DRAW, -1);
+        assertEquals(-1, game.save().players().get(1).passedFan());
+        choose(game, 1, DISCARD, Tile.kind(game.save().players().get(1).drawn())); passAll(game);
+        choose(game, 2, DRAW, -1); choose(game, 2, DISCARD, Tile.parseKind("9p"));
+        assertTrue(game.actions(1).stream().noneMatch(action -> action.type() == WIN));
+        assertEquals(0, game.save().players().get(1).passedFan());
+    }
+
+    @Test void rootsIncludePhysicalKongsAndGoldenSingleWaitAddsToAllPungs() {
+        var stock = new ArrayList<>(Tile.sichuanSet());
+        var quad = take(stock, "9m 9m 9m 9m");
+        var hand = take(stock, "1m 1m 1m 2m 2m 2m 1p 1p 1p 2p 2p");
+        var score = SichuanHandAnalyzer.score(hand, List.of(new Meld(Meld.Type.CONCEALED_QUAD, quad, 0, Tile.ABSENT)),
+            SichuanPreset.SBR_2025.config(), false, false, false, false);
+        assertEquals(List.of(SichuanSettlement.Fan.ALL_PUNGS, SichuanSettlement.Fan.ROOT), score.patterns());
+        var melds = new ArrayList<Meld>();
+        stock = new ArrayList<>(Tile.sichuanSet());
+        for (String kind : List.of("1m", "2m", "1p", "2p")) {
+            var tiles = take(stock, kind + " " + kind + " " + kind);
+            melds.add(new Meld(Meld.Type.TRIPLET, tiles, 1, tiles.get(0)));
+        }
+        score = SichuanHandAnalyzer.score(take(stock, "9p 9p"), melds, SichuanPreset.SBR_2025.config(), false, false, false, false);
+        assertEquals(List.of(SichuanSettlement.Fan.ALL_PUNGS, SichuanSettlement.Fan.GOLDEN_SINGLE_WAIT), score.patterns());
+        assertEquals(4, score.value());
+    }
+
+    @Test void maximumReadyValueExcludesWinCircumstancesAndSanctionedReadyPigCannotCollect() {
+        var stock = new ArrayList<>(Tile.sichuanSet());
+        var hand = take(stock, "1m 1m 2m 2m 3m 3m 4m 4m 5p 5p 6p 6p 7p");
+        assertEquals(4, SichuanHandAnalyzer.readyValue(hand, List.of(), 2, SichuanPreset.SBR_2025.config()));
+        var game = position(new int[]{2, 2, 2, 2}, true,
+            "1m 2m 3m 4m 5m 6m 1p 2p 3p 4p 5p 6p 9p 9s", WAIT, "", "");
+        assertFalse(game.adjudicateActiveFlowerPig(1));
+        assertTrue(game.adjudicateActiveFlowerPig(0));
+        assertFalse(game.adjudicateActiveFlowerPig(0));
+        game = SichuanCodec.restore(SichuanCodec.save(game));
+        choose(game, 0, DISCARD, Tile.parseKind("9s")); passAll(game);
+        assertEquals(SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG, game.result().drawStatus().get(0));
+        assertEquals(1, game.result().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.FLOWER_PIG).count());
+        assertTrue(game.result().ledger().stream().noneMatch(entry -> entry.type() == SichuanSettlement.Type.READY_PAYMENT
+            && (entry.payer() == 0 || entry.recipient() == 0)));
+        assertEquals(-24, game.result().deltas().stream().mapToInt(Integer::intValue).sum());
+    }
+
+    @Test void drawPaymentsUseTheRecipientsLargestStructuralWinRatherThanLastTileBonus() {
+        var game = position(new int[]{2, 2, 2, 2}, true,
+            "1m 2m 4m 5m 7m 8m 1p 2p 4p 5p 7p 8p 9p 9p",
+            "1m 1m 2m 2m 3m 3m 4p 4p 5p 5p 6p 6p 7p", WAIT, "");
+        choose(game, 0, DISCARD, Tile.parseKind("9p")); passAll(game);
+        assertEquals(SichuanSettlement.DrawStatus.NOT_READY, game.result().drawStatus().get(0));
+        assertTrue(game.result().ledger().stream().anyMatch(entry -> entry.type() == SichuanSettlement.Type.READY_PAYMENT
+            && entry.payer() == 0 && entry.recipient() == 1 && entry.amount() == 4));
+    }
+
+    @Test void basicFlushAndSituationalFanHaveIndependentValues() {
+        var stock = new ArrayList<>(Tile.sichuanSet());
+        var hand = take(stock, "1m 2m 3m 4m 5m 6m 1p 2p 3p 4p 5p 6p 9p 9p");
+        var rules = SichuanPreset.SBR_2025.config();
+        assertEquals(0, SichuanHandAnalyzer.score(hand, List.of(), rules, false, false, false, false).fan());
+        for (int circumstance = 0; circumstance < 4; circumstance++) {
+            var score = SichuanHandAnalyzer.score(hand, List.of(), rules, circumstance == 0, circumstance == 1, circumstance == 2, circumstance == 3);
+            assertEquals(1, score.fan()); assertEquals(2, score.value());
+        }
+        stock = new ArrayList<>(Tile.sichuanSet());
+        assertEquals(List.of(SichuanSettlement.Fan.FULL_FLUSH), SichuanHandAnalyzer.score(take(stock,
+            "1m 2m 3m 1m 2m 3m 4m 5m 6m 7m 8m 9m 5m 5m"), List.of(), rules, false, false, false, false).patterns());
+    }
+
+    @Test void firstWinnerDealsNextAndNoWinRetainsDealerWithFreshVoiding() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, "", "");
+        choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, WIN, -1); passAll(game);
+        game = emptyWall(game); choose(game, game.turn(), DRAW, -1);
+        var points = game.scores();
+        var completed = game.result();
+        var restored = SichuanCodec.restore(SichuanCodec.save(game));
+        long oldDecision = restored.decision();
+        assertTrue(restored.nextHand()); assertTrue(game.nextHand());
+        assertEquals(game.save().wall(), restored.save().wall());
+        assertEquals(2, restored.handNumber()); assertEquals(1, restored.dealer());
+        assertEquals(List.of(13, 14, 13, 13), restored.save().players().stream().map(player -> player.hand().size()).toList());
+        assertEquals(points, restored.scores());
+        assertEquals(completed, restored.completedHands().get(0).result());
+        assertNull(restored.result());
+        assertTrue(restored.save().players().stream().allMatch(player -> player.voidSuit() == -1 && !player.won()));
+        assertFalse(restored.act(0, oldDecision, 0));
+        for (int seat = 0; seat < 4; seat++) choose(restored, seat, VOID_SUIT, 2);
+        restored = emptyWall(restored);
+        choose(restored, 1, DISCARD, Tile.kind(restored.actions(1).stream().filter(action -> action.type() == DISCARD).findFirst().orElseThrow().tiles().get(0)));
+        passAll(restored);
+        assertTrue(restored.result().wins().isEmpty());
+        assertTrue(restored.nextHand()); assertEquals(1, restored.dealer());
+    }
+
+    @Test void eightHandsRetainLedgerDerivedTotalsAndOnlyFinalHandEndsMatch() {
+        var game = new SichuanGame(71);
+        var expected = new int[4];
+        for (int number = 1; number <= 8; number++) {
+            int steps = 0;
+            while (!game.ended()) {
+                assertTrue(++steps < 500);
+                for (int seat = 0; seat < 4; seat++) {
+                    var actions = game.actions(seat);
+                    if (actions.isEmpty()) continue;
+                    var preferred = actions.stream().filter(action -> action.type() == WIN || action.type() == PASS
+                        || action.type() == DRAW || action.type() == DISCARD || action.type() == VOID_SUIT).findFirst().orElseThrow();
+                    assertTrue(game.act(seat, game.decision(), actions.indexOf(preferred)));
+                }
+            }
+            for (int seat = 0; seat < 4; seat++) expected[seat] += game.result().deltas().get(seat);
+            assertEquals(java.util.Arrays.stream(expected).boxed().toList(), game.scores());
+            assertEquals(number, game.completedHands().size());
+            assertEquals(number == 8 ? SichuanGame.Phase.MATCH_END : SichuanGame.Phase.HAND_END, game.phase());
+            game = SichuanCodec.restore(SichuanCodec.save(game));
+            assertEquals(number < 8, game.nextHand());
+        }
+        assertTrue(game.view(0).actions().isEmpty());
+        assertEquals(game.scores(), game.view(-1).scores());
+    }
+
+    @Test void sessionWaitsForLifecycleConfirmationsAndRestoresSavedDeadlineWithoutClockCharges() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, WAIT, WAIT);
+        choose(game, 0, DISCARD, Tile.parseKind("9p"));
+        var session = session(game);
+        for (int seat = 1; seat < 4; seat++) {
+            var view = session.view(id(seat));
+            int index = view.game().actions().indexOf(new SichuanAction(WIN));
+            assertTrue(session.act(id(seat), session.tableId(), view.incarnation(), view.game().decision(), index));
+        }
+        assertEquals(TableSession.Lifecycle.PLAYING, session.lifecycle());
+        var end = session.view(id(0));
+        var clocks = session.save().clocks();
+        assertFalse(session.confirmNextHand(UUID.randomUUID(), session.tableId(), end.incarnation(), end.game().decision()));
+        assertTrue(session.confirmNextHand(id(0), session.tableId(), end.incarnation(), end.game().decision()));
+        assertFalse(session.confirmNextHand(id(0), session.tableId(), end.incarnation(), end.game().decision()));
+        for (int tick = 0; tick < 199; tick++) session.tick();
+        assertEquals(clocks, session.save().clocks());
+        var restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
+        assertTrue(restored.paused());
+        assertEquals(1, restored.view(id(0)).settlementTicks());
+        assertEquals(1, restored.view(id(0)).confirmed());
+        restored.tick(); assertEquals(1, restored.game().handNumber());
+        restored.synchronizeSeats(Map.of(id(0), 0), java.util.Set.of(id(0), id(1), id(2), id(3)));
+        restored.tick(); assertEquals(2, restored.game().handNumber());
+        assertEquals(0, restored.view(id(0)).confirmed());
+        assertEquals(end.game().scores(), restored.game().scores());
+        assertFalse(restored.confirmNextHand(id(0), restored.tableId(), end.incarnation(), end.game().decision()));
+        assertTrue(restored.view(id(0)).game().seats().get(1).hand().stream().allMatch(tile -> tile == Tile.HIDDEN));
+        assertEquals(restored.view(id(0)), SichuanCodec.decodeSessionView(SichuanCodec.encodeSessionView(restored.view(id(0)))));
+    }
+
+    @Test void allHumanConfirmationsAdvanceOnceAndMatchEndIsTerminalForTheSession() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, WAIT, WAIT);
+        choose(game, 0, DISCARD, Tile.parseKind("9p"));
+        choose(game, 1, WIN, -1); choose(game, 2, WIN, -1); choose(game, 3, WIN, -1);
+        var session = session(game);
+        var view = session.view(id(0));
+        for (int seat = 0; seat < 4; seat++)
+            assertTrue(session.confirmNextHand(id(seat), session.tableId(), view.incarnation(), view.game().decision()));
+        assertEquals(2, session.game().handNumber());
+        assertFalse(session.confirmNextHand(id(3), session.tableId(), view.incarnation(), view.game().decision()));
+
+        game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, WAIT, WAIT);
+        var state = game.save(); var base = game.rules();
+        var rules = new SichuanRules(base.fanCap(), base.selfDrawBonus(), base.concealedKongPayment(), base.discardKongPayment(),
+            base.addedKongPayment(), base.activeFlowerPigPenalty(), base.transferKongOnShoot(), base.refundKongWhenNotReady(), 1);
+        game = SichuanGame.restore(new SichuanGame.State(state.format(), rules, state.nextWallSeed(), 1, List.of(), state.phase(),
+            state.revision(), state.decision(), state.turn(), state.wall(), state.players(), state.focus(), state.supplier(), state.pendingKong(),
+            state.replacementDraw(), state.afterKong(), state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result()));
+        choose(game, 0, DISCARD, Tile.parseKind("9p")); session = session(game);
+        for (int seat = 1; seat < 4; seat++) {
+            view = session.view(id(seat));
+            assertTrue(session.act(id(seat), session.tableId(), view.incarnation(), view.game().decision(), view.game().actions().indexOf(new SichuanAction(WIN))));
+        }
+        assertEquals(TableSession.Lifecycle.FINISHED, session.lifecycle());
+        assertEquals(SichuanGame.Phase.MATCH_END, session.game().phase());
+        assertFalse(session.confirmNextHand(id(0), session.tableId(), session.incarnation(), session.game().decision()));
+        var completed = session.save().game(); session.tick(); assertEquals(completed, session.save().game());
+        assertEquals(session.game().scores(), SichuanCodec.restoreSession(SichuanCodec.saveSession(session)).game().scores());
+    }
+
+    private static UUID id(int seat) { return new UUID(42, seat + 1); }
+    private static SichuanSession session(SichuanGame game) {
+        var roster = new ArrayList<TableParticipant>();
+        for (int seat = 0; seat < 4; seat++) roster.add(new TableParticipant(id(seat), "player" + seat));
+        var seating = new RoomSeating(); seating.positioned(4);
+        var room = new TableSession.State(new UUID(41, 1), MahjongVariant.SICHUAN, 4, id(0), roster, seating.save(),
+            game.phase() == SichuanGame.Phase.MATCH_END ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING,
+            1, 1, 71, false, null, null, 0, 0);
+        var control = new TimeControl(1, 1);
+        var clocks = Collections.nCopies(4, new TimeControl.Clock(20, 20, false));
+        var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),
+            control, clocks, 0, 0, game.save()));
+        session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3), java.util.Set.of(id(0), id(1), id(2), id(3)));
+        return session;
+    }
+
+    private static SichuanGame emptyWall(SichuanGame game) {
+        var state = game.save();
+        var players = new ArrayList<>(state.players());
+        var player = players.get(2);
+        var river = new ArrayList<>(player.river());
+        for (int tile : state.wall().slots()) if (tile != Tile.ABSENT) river.add(new SichuanPlayerState.Discard(tile, false));
+        players.set(2, new SichuanPlayerState(player.hand(), player.melds(), river, player.voidSuit(), player.won(), player.drawn(), player.passedFan()));
+        return SichuanGame.restore(copy(state, players, new SichuanWall.State(Collections.nCopies(108, Tile.ABSENT), state.wall().dealer(), state.wall().die1(), state.wall().die2(), 108)));
+    }
+
+    private static SichuanGame nextDraw(SichuanGame game, int kind) {
+        var state = game.save();
+        var wall = state.wall();
+        var slots = new ArrayList<>(wall.slots());
+        int from = -1;
+        for (int index = 0; index < slots.size(); index++) if (slots.get(index) != Tile.ABSENT && Tile.kind(slots.get(index)) == kind) { from = index; break; }
+        assertTrue(from >= 0);
+        int next = SichuanWallLayout.traversal(wall.dealer(), wall.die1(), wall.die2()).get(wall.cursor());
+        Collections.swap(slots, from, next);
+        return SichuanGame.restore(copy(state, state.players(), new SichuanWall.State(slots, wall.dealer(), wall.die1(), wall.die2(), wall.cursor())));
     }
 
     private static void choose(SichuanGame game, int seat, SichuanAction.Type type, int argument) {
@@ -276,7 +602,7 @@ class SichuanGameTest {
         var slots = new ArrayList<>(Collections.nCopies(108, Tile.ABSENT));
         var order = SichuanWallLayout.traversal(0, 1, 1);
         if (!exhausted) for (int index = 0; index < stock.size(); index++) slots.set(order.get(53 + index), stock.get(index));
-        var state = new SichuanGame.State(1, SichuanPreset.SBR_2025.config(), SichuanGame.Phase.TURN, 1, 1, 0,
+        var state = new SichuanGame.State(SichuanGame.State.FORMAT, SichuanPreset.SBR_2025.config(), 17, 1, List.of(), SichuanGame.Phase.TURN, 1, 1, 0,
             new SichuanWall.State(slots, 0, 1, 1, exhausted ? 108 : 53), players, Tile.ABSENT, -1, -1,
             false, false, -1, List.of(), List.of(), List.of(), null);
         return SichuanGame.restore(state);
@@ -291,7 +617,7 @@ class SichuanGameTest {
         return hand;
     }
     private static SichuanGame.State copy(SichuanGame.State state, List<SichuanPlayerState> players, SichuanWall.State wall) {
-        return new SichuanGame.State(state.format(), state.rules(), state.phase(), state.revision(), state.decision(), state.turn(),
+        return new SichuanGame.State(state.format(), state.rules(), state.nextWallSeed(), state.handNumber(), state.completedHands(), state.phase(), state.revision(), state.decision(), state.turn(),
             wall, players, state.focus(), state.supplier(), state.pendingKong(), state.replacementDraw(), state.afterKong(),
             state.kongLedgerStart(), state.responses(), state.wins(), state.ledger(), state.result());
     }

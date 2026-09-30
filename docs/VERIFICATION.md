@@ -145,8 +145,10 @@ Inspect both selected captures in `fabric/build/smoke/mcr-auto-evidence/`
 and its fresh `PASS.txt` or `FAIL.txt` marker. Omit `smokeScreenshots` for an
 assertion-only run.
 `SichuanGameTest` owns suited-stock conservation, void-suit restrictions, multi-win
-blood battle, independent kong payments and refunds, flower-pig deductions,
-maximum ready payments, private views and explicit save/restore. Run
+blood battle, linked call transfers and rounding, kong refunds, flower-pig
+deductions, maximum ready payments, eight-hand lifecycle, session confirmations,
+private views and explicit save/restore. The clause mapping is in
+[Sichuan match orchestration](ARCHITECTURE.md#sichuan-sbr-match-orchestration). Run
 `gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
 `PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
 The focused real-client Sichuan smoke checks three-way lobby selection, the

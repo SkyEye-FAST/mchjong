@@ -764,6 +764,7 @@
   "sichuan.mchjong.action.void_suit": "Void suit",
   "sichuan.mchjong.action.win": "Win",
   "sichuan.mchjong.phase.hand_end": "Hand settlement",
+  "sichuan.mchjong.phase.match_end": "Match settlement",
   "sichuan.mchjong.phase.reaction": "Responses",
   "sichuan.mchjong.phase.turn": "Blood battle",
   "sichuan.mchjong.phase.voiding": "Choose void suit",

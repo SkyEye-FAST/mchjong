@@ -20,7 +20,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 public final class SichuanCodec {
-    private static final int MAX_CHARS = 65_536;
+    private static final int MAX_CHARS = 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().disableJdkUnsafe().serializeNulls().create();
     private SichuanCodec() {}
     public static String save(SichuanGame game) { return encode(game.save()); }

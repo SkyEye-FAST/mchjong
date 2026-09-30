@@ -5,16 +5,19 @@ import java.util.List;
 import java.util.Objects;
 
 public record SichuanView(long revision, long decision, SichuanRules rules, SichuanGame.Phase phase,
+                          int handNumber, int dealer, List<Integer> scores,
                           int viewerSeat, int turn, Wall wall, List<Seat> seats, int focus, int supplier,
                           boolean robbingKong, boolean submitted, List<SichuanAction> actions,
                           List<Winner> winners, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
     public SichuanView {
         Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall);
         seats = List.copyOf(seats); actions = List.copyOf(actions); winners = List.copyOf(winners); ledger = List.copyOf(ledger);
+        scores = List.copyOf(scores);
+        boolean ended = phase == SichuanGame.Phase.HAND_END || phase == SichuanGame.Phase.MATCH_END;
         if (revision < 1 || decision < 1 || viewerSeat < -1 || viewerSeat > 3 || turn < 0 || turn > 3 || seats.size() != 4
-            || viewerSeat < 0 && (!actions.isEmpty() || submitted) || (phase == SichuanGame.Phase.HAND_END) != (result != null))
+            || handNumber < 1 || handNumber > rules.matchHands() || dealer != wall.dealer() || scores.size() != 4
+            || viewerSeat < 0 && (!actions.isEmpty() || submitted) || ended != (result != null) || ended && !actions.isEmpty())
             throw new IllegalArgumentException("Invalid Sichuan view");
-        boolean ended = phase == SichuanGame.Phase.HAND_END;
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
             if (!ended && seat != viewerSeat && (player.hand().stream().anyMatch(tile -> tile != Tile.HIDDEN)
@@ -32,7 +35,7 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
     static SichuanView project(SichuanGame game, int viewer, boolean interactive) {
         if (viewer < -1 || viewer > 3) throw new IllegalArgumentException("Invalid Sichuan viewer");
         var state = game.save();
-        boolean ended = state.phase() == SichuanGame.Phase.HAND_END;
+        boolean ended = game.ended();
         var seats = new ArrayList<Seat>();
         for (int seat = 0; seat < 4; seat++) {
             var player = state.players().get(seat);
@@ -50,7 +53,7 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
         var wall = state.wall();
         var winners = state.wins().stream().map(win -> new Winner(win.seat(), win.supplier(),
             win.selfDraw() && !ended ? Tile.HIDDEN : win.tile(), win.selfDraw(), win.robbingKong(), win.score())).toList();
-        return new SichuanView(state.revision(), state.decision(), state.rules(), state.phase(), viewer, state.turn(),
+        return new SichuanView(state.revision(), state.decision(), state.rules(), state.phase(), game.handNumber(), game.dealer(), game.scores(), viewer, state.turn(),
             new Wall(wall.slots().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(),
                 wall.dealer(), wall.die1(), wall.die2()), seats, state.focus(), state.supplier(), state.pendingKong() >= 0,
             viewer >= 0 && state.responses().stream().anyMatch(response -> response.seat() == viewer),

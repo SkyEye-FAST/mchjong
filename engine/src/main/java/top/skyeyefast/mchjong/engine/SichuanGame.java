@@ -8,9 +8,13 @@ import java.util.Objects;
 import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
 
 public final class SichuanGame {
-    public enum Phase { VOIDING, TURN, REACTION, HAND_END }
+    public enum Phase { VOIDING, TURN, REACTION, HAND_END, MATCH_END }
+    private static final long WALL_SEED_STEP = 0x9e3779b97f4a7c15L;
     private final SichuanRules rules;
-    private final SichuanWall wall;
+    private SichuanWall wall;
+    private long nextWallSeed;
+    private int handNumber = 1;
+    private final List<Hand> completedHands = new ArrayList<>();
     private final Player[] players = new Player[4];
     private Phase phase = Phase.VOIDING;
     private long revision = 1;
@@ -30,21 +34,30 @@ public final class SichuanGame {
     public SichuanGame(long seed) { this(seed, SichuanPreset.SBR_2025.config(), Tile.sichuanSet()); }
     public SichuanGame(long seed, SichuanRules rules, List<Integer> stock) {
         this.rules = Objects.requireNonNull(rules);
-        wall = new SichuanWall(seed, 0, stock);
+        nextWallSeed = seed + WALL_SEED_STEP;
+        startHand(new SichuanWall(seed, 0, stock));
+        validate();
+    }
+
+    private void startHand(SichuanWall nextWall) {
+        wall = nextWall;
+        phase = Phase.VOIDING; turn = wall.save().dealer(); result = null;
+        clearReaction(); afterKong = false; replacementDraw = false; kongLedgerStart = -1;
+        wins.clear(); ledger.clear();
         for (int seat = 0; seat < 4; seat++) players[seat] = new Player();
         for (int packet = 0; packet < 3; packet++)
-            for (int seat = 0; seat < 4; seat++)
-                for (int tile = 0; tile < 4; tile++) players[seat].hand.add(wall.draw());
-        players[0].hand.add(wall.take(48));
-        players[0].drawn = wall.take(52);
-        players[0].hand.add(players[0].drawn);
-        for (int seat = 1; seat < 4; seat++) players[seat].hand.add(wall.draw());
+            for (int step = 0; step < 4; step++)
+                for (int tile = 0; tile < 4; tile++) players[(turn + step) % 4].hand.add(wall.draw());
+        players[turn].hand.add(wall.take(48));
+        players[turn].drawn = wall.take(52);
+        players[turn].hand.add(players[turn].drawn);
+        for (int step = 1; step < 4; step++) players[(turn + step) % 4].hand.add(wall.draw());
         for (var player : players) player.hand.sort(Tile.ORDER);
-        validate();
     }
 
     private SichuanGame(State state) {
         rules = state.rules(); wall = SichuanWall.restore(state.wall());
+        nextWallSeed = state.nextWallSeed(); handNumber = state.handNumber(); completedHands.addAll(state.completedHands());
         phase = state.phase(); revision = state.revision(); decision = state.decision(); turn = state.turn();
         focus = state.focus(); supplier = state.supplier(); pendingKong = state.pendingKong();
         replacementDraw = state.replacementDraw(); afterKong = state.afterKong(); kongLedgerStart = state.kongLedgerStart();
@@ -65,9 +78,27 @@ public final class SichuanGame {
     public int turn() { return turn; }
     public SichuanRules rules() { return rules; }
     public SichuanSettlement.Result result() { return result; }
+    public int handNumber() { return handNumber; }
+    public int dealer() { return wall.save().dealer(); }
+    public boolean ended() { return phase == Phase.HAND_END || phase == Phase.MATCH_END; }
+    public List<Hand> completedHands() { return List.copyOf(completedHands); }
+    public List<Integer> scores() {
+        var entries = new ArrayList<SichuanSettlement.Entry>();
+        for (var hand : completedHands) entries.addAll(hand.result().ledger());
+        if (result == null) entries.addAll(ledger);
+        return SichuanSettlement.points(entries);
+    }
+    public boolean nextHand() {
+        if (phase != Phase.HAND_END) return false;
+        int nextDealer = result.nextDealer(dealer());
+        handNumber++;
+        startHand(new SichuanWall(nextWallSeed, nextDealer, Tile.sichuanSet()));
+        nextWallSeed += WALL_SEED_STEP;
+        changed(); validate(); return true;
+    }
     public SichuanView view(int seat) { return SichuanView.project(this, seat, true); }
     public List<SichuanAction> actions(int seat) {
-        if (seat < 0 || seat > 3 || players[seat].won || phase == Phase.HAND_END) return List.of();
+        if (seat < 0 || seat > 3 || players[seat].won || ended()) return List.of();
         if (phase == Phase.REACTION && responses[seat] != null) return List.of();
         return legalActions(seat);
     }
@@ -81,11 +112,11 @@ public final class SichuanGame {
         if (phase == Phase.REACTION) {
             if (seat == supplier || player.won) return List.of();
             var score = winScore(seat, focus, true);
-            if (score != null && score.fan() > player.passedFan) actions.add(new SichuanAction(WIN));
+            if (score != null && Math.min(rules.fanCap(), score.fan()) > player.passedFan) actions.add(new SichuanAction(WIN));
             if (pendingKong < 0 && Tile.kind(focus) / 9 != player.voidSuit) {
                 var matching = matching(player, Tile.kind(focus));
-                if (matching.size() >= 2) actions.add(new SichuanAction(PUNG, matching.subList(0, 2)));
-                if (matching.size() == 3 && wall.remaining() > 0) actions.add(new SichuanAction(DISCARD_KONG, matching));
+                if (matching.size() >= 2) offerCall(actions, seat, new SichuanAction(PUNG, matching.subList(0, 2)));
+                if (matching.size() == 3 && wall.remaining() > 0) offerCall(actions, seat, new SichuanAction(DISCARD_KONG, matching));
             }
             if (!actions.isEmpty()) actions.add(new SichuanAction(PASS));
             return List.copyOf(actions);
@@ -99,9 +130,9 @@ public final class SichuanGame {
         if (player.drawn != Tile.ABSENT && wall.remaining() > 0) {
             for (int kind = 0; kind < 27; kind++) if (kind / 9 != player.voidSuit) {
                 var matching = matching(player, kind);
-                if (matching.size() == 4) actions.add(new SichuanAction(CONCEALED_KONG, matching));
+                if (matching.size() == 4) offerCall(actions, seat, new SichuanAction(CONCEALED_KONG, matching));
                 if (matching.size() == 1 && player.melds.stream().anyMatch(meld -> meld.type() == Meld.Type.TRIPLET
-                    && meld.kind() == Tile.kind(matching.get(0)))) actions.add(new SichuanAction(ADDED_KONG, matching));
+                    && meld.kind() == Tile.kind(matching.get(0)))) offerCall(actions, seat, new SichuanAction(ADDED_KONG, matching));
             }
         }
         return List.copyOf(actions);
@@ -110,15 +141,53 @@ public final class SichuanGame {
     private static List<Integer> matching(Player player, int kind) {
         return player.hand.stream().filter(tile -> Tile.kind(tile) == kind).sorted().toList();
     }
+    private boolean activeFlowerPig(int seat) {
+        return ledger.stream().anyMatch(entry -> entry.type() == SichuanSettlement.Type.FLOWER_PIG && entry.payer() == seat);
+    }
+    public boolean adjudicateActiveFlowerPig(int seat) {
+        if (seat < 0 || seat > 3 || ended() || phase == Phase.VOIDING || players[seat].won || activeFlowerPig(seat) || !activeFlowerPigViolation(seat)) return false;
+        transfer(SichuanSettlement.Type.FLOWER_PIG, seat, -1, rules.activeFlowerPigPenalty(), -1);
+        refundKongs(seat, 0);
+        if (phase == Phase.REACTION) {
+            responses[seat] = new SichuanAction(PASS);
+            if (responsesComplete()) resolveResponses();
+        }
+        changed(); return true;
+    }
+    private void offerCall(List<SichuanAction> actions, int seat, SichuanAction action) {
+        if (!activeFlowerPig(seat)) { actions.add(action); return; }
+        var player = players[seat];
+        var hand = new ArrayList<>(player.hand);
+        hand.removeAll(action.tiles());
+        var melds = new ArrayList<>(player.melds);
+        if (action.type() == ADDED_KONG) {
+            int index = meldIndex(player, action.tiles().get(0));
+            var pung = melds.get(index);
+            var tiles = new ArrayList<>(pung.tiles()); tiles.addAll(action.tiles());
+            melds.set(index, new Meld(Meld.Type.ADDED_QUAD, tiles, pung.fromSeat(), pung.calledTile()));
+        } else {
+            var tiles = new ArrayList<>(action.tiles());
+            if (action.type() != CONCEALED_KONG) tiles.add(focus);
+            melds.add(new Meld(action.type() == PUNG ? Meld.Type.TRIPLET : action.type() == CONCEALED_KONG
+                ? Meld.Type.CONCEALED_QUAD : Meld.Type.OPEN_QUAD, tiles, action.type() == CONCEALED_KONG ? seat : supplier,
+                action.type() == CONCEALED_KONG ? Tile.ABSENT : focus));
+        }
+        boolean ready = action.type() != PUNG && SichuanHandAnalyzer.readyValue(hand, melds, player.voidSuit, rules) > 0;
+        if (action.type() == PUNG) for (int tile : List.copyOf(hand)) {
+            var waiting = new ArrayList<>(hand); waiting.remove(Integer.valueOf(tile));
+            if (SichuanHandAnalyzer.readyValue(waiting, melds, player.voidSuit, rules) > 0) { ready = true; break; }
+        }
+        if (ready) actions.add(action);
+    }
 
     private SichuanSettlement.Score winScore(int seat, int tile, boolean claim) {
         var player = players[seat];
         var hand = new ArrayList<>(player.hand);
         if (claim) hand.add(tile);
-        if (player.voidSuit < 0 || hand.stream().anyMatch(owned -> Tile.kind(owned) / 9 == player.voidSuit)
+        if (activeFlowerPig(seat) || player.voidSuit < 0 || hand.stream().anyMatch(owned -> Tile.kind(owned) / 9 == player.voidSuit)
             || player.melds.stream().anyMatch(meld -> meld.kind() / 9 == player.voidSuit)) return null;
         return SichuanHandAnalyzer.score(hand, player.melds, rules, !claim && afterKong,
-            claim && afterKong, claim && pendingKong >= 0, wall.remaining() == 0);
+            claim && afterKong && pendingKong < 0, claim && pendingKong >= 0, wall.remaining() == 0);
     }
 
     public boolean act(int seat, long expectedDecision, int index) {
@@ -128,7 +197,7 @@ public final class SichuanGame {
         var action = offered.get(index);
         if (phase == Phase.REACTION) {
             var score = winScore(seat, focus, true);
-            if (action.type() != WIN && score != null) players[seat].passedFan = Math.max(players[seat].passedFan, score.fan());
+            if (action.type() != WIN && score != null) players[seat].passedFan = Math.max(players[seat].passedFan, Math.min(rules.fanCap(), score.fan()));
             responses[seat] = action;
             if (responsesComplete()) { resolveResponses(); changed(); }
             else revision = Math.addExact(revision, 1);
@@ -147,7 +216,7 @@ public final class SichuanGame {
                 var player = players[seat];
                 player.hand.removeAll(action.tiles());
                 player.melds.add(new Meld(Meld.Type.CONCEALED_QUAD, action.tiles(), seat, Tile.ABSENT));
-                kongLedgerStart = ledger.size();
+                beginKongChain();
                 payActive(SichuanSettlement.Type.CONCEALED_KONG, seat, rules.concealedKongPayment());
                 replacement();
             }
@@ -183,7 +252,7 @@ public final class SichuanGame {
         int ready = SichuanHandAnalyzer.readyValue(player.hand, player.melds, player.voidSuit, rules);
         if (ready == 0) player.passedFan = -1;
         var skipped = winScore(turn, tile, true);
-        if (skipped != null) player.passedFan = Math.max(player.passedFan, skipped.fan());
+        if (skipped != null) player.passedFan = Math.max(player.passedFan, Math.min(rules.fanCap(), skipped.fan()));
         player.river.add(new SichuanPlayerState.Discard(tile, false));
         pendingKong = -1;
         openResponses(turn, tile);
@@ -198,6 +267,7 @@ public final class SichuanGame {
 
     private void resolveResponses() {
         int lastWinner = -1;
+        var claimants = new ArrayList<Integer>();
         for (int step = 1; step < 4; step++) {
             int seat = (supplier + step) % 4;
             if (responses[seat].type() != WIN) continue;
@@ -205,6 +275,7 @@ public final class SichuanGame {
             wins.add(new SichuanSettlement.Win(seat, supplier, focus, false, pendingKong >= 0, score));
             transfer(SichuanSettlement.Type.DISCARD_WIN, supplier, seat, score.value(), -1);
             players[seat].won = true;
+            claimants.add(seat);
             lastWinner = seat;
         }
         if (lastWinner >= 0) {
@@ -214,7 +285,7 @@ public final class SichuanGame {
             }
             else claimDiscard();
             players[lastWinner].hand.add(focus); players[lastWinner].hand.sort(Tile.ORDER);
-            if (afterKong && rules.refundKongOnShoot()) refundKongs(supplier, kongLedgerStart);
+            if (afterKong && pendingKong < 0 && rules.transferKongOnShoot()) transferKongs(supplier, claimants);
             clearReaction();
             if (wins.size() == 3) finish(false);
             else advance(lastWinner);
@@ -227,7 +298,7 @@ public final class SichuanGame {
             var tiles = new ArrayList<>(pung.tiles()); tiles.add(focus);
             player.melds.set(pendingKong, new Meld(Meld.Type.ADDED_QUAD, tiles, pung.fromSeat(), pung.calledTile()));
             player.hand.remove(Integer.valueOf(focus));
-            kongLedgerStart = ledger.size();
+            beginKongChain();
             if (focus == player.drawn) payActive(SichuanSettlement.Type.ADDED_KONG, owner, rules.addedKongPayment());
             clearReaction(); turn = owner; replacement();
             return;
@@ -243,10 +314,11 @@ public final class SichuanGame {
             claimDiscard();
             if (action.type() == DISCARD_KONG) {
                 kongLedgerStart = ledger.size();
-                transfer(SichuanSettlement.Type.DISCARD_KONG, supplier, seat, rules.discardKongPayment(), -1);
+                if (!activeFlowerPig(seat)) transfer(SichuanSettlement.Type.DISCARD_KONG, supplier, seat, rules.discardKongPayment(), -1);
             }
             clearReaction(); turn = seat; player.drawn = Tile.ABSENT; phase = Phase.TURN;
             afterKong = false;
+            if (action.type() == PUNG) kongLedgerStart = -1;
             if (action.type() == DISCARD_KONG) replacement();
             return;
         }
@@ -262,6 +334,7 @@ public final class SichuanGame {
     private void replacement() {
         players[turn].drawn = Tile.ABSENT; phase = Phase.TURN; afterKong = false; replacementDraw = true;
     }
+    private void beginKongChain() { if (!afterKong) kongLedgerStart = ledger.size(); }
     private void advance(int previous) {
         afterKong = false; replacementDraw = false; kongLedgerStart = -1;
         for (int step = 1; step <= 4; step++) if (!players[(previous + step) % 4].won) {
@@ -276,6 +349,7 @@ public final class SichuanGame {
         throw new IllegalStateException("No pung to supplement");
     }
     private void payActive(SichuanSettlement.Type type, int recipient, int amount) {
+        if (type != SichuanSettlement.Type.SELF_DRAW_WIN && activeFlowerPig(recipient)) return;
         for (int seat = 0; seat < 4; seat++) if (seat != recipient && !players[seat].won) transfer(type, seat, recipient, amount, -1);
     }
     private void transfer(SichuanSettlement.Type type, int payer, int recipient, int amount, int related) {
@@ -284,9 +358,17 @@ public final class SichuanGame {
     private void refundKongs(int seat, int start) {
         if (start < 0) return;
         var refunded = new HashSet<Integer>();
-        for (var entry : ledger) if (entry.type() == SichuanSettlement.Type.KONG_REFUND) refunded.add(entry.relatedEntry());
+        for (var entry : ledger) {
+            if (entry.type() == SichuanSettlement.Type.KONG_REFUND || entry.type() == SichuanSettlement.Type.KONG_TRANSFER)
+                refunded.add(entry.relatedEntry());
+        }
         for (var entry : List.copyOf(ledger)) if (entry.id() >= start && entry.kong() && entry.recipient() == seat && !refunded.contains(entry.id()))
             transfer(SichuanSettlement.Type.KONG_REFUND, seat, entry.payer(), entry.amount(), entry.id());
+    }
+    private void transferKongs(int seat, List<Integer> claimants) {
+        if (kongLedgerStart < 0 || activeFlowerPig(seat)) return;
+        var sources = ledger.stream().filter(entry -> entry.id() >= kongLedgerStart && entry.kong() && entry.recipient() == seat).toList();
+        ledger.addAll(SichuanSettlement.kongTransfers(seat, sources, claimants, ledger.size()));
     }
     private void finish(boolean exhaustive) {
         var statuses = new ArrayList<SichuanSettlement.DrawStatus>();
@@ -294,27 +376,41 @@ public final class SichuanGame {
             int[] ready = new int[4];
             for (int seat = 0; seat < 4; seat++) {
                 var player = players[seat];
-                boolean missing = player.hand.stream().anyMatch(tile -> Tile.kind(tile) / 9 == player.voidSuit)
-                    || player.melds.stream().anyMatch(meld -> meld.kind() / 9 == player.voidSuit);
                 ready[seat] = player.won ? 0 : SichuanHandAnalyzer.readyValue(player.hand, player.melds, player.voidSuit, rules);
-                var status = player.won ? SichuanSettlement.DrawStatus.WON : missing
-                    ? player.river.stream().anyMatch(discard -> Tile.kind(discard.tile()) / 9 != player.voidSuit)
-                        ? SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG : SichuanSettlement.DrawStatus.PASSIVE_FLOWER_PIG
-                    : ready[seat] > 0 ? SichuanSettlement.DrawStatus.READY : SichuanSettlement.DrawStatus.NOT_READY;
+                var status = drawStatus(seat);
                 statuses.add(status);
-                if (!player.won && ready[seat] == 0 && rules.refundKongWhenNotReady()) refundKongs(seat, 0);
+                if (status == SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG && !activeFlowerPig(seat))
+                    transfer(SichuanSettlement.Type.FLOWER_PIG, seat, -1, rules.activeFlowerPigPenalty(), -1);
+                if (!player.won && (activeFlowerPig(seat) || ready[seat] == 0 && rules.refundKongWhenNotReady())) refundKongs(seat, 0);
             }
             for (int payer = 0; payer < 4; payer++) if (!players[payer].won) {
-                if (statuses.get(payer) == SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG)
-                    transfer(SichuanSettlement.Type.FLOWER_PIG, payer, -1, rules.activeFlowerPigPenalty(), -1);
                 for (int recipient = 0; recipient < 4; recipient++) if (recipient != payer && !players[recipient].won) {
-                    if (ready[payer] == 0 && ready[recipient] > 0)
+                    if (ready[payer] == 0 && statuses.get(recipient) == SichuanSettlement.DrawStatus.READY)
                         transfer(SichuanSettlement.Type.READY_PAYMENT, payer, recipient, ready[recipient], -1);
                 }
             }
         }
-        phase = Phase.HAND_END; afterKong = false; replacementDraw = false; kongLedgerStart = -1;
+        phase = handNumber == rules.matchHands() ? Phase.MATCH_END : Phase.HAND_END;
+        afterKong = false; replacementDraw = false; kongLedgerStart = -1;
         result = new SichuanSettlement.Result(wins, ledger, statuses, exhaustive);
+        completedHands.add(new Hand(handNumber, dealer(), result));
+    }
+    private SichuanSettlement.DrawStatus drawStatus(int seat) {
+        var player = players[seat];
+        if (player.won) return SichuanSettlement.DrawStatus.WON;
+        boolean missing = player.melds.stream().anyMatch(meld -> meld.kind() / 9 == player.voidSuit)
+            || player.hand.stream().anyMatch(tile -> Tile.kind(tile) / 9 == player.voidSuit);
+        if (activeFlowerPig(seat) || activeFlowerPigViolation(seat))
+            return SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG;
+        if (missing) return SichuanSettlement.DrawStatus.PASSIVE_FLOWER_PIG;
+        return SichuanHandAnalyzer.readyValue(player.hand, player.melds, player.voidSuit, rules) > 0
+            ? SichuanSettlement.DrawStatus.READY : SichuanSettlement.DrawStatus.NOT_READY;
+    }
+    private boolean activeFlowerPigViolation(int seat) {
+        var player = players[seat];
+        return player.melds.stream().anyMatch(meld -> meld.kind() / 9 == player.voidSuit)
+            || player.hand.stream().anyMatch(tile -> tile != player.drawn && Tile.kind(tile) / 9 == player.voidSuit)
+                && player.river.stream().anyMatch(discard -> Tile.kind(discard.tile()) / 9 != player.voidSuit);
     }
     private void changed() { revision = Math.addExact(revision, 1); decision = Math.addExact(decision, 1); }
 
@@ -322,22 +418,31 @@ public final class SichuanGame {
         validate();
         var submitted = new ArrayList<Response>();
         for (int seat = 0; seat < 4; seat++) if (responses[seat] != null) submitted.add(new Response(seat, responses[seat]));
-        return new State(State.FORMAT, rules, phase, revision, decision, turn, wall.save(),
+        return new State(State.FORMAT, rules, nextWallSeed, handNumber, completedHands, phase, revision, decision, turn, wall.save(),
             Arrays.stream(players).map(Player::save).toList(), focus, supplier, pendingKong,
             replacementDraw, afterKong, kongLedgerStart, submitted, wins, ledger, result);
     }
 
     public record Response(int seat, SichuanAction action) {}
-    public record State(int format, SichuanRules rules, Phase phase, long revision, long decision, int turn,
+    public record Hand(int number, int dealer, SichuanSettlement.Result result) {
+        public Hand {
+            Objects.requireNonNull(result);
+            if (number < 1 || dealer < 0 || dealer > 3) throw new IllegalArgumentException("Invalid Sichuan hand record");
+        }
+    }
+    public record State(int format, SichuanRules rules, long nextWallSeed, int handNumber, List<Hand> completedHands,
+                        Phase phase, long revision, long decision, int turn,
                         SichuanWall.State wall, List<SichuanPlayerState> players, int focus, int supplier, int pendingKong,
                         boolean replacementDraw, boolean afterKong, int kongLedgerStart, List<Response> responses,
                         List<SichuanSettlement.Win> wins, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
-        public static final int FORMAT = 1;
+        public static final int FORMAT = 2;
         public State {
             Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall);
             players = List.copyOf(players); responses = List.copyOf(responses); wins = List.copyOf(wins); ledger = List.copyOf(ledger);
+            completedHands = List.copyOf(completedHands);
             if (format != FORMAT || players.size() != 4 || revision < 1 || decision < 1
-                || revision >= Long.MAX_VALUE - 1 || decision >= Long.MAX_VALUE - 1 || turn < 0 || turn > 3)
+                || revision >= Long.MAX_VALUE - 1 || decision >= Long.MAX_VALUE - 1 || turn < 0 || turn > 3
+                || handNumber < 1 || handNumber > rules.matchHands())
                 throw new IllegalArgumentException("Invalid Sichuan game state");
         }
     }
@@ -382,20 +487,39 @@ public final class SichuanGame {
                 && !(phase == Phase.TURN && seat == turn && size == 13)
                 || player.won && size != 13 && size != 14 || player.melds.size() > 4
                 || phase != Phase.VOIDING && player.voidSuit < 0
+                || player.passedFan > rules.fanCap()
                 || player.drawn != Tile.ABSENT && !player.hand.contains(player.drawn))
                 throw new IllegalArgumentException("Invalid Sichuan player position");
         }
         if (owned.size() != 108) throw new IllegalArgumentException("Sichuan physical tiles are not conserved");
         for (var player : players) for (var discard : player.river)
             if (discard.claimed() && !owned.contains(discard.tile())) throw new IllegalArgumentException("Invalid discard alias");
-        if (wins.size() > 3 || (phase == Phase.HAND_END) != (result != null)
-            || phase != Phase.HAND_END && (players[turn].won || wins.size() == 3)
+        if (wins.size() > 3 || ended() != (result != null)
+            || !ended() && (players[turn].won || wins.size() == 3)
             || phase == Phase.VOIDING && (wins.size() > 0 || Arrays.stream(players).allMatch(player -> player.voidSuit >= 0))
             || kongLedgerStart < -1 || kongLedgerStart > ledger.size() || pendingKong < -1
+            || (kongLedgerStart >= 0) != (afterKong || replacementDraw)
+            || afterKong && (phase != Phase.TURN && phase != Phase.REACTION || replacementDraw)
+            || replacementDraw && (phase != Phase.TURN || players[turn].drawn != Tile.ABSENT)
+            || (afterKong || replacementDraw) && players[turn].melds.stream().noneMatch(Meld::quad)
             || phase == Phase.REACTION && (supplier != turn || focus < 0 || focus >= 108 || responsesComplete())
             || phase != Phase.REACTION && (focus != Tile.ABSENT || supplier != -1 || pendingKong != -1
                 || Arrays.stream(responses).anyMatch(Objects::nonNull)))
             throw new IllegalArgumentException("Invalid Sichuan phase");
+        if (completedHands.size() != handNumber - (ended() ? 0 : 1)
+            || ended() && (phase == Phase.MATCH_END) != (handNumber == rules.matchHands()))
+            throw new IllegalArgumentException("Invalid Sichuan match position");
+        int expectedDealer = 0;
+        for (int index = 0; index < completedHands.size(); index++) {
+            var hand = completedHands.get(index);
+            if (hand.number() != index + 1 || hand.dealer() != expectedDealer)
+                throw new IllegalArgumentException("Invalid Sichuan dealer history");
+            hand.result().validate(rules);
+            expectedDealer = hand.result().nextDealer(expectedDealer);
+        }
+        if (dealer() != (ended() ? completedHands.get(completedHands.size() - 1).dealer() : expectedDealer)
+            || ended() && !completedHands.get(completedHands.size() - 1).result().equals(result))
+            throw new IllegalArgumentException("Invalid Sichuan completed hand");
         if (phase == Phase.REACTION) {
             if (pendingKong >= 0) {
                 if (pendingKong >= players[supplier].melds.size() || !players[supplier].hand.contains(focus)
@@ -414,27 +538,10 @@ public final class SichuanGame {
                     throw new IllegalArgumentException("Invalid saved Sichuan response");
             }
         }
-        var refunded = new HashSet<Integer>();
-        for (int index = 0; index < ledger.size(); index++) {
-            var entry = ledger.get(index);
-            if (entry.id() != index) throw new IllegalArgumentException("Invalid ledger order");
-            int amount = switch (entry.type()) {
-                case CONCEALED_KONG -> rules.concealedKongPayment();
-                case DISCARD_KONG -> rules.discardKongPayment();
-                case ADDED_KONG -> rules.addedKongPayment();
-                case FLOWER_PIG -> rules.activeFlowerPigPenalty();
-                default -> entry.amount();
-            };
-            if (entry.amount() != amount || (entry.type() == SichuanSettlement.Type.FLOWER_PIG
-                || entry.type() == SichuanSettlement.Type.READY_PAYMENT) && (result == null || !result.exhaustive()))
-                throw new IllegalArgumentException("Invalid Sichuan payment");
-            if (entry.type() == SichuanSettlement.Type.KONG_REFUND) {
-                var original = ledger.get(entry.relatedEntry());
-                if (!original.kong() || !refunded.add(original.id()) || entry.payer() != original.recipient()
-                    || entry.recipient() != original.payer() || entry.amount() != original.amount())
-                    throw new IllegalArgumentException("Invalid kong refund");
-            }
-        }
+        SichuanSettlement.validateLedger(rules, wins, ledger);
+        if (result == null && ledger.stream().anyMatch(entry -> entry.type() == SichuanSettlement.Type.READY_PAYMENT
+            || entry.type() == SichuanSettlement.Type.KONG_REFUND && !activeFlowerPig(entry.payer())))
+            throw new IllegalArgumentException("Premature Sichuan draw settlement");
         for (var win : wins) {
             var player = players[win.seat()];
             var hand = new ArrayList<>(player.hand);
@@ -446,27 +553,29 @@ public final class SichuanGame {
                     win.score().patterns().contains(SichuanSettlement.Fan.UNDER_THE_SEA))))
                 throw new IllegalArgumentException("Invalid saved Sichuan winner");
         }
-        var payments = ledger.stream().filter(entry -> entry.type() == SichuanSettlement.Type.DISCARD_WIN
-            || entry.type() == SichuanSettlement.Type.SELF_DRAW_WIN).toList();
-        int payment = 0;
-        var retired = new HashSet<Integer>();
-        for (var win : wins) {
-            if (retired.contains(win.supplier())) throw new IllegalArgumentException("Retired Sichuan supplier");
-            for (int payer = 0; payer < 4; payer++) if (payer != win.seat() && !retired.contains(payer)
-                && (win.selfDraw() || payer == win.supplier())) {
-                if (payment >= payments.size()) throw new IllegalArgumentException("Missing Sichuan win payment");
-                var entry = payments.get(payment++);
-                if (entry.payer() != payer || entry.recipient() != win.seat()
-                    || entry.type() != (win.selfDraw() ? SichuanSettlement.Type.SELF_DRAW_WIN : SichuanSettlement.Type.DISCARD_WIN)
-                    || entry.amount() != win.score().value() + (win.selfDraw() ? rules.selfDrawBonus() : 0))
-                    throw new IllegalArgumentException("Invalid Sichuan win payment");
-            }
-            retired.add(win.seat());
-        }
-        if (payment != payments.size()) throw new IllegalArgumentException("Unmatched Sichuan win payment");
         if (result != null && (!result.wins().equals(wins) || !result.ledger().equals(ledger)
             || result.exhaustive() != (wins.size() < 3) || result.exhaustive() && wall.remaining() != 0))
             throw new IllegalArgumentException("Invalid Sichuan result state");
+        if (result != null && result.exhaustive()) {
+            var expectedPayments = new ArrayList<SichuanSettlement.Entry>();
+            for (int payer = 0; payer < 4; payer++) {
+                if (result.drawStatus().get(payer) != drawStatus(payer)) throw new IllegalArgumentException("Invalid Sichuan draw status");
+                var player = players[payer];
+                if (player.won || SichuanHandAnalyzer.readyValue(player.hand, player.melds, player.voidSuit, rules) > 0) continue;
+                for (int recipient = 0; recipient < 4; recipient++) if (recipient != payer && result.drawStatus().get(recipient) == SichuanSettlement.DrawStatus.READY) {
+                    var waiting = players[recipient];
+                    int amount = SichuanHandAnalyzer.readyValue(waiting.hand, waiting.melds, waiting.voidSuit, rules);
+                    expectedPayments.add(new SichuanSettlement.Entry(expectedPayments.size(), SichuanSettlement.Type.READY_PAYMENT, payer, recipient, amount, -1));
+                }
+            }
+            var actual = ledger.stream().filter(entry -> entry.type() == SichuanSettlement.Type.READY_PAYMENT).toList();
+            if (actual.size() != expectedPayments.size()) throw new IllegalArgumentException("Missing Sichuan ready payment");
+            for (int index = 0; index < actual.size(); index++) {
+                var entry = actual.get(index); var expected = expectedPayments.get(index);
+                if (entry.payer() != expected.payer() || entry.recipient() != expected.recipient() || entry.amount() != expected.amount())
+                    throw new IllegalArgumentException("Invalid Sichuan ready amount");
+            }
+        }
     }
     private static void own(HashSet<Integer> owned, int tile) {
         if (tile < 0 || tile >= 108 || !owned.add(tile)) throw new IllegalArgumentException("Invalid Sichuan physical identity");

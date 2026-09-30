@@ -241,16 +241,36 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
-## Sichuan SBR hand orchestration
+## Sichuan SBR match orchestration
 
 `SichuanSession` owns a four-human room, the explicit `SichuanRules` contract,
 physical stock, independent decision clocks and one `SichuanGame`. `SichuanPreset.SBR_2025`
-uses the MIL Rules Committee's 2025 Chinese competition rules: Chapter II for
-opening and play, Chapter III for payments and draw checks, and Chapter IV for
-active-flower-pig deductions. T/TFMJ 01—2024 cross-checks stock, terms and the
-24-point penalty. The Chinese competition text takes precedence over condensed
-reference tables. The preset caps basic value at three fan, adds one base point
-for self-draw payments and distinguishes timely from delayed added kongs.
+uses MIL 四川麻将（SBR）竞赛规则（试行 2025 版） for play, fan, draw checks
+and penalties, with explicit T/TFMJ 01—2024 selections described below. The preset
+caps basic value at three fan, adds one base point for self-draw and distinguishes
+timely from delayed added kongs. A physical quad contributes one `ROOT` in the
+winning hand independently of its immediate kong payment.
+
+### Rule clauses, implementation and regression ownership
+
+Sources: [MIL competition rules](https://mahjong-mil.org/)
+([Chinese text](https://www.scribd.com/document/853494559)),
+[T/TFMJ 01—2024](https://www.ttbz.org.cn/Home/PdfFileStreamGet/c3QsMTEyODcw)
+and its [standard transcription](https://www.duodown.com/biaozhun/53243685.html).
+All regression names below belong to `SichuanGameTest`.
+
+| Clause | Selected implementation | Regression |
+| --- | --- | --- |
+| MIL Art. 10(1); T/TFMJ 9.3.3 | `transferKongs` selects T/TFMJ call transfer, including consecutive settled kongs. Winners share equally, rounded upward; the shooter supplies rounding. Each transfer links its source receipt. MIL specifies a shooting-kong refund without transfer. | `consecutiveKongsTransferTheWholeChainToMultipleWinners`, `multipleWinnersShareKongIncomeAndShooterSuppliesIntegerRounding` |
+| MIL Art. 10(2); T/TFMJ 10.1 | `SichuanHandAnalyzer` selects the unified root for four identical owned tiles, including quads. MIL separates kong and un-konged root; each contributes one fan. Pungs and golden single wait add; flush and seven pairs contribute two each; circumstances contribute one each. | `rootsIncludePhysicalKongsAndGoldenSingleWaitAddsToAllPungs`, `scoringIncludesQuadPairsAndKongsWithoutRiichiSemantics`, `basicFlushAndSituationalFanHaveIndependentValues` |
+| MIL Art. 10(1), (2) | Only completed timely added kongs collect income. Robbery retains the pung and awards robbery, distinct from a shooting discard. | `timelyAddedKongChargesEachActivePlayerButDelayedAddedKongIsFree`, `addedKongChainsIncludeOnlySettledIncomeAndRobberyIsNotAShootingDiscard` |
+| MIL Art. 4; T/TFMJ 9.3.5 | `passedFan` compares capped fan, including declined self-draws. Drawing or becoming non-ready clears the restriction. Comparing capped rather than raw pattern fan is the declared interpretation of the fan-comparison wording. | `passedWinsBlockSameFanUntilDrawingAndSurviveRestore` |
+| MIL Art. 10(3), Art. 11 | `readyValue` maximizes structural value without win circumstances. Natural flower pigs are not ready. Active flower pigs lose 24 competition points, stop winning, refund retained kong income and can call for readiness. Sanctioned ready hands neither pay nor collect ready payments. | `finalTileChecksPassiveFlowerPigsAndMaximumReadyValue`, `maximumReadyValueExcludesWinCircumstancesAndSanctionedReadyPigCannotCollect`, `drawPaymentsUseTheRecipientsLargestStructuralWinRatherThanLastTileBonus` |
+| MIL Art. 10(1); T/TFMJ 9.3.4, 10.2.1 | `refundKongs` refunds retained non-ready receipts at exhaustion, including natural flower pigs; ready players and winners retain theirs. Transferred receipts are consumed. Retrospective recovery of previously transferred payments is not explicit in T/TFMJ; this table treats completed transfers and rounding charges as final. | `exhaustiveDrawChargesActiveFlowerPigsAndRefundsNotReadyKongs`, `exhaustiveChecksRetainReadyKongsAndDoNotRefundAlreadyTransferredIncome` |
+| MIL Art. 9; T/TFMJ 3.4, 9.4, 10.2.1(c) | All simultaneous winners retire. Three winners finish without draw checks. First winner deals next; simultaneous first winners select their supplier; no winner retains the dealer. | `multipleWinsKeepOnePhysicalTileAndFinishAtThree`, `thirdWinnerEndsWithoutDrawChecksOrKongRefundsEvenForTheLastNonReadyPlayer`, `firstWinnerDealsNextAndNoWinRetainsDealerWithFreshVoiding` |
+| MIL event-method provision; T/TFMJ 7.3.1–7.3.2 | The preset selects the eight-hand count-based match, with explicit `matchHands`. Decision clocks and result-reading time belong to the session. | `eightHandsRetainLedgerDerivedTotalsAndOnlyFinalHandEndsMatch`, `allHumanConfirmationsAdvanceOnceAndMatchEndIsTerminalForTheSession` |
+
+### Match and settlement boundaries
 
 `Tile.sichuanSet()` contains four physical copies of each suited kind, 108 in all.
 `SichuanDeck` admits a uniform subset from a single case without modifying it.
@@ -266,7 +286,8 @@ and kong only in the other suits, and requires the void suit to be cleared befor
 winning. Ordinary shapes use the existing library's common-hand analysis; Sichuan
 seven pairs, roots, fan and ready-value interpretation belong to `SichuanHandAnalyzer`.
 
-`SichuanGame` follows `VOIDING → TURN ↔ REACTION → HAND_END`. Reactions collect
+`SichuanGame` follows `VOIDING → TURN ↔ REACTION → HAND_END`, with the final hand
+entering `MATCH_END`. Reactions collect
 each eligible player's response under one decision token and resolve all winning
 claims together. The last winning claimant owns the one physical discard;
 earlier winners retain an immutable winning-tile reference. Winners retire from
@@ -275,21 +296,42 @@ winner. Three winners finish the hand; wall exhaustion runs flower-pig and
 maximum-ready-value checks for the remaining players.
 
 `SichuanSettlement` retains scored wins and ordered transfers for self-draw,
-discard wins, kongs, linked kong refunds and ready payments. `FLOWER_PIG` records
+discard wins, kongs, linked call transfers, rounding supplements, refunds and
+ready payments. `FLOWER_PIG` records
 the competition deduction with recipient `-1`, rather than transferring penalty
 points to opponents. The baseline deducts 24 points for an active flower pig;
 a passive flower pig participates in draw checks as not ready. Ordinary payments
 balance across players, while competition deductions reduce the table total.
-The completed result derives deltas from the retained ledger.
+The completed result derives deltas from the retained ledger. Match scores derive
+from completed-hand ledgers and the current live ledger, with no independent
+mutable score balance. Hand records preserve the dealer, scored result and ledger.
+`adjudicateActiveFlowerPig` is a server/referee operation requiring an observed
+violation; its ledger deduction preserves the sanction even after the suit clears.
+
+`SichuanSession` stays `PLAYING` at `HAND_END`, retaining the result while waiting
+for `confirmNextHand` from all four authenticated, correctly mounted humans or a
+200-tick reading period. Exit votes and absence pause this period. Advancement
+calls `SichuanGame.nextHand`, determines the next dealer, shuffles from the saved
+future seed, deals in dealer order and enters fresh simultaneous `VOIDING`.
+Clocks replenish per-hand reserves at that boundary. Confirmations use session
+lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room to
+`FINISHED`.
 
 `SichuanCodec` encodes explicit game/session saves separately from recipient views,
 requiring complete typed records and bounding size and nesting. Restoration checks
 all 108 physical identities, melds, pending reactions, winner scores and payment
-links, then refreshes decision and incarnation authority. Partial declarations
-and reactions, front-wall cursor, clock reserves and kong context survive saves.
+links, then refreshes decision and incarnation authority. Game and session formats
+are 2, with complete typed fields, a 1 MiB document bound and sixteen nesting
+levels. Hand number, current dealer, completed ledgers, current result, future-wall
+seed, partial confirmations and remaining reading time survive saves. Restoration
+derives cumulative scores without paying again and validates the dealer chain.
+Partial declarations and reactions, front-wall cursor, clock reserves and the
+whole consecutive-kong context also survive saves.
 `SichuanView` hides opponent hands, private declarations and wall identities;
 concealed kongs show their middle tiles, and winning hands remain concealed until
-hand completion. A mounted authenticated participant receives only their own
+hand completion. The view publishes hand number, dealer and cumulative scores,
+keeping future seeds and concealed future wall identities private. A mounted
+authenticated participant receives only their own
 actions. `SichuanScreen` presents the shared lobby, private declarations, issued
 actions and the completed point result through the independent Sichuan protocol.
 
