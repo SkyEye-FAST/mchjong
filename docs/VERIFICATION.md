@@ -144,6 +144,21 @@ gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-a
 Inspect both selected captures in `fabric/build/smoke/mcr-auto-evidence/`
 and its fresh `PASS.txt` or `FAIL.txt` marker. Omit `smokeScreenshots` for an
 assertion-only run.
+`SichuanGameTest` owns suited-stock conservation, void-suit restrictions, multi-win
+blood battle, independent kong payments and refunds, flower-pig deductions,
+maximum ready payments, private views and explicit save/restore. Run
+`gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
+`PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
+The focused real-client Sichuan smoke checks three-way lobby selection, the
+108-tile subset, issued declaration packets, concealed views and NBT restoration:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --console=plain
+```
+
+Inspect the fresh marker in `fabric/build/smoke/sichuan-evidence`. This focused
+profile runs assertions without captures.
+
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,
