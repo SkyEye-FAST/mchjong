@@ -332,8 +332,14 @@ concealed kongs show their middle tiles, and winning hands remain concealed unti
 hand completion. The view publishes hand number, dealer and cumulative scores,
 keeping future seeds and concealed future wall identities private. A mounted
 authenticated participant receives only their own
-actions. `SichuanScreen` presents the shared lobby, private declarations, issued
-actions and the completed point result through the independent Sichuan protocol.
+actions. `SichuanLobbyScreen` owns room preparation; `SichuanTableScreen` owns
+private declarations and issued match actions. `SichuanResultsScreen` presents
+each completed hand through `SichuanResults`, consuming the authoritative ledger
+in order: win methods and fan patterns, kong payments, linked call transfers and
+top-ups, refunds, ready checks and flower-pig deductions. It displays both the
+hand delta and cumulative score. `HAND_END` provides an authenticated next-hand
+button, confirmation count and paused-aware reading countdown; `MATCH_END`
+provides eight-hand cumulative standings and the issued return-to-lobby control.
 
 ### Shared rooms and rule sessions
 
@@ -397,8 +403,11 @@ NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 `McrActionPayload` and `SichuanActionPayload` carry only their respective issued
 match-action indices. Lobby selectors share `variant.mchjong.*` labels and divide
 their available width across the built-in variants.
-`McrNextHandPayload` carries MCR completed-hand confirmation separately; the
-server resolves the acting seat from the authenticated sender.
+`McrNextHandPayload` and `SichuanNextHandPayload` carry their respective
+completed-hand confirmations separately from gameplay actions. `TableNetworking`
+and `MahjongTableBlockEntity` verify reach, table, incarnation and decision, then
+resolve the acting seat from the authenticated sender. Duplicate confirmations
+do not change the count or deadline.
 `RiichiViewPayload`, `McrViewPayload` and `SichuanViewPayload` carry the public
 `TableRoomView` alongside their rule-specific recipient-safe projections.
 All three view payloads send the last-player leave decision directly to its
@@ -406,8 +415,29 @@ unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
-`RiichiLobby`, `McrLobbyScreen` and `SichuanScreen` share room-control lookup and sending while
+`RiichiLobby`, `McrLobbyScreen` and `SichuanLobbyScreen` share room-control lookup and sending while
 retaining their own rule settings. Match and settlement screens remain separate.
+
+### Sichuan physical presentation
+
+`SichuanTableScene` owns the 108-slot wall with fourteen stacks at even seats and
+thirteen at odd seats, compact unclaimed rivers, flat meld rails and source hand
+indices. Its geometry is independent of Riichi player-count layouts. Public
+discard-win aliases are grouped by supplier and physical tile for multi-win
+indicators; they do not duplicate the claimed tile in the scene.
+`SichuanSceneRenderer` renders these pieces with `SichuanDeck` appearance and the
+shared tile meshes and materials. `SichuanViewPayload` supplies that uniform case
+appearance and cloth alongside the redacted recipient view, not private stock.
+
+`SichuanTableScreen` composes `TableViewController`, `TableCanvas`, `SeatedCamera`
+and `TilePicking`. `SichuanImmersiveTable` adapts the same public poses to
+`ImmersiveTable` and `TableProjection`, with a recipient-only `TableHand` in the
+foreground. The persistent HUD shows hand number, dealer, cumulative scores,
+published void suits and winner status. Undeclared opponent choices remain
+pending, and winning opponent hands stay concealed until the hand ends. The
+renderer and results formatter consume only recipient-safe views.
+Lobby, table and hand-result screens share `TableExitControls` vote overlays;
+votes disable gameplay and next-hand confirmation while the session is paused.
 
 ### MCR physical presentation
 
@@ -607,7 +637,7 @@ The seated overlays project the actual 3D table, with `TableSettings` supplying
 the matching eye and FOV to world rendering and picking. `SeatedCameraState` owns
 seat-local distance, height, yaw/pitch, target translation and interpolated inspect
 progress. `SeatedCamera` bridges native free look and the loader tick lifecycle.
-`RiichiTableScreen` and `McrTableScreen` compose `TableViewController`, which owns
+`RiichiTableScreen`, `McrTableScreen` and `SichuanTableScreen` compose `TableViewController`, which owns
 view mode, inspect/reset, held arrows, right-drag look/pan and wheel distance/height.
 Each screen controls when switching is allowed and retains its own actions, HUD,
 hand selection and settlement. `TableKeys` supplies registered, rebindable actions;
@@ -618,7 +648,8 @@ so rendering and pointer input use the same coordinates.
 `ImmersiveTable` owns tile solids, material/artwork lookup, contact shadows and
 depth painting through `TableProjection`. `RiichiImmersiveTable` owns Riichi rails,
 rivers, extracted norths, center device and draw/discard motion;
-`McrImmersiveTable` owns the MCR scene adapter. Both compose the same primitives.
+`McrImmersiveTable` and `SichuanImmersiveTable` own their rule-specific scene
+adapters. All three compose the same primitives.
 `RiichiBoard` supplies Riichi information and animation anchors, including the
 separate flat replay layout. `TableHand`, `TileMesh` and `TilePicking` retain their
 shared hand, mesh and intersection responsibilities. Riichi scene, animation,

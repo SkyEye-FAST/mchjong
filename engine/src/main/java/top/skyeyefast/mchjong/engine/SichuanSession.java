@@ -151,6 +151,11 @@ public final class SichuanSession extends TableSession {
     }
     public record View(UUID tableId, UUID incarnation, long revision, boolean paused, List<TimeControl.Clock> clocks,
                        int confirmed, int settlementTicks, SichuanView game) {
+        public boolean canConfirmNextHand() {
+            return !paused && game.phase() == SichuanGame.Phase.HAND_END && game.viewerSeat() >= 0
+                && (confirmed & (1 << game.viewerSeat())) == 0;
+        }
+        public int confirmedCount() { return Integer.bitCount(confirmed); }
         public View {
             Objects.requireNonNull(tableId); Objects.requireNonNull(incarnation); Objects.requireNonNull(game);
             clocks = List.copyOf(clocks);

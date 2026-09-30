@@ -14,6 +14,7 @@ public record SichuanDeck(TileMaterial material, DyeColor back, TileFacePreset p
         Objects.requireNonNull(material); Objects.requireNonNull(preset); Objects.requireNonNull(backPreset);
     }
     public List<Integer> tiles() { return Tile.sichuanSet(); }
+    public TileData tile(int id) { return new TileData(Tile.kind(id), material, false); }
     public static SichuanDeck select(ItemStack box) {
         if (!MahjongSupplies.validBox(box)) return null;
         var stocks = new LinkedHashMap<SichuanDeck, int[]>();

@@ -25,6 +25,11 @@ public final class TilePicking {
             piece.scale(), origin, direction, lifted, 0);
     }
 
+    public static double distanceSquared(SichuanTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0,
+            piece.scale(), origin, direction, lifted, 0);
+    }
+
     private static double distanceSquared(Vec3 position, float yaw, float pitch, float scale,
                                           Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var inverse = new Matrix4f().translation((float) position.x,

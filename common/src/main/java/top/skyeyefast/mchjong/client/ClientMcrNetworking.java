@@ -31,7 +31,7 @@ public final class ClientMcrNetworking {
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.mcrLobby() != null
                 && clock.mcrLobby().tablePos().equals(payload.pos())) return;
             if (payload.open() || showing
-                || client.screen instanceof SichuanScreen screen && screen.tablePos().equals(payload.pos())
+                || client.screen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())
                 || RiichiTableScreen.active(client.screen) != null
                     && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos())) {
                 if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();

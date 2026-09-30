@@ -16,7 +16,7 @@ public final class ClientSichuanNetworking {
         if ((room.lifecycle() == TableSession.Lifecycle.LOBBY) != (view == null)
             || view != null && (!view.tableId().equals(room.tableId()) || !view.incarnation().equals(room.incarnation())
                 || view.game().viewerSeat() != room.viewerSeat())) return;
-        table.acceptSichuanView(view, room, payload.timeControl());
+        table.acceptSichuanView(view, room, payload.deck(), payload.cloth(), payload.timeControl());
         if (table.clientTableRoom() != room) return;
         if (payload.leaveDecision()) {
             if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())))
@@ -24,11 +24,27 @@ public final class ClientSichuanNetworking {
             return;
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())) client.setScreen(null);
-        if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.sichuanScreen() != null
-            && clock.sichuanScreen().tablePos().equals(payload.pos())) return;
-        if (client.screen instanceof SichuanScreen screen && screen.tablePos().equals(payload.pos())) screen.receivedView();
-        else if (payload.open() || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || RiichiTableScreen.active(client.screen) != null && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos()))
-            client.setScreen(new SichuanScreen(payload.pos()));
+        var active = SichuanTableScreen.active(client.screen);
+        boolean showing = active != null && active.tablePos().equals(payload.pos())
+            || client.screen instanceof SichuanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+            || client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos());
+        if (view == null) {
+            if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.sichuanScreen() != null
+                && clock.sichuanScreen().tablePos().equals(payload.pos())) return;
+            if (payload.open() || showing || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+                || RiichiTableScreen.active(client.screen) != null && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos())) {
+                if (client.screen instanceof SichuanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();
+                else client.setScreen(new SichuanLobbyScreen(payload.pos()));
+            }
+            return;
+        }
+        if (!payload.open() && !showing) return;
+        if (view.game().result() != null) {
+            if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
+            else client.setScreen(new SichuanResultsScreen(payload.pos(), active != null && active.immersive()));
+        } else if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();
+        else if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos()))
+            client.setScreen(new SichuanTableScreen(payload.pos(), results.immersive()));
+        else client.setScreen(new SichuanTableScreen(payload.pos()));
     }
 }

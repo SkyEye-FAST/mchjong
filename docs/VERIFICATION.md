@@ -151,15 +151,23 @@ private views and explicit save/restore. The clause mapping is in
 [Sichuan match orchestration](ARCHITECTURE.md#sichuan-sbr-match-orchestration). Run
 `gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
 `PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
+`SichuanPresentationTest` owns the 108-slot physical layout, recipient-safe scene
+projection, multi-win aliases and faithful result-ledger formatting. Run
+`gradlew.bat :fabric:test --tests "*SichuanPresentationTest" --warning-mode fail --console=plain`.
 The focused real-client Sichuan smoke checks three-way lobby selection, the
-108-tile subset, issued declaration packets, concealed views and NBT restoration:
+108-tile subset, private declarations, NBT restoration, seated and immersive
+physical-tile selection and discard, exit
+voting, result screens, duplicate confirmation packets, next-hand privacy,
+eight-hand completion and return to the lobby:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --console=plain
 ```
 
 Inspect the fresh marker in `fabric/build/smoke/sichuan-evidence`. This focused
-profile runs assertions without captures.
+profile runs assertions without captures. Add
+`-PsmokeScreenshots=sichuan-table.png,sichuan-results.png` to inspect only the
+affected table and hand-result states.
 
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.

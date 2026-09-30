@@ -22,7 +22,19 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         FurnitureMesh.table(pose, buffers, light, table.wood(), table.equipment().hasCloth() ? table.equipment().clothColor() : null,
             table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE));
         pose.popPose();
-        if (table.clientMcrView() != null && table.clientMcrDeck() != null) {
+        if (table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN) {
+            if (table.clientSichuanView() == null || table.clientSichuanDeck() == null) return;
+            var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);
+            var active = screen != null && screen.tablePos().equals(table.getBlockPos()) ? screen : null;
+            pose.pushPose();
+            pose.translate(.5, 0, .5);
+            SichuanSceneRenderer.render(SichuanTableScene.build(table.clientSichuanView().game()), table.clientSichuanDeck(),
+                pose, buffers, light, piece -> active == null ? 0 : active.highlight(piece),
+                piece -> active != null && active.selected(piece));
+            pose.popPose();
+            return;
+        }
+        if (table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR && table.clientMcrView() != null && table.clientMcrDeck() != null) {
             var screen = Minecraft.getInstance().screen instanceof McrTableScreen mcr
                 && mcr.tablePos().equals(table.getBlockPos()) ? mcr : null;
             pose.pushPose();

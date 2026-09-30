@@ -9,7 +9,7 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 
-/** Shared session exit controls for MCR room and match screens. */
+/** Shared session exit controls for rule-specific room and match screens. */
 final class TableExitControls {
     private TableExitControls() {}
 

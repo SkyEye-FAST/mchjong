@@ -40,6 +40,7 @@ public final class SeatedCamera {
         if (firstPerson) sync(seat);
         boolean inspect = firstPerson && (client.screen instanceof RiichiTableScreen table
             ? table.inspecting() : client.screen instanceof McrTableScreen mcr ? mcr.inspecting()
+            : client.screen instanceof SichuanTableScreen sichuan ? sichuan.inspecting()
             : client.screen == null && TableKeys.INSPECT.isDown());
         pose.tick(inspect);
         if (client.screen == null && firstPerson) {

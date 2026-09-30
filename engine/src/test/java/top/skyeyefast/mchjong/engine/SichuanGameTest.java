@@ -487,10 +487,23 @@ class SichuanGameTest {
         }
         assertEquals(TableSession.Lifecycle.PLAYING, session.lifecycle());
         var end = session.view(id(0));
+        assertTrue(end.canConfirmNextHand());
+        assertEquals(0, end.confirmedCount());
         var clocks = session.save().clocks();
         assertFalse(session.confirmNextHand(UUID.randomUUID(), session.tableId(), end.incarnation(), end.game().decision()));
         assertTrue(session.confirmNextHand(id(0), session.tableId(), end.incarnation(), end.game().decision()));
         assertFalse(session.confirmNextHand(id(0), session.tableId(), end.incarnation(), end.game().decision()));
+        assertFalse(session.view(id(0)).canConfirmNextHand());
+        assertEquals(1, session.view(id(1)).confirmedCount());
+        assertTrue(session.requestExit(id(1)));
+        assertFalse(session.view(id(2)).canConfirmNextHand());
+        assertFalse(session.confirmNextHand(id(2), session.tableId(), end.incarnation(), end.game().decision()));
+        int reading = session.view(id(0)).settlementTicks();
+        session.tick();
+        assertEquals(reading, session.view(id(0)).settlementTicks());
+        long vote = session.roomView(id(0)).exitVote().id();
+        assertTrue(session.answerExit(id(2), vote, false));
+        assertTrue(session.view(id(2)).canConfirmNextHand());
         for (int tick = 0; tick < 199; tick++) session.tick();
         assertEquals(clocks, session.save().clocks());
         var restored = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
@@ -532,6 +545,7 @@ class SichuanGameTest {
         }
         assertEquals(TableSession.Lifecycle.FINISHED, session.lifecycle());
         assertEquals(SichuanGame.Phase.MATCH_END, session.game().phase());
+        assertFalse(session.view(id(0)).canConfirmNextHand());
         assertFalse(session.confirmNextHand(id(0), session.tableId(), session.incarnation(), session.game().decision()));
         var completed = session.save().game(); session.tick(); assertEquals(completed, session.save().game());
         assertEquals(session.game().scores(), SichuanCodec.restoreSession(SichuanCodec.saveSession(session)).game().scores());

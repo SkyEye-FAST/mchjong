@@ -169,6 +169,18 @@ class ServerIntegrationTest {
                 UUID.randomUUID(), 9);
             top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.encode(buffer, lifecycle);
             assertEquals(lifecycle, top.skyeyefast.mchjong.network.McrNextHandPayload.CODEC.decode(buffer));
+            var sichuanConfirmation = new top.skyeyefast.mchjong.network.SichuanNextHandPayload(request.pos(), request.tableId(),
+                UUID.randomUUID(), 9);
+            top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.encode(buffer, sichuanConfirmation);
+            assertEquals(sichuanConfirmation, top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC.decode(buffer));
+            var sichuanRoom = new top.skyeyefast.mchjong.engine.SichuanSession(request.tableId(), 7);
+            var sichuanView = new top.skyeyefast.mchjong.network.SichuanViewPayload(request.pos(), "", sichuanRoom.roomView(null),
+                new top.skyeyefast.mchjong.item.SichuanDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
+                    net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN,
+                    net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
+                net.minecraft.world.item.DyeColor.CYAN, true, false, sichuanRoom.timeControl());
+            top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.encode(buffer, sichuanView);
+            assertEquals(sichuanView, top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.decode(buffer));
             var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
                 new top.skyeyefast.mchjong.engine.TableParticipant(UUID.randomUUID(), "Player " + seat)).toList();
             var session = top.skyeyefast.mchjong.engine.McrSession.start(request.tableId(), roster, 7,

@@ -27,6 +27,7 @@ public final class TableSettingsScreen extends Screen {
     }
     public RiichiTableScreen tableScreen() { return parent instanceof RiichiTableScreen table ? table : null; }
     public McrTableScreen mcrTableScreen() { return parent instanceof McrTableScreen table ? table : null; }
+    public SichuanTableScreen sichuanTableScreen() { return parent instanceof SichuanTableScreen table ? table : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
@@ -143,6 +144,7 @@ public final class TableSettingsScreen extends Screen {
     private void resetView() {
         if (parent instanceof RiichiTableScreen table) table.resetView();
         else if (parent instanceof McrTableScreen table) table.resetView();
+        else if (parent instanceof SichuanTableScreen table) table.resetView();
         else settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
     }
 

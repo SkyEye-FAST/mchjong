@@ -36,6 +36,9 @@ final class ForgeNetworking {
             .addMain(SichuanActionPayload.TYPE, SichuanActionPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
+            .addMain(SichuanNextHandPayload.TYPE, SichuanNextHandPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
+            })
             .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })

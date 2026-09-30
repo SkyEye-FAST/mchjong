@@ -16,6 +16,7 @@ public abstract class TableHudMixin {
     @Inject(method = "render", at = @At("HEAD"), cancellable = true)
     private void mchjong$tableHud(GuiGraphics graphics, DeltaTracker delta, CallbackInfo callback) {
         var screen = Minecraft.getInstance().screen;
-        if (RiichiTableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)) callback.cancel();
+        if (RiichiTableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)
+            || top.skyeyefast.mchjong.client.SichuanTableScreen.isOpen(screen)) callback.cancel();
     }
 }
