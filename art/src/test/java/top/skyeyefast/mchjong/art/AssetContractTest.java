@@ -117,6 +117,12 @@ class AssetContractTest {
                 if (i == 31 && (preset.equals("kansai") || preset.equals("kanto")))
                     assertTrue(Arrays.stream(tile.getRGB(8, 8, 240, 368, null, 0, 240))
                             .allMatch(pixel -> pixel == 0xffffffff), "White dragon remains blank");
+                else {
+                    var glyph = reference.glyph(i);
+                    long ink = Arrays.stream(glyph.getRGB(0, 0, 256, 384, null, 0, 256))
+                        .filter(pixel -> pixel >>> 24 >= 128).count();
+                    assertTrue(ink > 500 && ink < 256 * 384 / 2, preset + ": visible engraving without tile background on " + i);
+                }
             }
             assertEquals(45, hashes.size(), "Distinct numbered, honor, red and flower faces");
             assertTrue(Arrays.stream(atlas.getRGB(2016, 4064, 32, 32, null, 0, 32))
@@ -200,6 +206,13 @@ class AssetContractTest {
                 Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
+        for (String preset : List.of("sichuan", "taiwan", "fujian")) {
+            var metadata = JsonParser.parseString(Files.readString(resources.resolve(
+                "META-INF/licenses/" + preset + "-source.json"))).getAsJsonObject().getAsJsonObject("details");
+            assertEquals("Cangjie6", metadata.getAsJsonObject("author").get("contributor").getAsString());
+            assertEquals("CC BY-SA 4.0", metadata.get("license").getAsString());
+            assertFalse(metadata.get("modifications").getAsString().isBlank());
+        }
     }
 
     @Test

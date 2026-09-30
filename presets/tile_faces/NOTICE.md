@@ -1,7 +1,8 @@
 # Native tile-face artwork
 
 The individual tile images and their metadata in `presets/tile_faces` are build-time inputs.
-MChjong composes all 45 faces into separate Kansai, Kanto and Hong Kong texture atlases
+MChjong composes all 45 faces into separate Kansai, Kanto, Sichuan, Hong Kong,
+Taiwan and Fujian texture atlases
 inside the mod. Players select them in the mahjong box; no resource-pack
 installation, extraction or download occurs at runtime.
 
@@ -34,13 +35,30 @@ The Hong Kong flower tiles (1q-8q) are derived from the I.Mahjong-HK font create
 
 Released under the M+ Fonts License.
 
+## Sichuan, Taiwan and Fujian
+
+The `source.jpg` files in `sichuan/`, `taiwan/` and `fujian/` are photographs by
+[Cangjie6](https://commons.wikimedia.org/wiki/User:Cangjie6):
+
+- Sichuan: [Mahjong eg Chongqing.jpg](https://commons.wikimedia.org/wiki/File:Mahjong_eg_Chongqing.jpg)
+- Taiwan: [Mahjong eg TW.jpg](https://commons.wikimedia.org/wiki/File:Mahjong_eg_TW.jpg)
+- Fujian: [Mahjong eg Amoy.jpg](https://commons.wikimedia.org/wiki/File:Mahjong_eg_Amoy.jpg)
+
+The photographs and MChjong's derived engravings are licensed under
+[Creative Commons Attribution-ShareAlike 4.0 International](https://creativecommons.org/licenses/by-sa/4.0/).
+MChjong crops the 34 ordinary faces and eight flower faces, removes the tile
+bodies and photographic backgrounds, resamples the engravings, and recolors
+the three fives to supply red variants. Backs and jokers are not extracted.
+These modifications retain the same license, independently of the code license.
+No endorsement by the photographer is implied.
+
 ## Flower numbering
 
 Kansai uses spring, summer, autumn, winter, plum, orchid, bamboo and
 chrysanthemum (1q-8q).
 Kanto keeps its four seasons followed by 福禄寿貴 (5q-8q), with matching
 localized names.
-Hong Kong uses the four seasons (春, 夏, 秋, 冬) followed by the four gentlemen
+Sichuan, Hong Kong, Taiwan and Fujian use the four seasons (春, 夏, 秋, 冬) followed by the four gentlemen
 (梅, 蘭, 菊, 竹, 5q-8q), with matching localized names.
 All designs use their own supplied flower artwork.
 

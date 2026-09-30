@@ -39,7 +39,7 @@ allows it.
   lifecycle adapter and metadata in its own `src/smoke`.
 * `common/src/ponderData`: shared native-NBT Ponder generator source, compiled
   independently by both loader projects.
-* `art`: deterministic packing of native face-preset images, client model
+* `art`: deterministic extraction and packing of native face-preset images, client model
   descriptors, plus a separate server-data generator. Source-image resampling
   runs at build time; each supplied atlas includes its eight flower designs.
 

@@ -1,0 +1,19 @@
+{
+  "id": "sichuan",
+  "name": {
+    "zh-CN": "四川",
+    "zh-TW": "四川",
+    "ja-JP": "四川",
+    "en-US": "Sichuan"
+  },
+  "details": {
+    "author": {
+      "contributor": "Cangjie6"
+    },
+    "description": "https://commons.wikimedia.org/wiki/File:Mahjong_eg_Chongqing.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "modifications": "Cropped printed faces, removed tile bodies and photographic background, resampled engravings, and recolored the three red fives."
+  },
+  "sourceImage": "source.jpg"
+}

@@ -65,8 +65,7 @@ public final class TileFacePresets {
             try (var reader = resource.openAsReader()) {
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
                 var id = new TileFacePreset(ResourceLocation.fromNamespaceAndPath(path.getNamespace(), name));
-                if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)
-                    && !id.equals(TileFacePreset.HONG_KONG)) return;
+                if (!TileFacePreset.BUILTINS.contains(id)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
                 Definition definition = new Definition(ResourceLocation.parse(json.get("atlas").getAsString()),
                     ResourceLocation.parse(json.get("glyphs").getAsString()));
@@ -210,7 +209,11 @@ public final class TileFacePresets {
         var merged = new HashMap<>(local);
         merged.putAll(server);
         definitions = Map.copyOf(merged);
-        choices = merged.keySet().stream().sorted(java.util.Comparator.comparing(TileFacePreset::getSerializedName)).toList();
+        choices = merged.keySet().stream().sorted(java.util.Comparator
+            .comparingInt((TileFacePreset id) -> {
+                int index = TileFacePreset.BUILTINS.indexOf(id);
+                return index < 0 ? TileFacePreset.BUILTINS.size() : index;
+            }).thenComparing(TileFacePreset::getSerializedName)).toList();
         TileRenderTypes.reload();
     }
 }

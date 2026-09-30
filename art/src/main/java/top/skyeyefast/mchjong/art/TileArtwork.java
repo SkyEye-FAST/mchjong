@@ -14,7 +14,7 @@ import javax.imageio.ImageIO;
  * layout.
  */
 final class TileArtwork {
-    static final List<String> PRESETS = List.of("kansai", "kanto", "hong_kong");
+    static final List<String> PRESETS = List.of("kansai", "kanto", "sichuan", "hong_kong", "taiwan", "fujian");
     static final int WIDTH = 256, HEIGHT = 384, ATLAS_WIDTH = 2048, ATLAS_HEIGHT = 4096;
     static final int FACE_COUNT = 45, BACK = 0;
     static final List<String> FACE_KEYS = List.of(
@@ -35,7 +35,15 @@ final class TileArtwork {
         this.preset = preset;
         Path directory = presets.resolve(preset);
         Path tilesDir = directory.resolve("tiles");
+        BufferedImage photograph = switch (preset) {
+            case "sichuan", "taiwan", "fujian" -> ImageIO.read(directory.resolve("source.jpg").toFile());
+            default -> null;
+        };
         for (int face = 0; face < FACE_COUNT; face++) {
+            if (photograph != null) {
+                engravings[face] = PhotographedTiles.extract(photograph, face);
+                continue;
+            }
             String key = FACE_KEYS.get(face);
             Path tilePath = tilesDir.resolve(key + ".png");
             if (Files.exists(tilePath)) {

@@ -11,10 +11,14 @@ Each output is synchronized independently with the current generator results.
 
 ## Tile faces
 
-The 45 faces use the individual PNG source tiles under
-`presets/tile_faces/kanto/tiles/`, `presets/tile_faces/kansai/tiles/` and
-`presets/tile_faces/hong_kong/tiles/`, assigned to Kanto, Kansai and Hong Kong
-respectively.
+Each preset supplies 45 faces. Kansai, Kanto and Hong Kong use individual PNG
+source tiles under their `presets/tile_faces/<preset>/tiles/` directories.
+Sichuan, Taiwan and Fujian use `source.jpg` in their respective directories;
+`PhotographedTiles` extracts the printed faces, removes the photographic tile
+backgrounds and derives red fives at build time. The source photographs remain
+build inputs, while the generated atlases ship in the mod.
+The selector lists Kansai and Kanto first, followed by Sichuan, Hong Kong, Taiwan
+and Fujian; custom entries follow in persistent-ID order.
 `TileArtwork` maps their transparent engravings to runtime
 cells, including all three red fives, preserving proportions and antialiased
 edges. Built-in designs are ordinary mod resources selected in the mahjong
@@ -24,19 +28,21 @@ Source metadata and [the artwork notice](../presets/tile_faces/NOTICE.md) ship
 under `META-INF/licenses/`. The supplied Kansai metadata identifies
 lietxia (M+ Fonts License). None of the presets are relicensed under the repository's code license.
 
-`assets/mchjong/textures/tiles.png` (Kansai), `kanto/tiles.png` and
-`hong_kong/tiles.png` are 2048 by 4096 atlases, eight cells per row, each with
+`assets/mchjong/textures/tiles.png` (Kansai) and each other preset's
+`<preset>/tiles.png` are 2048 by 4096 atlases, eight cells per row, each with
 a matching `tile_glyphs.png` transparent engraving atlas in the same directory.
 Cells 0-26 are 1-9 characters, circles and bamboo; 27-33 are East, South, West,
 North, white, green and red dragon. Cells 34-36 are the three red fives in suit
 order. Cells 37-44 are numbered 1q-8q. Kansai uses spring, summer, autumn,
 winter, plum, orchid, bamboo and chrysanthemum; Kanto uses the four seasons
-followed by fortune, prosperity, longevity and nobility (福禄寿貴); Hong Kong uses
+followed by fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
+Hong Kong, Taiwan and Fujian use
 the four seasons followed by plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 All faces preserve the supplied artwork and proportions.
 Physical component faces are 34-41, separate from engine wall tile IDs.
 The white dragon is intentionally blank for Japanese presets (Kansai and Kanto)
-and displays a framed engraving for Hong Kong. Name tooltips follow the stored preset.
+and displays each regional design's framed engraving for Sichuan, Hong Kong,
+Taiwan and Fujian. Name tooltips follow the stored preset.
 World, held-item and GUI renderers all use the selected design's atlas pair.
 Custom face presets are ZIP archives in `config/mchjong/presets/faces/` on a client
 or `config/mchjong/server-presets/faces/` on a server. Inside a ZIP,

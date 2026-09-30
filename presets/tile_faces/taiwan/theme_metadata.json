@@ -1,0 +1,19 @@
+{
+  "id": "taiwan",
+  "name": {
+    "zh-CN": "台湾",
+    "zh-TW": "臺灣",
+    "ja-JP": "台湾",
+    "en-US": "Taiwan"
+  },
+  "details": {
+    "author": {
+      "contributor": "Cangjie6"
+    },
+    "description": "https://commons.wikimedia.org/wiki/File:Mahjong_eg_TW.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "modifications": "Cropped printed faces, removed tile bodies and photographic background, resampled engravings, and recolored the three red fives."
+  },
+  "sourceImage": "source.jpg"
+}

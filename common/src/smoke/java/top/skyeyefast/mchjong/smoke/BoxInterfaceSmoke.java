@@ -46,7 +46,10 @@ final class BoxInterfaceSmoke {
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         if (reagentStage > 0) return reagents(client, output, menu);
         var choices = top.skyeyefast.mchjong.client.TileFacePresets.choices();
-        var preset = choices.get(sample % choices.size());
+        var builtins = top.skyeyefast.mchjong.item.TileFacePreset.BUILTINS;
+        require(choices.stream().filter(builtins::contains).toList().equals(builtins), "Built-in face preset order changed");
+        var preset = sample == 0 ? top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN
+            : top.skyeyefast.mchjong.item.TileFacePreset.KANTO;
         if (!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset)) {
             require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())

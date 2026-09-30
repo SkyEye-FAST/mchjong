@@ -1,0 +1,19 @@
+{
+  "id": "fujian",
+  "name": {
+    "zh-CN": "福建",
+    "zh-TW": "福建",
+    "ja-JP": "福建",
+    "en-US": "Fujian"
+  },
+  "details": {
+    "author": {
+      "contributor": "Cangjie6"
+    },
+    "description": "https://commons.wikimedia.org/wiki/File:Mahjong_eg_Amoy.jpg",
+    "license": "CC BY-SA 4.0",
+    "licenseUrl": "https://creativecommons.org/licenses/by-sa/4.0/",
+    "modifications": "Cropped printed faces, removed tile bodies and photographic background, resampled engravings, and recolored the three red fives."
+  },
+  "sourceImage": "source.jpg"
+}
