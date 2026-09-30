@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Redraw Kanto, Sichuan and Fujian tile faces, recolor Taiwan vector glyphs, and supply the regional presets as individual transparent PNG engravings for the shared atlas generator.
 - Share the immersive canvas and seated camera controls between Riichi and MCR, with separate rule-specific scenes and explicitly named Riichi presentation components.
 - Share exit voting and paused-match leave confirmation between Riichi and MCR, with explicitly named rule-specific network protocols and Riichi state.
 - Keep Riichi lobby settings outside match views, name rule-specific state explicitly, and give MCR independent player persistence.

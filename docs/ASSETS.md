@@ -11,12 +11,9 @@ Each output is synchronized independently with the current generator results.
 
 ## Tile faces
 
-Each preset supplies 45 faces. Kansai, Kanto and Hong Kong use individual PNG
-source tiles under their `presets/tile_faces/<preset>/tiles/` directories.
-Sichuan, Taiwan and Fujian use `source.jpg` in their respective directories;
-`PhotographedTiles` extracts the printed faces, removes the photographic tile
-backgrounds and derives red fives at build time. The source photographs remain
-build inputs, while the generated atlases ship in the mod.
+Each preset supplies 45 individual transparent PNG engravings under
+`presets/tile_faces/<preset>/tiles/`. These prepared tile images are the build
+inputs, while the generated atlases ship in the mod.
 The selector lists Kansai and Kanto first, followed by Sichuan, Hong Kong, Taiwan
 and Fujian; custom entries follow in persistent-ID order.
 `TileArtwork` maps their transparent engravings to runtime

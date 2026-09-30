@@ -35,15 +35,7 @@ final class TileArtwork {
         this.preset = preset;
         Path directory = presets.resolve(preset);
         Path tilesDir = directory.resolve("tiles");
-        BufferedImage photograph = switch (preset) {
-            case "sichuan", "taiwan", "fujian" -> ImageIO.read(directory.resolve("source.jpg").toFile());
-            default -> null;
-        };
         for (int face = 0; face < FACE_COUNT; face++) {
-            if (photograph != null) {
-                engravings[face] = PhotographedTiles.extract(photograph, face);
-                continue;
-            }
             String key = FACE_KEYS.get(face);
             Path tilePath = tilesDir.resolve(key + ".png");
             if (Files.exists(tilePath)) {
