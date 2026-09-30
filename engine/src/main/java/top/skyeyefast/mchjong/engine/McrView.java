@@ -17,7 +17,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
         seats = List.copyOf(seats);
         actions = List.copyOf(actions);
         penalties = List.copyOf(penalties);
-        if (revision < 1 || decision < 1 || handNumber < 1 || handNumber > 16 || viewerSeat < -1 || viewerSeat > 3
+        if (revision < 1 || decision < 1 || handNumber < 1 || handNumber > 16 || viewerSeat < -2 || viewerSeat > 3
             || dealer != (handNumber - 1) % 4 || opening.dealer() != dealer || roundWind != Tile.EAST + (handNumber - 1) / 4
             || turn < 0 || turn > 3 || remaining < 0 || remaining > 91
             || seats.size() != 4 || wall.size() != 144 || actions.size() > 32 || penalties.size() > 64)
@@ -44,7 +44,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             var player = seats.get(seat);
             if (player.wind() != Tile.EAST + Math.floorMod(seat - dealer, 4))
                 throw new IllegalArgumentException("MCR view winds disagree with the dealer");
-            boolean visible = seat == viewerSeat || seat == winner;
+            boolean visible = viewerSeat == -2 || seat == viewerSeat || seat == winner;
             if (visible ? player.hand().contains(Tile.HIDDEN) || player.drawn() == Tile.HIDDEN
                 : player.hand().stream().anyMatch(tile -> tile != Tile.HIDDEN) || player.drawn() >= 0)
                 throw new IllegalArgumentException("MCR concealed hand escaped recipient filtering");
@@ -94,12 +94,12 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
     }
 
     static McrView project(McrGame game, int viewerSeat, boolean allowActions) {
-        if (viewerSeat < -1 || viewerSeat > 3) throw new IllegalArgumentException("Invalid MCR viewer seat");
+        if (viewerSeat < -2 || viewerSeat > 3) throw new IllegalArgumentException("Invalid MCR viewer seat");
         int winner = game.result() instanceof McrSettlement.Win win ? win.winner() : -1;
         boolean ended = game.phase() == McrGame.Phase.HAND_END || game.phase() == McrGame.Phase.MATCH_END;
         var seats = new ArrayList<Seat>(4);
         for (int seat = 0; seat < 4; seat++) {
-            boolean visible = seat == viewerSeat || seat == winner;
+            boolean visible = viewerSeat == -2 || seat == viewerSeat || seat == winner;
             var hand = game.hand(seat);
             var melds = new ArrayList<Meld>();
             for (var meld : game.melds(seat)) melds.add(meld.closed() && !visible && !ended
@@ -112,7 +112,7 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             ? new Focus(game.claimFrom(), game.claimTile(), game.robbingKong()) : null;
         return new McrView(game.revision(), game.decision(), game.handNumber(), game.phase(), viewerSeat,
             game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.opening(), game.publicWall(), focus, seats,
-            viewerSeat == -1 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat != -1 && game.responded(viewerSeat),
+            viewerSeat < 0 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat >= 0 && game.responded(viewerSeat),
             viewerSeat >= 0 && allowActions && game.actions(viewerSeat).stream().anyMatch(action -> action.type() == McrAction.Type.WIN)
                 && game.score(viewerSeat).meetsMinimum(), game.result(), game.penalties());
     }

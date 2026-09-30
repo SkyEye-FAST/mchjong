@@ -72,6 +72,7 @@ final class TableHost {
         // Completed side effects must be acknowledged before releasing their owning runtime.
         if (session instanceof RiichiSession riichi && (!riichi.pendingReplays().isEmpty() || !riichi.pendingExperience().isEmpty()))
             return false;
+        if (session instanceof McrSession mcr && !mcr.pendingReplays().isEmpty()) return false;
         TableSession replacement = session.selectVariant(actor, decision, variant);
         if (replacement == null) return false;
         session = replacement;

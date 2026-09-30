@@ -26,6 +26,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Record native MCR replays with physical openings, authoritative decisions, penalties and settlement, and play them back on the MCR table through the shared archive.
 - Add a built-in MCR Bot through shared room controls, supporting one human and three Bots through a complete sixteen-hand match with private-view decisions and persistent server scheduling.
 - Add configurable MCR action clocks, safe timeout defaults, automatic draws and flower replacement, and timed hand confirmation with exact countdown restoration.
 - Add seated and immersive MCR play with physical hand selection, shared camera controls and localized actions and fan names in all four languages.

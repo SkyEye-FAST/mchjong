@@ -57,8 +57,8 @@ final class ReplaySmoke {
         } else if (stage == 2 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
             require(replay.match().equals(match), "Replay transport changed the record");
             require(replay.cursor() == 0, "Replay did not start at the initial deal");
-            require(Tile.validSet(match.hands().getFirst().wall().tiles()), "Replay transfer lost the physical wall");
-            require(!match.hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
+            require(Tile.validSet(match.riichi().hands().getFirst().wall().tiles()), "Replay transfer lost the physical wall");
+            require(!match.riichi().hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
             checkBounds(client);
             capture(client,output,"20-replay-initial.png");
             replay.keyPressed(GLFW.GLFW_KEY_RIGHT_BRACKET,0,0);
@@ -85,7 +85,7 @@ final class ReplaySmoke {
             var json = com.google.gson.JsonParser.parseString(Files.readString(file)).getAsJsonObject();
             require(json.get("ver").getAsString().equals("2.3"), "Export has the wrong format");
             require(json.get("ref").getAsString().equals(match.id().toString()), "Export has the wrong match identity");
-            require(json.getAsJsonArray("log").size() == match.hands().size(), "Export is incomplete");
+            require(json.getAsJsonArray("log").size() == match.handCount(), "Export is incomplete");
             require(!json.has("seed") && !json.has("recorder"), "Export contains live internal state");
             ClientReplays.list(0, "Replay player", true);
             stage = 6; ticks = 0;

@@ -29,6 +29,8 @@ public final class McrGame {
     private boolean drawWallLast;
     private McrWinContext.KongWin drawKong = McrWinContext.KongWin.NONE;
     private McrSettlement.Result result;
+    private List<Integer> initialWall;
+    private List<List<Integer>> initialHands;
 
     public McrGame(long seed) { this(seed, new McrWall(seed)); }
 
@@ -43,6 +45,21 @@ public final class McrGame {
     private McrGame(long seed, McrWall wall) {
         this.seed = seed;
         startHand(wall);
+    }
+
+    /** Rebuilds one archived hand from its sealed opening, without a future-wall seed. */
+    static McrGame replayHand(int number, List<Integer> layout, McrOpening opening, List<Integer> points) {
+        if (number < 1 || number > 16 || points.size() != 4 || opening.dealer() != (number - 1) % 4)
+            throw new IllegalArgumentException("Invalid MCR replay opening");
+        var game = new McrGame(0, number - 1, layout, opening, points);
+        return game;
+    }
+
+    private McrGame(long seed, int index, List<Integer> layout, McrOpening opening, List<Integer> points) {
+        this.seed = seed;
+        handIndex = index;
+        for (int seat = 0; seat < 4; seat++) players[seat].points = points.get(seat);
+        startHand(new McrWall(layout, opening));
     }
 
     private McrGame(McrGameState state) {
@@ -125,6 +142,9 @@ public final class McrGame {
 
     /** The host resolves the authorized seat. Use -1 for spectators; never pass a client-claimed seat. */
     public McrView view(int viewerSeat) { return McrView.project(this, viewerSeat); }
+    McrView replayView() { return McrView.project(this, -2); }
+    List<Integer> initialWall() { return initialWall; }
+    List<List<Integer>> initialHands() { return initialHands; }
 
     List<Integer> publicWall() { return wall.tiles().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(); }
     boolean responded(int seat) { checkSeat(seat); return replies[seat] != null; }
@@ -174,6 +194,7 @@ public final class McrGame {
 
     private void startHand(McrWall nextWall) {
         wall = Objects.requireNonNull(nextWall);
+        initialWall = wall.tiles();
         for (var player : players) player.resetHand();
         Arrays.fill(winForbidden, false);
         result = null;
@@ -190,6 +211,7 @@ public final class McrGame {
             players[take.seat()].hand.add(tile);
             if (take.seat() == dealer()) players[dealer()].drawn = tile;
         }
+        initialHands = Arrays.stream(players).map(player -> List.copyOf(player.hand)).toList();
         // Expose flowers in their public area; each owner explicitly takes their tail replacements.
         for (var player : players) {
             for (int tile : List.copyOf(player.hand)) if (Tile.isFlower(tile)) {

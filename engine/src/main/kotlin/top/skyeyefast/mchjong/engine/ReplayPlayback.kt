@@ -1,5 +1,8 @@
 package top.skyeyefast.mchjong.engine
 
+private val ReplayMatch.rules: RiichiRules get() = requireNotNull(riichi).rules
+private val ReplayMatch.hands: List<ReplayHand> get() = requireNotNull(riichi).hands
+
 /** A read-only timeline. It never sends game actions or exposes any still-playing hand. */
 object ReplayPlayback {
     @JvmRecord

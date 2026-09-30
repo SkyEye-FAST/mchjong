@@ -11,6 +11,8 @@ import net.minecraft.network.chat.Component;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
+import top.skyeyefast.mchjong.engine.MahjongVariant;
+import top.skyeyefast.mchjong.engine.McrReplayPlayback;
 import top.skyeyefast.mchjong.engine.TenhouReplay;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
@@ -41,10 +43,14 @@ public final class ClientReplays {
                 client.setScreen(new ReplayBrowserScreen(parent, index));
             } else {
                 var match = TableNetworking.JSON.fromJson(completed.text(), ReplayMatch.class);
-                if (match == null || match.hands().isEmpty()) throw new IllegalArgumentException("Empty replay");
+                if (match == null || match.handCount() == 0) throw new IllegalArgumentException("Empty replay");
                 // Compile and validate every completed hand before user-controlled seeking can render it.
-                for (int hand = 0; hand < match.hands().size(); hand++) ReplayPlayback.timeline(match, hand);
-                client.setScreen(new ReplayScreen(client.screen, match));
+                for (int hand = 0; hand < match.handCount(); hand++) {
+                    if (match.variant() == MahjongVariant.MCR) McrReplayPlayback.timeline(match, hand);
+                    else ReplayPlayback.timeline(match, hand);
+                }
+                client.setScreen(match.variant() == MahjongVariant.MCR
+                    ? new McrReplayScreen(client.screen, match) : new ReplayScreen(client.screen, match));
             }
         } catch (RuntimeException failure) {
             TRANSFER.reset();
@@ -75,6 +81,7 @@ public final class ClientReplays {
     }
 
     public static Path export(ReplayMatch match) throws IOException {
+        if (match.variant() != MahjongVariant.RIICHI) throw new IllegalArgumentException("Tenhou export requires Riichi");
         Path path = Minecraft.getInstance().gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id() + ".json");
         byte[] contents = TableNetworking.JSON.toJson(TenhouReplay.export(match)).getBytes(StandardCharsets.UTF_8);
         ReplayStore.atomicWrite(path, contents);

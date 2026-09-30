@@ -41,7 +41,7 @@ final class ReplayWallPanel extends AbstractWidget {
             width - 18, MahjongUi.MUTED, false);
 
         var wall = hand.wall();
-        int players = match.rules().players();
+        int players = match.riichi().rules().players();
         int stacksPerSide = wall.tiles().size() / (players * 2);
         int columns = width >= 250 ? 2 : 1;
         int rows = (players + columns - 1) / columns;

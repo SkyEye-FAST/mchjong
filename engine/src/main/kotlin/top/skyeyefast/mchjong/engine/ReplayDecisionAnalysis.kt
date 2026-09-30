@@ -2,6 +2,9 @@ package top.skyeyefast.mchjong.engine
 
 import java.util.HashSet
 
+private val ReplayMatch.rules: RiichiRules get() = requireNotNull(riichi).rules
+private val ReplayMatch.hands: List<ReplayHand> get() = requireNotNull(riichi).hands
+
 /** Shape-only replay analysis using information that was visible to the acting player at that decision. */
 object ReplayDecisionAnalysis {
     @JvmRecord

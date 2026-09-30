@@ -133,13 +133,15 @@ synchronized action clock and shared exit vote, then drives a
 physical hand selection, view switching, immersive click/confirmation, flower
 replacement and responses through the independent MCR view and action path, opens
 settlement and confirms the next hand. It also keeps a match paused after the
-last dismount and resumes it when everyone returns. On Fabric, run:
+last dismount and resumes it when everyone returns. It then fetches the sealed
+MCR replay and checks initial display, event stepping and viewpoint switching.
+On Fabric, run:
 
 ```text
-gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-auto-play.png,mcr-auto-immersive.png" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-auto-replay.png,mcr-auto-replay-settlement.png" --warning-mode fail --console=plain
 ```
 
-Inspect the two selected captures in `fabric/build/smoke/mcr-auto-evidence/`
+Inspect both selected captures in `fabric/build/smoke/mcr-auto-evidence/`
 and its fresh `PASS.txt` or `FAIL.txt` marker. Omit `smokeScreenshots` for an
 assertion-only run.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.

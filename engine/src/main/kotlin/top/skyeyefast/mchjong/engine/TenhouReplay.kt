@@ -2,6 +2,11 @@ package top.skyeyefast.mchjong.engine
 
 import java.time.Instant
 
+private val ReplayMatch.rules: RiichiRules get() = requireNotNull(riichi).rules
+private val ReplayMatch.hands: List<ReplayHand> get() = requireNotNull(riichi).hands
+private val ReplayMatch.initialDealer: Int get() = requireNotNull(riichi).initialDealer
+private val ReplayMatch.redFives: RedFives get() = requireNotNull(riichi).redFives
+
 /**
  * Tenhou /6 JSON interchange, mlog 2.3 (not compressed XML .mjlog).
  * Protocol reference: https://github.com/Equim-chan/tensoul/blob/main/convert.js
@@ -10,6 +15,7 @@ import java.time.Instant
 object TenhouReplay {
     @JvmStatic
     fun export(match: ReplayMatch): Map<String, Any> {
+        require(match.variant == MahjongVariant.RIICHI) { "Tenhou export requires a Riichi replay" }
         require(match.hands.isNotEmpty()) { "There are no completed hands to export" }
         val root = linkedMapOf<String, Any>()
         root["ver"] = "2.3"

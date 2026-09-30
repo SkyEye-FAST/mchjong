@@ -24,6 +24,7 @@ import java.util.stream.Collectors;
 /** Bounded MCR JSON boundaries. Gson and the private live game never cross the public API. */
 public final class McrCodec {
     private static final int MAX_CHARS = 65_536;
+    private static final int MAX_SESSION_CHARS = 8 * 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().disableJdkUnsafe().serializeNulls()
         .registerTypeAdapter(McrSettlement.Result.class, new ResultAdapter()).create();
 
@@ -31,11 +32,11 @@ public final class McrCodec {
 
     public static String save(McrGame game) { return encode(game.save()); }
 
-    public static String saveSession(McrSession session) { return encode(session.save()); }
+    public static String saveSession(McrSession session) { return encode(session.save(), MAX_SESSION_CHARS); }
 
     public static McrSession restoreSession(String json) {
         try {
-            return McrSession.restore(decode(json, McrSession.State.class));
+            return McrSession.restore(decode(json, McrSession.State.class, MAX_SESSION_CHARS));
         } catch (RuntimeException invalid) {
             throw new IllegalArgumentException("Invalid MCR session save", invalid);
         }
@@ -71,14 +72,18 @@ public final class McrCodec {
         }
     }
 
-    private static String encode(Object value) {
+    private static String encode(Object value) { return encode(value, MAX_CHARS); }
+
+    private static String encode(Object value, int limit) {
         String json = JSON.toJson(value);
-        if (json.length() > MAX_CHARS) throw new IllegalArgumentException("MCR data exceeds its size limit");
+        if (json.length() > limit) throw new IllegalArgumentException("MCR data exceeds its size limit");
         return json;
     }
 
-    private static <T> T decode(String json, Class<T> type) {
-        if (json == null || json.length() > MAX_CHARS) throw new IllegalArgumentException("Invalid MCR data size");
+    private static <T> T decode(String json, Class<T> type) { return decode(json, type, MAX_CHARS); }
+
+    private static <T> T decode(String json, Class<T> type, int limit) {
+        if (json == null || json.length() > limit) throw new IllegalArgumentException("Invalid MCR data size");
         validateDocument(json);
         try (var reader = new JsonReader(new StringReader(json))) {
             reader.setLenient(false);

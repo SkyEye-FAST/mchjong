@@ -12,8 +12,8 @@ class ReplayDecisionAnalysisTest {
     @Test void hiddenOpponentTilesNeverChangeVisibleCandidateCounts() {
         ReplayMatch hiddenWaits = fixture(true);
         ReplayMatch otherTiles = fixture(false);
-        var first = hiddenWaits.hands().getFirst().decisions().getFirst();
-        var second = otherTiles.hands().getFirst().decisions().getFirst();
+        var first = hiddenWaits.riichi().hands().getFirst().decisions().getFirst();
+        var second = otherTiles.riichi().hands().getFirst().decisions().getFirst();
         var hidden = ReplayDecisionAnalysis.analyze(hiddenWaits, 0, first).getFirst();
         var clear = ReplayDecisionAnalysis.analyze(otherTiles, 0, second).getFirst();
 
@@ -65,8 +65,8 @@ class ReplayDecisionAnalysisTest {
         var replayHand = new ReplayHand(1, 0, 0, 0, 0, List.of(25000,25000,25000,25000), hands,
             List.of(tile(Tile.WHITE, 0)), wall, events, decisions, seats, List.of(), "exhaustive",
             List.of(0,0,0,0), List.of(tile(Tile.WHITE,0)), List.of(), List.of(), List.of());
-        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, rules, 0, participants,
-            List.of(replayHand), false, rules.redFives());
+        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, participants, MahjongVariant.RIICHI, false,
+            new RiichiReplay(rules, 0, rules.redFives(), List.of(replayHand)), null);
     }
 
     private static ReplayWall wall(RiichiRules rules) {

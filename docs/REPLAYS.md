@@ -23,7 +23,8 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The viewer uses the same four-seat screen-space table layout as immersive play.
+The browser labels Riichi and MCR records separately. The Riichi viewer uses the
+same four-seat screen-space table layout as immersive play.
 The upper hand selector opens a scrollable list for direct hand selection; the
 viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
@@ -55,7 +56,14 @@ estimate.
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.
 
-Export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
+MCR replays open on the MCR table layout. Left/Right move between recorded
+events, Up/Down switch hands, and V rotates the viewpoint. The controls also
+step through events and change hands or viewpoint. The display reconstructs
+all four hands, rivers, melds and flower areas from the sealed physical opening
+and the server's issued and selected actions. Settlement shows the recorded
+fan, payments and wrong-win penalties.
+
+Riichi export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
 `<game directory>/replays/mchjong/<match UUID>.json`, using an atomic replacement.
 The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
@@ -63,15 +71,16 @@ and nothing is uploaded to an external service.
 
 ## Privacy and persistence
 
-The live table continues to send only recipient-redacted `RiichiView` snapshots.
-An independent server recorder stores initial hands, actual committed actions and
+Live tables continue to send recipient-redacted `RiichiView` and `McrView` snapshots.
+Independent server recorders store initial hands, actual committed actions and
 the legal choices selected at each game decision. Only when a hand settles is an
-immutable `ReplayHand` appended to its match. At that point the completed hand also
-seals its initial physical wall order, break position, replacement slots and
-indicator slots for post-game review. The replay archive never contains an active
-hand or RNG seed, and no complete future wall is sent through the live `RiichiView`
-channel. The server's normal private world save still retains the wall state needed
-to resume an unfinished game after a restart.
+immutable rule-specific hand record appended to its match. Riichi hands seal the
+initial physical wall order, break position, replacement slots and indicator
+slots. MCR hands seal all 144 physical wall slots, both dice rolls, the break,
+raw opening hands, flower replacements, actions, penalties and settlement. The
+archive contains completed hands without an RNG seed; live views never expose a
+future wall. Private table saves retain active recording state and queued
+completed hands across a restart.
 
 Server records live at `<world>/data/mchjong/replays/<match UUID>.json`.
 Small `by-player/<player UUID>/` indexes support browsing without exposing other

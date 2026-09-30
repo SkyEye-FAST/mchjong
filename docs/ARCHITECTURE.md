@@ -195,7 +195,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 5 and the session format is 6. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 5 and the session format is 7. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -295,7 +295,8 @@ state containing the common room record and its own match record when play has
 started. Runtime game objects are reconstructed by the owning session; participant
 identity lives only in the room record. Presence is reconstructed from live
 mounts after loading; a fresh incarnation and decision invalidate requests from
-before restoration.
+before restoration. The block entity stores the private session JSON as UTF-8
+NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 
 `TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`
 and `McrActionPayload` carry only their respective issued match-action indices.
@@ -729,9 +730,15 @@ completion callback. See `AUDIO.md` for the recording contract.
 ## Replay storage and export
 
 Replay recording and playback live in the Minecraft-independent engine.
+`ReplayMatch` holds shared identity, participants, variant, timestamps and
+completion state; `RiichiReplay` and `McrReplay` own independent completed-hand
+types. MCR records a complete physical opening and accepted server decisions,
+then reconstructs read-only event frames with the MCR game rules. A completed
+hand enters the existing archive queue once; the session save retains both
+unfinished recording state and unacknowledged completed archives.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
-The viewer never feeds recorded actions back into a live `RiichiGame`. `TenhouReplay`
-is the only export encoder; it consumes completed records and does not rerun
+The viewer never feeds recorded actions back into a live match. `TenhouReplay`
+consumes completed Riichi records and does not rerun
 scoring. See `REPLAYS.md` for the storage layout and interchange details.

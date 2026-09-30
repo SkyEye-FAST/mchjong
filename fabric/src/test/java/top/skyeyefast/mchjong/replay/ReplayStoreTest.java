@@ -13,6 +13,8 @@ import org.junit.jupiter.api.io.TempDir;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayWall;
+import top.skyeyefast.mchjong.engine.RiichiReplay;
+import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -39,8 +41,8 @@ class ReplayStoreTest {
         var records = IntStream.range(0, hands).mapToObj(number -> new ReplayHand(number + 1, 0, 0, number, 0,
             List.of(35000,35000,35000), dealt, List.of(132), wall, List.of(), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
-        return new ReplayMatch(id, new UUID(2, 1), 1, 2, RiichiPreset.TENHOU_3.config(), 0, players, records, false,
-            top.skyeyefast.mchjong.engine.RedFives.THREE);
+        return new ReplayMatch(id, new UUID(2, 1), 1, 2, players, MahjongVariant.RIICHI, false,
+            new RiichiReplay(RiichiPreset.TENHOU_3.config(), 0, top.skyeyefast.mchjong.engine.RedFives.THREE, records), null);
     }
 
     private ReplayWall wall() {
@@ -78,8 +80,8 @@ class ReplayStoreTest {
         store.save(match(id, 1));
         var earlier = store.load(owner, id);
         store.save(match(id, 2));
-        assertEquals(1, earlier.hands().size());
-        assertEquals(2, store.load(owner, id).hands().size());
+        assertEquals(1, earlier.handCount());
+        assertEquals(2, store.load(owner, id).handCount());
         assertEquals(2, store.list(owner, 0, "", false).matches().getFirst().hands());
         String text = Files.readString(directory.resolve(id + ".json"));
         assertFalse(text.contains("\"seed\""));
@@ -116,7 +118,7 @@ class ReplayStoreTest {
         restarted.save(match(original.id(), 2));
         assertTrue(restarted.list(owner, 0, "", false).matches().isEmpty());
         assertThrows(IOException.class, () -> restarted.load(owner, original.id()));
-        assertEquals(2, restarted.load(other, original.id()).hands().size());
+        assertEquals(2, restarted.load(other, original.id()).handCount());
         restarted.delete(other, original.id());
         assertFalse(Files.exists(directory.resolve(original.id() + ".json")), "Last reference releases the shared archive");
         restarted.save(match(original.id(), 3));
@@ -127,8 +129,8 @@ class ReplayStoreTest {
         var store = new ReplayStore(directory, json);
         for (int number = 0; number < 14; number++) {
             var value = match(new UUID(7, number), 1);
-            store.save(new ReplayMatch(value.id(), value.tableId(), 1, 20 + number, value.rules(), value.initialDealer(),
-                value.participants(), value.hands(), false, value.redFives()));
+            store.save(new ReplayMatch(value.id(), value.tableId(), 1, 20 + number, value.participants(),
+                value.variant(), false, value.riichi(), null));
         }
         assertEquals(new UUID(7, 13), store.list(owner, 0, "oWnEr", false).matches().getFirst().id());
         assertEquals(new UUID(7, 0), store.list(owner, 0, "  GUEST  ", true).matches().getFirst().id());

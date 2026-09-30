@@ -291,16 +291,16 @@ class GameLifecycleTest {
                 assertEquals(-game.riichiSticks, result.finalScores().stream().mapToDouble(Double::doubleValue).sum(), 0.00001);
                 assertTrue(game.handNumber >= 1);
                 assertTrue(game.replay.complete());
-                assertEquals(game.handNumber, game.replay.hands().size());
+                assertEquals(game.handNumber, game.replay.handCount());
                 ReplayMatch restored = JSON.fromJson(JSON.toJson(game.replay), ReplayMatch.class);
                 assertEquals(game.replay, restored);
                 assertEquals(TenhouReplay.export(game.replay), TenhouReplay.export(restored));
                 assertFalse(JSON.toJson(restored).contains("\"seed\""), "Sealed replays must not retain RNG seeds");
-                var replayChoices = restored.hands().stream().flatMap(recorded -> recorded.decisions().stream())
+                var replayChoices = restored.riichi().hands().stream().flatMap(recorded -> recorded.decisions().stream())
                     .map(decision -> decision.options().get(decision.selected())).toList();
                 assertEquals(chosenActions, replayChoices, "Replay decisions must preserve the server-issued choice");
-                for (int hand = 0; hand < restored.hands().size(); hand++) {
-                    ReplayHand recorded = restored.hands().get(hand);
+                for (int hand = 0; hand < restored.handCount(); hand++) {
+                    ReplayHand recorded = restored.riichi().hands().get(hand);
                     assertTrue(Tile.validSet(recorded.wall().tiles()), "Replay wall must retain one complete physical set");
                     assertTrue(recorded.initialHands().stream().flatMap(List::stream).allMatch(recorded.wall().tiles()::contains));
                     var replayed = ReplayPlayback.at(restored, hand, recorded.events().size());

@@ -22,7 +22,7 @@ public final class ReplayStore {
     public ReplayStore(Path root, Gson json) { this.root = root; this.json = json; }
 
     public void save(ReplayMatch match) throws IOException {
-        if (match.hands().isEmpty()) throw new IllegalArgumentException("Only completed hands can be archived");
+        if (match.handCount() == 0) throw new IllegalArgumentException("Only completed hands can be archived");
         if (match.participants().stream().filter(player -> !player.bot())
                 .allMatch(player -> Files.exists(deleted(player.id(), match.id())))) {
             Files.deleteIfExists(root.resolve(match.id() + ".json"));
@@ -41,7 +41,7 @@ public final class ReplayStore {
         if (Files.exists(deleted(player, matchId)) || !Files.isRegularFile(index(player).resolve(matchId + ".json")))
             throw new IOException("Replay is not available to this player");
         ReplayMatch match = read(root.resolve(matchId + ".json"), ReplayMatch.class, MAX_BYTES);
-        if (!match.id().equals(matchId) || !match.permits(player) || match.hands().isEmpty())
+        if (!match.id().equals(matchId) || !match.permits(player) || match.handCount() == 0)
             throw new IOException("Replay is not available to this player");
         return match;
     }

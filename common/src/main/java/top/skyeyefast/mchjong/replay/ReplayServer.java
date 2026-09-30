@@ -19,6 +19,8 @@ import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.storage.LevelResource;
 import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.engine.RiichiSession;
+import top.skyeyefast.mchjong.engine.McrSession;
+import top.skyeyefast.mchjong.engine.TableSession;
 import top.skyeyefast.mchjong.network.ReplayPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 
@@ -32,12 +34,14 @@ public final class ReplayServer {
     }
 
     /** Failed writes remain in the persisted session queue for retry. */
-    public static boolean flush(MinecraftServer server, RiichiSession game) throws IOException {
+    public static boolean flush(MinecraftServer server, TableSession game) throws IOException {
         if (!top.skyeyefast.mchjong.world.WorldSettings.of(server).policy().replaysEnabled()) return false;
         boolean changed = false;
-        for (var match : game.pendingReplays()) {
+        var pending = game instanceof RiichiSession riichi ? riichi.pendingReplays() : ((McrSession) game).pendingReplays();
+        for (var match : pending) {
             state(server).store().save(match);
-            game.acknowledgeReplay(match.id());
+            if (game instanceof RiichiSession riichi) riichi.acknowledgeReplay(match.id());
+            else ((McrSession) game).acknowledgeReplay(match.id());
             changed = true;
         }
         return changed;

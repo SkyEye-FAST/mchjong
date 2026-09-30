@@ -209,7 +209,7 @@ public final class RiichiGame {
         if (recorder == null) return;
         if (replay == null) { recorder = null; return; }
         var completed = recorder.finish(this);
-        replay = replay.append(completed, phase == Phase.MATCH_END);
+        replay = replay.appendRiichi(completed, phase == Phase.MATCH_END);
         session.archiveQueue.removeIf(match -> match.id().equals(replay.id()));
         session.archiveQueue.add(replay);
         recorder = null;
@@ -382,9 +382,9 @@ public final class RiichiGame {
         round = honba = riichiSticks = 0;
         for (RiichiPlayerState player : players) player.points = rules.startingPoints();
         long now = System.currentTimeMillis();
-        replay = session.worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now, rules, initialDealer,
+        replay = session.worldPolicy.replaysEnabled() ? new ReplayMatch(UUID.randomUUID(), tableId, now, now,
             Arrays.stream(players).limit(rules.players()).map(player -> new ReplayMatch.Participant(player.member.id, player.member.name, player.member.bot)).toList(),
-            List.of(), false, RedFives.of(suppliedTiles)) : null;
+            MahjongVariant.RIICHI, false, new RiichiReplay(rules, initialDealer, RedFives.of(suppliedTiles), List.of()), null) : null;
         startHand();
     }
 

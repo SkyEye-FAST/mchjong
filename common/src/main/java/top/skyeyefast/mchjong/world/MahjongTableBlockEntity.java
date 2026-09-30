@@ -39,7 +39,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private static final Logger LOGGER = LoggerFactory.getLogger("mchjong");
     private static final SecureRandom SEEDS = new SecureRandom();
     private TableHost host;
-    private String unreadableSave;
+    private byte[] unreadableSave;
     private int ticks;
     private long sentRevision = -1;
     private WorldSettings.Policy sentWorldPolicy;
@@ -428,8 +428,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     }
 
     private void flushReplays() {
-        RiichiSession game = host == null ? null : host.riichi();
-        if (!(level instanceof ServerLevel server) || game == null || game.pendingReplays().isEmpty()
+        TableSession game = host == null ? null : host.session();
+        boolean pending = game instanceof RiichiSession riichi && !riichi.pendingReplays().isEmpty()
+            || game instanceof McrSession mcr && !mcr.pendingReplays().isEmpty();
+        if (!(level instanceof ServerLevel server) || !pending
             || server.getGameTime() < nextArchiveRetry) return;
         try {
             if (top.skyeyefast.mchjong.replay.ReplayServer.flush(server.getServer(), game)) setChanged();
@@ -765,8 +767,8 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     @Override protected void saveAdditional(CompoundTag tag, HolderLookup.Provider registries) {
         super.saveAdditional(tag, registries);
         equipment.save(tag, registries);
-        if (unreadableSave != null) tag.putString("session", unreadableSave);
-        else if (host != null) tag.putString("session", host.save());
+        if (unreadableSave != null) tag.putByteArray("session", unreadableSave);
+        else if (host != null) tag.putByteArray("session", host.save().getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
     @Override protected void loadAdditional(CompoundTag tag, HolderLookup.Provider registries) {
@@ -778,11 +780,14 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
         }
         if (tag.contains("session")) {
-            String saved = tag.getString("session");
+            byte[] saved = tag.getByteArray("session");
             try {
-                host = TableHost.restore(saved);
+                String encoded = java.nio.charset.StandardCharsets.UTF_8.newDecoder()
+                    .onMalformedInput(java.nio.charset.CodingErrorAction.REPORT)
+                    .decode(java.nio.ByteBuffer.wrap(saved)).toString();
+                host = TableHost.restore(encoded);
                 unreadableSave = null;
-            } catch (RuntimeException error) {
+            } catch (RuntimeException | java.nio.charset.CharacterCodingException error) {
                 unreadableSave = saved;
                 host = null;
                 LOGGER.error("Cannot load mahjong table at {}. Original save retained.", worldPosition, error);

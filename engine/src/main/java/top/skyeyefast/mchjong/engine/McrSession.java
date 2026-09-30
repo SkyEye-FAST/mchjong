@@ -16,6 +16,9 @@ public final class McrSession extends TableSession {
     private TimeControl timeControl = TimeControl.DEFAULT;
     private List<TimeControl.Clock> clocks = new ArrayList<>();
     private int age;
+    private ReplayMatch replay;
+    private McrReplayRecorder recorder;
+    private final List<ReplayMatch> archiveQueue = new ArrayList<>();
 
     public McrSession(UUID tableId, long seed) {
         super(tableId, MahjongVariant.MCR, 4, seed);
@@ -45,6 +48,9 @@ public final class McrSession extends TableSession {
         session.timeControl = state.timeControl();
         session.clocks = new ArrayList<>(state.clocks());
         session.age = state.age();
+        session.replay = state.replay();
+        session.recorder = state.recorder() == null ? null : new McrReplayRecorder(state.recorder());
+        session.archiveQueue.addAll(state.archiveQueue());
         if (session.game != null) roster(session.participants());
         return session;
     }
@@ -57,7 +63,13 @@ public final class McrSession extends TableSession {
     }
 
     private boolean apply(int seat, long decision, int actionIndex) {
+        var options = recorder == null ? null : game.actions(seat);
+        var before = recorder == null ? null : game.save();
         if (!game.act(seat, decision, actionIndex)) return false;
+        if (recorder != null) {
+            recorder.accepted(before, seat, options, actionIndex, game);
+            if (game.phase() == McrGame.Phase.HAND_END || game.phase() == McrGame.Phase.MATCH_END) finishReplay();
+        }
         if (game.decision() != decision) resetDecision(false);
         if (game.phase() == McrGame.Phase.HAND_END)
             for (int bot = 0; bot < 4; bot++) if (participants[bot].bot) confirmed |= 1 << bot;
@@ -105,6 +117,13 @@ public final class McrSession extends TableSession {
         if (!equipped()) throw new IllegalStateException("Cannot start MCR without its complete stock");
         roster(participants());
         game = McrGame.fromStock(seed, stock);
+        if (worldPolicy.replaysEnabled()) {
+            long now = System.currentTimeMillis();
+            replay = new ReplayMatch(UUID.randomUUID(), tableId, now, now,
+                participants().stream().map(player -> new ReplayMatch.Participant(player.id(), player.name(), player.bot())).toList(),
+                MahjongVariant.MCR, false, null, new McrReplay(List.of()));
+            recorder = new McrReplayRecorder(game);
+        } else { replay = null; recorder = null; }
         resetDecision(true);
         confirmed = 0;
         lifecycle = Lifecycle.PLAYING;
@@ -113,6 +132,8 @@ public final class McrSession extends TableSession {
 
     protected void clearMatch() {
         game = null;
+        replay = null;
+        recorder = null;
         confirmed = 0;
         clocks.clear();
         age = 0;
@@ -177,6 +198,7 @@ public final class McrSession extends TableSession {
 
     private void nextHand() {
         game.nextHand();
+        if (replay != null) recorder = new McrReplayRecorder(game);
         confirmed = 0;
         resetDecision(true);
         changed(false);
@@ -227,13 +249,25 @@ public final class McrSession extends TableSession {
     }
 
     public State save() {
-        return new State(State.FORMAT, saveRoom(), stock, confirmed, timeControl, clocks, age, game == null ? null : game.save());
+        return new State(State.FORMAT, saveRoom(), stock, confirmed, timeControl, clocks, age, game == null ? null : game.save(),
+            replay, recorder == null ? null : recorder.save(), archiveQueue);
     }
+
+    private void finishReplay() {
+        replay = replay.appendMcr(recorder.finish(game), game.phase() == McrGame.Phase.MATCH_END);
+        archiveQueue.removeIf(match -> match.id().equals(replay.id()));
+        archiveQueue.add(replay);
+        recorder = null;
+    }
+
+    public List<ReplayMatch> pendingReplays() { return List.copyOf(archiveQueue); }
+    public void acknowledgeReplay(UUID id) { archiveQueue.removeIf(match -> match.id().equals(id)); }
 
     /** A private envelope, not a wire view. No mount state or reusable request incarnation is persisted. */
     public record State(int format, TableSession.State room, List<Integer> stock, int confirmed,
-                        TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game) {
-        public static final int FORMAT = 6;
+                        TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game,
+                        ReplayMatch replay, McrReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
+        public static final int FORMAT = 7;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");
@@ -247,10 +281,14 @@ public final class McrSession extends TableSession {
                     || clock.reserveTicks() > timeControl.reserveSeconds() * 20))
                 throw new IllegalArgumentException("Invalid MCR clock state");
             stock = List.copyOf(stock);
+            archiveQueue = List.copyOf(archiveQueue);
             if (room.variant() != MahjongVariant.MCR || room.capacity() != 4 || room.manual()
                 || !stock.isEmpty() && !Tile.validMcrSet(stock)
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != McrGame.Phase.HAND_END)
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null)
+                || recorder != null && (replay == null || game == null || game.result() != null || recorder.number() != game.handNumber())
+                || replay != null && replay.variant() != MahjongVariant.MCR
+                || archiveQueue.stream().anyMatch(match -> match.variant() != MahjongVariant.MCR || match.handCount() == 0)
                 || game != null && (!Tile.validMcrSet(stock)
                     || (room.lifecycle() == Lifecycle.FINISHED) != (game.phase() == McrGame.Phase.MATCH_END)))
                 throw new IllegalArgumentException("Invalid MCR session state");

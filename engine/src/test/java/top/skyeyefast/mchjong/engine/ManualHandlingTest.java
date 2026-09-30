@@ -191,7 +191,7 @@ class ManualHandlingTest {
             }
             assertFalse(game.session.pendingReplays().isEmpty(), "Manual game never completed: " + rules);
             var replay = game.session.pendingReplays().getFirst();
-            assertEquals(1, replay.hands().size());
+            assertEquals(1, replay.handCount());
         }
     }
 

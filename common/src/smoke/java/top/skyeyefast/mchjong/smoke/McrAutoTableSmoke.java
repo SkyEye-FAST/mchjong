@@ -19,6 +19,9 @@ import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.McrResultsScreen;
 import top.skyeyefast.mchjong.client.McrLobbyScreen;
 import top.skyeyefast.mchjong.client.McrTableScreen;
+import top.skyeyefast.mchjong.client.McrReplayScreen;
+import top.skyeyefast.mchjong.client.ClientReplays;
+import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.client.TableLeaveScreen;
 import top.skyeyefast.mchjong.engine.MahjongVariant;
 import top.skyeyefast.mchjong.engine.McrAction;
@@ -48,6 +51,7 @@ final class McrAutoTableSmoke {
     private long leaveRevision;
     private int presentationStep;
     private boolean clockConfigured;
+    private UUID replayId;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         check(++ticks < 2200, "MCR automatic-table smoke timed out at " + stage);
@@ -347,6 +351,43 @@ final class McrAutoTableSmoke {
                 if (view == null || view.seated() != 15) break;
                 check(!view.paused() && view.game().handNumber() == 2,
                     "MCR match did not resume from the retained hand");
+                task = server.submit(() -> {
+                    var main = server.getPlayerList().getPlayer(mainId);
+                    var table = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
+                    var mcr = (McrSession) table.participantRoom(main);
+                    check(mcr != null && mcr.save().replay() != null && mcr.save().replay().handCount() == 1,
+                        "MCR replay did not seal the completed hand");
+                    replayId = mcr.save().replay().id();
+                    try { ReplayServer.flush(server, mcr); }
+                    catch (java.io.IOException failure) { throw new IllegalStateException(failure); }
+                });
+                stage++;
+            }
+            case 15 -> {
+                if (replayId == null) break;
+                ClientReplays.open(replayId);
+                stage++;
+            }
+            case 16 -> {
+                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                check(replay.match().variant() == MahjongVariant.MCR && replay.cursor() == 0,
+                    "MCR replay did not open at the initial deal");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                check(replay.cursor() == 1, "MCR replay did not advance one event");
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                stage++;
+            }
+            case 17 -> {
+                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay.png", client.getMainRenderTarget(), message -> {});
+                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+                stage++;
+            }
+            case 18 -> {
+                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                check(replay.cursor() > 1, "MCR replay did not seek to settlement");
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay-settlement.png", client.getMainRenderTarget(), message -> {});
+                replay.onClose();
                 return true;
             }
             default -> throw new IllegalStateException("Invalid MCR smoke stage");

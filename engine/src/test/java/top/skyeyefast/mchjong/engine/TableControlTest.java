@@ -70,10 +70,10 @@ class TableControlTest {
         assertTrue(lobby.configureEquipment(false, Tile.set(false, RedFives.NONE)));
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureRules(id(0), lobby.decision, RiichiPreset.M_LEAGUE.config()));
-        assertEquals(custom, lobby.game().replay.rules());
+        assertEquals(custom, lobby.game().replay.riichi().rules());
         RiichiSettlement.abort(lobby.game(), "nine_terminals");
         var replay = lobby.pendingReplays().getFirst();
-        assertEquals(custom, json.fromJson(json.toJson(replay), ReplayMatch.class).rules());
+        assertEquals(custom, json.fromJson(json.toJson(replay), ReplayMatch.class).riichi().rules());
         lobby.validate();
     }
 

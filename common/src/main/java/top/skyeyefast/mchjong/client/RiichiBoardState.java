@@ -29,7 +29,7 @@ record RiichiBoardState(int viewerSeat, int players, int dealer, int round, int 
         RiichiView.Focus focus = event != null && event.seat() >= 0 && event.tile() != Tile.ABSENT
             ? new RiichiView.Focus(event.seat(), event.tile(), event.kind() == ReplayHand.Kind.MELD || event.kind() == ReplayHand.Kind.NUKI, -1)
             : null;
-        return new RiichiBoardState(viewerSeat, match.rules().players(), hand.dealer(), hand.round(), hand.honba(), hand.sticks(),
+        return new RiichiBoardState(viewerSeat, match.riichi().rules().players(), hand.dealer(), hand.round(), hand.honba(), hand.sticks(),
             turn, -1, frame.seats(), focus, true, true, true);
     }
 }
