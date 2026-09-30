@@ -9,7 +9,7 @@ import java.util.Objects;
 public record McrView(long revision, long decision, int handNumber, McrGame.Phase phase,
                       int viewerSeat, int dealer, int roundWind, int turn, int remaining, McrOpening opening,
                       List<Integer> wall, Focus focus, List<Seat> seats, List<McrAction> actions,
-                      boolean responded, McrSettlement.Result result, List<McrSettlement.Penalty> penalties) {
+                      boolean responded, boolean qualifyingWin, McrSettlement.Result result, List<McrSettlement.Penalty> penalties) {
     public McrView {
         Objects.requireNonNull(phase);
         Objects.requireNonNull(opening);
@@ -27,6 +27,8 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
             throw new IllegalArgumentException("MCR views must not expose wall identities");
         if (viewerSeat == -1 && (!actions.isEmpty() || responded) || responded && !actions.isEmpty())
             throw new IllegalArgumentException("Actions do not belong to this recipient");
+        if (qualifyingWin && actions.stream().noneMatch(action -> action.type() == McrAction.Type.WIN))
+            throw new IllegalArgumentException("Win qualification requires an issued win action");
         boolean ended = phase == McrGame.Phase.HAND_END || phase == McrGame.Phase.MATCH_END;
         if (ended != (result != null) || (phase == McrGame.Phase.REACTION) != (focus != null)
             || focus != null && focus.seat() != turn
@@ -111,7 +113,8 @@ public record McrView(long revision, long decision, int handNumber, McrGame.Phas
         return new McrView(game.revision(), game.decision(), game.handNumber(), game.phase(), viewerSeat,
             game.dealer(), game.roundWind(), game.turn(), game.remaining(), game.opening(), game.publicWall(), focus, seats,
             viewerSeat == -1 || !allowActions ? List.of() : game.actions(viewerSeat), viewerSeat != -1 && game.responded(viewerSeat),
-            game.result(), game.penalties());
+            viewerSeat >= 0 && allowActions && game.actions(viewerSeat).stream().anyMatch(action -> action.type() == McrAction.Type.WIN)
+                && game.score(viewerSeat).meetsMinimum(), game.result(), game.penalties());
     }
 
     private static boolean ordinary(int tile) { return tile >= 0 && tile < 136; }

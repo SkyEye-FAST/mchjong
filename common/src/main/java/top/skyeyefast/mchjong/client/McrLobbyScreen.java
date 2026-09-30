@@ -69,6 +69,10 @@ public final class McrLobbyScreen extends Screen {
             int actionIndex = index;
             RoomAction action = room.actions().get(index);
             Component label = Component.translatable("action.mchjong." + action.type().name().toLowerCase(java.util.Locale.ROOT));
+            if (action.type() == RoomAction.Type.SET_BOT)
+                label = Component.translatable("room.mchjong.add_bot").append(" " + (action.arguments().getFirst() + 1));
+            if (action.type() == RoomAction.Type.REMOVE_BOT)
+                label = label.copy().append(" " + (action.arguments().getFirst() + 1));
             if (action.type() == RoomAction.Type.DRAW_WIND)
                 label = label.copy().append(" " + (action.arguments().getFirst() + 1));
             if (action.type() == RoomAction.Type.TRANSFER_HOST)

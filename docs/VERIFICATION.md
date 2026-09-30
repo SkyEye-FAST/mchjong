@@ -147,6 +147,9 @@ assertion-only run.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,
 incarnation-scoped requests, supplied-stock shuffling, independent response clocks,
 safe absent-player timeouts, resumed forced actions and timed hand acknowledgements.
+`McrBotTest` owns shared one-human/three-Bot preparation, world policy, recipient-only
+decisions, minimum-fan wins, discard availability, conservative calls, delayed
+simultaneous responses, restored pauses/votes and a complete sixteen-hand Bot match.
 `McrPersistenceTest` owns private save round trips, resumed responses and added
 kongs, payment idempotence, stale-token rejection and invalid-save rejection.
 The sixteen-hand `McrGameTest` lifecycle restores each completed hand before advancing.

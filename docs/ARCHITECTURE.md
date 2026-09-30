@@ -225,7 +225,8 @@ the dice, second roller and break, not the seed or tile identities.
 Flowers, rivers, exposed melds, points, stop-win flags,
 declared claim tiles and penalty events are public.
 
-Only the recipient receives their legal actions and submitted-response status.
+Only the recipient receives their legal actions, engine-calculated minimum-fan
+win qualification and submitted-response status.
 Other players' action choices and responses are absent from the data model.
 The public focus contains the offered discard or added-kong tile, not another
 player's response. Below-minimum structural wins remain issued actions; a
@@ -259,8 +260,9 @@ including private actions, convenience hints and settlement timing. Lobby
 updates carry no `RiichiView`.
 
 `McrSession` owns a complete 144-tile stock, `McrGame` and completed-hand
-acknowledgements. The shared room starts the match once all four distinct humans
-are ready at their assigned stools. Only a participant mounted at the assigned
+acknowledgements. The shared room starts the match once all four seats are ready;
+human participants occupy their assigned stools and built-in bots are ready automatically.
+Only a human participant mounted at the assigned
 seat receives that seat's private view. A missing, displaced or ambiguously
 occupied mount grants spectator access. MCR decision clocks continue for absent
 participants while any human remains seated. Timeouts pass responses or discard
@@ -269,9 +271,20 @@ explicit. Forced draws and flower replacements advance after twelve server ticks
 Shared exit votes pause actions, clocks and completed-hand acknowledgements. The
 last player to leave their stool chooses whether to keep the match paused or close
 it; a retained match resumes when a player returns. Both the vote and leave decision
-survive private table saves. Completed hands advance after all four confirmations
-or a 200-tick reading period. Session saves retain decision age, remaining move
+survive private table saves. Bots confirm completed hands automatically; completed
+hands advance after all human confirmations or a 200-tick reading period.
+Session saves retain decision age, remaining move
 allowances, hand reserves and confirmations alongside the pending game decision.
+
+`McrBot` consumes only its own `McrView` and selects an issued action index.
+`McrHandAnalyzer.analyze` adapts the library's shanten and effective-tile analysis,
+with physical-ID deduplication of owned and public tiles. Discards compare shanten,
+remaining effective copies, effective kinds and then physical ID. Calls require
+strict improvement after the best mandatory discard; kong evaluation conservatively
+checks publicly possible replacements. The session schedules bots after twelve ticks,
+without charging their clocks, and retains the same delay across partial responses
+and saves. Shared `allowBots` policy controls preparation; active matches retain
+their roster. See [Bot analysis](BOTS.md#mcr-built-in-opponent).
 
 `TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
 `MahjongTableBlockEntity` owns only that host. It observes stools and authenticated

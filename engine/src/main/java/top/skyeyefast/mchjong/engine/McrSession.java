@@ -26,7 +26,8 @@ public final class McrSession extends TableSession {
         var roster = roster(participants);
         var session = new McrSession(tableId, seed);
         for (int seat = 0; seat < 4; seat++) session.participants[seat] = Participant.restore(roster.get(seat));
-        session.hostId = roster.get(0).id();
+        session.hostId = roster.stream().filter(player -> !player.bot()).findFirst().orElseThrow().id();
+        for (var participant : session.participants) if (participant.bot) participant.presence = PlayerPresence.SEATED;
         session.seating.positioned(4);
         session.configureEquipment(false, stock);
         session.startMatch();
@@ -58,6 +59,8 @@ public final class McrSession extends TableSession {
     private boolean apply(int seat, long decision, int actionIndex) {
         if (!game.act(seat, decision, actionIndex)) return false;
         if (game.decision() != decision) resetDecision(false);
+        if (game.phase() == McrGame.Phase.HAND_END)
+            for (int bot = 0; bot < 4; bot++) if (participants[bot].bot) confirmed |= 1 << bot;
         if (game.phase() == McrGame.Phase.MATCH_END) lifecycle = Lifecycle.FINISHED;
         changed(false);
         return true;
@@ -136,6 +139,11 @@ public final class McrSession extends TableSession {
             var first = actions.get(0).type();
             if (actions.size() == 1 && (first == McrAction.Type.DRAW || first == McrAction.Type.REPLACE_FLOWER)) {
                 if (age >= AUTO_ACTION_TICKS) apply(seat, decision, 0);
+            } else if (participants[seat].bot) {
+                if (age >= AUTO_ACTION_TICKS) {
+                    int choice = McrBot.choose(game.view(seat));
+                    if (choice >= 0) apply(seat, decision, choice);
+                }
             } else if (clockActive(seat) && clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() == 0) {
                 int fallback = -1;
                 for (int index = 0; index < actions.size(); index++) {
@@ -153,7 +161,7 @@ public final class McrSession extends TableSession {
     }
 
     private boolean clockActive(int seat) {
-        return !paused() && exitVote == null && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION)
+        return !participants[seat].bot && !paused() && exitVote == null && (game.phase() == McrGame.Phase.TURN || game.phase() == McrGame.Phase.REACTION)
             && !game.actions(seat).isEmpty();
     }
 
@@ -175,6 +183,34 @@ public final class McrSession extends TableSession {
     }
 
     @Override protected boolean pauseForAbsence() { return !hasSeatedHuman(); }
+    @Override protected boolean allowsBots() { return worldPolicy.allowBots(); }
+
+    @Override protected void addBotChoices(List<RoomAction> actions, int target, Participant member) {
+        if (!member.bot) actions.add(new RoomAction(RoomAction.Type.SET_BOT, List.of(target, 0)));
+    }
+
+    @Override protected void setBotChoice(int target, int choice) {
+        if (choice != 0) throw new IllegalArgumentException("Unknown MCR bot");
+        setBot(target, BotDifficulty.EASY);
+    }
+
+    @Override public void configureWorld(WorldPolicy policy) {
+        boolean botsChanged = worldPolicy.allowBots() != policy.allowBots();
+        super.configureWorld(policy);
+        if (lobby() && !policy.allowBots()) {
+            boolean removed = false;
+            for (int seat = 0; seat < 4; seat++) if (participants[seat].bot) {
+                participants[seat] = new Participant();
+                removed = true;
+            }
+            if (removed) {
+                seating = new RoomSeating();
+                resetReadiness();
+                botsChanged = true;
+            }
+        }
+        if (botsChanged) changed(lobby());
+    }
     @Override protected boolean canReturnToLobby(int seat) { return seat == host(); }
 
     /** An absent participant gets the same concealed-data protection as an unprivileged spectator. */
@@ -249,7 +285,9 @@ public final class McrSession extends TableSession {
     private static List<TableParticipant> roster(List<TableParticipant> participants) {
         var copy = List.copyOf(participants);
         var identities = new HashSet<UUID>();
-        if (copy.size() != 4 || copy.stream().anyMatch(player -> player.id() == null || player.bot() || !identities.add(player.id())))
+        if (copy.size() != 4 || copy.stream().noneMatch(player -> !player.bot())
+            || copy.stream().anyMatch(player -> player.id() == null || player.entityBot() || player.externalBotId() != null
+                || player.bot() && player.difficulty() != BotDifficulty.EASY || !identities.add(player.id())))
             throw new IllegalArgumentException("An MCR session requires four distinct participants in seat order");
         return copy;
     }

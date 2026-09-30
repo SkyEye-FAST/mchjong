@@ -14,6 +14,18 @@ The room host can enable **Tenpai hints** in Settings → Room during preparatio
 The room shares this choice with every participant. When enabled, the table
 shows waits and unseen-copy counts from each player's authorized view.
 
+## MCR Bot rooms
+
+Select MCR with a complete 144-tile set, fill the empty seats with Bots, begin seat
+preparation and ready at the assigned stool. The shared room controls also add or
+remove individual Bots. One human and three built-in Bots can play all sixteen
+hands. World `allowBots` controls Bot availability during preparation.
+
+Bots confirm each completed hand automatically. Human confirmation advances early;
+the server also advances after the reading period. Leaving the last occupied human
+stool pauses the match, and returning resumes it. A sole human can close the match
+directly; rooms with multiple humans use the shared exit vote.
+
 ## World policy
 
 Each world save has `config/mchjong-world.toml`, shared by all dimensions and

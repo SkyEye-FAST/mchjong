@@ -122,7 +122,7 @@ class McrLayoutTest {
                 seat == 0 ? java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList() : List.of(), false));
         }
         var view = new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, 0, base.opening(),
-            java.util.Collections.nCopies(144, Tile.ABSENT), null, seats, List.of(), false, null, List.of());
+            java.util.Collections.nCopies(144, Tile.ABSENT), null, seats, List.of(), false, false, null, List.of());
         var scene = McrTableScene.build(view);
         assertEquals(scene, McrTableScene.immersive(view));
         assertTrue(McrTableScene.immersive(base).stream().noneMatch(piece -> piece.area() == McrTableScene.Area.WALL));

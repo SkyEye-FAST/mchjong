@@ -136,6 +136,6 @@ final class McrDisplaySmoke {
         var wall = new ArrayList<>(Collections.nCopies(144, Tile.ABSENT));
         for (int i = 0; i < stock.size(); i++) wall.set(McrWallLayout.drawSlot(opening, 108 + i), Tile.HIDDEN);
         return new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, stock.size(), opening,
-            wall, null, seats, List.of(), false, null, List.of());
+            wall, null, seats, List.of(), false, false, null, List.of());
     }
 }

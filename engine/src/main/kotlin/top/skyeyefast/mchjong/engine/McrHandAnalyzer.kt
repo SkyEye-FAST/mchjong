@@ -132,6 +132,18 @@ object McrHandAnalyzer {
     fun shanten(concealed: List<Int>, melds: List<Meld>, owner: Int): Int =
         McrMahjong.shanten(hand(concealed, melds, owner))
 
+    @JvmRecord
+    data class Progress(val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int)
+
+    /** Known tiles exclude the supplied hand/melds, including any proposed discard. */
+    @JvmStatic
+    fun analyze(concealed: List<Int>, melds: List<Meld>, owner: Int, visible: List<Int>): Progress {
+        unique(concealed + melds.flatMap { it.tiles() } + visible)
+        val analysis = McrMahjong.analyze(hand(concealed, melds, owner), visible.map(::libraryTile))
+        return Progress(analysis.shanten, java.util.Collections.unmodifiableSet(analysis.effectiveTiles
+            .filter { it.remainingCopies > 0 }.map { kind(it.tile) }.toSortedSet()), analysis.remainingCount)
+    }
+
     /** Structural waits as engine kinds; excludes fifth copies already owned in hand/melds. */
     @JvmStatic
     fun waits(concealed: List<Int>, melds: List<Meld>, owner: Int): Set<Int> {

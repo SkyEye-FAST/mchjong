@@ -1,5 +1,26 @@
 # Training opponent analysis
 
+## MCR built-in opponent
+
+MCR rooms offer one built-in opponent through the shared room Bot controls and
+world `allowBots` policy. One human can play a complete sixteen-hand match with
+three Bots. See [Rooms](ROOMS.md#mcr-bot-rooms) for preparation and pause controls.
+
+`McrBot` receives only its own recipient-safe `McrView`. The engine supplies
+minimum-fan qualification for issued win actions; qualifying wins take priority.
+Discard analysis uses `McrHandAnalyzer` and the library's structural shanten and
+effective tiles, ranking lower shanten, more visible remaining effective copies,
+then more effective kinds. Equal discards use the lowest physical tile ID.
+Availability deduplicates owned tiles, public rivers, exposed melds and the offered
+tile. Concealed opponents and wall identities never enter evaluation.
+
+Chows and pungs require a strict improvement after their best mandatory discard.
+Kongs require improvement even after comparing the best discard for each publicly
+possible replacement kind. Equal outcomes retain the existing hand. The server
+waits twelve ticks before Bot decisions, while the session also owns automatic
+draws and flower replacements. Bot actions and completed-hand confirmations share
+the normal room pause, exit and persistence lifecycle.
+
 ## Local bot service
 
 The server administrator can enable external opponents with
