@@ -8,19 +8,20 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TimeControl;
 
 /** The host edits server-owned lobby settings, not a client-side timeout. */
-public final class RiichiClockScreen extends Screen {
-    private final RiichiTableScreen parent;
+public final class TableClockScreen extends Screen {
+    private final Screen parent;
     private final TimeControl initial;
     private EditBox reserve;
     private EditBox move;
     private Button apply;
 
-    public RiichiClockScreen(RiichiTableScreen parent, TimeControl initial) {
+    public TableClockScreen(Screen parent, TimeControl initial) {
         super(Component.translatable("ui.mchjong.clock_settings"));
         this.parent = parent;
         this.initial = initial;
     }
-    public RiichiTableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return parent instanceof RiichiTableScreen table ? table : null; }
+    public McrLobbyScreen mcrLobby() { return parent instanceof McrLobbyScreen lobby ? lobby : null; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 

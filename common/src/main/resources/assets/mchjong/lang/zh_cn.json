@@ -369,7 +369,7 @@
   "mcr.mchjong.help.single_click": "点击打牌 · Shift点击选牌 · %s切换视角 · %s过",
   "mcr.mchjong.match_end": "比赛结束",
   "mcr.mchjong.next_hand": "确认下一盘",
-  "mcr.mchjong.paused": "等待四名玩家全部入座",
+  "mcr.mchjong.paused": "对局已暂停",
   "mcr.mchjong.penalty": "错和：%s（%s）",
   "mcr.mchjong.responded": "已响应，等待其他玩家",
   "mcr.mchjong.results": "国标结算",

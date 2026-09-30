@@ -43,7 +43,7 @@ final class RiichiLobby {
             buttons.add(button);
         }
         var clock = button(Component.translatable("ui.mchjong.clock_settings"), left + 2 * (third + 4), y,
-            span - 2 * (third + 4), () -> client.setScreen(new RiichiClockScreen(parent, settings.timeControl())));
+            span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, settings.timeControl())));
         clock.active = host;
         buttons.add(clock);
         var preset = button(Component.translatable("rules.mchjong.preset", Component.translatable(settings.rules().preset().presetKey())).append(" ▼"),

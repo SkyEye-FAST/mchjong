@@ -150,6 +150,9 @@ public abstract sealed class TableSession permits RiichiSession, McrSession {
 
     protected abstract boolean pauseForAbsence();
 
+    public abstract TimeControl timeControl();
+    public abstract boolean configureClock(UUID actor, TimeControl control);
+
     public int viewerSeat(UUID recipient) {
         int seat = seatOf(recipient);
         return seat >= 0 && participants[seat].presence == PlayerPresence.SEATED ? seat : -1;
@@ -157,9 +160,9 @@ public abstract sealed class TableSession permits RiichiSession, McrSession {
 
     /** A decision is meaningful only inside this table's current live incarnation. */
     public int authorize(UUID actor, UUID expectedTable, UUID expectedIncarnation, long expectedDecision,
-                         long currentDecision, boolean requireAllSeated) {
+                         long currentDecision) {
         if (!tableId.equals(expectedTable) || !incarnation.equals(expectedIncarnation)
-            || expectedDecision != currentDecision || requireAllSeated && seated() != (1 << capacity) - 1) return -1;
+            || expectedDecision != currentDecision) return -1;
         return viewerSeat(actor);
     }
 

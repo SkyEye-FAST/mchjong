@@ -116,7 +116,7 @@ public final class RiichiOptionsScreen extends Screen {
             entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
                 () -> minecraft.setScreen(new RiichiRulesScreen(parent, room, settings))));
             entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
-                () -> minecraft.setScreen(new RiichiClockScreen(parent, settings.timeControl()))));
+                () -> minecraft.setScreen(new TableClockScreen(parent, settings.timeControl()))));
             entries.add(new Entry(Component.translatable("ui.mchjong.invite"), room.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
                 () -> minecraft.setScreen(new RiichiInviteScreen(parent))));
         } else {

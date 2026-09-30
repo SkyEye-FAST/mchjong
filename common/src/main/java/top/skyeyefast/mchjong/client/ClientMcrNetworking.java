@@ -14,7 +14,7 @@ public final class ClientMcrNetworking {
         var client = Minecraft.getInstance();
         if (client.level == null || !(client.level.getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)) return;
         var view = payload.view().isEmpty() ? null : McrCodec.decodeSessionView(payload.view());
-        table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth());
+        table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth(), payload.timeControl());
         if (table.clientTableRoom() != payload.room()) return;
         if (payload.leaveDecision()) {
             if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), payload.room().tableId())))
@@ -28,6 +28,8 @@ public final class ClientMcrNetworking {
             || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
             || client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos());
         if (view == null) {
+            if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.mcrLobby() != null
+                && clock.mcrLobby().tablePos().equals(payload.pos())) return;
             if (payload.open() || showing
                 || RiichiTableScreen.active(client.screen) != null
                     && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos())) {

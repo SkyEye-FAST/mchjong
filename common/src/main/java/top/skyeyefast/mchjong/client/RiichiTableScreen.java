@@ -128,7 +128,7 @@ public final class RiichiTableScreen extends Screen {
         if (screen instanceof RiichiOptionsScreen options) return options.tableScreen();
         if (screen instanceof RiichiSeatsScreen seats) return seats.tableScreen();
         if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
-        if (screen instanceof RiichiClockScreen clock) return clock.tableScreen();
+        if (screen instanceof TableClockScreen clock) return clock.tableScreen();
         if (screen instanceof RiichiRulesScreen rules) return rules.tableScreen();
         if (screen instanceof RiichiInviteScreen invite) return invite.tableScreen();
         return null;

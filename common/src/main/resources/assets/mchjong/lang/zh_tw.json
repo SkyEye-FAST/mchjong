@@ -369,7 +369,7 @@
   "mcr.mchjong.help.single_click": "點擊打牌 · Shift點擊選牌 · %s切換視角 · %s過",
   "mcr.mchjong.match_end": "比賽結束",
   "mcr.mchjong.next_hand": "確認下一盤",
-  "mcr.mchjong.paused": "等待四名玩家全部入座",
+  "mcr.mchjong.paused": "對局已暫停",
   "mcr.mchjong.penalty": "錯和：%s（%s）",
   "mcr.mchjong.responded": "已回應，等待其他玩家",
   "mcr.mchjong.results": "國標結算",

@@ -148,7 +148,7 @@ the final five raw takes are 48, 52, 49, 50 and 51; the next front take is 53.
 Only after these 53 physical tiles have been allocated does the game expose
 flowers. `INITIAL_FLOWERS` issues replacement decisions in East, South, West,
 North order, completing each seat's chain before advancing. Ordinary and kong
-draws that encounter a flower enter `REPLACE_FLOWER`; the owner explicitly takes
+draws that encounter a flower enter `REPLACE_FLOWER`; the automatic table takes
 each replacement from the tail. Pending hand deficits and the phase/turn survive
 save and restore without consuming another tile. The game tracks the actual draw origin separately from the
 end of the wall; a flower replacement is distinct from a kong replacement,
@@ -195,7 +195,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 5 and the session format is 5. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 5 and the session format is 6. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -262,12 +262,16 @@ updates carry no `RiichiView`.
 acknowledgements. The shared room starts the match once all four distinct humans
 are ready at their assigned stools. Only a participant mounted at the assigned
 seat receives that seat's private view. A missing, displaced or ambiguously
-occupied mount grants spectator access. MCR play pauses while any participant is
-absent; pending responses and scores remain intact. Shared exit votes pause actions
-and completed-hand acknowledgements. The last player to leave their stool chooses
-whether to keep the match paused or close it; a retained match resumes when all
-four players return. Both the vote and leave decision survive private table saves.
-All four participants acknowledge a completed hand before the next hand begins.
+occupied mount grants spectator access. MCR decision clocks continue for absent
+participants while any human remains seated. Timeouts pass responses or discard
+the drawn tile, falling back to the first legal discard. Win declarations remain
+explicit. Forced draws and flower replacements advance after twelve server ticks.
+Shared exit votes pause actions, clocks and completed-hand acknowledgements. The
+last player to leave their stool chooses whether to keep the match paused or close
+it; a retained match resumes when a player returns. Both the vote and leave decision
+survive private table saves. Completed hands advance after all four confirmations
+or a 200-tick reading period. Session saves retain decision age, remaining move
+allowances, hand reserves and confirmations alongside the pending game decision.
 
 `TableHost` adapts one `TableSession` to Minecraft equipment and external bots.
 `MahjongTableBlockEntity` owns only that host. It observes stools and authenticated
@@ -694,8 +698,9 @@ dimensions are bounded before transfer, while each player stores a personal
 selection in the client TOML settings. The server broadcasts only selections
 from its own stick presets; a client-only selection stays on that player's client.
 
-`TimeControl` is enforced entirely in `RiichiGame`: per-hand reserves and fresh decision
-allowances are independent for each active responder. Client interpolation and
+`TimeControl` is enforced by `RiichiGame` and `McrSession`: per-hand reserves and fresh decision
+allowances are independent for each active responder. Both use `TimeControl.Clock`
+to spend move time before reserve. Client interpolation and
 warning sounds have no authority over deadlines. Lobby changes require the host
 and invalidate ready votes. `TableInvitations` binds expiring requests to player
 and table UUIDs; acceptance rechecks seating, distance, loaded chunks and phase.

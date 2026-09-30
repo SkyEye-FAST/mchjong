@@ -107,7 +107,7 @@ class McrSessionTest {
         var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
         session.synchronizeSeats(MOUNTS);
         session.unseat(id(0));
-        assertTrue(session.paused());
+        assertFalse(session.paused());
         assertFalse(session.leaveDecision(id(0)));
         session.unseat(id(1));
         session.unseat(id(2));
@@ -242,16 +242,144 @@ class McrSessionTest {
     }
 
     private static McrSession session(McrGame game) {
+        return session(game, TimeControl.DEFAULT);
+    }
+
+    private static McrSession session(McrGame game, TimeControl control) {
         var seating = new RoomSeating();
         seating.positioned(4);
         var room = new TableSession.State(TABLE, MahjongVariant.MCR, 4, ROSTER.getFirst().id(),
             ROSTER, seating.save(), TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0);
-        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0, game.save()));
+        var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
+        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0,
+            control, clocks, 0, game.save()));
         session.synchronizeSeats(MOUNTS);
         return session;
     }
 
     private static UUID id(int seat) { return ROSTER.get(seat).id(); }
+
+    private static void tick(McrSession session, int ticks) {
+        for (int i = 0; i < ticks; i++) session.tick();
+    }
+
+    @Test void absentPlayersTimeOutSafelyAndReloadDoesNotReplenishTheirClock() {
+        var session = session(fixed(5, new McrGameTest.Fixture().hand(0, "12345m567p789s11z6m").build()), new TimeControl(1, 1));
+        assertTrue(index(session.view(id(0)), WIN) >= 0);
+        int drawn = session.view(id(0)).game().seats().get(0).drawn();
+        session.unseat(id(0));
+        tick(session, 25);
+        assertEquals(new TimeControl.Clock(0, 15, false), session.save().clocks().get(0));
+        var restored = McrCodec.restoreSession(McrCodec.saveSession(session));
+        tick(restored, 30); // No observed mounts after loading: explicitly paused.
+        assertEquals(session.save().clocks(), restored.save().clocks());
+        restored.synchronizeSeats(Map.of(id(1), 1), java.util.Set.of(id(1)));
+        tick(restored, 14);
+        assertEquals(McrGame.Phase.TURN, restored.view(id(1)).game().phase());
+        restored.tick();
+        var after = restored.save().game();
+        assertEquals(drawn, after.players().get(0).river().getLast().tile());
+        assertTrue(after.players().get(0).river().getLast().tsumogiri());
+        assertTrue(after.penalties().isEmpty());
+        assertNull(after.result());
+    }
+
+    @Test void pendingResponsesKeepIndependentTimeAcrossVotesAndRestore() {
+        var game = fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
+            .hand(3, "555m123789m123p1z").build());
+        McrGameTest.discardKind(game, 0, "5m");
+        var session = session(game, new TimeControl(1, 1));
+        tick(session, 25);
+        play(session, 2, PASS);
+        tick(session, 4);
+        assertEquals(15, session.save().clocks().get(2).reserveTicks());
+        assertEquals(11, session.save().clocks().get(1).reserveTicks());
+        assertTrue(session.requestExit(id(0)));
+        tick(session, 15);
+        var restored = McrCodec.restoreSession(McrCodec.saveSession(session));
+        restored.synchronizeSeats(MOUNTS);
+        assertEquals(session.save().clocks(), restored.save().clocks());
+        assertTrue(restored.view(id(2)).game().responded());
+        assertTrue(restored.answerExit(id(1), restored.roomView(id(1)).exitVote().id(), false));
+        restored.unseat(id(1));
+        tick(restored, 10);
+        assertEquals(McrGame.Phase.REACTION, restored.view(id(0)).game().phase());
+        restored.tick();
+        assertEquals(McrGame.Phase.DRAW, restored.view(id(0)).game().phase());
+        assertNull(restored.view(id(0)).game().result());
+        assertTrue(restored.view(id(0)).game().penalties().isEmpty());
+        assertEquals(15, restored.save().clocks().get(2).reserveTicks());
+        var beforeDraw = restored.save();
+        tick(restored, McrSession.AUTO_ACTION_TICKS);
+        assertEquals(beforeDraw.game().wall().tiles().stream().filter(tile -> tile >= 0).count() - 1,
+            restored.save().game().wall().tiles().stream().filter(tile -> tile >= 0).count());
+        assertEquals(beforeDraw.clocks(), restored.save().clocks(), "A forced draw spends no decision allowance");
+    }
+
+    @Test void claimedTurnDefaultsToLegalDiscardAndForcedActionsResumeExactlyOnce() {
+        var game = fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
+            .hand(3, "555m123789m123p1z").build());
+        McrGameTest.discardKind(game, 0, "5m");
+        var session = session(game, new TimeControl(0, 1));
+        play(session, 1, PASS); play(session, 2, PASS); play(session, 3, PUNG);
+        var turn = session.view(id(3));
+        assertEquals(Tile.ABSENT, turn.game().seats().get(3).drawn());
+        int tile = turn.game().actions().get(index(turn, DISCARD)).tiles().getFirst();
+        tick(session, 20);
+        assertEquals(tile, session.save().game().players().get(3).river().getLast().tile());
+
+        var flowers = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        flowers.synchronizeSeats(MOUNTS);
+        assertEquals(McrGame.Phase.INITIAL_FLOWERS, flowers.save().game().phase());
+        tick(flowers, McrSession.AUTO_ACTION_TICKS - 1);
+        var before = flowers.save();
+        var restored = McrCodec.restoreSession(McrCodec.saveSession(flowers));
+        restored.synchronizeSeats(Map.of(id(3), 3));
+        restored.tick();
+        flowers.tick();
+        assertEquals(flowers.save().game().wall(), restored.save().game().wall());
+        assertEquals(flowers.save().game().players(), restored.save().game().players());
+        assertNotEquals(before.game().wall(), restored.save().game().wall());
+        assertEquals(before.clocks(), restored.save().clocks());
+    }
+
+    @Test void absentConfirmationHasFiniteSavedDeadlineAndNewHandRestoresReserve() {
+        var session = session(fixed(4, new McrGameTest.Fixture().hand(0, "111222333m444p11z").build()), new TimeControl(1, 1));
+        tick(session, 23);
+        play(session, 0, WIN);
+        var end = session.view(id(0));
+        assertEquals(McrGame.Phase.HAND_END, end.game().phase());
+        for (int seat = 0; seat < 3; seat++)
+            assertTrue(session.confirmNextHand(id(seat), TABLE, end.incarnation(), end.game().decision()));
+        session.unseat(id(3));
+        tick(session, McrSession.SETTLEMENT_TICKS - 1);
+        var restored = McrCodec.restoreSession(McrCodec.saveSession(session));
+        restored.synchronizeSeats(Map.of(id(0), 0));
+        assertEquals(1, restored.view(id(0)).settlementTicks());
+        restored.tick();
+        assertEquals(2, restored.view(id(0)).game().handNumber());
+        assertEquals(0, restored.view(id(0)).confirmed());
+        assertTrue(restored.save().clocks().stream().allMatch(clock -> clock.reserveTicks() == 20));
+        assertFalse(restored.confirmNextHand(id(0), TABLE, end.incarnation(), end.game().decision()));
+    }
+
+    @Test void onlyLobbyHostConfiguresPersistentClockAndReadinessIsCleared() {
+        var session = new McrSession(TABLE, 1);
+        session.join(id(0), "Host", 0); session.join(id(1), "Guest", 1);
+        session.participants[1].ready = true;
+        var clock = new TimeControl(3, 2);
+        assertFalse(session.configureClock(id(1), clock));
+        assertTrue(session.configureClock(id(0), clock));
+        assertFalse(session.participants[1].ready);
+        assertEquals(clock, McrCodec.restoreSession(McrCodec.saveSession(session)).timeControl());
+        var active = session(new McrGame(711));
+        assertFalse(active.configureClock(id(0), clock));
+        var invalid = JsonParser.parseString(McrCodec.saveSession(active)).getAsJsonObject();
+        invalid.getAsJsonArray("clocks").get(0).getAsJsonObject().addProperty("moveTicks", -1);
+        assertThrows(IllegalArgumentException.class, () -> McrCodec.restoreSession(invalid.toString()));
+    }
 
     private static int index(McrSession.View view, McrAction.Type type) {
         var actions = view.game().actions();

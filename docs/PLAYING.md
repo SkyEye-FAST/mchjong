@@ -52,7 +52,8 @@ dismount with Minecraft's sneak control after closing it.
 In the automatic-table lobby, the host selects MCR. Seat four human players and
 store a complete standard 144-tile box with eight flowers and a cloth. Assign
 seats, let all four players take their assigned stools, then each player presses
-Ready. The table runs a fixed sixteen-hand match.
+Ready. The host can set move time and the per-hand reserve in Time control before
+play. The table runs a fixed sixteen-hand match.
 
 The seated view shows physical walls, six-column rivers, left-corner melds,
 flowers, winds, scores and remaining tiles. Press V or the view button to switch
@@ -61,15 +62,20 @@ single-click, double-click or confirmation preference; Enter confirms selection.
 Tab focuses tiles and actions, P passes, and the seated camera supports inspect,
 right-drag, zoom and Home reset through the shared bindings.
 
-Use the Draw, Flower replacement, Chow, Pung, Melded Kong, Added Kong, Concealed
-Kong, Win and Pass buttons when offered. Initial flower replacements proceed in
-East, South, West, North order. Each Flower replacement takes one tile from the
-wall's tail; another flower offers another replacement. Flowers stay visible in
+Use the Chow, Pung, Melded Kong, Added Kong, Concealed Kong, Win and Pass buttons
+when offered. The table automatically draws and replaces flowers. Initial flower
+replacements proceed in East, South, West, North order. Each replacement takes one
+tile from the wall's tail; another flower continues the replacement. Flowers stay visible in
 their own area. A structural win remains
 declarable below eight non-flower points; declaring it applies the wrong-win
 penalty and marks that player as forbidden to win again during the current hand.
-Settlement shows localized fan names and payments. All four seated players
-confirm the next hand, retaining their chosen view. The match ends
+The action clock spends move time before the hand reserve. At timeout, responses
+pass and turns discard the drawn tile, or a legal hand tile after a claim. Winning
+requires an explicit declaration. These deadlines continue for absent players
+while someone remains seated. Exit votes and a fully unoccupied table pause play
+and clocks; returning to a retained table resumes the remaining time.
+Settlement shows localized fan names and payments. The next hand starts after all
+four confirmations or ten seconds, retaining the chosen view. The match ends
 after the sixteenth hand.
 
 ## Point-stick payments

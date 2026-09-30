@@ -82,9 +82,10 @@ The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
 Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
 foreground hand. Left-corner melds and flowers retain their MCR rail positions.
 Compact edge cards show player names, winds and scores; the current turn is marked
-with brass. Flower replacement has an explicit action button and names the player
-currently replacing. Discards come from hand selection, while draw, claims, kongs,
-wins and pass use localized native buttons with tile previews.
+with brass. Automatic flower replacement names the player currently replacing.
+Discards come from hand selection, while claims, kongs, wins and pass use localized
+native buttons with tile previews. MCR uses the shared room time editor and turn
+clock, reserving a clock lane below the actions and above the private hand.
 
 ## Components and interaction
 

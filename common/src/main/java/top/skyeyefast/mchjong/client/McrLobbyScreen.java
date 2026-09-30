@@ -56,7 +56,15 @@ public final class McrLobbyScreen extends Screen {
         addRenderableWidget(mcr);
         var riichi = RoomLobbyControls.variantButton(pos, room, MahjongVariant.RIICHI, x + 117, top + 32, 113, true);
         addRenderableWidget(riichi);
-        int actionTop = top + (room.actions().size() > 6 ? 138 : 151);
+        if (minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
+            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), x, top + 78, 230,
+                () -> minecraft.setScreen(new TableClockScreen(this, table.clientMcrTimeControl())));
+            clock.active = !pending && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
+            clock.setTooltip(Tooltip.create(Component.translatable("ui.mchjong.clock",
+                table.clientMcrTimeControl().moveSeconds(), table.clientMcrTimeControl().reserveSeconds())));
+            addRenderableWidget(clock);
+        }
+        int actionTop = top + 154;
         for (int index = 0; index < room.actions().size(); index++) {
             int actionIndex = index;
             RoomAction action = room.actions().get(index);
@@ -100,7 +108,7 @@ public final class McrLobbyScreen extends Screen {
                 var member = entry.participant();
                 Component name = member.id() == null ? Component.translatable("room.mchjong.empty") : Component.literal(member.name());
                 graphics.drawCenteredString(font, Component.literal((seat + 1) + ". ").append(name)
-                    .append(member.ready() ? " ✓" : ""), width / 2, top + 93 + seat * 12, MahjongUi.TEXT);
+                    .append(member.ready() ? " ✓" : ""), width / 2, top + 103 + seat * 12, MahjongUi.TEXT);
             }
         }
         super.render(graphics, mouseX, mouseY, partialTick);

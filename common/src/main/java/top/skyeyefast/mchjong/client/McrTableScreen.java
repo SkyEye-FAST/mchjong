@@ -27,6 +27,9 @@ public final class McrTableScreen extends Screen {
     private float framePartial;
     private TableHand hand;
     private McrImmersiveTable board;
+    private TableTurnClock turnClock;
+    private final List<AbstractWidget> decisionControls = new ArrayList<>();
+    private int actionTop;
 
     public McrTableScreen(BlockPos pos) { this(pos, false); }
     public McrTableScreen(BlockPos pos, boolean immersive) {
@@ -63,6 +66,8 @@ public final class McrTableScreen extends Screen {
     private void rebuild() {
         int focusedTile = getFocused() instanceof HandTarget target ? target.tile : Tile.ABSENT;
         clearWidgets();
+        turnClock = null;
+        decisionControls.clear();
         var view = view();
         if (view == null || table().clientTableRoom() == null) return;
         var room = table().clientTableRoom(); var game = view.game();
@@ -84,6 +89,7 @@ public final class McrTableScreen extends Screen {
             return;
         }
         int s = contentScale(), w = uiWidth();
+        turnClock = addRenderableWidget(new TableTurnClock());
         int x = toolbar("ui.mchjong.view_" + (immersive() ? "seated" : "immersive"), 8, this::toggleView);
         toolbar("settings.mchjong.title", x, () -> minecraft.setScreen(new TableSettingsScreen(this)));
         if (room.viewerSeat() >= 0) addRenderableWidget(new MahjongButton(w - 60 * s, 6, 52 * s, 20 * s,
@@ -92,22 +98,26 @@ public final class McrTableScreen extends Screen {
         var choices = new ArrayList<Integer>();
         if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int i = 0; i < game.actions().size(); i++)
-            if (game.actions().get(i).type() != McrAction.Type.DISCARD) choices.add(i);
+            if (game.actions().get(i).type() != McrAction.Type.DISCARD
+                && game.actions().get(i).type() != McrAction.Type.DRAW
+                && game.actions().get(i).type() != McrAction.Type.REPLACE_FLOWER) choices.add(i);
         int pages = Math.max(1, (choices.size() + 3) / 4);
         page = Math.min(page, pages - 1);
         int cell = immersive() ? 224 : Math.min(110, (w - 28) / 3);
         int actionY = immersive() ? 562 : uiHeight() - 112;
+        actionTop = actionY;
         for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {
             int index = choices.get(page * 4 + slot);
             var button = new ActionButton(w - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * s,
                 cell, 26 * s, game.actions().get(index), () -> send(view, index));
             button.active = !pending && !view.paused(); addRenderableWidget(button);
+            decisionControls.add(button);
         }
         if (pages > 1) {
-            addRenderableWidget(new MahjongButton(w - 68 * s, actionY - 22 * s, 28 * s, 20 * s,
-                Component.literal("‹"), ignored -> { page = Math.floorMod(page - 1, pages); rebuild(); }).textScale(s));
-            addRenderableWidget(new MahjongButton(w - 36 * s, actionY - 22 * s, 28 * s, 20 * s,
-                Component.literal("›"), ignored -> { page = (page + 1) % pages; rebuild(); }).textScale(s));
+            decisionControls.add(addRenderableWidget(new MahjongButton(w - 68 * s, actionY - 22 * s, 28 * s, 20 * s,
+                Component.literal("‹"), ignored -> { page = Math.floorMod(page - 1, pages); rebuild(); }).textScale(s)));
+            decisionControls.add(addRenderableWidget(new MahjongButton(w - 36 * s, actionY - 22 * s, 28 * s, 20 * s,
+                Component.literal("›"), ignored -> { page = (page + 1) % pages; rebuild(); }).textScale(s)));
         }
         if (game.viewerSeat() >= 0) for (int tile : game.seats().get(game.viewerSeat()).hand()) {
             var target = addRenderableWidget(new HandTarget(tile));
@@ -196,6 +206,14 @@ public final class McrTableScreen extends Screen {
         framePartial = partialTick;
         var view = view(); if (view == null || table().clientMcrDeck() == null) return;
         if (view.revision() != shownRevision) rebuild();
+        if (turnClock != null && view.game().viewerSeat() >= 0) {
+            var clock = view.clocks().get(view.game().viewerSeat()).after(table().clientViewAgeMillis());
+            int s = contentScale(), bottom = clockBottom();
+            int nextTop = bottom - 84 * s;
+            for (var widget : decisionControls) widget.setY(widget.getY() + nextTop - actionTop);
+            actionTop = nextTop;
+            turnClock.update(clock, uiWidth() - 16 * s, bottom, s);
+        }
         var transform = canvas();
         int mx = (int) Math.floor(transform.localX(mouseX)), my = (int) Math.floor(transform.localY(mouseY));
         transform.begin(g);
@@ -229,7 +247,8 @@ public final class McrTableScreen extends Screen {
             g.pose().pushPose(); g.pose().translate(0, 0, 600);
             TableExitControls.renderVote(g, font, table().clientTableRoom(), uiWidth(), uiHeight(), s);
             super.render(g, mx, my, partialTick);
-            if (table().clientTableRoom().exitVote() == null && TableSettings.get().show(TableSettings.Information.HELP)) {
+            if (table().clientTableRoom().exitVote() == null && (turnClock == null || !turnClock.visible)
+                && TableSettings.get().show(TableSettings.Information.HELP)) {
                 var help = Component.translatable("mcr.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT),
                     TableKeys.VIEW.getTranslatedKeyMessage(), TableKeys.PASS.getTranslatedKeyMessage());
                 g.pose().pushPose(); g.pose().scale(s, s, 1);
@@ -266,6 +285,25 @@ public final class McrTableScreen extends Screen {
                 g.renderTooltip(font, Component.literal(participant.name()).append(" · ").append(wind).append(" · " + player.points())
                     .append(" · ").append(state), mouseX, mouseY);
         }
+    }
+    private int clockBottom() {
+        if (hand != null) return hand.top() - 12;
+        var projection = projection();
+        double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
+        for (var piece : McrTableScene.build(view().game())) if (ownHand(piece)) {
+            var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
+                (float) piece.position().y, (float) piece.position().z)
+                .rotateY((float) Math.toRadians(piece.yaw())).scale(piece.scale());
+            for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
+                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var point = projection.project(new net.minecraft.world.phys.Vec3(corner.x, corner.y + .035, corner.z), .01);
+                if (point != null) { top = Math.min(top, point.y()); bottom = Math.max(bottom, point.y()); }
+            }
+        }
+        if (!Double.isFinite(top) || top >= height || bottom <= 0 || top < 196 && bottom + 90 <= height - 24)
+            return height - 24;
+        return Math.max(190, Math.min(height - 24, (int) top - 6));
     }
     private void toggleView() { presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }

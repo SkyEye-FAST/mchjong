@@ -369,7 +369,7 @@
   "mcr.mchjong.help.single_click": "クリックで打牌 · Shiftクリックで選択 · %sで視点 · %sでパス",
   "mcr.mchjong.match_end": "対局終了",
   "mcr.mchjong.next_hand": "次局を確認",
-  "mcr.mchjong.paused": "4人の着席を待っています",
+  "mcr.mchjong.paused": "対局を一時停止中",
   "mcr.mchjong.penalty": "錯和: %s (%s)",
   "mcr.mchjong.responded": "他のプレイヤーの応答を待っています",
   "mcr.mchjong.results": "国際公式麻雀の精算",

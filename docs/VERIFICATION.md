@@ -127,8 +127,9 @@ session boundary. Run them with
 `gradlew.bat :neoforge:test --tests "*PhysicalSuppliesTest.mcr*" --warning-mode fail --console=plain`.
 
 The focused automatic-table MCR smoke uses one real client and three server-side
-human participants. It selects MCR through the registered payload, seats four
-players, checks the standard 144-tile stock and shared exit vote, then drives a
+human participants. It selects MCR through the registered payload, configures the
+shared clock editor, seats four players, checks the standard 144-tile stock,
+synchronized action clock and shared exit vote, then drives a
 physical hand selection, view switching, immersive click/confirmation, flower
 replacement and responses through the independent MCR view and action path, opens
 settlement and confirms the next hand. It also keeps a match paused after the
@@ -144,8 +145,8 @@ assertion-only run.
 `WallInvariantTest` owns the Riichi live/dead wall and indicator invariants.
 `McrSettlementTest` owns MCR win payments, separate penalties and zero-payment draws.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,
-incarnation-scoped requests, supplied-stock shuffling, resumed responses and
-all-player hand acknowledgements.
+incarnation-scoped requests, supplied-stock shuffling, independent response clocks,
+safe absent-player timeouts, resumed forced actions and timed hand acknowledgements.
 `McrPersistenceTest` owns private save round trips, resumed responses and added
 kongs, payment idempotence, stale-token rejection and invalid-save rejection.
 The sixteen-hand `McrGameTest` lifecycle restores each completed hand before advancing.

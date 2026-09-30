@@ -687,8 +687,9 @@ public final class RiichiGame {
         // Charge every eligible seat before processing any response, including bot responses.
         // Otherwise a bot acting first would grant all humans a free tick.
         for (int seat = 0; seat < rules.players(); seat++) if (clockActive(seat)) {
-            if (moveTicks[seat] > 0) moveTicks[seat]--;
-            else if (reserveTicks[seat] > 0) reserveTicks[seat]--;
+            var remaining = new TimeControl.Clock(moveTicks[seat], reserveTicks[seat], true).after(50);
+            moveTicks[seat] = remaining.moveTicks();
+            reserveTicks[seat] = remaining.reserveTicks();
         }
         if (age >= AUTO_ACTION_TICKS) {
             for (int seat = 0; seat < rules.players(); seat++) {

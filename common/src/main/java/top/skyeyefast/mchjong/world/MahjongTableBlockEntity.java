@@ -46,6 +46,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private RiichiView clientView;
     private top.skyeyefast.mchjong.engine.RiichiRoomSettings clientRiichiSettings;
     private McrSession.View clientMcrView;
+    private top.skyeyefast.mchjong.engine.TimeControl clientMcrTimeControl;
     private top.skyeyefast.mchjong.engine.TableRoomView clientTableRoom;
     private top.skyeyefast.mchjong.item.McrDeck clientMcrDeck;
     private net.minecraft.world.item.DyeColor clientMcrCloth;
@@ -157,16 +158,19 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public MahjongVariant clientVariant() { return clientVariant; }
     public void acceptVariant(MahjongVariant value) { clientVariant = java.util.Objects.requireNonNull(value); }
     public McrSession.View clientMcrView() { return clientMcrView; }
+    public top.skyeyefast.mchjong.engine.TimeControl clientMcrTimeControl() { return clientMcrTimeControl; }
     public top.skyeyefast.mchjong.engine.TableRoomView clientTableRoom() { return clientTableRoom; }
     public top.skyeyefast.mchjong.item.McrDeck clientMcrDeck() { return clientMcrDeck; }
     public net.minecraft.world.item.DyeColor clientMcrCloth() { return clientMcrCloth; }
     public void acceptMcrView(McrSession.View view, top.skyeyefast.mchjong.engine.TableRoomView room,
                               top.skyeyefast.mchjong.item.McrDeck deck,
-                              net.minecraft.world.item.DyeColor cloth) {
+                              net.minecraft.world.item.DyeColor cloth, top.skyeyefast.mchjong.engine.TimeControl timeControl) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client MCR snapshot on server");
         if (clientTableRoom != null && clientTableRoom.tableId().equals(room.tableId())
             && clientTableRoom.incarnation().equals(room.incarnation()) && room.revision() < clientTableRoom.revision()) return;
         clientMcrView = view;
+        clientMcrTimeControl = timeControl;
+        clientViewReceivedNanos = System.nanoTime();
         clientTableRoom = room;
         clientMcrDeck = deck;
         clientMcrCloth = cloth;
@@ -254,6 +258,10 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         return player.serverLevel() == level && authorizedViewer(player) != null ? serverRiichiSession() : null;
     }
 
+    public TableSession participantRoom(ServerPlayer player) {
+        return player.serverLevel() == level && authorizedViewer(player) != null ? serverSession() : null;
+    }
+
     private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
         if (serverSession() instanceof McrSession) { sendMcrView(player, open); return; }
         RiichiSession session = serverRiichiSession();
@@ -280,7 +288,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
             session.roomView(authorizedViewer(player)),
-            stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()))));
+            stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()), session.timeControl())));
     }
 
     public void open(ServerPlayer player) {

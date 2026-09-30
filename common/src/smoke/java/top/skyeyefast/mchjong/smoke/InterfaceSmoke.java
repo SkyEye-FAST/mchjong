@@ -15,7 +15,7 @@ import top.skyeyefast.mchjong.client.MahjongEditBox;
 import top.skyeyefast.mchjong.client.MahjongSlider;
 import top.skyeyefast.mchjong.client.PersonalSettingsScreen;
 import top.skyeyefast.mchjong.client.PersonalPresetsScreen;
-import top.skyeyefast.mchjong.client.RiichiClockScreen;
+import top.skyeyefast.mchjong.client.TableClockScreen;
 import top.skyeyefast.mchjong.client.RiichiInviteScreen;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
@@ -169,7 +169,7 @@ final class InterfaceSmoke {
             require(client.screen instanceof PersonalSettingsScreen, "Personal settings did not return to its entry screen");
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            client.setScreen(new RiichiClockScreen(settingsParent, table.clientRiichiSettings().timeControl()));
+            client.setScreen(new TableClockScreen(settingsParent, table.clientRiichiSettings().timeControl()));
             settingsStage = 5; settingsTicks = 0;
         } else if (settingsStage == 5 && settingsTicks > 10) {
             checkBounds(client);

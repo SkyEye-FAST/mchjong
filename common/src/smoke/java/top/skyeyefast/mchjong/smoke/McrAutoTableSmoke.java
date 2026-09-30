@@ -47,6 +47,7 @@ final class McrAutoTableSmoke {
     private Map<UUID, Integer> assignedSeats;
     private long leaveRevision;
     private int presentationStep;
+    private boolean clockConfigured;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         check(++ticks < 2200, "MCR automatic-table smoke timed out at " + stage);
@@ -94,6 +95,22 @@ final class McrAutoTableSmoke {
                 var lobby = clientTable.clientTableRoom();
                 if (lobby == null || lobby.seats().stream().anyMatch(seat -> seat.participant().id() == null)) break;
                 check(client.screen instanceof McrLobbyScreen, "MCR preparation did not open its room screen");
+                if (!clockConfigured) {
+                    var clockButton = client.screen.children().stream().filter(child -> child instanceof MahjongButton button
+                        && button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("ui.mchjong.clock_settings").getString()))
+                        .map(child -> (MahjongButton) child).findFirst().orElseThrow();
+                    clockButton.onPress();
+                    check(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "MCR did not open the shared clock editor");
+                    var fields = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                        .map(net.minecraft.client.gui.components.EditBox.class::cast).toList();
+                    fields.get(0).setValue("30"); fields.get(1).setValue("7");
+                    client.screen.children().stream().filter(child -> child instanceof MahjongButton button
+                        && button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("gui.done").getString()))
+                        .map(child -> (MahjongButton) child).findFirst().orElseThrow().onPress();
+                    clockConfigured = true;
+                    break;
+                }
+                if (!new top.skyeyefast.mchjong.engine.TimeControl(30, 7).equals(clientTable.clientMcrTimeControl())) break;
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
@@ -211,6 +228,9 @@ final class McrAutoTableSmoke {
                 if (view == null || view.game().phase() != McrGame.Phase.TURN || view.game().actions().isEmpty()) break;
                 int index = first(view, McrAction.Type.DISCARD);
                 check(index >= 0, "Client has no discard action");
+                var clock = view.clocks().get(view.game().viewerSeat());
+                check(clock.active() && clock.reserveTicks() == 600 && clock.moveTicks() <= 140,
+                    "MCR action clock did not use the configured room time");
                 if (presentationStep == 0) {
                     check(!screen.immersive(), "MCR play must open in the seated world view");
                     SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), message -> {});

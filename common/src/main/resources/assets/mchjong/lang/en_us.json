@@ -369,7 +369,7 @@
   "mcr.mchjong.help.single_click": "Click: discard · Shift-click: select · %s: view · %s: pass",
   "mcr.mchjong.match_end": "Match complete",
   "mcr.mchjong.next_hand": "Confirm next hand",
-  "mcr.mchjong.paused": "Waiting for all four players to sit",
+  "mcr.mchjong.paused": "Match paused",
   "mcr.mchjong.penalty": "Wrong win: %s (%s)",
   "mcr.mchjong.responded": "Waiting for other responses",
   "mcr.mchjong.results": "MCR settlement",
