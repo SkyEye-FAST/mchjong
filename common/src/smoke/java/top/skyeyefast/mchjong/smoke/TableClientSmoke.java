@@ -102,6 +102,7 @@ public final class TableClientSmoke {
                 return;
             }
             if (step == 0 && client.screen instanceof TitleScreen) {
+                AudioEffectsSmoke.verify(client);
                 Files.createDirectories(output);
                 Files.deleteIfExists(output.resolve("PASS.txt"));
                 Files.deleteIfExists(output.resolve("FAIL.txt"));

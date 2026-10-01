@@ -202,18 +202,22 @@ public final class RiichiResults extends AbstractWidget {
         }
         // Reserve the complete receipt from the first frame, so new rows never move the hand.
         String limit = ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer());
+        int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
+        Component points = Component.translatable("ui.mchjong.points", gain);
+        Component grade = limit == null ? Component.empty() : Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit));
+        int gradeWidth = limit == null ? 0 : 2 * (font.width(grade) + 8);
+        boolean beside = compact && limit != null && 2 * font.width(points) + gradeWidth + 8 <= span;
+        int scoreHeight = limit == null || beside ? 28 : 54;
         if (scored) {
-            int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
-            Component points = Component.translatable("ui.mchjong.points", gain);
-            Component grade = limit == null ? Component.empty() : Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit));
-            int gradeWidth = limit == null ? 0 : 2 * (font.width(grade) + 8);
-            boolean beside = compact && limit != null && 2 * font.width(points) + gradeWidth + 8 <= span;
-            largeText(graphics, points, 0, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
-            if (graphics != null && limit != null && (readout == null || Util.getMillis() - readout.scoredAt(winner) >= 350))
-                largeBadge(graphics, grade, beside ? span - gradeWidth : 0, beside ? y : y + 26);
-            y += limit == null || beside ? 28 : 54;
+            if (graphics != null) {
+                graphics.fill(-MahjongUi.OFFSET, y, span + MahjongUi.OFFSET, y + scoreHeight, MahjongUi.INPUT);
+                graphics.fill(-MahjongUi.OFFSET, y, -MahjongUi.STEP, y + 22, GOLD);
+            }
+            largeText(graphics, points, MahjongUi.STEP, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
+            if (graphics != null && limit != null && (readout == null || readout.limitVisible(winner)))
+                largeBadge(graphics, grade, beside ? span - gradeWidth + MahjongUi.OFFSET : MahjongUi.OFFSET, beside ? y : y + 26);
         }
-        else y += limit == null ? 28 : 54;
+        y += scoreHeight;
         if (win.tile() >= 0) {
             y += 4;
             int leftHeight = indicators(graphics, 0, y, span / 2 - 4, false, compact);

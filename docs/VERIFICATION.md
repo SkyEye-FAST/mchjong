@@ -61,6 +61,9 @@ brain-driven seating with vehicle following disabled, client mount synchronizati
 saved entity recovery, assigned mounts, legal computer
 play and cleanup after a task change.
 Selected screenshots and results use `build/smoke/maid-evidence`.
+`maid-table-head.png` and `maid-gecko-table-head.png` render the actual equipped
+maid through the Bedrock and Gecko head layers; neither uses a player-model
+substitute.
 
 ### Create and Ponder
 
@@ -89,7 +92,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:neoforge:runSmokeCli
 | `-PsmokeVisibility=true` | Three participant visibility modes, private packets and independently redacted unmounted spectators; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
 | `-PsmokeItems=true` | Native held/dropped supplies and exact inventory changes; `items-evidence` |
-| `-PsmokePalette=true` | Material, dye, furniture and player head-slot presentation; `palette-evidence` |
+| `-PsmokePalette=true` | Material, dye, furniture, native player head-slot, crouched table edge and item-context presentation; `palette-evidence` |
 
 Use `:fabric:runSmokeClient -PsmokeInterface=true -PwithModMenu=true` to
 exercise the installed Mod Menu config factory. The base Fabric interface run
@@ -308,3 +311,24 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Bot checks
 
 Use `:engine:test --tests "*TrainingBotTest"` for decision regressions.
+
+## Furniture and settlement presentation
+
+The palette fixture captures `00-table-head.png`, `00-stool-head.png`, `00-armor-stand-head.png`,
+`00-table-edge-sneaking.png`, `00-table-edge-sneaking-shift.png`,
+`00-table-first-person.png`, `00-table-third-person.png` and
+`00-furniture-contexts.png`. The two edge captures move the crouched camera by
+one degree to expose depth flicker. The context sheet uses native GUI, FIXED,
+GROUND and both hand rendering paths with the shared furniture mesh.
+
+`FurnitureShapeTest` checks face-local UV scale, opaque cloth composition,
+single-plane cloth geometry and furniture context transforms.
+`RiichiAudioEventsTest` checks explicit result events, the 750 ms points hold,
+ordinary hands without LIMIT, long recordings and independent multiple winners.
+`AudioEffectsSmoke` checks native registration, resource resolution, mono decoding,
+duration and peak headroom for every original sound.
+`AssetContractTest` checks all project effect resources and neutral furniture
+model transforms. Settlement captures `06-readout-points.png` and
+`06-readout-grade.png` assert points precede the grade by at least 750 ms.
+`UiControlsSmoke` checks visible settings rectangles for bounds and overlap at
+320 × 240, 640 × 400 and 1280 × 800, retaining native keyboard behavior.

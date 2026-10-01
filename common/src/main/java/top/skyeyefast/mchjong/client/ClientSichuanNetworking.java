@@ -16,8 +16,20 @@ public final class ClientSichuanNetworking {
         if ((room.lifecycle() == TableSession.Lifecycle.LOBBY) != (view == null)
             || view != null && (!view.tableId().equals(room.tableId()) || !view.incarnation().equals(room.incarnation())
                 || view.game().viewerSeat() != room.viewerSeat() || !view.game().rules().equals(payload.settings().rules()))) return;
+        var previous = table.clientSichuanView();
+        var previousRoom = table.clientRoom();
         table.acceptSichuanView(view, room, payload.deck(), payload.cloth(), payload.settings());
         if (table.clientTableRoom() != room) return;
+        if (view != null && previousRoom != null && previousRoom.tableId().equals(payload.room().tableId())
+            && previousRoom.incarnation().equals(payload.room().incarnation())) {
+            if (previous == null && previousRoom.lobby()
+                || previous != null && previous.game().handNumber() != view.game().handNumber())
+                TableAudio.opening(payload.pos(), table.automatic());
+            else if (previous != null)
+                for (String effect : TableAudio.between(previous.game(), view.game()))
+                    TableAudio.effect(effect, effect.equals("score_reveal") ? null : payload.pos(), 0);
+        }
+
         if (payload.leaveDecision()) {
             if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId())))
                 client.setScreen(new TableLeaveScreen(payload.pos(), room.tableId(), room.decision()));

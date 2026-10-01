@@ -29,7 +29,7 @@ class AssetContractTest {
                 .getAsJsonObject();
         JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve("en_us.json")))
                 .getAsJsonObject();
-        assertEquals(26 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
+        assertEquals(25 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
         top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.forEach((event, subtitle) ->
             assertEquals(subtitle, sounds.getAsJsonObject("voice." + event).get("subtitle").getAsString()));
         for (var entry : sounds.entrySet()) {
@@ -39,8 +39,14 @@ class AssetContractTest {
                 assertTrue(sound.getAsJsonArray("sounds").isEmpty());
             else
                 for (var choice : sound.getAsJsonArray("sounds")) {
-                    assertEquals("event", choice.getAsJsonObject().get("type").getAsString());
-                    assertTrue(choice.getAsJsonObject().get("name").getAsString().startsWith("minecraft:"));
+                    var item = choice.getAsJsonObject();
+                    assertFalse(item.has("type"), "Effects must use project-owned samples");
+                    String name = item.get("name").getAsString();
+                    assertTrue(name.startsWith("mchjong:table/"));
+                    byte[] audio = Files.readAllBytes(languages.getParent().resolve("sounds/" + name.substring(8) + ".ogg"));
+                    assertEquals("OggS", new String(audio, 0, 4, java.nio.charset.StandardCharsets.US_ASCII));
+                    assertTrue(audio.length > 1000);
+                    assertFalse(item.get("stream").getAsBoolean());
                 }
         }
     }

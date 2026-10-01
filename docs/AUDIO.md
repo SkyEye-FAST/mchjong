@@ -1,8 +1,9 @@
 # Audio and voice presets
 
 Personal settings → Audio controls effect volume, countdown warnings, voice playback
-and voice volume. Effects are positional and also respect Minecraft's Blocks
-volume. Countdown warnings and recorded voices respect Master volume. Setting a
+and voice volume. Physical tile, dice and mechanism effects are positional at the table and also
+respect Minecraft's Blocks volume. UI accents, settlement reveals, countdown
+warnings and recorded voices respect Master volume. Setting a
 volume to zero mutes that category. The preview button plays one effect and the
 selected `ron` recording. Minecraft's accessibility narration has independent
 controls.
@@ -16,6 +17,39 @@ recordings while retaining effects.
 Missing recordings stay silent. The default voice preset uses the selected
 Minecraft resource pack's `mchjong:voice.*` events.
 
+## Original effects
+
+`MahjongSounds` registers the `mchjong:table.<name>` events below. `sounds.json`
+references project-owned mono Ogg Vorbis files at `sounds/table/<name>.ogg`.
+Riichi, MCR and Sichuan share the physical sound vocabulary. Repeated/cosmetic
+snapshots stay silent; revealing a concealed kong is not another kong sound.
+Native Minecraft widgets retain their normal click feedback.
+
+| Event suffix | Meaning | Source |
+| --- | --- | --- |
+| `tile_draw` | A tile leaves the wall for a hand | Table / Blocks |
+| `tile_discard` | A discard lands on the felt | Table / Blocks |
+| `tile_call` | A called group, flower/north or dealing packet lands | Table / Blocks |
+| `tile_kong` | A new or supplemented kong lands | Table / Blocks |
+| `riichi_stick` | The declaration stick lands | Table / Blocks |
+| `dice` | Dice roll and settle | Table / Blocks |
+| `table_mechanical` | Automatic-table opening/build motion | Table / Blocks |
+| `score_reveal` | Winner points or MCR/Sichuan receipt appears | UI / Master |
+| `grade_reveal` | Applicable Riichi grade appears with its voice | UI / Master |
+| `ui_accent` | Local turn attention | UI / Master |
+| `countdown` | Last-five-seconds warning | UI / Master |
+| `ron`, `tsumo` | Physical win declaration | Table / Blocks |
+| `draw_end` | Draw announcement | Table / Blocks |
+| `match_end` | Final standings | UI / Master |
+
+`art/audio/synthesize.py` is the source for the original effects. It synthesizes
+seeded impact noise and damped resonances, without external samples. Regenerate
+with Python 3 and FFmpeg's `libvorbis`; normal Gradle builds consume the checked-in
+Ogg files and need neither tool. Files are 44.1 kHz mono, 65–650 ms, with bounded
+peaks (at most 0.38 before encoding). Resin-like tile impacts are hard and brief,
+mechanics emphasize low frequencies, and reveals use restrained bright tones.
+Resource packs may replace these event files; voice presets remain independent.
+
 ## Settlement playback
 
 Winning settlements reveal one yaku at a time, playing its recording and waiting
@@ -24,8 +58,12 @@ yaku order. Ordinary yaku show their individual han after open-hand reductions;
 natural yakuman show only their applicable yakuman rows. Bonus rows follow in
 this order: dora, red dora, extracted-north dora, ura dora. Each row uses its own
 counted recording, with thirteen or more sharing the same recording. Each
-winner's points appear before the one applicable hand-grade recording; grade
-names are not played as a ladder. Multiple winners are read in order. Missing
+winner follows explicit `YAKU → POINTS → LIMIT → NEXT_WINNER` presentation events.
+After the last yaku, at least 300 ms of silence precedes points and `score_reveal`.
+Points hold alone for 750 ms before the applicable grade recording and
+`grade_reveal`. Ordinary hands omit LIMIT entirely and finish after the points
+hold; grade names are not played as a ladder. Multiple winners complete these
+stages independently in order, ending with `COMPLETE`. Missing
 recordings and muted voices retain a short visual cadence rather than blocking
 the receipt. Sound volume and animation settings remain independent.
 

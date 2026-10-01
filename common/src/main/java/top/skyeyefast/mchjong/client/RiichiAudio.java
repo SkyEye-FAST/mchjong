@@ -7,16 +7,11 @@ import java.util.UUID;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.multiplayer.ClientLevel;
-import net.minecraft.client.resources.sounds.SimpleSoundInstance;
-import net.minecraft.core.BlockPos;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.util.RandomSource;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.RiichiActionPayload;
-import top.skyeyefast.mchjong.world.MahjongSounds;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 
@@ -84,7 +79,8 @@ public final class RiichiAudio {
             result = null;
         }
         for (var cue : fromLobby && before == null ? RiichiAudioEvents.opening(view) : RiichiAudioEvents.between(before, view)) {
-            if (cue.sound() != null) effect(cue.sound(), table.getBlockPos(), cue.delay());
+            if (cue.sound() != null && (!cue.sound().equals("table_mechanical") || table.automatic()))
+                TableAudio.effect(cue.sound(), cue.sound().equals("ui_accent") ? null : table.getBlockPos(), cue.delay());
             if (cue.voice() != null && Minecraft.getInstance().player != null
                     && Minecraft.getInstance().player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table.getBlockPos())) <= 256)
                 SPEECH.add(speech(view, cue.seat(), cue.voice(), ticks + cue.delay()));
@@ -118,11 +114,19 @@ public final class RiichiAudio {
                 if (finalStage && !finalVoicePlayed) {
                     finishResult();
                     finalVoicePlayed = true;
-                    effect("match_end", null, 0);
+                    TableAudio.effect("match_end", null, 0);
                     speak("match_end");
                 } else if (!finalStage && SPEECH.isEmpty()) {
-                    String event = result.tick(Util.getMillis(), speaking);
-                    if (event != null) speak(speech(view, view.wins().get(result.winner()).seat(), event, ticks));
+                    var event = result.tick(Util.getMillis(), speaking);
+                    if (event != null) {
+                        switch (event.stage()) {
+                            case POINTS -> TableAudio.effect("score_reveal", null, 0);
+                            case LIMIT -> TableAudio.effect("grade_reveal", null, 0);
+                            default -> { }
+                        }
+                        if (event.voice() != null)
+                            speak(speech(view, view.wins().get(event.winner()).seat(), event.voice(), ticks));
+                    }
                 }
                 if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
                     for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == RiichiAction.Type.SETTLEMENT_DONE) {
@@ -142,17 +146,9 @@ public final class RiichiAudio {
             }
             if (clock.active() && seconds > 0 && seconds <= 5 && seconds != lastSecond) {
                 lastSecond = seconds;
-                if (TableSettings.get().countdownSounds) effect("countdown", null, 0);
+                if (TableSettings.get().countdownSounds) TableAudio.effect("countdown", null, 0);
             }
         }
-    }
-
-    private static void effect(String name, BlockPos pos, int delay) {
-        float volume = (float) TableSettings.get().effectsVolume;
-        if (volume <= 0) return;
-        var sound = pos == null ? SimpleSoundInstance.forUI(MahjongSounds.effect(name), 1, volume)
-            : new SimpleSoundInstance(MahjongSounds.effect(name), SoundSource.BLOCKS, volume, 1, RandomSource.create(), pos);
-        Minecraft.getInstance().getSoundManager().playDelayed(sound, delay);
     }
 
     private static void speak(String event) {
@@ -195,7 +191,7 @@ public final class RiichiAudio {
     }
 
     public static void preview() {
-        effect("ron", null, 0);
+        TableAudio.effect("ron", null, 0);
         speak("ron");
     }
 

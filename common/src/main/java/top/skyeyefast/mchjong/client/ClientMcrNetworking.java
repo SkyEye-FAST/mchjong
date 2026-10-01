@@ -14,8 +14,20 @@ public final class ClientMcrNetworking {
         var client = Minecraft.getInstance();
         if (client.level == null || !(client.level.getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)) return;
         var view = payload.view().isEmpty() ? null : McrCodec.decodeSessionView(payload.view());
+        var previous = table.clientMcrView();
+        var previousRoom = table.clientRoom();
         table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth(), payload.timeControl());
         if (table.clientTableRoom() != payload.room()) return;
+        if (view != null && previousRoom != null && previousRoom.tableId().equals(payload.room().tableId())
+            && previousRoom.incarnation().equals(payload.room().incarnation())) {
+            if (previous == null && previousRoom.lobby()
+                || previous != null && previous.game().handNumber() != view.game().handNumber())
+                TableAudio.opening(payload.pos(), table.automatic());
+            else if (previous != null)
+                for (String effect : TableAudio.between(previous.game(), view.game()))
+                    TableAudio.effect(effect, effect.equals("score_reveal") ? null : payload.pos(), 0);
+        }
+
         if (payload.leaveDecision()) {
             if (!(client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), payload.room().tableId())))
                 client.setScreen(new TableLeaveScreen(payload.pos(), payload.room().tableId(), payload.room().decision()));

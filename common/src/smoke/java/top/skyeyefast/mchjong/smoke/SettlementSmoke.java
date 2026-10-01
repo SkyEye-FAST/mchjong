@@ -43,8 +43,8 @@ final class SettlementSmoke {
             voiceSource = settings.voiceSource;
             voiceVolume = settings.voiceVolume;
             var preset = net.minecraft.resources.ResourceLocation.parse("smoke:readout");
-            // Decode an existing game recording; no third-party voice assets enter the project.
-            try (var sound = client.getResourceManager().open(net.minecraft.resources.ResourceLocation.parse("minecraft:sounds/random/click.ogg"))) {
+            // Reuse an original project effect as a bounded smoke-only voice recording.
+            try (var sound = client.getResourceManager().open(net.minecraft.resources.ResourceLocation.parse("mchjong:sounds/table/score_reveal.ogg"))) {
                 byte[] recording = sound.readAllBytes();
                 var recordings = new java.util.HashMap<String, byte[]>();
                 ScoreAnnouncements.SUBTITLES.keySet().forEach(event -> recordings.put(event, recording));
@@ -106,10 +106,12 @@ final class SettlementSmoke {
                 captureStage++;
             } else if (captureStage == 2 && readout.scoredAt(0) >= 0
                     && net.minecraft.Util.getMillis() - readout.scoredAt(0) >= 50) {
+                if (readout.limitVisible(0)) throw new IllegalStateException("Grade appeared in the points beat");
                 capture(client, output, "06-readout-points.png");
                 captureStage++;
-            } else if (captureStage == 3 && readout.scoredAt(0) >= 0
-                    && net.minecraft.Util.getMillis() - readout.scoredAt(0) >= 500) {
+            } else if (captureStage == 3 && readout.limitVisible(0)) {
+                if (net.minecraft.Util.getMillis() - readout.scoredAt(0) < 750)
+                    throw new IllegalStateException("Grade did not leave a 750ms points beat");
                 capture(client, output, "06-readout-grade.png");
                 captureStage++;
             }
