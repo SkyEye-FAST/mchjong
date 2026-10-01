@@ -20,6 +20,7 @@ public final class ClientSichuanNetworking {
         var previousRoom = table.clientRoom();
         table.acceptSichuanView(view, room, payload.deck(), payload.cloth(), payload.settings());
         if (table.clientTableRoom() != room) return;
+        table.acceptWorldPolicy(payload.world());
         if (view != null && previousRoom != null && previousRoom.tableId().equals(payload.room().tableId())
             && previousRoom.incarnation().equals(payload.room().incarnation())) {
             if (previous == null && previousRoom.lobby()

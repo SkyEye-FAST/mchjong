@@ -184,7 +184,7 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.SichuanDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true, true, false, sichuanRoom.roomSettings());
+                net.minecraft.world.item.DyeColor.CYAN, true, true, false, sichuanRoom.roomSettings(), top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
             top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.encode(buffer, sichuanView);
             assertEquals(sichuanView, top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.decode(buffer));
             for (boolean maximum : new boolean[]{false, true}) {
@@ -197,7 +197,7 @@ class ServerIntegrationTest {
                 assertEquals(proposal, top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC.decode(buffer));
                 var customView = new top.skyeyefast.mchjong.network.SichuanViewPayload(request.pos(), "", sichuanRoom.roomView(null),
                     null, net.minecraft.world.item.DyeColor.CYAN, false, false, false,
-                    new top.skyeyefast.mchjong.engine.SichuanRoomSettings(rules, new top.skyeyefast.mchjong.engine.TimeControl(0, 1), false));
+                    new top.skyeyefast.mchjong.engine.SichuanRoomSettings(rules, new top.skyeyefast.mchjong.engine.TimeControl(0, 1), false), top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
                 top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.encode(buffer, customView);
                 assertEquals(customView, top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.decode(buffer));
             }
@@ -229,7 +229,7 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.McrDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true, false, false, session.timeControl());
+                net.minecraft.world.item.DyeColor.CYAN, true, false, false, session.timeControl(), top.skyeyefast.mchjong.world.WorldSettings.Policy.DEFAULT);
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC.encode(buffer, mcrView);
             assertEquals(mcrView, top.skyeyefast.mchjong.network.McrViewPayload.CODEC.decode(buffer));
             assertTrue(top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(mcrView.view()).game().actions().isEmpty());

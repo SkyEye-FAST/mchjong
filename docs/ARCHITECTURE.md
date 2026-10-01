@@ -433,7 +433,7 @@ and `MahjongTableBlockEntity` verify reach, table, incarnation and decision, the
 resolve the acting seat from the authenticated sender. Duplicate confirmations
 do not change the count or deadline.
 `RiichiViewPayload`, `McrViewPayload` and `SichuanViewPayload` carry the public
-`TableRoomView` alongside their rule-specific recipient-safe projections.
+`TableRoomView` and synchronized world policy alongside their rule-specific recipient-safe projections.
 All three view payloads send the last-player leave decision directly to its
 unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only

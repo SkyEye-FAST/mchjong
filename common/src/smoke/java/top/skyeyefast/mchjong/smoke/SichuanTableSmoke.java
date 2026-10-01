@@ -116,7 +116,7 @@ final class SichuanTableSmoke {
                     && table.clientSichuanSettings().preset() == top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025,
                     "Lobby did not project authoritative Sichuan settings");
                 originalSettings = new top.skyeyefast.mchjong.network.SichuanViewPayload(pos, "", room, table.clientSichuanDeck(),
-                    table.clientSichuanCloth(), false, false, false, table.clientSichuanSettings());
+                    table.clientSichuanCloth(), false, false, false, table.clientSichuanSettings(), table.clientWorldPolicy());
                 var label = Component.translatable("sichuan.mchjong.rules.title").getString();
                 client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                     .filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElseThrow().onPress();

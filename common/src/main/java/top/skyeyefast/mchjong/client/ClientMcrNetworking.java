@@ -18,6 +18,7 @@ public final class ClientMcrNetworking {
         var previousRoom = table.clientRoom();
         table.acceptMcrView(view, payload.room(), payload.deck(), payload.cloth(), payload.timeControl());
         if (table.clientTableRoom() != payload.room()) return;
+        table.acceptWorldPolicy(payload.world());
         if (view != null && previousRoom != null && previousRoom.tableId().equals(payload.room().tableId())
             && previousRoom.incarnation().equals(payload.room().incarnation())) {
             if (previous == null && previousRoom.lobby()

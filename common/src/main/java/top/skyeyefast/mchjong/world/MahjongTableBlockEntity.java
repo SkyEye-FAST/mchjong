@@ -319,7 +319,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
             session.roomView(authorizedViewer(player)),
-            stock == null ? null : stock.deck(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.timeControl())));
+            stock == null ? null : stock.deck(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.timeControl(), WorldSettings.of(level.getServer()).policy())));
     }
 
     private void sendSichuanView(ServerPlayer player, boolean open, boolean controlReply) {
@@ -330,7 +330,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new SichuanViewPayload(worldPosition,
             snapshot == null ? "" : SichuanCodec.encodeSessionView(snapshot), session.roomView(viewer),
-            equipment.sichuanStock(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.roomSettings())));
+            equipment.sichuanStock(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.roomSettings(), WorldSettings.of(level.getServer()).policy())));
     }
 
     public void open(ServerPlayer player) {
