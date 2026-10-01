@@ -26,6 +26,20 @@ the server also advances after the reading period. Leaving the last occupied hum
 stool pauses the match, and returning resumes it. A sole human can close the match
 directly; rooms with multiple humans use the shared exit vote.
 
+## Sichuan Bot rooms
+
+Select Sichuan with a complete 108-tile suited set. Both SBR 2025 and T/TFMJ 01—2024
+support one human and three built-in Bots through all eight hands. Fill the empty
+seats, or add/remove individual Bots, then begin seat preparation and ready at your
+assigned stool. Sichuan has one built-in Bot choice.
+
+Bots are ready automatically and confirm each completed hand. Human confirmation
+advances early; the server also advances after the reading period. Leaving the last
+human stool pauses Bots and the match. Returning resumes the saved decisions.
+World `allowBots` controls preparation; running matches retain their roster.
+Scores, final standings and replay participants include Bots. See
+[Bot analysis](BOTS.md#sichuan-built-in-opponent) for their decision boundary.
+
 ## World policy
 
 Each world save has `config/mchjong-world.toml`, shared by all dimensions and
@@ -130,7 +144,7 @@ up during repositioning preserves the reservation; Leave room releases it.
 
 ## Computer players
 
-Each bot can be set to Easy or Hard during any waiting-room stage. Automatic
+Each Riichi bot can be set to Easy or Hard during any waiting-room stage. Automatic
 tables also offer the external Bots discovered from the administrator's
 [Bot Service configuration](BOTS.md#local-bot-service) when their player count
 and rule preset match the room. Changing the roster or Bot choice clears human

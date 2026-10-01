@@ -21,6 +21,34 @@ waits twelve ticks before Bot decisions, while the session also owns automatic
 draws and flower replacements. Bot actions and completed-hand confirmations share
 the normal room pause, exit and persistence lifecycle.
 
+## Sichuan built-in opponent
+
+SBR 2025 and T/TFMJ 01—2024 rooms offer one built-in Bot through the shared room
+controls and world `allowBots` policy. One human and three Bots can finish all
+eight hands. See [Rooms](ROOMS.md#sichuan-bot-rooms) for preparation and pauses.
+
+`SichuanBot` reads only its seat's recipient-safe `SichuanView` and selects an
+issued action index. Decisions are deterministic. Void selection combines suit
+size, pairs, triplets, connected fragments and shape efficiency. SBR submits the
+suit together with a legal secret physical first discard; heavenly void leaves
+that choice unbound. Issued actions preserve the bound discard and force clearing
+the void suit before ordinary discards.
+
+`SichuanHandAnalyzer` reuses mahjong-utils regular shapes and accounts for Sichuan
+seven pairs, where a four counts as two pairs. Ordinary discards prefer lower
+shanten, more remaining effective copies, then more effective kinds and the lowest
+physical ID. Public availability deduplicates the Bot's tiles, rivers, melds and
+focus; the revealed middle tiles of a concealed kong identify all four copies.
+Opponent hands and future wall identities stay hidden.
+
+Legal wins are accepted. Pungs require better progress after their mandatory
+discard. Kongs compare the concealed remainder before replacement, so discarding
+the unknown replacement preserves the evaluated shape. They require better
+progress or equal progress with immediate income under the current rules; delayed
+added kongs supply no such income. Flower-pig sanctions suppress this income
+preference. The server waits twelve ticks, leaves Bot clocks inactive, confirms
+completed hands automatically and saves pending delay, roster and replay flags.
+
 ## Local bot service
 
 The server administrator can enable external opponents with

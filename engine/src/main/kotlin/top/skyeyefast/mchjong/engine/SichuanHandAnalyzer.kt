@@ -2,8 +2,35 @@ package top.skyeyefast.mchjong.engine
 
 import mahjongutils.models.Tile as LibraryTile
 import mahjongutils.shanten.CommonShantenArgs
+import mahjongutils.shanten.ShantenWithoutGot
 
 object SichuanHandAnalyzer {
+    @JvmRecord
+    data class Progress(val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int)
+
+    /** Post-discard shape. Regular shapes use mahjong-utils; Sichuan counts a four as two pairs. */
+    @JvmStatic
+    fun analyze(hand: List<Int>, melds: List<Meld>, voidSuit: Int, visible: List<Int>): Progress {
+        val owned = hand + melds.flatMap { it.tiles() }
+        require(voidSuit in 0..2 && hand.size + 3 * melds.size == 13
+            && owned.all { it in 0..<108 } && owned.distinct().size == owned.size
+            && melds.none { it.type() == Meld.Type.SEQUENCE })
+        // The library infers the required concealed groups from 13 - 3 * meld count.
+        val regular = MahjongUtilsInterop.analyze(CommonShantenArgs(hand.map {
+            LibraryTile[Tile.notation(Tile.kind(it))]
+        }, bestShantenOnly = true), false).regular.shantenInfo as ShantenWithoutGot
+        val counts = IntArray(27)
+        hand.forEach { counts[Tile.kind(it)]++ }
+        val pairs = if (melds.isEmpty()) 6 - counts.sumOf { it / 2 } else Int.MAX_VALUE
+        val shanten = minOf(regular.shantenNum, pairs)
+        val effective = sortedSetOf<Int>()
+        if (regular.shantenNum == shanten) effective += regular.advance.map { Tile.parseKind(it.toString()) }
+        if (pairs == shanten) effective += (0..<27).filter { counts[it] % 2 == 1 }
+        val known = (owned + visible).filter { it in 0..<108 }.toSet().groupingBy(Tile::kind).eachCount()
+        effective.removeIf { it / 9 == voidSuit || (known[it] ?: 0) >= 4 }
+        return Progress(shanten, java.util.Collections.unmodifiableSet(effective), effective.sumOf { 4 - (known[it] ?: 0) })
+    }
+
     @JvmStatic
     fun score(hand: List<Int>, melds: List<Meld>, rules: SichuanRules,
               afterKong: Boolean, shootAfterKong: Boolean, robbing: Boolean, lastTile: Boolean): SichuanSettlement.Score? {

@@ -159,6 +159,12 @@ MIL shooting refunds, T/TFMJ call transfers, multi-win and sequential-win
 retirement, kong robbery and call transfers, flower-pig/ready checks, cumulative
 scores and dealer succession, queue acknowledgement and altered-record rejection.
 Run `gradlew.bat :engine:test --tests "*SichuanReplayTest" --warning-mode fail --console=plain`.
+`SichuanBotTest` owns deterministic void/secret-discard choices, quad-pair efficiency,
+public-copy deduplication, conservative calls, recipient privacy, room/policy
+controls, paused/restored scheduling, multi-win Bot replies, inactive Bot clocks,
+automatic confirmations and both presets' complete one-human/three-Bot eight-hand
+matches with restored settlements, final standings and replay flags. Run
+`gradlew.bat :engine:test --tests "*SichuanBotTest" --warning-mode fail --console=plain`.
 `SichuanRoomSettingsTest` owns lobby-only settings, exact preset/custom matching
 for every field, rule bounds, host/stale authority, readiness reset, world-policy
 restrictions and lobby/match save restoration. Run
@@ -177,7 +183,10 @@ non-host/stale/incarnation payload rejection, the
 physical-tile selection and discard, exit
 voting, result screens, duplicate confirmation packets, next-hand privacy,
 eight-hand completion, shared-browser retrieval, Sichuan replay event/hand
-navigation, final standings and return to the lobby:
+navigation, final standings and return to the lobby. It then uses native room
+packets to add/remove/fill three Bots, restores their NBT roster and completes an
+eight-hand T/TFMJ match with one real human, automatic confirmations, final client
+results and a validated Bot replay:
 
 ```text
 gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --console=plain

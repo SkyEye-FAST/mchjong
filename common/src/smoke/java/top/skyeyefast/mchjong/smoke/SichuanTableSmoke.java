@@ -449,11 +449,109 @@ final class SichuanTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay-settlement.png", client.getMainRenderTarget(), ignored -> {});
                 replay.onClose();
                 require(client.screen instanceof ReplayBrowserScreen, "Sichuan replay did not return to the shared browser");
+                client.screen.onClose();
+                task = server.submit(() -> {
+                    var main = server.getPlayerList().getPlayer(mainId);
+                    var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
+                    var session = (SichuanSession) target.participantRoom(main);
+                    for (var guest : guests) {
+                        if (guest.getVehicle() instanceof SeatEntity mount) { guest.stopRiding(); mount.discard(); }
+                        session.unseat(guest.getUUID());
+                    }
+                    target.open(main);
+                });
+                stage = 28;
+            }
+            case 28 -> {
+                if (room.seats().stream().filter(seat -> seat.participant().id() != null).count() != 1) break;
+                sendRoom(client, pos, room, RoomAction.Type.SET_BOT); stage++;
+            }
+            case 29 -> {
+                if (room.seats().stream().noneMatch(seat -> seat.participant().bot())) break;
+                sendRoom(client, pos, room, RoomAction.Type.REMOVE_BOT); stage++;
+            }
+            case 30 -> {
+                if (room.seats().stream().anyMatch(seat -> seat.participant().bot())) break;
+                sendRoom(client, pos, room, RoomAction.Type.FILL_BOTS); stage++;
+            }
+            case 31 -> {
+                if (room.seats().stream().filter(seat -> seat.participant().bot() && seat.participant().ready()).count() != 3) break;
+                client.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.SichuanRulesPayload(pos,
+                    room.tableId(), room.incarnation(), room.decision(), top.skyeyefast.mchjong.engine.SichuanPreset.TFMJ_2024.config())));
+                stage++;
+            }
+            case 32 -> {
+                if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.TFMJ_2024) break;
+                sendRoom(client, pos, room, RoomAction.Type.BEGIN_SEATING); stage++;
+            }
+            case 33 -> {
+                if (room.seating() != RoomSeating.Stage.POSITIONING) break;
+                task = server.submit(() -> {
+                    var main = server.getPlayerList().getPlayer(mainId);
+                    var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
+                    if (main.getVehicle() instanceof SeatEntity mount) { main.stopRiding(); mount.discard(); }
+                    target.sit(main, target.participantRoom(main).seatOf(mainId));
+                    target.open(main);
+                });
+                stage++;
+            }
+            case 34 -> {
+                if (room.actions().stream().noneMatch(action -> action.type() == RoomAction.Type.READY)) break;
+                sendRoom(client, pos, room, RoomAction.Type.READY); stage++;
+            }
+            case 35 -> {
+                if (table.clientSichuanView() == null) break;
+                task = server.submit(() -> {
+                    var main = server.getPlayerList().getPlayer(mainId);
+                    var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
+                    target.loadWithComponents(target.saveWithoutMetadata(main.registryAccess()), main.registryAccess());
+                    var session = (SichuanSession) target.participantRoom(main);
+                    session.synchronizeSeats(java.util.Map.of(mainId, session.seatOf(mainId)));
+                    require(session.participants().stream().filter(top.skyeyefast.mchjong.engine.TableParticipant::bot).count() == 3,
+                        "NBT restore lost Sichuan Bots");
+                    for (int tick = 0; tick < 30_000 && session.game().phase() != SichuanGame.Phase.MATCH_END; tick++) {
+                        var offered = session.view(mainId);
+                        if (offered.canConfirmNextHand()) {
+                            require(offered.confirmedCount() == 3, "Sichuan Bots did not confirm the hand");
+                            TableNetworking.receive(main, new SichuanNextHandPayload(pos, offered.tableId(), offered.incarnation(), offered.game().decision()));
+                        } else for (int index = 0; index < offered.game().actions().size(); index++) {
+                            var type = offered.game().actions().get(index).type();
+                            if (type == SichuanAction.Type.VOID_SUIT || type == SichuanAction.Type.DISCARD
+                                || type == SichuanAction.Type.PASS || type == SichuanAction.Type.WIN) {
+                                TableNetworking.receive(main, new SichuanActionPayload(pos, offered.tableId(), offered.incarnation(), offered.game().decision(), index));
+                                break;
+                            }
+                        }
+                        session.tick();
+                    }
+                    require(session.game().phase() == SichuanGame.Phase.MATCH_END, "One human and three Sichuan Bots stalled");
+                    var replay = session.pendingReplays().getFirst();
+                    require(replay.complete() && replay.handCount() == 8 && replay.participants().stream()
+                        .filter(top.skyeyefast.mchjong.engine.ReplayMatch.Participant::bot).count() == 3, "Bot replay roster or hands lost");
+                    top.skyeyefast.mchjong.engine.ReplayCodec.validate(replay);
+                    require(replay.header().finalRanks().size() == 4, "Bot match lost final standings");
+                    target.open(main);
+                });
+                stage++;
+            }
+            case 36 -> {
+                if (!(client.screen instanceof SichuanResultsScreen) || table.clientSichuanView().game().phase() != SichuanGame.Phase.MATCH_END) break;
+                require(table.clientSichuanView().game().handNumber() == 8, "Bot client lost match completion");
+                press(client, "action.mchjong.return_to_lobby"); stage++;
+            }
+            case 37 -> {
+                if (!room.lobby() || !(client.screen instanceof SichuanLobbyScreen)) break;
+                require(room.seats().stream().filter(seat -> seat.participant().bot() && seat.participant().ready()).count() == 3,
+                    "Returning to the lobby lost ready Bots");
                 return true;
             }
             default -> throw new IllegalStateException("Unknown Sichuan smoke stage");
         }
         return false;
+    }
+    private static void sendRoom(Minecraft client, BlockPos pos, top.skyeyefast.mchjong.engine.TableRoomView room, RoomAction.Type type) {
+        int index = java.util.stream.IntStream.range(0, room.actions().size()).filter(i -> room.actions().get(i).type() == type).findFirst().orElseThrow();
+        client.getConnection().send(PayloadPackets.serverbound(new TableRoomActionPayload(pos, room.tableId(), room.incarnation(), room.decision(), index)));
     }
     private static void press(Minecraft client, String key) {
         var label = Component.translatable(key).getString();

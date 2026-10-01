@@ -243,7 +243,8 @@ invalidating the other players' shared decision token.
 
 ## Sichuan match orchestration
 
-`SichuanSession` owns a four-human room, the explicit `SichuanRules` contract,
+`SichuanSession` owns a four-seat room with human and built-in Bot participants,
+the explicit `SichuanRules` contract,
 physical stock, independent decision clocks and one `SichuanGame`. `SichuanPreset.SBR_2025`
 uses MIL 四川麻将（SBR）竞赛规则（试行 2025 版） for play, fan, draw checks
 and penalties. `TFMJ_2024` separately selects T/TFMJ 01—2024. Both presets
@@ -326,8 +327,9 @@ mutable score balance. Hand records preserve the dealer, scored result and ledge
 violation; its ledger deduction preserves the sanction even after the suit clears.
 
 `SichuanSession` stays `PLAYING` at `HAND_END`, retaining the result while waiting
-for `confirmNextHand` from all four authenticated, correctly mounted humans or a
-200-tick reading period. Exit votes and absence pause this period. Advancement
+for `confirmNextHand` from authenticated, correctly mounted humans or a
+200-tick reading period. Bots confirm automatically. Exit votes and absence pause
+this period. Advancement
 calls `SichuanGame.nextHand`, determines the next dealer, shuffles from the saved
 future seed, deals in dealer order and enters fresh simultaneous `VOIDING`.
 Clocks replenish per-hand reserves at that boundary. Confirmations use session
@@ -434,6 +436,17 @@ preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
 `RiichiLobby`, `McrLobbyScreen` and `SichuanLobbyScreen` share room-control lookup and sending while
 retaining their own rule settings. Match and settlement screens remain separate.
+
+`SichuanBot` consumes only its seat's recipient-safe `SichuanView` and returns an
+issued action index. One deterministic policy ranks void suits by tile count,
+pair/triplet/connected support and shape efficiency, binding a legal physical
+first discard for SBR. Issued wins take priority. Discards use
+`SichuanHandAnalyzer`'s existing regular-shape library and Sichuan quad-pair
+analysis, with deduplicated public remaining copies. Calls compare progress after
+the mandatory discard; kongs retain progress and require improvement or immediate
+rule-configured income. The session uses the shared Bot room lifecycle and world
+policy, waits twelve ticks and leaves Bot clocks inactive. Bot identities and
+replay participant flags survive restores. See [Bot analysis](BOTS.md#sichuan-built-in-opponent).
 
 ### Sichuan physical presentation
 

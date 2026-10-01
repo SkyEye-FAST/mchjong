@@ -29,6 +29,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add one deterministic built-in Sichuan Bot for SBR 2025 and T/TFMJ 01—2024, supporting one human and three Bots through eight hands with shared room controls, private-view decisions, inactive Bot clocks, automatic confirmations, save restoration and replay participant flags.
 - Configure Sichuan room rules before play through a grouped, server-confirmed editor, with exact preset/Custom labels, host-only stale-safe proposals and readiness reset.
 - Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.
 - Add seated and immersive Sichuan tables, recipient-safe hand and void-suit displays, shared exit voting, detailed ledger results and explicit next-hand confirmations through the eight-hand match.

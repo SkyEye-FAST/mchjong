@@ -239,7 +239,7 @@ public final class TableClientSmoke {
                 step = 31; entered = ticks;
             } else if (step == 42) {
                 if (sichuanSmoke.tick(client, CENTER, output)) {
-                    Files.writeString(output.resolve("PASS.txt"), "Sichuan lobby, private declarations, NBT restore, seated/immersive picking and discard, exit vote, results, next-hand packets and eight-hand match completion passed\n");
+                    Files.writeString(output.resolve("PASS.txt"), "Sichuan lobby, private declarations, NBT restore, seated/immersive picking and discard, exit vote, results, next-hand packets, eight-hand matches, native Bot room controls, one-human/three-Bot NBT restore, automatic confirmations and Bot replay standings passed\n");
                     LOG.info("MCHJONG_SICHUAN_SMOKE_PASS");
                     step = 14;
                     client.stop();
