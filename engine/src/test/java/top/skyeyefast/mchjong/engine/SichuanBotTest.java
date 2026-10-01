@@ -96,7 +96,7 @@ class SichuanBotTest {
         seats.set(1, new SichuanView.Seat(other.hand(), other.melds(), dead, other.voidSuit(), other.won(), other.drawn(), other.firstDiscard()));
         var exhausted = new SichuanView(view.revision(), view.decision(), view.rules(), view.phase(), view.handNumber(), view.dealer(), view.scores(),
             view.viewerSeat(), view.turn(), view.wall(), seats, view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
-            view.actions(), view.winners(), view.ledger(), view.result());
+            view.actions(), view.winners(), view.ledger(), view.result(), view.passedFan());
         int exhaustedChoice = Tile.kind(exhausted.actions().get(SichuanBot.choose(exhausted)).tiles().getFirst());
         assertEquals(2, hand.stream().filter(tile -> Tile.kind(tile) == exhaustedChoice).count(),
             "With every pair-making single exhausted, abandon the slower seven-pairs route");
@@ -287,7 +287,7 @@ class SichuanBotTest {
     private static SichuanView withRules(SichuanView view, SichuanRules rules) {
         return new SichuanView(view.revision(), view.decision(), rules, view.phase(), view.handNumber(), view.dealer(), view.scores(),
             view.viewerSeat(), view.turn(), view.wall(), view.seats(), view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
-            view.actions(), view.winners(), view.ledger(), view.result());
+            view.actions(), view.winners(), view.ledger(), view.result(), view.passedFan());
     }
     private static SichuanAction selected(SichuanGame game, int seat) {
         int index = SichuanBot.choose(game.view(seat));
@@ -321,7 +321,7 @@ class SichuanBotTest {
             "Seat " + seat, seat >= humans, false, BotDifficulty.EASY, null, true));
         var seating = new RoomSeating(); seating.positioned(4);
         var room = new TableSession.State(new UUID(72, 0), MahjongVariant.SICHUAN, 4, HUMAN, roster, seating.save(),
-            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0);
+            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false);
         var control = TimeControl.DEFAULT;
         var clocks = Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),

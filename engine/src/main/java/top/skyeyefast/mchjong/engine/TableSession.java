@@ -25,6 +25,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     long decision = 1;
     long seed;
     boolean manual;
+    boolean convenienceHints;
     ExitVote exitVote;
     UUID pendingLeaveDecision;
     long exitVoteSequence;
@@ -50,7 +51,21 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     public long decision() { return decision; }
     public boolean lobby() { return lifecycle == Lifecycle.LOBBY; }
     public boolean manual() { return manual; }
-    public void configureWorld(WorldPolicy policy) { worldPolicy = Objects.requireNonNull(policy); }
+    public void configureWorld(WorldPolicy policy) {
+        worldPolicy = Objects.requireNonNull(policy);
+        if (!policy.allowConvenienceHints() && convenienceHints) {
+            convenienceHints = false;
+            changed(false);
+        }
+    }
+    public boolean convenienceHints() { return convenienceHints; }
+    public final boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
+        if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
+            || !isHost(actor) || expectedDecision != decision) return false;
+        convenienceHints = enabled;
+        changed(false);
+        return true;
+    }
     public int host() { return seatOf(hostId); }
     public boolean isHost(UUID actor) { return actor != null && actor.equals(hostId) && seatOf(actor) >= 0; }
 
@@ -208,6 +223,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                 replacement.participants[seat] = Participant.restore(participants[seat].snapshot());
         replacement.hostId = hostId;
         replacement.worldPolicy = worldPolicy;
+        replacement.convenienceHints = convenienceHints;
         replacement.revision = revision;
         replacement.decision = decision;
         replacement.renewIncarnation();
@@ -459,7 +475,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
-            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient));
+            viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
+            convenienceHints, worldPolicy.allowConvenienceHints());
     }
 
     protected final List<RoomAction> roomActions(int seat) {
@@ -617,7 +634,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     public record State(UUID tableId, MahjongVariant variant, int capacity, UUID hostId,
                         List<TableParticipant> participants, RoomSeating.Saved seating,
                         Lifecycle lifecycle, long revision, long decision, long seed, boolean manual,
-                        ExitVote exitVote, UUID pendingLeaveDecision, long exitVoteSequence, int exitCooldown) {
+                        ExitVote exitVote, UUID pendingLeaveDecision, long exitVoteSequence, int exitCooldown,
+                        boolean convenienceHints) {
         public State {
             Objects.requireNonNull(tableId);
             Objects.requireNonNull(variant);
@@ -636,7 +654,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         validateRoom();
         return new State(tableId, variant, capacity, hostId,
             Arrays.stream(participants).map(Participant::snapshot).toList(), seating.save(), lifecycle,
-            revision, decision, seed, manual, exitVote, pendingLeaveDecision, exitVoteSequence, exitCooldown);
+            revision, decision, seed, manual, exitVote, pendingLeaveDecision, exitVoteSequence, exitCooldown, convenienceHints);
     }
 
     protected final void restoreRoom(State state) {
@@ -651,6 +669,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         decision = state.decision();
         seed = state.seed();
         manual = state.manual();
+        convenienceHints = state.convenienceHints();
         exitVote = state.exitVote();
         pendingLeaveDecision = state.pendingLeaveDecision();
         exitVoteSequence = state.exitVoteSequence();

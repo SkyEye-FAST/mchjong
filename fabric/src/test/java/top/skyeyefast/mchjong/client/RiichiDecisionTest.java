@@ -16,7 +16,7 @@ class RiichiDecisionTest {
     private static RiichiView view(UUID table, long revision, long decision, int viewer, List<RiichiAction> actions) {
         return new RiichiView(table, revision, decision, 1, RiichiPreset.MAHJONG_SOUL_4.config(), RiichiView.Phase.TURN,
             viewer, 0, 0, 0, 0, 0, 70, 0, List.of(), null, List.of(), actions, List.of(), "playing", List.of(), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
     }
 
     @Test void aRequestCanOnlyBeSentOnceAndHeartbeatsDoNotUnlockIt() {

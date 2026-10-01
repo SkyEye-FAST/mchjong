@@ -31,6 +31,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Extend the shared, world-policy-controlled room convenience hints to MCR and Sichuan: private-hand discard progress, public unseen copies, scorer-backed MCR eight-fan qualification, Sichuan void tiles and capped ready values, and recipient-only passed-win restrictions through the common hand-hint interaction.
 - Add one deterministic built-in Sichuan Bot for SBR 2025 and T/TFMJ 01—2024, supporting one human and three Bots through eight hands with shared room controls, private-view decisions, inactive Bot clocks, automatic confirmations, save restoration and replay participant flags.
 - Configure Sichuan room rules before play through a grouped, server-confirmed editor, with exact preset/Custom labels, host-only stale-safe proposals and readiness reset.
 - Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.

@@ -14,7 +14,6 @@ public final class RiichiSession extends TableSession {
     TimeControl timeControl = TimeControl.DEFAULT;
     PlayerHandVisibility playerHandVisibility = PlayerHandVisibility.SELF;
     boolean openHands;
-    boolean convenienceHints;
     private transient List<ExternalBot> externalBots = List.of();
     final List<ReplayMatch> archiveQueue = new ArrayList<>();
     final Map<UUID, Integer> pendingExperience = new java.util.HashMap<>();
@@ -35,12 +34,11 @@ public final class RiichiSession extends TableSession {
     public TimeControl timeControl() { return timeControl; }
     public PlayerHandVisibility playerHandVisibility() { return playerHandVisibility; }
     public boolean openHands() { return openHands; }
-    public boolean convenienceHints() { return convenienceHints; }
     public List<ExternalBot> externalBots() { return externalBots == null ? List.of() : externalBots; }
 
     public RiichiRoomSettings roomSettings() {
         return new RiichiRoomSettings(rules, timeControl, playerHandVisibility, openHands,
-            convenienceHints, externalBots());
+            externalBots());
     }
 
     public RiichiView view(UUID recipient) { return game == null ? null : game.view(recipient); }
@@ -135,11 +133,7 @@ public final class RiichiSession extends TableSession {
         boolean changed = !policy.equals(previous);
         boolean decisionChanged = lobby()
             && (policy.allowBots() != previous.allowBots() || policy.forcedPreset() != previous.forcedPreset());
-        worldPolicy = policy;
-        if (!policy.allowConvenienceHints() && convenienceHints) {
-            convenienceHints = false;
-            changed = true;
-        }
+        super.configureWorld(policy);
         if (!policy.allowExperienceRewards() && !pendingExperience.isEmpty()) {
             pendingExperience.clear();
             changed = true;
@@ -205,14 +199,6 @@ public final class RiichiSession extends TableSession {
         return true;
     }
 
-    public boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
-        if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
-            || !isHost(actor) || expectedDecision != decision) return false;
-        convenienceHints = enabled;
-        changed(false);
-        return true;
-    }
-
     public boolean configureClock(UUID actor, TimeControl control) {
         if (!lobby() || exitVote != null || !isHost(actor)) return false;
         timeControl = Objects.requireNonNull(control);
@@ -240,7 +226,7 @@ public final class RiichiSession extends TableSession {
 
     public State save() {
         return new State(State.FORMAT, saveRoom(), rules, suppliedTiles, timeControl,
-            playerHandVisibility, openHands, convenienceHints, archiveQueue, pendingExperience,
+            playerHandVisibility, openHands, archiveQueue, pendingExperience,
             game == null ? null : game.save());
     }
 
@@ -253,7 +239,6 @@ public final class RiichiSession extends TableSession {
         session.timeControl = state.timeControl();
         session.playerHandVisibility = state.playerHandVisibility();
         session.openHands = state.openHands();
-        session.convenienceHints = state.convenienceHints();
         session.archiveQueue.addAll(state.archiveQueue());
         session.pendingExperience.putAll(state.pendingExperience());
         if (state.game() != null) session.game = RiichiGame.restore(session, state.game(), state.room().decision());
@@ -262,9 +247,9 @@ public final class RiichiSession extends TableSession {
 
     public record State(int format, TableSession.State room, RiichiRules rules, List<Integer> suppliedTiles,
                         TimeControl timeControl, PlayerHandVisibility playerHandVisibility,
-                        boolean openHands, boolean convenienceHints, List<ReplayMatch> archiveQueue,
+                        boolean openHands, List<ReplayMatch> archiveQueue,
                         Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
-        public static final int FORMAT = 2;
+        public static final int FORMAT = 3;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported Riichi session format");

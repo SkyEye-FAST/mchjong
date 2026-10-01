@@ -60,7 +60,7 @@ final class InputSmoke {
         actions.add(new RiichiAction(RiichiAction.Type.RIICHI, 4));
         RiichiView fixture = new RiichiView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, base.remaining(), base.wallBreak(),
-            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            base.wall(), null, seats, actions, List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
         table.acceptView(fixture);
         RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
         client.setScreen(screen);
@@ -199,7 +199,7 @@ final class InputSmoke {
         var fixture = new RiichiView(base.tableId(), base.revision() + 1, base.decision() + 1,
             base.handNumber(), base.rules(), RiichiView.Phase.REACTION, 0, 0, 0, 0, 0, from, base.remaining(), base.wallBreak(),
             base.wall(), new RiichiView.Focus(from, 14, false, 0), seats, List.of(new RiichiAction(RiichiAction.Type.PASS), action),
-            List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            List.of(), "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
         table.acceptView(fixture);
         TableSettings.get().animations = false;
         TableSettings.get().highlightTiles = false;

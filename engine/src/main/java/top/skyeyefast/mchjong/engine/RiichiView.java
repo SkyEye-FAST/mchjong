@@ -13,7 +13,7 @@ public record RiichiView(UUID tableId, long revision, long decision, int handNum
                         TimeControl timeControl, List<TimeControl.Clock> clocks, List<Integer> finalRanks,
                         PlayerHandVisibility playerHandVisibility, boolean openHands, ExitVote exitVote, Handling handling, RiichiAutoPlay autoPlay,
                         boolean ronBlocked, int riichiHan, Map<Integer, Long> riichiSafeTiles,
-                        boolean convenienceHints, List<ExternalBot> externalBots, int settlementTicks, int settlementSkippedSeats) {
+                        List<ExternalBot> externalBots, int settlementTicks, int settlementSkippedSeats) {
     public enum Phase { SHUFFLE, BUILD_WALL, DEAL, DRAW, TURN, REACTION, HAND_END, MATCH_END }
     // ronBlocked and riichiHan describe only the recipient. riichiHan is the
     // established declaration, or the current declaration's one/two-han value.

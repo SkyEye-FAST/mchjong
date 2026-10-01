@@ -37,7 +37,7 @@ class TableLayoutTest {
             melds, river, List.of(), false, false, false));
         return new RiichiView(v.tableId(), v.revision() + 1, v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
     }
 
     @Test void informationVisibilityNeverLaysHandsFlatAndOpenHandsDoes() {
@@ -137,7 +137,7 @@ class TableLayoutTest {
             }
             var view = new RiichiView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
                 v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
+                seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
             var pieces = new ArrayList<>(RiichiTableScene.build(view).stream().filter(p -> p.area() != RiichiTableScene.Area.WALL).toList());
             for (var north : pieces.stream().filter(p -> p.area() == RiichiTableScene.Area.NORTH).toList()) {
                 var local = top.skyeyefast.mchjong.world.TableGeometry.orient(north.position().x, north.position().y,

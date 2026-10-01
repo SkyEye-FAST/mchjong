@@ -24,7 +24,7 @@ class RiichiAudioEventsTest {
     private static RiichiView view(long revision, int hand, RiichiView.Phase phase, List<RiichiView.Seat> seats, String result) {
         return new RiichiView(TABLE, revision, 1, hand, RiichiPreset.TENHOU_4.config(), phase, 0,
             0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
     }
     private static List<RiichiView.Seat> seats() {
         return new ArrayList<>(Collections.nCopies(4, seat(List.of(), List.of(), List.of())));
@@ -40,7 +40,7 @@ class RiichiAudioEventsTest {
                                      List<RiichiView.Seat> seats, List<Integer> wall) {
         return new RiichiView(TABLE, revision, revision, hand, RiichiPreset.TENHOU_4.config(), RiichiView.Phase.HAND_END, 0,
             0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(), List.of(),
-            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
     }
 
     @Test void receiptWaitsForEachRecordingThenShowsPointsBeforeTheGrade() {

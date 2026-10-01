@@ -118,14 +118,14 @@ class TableControlTest {
         lobby.join(id(0), "Host", 0);
         lobby.join(id(1), "Guest", 1);
         long token = lobby.decision;
-        assertFalse(lobby.roomSettings().convenienceHints());
+        assertFalse(lobby.convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(1), token, true));
         assertFalse(lobby.configureConvenienceHints(id(0), token - 1, true));
         assertTrue(lobby.configureConvenienceHints(id(0), token, true));
-        assertTrue(lobby.roomSettings().convenienceHints());
+        assertTrue(lobby.convenienceHints());
         assertFalse(lobby.configureConvenienceHints(id(0), token, true));
         var saved = (RiichiSession) TableSessionCodec.restore(TableSessionCodec.save(lobby));
-        assertTrue(saved.roomSettings().convenienceHints());
+        assertTrue(saved.convenienceHints());
         GameLifecycleTest.startPositioned(lobby);
         assertFalse(lobby.configureConvenienceHints(id(0), lobby.decision, false));
     }

@@ -267,7 +267,7 @@ public final class McrSession extends TableSession {
     public record State(int format, TableSession.State room, List<Integer> stock, int confirmed,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game,
                         ReplayMatch replay, McrReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 7;
+        public static final int FORMAT = 8;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");

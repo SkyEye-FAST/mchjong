@@ -48,12 +48,12 @@ final class AnimationSmoke {
             // Display-only fixtures must not be replaced by live game heartbeats during the captures.
             fixture = new RiichiView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
                 base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
-                "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+                "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
             if (layoutsOnly) {
                 var previous = new RiichiView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
                     fixture.rules(), fixture.phase(), 0, 0, 0, 0, 0, 0, fixture.remaining(), fixture.wallBreak(), fixture.wall(),
                     null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(),
-                    fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+                    fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
                 table.acceptView(previous);
                 RiichiAnimation.of(table).accept(previous, Util.getMillis() - RiichiAnimation.DEAL_MILLIS);
             }
@@ -266,7 +266,7 @@ final class AnimationSmoke {
     private void update(MahjongTableBlockEntity table, List<RiichiView.Seat> seats, List<Integer> wall, int turn) {
         fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
             RiichiView.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
-            seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
         table.acceptView(fixture);
     }
 

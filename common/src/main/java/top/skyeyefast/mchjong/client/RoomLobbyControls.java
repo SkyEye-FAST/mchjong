@@ -17,6 +17,20 @@ import top.skyeyefast.mchjong.network.TableVariantPayload;
 final class RoomLobbyControls {
     private RoomLobbyControls() {}
 
+    static MahjongButton hintsButton(BlockPos pos, TableRoomView room, int x, int y, int width, Runnable sent) {
+        var label = Component.translatable("settings.mchjong.convenience_hints");
+        var value = Component.translatable(room.convenienceHints() ? "options.on" : "options.off");
+        var button = button(Component.translatable("settings.mchjong.toggle", label, value), x, y, width, () -> {
+            TableExitControls.send(pos, room, top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.CONVENIENCE_HINTS,
+                room.decision(), !room.convenienceHints());
+            sent.run();
+        }).option(label, value).checked(room.convenienceHints());
+        button.active = room.lobby() && room.viewerSeat() >= 0 && room.viewerSeat() == room.host()
+            && room.allowConvenienceHints() && room.exitVote() == null;
+        button.setTooltip(Tooltip.create(Component.translatable("settings.mchjong.convenience_hints_help")));
+        return button;
+    }
+
     static MahjongButton button(Component label, int x, int y, int width, Runnable action) {
         return MahjongButton.create(label, ignored -> action.run()).bounds(x, y, width, 20)
             .tooltip(Tooltip.create(label)).build();

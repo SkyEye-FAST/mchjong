@@ -32,7 +32,7 @@ class CompactTableLayoutTest {
             drawn ? hand.getLast() : Tile.ABSENT, melds, List.of(), List.of(), false, exposed, false));
         var view = new RiichiView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), owner,
             v.dealer(), v.round(), v.honba(), v.riichiSticks(), v.turn(), v.remaining(), v.wallBreak(), v.wall(), v.focus(),
-            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.convenienceHints(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
+            seats, v.actions(), v.wins(), v.result(), v.deltas(), v.finalScores(), v.finalUma(), v.timeControl(), v.clocks(), v.finalRanks(), v.playerHandVisibility(), v.openHands(), v.exitVote(), v.handling(), v.autoPlay(), v.ronBlocked(), v.riichiHan(), v.riichiSafeTiles(), v.externalBots(), v.settlementTicks(), v.settlementSkippedSeats());
         return RiichiTableScene.build(view).stream().filter(p -> p.seat() == owner).toList();
     }
 
@@ -135,7 +135,7 @@ class CompactTableLayoutTest {
             base.remaining(), base.wallBreak(), base.wall(), base.focus(), seats, base.actions(), base.wins(),
             base.result(), base.deltas(), base.finalScores(), base.finalUma(), base.timeControl(), base.clocks(),
             base.finalRanks(), base.playerHandVisibility(), base.openHands(), base.exitVote(), base.handling(), base.autoPlay(),
-            base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles(), base.convenienceHints(), base.externalBots(), base.settlementTicks(), base.settlementSkippedSeats());
+            base.ronBlocked(), base.riichiHan(), base.riichiSafeTiles(), base.externalBots(), base.settlementTicks(), base.settlementSkippedSeats());
         var pieces = RiichiTableScene.build(view).stream().filter(piece -> piece.area() == RiichiTableScene.Area.HAND && piece.seat() == 0).toList();
         assertEquals(RiichiTableScene.HAND_STEP, pieces.get(2).position().distanceTo(pieces.get(1).position()), 1e-9);
     }

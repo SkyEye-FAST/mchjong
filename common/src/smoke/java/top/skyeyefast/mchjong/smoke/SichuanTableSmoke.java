@@ -50,6 +50,8 @@ final class SichuanTableSmoke {
     private UUID incarnation;
     private UUID replayId;
     private boolean picked;
+    private boolean hintsConfigured;
+    private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
     private int selectedTile;
     private int boundFirstDiscard = Tile.ABSENT;
     private long discardDecision;
@@ -180,8 +182,16 @@ final class SichuanTableSmoke {
             }
             case 27 -> {
                 if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025) break;
-                client.screen.onClose();
+                if (client.screen instanceof top.skyeyefast.mchjong.client.SichuanRulesScreen) client.screen.onClose();
                 require(client.screen instanceof SichuanLobbyScreen, "Rule editor did not return to its lobby");
+                if (!hintsConfigured) {
+                    client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                        .filter(button -> button.getMessage().getString().startsWith(Component.translatable(
+                            "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress();
+                    hintsConfigured = true;
+                    break;
+                }
+                if (!room.convenienceHints()) break;
                 int index = room.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 require(index >= 0, "Sichuan room has no seating action");
                 client.getConnection().send(PayloadPackets.serverbound(new TableRoomActionPayload(pos, room.tableId(),
@@ -298,6 +308,7 @@ final class SichuanTableSmoke {
                 settled = 0; stage++;
             }
             case 11 -> {
+                if (!scoredHints.finished()) { scoredHints.tick(client, table, output, false); break; }
                 var view = table.clientSichuanView();
                 if (view.game().actions().stream().noneMatch(action -> action.type() == SichuanAction.Type.DISCARD)) break;
                 if (++settled < 10) break;
@@ -324,7 +335,14 @@ final class SichuanTableSmoke {
                     require(screen.mouseClicked(horizontal, vertical, 0), "Immersive Sichuan picking failed");
                     picked = true; settled = 0; break;
                 }
+                var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
+                    && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
+                require(hint.visible && hint.active, "Sichuan convenience preview missing after restored room and discard selection");
+                if (settled == 10) { screen.setFocused(hint); break; }
+                require(hint.isFocused(), "Sichuan hint cannot retain native keyboard focus");
+                SmokeScreenshots.grab(output.toFile(), "sichuan-hints.png", client.getMainRenderTarget(), ignored -> {});
                 SmokeScreenshots.grab(output.toFile(), "sichuan-table.png", client.getMainRenderTarget(), ignored -> {});
+                screen.setFocused(null);
                 discardDecision = view.game().decision();
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
                 stage = 17;

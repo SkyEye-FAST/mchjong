@@ -214,7 +214,7 @@ public final class SichuanSession extends TableSession {
     public record State(int format, TableSession.State room, SichuanRules rules, List<Integer> stock,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, int confirmed, SichuanGame.State game,
                         ReplayMatch replay, SichuanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 4;
+        public static final int FORMAT = 5;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(timeControl);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks);

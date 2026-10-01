@@ -782,6 +782,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             return;
         }
         boolean changed = switch (payload.operation()) {
+            case CONVENIENCE_HINTS -> session.configureConvenienceHints(player.getUUID(), payload.token(), payload.enabled());
             case REQUEST_EXIT -> payload.token() == session.decision() && session.requestExit(player.getUUID());
             case ANSWER_EXIT -> session.answerExit(player.getUUID(), payload.token(), payload.enabled());
             case RESOLVE_LEAVE -> payload.token() == session.decision()
@@ -811,7 +812,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             case NO_CALLS -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.NO_CALLS, payload.enabled());
             case AUTO_DISCARD -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.DISCARD, payload.enabled());
             case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.KITA, payload.enabled());
-            case CONVENIENCE_HINTS -> session.configureConvenienceHints(player.getUUID(), payload.token(), payload.enabled());
             case OPEN_HANDS -> session.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
         };
         if (changed) {

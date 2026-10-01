@@ -10,20 +10,17 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
 /** Native focus target for an on-demand wait preview above the private hand. */
-final class RiichiHints extends MahjongButton {
+final class RiichiHints extends TableHintsButton {
     private final TenpaiHints hints = new TenpaiHints();
     private List<TenpaiHints.Wait> waits = List.of();
     private List<TenpaiHints.Wait> narrated = List.of();
     private int previewDiscard = Tile.ABSENT;
     private int lastSelected = Tile.ABSENT;
     private Layout popup;
-    private int scale = 1;
     private Component heading = Component.empty();
 
     RiichiHints() {
-        super(0, 0, 20, 16, Component.translatable("hints.mchjong.button"), ignored -> {});
-        visible = active = false;
-        setTooltip(null);
+        super();
     }
 
     void clearPreview() { previewDiscard = lastSelected = Tile.ABSENT; waits = List.of(); visible = active = false; }
@@ -71,22 +68,6 @@ final class RiichiHints extends MahjongButton {
         int span = Math.max(Math.min(112, available), columns * step + 12);
         return new Layout(leftBound + (rightBound - leftBound - span * scale) / 2, bottom - height * scale,
             span * scale, height * scale, step * scale, tileWidth * scale, columns);
-    }
-
-    @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.pose().pushPose();
-        graphics.pose().translate(getX(), getY(), 0);
-        graphics.pose().scale(scale, scale, 1);
-        int centerX = 10, centerY = 8;
-        int edge = isHoveredOrFocused() ? MahjongUi.ACCENT : MahjongUi.EDGE;
-        for (int dy = -7; dy <= 7; dy++) {
-            int half = 7 - Math.abs(dy);
-            graphics.fill(centerX - half, centerY + dy, centerX + half + 1, centerY + dy + 1, edge);
-            if (half > 1) graphics.fill(centerX - half + 1, centerY + dy, centerX + half, centerY + dy + 1, MahjongUi.PANEL);
-        }
-        graphics.fill(centerX, centerY - 3, centerX + 1, centerY + 1, MahjongUi.ACCENT);
-        graphics.fill(centerX, centerY + 3, centerX + 1, centerY + 4, MahjongUi.ACCENT);
-        graphics.pose().popPose();
     }
 
     void renderPopup(GuiGraphics graphics, Font font, TileFacePreset preset) {

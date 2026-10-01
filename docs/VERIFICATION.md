@@ -170,6 +170,22 @@ matches with restored settlements, final standings and replay flags. Run
 for every field, rule bounds, host/stale authority, readiness reset, world-policy
 restrictions and lobby/match save restoration. Run
 `gradlew.bat :engine:test --tests "*SichuanRoomSettingsTest" --warning-mode fail --console=plain`.
+
+`ConvenienceHintsTest` owns the shared room hint setting, world-policy restriction,
+save/variant retention, MCR structural versus eight-non-flower-fan waits, Sichuan
+void tiles and structural/capped ready values, and public-copy accounting. The
+MCR privacy fixture and `SichuanGameTest.hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities`
+change private hands and wall identities without changing hint results.
+`SichuanGameTest.passedWinsBlockSameFanUntilDrawingAndSurviveRestore` also checks
+recipient-only restriction projection. Run with `:engine:test --tests "*ConvenienceHintsTest"
+--tests "*SichuanGameTest" --tests "*TenpaiHintsTest" --warning-mode fail --console=plain`.
+The MCR automatic-table and Sichuan client smokes enable hints through the shared
+room control, select a discard and focus the native hint widget. Opt-in captures
+are `mcr-auto-hints.png` and `sichuan-hints.png` in their respective evidence directories.
+Both smokes also check scored display fixtures at 320 × 240 seated and on the
+fixed immersive canvas; optional captures are `mcr-scored-hints-seated.png`,
+`mcr-scored-hints-immersive.png`, `sichuan-scored-hints-seated.png` and
+`sichuan-scored-hints-immersive.png`.
 `ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
 checks Sichuan proposals and settings at both field bounds and rejects malformed
 numeric proposals through the native codec.

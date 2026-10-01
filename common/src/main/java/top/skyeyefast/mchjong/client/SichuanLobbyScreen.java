@@ -51,7 +51,11 @@ public final class SichuanLobbyScreen extends Screen {
                 () -> minecraft.setScreen(new SichuanRulesScreen(this, room, settings)));
             rules.active = !pending;
             addRenderableWidget(rules);
-            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), left, 84, span,
+            var hints = RoomLobbyControls.hintsButton(pos, room, left + (span + 4) / 2, 84, (span - 4) / 2,
+                () -> { pending = true; rebuild(); });
+            hints.active &= !pending;
+            addRenderableWidget(hints);
+            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), left, 84, (span - 4) / 2,
                 () -> minecraft.setScreen(new TableClockScreen(this, settings.timeControl())));
             clock.active = !pending && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
             addRenderableWidget(clock);

@@ -8,7 +8,8 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
                           int handNumber, int dealer, List<Integer> scores,
                           int viewerSeat, int turn, Wall wall, List<Seat> seats, int focus, int supplier,
                           boolean robbingKong, boolean submitted, List<SichuanAction> actions,
-                          List<Winner> winners, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
+                          List<Winner> winners, List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result,
+                          int passedFan) {
     public SichuanView {
         Objects.requireNonNull(rules); Objects.requireNonNull(phase); Objects.requireNonNull(wall);
         seats = List.copyOf(seats); actions = List.copyOf(actions); winners = List.copyOf(winners); ledger = List.copyOf(ledger);
@@ -17,6 +18,7 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
         if (revision < 1 || decision < 1 || viewerSeat < -1 || viewerSeat > 3 || turn < 0 || turn > 3 || seats.size() != 4
             || handNumber < 1 || handNumber > rules.matchHands() || dealer != wall.dealer()
             || wall.eastWestLongWall() != rules.eastWestLongWall() || scores.size() != 4
+            || passedFan < -1 || passedFan > rules.fanCap() || viewerSeat < 0 && passedFan != -1
             || viewerSeat < 0 && (!actions.isEmpty() || submitted) || ended != (result != null) || ended && !actions.isEmpty())
             throw new IllegalArgumentException("Invalid Sichuan view");
         for (int seat = 0; seat < 4; seat++) {
@@ -62,7 +64,8 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
                     && !(state.afterKong() && state.rules().addedKongAfterKongIsShoot()),
             viewer >= 0 && (state.responses().stream().anyMatch(response -> response.seat() == viewer)
                 || state.phase() == SichuanGame.Phase.VOIDING && state.players().get(viewer).voidSuit() >= 0),
-            interactive ? game.actions(viewer) : List.of(), winners, state.ledger(), state.result());
+            interactive ? game.actions(viewer) : List.of(), winners, state.ledger(), state.result(),
+            viewer < 0 ? -1 : state.players().get(viewer).passedFan());
     }
     public record Wall(List<Integer> slots, int dealer, int die1, int die2, boolean eastWestLongWall) {
         public Wall {

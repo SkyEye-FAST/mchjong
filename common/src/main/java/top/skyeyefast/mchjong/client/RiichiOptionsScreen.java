@@ -97,10 +97,11 @@ public final class RiichiOptionsScreen extends Screen {
                 setWorldValue("forcedPreset", next == null ? "none" : next.name().toLowerCase(java.util.Locale.ROOT));
             }));
         } else if (tab == 1) {
-            entries.add(Entry.toggle("settings.mchjong.convenience_hints", settings.convenienceHints(),
-                host && lobby && world.allowConvenienceHints(),
-                () -> parent.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.CONVENIENCE_HINTS,
-                    room.decision(), !settings.convenienceHints())));
+            entries.add(Entry.toggle("settings.mchjong.convenience_hints", room.convenienceHints(),
+                host && lobby && room.allowConvenienceHints(),
+                () -> TableExitControls.send(parent.tablePos(), room,
+                    top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.CONVENIENCE_HINTS,
+                    room.decision(), !room.convenienceHints())));
             entries.add(Entry.choice("settings.mchjong.hand_visibility",
                 Component.translatable("settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
                 host && lobby, () -> {

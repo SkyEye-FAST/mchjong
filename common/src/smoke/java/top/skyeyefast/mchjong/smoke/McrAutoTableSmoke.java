@@ -51,6 +51,8 @@ final class McrAutoTableSmoke {
     private long leaveRevision;
     private int presentationStep;
     private boolean clockConfigured;
+    private boolean hintsConfigured;
+    private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
     private UUID replayId;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
@@ -115,6 +117,14 @@ final class McrAutoTableSmoke {
                     break;
                 }
                 if (!new top.skyeyefast.mchjong.engine.TimeControl(30, 7).equals(clientTable.clientMcrTimeControl())) break;
+                if (!hintsConfigured) {
+                    client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                        .filter(button -> button.getMessage().getString().startsWith(net.minecraft.network.chat.Component.translatable(
+                            "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress();
+                    hintsConfigured = true;
+                    break;
+                }
+                if (!lobby.convenienceHints()) break;
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
@@ -228,6 +238,7 @@ final class McrAutoTableSmoke {
             }
             case 7 -> {
                 if (!(client.screen instanceof McrTableScreen screen)) break;
+                if (!scoredHints.finished()) { scoredHints.tick(client, clientTable, output, true); break; }
                 var view = clientTable.clientMcrView();
                 if (view == null || view.game().phase() != McrGame.Phase.TURN || view.game().actions().isEmpty()) break;
                 int index = first(view, McrAction.Type.DISCARD);
@@ -250,6 +261,16 @@ final class McrAutoTableSmoke {
                     presentationStep++;
                     break;
                 }
+                var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
+                    && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
+                check(hint.visible && hint.active, "MCR selected discard has no convenience preview");
+                if (presentationStep == 1) {
+                    screen.setFocused(hint); presentationStep++;
+                    break;
+                }
+                check(hint.isFocused() && hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
+                    "hints.mchjong.after_discard").getString()), "MCR native hint focus or narration lost the discard preview");
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                 double x = (screen.width - 1280 * scale) / 2 + 289 * scale;

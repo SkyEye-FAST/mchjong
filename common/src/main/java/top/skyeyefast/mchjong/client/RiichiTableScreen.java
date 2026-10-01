@@ -1215,7 +1215,7 @@ public final class RiichiTableScreen extends Screen {
     }
 
     private void updateHints(RiichiView view) {
-        if (!view.convenienceHints() || dealing() || decision.pending() || results != null) {
+        if (room() == null || !room().convenienceHints() || dealing() || decision.pending() || results != null) {
             hints.clearPreview();
             return;
         }

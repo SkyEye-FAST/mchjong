@@ -110,14 +110,14 @@ class SichuanPresentationTest {
                                    List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
         return new SichuanView(1, 1, new SichuanGame(711).rules(), phase, phase == SichuanGame.Phase.MATCH_END ? 8 : 1, 0,
             List.of(100, 200, 300, 400), 0, 0, new SichuanView.Wall(Collections.nCopies(108, Tile.ABSENT), 0, 1, 1, true),
-            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result);
+            seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result, -1);
     }
     private static TableRoomView room(boolean finished) {
         var seats = java.util.stream.IntStream.range(0, 4).mapToObj(seat -> new TableRoomView.Seat(
             new TableParticipant(new UUID(42, seat + 1), "player" + seat), PlayerPresence.SEATED, seat)).toList();
         return new TableRoomView(new UUID(41, 1), new UUID(41, 2), 1, 1, MahjongVariant.SICHUAN,
             finished ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING, 0, 0, false, true, false,
-            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false);
+            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, true);
     }
     private static AABB bounds(SichuanTableScene.Piece piece) {
         double horizontal = piece.seat() % 2 == 0 ? SichuanTableScene.WIDTH : SichuanTableScene.HEIGHT;

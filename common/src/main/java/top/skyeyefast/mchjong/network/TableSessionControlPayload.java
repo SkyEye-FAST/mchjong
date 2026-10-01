@@ -10,7 +10,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Shared room exit, vote and last-player leave decisions. */
 public record TableSessionControlPayload(BlockPos pos, UUID tableId, Operation operation, long token, boolean enabled)
         implements CustomPacketPayload {
-    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, RESOLVE_LEAVE }
+    public enum Operation { REQUEST_EXIT, ANSWER_EXIT, RESOLVE_LEAVE, CONVENIENCE_HINTS }
     public static final Type<TableSessionControlPayload> TYPE = new Type<>(MahjongContent.id("table_session_control"));
     public static final StreamCodec<RegistryFriendlyByteBuf, TableSessionControlPayload> CODEC = new StreamCodec<>() {
         @Override public TableSessionControlPayload decode(RegistryFriendlyByteBuf buffer) {

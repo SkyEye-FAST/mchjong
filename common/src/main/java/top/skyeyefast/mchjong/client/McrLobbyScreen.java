@@ -52,7 +52,10 @@ public final class McrLobbyScreen extends Screen {
         }
         RoomLobbyControls.variantButtons(pos, room, x, top + 32, 230, true).forEach(this::addRenderableWidget);
         if (minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
-            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), x, top + 78, 230,
+            var hints = RoomLobbyControls.hintsButton(pos, room, x + 117, top + 78, 113, () -> { pending = true; rebuild(); });
+            hints.active &= !pending;
+            addRenderableWidget(hints);
+            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), x, top + 78, 113,
                 () -> minecraft.setScreen(new TableClockScreen(this, table.clientMcrTimeControl())));
             clock.active = !pending && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
             clock.setTooltip(Tooltip.create(Component.translatable("ui.mchjong.clock",

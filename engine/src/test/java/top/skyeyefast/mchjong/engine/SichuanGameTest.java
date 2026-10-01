@@ -482,6 +482,10 @@ class SichuanGameTest {
     @Test void passedWinsBlockSameFanUntilDrawingAndSurviveRestore() {
         var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, "9p", "");
         choose(game, 0, DISCARD, Tile.parseKind("9p")); choose(game, 1, PASS, -1); passAll(game);
+        assertEquals(0, game.view(1).passedFan());
+        assertEquals(-1, game.view(0).passedFan());
+        assertEquals(-1, game.view(-1).passedFan());
+        assertEquals(game.view(1), SichuanCodec.decodeView(SichuanCodec.encodeView(game.view(1))));
         game = SichuanCodec.restore(SichuanCodec.save(game));
         game = nextDraw(game, Tile.parseKind("9p"));
         choose(game, 1, DRAW, -1);
@@ -490,6 +494,27 @@ class SichuanGameTest {
         choose(game, 2, DRAW, -1); choose(game, 2, DISCARD, Tile.parseKind("9p"));
         assertTrue(game.actions(1).stream().noneMatch(action -> action.type() == WIN));
         assertEquals(0, game.save().players().get(1).passedFan());
+    }
+
+    @Test void hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities() {
+        var game = position(new int[]{2, 2, 2, 2}, false, WAIT + " 9s", "", "", "");
+        var state = game.save();
+        var players = new ArrayList<>(state.players());
+        var opponent = players.get(1);
+        var hand = new ArrayList<>(opponent.hand());
+        var slots = new ArrayList<>(state.wall().slots());
+        int slot = java.util.stream.IntStream.range(0, slots.size()).filter(index -> slots.get(index) >= 0).findFirst().orElseThrow();
+        int hidden = hand.set(0, slots.get(slot)); slots.set(slot, hidden);
+        players.set(1, new SichuanPlayerState(hand, opponent.melds(), opponent.river(), opponent.voidSuit(),
+            opponent.won(), opponent.drawn(), opponent.passedFan(), opponent.firstDiscard()));
+        var wall = state.wall();
+        var other = SichuanGame.restore(copy(state, players,
+            new SichuanWall.State(slots, wall.dealer(), wall.die1(), wall.die2(), wall.cursor(), wall.eastWestLongWall())));
+        int discard = state.players().get(0).hand().stream().filter(tile -> Tile.kind(tile) == Tile.parseKind("9s")).findFirst().orElseThrow();
+        var preview = new SichuanHints().preview(game.view(0), discard);
+        assertNotNull(preview);
+        assertEquals(preview, new SichuanHints().preview(other.view(0), discard));
+        assertNull(new SichuanHints().preview(other.view(-1), discard));
     }
 
     @Test void milSeparatesRootsAndKongsWhileTfmjCountsBothAsRoots() {
@@ -691,7 +716,7 @@ class SichuanGameTest {
         var seating = new RoomSeating(); seating.positioned(4);
         var room = new TableSession.State(new UUID(41, 1), MahjongVariant.SICHUAN, 4, id(0), roster, seating.save(),
             game.phase() == SichuanGame.Phase.MATCH_END ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING,
-            1, 1, 71, false, null, null, 0, 0);
+            1, 1, 71, false, null, null, 0, 0, false);
         var control = new TimeControl(1, 1);
         var clocks = Collections.nCopies(4, new TimeControl.Clock(20, 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),

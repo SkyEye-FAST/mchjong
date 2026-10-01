@@ -15,7 +15,7 @@ import java.util.Set;
 
 /** One private save envelope containing exactly one concrete session and its current match. */
 public final class TableSessionCodec {
-    private static final int FORMAT = 1;
+    private static final int FORMAT = 2;
     private static final int MAX_CHARS = 8 * 1024 * 1024;
     private static final Gson JSON = new GsonBuilder().serializeNulls().create();
 

@@ -212,8 +212,8 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Room settings include default-off tenpai hints for all participants. A small diamond
-with an exclamation mark appears at the lower right when valid waits are available.
+Room settings include default-off convenience hints for all three rules. A small diamond
+with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
 Hovering over or selecting a legal discard previews the resulting waits; retain
@@ -225,7 +225,13 @@ immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
 of language and font glyph bearings. Wrap waits into compact rows when side
 controls or player cards restrict the space, preserving the hand anchor and
-native text size. The room host can change this setting during preparation.
+native text size. MCR and Sichuan retain this native focus and popup style with
+shanten/effective-tile previews; MCR shows scorer-backed non-flower fan qualification,
+and Sichuan shows void tiles, structural capped values and its owner's passed-win
+restriction. Dense MCR/Sichuan tile rows paginate within the available height;
+native activation of the diamond advances the page while narration retains all
+tile rows. Shared presentation does not alter either table's hand geometry.
+The room host can change this setting during preparation.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
 round/remaining header. Their stick icons use fixed HUD artwork, independent of

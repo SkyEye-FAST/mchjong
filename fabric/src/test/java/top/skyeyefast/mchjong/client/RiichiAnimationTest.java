@@ -34,21 +34,21 @@ class RiichiAnimationTest {
         return new RiichiView(TABLE, 2, 2, 1, rules, RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0,
             wall.size() - rules.players() * 13 - 15, 12, wall, null, seats, List.of(new RiichiAction(RiichiAction.Type.DISCARD, 13)),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
     }
 
     private static RiichiView preparation(RiichiRules rules) {
         return new RiichiView(TABLE, 1, 1, 1, rules, RiichiView.Phase.SHUFFLE, 0, 0, 0, 0, 0, 0, 0, 0, List.of(), null,
             Collections.nCopies(rules.players(), seat(List.of(), Tile.ABSENT, List.of(), List.of(), false)), List.of(),
             List.of(), "playing", Collections.nCopies(rules.players(), 0), List.of(), List.of(),
-            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
     }
 
     private static RiichiView update(RiichiView old, List<RiichiView.Seat> seats, int viewer) {
         return new RiichiView(old.tableId(), old.revision() + 1, old.decision() + 1, old.handNumber(), old.rules(), old.phase(),
             viewer, old.dealer(), old.round(), old.honba(), old.riichiSticks(), old.turn(), old.remaining(), old.wallBreak(),
             old.wall(), old.focus(), seats, old.actions(), old.wins(), old.result(), old.deltas(), old.finalScores(), old.finalUma(),
-            old.timeControl(), old.clocks(), old.finalRanks(), old.playerHandVisibility(), old.openHands(), old.exitVote(), old.handling(), old.autoPlay(), old.ronBlocked(), old.riichiHan(), old.riichiSafeTiles(), old.convenienceHints(), old.externalBots(), old.settlementTicks(), old.settlementSkippedSeats());
+            old.timeControl(), old.clocks(), old.finalRanks(), old.playerHandVisibility(), old.openHands(), old.exitVote(), old.handling(), old.autoPlay(), old.ronBlocked(), old.riichiHan(), old.riichiSafeTiles(), old.externalBots(), old.settlementTicks(), old.settlementSkippedSeats());
     }
 
     private static RiichiAnimation.Frame tile(List<RiichiAnimation.Frame> frames, int tile) {
@@ -243,12 +243,12 @@ class RiichiAnimationTest {
             var built = new RiichiView(base.tableId(), 2, 2, 1, base.rules(), RiichiView.Phase.BUILD_WALL, 0,
                 0, 0, 0, 0, 0, size - 14, 0, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                handling, null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+                handling, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
             int wallBreak = 2 * (size / (2 * players) + 3);
             var opened = new RiichiView(base.tableId(), 3, 3, 1, base.rules(), RiichiView.Phase.DEAL, 0,
                 0, 0, 0, 0, 0, size - 14, wallBreak, wall, null, base.seats(), List.of(), List.of(), "playing",
                 Collections.nCopies(players, 0), List.of(), List.of(), base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null,
-                new RiichiView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+                new RiichiView.Handling((1 << players) - 1, 0, 4, 3, 4, false), null, false, 1, java.util.Map.of(), List.of(), 0, 0);
             var animation = new RiichiAnimation();
             animation.accept(built, 0);
             var positions = animation.sample(0).stream().filter(frame -> frame.piece().area() == RiichiTableScene.Area.WALL)

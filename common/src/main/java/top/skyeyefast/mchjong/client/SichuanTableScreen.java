@@ -30,6 +30,7 @@ public final class SichuanTableScreen extends Screen {
     private TableTurnClock turnClock;
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop;
+    private final TableHints hints = new TableHints();
 
     public SichuanTableScreen(BlockPos pos) { this(pos, false); }
     public SichuanTableScreen(BlockPos pos, boolean immersive) {
@@ -65,6 +66,7 @@ public final class SichuanTableScreen extends Screen {
     @Override protected void init() { rebuild(); }
 
     private void rebuild() {
+        boolean hintFocused = getFocused() == hints;
         int focusedTile = getFocused() instanceof HandTarget target ? target.tile : Tile.ABSENT;
         clearWidgets();
         turnClock = null;
@@ -76,6 +78,7 @@ public final class SichuanTableScreen extends Screen {
         shownRevision = view.revision();
         if (decision != game.decision()) {
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT; page = 0;
+            hints.clearPreview();
         }
         hand = null;
         board = immersive() ? new SichuanImmersiveTable(game.viewerSeat()) : null;
@@ -125,6 +128,8 @@ public final class SichuanTableScreen extends Screen {
             var target = addRenderableWidget(new HandTarget(tile));
             if (tile == focusedTile) setFocused(target);
         }
+        addRenderableWidget(hints);
+        if (hintFocused && hints.visible) setFocused(hints);
     }
     private int toolbar(String key, int positionX, Runnable action) {
         int textScale = contentScale(); var caption = Component.translatable(key);
@@ -248,9 +253,11 @@ public final class SichuanTableScreen extends Screen {
                 hand.render(graphics, selected, focus, tile -> tile == selected ? MahjongUi.ACCENT : 0, Tile.ABSENT,
                     deck.preset(), deck.material(), deck.back(), deck.backPreset(), null, null, 0);
             }
+            updateHints();
             graphics.pose().pushPose(); graphics.pose().translate(0, 0, 600);
             TableExitControls.renderVote(graphics, font, table().clientTableRoom(), uiWidth(), uiHeight(), textScale);
             super.render(graphics, mx, my, partialTick);
+            hints.renderPopup(graphics, font, table().clientSichuanDeck().preset());
             if (table().clientTableRoom().exitVote() == null && (turnClock == null || !turnClock.visible)
                 && TableSettings.get().show(TableSettings.Information.HELP)) {
                 var help = Component.translatable("sichuan.mchjong.help." + TableSettings.get().discardMode.name().toLowerCase(java.util.Locale.ROOT),
@@ -324,10 +331,58 @@ public final class SichuanTableScreen extends Screen {
             return height - 24;
         return Math.max(190, Math.min(height - 24, (int) top - 6));
     }
+    private void updateHints() {
+        var room = table().clientTableRoom();
+        if (!room.convenienceHints() || pending || room.exitVote() != null || view().paused()) {
+            hints.clearPreview();
+            return;
+        }
+        int scale = contentScale();
+        var bounds = privateHandBounds();
+        if (bounds == null) { hints.clearPreview(); return; }
+        int center = hand == null ? bounds.left() + bounds.width() / 2 : hand.centerX();
+        int bottom = bounds.top() - 4 * scale;
+        int half = Math.min(center - 8, uiWidth() - 8 - center);
+        for (var widget : decisionControls) if (widget.visible && widget.getY() < bottom
+            && widget.getBottom() > bottom - 100 * scale) {
+            if (widget.getX() > center) half = Math.min(half, widget.getX() - center - 4);
+            else if (widget.getRight() < center) half = Math.min(half, center - widget.getRight() - 4);
+        }
+        int focus = getFocused() instanceof HandTarget target ? target.tile : hovered;
+        hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half),
+            38, scale);
+        hints.setX(uiWidth() - 30 * scale);
+        hints.setY(uiHeight() - 16 * scale);
+    }
+
+    private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {
+        if (hand != null) return new net.minecraft.client.gui.navigation.ScreenRectangle(0, hand.top(), uiWidth(), uiHeight() - hand.top());
+        var projection = projection();
+        double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
+        double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
+        for (var piece : SichuanTableScene.build(view().game())) if (ownHand(piece)) {
+            var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
+                (float) piece.position().y, (float) piece.position().z)
+                .rotateY((float) Math.toRadians(piece.yaw())).scale(piece.scale());
+            for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
+                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var point = projection.project(new net.minecraft.world.phys.Vec3(corner.x, corner.y + .035, corner.z), .01);
+                if (point != null) {
+                    left = Math.min(left, point.x()); right = Math.max(right, point.x());
+                    top = Math.min(top, point.y()); bottom = Math.max(bottom, point.y());
+                }
+            }
+        }
+        if (!Double.isFinite(top) || top >= height || bottom <= 0 || left >= width || right <= 0) return null;
+        int x = (int) Math.max(0, left), y = (int) Math.max(0, top);
+        return new net.minecraft.client.gui.navigation.ScreenRectangle(x, y,
+            (int) Math.min(width, Math.ceil(right)) - x, (int) Math.min(height, Math.ceil(bottom)) - y);
+    }
     private void toggleView() { presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }
     @Override public void tick() { presentation.tick(); }
-    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
+    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; hints.clearPreview(); rebuild(); }
     @Override public boolean mouseClicked(double positionX, double positionY, int button) {
         if (presentation.mouseBinding(button, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matchesMouse(button)) { pass(); return true; }
@@ -367,7 +422,7 @@ public final class SichuanTableScreen extends Screen {
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
         if (presentation.keyPressed(key, scanCode, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matches(key, scanCode)) { pass(); return true; }
-        if (key == GLFW.GLFW_KEY_ESCAPE && selected >= 0) { selected = lastClicked = Tile.ABSENT; rebuild(); return true; }
+        if (key == GLFW.GLFW_KEY_ESCAPE && selected >= 0) { cancelSelection(); return true; }
         if ((key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER) && selected >= 0 && getFocused() == null) {
             send(view(), discardAction(selected)); return true;
         }

@@ -10,9 +10,30 @@ available through MChjong's mod-list Config button. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
-The room host can enable **Tenpai hints** in Settings → Room during preparation.
-The room shares this choice with every participant. When enabled, the table
-shows waits and unseen-copy counts from each player's authorized view.
+The room host can enable **Convenience hints** during preparation: Settings → Room
+for Riichi, or the preparation screen for MCR and Sichuan. All three rules share
+the setting, including when changing variants. World `allowConvenienceHints`
+can disable it in both waiting and running rooms.
+
+Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
+a legal discard previews the resulting hand. Activate the MCR/Sichuan diamond
+to page through tile rows when the popup needs more space. Riichi shows its structural waits.
+MCR shows shanten, improving tiles and structural waits, with non-flower fan for
+ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
+offered winning tile uses its public last-wall/robbing-kong circumstances. Future
+draw circumstances are not assumed. Flowers do not satisfy the minimum.
+
+Sichuan shows remaining void-suit tiles until the suit clears, then shanten and
+improving tiles. Ready hands show each wait's structural fan and capped value,
+and their maximum ready value under the room rules. These draw-check values
+exclude win circumstances and self-draw bonuses. A passed-win restriction is
+shown only to its owner; it restricts discard wins to higher capped fan until
+the engine clears it. Hints do not declare wins or submit actions.
+
+Counts use your own hand and public tiles, deduplicate claimed tiles and include
+exhausted structural waits at zero. They describe unseen copies, never the real
+wall or opponents' concealed hands. A structurally ready hand can therefore have
+no publicly available copies; Sichuan readiness still follows its draw scorer.
 
 ## MCR Bot rooms
 

@@ -196,7 +196,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 5 and the session format is 7. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 5 and the session format is 8. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -340,7 +340,7 @@ lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room 
 requiring complete typed records and bounding size and nesting. Restoration checks
 all 108 physical identities, melds, first-discard binding, pending reactions, winner scores and payment
 links, then refreshes decision and incarnation authority. Game format is 3 and
-session format is 4, with complete typed fields, an 8 MiB document bound and sixteen nesting
+session format is 5, with complete typed fields, an 8 MiB document bound and sixteen nesting
 levels. Hand number, current dealer, completed ledgers, current result, future-wall
 seed, partial confirmations and remaining reading time survive saves. Restoration
 derives cumulative scores without paying again and validates the dealer chain.
@@ -349,7 +349,9 @@ rule-selected last-kong or consecutive-kong context also survive saves.
 `SichuanView` hides opponent hands, private declarations and wall identities;
 concealed kongs show their middle tiles, and winning hands remain concealed until
 hand completion. The view publishes hand number, dealer and cumulative scores,
-keeping future seeds and concealed future wall identities private. A mounted
+keeping future seeds and concealed future wall identities private. The top-level
+`passedFan` belongs only to the recipient; spectators receive `-1` and no seat
+record publishes another player's restriction, including after hand completion. A mounted
 authenticated participant receives only their own
 actions. `SichuanLobbyScreen` owns room preparation; `SichuanTableScreen` owns
 private declarations and issued match actions. `SichuanResultsScreen` presents
@@ -364,7 +366,7 @@ provides configured-match cumulative standings and the issued return-to-lobby co
 
 `MahjongVariant` selects Riichi, MCR or Sichuan through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
-request incarnation, exit controls and room lifecycle. `RoomSeating` owns the
+request incarnation, convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
 `RoomAction` choices for all three rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
@@ -376,7 +378,7 @@ on return to the lobby. `RiichiGame` has only active match phases; its private
 actions, wall, scores, replay recording and settlement belong to that match.
 `TableRoomView` contains only common room state. `RiichiRoomSettings` projects
 Riichi rules and lobby configuration; `RiichiView` projects only an active match,
-including private actions, convenience hints and settlement timing. Lobby
+including private actions and settlement timing. Lobby
 updates carry no `RiichiView`.
 
 `McrSession` owns a complete 144-tile stock, `McrGame` and completed-hand
@@ -671,7 +673,7 @@ non-participant may open an active table's spectator screen.
 `WorldSettings` owns administrator policy per world save, across dimensions. It
 also controls invitations and invitation teleportation, Minecraft experience
 rewards, replay availability, bots and companion participants, convenience hints,
-and the thin custom-rule/forced-preset boundary. `RiichiSession` receives only the pure
+and the thin custom-rule/forced-preset boundary. `TableSession` receives only the pure
 runtime `WorldPolicy`; Minecraft UI and storage behavior stay outside the engine.
 `RiichiViewPayload` synchronizes `WorldSettings.Policy` separately from tile and
 room state. The World settings UI uses the server-advertised administrator command
@@ -717,7 +719,15 @@ physical IDs from the viewer's hand, rivers, melds, extracted norths, indicators
 and pending declarations. Training bots share this accounting. Opponents' concealed
 hands are ignored even when room hand visibility reveals them. `RiichiHints` renders
 this information when the room host enables convenience hints during preparation;
-the room view synchronizes that choice to every participant.
+`TableSession` persists that shared choice and `TableRoomView` synchronizes it and
+world-policy permission to every variant. `McrHints` and `SichuanHints` independently
+consume their recipient-safe views and existing analyzers. MCR waits carry scorer
+non-flower fan for ordinary discard/self-draw contexts and current public claim
+circumstances. Sichuan uses structural scores and `readyValue`, with its recipient's
+passed-win restriction. Public physical tile accounting excludes opponent hands
+and wall identities. `TableHintsButton` shares the native focus target and icon;
+`TableHints` formats the MCR/Sichuan results above the existing projected private
+hand without introducing a common analysis interface.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
 copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent
@@ -813,9 +823,9 @@ left by calls and account for the width of sideways riichi discards. Hiding rive
 is a local rendering preference; it also forces the remaining-wall count and
 current claimed-tile preview to remain visible, without changing game records.
 
-`TableSessionControlPayload` carries shared exit requests, votes and last-player
+`TableSessionControlPayload` carries shared convenience-hint configuration, exit requests, votes and last-player
 leave decisions directly to `TableSession`. `RiichiControlPayload` carries
-automatic play, convenience hints and open hands only for Riichi. These controls
+automatic play and open hands only for Riichi. These controls
 remain separate from match-action indices. Every loader checks the loaded table,
 table identity and current decision or vote token. Exit requests and votes require
 the sender's physical seat; a leave decision requires the pending actor. In the

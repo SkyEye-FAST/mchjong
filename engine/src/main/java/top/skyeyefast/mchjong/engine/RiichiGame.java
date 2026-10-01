@@ -800,7 +800,7 @@ public final class RiichiGame {
             viewer >= 0 && (players[viewer].temporaryFuriten || players[viewer].riichiFuriten),
             viewer < 0 ? 0 : players[viewer].doubleRiichi || players[viewer].firstTurn && uninterrupted ? 2 : 1,
             recorder == null ? Map.of() : recorder.riichiSafeTiles(),
-            session.convenienceHints, session.externalBots(), settlementTicks(), settlementSkippedSeats());
+            session.externalBots(), settlementTicks(), settlementSkippedSeats());
     }
 
     /** Used on loading a saved table and by conservation tests, never as a network input. */

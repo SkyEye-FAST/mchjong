@@ -65,7 +65,7 @@ final class TableInterfaceSmoke {
             table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(),
                 view.revision(), view.decision(), room.variant(), top.skyeyefast.mchjong.engine.TableSession.Lifecycle.PLAYING,
                 room.host(), view.viewerSeat(), room.manual(), room.equipped(), false, room.seating(),
-                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false));
+                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false, room.convenienceHints(), room.allowConvenienceHints()));
             SettlementSmoke.acceptFixture(table, view);
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
@@ -131,7 +131,7 @@ final class TableInterfaceSmoke {
             settings.timeControl(), List.of(new TimeControl.Clock(state == 3 ? 0 : 160, state == 3 ? 100 : 400, true),
                 new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false), new TimeControl.Clock(0, 0, false)), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false,
             state == 1 ? new ExitVote(1, 1, 400, 4, List.of(1)) : null, null,
-            top.skyeyefast.mchjong.engine.RiichiAutoPlay.DEFAULT, false, 1, java.util.Map.of(), false, List.of(), 0, 0);
+            top.skyeyefast.mchjong.engine.RiichiAutoPlay.DEFAULT, false, 1, java.util.Map.of(), List.of(), 0, 0);
         return state == 2 ? SettlementSmoke.fixture(normal) : normal;
     }
 

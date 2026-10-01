@@ -30,6 +30,7 @@ final class TenpaiHintsSmoke {
     private String language;
     private CompletableFuture<Void> reload;
     private RiichiView original, fixture;
+    private top.skyeyefast.mchjong.engine.TableRoomView originalRoom;
 
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         var settings = TableSettings.get();
@@ -39,6 +40,7 @@ final class TenpaiHintsSmoke {
             animations = settings.animations; discardMode = settings.discardMode;
             settings.animations = false; settings.discardMode = TableSettings.DiscardMode.CONFIRM;
             original = table.clientView();
+            originalRoom = table.clientRoom();
             sample = 0;
             show(client, table);
             return false;
@@ -98,8 +100,9 @@ final class TenpaiHintsSmoke {
                 original.round(), original.honba(), original.riichiSticks(), original.turn(), original.remaining(),
                 original.wallBreak(), original.wall(), original.focus(), original.seats(), original.actions(), original.wins(),
                 original.result(), original.deltas(), original.finalScores(), original.finalUma(), original.timeControl(), original.clocks(),
-                original.finalRanks(), original.playerHandVisibility(), original.openHands(), original.exitVote(), original.handling(), original.autoPlay(), original.ronBlocked(), original.riichiHan(), original.riichiSafeTiles(), original.convenienceHints(), original.externalBots(), original.settlementTicks(), original.settlementSkippedSeats()));
+                original.finalRanks(), original.playerHandVisibility(), original.openHands(), original.exitVote(), original.handling(), original.autoPlay(), original.ronBlocked(), original.riichiHan(), original.riichiSafeTiles(), original.externalBots(), original.settlementTicks(), original.settlementSkippedSeats()));
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
+            table.acceptRoom(originalRoom);
         }
         return false;
     }
@@ -130,9 +133,13 @@ final class TenpaiHintsSmoke {
         fixture = new RiichiView(original.tableId(), original.revision() + sample + 1, original.decision(), original.handNumber(),
             original.rules(), RiichiView.Phase.TURN, 0, 0, 0, 3, 4, 0, 70,
             original.wallBreak(), wall, null, seats, preview ? List.of(new RiichiAction(RiichiAction.Type.DISCARD, 125), new RiichiAction(RiichiAction.Type.DISCARD, 0)) : List.of(),
-            List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, original.autoPlay(), true, 1, java.util.Map.of(), true, List.of(), 0, 0);
+            List.of(), "playing", List.of(), List.of(), List.of(), original.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, original.autoPlay(), true, 1, java.util.Map.of(), List.of(), 0, 0);
         if (new TenpaiHints().waits(fixture, preview ? 125 : Tile.ABSENT).size() != 13)
             throw new IllegalStateException("Thirteen-way hint fixture is not ready");
+        var room = originalRoom;
+        table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(), fixture.revision(),
+            room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), room.manual(), room.equipped(), room.paused(),
+            room.seating(), room.availableWinds(), room.seats(), room.actions(), room.exitVote(), room.leaveDecision(), true, true));
         table.acceptView(fixture); client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         if (preview) {
             client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
