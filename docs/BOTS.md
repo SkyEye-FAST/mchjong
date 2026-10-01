@@ -54,18 +54,29 @@ that choice unbound. Issued actions preserve the bound discard and force clearin
 the void suit before ordinary discards.
 
 `SichuanHandAnalyzer` reuses mahjong-utils regular shapes and accounts for Sichuan
-seven pairs, where a four counts as two pairs. Ordinary discards prefer lower
-shanten, more remaining effective copies, then more effective kinds and the lowest
-physical ID. Public availability deduplicates the Bot's tiles, rivers, melds and
-focus; the revealed middle tiles of a concealed kong identify all four copies.
-Opponent hands and future wall identities stay hidden.
+seven pairs, where a four counts as two pairs. `SichuanBotValue` fits gradual,
+copy-consuming targets for seven pairs, all pungs, full flush, roots and declared
+kongs, including full-flush combinations. The analyzer validates and scores the
+completed targets under the current rules. Target distance and scarce missing
+copies discount their value; incompatible alternatives compete rather than adding
+hypothetical fan. Fixed melds exclude seven pairs and restrict flush suits. Capped
+payout supplies the value reward, so additional fan above `fanCap` has no marginal
+reward. This bounded target fitting is heuristic evidence, not another shanten or
+scoring implementation.
 
-Legal wins are accepted. Pungs require better progress after their mandatory
-discard. Kongs compare the concealed remainder before replacement, so discarding
-the unknown replacement preserves the evaluated shape. They require better
-progress or equal progress with immediate income under the current rules; delayed
-added kongs supply no such income. Flower-pig sanctions suppress this income
-preference. The server waits twelve ticks, leaves Bot clocks inactive, confirms
+Discards combine route value and distance with shanten and remaining effective
+copies, allowing at most one shanten of retreat. Equal evaluations prefer shape
+efficiency and then the lowest physical ID. Public availability deduplicates the
+Bot's tiles, rivers, melds and focus; a simulated discard remains visible. The
+revealed middle tiles of a concealed kong identify all four copies. Opponent hands
+and future wall identities stay hidden.
+
+Legal wins are accepted. Pungs must improve the same evaluation after their best
+mandatory discard. Kongs compare the concealed remainder before replacement, so
+discarding the unknown replacement preserves the evaluated shape. Immediate income
+under the current rules can settle a close comparison, but cannot justify worse
+shanten; delayed added kongs supply no such income. Flower-pig sanctions suppress
+this income preference. The server waits twelve ticks, leaves Bot clocks inactive, confirms
 completed hands automatically and saves pending delay, roster and replay flags.
 
 ## Local bot service

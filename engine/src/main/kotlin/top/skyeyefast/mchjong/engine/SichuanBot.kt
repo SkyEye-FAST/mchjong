@@ -28,16 +28,26 @@ object SichuanBot {
             if (view.focus() >= 0) add(view.focus())
         }
         val cache = mutableMapOf<Pair<List<Int>, List<Meld>>, SichuanHandAnalyzer.Progress>()
-        fun evaluate(hand: List<Int>, melds: List<Meld>, suit: Int = own.voidSuit()): SichuanHandAnalyzer.Progress =
+        fun progress(hand: List<Int>, melds: List<Meld>, suit: Int = own.voidSuit()): SichuanHandAnalyzer.Progress =
             if (suit != own.voidSuit()) SichuanHandAnalyzer.analyze(hand, melds, suit, known.toList())
             else cache.getOrPut(hand.map(Tile::kind).sorted() to melds) {
                 SichuanHandAnalyzer.analyze(hand, melds, suit, known.toList())
             }
-        fun bestDiscard(hand: List<Int>, melds: List<Meld>): SichuanHandAnalyzer.Progress {
+        val value = if (own.voidSuit() >= 0) SichuanBotValue(view.rules(), own.voidSuit(), known) else null
+        val evaluations = mutableMapOf<Pair<List<Int>, List<Meld>>, SichuanBotValue.Evaluation>()
+        fun evaluate(hand: List<Int>, melds: List<Meld>): SichuanBotValue.Evaluation =
+            evaluations.getOrPut(hand.map(Tile::kind).sorted() to melds) {
+                value!!.evaluate(hand, melds, progress(hand, melds))
+            }
+        val valueOrder = compareByDescending<SichuanBotValue.Evaluation> { it.utility }
+            .thenComparator { a, b -> order.compare(a.progress, b.progress) }
+        fun bestDiscard(hand: List<Int>, melds: List<Meld>): SichuanBotValue.Evaluation {
             val missing = hand.any { Tile.kind(it) / 9 == own.voidSuit() }
             val choices = hand.filter { (!missing || Tile.kind(it) / 9 == own.voidSuit())
                 && (own.firstDiscard() == Tile.ABSENT || own.river().isNotEmpty() || it == own.firstDiscard()) }
-            return choices.distinctBy(Tile::kind).map { evaluate(hand - it, melds) }.minWith(order)
+            val candidates = choices.distinctBy(Tile::kind).map { evaluate(hand - it, melds) }
+            val fastest = candidates.minOf { it.progress.shanten }
+            return candidates.filter { it.progress.shanten <= fastest + 1 }.minWith(valueOrder)
         }
 
         if (view.phase() == SichuanGame.Phase.VOIDING) {
@@ -49,10 +59,10 @@ object SichuanBot {
                     (1..2).sumOf { gap -> if (kind % 9 + gap < 9) minOf(counts[kind], counts[kind + gap]) else 0 }
             }
             fun efficiency(suit: Int): SichuanHandAnalyzer.Progress {
-                if (own.hand().size == 13) return evaluate(own.hand(), own.melds(), suit)
+                if (own.hand().size == 13) return progress(own.hand(), own.melds(), suit)
                 val missing = own.hand().filter { Tile.kind(it) / 9 == suit }
                 return missing.ifEmpty { own.hand() }.distinctBy(Tile::kind)
-                    .map { evaluate(own.hand() - it, own.melds(), suit) }.minWith(order)
+                    .map { progress(own.hand() - it, own.melds(), suit) }.minWith(order)
             }
             val suit = actions.filter { it.type() == VOID_SUIT }.map { it.suit() }.distinct()
                 .minWith(Comparator { a, b -> cost(a).compareTo(cost(b)).takeIf { it != 0 }
@@ -69,19 +79,23 @@ object SichuanBot {
                         .sumOf { counts[kind + it] }
                 }
                 val comparison = if (own.hand().size == 14)
-                    order.compare(evaluate(own.hand() - left, own.melds(), suit), evaluate(own.hand() - right, own.melds(), suit))
+                    order.compare(progress(own.hand() - left, own.melds(), suit), progress(own.hand() - right, own.melds(), suit))
                 else support(left).compareTo(support(right))
                 comparison.takeIf { it != 0 } ?: left.compareTo(right)
             })
         }
 
         var selected = actions.indexOfFirst { it.type() == PASS || it.type() == DRAW }
-        var baseline: SichuanHandAnalyzer.Progress? = null
-        for ((index, action) in actions.withIndex()) if (action.type() == DISCARD) {
-            val progress = evaluate(own.hand() - action.tiles().single(), own.melds())
-            val comparison = baseline?.let { order.compare(progress, it) } ?: -1
+        var baseline: SichuanBotValue.Evaluation? = null
+        val discards = actions.indices.filter { actions[it].type() == DISCARD }
+            .associateWith { evaluate(own.hand() - actions[it].tiles().single(), own.melds()) }
+        val fastest = discards.values.minOfOrNull { it.progress.shanten }
+        for ((index, evaluation) in discards) {
+            val action = actions[index]
+            if (evaluation.progress.shanten > fastest!! + 1) continue
+            val comparison = baseline?.let { valueOrder.compare(evaluation, it) } ?: -1
             if (comparison < 0 || comparison == 0 && action.tiles().single() < actions[selected].tiles().single()) {
-                baseline = progress
+                baseline = evaluation
                 selected = index
             }
         }
@@ -104,8 +118,7 @@ object SichuanBot {
                     (action.tiles() + view.focus()).sorted(), view.supplier(), view.focus())
             }
             // For a kong, discarding the unknown replacement always preserves this 13-tile remainder.
-            val progress = if (action.type() == PUNG) bestDiscard(hand, melds) else evaluate(hand, melds)
-            val comparison = order.compare(progress, best)
+            val evaluation = if (action.type() == PUNG) bestDiscard(hand, melds) else evaluate(hand, melds)
             val income = when (action.type()) {
                 DISCARD_KONG -> view.rules().discardKongPayment()
                 CONCEALED_KONG -> view.rules().concealedKongPayment()
@@ -113,8 +126,12 @@ object SichuanBot {
                 else -> 0
             }
             val sanctioned = view.ledger().any { it.type() == SichuanSettlement.Type.FLOWER_PIG && it.payer() == view.viewerSeat() }
-            if (comparison < 0 || comparison == 0 && income > 0 && !sanctioned) {
-                best = progress
+            val payers = if (action.type() == DISCARD_KONG) 1 else view.seats().count { !it.won() } - 1
+            val bonus = if (!sanctioned) minOf(0.45, 0.2 * kotlin.math.ln(1.0 + income * payers)) else 0.0
+            // Income can settle a close comparison, but cannot buy a shanten retreat.
+            val limit = best.progress.shanten + if (action.type() == PUNG) 1 else 0
+            if (evaluation.progress.shanten <= limit && evaluation.utility + bonus > best.utility + 0.15) {
+                best = evaluation.copy(utility = evaluation.utility + bonus)
                 selected = index
             }
         }

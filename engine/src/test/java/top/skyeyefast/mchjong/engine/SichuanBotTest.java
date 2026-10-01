@@ -76,6 +76,82 @@ class SichuanBotTest {
         assertEquals(DISCARD, selected(pairs, 0).type(), "A kong must not destroy the quad-pair route");
     }
 
+    @Test void sevenPairsRetainPairsAcrossAFasterOrdinaryDiscardAndRejectPungs() {
+        var game = turn("7p 7p 8p 8p 3p 3p 1m 1m 9p 9p 5p 6m 4p 5m");
+        int kind = Tile.kind(selected(game, 0).tiles().getFirst());
+        var hand = game.view(0).seats().getFirst().hand();
+        assertEquals(1, hand.stream().filter(tile -> Tile.kind(tile) == kind).count(), "Keep the five pairs");
+        var kept = new ArrayList<>(hand); kept.remove(selected(game, 0).tiles().getFirst());
+        assertEquals(1, SichuanHandAnalyzer.analyze(kept, List.of(), 2, hand).shanten());
+        assertEquals(0, hand.stream().map(tile -> {
+            var rest = new ArrayList<>(hand); rest.remove(tile);
+            return SichuanHandAnalyzer.analyze(rest, List.of(), 2, hand).shanten();
+        }).mapToInt(Integer::intValue).min().orElseThrow());
+        var view = game.view(0);
+        var seats = new ArrayList<>(view.seats());
+        var other = seats.get(1);
+        var deadKinds = List.of("4p", "5p", "5m", "6m").stream().map(Tile::parseKind).toList();
+        var dead = Tile.sichuanSet().stream().filter(tile -> deadKinds.contains(Tile.kind(tile)) && !hand.contains(tile))
+            .map(tile -> new SichuanPlayerState.Discard(tile, false)).toList();
+        seats.set(1, new SichuanView.Seat(other.hand(), other.melds(), dead, other.voidSuit(), other.won(), other.drawn(), other.firstDiscard()));
+        var exhausted = new SichuanView(view.revision(), view.decision(), view.rules(), view.phase(), view.handNumber(), view.dealer(), view.scores(),
+            view.viewerSeat(), view.turn(), view.wall(), seats, view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
+            view.actions(), view.winners(), view.ledger(), view.result());
+        int exhaustedChoice = Tile.kind(exhausted.actions().get(SichuanBot.choose(exhausted)).tiles().getFirst());
+        assertEquals(2, hand.stream().filter(tile -> Tile.kind(tile) == exhaustedChoice).count(),
+            "With every pair-making single exhausted, abandon the slower seven-pairs route");
+        var reaction = turn("1m", "7p 7p 8p 8p 3p 3p 1m 1m 9p 9p 5p 6m 4p");
+        discard(reaction, "1m");
+        assertTrue(reaction.actions(1).stream().anyMatch(action -> action.type() == PUNG));
+        assertEquals(PASS, selected(reaction, 1).type());
+    }
+
+    @Test void allPungsRetainPairsAndAcceptUsefulPungs() {
+        var game = turn("1m 1m 1m 2m 2m 4m 4m 5m 6m 7p 7p 9p 9p 8p");
+        int kind = Tile.kind(selected(game, 0).tiles().getFirst());
+        assertTrue(List.of("5m", "6m", "8p").stream().map(Tile::parseKind).toList().contains(kind));
+        var reaction = turn("2m", "2m 2m 1m 1m 1m 4m 4m 4m 7m 7m 7m 5p 9p");
+        discard(reaction, "2m");
+        assertEquals(PUNG, selected(reaction, 1).type());
+    }
+
+    @Test void nearlyPureHandsRetainTheirSuitAndRespectFixedMelds() {
+        var game = turn("1m 2m 3m 4m 5m 6m 7m 8m 9m 2m 2m 5m 6p 7p");
+        assertEquals(1, Tile.kind(selected(game, 0).tiles().getFirst()) / 9);
+        var purePairs = turn("1m 1m 2m 2m 3m 3m 5m 5m 7m 7m 4m 6m 8p 9p");
+        assertEquals(1, Tile.kind(selected(purePairs, 0).tiles().getFirst()) / 9);
+        var reaction = turn("2m", "2m 2m 1m 3m 4m 5m 6m 7m 8m 9m 5m 6p 8p");
+        discard(reaction, "2m");
+        assertEquals(PUNG, selected(reaction, 1).type());
+        assertTrue(reaction.act(1, reaction.decision(), SichuanBot.choose(reaction.view(1))));
+        for (int seat = 2; seat < 4; seat++) if (!reaction.actions(seat).isEmpty())
+            assertTrue(reaction.act(seat, reaction.decision(), reaction.actions(seat).indexOf(new SichuanAction(PASS))));
+        assertEquals(1, Tile.kind(selected(reaction, 1).tiles().getFirst()) / 9);
+    }
+
+    @Test void cappedValueStopsBuyingExtraRoutes() {
+        var game = turn("7p 7p 8p 8p 3p 3p 1m 1m 9p 9p 5p 6m 4p 5m");
+        var noFan = withRules(game.view(0), SichuanRuleOption.FAN_CAP.with(game.rules(), 0));
+        var hand = new ArrayList<>(noFan.seats().getFirst().hand());
+        hand.remove(noFan.actions().get(SichuanBot.choose(noFan)).tiles().getFirst());
+        assertEquals(0, SichuanHandAnalyzer.analyze(hand, List.of(), 2, noFan.seats().getFirst().hand()).shanten());
+
+        var root = turn("9m 9m 9m 9m 7m 8m 1m 2m 3m 4m 4m 5m 6p 7p");
+        var capped = withRules(root.view(0), SichuanRuleOption.FAN_CAP.with(root.rules(), 1));
+        var choice = capped.actions().get(SichuanBot.choose(capped));
+        assertEquals(DISCARD, choice.type());
+        assertEquals(Tile.parseKind("5m"), Tile.kind(choice.tiles().getFirst()), "The retained root caps payout; keep the fast mixed-suit wait");
+    }
+
+    @Test void kongPaymentsCannotBuyWorseProgressEvenAtTheirMaximum() {
+        var game = turn("1m 1m 1m 1m 2m 2m 3m 3m 4p 4p 5p 5p 6p 9p");
+        var rich = SichuanRuleOption.CONCEALED_KONG_PAYMENT.with(game.rules(), 8);
+        rich = SichuanRuleOption.DISCARD_KONG_PAYMENT.with(rich, 8);
+        rich = SichuanRuleOption.ADDED_KONG_PAYMENT.with(rich, 8);
+        var richView = withRules(game.view(0), rich);
+        assertEquals(DISCARD, richView.actions().get(SichuanBot.choose(richView)).type());
+    }
+
     @Test void hiddenHandsAndFutureWallCannotChangeTheChoice() {
         var game = turn("1m 2m 3m 1p 2p 3p 7p 8p 9p 3m 4m 6m 5p 5p");
         var original = SichuanCodec.restore(SichuanCodec.save(game)).view(0);
@@ -208,6 +284,11 @@ class SichuanBotTest {
         }
     }
 
+    private static SichuanView withRules(SichuanView view, SichuanRules rules) {
+        return new SichuanView(view.revision(), view.decision(), rules, view.phase(), view.handNumber(), view.dealer(), view.scores(),
+            view.viewerSeat(), view.turn(), view.wall(), view.seats(), view.focus(), view.supplier(), view.robbingKong(), view.submitted(),
+            view.actions(), view.winners(), view.ledger(), view.result());
+    }
     private static SichuanAction selected(SichuanGame game, int seat) {
         int index = SichuanBot.choose(game.view(seat));
         assertTrue(index >= 0 && index < game.actions(seat).size());

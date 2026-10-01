@@ -445,10 +445,13 @@ issued action index. One deterministic policy ranks void suits by tile count,
 pair/triplet/connected support and shape efficiency, binding a legal physical
 first discard for SBR. Issued wins take priority. Discards use
 `SichuanHandAnalyzer`'s existing regular-shape library and Sichuan quad-pair
-analysis, with deduplicated public remaining copies. Calls compare progress after
-the mandatory discard; kongs retain progress and require improvement or immediate
-rule-configured income. The session uses the shared Bot room lifecycle and world
-policy, waits twelve ticks and leaves Bot clocks inactive. Bot identities and
+analysis, with deduplicated public remaining copies. `SichuanBotValue` fits copy-aware
+seven-pairs, all-pungs, full-flush and root/kong targets, with completed targets validated and valued by the same analyzer. Routes
+compete using distance, scarcity and capped payout; fixed melds immediately remove
+incompatible routes. Discards allow at most one shanten of retreat. Calls compare
+the same evaluation after the mandatory discard; immediate rule-configured kong
+income can settle a close comparison without buying worse shanten. The session uses
+the shared Bot room lifecycle and world policy, waits twelve ticks and leaves Bot clocks inactive. Bot identities and
 replay participant flags survive restores. See [Bot analysis](BOTS.md#sichuan-built-in-opponent).
 
 ### Sichuan physical presentation

@@ -160,7 +160,8 @@ retirement, kong robbery and call transfers, flower-pig/ready checks, cumulative
 scores and dealer succession, queue acknowledgement and altered-record rejection.
 Run `gradlew.bat :engine:test --tests "*SichuanReplayTest" --warning-mode fail --console=plain`.
 `SichuanBotTest` owns deterministic void/secret-discard choices, quad-pair efficiency,
-public-copy deduplication, conservative calls, recipient privacy, room/policy
+public-copy deduplication, seven-pairs/all-pungs/full-flush retention, capped value,
+progress-preserving kong income, conservative calls, recipient privacy, room/policy
 controls, paused/restored scheduling, multi-win Bot replies, inactive Bot clocks,
 automatic confirmations and both presets' complete one-human/three-Bot eight-hand
 matches with restored settlements, final standings and replay flags. Run
