@@ -227,7 +227,8 @@ class SichuanBotTest {
         session.tick(); assertEquals(1, session.save().age());
     }
 
-    @Test @Timeout(60) void oneHumanThreeBotsFinishEightHandsWithReplayAndRestorationForBothPresets() {
+    // Two full matches plus replay reconstruction need headroom on shared CI runners.
+    @Test @Timeout(180) void oneHumanThreeBotsFinishEightHandsWithReplayAndRestorationForBothPresets() {
         for (var preset : SichuanPreset.values()) {
             var session = lobby(preset);
             room(session, RoomAction.Type.FILL_BOTS); start(session);
