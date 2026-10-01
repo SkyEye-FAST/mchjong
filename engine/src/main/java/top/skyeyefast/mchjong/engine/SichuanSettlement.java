@@ -9,7 +9,7 @@ public final class SichuanSettlement {
     private SichuanSettlement() {}
     public enum Type { DISCARD_WIN, SELF_DRAW_WIN, DISCARD_KONG, CONCEALED_KONG, ADDED_KONG,
                        KONG_REFUND, KONG_TRANSFER, KONG_TRANSFER_TOP_UP, FLOWER_PIG, READY_PAYMENT }
-    public enum Fan { ROOT, ALL_PUNGS, GOLDEN_SINGLE_WAIT, FULL_FLUSH, SEVEN_PAIRS,
+    public enum Fan { ROOT, KONG, ALL_PUNGS, GOLDEN_SINGLE_WAIT, FULL_FLUSH, SEVEN_PAIRS,
                       WIN_AFTER_KONG, SHOOT_AFTER_KONG, ROBBING_KONG, UNDER_THE_SEA }
     public enum DrawStatus { WON, READY, NOT_READY, PASSIVE_FLOWER_PIG, ACTIVE_FLOWER_PIG }
 
@@ -76,10 +76,11 @@ public final class SichuanSettlement {
                     throw new IllegalArgumentException("Invalid Sichuan ready payment");
                 int owner = entry.payer();
                 boolean sanctioned = ledger.stream().anyMatch(item -> item.type() == Type.FLOWER_PIG && item.payer() == owner && item.id() < entry.id());
+                boolean shooting = entry.type() == Type.KONG_REFUND && shootingRefund(rules, wins, ledger, entry);
                 if (entry.type() == Type.KONG_REFUND
-                    && !sanctioned && (!exhaustive || !rules.refundKongWhenNotReady()))
+                    && !sanctioned && !shooting && (!exhaustive || !rules.refundKongWhenNotReady()))
                     throw new IllegalArgumentException("Invalid Sichuan draw refund");
-                if (entry.type() == Type.KONG_REFUND && !sanctioned && (drawStatus.get(entry.payer()) == DrawStatus.READY
+                if (entry.type() == Type.KONG_REFUND && !sanctioned && !shooting && (drawStatus.get(entry.payer()) == DrawStatus.READY
                     || drawStatus.get(entry.payer()) == DrawStatus.WON))
                     throw new IllegalArgumentException("Invalid Sichuan refund payer");
             }
@@ -89,7 +90,9 @@ public final class SichuanSettlement {
                 boolean mustRefund = !transferred && (ledger.stream().anyMatch(entry -> entry.type() == Type.FLOWER_PIG && entry.payer() == source.recipient())
                     || exhaustive && rules.refundKongWhenNotReady()
                         && drawStatus.get(source.recipient()) != DrawStatus.READY && drawStatus.get(source.recipient()) != DrawStatus.WON);
-                if (refunded != mustRefund) throw new IllegalArgumentException("Missing Sichuan kong refund");
+                boolean shooting = ledger.stream().anyMatch(entry -> entry.type() == Type.KONG_REFUND
+                    && entry.relatedEntry() == source.id() && shootingRefund(rules, wins, ledger, entry));
+                if (refunded != (mustRefund || shooting)) throw new IllegalArgumentException("Missing Sichuan kong refund");
             }
             if (exhaustive) for (int seat = 0; seat < 4; seat++) {
                 int target = seat;
@@ -185,8 +188,23 @@ public final class SichuanSettlement {
                     || entry.recipient() != original.payer() || entry.amount() != original.amount()
                     || transferred.contains(original.id()))
                     throw new IllegalArgumentException("Invalid kong refund");
+                boolean sanctioned = ledger.subList(0, index).stream().anyMatch(item -> item.type() == Type.FLOWER_PIG && item.payer() == entry.payer());
+                if (!sanctioned && !shootingRefund(rules, wins, ledger, entry)
+                    && (!rules.refundKongWhenNotReady() || ledger.subList(index + 1, ledger.size()).stream().anyMatch(item -> item.kong()
+                        || item.type() == Type.DISCARD_WIN || item.type() == Type.SELF_DRAW_WIN)))
+                    throw new IllegalArgumentException("Invalid kong refund timing");
             }
         }
+    }
+
+    static boolean shootingRefund(SichuanRules rules, List<Win> wins, List<Entry> ledger, Entry entry) {
+        if (rules.transferKongOnShoot()) return false;
+        int previous = entry.id() - 1;
+        while (previous >= 0 && ledger.get(previous).type() == Type.KONG_REFUND) previous--;
+        if (previous < 0 || ledger.get(previous).type() != Type.DISCARD_WIN) return false;
+        var payment = ledger.get(previous);
+        return payment.payer() == entry.payer() && wins.stream().anyMatch(win -> win.seat() == payment.recipient()
+            && win.supplier() == entry.payer() && win.score().patterns().contains(Fan.SHOOT_AFTER_KONG));
     }
 
     public static List<Integer> points(List<Entry> ledger) {

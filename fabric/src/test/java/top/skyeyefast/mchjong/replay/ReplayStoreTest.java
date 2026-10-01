@@ -170,7 +170,7 @@ class ReplayStoreTest {
     @Test void sichuanArchivesAppearInTheSharedBrowserAndRejectTamperedEvents() throws Exception {
         var rules = SichuanPreset.SBR_2025.config();
         rules = new SichuanRules(rules.fanCap(), rules.selfDrawBonus(), rules.concealedKongPayment(), rules.discardKongPayment(),
-            rules.addedKongPayment(), rules.activeFlowerPigPenalty(), rules.transferKongOnShoot(), rules.refundKongWhenNotReady(), 1);
+            rules.addedKongPayment(), rules.activeFlowerPigPenalty(), rules.transferKongOnShoot(), rules.refundKongWhenNotReady(), 1, rules.separateKongFan(), rules.selectFirstDiscard(), rules.addedKongAfterKongIsShoot(), rules.eastWestLongWall());
         var game = new SichuanGame(711, rules, Tile.sichuanSet());
         var recorder = new SichuanReplayRecorder(game);
         for (int step = 0; step < 1000 && !game.ended(); step++) for (int seat = 0; seat < 4; seat++) {

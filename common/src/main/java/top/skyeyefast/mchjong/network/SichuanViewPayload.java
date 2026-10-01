@@ -9,11 +9,13 @@ import top.skyeyefast.mchjong.item.SichuanDeck;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.engine.TableRoomView;
+import top.skyeyefast.mchjong.engine.SichuanRoomSettings;
+import top.skyeyefast.mchjong.engine.TimeControl;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-/** Only an encoded recipient-safe session view and the public physical appearance. */
+/** Public room settings, an optional recipient-safe match view and physical appearance. */
 public record SichuanViewPayload(BlockPos pos, String view, TableRoomView room, SichuanDeck deck, DyeColor cloth,
-                             boolean open, boolean leaveDecision, top.skyeyefast.mchjong.engine.TimeControl timeControl)
+                             boolean open, boolean controlReply, boolean leaveDecision, SichuanRoomSettings settings)
     implements CustomPacketPayload {
     public SichuanViewPayload {
         java.util.Objects.requireNonNull(pos);
@@ -21,7 +23,7 @@ public record SichuanViewPayload(BlockPos pos, String view, TableRoomView room, 
         java.util.Objects.requireNonNull(room);
         if (room.variant() != top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN) throw new IllegalArgumentException("Not a Sichuan room");
         java.util.Objects.requireNonNull(cloth);
-        java.util.Objects.requireNonNull(timeControl);
+        java.util.Objects.requireNonNull(settings);
     }
     public static final Type<SichuanViewPayload> TYPE = new Type<>(MahjongContent.id("sichuan_view"));
     public static final StreamCodec<RegistryFriendlyByteBuf, SichuanViewPayload> CODEC = new StreamCodec<>() {
@@ -38,8 +40,9 @@ public record SichuanViewPayload(BlockPos pos, String view, TableRoomView room, 
                 deck = new SichuanDeck(material, back, preset, backPreset);
             }
             return new SichuanViewPayload(pos, view, room, deck,
-                buffer.readEnum(DyeColor.class), buffer.readBoolean(), buffer.readBoolean(),
-                new top.skyeyefast.mchjong.engine.TimeControl(buffer.readVarInt(), buffer.readVarInt()));
+                buffer.readEnum(DyeColor.class), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(),
+                new SichuanRoomSettings(SichuanRulesPayload.readRules(buffer),
+                    new TimeControl(buffer.readVarInt(), buffer.readVarInt()), buffer.readBoolean()));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, SichuanViewPayload value) {
             buffer.writeBlockPos(value.pos()); buffer.writeUtf(value.view(), 65536);
@@ -52,8 +55,10 @@ public record SichuanViewPayload(BlockPos pos, String view, TableRoomView room, 
                 buffer.writeResourceLocation(value.deck().preset().id());
                 buffer.writeResourceLocation(value.deck().backPreset());
             }
-            buffer.writeEnum(value.cloth()); buffer.writeBoolean(value.open()); buffer.writeBoolean(value.leaveDecision());
-            buffer.writeVarInt(value.timeControl().reserveSeconds()); buffer.writeVarInt(value.timeControl().moveSeconds());
+            buffer.writeEnum(value.cloth()); buffer.writeBoolean(value.open()); buffer.writeBoolean(value.controlReply()); buffer.writeBoolean(value.leaveDecision());
+            SichuanRulesPayload.writeRules(buffer, value.settings().rules());
+            buffer.writeVarInt(value.settings().timeControl().reserveSeconds()); buffer.writeVarInt(value.settings().timeControl().moveSeconds());
+            buffer.writeBoolean(value.settings().rulesEditable());
         }
     };
     @Override public Type<? extends CustomPacketPayload> type() { return TYPE; }

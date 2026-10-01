@@ -42,7 +42,8 @@ public final class SichuanTableScreen extends Screen {
         return screen instanceof TableSettingsScreen settings ? settings.sichuanTableScreen() : null;
     }
     public static boolean isOpen(Screen screen) {
-        return active(screen) != null || screen instanceof SichuanResultsScreen || screen instanceof SichuanLobbyScreen;
+        return active(screen) != null || screen instanceof SichuanResultsScreen || screen instanceof SichuanLobbyScreen
+            || screen instanceof SichuanRulesScreen;
     }
     public boolean immersive() { return presentation.immersive(); }
     public boolean inspecting() { return presentation.inspecting(); }
@@ -99,7 +100,9 @@ public final class SichuanTableScreen extends Screen {
         if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int actionIndex = 0; actionIndex < game.actions().size(); actionIndex++)
             if (game.actions().get(actionIndex).type() != SichuanAction.Type.DISCARD
-                && game.actions().get(actionIndex).type() != SichuanAction.Type.DRAW) choices.add(actionIndex);
+                && game.actions().get(actionIndex).type() != SichuanAction.Type.DRAW
+                && (game.actions().get(actionIndex).type() != SichuanAction.Type.VOID_SUIT
+                    || game.actions().get(actionIndex).tiles().isEmpty())) choices.add(actionIndex);
         int pages = Math.max(1, (choices.size() + 3) / 4);
         page = Math.min(page, pages - 1);
         int cell = immersive() ? 224 : Math.min(110, (canvasWidth - 28) / 3);
@@ -145,14 +148,16 @@ public final class SichuanTableScreen extends Screen {
         if (view == null || tile < 0) return -1;
         for (int actionIndex = 0; actionIndex < view.game().actions().size(); actionIndex++) {
             var action = view.game().actions().get(actionIndex);
-            if (action.type() == SichuanAction.Type.DISCARD && action.tiles().contains(tile)) return actionIndex;
+            if ((action.type() == SichuanAction.Type.DISCARD || action.type() == SichuanAction.Type.VOID_SUIT)
+                && action.tiles().contains(tile)) return actionIndex;
         }
         return -1;
     }
     private void choose(int tile) {
         if (pending) return;
         selected = tile; long now = Util.getMillis(); var mode = TableSettings.get().discardMode;
-        if (!hasShiftDown() && (mode == TableSettings.DiscardMode.SINGLE_CLICK
+        if (view() != null && view().game().phase() != top.skyeyefast.mchjong.engine.SichuanGame.Phase.VOIDING
+            && !hasShiftDown() && (mode == TableSettings.DiscardMode.SINGLE_CLICK
             || mode == TableSettings.DiscardMode.DOUBLE_CLICK && lastClicked == tile && now - lastClickAt <= 450)) {
             int index = discardAction(tile);
             if (index >= 0) { send(view(), index); return; }
@@ -231,6 +236,9 @@ public final class SichuanTableScreen extends Screen {
                 immersive() ? 183 : 43, MahjongUi.NEGATIVE);
             else if (view.game().submitted()) graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.responded"),
                 canvasWidth / 2, immersive() ? 183 : 43, MahjongUi.MUTED);
+            else if (view.game().phase() == top.skyeyefast.mchjong.engine.SichuanGame.Phase.VOIDING && view.game().rules().selectFirstDiscard())
+                graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.void_first_discard"),
+                    canvasWidth / 2, immersive() ? 183 : 43, MahjongUi.MUTED);
             graphics.pose().popPose();
             renderSeats(graphics, view, mx, my);
             renderClaims(graphics, view);

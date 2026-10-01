@@ -22,6 +22,7 @@ public final class SichuanSession extends TableSession {
     public SichuanGame game() { return game; }
     public SichuanRules rules() { return rules; }
     public TimeControl timeControl() { return timeControl; }
+    public SichuanRoomSettings roomSettings() { return new SichuanRoomSettings(rules, timeControl, worldPolicy.allowCustomRules()); }
     protected boolean pauseForAbsence() { return !hasSeatedHuman(); }
     protected boolean canReturnToLobby(int seat) { return seat == host(); }
     public boolean equipped() { return Tile.validSichuanSet(stock); }
@@ -179,7 +180,7 @@ public final class SichuanSession extends TableSession {
     public record State(int format, TableSession.State room, SichuanRules rules, List<Integer> stock,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, int confirmed, SichuanGame.State game,
                         ReplayMatch replay, SichuanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 3;
+        public static final int FORMAT = 4;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(timeControl);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks);

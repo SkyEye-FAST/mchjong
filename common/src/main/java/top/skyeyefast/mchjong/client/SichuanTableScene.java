@@ -34,17 +34,17 @@ public final class SichuanTableScene {
             seat * 90 + yaw, flat, back, scale);
     }
 
-    public static List<Piece> fullWall() {
-        return wall(java.util.Collections.nCopies(108, Tile.HIDDEN));
+    public static List<Piece> fullWall(boolean eastWestLongWall) {
+        return wall(java.util.Collections.nCopies(108, Tile.HIDDEN), eastWestLongWall);
     }
 
-    private static List<Piece> wall(List<Integer> slots) {
+    private static List<Piece> wall(List<Integer> slots, boolean eastWestLongWall) {
         var pieces = new ArrayList<Piece>();
-        for (int seat = 0; seat < 4; seat++) for (int column = 0; column < SichuanWallLayout.stacks(seat); column++)
+        for (int seat = 0; seat < 4; seat++) for (int column = 0; column < SichuanWallLayout.stacks(seat, eastWestLongWall); column++)
             for (int layer = 0; layer < 2; layer++) {
-                int slot = SichuanWallLayout.slot(seat, column, layer);
+                int slot = SichuanWallLayout.slot(seat, column, layer, eastWestLongWall);
                 if (slots.get(slot) != Tile.ABSENT) pieces.add(piece(slots.get(slot), seat, Area.WALL, slot,
-                    ((SichuanWallLayout.stacks(seat) - 1) / 2.0 - column) * WIDTH,
+                    ((SichuanWallLayout.stacks(seat, eastWestLongWall) - 1) / 2.0 - column) * WIDTH,
                     (layer == 0 ? 1.5 : .5) * DEPTH, WALL_Z, 0, true, true, TILE_SCALE));
             }
         return List.copyOf(pieces);
@@ -52,15 +52,15 @@ public final class SichuanTableScene {
 
     public static List<Piece> build(SichuanView view) {
         boolean ended = view.phase() == SichuanGame.Phase.HAND_END || view.phase() == SichuanGame.Phase.MATCH_END;
-        return build(view.wall().slots(), view.seats(), ended);
+        return build(view.wall().slots(), view.seats(), ended, view.wall().eastWestLongWall());
     }
 
     static List<Piece> replay(top.skyeyefast.mchjong.engine.SichuanReplayPlayback.Frame frame) {
-        return build(frame.state().wall().slots(), frame.seats(), true).stream().filter(piece -> piece.area() != Area.WALL).toList();
+        return build(frame.state().wall().slots(), frame.seats(), true, frame.state().wall().eastWestLongWall()).stream().filter(piece -> piece.area() != Area.WALL).toList();
     }
 
-    private static List<Piece> build(List<Integer> slots, List<SichuanView.Seat> seats, boolean ended) {
-        var pieces = new ArrayList<>(wall(slots));
+    private static List<Piece> build(List<Integer> slots, List<SichuanView.Seat> seats, boolean ended, boolean eastWestLongWall) {
+        var pieces = new ArrayList<>(wall(slots, eastWestLongWall));
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
             double meldWidth = player.melds().stream().mapToDouble(meld -> meld.tiles().size() * WIDTH + DEPTH / 4).sum();

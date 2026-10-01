@@ -53,7 +53,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private SichuanSession.View clientSichuanView;
     private top.skyeyefast.mchjong.item.SichuanDeck clientSichuanDeck;
     private net.minecraft.world.item.DyeColor clientSichuanCloth;
-    private top.skyeyefast.mchjong.engine.TimeControl clientSichuanTimeControl;
+    private top.skyeyefast.mchjong.engine.SichuanRoomSettings clientSichuanSettings;
     private top.skyeyefast.mchjong.engine.TimeControl clientMcrTimeControl;
     private top.skyeyefast.mchjong.engine.TableRoomView clientTableRoom;
     private top.skyeyefast.mchjong.item.McrDeck clientMcrDeck;
@@ -188,17 +188,17 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     public SichuanSession.View clientSichuanView() { return clientSichuanView; }
     public top.skyeyefast.mchjong.item.SichuanDeck clientSichuanDeck() { return clientSichuanDeck; }
     public net.minecraft.world.item.DyeColor clientSichuanCloth() { return clientSichuanCloth; }
-    public top.skyeyefast.mchjong.engine.TimeControl clientSichuanTimeControl() { return clientSichuanTimeControl; }
+    public top.skyeyefast.mchjong.engine.SichuanRoomSettings clientSichuanSettings() { return clientSichuanSettings; }
     public void acceptSichuanView(SichuanSession.View view, top.skyeyefast.mchjong.engine.TableRoomView room,
                                   top.skyeyefast.mchjong.item.SichuanDeck deck, net.minecraft.world.item.DyeColor cloth,
-                                  top.skyeyefast.mchjong.engine.TimeControl timeControl) {
+                                  top.skyeyefast.mchjong.engine.SichuanRoomSettings settings) {
         if (level == null || !level.isClientSide) throw new IllegalStateException("Client Sichuan snapshot on server");
         if (clientTableRoom != null && clientTableRoom.tableId().equals(room.tableId())
             && clientTableRoom.incarnation().equals(room.incarnation()) && room.revision() < clientTableRoom.revision()) return;
         clientSichuanView = view;
         clientSichuanDeck = deck;
         clientSichuanCloth = cloth;
-        clientSichuanTimeControl = timeControl;
+        clientSichuanSettings = java.util.Objects.requireNonNull(settings);
         clientTableRoom = room;
         clientViewReceivedNanos = System.nanoTime();
         clientVariant = MahjongVariant.SICHUAN;
@@ -292,7 +292,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         TableSession current = serverSession();
         if (current != null) switch (current.variant()) {
             case MCR -> { sendMcrView(player, open); return; }
-            case SICHUAN -> { sendSichuanView(player, open); return; }
+            case SICHUAN -> { sendSichuanView(player, open, controlReply); return; }
             case RIICHI -> { }
         }
         RiichiSession session = serverRiichiSession();
@@ -322,7 +322,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()), session.timeControl())));
     }
 
-    private void sendSichuanView(ServerPlayer player, boolean open) {
+    private void sendSichuanView(ServerPlayer player, boolean open, boolean controlReply) {
         SichuanSession session = host == null ? null : host.sichuan();
         if (session == null || player.serverLevel() != level) return;
         synchronizeSeats();
@@ -330,7 +330,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         var snapshot = session.view(viewer);
         player.connection.send(PayloadPackets.clientbound(new SichuanViewPayload(worldPosition,
             snapshot == null ? "" : SichuanCodec.encodeSessionView(snapshot), session.roomView(viewer),
-            equipment.sichuanStock(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()), session.timeControl())));
+            equipment.sichuanStock(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.roomSettings())));
     }
 
     public void open(ServerPlayer player) {
@@ -678,7 +678,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
             setChanged();
         }
-        sendSichuanView(player, false);
+        sendSichuanView(player, false, false);
     }
 
     public void confirmSichuanNextHand(ServerPlayer player, top.skyeyefast.mchjong.network.SichuanNextHandPayload payload) {
@@ -689,7 +689,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
             setChanged();
         }
-        sendSichuanView(player, false);
+        sendSichuanView(player, false, false);
     }
 
     public void confirmMcrNextHand(ServerPlayer player, McrNextHandPayload payload) {
@@ -748,6 +748,19 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             refreshParticipants(false);
         }
         sendView(player, false, true);
+    }
+
+    public void configureSichuanRules(ServerPlayer player, top.skyeyefast.mchjong.network.SichuanRulesPayload payload) {
+        var session = serverSession() instanceof SichuanSession sichuan ? sichuan : null;
+        if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
+            || authorizedViewer(player) == null) return;
+        if (session.tableId().equals(payload.tableId()) && session.incarnation().equals(payload.incarnation())
+            && session.configureRules(player.getUUID(), payload.decision(), payload.rules())) {
+            setChanged();
+            sentRevision = -1;
+            refreshParticipants(false);
+        }
+        sendSichuanView(player, false, true);
     }
 
     public void reorderHand(ServerPlayer player, top.skyeyefast.mchjong.network.RiichiHandOrderPayload payload) {

@@ -15,14 +15,16 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
         scores = List.copyOf(scores);
         boolean ended = phase == SichuanGame.Phase.HAND_END || phase == SichuanGame.Phase.MATCH_END;
         if (revision < 1 || decision < 1 || viewerSeat < -1 || viewerSeat > 3 || turn < 0 || turn > 3 || seats.size() != 4
-            || handNumber < 1 || handNumber > rules.matchHands() || dealer != wall.dealer() || scores.size() != 4
+            || handNumber < 1 || handNumber > rules.matchHands() || dealer != wall.dealer()
+            || wall.eastWestLongWall() != rules.eastWestLongWall() || scores.size() != 4
             || viewerSeat < 0 && (!actions.isEmpty() || submitted) || ended != (result != null) || ended && !actions.isEmpty())
             throw new IllegalArgumentException("Invalid Sichuan view");
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
             if (!ended && seat != viewerSeat && (player.hand().stream().anyMatch(tile -> tile != Tile.HIDDEN)
                 || player.drawn() != Tile.ABSENT && player.drawn() != Tile.HIDDEN
-                || phase == SichuanGame.Phase.VOIDING && player.voidSuit() != -1))
+                || phase == SichuanGame.Phase.VOIDING && player.voidSuit() != -1
+                || player.firstDiscard() != Tile.ABSENT))
                 throw new IllegalArgumentException("Concealed Sichuan data in view");
             if (!ended && seat != viewerSeat && player.melds().stream().anyMatch(meld -> meld.closed()
                 && (meld.tiles().size() != 4 || meld.tiles().get(0) != Tile.HIDDEN || meld.tiles().get(3) != Tile.HIDDEN)))
@@ -48,32 +50,36 @@ public record SichuanView(long revision, long decision, SichuanRules rules, Sich
             }
             seats.add(new Seat(privateHand ? player.hand() : java.util.Collections.nCopies(player.hand().size(), Tile.HIDDEN),
                 melds, player.river(), state.phase() == SichuanGame.Phase.VOIDING && seat != viewer ? -1 : player.voidSuit(),
-                player.won(), privateHand || player.drawn() == Tile.ABSENT ? player.drawn() : Tile.HIDDEN));
+                player.won(), privateHand || player.drawn() == Tile.ABSENT ? player.drawn() : Tile.HIDDEN,
+                privateHand ? player.firstDiscard() : Tile.ABSENT));
         }
         var wall = state.wall();
         var winners = state.wins().stream().map(win -> new Winner(win.seat(), win.supplier(),
             win.selfDraw() && !ended ? Tile.HIDDEN : win.tile(), win.selfDraw(), win.robbingKong(), win.score())).toList();
         return new SichuanView(state.revision(), state.decision(), state.rules(), state.phase(), game.handNumber(), game.dealer(), game.scores(), viewer, state.turn(),
             new Wall(wall.slots().stream().map(tile -> tile == Tile.ABSENT ? Tile.ABSENT : Tile.HIDDEN).toList(),
-                wall.dealer(), wall.die1(), wall.die2()), seats, state.focus(), state.supplier(), state.pendingKong() >= 0,
-            viewer >= 0 && state.responses().stream().anyMatch(response -> response.seat() == viewer),
+                wall.dealer(), wall.die1(), wall.die2(), wall.eastWestLongWall()), seats, state.focus(), state.supplier(), state.pendingKong() >= 0
+                    && !(state.afterKong() && state.rules().addedKongAfterKongIsShoot()),
+            viewer >= 0 && (state.responses().stream().anyMatch(response -> response.seat() == viewer)
+                || state.phase() == SichuanGame.Phase.VOIDING && state.players().get(viewer).voidSuit() >= 0),
             interactive ? game.actions(viewer) : List.of(), winners, state.ledger(), state.result());
     }
-    public record Wall(List<Integer> slots, int dealer, int die1, int die2) {
+    public record Wall(List<Integer> slots, int dealer, int die1, int die2, boolean eastWestLongWall) {
         public Wall {
             slots = List.copyOf(slots);
             if (slots.size() != 108 || slots.stream().anyMatch(tile -> tile != Tile.HIDDEN && tile != Tile.ABSENT))
                 throw new IllegalArgumentException("Invalid Sichuan public wall");
-            SichuanWallLayout.traversal(dealer, die1, die2);
+            SichuanWallLayout.traversal(dealer, die1, die2, eastWestLongWall);
         }
         public int remaining() { return (int) slots.stream().filter(tile -> tile == Tile.HIDDEN).count(); }
     }
     public record Seat(List<Integer> hand, List<Meld> melds, List<SichuanPlayerState.Discard> river,
-                       int voidSuit, boolean won, int drawn) {
+                       int voidSuit, boolean won, int drawn, int firstDiscard) {
         public Seat {
             hand = List.copyOf(hand); melds = List.copyOf(melds); river = List.copyOf(river);
             if (voidSuit < -1 || voidSuit > 2 || hand.stream().anyMatch(tile -> tile < Tile.HIDDEN || tile >= 108)
-                || drawn < Tile.ABSENT || drawn >= 108) throw new IllegalArgumentException("Invalid Sichuan public seat");
+                || drawn < Tile.ABSENT || drawn >= 108 || firstDiscard < Tile.ABSENT || firstDiscard >= 108)
+                throw new IllegalArgumentException("Invalid Sichuan public seat");
         }
     }
     public record Winner(int seat, int supplier, int tile, boolean selfDraw, boolean robbingKong, SichuanSettlement.Score score) {

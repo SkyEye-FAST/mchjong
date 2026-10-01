@@ -13,12 +13,16 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SichuanPresentationTest {
     @Test void wallUsesAll108PhysicalSlotsWithoutCornerIntersections() {
-        var pieces = SichuanTableScene.fullWall();
+        for (var preset : SichuanPreset.values()) verifyWall(preset.config().eastWestLongWall());
+    }
+
+    private static void verifyWall(boolean eastWestLongWall) {
+        var pieces = SichuanTableScene.fullWall(eastWestLongWall);
         assertEquals(108, pieces.size());
         assertEquals(108, pieces.stream().map(SichuanTableScene.Piece::index).distinct().count());
         for (int seat = 0; seat < 4; seat++) {
             int owner = seat;
-            assertEquals(SichuanWallLayout.stacks(seat) * 2, pieces.stream().filter(piece -> piece.seat() == owner).count());
+            assertEquals(((seat % 2 == 0) == eastWestLongWall ? 28 : 26), pieces.stream().filter(piece -> piece.seat() == owner).count());
         }
         for (var piece : pieces) {
             assertEquals(Tile.HIDDEN, piece.tile());
@@ -41,9 +45,9 @@ class SichuanPresentationTest {
         assertEquals("sichuan.mchjong.void_pending", key(SichuanTableScene.status(declaration.seats().get(1))));
         var seats = new ArrayList<>(declaration.seats());
         var kong = new Meld(Meld.Type.CONCEALED_QUAD, List.of(Tile.HIDDEN, 1, 2, Tile.HIDDEN), 1, Tile.ABSENT);
-        seats.set(1, new SichuanView.Seat(Collections.nCopies(10, Tile.HIDDEN), List.of(kong), List.of(), 2, true, Tile.HIDDEN));
+        seats.set(1, new SichuanView.Seat(Collections.nCopies(10, Tile.HIDDEN), List.of(kong), List.of(), 2, true, Tile.HIDDEN, Tile.ABSENT));
         seats.set(0, new SichuanView.Seat(List.of(8, 4), List.of(), List.of(
-            new SichuanPlayerState.Discard(16, true), new SichuanPlayerState.Discard(20, false)), 2, false, 4));
+            new SichuanPlayerState.Discard(16, true), new SichuanPlayerState.Discard(20, false)), 2, false, 4, Tile.ABSENT));
         var score = new SichuanSettlement.Score(0, 1, List.of());
         var winners = List.of(new SichuanView.Winner(1, 0, 16, false, false, score), new SichuanView.Winner(2, 0, 16, false, false, score));
         var live = view(SichuanGame.Phase.TURN, seats, winners, List.of(), null);
@@ -68,11 +72,11 @@ class SichuanPresentationTest {
                 || type == SichuanSettlement.Type.KONG_TRANSFER_TOP_UP ? 2 : -1;
             ledger.add(new SichuanSettlement.Entry(ledger.size(), type, 0, type == SichuanSettlement.Type.FLOWER_PIG ? -1 : 1, 4, related));
         }
-        var score = new SichuanSettlement.Score(3, 8, List.of(SichuanSettlement.Fan.FULL_FLUSH, SichuanSettlement.Fan.ROOT));
+        var score = new SichuanSettlement.Score(4, 8, List.of(SichuanSettlement.Fan.FULL_FLUSH, SichuanSettlement.Fan.ROOT, SichuanSettlement.Fan.KONG));
         var win = new SichuanSettlement.Win(1, 0, 16, false, false, score);
         var result = new SichuanSettlement.Result(List.of(win), ledger, List.of(SichuanSettlement.DrawStatus.NOT_READY,
             SichuanSettlement.DrawStatus.WON, SichuanSettlement.DrawStatus.READY, SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG), true);
-        var seats = Collections.nCopies(4, new SichuanView.Seat(List.of(16), List.of(), List.of(), 2, false, Tile.ABSENT));
+        var seats = Collections.nCopies(4, new SichuanView.Seat(List.of(16), List.of(), List.of(), 2, false, Tile.ABSENT, Tile.ABSENT));
         var ended = view(SichuanGame.Phase.HAND_END, seats, List.of(), ledger, result);
         var rows = SichuanResults.rows(ended, room(false));
         assertEquals(result.deltas().get(0).toString(), ((TranslatableContents) rows.get(1).text().getContents()).getArgs()[1]);
@@ -87,6 +91,12 @@ class SichuanPresentationTest {
                 .anyMatch(part -> key(part).equals("sichuan.mchjong.related")));
         }
         assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.full_flush")));
+        assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root")));
+        assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.kong")));
+        var tfmjRows = SichuanResults.rows(SichuanPreset.TFMJ_2024.config(), result, seats, ended.scores(), 0,
+            List.of("player0", "player1", "player2", "player3"));
+        assertTrue(tfmjRows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root_with_kong")));
+        assertFalse(tfmjRows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root")));
         assertTrue(rows.stream().anyMatch(row -> row.tiles().equals(List.of(16))));
         var finalView = view(SichuanGame.Phase.MATCH_END, seats, List.of(), ledger, result);
         assertEquals(8, finalView.handNumber());
@@ -99,7 +109,7 @@ class SichuanPresentationTest {
     private static SichuanView view(SichuanGame.Phase phase, List<SichuanView.Seat> seats, List<SichuanView.Winner> winners,
                                    List<SichuanSettlement.Entry> ledger, SichuanSettlement.Result result) {
         return new SichuanView(1, 1, new SichuanGame(711).rules(), phase, phase == SichuanGame.Phase.MATCH_END ? 8 : 1, 0,
-            List.of(100, 200, 300, 400), 0, 0, new SichuanView.Wall(Collections.nCopies(108, Tile.ABSENT), 0, 1, 1),
+            List.of(100, 200, 300, 400), 0, 0, new SichuanView.Wall(Collections.nCopies(108, Tile.ABSENT), 0, 1, 1, true),
             seats, Tile.ABSENT, -1, false, false, List.of(), winners, ledger, result);
     }
     private static TableRoomView room(boolean finished) {

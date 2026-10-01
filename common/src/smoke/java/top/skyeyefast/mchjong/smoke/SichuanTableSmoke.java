@@ -51,7 +51,9 @@ final class SichuanTableSmoke {
     private UUID replayId;
     private boolean picked;
     private int selectedTile;
+    private int boundFirstDiscard = Tile.ABSENT;
     private long discardDecision;
+    private top.skyeyefast.mchjong.network.SichuanViewPayload originalSettings;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
         require(++ticks < 1400, "Sichuan smoke timed out at " + stage);
@@ -107,11 +109,84 @@ final class SichuanTableSmoke {
             }
             case 3 -> {
                 if (room.seats().stream().anyMatch(seat -> seat.participant().id() == null)) break;
+                require(table.clientSichuanView() == null && table.clientSichuanSettings() != null
+                    && table.clientSichuanSettings().preset() == top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025,
+                    "Lobby did not project authoritative Sichuan settings");
+                originalSettings = new top.skyeyefast.mchjong.network.SichuanViewPayload(pos, "", room, table.clientSichuanDeck(),
+                    table.clientSichuanCloth(), false, false, false, table.clientSichuanSettings());
+                var label = Component.translatable("sichuan.mchjong.rules.title").getString();
+                client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                    .filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElseThrow().onPress();
+                stage = 22;
+            }
+            case 22 -> {
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.SichuanRulesScreen)) break;
+                verifyRuleLayout(client);
+                var label = Component.translatable("sichuan.mchjong.rules.fan_cap").getString();
+                var field = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
+                    .map(net.minecraft.client.gui.components.EditBox.class::cast).filter(box -> box.getMessage().getString().equals(label))
+                    .findFirst().orElseThrow();
+                field.setValue("9");
+                var applyLabel = Component.translatable("rules.mchjong.apply").getString();
+                require(client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                    .filter(button -> button.getMessage().getString().equals(applyLabel)).noneMatch(button -> button.active),
+                    "Out-of-range rule draft enabled Apply");
+                field.setValue("4");
+                require(table.clientSichuanSettings().rules().fanCap() == 3, "Local draft mutated authoritative settings");
+                press(client, "rules.mchjong.apply");
+                stage = 23;
+            }
+            case 23 -> {
+                if (table.clientSichuanSettings().rules().fanCap() != 4) break;
+                require(table.clientSichuanSettings().custom() && client.screen instanceof top.skyeyefast.mchjong.client.SichuanRulesScreen,
+                    "Rules acknowledgement lost the editor or Custom state");
+                top.skyeyefast.mchjong.client.ClientSichuanNetworking.receive(originalSettings);
+                require(table.clientSichuanSettings().rules().fanCap() == 4, "Old snapshot rolled back confirmed rules");
+                SmokeScreenshots.grab(output.toFile(), "sichuan-rules.png", client.getMainRenderTarget(), ignored -> {});
+                task = server.submit(() -> {
+                    var main = server.getPlayerList().getPlayer(mainId);
+                    var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
+                    var session = (SichuanSession) target.participantRoom(main);
+                    var before = session.save();
+                    var standard = top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025.config();
+                    TableNetworking.receive(guests.getFirst(), new top.skyeyefast.mchjong.network.SichuanRulesPayload(pos,
+                        session.tableId(), session.incarnation(), session.decision(), standard));
+                    TableNetworking.receive(main, new top.skyeyefast.mchjong.network.SichuanRulesPayload(pos,
+                        session.tableId(), session.incarnation(), originalSettings.room().decision(), standard));
+                    TableNetworking.receive(main, new top.skyeyefast.mchjong.network.SichuanRulesPayload(pos,
+                        session.tableId(), UUID.randomUUID(), session.decision(), standard));
+                    require(before.equals(session.save()), "Unauthorized or stale rules payload changed the room");
+                });
+                stage = 24;
+            }
+            case 24 -> {
+                press(client, "sichuan.mchjong.rules.preset.sbr_2025");
+                press(client, "rules.mchjong.apply");
+                stage = 25;
+            }
+            case 25 -> {
+                if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025) break;
+                press(client, "sichuan.mchjong.rules.preset.tfmj_2024");
+                press(client, "rules.mchjong.apply");
+                stage = 26;
+            }
+            case 26 -> {
+                if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.TFMJ_2024) break;
+                require(table.clientSichuanSettings().rules().transferKongOnShoot()
+                    && !table.clientSichuanSettings().rules().selectFirstDiscard(), "TFMJ preset did not select its behavior");
+                press(client, "sichuan.mchjong.rules.preset.sbr_2025");
+                press(client, "rules.mchjong.apply");
+                stage = 27;
+            }
+            case 27 -> {
+                if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025) break;
+                client.screen.onClose();
+                require(client.screen instanceof SichuanLobbyScreen, "Rule editor did not return to its lobby");
                 int index = room.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 require(index >= 0, "Sichuan room has no seating action");
                 client.getConnection().send(PayloadPackets.serverbound(new TableRoomActionPayload(pos, room.tableId(),
                     room.incarnation(), room.decision(), index)));
-                stage++;
+                stage = 4;
             }
             case 4 -> {
                 if (room.seating() != RoomSeating.Stage.POSITIONING) break;
@@ -145,17 +220,30 @@ final class SichuanTableSmoke {
                 var view = table.clientSichuanView();
                 if (view == null) break;
                 require(client.screen instanceof top.skyeyefast.mchjong.client.SichuanTableScreen && view.game().phase() == SichuanGame.Phase.VOIDING, "Sichuan did not enter declaration phase");
+                require(view.game().rules().equals(table.clientSichuanSettings().rules()), "Table disagrees with confirmed room rules");
                 require(view.game().wall().remaining() == 55 && view.game().seats().stream().filter(seat -> seat.hand().stream()
                     .anyMatch(tile -> tile != Tile.HIDDEN)).count() == 1, "Sichuan private deal leaked");
                 incarnation = view.incarnation();
-                client.getConnection().send(PayloadPackets.serverbound(new SichuanActionPayload(pos, view.tableId(),
-                    view.incarnation(), view.game().decision(), 0)));
+                if (++settled < 10) break;
+                var action = view.game().actions().getFirst();
+                require(!action.tiles().isEmpty(), "Sichuan smoke opening needs a bound first discard");
+                boundFirstDiscard = action.tiles().getFirst();
+                var screen = (SichuanTableScreen) client.screen;
+                var piece = top.skyeyefast.mchjong.client.SichuanTableScene.build(view.game()).stream()
+                    .filter(candidate -> candidate.area() == top.skyeyefast.mchjong.client.SichuanTableScene.Area.HAND
+                        && candidate.seat() == view.game().viewerSeat() && candidate.tile() == boundFirstDiscard).findFirst().orElseThrow();
+                var pointer = project(client, pos, piece.position());
+                require(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Secret first-discard picking failed");
+                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
                 stage++;
             }
             case 7 -> {
                 var view = table.clientSichuanView();
                 if (!view.game().actions().isEmpty()) break;
                 require(view.game().seats().stream().filter(seat -> seat.voidSuit() >= 0).count() == 1, "Private void choice leaked");
+                require(view.game().seats().get(view.game().viewerSeat()).firstDiscard() == boundFirstDiscard, "First discard was not submitted");
+                for (int seat = 0; seat < 4; seat++) if (seat != view.game().viewerSeat())
+                    require(view.game().seats().get(seat).firstDiscard() == Tile.ABSENT, "Private first-discard choice leaked");
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
@@ -176,6 +264,7 @@ final class SichuanTableSmoke {
                 if (view == null || view.game().phase() != SichuanGame.Phase.TURN) break;
                 require(!incarnation.equals(view.incarnation()), "Restored Sichuan incarnation was reused");
                 require(view.game().seats().stream().allMatch(seat -> seat.voidSuit() == 0), "Sichuan declarations did not complete");
+                require(view.game().seats().get(view.game().viewerSeat()).firstDiscard() == boundFirstDiscard, "NBT restore lost the first-discard binding");
                 press(client, "ui.mchjong.exit");
                 stage++;
             }
@@ -217,6 +306,7 @@ final class SichuanTableSmoke {
                     top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM;
                     selectedTile = view.game().actions().stream().filter(action -> action.type() == SichuanAction.Type.DISCARD)
                         .findFirst().orElseThrow().tiles().getFirst();
+                    require(selectedTile == boundFirstDiscard, "First discard did not use the secret selection");
                     var piece = top.skyeyefast.mchjong.client.SichuanTableScene.build(view.game()).stream()
                         .filter(candidate -> candidate.area() == top.skyeyefast.mchjong.client.SichuanTableScene.Area.HAND
                             && candidate.seat() == view.game().viewerSeat() && candidate.tile() == selectedTile).findFirst().orElseThrow();
@@ -256,6 +346,7 @@ final class SichuanTableSmoke {
                 if (!(client.screen instanceof SichuanResultsScreen results)) break;
                 var view = table.clientSichuanView();
                 require(view.game().phase() == SichuanGame.Phase.HAND_END && view.game().result() != null, "No hand ledger in results");
+                require(view.game().rules().equals(table.clientSichuanSettings().rules()), "Results disagree with confirmed room rules");
                 require(results.immersive(), "Results lost the selected table view");
                 if (++settled < 20) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-results.png", client.getMainRenderTarget(), ignored -> {});
@@ -287,6 +378,7 @@ final class SichuanTableSmoke {
                 require(view.confirmedCount() == 0 && view.game().result() == null, "Next hand retained settlement state");
                 for (int seat = 0; seat < 4; seat++) if (seat != view.game().viewerSeat()) {
                     require(view.game().seats().get(seat).voidSuit() == -1, "Next hand leaked a void choice");
+                    require(view.game().seats().get(seat).firstDiscard() == Tile.ABSENT, "Next hand leaked a first-discard choice");
                     require(view.game().seats().get(seat).hand().stream().allMatch(tile -> tile == Tile.HIDDEN), "Next hand leaked an opponent hand");
                 }
                 task = server.submit(() -> {
@@ -369,6 +461,27 @@ final class SichuanTableSmoke {
             .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
         require(button.active, "Disabled Sichuan control: " + key);
         button.onPress();
+    }
+    private static void verifyRuleLayout(Minecraft client) {
+        var screen = client.screen;
+        int originalWidth = screen.width, originalHeight = screen.height;
+        for (var size : List.of(new int[]{320, 240}, new int[]{640, 400})) {
+            screen.init(client, size[0], size[1]);
+            for (var group : top.skyeyefast.mchjong.engine.SichuanRuleOption.Group.values()) {
+                press(client, group.translationKey());
+                for (var child : screen.children()) if (child instanceof net.minecraft.client.gui.components.AbstractWidget widget)
+                    require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getX() + widget.getWidth() <= size[0]
+                        && widget.getY() + widget.getHeight() <= size[1],
+                        "Sichuan rules widget outside logical viewport");
+                int span = Math.min(540, size[0] - 24);
+                int descriptionWidth = span - Math.min(100, span / 3) - 10;
+                for (var option : top.skyeyefast.mchjong.engine.SichuanRuleOption.values()) if (option.group() == group)
+                    require(client.font.split(Component.translatable(option.descriptionKey()), descriptionWidth).size() * client.font.lineHeight <= 29,
+                        "Sichuan rule description overflow: " + option);
+            }
+        }
+        screen.init(client, originalWidth, originalHeight);
+        press(client, top.skyeyefast.mchjong.engine.SichuanRuleOption.Group.BASIC.translationKey());
     }
     private static void finishHand(SichuanSession session) {
         for (int move = 0; move < 2000 && !session.game().ended(); move++) advanceOne(session);

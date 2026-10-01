@@ -34,6 +34,12 @@ public final class TableNetworking {
             table.confirmSichuanNextHand(player, payload);
     }
 
+    public static void receive(ServerPlayer player, SichuanRulesPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.configureSichuanRules(player, payload);
+    }
+
     public static void receive(ServerPlayer player, TableRoomActionPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

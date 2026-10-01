@@ -16,6 +16,43 @@ class SichuanReplayTest {
     private static final UUID TABLE = new UUID(71, 1);
     private static UUID id(int seat) { return new UUID(72, seat + 1); }
 
+    @Test void milSecretFirstDiscardAndLastKongRefundReplayWithExactRuleNames() {
+        var opening = openingWithDraws(SichuanPreset.SBR_2025.config(), List.of(), "9m 9m 9m 9m 8m 8m 8m 8m 9p", WAIT, WAIT, WAIT).initialOpening();
+        var game = SichuanGame.replayHand(SichuanPreset.SBR_2025.config(), List.of(), opening);
+        var recorder = new SichuanReplayRecorder(game);
+        for (int seat = 0; seat < 4; seat++) {
+            var options = game.actions(seat);
+            int selected = -1;
+            for (int index = 0; index < options.size(); index++) if (options.get(index).suit() == (seat == 0 ? 1 : 2)) {
+                if (seat != 0 || options.get(index).tiles().stream().anyMatch(tile -> Tile.kind(tile) == Tile.parseKind("9p"))) {
+                    selected = index; break;
+                }
+            }
+            accept(game, recorder, seat, selected);
+            if (seat == 0) {
+                var reconstructed = SichuanReplayPlayback.reconstruct(game.rules(), List.of(), recorder.save());
+                assertEquals(game.save().players(), reconstructed.save().players());
+                assertEquals(Tile.ABSENT, reconstructed.view(-1).seats().get(0).firstDiscard());
+            }
+        }
+        int firstDiscard = game.save().players().get(0).firstDiscard();
+        choose(game, recorder, 0, CONCEALED_KONG, "9m"); choose(game, recorder, 0, DRAW, null);
+        choose(game, recorder, 0, CONCEALED_KONG, "8m"); choose(game, recorder, 0, DRAW, null);
+        choose(game, recorder, 0, DISCARD, "9p");
+        for (int seat = 1; seat < 4; seat++) choose(game, recorder, seat, WIN, null);
+        var hand = recorder.finish(game);
+        assertEquals(firstDiscard, hand.decisions().getFirst().options().get(hand.decisions().getFirst().selected()).tiles().getFirst());
+        assertEquals(List.of(3, 4, 5), hand.result().ledger().stream().filter(entry -> entry.type() == SichuanSettlement.Type.KONG_REFUND)
+            .map(SichuanSettlement.Entry::relatedEntry).toList());
+        assertTrue(hand.result().ledger().stream().noneMatch(SichuanSettlement.Entry::kongTransfer));
+        var match = match(game.rules(), List.of(hand), false);
+        var restored = ReplayCodec.decode(ReplayCodec.encode(match), ReplayMatch.class);
+        var timeline = SichuanReplayPlayback.timeline(restored, 0);
+        assertEquals(firstDiscard, timeline.frames().getLast().seats().get(0).firstDiscard());
+        assertEquals(hand.result(), timeline.frames().getLast().state().result());
+        assertPayments(hand);
+    }
+
     @Test void sealedPhysicalOpeningMultiRonAndDealerChainSurviveSerializationAndRecorderRestore() {
         var game = opening("9p", WAIT, WAIT, WAIT);
         var recorder = new SichuanReplayRecorder(game);
@@ -138,7 +175,7 @@ class SichuanReplayTest {
         session.configureEquipment(false, Tile.sichuanSet());
         var base = session.rules();
         session.configureRules(id(0), session.decision(), new SichuanRules(base.fanCap(), base.selfDrawBonus(), base.concealedKongPayment(),
-            base.discardKongPayment(), base.addedKongPayment(), base.activeFlowerPigPenalty(), base.transferKongOnShoot(), base.refundKongWhenNotReady(), 2));
+            base.discardKongPayment(), base.addedKongPayment(), base.activeFlowerPigPenalty(), base.transferKongOnShoot(), base.refundKongWhenNotReady(), 2, base.separateKongFan(), base.selectFirstDiscard(), base.addedKongAfterKongIsShoot(), base.eastWestLongWall()));
         session.startMatch(); seated(session);
         for (int number = 1; number <= 2; number++) {
             for (int step = 0; step < 1000 && !session.game().ended(); step++) {
@@ -211,7 +248,11 @@ class SichuanReplayTest {
         return new ReplayMatch(UUID.randomUUID(), TABLE, 1, 2, players, MahjongVariant.SICHUAN, complete, null, null, new SichuanReplay(rules, hands));
     }
     private static void voidAll(SichuanGame game, SichuanReplayRecorder recorder) {
-        for (int seat = 0; seat < 4; seat++) accept(game, recorder, seat, 2);
+        for (int seat = 0; seat < 4; seat++) {
+            var actions = game.actions(seat);
+            int selected = java.util.stream.IntStream.range(0, actions.size()).filter(index -> actions.get(index).suit() == 2).findFirst().orElseThrow();
+            accept(game, recorder, seat, selected);
+        }
     }
     private static void choose(SichuanGame game, SichuanReplayRecorder recorder, int seat, SichuanAction.Type type, String kind) {
         var actions = game.actions(seat);
@@ -233,7 +274,7 @@ class SichuanReplayTest {
         for (int index = 0; index < actions.size(); index++) if (actions.get(index).type() == PASS) return index;
         var drawn = game.save().players().get(seat).drawn();
         for (int index = 0; index < actions.size(); index++) if (actions.get(index).type() == DISCARD && actions.get(index).tiles().contains(drawn)) return index;
-        for (int index = 0; index < actions.size(); index++) if (actions.get(index).type() == VOID_SUIT) return 2;
+        for (int index = 0; index < actions.size(); index++) if (actions.get(index).type() == VOID_SUIT && actions.get(index).suit() == 2) return index;
         for (int index = 0; index < actions.size(); index++) if (actions.get(index).type() == DRAW || actions.get(index).type() == DISCARD) return index;
         throw new IllegalStateException("No replay test decision");
     }
@@ -244,6 +285,9 @@ class SichuanReplayTest {
     }
     private static SichuanGame opening(String... hands) { return openingWithDraws(List.of(), hands); }
     private static SichuanGame openingWithDraws(List<String> draws, String... hands) {
+        return openingWithDraws(SichuanPreset.TFMJ_2024.config(), draws, hands);
+    }
+    private static SichuanGame openingWithDraws(SichuanRules rules, List<String> draws, String... hands) {
         var stock = new ArrayList<>(Tile.sichuanSet());
         var selected = new ArrayList<List<Integer>>();
         for (String hand : hands) {
@@ -254,14 +298,14 @@ class SichuanReplayTest {
         var future = draws.stream().map(kind -> take(stock, kind)).toList();
         for (int seat = 0; seat < 4; seat++) while (selected.get(seat).size() < (seat == 0 ? 14 : 13)) selected.get(seat).add(stock.removeFirst());
         var slots = new ArrayList<>(Collections.nCopies(108, Tile.ABSENT));
-        var order = SichuanWallLayout.traversal(0, 1, 1); int[] used = new int[4];
+        var order = SichuanWallLayout.traversal(0, 1, 1, rules.eastWestLongWall()); int[] used = new int[4];
         for (int packet = 0; packet < 3; packet++) for (int seat = 0; seat < 4; seat++) for (int tile = 0; tile < 4; tile++)
             slots.set(order.get(packet * 16 + seat * 4 + tile), selected.get(seat).get(used[seat]++));
         slots.set(order.get(48), selected.get(0).get(12)); slots.set(order.get(52), selected.get(0).get(13));
         for (int seat = 1; seat < 4; seat++) slots.set(order.get(48 + seat), selected.get(seat).get(12));
         var remaining = new ArrayList<>(future); remaining.addAll(stock);
         for (int index = 0; index < remaining.size(); index++) slots.set(order.get(53 + index), remaining.get(index));
-        return SichuanGame.replayHand(SichuanPreset.SBR_2025.config(), List.of(), new SichuanWall.State(slots, 0, 1, 1, 0));
+        return SichuanGame.replayHand(rules, List.of(), new SichuanWall.State(slots, 0, 1, 1, 0, rules.eastWestLongWall()));
     }
     private static int take(List<Integer> stock, String kind) {
         int physical = stock.stream().filter(tile -> Tile.kind(tile) == Tile.parseKind(kind)).findFirst().orElseThrow();

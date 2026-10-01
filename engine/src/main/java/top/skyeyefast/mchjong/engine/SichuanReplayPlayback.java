@@ -8,7 +8,7 @@ public final class SichuanReplayPlayback {
         public Frame { scores = List.copyOf(scores); }
         public List<SichuanView.Seat> seats() {
             return state.players().stream().map(player -> new SichuanView.Seat(player.hand(), player.melds(), player.river(),
-                player.voidSuit(), player.won(), player.drawn())).toList();
+                player.voidSuit(), player.won(), player.drawn(), player.firstDiscard())).toList();
         }
     }
     public record Timeline(List<Frame> frames) {

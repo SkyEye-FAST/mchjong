@@ -5,6 +5,8 @@ import java.util.List;
 import java.util.Locale;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.SichuanView;
+import top.skyeyefast.mchjong.engine.SichuanRules;
+import top.skyeyefast.mchjong.engine.SichuanSettlement;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 
 final class SichuanResults {
@@ -15,10 +17,10 @@ final class SichuanResults {
     private SichuanResults() {}
 
     static List<Row> rows(SichuanView game, TableRoomView room) {
-        return rows(game.result(), game.seats(), game.scores(), game.viewerSeat(),
+        return rows(game.rules(), game.result(), game.seats(), game.scores(), game.viewerSeat(),
             room.seats().stream().map(seat -> seat.participant().name()).toList());
     }
-    static List<Row> rows(top.skyeyefast.mchjong.engine.SichuanSettlement.Result result, List<SichuanView.Seat> seats,
+    static List<Row> rows(SichuanRules rules, SichuanSettlement.Result result, List<SichuanView.Seat> seats,
                           List<Integer> scores, int viewer, List<String> names) {
         if (result == null) return List.of();
         var rows = new ArrayList<Row>();
@@ -39,7 +41,9 @@ final class SichuanResults {
             if (win.score().patterns().isEmpty()) rows.add(new Row(Component.translatable("sichuan.mchjong.fan.basic"), MahjongUi.MUTED));
             for (var pattern : win.score().patterns().stream().distinct().toList()) {
                 long count = win.score().patterns().stream().filter(other -> other == pattern).count();
-                rows.add(new Row(Component.translatable("sichuan.mchjong.fan." + pattern.name().toLowerCase(Locale.ROOT))
+                String name = pattern == SichuanSettlement.Fan.ROOT && !rules.separateKongFan()
+                    ? "root_with_kong" : pattern.name().toLowerCase(Locale.ROOT);
+                rows.add(new Row(Component.translatable("sichuan.mchjong.fan." + name)
                     .append(" ×" + count), MahjongUi.MUTED));
             }
         }

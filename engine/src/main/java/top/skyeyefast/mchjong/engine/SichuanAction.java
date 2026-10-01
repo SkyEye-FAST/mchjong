@@ -15,9 +15,12 @@ public record SichuanAction(Type type, List<Integer> tiles, int suit) {
             case CONCEALED_KONG -> 4;
             default -> 0;
         };
-        if (tiles.size() != size || (type == Type.VOID_SUIT ? suit < 0 || suit > 2 : suit != -1))
+        if ((type == Type.VOID_SUIT ? tiles.size() > 1 : tiles.size() != size)
+            || (type == Type.VOID_SUIT ? suit < 0 || suit > 2 : suit != -1))
             throw new IllegalArgumentException("Invalid Sichuan action");
         for (int tile : tiles) if (tile < 0 || tile >= 108) throw new IllegalArgumentException("Invalid Sichuan tile");
+        if (type == Type.VOID_SUIT && !tiles.isEmpty() && Tile.kind(tiles.get(0)) / 9 != suit)
+            throw new IllegalArgumentException("First discard is not in the void suit");
     }
     public SichuanAction(Type type) { this(type, List.of(), -1); }
     public SichuanAction(Type type, List<Integer> tiles) { this(type, tiles, -1); }

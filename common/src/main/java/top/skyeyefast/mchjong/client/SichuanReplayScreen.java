@@ -143,7 +143,7 @@ public final class SichuanReplayScreen extends Screen {
             for (int seat = 0; seat < 4; seat++) rows.add(new SichuanResults.Row(Component.literal("#" + header.finalRanks().get(seat)
                 + "  " + match.participants().get(seat).name() + "  " + frame.scores().get(seat)), MahjongUi.TEXT));
         }
-        rows.addAll(SichuanResults.rows(frame.state().result(), frame.seats(), frame.scores(), viewer,
+        rows.addAll(SichuanResults.rows(frame.state().rules(), frame.state().result(), frame.seats(), frame.scores(), viewer,
             match.participants().stream().map(ReplayMatch.Participant::name).toList()));
         int pageSize = 18;
         int pages = Math.max(1, (rows.size() + pageSize - 1) / pageSize);

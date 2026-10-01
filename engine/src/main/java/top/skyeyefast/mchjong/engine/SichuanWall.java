@@ -12,22 +12,25 @@ public final class SichuanWall {
     private final int dealer;
     private final int die1;
     private final int die2;
+    private final boolean eastWestLongWall;
     private int cursor;
 
-    public SichuanWall(long seed, int dealer, List<Integer> stock) {
+    public SichuanWall(long seed, int dealer, List<Integer> stock, boolean eastWestLongWall) {
         if (!Tile.validSichuanSet(stock)) throw new IllegalArgumentException("Sichuan needs 108 suited tiles");
         this.dealer = dealer;
+        this.eastWestLongWall = eastWestLongWall;
         slots = new ArrayList<>(stock);
         var random = new Random(seed);
         Collections.shuffle(slots, random);
         die1 = random.nextInt(6) + 1;
         die2 = random.nextInt(6) + 1;
-        traversal = SichuanWallLayout.traversal(dealer, die1, die2);
+        traversal = SichuanWallLayout.traversal(dealer, die1, die2, eastWestLongWall);
     }
     private SichuanWall(State state) {
         slots = new ArrayList<>(state.slots());
         dealer = state.dealer(); die1 = state.die1(); die2 = state.die2(); cursor = state.cursor();
-        traversal = SichuanWallLayout.traversal(dealer, die1, die2);
+        eastWestLongWall = state.eastWestLongWall();
+        traversal = SichuanWallLayout.traversal(dealer, die1, die2, eastWestLongWall);
         if (cursor < 0 || cursor > 108 || slots.size() != 108) throw new IllegalArgumentException("Invalid wall bounds");
         var seen = new HashSet<Integer>();
         for (int index = 0; index < 108; index++) {
@@ -49,8 +52,8 @@ public final class SichuanWall {
         while (cursor < 108 && slots.get(traversal.get(cursor)) == Tile.ABSENT) cursor++;
         return tile;
     }
-    public State save() { return new State(slots, dealer, die1, die2, cursor); }
-    public record State(List<Integer> slots, int dealer, int die1, int die2, int cursor) {
+    public State save() { return new State(slots, dealer, die1, die2, cursor, eastWestLongWall); }
+    public record State(List<Integer> slots, int dealer, int die1, int die2, int cursor, boolean eastWestLongWall) {
         public State { slots = List.copyOf(slots); }
     }
 }

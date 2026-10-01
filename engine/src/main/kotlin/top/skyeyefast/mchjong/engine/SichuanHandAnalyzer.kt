@@ -25,7 +25,10 @@ object SichuanHandAnalyzer {
             if (melds.size == 4) patterns += SichuanSettlement.Fan.GOLDEN_SINGLE_WAIT
         }
         if (owned.map { Tile.kind(it) / 9 }.distinct().size == 1) patterns += SichuanSettlement.Fan.FULL_FLUSH
-        repeat(owned.groupBy { Tile.kind(it) }.count { it.value.size == 4 }) { patterns += SichuanSettlement.Fan.ROOT }
+        val kongKinds = melds.filter { it.quad() }.map { it.kind() }.toSet()
+        owned.groupBy { Tile.kind(it) }.filter { it.value.size == 4 }.forEach { (kind, _) ->
+            patterns += if (rules.separateKongFan() && kind in kongKinds) SichuanSettlement.Fan.KONG else SichuanSettlement.Fan.ROOT
+        }
         if (afterKong) patterns += SichuanSettlement.Fan.WIN_AFTER_KONG
         if (shootAfterKong) patterns += SichuanSettlement.Fan.SHOOT_AFTER_KONG
         if (robbing) patterns += SichuanSettlement.Fan.ROBBING_KONG

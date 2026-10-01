@@ -178,9 +178,40 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.SichuanDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true, false, sichuanRoom.timeControl());
+                net.minecraft.world.item.DyeColor.CYAN, true, true, false, sichuanRoom.roomSettings());
             top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.encode(buffer, sichuanView);
             assertEquals(sichuanView, top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.decode(buffer));
+            for (boolean maximum : new boolean[]{false, true}) {
+                var rules = top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025.config();
+                for (var option : top.skyeyefast.mchjong.engine.SichuanRuleOption.values())
+                    rules = option.with(rules, maximum ? option.max() : option.min());
+                var proposal = new top.skyeyefast.mchjong.network.SichuanRulesPayload(request.pos(), request.tableId(),
+                    sichuanRoom.incarnation(), Long.MAX_VALUE, rules);
+                top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC.encode(buffer, proposal);
+                assertEquals(proposal, top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC.decode(buffer));
+                var customView = new top.skyeyefast.mchjong.network.SichuanViewPayload(request.pos(), "", sichuanRoom.roomView(null),
+                    null, net.minecraft.world.item.DyeColor.CYAN, false, false, false,
+                    new top.skyeyefast.mchjong.engine.SichuanRoomSettings(rules, new top.skyeyefast.mchjong.engine.TimeControl(0, 1), false));
+                top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.encode(buffer, customView);
+                assertEquals(customView, top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC.decode(buffer));
+            }
+            assertThrows(IllegalArgumentException.class, () -> new top.skyeyefast.mchjong.network.SichuanRulesPayload(
+                request.pos(), request.tableId(), sichuanRoom.incarnation(), 0, sichuanRoom.rules()));
+            for (var option : top.skyeyefast.mchjong.engine.SichuanRuleOption.values()) {
+                if (option.toggle()) continue;
+                for (int invalid : new int[]{option.min() - 1, option.max() + 1}) {
+                    buffer.clear();
+                    buffer.writeBlockPos(request.pos()); buffer.writeUUID(request.tableId()); buffer.writeUUID(sichuanRoom.incarnation());
+                    buffer.writeVarLong(1);
+                    var rules = sichuanRoom.rules();
+                    for (var field : top.skyeyefast.mchjong.engine.SichuanRuleOption.values()) {
+                        if (field.toggle()) buffer.writeBoolean(field.get(rules) != 0);
+                        else buffer.writeVarInt(field == option ? invalid : field.get(rules));
+                    }
+                    assertThrows(IllegalArgumentException.class, () -> top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC.decode(buffer));
+                }
+            }
+            buffer.clear();
             var roster = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
                 new top.skyeyefast.mchjong.engine.TableParticipant(UUID.randomUUID(), "Player " + seat)).toList();
             var session = top.skyeyefast.mchjong.engine.McrSession.start(request.tableId(), roster, 7,

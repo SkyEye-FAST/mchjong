@@ -111,6 +111,7 @@ public class Mchjong implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE,
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.RiichiRulesPayload.TYPE, top.skyeyefast.mchjong.network.RiichiRulesPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE, top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.RiichiVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
@@ -143,6 +144,8 @@ public class Mchjong implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(TableSeatPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiRulesPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));

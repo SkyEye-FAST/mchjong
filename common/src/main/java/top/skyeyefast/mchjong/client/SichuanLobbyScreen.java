@@ -22,6 +22,8 @@ public final class SichuanLobbyScreen extends Screen {
         this.pos = pos.immutable();
     }
     public BlockPos tablePos() { return pos; }
+    public TableRoomView room() { return table() == null ? null : table().clientTableRoom(); }
+    public top.skyeyefast.mchjong.engine.SichuanRoomSettings roomSettings() { return table() == null ? null : table().clientSichuanSettings(); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
     private MahjongTableBlockEntity table() {
@@ -35,15 +37,22 @@ public final class SichuanLobbyScreen extends Screen {
         if (table == null || table.clientTableRoom() == null) return;
         var room = table.clientTableRoom();
         int span = Math.min(440, width - 20), left = (width - span) / 2;
-        int actionTop = 132;
+        int actionTop = 158;
         if (room.exitVote() != null) {
             TableExitControls.voteButtons(pos, room, width, height).forEach(this::addRenderableWidget);
             return;
         }
         if (room.lobby()) {
             RoomLobbyControls.variantButtons(pos, room, left, 32, span, true).forEach(this::addRenderableWidget);
-            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), left, 58, span,
-                () -> minecraft.setScreen(new TableClockScreen(this, table.clientSichuanTimeControl())));
+            var settings = roomSettings();
+            if (settings == null) return;
+            var rules = RoomLobbyControls.button(Component.translatable("sichuan.mchjong.rules.title")
+                .append(": ").append(Component.translatable(settings.presetKey())), left, 58, span,
+                () -> minecraft.setScreen(new SichuanRulesScreen(this, room, settings)));
+            rules.active = !pending;
+            addRenderableWidget(rules);
+            var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), left, 84, span,
+                () -> minecraft.setScreen(new TableClockScreen(this, settings.timeControl())));
             clock.active = !pending && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
             addRenderableWidget(clock);
         }
@@ -89,7 +98,7 @@ public final class SichuanLobbyScreen extends Screen {
                 Component text = Component.literal((seat + 1) + ". ").append(participant.id() == null
                     ? Component.translatable("room.mchjong.empty") : Component.literal(participant.name()));
                 if (participant.ready()) text = text.copy().append(" ✓");
-                graphics.drawString(font, text, (width - Math.min(440, width - 20)) / 2, 84 + seat * 11, MahjongUi.TEXT);
+                graphics.drawString(font, text, (width - Math.min(440, width - 20)) / 2, 110 + seat * 11, MahjongUi.TEXT);
             }
         }
         if (table != null && table.clientTableRoom() != null) TableExitControls.renderVote(graphics, font, table.clientTableRoom(), width, height);
