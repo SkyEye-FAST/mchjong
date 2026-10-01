@@ -85,6 +85,28 @@ class FurnitureShapeTest {
         }
     }
 
+    @Test void inventoryStoolIsSmallerThanEitherTableInBothProjectedDimensions() {
+        var stool = new Mesh();
+        var stoolPose = new PoseStack();
+        MahjongItemRenderer.furniturePose(stoolPose, net.minecraft.world.item.ItemDisplayContext.GUI, false);
+        FurnitureMesh.stool(stoolPose, ignored -> stool, 0, top.skyeyefast.mchjong.item.FurnitureWood.OAK,
+            net.minecraft.world.item.DyeColor.GREEN);
+        for (boolean automatic : new boolean[]{false, true}) {
+            var table = new Mesh();
+            var tablePose = new PoseStack();
+            MahjongItemRenderer.furniturePose(tablePose, net.minecraft.world.item.ItemDisplayContext.GUI, true);
+            FurnitureMesh.table(tablePose, ignored -> table, 0, top.skyeyefast.mchjong.item.FurnitureWood.OAK, null, automatic);
+            for (int axis = 0; axis < 2; axis++) {
+                int dimension = axis;
+                double stoolSize = stool.vertices.stream().mapToDouble(v -> v.position.get(dimension)).max().orElseThrow()
+                    - stool.vertices.stream().mapToDouble(v -> v.position.get(dimension)).min().orElseThrow();
+                double tableSize = table.vertices.stream().mapToDouble(v -> v.position.get(dimension)).max().orElseThrow()
+                    - table.vertices.stream().mapToDouble(v -> v.position.get(dimension)).min().orElseThrow();
+                assertTrue(stoolSize < tableSize, "Stool must not dominate a table inventory icon");
+            }
+        }
+    }
+
     @Test void bevelsAndTaperedLegsHaveFiniteOutwardNormalsInEveryOrientation() {
         for (int yaw : new int[]{0, 90, 180, 270}) for (boolean bevel : new boolean[]{false, true}) {
             var pose = new PoseStack();

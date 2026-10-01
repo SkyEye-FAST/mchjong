@@ -291,13 +291,13 @@ public final class SichuanTableScreen extends Screen {
             graphics.pose().pushPose(); graphics.pose().translate(positionX + 4, positionY + 4, 0); graphics.pose().scale(textScale, textScale, 1);
             MahjongUi.text(graphics, font, Component.literal(participant.name()), 14, 0, cardWidth / textScale - 20, MahjongUi.TEXT, false);
             var score = Component.translatable("sichuan.mchjong.score", view.game().scores().get(seat));
-            if (view.game().dealer() == seat) score.append(" · ").append(Component.translatable("sichuan.mchjong.dealer"));
+            if (view.game().dealer() == seat) score = Component.translatable("ui.mchjong.annotation", score, Component.translatable("sichuan.mchjong.dealer"));
             MahjongUi.text(graphics, font, score, 0, 11, cardWidth / textScale - 8, MahjongUi.TEXT, false);
             var state = SichuanTableScene.status(player);
             MahjongUi.text(graphics, font, state, 0, 22, cardWidth / textScale - 8, player.won() ? MahjongUi.POSITIVE : MahjongUi.MUTED, false);
             graphics.pose().popPose();
             if (mouseX >= positionX && mouseX < positionX + cardWidth && mouseY >= positionY && mouseY < positionY + cardHeight)
-                graphics.renderTooltip(font, Component.literal(participant.name()).append(" · ").append(score).append(" · ").append(state), mouseX, mouseY);
+                graphics.renderTooltip(font, Component.literal(participant.name()).append("\n").append(score).append("\n").append(state), mouseX, mouseY);
         }
     }
     private void renderClaims(GuiGraphics graphics, SichuanSession.View view) {
@@ -308,8 +308,8 @@ public final class SichuanTableScreen extends Screen {
         for (var claim : claims) {
             String names = String.join(" / ", claim.winners().stream()
                 .map(seat -> table().clientTableRoom().seats().get(seat).participant().name()).toList());
-            MahjongUi.text(graphics, font, Component.translatable("sichuan.mchjong.multiple_winners", names)
-                    .append(" · ").append(tileLabel(claim.tile())),
+            MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.annotation",
+                    Component.translatable("sichuan.mchjong.multiple_winners", names), tileLabel(claim.tile())),
                 uiWidth() / scale / 4, top, uiWidth() / scale / 2, MahjongUi.POSITIVE, true);
             top += 11;
         }
@@ -453,7 +453,7 @@ public final class SichuanTableScreen extends Screen {
             super(positionX, positionY, canvasWidth, widgetHeight, actionLabel(action), ignored -> press.run());
             this.action = action;
             if (action.type() == SichuanAction.Type.WIN) primary();
-            var label = getMessage().copy(); for (int tile : action.tiles()) label.append(" · ").append(tileLabel(tile));
+            var label = getMessage().copy(); for (int tile : action.tiles()) label.append("\n").append(tileLabel(tile));
             setTooltip(net.minecraft.client.gui.components.Tooltip.create(label));
         }
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
@@ -472,7 +472,7 @@ public final class SichuanTableScreen extends Screen {
     private Component actionLabel(SichuanAction action) {
         var label = Component.translatable("sichuan.mchjong.action." + action.type().name().toLowerCase(java.util.Locale.ROOT));
         if (action.type() == SichuanAction.Type.VOID_SUIT)
-            label.append(" · ").append(Component.translatable("sichuan.mchjong.suit." + action.suit()));
+            label = Component.translatable("sichuan.mchjong.void_choice", Component.translatable("sichuan.mchjong.suit." + action.suit()));
         return label;
     }
 }

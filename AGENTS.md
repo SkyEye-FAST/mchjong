@@ -55,6 +55,9 @@ Update `en_us.json`, `ja_jp.json`, `zh_cn.json` and `zh_tw.json` together: ident
 keys and format specifiers, two-space indentation, LF and alphabetical key order.
 Use hierarchical dot-separated snake_case keys, `.description` and `.short`
 suffixes. Rule titles use standard Riichi terminology; mechanics go in descriptions.
+Do not use middle dots (`·`) as generic UI separators. Use natural localized
+phrasing, appropriate punctuation or separate lines. Follow vanilla Minecraft's
+spacing and punctuation conventions for each locale, including new strings.
 Resource paths/generation follow [ASSETS.md](docs/ASSETS.md) and [AUDIO.md](docs/AUDIO.md).
 
 Guides describe current capabilities, permissions and privacy, not retired features,

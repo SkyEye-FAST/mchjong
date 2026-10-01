@@ -118,7 +118,7 @@ public final class SichuanTableScene {
     public static Component status(SichuanView.Seat player) {
         var label = Component.translatable(player.voidSuit() < 0 ? "sichuan.mchjong.void_pending"
             : "sichuan.mchjong.suit." + player.voidSuit());
-        if (player.won()) label.append(" · ").append(Component.translatable("sichuan.mchjong.won"));
+        if (player.won()) label = Component.translatable("ui.mchjong.annotation", label, Component.translatable("sichuan.mchjong.won"));
         return label;
     }
 }

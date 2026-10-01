@@ -81,14 +81,28 @@ class SichuanPresentationTest {
         var rows = SichuanResults.rows(ended, room(false));
         assertEquals(result.deltas().get(0).toString(), ((TranslatableContents) rows.get(1).text().getContents()).getArgs()[1]);
         assertEquals(100, ((TranslatableContents) rows.get(1).text().getContents()).getArgs()[2]);
-        var paymentRows = rows.stream().filter(row -> row.text().getString().startsWith("#")).toList();
+        var paymentRows = rows.stream().map(row -> row.text())
+            .filter(text -> key(text).equals("sichuan.mchjong.payment_row") || key(text).equals("ui.mchjong.annotation")).toList();
         assertEquals(ledger.size(), paymentRows.size());
         for (int index = 0; index < ledger.size(); index++) {
             var entry = ledger.get(index);
+            var text = paymentRows.get(index);
+            if (entry.relatedEntry() >= 0) {
+                var annotation = (TranslatableContents) text.getContents();
+                var related = (net.minecraft.network.chat.Component) annotation.getArgs()[1];
+                assertEquals("sichuan.mchjong.related", key(related));
+                assertEquals(entry.relatedEntry() + 1, ((TranslatableContents) related.getContents()).getArgs()[0]);
+                text = (net.minecraft.network.chat.Component) annotation.getArgs()[0];
+            }
+            var args = ((TranslatableContents) text.getContents()).getArgs();
+            assertEquals(entry.id() + 1, args[0]);
             assertEquals("sichuan.mchjong.payment." + entry.type().name().toLowerCase(java.util.Locale.ROOT),
-                key(paymentRows.get(index).text().getSiblings().getFirst()));
-            if (entry.relatedEntry() >= 0) assertTrue(paymentRows.get(index).text().getSiblings().stream()
-                .anyMatch(part -> key(part).equals("sichuan.mchjong.related")));
+                key((net.minecraft.network.chat.Component) args[1]));
+            assertEquals("player" + entry.payer(), args[2]);
+            var recipient = (net.minecraft.network.chat.Component) args[3];
+            if (entry.recipient() < 0) assertEquals("sichuan.mchjong.competition", key(recipient));
+            else assertEquals("player" + entry.recipient(), recipient.getString());
+            assertEquals(entry.amount(), args[4]);
         }
         assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.full_flush")));
         assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root")));

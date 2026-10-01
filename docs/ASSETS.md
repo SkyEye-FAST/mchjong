@@ -273,9 +273,12 @@ the resulting geometry between blocks and items. Furniture item JSON leaves
 display transforms neutral; `MahjongItemRenderer` owns GUI/FIXED, GROUND, both
 hand perspectives and HEAD placement. Native player, armor-stand and maid head
 layers receive the same centered upright model. The optional maid extension uses
-TLM's public layer callbacks to pass equipped furniture through native HEAD item
-rendering (TLM's own head layer handles only skulls). It follows the model's head
-locator and shares the item transform, without character-specific offsets. Ordinary tables have framed
+TLM's public layer callbacks to pass both head equipment and the head display slot
+through native HEAD item rendering. A targeted optional mixin excludes furniture
+from TLM's shadow-only block-model path while retaining its skull and other item
+rendering. Both furniture slots preserve wood and dye components, follow the model's
+head locator and share the item transform, without character-specific offsets.
+The stool's GUI icon remains smaller than either table in both projected dimensions. Ordinary tables have framed
 playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
 have tapered wooden legs, stretchers, padded fabric and four tufts, with a

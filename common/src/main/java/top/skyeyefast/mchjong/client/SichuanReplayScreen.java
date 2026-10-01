@@ -98,8 +98,9 @@ public final class SichuanReplayScreen extends Screen {
                 graphics.fill(card.left(), card.top(), card.right(), card.bottom(), seat == viewer ? MahjongUi.SELECTED : MahjongUi.SURFACE);
                 text2x(graphics, Component.literal(match.participants().get(seat).name()), card.left() + 6, card.top() + 4,
                     card.width() - 12, MahjongUi.TEXT);
-                var status = Component.literal(frame.scores().get(seat) + " · ").append(SichuanTableScene.status(frame.seats().get(seat)));
-                if (seat == frame.state().wall().dealer()) status.append(" · ").append(Component.translatable("sichuan.mchjong.dealer"));
+                var state = SichuanTableScene.status(frame.seats().get(seat));
+                if (seat == frame.state().wall().dealer()) state = Component.translatable("ui.mchjong.annotation", state, Component.translatable("sichuan.mchjong.dealer"));
+                var status = Component.translatable("ui.mchjong.annotation", frame.scores().get(seat), state);
                 text2x(graphics, status,
                     card.left() + 6, card.top() + 25, card.width() - 12, MahjongUi.MUTED);
             }
@@ -109,7 +110,7 @@ public final class SichuanReplayScreen extends Screen {
         graphics.fill(0, height - 32, width, height, MahjongUi.PANEL);
         var event = frame.event();
         Component caption = event == null ? Component.translatable("replay.mchjong.initial")
-            : Component.literal(match.participants().get(event.seat()).name() + " · ").append(Component.translatable(switch (event.kind()) {
+            : Component.translatable("replay.mchjong.player_action", match.participants().get(event.seat()).name(), Component.translatable(switch (event.kind()) {
                 case VOID_SUIT, VOID_SUITS -> "sichuan.mchjong.action.void_suit";
                 case DRAW -> "sichuan.mchjong.action.draw";
                 case DISCARD -> "sichuan.mchjong.action.discard";
@@ -155,7 +156,7 @@ public final class SichuanReplayScreen extends Screen {
             else for (int tile = 0; tile < row.tiles().size(); tile++) TileGui.tile(graphics, row.tiles().get(tile),
                 left + 16 + tile * 20, y, 18, false, false, false, false, DECK.preset(), DECK.material(), DECK.back(), DECK.backPreset());
         }
-        text2x(graphics, Component.translatable("sichuan.mchjong.results", handIndex + 1).append(" · " + (resultPage + 1) + " / " + pages),
+        text2x(graphics, Component.translatable("ui.mchjong.annotation", Component.translatable("sichuan.mchjong.results", handIndex + 1), (resultPage + 1) + "/" + pages),
             left + 16, top + 12, span - 32, MahjongUi.ACCENT);
     }
     private void text2x(GuiGraphics graphics, Component text, int x, int y, int span, int color) {

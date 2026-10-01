@@ -71,7 +71,7 @@ final class TableHints extends TableHintsButton {
         if (!preview.voidTiles().isEmpty()) {
             summary = Component.translatable("hints.mchjong.sichuan.void_tiles",
                 Component.translatable("sichuan.mchjong.suit." + preview.voidSuit()), preview.voidTiles().size());
-            if (preview.discard()) summary = Component.translatable("hints.mchjong.after_discard").append(" · ").append(summary);
+            if (preview.discard()) summary = Component.translatable("hints.mchjong.after_discard", summary);
             preview.voidTiles().stream().map(Tile::kind).distinct().sorted().forEach(kind -> rows.add(new Entry(kind,
                 (int) preview.voidTiles().stream().filter(tile -> Tile.kind(tile) == kind).count(), Component.empty(), Component.empty())));
         } else {
@@ -92,7 +92,7 @@ final class TableHints extends TableHintsButton {
     }
     private static net.minecraft.network.chat.MutableComponent heading(boolean discard, int shanten) {
         var heading = shanten == 0 ? Component.translatable("hints.mchjong.tenpai") : Component.translatable("hints.mchjong.shanten", shanten);
-        return discard ? Component.translatable("hints.mchjong.after_discard").append(" · ").append(heading) : heading;
+        return discard ? Component.translatable("hints.mchjong.after_discard", heading) : heading;
     }
 
     private void present(Component summary, List<Entry> rows, Font font, int center, int bottom, int halfWidth, int topBound, int scale) {
@@ -123,7 +123,7 @@ final class TableHints extends TableHintsButton {
         setX(center + halfWidth - getWidth()); setY(bottom + 4 * scale);
         var message = Component.translatable("hints.mchjong.button").append("\n").append(summary);
         for (var row : rows) message.append("\n").append(Component.translatable("tile.mchjong." + Tile.notation(row.kind())))
-            .append(" × " + row.count()).append(" · ").append(row.detail());
+            .append(" × " + row.count()).append("\n").append(row.detail());
         if (pages > 1) message.append("\n").append(Component.translatable("hints.mchjong.page", page + 1, pages));
         setMessage(message);
     }

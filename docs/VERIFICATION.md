@@ -61,9 +61,10 @@ brain-driven seating with vehicle following disabled, client mount synchronizati
 saved entity recovery, assigned mounts, legal computer
 play and cleanup after a task change.
 Selected screenshots and results use `build/smoke/maid-evidence`.
-`maid-table-head.png` and `maid-gecko-table-head.png` render the actual equipped
-maid through the Bedrock and Gecko head layers; neither uses a player-model
-substitute.
+`maid-furniture-head.png` and `maid-gecko-furniture-head.png` render the actual
+maid through the Bedrock and Gecko head layers. Each sheet compares ordinary and
+automatic tables with stools in the equipment and display slots, including dyed
+components and simultaneous skull equipment; neither uses a player-model substitute.
 
 ### Create and Ponder
 

@@ -60,12 +60,12 @@ final class MaidIntegrationSmoke {
                 if (headCapture == 0) {
                     seated.getConfigManager().setChatBubbleShow(false);
                     previousScreen = client.screen;
-                    client.setScreen(new HeadEquipmentSmokeScreen(seated));
+                    client.setScreen(new MaidFurnitureSmokeScreen(seated));
                 } else if (headCapture == 1) {
-                    SmokeScreenshots.grab(output.toFile(), "maid-table-head.png", client.getMainRenderTarget(), ignored -> {});
+                    SmokeScreenshots.grab(output.toFile(), "maid-furniture-head.png", client.getMainRenderTarget(), ignored -> {});
                     seated.setModelId("geckolib:winefox");
                 } else if (headCapture == 2) {
-                    SmokeScreenshots.grab(output.toFile(), "maid-gecko-table-head.png", client.getMainRenderTarget(), ignored -> {});
+                    SmokeScreenshots.grab(output.toFile(), "maid-gecko-furniture-head.png", client.getMainRenderTarget(), ignored -> {});
                     seated.setModelId("touhou_little_maid:hakurei_reimu");
                 } else client.setScreen(previousScreen);
                 headCapture++;

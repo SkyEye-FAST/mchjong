@@ -66,7 +66,7 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             case GUI, FIXED, NONE -> {
                 pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(context == ItemDisplayContext.GUI ? 15 : 0));
                 pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(context == ItemDisplayContext.GUI ? 225 : 0));
-                scale = .9f / width;
+                scale = (context == ItemDisplayContext.GUI && !table ? .5f : .9f) / width;
                 pose.scale(scale, scale, scale);
                 pose.translate(0, -height / 2, 0);
             }

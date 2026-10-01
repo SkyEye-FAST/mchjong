@@ -47,16 +47,14 @@ final class SichuanResults {
                     .append(" ×" + count), MahjongUi.MUTED));
             }
         }
-        if (result.exhaustive()) for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.literal(names.get(seat) + " · ")
-            .append(Component.translatable("sichuan.mchjong.draw." + result.drawStatus().get(seat).name().toLowerCase(Locale.ROOT))), MahjongUi.MUTED));
+        if (result.exhaustive()) for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.translatable("room.mchjong.member", names.get(seat),
+            Component.translatable("sichuan.mchjong.draw." + result.drawStatus().get(seat).name().toLowerCase(Locale.ROOT))), MahjongUi.MUTED));
         rows.add(new Row(Component.translatable("sichuan.mchjong.ledger"), MahjongUi.ACCENT));
         for (var entry : result.ledger()) {
-            var text = Component.literal("#" + (entry.id() + 1) + " ")
-                .append(Component.translatable("sichuan.mchjong.payment." + entry.type().name().toLowerCase(Locale.ROOT)))
-                .append(" · " + names.get(entry.payer()) + " → ")
-                .append(entry.recipient() < 0 ? Component.translatable("sichuan.mchjong.competition") : Component.literal(names.get(entry.recipient())))
-                .append(" · " + entry.amount());
-            if (entry.relatedEntry() >= 0) text.append(" · ").append(Component.translatable("sichuan.mchjong.related", entry.relatedEntry() + 1));
+            var text = Component.translatable("sichuan.mchjong.payment_row", entry.id() + 1,
+                Component.translatable("sichuan.mchjong.payment." + entry.type().name().toLowerCase(Locale.ROOT)), names.get(entry.payer()),
+                entry.recipient() < 0 ? Component.translatable("sichuan.mchjong.competition") : Component.literal(names.get(entry.recipient())), entry.amount());
+            if (entry.relatedEntry() >= 0) text = Component.translatable("ui.mchjong.annotation", text, Component.translatable("sichuan.mchjong.related", entry.relatedEntry() + 1));
             rows.add(new Row(text, entry.recipient() < 0 ? MahjongUi.NEGATIVE : MahjongUi.TEXT));
         }
         return List.copyOf(rows);

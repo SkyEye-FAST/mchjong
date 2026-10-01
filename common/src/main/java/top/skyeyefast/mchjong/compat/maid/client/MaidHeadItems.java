@@ -15,9 +15,10 @@ import net.minecraft.client.renderer.entity.layers.RenderLayer;
 import net.minecraft.world.entity.EquipmentSlot;
 import net.minecraft.world.entity.Mob;
 import net.minecraft.world.item.ItemDisplayContext;
+import net.minecraft.world.item.ItemStack;
 import top.skyeyefast.mchjong.world.MahjongContent;
 
-/** TLM's native head layer accepts skulls only. Bridge furniture to the vanilla HEAD item path. */
+/** Furniture in either maid head slot uses the native HEAD item path, preserving its components. */
 public final class MaidHeadItems {
     private MaidHeadItems() {}
 
@@ -26,7 +27,7 @@ public final class MaidHeadItems {
         ((top.skyeyefast.mchjong.mixin.LivingRendererAccessor) renderer).mchjong$layers().add(0, new RenderLayer<Mob, BedrockModel<Mob>>(renderer) {
             @Override public void render(PoseStack pose, MultiBufferSource buffers, int light, Mob maid,
                     float limb, float amount, float partial, float age, float yaw, float pitch) {
-                if (!furniture(maid) || !renderer.getMainInfo().isShowCustomHead() || !getParentModel().hasHead()) return;
+                if (!renderer.getMainInfo().isShowCustomHead() || !getParentModel().hasHead()) return;
                 pose.pushPose();
                 getParentModel().getHead().translateAndRotateAndScale(pose);
                 renderItem(maid, pose, buffers, light);
@@ -48,7 +49,7 @@ public final class MaidHeadItems {
                 float limb, float amount, float partial, float age, float yaw, float pitch) {
             var entity = getGeoEntity(maid);
             var model = entity.getGeoModel();
-            if (!furniture(maid) || model == null || !entity.getMaidInfo().isShowCustomHead() || model.headBones().isEmpty()) return;
+            if (model == null || !entity.getMaidInfo().isShowCustomHead() || model.headBones().isEmpty()) return;
             pose.pushPose();
             RenderUtils.prepMatrixForLocator(pose, model.headBones());
             // Gecko locators use opposite X/Y axes to vanilla model parts.
@@ -58,15 +59,24 @@ public final class MaidHeadItems {
         }
     }
 
-    private static boolean furniture(Mob maid) {
-        var stack = maid.getItemBySlot(EquipmentSlot.HEAD);
+    private static boolean furniture(ItemStack stack) {
         return stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM) || stack.is(MahjongContent.STOOL_ITEM);
     }
 
     private static void renderItem(Mob maid, PoseStack pose, MultiBufferSource buffers, int light) {
+        var head = maid.getItemBySlot(EquipmentSlot.HEAD);
+        var companion = com.github.tartaricacid.touhoulittlemaid.api.entity.IMaid.convert(maid);
+        var display = companion == null ? ItemStack.EMPTY : companion.getBackpackShowItem();
+        if (furniture(head)) renderItem(maid, head, pose, buffers, light);
+        if (furniture(display)) renderItem(maid, display, pose, buffers, light);
+    }
+
+    private static void renderItem(Mob maid, ItemStack stack, PoseStack pose, MultiBufferSource buffers, int light) {
+        pose.pushPose();
         CustomHeadLayer.translateToHead(pose, false);
-        Minecraft.getInstance().getItemRenderer().renderStatic(maid.getItemBySlot(EquipmentSlot.HEAD),
+        Minecraft.getInstance().getItemRenderer().renderStatic(stack,
             ItemDisplayContext.HEAD, light, net.minecraft.client.renderer.texture.OverlayTexture.NO_OVERLAY,
             pose, buffers, maid.level(), maid.getId());
+        pose.popPose();
     }
 }

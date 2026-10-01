@@ -293,8 +293,8 @@ public final class McrTableScreen extends Screen {
             g.pose().popPose();
             if (!immersive() && player.winForbidden()) g.fill(x, y + cardHeight - 2, x + cardWidth, y + cardHeight, MahjongUi.NEGATIVE);
             if (mouseX >= x && mouseX < x + cardWidth && mouseY >= y && mouseY < y + cardHeight)
-                g.renderTooltip(font, Component.literal(participant.name()).append(" · ").append(wind).append(" · " + player.points())
-                    .append(" · ").append(state), mouseX, mouseY);
+                g.renderTooltip(font, Component.literal(participant.name()).append("\n").append(wind).append("  " + player.points())
+                    .append("\n").append(state), mouseX, mouseY);
         }
     }
     private int clockBottom() {
@@ -434,7 +434,7 @@ public final class McrTableScreen extends Screen {
             super(x, y, w, h, actionLabel(action), ignored -> press.run());
             this.action = action;
             if (action.type() == McrAction.Type.WIN) primary();
-            var label = getMessage().copy(); for (int tile : action.tiles()) label.append(" · ").append(tileLabel(tile));
+            var label = getMessage().copy(); for (int tile : action.tiles()) label.append("\n").append(tileLabel(tile));
             setTooltip(net.minecraft.client.gui.components.Tooltip.create(label));
         }
         @Override protected void renderWidget(GuiGraphics g, int mouseX, int mouseY, float partialTick) {

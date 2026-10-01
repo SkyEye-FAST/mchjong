@@ -132,7 +132,7 @@ final class RoomLobby {
     }
 
     private void buildRoster(List<MahjongButton> buttons, TableRoomView room) {
-        int pitch = layout.height() < 200 ? 22 : 34;
+        int pitch = layout.height() < 200 ? 26 : 34;
         for (int seat = 0; seat < room.seats().size(); seat++) {
             int y = layout.contentTop() + seat * pitch;
             var participant = room.seats().get(seat).participant();
@@ -266,7 +266,7 @@ final class RoomLobby {
         var l = layout;
         MahjongUi.panel(graphics, l.left() - 6, l.top(), l.span() + 12, l.height());
         if (tab == 0) {
-            int pitch = l.height() < 200 ? 22 : 34;
+            int pitch = l.height() < 200 ? 26 : 34;
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat); var player = state.participant();
                 int y = l.contentTop() + seat * pitch;
@@ -279,9 +279,9 @@ final class RoomLobby {
                 MahjongUi.text(graphics, font, name, l.bodyLeft() + 4 + portrait, y + 2, textWidth - portrait, color, false);
                 var status = (player.id() == null ? Component.empty() : player.ready() ? Component.translatable("ui.mchjong.ready")
                     : player.bot() ? botName(room, seat) : TableParticipantsScreen.presence(state.presence())).copy();
-                if (state.wind() >= 0) status = TableParticipantsScreen.wind(state.wind()).copy().append(" · ").append(status);
-                if (seat == room.host()) status.append(" · ").append(Component.translatable("room.mchjong.host.short"));
-                MahjongUi.text(graphics, font, status, l.bodyLeft() + 4, y + 12, textWidth, MahjongUi.MUTED, false);
+                if (state.wind() >= 0) status = Component.translatable("room.mchjong.member", TableParticipantsScreen.wind(state.wind()), status);
+                if (seat == room.host()) status = Component.translatable("ui.mchjong.annotation", status, Component.translatable("room.mchjong.host.short"));
+                MahjongUi.text(graphics, font, status, l.bodyLeft() + 4, y + 15, textWidth, MahjongUi.MUTED, false);
                 var hover = name.copy().append("\n").append(status);
                 if (state.wind() >= 0) {
                     var position = top.skyeyefast.mchjong.world.TableGeometry.stool(pos, state.wind());

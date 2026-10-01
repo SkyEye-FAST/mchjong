@@ -128,7 +128,7 @@ public final class McrReplayScreen extends Screen {
         graphics.fill(0, height - 32, width, height, MahjongUi.PANEL);
         var event = frame.event();
         Component caption = event == null ? Component.translatable("replay.mchjong.initial")
-            : Component.literal(match.participants().get(event.seat()).name() + " · ").append(Component.translatable(switch (event.kind()) {
+            : Component.translatable("replay.mchjong.player_action", match.participants().get(event.seat()).name(), Component.translatable(switch (event.kind()) {
                 case DRAW -> "mcr.mchjong.action.draw";
                 case FLOWER_REPLACEMENT -> "mcr.mchjong.action.replace_flower";
                 case DISCARD -> "mcr.mchjong.action.discard";
