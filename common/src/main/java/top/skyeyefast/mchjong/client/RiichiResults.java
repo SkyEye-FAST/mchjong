@@ -209,13 +209,10 @@ public final class RiichiResults extends AbstractWidget {
         boolean beside = compact && limit != null && 2 * font.width(points) + gradeWidth + 8 <= span;
         int scoreHeight = limit == null || beside ? 28 : 54;
         if (scored) {
-            if (graphics != null) {
-                graphics.fill(-MahjongUi.OFFSET, y, span + MahjongUi.OFFSET, y + scoreHeight, MahjongUi.INPUT);
-                graphics.fill(-MahjongUi.OFFSET, y, -MahjongUi.STEP, y + 22, GOLD);
-            }
-            largeText(graphics, points, MahjongUi.STEP, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
+            if (graphics != null) graphics.fill(0, y, span, y + scoreHeight, MahjongUi.INPUT);
+            largeText(graphics, points, 0, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
             if (graphics != null && limit != null && (readout == null || readout.limitVisible(winner)))
-                largeBadge(graphics, grade, beside ? span - gradeWidth + MahjongUi.OFFSET : MahjongUi.OFFSET, beside ? y : y + 26);
+                largeBadge(graphics, grade, beside ? span - gradeWidth : 0, beside ? y : y + 26);
         }
         y += scoreHeight;
         if (win.tile() >= 0) {

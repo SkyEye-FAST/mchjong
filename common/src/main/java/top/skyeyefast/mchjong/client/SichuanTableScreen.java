@@ -123,7 +123,7 @@ public final class SichuanTableScreen extends Screen {
         actionTop = actionY;
         for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {
             int index = choices.get(page * 4 + slot);
-            var button = new ActionButton(canvasWidth - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * textScale + MahjongUi.step(slot % 2) * textScale,
+            var button = new ActionButton(canvasWidth - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * textScale,
                 cell, 26 * textScale, game.actions().get(index), () -> send(view, index));
             button.active = !pending && !view.paused(); addRenderableWidget(button);
             decisionControls.add(button);
@@ -282,7 +282,6 @@ public final class SichuanTableScreen extends Screen {
             int cardWidth = immersive() ? 180 : Math.min(120, width / 3), positionX, positionY;
             if (immersive()) { var rect = TableCanvas.card(side); positionX = rect.left(); positionY = rect.top(); }
             else { positionX = side == 1 || side == 2 ? width - cardWidth - 8 : 8; positionY = side == 0 || side == 1 ? 90 : 50; }
-            if (!immersive()) positionY += MahjongUi.step(side);
             var player = view.game().seats().get(seat);
             var participant = table().clientTableRoom().seats().get(seat).participant();
             int cardHeight = 36 * textScale;
@@ -357,7 +356,7 @@ public final class SichuanTableScreen extends Screen {
         hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half),
             38, scale);
         hints.setX(uiWidth() - 30 * scale);
-        hints.setY(uiHeight() - (16 + MahjongUi.OFFSET) * scale);
+        hints.setY(uiHeight() - 16 * scale);
     }
 
     private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {

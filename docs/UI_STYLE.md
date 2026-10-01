@@ -117,14 +117,13 @@ uses a drop shadow for contrast.
 
 Lobby and settings controls share straight row baselines, four-pixel gutters,
 and a persistent category rail. Primary actions use brass emphasis on the same
-footer baseline as their secondary actions. Match HUD plaques and action columns
-retain the shared `MahjongUi.STEP` / `OFFSET` / `OVERHANG` rhythm of 2 / 4 / 8
-logical pixels. On the immersive canvas, spacing follows the content scale.
-Move the actual native rectangular widget bounds with its surface; preserve Tab
-order, narration and focus outlines. Never offset only the visible control.
+footer baseline as their secondary actions. Match HUD cards and action rows share
+aligned edges and baselines; do not add decorative staggering or overhangs.
+On the immersive canvas, spacing follows the content scale. Keep native rectangular
+widget bounds aligned with their surfaces; preserve Tab order, narration and focus outlines.
 
-The receipt's point strip extends 4 logical pixels beyond the yaku body; its brass
-grade badge steps inward by 4 pixels. Reserve the final geometry before any reveal.
+The receipt's point strip and grade badge align with the yaku body's edges.
+Reserve the final geometry before any reveal.
 
 Keep necessary titles, body and navigation visually distinct. Lobby and settings
 screens use compact centered floating panels, leaving the world visible around
@@ -262,7 +261,8 @@ round/remaining header. Their stick icons use fixed HUD artwork, independent of
 the selected point-stick preset. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
-on both text lines. Player cards begin at y=38 with the shared 0 / 2 / 4 pixel column steps and no separate indicator row.
+on both text lines. Seated Riichi player cards share the y=38 baseline and have no
+separate indicator row. Immersive left and right player cards share their top edge.
 Respect the independent DEPOSITS and DORA preferences. Show a compact
 red-background, white-text furiten badge below
 the local player's card in either view. STATUS controls this recipient-only badge;

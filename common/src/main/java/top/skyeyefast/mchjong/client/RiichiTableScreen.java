@@ -426,7 +426,7 @@ public final class RiichiTableScreen extends Screen {
         }
         if (immersive()) board = new RiichiBoard(RiichiBoardState.live(view), 20, layoutWidth - 20, 68,
             hand == null ? layoutHeight - 112 : hand.top() - 24, layoutHeight, true);
-        actionHeight = count == 0 ? 0 : rows * (buttonHeight + buttonGap) - buttonGap + MahjongUi.step(columns - 1) * (immersive() ? 2 : 1);
+        actionHeight = count == 0 ? 0 : rows * (buttonHeight + buttonGap) - buttonGap;
         int slot = 0;
         if (riichi) {
             var button = MahjongButton.create(Component.translatable(choosingRiichi ? "ui.mchjong.cancel_riichi" : "action.mchjong.riichi"),
@@ -441,7 +441,7 @@ public final class RiichiTableScreen extends Screen {
             Component label = Component.translatable(action.translationKey());
             final RiichiView snapshot = view;
             CalloutButton button = new CalloutButton(startX + slot % columns * (boxWidth + buttonGap),
-                actionTop + slot / columns * (buttonHeight + buttonGap) + MahjongUi.step(slot % columns) * (immersive() ? 2 : 1), boxWidth, buttonHeight, label, action,
+                actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight, label, action,
                 () -> send(snapshot, index));
             button.setTooltip(Tooltip.create(label));
             addRenderableWidget(button);
@@ -480,7 +480,7 @@ public final class RiichiTableScreen extends Screen {
                 final int actionIndex = discard;
                 confirmButton = addRenderableWidget(MahjongButton.create(Component.translatable(choosingRiichi ? "ui.mchjong.confirm_riichi" : "action.mchjong.discard"), ignored -> send(snapshot, actionIndex))
                     .bounds(startX + slot % columns * (boxWidth + buttonGap),
-                        actionTop + slot / columns * (buttonHeight + buttonGap) + MahjongUi.step(slot % columns) * (immersive() ? 2 : 1), boxWidth, buttonHeight).build().primary());
+                        actionTop + slot / columns * (buttonHeight + buttonGap), boxWidth, buttonHeight).build().primary());
                 confirmButton.setTooltip(Tooltip.create(confirmButton.getMessage()));
                 decisionButtons.add(confirmButton);
         }

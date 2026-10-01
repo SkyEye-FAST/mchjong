@@ -13,7 +13,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 - Unify Riichi, MCR and Sichuan lobbies with a separate variant sidebar, shared roster and preparation footer; use compact floating lobby/settings panels without left-edge control decorations or repeated headings, align rule editors and match toolbars, share World/Room/Personal settings, and use explicit personal choices with category-only resets.
 
-- Unify table presentation with controlled square UI offsets, stable furniture UVs and head/item transforms, original Mahjong effects and a distinct points beat before Riichi grade announcements.
+- Unify table presentation with aligned square controls and HUD cards, stable furniture UVs and head/item transforms, original Mahjong effects and a distinct points beat before Riichi grade announcements.
 
 - Give the Sichuan Bot gradual, public-copy-aware seven-pairs, all-pungs, full-flush and root/kong route evaluation for discards and calls, valuing compatible combinations through the shared scorer and current fan cap.
 - Give the MCR Bot gradual, public-copy-aware eight-fan route evaluation for discards and calls, preserving viable scoring structures instead of pursuing tile efficiency alone.

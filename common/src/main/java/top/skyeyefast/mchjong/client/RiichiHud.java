@@ -157,7 +157,7 @@ final class RiichiHud {
             boolean meldSummary = seated && settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty();
             int summaryWidth = meldSummary ? summaryTileWidth(player.melds(), seat, cardWidth - 10) : 0;
             int cardHeight = seatedCardHeight(meldSummary, summaryWidth);
-            top = 38 + MahjongUi.step(seat);
+            top = 38;
             if (board != null) {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
