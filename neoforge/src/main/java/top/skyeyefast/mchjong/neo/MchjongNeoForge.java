@@ -112,7 +112,7 @@ public final class MchjongNeoForge {
     }
 
     private void payloads(RegisterPayloadHandlersEvent event) {
-        var registrar = event.registrar("16");
+        var registrar = event.registrar("17");
         registrar.playToServer(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC,
             (payload, context) -> { if (context.player() instanceof ServerPlayer player) payload.handle(player); });
         registrar.playToClient(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE, top.skyeyefast.mchjong.network.VoiceAppearancePayload.CODEC,
@@ -146,6 +146,10 @@ public final class MchjongNeoForge {
             });
         registrar.playToServer(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
             top.skyeyefast.mchjong.network.TableVariantPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+            });
+        registrar.playToServer(top.skyeyefast.mchjong.network.MatchAutomationPayload.TYPE,
+            top.skyeyefast.mchjong.network.MatchAutomationPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
             });
         registrar.playToServer(RiichiControlPayload.TYPE, RiichiControlPayload.CODEC, (payload, context) -> {

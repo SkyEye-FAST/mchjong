@@ -31,6 +31,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Share private auto win, no calls and physical drawn-tile discard controls across Riichi, MCR and Sichuan, with rule-owned legal-action selection, MCR eight-fan qualification, Sichuan win/void/first-discard protection and restored per-seat preferences.
 - Extend the shared, world-policy-controlled room convenience hints to MCR and Sichuan: private-hand discard progress, public unseen copies, scorer-backed MCR eight-fan qualification, Sichuan void tiles and capped ready values, and recipient-only passed-win restrictions through the common hand-hint interaction.
 - Add one deterministic built-in Sichuan Bot for SBR 2025 and T/TFMJ 01—2024, supporting one human and three Bots through eight hands with shared room controls, private-view decisions, inactive Bot clocks, automatic confirmations, save restoration and replay participant flags.
 - Configure Sichuan room rules before play through a grouped, server-confirmed editor, with exact preset/Custom labels, host-only stale-safe proposals and readiness reset.

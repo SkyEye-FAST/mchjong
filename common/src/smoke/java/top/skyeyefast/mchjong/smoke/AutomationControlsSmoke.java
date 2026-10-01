@@ -7,6 +7,7 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.RiichiAutoPlay;
+import top.skyeyefast.mchjong.engine.MatchAutomation;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -18,6 +19,7 @@ final class AutomationControlsSmoke {
     private int stage, ticks, totalTicks, toggle;
     private long decision;
     private RiichiAutoPlay initial, expected;
+    private MatchAutomation initialCommon, expectedCommon;
     private final RoomPreparationSmoke opening = new RoomPreparationSmoke();
     private final RoomPreparationSmoke preparation = new RoomPreparationSmoke();
     private CompletableFuture<Void> reseated;
@@ -37,6 +39,7 @@ final class AutomationControlsSmoke {
         if (stage < 8) require(view.autoPlay() != null, "Seated automatic-table preferences are missing");
         if (stage == 0) {
             initial = view.autoPlay();
+            initialCommon = table.clientTableRoom().automation();
             var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
             parent.resetView();
@@ -69,9 +72,16 @@ final class AutomationControlsSmoke {
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
             next(3);
         } else if (stage == 3 && ticks > 2) {
-            var option = RiichiAutoPlay.Option.values()[toggle / 2];
-            boolean enabled = view.autoPlay().enabled(option);
-            expected = view.autoPlay().with(option, !enabled);
+            int option = toggle / 2;
+            expected = view.autoPlay();
+            expectedCommon = table.clientTableRoom().automation();
+            if (option == 0 || option == 4) {
+                var riichiOption = option == 0 ? RiichiAutoPlay.Option.SORT : RiichiAutoPlay.Option.KITA;
+                expected = expected.with(riichiOption, !expected.enabled(riichiOption));
+            } else {
+                var commonOption = MatchAutomation.Option.values()[option - 1];
+                expectedCommon = expectedCommon.with(commonOption, !expectedCommon.enabled(commonOption));
+            }
             decision = view.decision();
             var button = optionButton(client, option);
             if ((button.getWidth() == 24) != (toggle % 2 == 1)) {
@@ -87,16 +97,16 @@ final class AutomationControlsSmoke {
             }
             next(4);
         } else if (stage == 4 && ticks > 2) {
-            if (!expected.equals(view.autoPlay())) {
+            if (!expected.equals(view.autoPlay()) || !expectedCommon.equals(table.clientTableRoom().automation())) {
                 // A live opponent may advance the decision between the rendered frame and the packet.
                 if (decision != view.decision()) next(3);
                 return false;
             }
             checkBounds(client);
-            require(client.screen.getFocused() == optionButton(client, RiichiAutoPlay.Option.values()[toggle / 2]),
+            require(client.screen.getFocused() == optionButton(client, toggle / 2),
                 "Automatic option lost keyboard focus on server acknowledgement");
             if (++toggle == (sanma ? 10 : 8)) {
-                require(initial.equals(view.autoPlay()), "Preference round-trip changed another option");
+                require(initial.equals(view.autoPlay()) && initialCommon.equals(table.clientTableRoom().automation()), "Preference round-trip changed another option");
                 click(client, Component.translatable(sanma ? "ui.mchjong.automation_show" : "ui.mchjong.exit").getString());
                 next(sanma ? 5 : 8);
                 return false;
@@ -147,8 +157,8 @@ final class AutomationControlsSmoke {
             client.getMainRenderTarget(), ignored -> {});
     }
 
-    static AbstractWidget optionButton(Minecraft client, RiichiAutoPlay.Option option) {
-        String name = Component.translatable(KEYS[option.ordinal()]).getString();
+    static AbstractWidget optionButton(Minecraft client, int option) {
+        String name = Component.translatable(KEYS[option]).getString();
         return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().startsWith(name)).findFirst().orElseThrow();
     }

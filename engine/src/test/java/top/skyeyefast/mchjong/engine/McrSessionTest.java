@@ -21,6 +21,80 @@ class McrSessionTest {
         new TableParticipant(new UUID(1, 4), "North"));
     private static final Map<UUID, Integer> MOUNTS = Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3);
 
+    @Test void automationNeverDeclaresLowFanAndClaimsQualifiedSelfDrawBeforeDiscard() {
+        var low = fixed(5, new McrGameTest.Fixture().hand(0, "12345m567p789s11z6m").build());
+        assertFalse(low.view(0).qualifyingWin());
+        var session = session(low);
+        for (var option : MatchAutomation.Option.values()) enable(session, 0, option);
+        int drawn = low.drawn(0);
+        tick(session, McrSession.AUTO_ACTION_TICKS);
+        assertEquals(drawn, session.view(id(0)).game().seats().get(0).river().getLast().tile());
+        assertTrue(session.view(id(0)).game().penalties().isEmpty());
+
+        var claim = fixed(6, new McrGameTest.Fixture().hand(0, "279m147p258s2345z8s")
+            .hand(1, "445566m2277779s").at(53, Tile.parseKind("8s")).build());
+        McrGameTest.discardKind(claim, 0, "8s");
+        assertTrue(McrGameTest.has(claim, 1, WIN));
+        assertFalse(claim.view(1).qualifyingWin());
+        session = session(claim);
+        enable(session, 1, MatchAutomation.Option.WIN);
+        enable(session, 1, MatchAutomation.Option.NO_CALLS);
+        tick(session, McrSession.AUTO_ACTION_TICKS);
+        assertTrue(session.view(id(1)).game().penalties().isEmpty());
+        assertFalse(session.view(id(1)).game().seats().get(1).winForbidden());
+
+        McrGameTest.passAll(claim);
+        McrGameTest.play(claim, 1, DRAW);
+        assertTrue(claim.view(1).qualifyingWin());
+        session = session(claim);
+        for (var option : MatchAutomation.Option.values()) enable(session, 1, option);
+        tick(session, McrSession.AUTO_ACTION_TICKS);
+        var win = assertInstanceOf(McrSettlement.Win.class, session.view(id(1)).game().result());
+        assertEquals(1, win.winner());
+        assertTrue(win.score().meetsMinimum());
+        assertTrue(session.view(id(1)).game().seats().get(1).river().isEmpty());
+    }
+
+    @Test void privateAutomationWaitsForQualifiedRonAndPreservesTheSharedWindowAcrossRestore() {
+        var game = fixed(4, new McrGameTest.Fixture().hand(0, "279m147p258s2345z5m")
+            .hand(1, "123456789p11s46m").hand(2, "123456789s22p46m")
+            .hand(3, "555m123789m123p1z").build());
+        McrGameTest.discardKind(game, 0, "5m");
+        var session = session(game);
+        play(session, 2, WIN);
+        var before = session.view(id(1));
+        enable(session, 1, MatchAutomation.Option.NO_CALLS);
+        enable(session, 1, MatchAutomation.Option.DISCARD);
+        assertEquals(before.clocks(), session.view(id(1)).clocks());
+        assertEquals(before.game().decision(), session.view(id(1)).game().decision());
+        assertTrue(session.view(id(2)).game().responded());
+        assertNull(session.roomView(OUTSIDER).automation());
+        assertEquals(MatchAutomation.DEFAULT, session.roomView(id(2)).automation());
+        assertFalse(session.configureAutomation(OUTSIDER, TABLE, session.incarnation(), before.game().decision(), MatchAutomation.Option.WIN, true));
+        assertFalse(session.configureAutomation(id(1), TABLE, UUID.randomUUID(), before.game().decision(), MatchAutomation.Option.WIN, true));
+        tick(session, McrSession.AUTO_ACTION_TICKS);
+        assertFalse(session.view(id(1)).game().responded());
+        var preference = session.roomView(id(1)).automation();
+        session = McrCodec.restoreSession(McrCodec.saveSession(session));
+        assertNull(session.roomView(id(1)).automation());
+        session.synchronizeSeats(MOUNTS);
+        assertEquals(preference, session.roomView(id(1)).automation());
+        enable(session, 1, MatchAutomation.Option.WIN);
+        enable(session, 3, MatchAutomation.Option.NO_CALLS);
+        tick(session, 1);
+        var win = assertInstanceOf(McrSettlement.Win.class, session.view(id(1)).game().result());
+        assertEquals(1, win.winner());
+        for (int seat = 0; seat < 4; seat++) {
+            var view = session.view(id(seat));
+            assertTrue(session.confirmNextHand(id(seat), TABLE, session.incarnation(), view.game().decision()));
+        }
+        for (int seat = 0; seat < 4; seat++) assertEquals(MatchAutomation.DEFAULT, session.roomView(id(seat)).automation());
+    }
+
+    private static void enable(McrSession session, int seat, MatchAutomation.Option option) {
+        assertTrue(session.configureAutomation(id(seat), TABLE, session.incarnation(), session.view(id(seat)).game().decision(), option, true));
+    }
+
     @Test void preparedRosterAndCompleteStockStartOneShuffledMatch() {
         var roster = new ArrayList<>(ROSTER);
         var stock = new ArrayList<>(Tile.mcrSet());
@@ -249,7 +323,7 @@ class McrSessionTest {
         var seating = new RoomSeating();
         seating.positioned(4);
         var room = new TableSession.State(TABLE, MahjongVariant.MCR, 4, ROSTER.getFirst().id(),
-            ROSTER, seating.save(), TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false);
+            ROSTER, seating.save(), TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
         var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
         var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0,
             control, clocks, 0, game.save(), null, null, List.of()));

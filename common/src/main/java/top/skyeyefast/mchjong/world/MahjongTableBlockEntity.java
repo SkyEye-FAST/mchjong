@@ -291,7 +291,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
     private void sendView(ServerPlayer player, boolean open, boolean controlReply) {
         TableSession current = serverSession();
         if (current != null) switch (current.variant()) {
-            case MCR -> { sendMcrView(player, open); return; }
+            case MCR -> { sendMcrView(player, open, controlReply); return; }
             case SICHUAN -> { sendSichuanView(player, open, controlReply); return; }
             case RIICHI -> { }
         }
@@ -310,7 +310,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
                 session.variant())));
     }
 
-    private void sendMcrView(ServerPlayer player, boolean open) {
+    private void sendMcrView(ServerPlayer player, boolean open, boolean controlReply) {
         McrSession session = host == null ? null : host.mcr();
         if (session == null || player.serverLevel() != level) return;
         var stock = equipment.mcrStock();
@@ -319,7 +319,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         player.connection.send(PayloadPackets.clientbound(new McrViewPayload(worldPosition,
             snapshot == null ? "" : McrCodec.encodeSessionView(snapshot),
             session.roomView(authorizedViewer(player)),
-            stock == null ? null : stock.deck(), equipment.clothColor(), open, session.leaveDecision(player.getUUID()), session.timeControl())));
+            stock == null ? null : stock.deck(), equipment.clothColor(), open, controlReply, session.leaveDecision(player.getUUID()), session.timeControl())));
     }
 
     private void sendSichuanView(ServerPlayer player, boolean open, boolean controlReply) {
@@ -652,7 +652,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
             setChanged();
         }
-        sendMcrView(player, false);
+        sendMcrView(player, false, false);
     }
 
     public void actRoom(ServerPlayer player, TableRoomActionPayload payload) {
@@ -700,7 +700,7 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
             sentRevision = -1;
             setChanged();
         }
-        sendMcrView(player, false);
+        sendMcrView(player, false, false);
     }
 
     /** Server-side recipient projection for world interactions and focused integration checks. */
@@ -799,6 +799,23 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         sendView(player, false, true);
     }
 
+    public void matchAutomation(ServerPlayer player, top.skyeyefast.mchjong.network.MatchAutomationPayload payload) {
+        TableSession session = serverSession();
+        if (session == null || player.serverLevel() != level || !player.isAlive() || player.isSpectator()
+            || authorizedViewer(player) == null) {
+            sendView(player, false, true);
+            return;
+        }
+        boolean changed = session.configureAutomation(player.getUUID(), payload.tableId(), payload.incarnation(),
+            payload.decision(), payload.option(), payload.enabled());
+        if (changed) {
+            refreshParticipants(false);
+            setChanged();
+            sentRevision = -1;
+        }
+        sendView(player, false, true);
+    }
+
     public void riichiControl(ServerPlayer player, RiichiControlPayload payload) {
         RiichiSession session = participantSession(player);
         if (session == null || !session.tableId().equals(payload.tableId())) {
@@ -808,9 +825,6 @@ public final class MahjongTableBlockEntity extends FurnitureBlockEntity {
         RiichiGame game = session.game();
         boolean changed = switch (payload.operation()) {
             case AUTO_SORT -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.SORT, payload.enabled());
-            case AUTO_WIN -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.WIN, payload.enabled());
-            case NO_CALLS -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.NO_CALLS, payload.enabled());
-            case AUTO_DISCARD -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.DISCARD, payload.enabled());
             case AUTO_KITA -> game != null && game.configureAutoPlay(player.getUUID(), payload.token(), top.skyeyefast.mchjong.engine.RiichiAutoPlay.Option.KITA, payload.enabled());
             case OPEN_HANDS -> session.configureOpenHands(player.getUUID(), payload.token(), payload.enabled());
         };

@@ -117,7 +117,7 @@ class SichuanPresentationTest {
             new TableParticipant(new UUID(42, seat + 1), "player" + seat), PlayerPresence.SEATED, seat)).toList();
         return new TableRoomView(new UUID(41, 1), new UUID(41, 2), 1, 1, MahjongVariant.SICHUAN,
             finished ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING, 0, 0, false, true, false,
-            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, true);
+            RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, true, top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT);
     }
     private static AABB bounds(SichuanTableScene.Piece piece) {
         double horizontal = piece.seat() % 2 == 0 ? SichuanTableScene.WIDTH : SichuanTableScene.HEIGHT;

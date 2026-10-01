@@ -221,6 +221,18 @@ for the affected replay states.
 `McrSessionTest` owns UUID/seat binding, live-mount privacy, paused actions,
 incarnation-scoped requests, supplied-stock shuffling, independent response clocks,
 safe absent-player timeouts, resumed forced actions and timed hand acknowledgements.
+Its automation cases cover below-minimum win rejection, qualified self-draw/ron,
+win priority, private preferences, unchanged clocks/partial responses and restored
+preferences with per-hand reset. `SichuanGameTest` checks unhandled self-draw/ron,
+unchanged passed-win state, simultaneous replies, private/restored preferences and
+legal physical draw discards under void-suit priority and SBR first-discard binding.
+`RiichiAutoPlayTest` and `ReactionRulesTest` retain shared win/pass/discard priority,
+private/restored preferences and Riichi-only sort/north behavior.
+The MCR and Sichuan client profiles also run `MatchAutomationControlsSmoke` for
+native pointer/keyboard packets, acknowledgement focus, 320 x 240 seated controls
+and the fixed immersive canvas. Opt-in captures are `mcr-automation-seated.png`,
+`mcr-automation-immersive.png`, `sichuan-automation-seated.png` and
+`sichuan-automation-immersive.png`.
 `McrBotTest` owns shared one-human/three-Bot preparation, world policy, recipient-only
 decisions, minimum-fan wins, discard availability, conservative calls, delayed
 simultaneous responses, restored pauses/votes and a complete sixteen-hand Bot match.

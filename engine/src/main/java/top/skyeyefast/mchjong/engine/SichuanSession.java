@@ -10,6 +10,7 @@ public final class SichuanSession extends TableSession {
     private static final int AUTO_ACTION_TICKS = 12;
     private SichuanRules rules = SichuanPreset.SBR_2025.config();
     private SichuanGame game;
+    @Override protected long matchDecision() { return game == null ? decision : game.decision(); }
     private List<Integer> stock = List.of();
     private TimeControl timeControl = TimeControl.DEFAULT;
     private final List<TimeControl.Clock> clocks = new ArrayList<>();
@@ -68,6 +69,7 @@ public final class SichuanSession extends TableSession {
         this.rules = Objects.requireNonNull(rules); resetReadiness(); changed(true); return true;
     }
     protected void startMatch() {
+        resetAutomation();
         if (!equipped()) throw new IllegalStateException("Cannot start Sichuan without stock");
         game = new SichuanGame(seed, rules, stock); lifecycle = Lifecycle.PLAYING;
         if (worldPolicy.replaysEnabled()) {
@@ -94,6 +96,7 @@ public final class SichuanSession extends TableSession {
         changed(false); return true;
     }
     private void nextHand() {
+        resetAutomation();
         if (!game.nextHand()) throw new IllegalStateException("Sichuan hand cannot advance");
         if (replay != null) recorder = new SichuanReplayRecorder(game);
         age = 0; confirmed = 0;
@@ -148,7 +151,10 @@ public final class SichuanSession extends TableSession {
                     int choice = SichuanBot.choose(game.view(seat));
                     if (choice >= 0) apply(seat, expectedDecision, choice);
                 }
-            } else if (clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() == 0) {
+            } else {
+                int automatic = age >= AUTO_ACTION_TICKS ? SichuanAutomation.action(automation.get(seat), game.view(seat)) : -1;
+                if (automatic >= 0) { apply(seat, expectedDecision, automatic); continue; }
+                if (clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() != 0) continue;
                 int fallback = -1;
                 for (int index = 0; index < actions.size(); index++) {
                     var action = actions.get(index);
@@ -214,7 +220,7 @@ public final class SichuanSession extends TableSession {
     public record State(int format, TableSession.State room, SichuanRules rules, List<Integer> stock,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, int confirmed, SichuanGame.State game,
                         ReplayMatch replay, SichuanReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 5;
+        public static final int FORMAT = 6;
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(timeControl);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks);

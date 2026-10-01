@@ -9,6 +9,7 @@ import java.util.UUID;
 /** Riichi room configuration, equipment, participants and match lifecycle. */
 public final class RiichiSession extends TableSession {
     private RiichiGame game;
+    @Override protected long matchDecision() { return decision; }
     RiichiRules rules;
     List<Integer> suppliedTiles;
     TimeControl timeControl = TimeControl.DEFAULT;
@@ -249,7 +250,7 @@ public final class RiichiSession extends TableSession {
                         TimeControl timeControl, PlayerHandVisibility playerHandVisibility,
                         boolean openHands, List<ReplayMatch> archiveQueue,
                         Map<UUID, Integer> pendingExperience, RiichiGame.State game) {
-        public static final int FORMAT = 3;
+        public static final int FORMAT = 4;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported Riichi session format");

@@ -235,7 +235,7 @@ class McrBotTest {
         var seating = new RoomSeating();
         seating.positioned(4);
         var room = new TableSession.State(new UUID(71, 0), MahjongVariant.MCR, 4, HUMAN, roster, seating.save(),
-            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false);
+            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
         var control = TimeControl.DEFAULT;
         var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
         var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0,

@@ -65,7 +65,7 @@ final class TableInterfaceSmoke {
             table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(),
                 view.revision(), view.decision(), room.variant(), top.skyeyefast.mchjong.engine.TableSession.Lifecycle.PLAYING,
                 room.host(), view.viewerSeat(), room.manual(), room.equipped(), false, room.seating(),
-                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false, room.convenienceHints(), room.allowConvenienceHints()));
+                room.availableWinds(), room.seats(), List.of(), view.exitVote(), false, room.convenienceHints(), room.allowConvenienceHints(), view.viewerSeat() < 0 ? null : top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT));
             SettlementSmoke.acceptFixture(table, view);
             var settings = TableSettings.get();
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);

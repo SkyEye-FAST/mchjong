@@ -181,14 +181,22 @@ and does not change game rules or replay records.
 
 ## Automatic-table quick controls
 
-During an automatic-table match, the lower-left quick controls offer auto sort,
-auto win, no calls and auto discard, plus auto kita in three-player games.
+During an automatic-table match, all three rules offer auto win, no calls and
+auto discard. Riichi additionally offers auto sort and auto kita in three-player games.
 The side arrow switches between localized initials and full labels; each option
 remains clickable and keyboard-accessible in either presentation. Filled or
 outlined state marks and hover labels identify the current setting. Each change
-waits for the server's acknowledgement; sorting starts enabled and the other
-options start disabled. Auto kita uses legal north extractions before automatic
-discards, while a possible win always takes priority.
+waits for the server's acknowledgement. Preferences are private to your seat,
+survive save/restore and reset each hand: sorting starts enabled and the other
+options start disabled. Immersive play places the same controls below your hand.
+Auto win takes priority. With auto win disabled, a qualifying win waits for your
+decision even if no calls or auto discard is enabled. MCR auto win requires eight
+non-flower fan and never declares a below-minimum win. Sichuan respects the
+server's passed-win restriction. No calls passes MCR chow/pung/kong and Sichuan
+pung/kong reactions. Auto discard plays only the physical tile just drawn when
+that discard is legal; Sichuan waits when void-suit priority or SBR's bound first
+discard requires another tile. Riichi auto kita uses legal north extractions
+before automatic discards, while a possible win always takes priority.
 
 ## Results and progression
 

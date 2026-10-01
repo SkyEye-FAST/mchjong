@@ -10,7 +10,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 /** Riichi preferences and preparation controls never occupy legal tile actions. */
 public record RiichiControlPayload(BlockPos pos, UUID tableId, Operation operation, long token, boolean enabled)
         implements CustomPacketPayload {
-    public enum Operation { AUTO_SORT, AUTO_WIN, NO_CALLS, AUTO_DISCARD, AUTO_KITA, OPEN_HANDS }
+    public enum Operation { AUTO_SORT, AUTO_KITA, OPEN_HANDS }
     public static final Type<RiichiControlPayload> TYPE = new Type<>(MahjongContent.id("riichi_control"));
     public static final StreamCodec<RegistryFriendlyByteBuf, RiichiControlPayload> CODEC = new StreamCodec<>() {
         @Override public RiichiControlPayload decode(RegistryFriendlyByteBuf buffer) {

@@ -44,7 +44,10 @@ public final class ClientMcrNetworking {
         if (ended) {
             if (client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new McrResultsScreen(payload.pos(), active != null && active.immersive()));
-        } else if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();
+        } else if (active != null && active.tablePos().equals(payload.pos())) {
+            active.receivedView();
+            if (payload.controlReply()) active.receivedControlReply();
+        }
         else if (client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos())) {
             client.setScreen(new McrTableScreen(payload.pos(), results.immersive()));
         } else client.setScreen(new McrTableScreen(payload.pos()));

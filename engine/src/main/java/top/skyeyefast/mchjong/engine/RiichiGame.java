@@ -389,6 +389,7 @@ public final class RiichiGame {
     }
 
     void startHand() {
+        session.resetAutomation();
         for (RiichiPlayerState player : players) player.resetHand();
         handNumber++;
         recorder = null;
@@ -702,7 +703,7 @@ public final class RiichiGame {
                 } else {
                     RiichiAutoPlay preference = manual ? RiichiAutoPlay.DEFAULT : player.autoPlay;
                     index = manual && phase == Phase.DRAW && player.riichi ? indexOf(legal, DRAW)
-                        : preference.action(phase, player.riichi, player.drawn, legal);
+                        : preference.action(manual ? MatchAutomation.DEFAULT : session.automation.get(seat), phase, player.riichi, player.drawn, legal);
                 }
                 if (index >= 0) {
                     act(player.member.id, token, index);

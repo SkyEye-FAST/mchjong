@@ -26,6 +26,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     long seed;
     boolean manual;
     boolean convenienceHints;
+    List<MatchAutomation> automation = new ArrayList<>(java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
     ExitVote exitVote;
     UUID pendingLeaveDecision;
     long exitVoteSequence;
@@ -59,6 +60,19 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         }
     }
     public boolean convenienceHints() { return convenienceHints; }
+    public final boolean configureAutomation(UUID actor, UUID expectedTable, UUID expectedIncarnation,
+                                             long expectedDecision, MatchAutomation.Option option, boolean enabled) {
+        int seat = authorize(actor, expectedTable, expectedIncarnation, expectedDecision, matchDecision());
+        if (seat < 0 || participants[seat].bot || manual || lifecycle != Lifecycle.PLAYING
+            || paused() || exitVote != null || automation.get(seat).enabled(option) == enabled) return false;
+        automation.set(seat, automation.get(seat).with(option, enabled));
+        changed(false);
+        return true;
+    }
+    protected abstract long matchDecision();
+    protected final void resetAutomation() {
+        java.util.Collections.fill(automation, MatchAutomation.DEFAULT);
+    }
     public final boolean configureConvenienceHints(UUID actor, long expectedDecision, boolean enabled) {
         if (convenienceHints == enabled || enabled && !worldPolicy.allowConvenienceHints() || !lobby() || exitVote != null
             || !isHost(actor) || expectedDecision != decision) return false;
@@ -476,7 +490,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         return new TableRoomView(tableId, incarnation, revision, decision, variant, lifecycle,
             host(), viewer, manual, equipped(), paused(), seating.stage, available, seats,
             viewer < 0 ? List.of() : roomActions(viewer), exitVote, leaveDecision(recipient),
-            convenienceHints, worldPolicy.allowConvenienceHints());
+            convenienceHints, worldPolicy.allowConvenienceHints(),
+            viewer < 0 || manual || lobby() || participants[viewer].bot ? null : automation.get(viewer));
     }
 
     protected final List<RoomAction> roomActions(int seat) {
@@ -635,13 +650,15 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                         List<TableParticipant> participants, RoomSeating.Saved seating,
                         Lifecycle lifecycle, long revision, long decision, long seed, boolean manual,
                         ExitVote exitVote, UUID pendingLeaveDecision, long exitVoteSequence, int exitCooldown,
-                        boolean convenienceHints) {
+                        boolean convenienceHints, List<MatchAutomation> automation) {
         public State {
             Objects.requireNonNull(tableId);
             Objects.requireNonNull(variant);
             Objects.requireNonNull(seating);
             Objects.requireNonNull(lifecycle);
             participants = List.copyOf(participants);
+            automation = List.copyOf(automation);
+            if (automation.size() != 4) throw new IllegalArgumentException("Invalid automation preferences");
             if (capacity != 3 && capacity != 4
                 || participants.size() != 4 || revision < 1 || revision >= Long.MAX_VALUE - 1
                 || decision < 1 || decision >= Long.MAX_VALUE - 1 || exitVoteSequence < 0
@@ -654,7 +671,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         validateRoom();
         return new State(tableId, variant, capacity, hostId,
             Arrays.stream(participants).map(Participant::snapshot).toList(), seating.save(), lifecycle,
-            revision, decision, seed, manual, exitVote, pendingLeaveDecision, exitVoteSequence, exitCooldown, convenienceHints);
+            revision, decision, seed, manual, exitVote, pendingLeaveDecision, exitVoteSequence, exitCooldown, convenienceHints, automation);
     }
 
     protected final void restoreRoom(State state) {
@@ -670,6 +687,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
         seed = state.seed();
         manual = state.manual();
         convenienceHints = state.convenienceHints();
+        automation = new ArrayList<>(state.automation());
         exitVote = state.exitVote();
         pendingLeaveDecision = state.pendingLeaveDecision();
         exitVoteSequence = state.exitVoteSequence();

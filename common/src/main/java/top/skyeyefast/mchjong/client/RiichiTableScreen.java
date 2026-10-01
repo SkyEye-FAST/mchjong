@@ -87,7 +87,21 @@ public final class RiichiTableScreen extends Screen {
             if (index >= 0) send(current, index);
         }
     });
-    private final RiichiAutomation automation = new RiichiAutomation(this, () -> lastRevision = -1);
+    private final TableAutomation automation = new TableAutomation(this, this::automationOptions, () -> lastRevision = -1);
+
+    private List<TableAutomation.Toggle> automationOptions() {
+        var current = view();
+        if (current == null || current.autoPlay() == null || current.viewerSeat() < 0
+            || (current.phase() != RiichiView.Phase.TURN && current.phase() != RiichiView.Phase.REACTION)
+            || current.exitVote() != null) return List.of();
+        var choices = new ArrayList<TableAutomation.Toggle>();
+        choices.add(new TableAutomation.Toggle("ui.mchjong.auto_sort", current.autoPlay().sort(),
+            () -> control(current, RiichiControlPayload.Operation.AUTO_SORT, current.decision(), !current.autoPlay().sort())));
+        choices.addAll(TableAutomation.common(pos, room(), current.decision()));
+        if (current.rules().sanma()) choices.add(new TableAutomation.Toggle("ui.mchjong.auto_kita", current.autoPlay().kita(),
+            () -> control(current, RiichiControlPayload.Operation.AUTO_KITA, current.decision(), !current.autoPlay().kita())));
+        return choices;
+    }
 
     public RiichiTableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
     @Override public boolean isPauseScreen() { return false; }
@@ -351,7 +365,7 @@ public final class RiichiTableScreen extends Screen {
         updateScene();
         board = null;
         int layoutWidth = uiWidth(), layoutHeight = uiHeight();
-        int handHeight = layoutHeight - (immersive() ? RiichiResults.available(view) ? 116 : RiichiAutomation.available(view) ? 60 : 30 : 0);
+        int handHeight = layoutHeight - (immersive() ? RiichiResults.available(view) ? 116 : automation.available() ? 60 : 30 : 0);
         hand = immersive() && view.viewerSeat() >= 0
             && !view.seats().get(view.viewerSeat()).hand().isEmpty()
             ? new TableHand(view.seats().get(view.viewerSeat()), view.viewerSeat(), layoutWidth, handHeight, 58, true) : null;
@@ -361,7 +375,7 @@ public final class RiichiTableScreen extends Screen {
         if (view.actions().stream().noneMatch(action -> action.type() == RiichiAction.Type.RIICHI)) choosingRiichi = false;
         buildToolbar(view);
         actionLeft = 10;
-        automation.build(view, layoutWidth, immersive() ? layoutHeight - 32 : hand == null ? layoutHeight - 17 : hand.top() - 8,
+        automation.build(layoutWidth, immersive() ? layoutHeight - 32 : hand == null ? layoutHeight - 17 : hand.top() - 8,
             immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         if (view.exitVote() != null) { buildExitVote(view); return; }
@@ -394,7 +408,7 @@ public final class RiichiTableScreen extends Screen {
             actionLeft = startX;
         } else {
             int scale = immersive() ? 2 : 1;
-            int actionWidth = layoutWidth - 20 * scale - (!immersive() && RiichiAutomation.available(view) ? automation.width(layoutWidth) + 8 : 0);
+            int actionWidth = layoutWidth - 20 * scale - (!immersive() && automation.available() ? automation.width(layoutWidth) + 8 : 0);
             actionLeft = layoutWidth - 10 * scale - actionWidth;
             columns = Math.min(Math.max(1, count), Math.max(1, Math.min(3, actionWidth / (88 * scale))));
             boxWidth = Math.min(132 * scale, (actionWidth - (columns - 1) * 4 * scale) / columns);

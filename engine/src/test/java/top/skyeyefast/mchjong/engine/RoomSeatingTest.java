@@ -228,7 +228,7 @@ class RoomSeatingTest {
             act(game, id(0), RoomAction.Type.BEGIN_SEATING);
             arriveAndReady(game);
             assertFalse(game.roomView(null).lobby());
-            var preference = new RiichiAutoPlay(false, true, false, false, false);
+            var preference = new RiichiAutoPlay(false, false);
             game.game().players[0].autoPlay = preference;
             long revision = game.revision();
             game.unseat(id(0));

@@ -58,6 +58,12 @@ public final class TableNetworking {
             table.configureVariant(player, payload);
     }
 
+    public static void receive(ServerPlayer player, MatchAutomationPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.matchAutomation(player, payload);
+    }
+
     public static void receive(ServerPlayer player, RiichiControlPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.serverLevel().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

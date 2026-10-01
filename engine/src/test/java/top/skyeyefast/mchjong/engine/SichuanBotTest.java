@@ -321,7 +321,7 @@ class SichuanBotTest {
             "Seat " + seat, seat >= humans, false, BotDifficulty.EASY, null, true));
         var seating = new RoomSeating(); seating.positioned(4);
         var room = new TableSession.State(new UUID(72, 0), MahjongVariant.SICHUAN, 4, HUMAN, roster, seating.save(),
-            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false);
+            TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
         var control = TimeControl.DEFAULT;
         var clocks = Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),

@@ -53,6 +53,7 @@ final class McrAutoTableSmoke {
     private boolean clockConfigured;
     private boolean hintsConfigured;
     private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
+    private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private UUID replayId;
 
     boolean tick(Minecraft client, BlockPos pos, Path output) {
@@ -177,6 +178,7 @@ final class McrAutoTableSmoke {
             }
             case 6 -> {
                 if (!(client.screen instanceof McrTableScreen screen)) break;
+                if (!automation.tick(client, clientTable, output, "mcr")) break;
                 var view = clientTable.clientMcrView();
                 check(view != null && view.seated() == 15 && view.game().wall().size() == 144,
                     "MCR screen lacks the complete seated wall");
@@ -274,7 +276,7 @@ final class McrAutoTableSmoke {
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                 double x = (screen.width - 1280 * scale) / 2 + 289 * scale;
-                double y = (screen.height - 800 * scale) / 2 + 726 * scale;
+                double y = (screen.height - 800 * scale) / 2 + 666 * scale;
                 firstDecision = view.game().decision();
                 check(screen.mouseClicked(x, y, 0), "Immersive hand did not accept canvas coordinates");
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);

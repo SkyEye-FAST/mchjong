@@ -9,6 +9,7 @@ import java.util.UUID;
 /** MCR match state and hand acknowledgements; room authority belongs to TableSession. */
 public final class McrSession extends TableSession {
     private McrGame game;
+    @Override protected long matchDecision() { return game == null ? decision : game.decision(); }
     private List<Integer> stock = List.of();
     private int confirmed;
     static final int AUTO_ACTION_TICKS = 12;
@@ -165,7 +166,10 @@ public final class McrSession extends TableSession {
                     int choice = McrBot.choose(game.view(seat));
                     if (choice >= 0) apply(seat, decision, choice);
                 }
-            } else if (clockActive(seat) && clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() == 0) {
+            } else {
+                int automatic = age >= AUTO_ACTION_TICKS ? McrAutomation.action(automation.get(seat), game.view(seat)) : -1;
+                if (automatic >= 0) { apply(seat, decision, automatic); continue; }
+                if (!(clockActive(seat) && clocks.get(seat).moveTicks() + clocks.get(seat).reserveTicks() == 0)) continue;
                 int fallback = -1;
                 for (int index = 0; index < actions.size(); index++) {
                     var action = actions.get(index);
@@ -187,6 +191,7 @@ public final class McrSession extends TableSession {
     }
 
     private void resetDecision(boolean newHand) {
+        if (newHand) resetAutomation();
         age = 0;
         for (int seat = 0; seat < 4; seat++) {
             int reserve = newHand ? timeControl.reserveSeconds() * 20 : clocks.get(seat).reserveTicks();
@@ -267,7 +272,7 @@ public final class McrSession extends TableSession {
     public record State(int format, TableSession.State room, List<Integer> stock, int confirmed,
                         TimeControl timeControl, List<TimeControl.Clock> clocks, int age, McrGameState game,
                         ReplayMatch replay, McrReplayRecorder.State recorder, List<ReplayMatch> archiveQueue) {
-        public static final int FORMAT = 8;
+        public static final int FORMAT = 9;
 
         public State {
             if (format != FORMAT) throw new IllegalArgumentException("Unsupported MCR session format");

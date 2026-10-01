@@ -13,6 +13,77 @@ import static top.skyeyefast.mchjong.engine.SichuanAction.Type.*;
 class SichuanGameTest {
     private static final String WAIT = "1m 2m 3m 4m 5m 6m 1p 2p 3p 4p 5p 6p 9p";
 
+    @Test void automationWaitsForWinsWithoutChangingPassedFanAndRestoresPrivatePreferences() {
+        var game = position(new int[]{2, 2, 2, 2}, false, "9p", WAIT, WAIT, WAIT);
+        choose(game, 0, DISCARD, Tile.parseKind("9p"));
+        choose(game, 2, WIN, -1);
+        var session = session(game);
+        var before = session.view(id(1));
+        for (var option : List.of(MatchAutomation.Option.NO_CALLS, MatchAutomation.Option.DISCARD))
+            enable(session, 1, option);
+        assertEquals(before.clocks(), session.view(id(1)).clocks());
+        assertEquals(before.game().decision(), session.view(id(1)).game().decision());
+        for (int tick = 0; tick < 12; tick++) session.tick();
+        assertFalse(session.view(id(1)).game().submitted());
+        assertEquals(-1, session.view(id(1)).game().passedFan());
+        assertTrue(session.view(id(2)).game().submitted());
+        assertNull(session.roomView(null).automation());
+        assertEquals(MatchAutomation.DEFAULT, session.roomView(id(2)).automation());
+        assertFalse(session.configureAutomation(id(1), session.tableId(), session.incarnation(), before.game().decision() - 1, MatchAutomation.Option.WIN, true));
+        var preference = session.roomView(id(1)).automation();
+        session = SichuanCodec.restoreSession(SichuanCodec.saveSession(session));
+        assertNull(session.roomView(id(1)).automation());
+        session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3));
+        assertEquals(preference, session.roomView(id(1)).automation());
+        enable(session, 1, MatchAutomation.Option.WIN);
+        session.tick();
+        assertTrue(session.view(id(1)).game().submitted());
+        var view = session.view(id(3));
+        assertTrue(session.act(id(3), session.tableId(), session.incarnation(), view.game().decision(),
+            view.game().actions().indexOf(new SichuanAction(WIN))));
+        assertEquals(List.of(1, 2, 3), session.game().result().wins().stream().map(SichuanSettlement.Win::seat).toList());
+        for (int seat = 0; seat < 4; seat++)
+            assertTrue(session.confirmNextHand(id(seat), session.tableId(), session.incarnation(), session.game().decision()));
+        for (int seat = 0; seat < 4; seat++) assertEquals(MatchAutomation.DEFAULT, session.roomView(id(seat)).automation());
+
+        game = position(new int[]{2, 2, 2, 2}, false, WAIT + " 9p", "", "", "");
+        session = session(game);
+        enable(session, 0, MatchAutomation.Option.NO_CALLS);
+        enable(session, 0, MatchAutomation.Option.DISCARD);
+        for (int tick = 0; tick < 12; tick++) session.tick();
+        assertEquals(before.game().passedFan(), session.view(id(0)).game().passedFan());
+        assertTrue(session.game().save().players().get(0).river().isEmpty());
+        enable(session, 0, MatchAutomation.Option.WIN);
+        session.tick();
+        assertTrue(session.game().save().players().get(0).won());
+        assertTrue(session.game().save().players().get(0).river().isEmpty());
+    }
+
+    @Test void automaticDrawDiscardUsesOnlyTheLegalPhysicalDrawAndRespectsVoidingAndBoundFirstDiscard() {
+        var preference = new MatchAutomation(false, true, true);
+        var blocked = position(new int[]{2, 2, 2, 2}, false, WAIT + " 9s", "", "", "");
+        assertEquals(-1, SichuanAutomation.action(preference, blocked.view(0)));
+        var legal = position(new int[]{2, 2, 2, 2}, false, "9s " + WAIT, "", "", "");
+        int index = SichuanAutomation.action(preference, legal.view(0));
+        assertEquals(new SichuanAction(DISCARD, List.of(legal.view(0).seats().get(0).drawn())), legal.actions(0).get(index));
+        assertTrue(legal.act(0, legal.decision(), index));
+
+        var bound = new SichuanGame(12);
+        int drawn = bound.view(0).seats().get(0).drawn();
+        var selection = bound.actions(0).stream().filter(action -> !action.tiles().isEmpty()
+            && action.tiles().getFirst() != drawn).findFirst().orElseThrow();
+        assertTrue(bound.act(0, bound.decision(), bound.actions(0).indexOf(selection)));
+        for (int seat = 1; seat < 4; seat++) assertTrue(bound.act(seat, bound.decision(), 0));
+        assertEquals(-1, SichuanAutomation.action(preference, bound.view(0)));
+        assertEquals(selection.tiles(), bound.actions(0).stream().filter(action -> action.type() == DISCARD).findFirst().orElseThrow().tiles());
+        bound = SichuanCodec.restore(SichuanCodec.save(bound));
+        assertEquals(-1, SichuanAutomation.action(preference, bound.view(0)));
+    }
+
+    private static void enable(SichuanSession session, int seat, MatchAutomation.Option option) {
+        assertTrue(session.configureAutomation(id(seat), session.tableId(), session.incarnation(), session.game().decision(), option, true));
+    }
+
     @Test void stockOpeningAndSealedVoiding() {
         assertEquals(108, Tile.sichuanSet().size());
         assertEquals(108, Tile.sichuanSet().stream().distinct().count());
@@ -716,7 +787,7 @@ class SichuanGameTest {
         var seating = new RoomSeating(); seating.positioned(4);
         var room = new TableSession.State(new UUID(41, 1), MahjongVariant.SICHUAN, 4, id(0), roster, seating.save(),
             game.phase() == SichuanGame.Phase.MATCH_END ? TableSession.Lifecycle.FINISHED : TableSession.Lifecycle.PLAYING,
-            1, 1, 71, false, null, null, 0, 0, false);
+            1, 1, 71, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
         var control = new TimeControl(1, 1);
         var clocks = Collections.nCopies(4, new TimeControl.Clock(20, 20, false));
         var session = SichuanSession.restore(new SichuanSession.State(SichuanSession.State.FORMAT, room, game.rules(), Tile.sichuanSet(),

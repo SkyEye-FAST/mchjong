@@ -21,7 +21,7 @@ class RiichiAutoPlayTest {
             RiichiGame game = GameLifecycleTest.started(rules, 31);
             int seat = game.turn, drawn = game.players[seat].drawn;
             long decision = game.decision();
-            assertTrue(game.configureAutoPlay(game.players[seat].member.id, decision, RiichiAutoPlay.Option.DISCARD, true));
+            assertTrue(game.session.configureAutomation(game.players[seat].member.id, game.session.tableId(), game.session.incarnation(), decision, MatchAutomation.Option.DISCARD, true));
             ticks(game, RiichiGame.DEAL_TICKS + RiichiGame.AUTO_ACTION_TICKS - 1);
             assertEquals(decision, game.decision());
             game.tick();
@@ -38,7 +38,7 @@ class RiichiAutoPlayTest {
         riichi(game, seat);
         game.options.set(seat, LegalActions.onTurn(game, seat));
         game = GameLifecycleTest.reloadMounted(game);
-        assertFalse(game.players[seat].autoPlay.discard());
+        assertFalse(game.session.roomView(game.players[seat].member.id).automation().discard());
         ticks(game, RiichiGame.DEAL_TICKS + RiichiGame.AUTO_ACTION_TICKS);
         assertEquals(drawn, game.players[seat].river.getLast().tile());
         game.validate();
@@ -74,28 +74,29 @@ class RiichiAutoPlayTest {
     }
 
     @Test void winAndKanOpportunitiesAreNotSilentlyThrownAway() {
-        RiichiAutoPlay all = new RiichiAutoPlay(true, true, true, true, true);
+        RiichiAutoPlay all = new RiichiAutoPlay(true, true);
+        var allPreferences = new MatchAutomation(true, true, true);
         List<RiichiAction> tsumo = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(TSUMO));
         List<RiichiAction> ron = List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)), new RiichiAction(RON));
-        assertEquals(1, all.action(RiichiGame.Phase.TURN, true, 7, tsumo));
-        assertEquals(2, all.action(RiichiGame.Phase.REACTION, false, -1, ron));
-        assertEquals(-1, all.with(RiichiAutoPlay.Option.WIN, false).action(RiichiGame.Phase.TURN, true, 7, tsumo));
-        assertEquals(-1, all.with(RiichiAutoPlay.Option.WIN, false).action(RiichiGame.Phase.REACTION, false, -1, ron));
-        assertEquals(0, all.action(RiichiGame.Phase.REACTION, false, -1, List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)))));
+        assertEquals(1, all.action(allPreferences, RiichiGame.Phase.TURN, true, 7, tsumo));
+        assertEquals(2, all.action(allPreferences, RiichiGame.Phase.REACTION, false, -1, ron));
+        assertEquals(-1, all.action(allPreferences.with(MatchAutomation.Option.WIN, false), RiichiGame.Phase.TURN, true, 7, tsumo));
+        assertEquals(-1, all.action(allPreferences.with(MatchAutomation.Option.WIN, false), RiichiGame.Phase.REACTION, false, -1, ron));
+        assertEquals(0, all.action(allPreferences, RiichiGame.Phase.REACTION, false, -1, List.of(new RiichiAction(PASS), new RiichiAction(PON, List.of(1, 2)))));
         List<RiichiAction> kan = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(CLOSED_KAN, List.of(4, 5, 6, 7)));
-        assertEquals(-1, RiichiAutoPlay.DEFAULT.action(RiichiGame.Phase.TURN, true, 7, kan));
-        assertEquals(0, all.action(RiichiGame.Phase.TURN, true, 7, kan));
+        assertEquals(-1, RiichiAutoPlay.DEFAULT.action(MatchAutomation.DEFAULT, RiichiGame.Phase.TURN, true, 7, kan));
+        assertEquals(0, all.action(allPreferences, RiichiGame.Phase.TURN, true, 7, kan));
         List<RiichiAction> north = List.of(new RiichiAction(DISCARD, 7), new RiichiAction(NUKI, 7));
-        assertEquals(1, all.action(RiichiGame.Phase.TURN, true, 7, north));
-        assertEquals(-1, all.with(RiichiAutoPlay.Option.KITA, false).action(RiichiGame.Phase.TURN, true, 7, north));
+        assertEquals(1, all.action(allPreferences, RiichiGame.Phase.TURN, true, 7, north));
+        assertEquals(-1, all.with(RiichiAutoPlay.Option.KITA, false).action(allPreferences, RiichiGame.Phase.TURN, true, 7, north));
         var kitaOnly = RiichiAutoPlay.DEFAULT.with(RiichiAutoPlay.Option.KITA, true);
-        assertEquals(1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, north));
-        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(DISCARD, 7))));
-        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.REACTION, false, 7, north));
-        assertEquals(-1, kitaOnly.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
-        assertEquals(1, all.action(RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
-        assertEquals(-1, all.action(RiichiGame.Phase.TURN, false, Tile.ABSENT, List.of(new RiichiAction(DISCARD, 7))));
-        assertEquals(-1, all.action(RiichiGame.Phase.HAND_END, false, -1, List.of(new RiichiAction(NEXT))));
+        assertEquals(1, kitaOnly.action(MatchAutomation.DEFAULT, RiichiGame.Phase.TURN, false, 7, north));
+        assertEquals(-1, kitaOnly.action(MatchAutomation.DEFAULT, RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(DISCARD, 7))));
+        assertEquals(-1, kitaOnly.action(MatchAutomation.DEFAULT, RiichiGame.Phase.REACTION, false, 7, north));
+        assertEquals(-1, kitaOnly.action(MatchAutomation.DEFAULT, RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
+        assertEquals(1, all.action(allPreferences, RiichiGame.Phase.TURN, false, 7, List.of(new RiichiAction(NUKI, 7), new RiichiAction(TSUMO))));
+        assertEquals(-1, all.action(allPreferences, RiichiGame.Phase.TURN, false, Tile.ABSENT, List.of(new RiichiAction(DISCARD, 7))));
+        assertEquals(-1, all.action(allPreferences, RiichiGame.Phase.HAND_END, false, -1, List.of(new RiichiAction(NEXT))));
     }
 
     @Test void disconnectedTrusteeUsesNetworkMahjongDefaultsWithoutChangingPreferencesOrClocks() {
@@ -180,21 +181,26 @@ class RiichiAutoPlayTest {
         game.options.set(3, List.of(new RiichiAction(PASS)));
         long decision = game.decision();
         ticks(game, 5);
+        assertTrue(game.act(game.players[2].member.id, decision, 0));
         int[] move = game.moveTicks.clone(), reserve = game.reserveTicks.clone();
-        assertTrue(game.configureAutoPlay(game.players[1].member.id, decision, RiichiAutoPlay.Option.NO_CALLS, true));
+        assertTrue(game.session.configureAutomation(game.players[1].member.id, game.session.tableId(), game.session.incarnation(), decision, MatchAutomation.Option.NO_CALLS, true));
         assertEquals(decision, game.decision());
         assertArrayEquals(move, game.moveTicks);
         assertArrayEquals(reserve, game.reserveTicks);
+        assertEquals(0, game.replies[2]);
         assertNull(game.view(null).autoPlay());
-        assertTrue(game.view(game.players[1].member.id).autoPlay().noCalls());
+        assertNull(game.session.roomView(null).automation());
+        assertTrue(game.session.roomView(game.players[1].member.id).automation().noCalls());
         assertEquals(RiichiAutoPlay.DEFAULT, game.view(game.players[2].member.id).autoPlay());
-        assertFalse(game.configureAutoPlay(UUID.randomUUID(), decision, RiichiAutoPlay.Option.WIN, true));
+        assertEquals(MatchAutomation.DEFAULT, game.session.roomView(game.players[2].member.id).automation());
+        assertFalse(game.session.configureAutomation(UUID.randomUUID(), game.session.tableId(), game.session.incarnation(), decision, MatchAutomation.Option.WIN, true));
         assertFalse(game.configureAutoPlay(game.players[1].member.id, decision, RiichiAutoPlay.Option.KITA, true));
-        assertFalse(game.configureAutoPlay(game.players[1].member.id, decision - 1, RiichiAutoPlay.Option.WIN, true));
+        assertFalse(game.session.configureAutomation(game.players[1].member.id, game.session.tableId(), game.session.incarnation(), decision - 1, MatchAutomation.Option.WIN, true));
         ticks(game, RiichiGame.AUTO_ACTION_TICKS - 5);
         assertEquals(0, game.replies[1]);
         assertEquals(decision, game.decision());
-        assertTrue(game.act(game.players[2].member.id, decision, 0));
+        assertEquals(0, game.replies[2]);
+        assertFalse(game.act(game.players[2].member.id, decision, 0));
     }
 
     @Test void sortingCanBeDisabledWithoutMovingTheDrawnTileOrExposingAnotherHand() {
@@ -231,13 +237,18 @@ class RiichiAutoPlayTest {
         UUID actor = game.players[0].member.id;
         for (var option : RiichiAutoPlay.Option.values())
             assertTrue(game.configureAutoPlay(actor, game.decision(), option, option != RiichiAutoPlay.Option.SORT));
-        RiichiAutoPlay expected = new RiichiAutoPlay(false, true, true, true, true);
+        for (var option : MatchAutomation.Option.values())
+            assertTrue(game.session.configureAutomation(actor, game.session.tableId(), game.session.incarnation(), game.decision(), option, true));
+        RiichiAutoPlay expected = new RiichiAutoPlay(false, true);
         assertEquals(expected, game.view(actor).autoPlay());
+        assertEquals(new MatchAutomation(true, true, true), game.session.roomView(actor).automation());
         game = GameLifecycleTest.reloadMounted(game);
         game.validate();
         assertEquals(expected, game.view(actor).autoPlay());
+        assertEquals(new MatchAutomation(true, true, true), game.session.roomView(actor).automation());
         game.startHand();
         assertEquals(RiichiAutoPlay.DEFAULT, game.view(actor).autoPlay());
+        assertEquals(MatchAutomation.DEFAULT, game.session.roomView(actor).automation());
         RiichiSession session = game.session;
         assertTrue(session.requestExit(actor));
         long vote = session.exitVote.id();
@@ -247,7 +258,7 @@ class RiichiAutoPlayTest {
         assertTrue(session.join(newcomer, "New player", 0));
         GameLifecycleTest.startPositioned(session);
         assertEquals(RiichiAutoPlay.DEFAULT, session.game().view(newcomer).autoPlay());
-        assertFalse(session.game().configureAutoPlay(actor, session.decision(), RiichiAutoPlay.Option.WIN, true));
+        assertFalse(session.game().session.configureAutomation(actor, session.game().session.tableId(), session.game().session.incarnation(), session.decision(), MatchAutomation.Option.WIN, true));
     }
 
     @Test void ordinaryClockSpendsThirtySecondsThenReserveAndReloadKeepsHostValues() {

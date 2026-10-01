@@ -9,7 +9,7 @@ final class ForgeNetworking {
     private ForgeNetworking() {}
 
     static void register() {
-        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(17)
+        var channel = ChannelBuilder.named("mchjong:play").networkProtocolVersion(18)
             .payloadChannel().protocol(NetworkProtocol.PLAY)
             .serverbound()
             .addMain(VoiceChoicePayload.TYPE, VoiceChoicePayload.CODEC, (payload, context) -> {
@@ -40,6 +40,9 @@ final class ForgeNetworking {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(TableVariantPayload.TYPE, TableVariantPayload.CODEC, (payload, context) -> {
+                if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
+            })
+            .addMain(MatchAutomationPayload.TYPE, MatchAutomationPayload.CODEC, (payload, context) -> {
                 if (context.getSender() != null) TableNetworking.receive(context.getSender(), payload);
             })
             .addMain(RiichiControlPayload.TYPE, RiichiControlPayload.CODEC, (payload, context) -> {

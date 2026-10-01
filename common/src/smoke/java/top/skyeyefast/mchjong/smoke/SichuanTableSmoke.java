@@ -52,6 +52,7 @@ final class SichuanTableSmoke {
     private boolean picked;
     private boolean hintsConfigured;
     private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
+    private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private int selectedTile;
     private int boundFirstDiscard = Tile.ABSENT;
     private long discardDecision;
@@ -272,6 +273,7 @@ final class SichuanTableSmoke {
             case 8 -> {
                 var view = table.clientSichuanView();
                 if (view == null || view.game().phase() != SichuanGame.Phase.TURN) break;
+                if (!automation.tick(client, table, output, "sichuan")) break;
                 require(!incarnation.equals(view.incarnation()), "Restored Sichuan incarnation was reused");
                 require(view.game().seats().stream().allMatch(seat -> seat.voidSuit() == 0), "Sichuan declarations did not complete");
                 require(view.game().seats().get(view.game().viewerSeat()).firstDiscard() == boundFirstDiscard, "NBT restore lost the first-discard binding");
@@ -331,7 +333,7 @@ final class SichuanTableSmoke {
                     double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                     double horizontal = (screen.width - 1280 * scale) / 2
                         + (289 + tiles.indexOf(selectedTile) * 52 + (selectedTile == player.drawn() ? 26 : 0)) * scale;
-                    double vertical = (screen.height - 800 * scale) / 2 + 726 * scale;
+                    double vertical = (screen.height - 800 * scale) / 2 + 666 * scale;
                     require(screen.mouseClicked(horizontal, vertical, 0), "Immersive Sichuan picking failed");
                     picked = true; settled = 0; break;
                 }

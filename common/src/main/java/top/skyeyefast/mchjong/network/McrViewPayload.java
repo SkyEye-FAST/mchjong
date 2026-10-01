@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 /** Only an encoded recipient-safe session view and the public physical appearance. */
 public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrDeck deck, DyeColor cloth,
-                             boolean open, boolean leaveDecision, top.skyeyefast.mchjong.engine.TimeControl timeControl)
+                             boolean open, boolean controlReply, boolean leaveDecision, top.skyeyefast.mchjong.engine.TimeControl timeControl)
     implements CustomPacketPayload {
     public McrViewPayload {
         java.util.Objects.requireNonNull(view);
@@ -36,7 +36,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
                 deck = new McrDeck(material, back, preset, backPreset);
             }
             return new McrViewPayload(pos, view, room, deck,
-                buffer.readEnum(DyeColor.class), buffer.readBoolean(), buffer.readBoolean(),
+                buffer.readEnum(DyeColor.class), buffer.readBoolean(), buffer.readBoolean(), buffer.readBoolean(),
                 new top.skyeyefast.mchjong.engine.TimeControl(buffer.readVarInt(), buffer.readVarInt()));
         }
         @Override public void encode(RegistryFriendlyByteBuf buffer, McrViewPayload value) {
@@ -50,7 +50,7 @@ public record McrViewPayload(BlockPos pos, String view, TableRoomView room, McrD
                 buffer.writeResourceLocation(value.deck().preset().id());
                 buffer.writeResourceLocation(value.deck().backPreset());
             }
-            buffer.writeEnum(value.cloth()); buffer.writeBoolean(value.open()); buffer.writeBoolean(value.leaveDecision());
+            buffer.writeEnum(value.cloth()); buffer.writeBoolean(value.open()); buffer.writeBoolean(value.controlReply()); buffer.writeBoolean(value.leaveDecision());
             buffer.writeVarInt(value.timeControl().reserveSeconds()); buffer.writeVarInt(value.timeControl().moveSeconds());
         }
     };

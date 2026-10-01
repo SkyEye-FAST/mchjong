@@ -31,6 +31,16 @@ public final class SichuanTableScreen extends Screen {
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop;
     private final TableHints hints = new TableHints();
+    private final TableAutomation automation = new TableAutomation(this, this::automationOptions, this::rebuild);
+
+    private List<TableAutomation.Toggle> automationOptions() {
+        var current = view();
+        if (current == null || (current.game().phase() != top.skyeyefast.mchjong.engine.SichuanGame.Phase.TURN
+            && current.game().phase() != top.skyeyefast.mchjong.engine.SichuanGame.Phase.REACTION)) return List.of();
+        return TableAutomation.common(pos, table().clientTableRoom(), current.game().decision());
+    }
+    public void receivedControlReply() { automation.receivedControlReply(); }
+
 
     public SichuanTableScreen(BlockPos pos) { this(pos, false); }
     public SichuanTableScreen(BlockPos pos, boolean immersive) {
@@ -66,6 +76,7 @@ public final class SichuanTableScreen extends Screen {
     @Override protected void init() { rebuild(); }
 
     private void rebuild() {
+        int automationFocus = automation.focusedIndex(getFocused());
         boolean hintFocused = getFocused() == hints;
         int focusedTile = getFocused() instanceof HandTarget target ? target.tile : Tile.ABSENT;
         clearWidgets();
@@ -86,7 +97,7 @@ public final class SichuanTableScreen extends Screen {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-            hand = new TableHand(tiles, player.drawn(), List.of(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 20, 52, true);
+            hand = new TableHand(tiles, player.drawn(), List.of(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - (automation.available() ? 80 : 20), 52, true);
         }
         if (room.exitVote() != null) {
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
@@ -99,6 +110,8 @@ public final class SichuanTableScreen extends Screen {
         if (room.viewerSeat() >= 0) addRenderableWidget(new MahjongButton(canvasWidth - 60 * textScale, 6, 52 * textScale, 20 * textScale,
             Component.translatable("ui.mchjong.exit"), ignored -> TableExitControls.send(pos, room,
                 TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).textScale(textScale));
+        automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
+        automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
         if (discardAction(selected) >= 0) choices.add(discardAction(selected));
         for (int actionIndex = 0; actionIndex < game.actions().size(); actionIndex++)
@@ -108,7 +121,7 @@ public final class SichuanTableScreen extends Screen {
                     || game.actions().get(actionIndex).tiles().isEmpty())) choices.add(actionIndex);
         int pages = Math.max(1, (choices.size() + 3) / 4);
         page = Math.min(page, pages - 1);
-        int cell = immersive() ? 224 : Math.min(110, (canvasWidth - 28) / 3);
+        int cell = immersive() ? 224 : Math.min(110, (canvasWidth - 28 - (automation.available() ? automation.width(canvasWidth) + 8 : 0)) / 2);
         int actionY = immersive() ? 562 : uiHeight() - 112;
         actionTop = actionY;
         for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {

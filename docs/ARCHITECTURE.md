@@ -196,7 +196,7 @@ draw provenance, pending added kong, submitted responses, penalties and hand res
 and constructs a game without dealing or applying any payment again. The codec
 uses the engine's embedded Gson and explicit win/draw tags for settlement results.
 All record fields are required, and incompatible formats or invalid data are rejected.
-The MCR game format is 5 and the session format is 8. Wall validation checks upper-before-lower occupancy and that
+The MCR game format is 5 and the session format is 9. Wall validation checks upper-before-lower occupancy and that
 each cursor points to the next occupied slot in its own traversal.
 The JSON boundary limits input to 65,536 characters and sixteen nesting levels,
 rejects duplicate fields and checks numeric/boolean types before binding records.
@@ -340,7 +340,7 @@ lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room 
 requiring complete typed records and bounding size and nesting. Restoration checks
 all 108 physical identities, melds, first-discard binding, pending reactions, winner scores and payment
 links, then refreshes decision and incarnation authority. Game format is 3 and
-session format is 5, with complete typed fields, an 8 MiB document bound and sixteen nesting
+session format is 6, with complete typed fields, an 8 MiB document bound and sixteen nesting
 levels. Hand number, current dealer, completed ledgers, current result, future-wall
 seed, partial confirmations and remaining reading time survive saves. Restoration
 derives cumulative scores without paying again and validates the dealer chain.
@@ -824,8 +824,22 @@ is a local rendering preference; it also forces the remaining-wall count and
 current claimed-tile preview to remain visible, without changing game records.
 
 `TableSessionControlPayload` carries shared convenience-hint configuration, exit requests, votes and last-player
-leave decisions directly to `TableSession`. `RiichiControlPayload` carries
-automatic play and open hands only for Riichi. These controls
+leave decisions directly to `TableSession`. `MatchAutomationPayload` carries auto win,
+no calls and auto drawn-tile discard for all three rules, bound to table UUID,
+incarnation and the current match decision. `TableSession` saves one private
+`MatchAutomation` per seat and projects only the authenticated seated human
+recipient's preferences in `TableRoomView`; spectators and Bots receive none.
+Each new hand resets all three switches to disabled. Changes update only the
+session revision, preserving clocks, decision tokens and submitted reactions.
+`McrAutomation`, `SichuanAutomation` and `RiichiAutoPlay` independently choose
+current issued action indices: claim enabled wins, wait for unhandled wins,
+pass skipped calls, then discard only the legal physical draw. MCR checks eight
+non-flower fan before treating `WIN` as qualifying; Sichuan uses the server-issued
+`WIN` and legal discards, preserving passed-win restrictions, void-suit priority
+and SBR first-discard binding. Bots use their independent policies.
+The client `TableAutomation` shares native controls, acknowledgement/focus handling
+and seated/immersive layouts. Riichi adds sort hand and three-player north extraction.
+`RiichiControlPayload` carries those Riichi-only switches and open hands. These controls
 remain separate from match-action indices. Every loader checks the loaded table,
 table identity and current decision or vote token. Exit requests and votes require
 the sender's physical seat; a leave decision requires the pending actor. In the

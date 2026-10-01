@@ -459,9 +459,10 @@ front and back rims and the side edges in the animated world pose, with depth te
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
-The automatic table's active-match overlay includes collapsible controls at the
-lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
-matches) extract norths. Both compact and expanded rows are individual toggle buttons;
+The automatic table's active-match overlay shares collapsible controls for all
+three rules at the lower left: claim wins, skip calls and discard drawn tiles.
+Riichi additionally offers sort hand and, in three-player matches, extract norths.
+Both compact and expanded rows are individual toggle buttons;
 seated rows retain 20-pixel hit areas with inset 18-pixel surfaces and no vertical
 gap. A quiet side handle changes their presentation, retaining a 20-pixel hit area
 and a visible keyboard focus outline. Immersive controls retain the horizontal strip.
@@ -475,8 +476,9 @@ canvas and are only uniformly scaled by the outer letterbox transform. These pre
 seated player, reset at the start of each hand, and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
 text stay in the action-side gutter. Sorting starts enabled; the other options start
-disabled. A legal win takes priority over automatic north extraction, discards and
-skipped calls. Without automatic wins, the win decision remains explicit. Automatic
+disabled. A qualifying win takes priority over automatic north extraction, discards and
+skipped calls. Without automatic wins, the win decision remains explicit. MCR uses
+eight non-flower fan; Sichuan uses its issued win and discard choices. Automatic
 north extraction uses only legal server actions, independently of the skip-calls
 preference, and retains the normal robbery and replacement-draw flow.
 Turning sorting off keeps the hand's current order. Dragging a tile onto another

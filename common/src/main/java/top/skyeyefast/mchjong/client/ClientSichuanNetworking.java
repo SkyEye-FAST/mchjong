@@ -47,7 +47,10 @@ public final class ClientSichuanNetworking {
         if (view.game().result() != null) {
             if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos())) results.receivedView();
             else client.setScreen(new SichuanResultsScreen(payload.pos(), active != null && active.immersive()));
-        } else if (active != null && active.tablePos().equals(payload.pos())) active.receivedView();
+        } else if (active != null && active.tablePos().equals(payload.pos())) {
+            active.receivedView();
+            if (payload.controlReply()) active.receivedControlReply();
+        }
         else if (client.screen instanceof SichuanResultsScreen results && results.tablePos().equals(payload.pos()))
             client.setScreen(new SichuanTableScreen(payload.pos(), results.immersive()));
         else client.setScreen(new SichuanTableScreen(payload.pos()));

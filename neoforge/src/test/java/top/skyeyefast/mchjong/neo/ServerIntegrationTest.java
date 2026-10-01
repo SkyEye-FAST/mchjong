@@ -127,6 +127,12 @@ class ServerIntegrationTest {
                 RiichiControlPayload.CODEC.encode(buffer, control);
                 assertEquals(control, RiichiControlPayload.CODEC.decode(buffer));
             }
+            for (var option : top.skyeyefast.mchjong.engine.MatchAutomation.Option.values()) for (boolean enabled : new boolean[]{false, true}) {
+                var control = new top.skyeyefast.mchjong.network.MatchAutomationPayload(request.pos(), request.tableId(),
+                    UUID.randomUUID(), Long.MAX_VALUE, option, enabled);
+                top.skyeyefast.mchjong.network.MatchAutomationPayload.CODEC.encode(buffer, control);
+                assertEquals(control, top.skyeyefast.mchjong.network.MatchAutomationPayload.CODEC.decode(buffer));
+            }
             for (var operation : top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.values()) {
                 var control = new top.skyeyefast.mchjong.network.TableSessionControlPayload(
                     request.pos(), request.tableId(), operation, 23, true);
@@ -223,7 +229,7 @@ class ServerIntegrationTest {
                 new top.skyeyefast.mchjong.item.McrDeck(top.skyeyefast.mchjong.item.TileMaterial.BONE,
                     net.minecraft.world.item.DyeColor.BLUE, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
                     net.minecraft.resources.ResourceLocation.fromNamespaceAndPath("mchjong", "default")),
-                net.minecraft.world.item.DyeColor.CYAN, true, false, session.timeControl());
+                net.minecraft.world.item.DyeColor.CYAN, true, false, false, session.timeControl());
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC.encode(buffer, mcrView);
             assertEquals(mcrView, top.skyeyefast.mchjong.network.McrViewPayload.CODEC.decode(buffer));
             assertTrue(top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(mcrView.view()).game().actions().isEmpty());
