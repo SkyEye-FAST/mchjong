@@ -9,7 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
-- Audit Sichuan SBR settlement semantics with linked consecutive-kong call transfers, unified roots and explicit draw-check contracts, and run ledger-scored eight-hand matches with dealer succession and persistent session hand advancement.
+- Run ledger-scored eight-hand Sichuan matches with dealer succession, explicit draw checks and persistent session hand advancement.
 - Redraw Kanto, Sichuan, Taiwan and Fujian tile faces, remove retired external source notices for the redrawn presets, and supply the regional presets as individual transparent PNG engravings for the shared atlas generator.
 - Share the immersive canvas and seated camera controls between Riichi and MCR, with separate rule-specific scenes and explicitly named Riichi presentation components.
 - Share exit voting and paused-match leave confirmation between Riichi and MCR, with explicitly named rule-specific network protocols and Riichi state.
@@ -20,6 +20,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Separate MIL SBR 2025 from T/TFMJ 01—2024: use each preset's wall layout, refund the SBR shooting kong instead of transferring its income, distinguish Kong and Root fan names, and preserve secret bound first-discard choices through play, saves and replays.
 - Keep MCR flowers and Riichi extracted norths in the same horizontal rail as hands and melds.
 - Center MCR rivers like Riichi, place melds and flowers on the owner's left, and omit walls from the immersive MCR table.
 - Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.
@@ -28,6 +29,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Configure Sichuan room rules before play through a grouped, server-confirmed editor, with exact preset/Custom labels, host-only stale-safe proposals and readiness reset.
 - Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.
 - Add seated and immersive Sichuan tables, recipient-safe hand and void-suit displays, shared exit voting, detailed ledger results and explicit next-hand confirmations through the eight-hand match.
 - Add an independent Sichuan SBR 2025 hand engine, explicit rules, blood-battle payments and draw checks, private save/restore, and a shared three-variant lobby with Sichuan action controls.

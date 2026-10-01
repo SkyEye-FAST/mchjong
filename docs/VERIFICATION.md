@@ -144,23 +144,36 @@ gradlew.bat :fabric:runSmokeClient -PsmokeMcrAuto=true "-PsmokeScreenshots=mcr-a
 Inspect both selected captures in `fabric/build/smoke/mcr-auto-evidence/`
 and its fresh `PASS.txt` or `FAIL.txt` marker. Omit `smokeScreenshots` for an
 assertion-only run.
-`SichuanGameTest` owns suited-stock conservation, void-suit restrictions, multi-win
-blood battle, linked call transfers and rounding, kong refunds, flower-pig
+`SichuanGameTest` owns suited-stock conservation, rule-selected wall layouts and
+all dealer/dice cuts, secret physical first-discard
+binding and heavenly void, recipient redaction, MIL/T/TFMJ fan naming and
+added-kong distinctions, multi-win blood battle, T/TFMJ linked call transfers and
+rounding, MIL last-kong refunds, flower-pig
 deductions, maximum ready payments, eight-hand lifecycle, session confirmations,
 private views and explicit save/restore. The clause mapping is in
-[Sichuan match orchestration](ARCHITECTURE.md#sichuan-sbr-match-orchestration). Run
+[Sichuan match orchestration](ARCHITECTURE.md#sichuan-match-orchestration). Run
 `gradlew.bat :engine:test --tests "*SichuanGameTest" --warning-mode fail --console=plain`.
 `SichuanReplayTest` owns sealed physical openings, recorder restoration,
-serialization and rule-executed event consistency, multi-win and sequential-win
+serialization and rule-executed event consistency, secret selection reconstruction,
+MIL shooting refunds, T/TFMJ call transfers, multi-win and sequential-win
 retirement, kong robbery and call transfers, flower-pig/ready checks, cumulative
 scores and dealer succession, queue acknowledgement and altered-record rejection.
 Run `gradlew.bat :engine:test --tests "*SichuanReplayTest" --warning-mode fail --console=plain`.
+`SichuanRoomSettingsTest` owns lobby-only settings, exact preset/custom matching
+for every field, rule bounds, host/stale authority, readiness reset, world-policy
+restrictions and lobby/match save restoration. Run
+`gradlew.bat :engine:test --tests "*SichuanRoomSettingsTest" --warning-mode fail --console=plain`.
+`ServerIntegrationTest.actualMinecraftCodecsRoundTripOnlyDeclaredPayloads` also
+checks Sichuan proposals and settings at both field bounds and rejects malformed
+numeric proposals through the native codec.
 `PhysicalSuppliesTest.sichuanStock*` owns native single-case stock admission.
-`SichuanPresentationTest` owns the 108-slot physical layout, recipient-safe scene
+`SichuanPresentationTest` owns both 108-slot physical layouts, recipient-safe scene
 projection, multi-win aliases and faithful result-ledger formatting. Run
 `gradlew.bat :fabric:test --tests "*SichuanPresentationTest" --warning-mode fail --console=plain`.
-The focused real-client Sichuan smoke checks three-way lobby selection, the
-108-tile subset, private declarations, NBT restoration, seated and immersive
+The focused real-client Sichuan smoke checks three-way lobby selection,
+server-confirmed rule drafts and preset restoration, old-snapshot rejection,
+non-host/stale/incarnation payload rejection, the
+108-tile subset, private suit/first-discard declarations, NBT restoration, seated and immersive
 physical-tile selection and discard, exit
 voting, result screens, duplicate confirmation packets, next-hand privacy,
 eight-hand completion, shared-browser retrieval, Sichuan replay event/hand
@@ -172,6 +185,7 @@ gradlew.bat :fabric:runSmokeClient -PsmokeSichuan=true --warning-mode fail --con
 
 Inspect the fresh marker in `fabric/build/smoke/sichuan-evidence`. This focused
 profile runs assertions without captures. Add
+`-PsmokeScreenshots=sichuan-rules.png` for the rule editor, or
 `-PsmokeScreenshots=sichuan-table.png,sichuan-results.png` for table and hand-result
 changes, or `-PsmokeScreenshots=sichuan-replay.png,sichuan-replay-settlement.png`
 for the affected replay states.

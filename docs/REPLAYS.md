@@ -91,7 +91,11 @@ slots. MCR hands seal all 144 physical wall slots, both dice rolls, the break,
 raw opening hands, flower replacements, actions, penalties and settlement.
 Sichuan hands seal all 108 physical wall slots, both dice, dealer, starting
 cumulative scores, initial hands, void suits, every accepted choice, public
-events, the complete settlement ledger and ending cumulative scores. MCR and
+events, the complete settlement ledger and ending cumulative scores. Secret
+first-discard selections are physical tile choices in the decisions; playback
+enforces the binding. Sichuan rules and fan names distinguish MIL SBR from T/TFMJ.
+Running recipient views hide other players' selections until the tile is played.
+MCR and
 Sichuan playback reexecutes the recorded decisions against their respective
 rules, checking every event and settlement rather than storing view snapshots. The
 archive contains completed hands without an RNG seed; live views never expose a

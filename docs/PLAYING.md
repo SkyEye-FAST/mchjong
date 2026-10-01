@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-MChjong features three- and four-player riichi mahjong and four-player MCR on
+MChjong features three- and four-player riichi mahjong, four-player MCR and Sichuan on
 automatic tables. See
 [Rules and presets](RULES.md) for available presets and custom settings.
 
@@ -77,6 +77,22 @@ and clocks; returning to a retained table resumes the remaining time.
 Settlement shows localized fan names and payments. The next hand starts after all
 four confirmations or ten seconds, retaining the chosen view. The match ends
 after the sixteenth hand.
+
+### Automatic-table Sichuan
+
+Select Sichuan, seat four humans and supply a uniform case covering the 108 suited
+tiles and a cloth. The host chooses MIL SBR 2025 or T/TFMJ 01—2024 in the rule
+editor before everyone presses Ready. Both run an eight-hand match.
+
+With MIL SBR, select a hand tile and confirm the void-suit action to secretly bind
+its suit and that physical tile as your first discard. A naturally absent suit
+has a suit-only action and binds no tile. All four void suits appear together;
+other players cannot see the bound tile before it is discarded. T/TFMJ asks only
+for the suit. Draws are automatic; calls, wins and discards use issued actions.
+Results retain the selected preset's fan names and payments. Confirm the next
+hand or wait ten seconds; the eighth hand shows cumulative standings.
+See [Sichuan rule contracts](ARCHITECTURE.md#sichuan-match-orchestration)
+for settlement differences and [Replays](REPLAYS.md) for recorded selections.
 
 ## Point-stick payments
 

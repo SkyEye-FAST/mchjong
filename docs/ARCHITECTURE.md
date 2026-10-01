@@ -241,15 +241,27 @@ construction enforces concealed-data redaction, so private state is not a valid
 view document. Snapshot revision reflects partial-response changes without
 invalidating the other players' shared decision token.
 
-## Sichuan SBR match orchestration
+## Sichuan match orchestration
 
 `SichuanSession` owns a four-human room, the explicit `SichuanRules` contract,
 physical stock, independent decision clocks and one `SichuanGame`. `SichuanPreset.SBR_2025`
 uses MIL 四川麻将（SBR）竞赛规则（试行 2025 版） for play, fan, draw checks
-and penalties, with explicit T/TFMJ 01—2024 selections described below. The preset
-caps basic value at three fan, adds one base point for self-draw and distinguishes
-timely from delayed added kongs. A physical quad contributes one `ROOT` in the
-winning hand independently of its immediate kong payment.
+and penalties. `TFMJ_2024` separately selects T/TFMJ 01—2024. Both presets
+cap basic value at three fan, add one base point for self-draw and distinguish
+timely from delayed added kongs. MIL scores declared quads as `KONG` and
+undeclared fours as `ROOT`; T/TFMJ scores both as `ROOT` (带根). Each contributes
+one fan independently of its immediate kong payment.
+
+`SichuanRoomSettings` publishes the complete authoritative `SichuanRules`, clock
+settings and world-policy editing permission in every room snapshot, including
+the lobby where `SichuanSession.view` remains null. Preset identity is derived by
+exact equality with either preset; changing any field displays Custom, and restoring
+all preset values restores its label. The engine always reads the complete rules,
+never the preset name. `SichuanRuleOption` supplies only field bounds, boolean or
+integer type, translation keys and Basic / Kongs / Draw & settlement groups.
+`SichuanRulesScreen` opens from the lobby, keeps an apply/cancel draft and uses
+explicit server replies for confirmation. Guests can inspect but not edit rules.
+It paginates option rows and shows short descriptions with the shared UI widgets.
 
 ### Rule clauses, implementation and regression ownership
 
@@ -261,25 +273,30 @@ All regression names below belong to `SichuanGameTest`.
 
 | Clause | Selected implementation | Regression |
 | --- | --- | --- |
-| MIL Art. 10(1); T/TFMJ 9.3.3 | `transferKongs` selects T/TFMJ call transfer, including consecutive settled kongs. Winners share equally, rounded upward; the shooter supplies rounding. Each transfer links its source receipt. MIL specifies a shooting-kong refund without transfer. | `consecutiveKongsTransferTheWholeChainToMultipleWinners`, `multipleWinnersShareKongIncomeAndShooterSuppliesIntegerRounding` |
-| MIL Art. 10(2); T/TFMJ 10.1 | `SichuanHandAnalyzer` selects the unified root for four identical owned tiles, including quads. MIL separates kong and un-konged root; each contributes one fan. Pungs and golden single wait add; flush and seven pairs contribute two each; circumstances contribute one each. | `rootsIncludePhysicalKongsAndGoldenSingleWaitAddsToAllPungs`, `scoringIncludesQuadPairsAndKongsWithoutRiichiSemantics`, `basicFlushAndSituationalFanHaveIndependentValues` |
+| MIL Art. 5(6); T/TFMJ 7.4(c) | `eastWestLongWall=true` gives East/West 14 stacks and North/South 13 (MIL); `false` reverses them (T/TFMJ). Saved openings, dice traversal and client geometry use the same parameter. | `presetsUseTheirOwnWallLayoutAcrossEveryDealerAndDiceCut` |
+| MIL Art. 10(1); T/TFMJ 9.3.3 | `transferKongOnShoot=false` refunds only the shooting kong's receipts to their original payers (MIL). `true` transfers the whole settled consecutive chain to winners (T/TFMJ), sharing equally with the shooter supplying integer rounding. | `milShootingRefundsOnlyTheLastKongAndNeverTransfersOrRefundsTwice`, `consecutiveKongsTransferTheWholeChainToMultipleWinners`, `multipleWinnersShareKongIncomeAndShooterSuppliesIntegerRounding` |
+| MIL Art. 10(2); T/TFMJ 10.1 | `separateKongFan=true` distinguishes MIL `KONG` and `ROOT`; `false` uses T/TFMJ 带根 for both. Their fan totals agree; recorded patterns plus rules preserve the distinction, and settlement/replay labels use 根、杠 or 带根 accordingly. | `milSeparatesRootsAndKongsWhileTfmjCountsBothAsRoots`, `scoringIncludesQuadPairsAndKongsWithoutRiichiSemantics`, `basicFlushAndSituationalFanHaveIndependentValues` |
+| MIL Art. 6(2) | `selectFirstDiscard=true` uses concealed tile indication: suit and owned first-discard identity are submitted together. Heavenly void has no bound tile. T/TFMJ uses suit selection only. | `milFirstDiscardIsSecretPhysicalChoiceAndSurvivesDrawAndRestore`, `heavenlyVoidHasNoBoundDiscardAndTfmjOnlySelectsTheSuit` |
+| MIL Art. 10(2), fan ⑧–⑨ | `addedKongAfterKongIsShoot=true` makes a winning claim on another added kong after replacement a shooting win with that kong complete and unpaid. T/TFMJ retains robbery with the pung intact. | `milAddedKongAfterReplacementIsShootingAndTfmjKeepsRobbery` |
 | MIL Art. 10(1), (2) | Only completed timely added kongs collect income. Robbery retains the pung and awards robbery, distinct from a shooting discard. | `timelyAddedKongChargesEachActivePlayerButDelayedAddedKongIsFree`, `addedKongChainsIncludeOnlySettledIncomeAndRobberyIsNotAShootingDiscard` |
 | MIL Art. 4; T/TFMJ 9.3.5 | `passedFan` compares capped fan, including declined self-draws. Drawing or becoming non-ready clears the restriction. Comparing capped rather than raw pattern fan is the declared interpretation of the fan-comparison wording. | `passedWinsBlockSameFanUntilDrawingAndSurviveRestore` |
 | MIL Art. 10(3), Art. 11 | `readyValue` maximizes structural value without win circumstances. Natural flower pigs are not ready. Active flower pigs lose 24 competition points, stop winning, refund retained kong income and can call for readiness. Sanctioned ready hands neither pay nor collect ready payments. | `finalTileChecksPassiveFlowerPigsAndMaximumReadyValue`, `maximumReadyValueExcludesWinCircumstancesAndSanctionedReadyPigCannotCollect`, `drawPaymentsUseTheRecipientsLargestStructuralWinRatherThanLastTileBonus` |
 | MIL Art. 10(1); T/TFMJ 9.3.4, 10.2.1 | `refundKongs` refunds retained non-ready receipts at exhaustion, including natural flower pigs; ready players and winners retain theirs. Transferred receipts are consumed. Retrospective recovery of previously transferred payments is not explicit in T/TFMJ; this table treats completed transfers and rounding charges as final. | `exhaustiveDrawChargesActiveFlowerPigsAndRefundsNotReadyKongs`, `exhaustiveChecksRetainReadyKongsAndDoNotRefundAlreadyTransferredIncome` |
 | MIL Art. 9; T/TFMJ 3.4, 9.4, 10.2.1(c) | All simultaneous winners retire. Three winners finish without draw checks. First winner deals next; simultaneous first winners select their supplier; no winner retains the dealer. | `multipleWinsKeepOnePhysicalTileAndFinishAtThree`, `thirdWinnerEndsWithoutDrawChecksOrKongRefundsEvenForTheLastNonReadyPlayer`, `firstWinnerDealsNextAndNoWinRetainsDealerWithFreshVoiding` |
-| MIL event-method provision; T/TFMJ 7.3.1–7.3.2 | The preset selects the eight-hand count-based match, with explicit `matchHands`. Decision clocks and result-reading time belong to the session. | `eightHandsRetainLedgerDerivedTotalsAndOnlyFinalHandEndsMatch`, `allHumanConfirmationsAdvanceOnceAndMatchEndIsTerminalForTheSession` |
+| MIL Art. 5(2), Art. 4(5); T/TFMJ 7.3.1–7.3.2 | Both presets use `matchHands=8`. MIL leaves the event length to its competition regulations; T/TFMJ explicitly permits eight hands or a time limit, with organizer overrides. Decision clocks and result-reading time belong to the session. | `eightHandsRetainLedgerDerivedTotalsAndOnlyFinalHandEndsMatch`, `allHumanConfirmationsAdvanceOnceAndMatchEndIsTerminalForTheSession` |
 
 ### Match and settlement boundaries
 
 `Tile.sichuanSet()` contains four physical copies of each suited kind, 108 in all.
 `SichuanDeck` admits a uniform subset from a single case without modifying it.
-`SichuanWall` and `SichuanWallLayout` own the 14/13/14/13-stack opening, dice cut,
+`SichuanWall` and `SichuanWallLayout` own the rule-selected 14/13/14/13 (MIL) or
+13/14/13/14 (T/TFMJ) stack layout, dice cut,
 dealer jump tile, clockwise wall traversal and front-end kong replacement. The
 initial deal enters simultaneous concealed void-suit selection directly. All
-choices become public together when `VOIDING` completes.
+void suits become public together when `VOIDING` completes. A bound first discard
+stays private until played and must be used even after a draw or intervening call.
 
-`SichuanPlayerState` stores void suit, concealed tiles, melds, river, drawn tile,
+`SichuanPlayerState` stores void suit, bound physical first discard, concealed tiles, melds, river, drawn tile,
 passed-win fan and retirement. `SichuanAction` is an independent issued-action
 contract. Its legal-actions layer admits void-suit discards first, permits pung
 and kong only in the other suits, and requires the void suit to be cleared before
@@ -319,14 +336,14 @@ lifecycle authority rather than `SichuanAction`. Only `MATCH_END` sets the room 
 
 `SichuanCodec` encodes explicit game/session saves separately from recipient views,
 requiring complete typed records and bounding size and nesting. Restoration checks
-all 108 physical identities, melds, pending reactions, winner scores and payment
-links, then refreshes decision and incarnation authority. Game format is 2 and
-session format is 3, with complete typed fields, an 8 MiB document bound and sixteen nesting
+all 108 physical identities, melds, first-discard binding, pending reactions, winner scores and payment
+links, then refreshes decision and incarnation authority. Game format is 3 and
+session format is 4, with complete typed fields, an 8 MiB document bound and sixteen nesting
 levels. Hand number, current dealer, completed ledgers, current result, future-wall
 seed, partial confirmations and remaining reading time survive saves. Restoration
 derives cumulative scores without paying again and validates the dealer chain.
 Partial declarations and reactions, front-wall cursor, clock reserves and the
-whole consecutive-kong context also survive saves.
+rule-selected last-kong or consecutive-kong context also survive saves.
 `SichuanView` hides opponent hands, private declarations and wall identities;
 concealed kongs show their middle tiles, and winning hands remain concealed until
 hand completion. The view publishes hand number, dealer and cumulative scores,
@@ -339,7 +356,7 @@ in order: win methods and fan patterns, kong payments, linked call transfers and
 top-ups, refunds, ready checks and flower-pig deductions. It displays both the
 hand delta and cumulative score. `HAND_END` provides an authenticated next-hand
 button, confirmation count and paused-aware reading countdown; `MATCH_END`
-provides eight-hand cumulative standings and the issued return-to-lobby control.
+provides configured-match cumulative standings and the issued return-to-lobby control.
 
 ### Shared rooms and rule sessions
 
@@ -488,6 +505,18 @@ editor shows options, read-only details and custom settings separately. The view
 payload adds six public red-stock capability bits (three compositions for each
 player count), not box contents. The server independently authorizes every
 proposed red composition against stock.
+
+`SichuanRulesPayload` carries all thirteen bounded Sichuan fields, table UUID,
+incarnation and lobby decision. All three loaders route it through the shared
+reach and participant authorization boundary to `SichuanSession.configureRules`.
+Only the host can change rules before play, subject to world custom-rule policy;
+stale decisions, old incarnations and running-match edits are rejected without
+changing state. Accepted changes clear everyone's readiness and advance the room
+decision. Existing session saves retain the full rules through lobby and match
+restoration. `SichuanViewPayload` always carries room settings alongside an
+optional redacted match view; the client atomically accepts settings with the
+room revision and rejects disagreement with active match rules. Lobby, table
+and receipt screens use these server-confirmed values, never a local draft.
 
 Survival components, atomic box transformations and component-preserving recipes
 live in `common/item` and `common/recipe`. `TableEquipment` stores two internal case
@@ -864,7 +893,8 @@ completed-hand types, and exactly one payload matches the selected variant.
 MCR and Sichuan record complete physical openings and accepted server decisions,
 then reconstruct read-only event frames by executing their own game rules and
 checking each event. `SichuanReplayHand` seals the 108 physical wall slots, dice
-and dealer, starting cumulative scores, initial hands, void suits, issued choices,
+and dealer, starting cumulative scores, initial hands, void suits, issued choices
+(including each secret physical first-discard selection),
 public events, complete settlement ledger and ending cumulative scores. Its hand
 chain checks dealer succession and cumulative scores independently of live views.
 `SichuanSession` retains sealed hands throughout the match and queues the completed
