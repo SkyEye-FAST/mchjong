@@ -181,7 +181,8 @@ class McrBotTest {
         assertEquals(age + 1, session.save().age());
     }
 
-    @Test @Timeout(30) void oneHumanAndThreeBotsFinishAllSixteenHands() {
+    // Full-match lifecycle coverage, not a hardware-dependent Bot speed benchmark.
+    @Test @Timeout(120) void oneHumanAndThreeBotsFinishAllSixteenHands() {
         var session = lobby();
         room(session, RoomAction.Type.FILL_BOTS);
         start(session);
