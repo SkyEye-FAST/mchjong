@@ -8,7 +8,6 @@ import net.minecraft.client.gui.Font;
 import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.client.renderer.texture.OverlayTexture;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -27,11 +26,29 @@ public final class RiichiIndicator {
         return DIGITS[character - '0'];
     }
 
-    public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
+    /** The machine housing remains visible even before a match snapshot exists. */
+    public static void renderStandby(PoseStack pose, MultiBufferSource buffers, int light) {
+        housing(pose, buffers, light);
+        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
+        for (int seat = 0; seat < 4; seat++) {
+            pose.pushPose();
+            pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
+            TileMesh.box(pose, vertices, -.15f, SURFACE, .166f, .15f, SURFACE + .001f, .244f, 0xff22383d, light);
+            panel(pose, vertices, -.14f, .237f, .14f, .242f, 0xff405052, light);
+            pose.popPose();
+        }
+    }
+
+    private static void housing(PoseStack pose, MultiBufferSource buffers, int light) {
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
         TileMesh.box(pose, vertices, -.265f, (float) TableGeometry.FELT_Y, -.265f,
             .265f, SURFACE - .004f, .265f, 0xff243c40, light);
         TileMesh.box(pose, vertices, -.25f, SURFACE - .004f, -.25f, .25f, SURFACE, .25f, 0xff101e23, light);
+    }
+
+    public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        housing(pose, buffers, light);
+        var vertices = buffers.getBuffer(TileRenderTypes.FACES);
         boolean playing = view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();

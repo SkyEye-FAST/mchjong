@@ -21,6 +21,8 @@ public final class MahjongTableRenderer implements BlockEntityRenderer<MahjongTa
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, light, table.wood(), table.equipment().hasCloth() ? table.equipment().clothColor() : null,
             table.getBlockState().is(top.skyeyefast.mchjong.world.MahjongContent.AUTO_TABLE));
+        if (table.automatic() && (table.clientRoom() == null || table.clientRoom().lobby()))
+            RiichiIndicator.renderStandby(pose, buffers, light);
         pose.popPose();
         if (table.clientVariant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN) {
             if (table.clientSichuanView() == null || table.clientSichuanDeck() == null) return;

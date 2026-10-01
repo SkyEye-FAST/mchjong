@@ -28,6 +28,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
+
 - Restore the Immersive view caption, separate lobby portraits from status text, use locale-appropriate phrasing and punctuation, reduce the stool inventory icon, and render furniture in both maid head slots with its full item textures and components.
 - Separate MIL SBR 2025 from T/TFMJ 01—2024: use each preset's wall layout, refund the SBR shooting kong instead of transferring its income, distinguish Kong and Root fan names, and preserve secret bound first-discard choices through play, saves and replays.
 - Keep MCR flowers and Riichi extracted norths in the same horizontal rail as hands and melds.

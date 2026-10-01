@@ -33,6 +33,20 @@ class FurnitureShapeTest {
         @Override public VertexConsumer setNormal(float x, float y, float z) { vertices.getLast().normal = new Vector3f(x, y, z); return this; }
     }
 
+    @Test void idleMachineRendersWithoutAMatchViewAndKeepsThePoseBalanced() {
+        var mesh = new Mesh();
+        var pose = new PoseStack();
+        var before = new org.joml.Matrix4f(pose.last().pose());
+        RiichiIndicator.renderStandby(pose, ignored -> mesh, 0);
+        assertFalse(mesh.vertices.isEmpty());
+        assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.position.isFinite()));
+        assertTrue(mesh.vertices.stream().allMatch(vertex -> Math.abs(vertex.position.x) <= .266f
+            && Math.abs(vertex.position.z) <= .266f));
+        assertEquals(16, mesh.vertices.stream().filter(vertex -> vertex.color == 0xff405052).count());
+        assertTrue(mesh.vertices.stream().noneMatch(vertex -> vertex.color == 0xffffd58a));
+        assertEquals(before, pose.last().pose());
+    }
+
     @Test void textureDensityAndComponentTintSurviveLongRails() {
         var mesh = new Mesh();
         FurnitureShape.box(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0xffb8c4a2, 0);
