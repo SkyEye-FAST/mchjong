@@ -92,6 +92,7 @@ public final class TableClientSmoke {
             require(org.lwjgl.glfw.GLFW.glfwGetInputMode(client.getWindow().getWindow(), org.lwjgl.glfw.GLFW.GLFW_CURSOR)
                 == org.lwjgl.glfw.GLFW.GLFW_CURSOR_NORMAL, "Smoke client confined or hid the desktop cursor");
             ticks++;
+            if (step == 43 || step == 44) client.options.keyShift.setDown(true);
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             // Presence checks wait through real server grace periods in each automatic room.
             if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8600 : 6600))
@@ -253,7 +254,8 @@ public final class TableClientSmoke {
                 }
             } else if (step == 31 && ticks - entered > 15) {
                 capture(client, "00-material-palette.png");
-                client.setScreen(new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
+                client.setScreen(paletteOnly ? new HeadEquipmentSmokeScreen(client.player)
+                    : new net.minecraft.client.gui.screens.inventory.InventoryScreen(client.player));
                 step = 16; entered = ticks;
             } else if (step == 16 && ticks - entered > 15) {
                 capture(client, paletteOnly ? "00-table-head.png" : "00-equipment-inventory.png");
@@ -286,7 +288,57 @@ public final class TableClientSmoke {
                 step = 17; entered = ticks;
             } else if (step == 39 && ticks - entered > 15) {
                 capture(client, "00-stool-head.png");
-                Files.writeString(output.resolve("PASS.txt"), "Material palette, native inventory items, and table and stool head-slot rendering passed.\n");
+                client.setScreen(null);
+                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                client.options.keyShift.setDown(true);
+                client.player.getInventory().selected = 8;
+                var id = client.player.getUUID();
+                client.getSingleplayerServer().execute(() -> {
+                    var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                    player.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, ItemStack.EMPTY);
+                    player.getInventory().selected = 8;
+                    player.teleportTo(player.serverLevel(), 1.4, 64, 2.31, 180, 11);
+                });
+                step = 43; entered = ticks;
+            } else if (step == 43 && ticks - entered > 30) {
+                require(client.level.noCollision(client.player), "Near-edge fixture intersects furniture");
+                require(client.player.isCrouching(), "Near-edge fixture is not sneaking: flying=" + client.player.getAbilities().flying + ", shift=" + client.player.isShiftKeyDown()
+                    + ", input=" + client.player.input.shiftKeyDown + ", pose=" + client.player.getPose()
+                    + ", pos=" + client.player.position() + ", screen=" + client.screen);
+                capture(client, "00-table-edge-sneaking.png");
+                client.player.setYRot(181);
+                client.player.yRotO = 181;
+                step = 44; entered = ticks;
+            } else if (step == 44 && ticks - entered > 10) {
+                capture(client, "00-table-edge-sneaking-shift.png");
+                client.options.keyShift.setDown(false);
+                client.player.getInventory().selected = 1;
+                var id = client.player.getUUID();
+                client.getSingleplayerServer().execute(() -> {
+                    var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
+                    player.setNoGravity(false);
+                    player.teleportTo(player.serverLevel(), .5, 64, 3.5, 180, 15);
+                    player.getInventory().selected = 1;
+                });
+                step = 45; entered = ticks;
+            } else if (step == 45 && ticks - entered > 20) {
+                capture(client, "00-table-first-person.png");
+                client.options.setCameraType(net.minecraft.client.CameraType.THIRD_PERSON_FRONT);
+                step = 46; entered = ticks;
+            } else if (step == 46 && ticks - entered > 20) {
+                capture(client, "00-table-third-person.png");
+                client.options.setCameraType(net.minecraft.client.CameraType.FIRST_PERSON);
+                client.setScreen(new FurnitureContextsSmoke());
+                step = 47; entered = ticks;
+            } else if (step == 47 && ticks - entered > 15) {
+                capture(client, "00-furniture-contexts.png");
+                var stand = new net.minecraft.world.entity.decoration.ArmorStand(client.level, 0, 0, 0);
+                stand.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD, new ItemStack(MahjongContent.TABLE_ITEM));
+                client.setScreen(new HeadEquipmentSmokeScreen(stand));
+                step = 48; entered = ticks;
+            } else if (step == 48 && ticks - entered > 15) {
+                capture(client, "00-armor-stand-head.png");
+                Files.writeString(output.resolve("PASS.txt"), "Furniture palette, player HEAD, crouched table edge and item contexts passed.\n");
                 LOG.info("MCHJONG_PALETTE_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 17 && ticks - entered > 15 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxScreen) {

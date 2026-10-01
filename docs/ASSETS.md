@@ -249,8 +249,10 @@ component. Resource packs can replace these paths directly.
 transparent 256 × 256 default image. Replace it with an RGBA design to add a
 single pattern across the table's whole cloth, its folded item and the immersive
 table. Pattern colors are independent of the dyed fabric beneath; transparent
-pixels preserve the fabric. This layer is separate from the repeating `felt.png`
-material shared with stool upholstery.
+pixels preserve the fabric. On world and item cloth, `ClothTexture` composites
+the pattern, dyed weave and border into one opaque texture on resource reload.
+There is one top surface, with no depth-offset pattern polygons. The source
+pattern remains separate from the repeating `felt.png` used by stool upholstery.
 The block atlas explicitly stitches the wooden particle sprite through
 `assets/minecraft/atlases/blocks.json`; it does not duplicate the runtime textures.
 The table and stool block models contain opaque cuboids inside their visible meshes.
@@ -262,9 +264,18 @@ Tile inventory icons show a three-dimensional angled view with front lighting.
 bevels and a continuous mitered table rim, with outward normals and consistent
 pixel density of sixteen texels per world block. Coplanar polygons share local-space
 texture coordinates, keeping the grain continuous across subdivided caps.
+Base faces use explicit XY, ZY or XZ coordinates; diagonal walls use fixed
+tangents and bevel slopes keep the adjoining cap projection. Texture direction
+does not change when a box changes aspect ratio.
 Large material clusters, square fasteners, cushion tufts and ventilation slots
 remain readable at the seated camera distance. `FurnitureMesh` shares
-the resulting geometry between blocks and items. Ordinary tables have framed
+the resulting geometry between blocks and items. Furniture item JSON leaves
+display transforms neutral; `MahjongItemRenderer` owns GUI/FIXED, GROUND, both
+hand perspectives and HEAD placement. Native player, armor-stand and maid head
+layers receive the same centered upright model. The optional maid extension uses
+TLM's public layer callbacks to pass equipped furniture through native HEAD item
+rendering (TLM's own head layer handles only skulls). It follows the model's head
+locator and shares the item transform, without character-specific offsets. Ordinary tables have framed
 playing surfaces, beveled rails, tapered legs and stretchers; automatic tables
 have a metal pedestal, a low plinth, a brass band and ventilation slots. Stools
 have tapered wooden legs, stretchers, padded fabric and four tufts, with a

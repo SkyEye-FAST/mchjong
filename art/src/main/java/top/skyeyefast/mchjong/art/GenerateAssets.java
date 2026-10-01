@@ -137,8 +137,12 @@ public final class GenerateAssets {
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
         }
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
-            String rotation = name.equals("mahjong_tile") ? "[25,35,0]"
-                : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
+            if (name.endsWith("mahjong_table") || name.equals("mahjong_stool")) {
+                text("assets/mchjong/models/item/" + name + ".json",
+                    "{\"parent\":\"minecraft:builtin/entity\",\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"side\"}");
+                continue;
+            }
+            String rotation = name.equals("mahjong_tile") ? "[25,35,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.

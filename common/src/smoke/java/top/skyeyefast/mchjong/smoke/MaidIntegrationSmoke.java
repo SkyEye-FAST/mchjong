@@ -29,6 +29,8 @@ final class MaidIntegrationSmoke {
     private CompoundTag saved;
     private int maidSeat;
     private boolean capturedLobby;
+    private int headCapture;
+    private net.minecraft.client.gui.screens.Screen previousScreen;
     private CompletableFuture<Boolean> work;
 
     boolean tick(Minecraft client, BlockPos center, Path output) {
@@ -52,6 +54,24 @@ final class MaidIntegrationSmoke {
             }
             require(seated != null && seated.getVehicle() instanceof SeatEntity,
                 "Client maid lost its synchronized seat at step " + step);
+            if (step == 2 && headCapture < 4) {
+                require(seated.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(
+                    top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM), "Maid HEAD equipment did not synchronize");
+                if (headCapture == 0) {
+                    seated.getConfigManager().setChatBubbleShow(false);
+                    previousScreen = client.screen;
+                    client.setScreen(new HeadEquipmentSmokeScreen(seated));
+                } else if (headCapture == 1) {
+                    SmokeScreenshots.grab(output.toFile(), "maid-table-head.png", client.getMainRenderTarget(), ignored -> {});
+                    seated.setModelId("geckolib:winefox");
+                } else if (headCapture == 2) {
+                    SmokeScreenshots.grab(output.toFile(), "maid-gecko-table-head.png", client.getMainRenderTarget(), ignored -> {});
+                    seated.setModelId("touhou_little_maid:hakurei_reimu");
+                } else client.setScreen(previousScreen);
+                headCapture++;
+                stageTicks = 0;
+                return false;
+            }
             if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
                 "Default maid model name is not localized");
             if (step == 8) require(client.screen.width == 320 && client.screen.height == 240, "Maid small viewport is not 320x240");
@@ -95,6 +115,8 @@ final class MaidIntegrationSmoke {
                 maid.setTame(true, true);
                 maid.setRideable(false);
                 maid.setModelId("touhou_little_maid:hakurei_reimu");
+                maid.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                    new net.minecraft.world.item.ItemStack(top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM));
                 var stool = TableGeometry.stool(center, 1);
                 maid.moveTo(stool.getX() + 1.5, stool.getY(), stool.getZ() + .5, 90, 0);
                 maid.setSchedule(MaidSchedule.ALL);
@@ -123,7 +145,7 @@ final class MaidIntegrationSmoke {
                 top.skyeyefast.mchjong.engine.RiichiSession joined = table.participantSession(owner);
                 require(joined != null && joined.entityBot(maidId) && joined.seatOf(maidId) == seat.seat(),
                     "Maid mount and game membership differ");
-                require(joined.view(null).seats().get(seat.seat()).name()
+                require(joined.roomView(null).seats().get(seat.seat()).participant().name()
                     .equals("model.touhou_little_maid.hakurei_reimu.name"), "Maid model translation key was lost");
                 if (currentStep == 5) {
                     act(table, owner, RoomAction.Type.FILL_BOTS);

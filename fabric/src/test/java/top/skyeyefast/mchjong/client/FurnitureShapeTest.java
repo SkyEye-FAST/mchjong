@@ -37,11 +37,52 @@ class FurnitureShapeTest {
         var mesh = new Mesh();
         FurnitureShape.box(new PoseStack(), mesh, 0, 0, 0, 3, .25f, 2, 0xffb8c4a2, 0);
         assertEquals(24, mesh.vertices.size());
-        assertEquals(3, mesh.vertices.get(1).v);
+        assertEquals(3, mesh.vertices.get(1).u);
         assertEquals(0, mesh.vertices.get(0).u);
         assertEquals(3, mesh.vertices.get(9).u);
         assertEquals(2, mesh.vertices.get(8).v);
         assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.color == 0xffb8c4a2));
+    }
+
+    @Test void faceUvBasisDoesNotFlipWhenAspectRatioChanges() {
+        for (float height : new float[]{.99f, 1, 1.01f}) {
+            var mesh = new Mesh();
+            FurnitureShape.box(new PoseStack(), mesh, 0, 0, 0, 1, height, 1, -1, 0);
+            assertEquals(1, mesh.vertices.get(1).u);
+            assertEquals(height, mesh.vertices.get(2).v);
+        }
+    }
+
+    @Test void clothHasOneOpaqueTopWithoutNearCoplanarDecorations() {
+        var mesh = new Mesh();
+        FurnitureMesh.table(new PoseStack(), ignored -> mesh, 0,
+            top.skyeyefast.mchjong.item.FurnitureWood.OAK, net.minecraft.world.item.DyeColor.CYAN, true);
+        int feltTops = 0;
+        for (int i = 0; i < mesh.vertices.size(); i += 4) {
+            var vertex = mesh.vertices.get(i);
+            if (vertex.normal.y > .999 && vertex.position.y >= .925 && vertex.position.y < .95) {
+                assertEquals(.9375f, vertex.position.y, 1e-6);
+                feltTops++;
+            }
+        }
+        assertEquals(1, feltTops);
+        assertEquals(0xff123456, ClothTexture.over(0xff123456, 0));
+        assertEquals(0xffabcdef, ClothTexture.over(0xff123456, 0xffabcdef));
+    }
+
+    @Test void furnitureContextsHaveFiniteCenteredBoundsAndAnUprightHeadPose() {
+        for (boolean table : new boolean[]{false, true}) for (var context : net.minecraft.world.item.ItemDisplayContext.values()) {
+            var pose = new PoseStack();
+            MahjongItemRenderer.furniturePose(pose, context, table);
+            assertTrue(pose.last().pose().isFinite());
+            var base = pose.last().pose().transformPosition(new Vector3f());
+            var top = pose.last().pose().transformPosition(new Vector3f(0, 1, 0));
+            assertEquals(.5f, base.x, 1e-5);
+            if (context == net.minecraft.world.item.ItemDisplayContext.HEAD) {
+                assertEquals(.5f, base.z, 1e-5);
+                assertTrue(top.y > base.y, "Item-up maps to model-up through the native head layer");
+            }
+        }
     }
 
     @Test void bevelsAndTaperedLegsHaveFiniteOutwardNormalsInEveryOrientation() {

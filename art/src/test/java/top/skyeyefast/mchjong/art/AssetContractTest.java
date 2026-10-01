@@ -226,7 +226,9 @@ class AssetContractTest {
             JsonObject model = JsonParser
                     .parseString(Files.readString(resources.resolve("assets/mchjong/models/item/" + name + ".json")))
                     .getAsJsonObject();
-            assertTrue(model.getAsJsonObject("display").has("head"), name + " needs a head-slot transform");
+            if (name.endsWith("mahjong_table") || name.equals("mahjong_stool"))
+                assertFalse(model.has("display"), "Furniture context transforms belong to the shared renderer");
+            else assertTrue(model.getAsJsonObject("display").has("head"), name + " needs a head-slot transform");
         }
         for (String name : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool")) {
             JsonObject model = JsonParser

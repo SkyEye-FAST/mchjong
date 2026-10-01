@@ -13,6 +13,18 @@ import net.minecraft.world.entity.ai.behavior.BehaviorControl;
 
 /** Loaded through each maid mod's optional extension discovery, on both logical sides. */
 public class MaidExtension implements ILittleMaid {
+    @Override public void addAdditionMaidLayer(
+            com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.EntityMaidRenderer renderer,
+            net.minecraft.client.renderer.entity.EntityRendererProvider.Context context) {
+        top.skyeyefast.mchjong.compat.maid.client.MaidHeadItems.add(renderer);
+    }
+
+    @Override public void addAdditionGeckoMaidLayer(
+            com.github.tartaricacid.touhoulittlemaid.client.renderer.entity.GeckoEntityMaidRenderer<? extends net.minecraft.world.entity.Mob> renderer,
+            net.minecraft.client.renderer.entity.EntityRendererProvider.Context context) {
+        top.skyeyefast.mchjong.compat.maid.client.MaidHeadItems.add(renderer);
+    }
+
     @Override public void addMaidTask(TaskManager manager) { manager.add(new MaidMahjongTask()); }
 
     @Override public void registerTaskData(TaskDataRegister register) {
