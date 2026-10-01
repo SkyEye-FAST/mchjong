@@ -87,7 +87,7 @@ public final class SichuanRulesScreen extends Screen {
         pages = Math.max(1, (options.size() + rows - 1) / rows); page = Math.clamp(page, 0, pages - 1);
         for (int offset = 0; offset < rows && page * rows + offset < options.size(); offset++) {
             var option = options.get(page * rows + offset);
-            int top = 72 + offset * 54;
+            int top = 76 + offset * 54;
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
             labels.add(new Label(caption, description, contentLeft, top, contentWidth));
@@ -123,7 +123,7 @@ public final class SichuanRulesScreen extends Screen {
             loadConfirmed(); init();
         }).bounds(left, height - 30, buttonWidth, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
-            .bounds(left + buttonWidth + 4, height - 30, buttonWidth, 20).build().primary());
+            .bounds(left + buttonWidth + 4, height - 30 - MahjongUi.STEP, buttonWidth, 20).build().primary());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
             .bounds(left + 2 * (buttonWidth + 4), height - 30, buttonWidth, 20).build());
         updateControls();
@@ -167,8 +167,8 @@ public final class SichuanRulesScreen extends Screen {
         updateControls();
         int span = Math.min(540, width - 24), left = (width - span) / 2;
         MahjongUi.backdrop(graphics, width, height, 580);
-        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.scope.room").append(" › ").append(title),
-            left, 12, span, MahjongUi.ACCENT, false);
+        MahjongUi.titlePlaque(graphics, font, Component.translatable("settings.mchjong.scope.room").append(" › ").append(title),
+            left - MahjongUi.OFFSET, 7, span);
         var matched = SichuanPreset.match(draft);
         MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.preset",
             Component.translatable(matched == null ? "sichuan.mchjong.rules.custom" : matched.translationKey())), left, 40, span - 116, MahjongUi.TEXT, false);

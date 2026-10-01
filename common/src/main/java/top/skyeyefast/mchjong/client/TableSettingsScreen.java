@@ -93,7 +93,7 @@ public final class TableSettingsScreen extends Screen {
         page = Math.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            option.setY(60 + i * 22);
+            option.setY(62 + i * 22);
             addRenderableWidget(option);
         }
         if (pages > 1) {
@@ -113,7 +113,7 @@ public final class TableSettingsScreen extends Screen {
             VoicePresets.sendChoice();
         }).bounds(left, height - 30, column, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left + column + 6, height - 30, column, 20).build().primary());
+            .bounds(left + column + 6, height - 30 - MahjongUi.STEP, column, 20).build().primary());
     }
 
     private Button addToggle(String key, boolean enabled, Runnable toggle) {

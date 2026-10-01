@@ -114,6 +114,19 @@ uses a drop shadow for contrast.
 
 ## Layout and information hierarchy
 
+Use the shared `MahjongUi.STEP` / `OFFSET` / `OVERHANG` rhythm: 2 / 4 / 8
+logical pixels. Adjacent columns step by 0 / 2 / 4 pixels; title plaques extend
+4 pixels beyond the content edge, and primary lobby actions inset by 8 pixels.
+Category rails begin above their body heading; primary footer controls rise by
+2 pixels. Player plaques and action columns use the same steps, while automation
+and hint entrances keep separate edges. On the immersive canvas these steps
+follow the component's existing content scale. Do not add arbitrary offsets.
+Move the actual native rectangular widget bounds with its surface; preserve Tab
+order, narration and focus outlines. Never offset only the visible control.
+
+The receipt's point strip extends 4 logical pixels beyond the yaku body; its brass
+grade badge steps inward by 4 pixels. Reserve the final geometry before any reveal.
+
 Keep the title, body, supporting information and navigation visually distinct.
 Secondary screens use a centered panel over a subdued backdrop. In the table
 view, compact HUD cards belong near the edges so the physical hand stays clear.
@@ -238,7 +251,7 @@ round/remaining header. Their stick icons use fixed HUD artwork, independent of
 the selected point-stick preset. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
-on both text lines. Player cards begin at y=38 without a separate indicator row.
+on both text lines. Player cards begin at y=38 with the shared 0 / 2 / 4 pixel column steps and no separate indicator row.
 Respect the independent DEPOSITS and DORA preferences. Show a compact
 red-background, white-text furiten badge below
 the local player's card in either view. STATUS controls this recipient-only badge;

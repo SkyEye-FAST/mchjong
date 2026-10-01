@@ -17,8 +17,8 @@ record SettingsLayout(int left, int span, int rail, int height) {
     int paging() { return height - 56; }
     void paint(GuiGraphics graphics, Font font, int width, Component title, Component section) {
         graphics.fill(0, 0, width, height, MahjongUi.BACKDROP);
-        graphics.fill(left, 10, left + span, 32, MahjongUi.INPUT);
-        MahjongUi.text(graphics, font, title, left + 7, 17, span - 14, MahjongUi.TEXT, false);
-        MahjongUi.text(graphics, font, section, bodyLeft() + 6, 43, bodyWidth() - 12, MahjongUi.TEXT, true);
+        MahjongUi.panel(graphics, bodyLeft() - MahjongUi.OFFSET, 42, bodyWidth() + MahjongUi.OFFSET, paging() - 46);
+        MahjongUi.titlePlaque(graphics, font, title, left - MahjongUi.OFFSET, 10, span);
+        MahjongUi.text(graphics, font, section, bodyLeft() + 8, 46, bodyWidth() - 16, MahjongUi.ACCENT, false);
     }
 }

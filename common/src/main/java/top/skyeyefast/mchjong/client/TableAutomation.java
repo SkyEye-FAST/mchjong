@@ -76,7 +76,7 @@ final class TableAutomation {
         int toggleWidth = horizontal ? 36 : 20;
         int height = horizontal ? buttonHeight : count * 20 + (count - 1) * gap, top = bottom - height;
         int horizontalSpan = count * width + count * gap + toggleWidth;
-        int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8;
+        int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8 + MahjongUi.OFFSET;
         for (int index = 0; index < choices.size(); index++) {
             var choice = choices.get(index);
             String key = choice.key();
@@ -84,7 +84,7 @@ final class TableAutomation {
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
                 Component.translatable(enabled ? "options.on" : "options.off"));
             var button = new MahjongButton(origin + (horizontal ? index * (width + gap) : 0),
-                top + (horizontal ? 0 : index * (20 + gap)), width, buttonHeight, label, ignored -> {
+                top + (horizontal ? -MahjongUi.step(index) : index * (20 + gap)), width, buttonHeight, label, ignored -> {
                 if (pending || !available()) return;
                 pending = true;
                 choice.send().run();

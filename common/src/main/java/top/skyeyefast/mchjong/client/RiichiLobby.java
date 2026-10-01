@@ -40,7 +40,7 @@ final class RiichiLobby {
             if (!supplied) button.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.insufficient_reds")));
             buttons.add(button);
         }
-        var clock = button(Component.translatable("ui.mchjong.clock_settings"), left + 2 * (third + 4), y,
+        var clock = button(Component.translatable("ui.mchjong.clock_settings"), left + 2 * (third + 4), y + MahjongUi.STEP,
             span - 2 * (third + 4), () -> client.setScreen(new TableClockScreen(parent, settings.timeControl())));
         clock.active = host;
         buttons.add(clock);
@@ -48,7 +48,7 @@ final class RiichiLobby {
             left, y + 24, half, () -> client.setScreen(new RiichiRulesScreen(parent, room, settings, true)));
         preset.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help")));
         buttons.add(preset);
-        buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24, half,
+        buttons.add(button(Component.translatable("rules.mchjong.title"), left + half + 4, y + 24 + MahjongUi.STEP, half,
             () -> client.setScreen(new RiichiRulesScreen(parent, room, settings))).selected(settings.rules().custom()));
         var visibility = button(Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
             "settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))), left, y + 48, span,
@@ -61,7 +61,7 @@ final class RiichiLobby {
         var world = parent.worldPolicy();
         invite.active = member && (world == null || world.invitationsEnabled());
         buttons.add(invite);
-        buttons.add(button(Component.translatable("room.mchjong.participants"), left + half + 4, y + 72, half,
+        buttons.add(button(Component.translatable("room.mchjong.participants"), left + half + 4, y + 72 + MahjongUi.STEP, half,
             () -> client.setScreen(new RiichiSeatsScreen(parent))));
         int start = RoomLobbyControls.find(room, RoomAction.Type.BEGIN_SEATING, List.of());
         if (start < 0) start = RoomLobbyControls.find(room, RoomAction.Type.FILL_BOTS, List.of());
@@ -72,8 +72,10 @@ final class RiichiLobby {
         else if (host && room.seats().stream().allMatch(seat -> seat.participant().id() != null))
             label = parent.automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed";
         else label = "room.mchjong.wait_host";
-        var primary = button(Component.translatable(label), left, primaryY(height), span, () -> parent.sendRoom(room, index)).primary();
-        primary.setHeight(26);
+        var primary = button(Component.translatable(label), left + MahjongUi.OVERHANG, primaryY(height) - MahjongUi.STEP, span - 2 * MahjongUi.OVERHANG, () -> parent.sendRoom(room, index)).primary();
+        primary.setHeight(height < 300 ? 24 : 26);
+        if (height < 300 && settings.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE)
+            primary.setTooltip(Tooltip.create(Component.translatable("rules.mchjong.no_red_warning")));
         primary.active = index >= 0;
         buttons.add(primary);
         var service = parent.botService();

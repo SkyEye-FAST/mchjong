@@ -124,7 +124,7 @@ public final class McrTableScreen extends Screen {
         actionTop = actionY;
         for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {
             int index = choices.get(page * 4 + slot);
-            var button = new ActionButton(w - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * s,
+            var button = new ActionButton(w - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * s + MahjongUi.step(slot % 2) * s,
                 cell, 26 * s, game.actions().get(index), () -> send(view, index));
             button.active = !pending && !view.paused(); addRenderableWidget(button);
             decisionControls.add(button);
@@ -287,6 +287,7 @@ public final class McrTableScreen extends Screen {
             int cardWidth = immersive() ? 180 : Math.min(120, width / 3), x, y;
             if (immersive()) { var rect = TableCanvas.card(side); x = rect.left(); y = rect.top(); }
             else { x = side == 1 || side == 2 ? width - cardWidth - 8 : 8; y = side == 0 || side == 1 ? 82 : 54; }
+            if (!immersive()) y += MahjongUi.step(side);
             var player = view.game().seats().get(seat); var participant = view.participants().get(seat);
             int cardHeight = (immersive() ? 34 : 24) * s;
             g.fill(x, y, x + cardWidth, y + cardHeight, MahjongUi.PANEL);
@@ -346,7 +347,7 @@ public final class McrTableScreen extends Screen {
         hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half),
             38, scale);
         hints.setX(uiWidth() - 30 * scale);
-        hints.setY(uiHeight() - 16 * scale);
+        hints.setY(uiHeight() - (16 + MahjongUi.OFFSET) * scale);
     }
 
     private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {

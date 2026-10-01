@@ -52,7 +52,7 @@ public final class McrLobbyScreen extends Screen {
         }
         RoomLobbyControls.variantButtons(pos, room, x, top + 32, 230, true).forEach(this::addRenderableWidget);
         if (minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) {
-            var hints = RoomLobbyControls.hintsButton(pos, room, x + 117, top + 78, 113, () -> { pending = true; rebuild(); });
+            var hints = RoomLobbyControls.hintsButton(pos, room, x + 117, top + 78 + MahjongUi.STEP, 113, () -> { pending = true; rebuild(); });
             hints.active &= !pending;
             addRenderableWidget(hints);
             var clock = RoomLobbyControls.button(Component.translatable("ui.mchjong.clock_settings"), x, top + 78, 113,
@@ -77,7 +77,7 @@ public final class McrLobbyScreen extends Screen {
                 label = Component.translatable("room.mchjong.transfer_host",
                     room.seats().get(action.arguments().getFirst()).participant().name());
             var button = RoomLobbyControls.button(label, x + index % 2 * 117,
-                actionTop + index / 2 * 23, 113, () -> send(room, actionIndex));
+                actionTop + index / 2 * 23 + MahjongUi.step(index % 2), 113, () -> send(room, actionIndex));
             button.active = !pending;
             addRenderableWidget(button);
         }
@@ -100,7 +100,7 @@ public final class McrLobbyScreen extends Screen {
         MahjongUi.panel(graphics, (width - 246) / 2, top, 246, Math.min(246, height - 12));
         graphics.fill((width - 230) / 2, top + 1, (width + 230) / 2, top + 2, MahjongUi.ACCENT);
         TableRoomView room = room();
-        graphics.drawCenteredString(font, title, width / 2, top + 12, MahjongUi.TEXT);
+        MahjongUi.titlePlaque(graphics, font, title, (width - 246) / 2 - MahjongUi.OFFSET, top + 4, 158);
         if (room != null) {
             var stock = font.split(Component.translatable("mcr.mchjong.stock_hint"), 226);
             for (int line = 0; line < Math.min(2, stock.size()); line++)

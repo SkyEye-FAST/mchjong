@@ -32,8 +32,8 @@ public record TableCanvas(int screenWidth, int screenHeight, boolean immersive) 
 
     static ScreenRectangle card(int side) {
         return switch (side) {
-            case 1 -> new ScreenRectangle(1106, 108, 166, 48);
-            case 3 -> new ScreenRectangle(8, 108, 166, 48);
+            case 1 -> new ScreenRectangle(1106, 108 + MahjongUi.OVERHANG, 166, 48);
+            case 3 -> new ScreenRectangle(8 + MahjongUi.OFFSET, 108, 166, 48);
             case 2 -> new ScreenRectangle(557, 8, 166, 48);
             default -> new ScreenRectangle(12, 722, 180, 48);
         };

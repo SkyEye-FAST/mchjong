@@ -196,12 +196,12 @@ final class RiichiHud {
             boolean meldSummary = seated && settings.show(TableSettings.Information.MELDS) && !player.melds().isEmpty();
             int summaryWidth = meldSummary ? summaryTileWidth(player.melds(), seat, cardWidth - 10) : 0;
             int cardHeight = seatedCardHeight(meldSummary, summaryWidth);
+            top = 38 + MahjongUi.step(seat);
             if (board != null) {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
             }
             if (board != null && board.perspective()) {
-                graphics.fill(x + 5, top + 5, x + cardWidth + 5, top + cardHeight + 5, 0x44000000);
                 graphics.fill(x, top, x + cardWidth, top + cardHeight,
                     seat == view.viewerSeat() ? 0xc832554f : 0xb80c2024);
                 graphics.renderOutline(x, top, cardWidth, cardHeight,

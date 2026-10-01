@@ -119,7 +119,7 @@ public final class RiichiRulesScreen extends Screen {
         for (var section : Mode.values()) {
             var text = Component.translatable(section.key());
             addRenderableWidget(MahjongButton.create(text, ignored -> { mode = section; page = 0; init(); })
-                .bounds(left + section.ordinal() * (tabWidth + 4), 56, tabWidth, 20)
+                .bounds(left + section.ordinal() * (tabWidth + 4), 54 + MahjongUi.step(section.ordinal()), tabWidth, 20)
                 .tooltip(Tooltip.create(text)).build().selected(mode == section));
         }
         var groups = RiichiRuleOption.Group.values();
@@ -128,7 +128,7 @@ public final class RiichiRulesScreen extends Screen {
             var category = groups[i];
             var text = Component.translatable(category.translationKey());
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
-                .bounds(left + i * (groupWidth + 4), 80, groupWidth, 20)
+                .bounds(left + i * (groupWidth + 4), 80 + MahjongUi.step(i), groupWidth, 20)
                 .tooltip(Tooltip.create(text)).build().selected(group == category));
         }
         if (mode == Mode.PRESET) labels.add(new Label(Component.translatable(
@@ -141,7 +141,7 @@ public final class RiichiRulesScreen extends Screen {
         page = Math.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            int y = 108 + i * 24;
+            int y = 110 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())
@@ -220,7 +220,7 @@ public final class RiichiRulesScreen extends Screen {
             }
         }).bounds(left, height - 30, tabWidth, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
-            .bounds(left + tabWidth + 4, height - 30, tabWidth, 20).build().primary());
+            .bounds(left + tabWidth + 4, height - 30 - MahjongUi.STEP, tabWidth, 20).build().primary());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
             .bounds(left + 2 * (tabWidth + 4), height - 30, tabWidth, 20).build());
         updateControls();
@@ -286,7 +286,7 @@ public final class RiichiRulesScreen extends Screen {
         Component path = Component.translatable("settings.mchjong.scope.room").append(" › ").append(title);
         if (presetExpanded) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.mode.preset"));
         else if (draft.custom()) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.custom"));
-        MahjongUi.text(graphics, font, path, 12, 12, width - 24, MahjongUi.ACCENT, true);
+        MahjongUi.titlePlaque(graphics, font, path, Math.max(8, (width - 540) / 2 - MahjongUi.OFFSET), 7, Math.min(540, width - 16));
         if (presetExpanded) {
             int left = (width - Math.min(540, width - 24)) / 2;
             graphics.vLine(left + 5, 56, height - 58, MahjongUi.EDGE);

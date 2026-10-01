@@ -51,7 +51,7 @@ public final class SichuanLobbyScreen extends Screen {
                 () -> minecraft.setScreen(new SichuanRulesScreen(this, room, settings)));
             rules.active = !pending;
             addRenderableWidget(rules);
-            var hints = RoomLobbyControls.hintsButton(pos, room, left + (span + 4) / 2, 84, (span - 4) / 2,
+            var hints = RoomLobbyControls.hintsButton(pos, room, left + (span + 4) / 2, 84 + MahjongUi.STEP, (span - 4) / 2,
                 () -> { pending = true; rebuild(); });
             hints.active &= !pending;
             addRenderableWidget(hints);
@@ -78,7 +78,7 @@ public final class SichuanLobbyScreen extends Screen {
         for (int offset = 0; offset < capacity && page * capacity + offset < labels.size(); offset++) {
             int index = page * capacity + offset;
             var button = RoomLobbyControls.button(labels.get(index), left + offset % 3 * (cell + 4),
-                actionTop + offset / 3 * 23, cell, () -> { if (!pending) { pending = true; commands.get(index).run(); rebuild(); } });
+                actionTop + offset / 3 * 23 + MahjongUi.step(offset % 3), cell, () -> { if (!pending) { pending = true; commands.get(index).run(); rebuild(); } });
             button.active = !pending; addRenderableWidget(button);
         }
         if (pages > 1) {
@@ -93,7 +93,7 @@ public final class SichuanLobbyScreen extends Screen {
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, Math.min(464, width));
-        graphics.drawCenteredString(font, title, width / 2, 12, MahjongUi.TEXT);
+        MahjongUi.titlePlaque(graphics, font, title, (width - Math.min(440, width - 20)) / 2 - MahjongUi.OFFSET, 7, Math.min(440, width - 20));
         var table = table();
         if (table != null && table.clientTableRoom() != null) {
             TableRoomView room = table.clientTableRoom();

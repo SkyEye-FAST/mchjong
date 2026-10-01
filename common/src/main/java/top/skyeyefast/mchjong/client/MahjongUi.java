@@ -22,6 +22,18 @@ public final class MahjongUi {
     public static final int DANGER = 0xffa33232;
     public static final int ON_DANGER = 0xffffffff;
 
+    public static final int STEP = 2, OFFSET = 4, OVERHANG = 8;
+
+    /** Stable stepped columns, in logical pixels; input uses these same integer bounds. */
+    public static int step(int column) { return Math.floorMod(column, 3) * STEP; }
+
+    public static void titlePlaque(GuiGraphics g, Font font, Component title, int x, int y, int span) {
+        int width = Math.min(span, font.width(title) + 16);
+        g.fill(x, y, x + width, y + 18, INPUT);
+        g.fill(x, y, x + STEP, y + 18, ACCENT);
+        text(g, font, title, x + 8, y + 5, width - 14, TEXT, false);
+    }
+
     private MahjongUi() {}
 
     public static void panel(GuiGraphics g, int x, int y, int width, int height) {
