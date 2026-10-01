@@ -9,6 +9,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Give the MCR Bot gradual, public-copy-aware eight-fan route evaluation for discards and calls, preserving viable scoring structures instead of pursuing tile efficiency alone.
 - Run ledger-scored eight-hand Sichuan matches with dealer succession, explicit draw checks and persistent session hand advancement.
 - Redraw Kanto, Sichuan, Taiwan and Fujian tile faces, remove retired external source notices for the redrawn presets, and supply the regional presets as individual transparent PNG engravings for the shared atlas generator.
 - Share the immersive canvas and seated camera controls between Riichi and MCR, with separate rule-specific scenes and explicitly named Riichi presentation components.

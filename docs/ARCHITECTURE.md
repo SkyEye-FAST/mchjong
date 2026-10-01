@@ -397,11 +397,14 @@ Session saves retain decision age, remaining move
 allowances, hand reserves and confirmations alongside the pending game decision.
 
 `McrBot` consumes only its own `McrView` and selects an issued action index.
-`McrHandAnalyzer.analyze` adapts the library's shanten and effective-tile analysis,
-with physical-ID deduplication of owned and public tiles. Discards compare shanten,
-remaining effective copies, effective kinds and then physical ID. Calls require
-strict improvement after the best mandatory discard; kong evaluation conservatively
-checks publicly possible replacements. The session schedules bots after twelve ticks,
+`McrHandAnalyzer.analyze` adapts the library's regular/special-form shanten and
+effective-tile analysis, with physical-ID deduplication of owned and public tiles.
+`McrBotRoutes` adds gradual, copy-aware eight-fan targets constrained by fixed melds;
+the existing scorer validates regular targets and live qualifying waits. Discards
+combine route feasibility/retention, shanten and effective tiles, allowing at most
+one shanten of retreat. Calls require strict improvement under the same evaluation
+after the best mandatory discard; kongs check a guaranteed continuation across
+publicly possible replacements. The session schedules bots after twelve ticks,
 without charging their clocks, and retains the same delay across partial responses
 and saves. Shared `allowBots` policy controls preparation; active matches retain
 their roster. See [Bot analysis](BOTS.md#mcr-built-in-opponent).

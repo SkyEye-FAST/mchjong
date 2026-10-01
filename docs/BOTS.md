@@ -8,15 +8,34 @@ three Bots. See [Rooms](ROOMS.md#mcr-bot-rooms) for preparation and pause contro
 
 `McrBot` receives only its own recipient-safe `McrView`. The engine supplies
 minimum-fan qualification for issued win actions; qualifying wins take priority.
-Discard analysis uses `McrHandAnalyzer` and the library's structural shanten and
-effective tiles, ranking lower shanten, more visible remaining effective copies,
-then more effective kinds. Equal discards use the lowest physical tile ID.
-Availability deduplicates owned tiles, public rivers, exposed melds and the offered
-tile. Concealed opponents and wall identities never enter evaluation.
+Discard analysis combines `McrHandAnalyzer`'s structural shanten and effective
+tiles with `McrBotRoutes`' gradual evidence for reaching eight non-flower fan.
+The library supplies special-form distances; copy-consuming targets cover seven
+pairs, thirteen orphans, lesser/greater honors and knitted tiles, knitted straight,
+pungs, half/full flush, outside/terminal hands, pure straight, pure shifted/triple
+chows, pure shifted pungs, mixed shifted/triple chows, mixed straight, all types
+and upper/middle/lower tiles. Fixed melds occupy actual slots and restrict shapes.
+Missing copies discount each route continuously; an exhausted indispensable kind
+excludes its target. Alternatives compete rather than adding hypothetical fan.
+Regular targets are confirmed by the existing scorer for each missing kind that
+could finish the hand, so an unrelated retained pair cannot invent a wait bonus.
+Six-fan routes need a scorer-confirmed companion or concealed-hand contribution.
+Near readiness, ordinary discard/self-draw waits are scored with current winds,
+without assuming flowers, last-tile or kong bonuses.
 
-Chows and pungs require a strict improvement after their best mandatory discard.
-Kongs require improvement even after comparing the best discard for each publicly
-possible replacement kind. Equal outcomes retain the existing hand. The server
+A decision reconstructs a preferred route from its retained structure. Route
+feasibility and retention can outweigh wider raw effective tiles or a one-shanten
+retreat; larger discard retreats are excluded. Equal evaluations use the lowest
+physical tile ID. Availability deduplicates owned tiles, public rivers, exposed
+melds and the offered tile. Concealed opponents and wall identities never enter
+evaluation. Route fitting uses a bounded beam and a missing-copy cutoff; its
+feasibility is heuristic evidence, not a calibrated probability or an exhaustive
+search of every winning hand.
+
+Chows and pungs use the same evaluation after their best mandatory discard and
+require strict improvement over passing. Kongs must improve a guaranteed
+continuation that discards the replacement, accounting for the consumed copy of
+every publicly possible replacement kind. Equal outcomes retain the existing hand. The server
 waits twelve ticks before Bot decisions, while the session also owns automatic
 draws and flower replacements. Bot actions and completed-hand confirmations share
 the normal room pause, exit and persistence lifecycle.

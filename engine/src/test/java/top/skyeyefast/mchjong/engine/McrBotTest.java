@@ -48,7 +48,16 @@ class McrBotTest {
         discardKind(ready, 0, "5m");
         assertTrue(has(ready, 1, CHOW));
         assertFalse(ready.view(1).qualifyingWin());
-        assertEquals(PASS, choice(ready, 1).type(), "An equal post-discard shape is not progress");
+        assertEquals(CHOW, choice(ready, 1).type(), "A call can retain shanten and establish a qualifying wait");
+        assertTrue(ready.act(1, ready.decision(), McrBot.choose(ready.view(1))));
+        passAll(ready);
+        assertEquals(Tile.parseKind("9s"), Tile.kind(choice(ready, 1).tiles().getFirst()));
+        assertTrue(ready.act(1, ready.decision(), McrBot.choose(ready.view(1))));
+        int six = Tile.parseKind("6s") * 4;
+        while (ready.hand(1).contains(six)) six++;
+        assertTrue(McrHandAnalyzer.score(ready.hand(1), ready.melds(1), 1, six,
+            new McrWinContext(McrWinContext.Method.SELF_DRAW, Tile.SOUTH, Tile.EAST, false,
+                McrWinContext.KongWin.NONE, false, 0)).meetsMinimum());
         var advancing = fixed(3, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "46m123789p12s112z").build());
         discardKind(advancing, 0, "5m");
@@ -73,11 +82,14 @@ class McrBotTest {
         assertEquals(Tile.parseKind("3s"), Tile.kind(visible.actions().get(McrBot.choose(visible)).tiles().getFirst()));
     }
 
-    @Test void kongsWithoutGuaranteedProgressKeepTheExistingShape() {
+    @Test void kongsRequireGuaranteedEfficiencyOrFanProgress() {
         var concealed = fixed(14, new Fixture().hand(0, "1111m123456p78s22z")
             .tail(0, Tile.parseKind("9s")).build());
         assertTrue(has(concealed, 0, CONCEALED_KONG));
-        assertEquals(DISCARD, choice(concealed, 0).type());
+        assertEquals(CONCEALED_KONG, choice(concealed, 0).type());
+        assertTrue(concealed.act(0, concealed.decision(), McrBot.choose(concealed.view(0))));
+        assertTrue(concealed.view(0).qualifyingWin());
+        assertEquals(WIN, choice(concealed, 0).type());
         var exposed = fixed(13, new Fixture().hand(0, "279m147p258s2345z5m")
             .hand(1, "555m123456p78s11z").tail(0, Tile.parseKind("9s")).build());
         discardKind(exposed, 0, "5m");

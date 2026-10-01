@@ -133,7 +133,13 @@ object McrHandAnalyzer {
         McrMahjong.shanten(hand(concealed, melds, owner))
 
     @JvmRecord
-    data class Progress(val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int)
+    data class Progress(val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int,
+                        val forms: List<FormProgress>)
+
+    enum class Form { REGULAR, SEVEN_PAIRS, THIRTEEN_ORPHANS, HONORS_AND_KNITTED_TILES, KNITTED_STRAIGHT }
+
+    @JvmRecord
+    data class FormProgress(val form: Form, val shanten: Int, val effectiveKinds: Set<Int>, val remainingCount: Int)
 
     /** Known tiles exclude the supplied hand/melds, including any proposed discard. */
     @JvmStatic
@@ -141,7 +147,12 @@ object McrHandAnalyzer {
         unique(concealed + melds.flatMap { it.tiles() } + visible)
         val analysis = McrMahjong.analyze(hand(concealed, melds, owner), visible.map(::libraryTile))
         return Progress(analysis.shanten, java.util.Collections.unmodifiableSet(analysis.effectiveTiles
-            .filter { it.remainingCopies > 0 }.map { kind(it.tile) }.toSortedSet()), analysis.remainingCount)
+            .filter { it.remainingCopies > 0 }.map { kind(it.tile) }.toSortedSet()), analysis.remainingCount,
+            java.util.Collections.unmodifiableList(analysis.forms.map { form ->
+                FormProgress(Form.valueOf(form.form.name), form.shanten,
+                    java.util.Collections.unmodifiableSet(form.effectiveTiles.filter { it.remainingCopies > 0 }
+                        .map { kind(it.tile) }.toSortedSet()), form.remainingCount)
+            }))
     }
 
     /** Structural waits as engine kinds; excludes fifth copies already owned in hand/melds. */
