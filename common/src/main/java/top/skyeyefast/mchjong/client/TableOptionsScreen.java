@@ -8,8 +8,9 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
 /** Scope navigation. Administrator edits use the server's permission-checked world commands. */
-public final class RiichiOptionsScreen extends Screen {
-    private final RiichiTableScreen parent;
+public final class TableOptionsScreen extends Screen implements TableChildScreen {
+    private final Screen parent;
+    private final net.minecraft.core.BlockPos pos;
     private int tab = 1;
     private int page;
     private int pages = 1;
@@ -25,24 +26,29 @@ public final class RiichiOptionsScreen extends Screen {
             return new Entry(Component.translatable(key + ".label"), value, null, enabled, action);
         }
         Component message() {
-            return value.getString().equals("›") ? label : Component.translatable("settings.mchjong.toggle", label, value);
+            return value.getString().equals("›") ? label : Component.translatable("settings.mchjong.toggle", label,
+                checked == null ? value : Component.translatable(checked ? "options.on" : "options.off"));
         }
     }
 
-    public RiichiOptionsScreen(RiichiTableScreen parent) {
+    public TableOptionsScreen(Screen parent, net.minecraft.core.BlockPos pos) {
         super(Component.translatable("settings.mchjong.scopes"));
         this.parent = parent;
+        this.pos = pos.immutable();
     }
-    public RiichiTableScreen tableScreen() { return parent; }
+    @Override public Screen parent() { return parent; }
+    public net.minecraft.core.BlockPos tablePos() { return pos; }
+    private top.skyeyefast.mchjong.world.MahjongTableBlockEntity table() {
+        return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table ? table : null;
+    }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
-        var room = parent.room();
-        var settings = parent.roomSettings();
-        var world = parent.worldPolicy();
-        if (room == null || settings == null || world == null) return;
+        var room = table() == null ? null : table().clientTableRoom();
+        var world = table() == null ? null : table().clientWorldPolicy();
+        if (room == null || world == null) return;
         revision = room.revision();
         policy = world;
         layout = SettingsLayout.of(width, height);
@@ -52,11 +58,9 @@ public final class RiichiOptionsScreen extends Screen {
             int index = i;
             addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.scope." + scopes[i]), ignored -> {
                 tab = index; page = 0; init();
-            }).bounds(layout.left(), 38 + i * 24, layout.rail(), 22).build().navigation().selected(tab == i));
+            }).bounds(layout.left(), layout.contentTop() + i * 24, layout.rail(), 22).build().navigation().selected(tab == i));
         }
         List<Entry> entries = new ArrayList<>();
-        boolean host = room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
-        boolean lobby = room.lobby();
         if (tab == 0) {
             boolean edit = canEditWorld();
             entries.add(Entry.toggle("settings.mchjong.invitations_enabled", world.invitationsEnabled(), edit,
@@ -97,32 +101,11 @@ public final class RiichiOptionsScreen extends Screen {
                 setWorldValue("forcedPreset", next == null ? "none" : next.name().toLowerCase(java.util.Locale.ROOT));
             }));
         } else if (tab == 1) {
-            entries.add(Entry.toggle("settings.mchjong.convenience_hints", room.convenienceHints(),
-                host && lobby && room.allowConvenienceHints(),
-                () -> TableExitControls.send(parent.tablePos(), room,
-                    top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.CONVENIENCE_HINTS,
-                    room.decision(), !room.convenienceHints())));
-            entries.add(Entry.choice("settings.mchjong.hand_visibility",
-                Component.translatable("settings.mchjong.hand_visibility." + settings.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT)),
-                host && lobby, () -> {
-                    var modes = top.skyeyefast.mchjong.engine.PlayerHandVisibility.values();
-                    int direction = Screen.hasShiftDown() ? -1 : 1;
-                    parent.configureVisibility(modes[Math.floorMod(settings.playerHandVisibility().ordinal() + direction, modes.length)]);
-                }));
-            entries.add(Entry.toggle("settings.mchjong.open_hands", settings.openHands(), host && lobby,
-                () -> parent.control(room, top.skyeyefast.mchjong.network.RiichiControlPayload.Operation.OPEN_HANDS,
-                    room.decision(), !settings.openHands())));
-            entries.add(new Entry(Component.translatable("room.mchjong.participants"), true,
-                () -> minecraft.setScreen(new RiichiSeatsScreen(parent))));
-            entries.add(new Entry(Component.translatable("rules.mchjong.title"), true,
-                () -> minecraft.setScreen(new RiichiRulesScreen(parent, room, settings))));
-            entries.add(new Entry(Component.translatable("ui.mchjong.clock_settings"), host && lobby,
-                () -> minecraft.setScreen(new TableClockScreen(parent, settings.timeControl()))));
-            entries.add(new Entry(Component.translatable("ui.mchjong.invite"), room.viewerSeat() >= 0 && lobby && world.invitationsEnabled(),
-                () -> minecraft.setScreen(new RiichiInviteScreen(parent))));
+            for (var option : RoomLobby.options(this, pos, room))
+                entries.add(new Entry(option.label(), option.value(), option.checked(), option.enabled(), option.action()));
         } else {
             entries.add(new Entry(Component.translatable("settings.mchjong.title"), true,
-                () -> minecraft.setScreen(new TableSettingsScreen(parent))));
+                () -> minecraft.setScreen(new TableSettingsScreen(this))));
             entries.add(new Entry(Component.translatable("settings.mchjong.personal_presets"), true,
                 () -> minecraft.setScreen(new PersonalPresetsScreen(this))));
         }
@@ -132,11 +115,11 @@ public final class RiichiOptionsScreen extends Screen {
         for (int row = 0; row < rows && page * rows + row < entries.size(); row++) {
             var entry = entries.get(page * rows + row);
             var button = MahjongButton.create(entry.message(), ignored -> entry.action().run())
-                .bounds(left, 60 + row * 22, span, 20).build().option(entry.label(), entry.value());
+                .bounds(left, layout.contentTop() + row * 22, span, 20).build().option(entry.label(), entry.value());
             if (entry.checked() != null) button.checked(entry.checked());
             button.active = entry.enabled();
             Component help = tab == 0 && !canEditWorld() ? Component.translatable("settings.mchjong.world_locked")
-                : tab == 1 && page * rows + row == 0
+                : entry.label().getString().equals(Component.translatable("settings.mchjong.convenience_hints").getString())
                     ? entry.message().copy().append("\n").append(Component.translatable("settings.mchjong.convenience_hints_help"))
                     : entry.message();
             button.setTooltip(Tooltip.create(help));
@@ -153,7 +136,7 @@ public final class RiichiOptionsScreen extends Screen {
             addRenderableWidget(next);
         }
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left + span - Math.min(120, span), height - 30, Math.min(120, span), 20).build().primary());
+            .bounds(left + span - Math.min(120, span), layout.footer(), Math.min(120, span), 20).build().primary());
     }
 
     private boolean canEditWorld() {
@@ -188,25 +171,14 @@ public final class RiichiOptionsScreen extends Screen {
     }
 
     @Override public void tick() {
-        var room = parent.room();
+        var room = table() == null ? null : table().clientTableRoom();
         if (room == null) { onClose(); return; }
-        if (revision != room.revision() || !java.util.Objects.equals(policy, parent.worldPolicy())) init();
+        if (revision != room.revision() || !java.util.Objects.equals(policy, table().clientWorldPolicy())) init();
     }
 
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
         if (layout == null) return;
-        String[] scopes = {"world", "room", "personal"};
-        layout.paint(graphics, font, width, title, Component.translatable("settings.mchjong.scope." + scopes[tab]));
-        var room = parent.room();
-        Component note = Component.translatable("settings.mchjong.personal_note");
-        if (tab == 0) note = Component.translatable(canEditWorld() ? "settings.mchjong.world_admin" : "settings.mchjong.world_locked");
-        if (tab == 1 && room != null) note = Component.translatable("room.mchjong.host",
-            room.host() < 0 ? "—" : room.seats().get(room.host()).participant().name());
-        int noteY = 118;
-        for (var line : font.split(note, layout.rail() - 12)) {
-            graphics.drawString(font, line, layout.left() + 6, noteY, MahjongUi.MUTED, false);
-            noteY += 11;
-        }
+        layout.paint(graphics, font, title);
         if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages,
             layout.bodyLeft() + layout.bodyWidth() / 2, layout.paging() + 6, MahjongUi.MUTED);
         super.render(graphics, x, y, partialTick);

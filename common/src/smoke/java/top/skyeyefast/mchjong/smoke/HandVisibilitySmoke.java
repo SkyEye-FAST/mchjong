@@ -5,7 +5,7 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractButton;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.RiichiOptionsScreen;
+import top.skyeyefast.mchjong.client.TableOptionsScreen;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RiichiView;
@@ -36,11 +36,10 @@ final class HandVisibilitySmoke {
             if (room.viewerSeat() < 0 || !room.lobby()) return false;
             var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
-            client.setScreen(new RiichiOptionsScreen(parent));
+            client.setScreen(new TableOptionsScreen(parent, parent.tablePos()));
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
                 "settings.mchjong.hand_visibility." + configuration.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
-            var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
-                .filter(candidate -> candidate.getMessage().getString().equals(label)).findFirst().orElseThrow();
+            var button = LobbySmoke.find(client, label);
             require(button.active, "Host visibility control is disabled");
             if (configuration.playerHandVisibility() != visibility) button.onPress();
             next(1);
@@ -50,14 +49,13 @@ final class HandVisibilitySmoke {
             resize(client, true);
             var parent = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(parent);
-            client.setScreen(new RiichiOptionsScreen(parent));
+            client.setScreen(new TableOptionsScreen(parent, parent.tablePos()));
             next(3);
         } else if (stage == 3 && ticks > 10) {
             AutomationControlsSmoke.checkBounds(client);
             var label = Component.translatable("settings.mchjong.hand_visibility", Component.translatable(
                 "settings.mchjong.hand_visibility." + visibility.name().toLowerCase(java.util.Locale.ROOT))).getString();
-            require(client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
-                .anyMatch(button -> button.active && button.getMessage().getString().equals(label)), "Missing room visibility control");
+            require(LobbySmoke.find(client, label).active, "Missing room visibility control");
             capture(client, output, "room-" + visibility + "-small.png");
             resize(client, false);
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));

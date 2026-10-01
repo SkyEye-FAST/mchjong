@@ -48,6 +48,8 @@ final class RoomPreparationSmoke {
         if (room == null) return false;
         if (RiichiTableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
+            var roster = LobbySmoke.find(client, Component.translatable("room.mchjong.participants").getString());
+            if (roster != null) roster.onPress();
             boolean full = room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.BEGIN_SEATING);
             if (full && botCycle < 4 && botCycle != 2) {
                 if (botSeat < 0) for (int seat = 0; seat < room.seats().size(); seat++)
@@ -80,7 +82,7 @@ final class RoomPreparationSmoke {
             }
             if (botCycle == 3 && !full) return false;
             click(client, full
-                ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "room.mchjong.start_bots");
+                ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "action.mchjong.fill_bots");
         } else if (room.seating() == RoomSeating.Stage.DRAWING) {
             if (!capturedDrawing) {
                 AutomationControlsSmoke.checkBounds(client);

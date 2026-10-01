@@ -17,49 +17,26 @@ import top.skyeyefast.mchjong.network.TableVariantPayload;
 final class RoomLobbyControls {
     private RoomLobbyControls() {}
 
-    static MahjongButton hintsButton(BlockPos pos, TableRoomView room, int x, int y, int width, Runnable sent) {
-        var label = Component.translatable("settings.mchjong.convenience_hints");
-        var value = Component.translatable(room.convenienceHints() ? "options.on" : "options.off");
-        var button = button(Component.translatable("settings.mchjong.toggle", label, value), x, y, width, () -> {
-            TableExitControls.send(pos, room, top.skyeyefast.mchjong.network.TableSessionControlPayload.Operation.CONVENIENCE_HINTS,
-                room.decision(), !room.convenienceHints());
-            sent.run();
-        }).option(label, value).checked(room.convenienceHints());
-        button.active = room.lobby() && room.viewerSeat() >= 0 && room.viewerSeat() == room.host()
-            && room.allowConvenienceHints() && room.exitVote() == null;
-        button.setTooltip(Tooltip.create(Component.translatable("settings.mchjong.convenience_hints_help")));
-        return button;
-    }
-
     static MahjongButton button(Component label, int x, int y, int width, Runnable action) {
         return MahjongButton.create(label, ignored -> action.run()).bounds(x, y, width, 20)
             .tooltip(Tooltip.create(label)).build();
     }
 
     static MahjongButton variantButton(BlockPos pos, TableRoomView room, MahjongVariant choice,
-                                       int x, int y, int width, boolean automatic) {
+                                       int x, int y, int width, boolean automatic, Runnable sent) {
         var label = Component.translatable("variant.mchjong." + choice.name().toLowerCase(java.util.Locale.ROOT));
         var button = button(label, x, y, width, () -> {
             var connection = Minecraft.getInstance().getConnection();
-            if (connection != null) connection.send(PayloadPackets.serverbound(new TableVariantPayload(pos,
-                room.tableId(), room.decision(), choice)));
+            if (connection != null && room.variant() != choice) {
+                connection.send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.decision(), choice)));
+                sent.run();
+            }
         }).selected(room.variant() == choice);
-        button.active = automatic && room.viewerSeat() == room.host() && room.viewerSeat() >= 0
-            && room.seating() == RoomSeating.Stage.GATHERING && room.variant() != choice
+        button.active = room.variant() == choice || automatic && room.viewerSeat() == room.host() && room.viewerSeat() >= 0
+            && room.seating() == RoomSeating.Stage.GATHERING
             && room.seats().stream().noneMatch(seat -> seat.participant().bot());
+        if (!button.active) button.setTooltip(Tooltip.create(label.copy().append("\n").append(Component.translatable("lobby.mchjong.variant_locked"))));
         return button;
-    }
-
-    static List<MahjongButton> variantButtons(BlockPos pos, TableRoomView room, int x, int y, int width, boolean automatic) {
-        var variants = MahjongVariant.values();
-        var buttons = new java.util.ArrayList<MahjongButton>();
-        int available = width - (variants.length - 1) * 4;
-        for (int index = 0; index < variants.length; index++) {
-            int start = index * available / variants.length;
-            int end = (index + 1) * available / variants.length;
-            buttons.add(variantButton(pos, room, variants[index], x + start + index * 4, y, end - start, automatic));
-        }
-        return buttons;
     }
 
     static int find(TableRoomView room, RoomAction.Type type, List<Integer> arguments) {

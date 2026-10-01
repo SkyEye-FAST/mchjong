@@ -400,7 +400,7 @@ public final class TableClientSmoke {
                 }
                 capture(client, "01-lobby.png");
                 for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.getMessage().getString().equals(
-                    net.minecraft.network.chat.Component.translatable("room.mchjong.start_bots").getString())) {
+                    net.minecraft.network.chat.Component.translatable("action.mchjong.fill_bots").getString())) {
                     client.screen.mouseClicked(widget.getX()+8, widget.getY()+8, 0);
                     step = 4; entered = ticks;
                     return;

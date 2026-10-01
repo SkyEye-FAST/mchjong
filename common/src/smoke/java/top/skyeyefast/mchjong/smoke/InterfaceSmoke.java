@@ -16,7 +16,7 @@ import top.skyeyefast.mchjong.client.MahjongSlider;
 import top.skyeyefast.mchjong.client.PersonalSettingsScreen;
 import top.skyeyefast.mchjong.client.PersonalPresetsScreen;
 import top.skyeyefast.mchjong.client.TableClockScreen;
-import top.skyeyefast.mchjong.client.RiichiInviteScreen;
+import top.skyeyefast.mchjong.client.TableInviteScreen;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.item.MahjongBoxMenu;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
@@ -154,6 +154,7 @@ final class InterfaceSmoke {
             client.screen.keyPressed(GLFW.GLFW_KEY_TAB, 0, 0);
             require(client.screen.getFocused() != null, "Tab cannot focus a custom control");
             capture(client, output, "33-settings-tab-" + (settingsStage - 1) + ".png");
+            if (settingsStage == 2) verifyPreferenceChoices(client);
             if (settingsStage < 4) click(client, "settings.mchjong.tab." + settingsStage);
             else {
                 client.options.guiScale().set(2);
@@ -191,13 +192,13 @@ final class InterfaceSmoke {
             require(button(client, "gui.done").active, "Valid numeric input cannot be applied");
             capture(client, output, "34-clock-keyboard.png");
             client.screen.onClose(); // Do not send edited clock values into a running table.
-            client.setScreen(new RiichiInviteScreen(settingsParent));
+            client.setScreen(new TableInviteScreen(settingsParent, settingsParent.tablePos()));
             settingsStage = 8; settingsTicks = 0;
         } else if (settingsStage == 8 && settingsTicks > 10) {
             checkBounds(client);
             capture(client, output, "35-invite-small.png");
             client.screen.onClose();
-            client.setScreen(new top.skyeyefast.mchjong.client.RiichiOptionsScreen(settingsParent));
+            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(settingsParent, settingsParent.tablePos()));
             settingsStage = 11; settingsTicks = 0;
         } else if (settingsStage >= 11 && settingsStage <= 13 && settingsTicks > 10) {
             checkBounds(client);
@@ -211,7 +212,7 @@ final class InterfaceSmoke {
             }
             else {
                 client.screen.onClose();
-                client.setScreen(new top.skyeyefast.mchjong.client.RiichiSeatsScreen(settingsParent));
+                client.setScreen(new top.skyeyefast.mchjong.client.TableParticipantsScreen(settingsParent, settingsParent.tablePos()));
                 settingsStage = 14; settingsTicks = 0;
                 return false;
             }
@@ -245,6 +246,27 @@ final class InterfaceSmoke {
 
     boolean automation(Minecraft client, MahjongTableBlockEntity table, Path output) {
         return automation.tick(client, table, output);
+    }
+
+    private static void verifyPreferenceChoices(Minecraft client) {
+        var settings = top.skyeyefast.mchjong.client.TableSettings.get();
+        var screen = client.screen;
+        double volume = settings.effectsVolume;
+        boolean round = settings.show(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND);
+        settings.effectsVolume = .37;
+        if (round) settings.toggle(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND);
+        LobbySmoke.find(client, Component.translatable("settings.mchjong.discard").getString()).onPress();
+        require(client.screen != screen, "Discard mode did not open explicit choices");
+        checkBounds(client);
+        click(client, "settings.mchjong.discard.confirm");
+        require(client.screen == screen && settings.discardMode == top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM,
+            "Discard choice did not return or apply");
+        click(client, "settings.mchjong.reset_category");
+        require(settings.discardMode == top.skyeyefast.mchjong.client.TableSettings.DiscardMode.SINGLE_CLICK
+            && settings.effectsVolume == .37 && !settings.show(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND),
+            "Category reset changed another category");
+        settings.effectsVolume = volume;
+        if (round) settings.toggle(top.skyeyefast.mchjong.client.TableSettings.Information.ROUND);
     }
 
     private void restoreWindow(Minecraft client) {

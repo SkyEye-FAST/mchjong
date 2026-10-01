@@ -11,7 +11,6 @@ import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.engine.RiichiRoomSettings;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.world.BotServiceState;
 
@@ -38,44 +37,6 @@ final class RiichiHud {
     }
     Component tooltip(int x, int y) {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
-    }
-
-    void renderLobby(Font font, GuiGraphics graphics, TableRoomView room, RiichiRoomSettings configuration,
-                     BotServiceState botService, int width) {
-        clear();
-        int cardWidth = (width - 16 - (room.seats().size() - 1) * 4) / room.seats().size();
-        for (int seat = 0; seat < room.seats().size(); seat++) {
-            var state = room.seats().get(seat);
-            var player = state.participant();
-            boolean occupied = player.id() != null;
-            boolean disconnected = occupied && !player.bot() && state.presence() == PlayerPresence.DISCONNECTED;
-            Component name = !occupied ? Component.translatable("wind.mchjong." + WINDS[seat] + ".short")
-                : player.bot() && !player.entityBot() ? Component.translatable("ui.mchjong.bot.short", seat + 1)
-                : RiichiTableScreen.playerName(room, seat);
-            Component status = RiichiSeatsScreen.wind(state.wind()).copy().append("  ")
-                .append(Component.translatable(player.ready() ? "ui.mchjong.ready" : "ui.mchjong.not_ready"));
-            Component hover = occupied ? RiichiTableScreen.playerName(room, seat) : name;
-            if (player.externalBotId() != null)
-                hover = RiichiSeatsScreen.botName(room, configuration.externalBots(), seat);
-            String error = botService == null || seat >= botService.seatErrors().size()
-                ? null : botService.seatErrors().get(seat);
-            if (error != null) {
-                name = name.copy().append(" !");
-                hover = hover.copy().append("\n").append(Component.translatable("bot.mchjong.service." + error));
-            }
-            if (state.presence() == PlayerPresence.AWAY)
-                hover = hover.copy().append("\n").append(Component.translatable("room.mchjong.away"));
-            else if (disconnected)
-                hover = hover.copy().append("\n").append(RiichiSeatsScreen.presence(state.presence()));
-            int x = 8 + seat * (cardWidth + 4);
-            graphics.fill(x, 32, x + cardWidth, 56, seat == room.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
-            if (player.ready()) graphics.fill(x, 32, x + 2, 56, MahjongUi.ACCENT);
-            int inset = occupied ? PlayerPortrait.draw(graphics, player, x + 5, 34, 10) : 0;
-            text(font, graphics, name, x + 5 + inset, 36, cardWidth - 10 - inset
-                - (occupied ? 0 : inviteWidth(font) + 2), disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT);
-            if (occupied) text(font, graphics, status, x + 5, 46, cardWidth - 10, MahjongUi.MUTED);
-            regions.add(new Region(x, 32, cardWidth - (occupied ? 0 : inviteWidth(font) + 2), 24, hover));
-        }
     }
 
     void render(Font font, GuiGraphics graphics, RiichiView view, TableRoomView room, int width, TileFacePreset preset, RiichiBoard board) {
@@ -154,7 +115,7 @@ final class RiichiHud {
             Component shortLine = Component.empty();
             Component hover = RiichiTableScreen.playerName(view, seat).copy();
             if (room != null && seat < room.seats().size() && room.seats().get(seat).participant().externalBotId() != null)
-                hover = RiichiSeatsScreen.botName(room, view.externalBots(), seat);
+                hover = TableParticipantsScreen.botName(room, view.externalBots(), seat);
             String botError = botService == null || seat >= botService.seatErrors().size()
                 ? null : botService.seatErrors().get(seat);
             if (botError != null) {
@@ -180,7 +141,7 @@ final class RiichiHud {
             } else if (disconnected) {
                 if (board == null || !board.perspective())
                     shortLine = appendStatus(shortLine, Component.translatable("room.mchjong.disconnected.short"));
-                hover = hover.copy().append("\n").append(RiichiSeatsScreen.presence(presence));
+                hover = hover.copy().append("\n").append(TableParticipantsScreen.presence(presence));
             }
             if (settings.show(TableSettings.Information.STATUS)) {
                 if (seat == view.dealer()) hover = hover.copy().append("\n").append(Component.translatable("ui.mchjong.dealer"));
@@ -303,8 +264,6 @@ final class RiichiHud {
     }
 
     static int seatedCardHeight(boolean summary, int tileWidth) { return 24 + (summary ? tileWidth == 0 ? 12 : 16 : 0); }
-
-    static int inviteWidth(Font font) { return font.width(Component.translatable("ui.mchjong.invite.short")) + 12; }
 
     private boolean furiten(RiichiView view) {
         if (furitenView == view) return furiten;

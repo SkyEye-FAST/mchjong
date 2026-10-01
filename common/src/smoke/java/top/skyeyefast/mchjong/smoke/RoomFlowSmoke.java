@@ -48,8 +48,7 @@ final class RoomFlowSmoke {
         } else if (stage == 3 && ticks > 10) {
             check(client);
             capture(client, output, "lobby-" + LANGUAGES[locale] + "-small.png");
-            for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite.short", "ui.mchjong.invite",
-                    "room.mchjong.participants", "settings.mchjong.scopes")) {
+            for (var key : List.of("rules.mchjong.title", "ui.mchjong.clock_settings", "ui.mchjong.invite", "settings.mchjong.scopes")) {
                 click(client, key);
                 require(!(client.screen instanceof RiichiTableScreen), "Room shortcut failed: " + key);
                 AutomationControlsSmoke.checkBounds(client);
@@ -63,7 +62,7 @@ final class RoomFlowSmoke {
             }
         } else if (stage == 4 && configuration.playerHandVisibility() == PlayerHandVisibility.RIICHI) {
             originalPreset = configuration.rules().preset();
-            clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).append(" ▼").getString());
+            clickText(client, Component.translatable("rules.mchjong.preset", Component.translatable(originalPreset.presetKey())).getString());
             var nextPreset = java.util.Arrays.stream(top.skyeyefast.mchjong.engine.RiichiPreset.values())
                 .filter(preset -> preset.players() == originalPreset.players() && preset != originalPreset).findFirst().orElseThrow();
             click(client, nextPreset.presetKey());
@@ -92,7 +91,7 @@ final class RoomFlowSmoke {
             next(8);
         } else if (stage == 8 && ticks > 10 && table.clientRoom().actions().stream().anyMatch(action -> action.type()
             == top.skyeyefast.mchjong.engine.RoomAction.Type.FILL_BOTS)) {
-            click(client, "room.mchjong.start_bots");
+            click(client, "action.mchjong.fill_bots");
             next(9);
         } else if (stage == 9 && room.seats().stream().allMatch(seat -> seat.participant().id() != null)) {
             require(table.clientRoom().actions().stream().noneMatch(action -> action.type()
@@ -230,8 +229,7 @@ final class RoomFlowSmoke {
         clickText(client, Component.translatable(key, arguments).getString());
     }
     private static void clickText(Minecraft client, String text) {
-        var button = client.screen.children().stream().filter(AbstractButton.class::isInstance).map(AbstractButton.class::cast)
-            .filter(control -> control.getMessage().getString().equals(text)).findFirst().orElse(null);
+        var button = LobbySmoke.find(client, text);
         require(button != null && button.active, "Missing active lobby control: " + text);
         client.screen.mouseClicked(button.getX() + 4, button.getY() + 4, 0);
     }
@@ -239,8 +237,8 @@ final class RoomFlowSmoke {
         AutomationControlsSmoke.checkBounds(client);
         if (client.screen instanceof RiichiTableScreen screen && screen.immersive()) return;
         for (var child : client.screen.children()) if (child instanceof AbstractButton button && button.visible)
-            require(client.font.width(button.getMessage()) <= button.getWidth() - 12,
-                "Truncated room control: " + button.getMessage().getString());
+            require(client.font.width(button.getMessage()) <= button.getWidth() - 12 || button.getTooltip() != null,
+                "Truncated room control has no full label: " + button.getMessage().getString());
     }
     private static void capture(Minecraft client, Path output, String name) {
         SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});

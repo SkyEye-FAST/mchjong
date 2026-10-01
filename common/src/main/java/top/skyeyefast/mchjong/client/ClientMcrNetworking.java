@@ -36,18 +36,21 @@ public final class ClientMcrNetworking {
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), payload.room().tableId()))
             client.setScreen(null);
+        var rootScreen = TableChildScreen.root(client.screen);
         var active = McrTableScreen.active(client.screen);
         boolean showing = active != null && active.tablePos().equals(payload.pos())
-            || client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+            || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
             || client.screen instanceof McrResultsScreen results && results.tablePos().equals(payload.pos());
+        if (previousRoom != null && previousRoom.viewerSeat() >= 0 && payload.room().viewerSeat() < 0
+            && payload.room().lobby() && showing) { client.setScreen(null); return; }
         if (view == null) {
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.mcrLobby() != null
                 && clock.mcrLobby().tablePos().equals(payload.pos())) return;
             if (payload.open() || showing
-                || client.screen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())
+                || rootScreen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())
                 || RiichiTableScreen.active(client.screen) != null
                     && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos())) {
-                if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();
+                if (rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();
                 else client.setScreen(new McrLobbyScreen(payload.pos()));
             }
             return;

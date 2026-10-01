@@ -103,9 +103,7 @@ final class McrAutoTableSmoke {
                 if (lobby == null || lobby.seats().stream().anyMatch(seat -> seat.participant().id() == null)) break;
                 check(client.screen instanceof McrLobbyScreen, "MCR preparation did not open its room screen");
                 if (!clockConfigured) {
-                    var clockButton = client.screen.children().stream().filter(child -> child instanceof MahjongButton button
-                        && button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("ui.mchjong.clock_settings").getString()))
-                        .map(child -> (MahjongButton) child).findFirst().orElseThrow();
+                    var clockButton = LobbySmoke.find(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.clock_settings").getString());
                     clockButton.onPress();
                     check(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "MCR did not open the shared clock editor");
                     var fields = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
@@ -119,6 +117,7 @@ final class McrAutoTableSmoke {
                 }
                 if (!new top.skyeyefast.mchjong.engine.TimeControl(30, 7).equals(clientTable.clientMcrTimeControl())) break;
                 if (!hintsConfigured) {
+                    LobbySmoke.settings(client);
                     client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                         .filter(button -> button.getMessage().getString().startsWith(net.minecraft.network.chat.Component.translatable(
                             "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress();

@@ -49,6 +49,7 @@ public final class ClientRiichiNetworking {
         }
         if (client.screen instanceof TableLeaveScreen leave && leave.matches(payload.pos(), room.tableId()))
             client.setScreen(null);
+        var rootScreen = TableChildScreen.root(client.screen);
         RiichiTableScreen active = RiichiTableScreen.active(client.screen);
         if (previousRoom != null && previousRoom.viewerSeat() >= 0 && room.viewerSeat() < 0
             && room.lobby()
@@ -68,8 +69,8 @@ public final class ClientRiichiNetworking {
                 client.setScreen(screen);
                 screen.resetView();
             }
-        } else if (client.screen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
-            || client.screen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())) {
+        } else if (rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+            || rootScreen instanceof SichuanLobbyScreen screen && screen.tablePos().equals(payload.pos())) {
             client.setScreen(new RiichiTableScreen(payload.pos()));
         }
     }

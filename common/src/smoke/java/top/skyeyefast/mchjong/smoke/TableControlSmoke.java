@@ -326,7 +326,7 @@ final class TableControlSmoke {
             });
             next(6);
         } else if (stage == 6 && configuration.openHands()) {
-            click(client, "room.mchjong.start_bots");
+            click(client, "action.mchjong.fill_bots");
             next(28);
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);
@@ -385,8 +385,7 @@ final class TableControlSmoke {
         if (client.screen instanceof RiichiTableScreen && ticks % 10 == 0) {
             String label = Component.translatable("rules.mchjong.preset",
                 Component.translatable(configuration.rules().preset().presetKey())).getString();
-            var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().startsWith(label)).findFirst().orElseThrow();
+            var button = LobbySmoke.find(client, label);
             require(button.active, "Host preset selector is disabled");
             client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
         } else if (client.screen instanceof RiichiRulesScreen && ticks % 10 == 0) {
@@ -407,8 +406,7 @@ final class TableControlSmoke {
     }
     private static void click(Minecraft client, String key) {
         String label = Component.translatable(key).getString();
-        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+        var button = LobbySmoke.find(client, label);
         require(button.active, "Disabled control: " + key);
         client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
     }

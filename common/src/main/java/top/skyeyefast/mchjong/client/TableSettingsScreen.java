@@ -11,7 +11,7 @@ import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public final class TableSettingsScreen extends Screen {
+public final class TableSettingsScreen extends Screen implements TableChildScreen {
     private final Screen parent;
     private final TableSettings settings = TableSettings.get();
     private int tab;
@@ -25,9 +25,10 @@ public final class TableSettingsScreen extends Screen {
         super(Component.translatable("settings.mchjong.title"));
         this.parent = parent;
     }
-    public RiichiTableScreen tableScreen() { return parent instanceof RiichiTableScreen table ? table : null; }
-    public McrTableScreen mcrTableScreen() { return parent instanceof McrTableScreen table ? table : null; }
-    public SichuanTableScreen sichuanTableScreen() { return parent instanceof SichuanTableScreen table ? table : null; }
+    public RiichiTableScreen tableScreen() { return TableChildScreen.root(parent) instanceof RiichiTableScreen table ? table : null; }
+    public McrTableScreen mcrTableScreen() { return TableChildScreen.root(parent) instanceof McrTableScreen table ? table : null; }
+    public SichuanTableScreen sichuanTableScreen() { return TableChildScreen.root(parent) instanceof SichuanTableScreen table ? table : null; }
+    @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
@@ -40,7 +41,7 @@ public final class TableSettingsScreen extends Screen {
             final int index = i;
             var button = MahjongButton.create(Component.translatable("settings.mchjong.tab." + i), ignored -> {
                 tab = index; page = 0; init();
-            }).bounds(layout.left() + 4, 62 + i * 22, layout.rail() - 4, 20).build().navigation();
+            }).bounds(layout.left() + 4, layout.contentTop() + i * 22, layout.rail() - 4, 20).build().navigation();
             button.selected(tab == i);
             addRenderableWidget(button);
         }
@@ -52,21 +53,12 @@ public final class TableSettingsScreen extends Screen {
                 }
             }
         } else if (tab == 1) {
-            addChoice("settings.mchjong.discard", settings.discardMode, () -> {
-                var values = TableSettings.DiscardMode.values();
-                settings.discardMode = values[Math.floorMod(settings.discardMode.ordinal() + (hasShiftDown() ? -1 : 1), values.length)];
-            });
-            addChoice("settings.mchjong.guides", settings.guideLines, () -> {
-                var values = TableSettings.GuideLines.values();
-                settings.guideLines = values[Math.floorMod(settings.guideLines.ordinal() + (hasShiftDown() ? -1 : 1), values.length)];
-            });
+            addChoice("settings.mchjong.discard", settings.discardMode, value -> settings.discardMode = value);
+            addChoice("settings.mchjong.guides", settings.guideLines, value -> settings.guideLines = value);
             addToggle("settings.mchjong.action_tiles", settings.actionTiles, () -> settings.actionTiles = !settings.actionTiles);
             addToggle("settings.mchjong.highlight", settings.highlightTiles, () -> settings.highlightTiles = !settings.highlightTiles);
             addToggle("settings.mchjong.animations", settings.animations, () -> settings.animations = !settings.animations);
-            addChoice("settings.mchjong.tile_labels", settings.tileLabels, () -> {
-                settings.tileLabels = settings.tileLabels == TableSettings.TileLabels.NAME
-                    ? TableSettings.TileLabels.MPSZ : TableSettings.TileLabels.NAME;
-            });
+            addChoice("settings.mchjong.tile_labels", settings.tileLabels, value -> settings.tileLabels = value);
             addToggle("settings.mchjong.auto_seat", settings.autoSeat,
                 () -> settings.autoSeat = !settings.autoSeat)
                 .setTooltip(Tooltip.create(Component.translatable("settings.mchjong.auto_seat_help")));
@@ -79,10 +71,8 @@ public final class TableSettingsScreen extends Screen {
             options.add(new VolumeSlider(left, 0, span, false));
             addToggle("settings.mchjong.countdown", settings.countdownSounds, () -> settings.countdownSounds = !settings.countdownSounds);
             addAction("settings.mchjong.audio_preview", RiichiAudio::preview);
-            addChoice("settings.mchjong.voice", settings.voiceSource, () -> {
-                var modes = TableSettings.VoiceSource.values();
-                settings.voiceSource = modes[Math.floorMod(settings.voiceSource.ordinal() + (hasShiftDown() ? -1 : 1), modes.length)];
-                RiichiAudio.settingsChanged();
+            addChoice("settings.mchjong.voice", settings.voiceSource, value -> {
+                settings.voiceSource = value; RiichiAudio.settingsChanged();
             }).setTooltip(Tooltip.create(Component.translatable("settings.mchjong.voice_preset_note")));
             var voiceVolume = new VolumeSlider(left, 0, span, true);
             voiceVolume.active = settings.voiceSource == TableSettings.VoiceSource.SELECTED;
@@ -93,7 +83,7 @@ public final class TableSettingsScreen extends Screen {
         page = Math.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            option.setY(62 + i * 22);
+            option.setY(layout.contentTop() + i * 22);
             addRenderableWidget(option);
         }
         if (pages > 1) {
@@ -107,13 +97,14 @@ public final class TableSettingsScreen extends Screen {
             addRenderableWidget(next);
         }
         int column = (span - 6) / 2;
-        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset"), ignored -> {
-            settings.reset(); RiichiAudio.settingsChanged(); resetView(); init();
-            RiichiStickPresets.sendChoice();
-            VoicePresets.sendChoice();
-        }).bounds(left, height - 30, column, 20).build());
+        addRenderableWidget(MahjongButton.create(Component.translatable("settings.mchjong.reset_category"), ignored -> {
+            settings.reset(TableSettings.Category.values()[tab]);
+            if (tab == 3) RiichiAudio.settingsChanged();
+            if (tab == 2) resetView();
+            init();
+        }).bounds(left, layout.footer(), column, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left + column + 6, height - 30 - MahjongUi.STEP, column, 20).build().primary());
+            .bounds(left + column + 6, layout.footer(), column, 20).build().primary());
     }
 
     private Button addToggle(String key, boolean enabled, Runnable toggle) {
@@ -126,11 +117,14 @@ public final class TableSettingsScreen extends Screen {
         return button;
     }
 
-    private MahjongButton addChoice(String key, Enum<?> value, Runnable action) {
+    private <E extends Enum<E>> MahjongButton addChoice(String key, E value, java.util.function.Consumer<E> choose) {
         Component label = Component.translatable(key);
         Component current = Component.translatable(key + "." + value.name().toLowerCase(Locale.ROOT));
+        var values = value.getDeclaringClass().getEnumConstants();
+        var captions = java.util.Arrays.stream(values).map(option -> (Component) Component.translatable(key + "." + option.name().toLowerCase(Locale.ROOT))).toList();
         var button = MahjongButton.create(Component.translatable("settings.mchjong.toggle", label, current),
-            ignored -> { action.run(); init(); }).bounds(layout.bodyLeft(), 0, layout.bodyWidth(), 20).build().option(label, current);
+            ignored -> minecraft.setScreen(new TableChoiceScreen(this, label, captions, value.ordinal(), index -> choose.accept(values[index]))))
+            .bounds(layout.bodyLeft(), 0, layout.bodyWidth(), 20).build().option(label, current);
         options.add(button);
         return button;
     }
@@ -142,28 +136,28 @@ public final class TableSettingsScreen extends Screen {
     }
 
     private void resetView() {
-        if (parent instanceof RiichiTableScreen table) table.resetView();
-        else if (parent instanceof McrTableScreen table) table.resetView();
-        else if (parent instanceof SichuanTableScreen table) table.resetView();
+        if (TableChildScreen.root(parent) instanceof RiichiTableScreen table) table.resetView();
+        else if (TableChildScreen.root(parent) instanceof McrTableScreen table) table.resetView();
+        else if (TableChildScreen.root(parent) instanceof SichuanTableScreen table) table.resetView();
         else settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
     }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        layout.paint(graphics, font, width, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
-            Component.translatable("settings.mchjong.tab." + tab));
-        graphics.fill(layout.left(), 38, layout.left() + layout.rail(), 152, MahjongUi.INPUT);
-        MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.preferences"),
-            layout.left() + 7, 44, layout.rail() - 14, MahjongUi.TEXT, false);
+        layout.paint(graphics, font, title);
         if (pages > 1) graphics.drawCenteredString(font, (page + 1) + " / " + pages,
             layout.bodyLeft() + layout.bodyWidth() / 2, layout.paging() + 6, MahjongUi.MUTED);
-        if (saveFailed) graphics.drawCenteredString(font, Component.translatable("settings.mchjong.save_failed"), width / 2, height - 76, MahjongUi.NEGATIVE);
+        if (saveFailed) MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.save_failed"),
+            layout.bodyLeft(), layout.paging() - 10, layout.bodyWidth(), MahjongUi.NEGATIVE, false);
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     @Override public void onClose() {
         try {
             settings.save(TableSettings.configPath());
-            minecraft.setScreen(minecraft.level == null && parent instanceof RiichiTableScreen ? null : parent);
+            var root = TableChildScreen.root(parent);
+            boolean table = root instanceof RiichiTableScreen || root instanceof McrTableScreen || root instanceof SichuanTableScreen
+                || root instanceof McrLobbyScreen || root instanceof SichuanLobbyScreen;
+            minecraft.setScreen(minecraft.level == null && table ? null : parent);
         } catch (IOException failure) {
             org.slf4j.LoggerFactory.getLogger("mchjong").error("Cannot save table settings", failure);
             saveFailed = true;

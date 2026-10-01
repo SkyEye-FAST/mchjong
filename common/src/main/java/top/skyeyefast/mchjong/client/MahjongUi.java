@@ -30,7 +30,6 @@ public final class MahjongUi {
     public static void titlePlaque(GuiGraphics g, Font font, Component title, int x, int y, int span) {
         int width = Math.min(span, font.width(title) + 16);
         g.fill(x, y, x + width, y + 18, INPUT);
-        g.fill(x, y, x + STEP, y + 18, ACCENT);
         text(g, font, title, x + 8, y + 5, width - 14, TEXT, false);
     }
 
@@ -42,7 +41,6 @@ public final class MahjongUi {
     }
 
     public static void backdrop(GuiGraphics g, int width, int height, int contentWidth) {
-        g.fill(0, 0, width, height, BACKDROP);
         int span = Math.min(contentWidth, width - 24);
         panel(g, (width - span) / 2 - 8, 6, span + 16, height - 12);
         g.fill((width - span) / 2, 7, (width + span) / 2, 8, ACCENT);

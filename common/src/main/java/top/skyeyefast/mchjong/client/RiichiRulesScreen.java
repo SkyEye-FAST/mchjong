@@ -22,7 +22,7 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 
 /** Local draft with explicit apply/cancel; only an acknowledged server snapshot becomes active rules. */
-public final class RiichiRulesScreen extends Screen {
+public final class RiichiRulesScreen extends Screen implements TableChildScreen {
     private enum Mode {
         PRESET, DETAILS, CUSTOM;
         String key() { return "rules.mchjong.mode." + name().toLowerCase(java.util.Locale.ROOT); }
@@ -32,7 +32,8 @@ public final class RiichiRulesScreen extends Screen {
         RiichiRuleOption.STARTING_POINTS, RiichiRuleOption.RETURN_POINTS, RiichiRuleOption.IPPATSU, RiichiRuleOption.URA_DORA,
         RiichiRuleOption.KAN_DORA, RiichiRuleOption.KAZOE_YAKUMAN, RiichiRuleOption.KIRIAGE_MANGAN, RiichiRuleOption.DOUBLE_YAKUMAN,
         RiichiRuleOption.HEAD_BUMP, RiichiRuleOption.UMA_1, RiichiRuleOption.UMA_2, RiichiRuleOption.UMA_3, RiichiRuleOption.UMA_4);
-    private final RiichiTableScreen parent;
+    private final Screen parent;
+    private final RiichiTableScreen table;
     private TableRoomView baseline;
     private RiichiRoomSettings baselineSettings;
     private RiichiRules draft;
@@ -50,34 +51,37 @@ public final class RiichiRulesScreen extends Screen {
     private Button apply;
     private boolean rejected;
     private boolean presetExpanded;
+    private SettingsLayout layout;
 
     private record Label(Component text, Component tooltip, int x, int y, int width) {
         Label(Component text, int x, int y, int width) { this(text, text, x, y, width); }
     }
 
-    public RiichiRulesScreen(RiichiTableScreen parent, TableRoomView room, RiichiRoomSettings settings) {
+    public RiichiRulesScreen(Screen parent, TableRoomView room, RiichiRoomSettings settings) {
         this(parent, room, settings, false);
     }
-    public RiichiRulesScreen(RiichiTableScreen parent, TableRoomView room, RiichiRoomSettings settings, boolean presetExpanded) {
+    public RiichiRulesScreen(Screen parent, TableRoomView room, RiichiRoomSettings settings, boolean presetExpanded) {
         super(Component.translatable("rules.mchjong.title"));
         this.parent = parent;
+        this.table = (RiichiTableScreen) TableChildScreen.root(parent);
         baseline = room;
         baselineSettings = settings;
         draft = settings.rules();
         mode = draft.custom() ? Mode.CUSTOM : Mode.PRESET;
         this.presetExpanded = presetExpanded;
     }
-    public RiichiTableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return table; }
+    @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     private boolean host() {
-        var room = parent.room();
+        var room = table.room();
         return room != null && room.tableId().equals(baseline.tableId()) && room.lobby()
             && room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
     }
     private boolean stale() {
-        var room = parent.room();
+        var room = table.room();
         return room == null || !room.tableId().equals(baseline.tableId()) || room.decision() != baseline.decision();
     }
     private boolean invalid() {
@@ -92,12 +96,13 @@ public final class RiichiRulesScreen extends Screen {
     @Override protected void init() {
         clearWidgets(); editors.clear(); labels.clear(); redButtons.clear(); redAvailability.clear();
         presetButtons.clear(); presetAvailability.clear(); apply = null;
-        int span = Math.min(540, width - 24), left = (width - span) / 2;
+        layout = SettingsLayout.of(width, height);
+        int span = layout.bodyWidth(), left = layout.bodyLeft();
         Component preset = Component.translatable("rules.mchjong.preset", Component.translatable(draft.preset().presetKey()))
             .append(presetExpanded ? " ▲" : " ▼");
         var presetButton = addRenderableWidget(MahjongButton.create(preset, ignored -> {
             presetExpanded = !presetExpanded; init();
-        }).bounds(left, 30, span, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help"))).build());
+        }).bounds(left, layout.contentTop(), span, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.preset_help"))).build());
         editors.add(presetButton);
         if (presetExpanded) {
             var presets = Arrays.stream(RiichiPreset.values()).filter(rule -> rule.players() == draft.players()).toList();
@@ -107,11 +112,11 @@ public final class RiichiRulesScreen extends Screen {
                 var choice = addRenderableWidget(MahjongButton.create(name, ignored -> {
                     draft = draft.withPreset(rule); mode = Mode.PRESET; numbers.clear(); page = 0; rejected = false;
                     presetExpanded = false; init();
-                }).bounds(left + 12, 56 + i * 24, span - 12, 20).build().selected(draft.preset() == rule));
+                }).bounds(left + 12, layout.top() + 62 + i * 24, span - 12, 20).build().selected(draft.preset() == rule));
                 presetButtons.put(rule, choice);
             }
             addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
-                .bounds(left, height - 30, span, 20).build());
+                .bounds(left, layout.footer(), span, 20).build());
             updateControls();
             return;
         }
@@ -119,29 +124,26 @@ public final class RiichiRulesScreen extends Screen {
         for (var section : Mode.values()) {
             var text = Component.translatable(section.key());
             addRenderableWidget(MahjongButton.create(text, ignored -> { mode = section; page = 0; init(); })
-                .bounds(left + section.ordinal() * (tabWidth + 4), 54 + MahjongUi.step(section.ordinal()), tabWidth, 20)
+                .bounds(left + section.ordinal() * (tabWidth + 4), layout.top() + 62, tabWidth, 20)
                 .tooltip(Tooltip.create(text)).build().selected(mode == section));
         }
         var groups = RiichiRuleOption.Group.values();
-        int groupWidth = (span - (groups.length - 1) * 4) / groups.length;
         for (int i = 0; mode != Mode.PRESET && i < groups.length; i++) {
             var category = groups[i];
             var text = Component.translatable(category.translationKey());
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
-                .bounds(left + i * (groupWidth + 4), 80 + MahjongUi.step(i), groupWidth, 20)
-                .tooltip(Tooltip.create(text)).build().selected(group == category));
+                .bounds(layout.left(), layout.contentTop() + i * 22, layout.rail(), 20)
+                .tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
-        if (mode == Mode.PRESET) labels.add(new Label(Component.translatable(
-            draft.custom() ? "rules.mchjong.custom_note" : "rules.mchjong.preset_note"), left, 85, span));
         var options = (mode == Mode.PRESET ? OVERVIEW.stream() : Arrays.stream(RiichiRuleOption.values())
             .filter(option -> option.group() == group))
             .filter(option -> option.visible(draft)).toList();
-        int rows = Math.max(1, (height - 182) / 24);
+        int rows = Math.max(1, (layout.height() - 160) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows);
         page = Math.clamp(page, 0, pages - 1);
         for (int i = 0; i < rows && page * rows + i < options.size(); i++) {
             var option = options.get(page * rows + i);
-            int y = 110 + i * 24;
+            int y = layout.top() + 92 + i * 24;
             var label = option.floatingPlayers() < 0 ? Component.translatable(option.translationKey(), option.placementRank())
                 : Component.translatable(option.translationKey(), option.floatingPlayers(), option.placementRank());
             var description = option.floatingPlayers() < 0 ? Component.translatable(option.descriptionKey(), option.placementRank())
@@ -159,7 +161,7 @@ public final class RiichiRulesScreen extends Screen {
                 for (var reds : RedFives.values()) {
                     var text = Component.translatable(reds.translationKey());
                     var choice = addRenderableWidget(MahjongButton.create(text, ignored -> {
-                        if (parent.canSupplyReds(draft.sanma(), reds)) {
+                        if (table.canSupplyReds(draft.sanma(), reds)) {
                             draft = draft.with(option, reds.ordinal()); rejected = false; init();
                         }
                     }).bounds(left + caption + reds.ordinal() * (choiceWidth + 4), y, choiceWidth, 20)
@@ -206,33 +208,33 @@ public final class RiichiRulesScreen extends Screen {
             }
         }
         var previous = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
-            .bounds(width / 2 - 75, height - 59, 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.previous"))).build());
+            .bounds(left, layout.paging(), 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.previous"))).build());
         previous.active = page > 0;
         var next = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> { page++; init(); })
-            .bounds(width / 2 + 45, height - 59, 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
+            .bounds(left + span - 30, layout.paging(), 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
         next.active = page + 1 < pages;
         addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.reload"), ignored -> {
-            var current = parent.room();
-            var settings = parent.roomSettings();
+            var current = table.room();
+            var settings = table.roomSettings();
             if (current != null && settings != null && pending == null) {
                 baseline = current; baselineSettings = settings; draft = settings.rules();
                 numbers.clear(); rejected = false; page = 0; init();
             }
-        }).bounds(left, height - 30, tabWidth, 20).build());
+        }).bounds(left, layout.footer(), tabWidth, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
-            .bounds(left + tabWidth + 4, height - 30 - MahjongUi.STEP, tabWidth, 20).build().primary());
+            .bounds(left + tabWidth + 4, layout.footer(), tabWidth, 20).build().primary());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
-            .bounds(left + 2 * (tabWidth + 4), height - 30, tabWidth, 20).build());
+            .bounds(left + 2 * (tabWidth + 4), layout.footer(), tabWidth, 20).build());
         updateControls();
     }
 
     private void updateControls() {
         boolean editable = host() && pending == null && !stale();
-        var world = parent.worldPolicy();
+        var world = table.worldPolicy();
         boolean customEditable = world != null && (world.allowCustomRules() || mode != Mode.CUSTOM);
         editors.forEach(widget -> widget.active = editable && customEditable);
         redButtons.forEach((reds, button) -> {
-            boolean available = parent.canSupplyReds(draft.sanma(), reds);
+            boolean available = table.canSupplyReds(draft.sanma(), reds);
             button.active = editable && available;
             if (!Boolean.valueOf(available).equals(redAvailability.put(reds, available)))
                 button.setTooltip(Tooltip.create(available ? Component.translatable("rules.mchjong.red_composition",
@@ -240,7 +242,7 @@ public final class RiichiRulesScreen extends Screen {
                     : Component.translatable("rules.mchjong.insufficient_reds")));
         });
         presetButtons.forEach((rule, button) -> {
-            boolean available = parent.canSupplyReds(rule.sanma(), draft.withPreset(rule).redFives())
+            boolean available = table.canSupplyReds(rule.sanma(), draft.withPreset(rule).redFives())
                 && world != null && (world.forcedPreset() == null || world.forcedPreset() == rule);
             button.active = editable && available;
             if (!Boolean.valueOf(available).equals(presetAvailability.put(rule, available)))
@@ -251,24 +253,24 @@ public final class RiichiRulesScreen extends Screen {
             && !draft.equals(baselineSettings.rules());
     }
     private boolean allowedByWorld(RiichiRules config) {
-        var world = parent.worldPolicy();
+        var world = table.worldPolicy();
         return world != null && (world.forcedPreset() == null || world.forcedPreset() == config.preset())
             && (world.allowCustomRules() || !config.custom());
     }
-    private boolean missingReds() { return !parent.canSupplyReds(draft.sanma(), draft.redFives()); }
+    private boolean missingReds() { return !table.canSupplyReds(draft.sanma(), draft.redFives()); }
     private void submit() {
         if (!host() || stale() || !allowedByWorld(draft) || invalid() || missingReds()
             || pending != null || minecraft.getConnection() == null) return;
         pending = draft;
         pendingTicks = 0;
         minecraft.getConnection().send(PayloadPackets.serverbound(
-            new RiichiRulesPayload(parent.tablePos(), baseline.tableId(), baseline.decision(), pending)));
+            new RiichiRulesPayload(table.tablePos(), baseline.tableId(), baseline.decision(), pending)));
         updateControls();
     }
     void receivedReply() {
         if (pending == null) return;
-        var room = parent.room();
-        var settings = parent.roomSettings();
+        var room = table.room();
+        var settings = table.roomSettings();
         boolean accepted = room != null && settings != null
             && room.tableId().equals(baseline.tableId()) && settings.rules().equals(pending);
         pending = null;
@@ -282,27 +284,19 @@ public final class RiichiRulesScreen extends Screen {
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         updateControls();
-        MahjongUi.backdrop(graphics, width, height, 580);
-        Component path = Component.translatable("settings.mchjong.scope.room").append(" › ").append(title);
-        if (presetExpanded) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.mode.preset"));
-        else if (draft.custom()) path = path.copy().append(" › ").append(Component.translatable("rules.mchjong.custom"));
-        MahjongUi.titlePlaque(graphics, font, path, Math.max(8, (width - 540) / 2 - MahjongUi.OFFSET), 7, Math.min(540, width - 16));
-        if (presetExpanded) {
-            int left = (width - Math.min(540, width - 24)) / 2;
-            graphics.vLine(left + 5, 56, height - 58, MahjongUi.EDGE);
-        }
+
+        layout.paint(graphics, font, title);
         for (var label : labels) {
             MahjongUi.text(graphics, font, label.text(), label.x(), label.y(), label.width(), MahjongUi.TEXT, false);
             if (mouseX >= label.x() && mouseX < label.x() + label.width() && mouseY >= label.y() - 4 && mouseY < label.y() + 12)
                 setTooltipForNextRenderPass(label.tooltip());
         }
         if (!presetExpanded)
-            graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
+            graphics.drawCenteredString(font, (page + 1) + " / " + pages, layout.bodyLeft() + layout.bodyWidth() / 2, layout.paging() + 6, MahjongUi.MUTED);
         String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"
             : !host() ? "rules.mchjong.read_only" : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid"
-            : missingReds() ? "rules.mchjong.insufficient_reds" : mode == Mode.CUSTOM ? "rules.mchjong.custom_note"
-            : mode == Mode.PRESET ? "rules.mchjong.apply_note" : "rules.mchjong.details_note";
-        MahjongUi.text(graphics, font, Component.translatable(notice), 12, height - (presetExpanded ? 52 : 75), width - 24,
+            : missingReds() ? "rules.mchjong.insufficient_reds" : !allowedByWorld(draft) ? "settings.mchjong.world_locked" : null;
+        if (notice != null) MahjongUi.text(graphics, font, Component.translatable(notice), layout.bodyLeft(), layout.paging() - 14, layout.bodyWidth(),
             rejected || stale() || invalid() || missingReds() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, true);
         super.render(graphics, mouseX, mouseY, partialTick);
     }

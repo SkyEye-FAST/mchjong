@@ -141,7 +141,7 @@ final class ManualTableSmoke {
             }
             case 17 -> {
                 if (!(client.screen instanceof RiichiTableScreen) || ticks < 10) return false;
-                click(client, "room.mchjong.start_bots");
+                click(client, "action.mchjong.fill_bots");
                 next(19);
             }
             case 19 -> {

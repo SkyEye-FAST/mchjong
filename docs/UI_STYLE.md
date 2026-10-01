@@ -35,7 +35,8 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 Use these tokens rather than introducing almost-identical local colors. Tile
 artwork, felt dyes, suit colors and world materials are not interface tokens.
 Avoid turning every edge gold: reserve emphasis for the current selection,
-keyboard focus, an important decision or the panel's small header accent.
+keyboard focus or an important decision. Do not decorate controls or titles with
+left-edge vertical accent strips; selected navigation uses a short bottom rule.
 
 ## MCR physical layout
 
@@ -114,22 +115,23 @@ uses a drop shadow for contrast.
 
 ## Layout and information hierarchy
 
-Use the shared `MahjongUi.STEP` / `OFFSET` / `OVERHANG` rhythm: 2 / 4 / 8
-logical pixels. Adjacent columns step by 0 / 2 / 4 pixels; title plaques extend
-4 pixels beyond the content edge, and primary lobby actions inset by 8 pixels.
-Category rails begin above their body heading; primary footer controls rise by
-2 pixels. Player plaques and action columns use the same steps, while automation
-and hint entrances keep separate edges. On the immersive canvas these steps
-follow the component's existing content scale. Do not add arbitrary offsets.
+Lobby and settings controls share straight row baselines, four-pixel gutters,
+and a persistent category rail. Primary actions use brass emphasis on the same
+footer baseline as their secondary actions. Match HUD plaques and action columns
+retain the shared `MahjongUi.STEP` / `OFFSET` / `OVERHANG` rhythm of 2 / 4 / 8
+logical pixels. On the immersive canvas, spacing follows the content scale.
 Move the actual native rectangular widget bounds with its surface; preserve Tab
 order, narration and focus outlines. Never offset only the visible control.
 
 The receipt's point strip extends 4 logical pixels beyond the yaku body; its brass
 grade badge steps inward by 4 pixels. Reserve the final geometry before any reveal.
 
-Keep the title, body, supporting information and navigation visually distinct.
-Secondary screens use a centered panel over a subdued backdrop. In the table
-view, compact HUD cards belong near the edges so the physical hand stays clear.
+Keep necessary titles, body and navigation visually distinct. Lobby and settings
+screens use compact centered floating panels, leaving the world visible around
+them without a full-screen dim layer. Their bounds follow the content and paginate
+at small sizes. Do not repeat the mod name, selected category or ordinary preparation
+stage as a heading or status line. In the table view, compact HUD cards belong near
+the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit category
 navigation and grouped option rows; selection does not replace the setting's written value.
 Tooltips contain concise labels and state only. Gameplay and crafting explanations
@@ -155,9 +157,14 @@ Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
-The lobby keeps player count, presets, detailed rules, visibility, clock settings,
-invitations and participants on its first page. Keep leave and host dissolution
-distinct in the toolbar, with one prominent seat-preparation action below the settings.
+All three variants share one lobby layout. The left rail selects Riichi, MCR or
+Sichuan; variant selection never appears among that variant's settings. The body
+has Players and bots and Match settings tabs. Keep the roster visible on arrival,
+with per-seat Bot and ownership controls. Match settings paginate player count,
+presets, detailed rules, visibility, timing and convenience hints. Invitation and
+replay navigation sit at the bottom of the rail. Leave and host dissolution stay
+distinct in the toolbar. Fill empty seats is a separate secondary action beside
+the prominent seat-preparation action; drawing winds and readiness reuse its footer.
 Settlement uses one top action with the server's countdown in parentheses and
 automatically opens final standings at the match's second stage. The roster
 returns to the lobby after that stage, with leave and dissolution available there.
@@ -170,14 +177,20 @@ small viewports scale that canvas uniformly rather than reflowing it.
 The table settings hub has World, Room and Personal tabs. Administrators edit world policy
 in the World tab through permission-checked server commands; other players see
 read-only values with a short administrator-only explanation. Room controls
-and ownership transfer are paginated separately from local presentation options.
-Secondary settings and preset pages show their parent scope in the header;
-expanded preset choices use an inset and a quiet vertical rule.
-Settings use a persistent left category rail and flat, compact option rows beneath
-a centered section heading. Labels align left, values align right, and boolean
+are paginated separately from local presentation options; ownership transfer stays
+in the lobby roster and the shared participant page under Settings → Room.
+Rule editors and personal preset pages use the same compact panel, category rail,
+option area and aligned footer. Settings retain a persistent left category rail
+and flat option rows beneath one concise page title. The selected navigation item
+already identifies the section; show inline notices only for pending submissions,
+permission restrictions or errors. Labels align left, values align right, and boolean
 options use square indicators. Keep borders for keyboard focus and footer actions.
+Personal presentation enum values open explicit choice lists and return to their
+category. Restore category defaults affects only the current presentation category;
+personal stick/voice presets are managed on their own page. Changes apply immediately
+and are saved when leaving the personal settings page.
 Personal preset navigation groups indented Server/Local entries beneath each
-stick/voice category. Mark the active child with a leading accent. Narrow windows
+stick/voice category. Mark the active child with selected fill and a bottom rule. Narrow windows
 retain this hierarchy and paginate the content area.
 Settlement score tables use compact rows, quiet horizontal separators and a leading
 accent for the local player. Numeric headings and values share right-aligned column
@@ -186,10 +199,10 @@ edges; the player heading aligns with names after their portraits.
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
 who are absent, and keeps wind assignments separate from world-direction coordinates.
-Empty lobby seat cards show their abbreviated wind beside an Invite control.
-Per-seat bot controls live directly beneath the top seat cards throughout preparation;
-ownership actions remain in the participant screen. The centered brass primary
-button advances filling seats, the table-specific assignment, then readiness.
+Roster rows show names, wind assignments, presence and readiness. Bot controls
+and ownership transfer occupy the right edge of the affected row. Complete names,
+seat coordinates and Bot service errors remain available on hover. The footer
+advances gathering to the table-specific assignment and then readiness.
 Participants distinguish temporary absence, disconnection,
 and an empty/released place. Disconnected human names use the negative text color;
 HUD cards include their presence in the summary and hover details. Bot replacement
@@ -218,9 +231,7 @@ use three separate choices; unavailable choices remain visible, disabled and
 labelled with a shortage tooltip. Availability comes from synchronized server
 capabilities rather than access to box inventory. Every composition, including
 no-red play, requires a complete matching set with enough ordinary and red fives.
-A selected no-red configuration displays a red warning inside the room home panel
-below its primary action. All rule pages paginate at
-320 x 240, with complete labels available on hover.
+All rule pages paginate at 320 x 240, with complete labels available on hover.
 Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
@@ -455,7 +466,10 @@ table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitc
 at 20 degrees per second. Home restores distance, height, direction, target and
 inspect progress. Minecraft controls third-person views. Camera sliders preserve
 the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
-the current elevated seating view. The top-bar view button or V switches to the
+the current elevated seating view. All three variants use the same top-right toolbar order: Replays, view, Settings,
+and Exit. Narrow seated overlays use short captions with the full names on hover;
+normal and immersive toolbars size buttons from their translated captions.
+The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
 Its left edge stays on a fourteen-tile rail, with exposed melds fitted to its right.

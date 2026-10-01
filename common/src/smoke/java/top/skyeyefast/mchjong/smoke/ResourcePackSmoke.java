@@ -205,7 +205,7 @@ final class ResourcePackSmoke {
         } else if (stage == 8 && ticks > 20) {
             SmokeScreenshots.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
             var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
-            client.setScreen(new top.skyeyefast.mchjong.client.RiichiOptionsScreen(screen));
+            client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(screen, screen.tablePos()));
             stage = 81; ticks = 0;
         } else if (stage == 81 && ticks > 5) {
             button(client, "settings.mchjong.scope.personal").onPress();

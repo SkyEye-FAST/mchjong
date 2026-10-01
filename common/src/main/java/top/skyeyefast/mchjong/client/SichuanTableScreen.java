@@ -49,8 +49,8 @@ public final class SichuanTableScreen extends Screen {
     }
     public BlockPos tablePos() { return pos; }
     public static SichuanTableScreen active(Screen screen) {
-        if (screen instanceof SichuanTableScreen table) return table;
-        return screen instanceof TableSettingsScreen settings ? settings.sichuanTableScreen() : null;
+        screen = TableChildScreen.root(screen);
+        return screen instanceof SichuanTableScreen table ? table : null;
     }
     public static boolean isOpen(Screen screen) {
         return active(screen) != null || screen instanceof SichuanResultsScreen || screen instanceof SichuanLobbyScreen
@@ -105,11 +105,8 @@ public final class SichuanTableScreen extends Screen {
         }
         int textScale = contentScale(), canvasWidth = uiWidth();
         turnClock = addRenderableWidget(new TableTurnClock());
-        int positionX = toolbar("ui.mchjong.view_" + (immersive() ? "seated" : "immersive"), 8, this::toggleView);
-        toolbar("settings.mchjong.title", positionX, () -> minecraft.setScreen(new TableSettingsScreen(this)));
-        if (room.viewerSeat() >= 0) addRenderableWidget(new MahjongButton(canvasWidth - 60 * textScale, 6, 52 * textScale, 20 * textScale,
-            Component.translatable("ui.mchjong.exit"), ignored -> TableExitControls.send(pos, room,
-                TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).textScale(textScale));
+        TableToolbar.build(this, pos, room, uiWidth(), immersive(), game.viewerSeat() >= 0, this::toggleView)
+            .forEach(this::addRenderableWidget);
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
@@ -143,12 +140,6 @@ public final class SichuanTableScreen extends Screen {
         }
         addRenderableWidget(hints);
         if (hintFocused && hints.visible) setFocused(hints);
-    }
-    private int toolbar(String key, int positionX, Runnable action) {
-        int textScale = contentScale(); var caption = Component.translatable(key);
-        int span = Math.min(uiWidth() / 3, (font.width(caption) + 14) * textScale);
-        addRenderableWidget(new MahjongButton(positionX, 6, span, 20 * textScale, caption, ignored -> action.run()).textScale(textScale));
-        return positionX + span + 4;
     }
     private void send(SichuanSession.View snapshot, int index) {
         var current = view();

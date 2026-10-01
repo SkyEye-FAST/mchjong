@@ -31,6 +31,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Non-pausing table controls with seated world interaction and an independent immersive play surface. */
 public final class RiichiTableScreen extends Screen {
+    private final RoomLobby lobby;
     private final TableViewController presentation = new TableViewController();
     private static final String[] WINDS = {"east", "south", "west", "north"};
     private final BlockPos pos;
@@ -83,7 +84,7 @@ public final class RiichiTableScreen extends Screen {
     private final RiichiDice dice = new RiichiDice(() -> {
         var current = view();
         if (current != null) {
-            int index = RiichiSeatsScreen.find(current, RiichiAction.Type.PICK_UP_DICE, List.of());
+            int index = findAction(current, RiichiAction.Type.PICK_UP_DICE, List.of());
             if (index >= 0) send(current, index);
         }
     });
@@ -103,7 +104,7 @@ public final class RiichiTableScreen extends Screen {
         return choices;
     }
 
-    public RiichiTableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); }
+    public RiichiTableScreen(BlockPos pos) { super(Component.translatable("ui.mchjong.title")); this.pos = pos.immutable(); lobby = new RoomLobby(this, this.pos, this::rebuild); }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
     @Override public void removed() {
@@ -138,13 +139,9 @@ public final class RiichiTableScreen extends Screen {
     }
 
     public static RiichiTableScreen active(Screen screen) {
+        screen = TableChildScreen.root(screen);
         if (screen instanceof RiichiTableScreen table) return table;
-        if (screen instanceof RiichiOptionsScreen options) return options.tableScreen();
-        if (screen instanceof RiichiSeatsScreen seats) return seats.tableScreen();
-        if (screen instanceof TableSettingsScreen settings) return settings.tableScreen();
-        if (screen instanceof TableClockScreen clock) return clock.tableScreen();
         if (screen instanceof RiichiRulesScreen rules) return rules.tableScreen();
-        if (screen instanceof RiichiInviteScreen invite) return invite.tableScreen();
         return null;
     }
 
@@ -219,6 +216,14 @@ public final class RiichiTableScreen extends Screen {
         scene = frames.stream().map(RiichiAnimation.Frame::piece).toList();
     }
 
+    private static int findAction(RiichiView view, RiichiAction.Type type, List<Integer> arguments) {
+        for (int index = 0; index < view.actions().size(); index++) {
+            var action = view.actions().get(index);
+            if (action.type() == type && action.tiles().equals(arguments)) return index;
+        }
+        return -1;
+    }
+
     private boolean dealing() {
         RiichiAnimation animation = animation();
         return animation != null && TableSettings.get().animations && animation.dealing(Util.getMillis());
@@ -234,6 +239,7 @@ public final class RiichiTableScreen extends Screen {
     }
 
     public void receivedView() {
+        lobby.receivedView();
         refreshDecision(view());
         lastRevision = -1;
     }
@@ -563,27 +569,9 @@ public final class RiichiTableScreen extends Screen {
             Math.max(2, tileWidth / 8), facePreset(), tileMaterial(), tileBack(), tileBackPreset());
     }
 
-    private void buildLobbyToolbar(TableRoomView room) {
-        int cell = (width - 28) / 4;
-        String[] labels = {"replay.mchjong.title", "settings.mchjong.scopes", "action.mchjong.leave_room", "room.mchjong.dissolve"};
-        int leave = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM, List.of());
-        Runnable[] actions = {() -> ClientReplays.list(0, "", false),
-            () -> minecraft.setScreen(new RiichiOptionsScreen(this)), () -> sendRoom(room, leave),
-            () -> sessionControl(room.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)};
-        for (int i = 0; i < labels.length; i++) {
-            int index = i;
-            var button = MahjongButton.create(Component.translatable(labels[i]), ignored -> actions[index].run())
-                .bounds(8 + i * (cell + 4), 8, cell, 20)
-                .tooltip(Tooltip.create(Component.translatable(labels[i]))).build();
-            if (i == 2) button.active = leave >= 0;
-            if (i == 3) button.active = room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
-            addRenderableWidget(button);
-        }
-    }
-
     private void buildToolbar(RiichiView view) {
         if (RiichiResults.available(view)) {
-            int skip = RiichiSeatsScreen.find(view, RiichiAction.Type.SKIP_SETTLEMENT, List.of());
+            int skip = findAction(view, RiichiAction.Type.SKIP_SETTLEMENT, List.of());
             boolean skipped = view.viewerSeat() >= 0
                 && (view.settlementSkippedSeats() & (1 << view.viewerSeat())) != 0;
             int ticks = view.settlementTicks();
@@ -607,47 +595,8 @@ public final class RiichiTableScreen extends Screen {
             addRenderableWidget(countdown);
             return;
         }
-        int layoutWidth = uiWidth();
-        int right = layoutWidth - (immersive() ? 20 : 8);
-        Component exitLabel = Component.translatable("ui.mchjong.exit");
-        Component viewLabel = Component.translatable(immersive() ? "ui.mchjong.view_seated" : "ui.mchjong.view_immersive");
-        Component replayLabel = Component.translatable("replay.mchjong.title");
-        int exitWidth = immersive() ? Math.max(78, font.width(exitLabel) * 2 + 20) : 48;
-        int viewWidth = immersive() ? Math.max(100, font.width(viewLabel) * 2 + 20) : 64;
-        int replayWidth = immersive() ? Math.max(88, font.width(replayLabel) * 2 + 20) : 52;
-        int controlHeight = immersive() ? 36 : 20;
-        int gap = immersive() ? 8 : 4;
-        int menuWidth = immersive() ? 40 : 22;
-        addRenderableWidget(MahjongButton.create(Component.literal("…"), ignored -> minecraft.setScreen(new RiichiOptionsScreen(this)))
-            .bounds(right - menuWidth, immersive() ? 16 : 8, menuWidth, controlHeight)
-            .tooltip(Tooltip.create(Component.translatable("settings.mchjong.scopes"))).build());
-        right -= menuWidth + gap;
-        if (view.viewerSeat() >= 0) {
-            var exit = MahjongButton.create(exitLabel, ignored ->
-                sessionControl(view.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, view.decision(), false))
-                .bounds(right - exitWidth, immersive() ? 16 : 8, exitWidth, controlHeight)
-                .tooltip(Tooltip.create(Component.translatable("ui.mchjong.exit"))).build();
-            exit.active = view.exitVote() == null;
-            addRenderableWidget(exit);
-            right -= exitWidth + gap;
-        }
-        Component cameraHelp = !viewReady ? Component.translatable("ui.mchjong.immersive_after_deal")
-            : Component.translatable("ui.mchjong.switch_view", TableKeys.VIEW.getTranslatedKeyMessage())
-            .append("\n").append(Component.translatable("ui.mchjong.camera_help",
-                TableKeys.INSPECT.getTranslatedKeyMessage(), TableKeys.RESET.getTranslatedKeyMessage()));
-        var camera = MahjongButton.create(viewLabel, ignored -> toggleView())
-            .bounds(right - viewWidth, immersive() ? 16 : 8, viewWidth, controlHeight).tooltip(Tooltip.create(cameraHelp)).build();
-        camera.active = view.viewerSeat() >= 0 && viewReady;
-        addRenderableWidget(camera);
-        right -= viewWidth + gap;
-        var replay = MahjongButton.create(replayLabel, ignored -> ClientReplays.list(0, "", false))
-            .bounds(right - replayWidth, immersive() ? 16 : 8, replayWidth, controlHeight)
-            .tooltip(Tooltip.create(Component.translatable("replay.mchjong.title"))).build();
-        var world = worldPolicy();
-        replay.active = world == null || world.replaysEnabled();
-        addRenderableWidget(replay);
-        if (immersive()) for (var child : children())
-            if (child instanceof MahjongButton button) button.textScale(2);
+        TableToolbar.build(this, pos, room(), uiWidth(), immersive(), view.viewerSeat() >= 0 && viewReady, this::toggleView)
+            .forEach(this::addRenderableWidget);
     }
 
     void configureVisibility(top.skyeyefast.mchjong.engine.PlayerHandVisibility visibility) {
@@ -695,14 +644,7 @@ public final class RiichiTableScreen extends Screen {
     }
 
     private void buildLobby(TableRoomView room, RiichiRoomSettings settings) {
-        buildLobbyToolbar(room);
-        buildSeatControls(room, settings);
-        if (room.seating() != top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
-            buildSeating(room);
-            return;
-        }
-        RiichiLobby.controls(this, room, settings, width, height).forEach(this::addRenderableWidget);
-        actionTop = RiichiLobby.primaryY(height);
+        lobby.build(room, width, height).forEach(this::addRenderableWidget);
     }
 
     boolean automatic() {
@@ -712,102 +654,6 @@ public final class RiichiTableScreen extends Screen {
     top.skyeyefast.mchjong.engine.MahjongVariant variant() {
         return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table
             ? table.clientVariant() : top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
-    }
-
-    private void buildSeatControls(TableRoomView room, RiichiRoomSettings settings) {
-        int cardWidth = (width - 16 - (room.seats().size() - 1) * 4) / room.seats().size();
-        for (int seat = 0; seat < room.seats().size(); seat++) {
-            var state = room.seats().get(seat);
-            var player = state.participant();
-            if (player.id() == null) {
-                int inviteWidth = RiichiHud.inviteWidth(font);
-                var invite = MahjongButton.create(Component.translatable("ui.mchjong.invite.short"), ignored ->
-                    minecraft.setScreen(new RiichiInviteScreen(this)))
-                    .bounds(8 + seat * (cardWidth + 4) + cardWidth - inviteWidth - 2, 34, inviteWidth, 20)
-                    .tooltip(Tooltip.create(Component.translatable("ui.mchjong.invite"))).build();
-                var world = worldPolicy();
-                invite.active = room.viewerSeat() >= 0 && room.exitVote() == null
-                    && (world == null || world.invitationsEnabled());
-                addRenderableWidget(invite);
-            }
-            if (variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR) continue;
-            if (player.id() != null && !player.bot()
-                && state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.DISCONNECTED) continue;
-            int current = -1;
-            if (player.bot()) {
-                if (state.participant().externalBotId() == null) current = state.participant().difficulty().ordinal();
-                else for (int candidate = 0; candidate < settings.externalBots().size(); candidate++)
-                    if (settings.externalBots().get(candidate).id().equals(state.participant().externalBotId())) current = 2 + candidate;
-            }
-            int next = -1, index = -1;
-            for (int candidate = current + 1; candidate < 2 + settings.externalBots().size(); candidate++) {
-                int action = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.SET_BOT, List.of(seat, candidate));
-                if (action >= 0) { next = candidate; index = action; break; }
-            }
-            if (index < 0) index = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.REMOVE_BOT, List.of(seat));
-            final int selected = index;
-            var label = player.bot() ? RiichiSeatsScreen.botName(room, settings.externalBots(), seat).copy() : Component.translatable("room.mchjong.add_bot");
-            var service = botService();
-            String error = service != null && seat < service.seatErrors().size() ? service.seatErrors().get(seat) : null;
-            if (error != null) label.append(" !");
-            label.append(" ›");
-            var button = MahjongButton.create(label, ignored -> sendRoom(room, selected))
-                .bounds(8 + seat * (cardWidth + 4), 56, cardWidth, 20)
-                .tooltip(Tooltip.create(label.copy().append("\n").append(error == null ? Component.empty()
-                    : Component.translatable("bot.mchjong.service." + error).copy().append("\n"))
-                    .append(Component.translatable("room.mchjong.bot_next", next < 0
-                        ? Component.translatable("room.mchjong.empty") : next < 2
-                        ? Component.translatable(top.skyeyefast.mchjong.engine.BotDifficulty.values()[next].translationKey())
-                        : Component.literal(settings.externalBots().get(next - 2).name()))))).build();
-            button.active = index >= 0 && room.exitVote() == null;
-            addRenderableWidget(button);
-        }
-    }
-
-    private void buildSeating(TableRoomView room) {
-        int span = Math.min(440, width - 24), left = (width - span) / 2;
-        boolean drawing = room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.DRAWING;
-        var heading = MahjongButton.create(Component.translatable(drawing ? "room.mchjong.draw_winds" : "room.mchjong.take_seats"), ignored -> {})
-            .bounds(left, 82, span, 20).build();
-        heading.active = false;
-        addRenderableWidget(heading);
-        for (int seat = 0; seat < room.seats().size(); seat++) {
-            var state = room.seats().get(seat);
-            var player = state.participant();
-            Component status = drawing ? RiichiSeatsScreen.wind(state.wind())
-                : player.ready() ? Component.translatable("ui.mchjong.ready") : RiichiSeatsScreen.presence(state.presence());
-            Component label = Component.translatable("room.mchjong.seat_status", drawing ? Component.literal(Integer.toString(seat + 1))
-                : RiichiSeatsScreen.wind(seat), playerName(room, seat), status);
-            var entry = MahjongButton.create(label, ignored -> {}).bounds(left, 106 + seat * 18, span, 16)
-                .tooltip(Tooltip.create(drawing ? label : RiichiSeatsScreen.position(this, seat))).build();
-            entry.active = false;
-            addRenderableWidget(entry);
-        }
-        int actionY = Math.min(height - 58, 182);
-        if (drawing) {
-            int count = room.seats().size(), cell = (span - 4 * (count - 1)) / count;
-            for (int slot = 0; slot < count; slot++) {
-                int index = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.DRAW_WIND, List.of(slot));
-                var button = MahjongButton.create(Component.translatable("room.mchjong.wind_tile", slot + 1), ignored -> sendRoom(room, index))
-                    .bounds(left + slot * (cell + 4), actionY, cell, 22).build();
-                button.active = index >= 0;
-                addRenderableWidget(button);
-            }
-        } else {
-            int ready = RoomLobbyControls.find(room, top.skyeyefast.mchjong.engine.RoomAction.Type.READY, List.of());
-            boolean present = room.viewerSeat() >= 0 && room.seats().get(room.viewerSeat()).presence()
-                == top.skyeyefast.mchjong.engine.PlayerPresence.SEATED;
-            boolean alreadyReady = room.viewerSeat() >= 0 && room.seats().get(room.viewerSeat()).participant().ready();
-            var button = MahjongButton.create(Component.translatable(ready >= 0
-                ? alreadyReady ? "action.mchjong.unready" : "action.mchjong.ready"
-                : present ? automatic() ? "ui.mchjong.equipment_needed" : "ui.mchjong.manual_equipment_needed" : "room.mchjong.take_seats"), ignored -> sendRoom(room, ready))
-                .bounds(left, actionY, span, 22).build().primary();
-            button.active = ready >= 0;
-            addRenderableWidget(button);
-        }
-        addRenderableWidget(MahjongButton.create(Component.translatable("room.mchjong.participants"), ignored ->
-            minecraft.setScreen(new RiichiSeatsScreen(this))).bounds(left, height - 30, span, 20).build());
-        actionTop = actionY;
     }
 
     void send(RiichiView snapshot, int index) {
@@ -1120,37 +966,9 @@ public final class RiichiTableScreen extends Screen {
     }
 
     private void renderLobby(GuiGraphics graphics, int mouseX, int mouseY, float partialTick, TableRoomView room) {
-        var settings = roomSettings();
-        if (settings == null) return;
         information.clear();
-        if (room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
-            int span = Math.min(440, width - 20), left = (width - span) / 2;
-            MahjongUi.panel(graphics, left - 4, 78, span + 8, actionTop - 32);
-        }
-        information.renderLobby(font, graphics, room, settings, botService(), width);
-        if (room.seating() == top.skyeyefast.mchjong.engine.RoomSeating.Stage.GATHERING) {
-            if (settings.rules().redFives() == top.skyeyefast.mchjong.engine.RedFives.NONE) {
-                var warning = Component.translatable("rules.mchjong.no_red_warning");
-                if (height < 300) MahjongUi.text(graphics, font, warning, 12, height - font.lineHeight - 1,
-                    width - 24, MahjongUi.NEGATIVE, true);
-                else {
-                    int y = actionTop + 33;
-                    for (var line : font.split(warning, width - 24)) {
-                        graphics.drawCenteredString(font, line, width / 2, y, MahjongUi.NEGATIVE);
-                        y += font.lineHeight;
-                    }
-                }
-            }
-            if (height >= 300) {
-                int span = Math.min(400, width - 20), left = (width - span) / 2;
-                MahjongUi.text(graphics, font, Component.translatable(automatic() ? "room.mchjong.flow_auto" : "room.mchjong.flow_manual"),
-                    left, 82, span, MahjongUi.ACCENT, true);
-            }
-        }
+        lobby.paint(graphics, room, width, height, mouseX, mouseY);
         super.render(graphics, mouseX, mouseY, partialTick);
-        Component tooltip = information.tooltip(mouseX, mouseY);
-        if (tooltip != null && !overWidget(mouseX, mouseY))
-            graphics.renderTooltip(font, font.split(tooltip, Math.min(320, width - 24)), mouseX, mouseY);
     }
 
     private void layoutTurnControls(RiichiView view) {

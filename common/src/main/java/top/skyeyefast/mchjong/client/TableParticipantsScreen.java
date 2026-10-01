@@ -5,33 +5,43 @@ import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.RiichiAction;
 import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.PlayerPresence;
 import top.skyeyefast.mchjong.engine.TableRoomView;
-import top.skyeyefast.mchjong.engine.RiichiView;
-import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Participant presence and ownership. Bot controls live on the room's seat cards. */
-public final class RiichiSeatsScreen extends Screen {
-    private final RiichiTableScreen parent;
+/** Shared participant presence and ownership while inspecting room settings. */
+public final class TableParticipantsScreen extends Screen implements TableChildScreen {
+    private final Screen parent;
+    private final net.minecraft.core.BlockPos pos;
     private long revision = -1;
+    private int left, top, span, panelHeight, pitch;
 
-    public RiichiSeatsScreen(RiichiTableScreen parent) {
+    public TableParticipantsScreen(Screen parent, net.minecraft.core.BlockPos pos) {
         super(Component.translatable("room.mchjong.participants"));
         this.parent = parent;
+        this.pos = pos.immutable();
     }
-    public RiichiTableScreen tableScreen() { return parent; }
+    @Override public Screen parent() { return parent; }
+    private top.skyeyefast.mchjong.world.MahjongTableBlockEntity table() {
+        return minecraft.level != null && minecraft.level.getBlockEntity(pos) instanceof top.skyeyefast.mchjong.world.MahjongTableBlockEntity table ? table : null;
+    }
+    private TableRoomView room() { return table() == null ? null : table().clientTableRoom(); }
+    private List<top.skyeyefast.mchjong.engine.ExternalBot> externalBots() {
+        return table().clientRiichiSettings() == null ? List.of() : table().clientRiichiSettings().externalBots();
+    }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
 
     @Override protected void init() {
         clearWidgets();
-        var room = parent.room();
+        var room = room();
         if (room == null) return;
         revision = room.revision();
-        int span = Math.min(440, width - 24), left = (width - span) / 2;
+        span = Math.min(380, width - 48);
+        panelHeight = Math.min(88 + room.seats().size() * 32, height - 32);
+        left = (width - span) / 2;
+        top = (height - panelHeight) / 2;
+        pitch = (panelHeight - 88) / room.seats().size();
         boolean host = room.viewerSeat() >= 0 && room.viewerSeat() == room.host() && room.exitVote() == null;
         for (int seat = 0; seat < room.seats().size(); seat++) {
             var state = room.seats().get(seat);
@@ -46,34 +56,26 @@ public final class RiichiSeatsScreen extends Screen {
                 int index = RoomLobbyControls.find(room, RoomAction.Type.TRANSFER_HOST, List.of(seat));
                 enabled = host && seat != room.host() && (!room.lobby() || index >= 0);
                 action = () -> {
-                    if (room.lobby()) parent.sendRoom(room, index);
+                    if (room.lobby()) RoomLobbyControls.send(pos, room, index);
                     else if (minecraft.getConnection() != null) minecraft.getConnection().sendCommand("mchjong host " + player.name());
                 };
             } else {
-                label = player.bot() ? botName(room, parent.roomSettings().externalBots(), seat)
+                label = player.bot() ? botName(room, externalBots(), seat)
                     : Component.translatable(player.id() != null ? presenceKey(state.presence()) : "room.mchjong.empty");
                 hint = label;
                 enabled = false;
                 action = () -> {};
             }
             var button = MahjongButton.create(label, ignored -> action.run())
-                .bounds(left + span - 100, 42 + seat * 37, 100, 22).tooltip(Tooltip.create(hint)).build();
+                .bounds(left + span - 100, top + 38 + seat * pitch, 100, 22).tooltip(Tooltip.create(hint)).build();
             button.active = enabled;
             addRenderableWidget(button);
         }
         int leave = RoomLobbyControls.find(room, RoomAction.Type.LEAVE_ROOM, List.of());
-        if (leave >= 0) addRenderableWidget(MahjongButton.create(Component.translatable("action.mchjong.leave_room"), ignored -> parent.sendRoom(room, leave))
-            .bounds(left, height - 54, span, 20).build());
+        if (leave >= 0) addRenderableWidget(MahjongButton.create(Component.translatable("action.mchjong.leave_room"), ignored -> RoomLobbyControls.send(pos, room, leave))
+            .bounds(left, top + panelHeight - 50, span, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(left, height - 30, span, 20).build().primary());
-    }
-
-    static int find(RiichiView view, RiichiAction.Type type, List<Integer> arguments) {
-        for (int index = 0; index < view.actions().size(); index++) {
-            var action = view.actions().get(index);
-            if (action.type() == type && action.tiles().equals(arguments)) return index;
-        }
-        return -1;
+            .bounds(left, top + panelHeight - 26, span, 20).build().primary());
     }
 
     static Component botName(TableRoomView room, List<top.skyeyefast.mchjong.engine.ExternalBot> externalBots, int seat) {
@@ -90,23 +92,17 @@ public final class RiichiSeatsScreen extends Screen {
             : "wind.mchjong." + new String[]{"east", "south", "west", "north"}[wind]);
     }
 
-    static Component position(RiichiTableScreen table, int seat) {
-        var pos = TableGeometry.stool(table.tablePos(), seat);
-        return Component.translatable("room.mchjong.position", wind(seat), pos.getX(), pos.getY(), pos.getZ());
-    }
-
     @Override public void tick() {
-        var room = parent.room();
+        var room = room();
         if (room == null || room.viewerSeat() < 0) { onClose(); return; }
         if (room.revision() != revision) init();
     }
 
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
-        MahjongUi.backdrop(graphics, width, height, 464);
-        MahjongUi.text(graphics, font, title, 12, 16, width - 24, MahjongUi.TEXT, true);
-        TableRoomView room = parent.room();
+        MahjongUi.panel(graphics, left - 6, top, span + 12, panelHeight);
+        MahjongUi.text(graphics, font, title, left + 7, top + 12, span - 14, MahjongUi.TEXT, false);
+        TableRoomView room = room();
         if (room != null) {
-            int span = Math.min(440, width - 24), left = (width - span) / 2;
             for (int seat = 0; seat < room.seats().size(); seat++) {
                 var state = room.seats().get(seat);
                 var player = state.participant();
@@ -114,10 +110,10 @@ public final class RiichiSeatsScreen extends Screen {
                 Component status = wind(state.wind()).copy().append("  ").append(player.id() == null
                     ? Component.translatable("room.mchjong.left_room") : player.bot() ? Component.translatable("room.mchjong.bot")
                     : presence(state.presence()));
-                int inset = PlayerPortrait.draw(graphics, player, left, 42 + seat * 37, 10);
+                int inset = PlayerPortrait.draw(graphics, player, left, top + 38 + seat * pitch, 10);
                 int nameColor = !player.bot() && state.presence() == PlayerPresence.DISCONNECTED ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
-                MahjongUi.text(graphics, font, label, left + inset, 43 + seat * 37, span - 108 - inset, nameColor, false);
-                MahjongUi.text(graphics, font, status, left, 56 + seat * 37, span - 108, MahjongUi.MUTED, false);
+                MahjongUi.text(graphics, font, label, left + inset, top + 39 + seat * pitch, span - 108 - inset, nameColor, false);
+                MahjongUi.text(graphics, font, status, left, top + 52 + seat * pitch, span - 108, MahjongUi.MUTED, false);
             }
         }
         super.render(graphics, x, y, partialTick);

@@ -439,8 +439,12 @@ unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
 `ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
-`RiichiLobby`, `McrLobbyScreen` and `SichuanLobbyScreen` share room-control lookup and sending while
-retaining their own rule settings. Match and settlement screens remain separate.
+`RoomLobby` owns the shared variant rail, roster, settings and stage footer.
+`RiichiTableScreen`, `McrLobbyScreen` and `SichuanLobbyScreen` adapt their confirmed
+rule state to that component. `TableToolbar`, `TableOptionsScreen`,
+`TableParticipantsScreen` and `TableInviteScreen` share navigation across variants;
+`TableChildScreen` retains the parent chain for snapshot routing and returns.
+Match scenes and settlement screens retain their rule-specific contents.
 
 `SichuanBot` consumes only its seat's recipient-safe `SichuanView` and returns an
 issued action index. One deterministic policy ranks void suits by tile count,
@@ -802,8 +806,8 @@ then adds a 200-tick final-standings stage before restoring the roster.
 age preserves the countdown across reloads. `RiichiTableScreen` switches to final standings at the
 stage boundary, including when opened partway through settlement.
 
-`RiichiLobby` groups player count, matching rule presets, rule details, visibility,
-clocks, invitations and participants on one page. The top toolbar offers individual
+`RoomLobby` separates variant navigation from the roster and paginated match
+settings. See [Interface style](UI_STYLE.md) for its shared layout contract. The top toolbar offers individual
 leave and host-only dissolution. `RiichiHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
 the lower edge rather than covering the table center. The concealed run stays

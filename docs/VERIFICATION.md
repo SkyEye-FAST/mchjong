@@ -87,7 +87,7 @@ Use the following flags with `:fabric:runSmokeClient` and `:neoforge:runSmokeCli
 | --- | --- |
 | `-PsmokeRoom=true` | Lobby, four-language layouts, countdowns, final standings, retained members, leave/dissolve packets; `room-evidence` |
 | `-PsmokeSettlement=true` | Recorded sequential yaku, han badges, points-before-grade, sextuple-yakuman emphasis, multiple winners, four-language standings with uma, resizing and result navigation; `settlement-evidence` |
-| `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, keyboard/disabled states, immersive controls; `interface-evidence` |
+| `-PsmokeInterface=true` | Box transactions, carrier synchronization, personal mod settings and preset navigation, explicit input choices, category-only reset, keyboard/disabled states, immersive controls; `interface-evidence` |
 | `-PsmokeSeating=true` | Mounts, private deals, camera clearance, inspect/reset and rebound input, dragging, focus loss, immersive selection, closed-screen camera and third-person stool; `seating-evidence` |
 | `-PsmokeVisibility=true` | Three participant visibility modes, private packets and independently redacted unmounted spectators; `visibility-evidence` |
 | `-PsmokeManual=true` | Physical shuffle, wall building, dice, packet dealing, draws, save/reload and exit; `manual-evidence` |
@@ -196,8 +196,9 @@ numeric proposals through the native codec.
 `SichuanPresentationTest` owns both 108-slot physical layouts, recipient-safe scene
 projection, multi-win aliases and faithful result-ledger formatting. Run
 `gradlew.bat :fabric:test --tests "*SichuanPresentationTest" --warning-mode fail --console=plain`.
-The focused real-client Sichuan smoke checks three-way lobby selection,
-server-confirmed rule drafts and preset restoration, old-snapshot rejection,
+The focused real-client Sichuan smoke checks three-way lobby selection at
+320 × 240, the shared settings/clock return chain and synchronized World scope
+for each variant, server-confirmed rule drafts and preset restoration, old-snapshot rejection,
 non-host/stale/incarnation payload rejection, the
 108-tile subset, private suit/first-discard declarations, NBT restoration, seated and immersive
 physical-tile selection and discard, exit

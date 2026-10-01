@@ -49,10 +49,10 @@ dismount with Minecraft's sneak control after closing it.
 
 ### Automatic-table MCR
 
-In the automatic-table lobby, the host selects MCR. Seat four human players and
+In the automatic-table lobby, the host selects MCR from the variant sidebar. Seat four human players and
 store a complete standard 144-tile box with eight flowers and a cloth. Assign
 seats, let all four players take their assigned stools, then each player presses
-Ready. The host can set move time and the per-hand reserve in Time control before
+Ready. The host can set move time and the per-hand reserve in Match settings → Time control before
 play. The table runs a fixed sixteen-hand match.
 
 The seated view shows physical walls, six-column rivers, left-corner melds,
@@ -80,7 +80,7 @@ after the sixteenth hand.
 
 ### Automatic-table Sichuan
 
-Select Sichuan, seat four humans and supply a uniform case covering the 108 suited
+Select Sichuan from the lobby sidebar, seat four humans and supply a uniform case covering the 108 suited
 tiles and a cloth. The host chooses MIL SBR 2025 or T/TFMJ 01—2024 in the rule
 editor before everyone presses Ready. Both run an eight-hand match.
 

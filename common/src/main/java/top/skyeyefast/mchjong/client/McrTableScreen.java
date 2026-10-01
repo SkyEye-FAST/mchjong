@@ -49,8 +49,8 @@ public final class McrTableScreen extends Screen {
     }
     public BlockPos tablePos() { return pos; }
     public static McrTableScreen active(Screen screen) {
-        if (screen instanceof McrTableScreen table) return table;
-        return screen instanceof TableSettingsScreen settings ? settings.mcrTableScreen() : null;
+        screen = TableChildScreen.root(screen);
+        return screen instanceof McrTableScreen table ? table : null;
     }
     public static boolean isOpen(Screen screen) {
         return active(screen) != null || screen instanceof McrResultsScreen || screen instanceof McrLobbyScreen;
@@ -104,11 +104,8 @@ public final class McrTableScreen extends Screen {
         }
         int s = contentScale(), w = uiWidth();
         turnClock = addRenderableWidget(new TableTurnClock());
-        int x = toolbar("ui.mchjong.view_" + (immersive() ? "seated" : "immersive"), 8, this::toggleView);
-        toolbar("settings.mchjong.title", x, () -> minecraft.setScreen(new TableSettingsScreen(this)));
-        if (room.viewerSeat() >= 0) addRenderableWidget(new MahjongButton(w - 60 * s, 6, 52 * s, 20 * s,
-            Component.translatable("ui.mchjong.exit"), ignored -> TableExitControls.send(pos, room,
-                TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false)).textScale(s));
+        TableToolbar.build(this, pos, room, uiWidth(), immersive(), game.viewerSeat() >= 0, this::toggleView)
+            .forEach(this::addRenderableWidget);
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
         var choices = new ArrayList<Integer>();
@@ -141,12 +138,6 @@ public final class McrTableScreen extends Screen {
         }
         addRenderableWidget(hints);
         if (hintFocused && hints.visible) setFocused(hints);
-    }
-    private int toolbar(String key, int x, Runnable action) {
-        int s = contentScale(); var caption = Component.translatable(key);
-        int span = Math.min(uiWidth() / 3, (font.width(caption) + 14) * s);
-        addRenderableWidget(new MahjongButton(x, 6, span, 20 * s, caption, ignored -> action.run()).textScale(s));
-        return x + span + 4;
     }
     private void send(McrSession.View snapshot, int index) {
         var current = view();

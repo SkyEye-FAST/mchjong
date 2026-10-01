@@ -20,8 +20,9 @@ import top.skyeyefast.mchjong.engine.TableRoomView;
 import top.skyeyefast.mchjong.network.PayloadPackets;
 import top.skyeyefast.mchjong.network.SichuanRulesPayload;
 
-public final class SichuanRulesScreen extends Screen {
-    private final SichuanLobbyScreen parent;
+public final class SichuanRulesScreen extends Screen implements TableChildScreen {
+    private final Screen parent;
+    private final SichuanLobbyScreen table;
     private TableRoomView baseline;
     private SichuanRoomSettings baselineSettings;
     private SichuanRules draft, pending;
@@ -32,24 +33,27 @@ public final class SichuanRulesScreen extends Screen {
     private int page, pages, pendingTicks;
     private Button apply, reload;
     private boolean rejected;
+    private SettingsLayout layout;
 
     private record Label(Component text, Component description, int x, int y, int width) {}
 
-    public SichuanRulesScreen(SichuanLobbyScreen parent, TableRoomView room, SichuanRoomSettings settings) {
+    public SichuanRulesScreen(Screen parent, TableRoomView room, SichuanRoomSettings settings) {
         super(Component.translatable("sichuan.mchjong.rules.title"));
-        this.parent = parent; baseline = room; baselineSettings = settings; draft = settings.rules();
+        this.parent = parent;
+        this.table = (SichuanLobbyScreen) TableChildScreen.root(parent); baseline = room; baselineSettings = settings; draft = settings.rules();
     }
-    public BlockPos tablePos() { return parent.tablePos(); }
+    public BlockPos tablePos() { return table.tablePos(); }
+    @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
 
     private boolean host() {
-        var room = parent.room();
+        var room = table.room();
         return room != null && room.tableId().equals(baseline.tableId()) && room.lobby() && room.exitVote() == null
             && room.viewerSeat() >= 0 && room.viewerSeat() == room.host();
     }
     private boolean stale() {
-        var room = parent.room();
+        var room = table.room();
         return room == null || !room.tableId().equals(baseline.tableId()) || !room.incarnation().equals(baseline.incarnation())
             || room.decision() != baseline.decision();
     }
@@ -61,33 +65,36 @@ public final class SichuanRulesScreen extends Screen {
         return false;
     }
     private void loadConfirmed() {
-        var room = parent.room(); var settings = parent.roomSettings();
+        var room = table.room(); var settings = table.roomSettings();
         if (room == null || settings == null || !room.tableId().equals(baseline.tableId())) return;
         baseline = room; baselineSettings = settings; draft = settings.rules(); numbers.clear(); rejected = false;
     }
 
     @Override protected void init() {
         clearWidgets(); editors.clear(); labels.clear();
-        int span = Math.min(540, width - 24), left = (width - span) / 2;
+        layout = SettingsLayout.of(width, height);
+        int span = layout.bodyWidth(), left = layout.bodyLeft();
         var matched = SichuanPreset.match(draft);
-        var nextPreset = SichuanPreset.values()[matched == null ? 0 : (matched.ordinal() + 1) % SichuanPreset.values().length];
-        var preset = addRenderableWidget(MahjongButton.create(Component.translatable(nextPreset.translationKey()), ignored -> {
-            var next = nextPreset;
-            draft = next.config(); numbers.clear(); rejected = false; init();
-        }).bounds(left + span - 108, 34, 108, 20).build());
+        var presets = SichuanPreset.values();
+        var label = Component.translatable("rules.mchjong.preset", Component.translatable(matched == null
+            ? "sichuan.mchjong.rules.custom" : matched.translationKey()));
+        var preset = addRenderableWidget(MahjongButton.create(label, ignored -> minecraft.setScreen(new TableChoiceScreen(this,
+            Component.translatable("rules.mchjong.mode.preset"), Arrays.stream(presets).map(value -> (Component) Component.translatable(value.translationKey())).toList(),
+            matched == null ? -1 : matched.ordinal(), index -> { draft = presets[index].config(); numbers.clear(); rejected = false; })))
+            .bounds(left, layout.contentTop(), span, 20).tooltip(Tooltip.create(label)).build());
         editors.add(preset);
-        int rail = Math.min(100, span / 3), contentLeft = left + rail + 10, contentWidth = span - rail - 10;
+        int contentLeft = left, contentWidth = span;
         for (var category : SichuanRuleOption.Group.values()) {
             var text = Component.translatable(category.translationKey());
             addRenderableWidget(MahjongButton.create(text, ignored -> { group = category; page = 0; init(); })
-                .bounds(left, 72 + category.ordinal() * 26, rail, 20).tooltip(Tooltip.create(text)).build().selected(group == category));
+                .bounds(layout.left(), layout.contentTop() + category.ordinal() * 22, layout.rail(), 20).tooltip(Tooltip.create(text)).build().navigation().selected(group == category));
         }
         var options = Arrays.stream(SichuanRuleOption.values()).filter(option -> option.group() == group).toList();
-        int rows = Math.max(1, (height - 158) / 54);
+        int rows = Math.max(1, (layout.height() - 136) / 24);
         pages = Math.max(1, (options.size() + rows - 1) / rows); page = Math.clamp(page, 0, pages - 1);
         for (int offset = 0; offset < rows && page * rows + offset < options.size(); offset++) {
             var option = options.get(page * rows + offset);
-            int top = 76 + offset * 54;
+            int top = layout.top() + 68 + offset * 24;
             var caption = Component.translatable(option.translationKey());
             var description = Component.translatable(option.descriptionKey());
             labels.add(new Label(caption, description, contentLeft, top, contentWidth));
@@ -113,23 +120,23 @@ public final class SichuanRulesScreen extends Screen {
             }
         }
         var previous = addRenderableWidget(MahjongButton.create(Component.literal("‹"), ignored -> { page--; init(); })
-            .bounds(width / 2 - 75, height - 59, 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.previous"))).build());
+            .bounds(left, layout.paging(), 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.previous"))).build());
         previous.active = page > 0;
         var next = addRenderableWidget(MahjongButton.create(Component.literal("›"), ignored -> { page++; init(); })
-            .bounds(width / 2 + 45, height - 59, 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
+            .bounds(left + span - 30, layout.paging(), 30, 20).tooltip(Tooltip.create(Component.translatable("rules.mchjong.next"))).build());
         next.active = page + 1 < pages;
         int buttonWidth = (span - 8) / 3;
         reload = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.reload"), ignored -> {
             loadConfirmed(); init();
-        }).bounds(left, height - 30, buttonWidth, 20).build());
+        }).bounds(left, layout.footer(), buttonWidth, 20).build());
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("rules.mchjong.apply"), ignored -> submit())
-            .bounds(left + buttonWidth + 4, height - 30 - MahjongUi.STEP, buttonWidth, 20).build().primary());
+            .bounds(left + buttonWidth + 4, layout.footer(), buttonWidth, 20).build().primary());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
-            .bounds(left + 2 * (buttonWidth + 4), height - 30, buttonWidth, 20).build());
+            .bounds(left + 2 * (buttonWidth + 4), layout.footer(), buttonWidth, 20).build());
         updateControls();
     }
     private void updateControls() {
-        boolean editable = host() && !stale() && pending == null && parent.roomSettings() != null && parent.roomSettings().rulesEditable();
+        boolean editable = host() && !stale() && pending == null && table.roomSettings() != null && table.roomSettings().rulesEditable();
         editors.forEach(widget -> widget.active = editable);
         if (apply != null) apply.active = editable && !invalid() && !draft.equals(baselineSettings.rules());
         if (reload != null) reload.active = pending == null;
@@ -143,7 +150,7 @@ public final class SichuanRulesScreen extends Screen {
         updateControls();
     }
     public void receivedView(boolean reply) {
-        var settings = parent.roomSettings();
+        var settings = table.roomSettings();
         if (pending != null && reply) {
             boolean accepted = settings != null && settings.rules().equals(pending) && !staleIdentity();
             pending = null;
@@ -155,7 +162,7 @@ public final class SichuanRulesScreen extends Screen {
         updateControls();
     }
     private boolean staleIdentity() {
-        var room = parent.room();
+        var room = table.room();
         return room == null || !room.tableId().equals(baseline.tableId()) || !room.incarnation().equals(baseline.incarnation());
     }
     @Override public void tick() {
@@ -165,24 +172,18 @@ public final class SichuanRulesScreen extends Screen {
     }
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         updateControls();
-        int span = Math.min(540, width - 24), left = (width - span) / 2;
-        MahjongUi.backdrop(graphics, width, height, 580);
-        MahjongUi.titlePlaque(graphics, font, Component.translatable("settings.mchjong.scope.room").append(" › ").append(title),
-            left - MahjongUi.OFFSET, 7, span);
-        var matched = SichuanPreset.match(draft);
-        MahjongUi.text(graphics, font, Component.translatable("rules.mchjong.preset",
-            Component.translatable(matched == null ? "sichuan.mchjong.rules.custom" : matched.translationKey())), left, 40, span - 116, MahjongUi.TEXT, false);
+        int span = layout.bodyWidth(), left = layout.bodyLeft();
+        layout.paint(graphics, font, title);
         for (var label : labels) {
             MahjongUi.text(graphics, font, label.text(), label.x(), label.y() + 6, label.width() - 64, MahjongUi.TEXT, false);
-            graphics.drawWordWrap(font, label.description(), label.x(), label.y() + 25, label.width(), MahjongUi.MUTED);
             if (mouseX >= label.x() && mouseX < label.x() + label.width() - 64 && mouseY >= label.y() && mouseY < label.y() + 20)
-                setTooltipForNextRenderPass(label.text());
+                setTooltipForNextRenderPass(label.text().copy().append(Component.literal(String.valueOf((char)10))).append(label.description()));
         }
-        graphics.drawCenteredString(font, (page + 1) + " / " + pages, width / 2, height - 53, MahjongUi.MUTED);
+        graphics.drawCenteredString(font, (page + 1) + " / " + pages, left + span / 2, layout.paging() + 6, MahjongUi.MUTED);
         String notice = pending != null ? "rules.mchjong.pending" : rejected ? "rules.mchjong.rejected"
-            : !host() ? "rules.mchjong.read_only" : parent.roomSettings() == null || !parent.roomSettings().rulesEditable() ? "sichuan.mchjong.rules.locked"
-            : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid" : "sichuan.mchjong.rules.apply_note";
-        MahjongUi.text(graphics, font, Component.translatable(notice), left, height - 82, span,
+            : !host() ? "rules.mchjong.read_only" : table.roomSettings() == null || !table.roomSettings().rulesEditable() ? "sichuan.mchjong.rules.locked"
+            : stale() ? "rules.mchjong.stale" : invalid() ? "rules.mchjong.invalid" : null;
+        if (notice != null) MahjongUi.text(graphics, font, Component.translatable(notice), left, layout.paging() - 14, span,
             rejected || stale() || invalid() ? MahjongUi.NEGATIVE : MahjongUi.MUTED, false);
         super.render(graphics, mouseX, mouseY, partialTick);
     }

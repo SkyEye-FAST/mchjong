@@ -1,9 +1,11 @@
 # Rooms, permissions and settings
 
-The lobby directly exposes player count, rule preset, rule details, hand visibility,
-time allowances, invitations and participants. The primary button fills empty seats
-and starts seat preparation. Leave room and the host's Close room control stay
-in the top toolbar. The Settings button groups additional controls into World, Room and Personal.
+Riichi, MCR and Sichuan use the same lobby. Select the variant from the left
+sidebar, then use Players and bots to manage the roster or Match settings to
+configure the selected variant. Variant selection is available to the host during
+gathering on automatic tables without Bots. Fill empty seats and seat preparation
+have separate footer buttons. Leave room and the host's Close room control stay
+in the top toolbar. Settings groups controls into World, Room and Personal.
 Administrators can edit world values in the World tab; other players can inspect them. Personal
 display, input, camera and audio settings remain local to each player and are also
 available through MChjong's mod-list Config button. Automatic
@@ -11,7 +13,7 @@ play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
 The room host can enable **Convenience hints** during preparation: Settings → Room
-for Riichi, or the preparation screen for MCR and Sichuan. All three rules share
+or the lobby Match settings tab for all three variants. All three rules share
 the setting, including when changing variants. World `allowConvenienceHints`
 can disable it in both waiting and running rooms.
 
@@ -106,7 +108,7 @@ individual mahjong options into world settings.
 
 ## Hand visibility
 
-The host chooses Hand visibility directly in the lobby before play. The choice is
+The host chooses Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
 saved with that table, and changing it clears readiness:
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
@@ -140,9 +142,9 @@ a remaining human. Standing up to move to an assigned stool retains room members
 
 Players join by sitting on a stool. The waiting room has three stages: gathering,
 wind drawing on an ordinary table, and occupying the assigned seats. The host
-can fill empty places with bots or configure them directly on the top seat cards.
+can fill empty places with bots or configure them directly in the roster rows.
 
-The centered primary button fills empty places, then advances seat preparation.
+Fill empty seats adds Bots; the separate primary button advances seat preparation.
 Once all places have occupants, an ordinary table presents
 face-down wind tiles: each human chooses one, then bots draw the remainder. An
 automatic table shuffles the entire roster immediately. The original east seat is
@@ -171,9 +173,9 @@ tables also offer the external Bots discovered from the administrator's
 and rule preset match the room. Changing the roster or Bot choice clears human
 readiness. Bots remain ready while humans reposition themselves.
 
-The control in each empty or bot-occupied top seat card cycles through Easy,
+The control in each empty or bot-occupied roster row cycles through Easy,
 Hard, compatible external Bots and Empty. External choices retain their stable
-Bot ID in the room save. A service error appears on the affected seat card and
+Bot ID in the room save. A service error appears on the affected roster row and
 its hover details while that Bot waits for a decision. A physically seated human
 cannot be replaced; their control is reserved for transferring room ownership.
 Fill empty seats adds Easy bots.
@@ -193,8 +195,7 @@ heuristic evaluation.
 
 ## Invitations
 
-Use Invite beside a vacant lobby seat to choose an online player. Invite player
-in the lobby opens the same selector. You can also use `/mchjong invite <player>`, with an online
+Use Invite player at the bottom of the lobby sidebar or Settings → Room to choose an online player. You can also use `/mchjong invite <player>`, with an online
 player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.

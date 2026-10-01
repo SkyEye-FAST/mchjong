@@ -165,6 +165,28 @@ public final class TableSettings {
     public void toggle(Information information) {
         if (!hiddenInformation.remove(information)) hiddenInformation.add(information);
     }
+    public enum Category { INFORMATION, INTERACTION, VIEW, AUDIO }
+
+    public void reset(Category category) {
+        var defaults = new TableSettings();
+        switch (category) {
+            case INFORMATION -> hiddenInformation.clear();
+            case INTERACTION -> {
+                discardMode = defaults.discardMode; tileLabels = defaults.tileLabels; guideLines = defaults.guideLines;
+                actionTiles = defaults.actionTiles; highlightTiles = defaults.highlightTiles;
+                autoSeat = defaults.autoSeat; animations = defaults.animations;
+            }
+            case VIEW -> {
+                showRiver = defaults.showRiver; cameraDistance = defaults.cameraDistance; cameraHeight = defaults.cameraHeight;
+                camera().reset(cameraDistance, cameraHeight);
+            }
+            case AUDIO -> {
+                voiceSource = defaults.voiceSource; effectsVolume = defaults.effectsVolume;
+                voiceVolume = defaults.voiceVolume; countdownSounds = defaults.countdownSounds;
+            }
+        }
+    }
+
     public void reset() {
         TableSettings defaults = new TableSettings();
         hiddenInformation.clear();

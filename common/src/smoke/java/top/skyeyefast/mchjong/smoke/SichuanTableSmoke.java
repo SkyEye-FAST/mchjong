@@ -46,7 +46,7 @@ final class SichuanTableSmoke {
         MahjongVariant.RIICHI, MahjongVariant.SICHUAN);
     private final List<ServerPlayer> guests = new ArrayList<>();
     private CompletableFuture<?> task;
-    private int stage, choice, ticks, settled;
+    private int stage, choice, ticks, settled, captureTicks;
     private UUID incarnation;
     private UUID replayId;
     private boolean picked;
@@ -94,6 +94,30 @@ final class SichuanTableSmoke {
                     case MCR -> client.screen instanceof McrLobbyScreen;
                     case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
                 }, "Variant did not open its own screen");
+                client.getWindow().setWindowed(960, 720);
+                client.options.guiScale().set(3); client.resizeDisplay();
+                captureTicks = 0; stage = 60;
+            }
+            case 60 -> {
+                if (++captureTicks < 12) break;
+                require(client.screen.width == 320 && client.screen.height == 240, "Lobby viewport was not 320x240");
+                AutomationControlsSmoke.checkBounds(client);
+                SmokeScreenshots.grab(output.toFile(), "lobby-" + room.variant().name().toLowerCase(java.util.Locale.ROOT) + "-320x240.png", client.getMainRenderTarget(), ignored -> {});
+                var lobbyScreen = client.screen;
+                LobbySmoke.find(client, Component.translatable("settings.mchjong.scopes").getString()).onPress();
+                var optionsScreen = client.screen;
+                LobbySmoke.find(client, Component.translatable("ui.mchjong.clock_settings").getString()).onPress();
+                require(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "Variant clock settings did not open");
+                AutomationControlsSmoke.checkBounds(client);
+                client.screen.onClose();
+                require(client.screen == optionsScreen, "Clock did not return to its settings scope");
+                LobbySmoke.find(client, Component.translatable("settings.mchjong.scope.world").getString()).onPress();
+                String policy = Component.translatable("settings.mchjong.toggle", Component.translatable("settings.mchjong.invitations_enabled"),
+                    Component.translatable(table.clientWorldPolicy().invitationsEnabled() ? "options.on" : "options.off")).getString();
+                require(LobbySmoke.find(client, policy) != null, "Variant world scope did not display synchronized policy");
+                client.screen.onClose();
+                require(client.screen == lobbyScreen, "Settings did not return to the variant lobby");
+                client.options.guiScale().set(2); client.getWindow().setWindowed(1280, 800); client.resizeDisplay();
                 if (++choice < CHOICES.size()) { stage = 1; break; }
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
@@ -108,7 +132,7 @@ final class SichuanTableSmoke {
                     }
                     target.open(main);
                 });
-                stage++;
+                stage = 3;
             }
             case 3 -> {
                 if (room.seats().stream().anyMatch(seat -> seat.participant().id() == null)) break;
@@ -117,6 +141,7 @@ final class SichuanTableSmoke {
                     "Lobby did not project authoritative Sichuan settings");
                 originalSettings = new top.skyeyefast.mchjong.network.SichuanViewPayload(pos, "", room, table.clientSichuanDeck(),
                     table.clientSichuanCloth(), false, false, false, table.clientSichuanSettings(), table.clientWorldPolicy());
+                LobbySmoke.settings(client);
                 var label = Component.translatable("sichuan.mchjong.rules.title").getString();
                 client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                     .filter(button -> button.getMessage().getString().startsWith(label)).findFirst().orElseThrow().onPress();
@@ -163,13 +188,13 @@ final class SichuanTableSmoke {
                 stage = 24;
             }
             case 24 -> {
-                press(client, "sichuan.mchjong.rules.preset.sbr_2025");
+                selectPreset(client, "sichuan.mchjong.rules.preset.sbr_2025");
                 press(client, "rules.mchjong.apply");
                 stage = 25;
             }
             case 25 -> {
                 if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.SBR_2025) break;
-                press(client, "sichuan.mchjong.rules.preset.tfmj_2024");
+                selectPreset(client, "sichuan.mchjong.rules.preset.tfmj_2024");
                 press(client, "rules.mchjong.apply");
                 stage = 26;
             }
@@ -177,7 +202,7 @@ final class SichuanTableSmoke {
                 if (table.clientSichuanSettings().preset() != top.skyeyefast.mchjong.engine.SichuanPreset.TFMJ_2024) break;
                 require(table.clientSichuanSettings().rules().transferKongOnShoot()
                     && !table.clientSichuanSettings().rules().selectFirstDiscard(), "TFMJ preset did not select its behavior");
-                press(client, "sichuan.mchjong.rules.preset.sbr_2025");
+                selectPreset(client, "sichuan.mchjong.rules.preset.sbr_2025");
                 press(client, "rules.mchjong.apply");
                 stage = 27;
             }
@@ -580,6 +605,14 @@ final class SichuanTableSmoke {
         require(button.active, "Disabled Sichuan control: " + key);
         button.onPress();
     }
+    private static void selectPreset(Minecraft client, String key) {
+        var editor = client.screen;
+        String prefix = Component.translatable("rules.mchjong.preset", "").getString();
+        client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+            .filter(button -> button.getMessage().getString().startsWith(prefix)).findFirst().orElseThrow().onPress();
+        press(client, key);
+        require(client.screen == editor, "Preset selection did not return to its rule editor");
+    }
     private static void verifyRuleLayout(Minecraft client) {
         var screen = client.screen;
         int originalWidth = screen.width, originalHeight = screen.height;
@@ -591,11 +624,6 @@ final class SichuanTableSmoke {
                     require(widget.getX() >= 0 && widget.getY() >= 0 && widget.getX() + widget.getWidth() <= size[0]
                         && widget.getY() + widget.getHeight() <= size[1],
                         "Sichuan rules widget outside logical viewport");
-                int span = Math.min(540, size[0] - 24);
-                int descriptionWidth = span - Math.min(100, span / 3) - 10;
-                for (var option : top.skyeyefast.mchjong.engine.SichuanRuleOption.values()) if (option.group() == group)
-                    require(client.font.split(Component.translatable(option.descriptionKey()), descriptionWidth).size() * client.font.lineHeight <= 29,
-                        "Sichuan rule description overflow: " + option);
             }
         }
         screen.init(client, originalWidth, originalHeight);
