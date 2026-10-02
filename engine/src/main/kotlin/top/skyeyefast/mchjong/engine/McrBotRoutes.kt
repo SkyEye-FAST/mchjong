@@ -91,29 +91,28 @@ internal class McrBotRoutes(private val owner: Int, private val seatWind: Int, p
             if (slots < 0) continue
             val initial = IntArray(34)
             todo.forEach { group -> group.forEach { initial[it]++ } }
-            val start = fit(initial, -1, held, live) ?: continue
+            val start = fit(initial, -1, held, live, 8) ?: continue
             // Targets farther than eight missing draws have negligible evidence. This
             // bound also avoids expensive completion of unrelated distant templates.
-            if (start.missing > 8) continue
             var beam = listOf(start)
             repeat(slots) {
                 val next = ArrayList<Fit>()
                 for (state in beam) for (index in maxOf(0, state.last)..template.allowed.lastIndex) {
                     val need = state.need.clone()
                     template.allowed[index].forEach { need[it]++ }
-                    val candidate = fit(need, index, held, live) ?: continue
-                    if (candidate.missing <= 8) next.add(candidate)
+                    val candidate = fit(need, index, held, live, 8) ?: continue
+                    next.add(candidate)
                 }
                 // A small beam retains alternatives without enumerating every regular
                 // winning hand. This is a route heuristic, not another shanten solver.
-                beam = next.sortedWith(FIT_ORDER).distinctBy { it.need.toList() }.take(8)
+                next.sortWith(FIT_ORDER)
+                beam = next.asSequence().distinctBy { it.need.toList() }.take(8).toList()
             }
             val complete = ArrayList<Fit>()
             for (state in beam) for (pair in template.pairs) {
                 val need = state.need.clone()
                 need[pair] += 2
-                val candidate = fit(need, state.last, held, live) ?: continue
-                if (candidate.missing > 8) continue
+                val candidate = fit(need, state.last, held, live, 8) ?: continue
                 if (template.types) {
                     val all = need.clone()
                     fixed.forEach { group -> group.forEach { all[it]++ } }
@@ -147,13 +146,14 @@ internal class McrBotRoutes(private val owner: Int, private val seatWind: Int, p
         return Assessment(routes.values.toList(), winningCopies)
     }
 
-    private fun fit(need: IntArray, last: Int, held: IntArray, live: IntArray): Fit? {
+    private fun fit(need: IntArray, last: Int, held: IntArray, live: IntArray, maxMissing: Int = Int.MAX_VALUE): Fit? {
         var missing = 0
         var scarcity = 0.0
         for (kind in need.indices) {
             if (need[kind] > held[kind] + live[kind]) return null
             val deficit = maxOf(0, need[kind] - held[kind])
             missing += deficit
+            if (missing > maxMissing) return null
             if (deficit > 0) scarcity += deficit * ln(4.0 / live[kind])
         }
         return Fit(need, last, missing, scarcity)

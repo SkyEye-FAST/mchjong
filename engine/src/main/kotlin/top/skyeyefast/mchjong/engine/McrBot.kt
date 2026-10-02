@@ -19,6 +19,10 @@ object McrBot {
         if (view.qualifyingWin()) return actions.indexOfFirst { it.type() == WIN }
         // Forced draws/replacements belong exclusively to the session scheduler.
         if (actions.none { it.type() == PASS || it.type() == DISCARD }) return -1
+        // A pass-only response cannot improve the hand. Do not search scoring
+        // routes when there is no discard or call to compare against passing.
+        if (actions.none { it.type() in listOf(DISCARD, CHOW, PUNG, MELDED_KONG, CONCEALED_KONG) })
+            return actions.indexOfFirst { it.type() == PASS }
         val own = view.seats()[view.viewerSeat()]
         val known = linkedSetOf<Int>().apply {
             addAll(own.hand())
@@ -33,7 +37,7 @@ object McrBot {
         val cache = HashMap<Key, Evaluation>()
         fun evaluate(hand: List<Int>, melds: List<Meld>, visible: Set<Int> = known): Evaluation {
             val owned = (hand + melds.flatMap { it.tiles() }).toSet()
-            return cache.getOrPut(Key(hand.sorted(), melds, visible)) {
+            return cache.getOrPut(Key(hand.map(Tile::kind).sorted(), melds, visible)) {
                 val progress = McrHandAnalyzer.analyze(hand, melds, view.viewerSeat(), (visible - owned).toList())
                 Evaluation(progress, routes.assess(hand, melds, visible, progress))
             }

@@ -30,6 +30,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Avoid redundant MCR Bot route searches for pass-only replies and equivalent physical discards, and reject already out-of-range route candidates before allocating fits; bound Snapshot CI workers and retain test reports and build diagnostics on failure.
+
 - Restore full-size Chinese tiles for MCR and Sichuan, calibrate their independent 12-degree automatic-table lift rails to real table proportions, return melds to the owner’s left and place later river rows in actually vacated wall space; verify conserved post-deal, midgame and late-game positions across both Sichuan wall assignments without dynamic tile scaling.
 
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.

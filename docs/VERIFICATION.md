@@ -19,6 +19,8 @@ gradlew.bat :fabric:runSmokeServer :neoforge:runSmokeServer :forge:runSmokeServe
 `--no-parallel --max-workers=2` bounds resource use. Dedicated-server launcher
 checks use isolated directories and `--initSettings`; they cover entrypoint and
 settings initialization, not simulated worlds. The default EULA is unchanged.
+Snapshot CI limits Gradle to two workers and uploads test reports, XML results,
+problem reports and the build log even when the build fails.
 
 The 1.21.1 Forge client check is a focused registration, item-renderer and title
 screen bootstrap under `forge/build/smoke/bootstrap-evidence`. It does not establish
