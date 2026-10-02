@@ -52,6 +52,7 @@ final class SichuanTableSmoke {
     private boolean picked;
     private boolean hintsConfigured;
     private final ConvenienceHintsSmoke scoredHints = new ConvenienceHintsSmoke();
+    private final WallSeatedSmoke seatedWall = new WallSeatedSmoke();
     private final MatchAutomationControlsSmoke automation = new MatchAutomationControlsSmoke();
     private int selectedTile;
     private int boundFirstDiscard = Tile.ABSENT;
@@ -335,6 +336,7 @@ final class SichuanTableSmoke {
                 settled = 0; stage++;
             }
             case 11 -> {
+                if (!seatedWall.finished()) { seatedWall.tick(client, table, output, false); break; }
                 if (!scoredHints.finished()) { scoredHints.tick(client, table, output, false); break; }
                 var view = table.clientSichuanView();
                 if (view.game().actions().stream().noneMatch(action -> action.type() == SichuanAction.Type.DISCARD)) break;

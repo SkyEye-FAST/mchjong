@@ -18,6 +18,8 @@ import top.skyeyefast.mchjong.client.FurnitureMesh;
 import top.skyeyefast.mchjong.client.MahjongUi;
 import top.skyeyefast.mchjong.client.McrSceneRenderer;
 import top.skyeyefast.mchjong.client.McrTableScene;
+import top.skyeyefast.mchjong.client.SichuanSceneRenderer;
+import top.skyeyefast.mchjong.client.SichuanTableScene;
 import top.skyeyefast.mchjong.engine.McrDiscard;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrOpening;
@@ -27,13 +29,15 @@ import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.McrDeck;
+import top.skyeyefast.mchjong.item.SichuanDeck;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Shared-client physical and immersive render fixtures, without a second gameplay smoke. */
 final class McrDisplaySmoke {
-    private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png", "mcr-immersive.png"};
+    private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png", "mcr-immersive.png",
+        "sichuan-wall-east-west.png", "sichuan-wall-north-south.png"};
     private Display display;
     private int ticks;
     private int frameTicks;
@@ -71,19 +75,29 @@ final class McrDisplaySmoke {
         private final List<McrTableScene.Piece> play = McrTableScene.build(position());
         private final McrDeck deck = new McrDeck(TileMaterial.BONE, DyeColor.BLUE, TileFacePreset.KANSAI,
             ResourceLocation.fromNamespaceAndPath("mchjong", "default"));
+        private final SichuanDeck sichuanDeck = new SichuanDeck(TileMaterial.BONE, DyeColor.BLUE, TileFacePreset.KANSAI,
+            ResourceLocation.fromNamespaceAndPath("mchjong", "default"));
+        private final List<SichuanTableScene.Piece> eastWestWall = SichuanTableScene.fullWall(true);
+        private final List<SichuanTableScene.Piece> northSouthWall = SichuanTableScene.fullWall(false);
         private int stage;
         private int frames;
 
         Display() {
             super(Component.literal("MCR layout verification"));
             if (wall.size() != 144 || play.size() != 144) throw new IllegalStateException("Display lost physical tiles");
+            if (eastWestWall.size() != 108 || northSouthWall.size() != 108)
+                throw new IllegalStateException("Sichuan display lost physical tiles");
         }
 
         @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
             frames++;
             graphics.fill(0, 0, width, height, MahjongUi.PANEL);
-            graphics.drawCenteredString(font, stage > 0 ? "MCR | six-column rivers, public melds and flowers"
-                : "MCR | 144 tiles / 72 stacks / four 18-stack walls", width / 2, 12, MahjongUi.TEXT);
+            graphics.drawCenteredString(font, switch (stage) {
+                case 0 -> "MCR | 144 tiles / four 18-stack walls / 12-degree tilt";
+                case 3 -> "Sichuan | 108 tiles / East-West 14 stacks / 12-degree tilt";
+                case 4 -> "Sichuan | 108 tiles / North-South 14 stacks / 12-degree tilt";
+                default -> "MCR | six-column rivers, public melds and flowers";
+            }, width / 2, 12, MahjongUi.TEXT);
             graphics.flush();
             var pose = graphics.pose();
             float scale = (float) Math.min(width / (2 * TableGeometry.OUTER_HALF_WIDTH + .4),
@@ -95,8 +109,11 @@ final class McrDisplaySmoke {
             pose.translate(0, -TableGeometry.FELT_Y, 0);
             RenderSystem.enableDepthTest();
             FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
-            McrSceneRenderer.render(stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
-                deck, pose, graphics.bufferSource(), 0xf000f0);
+            if (stage >= 3)
+                SichuanSceneRenderer.render(stage == 3 ? eastWestWall : northSouthWall,
+                    sichuanDeck, pose, graphics.bufferSource(), 0xf000f0);
+            else McrSceneRenderer.render(stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
+                    deck, pose, graphics.bufferSource(), 0xf000f0);
             graphics.flush();
             pose.popPose();
             graphics.drawCenteredString(font, "Shared tile mesh and physical-slot scene; no room mode is enabled",
