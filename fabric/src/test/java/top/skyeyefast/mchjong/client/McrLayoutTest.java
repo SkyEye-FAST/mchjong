@@ -38,9 +38,9 @@ class McrLayoutTest {
             assertEquals(18, upper.size());
             WallGeometryAssertions.tiltedSide(upper.stream().map(McrTableScene.Piece::position).toList(),
                 upper.stream().map(McrTableScene.Piece::yaw).toList(), seat, firstDirection, McrTableScene.WIDTH);
-            var next = pieces.get(McrWallLayout.slot(McrWallLayout.stack((seat + 1) % 4, 17), McrWallLayout.Layer.UPPER));
-            WallGeometryAssertions.corner(upper.getFirst().position(), upper.getLast().position(),
-                next.position(), upper.getFirst().yaw(), McrTableScene.WIDTH, McrTableScene.HEIGHT);
+            WallGeometryAssertions.riverClearance(upper.stream().map(McrTableScene.Piece::position).toList(),
+                upper.stream().map(McrTableScene.Piece::yaw).toList(), seat,
+                McrTableScene.WIDTH, McrTableScene.HEIGHT, McrTableScene.RIVER_Z);
         }
         for (int seat = 0; seat < 4; seat++) for (int column = 0; column < 18; column++) {
             int stack = McrWallLayout.stack(seat, column);

@@ -30,7 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Tilt the complete MCR and Sichuan double-layer walls by 12 degrees in a consistent pinwheel layout, rotating both stack centers and tile yaw with tightly touching stacks and closely gathered corners, keeping the center panel visible from seated play while preserving physical slots and rule-specific wall traversal.
+- Position the 12-degree MCR and Sichuan pinwheel walls on one outer automatic-table rail, leaving room for four six-tile river rows around the center device; shorter Sichuan walls retain that radius with larger corner gaps, while stack contact, tile yaw, physical slots and rule-specific traversal remain unchanged.
 
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
 
@@ -40,7 +40,6 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Center MCR rivers like Riichi, place melds and flowers on the owner's left, and omit walls from the immersive MCR table.
 - Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.
 - Highlight every tile in a wall pickup packet and allow grabbing any tile in that packet.
-- Close MCR wall corners with a fine tile seam while retaining the four projecting ends.
 
 ### Added
 

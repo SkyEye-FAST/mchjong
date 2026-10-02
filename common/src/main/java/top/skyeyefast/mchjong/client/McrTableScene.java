@@ -16,8 +16,7 @@ public final class McrTableScene {
     public static final double WIDTH = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double HEIGHT = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double DEPTH = (double) TileMesh.DEPTH * TILE_SCALE;
-    private static final TiltedWallLayout WALL = TiltedWallLayout.compact(McrWallLayout.STACKS_PER_SIDE,
-        McrWallLayout.STACKS_PER_SIDE, WIDTH, HEIGHT);
+    private static final TiltedWallLayout WALL = TiltedWallLayout.compact(McrWallLayout.STACKS_PER_SIDE, WIDTH, HEIGHT);
     public static final double HAND_Z = RiichiTableScene.HAND_Z;
     public static final double MELD_RIGHT = RiichiTableScene.MELD_RIGHT;
     public static final double RIVER_Z = RiichiTableScene.RIVER_Z;

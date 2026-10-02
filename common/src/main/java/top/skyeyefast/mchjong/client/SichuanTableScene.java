@@ -41,8 +41,7 @@ public final class SichuanTableScene {
         var pieces = new ArrayList<Piece>();
         for (int seat = 0; seat < 4; seat++) {
             int stacks = SichuanWallLayout.stacks(seat, eastWestLongWall);
-            var wall = TiltedWallLayout.compact(stacks,
-                SichuanWallLayout.stacks((seat + 1) % 4, eastWestLongWall), WIDTH, HEIGHT);
+            var wall = TiltedWallLayout.compact(stacks, WIDTH, HEIGHT);
             for (int column = 0; column < stacks; column++)
             for (int layer = 0; layer < 2; layer++) {
                 int slot = SichuanWallLayout.slot(seat, column, layer, eastWestLongWall);

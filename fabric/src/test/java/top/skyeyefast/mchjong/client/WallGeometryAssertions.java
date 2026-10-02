@@ -8,13 +8,30 @@ import static org.junit.jupiter.api.Assertions.*;
 final class WallGeometryAssertions {
     private WallGeometryAssertions() {}
 
-    static void corner(Vec3 first, Vec3 last, Vec3 adjacentEnd, float yaw, double width, double height) {
-        var along = tangent(yaw);
-        var outward = tangent(yaw - 90);
-        double gap = first.subtract(adjacentEnd).dot(outward) - (height + width) / 2;
-        assertEquals(width / 8, gap, 1e-8, "Each short end nearly meets the neighboring wall");
-        double contact = adjacentEnd.subtract(last).dot(along);
-        assertTrue(contact > 0 && contact < first.distanceTo(last), "The corner must meet the wall's side, not float beyond its end");
+    static void riverClearance(List<Vec3> centers, List<Float> yaws, int seat,
+                               double width, double height, double riverZ) {
+        double riverInner = riverZ - height / 2;
+        double requiredRiverDepth = 4 * height;
+        double wallRiverGap = .02;
+        assertTrue(riverInner > TableIndicator.HALF_WIDTH, "The river must clear the actual center housing");
+        assertTrue(6 * width / 2 < riverInner, "Six-column rivers must clear the neighboring seat's river");
+        double innerWallBoundary = Double.POSITIVE_INFINITY;
+        for (int tile = 0; tile < centers.size(); tile++) {
+            var center = centers.get(tile);
+            var x = tangent(yaws.get(tile)).scale(width / 2);
+            var z = tangent(yaws.get(tile) - 90).scale(height / 2);
+            for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
+                var corner = center.add(x.scale(sx)).add(z.scale(sz));
+                var local = TableGeometry.orient(corner.x, 0, corner.z, (4 - seat) % 4);
+                innerWallBoundary = Math.min(innerWallBoundary, local.z);
+                assertTrue(Math.max(Math.abs(local.x), Math.abs(local.z)) < TableGeometry.FELT_HALF_WIDTH,
+                    "Every rotated wall corner must stay on the felt");
+            }
+        }
+        assertTrue(innerWallBoundary >= riverInner + requiredRiverDepth + wallRiverGap,
+            "Even the inward wall end must clear all four six-tile river rows");
+        assertTrue(innerWallBoundary >= TableIndicator.HALF_WIDTH + requiredRiverDepth + wallRiverGap,
+            "Center device, river depth and wall gap must fit inside the oriented wall boundary");
     }
 
     static void clearCenter(Vec3 position, float yaw, double width, double height, double depth) {
@@ -40,7 +57,7 @@ final class WallGeometryAssertions {
         var local = TableGeometry.orient(direction.x, 0, direction.z, (4 - seat) % 4);
         assertTrue(local.x > .9 && local.z > .15, "Both local axes must change with the same handedness");
         double angle = Math.toDegrees(Math.atan2(local.z, local.x));
-        assertTrue(angle >= 10 && angle <= 15, "The whole wall must have a mild, visible tilt");
+        assertEquals(12, angle, 1e-5, "The whole wall retains its 12-degree tilt");
         var expected = TableGeometry.orient(firstSideDirection.x, 0, firstSideDirection.z, seat);
         assertEquals(0, direction.distanceTo(expected), 1e-8, "Sides rotate by successive 90-degree turns");
         double pitch = centers.get(0).distanceTo(centers.get(1));

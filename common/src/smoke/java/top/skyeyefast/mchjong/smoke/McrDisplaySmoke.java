@@ -20,6 +20,7 @@ import top.skyeyefast.mchjong.client.McrSceneRenderer;
 import top.skyeyefast.mchjong.client.McrTableScene;
 import top.skyeyefast.mchjong.client.SichuanSceneRenderer;
 import top.skyeyefast.mchjong.client.SichuanTableScene;
+import top.skyeyefast.mchjong.client.TableIndicator;
 import top.skyeyefast.mchjong.engine.McrDiscard;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrOpening;
@@ -37,7 +38,8 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 /** Shared-client physical and immersive render fixtures, without a second gameplay smoke. */
 final class McrDisplaySmoke {
     private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png", "mcr-immersive.png",
-        "sichuan-wall-east-west.png", "sichuan-wall-north-south.png"};
+        "sichuan-wall-east-west.png", "sichuan-wall-north-south.png",
+        "mcr-wall-rivers.png", "sichuan-wall-east-west-rivers.png", "sichuan-wall-north-south-rivers.png"};
     private Display display;
     private int ticks;
     private int frameTicks;
@@ -79,6 +81,9 @@ final class McrDisplaySmoke {
             ResourceLocation.fromNamespaceAndPath("mchjong", "default"));
         private final List<SichuanTableScene.Piece> eastWestWall = SichuanTableScene.fullWall(true);
         private final List<SichuanTableScene.Piece> northSouthWall = SichuanTableScene.fullWall(false);
+        // Deliberate clearance stress fixture: a full wall plus four rows at every seat,
+        // not a possible game position or an additional physical stock.
+        private final List<McrTableScene.Piece> rivers = new ArrayList<>();
         private int stage;
         private int frames;
 
@@ -87,6 +92,12 @@ final class McrDisplaySmoke {
             if (wall.size() != 144 || play.size() != 144) throw new IllegalStateException("Display lost physical tiles");
             if (eastWestWall.size() != 108 || northSouthWall.size() != 108)
                 throw new IllegalStateException("Sichuan display lost physical tiles");
+            for (int seat = 0; seat < 4; seat++) for (int index = 0; index < 24; index++)
+                rivers.add(new McrTableScene.Piece(index, seat, McrTableScene.Area.RIVER, index,
+                    TableGeometry.orient((index % 6 - 2.5) * McrTableScene.WIDTH,
+                        TableGeometry.FELT_Y + McrTableScene.DEPTH / 2,
+                        McrTableScene.RIVER_Z + index / 6 * McrTableScene.HEIGHT, seat),
+                    seat * 90, true, false, McrTableScene.TILE_SCALE));
         }
 
         @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
@@ -96,6 +107,9 @@ final class McrDisplaySmoke {
                 case 0 -> "MCR | 144 tiles / four 18-stack walls / 12-degree tilt";
                 case 3 -> "Sichuan | 108 tiles / East-West 14 stacks / 12-degree tilt";
                 case 4 -> "Sichuan | 108 tiles / North-South 14 stacks / 12-degree tilt";
+                case 5 -> "MCR | full wall + four-row river clearance fixture";
+                case 6 -> "Sichuan | East-West long wall + four-row river clearance fixture";
+                case 7 -> "Sichuan | North-South long wall + four-row river clearance fixture";
                 default -> "MCR | six-column rivers, public melds and flowers";
             }, width / 2, 12, MahjongUi.TEXT);
             graphics.flush();
@@ -108,12 +122,21 @@ final class McrDisplaySmoke {
             pose.mulPose(Axis.XP.rotationDegrees(64));
             pose.translate(0, -TableGeometry.FELT_Y, 0);
             RenderSystem.enableDepthTest();
-            FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
-            if (stage >= 3)
-                SichuanSceneRenderer.render(stage == 3 ? eastWestWall : northSouthWall,
+            FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, true);
+            TableIndicator.renderStandby(pose, graphics.bufferSource(), 0xf000f0);
+            if (stage == 3 || stage == 4 || stage >= 6)
+                SichuanSceneRenderer.render(stage == 3 || stage == 6 ? eastWestWall : northSouthWall,
                     sichuanDeck, pose, graphics.bufferSource(), 0xf000f0);
-            else McrSceneRenderer.render(stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
+            else McrSceneRenderer.render(stage == 0 || stage == 5 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
                     deck, pose, graphics.bufferSource(), 0xf000f0);
+            if (stage >= 5) {
+                var riverPieces = rivers;
+                if (stage >= 6) riverPieces = rivers.stream().map(piece -> new McrTableScene.Piece(
+                    piece.tile(), piece.seat(), piece.area(), piece.index(), piece.position().add(
+                        TableGeometry.orient(0, 0, SichuanTableScene.RIVER_Z - McrTableScene.RIVER_Z, piece.seat())),
+                    piece.yaw(), piece.flat(), piece.back(), piece.scale())).toList();
+                McrSceneRenderer.render(riverPieces, deck, pose, graphics.bufferSource(), 0xf000f0);
+            }
             graphics.flush();
             pose.popPose();
             graphics.drawCenteredString(font, "Shared tile mesh and physical-slot scene; no room mode is enabled",

@@ -50,11 +50,14 @@ each tilted 12 degrees relative to its owner's table edge. Stack centers advance
 along the tilted wall tangent, and each tile's yaw follows that same tangent.
 Rotate the complete local pose by 90 degrees for successive seats: all four
 walls retain the same local tilt and handedness, forming a rotated hash/pinwheel
-outline. Wall centers follow the compact length of the neighboring wall: each
-short end approaches its neighbor's side with a narrow clearance, while the long
-end extends past that junction. Keep the four walls gathered around the center,
-without intersections or large disconnected corner gaps. The complete wall must
-leave the central instrument panel visible from the default seated camera.
+outline. All automatic-table walls share one outer lift rail, independent of
+stack count. Derive its radius from the felt edge and the rotated bounds of the
+longest supported wall, leaving a felt margin. MCR's eighteen-stack walls and
+Sichuan's thirteen/fourteen-stack walls retain the same centers; shorter walls
+leave larger corner gaps instead of shrinking toward the center. Keep the actual
+oriented inner wall boundary beyond the center housing, four six-tile river rows
+and a positive wall-to-river gap, including the inward tilted end. The complete
+wall must leave the central instrument panel visible from the default seated camera.
 Stack pitch equals tile width, so neighboring tiles touch edge to edge along the
 wall tangent, as in Riichi. Check intersections using oriented tile bounds;
 world-axis AABBs of tightly packed tilted tiles may overlap. Every tile stays on

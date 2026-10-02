@@ -40,11 +40,9 @@ class SichuanPresentationTest {
             }
             WallGeometryAssertions.tiltedSide(upper.stream().map(SichuanTableScene.Piece::position).toList(),
                 upper.stream().map(SichuanTableScene.Piece::yaw).toList(), seat, firstDirection, SichuanTableScene.WIDTH);
-            int nextSeat = (seat + 1) % 4;
-            int nextSlot = SichuanWallLayout.slot(nextSeat, SichuanWallLayout.stacks(nextSeat, eastWestLongWall) - 1, 0, eastWestLongWall);
-            var next = pieces.stream().filter(piece -> piece.index() == nextSlot).findFirst().orElseThrow();
-            WallGeometryAssertions.corner(upper.getFirst().position(), upper.getLast().position(),
-                next.position(), upper.getFirst().yaw(), SichuanTableScene.WIDTH, SichuanTableScene.HEIGHT);
+            WallGeometryAssertions.riverClearance(upper.stream().map(SichuanTableScene.Piece::position).toList(),
+                upper.stream().map(SichuanTableScene.Piece::yaw).toList(), seat,
+                SichuanTableScene.WIDTH, SichuanTableScene.HEIGHT, SichuanTableScene.RIVER_Z);
         }
         for (var piece : pieces) {
             assertEquals(Tile.HIDDEN, piece.tile());
@@ -59,6 +57,23 @@ class SichuanPresentationTest {
             assertFalse(WallGeometryAssertions.intersects(pieces.get(first).position(), pieces.get(first).yaw(),
                 pieces.get(second).position(), pieces.get(second).yaw(), SichuanTableScene.WIDTH,
                 SichuanTableScene.HEIGHT, SichuanTableScene.DEPTH));
+    }
+
+    @Test void bothSichuanAssignmentsUseTheSameOuterRailAsMcr() {
+        var mcr = McrTableScene.fullWall();
+        for (boolean eastWestLongWall : new boolean[]{false, true}) {
+            var sichuan = SichuanTableScene.fullWall(eastWestLongWall);
+            for (int seat = 0; seat < 4; seat++) {
+                int owner = seat;
+                var expected = mcr.stream().filter(piece -> piece.seat() == owner)
+                    .map(McrTableScene.Piece::position).reduce(net.minecraft.world.phys.Vec3.ZERO, net.minecraft.world.phys.Vec3::add)
+                    .scale(1.0 / 36);
+                var actual = sichuan.stream().filter(piece -> piece.seat() == owner)
+                    .map(SichuanTableScene.Piece::position).reduce(net.minecraft.world.phys.Vec3.ZERO, net.minecraft.world.phys.Vec3::add)
+                    .scale(1.0 / (2 * SichuanWallLayout.stacks(seat, eastWestLongWall)));
+                assertEquals(0, expected.distanceTo(actual), 1e-8, "Stack count must not move the wall rail or center");
+            }
+        }
     }
 
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {

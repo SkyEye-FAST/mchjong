@@ -129,8 +129,13 @@ and matching tile yaw in all three wall captures. The `smokeMcrAuto` profile
 provides `mcr-wall-seated.png`; `smokeSichuan` provides
 `sichuan-wall-east-west-seated.png` and `sichuan-wall-north-south-seated.png`.
 These display-only full-wall snapshots use the real seated world camera and
-active automatic-table instrument panel. Check corner proximity and unobstructed
-center labels in these views as well as the overhead captures. Omit `smokeScreenshots` for
+active automatic-table instrument panel. Check the fixed outer rail, larger Sichuan
+corner gaps and unobstructed center labels in these views as well as the overhead captures.
+The layout profile also supplies `mcr-wall-rivers.png`,
+`sichuan-wall-east-west-rivers.png` and `sichuan-wall-north-south-rivers.png`:
+display-only clearance stress fixtures combining complete walls with four six-tile
+river rows per seat, rather than legal physical-stock snapshots. Inspect the
+inward wall ends, center housing clearance and felt margins. Omit `smokeScreenshots` for
 assertion-only runs. Compile the other affected loaders without duplicating these shared images.
 
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
