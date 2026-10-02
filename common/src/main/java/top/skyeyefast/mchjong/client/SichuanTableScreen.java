@@ -59,6 +59,15 @@ public final class SichuanTableScreen extends Screen {
     }
     public boolean immersive() { return presentation.immersive(); }
     public boolean inspecting() { return presentation.inspecting(); }
+    @Override public Component getNarrationMessage() {
+        var message = super.getNarrationMessage().copy();
+        var current = view();
+        var room = current == null ? null : table().clientTableRoom();
+        if (current != null && current.game() != null && room != null) for (int seat = 0; seat < 4; seat++)
+            message.append("\n").append(room.seats().get(seat).participant().name())
+                .append(" ").append(SichuanTableScene.status(current.game().seats().get(seat)));
+        return message;
+    }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int positionX, int positionY, float partialTick) {}
     @Override public void removed() { presentation.clearInput(); }

@@ -131,7 +131,8 @@ class SichuanPresentationTest {
         var winners = List.of(new SichuanView.Winner(1, 0, 16, false, false, score), new SichuanView.Winner(2, 0, 16, false, false, score));
         var live = view(SichuanGame.Phase.TURN, seats, winners, List.of(), null);
         var shared = TableBoardState.live(live);
-        assertEquals("sichuan.mchjong.suit.2", key(shared.indicator().seats().get(0)));
+        assertEquals("sichuan.mchjong.suit.2.short", key(shared.indicator().seats().get(0)));
+        assertEquals("sichuan.mchjong.suit.2", key(SichuanTableScene.status(live.seats().get(0))));
         assertEquals("sichuan.mchjong.won", key(shared.indicator().seats().get(1)));
         assertFalse(shared.seats().get(1).exposed(), "A live winner must retain recipient visibility");
         assertEquals(List.of(Tile.HIDDEN, 1, 2, Tile.HIDDEN), shared.seats().get(1).layout(kong, 1).parts().stream().map(MeldLayout.Part::tile).toList());
