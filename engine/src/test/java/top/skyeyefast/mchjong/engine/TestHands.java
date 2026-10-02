@@ -31,6 +31,6 @@ final class TestHands {
     }
     static Meld meld(Meld.Type type, String text) {
         var tiles = tiles(text);
-        return new Meld(type, tiles, 3, type == Meld.Type.CLOSED_KAN ? Tile.ABSENT : tiles.getFirst());
+        return new Meld(type, tiles, 3, type == Meld.Type.CONCEALED_QUAD ? Tile.ABSENT : tiles.getFirst());
     }
 }

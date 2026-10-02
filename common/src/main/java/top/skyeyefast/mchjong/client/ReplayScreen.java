@@ -33,7 +33,7 @@ public final class ReplayScreen extends Screen {
     private boolean roundsOpen;
     private boolean wallOpen;
     private ReplayPlayback.Timeline playback;
-    private TableBoard board;
+    private RiichiBoard board;
     private TableHand viewerHand;
     private Timeline timeline;
     private Button play;
@@ -60,7 +60,7 @@ public final class ReplayScreen extends Screen {
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics) {}
 
-    private ReplayHand hand() { return match.hands().get(handIndex); }
+    private ReplayHand hand() { return match.riichi().hands().get(handIndex); }
     private ReplayPlayback.Frame frame() { return playback.frames().get(cursor); }
     private int steps() { return playback.frames().size() - 1; }
 
@@ -81,7 +81,7 @@ public final class ReplayScreen extends Screen {
         int nextX = 48 + roundButton.getWidth();
         var nextHand = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> changeHand(1))
             .bounds(nextX, 29, 30, 20).build());
-        nextHand.active = handIndex + 1 < match.hands().size();
+        nextHand.active = handIndex + 1 < match.riichi().hands().size();
 
         speedButton = addRenderableWidget(MahjongButton.create(Component.empty(), ignored -> cycleSpeed())
             .bounds(width - 10 - speedWidth, 29, speedWidth, 20).build());
@@ -134,7 +134,7 @@ public final class ReplayScreen extends Screen {
             for (int seat = 0; seat < match.participants().size(); seat++)
                 if (match.participants().get(seat).id().equals(id)) return seat;
         }
-        return net.minecraft.util.Mth.clamp(match.initialDealer(), 0, match.rules().players() - 1);
+        return net.minecraft.util.Mth.clamp(match.riichi().initialDealer(), 0, match.riichi().rules().players() - 1);
     }
 
     private void layoutFrame() {
@@ -142,7 +142,7 @@ public final class ReplayScreen extends Screen {
         int controlsTop = height - 78;
         viewerHand = new TableHand(frame.seats().get(viewer), viewer, width, controlsTop, height < 360 ? 17 : 21);
         int boardBottom = Math.max(120, viewerHand.top() - 5);
-        board = new TableBoard(TableBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
+        board = new RiichiBoard(RiichiBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
         result.visible = result.active = frame.settled() && !wallOpen;
         result.setViewer(viewer);
         var decision = currentDecision();
@@ -172,7 +172,7 @@ public final class ReplayScreen extends Screen {
         if (decision.seat() != viewer) return false;
         if (decision.options().size() > 1) return true;
         var type = decision.options().get(decision.selected()).type();
-        return type != top.skyeyefast.mchjong.engine.Action.Type.DISCARD && type != top.skyeyefast.mchjong.engine.Action.Type.PASS;
+        return type != top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD && type != top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS;
     }
 
     private int decisionCursor(ReplayHand.Decision decision) {
@@ -228,7 +228,7 @@ public final class ReplayScreen extends Screen {
     private void changeHand(int offset) { changeHandTo(handIndex + offset); }
 
     private void changeHandTo(int index) {
-        int next = net.minecraft.util.Mth.clamp(index, 0, match.hands().size() - 1);
+        int next = net.minecraft.util.Mth.clamp(index, 0, match.riichi().hands().size() - 1);
         if (next == handIndex && playback != null) { roundsOpen = false; refresh(); return; }
         handIndex = next;
         cursor = 0;
@@ -255,7 +255,7 @@ public final class ReplayScreen extends Screen {
     }
 
     private void cycleViewer(int offset) {
-        viewer = Math.floorMod(viewer + offset, match.rules().players());
+        viewer = Math.floorMod(viewer + offset, match.riichi().rules().players());
         refresh();
     }
 
@@ -297,10 +297,10 @@ public final class ReplayScreen extends Screen {
     }
 
     private Component roundLabel(int index) {
-        var replayHand = match.hands().get(index);
-        int wind = Math.min(3, replayHand.round() / match.rules().players());
+        var replayHand = match.riichi().hands().get(index);
+        int wind = Math.min(3, replayHand.round() / match.riichi().rules().players());
         return Component.translatable("ui.mchjong.round", Component.translatable("wind.mchjong." + WINDS[wind]),
-            replayHand.round() % match.rules().players() + 1, replayHand.honba());
+            replayHand.round() % match.riichi().rules().players() + 1, replayHand.honba());
     }
 
     private Component eventName() {
@@ -325,7 +325,7 @@ public final class ReplayScreen extends Screen {
         MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 11, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, eventName(), 12, 54, width - 24, MahjongUi.ACCENT, true);
         if (!frame().settled() && !wallOpen) {
-            board.render(graphics, TableBoardState.replay(match, hand(), frame(), viewer), PRESET);
+            board.render(graphics, RiichiBoardState.replay(match, hand(), frame(), viewer), PRESET);
             renderPlayerCards(graphics);
             viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, PRESET);
             renderDora(graphics);
@@ -334,7 +334,7 @@ public final class ReplayScreen extends Screen {
     }
 
     private void renderPlayerCards(GuiGraphics graphics) {
-        for (int seat = 0; seat < match.rules().players(); seat++) {
+        for (int seat = 0; seat < match.riichi().rules().players(); seat++) {
             var card = board.card(seat);
             var player = frame().seats().get(seat);
             graphics.fill(card.x(), card.y(), card.right(), card.bottom(), seat == viewer ? MahjongUi.SELECTED : MahjongUi.SURFACE);
@@ -365,7 +365,7 @@ public final class ReplayScreen extends Screen {
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button == 0 && !frame().settled() && board != null) {
-            for (int seat = 0; seat < match.rules().players(); seat++) {
+            for (int seat = 0; seat < match.riichi().rules().players(); seat++) {
                 var card = board.card(seat);
                 if (mouseX >= card.x() && mouseX < card.right() && mouseY >= card.y() && mouseY < card.bottom()) {
                     viewer = seat;
@@ -419,15 +419,15 @@ public final class ReplayScreen extends Screen {
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             MahjongUi.panel(graphics, getX(), getY(), width, height);
             graphics.enableScissor(getX() + 2, getY() + 2, getX() + width - 2, getY() + height - 2);
-            for (int i = 0; i < match.hands().size(); i++) {
+            for (int i = 0; i < match.riichi().hands().size(); i++) {
                 int y = getY() + i * ROW - scroll;
                 if (y + ROW < getY() || y > getY() + height) continue;
                 graphics.fill(getX() + 4, y + 3, getX() + width - 7, y + ROW - 2, i == handIndex ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                var label = roundLabel(i).copy().append("  ").append(Component.translatable("result.mchjong." + match.hands().get(i).result()));
+                var label = roundLabel(i).copy().append("  ").append(Component.translatable("result.mchjong." + match.riichi().hands().get(i).result()));
                 MahjongUi.text(graphics, font, label, getX() + 9, y + 8, width - 20, i == handIndex ? MahjongUi.ACCENT : MahjongUi.TEXT, false);
             }
             graphics.disableScissor();
-            int content = match.hands().size() * ROW;
+            int content = match.riichi().hands().size() * ROW;
             if (content > height) {
                 int thumb = Math.max(14, height * height / content);
                 int y = getY() + scroll * (height - thumb) / (content - height);
@@ -439,13 +439,13 @@ public final class ReplayScreen extends Screen {
         @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (button != 0 || !isMouseOver(mouseX, mouseY)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
-            if (entry >= 0 && entry < match.hands().size()) changeHandTo(entry);
+            if (entry >= 0 && entry < match.riichi().hands().size()) changeHandTo(entry);
             return true;
         }
 
         @Override public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
             if (!isMouseOver(mouseX, mouseY)) return false;
-            scroll = net.minecraft.util.Mth.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.hands().size() * ROW - height));
+            scroll = net.minecraft.util.Mth.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.riichi().hands().size() * ROW - height));
             return true;
         }
 

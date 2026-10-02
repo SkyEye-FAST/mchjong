@@ -46,7 +46,10 @@ final class BoxInterfaceSmoke {
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         if (reagentStage > 0) return reagents(client, output, menu);
         var choices = top.skyeyefast.mchjong.client.TileFacePresets.choices();
-        var preset = choices.get(sample % choices.size());
+        var builtins = top.skyeyefast.mchjong.item.TileFacePreset.BUILTINS;
+        require(choices.stream().filter(builtins::contains).toList().equals(builtins), "Built-in face preset order changed");
+        var preset = sample == 0 ? top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN
+            : top.skyeyefast.mchjong.item.TileFacePreset.KANTO;
         if (!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset)) {
             require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
@@ -167,7 +170,7 @@ final class BoxInterfaceSmoke {
                     settings.tileLabels = style;
                     var lines = net.minecraft.client.gui.screens.Screen.getTooltipFromItem(client, stack).stream().map(Component::getString).toList();
                     require(lines.contains(data.label(style == top.skyeyefast.mchjong.client.TableSettings.TileLabels.MPSZ, preset).getString()), "Client tooltip ignores the tile-label preference or preset");
-                    require(lines.getFirst().equals(Component.translatable("item.mchjong.mahjong_tile").getString()), "Flowers use a different item-name layout");
+                    require(lines.get(0).equals(Component.translatable("item.mchjong.mahjong_tile").getString()), "Flowers use a different item-name layout");
                 }
             }
         } finally { settings.tileLabels = previous; }

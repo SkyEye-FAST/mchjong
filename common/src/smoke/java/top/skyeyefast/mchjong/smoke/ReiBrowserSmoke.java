@@ -23,8 +23,8 @@ final class ReiBrowserSmoke implements BrowserDriver {
             var registered = DisplayRegistry.getInstance().getAll().values().stream().flatMap(List::stream)
                 .filter(candidate -> candidate.getDisplayLocation().filter(display::equals).isPresent())
                 .findFirst().orElse(null);
-            if (registered == null || registered.getOutputEntries().isEmpty() || registered.getOutputEntries().getFirst().isEmpty()) return false;
-            if (ViewSearchBuilder.builder().addRecipesFor(registered.getOutputEntries().getFirst().getFirst()).streamDisplays()
+            if (registered == null || registered.getOutputEntries().isEmpty() || registered.getOutputEntries().get(0).isEmpty()) return false;
+            if (ViewSearchBuilder.builder().addRecipesFor(registered.getOutputEntries().get(0).get(0)).streamDisplays()
                 .flatMap(spec -> spec.provideInternalDisplayIds().stream()).noneMatch(display::equals)) return false;
             var entries = catalogue();
             return MahjongCatalog.entries().stream().allMatch(expected -> entries.stream()
@@ -52,7 +52,7 @@ final class ReiBrowserSmoke implements BrowserDriver {
         var display = DisplayRegistry.getInstance().getAll().values().stream().flatMap(List::stream)
             .filter(candidate -> candidate.getDisplayLocation().filter(id::equals).isPresent())
             .findFirst().orElseThrow(() -> new IllegalStateException("REI did not register " + id));
-        var output = display.getOutputEntries().getFirst().getFirst();
+        var output = display.getOutputEntries().get(0).get(0);
         if (!ViewSearchBuilder.builder().addRecipesFor(output).filterCategory(display.getCategoryIdentifier()).open())
             throw new IllegalStateException("REI did not open " + id);
     }

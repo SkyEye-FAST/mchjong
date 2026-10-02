@@ -18,11 +18,11 @@ import org.slf4j.LoggerFactory;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableActionPayload;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
+import top.skyeyefast.mchjong.network.RiichiControlPayload;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.network.TableSeatPayload;
-import top.skyeyefast.mchjong.network.TableViewPayload;
+import top.skyeyefast.mchjong.network.RiichiViewPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
@@ -43,6 +43,7 @@ public class Mchjong implements ModInitializer {
         net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents.SERVER_STARTING.register(server -> {
             top.skyeyefast.mchjong.world.WorldSettings.of(server);
             top.skyeyefast.mchjong.config.ServerPresets.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
+            top.skyeyefast.mchjong.world.BotServiceClient.load(net.fabricmc.loader.api.FabricLoader.getInstance().getConfigDir());
         });
         net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             top.skyeyefast.mchjong.config.ServerPresets.send(handler.player);
@@ -77,32 +78,78 @@ public class Mchjong implements ModInitializer {
         ItemGroupEvents.modifyEntriesEvent(CreativeModeTabs.FUNCTIONAL_BLOCKS).register(entries -> {
             top.skyeyefast.mchjong.item.MahjongCatalog.entries().forEach(entries::accept);
         });
-        receiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, top.skyeyefast.mchjong.network.StickChoicePayload::decode,
-            (player, payload) -> payload.handle(player));
-        receiver(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload::decode,
-            (player, payload) -> payload.handle(player));
-        receiver(TableActionPayload.TYPE, TableActionPayload::decode, TableNetworking::receive);
-        receiver(TableControlPayload.TYPE, TableControlPayload::decode, TableNetworking::receive);
-        receiver(top.skyeyefast.mchjong.network.TableHandOrderPayload.TYPE,
-            top.skyeyefast.mchjong.network.TableHandOrderPayload::decode, TableNetworking::receive);
-        receiver(TableSeatPayload.TYPE, TableSeatPayload::decode, TableNetworking::receive);
-        receiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, top.skyeyefast.mchjong.network.BoxPrintPayload::decode,
-            (player, payload) -> payload.handle(player));
-        receiver(top.skyeyefast.mchjong.network.TableRulesPayload.TYPE, top.skyeyefast.mchjong.network.TableRulesPayload::decode,
-            TableNetworking::receive);
-        receiver(top.skyeyefast.mchjong.network.TableVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.TableVisibilityPayload::decode,
-            TableNetworking::receive);
-        LOGGER.info("Initializing {} for Fabric", MOD_ID);
-        if (net.fabricmc.loader.api.FabricLoader.getInstance().isModLoaded("create"))
-            top.skyeyefast.mchjong.compat.create.CreatePlatform.register();
-    }
-
-    private static <T> void receiver(net.minecraft.resources.ResourceLocation id,
-            java.util.function.Function<net.minecraft.network.FriendlyByteBuf, T> decoder,
-            java.util.function.BiConsumer<net.minecraft.server.level.ServerPlayer, T> handler) {
-        ServerPlayNetworking.registerGlobalReceiver(id, (server, player, listener, buffer, sender) -> {
-            T payload = decoder.apply(buffer);
-            server.execute(() -> handler.accept(player, payload));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.VoiceChoicePayload.decode(buffer);
+            server.execute(() -> payload.handle(player));
         });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.BoxPrintPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.BoxPrintPayload.decode(buffer);
+            server.execute(() -> payload.handle(player));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.StickChoicePayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.StickChoicePayload.decode(buffer);
+            server.execute(() -> payload.handle(player));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(RiichiActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = RiichiActionPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableRoomActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TableRoomActionPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.McrNextHandPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.McrActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.McrActionPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanActionPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.SichuanActionPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanNextHandPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.SichuanNextHandPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TableVariantPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.MatchAutomationPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.MatchAutomationPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(RiichiControlPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = RiichiControlPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableSessionControlPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.TableSessionControlPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiHandOrderPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.RiichiHandOrderPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(TableSeatPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = TableSeatPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiRulesPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.RiichiRulesPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.SichuanRulesPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, (server, player, handler, buffer, sender) -> {
+            var payload = top.skyeyefast.mchjong.network.RiichiVisibilityPayload.decode(buffer);
+            server.execute(() -> TableNetworking.receive(player, payload));
+        });
+        LOGGER.info("Initializing {} for Fabric", MOD_ID);
     }
 }

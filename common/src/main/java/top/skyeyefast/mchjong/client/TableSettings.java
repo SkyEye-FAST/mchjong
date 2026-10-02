@@ -70,7 +70,7 @@ public final class TableSettings {
     /** Fit the near playing-surface corners at the reset angle, independently of free looking. */
     public double cameraFov(double requested, double aspectRatio) {
         double pitch = Math.toRadians(cameraPitch());
-        double tileTop = TableGeometry.FELT_Y + (0.081 + TileMesh.HEIGHT / 2.0) * TableScene.TILE_SCALE;
+        double tileTop = TableGeometry.FELT_Y + (0.081 + TileMesh.HEIGHT / 2.0) * RiichiTableScene.TILE_SCALE;
         double nearestDepth = (cameraDistance - TableGeometry.FELT_HALF_WIDTH) * Math.cos(pitch)
             + (cameraHeight - tileTop) * Math.sin(pitch);
         // Leave 2.5% of the viewport on each side of the complete tile envelopes.
@@ -166,6 +166,28 @@ public final class TableSettings {
     public void toggle(Information information) {
         if (!hiddenInformation.remove(information)) hiddenInformation.add(information);
     }
+    public enum Category { INFORMATION, INTERACTION, VIEW, AUDIO }
+
+    public void reset(Category category) {
+        var defaults = new TableSettings();
+        switch (category) {
+            case INFORMATION -> hiddenInformation.clear();
+            case INTERACTION -> {
+                discardMode = defaults.discardMode; tileLabels = defaults.tileLabels; guideLines = defaults.guideLines;
+                actionTiles = defaults.actionTiles; highlightTiles = defaults.highlightTiles;
+                autoSeat = defaults.autoSeat; animations = defaults.animations;
+            }
+            case VIEW -> {
+                showRiver = defaults.showRiver; cameraDistance = defaults.cameraDistance; cameraHeight = defaults.cameraHeight;
+                camera().reset(cameraDistance, cameraHeight);
+            }
+            case AUDIO -> {
+                voiceSource = defaults.voiceSource; effectsVolume = defaults.effectsVolume;
+                voiceVolume = defaults.voiceVolume; countdownSounds = defaults.countdownSounds;
+            }
+        }
+    }
+
     public void reset() {
         TableSettings defaults = new TableSettings();
         hiddenInformation.clear();

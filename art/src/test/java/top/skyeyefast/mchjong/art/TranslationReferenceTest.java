@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.TreeSet;
 import java.util.regex.Pattern;
 import org.junit.jupiter.api.Test;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TranslationReferenceTest {
@@ -32,12 +32,12 @@ class TranslationReferenceTest {
                 }
             }
         }
-        for (RuleSet rules : RuleSet.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
-        for (var option : top.skyeyefast.mchjong.engine.RuleOption.values()) {
+        for (RiichiPreset rules : RiichiPreset.values()) { used.add(rules.translationKey()); used.add(rules.presetKey()); }
+        for (var option : top.skyeyefast.mchjong.engine.RiichiRuleOption.values()) {
             used.add(option.translationKey());
             used.add(option.descriptionKey());
         }
-        for (var group : top.skyeyefast.mchjong.engine.RuleOption.Group.values()) used.add(group.translationKey());
+        for (var group : top.skyeyefast.mchjong.engine.RiichiRuleOption.Group.values()) used.add(group.translationKey());
         for (String mode : List.of("preset", "details", "custom")) used.add("rules.mchjong.mode." + mode);
         // Registry-derived names can appear in Jade even when no source uses a literal translation key.
         for (String block : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool", "table_space"))
@@ -46,7 +46,7 @@ class TranslationReferenceTest {
             used.add("item.mchjong." + item);
         for (var composition : top.skyeyefast.mchjong.engine.RedFives.values()) used.add(composition.translationKey());
         used.addAll(top.skyeyefast.mchjong.engine.YakuCatalog.allTranslationKeys());
-        for (String preset : List.of("kansai", "kanto")) used.add("preset.mchjong." + preset);
+        for (String preset : TileArtwork.PRESETS) used.add("preset.mchjong." + preset);
         used.add("entity.mchjong.seat");
         used.add("itemGroup.mchjong");
         for (String wood : List.of("oak", "spruce", "birch", "jungle", "acacia", "dark_oak", "mangrove", "cherry", "bamboo", "crimson", "warped")) {

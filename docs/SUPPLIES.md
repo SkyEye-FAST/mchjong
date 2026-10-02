@@ -26,7 +26,7 @@ The two tables share the `mchjong:mahjong_table` block entity type. Stools use
 The optional Create adapter additionally registers `mchjong:mahjong_printing_plate`
 and `mchjong:incomplete_mahjong_box` for the [workshop](CREATE.md).
 
-## Native NBT and variants
+## Components and variants
 
 The optional shapeless recipe `mchjong:mahjong_manual` produces
 `patchouli:guide_book` bound to `mchjong:guide`. Loader
@@ -34,24 +34,22 @@ resource conditions enable it only when Patchouli is installed.
 The server stores starter-book recipient UUIDs in `mchjong_manual_gifts` saved
 data, shared across dimensions and retained across player deaths and reconnects.
 
-This branch stores supply data under the stack's `mchjong` NBT compound.
-The keys below are accessed and normalized through `MahjongComponents`.
-
-| NBT key | Value | Used by |
+| Component | Value | Used by |
 | --- | --- | --- |
-| `wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
-| `tile` | `{face, material, red}` | Tile items |
-| `face_preset` | Built-in `mchjong:kansai` or `mchjong:kanto`, or a cosmetic preset identifier | Tile-face design |
-| `back_preset` | Cosmetic preset identifier; the default design omits this key | Tile-back design |
-| `points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
-| `color` | Vanilla dye integer ID, `0..15` | Tile backs, cloth, stool cushions |
-| `Items` | Native item-stack list with slot indices | Mahjong boxes |
-| `box_preset` | `none`, `three`, `four` | Complete-box catalogue variant |
+| `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
+| `mchjong:tile` | `{face, material, red}` | Tile items |
+| `mchjong:face_preset` | Built-in `kansai`, `kanto`, `sichuan`, `hong_kong`, `taiwan` or `fujian`, or a configured ZIP preset | Tile-face design |
+| `mchjong:back_preset` | Default or a configured ZIP preset | Tile-back pattern |
+| `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
+| `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
+| `minecraft:container` | Native item-stack container | Mahjong boxes |
 
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
 are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
 autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
-Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
+Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
+Hong Kong, Taiwan and Fujian's
+`5q..8q` show plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
 Only faces `4`, `13`, `22` can have `red = true`. Material is one of the eleven
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
@@ -59,10 +57,9 @@ wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
 the component codecs. Identical components stack normally. Undyed tile backs use
 their material texture and selected pattern; default cloth is cyan and stool cushions are white.
 
-Domain values use codecs and are written through native NBT and packet buffers.
-Default-valued fields are normalized so fresh and crafted stacks remain mergeable.
-No item IDs are generated for particular faces, back colors, woods
-or denominations. Placed furniture projects its item data into its block
+All custom components are immutable codec values with persistence and network
+serialization. No item IDs are generated for particular faces, back colors, woods
+or denominations. Placed furniture projects its item components into its block
 entity, including drops and pick-block results. Private box contents are never
 part of a furniture appearance update.
 
@@ -77,11 +74,28 @@ replay code remain independent of Minecraft items.
 `FurnitureMesh`, `TileMesh` and `MahjongItemRenderer` share geometry between
 world and inventory rendering. Loader entry points register components,
 serializers, blocks, items and renderers without duplicating these rules.
-Forge defers intrusive object creation until registry events.
+NeoForge defers intrusive object creation until registry events.
 
 `GenerateAssets` generates textures and client models. `GenerateData` serializes
 server data through `SurvivalRecipes` and `FurnitureData`, with separate
 synchronized Gradle outputs and reproducibility checks.
+
+## MCR stock boundary
+
+`McrDeck.select` uses the existing box/component validation and inspects one case
+without consuming or rewriting its contents. A selected set contains four
+ordinary copies of each of the 34 kinds and one of each of the eight flowers.
+All selected tiles share material, back color, face preset and back preset.
+Spare tiles remain in the case; red markings do not substitute for missing
+ordinary fives. Each returned deck supplies the standard 144 physical engine
+identities. `McrDeck.tile` explicitly maps physical flower IDs to their item
+faces, independently of ordinary `Tile.kind` analysis.
+
+`TableEquipment.mcrStock` checks its two cases independently and returns the
+source slot and deck. Stock selection leaves the Riichi selection, public
+appearance and point-stick reservations unchanged. It is a supply check;
+cloth, room readiness, active-match locking and start authorization belong to
+the table lifecycle that consumes the selection.
 
 ## Recipe catalogue and identity
 
@@ -91,7 +105,7 @@ denomination, including the inactive negative stick. Furniture covers all eleven
 wood types. Flowers and red fives share the existing tile item.
 
 Recipe identity distinguishes wood, material, back color, face preset, face, red
-markings, denomination and complete container NBT. An outer custom name
+markings, denomination and complete container components. An outer custom name
 is cosmetic for lookup; crafting still applies the source recipe's name-preservation
 rules. Examples are built from the recipes in the loaded datapack. Every cycling
 ingredient is accepted only when the source recipe produces the displayed output

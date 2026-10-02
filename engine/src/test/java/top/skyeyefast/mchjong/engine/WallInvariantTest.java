@@ -8,7 +8,7 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class WallInvariantTest {
     @Test void openingCountsFromTheSelectedWallsRightAndFollowsEveryDealer() {
-        for (RuleSet rules : new RuleSet[]{RuleSet.TENHOU_3, RuleSet.TENHOU_4}) {
+        for (RiichiPreset rules : new RiichiPreset[]{RiichiPreset.TENHOU_3, RiichiPreset.TENHOU_4}) {
             int players = rules.players(), size = rules.sanma() ? 108 : 136;
             int stacks = size / (2 * players);
             var base = new Wall(rules.config(), 123, 0);
@@ -32,8 +32,8 @@ class WallInvariantTest {
         }
     }
 
-    @ParameterizedTest @EnumSource(RuleSet.class)
-    void everyPhysicalTileIsAccountedForEvenAfterAllReplacements(RuleSet rules) {
+    @ParameterizedTest @EnumSource(RiichiPreset.class)
+    void everyPhysicalTileIsAccountedForEvenAfterAllReplacements(RiichiPreset rules) {
         for (var composition : RedFives.values()) {
             var supplied = Tile.set(rules.sanma(), composition);
             assertTrue(Tile.validSet(supplied));
@@ -41,7 +41,7 @@ class WallInvariantTest {
                 assertThrows(IllegalArgumentException.class, () -> new Wall(rules.config(), 12, 0, supplied));
                 continue;
             }
-            Wall wall = new Wall(rules.config().with(RuleOption.RED_FIVES, composition.ordinal()), 12, 0, supplied);
+            Wall wall = new Wall(rules.config().with(RiichiRuleOption.RED_FIVES, composition.ordinal()), 12, 0, supplied);
             var taken = new HashSet<Integer>();
             for (int i = 0; i < rules.players() * 13 + 1; i++) assertTrue(taken.add(wall.draw()));
             assertEquals(rules.sanma() ? 54 : 69, wall.remaining());
@@ -58,8 +58,8 @@ class WallInvariantTest {
         }
     }
 
-    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
-    void replacementSlotsStayEmptyAndTheLastLiveTileStaysAtTheWallEnd(RuleSet rules) {
+    @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"TENHOU_4", "TENHOU_3"})
+    void replacementSlotsStayEmptyAndTheLastLiveTileStaysAtTheWallEnd(RiichiPreset rules) {
         Wall wall = new Wall(rules.config(), 211, 0);
         int end = wall.tiles.size();
         for (int i = 0; i < rules.replacementCapacity(); i++) {
@@ -79,8 +79,8 @@ class WallInvariantTest {
         assertEquals(0, wall.remaining());
     }
 
-    @ParameterizedTest @EnumSource(value = RuleSet.class, names = {"TENHOU_4", "TENHOU_3"})
-    void publicWallOnlyExposesDeclaredIndicators(RuleSet rules) {
+    @ParameterizedTest @EnumSource(value = RiichiPreset.class, names = {"TENHOU_4", "TENHOU_3"})
+    void publicWallOnlyExposesDeclaredIndicators(RiichiPreset rules) {
         Wall wall = new Wall(rules.config(), 123, 0);
         assertEquals(1, wall.publicTiles(false).stream().filter(t -> t >= 0).count());
         for (int i = 0; i < 4; i++) wall.reveal();

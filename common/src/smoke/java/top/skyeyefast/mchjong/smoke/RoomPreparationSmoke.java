@@ -5,11 +5,12 @@ import java.util.concurrent.CompletableFuture;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RoomAction;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.RoomSeating;
 import top.skyeyefast.mchjong.network.TableNetworking;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -32,7 +33,7 @@ final class RoomPreparationSmoke {
             originalAutoSeat = TableSettings.get().autoSeat;
             TableSettings.get().autoSeat = table.automatic();
         }
-        if (view != null && view.phase() != Game.Phase.LOBBY) {
+        if (view != null) {
             TableSettings.get().autoSeat = originalAutoSeat;
             return true;
         }
@@ -44,16 +45,18 @@ final class RoomPreparationSmoke {
             serverWork = null;
         }
         var room = table.clientRoom();
-        if (view == null || room == null) return false;
-        if (TableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
+        if (room == null) return false;
+        if (RiichiTableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
-            boolean full = view.actions().stream().anyMatch(action -> action.type() == Action.Type.BEGIN_SEATING);
+            var roster = LobbySmoke.find(client, Component.translatable("room.mchjong.participants").getString());
+            if (roster != null) roster.onPress();
+            boolean full = room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.BEGIN_SEATING);
             if (full && botCycle < 4 && botCycle != 2) {
-                if (botSeat < 0) for (int seat = 0; seat < view.seats().size(); seat++)
-                    if (view.seats().get(seat).bot()) { botSeat = seat; break; }
+                if (botSeat < 0) for (int seat = 0; seat < room.seats().size(); seat++)
+                    if (room.seats().get(seat).participant().bot()) { botSeat = seat; break; }
                 if (botSeat >= 0) {
-                    var occupant = view.seats().get(botSeat);
-                    var difficulty = room.seats().get(botSeat).difficulty();
+                    var occupant = room.seats().get(botSeat).participant();
+                    var difficulty = room.seats().get(botSeat).participant().difficulty();
                     if (botCycle == 0) {
                         if (difficulty != BotDifficulty.EASY) throw new IllegalStateException("Fill must create Easy bots");
                         click(client, BotDifficulty.EASY.translationKey());
@@ -71,7 +74,7 @@ final class RoomPreparationSmoke {
                 botCycle = 4;
             }
             if (botCycle == 2) {
-                if (!view.seats().get(botSeat).occupied()) {
+                if (room.seats().get(botSeat).participant().id() == null) {
                     click(client, "room.mchjong.add_bot");
                     botCycle = 3;
                 }
@@ -79,7 +82,7 @@ final class RoomPreparationSmoke {
             }
             if (botCycle == 3 && !full) return false;
             click(client, full
-                ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "room.mchjong.start_bots");
+                ? table.automatic() ? "room.mchjong.start_auto" : "room.mchjong.start_manual" : "action.mchjong.fill_bots");
         } else if (room.seating() == RoomSeating.Stage.DRAWING) {
             if (!capturedDrawing) {
                 AutomationControlsSmoke.checkBounds(client);
@@ -95,21 +98,21 @@ final class RoomPreparationSmoke {
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                    var game = serverTable.participantGame(player);
+                    var game = serverTable.participantSession(player);
                     var bag = TableNetworking.JSON.toJsonTree(game).getAsJsonObject().getAsJsonObject("seating").getAsJsonArray("concealed");
                     for (int slot = 0; slot < bag.size(); slot++) if (bag.get(slot).getAsInt() == 0) return slot;
                     throw new IllegalStateException("Wind bag has no east");
                 });
             } else if (windSlot >= 0) click(client, "room.mchjong.wind_tile", windSlot + 1);
-        } else if (view.viewerSeat() >= 0) {
-            var state = room.seats().get(view.viewerSeat());
+        } else if (room.viewerSeat() >= 0) {
+            var state = room.seats().get(room.viewerSeat());
             if (!capturedPositioning) {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-assigned-seats.png");
                 capturedPositioning = true;
             }
             if (state.presence() != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED) {
-                if (view.actions().stream().anyMatch(action -> action.type() == Action.Type.READY))
+                if (room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.READY))
                     throw new IllegalStateException("Unseated player can ready up");
                 if (table.automatic()) return false;
                 var id = client.player.getUUID();
@@ -117,16 +120,16 @@ final class RoomPreparationSmoke {
                 serverWork = client.getSingleplayerServer().submit(() -> {
                     var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                     var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
-                    var game = serverTable.participantGame(player);
+                    var game = serverTable.participantSession(player);
                     int seat = game.seatOf(id);
                     player.stopRiding();
                     serverTable.sit(player, seat);
-                    if (serverTable.participantGame(player) == null || game.roomView().seats().get(seat).presence()
+                    if (serverTable.participantSession(player) == null || game.roomView(id).seats().get(seat).presence()
                         != top.skyeyefast.mchjong.engine.PlayerPresence.SEATED)
                         throw new IllegalStateException("Could not occupy the assigned stool");
                     return -1;
                 });
-            } else if (!view.seats().get(view.viewerSeat()).ready()) {
+            } else if (!state.participant().ready()) {
                 AutomationControlsSmoke.checkBounds(client);
                 capture(client, output, prefix + "-ready.png");
                 click(client, "action.mchjong.ready");

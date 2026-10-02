@@ -68,7 +68,7 @@ final class BrowserSmoke {
                 && recipe.operation() == SupplyCraftingRecipe.Operation.UPGRADE_TABLE);
             for (var example : List.of(flower, red, upgrade)) {
                 check(driver.query(example.output(), true).contains(example.id()), "Missing output lookup: " + example.id());
-                var ingredient = example == upgrade ? example.input().get(4) : example.input().getFirst();
+                var ingredient = example == upgrade ? example.input().get(4) : example.input().get(0);
                 check(driver.query(ingredient, false).contains(example.id()), "Missing input lookup: " + example.id());
             }
             width = client.getWindow().getScreenWidth(); height = client.getWindow().getScreenHeight();
@@ -126,7 +126,7 @@ final class BrowserSmoke {
         for (int i = 0; i < entries.size(); i++) if (entries.get(i).is(MahjongContent.BOX_ITEM)) boxes.add(i);
         check(boxes.size() == 4 && boxes.get(1) == boxes.get(0) + 1 && boxes.get(2) == boxes.get(1) + 1
             && boxes.get(3) == boxes.get(2) + 1, "Mahjong box variants are not adjacent");
-        check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.getFirst()))) == 0, "Stocked box precedes empty box");
+        check(MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.get(0)))) == 0, "Stocked box precedes empty box");
         check(java.util.stream.IntStream.range(1, boxes.size()).allMatch(index ->
             MahjongSupplies.tileCount(MahjongSupplies.contents(entries.get(boxes.get(index)))) == 144), "Stocked box is not a 144-tile set");
         check(java.util.stream.IntStream.range(1, boxes.size()).mapToObj(index -> MahjongComponents.boxPreset(entries.get(boxes.get(index)))).toList()

@@ -4,11 +4,13 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.entity.item.ItemEntity;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.item.context.BlockPlaceContext;
 import net.minecraft.world.level.GameRules;
 import net.minecraft.world.level.GameType;
@@ -17,16 +19,15 @@ import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
 import top.skyeyefast.mchjong.item.TileData;
 import top.skyeyefast.mchjong.item.TileMaterial;
-import top.skyeyefast.mchjong.network.TableControlPayload;
-import top.skyeyefast.mchjong.network.TableNetworking;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 import top.skyeyefast.mchjong.world.MahjongContent;
 import top.skyeyefast.mchjong.world.MahjongTableBlock;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -77,7 +78,7 @@ final class EquipmentLifecycleSmoke {
         for (int x = -4; x <= 4; x++) for (int z = -4; z <= 4; z++)
             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         ItemStack furniture = new ItemStack(block);
-        top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, FurnitureWood.BAMBOO);
+        furniture.set(MahjongComponents.WOOD, FurnitureWood.BAMBOO);
         ItemStack expectedFurniture = furniture.copy();
         inventory.setItem(0, furniture);
         var hit = new BlockHitResult(Vec3.atBottomCenterOf(CENTER), Direction.UP, CENTER.below(), false);
@@ -118,26 +119,26 @@ final class EquipmentLifecycleSmoke {
         check(table.wood() == FurnitureWood.BAMBOO, "Placed table lost its component wood");
         level.setBlock(TableGeometry.stool(CENTER, 0), MahjongContent.STOOL.defaultBlockState(), 3);
         var stool = TableGeometry.stool(CENTER, 0);
-        level.getBlockState(stool).use(level, player, net.minecraft.world.InteractionHand.MAIN_HAND,
+        level.getBlockState(stool).useWithoutItem(level, player,
             new BlockHitResult(Vec3.atCenterOf(stool), Direction.UP, stool, false));
         check(player.isPassenger(), "The stool did not find its table");
-        Game game = table.participantGame(player);
-        check(game != null && !game.equipped() && game.view(player.getUUID()).actions().stream()
-            .noneMatch(action -> action.type() == Action.Type.READY), "Empty table could start a game");
+        top.skyeyefast.mchjong.engine.RiichiSession game = table.participantSession(player);
+        check(game != null && !game.equipped() && game.roomView(player.getUUID()).actions().stream()
+            .noneMatch(action -> action.type() == top.skyeyefast.mchjong.engine.RoomAction.Type.READY), "Empty table could start a game");
 
         var complete = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
         var shortSet = complete.copy();
         var contents = MahjongSupplies.contents(shortSet);
-        contents.getFirst().shrink(1);
-        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(shortSet, contents);
+        contents.get(0).shrink(1);
+        shortSet.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
         var mixedColor = complete.copy();
         contents = MahjongSupplies.contents(mixedColor);
-        top.skyeyefast.mchjong.item.MahjongComponents.color(contents.getFirst(), DyeColor.BLUE);
-        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(mixedColor, contents);
+        contents.get(0).set(DataComponents.BASE_COLOR, DyeColor.BLUE);
+        mixedColor.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
         var mixedMaterial = complete.copy();
         contents = MahjongSupplies.contents(mixedMaterial);
-        top.skyeyefast.mchjong.item.MahjongComponents.tile(contents.getFirst(), new TileData(0, TileMaterial.BONE, false));
-        top.skyeyefast.mchjong.item.MahjongSupplies.setContents(mixedMaterial, contents);
+        contents.get(0).set(MahjongComponents.TILE, new TileData(0, TileMaterial.BONE, false));
+        mixedMaterial.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(contents));
         for (var invalid : List.of(shortSet, mixedColor, mixedMaterial)) {
             var before = invalid.copy();
             TableStorageSmoke.put(player, table, 0, invalid);
@@ -149,13 +150,13 @@ final class EquipmentLifecycleSmoke {
         var redOnly = MahjongSupplies.stockedBox(RedFives.THREE);
         TableStorageSmoke.put(player, table, 0, redOnly);
         check(!table.equipment().canSupplyReds(false, RedFives.NONE), "Three-red stock incorrectly supplies no-red play");
-        check(table.participantGame(player).rules().redFives() == RedFives.THREE,
+        check(table.participantSession(player).rules().redFives() == RedFives.THREE,
             "Three-red stock left the room on an unavailable no-red setting");
         TableStorageSmoke.take(player, table, 0);
         var first = MahjongSupplies.completeBox(TileMaterial.BONE, DyeColor.BLUE);
         var firstExpected = first.copy();
         TableStorageSmoke.put(player, table, 0, first);
-        check(table.participantGame(player).rules().redFives() == RedFives.NONE,
+        check(table.participantSession(player).rules().redFives() == RedFives.NONE,
             "Replacing three-red stock with no-red stock did not update the room");
         check(first.isEmpty(), "Storage transfer did not move exactly one box");
         var installed = complete.copy();
@@ -164,20 +165,20 @@ final class EquipmentLifecycleSmoke {
         TableStorageSmoke.take(player, table, 1);
         TableStorageSmoke.put(player, table, 0, findInventory(player, complete));
         check(installed.isEmpty() && countInventory(player, firstExpected) == 1, "Moving the cases lost or duplicated their contents");
-        check(!table.participantGame(player).equipped(), "Table started without a cloth");
+        check(!table.participantSession(player).equipped(), "Table started without a cloth");
         var green = new ItemStack(MahjongContent.CLOTH_ITEM);
         var greenExpected = green.copy();
         table.useEquipment(player, green);
         var red = new ItemStack(MahjongContent.CLOTH_ITEM);
-        top.skyeyefast.mchjong.item.MahjongComponents.color(red, DyeColor.RED);
+        red.set(DataComponents.BASE_COLOR, DyeColor.RED);
         var redExpected = red.copy();
         table.useEquipment(player, red);
         check(green.isEmpty() && red.isEmpty() && countInventory(player, greenExpected) == 1, "Replacing cloth did not conserve items");
 
         PointStickMenuSmoke.stockDrawers(table);
-        game = table.participantGame(player);
+        game = table.participantSession(player);
         SeatingFixtures.startPositioned(game, player.getUUID());
-        check(game.phase() != Game.Phase.LOBBY, "Equipped table did not start");
+        check(!game.lobby(), "Equipped table did not start");
         game.validate();
         var lockedCloth = redExpected.copy();
         table.useEquipment(player, lockedCloth);
@@ -191,9 +192,9 @@ final class EquipmentLifecycleSmoke {
         check(ItemStack.matches(complete, table.equipment().boxes().getItem(0)), "A running game's box was removed");
         player.setShiftKeyDown(false);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
-        top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
+        sticks.set(MahjongComponents.POINTS, 1000);
         var expectedSticks = sticks.copy();
-        String scoresBefore = TableNetworking.JSON.toJson(game);
+        String scoresBefore = top.skyeyefast.mchjong.engine.TableSessionCodec.save(game);
         if (!table.automatic()) {
             var menu = PointStickMenuSmoke.open(player, table, 0);
             menu.setCarried(sticks);
@@ -205,12 +206,12 @@ final class EquipmentLifecycleSmoke {
             table.openSticks(player, 0);
             check(!(player.containerMenu instanceof top.skyeyefast.mchjong.item.PointStickMenu), "Automatic table opened a manual drawer");
         }
-        check(scoresBefore.equals(TableNetworking.JSON.toJson(game)), "Physical sticks changed authoritative points/deposits");
+        check(scoresBefore.equals(top.skyeyefast.mchjong.engine.TableSessionCodec.save(game)), "Physical sticks changed authoritative points/deposits");
         long exitToken = game.view(player.getUUID()).decision();
-        table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
-        check(game.phase() != Game.Phase.LOBBY && player.isPassenger(), "A stale exit token changed the game");
-        table.control(player, new TableControlPayload(CENTER, game.tableId(), TableControlPayload.Operation.REQUEST_EXIT, exitToken, false));
-        check(game.phase() == Game.Phase.LOBBY && !player.isPassenger(), "Exiting did not release the running table");
+        table.sessionControl(player, new TableSessionControlPayload(CENTER, game.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, exitToken - 1, false));
+        check(!game.lobby() && player.isPassenger(), "A stale exit token changed the game");
+        table.sessionControl(player, new TableSessionControlPayload(CENTER, game.tableId(), TableSessionControlPayload.Operation.REQUEST_EXIT, exitToken, false));
+        check(game.lobby() && !player.isPassenger(), "Exiting did not release the running table");
         // Native inventory transfers can occupy any hotbar slot.
         if (!table.automatic()) {
             for (int seat = 0; seat < 4; seat++) PointStickMenuSmoke.take(player, table, seat);
@@ -229,11 +230,13 @@ final class EquipmentLifecycleSmoke {
         table.useEquipment(player, findInventory(player, redExpected));
         if (!table.automatic()) PointStickMenuSmoke.put(player, table, 0, findInventory(player, expectedSticks).split(3));
 
-        var saved = table.saveWithoutMetadata();
+        var saved = table.saveWithoutMetadata(level.registryAccess());
         var loaded = new MahjongTableBlockEntity(CENTER, block.defaultBlockState());
         loaded.setLevel(level);
-        loaded.load(saved);
-        check(saved.equals(loaded.saveWithoutMetadata()), "Equipment did not survive save/load");
+        loaded.loadWithComponents(saved, level.registryAccess());
+        var restored = loaded.saveWithoutMetadata(level.registryAccess());
+        restored.putByteArray("session", saved.getByteArray("session"));
+        check(saved.equals(restored), "Equipment did not survive save/load");
         level.setBlockEntity(loaded);
         player.teleportTo(level, CENTER.getX() + 20, 64, .5, 0, 0);
         if (destruction == 0) level.destroyBlock(CENTER, true);
@@ -247,7 +250,7 @@ final class EquipmentLifecycleSmoke {
         var expectedDrops = new ArrayList<>(List.of(expectedFurniture, complete, firstExpected, redExpected));
         if (!loaded.automatic()) expectedDrops.add(expectedSticks);
         for (var expected : expectedDrops) {
-            int count = drops.stream().map(ItemEntity::getItem).filter(stack -> ItemStack.isSameItemSameTags(stack, expected))
+            int count = drops.stream().map(ItemEntity::getItem).filter(stack -> ItemStack.isSameItemSameComponents(stack, expected))
                 .mapToInt(ItemStack::getCount).sum();
             check(count == expected.getCount(), "Destruction " + destruction + " returned " + count + " rather than " + expected);
         }
@@ -257,11 +260,11 @@ final class EquipmentLifecycleSmoke {
 
     private static int countInventory(ServerPlayer player, ItemStack expected) {
         return java.util.stream.IntStream.range(0, player.getInventory().getContainerSize()).mapToObj(player.getInventory()::getItem)
-            .filter(stack -> ItemStack.isSameItemSameTags(stack, expected)).mapToInt(ItemStack::getCount).sum();
+            .filter(stack -> ItemStack.isSameItemSameComponents(stack, expected)).mapToInt(ItemStack::getCount).sum();
     }
     private static ItemStack findInventory(ServerPlayer player, ItemStack expected) {
         return java.util.stream.IntStream.range(0, player.getInventory().getContainerSize()).mapToObj(player.getInventory()::getItem)
-            .filter(stack -> ItemStack.isSameItemSameTags(stack, expected)).findFirst().orElseThrow();
+            .filter(stack -> ItemStack.isSameItemSameComponents(stack, expected)).findFirst().orElseThrow();
     }
     private static void check(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

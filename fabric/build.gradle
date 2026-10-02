@@ -184,11 +184,14 @@ def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('fal
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
+def mcrLayoutSmoke = providers.gradleProperty('smokeMcrLayout').getOrElse('false').toBoolean()
+def mcrAutoSmoke = providers.gradleProperty('smokeMcrAuto').getOrElse('false').toBoolean()
+def sichuanSmoke = providers.gradleProperty('smokeSichuan').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'emi', 'rei'])) throw new GradleException('recipeBrowser must be none, jei, emi or rei')
 if (browserSmoke && recipeBrowser == 'none') throw new GradleException('smokeBrowser requires a recipeBrowser profile')
-def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
+def smokeProfile = sichuanSmoke ? 'sichuan-' : mcrAutoSmoke ? 'mcr-auto-' : mcrLayoutSmoke ? 'mcr-layout-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : browserSmoke ? 'browser-' + recipeBrowser + '-' : roomSmoke ? 'room-' : manualSmoke ? 'manual-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ponderSmoke ? 'ponder-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
@@ -212,6 +215,9 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.mcrLayoutOnly', mcrLayoutSmoke.toString()
+            property 'mchjong.smoke.mcrAutoOnly', mcrAutoSmoke.toString()
+            property 'mchjong.smoke.sichuanOnly', sichuanSmoke.toString()
             property 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
             property 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             property 'mchjong.smoke.maid', maidSmoke.toString()

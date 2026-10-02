@@ -6,6 +6,9 @@
     "ja-JP": "関東",
     "en-US": "Kanto"
   },
+  "details": {
+    "modifications": "Redrawn from the existing Kanto engravings with AI-assisted contour restoration, flat ink colors and transparent negative space; retained the flower motifs and red-five marks."
+  },
   "tileDirectory": "tiles",
   "tiles": {
     "1m": "1m.png",

@@ -1,6 +1,5 @@
 package top.skyeyefast.mchjong.client;
 
-import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.google.gson.JsonParser;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
@@ -65,11 +64,11 @@ public final class TileFacePresets {
         resources.listResources("tile_face_presets", path -> path.getPath().endsWith(".json")).forEach((path, resource) -> {
             try (var reader = resource.openAsReader()) {
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
-                var id = new TileFacePreset(ResourceIds.of(path.getNamespace(), name));
-                if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)) return;
+                var id = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of(path.getNamespace(), name));
+                if (!TileFacePreset.BUILTINS.contains(id)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
-                Definition definition = new Definition(ResourceIds.of(json.get("atlas").getAsString()),
-                    ResourceIds.of(json.get("glyphs").getAsString()));
+                Definition definition = new Definition(top.skyeyefast.mchjong.platform.ResourceIds.of(json.get("atlas").getAsString()),
+                    top.skyeyefast.mchjong.platform.ResourceIds.of(json.get("glyphs").getAsString()));
                 if (resources.getResource(definition.atlas()).isEmpty() || resources.getResource(definition.glyphs()).isEmpty())
                     throw new IllegalArgumentException("Missing atlas or glyph texture");
                 loaded.put(id, definition);
@@ -184,8 +183,8 @@ public final class TileFacePresets {
     private static Definition register(TileFacePreset preset, TileFaceImages.Pair pair, String prefix,
                                        Set<ResourceLocation> locations) {
         String path = prefix + "/" + preset.id().getNamespace() + "/" + preset.id().getPath();
-        var atlasId = ResourceIds.of("mchjong", path + "/tiles");
-        var glyphsId = ResourceIds.of("mchjong", path + "/glyphs");
+        var atlasId = top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", path + "/tiles");
+        var glyphsId = top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", path + "/glyphs");
         var textures = Minecraft.getInstance().getTextureManager();
         textures.register(atlasId, new DynamicTexture(pair.atlas()));
         textures.register(glyphsId, new DynamicTexture(pair.glyphs()));
@@ -210,7 +209,11 @@ public final class TileFacePresets {
         var merged = new HashMap<>(local);
         merged.putAll(server);
         definitions = Map.copyOf(merged);
-        choices = merged.keySet().stream().sorted(java.util.Comparator.comparing(TileFacePreset::getSerializedName)).toList();
+        choices = merged.keySet().stream().sorted(java.util.Comparator
+            .comparingInt((TileFacePreset id) -> {
+                int index = TileFacePreset.BUILTINS.indexOf(id);
+                return index < 0 ? TileFacePreset.BUILTINS.size() : index;
+            }).thenComparing(TileFacePreset::getSerializedName)).toList();
         TileRenderTypes.reload();
     }
 }

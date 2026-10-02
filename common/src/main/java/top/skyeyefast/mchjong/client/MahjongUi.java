@@ -22,6 +22,12 @@ public final class MahjongUi {
     public static final int DANGER = 0xffa33232;
     public static final int ON_DANGER = 0xffffffff;
 
+    public static void titlePlaque(GuiGraphics g, Font font, Component title, int x, int y, int span) {
+        int width = Math.min(span, font.width(title) + 16);
+        g.fill(x, y, x + width, y + 18, INPUT);
+        text(g, font, title, x + 8, y + 5, width - 14, TEXT, false);
+    }
+
     private MahjongUi() {}
 
     public static void panel(GuiGraphics g, int x, int y, int width, int height) {
@@ -30,7 +36,6 @@ public final class MahjongUi {
     }
 
     public static void backdrop(GuiGraphics g, int width, int height, int contentWidth) {
-        g.fill(0, 0, width, height, BACKDROP);
         int span = Math.min(contentWidth, width - 24);
         panel(g, (width - span) / 2 - 8, 6, span + 16, height - 12);
         g.fill((width - span) / 2, 7, (width + span) / 2, 8, ACCENT);

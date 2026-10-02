@@ -1,0 +1,264 @@
+package top.skyeyefast.mchjong.client;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.HandScore;
+import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
+import top.skyeyefast.mchjong.engine.Meld;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RiichiView;
+import top.skyeyefast.mchjong.engine.TimeControl;
+import static org.junit.jupiter.api.Assertions.*;
+
+class RiichiAudioEventsTest {
+    private static final UUID TABLE = new UUID(6, 12);
+    private static RiichiView.Seat seat(List<RiichiDiscard> river, List<Meld> melds, List<Integer> norths) {
+        return new RiichiView.Seat(false, "Player", true, false, false, 25000,
+            List.of(), -2, melds, river, norths, false, false, false);
+    }
+    private static RiichiView view(long revision, int hand, RiichiView.Phase phase, List<RiichiView.Seat> seats, String result) {
+        return new RiichiView(TABLE, revision, 1, hand, RiichiPreset.TENHOU_4.config(), phase, 0,
+            0, 0, 0, 0, 0, 70, 0, List.of(), null, seats, List.of(), List.of(), result, List.of(), List.of(), List.of(),
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
+    }
+    private static List<RiichiView.Seat> seats() {
+        return new ArrayList<>(Collections.nCopies(4, seat(List.of(), List.of(), List.of())));
+    }
+    private static List<String> sounds(RiichiView before, RiichiView after) {
+        return RiichiAudioEvents.between(before, after).stream().map(RiichiAudioEvents.Cue::sound).toList();
+    }
+
+    private static RiichiView receipt(long revision, int hand, List<RiichiView.Win> wins) {
+        return receipt(revision, hand, wins, seats(), List.of());
+    }
+    private static RiichiView receipt(long revision, int hand, List<RiichiView.Win> wins,
+                                     List<RiichiView.Seat> seats, List<Integer> wall) {
+        return new RiichiView(TABLE, revision, revision, hand, RiichiPreset.TENHOU_4.config(), RiichiView.Phase.HAND_END, 0,
+            0, 0, 0, 0, 0, 0, 0, wall, null, seats, List.of(), wins, "ron", List.of(), List.of(), List.of(),
+            TimeControl.DEFAULT, List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
+    }
+
+    @Test void receiptWaitsForEachRecordingThenShowsPointsBeforeTheGrade() {
+        var score = new HandScore(3, 60, 0, 8000, 0, 0, List.of("Richi"), 2);
+        var wins = List.of(new RiichiView.Win(1, 0, 4, score));
+        var readout = new ResultReadout(receipt(1, 1, wins), 0);
+        assertNull(readout.tick(400, true));
+        assertEquals(0, readout.visibleRows(0));
+        assertEquals(new ResultReadout.Event(ResultReadout.Stage.YAKU, 0, "yaku.riichi"), readout.tick(500, false));
+        assertNull(readout.tick(5000, true));
+        assertEquals(1, readout.visibleRows(0));
+        assertEquals("yaku.dora_2", readout.tick(5001, false).voice());
+        assertEquals(-1, readout.scoredAt(0));
+        assertNull(readout.tick(6000, true));
+        assertNull(readout.tick(6001, false));
+        assertEquals(-1, readout.scoredAt(0), "Pause starts after the final recording ends");
+        assertEquals(ResultReadout.Stage.POINTS, readout.tick(6301, false).stage());
+        assertEquals(6301, readout.scoredAt(0));
+        assertNull(readout.tick(7050, false));
+        assertFalse(readout.limitVisible(0));
+        var grade = readout.tick(7051, false);
+        assertEquals(ResultReadout.Stage.LIMIT, grade.stage());
+        assertEquals("score.mangan", grade.voice());
+        assertTrue(readout.limitVisible(0));
+        assertNull(readout.tick(9000, true));
+        assertFalse(readout.complete());
+        assertNull(readout.tick(9001, false));
+        assertEquals(ResultReadout.Stage.COMPLETE, readout.tick(9251, false).stage());
+        assertTrue(readout.complete());
+        assertEquals(9251, readout.pointsAt());
+        assertTrue(readout.matches(receipt(50, 1, wins)), "Snapshot/decision refresh retains progress");
+        assertFalse(readout.matches(receipt(51, 2, wins)));
+        assertNull(readout.tick(10000, false));
+        readout.finish(11000);
+        assertEquals(9251, readout.pointsAt(), "Skipping a completed readout does not restart scores");
+    }
+
+    @Test void silentMultiWinnerReceiptsAdvanceOnceAndCanBeSkippedWithoutReplaying() {
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var view = receipt(1, 1, List.of(new RiichiView.Win(1, 0, 4, score), new RiichiView.Win(2, 0, 4, score)));
+        var readout = new ResultReadout(view, 0);
+        var events = new ArrayList<ResultReadout.Event>();
+        long points = -1;
+        for (long now = 0; now <= 7000; now += 50) {
+            var event = readout.tick(now, false);
+            if (event == null) continue;
+            events.add(event);
+            if (event.stage() == ResultReadout.Stage.POINTS) points = now;
+            if (event.stage() == ResultReadout.Stage.NEXT_WINNER || event.stage() == ResultReadout.Stage.COMPLETE)
+                assertTrue(now - points >= 750, "Ordinary wins retain the full points beat");
+        }
+        assertEquals(List.of(ResultReadout.Stage.YAKU, ResultReadout.Stage.POINTS, ResultReadout.Stage.NEXT_WINNER,
+            ResultReadout.Stage.YAKU, ResultReadout.Stage.POINTS, ResultReadout.Stage.COMPLETE),
+            events.stream().map(ResultReadout.Event::stage).toList());
+        assertEquals(List.of(0, 0, 1, 1, 1, 1), events.stream().map(ResultReadout.Event::winner).toList());
+        assertTrue(readout.complete());
+        assertFalse(readout.limitVisible(0));
+        assertFalse(readout.limitVisible(1));
+        var skipped = new ResultReadout(view, 0);
+        skipped.tick(400, false);
+        skipped.finish(450);
+        assertEquals(1, skipped.visibleRows(1));
+        assertNull(skipped.tick(10000, false));
+        assertEquals(450, skipped.pointsAt());
+    }
+
+    @Test void gradesUseActualPaymentsAndCoverAllSupportedYakumanMultipliers() {
+        String[] grades = {null, "mangan", "haneman", "baiman", "sanbaiman", "kazoe_yakuman"};
+        int[] bases = {1920, 2000, 3000, 4000, 6000, 8000};
+        for (int i = 0; i < bases.length; i++) {
+            String expected = grades[i] == null ? null : "score." + grades[i];
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, bases[i] * 4, 0, 0, List.of(), 0), false));
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, bases[i] * 6, 0, 0, List.of(), 0), true));
+            assertEquals(expected, ScoreAnnouncements.limit(new HandScore(13, 30, 0, 0, bases[i] * 2, bases[i], List.of(), 0), false));
+        }
+        for (int count = 1; count <= 6; count++) {
+            String event = ScoreAnnouncements.limit(new HandScore(13 * count, 0, count, 32000 * count, 0, 0, List.of(), 0), false);
+            assertEquals("score.yakuman" + (count == 1 ? "" : "_" + count), event);
+            assertTrue(ScoreAnnouncements.SUBTITLES.containsKey(event));
+        }
+    }
+
+    @Test void receiptOrdersYakuAndUsesOpenHandHanFromTheScoringLibrary() {
+        var score = new HandScore(9, 40, 0, 16000, 0, 0,
+            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku", "Richi", "Ippatsu"), 0);
+        var win = new RiichiView.Win(1, 0, 4, score);
+        var closed = receipt(1, 1, List.of(win));
+        var rows = ScoreAnnouncements.rows(closed, win);
+        assertEquals(List.of("yaku.riichi", "yaku.ippatsu", "yaku.haku", "yaku.seat_wind_south",
+            "yaku.round_wind_east", "yaku.chanta", "yaku.honitsu"), rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertEquals(List.of(1, 1, 1, 1, 1, 2, 3), rows.stream().map(ScoreAnnouncements.Row::han).toList());
+        var seats = seats();
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(124, 125, 126), 0, 124)), List.of()));
+        var openWin = new RiichiView.Win(1, 0, 4, new HandScore(6, 40, 0, 12000, 0, 0,
+            List.of("Honitsu", "RoundWind", "Chanta", "SelfWind", "Haku"), 0));
+        var open = ScoreAnnouncements.rows(receipt(1, 1, List.of(openWin), seats, List.of()), openWin);
+        assertEquals(List.of(1, 1, 1, 1, 2), open.stream().map(ScoreAnnouncements.Row::han).toList());
+    }
+
+    @Test void bonusesHaveSeparateCountsAndThirteenOrMoreUsesOneRecording() {
+        var seats = seats();
+        seats.set(1, new RiichiView.Seat(false, "Player", true, false, false, 25000,
+            List.of(272, 112, 113, 4, 8, 12, 24, 28, 32, 40, 44, 48, 56, 60), -2,
+            List.of(), List.of(), List.of(120, 121), true, true, false));
+        var wall = new ArrayList<>(Collections.nCopies(14, -1));
+        wall.set(8, 108); // East indicator: two South tiles count as ura.
+        var win = new RiichiView.Win(1, 0, 60, new HandScore(9, 30, 0, 16000, 0, 0, List.of("Richi"), 8));
+        var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win), seats, wall), win);
+        assertEquals(List.of("yaku.riichi", "yaku.dora_3", "yaku.dora", "yaku.dora_2", "yaku.dora_2"),
+            rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertEquals(List.of("yaku.mchjong.riichi", "yaku.mchjong.dora", "yaku.mchjong.red_dora",
+            "yaku.mchjong.nuki_dora", "yaku.mchjong.ura_dora"), rows.stream().map(ScoreAnnouncements.Row::translationKey).toList());
+        assertEquals(List.of(1, 3, 1, 2, 2), rows.stream().map(ScoreAnnouncements.Row::han).toList());
+        var player = seats.get(1);
+        seats.set(1, new RiichiView.Seat(false, "Player", true, false, false, 25000,
+            player.hand().subList(1, 14), -2, List.of(), List.of(), player.norths(), true, true, false));
+        wall.set(8, 116); // West indicator: extracted North tiles also count as ura.
+        var redRon = new RiichiView.Win(1, 0, 272, new HandScore(7, 30, 0, 12000, 0, 0, List.of("Richi"), 6));
+        var ronRows = ScoreAnnouncements.rows(receipt(1, 1, List.of(redRon), seats, wall), redRon);
+        assertEquals(List.of(1, 1, 1, 2, 2), ronRows.stream().map(ScoreAnnouncements.Row::han).toList(),
+            "Include the claimed red tile and ura on extracted North tiles exactly once");
+        for (int count : List.of(1, 2, 12, 13, 14, 20)) {
+            var counted = new RiichiView.Win(1, 0, 4, new HandScore(count + 1, 30, 0, 32000, 0, 0, List.of("Richi"), count));
+            var last = ScoreAnnouncements.rows(receipt(1, 1, List.of(counted)), counted).getLast();
+            assertEquals("yaku.dora" + (count == 1 ? "" : count < 13 ? "_" + count : "_many"), last.voice());
+            assertEquals(count, last.han());
+        }
+    }
+
+    @Test void yakumanOrderExcludesOrdinaryYakuAndAllBonuses() {
+        var win = new RiichiView.Win(1, 0, 4, new HandScore(78, 0, 6, 192000, 0, 0,
+            List.of("Daisushi", "SuankoTanki", "Tsuiso", "Chihou", "Richi", "Haku"), 13));
+        var rows = ScoreAnnouncements.rows(receipt(1, 1, List.of(win)), win);
+        assertEquals(List.of("yaku.chihou", "yaku.tsuuiisou", "yaku.suuankou_tanki", "yaku.daisuushii"),
+            rows.stream().map(ScoreAnnouncements.Row::voice).toList());
+        assertTrue(rows.stream().allMatch(row -> row.han() == 0));
+    }
+
+    @Test void doubleRiichiVoiceCarriesTheDeclaringSeatForEveryListener() {
+        var before = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
+        var seats = seats();
+        seats.set(1, new RiichiView.Seat(false, "Player", true, false, false, 24000,
+            List.of(), -2, List.of(), List.of(new RiichiDiscard(12, true, false, true)), List.of(), true, false, true));
+        var after = view(2, 1, RiichiView.Phase.REACTION, seats, "playing");
+        var cue = RiichiAudioEvents.between(before, after).getLast();
+        assertEquals("riichi_stick", cue.sound());
+        assertEquals("double_riichi", cue.voice());
+        assertEquals(1, cue.seat());
+        var ownSeats = seats();
+        ownSeats.set(0, seats.get(1));
+        assertEquals("double_riichi", RiichiAudioEvents.between(before,
+            view(2, 1, RiichiView.Phase.REACTION, ownSeats, "playing")).getLast().voice());
+        assertEquals("yaku.double_riichi", ScoreAnnouncements.yaku("WRichi"));
+        assertTrue(RiichiAudioEvents.between(after, view(3, 1, RiichiView.Phase.REACTION, seats, "playing")).isEmpty());
+    }
+
+    @Test void firstObservationRepeatedAndCosmeticSnapshotsAreSilent() {
+        var view = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
+        assertTrue(sounds(null, view).isEmpty());
+        assertTrue(sounds(view, view).isEmpty());
+        assertTrue(sounds(view, view(2, 1, RiichiView.Phase.TURN, seats(), "playing")).isEmpty());
+    }
+
+    @Test void openingPlaysMechanismDiceAndDealingInOrder() {
+        var cues = RiichiAudioEvents.opening(view(2, 1, RiichiView.Phase.TURN, seats(), "playing"));
+        assertEquals(List.of("table_mechanical", "dice", "tile_call"), cues.stream().map(RiichiAudioEvents.Cue::sound).toList());
+        assertEquals(List.of(0, 4, 10), cues.stream().map(RiichiAudioEvents.Cue::delay).toList());
+    }
+
+    @Test void riichiAndBothDiscardTypesAreEmittedOnlyForNewRiverEntries() {
+        var before = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
+        var seats = seats();
+        seats.set(0, seat(List.of(new RiichiDiscard(12, true, false, true)), List.of(), List.of()));
+        var after = view(2, 1, RiichiView.Phase.REACTION, seats, "playing");
+        assertEquals(List.of("tile_discard", "riichi_stick"), sounds(before, after));
+        seats.set(0, seat(List.of(new RiichiDiscard(12, true, true, true)), List.of(), List.of()));
+        assertTrue(sounds(after, view(3, 1, RiichiView.Phase.REACTION, seats, "playing")).isEmpty());
+        seats.set(0, seat(List.of(new RiichiDiscard(12, false, false, false)), List.of(), List.of()));
+        assertEquals(List.of("tile_discard"), sounds(before, view(2, 1, RiichiView.Phase.REACTION, seats, "playing")));
+    }
+
+    @Test void addedKanDoesNotRepeatPonAndNukiHasItsOwnVoice() {
+        var seats = seats();
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.TRIPLET, List.of(40, 41, 42), 0, 40)), List.of()));
+        var before = view(1, 1, RiichiView.Phase.TURN, seats, "playing");
+        seats.set(1, seat(List.of(), List.of(new Meld(Meld.Type.ADDED_QUAD, List.of(40, 41, 42, 43), 0, 40)), List.of()));
+        seats.set(2, seat(List.of(), List.of(), List.of(120)));
+        assertEquals(List.of("tile_kong", "tile_call"), sounds(before, view(2, 1, RiichiView.Phase.TURN, seats, "playing")));
+        var cues = RiichiAudioEvents.between(before, view(2, 1, RiichiView.Phase.TURN, seats, "playing"));
+        assertEquals(List.of(1, 2), cues.stream().map(RiichiAudioEvents.Cue::seat).toList());
+        assertEquals(List.of("kan", "nuki"), cues.stream().map(RiichiAudioEvents.Cue::voice).toList());
+    }
+
+    @Test void replacingACalledRiichiDiscardDoesNotRepeatTheDeclarationVoice() {
+        var seats = seats();
+        var called = new RiichiDiscard(12, true, true, true);
+        seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
+            List.of(), List.of(called), List.of(), true, false, false));
+        var before = view(1, 1, RiichiView.Phase.TURN, seats, "playing");
+        seats.set(0, new RiichiView.Seat(false, "Player", true, false, false, 24000, List.of(), -2,
+            List.of(), List.of(called, new RiichiDiscard(20, true, false, true)), List.of(), true, false, false));
+        assertEquals(List.of("tile_discard"), sounds(before, view(2, 1, RiichiView.Phase.REACTION, seats, "playing")));
+    }
+
+    @Test void winDrawAndFinalMatchCuesAreDistinctAndDoNotRepeatForReadyVotes() {
+        var before = view(1, 1, RiichiView.Phase.TURN, seats(), "playing");
+        for (String reason : List.of("exhaustive", "four_kans", "nagashi"))
+            assertEquals(List.of("draw_end"), sounds(before, view(2, 1, RiichiView.Phase.HAND_END, seats(), reason)));
+        for (String reason : List.of("ron", "tsumo")) {
+            var after = view(2, 1, RiichiView.Phase.MATCH_END, seats(), reason);
+            assertEquals(List.of(reason), sounds(before, after));
+            assertTrue(sounds(after, view(3, 1, RiichiView.Phase.MATCH_END, seats(), reason)).isEmpty());
+        }
+        var score = new HandScore(1, 30, 0, 1000, 0, 0, List.of("Richi"), 0);
+        var multiple = receipt(2, 1, List.of(new RiichiView.Win(1, 0, 4, score), new RiichiView.Win(2, 0, 4, score)));
+        var voices = RiichiAudioEvents.between(before, multiple).stream().filter(cue -> cue.voice() != null).toList();
+        assertEquals(List.of(1, 2), voices.stream().map(RiichiAudioEvents.Cue::seat).toList());
+        assertTrue(voices.stream().allMatch(cue -> cue.voice().equals("ron")));
+        assertEquals(1, RiichiAudioEvents.between(before, multiple).stream().filter(cue -> "ron".equals(cue.sound())).count());
+    }
+}

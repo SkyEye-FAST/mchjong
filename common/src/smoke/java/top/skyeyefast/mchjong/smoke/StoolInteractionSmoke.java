@@ -10,7 +10,7 @@ import net.minecraft.world.InteractionHand;
 import net.minecraft.world.phys.AABB;
 import net.minecraft.world.phys.BlockHitResult;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -51,7 +51,7 @@ final class StoolInteractionSmoke {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var level = player.serverLevel();
                 require(!player.isPassenger(), "Sneak-click mounted the server player");
-                require(((MahjongTableBlockEntity) level.getBlockEntity(center)).participantGame(player) == null,
+                require(((MahjongTableBlockEntity) level.getBlockEntity(center)).participantSession(player) == null,
                     "Sneak-click joined the room");
                 require(level.getEntitiesOfClass(SeatEntity.class, new AABB(stool).inflate(1)).isEmpty(),
                     "Sneak-click created a seat entity");
@@ -68,10 +68,12 @@ final class StoolInteractionSmoke {
             use(client, stool);
             step = 7;
         } else if (step == 7) {
-            require(client.player.getVehicle() instanceof SeatEntity && client.screen instanceof TableScreen,
+            require(client.player.getVehicle() instanceof SeatEntity && client.screen instanceof RiichiTableScreen,
                 "Ordinary stool click did not mount and open controls");
-            var view = ((MahjongTableBlockEntity) client.level.getBlockEntity(center)).clientView();
-            require(view != null && view.viewerSeat() == 0, "Ordinary stool click opened a spectator view");
+            var table = (MahjongTableBlockEntity) client.level.getBlockEntity(center);
+            var room = table.clientRoom();
+            require(room != null && room.viewerSeat() == 0 && table.clientView() == null,
+                "Ordinary stool click opened an incorrect lobby view");
             var id = client.player.getUUID();
             verification = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);

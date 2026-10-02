@@ -39,6 +39,7 @@ public final class MchjongForge {
         MinecraftForge.EVENT_BUS.addListener((ServerStartingEvent event) -> {
             top.skyeyefast.mchjong.world.WorldSettings.of(event.getServer());
             top.skyeyefast.mchjong.config.ServerPresets.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
+            top.skyeyefast.mchjong.world.BotServiceClient.load(net.minecraftforge.fml.loading.FMLPaths.CONFIGDIR.get());
         });
         MinecraftForge.EVENT_BUS.addListener((net.minecraftforge.event.entity.player.PlayerEvent.PlayerLoggedInEvent event) -> {
             if (event.getEntity() instanceof net.minecraft.server.level.ServerPlayer player) {

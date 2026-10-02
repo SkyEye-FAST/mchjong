@@ -35,7 +35,58 @@ large rounded cards or textures copied from unrelated Minecraft menus.
 Use these tokens rather than introducing almost-identical local colors. Tile
 artwork, felt dyes, suit colors and world materials are not interface tokens.
 Avoid turning every edge gold: reserve emphasis for the current selection,
-keyboard focus, an important decision or the panel's small header accent.
+keyboard focus or an important decision. Do not decorate controls or titles with
+left-edge vertical accent strips; selected navigation uses a short bottom rule.
+
+## MCR physical layout
+
+MCR presentation uses its own scene and layout types. Dimensions derive from
+`TileMesh.WIDTH`, `HEIGHT` and `DEPTH` at the scene's tile scale. Seat-local x
+runs left to right as seen by the seated player; z increases toward that player.
+All four seats use the same local poses rotated by `TableGeometry.orient`.
+
+The built wall has four straight eighteen-stack sides, each stack upper/lower.
+Each side is displaced along its length in the same local direction, so one
+end extends past its adjacent wall while the opposite end stops short. This
+fourfold pinwheel arrangement forms the offset hash-shaped enclosure rather
+than endpoint-aligned square corners. Offset, corner clearance and the small
+inter-stack seam come from tile dimensions; the short end meets the adjacent
+wall with that same fine seam, and stacks do not overlap at the corners.
+Rendered slot indices are the engine's fixed physical slots, independent of the
+opening and draw order.
+
+Each river packs only physically present discards, six per row from left to
+right. The first row is closest to the table center and further rows expand
+toward the player. A called-away history entry occupies no river position.
+Every river tile has the same upright face orientation and width.
+The group is centered in front of its owner at the same origin and row spacing
+as the Riichi river. The immersive MCR table uses these positions and omits walls.
+
+Melds lie face up at the owner's left-hand corner, at the same depth as the hand.
+The earliest meld starts at the corner and later melds extend right. The hand
+stays centered when possible and shifts right only enough to clear the actual
+meld bounds. The claimed tile is rotated ninety degrees: left for the previous
+player, middle for the opposite player and right for the next player. A chow
+uses the left source only. A concealed kong has four face-down tiles during play
+and turns face up after the hand ends. Open quads and
+supplemented triplets use the same four-tile flat row; the fourth tile does
+not form a separate raised or forward stack.
+
+Flowers lie face up in one continuous run between the left-corner melds and the
+hand, at the same depth. Their actual width participates in hand clearance.
+When a full flower run and kongs fill the rail, scale that seat's hand, melds and
+flowers together just enough to fit between the neighboring corners.
+The scene preserves the source indices in its pieces and does not reconstruct
+hidden tile identities to arrange them. `McrView` remains the visibility authority.
+
+The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
+Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
+foreground hand. Left-corner melds and flowers retain their MCR rail positions.
+Compact edge cards show player names, winds and scores; the current turn is marked
+with brass. Automatic flower replacement names the player currently replacing.
+Discards come from hand selection, while claims, kongs, wins and pass use localized
+native buttons with tile previews. MCR uses the shared room time editor and turn
+clock, reserving a clock lane below the actions and above the private hand.
 
 ## Components and interaction
 
@@ -64,9 +115,22 @@ uses a drop shadow for contrast.
 
 ## Layout and information hierarchy
 
-Keep the title, body, supporting information and navigation visually distinct.
-Secondary screens use a centered panel over a subdued backdrop. In the table
-view, compact HUD cards belong near the edges so the physical hand stays clear.
+Lobby and settings controls share straight row baselines, four-pixel gutters,
+and a persistent category rail. Primary actions use brass emphasis on the same
+footer baseline as their secondary actions. Match HUD cards and action rows share
+aligned edges and baselines; do not add decorative staggering or overhangs.
+On the immersive canvas, spacing follows the content scale. Keep native rectangular
+widget bounds aligned with their surfaces; preserve Tab order, narration and focus outlines.
+
+The receipt's point strip and grade badge align with the yaku body's edges.
+Reserve the final geometry before any reveal.
+
+Keep necessary titles, body and navigation visually distinct. Lobby and settings
+screens use compact centered floating panels, leaving the world visible around
+them without a full-screen dim layer. Their bounds follow the content and paginate
+at small sizes. Do not repeat the mod name, selected category or ordinary preparation
+stage as a heading or status line. In the table view, compact HUD cards belong near
+the edges so the physical hand stays clear.
 Actions remain separate from informational labels. Settings use explicit category
 navigation and grouped option rows; selection does not replace the setting's written value.
 Tooltips contain concise labels and state only. Gameplay and crafting explanations
@@ -92,9 +156,14 @@ Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
-The lobby keeps player count, presets, detailed rules, visibility, clock settings,
-invitations and participants on its first page. Keep leave and host dissolution
-distinct in the toolbar, with one prominent seat-preparation action below the settings.
+All three variants share one lobby layout. The left rail selects Riichi, MCR or
+Sichuan; variant selection never appears among that variant's settings. The body
+has Players and bots and Match settings tabs. Keep the roster visible on arrival,
+with per-seat Bot and ownership controls. Match settings paginate player count,
+presets, detailed rules, visibility, timing and convenience hints. Invitation and
+replay navigation sit at the bottom of the rail. Leave and host dissolution stay
+distinct in the toolbar. Fill empty seats is a separate secondary action beside
+the prominent seat-preparation action; drawing winds and readiness reuse its footer.
 Settlement uses one top action with the server's countdown in parentheses and
 automatically opens final standings at the match's second stage. The roster
 returns to the lobby after that stage, with leave and dissolution available there.
@@ -107,14 +176,20 @@ small viewports scale that canvas uniformly rather than reflowing it.
 The table settings hub has World, Room and Personal tabs. Administrators edit world policy
 in the World tab through permission-checked server commands; other players see
 read-only values with a short administrator-only explanation. Room controls
-and ownership transfer are paginated separately from local presentation options.
-Secondary settings and preset pages show their parent scope in the header;
-expanded preset choices use an inset and a quiet vertical rule.
-Settings use a persistent left category rail and flat, compact option rows beneath
-a centered section heading. Labels align left, values align right, and boolean
+are paginated separately from local presentation options; ownership transfer stays
+in the lobby roster and the shared participant page under Settings → Room.
+Rule editors and personal preset pages use the same compact panel, category rail,
+option area and aligned footer. Settings retain a persistent left category rail
+and flat option rows beneath one concise page title. The selected navigation item
+already identifies the section; show inline notices only for pending submissions,
+permission restrictions or errors. Labels align left, values align right, and boolean
 options use square indicators. Keep borders for keyboard focus and footer actions.
+Personal presentation enum values open explicit choice lists and return to their
+category. Restore category defaults affects only the current presentation category;
+personal stick/voice presets are managed on their own page. Changes apply immediately
+and are saved when leaving the personal settings page.
 Personal preset navigation groups indented Server/Local entries beneath each
-stick/voice category. Mark the active child with a leading accent. Narrow windows
+stick/voice category. Mark the active child with selected fill and a bottom rule. Narrow windows
 retain this hierarchy and paginate the content area.
 Settlement score tables use compact rows, quiet horizontal separators and a leading
 accent for the local player. Numeric headings and values share right-aligned column
@@ -123,10 +198,10 @@ edges; the player heading aligns with names after their portraits.
 Room preparation uses separate gathering, concealed wind-selection and assigned-seat
 views. The participant screen distinguishes empty places from reserved participants
 who are absent, and keeps wind assignments separate from world-direction coordinates.
-Empty lobby seat cards show their abbreviated wind beside an Invite control.
-Per-seat bot controls live directly beneath the top seat cards throughout preparation;
-ownership actions remain in the participant screen. The centered brass primary
-button advances filling seats, the table-specific assignment, then readiness.
+Roster rows show names, wind assignments, presence and readiness. Bot controls
+and ownership transfer occupy the right edge of the affected row. Complete names,
+seat coordinates and Bot service errors remain available on hover. The footer
+advances gathering to the table-specific assignment and then readiness.
 Participants distinguish temporary absence, disconnection,
 and an empty/released place. Disconnected human names use the negative text color;
 HUD cards include their presence in the summary and hover details. Bot replacement
@@ -155,15 +230,13 @@ use three separate choices; unavailable choices remain visible, disabled and
 labelled with a shortage tooltip. Availability comes from synchronized server
 capabilities rather than access to box inventory. Every composition, including
 no-red play, requires a complete matching set with enough ordinary and red fives.
-A selected no-red configuration displays a red warning inside the room home panel
-below its primary action. All rule pages paginate at
-320 x 240, with complete labels available on hover.
+All rule pages paginate at 320 x 240, with complete labels available on hover.
 Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Room settings include default-off tenpai hints for all participants. A small diamond
-with an exclamation mark appears at the lower right when valid waits are available.
+Room settings include default-off convenience hints for all three rules. A small diamond
+with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
 Hovering over or selecting a legal discard previews the resulting waits; retain
@@ -175,14 +248,21 @@ immersive play. Keep a small gap to the tiles instead of anchoring to the action
 rail. Draw the exclamation icon at the diamond's geometric center, independent
 of language and font glyph bearings. Wrap waits into compact rows when side
 controls or player cards restrict the space, preserving the hand anchor and
-native text size. The room host can change this setting during preparation.
+native text size. MCR and Sichuan retain this native focus and popup style with
+shanten/effective-tile previews; MCR shows scorer-backed non-flower fan qualification,
+and Sichuan shows void tiles, structural capped values and its owner's passed-win
+restriction. Dense MCR/Sichuan tile rows paginate within the available height;
+native activation of the diamond advances the page while narration retains all
+tile rows. Shared presentation does not alter either table's hand geometry.
+The room host can change this setting during preparation.
 
 Seated HUDs integrate honba/riichi-stick counts and dora into the existing 26-pixel
 round/remaining header. Their stick icons use fixed HUD artwork, independent of
 the selected point-stick preset. Indicators use 14-pixel faces when space permits; compact
 headers use 8-pixel faces beside the round and short remaining text beside the
 stick counts. Immersive headers use 14-pixel indicators and reserve their width
-on both text lines. Player cards begin at y=38 without a separate indicator row.
+on both text lines. Seated Riichi player cards share the y=38 baseline and have no
+separate indicator row. Immersive left and right player cards share their top edge.
 Respect the independent DEPOSITS and DORA preferences. Show a compact
 red-background, white-text furiten badge below
 the local player's card in either view. STATUS controls this recipient-only badge;
@@ -204,7 +284,8 @@ The viewer's
 large interactive hand and raised tile rack form the foreground along the bottom. Place
 the viewer's melds flat on the table at the right-hand corner, with the earliest
 meld nearest that corner and later melds extending left. Apply the same owner-relative
-right-end rule to every seat.
+right-end rule to every seat. Extracted norths lie in one run at the left end
+of the same outer rail as the melds.
 Place immersive automation in a compact centered horizontal strip below the hand, with
 action buttons above the right end of the hand, clear of the central rivers and table melds. Seated automation keeps its
 side column. Three-player layouts place both opponents at the sides and do not reserve
@@ -344,16 +425,16 @@ Melds start at the player's right-hand table corner and extend left along the
 same depth as the hand. Never move melds forward into a rail between the hand
 and the wall. The concealed hand stays centered on the table while its right
 edge, including any drawn tile and draw gap, clears the actual meld bounds by
-`TableScene.HAND_MELD_GAP`. When they do not fit, shift the hand left only by the
+`RiichiTableScene.HAND_MELD_GAP`. When they do not fit, shift the hand left only by the
 missing clearance. Do not use a fixed left offset or center the hand in the
 entire remaining space. Do not
 reserve absent melds or drawn tiles. Drawing can move a constrained hand only as
 far as the additional tile requires; an unconstrained hand does not move.
 Account for open/closed/added kans and sideways calls without moving
-earlier melds away from their corner. Extracted norths form two short rows on
-the left, with clearance from the adjacent player's right-corner melds.
+earlier melds away from their corner. Extracted norths form one continuous run on
+the left at the hand's depth, with clearance from the adjacent player's right-corner melds.
 
-Use `TableScene` and `MeldLayout` for rendering and picking together. Derive
+Use `RiichiTableScene` and `MeldLayout` for rendering and picking together. Derive
 occupied widths from the real `TileMesh` dimensions, including sideways called
 tiles and front-aligned added kans. All tiles in a meld share the same bottom
 edge toward their owner. An added-kan tile lies flat immediately in front of
@@ -385,7 +466,10 @@ table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitc
 at 20 degrees per second. Home restores distance, height, direction, target and
 inspect progress. Minecraft controls third-person views. Camera sliders preserve
 the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
-the current elevated seating view. The top-bar view button or V switches to the
+the current elevated seating view. All three variants use the same top-right toolbar order: Replays, view, Settings,
+and Exit. Narrow seated overlays use short captions with the full names on hover;
+normal and immersive toolbars size buttons from their translated captions.
+The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
 Its left edge stays on a fourteen-tile rail, with exposed melds fitted to its right.
@@ -402,9 +486,10 @@ front and back rims and the side edges in the animated world pose, with depth te
 
 Riichi deposits occupy four lanes in the central area, above the automatic display
 or on the ordinary table's felt; carried deposits remain visible between hands.
-The automatic table's active-match overlay includes collapsible controls at the
-lower left: sort hand, claim wins, skip calls, discard drawn tiles, and (in three-player
-matches) extract norths. Both compact and expanded rows are individual toggle buttons;
+The automatic table's active-match overlay shares collapsible controls for all
+three rules at the lower left: claim wins, skip calls and discard drawn tiles.
+Riichi additionally offers sort hand and, in three-player matches, extract norths.
+Both compact and expanded rows are individual toggle buttons;
 seated rows retain 20-pixel hit areas with inset 18-pixel surfaces and no vertical
 gap. A quiet side handle changes their presentation, retaining a 20-pixel hit area
 and a visible keyboard focus outline. Immersive controls retain the horizontal strip.
@@ -418,8 +503,9 @@ canvas and are only uniformly scaled by the outer letterbox transform. These pre
 seated player, reset at the start of each hand, and are acknowledged before another toggle is enabled. Keep keyboard
 focus across snapshot updates and collapse/expand. Countdown, riichi and animation
 text stay in the action-side gutter. Sorting starts enabled; the other options start
-disabled. A legal win takes priority over automatic north extraction, discards and
-skipped calls. Without automatic wins, the win decision remains explicit. Automatic
+disabled. A qualifying win takes priority over automatic north extraction, discards and
+skipped calls. Without automatic wins, the win decision remains explicit. MCR uses
+eight non-flower fan; Sichuan uses its issued win and discard choices. Automatic
 north extraction uses only legal server actions, independently of the skip-calls
 preference, and retains the normal robbery and replacement-draw flow.
 Turning sorting off keeps the hand's current order. Dragging a tile onto another

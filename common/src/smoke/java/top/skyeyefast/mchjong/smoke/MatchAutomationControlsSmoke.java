@@ -1,0 +1,116 @@
+package top.skyeyefast.mchjong.smoke;
+
+import java.nio.file.Path;
+import net.minecraft.client.Minecraft;
+import net.minecraft.client.gui.components.AbstractWidget;
+import net.minecraft.network.chat.Component;
+import org.lwjgl.glfw.GLFW;
+import top.skyeyefast.mchjong.client.McrTableScreen;
+import top.skyeyefast.mchjong.client.SichuanTableScreen;
+import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
+
+/** One shared UI/packet check for the three common options on the non-Riichi tables. */
+final class MatchAutomationControlsSmoke {
+    private int stage, ticks;
+    boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
+        if (stage == 7) return true;
+        var room = table.clientTableRoom();
+        if (stage == 0 && client.screen.children().stream().filter(AbstractWidget.class::isInstance)
+            .map(AbstractWidget.class::cast).noneMatch(widget -> widget.getMessage().getString()
+                .startsWith(Component.translatable("ui.mchjong.auto_win").getString()))) return false;
+        if (++ticks < 4) return false;
+        switch (stage) {
+            case 0 -> {
+                client.getWindow().setWindowed(960, 720); client.options.guiScale().set(3); client.resizeDisplay();
+                next();
+            }
+            case 1 -> {
+                bounds(client);
+                capture(client, output, prefix + "-automation-seated.png");
+                press(client, "ui.mchjong.automation_show"); next();
+            }
+            case 2 -> {
+                bounds(client);
+                var button = option(client);
+                client.screen.setFocused(button);
+                require(client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0), "Automation rejected native keyboard input");
+                next();
+            }
+            case 3 -> {
+                if (!room.automation().win() || !option(client).active) return false;
+                require(client.screen.getFocused() == option(client), "Automation lost focus on acknowledgement");
+                option(client).onClick(option(client).getX() + 2, option(client).getY() + 2);
+                next();
+            }
+            case 4 -> {
+                if (room.automation().win() || !option(client).active) return false;
+                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0); next();
+            }
+            case 5 -> {
+                require(immersive(client), "Automation lost the immersive view");
+                bounds(client);
+                capture(client, output, prefix + "-automation-immersive.png");
+                press(client, "ui.mchjong.automation_hide"); next();
+            }
+            case 6 -> {
+                bounds(client);
+                require(!room.automation().win() && !room.automation().noCalls() && !room.automation().discard(),
+                    "Automation round trip changed another preference");
+                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+                client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeDisplay();
+                next();
+            }
+            default -> throw new IllegalStateException("Unexpected automation smoke stage");
+        }
+        return stage == 7;
+    }
+    private void next() { stage++; ticks = 0; }
+    private static AbstractWidget option(Minecraft client) {
+        String label = Component.translatable("ui.mchjong.auto_win").getString();
+        return client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().startsWith(label)).findFirst().orElseThrow();
+    }
+    private static boolean immersive(Minecraft client) {
+        return client.screen instanceof McrTableScreen screen ? screen.immersive() : ((SichuanTableScreen) client.screen).immersive();
+    }
+    private static void press(Minecraft client, String key) {
+        String label = Component.translatable(key).getString();
+        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+        double x = button.getX() + button.getWidth() / 2.0, y = button.getY() + button.getHeight() / 2.0;
+        if (immersive(client)) {
+            double scale = Math.min(client.screen.width / 1280.0, client.screen.height / 800.0);
+            x = (client.screen.width - 1280 * scale) / 2 + x * scale;
+            y = (client.screen.height - 800 * scale) / 2 + y * scale;
+        }
+        require(client.screen.mouseClicked(x, y, 0), "Automation control rejected pointer input");
+        client.screen.mouseReleased(x, y, 0);
+    }
+    private static void bounds(Minecraft client) {
+        int width = immersive(client) ? 1280 : client.screen.width, height = immersive(client) ? 800 : client.screen.height;
+        var widgets = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
+            .filter(widget -> widget.visible && !widget.getClass().getSimpleName().equals("HandTarget")
+                && !widget.getClass().getSimpleName().equals("TableHints") && !widget.getClass().getSimpleName().equals("TableTurnClock")).toList();
+        for (int index = 0; index < widgets.size(); index++) {
+            var a = widgets.get(index);
+            require(a.getX() >= 0 && a.getY() >= 0 && (a.getX() + a.getWidth()) <= width && (a.getY() + a.getHeight()) <= height, "Automation exceeds canvas");
+            for (int other = index + 1; other < widgets.size(); other++) {
+                var b = widgets.get(other);
+                require((a.getX() + a.getWidth()) <= b.getX() || (b.getX() + b.getWidth()) <= a.getX() || (a.getY() + a.getHeight()) <= b.getY() || (b.getY() + b.getHeight()) <= a.getY(),
+                    "Automation overlaps another control");
+            }
+        }
+        for (String key : new String[]{"auto_win", "no_calls", "auto_discard"}) {
+            var button = widgets.stream().filter(widget -> widget.getMessage().getString().startsWith(
+                Component.translatable("ui.mchjong." + key).getString())).findFirst().orElseThrow();
+            require(!immersive(client) || (button.getY() + button.getHeight()) <= height - 32, "Automation overlaps the help line");
+        }
+        require(widgets.stream().noneMatch(widget -> widget.getMessage().getString().startsWith(
+            Component.translatable("ui.mchjong.auto_sort").getString()) || widget.getMessage().getString().startsWith(
+            Component.translatable("ui.mchjong.auto_kita").getString())), "Riichi controls leaked into another rule");
+    }
+    private static void capture(Minecraft client, Path output, String name) {
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+    }
+    private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
+}

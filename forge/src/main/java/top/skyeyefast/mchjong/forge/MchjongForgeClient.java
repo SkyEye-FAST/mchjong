@@ -3,6 +3,7 @@ package top.skyeyefast.mchjong.forge;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.MenuScreens;
 import net.minecraft.client.renderer.BlockEntityWithoutLevelRenderer;
+import net.minecraft.client.resources.model.ModelResourceLocation;
 import net.minecraft.server.packs.resources.ResourceManagerReloadListener;
 import net.minecraftforge.api.distmarker.Dist;
 import net.minecraftforge.client.event.EntityRenderersEvent;
@@ -21,7 +22,7 @@ import top.skyeyefast.mchjong.world.MahjongContent;
 
 @Mod.EventBusSubscriber(modid = MahjongContent.MOD_ID, value = Dist.CLIENT, bus = Mod.EventBusSubscriber.Bus.MOD)
 public final class MchjongForgeClient {
-    private static final boolean PATCHOULI = net.minecraftforge.fml.ModList.get().isLoaded("patchouli");
+    private static final ModelResourceLocation RIICHI = new ModelResourceLocation(RiichiStickModel.ID, "standalone");
     private MchjongForgeClient() {}
 
     public static void registerConfigScreen(net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext context) {
@@ -30,7 +31,7 @@ public final class MchjongForgeClient {
     }
 
     @SubscribeEvent public static void models(ModelEvent.RegisterAdditional event) {
-        event.register(RiichiStickModel.ID);
+        event.register(RIICHI);
     }
 
     @SubscribeEvent public static void resources(RegisterClientReloadListenersEvent event) {
@@ -43,14 +44,8 @@ public final class MchjongForgeClient {
 
     @SubscribeEvent public static void setup(FMLClientSetupEvent event) {
         event.enqueueWork(() -> {
-            if (net.minecraftforge.fml.ModList.get().isLoaded("touhou_little_maid"))
-                top.skyeyefast.mchjong.compat.maid.client.MaidSeatMounts.register();
-            if (net.minecraftforge.fml.ModList.get().isLoaded("create"))
-                top.skyeyefast.mchjong.compat.create.CreatePonder.register();
-            else if (net.minecraftforge.fml.ModList.get().isLoaded("ponder"))
-                top.skyeyefast.mchjong.compat.ponder.MchjongPonder.register();
             RiichiStickModel.initialize(() -> Minecraft.getInstance().getModelManager()
-                .getModel(RiichiStickModel.ID));
+                .getModel(RIICHI));
             MenuScreens.register(MahjongContent.BOX_MENU, MahjongBoxScreen::new);
             MenuScreens.register(MahjongContent.TABLE_MENU, MahjongTableScreen::new);
             MenuScreens.register(MahjongContent.STICK_MENU, PointStickScreen::new);
@@ -75,13 +70,12 @@ public final class MchjongForgeClient {
 
         @SubscribeEvent public static void tick(TickEvent.ClientTickEvent event) {
             if (event.phase != TickEvent.Phase.END) return;
-            top.skyeyefast.mchjong.compat.patchouli.ManualClient.tick(PATCHOULI);
-            TableAudio.tick();
+            RiichiAudio.tick();
             SeatedCamera.tick();
             ClientReplays.tick();
             top.skyeyefast.mchjong.client.TileFacePresets.tick();
         }
 
-        @SubscribeEvent public static void close(GameShuttingDownEvent event) { TableAudio.close(); }
+        @SubscribeEvent public static void close(GameShuttingDownEvent event) { RiichiAudio.close(); }
     }
 }

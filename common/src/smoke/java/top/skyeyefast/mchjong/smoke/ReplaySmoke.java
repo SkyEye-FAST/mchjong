@@ -10,12 +10,13 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ReplayScreen;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiAction;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
 import top.skyeyefast.mchjong.engine.ReplayPlayback;
-import top.skyeyefast.mchjong.engine.RuleSet;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.world.MahjongSounds;
@@ -36,8 +37,8 @@ final class ReplaySmoke {
             UUID viewer = client.player.getUUID();
             client.getSingleplayerServer().execute(() -> {
                 try {
-                    Game game = createHand(viewer);
-                    ReplayMatch record = game.pendingReplays().getFirst();
+                    RiichiSession game = createHand(viewer);
+                    ReplayMatch record = game.pendingReplays().get(0);
                     ReplayServer.flush(client.getSingleplayerServer(), game);
                     require(game.pendingReplays().isEmpty(), "Archive was not acknowledged");
                     fixture.complete(record);
@@ -56,8 +57,8 @@ final class ReplaySmoke {
         } else if (stage == 2 && ticks > 15 && client.screen instanceof ReplayScreen replay) {
             require(replay.match().equals(match), "Replay transport changed the record");
             require(replay.cursor() == 0, "Replay did not start at the initial deal");
-            require(Tile.validSet(match.hands().getFirst().wall().tiles()), "Replay transfer lost the physical wall");
-            require(!match.hands().getFirst().decisions().isEmpty(), "Replay transfer lost decision points");
+            require(Tile.validSet(match.riichi().hands().get(0).wall().tiles()), "Replay transfer lost the physical wall");
+            require(!match.riichi().hands().get(0).decisions().isEmpty(), "Replay transfer lost decision points");
             checkBounds(client);
             capture(client,output,"20-replay-initial.png");
             replay.keyPressed(GLFW.GLFW_KEY_RIGHT_BRACKET,0,0);
@@ -84,7 +85,7 @@ final class ReplaySmoke {
             var json = com.google.gson.JsonParser.parseString(Files.readString(file)).getAsJsonObject();
             require(json.get("ver").getAsString().equals("2.3"), "Export has the wrong format");
             require(json.get("ref").getAsString().equals(match.id().toString()), "Export has the wrong match identity");
-            require(json.getAsJsonArray("log").size() == match.hands().size(), "Export is incomplete");
+            require(json.getAsJsonArray("log").size() == match.handCount(), "Export is incomplete");
             require(!json.has("seed") && !json.has("recorder"), "Export contains live internal state");
             ClientReplays.list(0, "Replay player", true);
             stage = 6; ticks = 0;
@@ -136,28 +137,29 @@ final class ReplaySmoke {
         return false;
     }
 
-    private static Game createHand(UUID viewer) {
-        Game game = new Game(UUID.randomUUID(),RuleSet.TENHOU_4,73519);
+    private static RiichiSession createHand(UUID viewer) {
+        RiichiSession session = new RiichiSession(UUID.randomUUID(),RiichiPreset.TENHOU_4,73519);
         UUID[] ids = {viewer,UUID.randomUUID(),UUID.randomUUID(),UUID.randomUUID()};
         for (int seat = 0; seat < 4; seat++) {
-            require(game.join(ids[seat], "Replay player " + (seat+1),seat),"Cannot join replay fixture");
+            require(session.join(ids[seat], "Replay player " + (seat+1),seat),"Cannot join replay fixture");
         }
-        SeatingFixtures.startPositioned(game, ids);
+        SeatingFixtures.startPositioned(session, ids);
+        RiichiGame game = session.game();
         for (int step = 0; step < 2000; step++) {
-            if (game.phase() == Game.Phase.HAND_END || game.phase() == Game.Phase.MATCH_END) return game;
+            if (game.phase() == RiichiGame.Phase.HAND_END || game.phase() == RiichiGame.Phase.MATCH_END) return session;
             boolean acted = false;
             for (UUID id : ids) {
-                TableView view = game.view(id);
-                int action = find(view,Action.Type.PASS);
-                if (action < 0) action = find(view,Action.Type.TSUMO);
-                if (action < 0) action = find(view,Action.Type.DISCARD);
+                RiichiView view = game.view(id);
+                int action = find(view,RiichiAction.Type.PASS);
+                if (action < 0) action = find(view,RiichiAction.Type.TSUMO);
+                if (action < 0) action = find(view,RiichiAction.Type.DISCARD);
                 if (action >= 0) { require(game.act(id,view.decision(),action),"Replay fixture rejected a legal move"); acted = true; break; }
             }
             require(acted,"Replay fixture deadlocked");
         }
         throw new IllegalStateException("Replay fixture never settled");
     }
-    private static int find(TableView view, Action.Type type) {
+    private static int find(RiichiView view, RiichiAction.Type type) {
         for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == type) return i;
         return -1;
     }

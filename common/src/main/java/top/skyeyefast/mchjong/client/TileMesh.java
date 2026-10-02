@@ -53,7 +53,7 @@ public final class TileMesh {
             ? 0xff000000 | dyeColor(dye) : bodyColor(material, dye);
     }
 
-    private static int dyeColor(DyeColor dye) {
+    static int dyeColor(DyeColor dye) {
         float[] rgb = dye.getTextureDiffuseColors();
         return (int) (rgb[0] * 255) << 16 | (int) (rgb[1] * 255) << 8 | (int) (rgb[2] * 255);
     }

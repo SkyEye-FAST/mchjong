@@ -8,19 +8,23 @@ import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TimeControl;
 
 /** The host edits server-owned lobby settings, not a client-side timeout. */
-public final class TableClockScreen extends Screen {
-    private final TableScreen parent;
+public final class TableClockScreen extends Screen implements TableChildScreen {
+    private final Screen parent;
     private final TimeControl initial;
     private EditBox reserve;
     private EditBox move;
     private Button apply;
+    private int top;
 
-    public TableClockScreen(TableScreen parent, TimeControl initial) {
+    public TableClockScreen(Screen parent, TimeControl initial) {
         super(Component.translatable("ui.mchjong.clock_settings"));
         this.parent = parent;
         this.initial = initial;
     }
-    public TableScreen tableScreen() { return parent; }
+    public RiichiTableScreen tableScreen() { return TableChildScreen.root(parent) instanceof RiichiTableScreen table ? table : null; }
+    public McrLobbyScreen mcrLobby() { return TableChildScreen.root(parent) instanceof McrLobbyScreen lobby ? lobby : null; }
+    public SichuanLobbyScreen sichuanScreen() { return TableChildScreen.root(parent) instanceof SichuanLobbyScreen screen ? screen : null; }
+    @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics) {}
 
@@ -28,17 +32,18 @@ public final class TableClockScreen extends Screen {
         String reserveValue = reserve == null ? Integer.toString(initial.reserveSeconds()) : reserve.getValue();
         String moveValue = move == null ? Integer.toString(initial.moveSeconds()) : move.getValue();
         int left = width / 2 - 100;
-        reserve = field(left, 72, "ui.mchjong.reserve_time", reserveValue);
-        move = field(left, 118, "ui.mchjong.move_time", moveValue);
+        top = (height - 174) / 2;
+        reserve = field(left, top + 48, "ui.mchjong.reserve_time", reserveValue);
+        move = field(left, top + 94, "ui.mchjong.move_time", moveValue);
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> {
             TimeControl control = control();
             if (control != null && minecraft.getConnection() != null) {
                 minecraft.getConnection().sendCommand("mchjong clock " + control.reserveSeconds() + " " + control.moveSeconds());
                 onClose();
             }
-        }).bounds(left, height - 30, 96, 20).build().primary());
+        }).bounds(left, top + 148, 96, 20).build().primary());
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.cancel"), ignored -> onClose())
-            .bounds(left + 104, height - 30, 96, 20).build());
+            .bounds(left + 104, top + 148, 96, 20).build());
     }
     private EditBox field(int x, int y, String key, String value) {
         var box = new MahjongEditBox(font, x, y, 200, 20, Component.translatable(key));
@@ -52,10 +57,10 @@ public final class TableClockScreen extends Screen {
         catch (IllegalArgumentException failure) { return null; }
     }
     @Override public void render(GuiGraphics graphics, int x, int y, float partialTick) {
-        MahjongUi.backdrop(graphics, width, height, 280);
-        MahjongUi.text(graphics, font, title, 12, 20, width - 24, MahjongUi.TEXT, true);
-        graphics.drawString(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, 58, MahjongUi.MUTED);
-        graphics.drawString(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, 104, MahjongUi.MUTED);
+        MahjongUi.panel(graphics, width / 2 - 110, top, 220, 174);
+        MahjongUi.text(graphics, font, title, width / 2 - 100, top + 12, 200, MahjongUi.TEXT, false);
+        graphics.drawString(font, Component.translatable("ui.mchjong.reserve_time"), width / 2 - 100, top + 34, MahjongUi.MUTED);
+        graphics.drawString(font, Component.translatable("ui.mchjong.move_time"), width / 2 - 100, top + 80, MahjongUi.MUTED);
         apply.active = control() != null;
         super.render(graphics, x, y, partialTick);
     }

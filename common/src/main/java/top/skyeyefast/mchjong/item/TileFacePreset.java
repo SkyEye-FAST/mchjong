@@ -1,13 +1,17 @@
 package top.skyeyefast.mchjong.item;
 
-import top.skyeyefast.mchjong.platform.ResourceIds;
 import com.mojang.serialization.Codec;
 import net.minecraft.resources.ResourceLocation;
 
 /** Persistent cosmetic identity; images are resolved on each client. */
 public record TileFacePreset(ResourceLocation id) {
-    public static final TileFacePreset KANSAI = new TileFacePreset(ResourceIds.of("mchjong", "kansai"));
-    public static final TileFacePreset KANTO = new TileFacePreset(ResourceIds.of("mchjong", "kanto"));
+    public static final TileFacePreset KANSAI = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "kansai"));
+    public static final TileFacePreset KANTO = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "kanto"));
+    public static final TileFacePreset HONG_KONG = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "hong_kong"));
+    public static final TileFacePreset SICHUAN = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "sichuan"));
+    public static final TileFacePreset TAIWAN = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "taiwan"));
+    public static final TileFacePreset FUJIAN = new TileFacePreset(top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "fujian"));
+    public static final java.util.List<TileFacePreset> BUILTINS = java.util.List.of(KANSAI, KANTO, SICHUAN, HONG_KONG, TAIWAN, FUJIAN);
     public static final Codec<TileFacePreset> CODEC = ResourceLocation.CODEC.xmap(TileFacePreset::new, TileFacePreset::id);
     public TileFacePreset {
         java.util.Objects.requireNonNull(id);

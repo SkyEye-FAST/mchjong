@@ -12,6 +12,7 @@ repositories { mavenCentral() }
 dependencies {
     implementation platform("org.jetbrains.kotlinx:kotlinx-serialization-bom:${kotlinx_serialization_version}")
     implementation "io.github.ssttkkl:mahjong-utils-jvm:${mahjong_utils_version}"
+    implementation "top.skyeyefast:mcr-mahjong:${mcr_mahjong_version}"
     implementation 'org.jetbrains.kotlinx:kotlinx-serialization-core-jvm'
     testImplementation platform("org.junit:junit-bom:${junit_version}")
     testImplementation 'org.junit.jupiter:junit-jupiter'
@@ -31,6 +32,7 @@ shadowJar {
     duplicatesStrategy = DuplicatesStrategy.INCLUDE
     archiveClassifier = ''
     relocate 'mahjongutils', 'top.skyeyefast.mchjong.internal.mahjongutils'
+    relocate 'top.skyeyefast.mcr', 'top.skyeyefast.mchjong.internal.mcr'
     relocate 'kotlin', 'top.skyeyefast.mchjong.internal.kotlin'
     relocate 'kotlinx', 'top.skyeyefast.mchjong.internal.kotlinx'
     relocate 'com.google.gson', 'top.skyeyefast.mchjong.internal.gson'

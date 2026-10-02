@@ -1,6 +1,6 @@
 package top.skyeyefast.mchjong.engine
 
-/** A tile ID identifies one physical tile, not just its face. */
+/** A tile ID identifies one physical tile. Ordinary kinds and flowers have separate domains. */
 object Tile {
     private const val RED_FLAG = 256
 
@@ -17,6 +17,7 @@ object Tile {
     const val GREEN = 32
     const val RED = 33
 
+    /** Ordinary tiles only: flowers and hidden/absent sentinels are rejected. */
     @JvmStatic
     fun kind(id: Int): Int {
         val physical = id and RED_FLAG.inv()
@@ -28,6 +29,30 @@ object Tile {
 
     @JvmStatic
     fun red(id: Int): Boolean = id >= 0 && (id and RED_FLAG) != 0
+
+    @JvmStatic
+    fun isFlower(id: Int): Boolean = FlowerTile.of(id) != null
+
+    /** Validates an identity and removes red-five decoration for physical-copy accounting. */
+    @JvmStatic
+    fun physicalId(id: Int): Int {
+        if (isFlower(id)) return id
+        kind(id)
+        return id and RED_FLAG.inv()
+    }
+
+    /** Standard MCR stock: four copies of each ordinary kind and eight unique flowers. */
+    @JvmStatic
+    fun mcrSet(): List<Int> = java.util.List.copyOf(set(false, RedFives.NONE) + FlowerTile.entries.map { it.id() })
+
+    @JvmStatic
+    fun validMcrSet(tiles: List<Int>): Boolean = tiles.size == 144 && tiles.toSet() == mcrSet().toSet()
+
+    @JvmStatic
+    fun sichuanSet(): List<Int> = java.util.List.copyOf((0..<108).toList())
+
+    @JvmStatic
+    fun validSichuanSet(tiles: List<Int>): Boolean = tiles.size == 108 && tiles.toSet() == sichuanSet().toSet()
 
     @JvmStatic
     fun id(kind: Int, copy: Int, red: Boolean): Int {

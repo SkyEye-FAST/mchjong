@@ -8,16 +8,16 @@ import java.util.stream.IntStream;
 import net.minecraft.Util;
 import net.minecraft.client.Minecraft;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.client.TableAnimation;
-import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableScene;
+import top.skyeyefast.mchjong.client.RiichiAnimation;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScene;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.TileMesh;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.Discard;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiAction;
+import top.skyeyefast.mchjong.engine.RiichiDiscard;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
@@ -27,7 +27,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 final class AnimationSmoke {
     private final boolean layoutsOnly;
     private final DepositVisualSmoke deposits = new DepositVisualSmoke();
-    private TableView fixture;
+    private RiichiView fixture;
     private int ticks;
     private int windowWidth, windowHeight, guiScale;
     private boolean originalHighlight;
@@ -38,26 +38,26 @@ final class AnimationSmoke {
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output) {
         ticks++;
         if (fixture == null) {
-            TableView base = table.clientView();
+            RiichiView base = table.clientView();
             TableSettings.get().animations = true;
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < base.rules().players(); seat++) seats.add(seat(seat == 0
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(13, Tile.HIDDEN), List.of(), List.of(), false));
             var wall = new ArrayList<>(Collections.nCopies(136, Tile.HIDDEN));
             for (int i = 0; i < 53; i++) wall.set(i, Tile.ABSENT);
             // Display-only fixtures must not be replaced by live game heartbeats during the captures.
-            fixture = new TableView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
-                base.rules(), Game.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
-                "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of());
+            fixture = new RiichiView(base.tableId(), Long.MAX_VALUE / 2, base.decision() + 1, base.handNumber() + 1,
+                base.rules(), RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 70, 12, wall, null, seats, List.of(), List.of(),
+                "playing", List.of(), List.of(), List.of(), base.timeControl(), base.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
             if (layoutsOnly) {
-                var previous = new TableView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
+                var previous = new RiichiView(fixture.tableId(), fixture.revision() - 1, fixture.decision(), fixture.handNumber() - 1,
                     fixture.rules(), fixture.phase(), 0, 0, 0, 0, 0, 0, fixture.remaining(), fixture.wallBreak(), fixture.wall(),
                     null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(),
-                    fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+                    fixture.clocks(), List.of(), fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
                 table.acceptView(previous);
-                TableAnimation.of(table).accept(previous, Util.getMillis() - TableAnimation.DEAL_MILLIS);
+                RiichiAnimation.of(table).accept(previous, Util.getMillis() - RiichiAnimation.DEAL_MILLIS);
             }
-            TableScreen screen = new TableScreen(table.getBlockPos());
+            RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
             if (layoutsOnly) screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
@@ -70,33 +70,34 @@ final class AnimationSmoke {
                     TableSettings.get().toggle(information);
                 }
         }
-        if (layoutsOnly && ticks <= 60 && !((TableScreen) client.screen).immersive())
+        if (layoutsOnly && ticks <= 60 && !((RiichiTableScreen) client.screen).immersive())
             throw new IllegalStateException("Automatic dealing exited immersive view");
         if (ticks == 6 && !layoutsOnly) capture(client, output, "12-wall-rising.png");
         if (ticks == 18) capture(client, output, layoutsOnly ? "13-immersive-dealing-packets.png" : "13-dealing-packets.png");
         if (ticks == 60) {
-            if (TableAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
+            if (RiichiAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
             capture(client, output, layoutsOnly ? "14-immersive-deal-complete.png" : "14-animated-deal-complete.png");
             if (layoutsOnly) {
                 client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                 hidden.forEach(TableSettings.get()::toggle);
                 hidden.clear();
                 TableSettings.get().animations = false;
-                ticks = 115;
+                // Keep the shared camera and hand-input checks in the focused seated run.
+                ticks = 109;
             }
         }
         if (ticks == 61) {
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(IntStream.range(0, 13).boxed().toList(), List.of(),
-                List.of(new Discard(13, true, false, true)), false));
+                List.of(new RiichiDiscard(13, true, false, true)), false));
             update(table, seats, fixture.wall());
         }
         if (ticks == 65) capture(client, output, "15-riichi-discard-moving.png");
         if (ticks == 74) {
             var seats = new ArrayList<>(fixture.seats());
-            seats.set(0, seat(seats.getFirst().hand(), List.of(), List.of(new Discard(13, true, true, true)), true));
+            seats.set(0, seat(seats.get(0).hand(), List.of(), List.of(new RiichiDiscard(13, true, true, true)), true));
             seats.set(1, seat(Collections.nCopies(11, Tile.HIDDEN),
-                List.of(new Meld(Meld.Type.PON, List.of(13, 14, 15), 0, 13)), List.of(), false));
+                List.of(new Meld(Meld.Type.TRIPLET, List.of(13, 14, 15), 0, 13)), List.of(), false));
             update(table, seats, fixture.wall());
         }
         if (ticks == 78) capture(client, output, "16-pon-and-riichi-stick-moving.png");
@@ -105,8 +106,8 @@ final class AnimationSmoke {
             var seats = new ArrayList<>(fixture.seats());
             var hand = new ArrayList<>(IntStream.range(4, 13).boxed().toList());
             hand.add(16);
-            seats.set(0, seat(hand, List.of(new Meld(Meld.Type.CLOSED_KAN, List.of(0, 1, 2, 3), 0, Tile.ABSENT)),
-                seats.getFirst().river(), true));
+            seats.set(0, seat(hand, List.of(new Meld(Meld.Type.CONCEALED_QUAD, List.of(0, 1, 2, 3), 0, Tile.ABSENT)),
+                seats.get(0).river(), true));
             var wall = new ArrayList<>(fixture.wall());
             wall.set(53, Tile.ABSENT);
             update(table, seats, wall);
@@ -130,12 +131,12 @@ final class AnimationSmoke {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+            var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i % 3 + 1, i * 4)).toList();
             var seats = new ArrayList<>(fixture.seats());
             seats.set(0, seat(List.of(80, 81), melds, List.of(), false));
             update(table, seats, fixture.wall());
-            var screen = new TableScreen(table.getBlockPos());
+            var screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
         }
@@ -162,25 +163,26 @@ final class AnimationSmoke {
                 var player = seats.get(side);
                 int first = 40 + side * 20;
                 var river = IntStream.range(first, first + (side % 2 == 0 ? 24 : 12))
-                    .mapToObj(tile -> new Discard(tile, tile == first + 2, false, false)).toList();
-                seats.set(side, new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
-                    player.points(), player.hand(), player.drawn(), player.melds(), river, player.norths(),
+                    .mapToObj(tile -> new RiichiDiscard(tile, tile == first + 2, false, false)).toList();
+                seats.set(side, new RiichiView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(), player.ready(),
+                    player.points(), player.hand(), player.drawn(), player.melds(), river,
+                    side == 0 ? List.of(120) : side == 1 ? List.of(121, 122, 123) : List.of(),
                     player.riichi(), player.exposed(), player.doubleRiichi()));
             }
             var right = seats.get(1);
-            var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
+            var cornerKans = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(16 + i * 4, 17 + i * 4, 18 + i * 4, 19 + i * 4), 2, 16 + i * 4)).toList();
-            seats.set(1, new TableView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
+            seats.set(1, new RiichiView.Seat(right.entityBot(), right.name(), right.occupied(), right.bot(), right.ready(), right.points(),
                 List.of(Tile.HIDDEN, Tile.HIDDEN), Tile.ABSENT, cornerKans, right.river(), right.norths(), right.riichi(), false, right.doubleRiichi()));
             int leftSeat = seats.size() - 1;
             var left = seats.get(leftSeat);
-            var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_KAN,
-                List.of(116 + i * 4, 117 + i * 4, 118 + i * 4, 119 + i * 4), 2, 116 + i * 4)).toList();
-            seats.set(leftSeat, new TableView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
+            var leftMelds = IntStream.range(0, 2).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
+                List.of(108 + i * 4, 109 + i * 4, 110 + i * 4, 111 + i * 4), 2, 108 + i * 4)).toList();
+            seats.set(leftSeat, new RiichiView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
             AutomationControlsSmoke.click(client, label);
         }
@@ -189,19 +191,19 @@ final class AnimationSmoke {
             client.getWindow().setWindowed(960, 600);
             client.options.guiScale().set(2);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
         }
         if (ticks == 327) {
             capture(client, output, "57-immersive-rivers-melds-480x300.png");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
             capture(client, output, "57-immersive-rivers-melds-320x240-gui3-letterbox.png");
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
             client.resizeDisplay();
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
         }
         if (ticks == 328) {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
@@ -210,7 +212,7 @@ final class AnimationSmoke {
         if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
         if (ticks >= 328 && ticks <= 352 && (ticks - 328) % 12 == 0) {
-            var calls = new Action.Type[]{Action.Type.CHI, Action.Type.PON, Action.Type.OPEN_KAN};
+            var calls = new RiichiAction.Type[]{RiichiAction.Type.CHI, RiichiAction.Type.PON, RiichiAction.Type.OPEN_KAN};
             InputSmoke.verifyCallFocus(client, table, calls[(ticks - 328) / 12]);
         }
         if (ticks >= 334 && ticks <= 358 && (ticks - 334) % 12 == 0)
@@ -222,7 +224,7 @@ final class AnimationSmoke {
                 ? IntStream.range(0, 14).boxed().toList() : Collections.nCopies(14, Tile.HIDDEN), List.of(), List.of(), false));
             update(table, seats, fixture.wall());
             TableSettings.get().animations = true;
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         }
         if (ticks == 364 || ticks == 384 || ticks == 404) {
@@ -233,9 +235,9 @@ final class AnimationSmoke {
             var player = seats.get(owner);
             var hand = new ArrayList<>(player.hand());
             if (owner == 0) hand.remove(Integer.valueOf(tile));
-            else hand.removeLast();
+            else hand.remove(hand.size() - 1);
             var river = new ArrayList<>(player.river());
-            river.add(new Discard(tile, ticks == 364, false, tsumogiri));
+            river.add(new RiichiDiscard(tile, ticks == 364, false, tsumogiri));
             seats.set(owner, seat(hand, player.melds(), river, player.riichi() || ticks == 364));
             update(table, seats, fixture.wall(), owner);
         }
@@ -245,7 +247,7 @@ final class AnimationSmoke {
             capture(client, output, "58-immersive-" + (ticks == 378 ? "tedashi-riichi" : ticks == 398 ? "tsumogiri" : "opponent-tsumogiri") + "-landed.png");
         if (ticks == 380) {
             var seats = new ArrayList<>(fixture.seats());
-            var player = seats.getFirst();
+            var player = seats.get(0);
             var hand = new ArrayList<>(player.hand());
             hand.add(14);
             seats.set(0, seat(hand, player.melds(), player.river(), player.riichi()));
@@ -257,20 +259,20 @@ final class AnimationSmoke {
         return false;
     }
 
-    private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall) {
+    private void update(MahjongTableBlockEntity table, List<RiichiView.Seat> seats, List<Integer> wall) {
         update(table, seats, wall, 0);
     }
 
-    private void update(MahjongTableBlockEntity table, List<TableView.Seat> seats, List<Integer> wall, int turn) {
-        fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
-            Game.Phase.TURN, 0, 0, 0, 0, seats.getFirst().riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
-            seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+    private void update(MahjongTableBlockEntity table, List<RiichiView.Seat> seats, List<Integer> wall, int turn) {
+        fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1, fixture.handNumber(), fixture.rules(),
+            RiichiView.Phase.TURN, 0, 0, 0, 0, seats.get(0).riichi() ? 1 : 0, turn, 70, fixture.wallBreak(), wall, null,
+            seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
         table.acceptView(fixture);
     }
 
-    private static TableView.Seat seat(List<Integer> hand, List<Meld> melds, List<Discard> river, boolean riichi) {
-        return new TableView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
-            hand.size() % 3 == 2 ? hand.getLast() : Tile.ABSENT, melds, river, List.of(), riichi, false, false);
+    private static RiichiView.Seat seat(List<Integer> hand, List<Meld> melds, List<RiichiDiscard> river, boolean riichi) {
+        return new RiichiView.Seat(false, "Player", true, false, false, riichi ? 24000 : 25000, hand,
+            hand.size() % 3 == 2 ? hand.get(hand.size() - 1) : Tile.ABSENT, melds, river, List.of(), riichi, false, false);
     }
 
     /** Check the complete rendered tile envelopes, not just the centers of the last meld. */
@@ -282,11 +284,11 @@ final class AnimationSmoke {
         var up = right.cross(forward);
         double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
-        for (var piece : TableScene.build(table.clientView())) {
-            if (piece.seat() != 0 || piece.area() != TableScene.Area.HAND && piece.area() != TableScene.Area.MELD) continue;
-            double x = TileMesh.WIDTH * TableScene.TILE_SCALE / 2;
-            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * TableScene.TILE_SCALE / 2;
-            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * TableScene.TILE_SCALE / 2;
+        for (var piece : RiichiTableScene.build(table.clientView())) {
+            if (piece.seat() != 0 || piece.area() != RiichiTableScene.Area.HAND && piece.area() != RiichiTableScene.Area.MELD) continue;
+            double x = TileMesh.WIDTH * RiichiTableScene.TILE_SCALE / 2;
+            double y = (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * RiichiTableScene.TILE_SCALE / 2;
+            double z = (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * RiichiTableScene.TILE_SCALE / 2;
             if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
             for (int dx : new int[]{-1, 1}) for (int dy : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
                 var point = TableGeometry.world(table.getBlockPos(), piece.position().add(dx * x, dy * y, dz * z))

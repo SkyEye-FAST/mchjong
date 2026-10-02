@@ -4,7 +4,7 @@ package top.skyeyefast.mchjong.engine;
 public record WorldPolicy(boolean allowConvenienceHints, boolean allowExperienceRewards,
                           boolean deductNegativeExperience, int maxExperienceChange,
                           boolean replaysEnabled, boolean allowBots, boolean allowCompanionPlayers,
-                          boolean allowCustomRules, RuleSet forcedPreset) {
+                          boolean allowCustomRules, RiichiPreset forcedPreset) {
     public static final int MAX_EXPERIENCE_LIMIT = 100_000;
     public static final WorldPolicy DEFAULT = new WorldPolicy(
         true, false, true, 5_000, true, true, true, true, null);
@@ -14,7 +14,7 @@ public record WorldPolicy(boolean allowConvenienceHints, boolean allowExperience
             throw new IllegalArgumentException("Invalid experience limit");
     }
 
-    public boolean permitsRules(RuleConfig rules) {
+    public boolean permitsRules(RiichiRules rules) {
         if (forcedPreset != null && rules.preset() != forcedPreset) return false;
         return allowCustomRules || !rules.custom();
     }

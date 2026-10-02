@@ -36,7 +36,7 @@ final class InvitationSmoke {
                     "Invitation failed in selector parsing instead of player validation: " + expected.getMessage());
             }
         }
-        var game = table.participantGame(sender);
+        var game = table.participantSession(sender);
         try {
             recipient.setPos(sender.getX() + 32, sender.getY(), sender.getZ());
             policy.set("invitationTeleport", true);
@@ -65,17 +65,17 @@ final class InvitationSmoke {
                 throw new IllegalStateException("An accepted invitation could be replayed");
             } catch (CommandSyntaxException expected) { /* Consumed tokens cannot travel twice. */ }
             int seat = java.util.stream.IntStream.range(0, game.rules().players())
-                .filter(index -> !game.view(null).seats().get(index).occupied()).findFirst().orElseThrow();
+                .filter(index -> game.roomView(null).seats().get(index).participant().id() == null).findFirst().orElseThrow();
             table.sit(recipient, seat);
             check(game.seatOf(recipient.getUUID()) == seat && recipient.isPassenger(), "Sitting did not join the invited room");
             check(game.transferHost(sender.getUUID(), recipient.getUUID()), "Host transfer rejected an invited participant");
             check(game.transferHost(recipient.getUUID(), sender.getUUID()), "New host did not acquire ownership permissions");
         } finally {
             recipient.stopRiding();
-            var view = game.view(recipient.getUUID());
+            var view = game.roomView(recipient.getUUID());
             for (int index = 0; index < view.actions().size(); index++) {
-                if (view.actions().get(index).type() == top.skyeyefast.mchjong.engine.Action.Type.LEAVE_ROOM) {
-                    game.act(recipient.getUUID(), view.decision(), index);
+                if (view.actions().get(index).type() == top.skyeyefast.mchjong.engine.RoomAction.Type.LEAVE_ROOM) {
+                    game.actRoom(recipient.getUUID(), view.tableId(), view.incarnation(), view.decision(), index);
                     break;
                 }
             }

@@ -128,6 +128,18 @@ public final class TileRenderTypes extends RenderType {
                 .createCompositeState(false));
     }
 
+    public static RenderType cloth(net.minecraft.world.item.DyeColor dye, boolean folded) {
+        var location = top.skyeyefast.mchjong.platform.ResourceIds.of("mchjong", "cloth/" + dye.getName() + (folded ? "/folded" : "/table"));
+        return CLOTH.computeIfAbsent(location, key -> material("mchjong_cloth", new TextureStateShard(key, false, false) {
+            @Override public void setupRenderState() {
+                var textures = net.minecraft.client.Minecraft.getInstance().getTextureManager();
+                if (!(textures.getTexture(key, null) instanceof ClothTexture)) textures.register(key, new ClothTexture(dye, folded));
+                super.setupRenderState();
+            }
+        }));
+    }
+    private static final java.util.Map<ResourceLocation, RenderType> CLOTH = new java.util.HashMap<>();
+
     private static final class FaceTextureState extends TextureStateShard {
         private final ResourceLocation location;
         FaceTextureState(ResourceLocation location) { super(location, true, true); this.location = location; }

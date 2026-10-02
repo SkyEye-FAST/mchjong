@@ -89,9 +89,9 @@ operation; creative dye remains unchanged, even when used by a survival player.
 Materials, back colors and point sticks are preserved. Invalid counts, mixed
 blanks, invalid selections and already-matching no-red sets do not consume anything.
 
-Choose **Kansai** or **Kanto** from the box's face preset screen. Four sample
-tiles appear beside each design. Both designs are built into the mod;
-the selection applies to inventory items, the world table, immersive hands,
+Choose **Kansai**, **Kanto** or **Hong Kong** from the box's face preset screen.
+Four sample tiles appear beside each design. All three designs are built into
+the mod; the selection applies to inventory items, the world table, immersive hands,
 action previews and settlement. Reprinting an existing complete set applies
 the face preset and restores ordinary fives, including when the
 selected face preset is already in use. Other tile components are preserved. Tile-back

@@ -1,194 +1,79 @@
 package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
-import java.util.Map;
-import java.util.WeakHashMap;
-import java.util.UUID;
-import net.minecraft.Util;
+import java.util.List;
 import net.minecraft.client.Minecraft;
-import net.minecraft.client.multiplayer.ClientLevel;
 import net.minecraft.client.resources.sounds.SimpleSoundInstance;
 import net.minecraft.core.BlockPos;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.util.RandomSource;
-import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.engine.McrView;
+import top.skyeyefast.mchjong.engine.Meld;
+import top.skyeyefast.mchjong.engine.SichuanView;
+import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongSounds;
-import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
-import top.skyeyefast.mchjong.world.SeatEntity;
 
-/** Client-local effects and optional recorded voices. Never invokes a speech backend. */
+/** Shared positional tile effects; UI/receipt accents use a relative UI source. */
 public final class TableAudio {
-    private static final Map<MahjongTableBlockEntity, TableView> VIEWS = new WeakHashMap<>();
-    private static final ArrayList<Speech> SPEECH = new ArrayList<>();
-    private record Speech(long tick, String voice, net.minecraft.resources.ResourceLocation preset, boolean remote) {}
-    private static ClientLevel level;
-    private static long ticks;
-    private static UUID clockTable;
-    private static long clockDecision = -1;
-    private static int lastSecond = -1;
-    private static ResultReadout result;
-    private static boolean finalVoicePlayed;
-    private static long acknowledged = -1;
-    private static boolean seated;
     private TableAudio() {}
 
-    private static void world() {
-        var current = Minecraft.getInstance().level;
-        if (current == level) return;
-        VIEWS.clear();
-        SPEECH.clear();
-        VoicePresets.stop();
-        result = null;
-        clockTable = null;
-        clockDecision = -1;
-        lastSecond = -1;
-        level = current;
-    }
-
-    public static void accept(MahjongTableBlockEntity table, TableView view) {
-        world();
-        TableView before = VIEWS.put(table, view);
-        if (before != null && (!before.tableId().equals(view.tableId()) || before.viewerSeat() != view.viewerSeat())) {
-            SPEECH.clear();
-        }
-        if (view.viewerSeat() >= 0 && TableResults.available(view)) {
-            if (result == null || !result.matches(view)) {
-                SPEECH.clear();
-                VoicePresets.stop();
-                result = new ResultReadout(view, Util.getMillis());
-                acknowledged = -1;
-                finalVoicePlayed = before == null || TableResults.available(before);
-                // Joining/reopening an already completed hand must not replay its announcements.
-                if (finalVoicePlayed) result.finish(Util.getMillis());
-            }
-        } else if (result != null && before != null && result.matches(before)) {
-            finishResult();
-            SPEECH.clear();
-            VoicePresets.stop();
-            result = null;
-        }
-        for (var cue : TableAudioEvents.between(before, view)) {
-            if (cue.sound() != null) effect(cue.sound(), table.getBlockPos(), cue.delay());
-            if (cue.voice() != null && Minecraft.getInstance().player != null
-                    && Minecraft.getInstance().player.distanceToSqr(net.minecraft.world.phys.Vec3.atCenterOf(table.getBlockPos())) <= 256)
-                SPEECH.add(speech(view, cue.seat(), cue.voice(), ticks + cue.delay()));
-        }
-    }
-
-    public static void tick() {
-        world();
-        ticks++;
-        var client = Minecraft.getInstance();
-        VoicePresets.playing();
-        if (TableSettings.get().voiceSource == TableSettings.VoiceSource.OFF || TableSettings.get().voiceVolume <= 0)
-            VoicePresets.stop();
-        boolean speaking = VoicePresets.playing();
-        if (!speaking && !SPEECH.isEmpty() && SPEECH.get(0).tick() <= ticks) {
-            speak(SPEECH.remove(0));
-            speaking = VoicePresets.playing();
-        }
-        if (client.player == null || !(client.player.getVehicle() instanceof SeatEntity seat)) {
-            if (seated) { finishResult(); VoicePresets.stop(); }
-            seated = false;
-            clockTable = null;
-            return;
-        }
-        seated = true;
-        if (client.level.getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table && table.clientView() != null) {
-            var view = table.clientView();
-            if (result != null && result.matches(view)) {
-                boolean finalStage = view.phase() == Game.Phase.MATCH_END && table.clientRoom() != null
-                    && table.clientRoom().settlementTicks() <= Game.SETTLEMENT_TICKS;
-                if (finalStage && !finalVoicePlayed) {
-                    finishResult();
-                    finalVoicePlayed = true;
-                    effect("match_end", null, 0);
-                    speak("match_end");
-                } else if (!finalStage && SPEECH.isEmpty()) {
-                    String event = result.tick(Util.getMillis(), speaking);
-                    if (event != null) speak(speech(view, view.wins().get(result.winner()).seat(), event, ticks));
-                }
-                if (!finalStage && result.complete() && acknowledged != view.decision() && client.getConnection() != null) {
-                    for (int i = 0; i < view.actions().size(); i++) if (view.actions().get(i).type() == Action.Type.SETTLEMENT_DONE) {
-                        client.getConnection().send(PayloadPackets.serverbound(
-                            new TableActionPayload(table.getBlockPos(), view.tableId(), view.decision(), i)));
-                        acknowledged = view.decision();
-                        break;
-                    }
-                }
-            }
-            int own = view.viewerSeat();
-            if (own < 0 || own >= view.clocks().size()) return;
-            var clock = view.clocks().get(own).after(table.clientViewAgeMillis());
-            int seconds = (clock.moveTicks() + clock.reserveTicks() + 19) / 20;
-            if (!view.tableId().equals(clockTable) || view.decision() != clockDecision) {
-                clockTable = view.tableId(); clockDecision = view.decision(); lastSecond = -1;
-            }
-            if (clock.active() && seconds > 0 && seconds <= 5 && seconds != lastSecond) {
-                lastSecond = seconds;
-                if (TableSettings.get().countdownSounds) effect("countdown", null, 0);
-            }
-        }
-    }
-
-    private static void effect(String name, BlockPos pos, int delay) {
+    public static void effect(String name, BlockPos pos, int delay) {
         float volume = (float) TableSettings.get().effectsVolume;
         if (volume <= 0) return;
-        var sound = pos == null ? SimpleSoundInstance.forUI(MahjongSounds.effect(name), 1, volume)
-            : new SimpleSoundInstance(MahjongSounds.effect(name), SoundSource.BLOCKS, volume, 1, RandomSource.create(), pos);
+        var event = MahjongSounds.effect(name);
+        var sound = pos == null ? SimpleSoundInstance.forUI(event, 1, volume)
+            : new SimpleSoundInstance(event, SoundSource.BLOCKS, volume, 1, RandomSource.create(),
+                pos.getX() + .5, pos.getY() + .94, pos.getZ() + .5);
         Minecraft.getInstance().getSoundManager().playDelayed(sound, delay);
     }
 
-    private static void speak(String event) {
-        speak(new Speech(ticks, event, TableSettings.get().voicePreset, false));
+    static void opening(BlockPos pos, boolean automatic) {
+        if (automatic) effect("table_mechanical", pos, 0);
+        effect("dice", pos, 4);
+        effect("tile_call", pos, 10);
     }
 
-    private static Speech speech(TableView view, int seat, String event, long tick) {
-        boolean remote = seat >= 0 && seat != view.viewerSeat();
-        var preset = remote ? VoicePresets.forPlayer(view.seats().get(seat).name()) : TableSettings.get().voicePreset;
-        return new Speech(tick, event, preset, remote);
-    }
-
-    private static void speak(Speech speech) {
-        var settings = TableSettings.get();
-        switch (settings.voiceSource) {
-            case OFF -> { }
-            case SELECTED -> {
-                if (settings.voiceVolume > 0) VoicePresets.play(speech.voice(), (float) settings.voiceVolume, speech.preset(), speech.remote());
-            }
+    static List<String> between(McrView before, McrView after) {
+        if (before == null || after == null || after.revision() <= before.revision()
+            || before.viewerSeat() != after.viewerSeat() || before.handNumber() != after.handNumber()) return List.of();
+        var effects = new ArrayList<String>();
+        for (int seat = 0; seat < 4; seat++) {
+            var old = before.seats().get(seat); var next = after.seats().get(seat);
+            tiles(effects, old.river().size(), next.river().size(), old.drawn(), next.drawn(),
+                old.hand().size(), next.hand().size(), old.melds(), next.melds());
+            if (next.flowers().size() > old.flowers().size()) effects.add("tile_call");
         }
+        if (before.result() == null && after.result() != null) effects.add("score_reveal");
+        return List.copyOf(effects);
     }
 
-    public static void settingsChanged() {
-        SPEECH.clear();
-        VoicePresets.stop();
+    static List<String> between(SichuanView before, SichuanView after) {
+        if (before == null || after == null || after.revision() <= before.revision()
+            || before.viewerSeat() != after.viewerSeat() || before.handNumber() != after.handNumber()) return List.of();
+        var effects = new ArrayList<String>();
+        for (int seat = 0; seat < 4; seat++) {
+            var old = before.seats().get(seat); var next = after.seats().get(seat);
+            tiles(effects, old.river().size(), next.river().size(), old.drawn(), next.drawn(),
+                old.hand().size(), next.hand().size(), old.melds(), next.melds());
+        }
+        if (after.winners().size() > before.winners().size())
+            effects.add(after.winners().get(before.winners().size()).selfDraw() ? "tsumo" : "ron");
+        if (before.result() == null && after.result() != null) effects.add("score_reveal");
+        return List.copyOf(effects);
     }
 
-    public static ResultReadout result(TableView view) {
-        return result != null && result.matches(view) ? result : null;
-    }
-
-    /** First skip reveals the receipt locally; only a subsequent skip advances the server. */
-    public static boolean finishResult() {
-        if (result == null) return false;
-        boolean pending = !result.complete();
-        result.finish(Util.getMillis());
-        SPEECH.clear();
-        VoicePresets.stop();
-        return pending;
-    }
-
-    public static void preview() {
-        effect("ron", null, 0);
-        speak("ron");
-    }
-
-    public static void close() {
-        VoicePresets.stop();
-        VIEWS.clear(); SPEECH.clear(); result = null; level = null;
+    private static void tiles(List<String> effects, int oldRiver, int river, int oldDraw, int draw,
+                              int oldHand, int hand, List<Meld> oldMelds, List<Meld> melds) {
+        if (river > oldRiver) effects.add("tile_discard");
+        if (draw != Tile.ABSENT && (oldDraw == Tile.ABSENT || hand > oldHand)) effects.add("tile_draw");
+        for (int i = 0; i < melds.size(); i++) {
+            var meld = melds.get(i);
+            // Revealing concealed identities at settlement is not another physical call.
+            if (i < oldMelds.size() && meld.type() == oldMelds.get(i).type()) continue;
+            effects.add(switch (meld.type()) {
+                case SEQUENCE, TRIPLET -> "tile_call";
+                case OPEN_QUAD, CONCEALED_QUAD, ADDED_QUAD -> "tile_kong";
+            });
+        }
     }
 }

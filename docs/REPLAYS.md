@@ -23,7 +23,8 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The viewer uses the same four-seat screen-space table layout as immersive play.
+The browser labels Riichi, MCR and Sichuan records separately. The Riichi viewer uses the
+same four-seat screen-space table layout as immersive play.
 The upper hand selector opens a scrollable list for direct hand selection; the
 viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
@@ -55,7 +56,24 @@ estimate.
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.
 
-Export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
+MCR replays open on the MCR table layout. Left/Right move between recorded
+events, Up/Down switch hands, and V rotates the viewpoint. The controls also
+step through events and change hands or viewpoint. The display reconstructs
+all four hands, rivers, melds and flower areas from the sealed physical opening
+and the server's issued and selected actions. Settlement shows the recorded
+fan, payments and wrong-win penalties.
+
+Sichuan replays open on the Sichuan table layout with all four hands, melds,
+rivers, void suits, retired winners and cumulative scores visible. Left/Right
+step through accepted decisions and their public events, Up/Down switch hands,
+Home/End seek to the initial deal or settlement, and V rotates the viewpoint.
+The hand and event buttons provide the same navigation. Receipts reuse the
+Sichuan result display: each win and fan, kong payment, linked call transfer and
+rounding supplement, refund, flower-pig deduction and ready-hand payment remains
+in ledger order. PgUp/PgDn or the receipt arrows change receipt pages. The final
+hand also shows the completed match's cumulative scores and tied placements.
+
+Riichi export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
 `<game directory>/replays/mchjong/<match UUID>.json`, using an atomic replacement.
 The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
@@ -63,15 +81,26 @@ and nothing is uploaded to an external service.
 
 ## Privacy and persistence
 
-The live table continues to send only recipient-redacted `TableView` snapshots.
-An independent server recorder stores initial hands, actual committed actions and
+Live tables continue to send recipient-redacted `RiichiView`, `McrView` and
+`SichuanView` snapshots.
+Independent server recorders store initial hands, actual committed actions and
 the legal choices selected at each game decision. Only when a hand settles is an
-immutable `ReplayHand` appended to its match. At that point the completed hand also
-seals its initial physical wall order, break position, replacement slots and
-indicator slots for post-game review. The replay archive never contains an active
-hand or RNG seed, and no complete future wall is sent through the live `TableView`
-channel. The server's normal private world save still retains the wall state needed
-to resume an unfinished game after a restart.
+immutable rule-specific hand record appended to its match. Riichi hands seal the
+initial physical wall order, break position, replacement slots and indicator
+slots. MCR hands seal all 144 physical wall slots, both dice rolls, the break,
+raw opening hands, flower replacements, actions, penalties and settlement.
+Sichuan hands seal all 108 physical wall slots, both dice, dealer, starting
+cumulative scores, initial hands, void suits, every accepted choice, public
+events, the complete settlement ledger and ending cumulative scores. Secret
+first-discard selections are physical tile choices in the decisions; playback
+enforces the binding. Sichuan rules and fan names distinguish MIL SBR from T/TFMJ.
+Running recipient views hide other players' selections until the tile is played.
+MCR and
+Sichuan playback reexecutes the recorded decisions against their respective
+rules, checking every event and settlement rather than storing view snapshots. The
+archive contains completed hands without an RNG seed; live views never expose a
+future wall. Private table saves retain active recording state and queued
+completed hands across a restart.
 
 Server records live at `<world>/data/mchjong/replays/<match UUID>.json`.
 Small `by-player/<player UUID>/` indexes support browsing without exposing other
@@ -88,7 +117,11 @@ hand, a queued save or a server restart cannot recreate the deleted entry. Once
 every human participant has deleted their reference, the canonical archive is
 removed as well. These markers remain part of the world backup.
 
-Each finished hand updates the archive atomically. Pending writes also remain
+Riichi and MCR finished hands update the archive atomically. Sichuan retains each
+sealed hand in the private session during play and archives the complete match
+once it ends; closing an unfinished match archives the hands already sealed.
+Acknowledged Sichuan archives are not queued again after restoration or returning
+to the lobby. Pending writes also remain
 in the table's normal saved game data until all index updates succeed. An I/O
 failure is logged and retried after sixty seconds; it does not acknowledge or
 silently discard the queued record. Successful records survive table removal,
@@ -99,7 +132,9 @@ Retrieval is rate-limited per player. Transfers are separate from live snapshots
 split into bounded chunks, checked for identity/order, and reassembled only at
 completion. An incomplete transfer expires after thirty seconds; disconnects
 clear it. A canonical archive is limited to 8 MiB and transfer memory is bounded.
-The client validates the recorded timeline before presenting it.
+The server and client validate recorded timelines before retrieval and presentation.
+JSON validation requires complete typed fields, mutually exclusive rule payloads,
+valid cumulative scores and dealer chains, and rejects altered choices or events.
 
 ## Tenhou JSON format
 

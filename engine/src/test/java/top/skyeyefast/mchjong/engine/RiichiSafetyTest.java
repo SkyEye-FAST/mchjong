@@ -9,7 +9,7 @@ import static org.junit.jupiter.api.Assertions.*;
 class RiichiSafetyTest {
     private static ReplayHand.Event event(ReplayHand.Kind kind, int seat, int tile) {
         return new ReplayHand.Event(kind, seat, tile,
-            kind == ReplayHand.Kind.MELD ? TestHands.meld(Meld.Type.CLOSED_KAN, "5555m") : null, false, false, true);
+            kind == ReplayHand.Kind.MELD ? TestHands.meld(Meld.Type.CONCEALED_QUAD, "5555m") : null, false, false, true);
     }
 
     @Test void onlyCompletedDiscardsAfterEachAcceptedRiichiAreSafe() {
@@ -41,7 +41,7 @@ class RiichiSafetyTest {
     }
 
     @Test void redactedViewsAndSavedGamesPreserveOpponentSpecificEvidence() {
-        var game = TrainingBotTest.hand("123456m234p456s12z");
+        var game = GameLifecycleTest.started(RiichiPreset.TENHOU_4, 91);
         game.recorder = new ReplayRecorder(game);
         game.players[1].riichi = true;
         game.players[2].riichi = true;
@@ -49,16 +49,16 @@ class RiichiSafetyTest {
         game.recorder.discard(3, 4, false, false);
         game.recorder.draw(0, 128);
         game.recorder.riichi(2);
-        var view = game.view(game.players[0].id);
+        var view = game.view(game.players[0].member.id);
         var defence = new BotAnalysis(view, BotDifficulty.HARD).defence;
         assertEquals(0, defence.riskAgainst(1, 1));
         assertTrue(defence.riskAgainst(2, 1) > 0);
         assertEquals(view.riichiSafeTiles(), game.view(null).riichiSafeTiles());
         var json = new Gson();
-        var restored = json.fromJson(json.toJson(game), Game.class);
-        assertEquals(view.riichiSafeTiles(), restored.view(game.players[0].id).riichiSafeTiles());
-        assertEquals(view.riichiSafeTiles(), json.fromJson(json.toJson(view), TableView.class).riichiSafeTiles());
+        var restored = GameLifecycleTest.reloadMounted(game);
+        assertEquals(view.riichiSafeTiles(), restored.view(game.players[0].member.id).riichiSafeTiles());
+        assertEquals(view.riichiSafeTiles(), json.fromJson(json.toJson(view), RiichiView.class).riichiSafeTiles());
         game.startHand();
-        assertTrue(game.view(game.players[0].id).riichiSafeTiles().isEmpty());
+        assertTrue(game.view(game.players[0].member.id).riichiSafeTiles().isEmpty());
     }
 }

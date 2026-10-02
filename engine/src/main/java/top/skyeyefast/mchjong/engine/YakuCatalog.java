@@ -77,3 +77,4 @@ public final class YakuCatalog {
 
     private YakuCatalog() {}
 }
+

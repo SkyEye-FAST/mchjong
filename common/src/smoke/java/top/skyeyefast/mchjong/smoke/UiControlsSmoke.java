@@ -10,23 +10,34 @@ import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.MahjongEditBox;
 import top.skyeyefast.mchjong.client.MahjongSlider;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettingsScreen;
 
 /** Exercise the themed widgets with the actual game's input and font implementations. */
 final class UiControlsSmoke {
     static void verify(Minecraft client) {
-        var settings = new TableSettingsScreen(new TableScreen(BlockPos.ZERO));
-        settings.init(client, 320, 240);
-        for (int tab = 0; tab < 4; tab++) {
-            String label = Component.translatable("settings.mchjong.tab." + tab).getString();
-            var button = settings.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
-                .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-            require(settings.mouseClicked(button.getX() + 5, button.getY() + 5, 0), "Themed tab is not clickable");
-            for (var child : settings.children()) if (child instanceof AbstractWidget widget) {
-                require(widget.getX() >= 0 && widget.getY() >= 0 && (widget.getX() + widget.getWidth()) <= 320 && (widget.getY() + widget.getHeight()) <= 240,
-                    "Settings control outside minimum viewport: " + widget.getMessage().getString());
-                require(!(widget instanceof Button) || widget instanceof MahjongButton, "Settings still uses a vanilla button");
+        for (int[] size : new int[][] {{320, 240}, {640, 400}, {1280, 800}}) {
+            var settings = new TableSettingsScreen(new RiichiTableScreen(BlockPos.ZERO));
+            settings.init(client, size[0], size[1]);
+            for (int tab = 0; tab < 4; tab++) {
+                String label = Component.translatable("settings.mchjong.tab." + tab).getString();
+                var button = settings.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
+                    .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+                require(settings.mouseClicked(button.getX() + 5, button.getY() + 5, 0), "Themed tab is not clickable");
+                var widgets = settings.children().stream().filter(AbstractWidget.class::isInstance)
+                    .map(AbstractWidget.class::cast).filter(widget -> widget.visible).toList();
+                for (int i = 0; i < widgets.size(); i++) {
+                    var widget = widgets.get(i);
+                    require(widget.getX() >= 0 && widget.getY() >= 0 && (widget.getX() + widget.getWidth()) <= size[0] && (widget.getY() + widget.getHeight()) <= size[1],
+                        "Settings control outside viewport: " + widget.getMessage().getString());
+                    require(!(widget instanceof Button) || widget instanceof MahjongButton, "Settings still uses a vanilla button");
+                    for (int j = i + 1; j < widgets.size(); j++) {
+                        var other = widgets.get(j);
+                        require((widget.getX() + widget.getWidth()) <= other.getX() || (other.getX() + other.getWidth()) <= widget.getX()
+                            || (widget.getY() + widget.getHeight()) <= other.getY() || (other.getY() + other.getHeight()) <= widget.getY(),
+                            "Settings controls overlap: " + widget.getMessage().getString() + " / " + other.getMessage().getString());
+                    }
+                }
             }
         }
         var presses = new AtomicInteger();

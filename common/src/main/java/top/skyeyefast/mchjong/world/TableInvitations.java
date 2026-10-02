@@ -14,7 +14,7 @@ import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.level.Level;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiSession;
 
 /** Recipient-bound requests; only world policy can permit safe, explicit invitation teleportation. */
 public final class TableInvitations {
@@ -41,10 +41,11 @@ public final class TableInvitations {
 
     public static int invite(ServerPlayer sender, ServerPlayer recipient) throws CommandSyntaxException {
         MahjongTableBlockEntity table = TableCommands.table(sender);
-        Game game = table.participantGame(sender);
+        RiichiSession game = table.participantSession(sender);
         if (!WorldSettings.of(sender.server).policy().invitationsEnabled()
-            || game.phase() != Game.Phase.LOBBY || recipient == sender || recipient.isSpectator()
-            || game.seatOf(recipient.getUUID()) >= 0 || game.view(null).seats().stream().allMatch(seat -> seat.occupied()))
+            || !game.lobby() || recipient == sender || recipient.isSpectator()
+            || game.seatOf(recipient.getUUID()) >= 0 || game.roomView(null).seats().stream()
+                .allMatch(seat -> seat.participant().id() != null))
             throw TableCommands.error("message.mchjong.invite_unavailable");
         var server = sender.server;
         var inbox = of(server);
@@ -92,21 +93,21 @@ public final class TableInvitations {
         BlockPos pos = invitation.pos();
         if (level == null || !level.getChunkSource().hasChunk(pos.getX() >> 4, pos.getZ() >> 4)
             || !(level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table) || sender == null
-            || table.participantGame(sender) == null || !table.participantGame(sender).tableId().equals(invitation.tableId())
-            || table.participantGame(sender).phase() != Game.Phase.LOBBY) {
+            || table.participantSession(sender) == null || !table.participantSession(sender).tableId().equals(invitation.tableId())
+            || !table.participantSession(sender).lobby()) {
             inbox.pending.remove(token);
             throw TableCommands.error("message.mchjong.invite_expired");
         }
         if (!recipient.isAlive() || recipient.isSpectator() || recipient.isPassenger())
             throw TableCommands.error("message.mchjong.invite_unavailable");
-        var view = table.participantGame(sender).view(null);
+        var view = table.participantSession(sender).roomView(null);
         boolean remote = recipient.serverLevel() != level || recipient.distanceToSqr(pos.getCenter()) > 36;
         if (remote && (!invitation.teleportOffered() || !WorldSettings.of(server).policy().invitationTeleport()))
             throw TableCommands.error("message.mchjong.invite_approach");
         int nearest = TableGeometry.nearestSide(recipient.position().subtract(pos.getCenter()));
         for (int offset = 0; offset < 4; offset++) {
             int seat = (nearest + offset) % 4;
-            if (seat >= view.seats().size() || view.seats().get(seat).occupied()
+            if (seat >= view.seats().size() || view.seats().get(seat).participant().id() != null
                 || !level.getBlockState(TableGeometry.stool(pos, seat)).is(MahjongContent.STOOL)) continue;
             if (remote) {
                 var safe = safeArrival(level, pos, seat, recipient);
@@ -120,7 +121,7 @@ public final class TableInvitations {
                 return 1;
             }
             table.sit(recipient, seat);
-            if (table.participantGame(recipient) != null) {
+            if (table.participantSession(recipient) != null) {
                 inbox.pending.remove(token);
                 sender.sendSystemMessage(Component.translatable("message.mchjong.invite_joined", recipient.getDisplayName()));
                 return 1;

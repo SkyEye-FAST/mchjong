@@ -1,31 +1,29 @@
 package top.skyeyefast.mchjong.engine
 
-import top.skyeyefast.mchjong.engine.Action.Type.ABORT_NINE
-import top.skyeyefast.mchjong.engine.Action.Type.ADDED_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.BUILD_WALL
-import top.skyeyefast.mchjong.engine.Action.Type.CHI
-import top.skyeyefast.mchjong.engine.Action.Type.CLOSED_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.DISCARD
-import top.skyeyefast.mchjong.engine.Action.Type.DRAW
-import top.skyeyefast.mchjong.engine.Action.Type.DRAW_WIND
-import top.skyeyefast.mchjong.engine.Action.Type.NEXT
-import top.skyeyefast.mchjong.engine.Action.Type.NUKI
-import top.skyeyefast.mchjong.engine.Action.Type.OPEN_KAN
-import top.skyeyefast.mchjong.engine.Action.Type.PASS
-import top.skyeyefast.mchjong.engine.Action.Type.PICK_UP_DICE
-import top.skyeyefast.mchjong.engine.Action.Type.ROLL_DICE
-import top.skyeyefast.mchjong.engine.Action.Type.PON
-import top.skyeyefast.mchjong.engine.Action.Type.READY
-import top.skyeyefast.mchjong.engine.Action.Type.RIICHI
-import top.skyeyefast.mchjong.engine.Action.Type.RON
-import top.skyeyefast.mchjong.engine.Action.Type.SHUFFLE
-import top.skyeyefast.mchjong.engine.Action.Type.SKIP_SETTLEMENT
-import top.skyeyefast.mchjong.engine.Action.Type.TAKE_PACKET
-import top.skyeyefast.mchjong.engine.Action.Type.TSUMO
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ABORT_NINE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ADDED_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.BUILD_WALL
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.CHI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.CLOSED_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.DRAW
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.NEXT
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.NUKI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.OPEN_KAN
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PICK_UP_DICE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.ROLL_DICE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.PON
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.RIICHI
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.RON
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.SHUFFLE
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.SKIP_SETTLEMENT
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.TAKE_PACKET
+import top.skyeyefast.mchjong.engine.RiichiAction.Type.TSUMO
 
 /** Deterministic decisions from own/public information and engine-issued legal actions. */
 internal class TrainingBot private constructor(
-    private val view: TableView,
+    private val view: RiichiView,
     private val level: BotDifficulty,
 ) {
     private val analysis = BotAnalysis(view, level)
@@ -34,8 +32,9 @@ internal class TrainingBot private constructor(
 
     @JvmRecord
     data class Adjustments(val action: Double, val danger: Double, val reserve: Double, val riichi: Double,
-                           val callPressure: Double, val sticks: Double) {
-        fun total(): Double = action - danger + reserve - riichi - callPressure + sticks
+                           val callPressure: Double) {
+        fun immediate(): Double = action - danger - riichi - callPressure
+        fun total(): Double = immediate() + reserve
     }
 
     private data class Choice(
@@ -94,7 +93,7 @@ internal class TrainingBot private constructor(
             }
         }
         if (choices.isEmpty()) throw IllegalStateException("No evaluated legal bot action")
-        val finalDiscards = if (view.remaining() == 0 && view.phase() == Game.Phase.TURN) {
+        val finalDiscards = if (view.remaining() == 0 && view.phase() == RiichiView.Phase.TURN) {
             choices.filter { view.actions()[it.index].type() == DISCARD }
         } else emptyList()
         val baseline = choices.asSequence()
@@ -135,9 +134,7 @@ internal class TrainingBot private constructor(
         choices.sortWith(compareBy<Choice> { reserveBaseline && it !== baseline }
             .thenBy { reserveBaseline && !it.replacement }
             .thenByDescending { score(it) }.thenBy { it.key })
-        var bestScore = Double.NEGATIVE_INFINITY
-        var best = baseline
-        var roots = 0
+        val eligible = mutableListOf<Choice>()
         for (candidate in choices) {
             val type = view.actions()[candidate.index].type()
             if ((type == CHI || type == PON || type == OPEN_KAN) && !viable(candidate)) {
@@ -155,20 +152,24 @@ internal class TrainingBot private constructor(
             val safer = candidate.discard >= 0 && baseline.discard >= 0 &&
                 defence.danger(candidate.discard) < defence.danger(baseline.discard)
             val retreat = candidate.evaluation.shanten > minimum && !candidate.replacement && candidate !== fold && !safer
-            val oneShanten = searchDecision && candidate.evaluation.shanten == 1 && !candidate.replacement
-            if (
-                retreat && viable(baseline) && baseline.evaluation.live > 0 &&
-                (level != BotDifficulty.HARD || !oneShanten && roots >= BotAnalysis.SEARCH_ROOTS)
-            ) continue
-            var candidateScore = score(candidate)
-            val expand = candidate !== fold && searchDecision
-            if (expand && (oneShanten || roots < BotAnalysis.SEARCH_ROOTS) && candidate.evaluation.shanten <= minimum + 1) {
-                val forward = analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
-                candidateScore += forward - candidate.evaluation.utility
-                if (!oneShanten) roots++
-            } else if (candidate.replacement) {
+            if (retreat && viable(baseline) && baseline.evaluation.live > 0 && !searchDecision) {
                 continue
             }
+            eligible += candidate
+        }
+        val general = eligible.filter { searchDecision && (it.replacement || analysis.canReachNextTurn(it.state)) &&
+            !(it.evaluation.shanten == 1 && !it.replacement) }
+        val frontier = general.filter { candidate -> general.none { it !== candidate && dominates(it, candidate) } }
+        val roots = selectRoots(frontier, general, baseline, fold)
+        var bestScore = Double.NEGATIVE_INFINITY
+        var best = baseline
+        for (candidate in eligible) {
+            val nextTurn = candidate.replacement || analysis.canReachNextTurn(candidate.state)
+            val oneShanten = searchDecision && nextTurn && candidate.evaluation.shanten == 1 && !candidate.replacement
+            if (searchDecision && nextTurn && !oneShanten && candidate !in roots) continue
+            val forecast = if (searchDecision && nextTurn) analysis.forward(candidate.state, candidate.evaluation, candidate.replacement)
+                else BotAnalysis.Forecast(candidate.evaluation.utility, 0.0, defence.reserve(candidate.state), 0.0, 0.0)
+            val candidateScore = adjustments(candidate).immediate() + forecast.total()
             if (candidateScore > bestScore || candidateScore == bestScore && candidate.key < best.key) {
                 bestScore = candidateScore
                 best = candidate
@@ -182,11 +183,11 @@ internal class TrainingBot private constructor(
         val own = view.seats()[view.viewerSeat()]
         val otherNagashi = view.seats().indices.any { seat ->
             val player = view.seats()[seat]
-            seat != view.viewerSeat() && Settlement.nagashiEligible(view.rules(), player.melds(), player.river())
+            seat != view.viewerSeat() && RiichiSettlement.nagashiEligible(view.rules(), player.melds(), player.river())
         }
         fun settlement(candidate: Choice): Int {
-            val river = own.river() + Discard(candidate.discard, false, false, false)
-            if (Settlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
+            val river = own.river() + RiichiDiscard(candidate.discard, false, false, false)
+            if (RiichiSettlement.nagashiEligible(view.rules(), candidate.state.melds(), river)) return 2
             return if (!otherNagashi && LegalActions.formalTenpai(candidate.state.hand(), candidate.state.melds(), view.rules())) 1 else 0
         }
         // No future draws remain. Prefer a better draw settlement only when the
@@ -198,6 +199,47 @@ internal class TrainingBot private constructor(
                 .thenBy { defence.danger(it.discard) }.thenByDescending { score(it) }.thenBy { it.key })
             ?: return selected
         return better
+    }
+
+    private fun offense(candidate: Choice): Double = candidate.evaluation.utility - candidate.evaluation.terms.speed
+
+    private fun safety(candidate: Choice): Double = adjustments(candidate).total()
+
+    private fun dominates(first: Choice, second: Choice): Boolean {
+        if (first.replacement != second.replacement) return false
+        val a = first.evaluation
+        val b = second.evaluation
+        return a.shanten <= b.shanten && a.live >= b.live && offense(first) >= offense(second) &&
+            safety(first) >= safety(second) &&
+            (a.shanten < b.shanten || a.live > b.live || offense(first) > offense(second) || safety(first) > safety(second))
+    }
+
+    private fun selectRoots(frontier: List<Choice>, all: List<Choice>, baseline: Choice, fold: Choice?): Set<Choice> {
+        val selected = linkedSetOf<Choice>()
+        if (baseline in all && (view.actions()[baseline.index].type() == PASS || all.any { it.replacement })) selected += baseline
+        if (fold in all) selected += fold!!
+        all.filter { it.replacement }.maxWithOrNull(compareBy<Choice> { score(it) }.thenByDescending { it.key })
+            ?.let { selected += it }
+        val dimensions: List<(Choice) -> Double> = listOf(
+            { it.evaluation.terms.speed }, ::offense, ::safety,
+        )
+        val ranges = dimensions.map { dimension ->
+            (frontier.maxOfOrNull(dimension) ?: 0.0) - (frontier.minOfOrNull(dimension) ?: 0.0)
+        }
+        if (selected.isEmpty()) frontier.maxWithOrNull(compareBy<Choice> { score(it) }.thenByDescending { it.key })
+            ?.let { selected += it }
+        while (selected.size < BotAnalysis.SEARCH_ROOTS) {
+            val next = frontier.asSequence().filter { it !in selected }.maxWithOrNull(
+                compareBy<Choice> { candidate ->
+                    dimensions.indices.maxOf { dimension ->
+                        val best = selected.maxOfOrNull(dimensions[dimension]) ?: Double.NEGATIVE_INFINITY
+                        (dimensions[dimension](candidate) - best) / maxOf(1.0, ranges[dimension])
+                    }
+                }.thenBy { score(it) }.thenByDescending { it.key },
+            ) ?: break
+            selected += next
+        }
+        return selected
     }
 
     private fun viable(candidate: Choice): Boolean =
@@ -213,13 +255,11 @@ internal class TrainingBot private constructor(
         return Adjustments(candidate.adjustment,
             if (candidate.discard >= 0) defence.penalty(candidate.discard, defence.mode(candidate.evaluation)) else 0.0,
             defence.reserve(candidate.state),
-            if (type == RIICHI) analysis.riichiCost(candidate.evaluation) +
-                if (defence.placementUrgency(candidate.evaluation.points) < 1) 5 else 0 else 0.0,
-            if (type == CHI || type == PON || type == OPEN_KAN) defence.pressure() * 2 else 0.0,
-            if (candidate.evaluation.shanten == 0) minOf(8.0, candidate.evaluation.waits.quality()) * view.riichiSticks() * 0.4 else 0.0)
+            if (type == RIICHI) analysis.riichiCost(candidate.evaluation) else 0.0,
+            if (type == CHI || type == PON) defence.pressure() * 2 else 0.0)
     }
 
-    private fun addCall(choices: MutableList<Choice>, index: Int, action: Action) {
+    private fun addCall(choices: MutableList<Choice>, index: Int, action: RiichiAction) {
         val next = declaration(action)
         val forbidden = LegalActions.forbiddenAfterCall(action, view.focus().tile())
         val shapes = analysis.discards(next)
@@ -230,7 +270,7 @@ internal class TrainingBot private constructor(
         }
     }
 
-    private fun declaration(action: Action): BotAnalysis.State {
+    private fun declaration(action: RiichiAction): BotAnalysis.State {
         val hand = initial.hand().toMutableList()
         for (tile in action.tiles()) hand.remove(tile)
         val melds = initial.melds().toMutableList()
@@ -240,10 +280,10 @@ internal class TrainingBot private constructor(
             ADDED_KAN -> {
                 for (i in melds.indices) {
                     val old = melds[i]
-                    if (old.type() == Meld.Type.PON && old.kind() == Tile.kind(action.tiles().first())) {
+                    if (old.type() == Meld.Type.TRIPLET && old.kind() == Tile.kind(action.tiles().first())) {
                         val tiles = old.tiles().toMutableList()
                         tiles.addAll(action.tiles())
-                        melds[i] = Meld(Meld.Type.ADDED_KAN, tiles, old.fromSeat(), old.calledTile())
+                        melds[i] = Meld(Meld.Type.ADDED_QUAD, tiles, old.fromSeat(), old.calledTile())
                         break
                     }
                 }
@@ -254,7 +294,7 @@ internal class TrainingBot private constructor(
                 if (!closed) tiles += view.focus().tile()
                 tiles.sortWith(Tile.ORDER)
                 melds += Meld(
-                    Meld.Type.valueOf(action.type().name),
+                    action.type().meldType(),
                     tiles,
                     if (closed) view.viewerSeat() else view.focus().seat(),
                     if (closed) Tile.ABSENT else view.focus().tile(),
@@ -273,7 +313,7 @@ internal class TrainingBot private constructor(
         )
     }
 
-    private fun declarationCost(action: Action, after: BotAnalysis.State): Double {
+    private fun declarationCost(action: RiichiAction, after: BotAnalysis.State): Double {
         val tile = action.tiles().first()
         val nuki = action.type() == NUKI
         var risk = if (action.type() == OPEN_KAN) 0.0 else defence.danger(tile)
@@ -314,9 +354,9 @@ internal class TrainingBot private constructor(
 
     companion object {
         @JvmStatic
-        fun choose(view: TableView, level: BotDifficulty): Int {
+        fun choose(view: RiichiView, level: BotDifficulty): Int {
             if (view.actions().isEmpty()) throw IllegalArgumentException("A bot needs a legal decision")
-            for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, READY, DRAW_WIND, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
+            for (type in listOf(RON, TSUMO, SKIP_SETTLEMENT, NEXT, SHUFFLE, BUILD_WALL, PICK_UP_DICE, ROLL_DICE, TAKE_PACKET, DRAW)) {
                 val index = index(view.actions(), type)
                 if (index >= 0) return index
             }
@@ -324,9 +364,9 @@ internal class TrainingBot private constructor(
             return TrainingBot(view, level).choose()
         }
 
-        private fun index(actions: List<Action>, type: Action.Type): Int = actions.indexOfFirst { it.type() == type }
+        private fun index(actions: List<RiichiAction>, type: RiichiAction.Type): Int = actions.indexOfFirst { it.type() == type }
 
-        private fun stable(action: Action): String =
+        private fun stable(action: RiichiAction): String =
             action.type().name + action.tiles().map(BotAnalysis::face).sorted()
     }
 }

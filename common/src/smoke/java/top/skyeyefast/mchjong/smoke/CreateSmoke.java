@@ -51,16 +51,16 @@ final class CreateSmoke {
             var matcher = BasinOperatingBlockEntity.class.getDeclaredMethod("getMatchingRecipes");
             matcher.setAccessible(true);
             @SuppressWarnings("unchecked") var recipes = (List<Recipe<?>>) matcher.invoke(level.getBlockEntity(pos.above(2)));
-            check(!recipes.isEmpty() && recipes.getFirst() instanceof CreateProcessing.WorkshopRecipe, "Press did not discover printing operation");
-            check(BasinRecipe.match(basin, recipes.getFirst()), "Printing match failed");
-            check(BasinRecipe.apply(basin, recipes.getFirst()), "Printing transaction failed");
+            check(!recipes.isEmpty() && recipes.get(0) instanceof CreateProcessing.WorkshopRecipe, "Press did not discover printing operation");
+            check(BasinRecipe.match(basin, recipes.get(0)), "Printing match failed");
+            check(BasinRecipe.apply(basin, recipes.get(0)), "Printing transaction failed");
             var produced = CreateSmokeInventory.outputs(basin);
             var printed = produced.stream().filter(stack -> stack.is(MahjongContent.BOX_ITEM)).findFirst().orElseThrow();
             check(MahjongSupplies.tileCount(MahjongSupplies.contents(printed)) == 144, "Printing lost tiles");
             check(MahjongSupplies.deck(printed).preset().equals(TileFacePreset.KANSAI), "Printing lost preset");
             check(printed.getHoverName().equals(box.getHoverName()), "Printing lost box name");
             check(produced.stream().anyMatch(stack -> ItemStack.matches(stack, plate)), "Plate not returned intact");
-            check(!BasinRecipe.apply(basin, recipes.getFirst()), "Stale recipe consumed a second time");
+            check(!BasinRecipe.apply(basin, recipes.get(0)), "Stale recipe consumed a second time");
 
             CreateSmokeInventory.clear(basin);
             level.setBlockAndUpdate(pos.above(2), AllBlocks.MECHANICAL_MIXER.getDefaultState());
@@ -92,7 +92,7 @@ final class CreateSmoke {
             check(CreateSmokeInventory.insert(basin, sticks) && CreateSmokeInventory.insert(basin, new ItemStack(Items.BLUE_DYE)), "Stick insertion");
             var marking = CreateProcessing.mixing(CreatePlatform.inventory(basin));
             check(marking != null && BasinRecipe.apply(basin, marking.recipe()), "Marking failed");
-            var marked = CreateSmokeInventory.outputs(basin).getFirst();
+            var marked = CreateSmokeInventory.outputs(basin).get(0);
             check(marked.getCount() == 16 && MahjongComponents.points(marked) == 1000 && marked.getHoverName().equals(sticks.getHoverName()), "Marked stack data");
             CreateSmokeInventory.clear(basin);
             level.setBlockAndUpdate(pos.above(2), AllBlocks.MECHANICAL_PRESS.getDefaultState());
@@ -100,7 +100,7 @@ final class CreateSmoke {
                 check(CreateSmokeInventory.insert(basin, input.copy()), "Packing insertion");
             var packing = CreateProcessing.pressing(CreatePlatform.inventory(basin));
             check(packing != null && BasinRecipe.apply(basin, packing.recipe()), "Packing failed");
-            var packed = CreateSmokeInventory.outputs(basin).getFirst();
+            var packed = CreateSmokeInventory.outputs(basin).get(0);
             check(MahjongSupplies.validBox(packed) && MahjongSupplies.contents(packed).get(MahjongSupplies.DICE_SLOT).getCount() == 2, "Packed inventory invalid");
             check(MahjongSupplies.pack(packed, List.of(new ItemStack(MahjongContent.DICE, 64))).isEmpty(), "Packing bypassed dice capacity");
 
@@ -108,20 +108,20 @@ final class CreateSmoke {
             five.setHoverName(Component.literal("Named five"));
             var red = CreateProcessing.deploying(five, new ItemStack(MahjongContent.RED_DORA_DYE));
             check(red != null, "Deployer recipe missing");
-            var result = red.rollResults().getFirst();
+            var result = red.rollResults().get(0);
             check(result.getCount() == 1 && five.getCount() == 64 && MahjongSupplies.tile(result).red(), "Deployer converted a whole stack");
             check(result.getHoverName().equals(five.getHoverName()) && MahjongSupplies.back(result) == DyeColor.CYAN, "Deployer lost stack data");
             check(CreateProcessing.deploying(result, new ItemStack(MahjongContent.RED_DORA_DYE)) == null, "Already-red input matched");
-            check(ItemStack.matches(CreateProcessing.deploying(result, new ItemStack(MahjongContent.UNDO_DYE)).rollResults().getFirst(), five.copyWithCount(1)), "Deployer undo changed other data");
+            check(ItemStack.matches(CreateProcessing.deploying(result, new ItemStack(MahjongContent.UNDO_DYE)).rollResults().get(0), five.copyWithCount(1)), "Deployer undo changed other data");
 
             var assembled = new ItemStack(Items.CHEST);
             for (var reagent : List.of(Items.LEATHER, Items.IRON_NUGGET)) {
                 var recipe = SequencedAssemblyRecipe.getRecipe(level, assembled, AllRecipeTypes.DEPLOYING.getType(), DeployerApplicationRecipe.class).orElseThrow();
                 check(recipe.getIngredients().get(1).test(new ItemStack(reagent)), "Wrong assembly reagent");
-                assembled = recipe.rollResults().getFirst();
+                assembled = recipe.rollResults().get(0);
             }
             var finishing = SequencedAssemblyRecipe.getRecipe(level, assembled, AllRecipeTypes.PRESSING.getType(), PressingRecipe.class).orElseThrow();
-            check(MahjongSupplies.validBox(finishing.rollResults().getFirst()), "Assembly did not finish a box");
+            check(MahjongSupplies.validBox(finishing.rollResults().get(0)), "Assembly did not finish a box");
             for (String id : List.of("blanks_bone", "blank_point_sticks", "mahjong_dye", "red_dora_dye", "undo_dye")) {
                 check(AllRecipeTypes.shouldIgnoreInAutomation(level.getRecipeManager().byKey(MahjongContent.id(id)).orElseThrow()), "Inefficient native recipe remains in automation");
                 check(level.getRecipeManager().byKey(MahjongContent.id("create/" + id)).isPresent(), "Industrial recipe missing: " + id);

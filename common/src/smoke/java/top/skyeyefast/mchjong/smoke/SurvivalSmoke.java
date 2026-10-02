@@ -2,6 +2,7 @@ package top.skyeyefast.mchjong.smoke;
 
 import java.util.List;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.ItemStack;
@@ -34,27 +35,27 @@ final class SurvivalSmoke {
             var table = new MahjongTableBlockEntity(BlockPos.ZERO, block.defaultBlockState());
             table.setLevel(level);
             var furniture = new ItemStack(block);
-            top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, FurnitureWood.WARPED);
-            table.applyItem(furniture);
+            furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
+            table.applyComponentsFromItemStack(furniture);
             table.equipment().boxes().setItem(0, MahjongSupplies.completeBox(TileMaterial.GLASS, DyeColor.CYAN));
             table.equipment().installCloth(new ItemStack(MahjongContent.CLOTH_ITEM));
             var drops = Block.getDrops(block.defaultBlockState(), level, BlockPos.ZERO, table);
-            check(drops.size() == 1 && top.skyeyefast.mchjong.item.MahjongComponents.wood(drops.getFirst()) == FurnitureWood.WARPED, "Table loot lost its wood");
-            check(!MahjongSupplies.hasStorage(drops.getFirst()) && drops.getFirst().getTagElement("BlockEntityTag") == null, "Furniture loot duplicated equipment");
+            check(drops.size() == 1 && drops.get(0).get(MahjongComponents.WOOD) == FurnitureWood.WARPED, "Table loot lost its wood");
+            check(!drops.get(0).has(DataComponents.CONTAINER) && !drops.get(0).has(DataComponents.BLOCK_ENTITY_DATA), "Furniture loot duplicated equipment");
             var packet = table.getUpdatePacket();
-            check(packet != null && packet.getTag().equals(table.getUpdateTag()), "Wrong appearance packet");
-            check(!packet.getTag().contains("game") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
+            check(packet != null && packet.getTag().equals(table.getUpdateTag(level.registryAccess())), "Wrong appearance packet");
+            check(!packet.getTag().contains("session") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
             check("glass".equals(packet.getTag().getString("tile_material")), "Missing glass appearance");
         }
         var stool = new FurnitureBlockEntity(BlockPos.ZERO, MahjongContent.STOOL.defaultBlockState());
         stool.setLevel(level);
         var stack = new ItemStack(MahjongContent.STOOL_ITEM);
-        top.skyeyefast.mchjong.item.MahjongComponents.wood(stack, FurnitureWood.CHERRY);
-        top.skyeyefast.mchjong.item.MahjongComponents.color(stack, DyeColor.MAGENTA);
-        stool.applyItem(stack);
+        stack.set(MahjongComponents.WOOD, FurnitureWood.CHERRY);
+        stack.set(DataComponents.BASE_COLOR, DyeColor.MAGENTA);
+        stool.applyComponentsFromItemStack(stack);
         var drops = Block.getDrops(MahjongContent.STOOL.defaultBlockState(), level, BlockPos.ZERO, stool);
-        check(drops.size() == 1 && top.skyeyefast.mchjong.item.MahjongComponents.wood(drops.getFirst()) == FurnitureWood.CHERRY
-            && top.skyeyefast.mchjong.item.MahjongComponents.color(drops.getFirst()) == DyeColor.MAGENTA, "Stool loot lost appearance");
+        check(drops.size() == 1 && drops.get(0).get(MahjongComponents.WOOD) == FurnitureWood.CHERRY
+            && drops.get(0).get(DataComponents.BASE_COLOR) == DyeColor.MAGENTA, "Stool loot lost appearance");
         BoxMenuSmoke.verify(player);
         TableStorageSmoke.verify(player);
         PointStickMenuSmoke.verify(player);

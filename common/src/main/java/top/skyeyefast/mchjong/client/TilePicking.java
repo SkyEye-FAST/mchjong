@@ -11,21 +11,36 @@ public final class TilePicking {
         TileMesh.WIDTH / 2.0, TileMesh.HEIGHT / 2.0, TileMesh.DEPTH / 2.0);
     private TilePicking() {}
 
-    public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
+    public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted) {
         return distanceSquared(frame, origin, direction, lifted, 0);
     }
 
-    public static double distanceSquared(TableAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
+    public static double distanceSquared(RiichiAnimation.Frame frame, Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var piece = frame.piece();
-        var inverse = new Matrix4f().translation((float) piece.position().x,
-            (float) (piece.position().y + (lifted ? 0.035 : 0)), (float) piece.position().z)
-            .rotateY((float) Math.toRadians(piece.yaw())).rotateX((float) Math.toRadians(frame.pitch()))
-            .scale(TableScene.TILE_SCALE).invert();
+        return distanceSquared(piece.position(), piece.yaw(), frame.pitch(), RiichiTableScene.TILE_SCALE, origin, direction, lifted, padding);
+    }
+
+    public static double distanceSquared(McrTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0,
+            piece.scale(), origin, direction, lifted, 0);
+    }
+
+    public static double distanceSquared(SichuanTableScene.Piece piece, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0,
+            piece.scale(), origin, direction, lifted, 0);
+    }
+
+    private static double distanceSquared(Vec3 position, float yaw, float pitch, float scale,
+                                          Vec3 origin, Vec3 direction, boolean lifted, double padding) {
+        var inverse = new Matrix4f().translation((float) position.x,
+            (float) (position.y + (lifted ? 0.035 : 0)), (float) position.z)
+            .rotateY((float) Math.toRadians(yaw)).rotateX((float) Math.toRadians(pitch))
+            .scale(scale).invert();
         Vec3 start = local(inverse, origin);
         Vec3 end = local(inverse, origin.add(direction.normalize().scale(32)));
         AABB target = padding > 0 ? TILE.inflate(padding) : TILE;
         if (target.contains(start)) return 0;
-        return target.clip(start, end).map(hit -> start.distanceToSqr(hit) * TableScene.TILE_SCALE * TableScene.TILE_SCALE)
+        return target.clip(start, end).map(hit -> start.distanceToSqr(hit) * scale * scale)
             .orElse(Double.POSITIVE_INFINITY);
     }
 

@@ -25,12 +25,12 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
     @Override public void renderByItem(ItemStack stack, ItemDisplayContext context, PoseStack pose,
                                        MultiBufferSource buffers, int light, int overlay) {
         pose.pushPose();
-        pose.translate(.5, .15, .5);
+        boolean table = stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM);
+        boolean furniture = table || stack.is(MahjongContent.STOOL_ITEM);
+        if (furniture) furniturePose(pose, context, table);
+        else pose.translate(.5, .15, .5);
         var wood = MahjongComponents.wood(stack);
         if (stack.is(MahjongContent.TABLE_ITEM) || stack.is(MahjongContent.AUTO_TABLE_ITEM)) {
-            pose.translate(0, .18, 0);
-            float scale = (float) (.9 / (2 * top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH));
-            pose.scale(scale, scale, scale);
             FurnitureMesh.table(pose, buffers, light, wood, null, stack.is(MahjongContent.AUTO_TABLE_ITEM));
         } else if (stack.is(MahjongContent.STOOL_ITEM)) {
             FurnitureMesh.stool(pose, buffers, light, wood, MahjongSupplies.color(stack));
@@ -55,5 +55,46 @@ public final class MahjongItemRenderer extends BlockEntityWithoutLevelRenderer {
             TileMesh.drawBackPattern(pose, buffers.getBuffer(TileRenderTypes.backPattern(MahjongSupplies.backPreset(stack))), false, light);
         }
         pose.popPose();
+    }
+    /** Native item callers share the same centered, upright furniture envelope. */
+    static void furniturePose(PoseStack pose, ItemDisplayContext context, boolean table) {
+        float width = table ? (float) (2 * top.skyeyefast.mchjong.world.TableGeometry.OUTER_HALF_WIDTH) : .78125f;
+        float height = table ? 1 : (float) top.skyeyefast.mchjong.world.TableGeometry.STOOL_HEIGHT;
+        pose.translate(.5, .5, .5);
+        float scale;
+        switch (context) {
+            case GUI, FIXED, NONE -> {
+                pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(context == ItemDisplayContext.GUI ? 15 : 0));
+                pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(context == ItemDisplayContext.GUI ? 225 : 0));
+                scale = (context == ItemDisplayContext.GUI && !table ? .5f : .9f) / width;
+                pose.scale(scale, scale, scale);
+                pose.translate(0, -height / 2, 0);
+            }
+            case GROUND -> {
+                scale = .45f / width;
+                pose.translate(0, -.35, 0);
+                pose.scale(scale, scale, scale);
+            }
+            case HEAD -> {
+                // Native head Y inversion maps item-up to model-up; feet sit on the head crown.
+                pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(180));
+                pose.translate(0, .4, 0);
+                scale = 1.1f / width;
+                pose.scale(scale, scale, scale);
+            }
+            case FIRST_PERSON_LEFT_HAND, FIRST_PERSON_RIGHT_HAND -> {
+                pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(context == ItemDisplayContext.FIRST_PERSON_LEFT_HAND ? -30 : 30));
+                scale = .63f / width;
+                pose.scale(scale, scale, scale);
+                pose.translate(0, -height / 2, 0);
+            }
+            case THIRD_PERSON_LEFT_HAND, THIRD_PERSON_RIGHT_HAND -> {
+                pose.mulPose(com.mojang.math.Axis.XP.rotationDegrees(75));
+                pose.mulPose(com.mojang.math.Axis.YP.rotationDegrees(context == ItemDisplayContext.THIRD_PERSON_LEFT_HAND ? -45 : 45));
+                scale = .54f / width;
+                pose.scale(scale, scale, scale);
+                pose.translate(0, -height / 2, 0);
+            }
+        }
     }
 }

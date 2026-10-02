@@ -1,10 +1,13 @@
 package top.skyeyefast.mchjong.engine
 
+private val ReplayMatch.rules: RiichiRules get() = requireNotNull(riichi).rules
+private val ReplayMatch.hands: List<ReplayHand> get() = requireNotNull(riichi).hands
+
 /** A read-only timeline. It never sends game actions or exposes any still-playing hand. */
 object ReplayPlayback {
     @JvmRecord
     data class Frame(
-        val seats: List<TableView.Seat>,
+        val seats: List<RiichiView.Seat>,
         val dora: List<Int>,
         val cursor: Int,
         val steps: Int,
@@ -23,7 +26,7 @@ object ReplayPlayback {
     private class Seat(hand: List<Int>, var points: Int) {
         val hand = hand.toMutableList()
         val melds = mutableListOf<Meld>()
-        val river = mutableListOf<Discard>()
+        val river = mutableListOf<RiichiDiscard>()
         val norths = mutableListOf<Int>()
         var drawn = Tile.ABSENT
         var riichi = false
@@ -60,7 +63,7 @@ object ReplayPlayback {
                 ReplayHand.Kind.DISCARD -> {
                     seat.remove(event.tile)
                     seat.drawn = Tile.ABSENT
-                    seat.river += Discard(event.tile, event.riichi || seat.nextSideways, false, event.tsumogiri)
+                    seat.river += RiichiDiscard(event.tile, event.riichi || seat.nextSideways, false, event.tsumogiri)
                     seat.nextSideways = false
                 }
                 ReplayHand.Kind.RIICHI -> {
@@ -75,9 +78,9 @@ object ReplayPlayback {
                 ReplayHand.Kind.MELD -> {
                     if (!event.committed) continue
                     val meld = event.meld!!
-                    if (meld.type() == Meld.Type.ADDED_KAN) {
+                    if (meld.type() == Meld.Type.ADDED_QUAD) {
                         seat.remove(event.tile)
-                        val pon = seat.melds.indexOfLast { it.type() == Meld.Type.PON && it.kind() == meld.kind() }
+                        val pon = seat.melds.indexOfLast { it.type() == Meld.Type.TRIPLET && it.kind() == meld.kind() }
                         require(pon >= 0) { "Added kan has no pon" }
                         seat.melds[pon] = meld
                     } else {
@@ -102,7 +105,7 @@ object ReplayPlayback {
             seat.hand.sortWith(Tile.ORDER)
             if (seat.drawn >= 0 && seat.hand.remove(seat.drawn)) seat.hand += seat.drawn
             val player = match.participants[i]
-            TableView.Seat(
+            RiichiView.Seat(
                 hand.finalSeats[i].entityBot(),
                 player.name,
                 true,
