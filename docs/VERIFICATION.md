@@ -106,47 +106,42 @@ interface smoke verify their native config-screen factories.
 tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
 and first/third jump sources, front/tail traversal and restored physical cursors.
-`McrLayoutTest` owns the rotated hash-shaped wall clearance, compact six-column
-rivers, right-corner source-marked flat melds, flower/hand separation and scene source indices.
-It checks complete walls together with four river rows and occupied standing or
-face-up hand/meld/flower rails, plus actual post-deal scenes. `SichuanPresentationTest`
-checks the same mixed-scene collision boundary in both 13/14-stack assignments.
-Run the shared presentation checks with
-`gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain`.
-
-The focused shared-client MCR display fixture draws the unopened 144-tile wall
-and a complete physical stock distributed across walls, hands, rivers, melds
-and flowers, plus its wall-free immersive projection. It exercises the shared renderer without starting a room or a
-second game simulation. On Fabric, run:
+`McrLayoutTest` and `SichuanPresentationTest` own fixed-size Chinese geometry:
+12-degree windmill walls, opposite inner-face spacing along the wall normal,
+physical slots, layer contact, felt bounds, left-side meld chronology, minimal
+hand displacement and six-column rivers. `ChineseGameplayFixtures` uses only
+engine-issued actions and calls engine conservation validation after every
+accepted action. Multiple shuffled openings are checked through initial flower
+replacement/voiding, post-deal, midgame, late game and termination. Claims are
+preferred and wins passed to exercise public areas through wall exhaustion.
+No full-wall-plus-maximum-river/hand/meld capacity fixture constrains geometry.
+Run shared checks with:
 
 ```text
-gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr-play.png,mcr-immersive.png" --warning-mode fail --console=plain
+gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*SichuanPresentationTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain
 ```
 
-Inspect the two images in `fabric/build/smoke/mcr-layout-evidence/screenshots`
-and the fresh `PASS.txt`/`FAIL.txt` marker. Select `mcr-wall.png` when changing the
-built wall. The same fixture captures complete Sichuan walls with
-`sichuan-wall-east-west.png` and `sichuan-wall-north-south.png`, covering both
-13/14-stack assignments. Inspect the whole-wall tilt relative to the table edges
-and matching tile yaw in all three wall captures. The `smokeMcrAuto` profile
-provides `mcr-wall-seated.png`; `smokeSichuan` provides
-`sichuan-wall-east-west-seated.png` and `sichuan-wall-north-south-seated.png`.
-These display-only full-wall snapshots use the real seated world camera and
-active automatic-table instrument panel. Check the fixed outer rail, larger Sichuan
-corner gaps and unobstructed center labels in these views as well as the overhead captures.
-The layout profile also supplies `mcr-wall-rivers.png`,
-`sichuan-wall-east-west-rivers.png` and `sichuan-wall-north-south-rivers.png`:
-display-only clearance stress fixtures combining complete walls with four six-tile
-river rows, hands and melds per seat, plus MCR flowers, rather than legal physical-stock
-snapshots. Their seated equivalents are `mcr-space-seated.png`,
-`sichuan-space-east-west-seated.png` and `sichuan-space-north-south-seated.png`.
-Actual post-deal captures are `mcr-dealt.png`, `sichuan-dealt-east-west.png` and
-`sichuan-dealt-north-south.png` in the layout profile, and `mcr-dealt-seated.png`,
-`sichuan-dealt-east-west-seated.png` and `sichuan-dealt-north-south-seated.png` in
-the respective seated profiles. Inspect both inward and outward wall ends,
-center housing clearance, occupied outer rails and felt margins. Empty-hand full-wall
-captures alone do not establish wall/hand clearance. Omit `smokeScreenshots` for
-assertion-only runs. Compile the other affected loaders without duplicating these shared images.
+The layout smoke renders the unopened wall and actual engine post-deal, midgame
+and late-game snapshots for MCR, Sichuan SBR and Sichuan TFMJ. All captures include
+the automatic table's central instrument housing. Run:
+
+```text
+gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr-wall.png,mcr-dealt.png,mcr-midgame.png,mcr-late.png,sichuan-wall-east-west.png,sichuan-dealt-east-west.png,sichuan-midgame-east-west.png,sichuan-late-east-west.png,sichuan-wall-north-south.png,sichuan-dealt-north-south.png,sichuan-midgame-north-south.png,sichuan-late-north-south.png" --warning-mode fail --console=plain
+```
+
+Inspect fresh `PASS.txt`/`FAIL.txt` and selected images under
+`fabric/build/smoke/mcr-layout-evidence/screenshots`. `mcr-immersive.png` captures
+the same midgame with walls omitted. Check large Chinese tile proportions,
+matching wall yaw, larger Sichuan end gaps, the first river outside the housing,
+later rows in emptied wall space and chronological public groups on the left.
+
+The `smokeMcrAuto` profile supplies `mcr-wall-seated.png`, `mcr-dealt-seated.png`,
+`mcr-midgame-seated.png` and `mcr-late-seated.png`. `smokeSichuan` supplies the
+same four phases as `sichuan-{wall,dealt,midgame,late}-{east-west,north-south}-seated.png`.
+These use the real seated world camera and active center panel. Empty-hand full
+walls establish neither wall/hand clearance nor later river capacity; inspect
+the legal played positions as well. Screenshots are opt-in. Compile the other
+affected loaders without duplicating shared images.
 
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
 identities, appearance matching, separate-case selection and the supplied-stock

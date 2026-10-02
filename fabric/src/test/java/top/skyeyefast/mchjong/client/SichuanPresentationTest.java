@@ -40,9 +40,7 @@ class SichuanPresentationTest {
             }
             WallGeometryAssertions.tiltedSide(upper.stream().map(SichuanTableScene.Piece::position).toList(),
                 upper.stream().map(SichuanTableScene.Piece::yaw).toList(), seat, firstDirection, SichuanTableScene.WIDTH);
-            WallGeometryAssertions.riverClearance(upper.stream().map(SichuanTableScene.Piece::position).toList(),
-                upper.stream().map(SichuanTableScene.Piece::yaw).toList(), seat,
-                SichuanTableScene.WIDTH, SichuanTableScene.HEIGHT, SichuanTableScene.RIVER_Z);
+            WallGeometryAssertions.liftRail(upper.stream().map(SichuanTableScene.Piece::position).toList(), seat, SichuanTableScene.HEIGHT);
         }
         for (var piece : pieces) {
             assertEquals(Tile.HIDDEN, piece.tile());
@@ -76,33 +74,42 @@ class SichuanPresentationTest {
         }
     }
 
-    @Test void wallsClearHandsAndMeldsInBothAssignments() {
-        for (boolean eastWestLongWall : new boolean[]{false, true}) {
-            var rules = (eastWestLongWall ? SichuanPreset.SBR_2025 : SichuanPreset.TFMJ_2024).config();
-            WallGeometryAssertions.noIntersections(SichuanTableScene.build(new SichuanGame(711, rules, Tile.sichuanSet()).view(0))
-                .stream().map(WallGeometryAssertions::solid).toList());
-            for (var phase : List.of(SichuanGame.Phase.TURN, SichuanGame.Phase.HAND_END)) {
-                for (int meldCount : new int[]{0, 4}) {
-                    var seats = new ArrayList<SichuanView.Seat>();
-                    for (int seat = 0; seat < 4; seat++) {
-                        var melds = new ArrayList<Meld>();
-                        for (int group = 0; group < meldCount; group++) melds.add(new Meld(Meld.Type.OPEN_QUAD,
-                            List.of(0, 1, 2, 3), (seat + 3) % 4, 0));
-                        var river = new ArrayList<SichuanPlayerState.Discard>();
-                        for (int index = 0; index < 24; index++) river.add(new SichuanPlayerState.Discard(index, false));
-                        seats.add(new SichuanView.Seat(Collections.nCopies(14 - 3 * meldCount, Tile.HIDDEN),
-                            melds, river, 0, false, Tile.HIDDEN, Tile.ABSENT));
-                    }
-                    // Capacity fixture, not a stock-conserving gameplay snapshot.
-                    var view = new SichuanView(1, 1, rules, phase, 1, 0, Collections.nCopies(4, 0), 0, 0,
-                        new SichuanView.Wall(Collections.nCopies(108, Tile.HIDDEN), 0, 1, 1, eastWestLongWall),
-                        seats, Tile.ABSENT, -1, false, false, List.of(), List.of(), List.of(),
-                        phase == SichuanGame.Phase.HAND_END ? new SichuanSettlement.Result(List.of(), List.of(),
-                            Collections.nCopies(4, SichuanSettlement.DrawStatus.NOT_READY), true) : null, -1);
-                    WallGeometryAssertions.noIntersections(SichuanTableScene.build(view).stream().map(WallGeometryAssertions::solid).toList());
-                }
-            }
+    @Test void realGamesConserveStockAndClearAllPhysicalZonesInBothAssignments() {
+        assertEquals(1.0f, SichuanTableScene.TILE_SCALE);
+        for (boolean eastWest : new boolean[]{true, false}) for (long seed : new long[]{1, 2, 3, 4, 5, 6, 19, 20, 21, 22, 42, 43, 711, 712, 2025, 2026}) {
+            top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(seed, eastWest, -1, 0, false, view -> {
+                var scene = SichuanTableScene.build(view);
+                assertEquals(108, scene.size(), "Physical stock must survive every accepted action");
+                assertTrue(scene.stream().allMatch(piece -> piece.scale() == 1.0f));
+                for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
+                WallGeometryAssertions.leftMeldsAndMinimalHandShift(scene.stream().map(piece ->
+                    new WallGeometryAssertions.PublicPiece(WallGeometryAssertions.solid(piece), piece.seat(),
+                        piece.area() == SichuanTableScene.Area.HAND, piece.area() == SichuanTableScene.Area.MELD ? piece.index() / 4 : -1)).toList(),
+                    view.seats().stream().map(player -> player.hand().size() * SichuanTableScene.WIDTH
+                        + (player.drawn() != Tile.ABSENT && !player.hand().isEmpty() ? RiichiTableScene.DRAW_GAP : 0)).toList(), SichuanTableScene.HAND_Z);
+                assertDoesNotThrow(() -> { for (int i=0; i<scene.size(); i++) for(int j=i+1;j<scene.size();j++)
+                    assertFalse(WallGeometryAssertions.intersects(WallGeometryAssertions.solid(scene.get(i)), WallGeometryAssertions.solid(scene.get(j))), scene.get(i)+" / "+scene.get(j)); },
+                    "Sichuan seed=" + seed + " eastWest=" + eastWest + " revision=" + view.revision());
+            });
         }
+    }
+
+    @Test void bloodBattleWinnersAndAddedKongsRetainFixedPhysicalGeometry() {
+        var observed = java.util.EnumSet.noneOf(Meld.Type.class);
+        boolean[] won = {false};
+        for (boolean eastWest : new boolean[]{true, false}) for (long seed = 1; seed <= 16; seed++) {
+            var finalView = top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(seed, eastWest, -1, 0, true, view -> {
+                var scene = SichuanTableScene.build(view);
+                assertEquals(108, scene.size());
+                for (var seat : view.seats()) for (var meld : seat.melds()) observed.add(meld.type());
+                won[0] |= !view.winners().isEmpty();
+                for (var piece : scene) WallGeometryAssertions.onFelt(WallGeometryAssertions.solid(piece));
+                WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
+            });
+            assertTrue(finalView.phase() == SichuanGame.Phase.HAND_END || finalView.phase() == SichuanGame.Phase.MATCH_END);
+        }
+        assertTrue(won[0], "Fixtures must include real blood-battle winners");
+        assertTrue(observed.contains(Meld.Type.ADDED_QUAD), "Fixtures must exercise the real added-kong forward tile");
     }
 
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {

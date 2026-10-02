@@ -239,8 +239,8 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 7 -> {
-                if (!(client.screen instanceof McrTableScreen screen)) break;
                 if (!seatedWall.finished()) { seatedWall.tick(client, clientTable, output, true); break; }
+                if (!(client.screen instanceof McrTableScreen screen)) break;
                 if (!scoredHints.finished()) { scoredHints.tick(client, clientTable, output, true); break; }
                 var view = clientTable.clientMcrView();
                 if (view == null || view.game().phase() != McrGame.Phase.TURN || view.game().actions().isEmpty()) break;

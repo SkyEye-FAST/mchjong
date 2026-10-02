@@ -136,6 +136,7 @@ jar { from(rootProject.file('LICENSE')) }
 sourceSets {
     smoke {
         java.srcDir '../common/src/smoke/java'
+        java.srcDir '../common/src/testFixtures/java'
         resources.srcDir '../common/src/smoke/resources'
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath
@@ -214,3 +215,5 @@ tasks.named('runSmokeClient') {
         }
     }
 }
+
+sourceSets.test.java.srcDir '../common/src/testFixtures/java'

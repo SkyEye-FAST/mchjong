@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 
 import static top.skyeyefast.mchjong.client.ImmersiveTable.*;
 
-/** Riichi immersive rails, rivers, deposits and presentation motion. */
+/** Native immersive public rails, rivers, deposits and presentation motion. */
 final class TableImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 120;
@@ -75,7 +75,7 @@ final class TableImmersiveTable {
         for (int seat = 0; seat < players; seat++) {
             if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen(), deal, now);
             else {
-                norths(seat, view.seats().get(seat).norths());
+                norths(seat, view.seats().get(seat));
                 melds(seat, view.seats().get(seat));
             }
             if (TableSettings.get().showRiver) river(view, seat, suppressed);
@@ -98,14 +98,16 @@ final class TableImmersiveTable {
             handX += w;
         }
         melds(seat, player);
-        norths(seat, player.norths());
+        norths(seat, player);
     }
 
-    private void norths(int seat, List<Integer> norths) {
+    private void norths(int seat, TableBoardState.Seat player) {
         int side = side(seat);
-        double x = -meldCorner(side) + 30 * RATIO + 5;
-        for (int tile : norths) {
-            tile(tile, side, x + 15, outerRail(side), 30, false, false, false, 0);
+        boolean flowers = player.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR;
+        double x = flowers ? 0 : -meldCorner(side) + 30 * RATIO + 5;
+        double z = outerRail(side) - (flowers ? 30 * RATIO + 5 : 0);
+        for (int tile : player.norths()) {
+            tile(tile, side, x + 15, z, 30, false, false, false, 0);
             x += 30;
         }
     }
@@ -125,15 +127,17 @@ final class TableImmersiveTable {
 
     private void melds(int seat, TableBoardState.Seat player) {
         int side = side(seat), w = 30;
-        double x = meldCorner(side);
+        boolean left = player.variant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
+        double x = (left ? -1 : 1) * meldCorner(side);
         double z = outerRail(side);
         for (var meld : player.melds()) {
-            x -= TileGui.meldWidth(player.layout(meld, seat), w);
+            double span = TileGui.meldWidth(player.layout(meld, seat), w);
+            if (!left) x -= span;
             for (var part : player.layout(meld, seat).parts()) {
                 double scale = w / (double) TileMesh.WIDTH;
                 tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
             }
-            x -= 5;
+            x += left ? span + 5 : -5;
         }
     }
 
@@ -145,6 +149,11 @@ final class TableImmersiveTable {
 
     static double handLeft(TableBoardState.Seat player, int seat, int side) {
         int handWidth = player.hand().size() * 30;
+        if (player.variant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI) {
+            double meldRight = -meldCorner(side);
+            for (var meld : player.melds()) meldRight += TileGui.meldWidth(player.layout(meld, seat), 30) + 5;
+            return Math.max(-handWidth / 2.0, meldRight + (player.melds().isEmpty() ? 0 : 13));
+        }
         double meldLeft = meldCorner(side);
         for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(player.layout(meld, seat), 30) + 5;
         return Math.min(-handWidth / 2.0, meldLeft - 18 - handWidth);

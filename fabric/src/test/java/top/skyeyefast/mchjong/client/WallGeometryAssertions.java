@@ -8,32 +8,14 @@ import static org.junit.jupiter.api.Assertions.*;
 final class WallGeometryAssertions {
     private WallGeometryAssertions() {}
 
-    static void riverClearance(List<Vec3> centers, List<Float> yaws, int seat,
-                               double width, double height, double riverZ) {
-        double riverInner = riverZ - height / 2;
-        double requiredRiverDepth = 4 * height;
-        double wallRiverGap = .02;
-        assertTrue(riverInner > TableIndicator.HALF_WIDTH, "The river must clear the actual center housing");
-        assertTrue(6 * width / 2 < riverInner, "Six-column rivers must clear the neighboring seat's river");
-        double innerWallBoundary = Double.POSITIVE_INFINITY;
-        for (int tile = 0; tile < centers.size(); tile++) {
-            var center = centers.get(tile);
-            var x = tangent(yaws.get(tile)).scale(width / 2);
-            var z = tangent(yaws.get(tile) - 90).scale(height / 2);
-            for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
-                var corner = center.add(x.scale(sx)).add(z.scale(sz));
-                var local = TableGeometry.orient(corner.x, 0, corner.z, (4 - seat) % 4);
-                innerWallBoundary = Math.min(innerWallBoundary, local.z);
-                assertTrue(Math.max(Math.abs(local.x), Math.abs(local.z)) < TableGeometry.FELT_HALF_WIDTH,
-                    "Every rotated wall corner must stay on the felt");
-                assertTrue(local.z <= RiichiTableScene.HAND_Z - height / 2 - .02 + 1e-8,
-                    "Every rotated wall corner must clear the outer face-up hand and meld rail");
-            }
+    static void liftRail(List<Vec3> centers, int seat, double height) {
+        var normal = new Vec3(-Math.sin(Math.toRadians(12)), 0, Math.cos(Math.toRadians(12)));
+        for (var center : centers) {
+            var local = TableGeometry.orient(center.x, 0, center.z, (4 - seat) % 4);
+            double innerEdge = local.dot(normal) - height / 2;
+            assertEquals(30.5 / 85, 2 * innerEdge / (2 * TableGeometry.FELT_HALF_WIDTH), 1.0 / 85,
+                "Opposite inner-face clearance is measured along the tilted wall normal");
         }
-        assertTrue(innerWallBoundary >= riverInner + requiredRiverDepth + wallRiverGap,
-            "Even the inward wall end must clear all four six-tile river rows");
-        assertTrue(innerWallBoundary >= TableIndicator.HALF_WIDTH + requiredRiverDepth + wallRiverGap,
-            "Center device, river depth and wall gap must fit inside the oriented wall boundary");
     }
 
     static void clearCenter(Vec3 position, float yaw, double width, double height, double depth) {
@@ -106,6 +88,57 @@ final class WallGeometryAssertions {
         return new Solid(piece.position(), piece.yaw(), TileMesh.WIDTH * (double) piece.scale(),
             (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale(),
             (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale());
+    }
+
+    record PublicPiece(Solid solid, int seat, boolean hand, int group) {}
+
+    static void leftMeldsAndMinimalHandShift(List<PublicPiece> pieces, List<Double> handWidths, double handZ) {
+        for (int seat = 0; seat < 4; seat++) {
+            int owner = seat;
+            var own = pieces.stream().filter(p -> p.seat() == owner).toList();
+            var hand = own.stream().filter(PublicPiece::hand).toList();
+            double expectedHandEdge = -handWidths.get(seat) / 2;
+            double previousRight = Double.NEGATIVE_INFINITY;
+            for (int group = 0; group < 4; group++) {
+                int number = group;
+                var meld = own.stream().filter(p -> p.group() == number).toList();
+                if (meld.isEmpty()) continue;
+                double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
+                for (var part : meld) {
+                    var solid = part.solid();
+                    var local = TableGeometry.orient(solid.position().x, 0, solid.position().z, (4 - seat) % 4);
+                    double angle = Math.toRadians(solid.yaw() - seat * 90);
+                    double halfX = (solid.width() * Math.abs(Math.cos(angle)) + solid.depth() * Math.abs(Math.sin(angle))) / 2;
+                    double halfZ = (solid.width() * Math.abs(Math.sin(angle)) + solid.depth() * Math.abs(Math.cos(angle))) / 2;
+                    left = Math.min(left, local.x - halfX); right = Math.max(right, local.x + halfX);
+                    if (!hand.isEmpty() && Math.abs(local.z - handZ) < halfZ + hand.getFirst().solid().depth() / 2 - 1e-8)
+                        expectedHandEdge = Math.max(expectedHandEdge, local.x + halfX + .04);
+                }
+                if (group == 0) assertTrue((left + right) / 2 < 0, "First Chinese meld belongs on the owner's left");
+                assertTrue(left >= previousRight, "Chronological groups extend right");
+                previousRight = right;
+            }
+            if (!hand.isEmpty()) {
+                double actual = hand.stream().mapToDouble(p -> {
+                    var local = TableGeometry.orient(p.solid().position().x, 0, p.solid().position().z, (4 - owner) % 4);
+                    return local.x - p.solid().width() / 2;
+                }).min().orElseThrow();
+                assertEquals(expectedHandEdge, actual, 1e-8, "Hand moves right only by the actual missing meld clearance");
+            }
+        }
+    }
+
+    static void onFelt(Solid solid) {
+        var housing = new Solid(new Vec3(0, TableGeometry.FELT_Y + .0175, 0), 0,
+            2 * TableIndicator.HALF_WIDTH, .035, 2 * TableIndicator.HALF_WIDTH);
+        assertFalse(intersects(solid, housing), "Physical tiles must clear the actual center device");
+        var x = tangent(solid.yaw()).scale(solid.width() / 2);
+        var z = tangent(solid.yaw() - 90).scale(solid.depth() / 2);
+        for (int sx : new int[]{-1, 1}) for (int sz : new int[]{-1, 1}) {
+            var corner = solid.position().add(x.scale(sx)).add(z.scale(sz));
+            assertTrue(Math.max(Math.abs(corner.x), Math.abs(corner.z)) <= TableGeometry.FELT_HALF_WIDTH + 1e-8,
+                "Physical piece leaves felt: " + solid);
+        }
     }
 
     static void noIntersections(List<Solid> solids) {

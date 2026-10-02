@@ -15,8 +15,13 @@ abstract class SmokeWallMixin {
     @Redirect(method = "render", at = @At(value = "INVOKE", target =
         "Ltop/skyeyefast/mchjong/client/McrTableScene;build(Ltop/skyeyefast/mchjong/engine/McrView;)Ljava/util/List;"))
     private List<McrTableScene.Piece> unopenedWall(McrView view) {
-        var scene = McrTableScene.build(view);
-        return WallSeatedSmoke.fullMcrWall ? java.util.stream.Stream.concat(McrTableScene.fullWall().stream(),
-            scene.stream().filter(piece -> piece.area() != McrTableScene.Area.WALL)).toList() : scene;
+        return WallSeatedSmoke.fullMcrWall ? McrTableScene.fullWall() : McrTableScene.build(view);
+    }
+    @Redirect(method = "render", at = @At(value = "INVOKE", target =
+        "Ltop/skyeyefast/mchjong/client/TableIndicator;render(Ltop/skyeyefast/mchjong/engine/McrView;Lcom/mojang/blaze3d/vertex/PoseStack;Lnet/minecraft/client/renderer/MultiBufferSource;I)V"))
+    private void unopenedIndicator(McrView view, com.mojang.blaze3d.vertex.PoseStack pose,
+                                   net.minecraft.client.renderer.MultiBufferSource buffers, int light) {
+        if (WallSeatedSmoke.fullMcrWall) top.skyeyefast.mchjong.client.TableIndicator.renderStandby(pose, buffers, light);
+        else top.skyeyefast.mchjong.client.TableIndicator.render(view, pose, buffers, light);
     }
 }

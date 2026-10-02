@@ -5,16 +5,17 @@ import net.minecraft.world.phys.Vec3;
 /** Seat-local projection only; columns and physical slots belong to the rule's wall layout. */
 record TiltedWallLayout(int stacks, double pitch, float angle, double centerX, double centerZ) {
     static final float ANGLE = 12;
+    static final double INNER_EDGE_SPACING = 2 * top.skyeyefast.mchjong.world.TableGeometry.FELT_HALF_WIDTH * 31.4 / 85;
 
     static TiltedWallLayout compact(int stacks, double width, double height) {
-        double along = height;
         double angle = Math.toRadians(ANGLE);
-        // Reserve the outer hand/meld rail, including the depth of face-up tiles.
-        // One automatic-table rail, sized for the longest (18-stack) wall's rotated bounds.
-        // Shorter walls change only their tangent span, leaving more room at the corners.
-        double halfDepth = 18 * width / 2 * Math.sin(angle) + height / 2 * Math.cos(angle);
-        double railZ = RiichiTableScene.HAND_Z - height / 2 - .02 - halfDepth;
-        double outward = (railZ - Math.sin(angle) * along) / Math.cos(angle);
+        // CN107233724B's 30.5 cm wall gap on an 85 cm table is interpreted here
+        // as the clear distance between opposite inner faces, along the wall normal.
+        // Use 31.4 cm, within its stated +/-1 cm tolerance, for unscaled 50 mm tiles.
+        // Centerline spacing includes one full tile height; never measure local z.
+        double outward = INNER_EDGE_SPACING / 2 + height / 2;
+        // Fixed lift-mouth offset along the tangent, independent of the installed stock.
+        double along = .50;
         return new TiltedWallLayout(stacks, width, ANGLE,
             Math.cos(angle) * along - Math.sin(angle) * outward,
             Math.sin(angle) * along + Math.cos(angle) * outward);

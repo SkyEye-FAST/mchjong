@@ -4,7 +4,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.McrSettlement;
 import top.skyeyefast.mchjong.engine.McrView;
 import top.skyeyefast.mchjong.engine.McrWallLayout;
 import top.skyeyefast.mchjong.engine.Tile;
@@ -12,14 +11,15 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** MCR-only physical scene. The same seat-local geometry is rotated for every player. */
 public final class McrTableScene {
-    public static final float TILE_SCALE = .69f;
+    public static final float TILE_SCALE = 1.0f;
     public static final double WIDTH = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double HEIGHT = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double DEPTH = (double) TileMesh.DEPTH * TILE_SCALE;
     private static final TiltedWallLayout WALL = TiltedWallLayout.compact(McrWallLayout.STACKS_PER_SIDE, WIDTH, HEIGHT);
-    public static final double HAND_Z = RiichiTableScene.HAND_Z;
-    public static final double MELD_RIGHT = RiichiTableScene.MELD_RIGHT;
-    public static final double RIVER_Z = RiichiTableScene.RIVER_Z;
+    public static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - HEIGHT / 2 - .015;
+    public static final double MELD_LEFT = -TableGeometry.FELT_HALF_WIDTH + .015;
+    public static final double RIVER_Z = TableIndicator.HALF_WIDTH + HEIGHT / 2 + .005;
+    public static final double RIVER_X = WIDTH / 2;
     public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back, float scale) {}
@@ -52,7 +52,8 @@ public final class McrTableScene {
 
     public static List<Piece> build(McrView view) {
         var result = new ArrayList<>(wall(view.wall()));
-        int winner = view.result() instanceof McrSettlement.Win win ? win.winner() : -1;
+        var occupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat())).toList());
+        occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
         boolean ended = view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.HAND_END
             || view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.MATCH_END;
         for (int seat = 0; seat < 4; seat++) {
@@ -65,43 +66,44 @@ public final class McrTableScene {
                 indices.remove(Integer.valueOf(original));
                 indices.add(original);
             }
-            var melds = new ArrayList<McrMeldLayout>();
-            for (var meld : player.melds()) melds.add(McrMeldLayout.of(meld, seat, ended));
-            double meldWidth = melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
-            double flowerLeft = -HAND_Z + HEIGHT / 2 + .035;
+            var melds = new ArrayList<MeldLayout>();
+            for (var meld : player.melds()) melds.add(MeldLayout.of(meld, seat, top.skyeyefast.mchjong.engine.MahjongVariant.MCR, ended));
+            var origins = ChineseTableLayout.melds(melds, seat, occupied);
             double handWidth = hand.size() * WIDTH + (drawn ? RiichiTableScene.DRAW_GAP : 0);
-            double gap = hand.isEmpty() ? 0 : RiichiTableScene.HAND_MELD_GAP;
-            double flowerWidth = player.flowers().size() * WIDTH;
-            double rowWidth = flowerWidth + handWidth + meldWidth + (flowerWidth > 0 ? gap : 0) + (meldWidth > 0 ? gap : 0);
-            float rowScale = (float) (TILE_SCALE * Math.min(1, (MELD_RIGHT - flowerLeft) / Math.max(WIDTH, rowWidth)));
-            double fit = rowScale / (double) TILE_SCALE;
-            double handLeft = -(handWidth - WIDTH) * fit / 2;
-            if (meldWidth > 0) handLeft = Math.min(handLeft, MELD_RIGHT - (meldWidth + gap + handWidth - WIDTH / 2) * fit);
-            if (flowerWidth > 0) handLeft = Math.max(handLeft, flowerLeft + (flowerWidth + gap + WIDTH / 2) * fit);
+            double handLeft = -(handWidth - WIDTH) / 2;
+            for (int group = 0; group < origins.size(); group++) {
+                var origin = origins.get(group);
+                if (Math.abs(origin.z - HAND_Z) < HEIGHT)
+                    handLeft = Math.max(handLeft, origin.x + melds.get(group).width() + .04 + WIDTH / 2);
+            }
             for (int index = 0; index < hand.size(); index++) {
                 boolean flat = ended;
                 int original = indices.get(index);
                 result.add(piece(hand.get(original), seat, Area.HAND, original,
-                    handLeft + (index * WIDTH + (drawn && index == hand.size() - 1 ? RiichiTableScene.DRAW_GAP : 0)) * fit,
-                    (flat ? DEPTH : HEIGHT) * fit / 2, HAND_Z, 0, flat, false, rowScale));
+                    handLeft + (index * WIDTH + (drawn && index == hand.size() - 1 ? RiichiTableScene.DRAW_GAP : 0)),
+                    (flat ? DEPTH : HEIGHT) / 2, HAND_Z, 0, flat, false, TILE_SCALE));
             }
-            for (var part : McrRiverLayout.of(player.river()))
-                result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), part.x() * TILE_SCALE,
-                    DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false, TILE_SCALE));
-            double right = MELD_RIGHT;
             for (int group = 0; group < player.melds().size(); group++) {
                 var layout = melds.get(group);
-                double left = right - layout.width() * rowScale;
                 for (int index = 0; index < layout.parts().size(); index++) {
                     var part = layout.parts().get(index);
-                    result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * rowScale,
-                        DEPTH * fit / 2, HAND_Z + part.z() * rowScale, part.sideways() ? 90 : 0, true, part.back(), rowScale));
+                    result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, origins.get(group).x + part.x(),
+                        DEPTH / 2, origins.get(group).z + part.z(), part.sideways() ? 90 : 0, true, part.back(), TILE_SCALE));
                 }
-                right = left;
             }
             for (var part : McrFlowerLayout.of(player.flowers()))
-                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), flowerLeft + part.x() * rowScale,
-                    DEPTH * fit / 2, HAND_Z, 0, true, false, rowScale));
+                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), .30 + part.x(),
+                    DEPTH / 2, HAND_Z - HEIGHT - .02, 0, true, false, TILE_SCALE));
+        }
+        var rivers = view.seats().stream().map(player -> McrRiverLayout.of(player.river())).toList();
+        occupied = new ArrayList<>(result.stream().map(p -> ChineseTableLayout.bounds(p.position(), p.yaw(), p.flat())).toList());
+        occupied.add(new ChineseTableLayout.Bounds(Vec3.ZERO, 0, 2 * TableIndicator.HALF_WIDTH, 2 * TableIndicator.HALF_WIDTH));
+        var positions = ChineseTableLayout.rivers(rivers.stream().map(List::size).toList(), occupied);
+        for (int seat = 0; seat < 4; seat++) for (int index = 0; index < rivers.get(seat).size(); index++) {
+            var part = rivers.get(seat).get(index);
+            var position = positions.get(seat).get(index);
+            result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), position.x,
+                DEPTH / 2, position.z, 0, true, false, TILE_SCALE));
         }
         return List.copyOf(result);
     }
