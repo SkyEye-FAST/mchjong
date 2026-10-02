@@ -334,3 +334,17 @@ model transforms. Settlement captures `06-readout-points.png` and
 `06-readout-grade.png` assert points precede the grade by at least 750 ms.
 `UiControlsSmoke` checks visible settings rectangles for bounds and overlap at
 320 × 240, 640 × 400 and 1280 × 800, retaining native keyboard behavior.
+
+The shared presentation is checked on all three Minecraft profiles with
+`buildAll --warning-mode fail` and the Fabric `smokeMcrAuto`, `smokeSichuan`,
+`smokeSettlement`, `smokeManual` and `smokeVisibility` client profiles. MCR and
+Sichuan checks exercise the shared immersive canvas, physical hand picking,
+settlements and replays while retaining their own rules and hidden information.
+The Sichuan picking check switches back to the physical table and verifies the
+same tile remains selected.
+
+The adjacent bot-advisor project owns decision and overlay-placement tests.
+Its development smoke installer can add the matching loader JAR to a focused
+run and removes it afterward. Run its `mcr-auto`, `sichuan` and `seating` profiles
+to check the three native rule adapters against actual client screens; these
+installed checks complement the advisor's decision tests.
