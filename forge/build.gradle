@@ -28,6 +28,7 @@ sourceSets {
     }
     smoke {
         java.srcDir '../common/src/smoke/java'
+        java.srcDir '../common/src/testFixtures/java'
         resources.srcDir '../common/src/smoke/resources'
         compileClasspath += sourceSets.main.output + sourceSets.main.compileClasspath
         runtimeClasspath += sourceSets.main.output + sourceSets.main.runtimeClasspath

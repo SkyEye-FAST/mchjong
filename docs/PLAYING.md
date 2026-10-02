@@ -153,8 +153,9 @@ view. Distance and height sliders preserve the current look direction.
 Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong table.
 Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
-clickable hand and raised rack form the foreground, melds lie flat at each owner's
-right-hand table corner, and four rivers surround the compact central table device.
+clickable hand and raised rack form the foreground. Riichi melds lie flat at each
+owner's right-hand table corner; MCR and Sichuan melds begin on the owner's left
+and extend right. Four rivers surround the compact central table device.
 One perspective camera projects the cloth, solid tiles and upright opponent hands.
 Long melds wrap into the owner's inner corner. Compact player plaques remain at
 the table edges, and the rivers preserve six discards per row with sideways riichi
@@ -173,8 +174,9 @@ E opens your point-stick drawer.
 The compact top bar shows points and essential table information; hover over a
 player card for detailed status. Player names have skin portraits; practice bots
 use a distinct robot portrait. The concealed run stays centered, with a separate
-drawn-tile slot. Melds extend left from your right corner at hand depth; the hand
-shifts left only when the actual tiles need room. The Camera settings include **Show discards on the table**.
+drawn-tile slot. Riichi melds extend left from your right corner at hand depth; the hand
+shifts left only when the actual tiles need room. Chinese melds extend right from
+your left, and the hand shifts right only when an actual group needs room. The Camera settings include **Show discards on the table**.
 Hiding the rivers always keeps the remaining wall count visible, even when that
 information would otherwise be disabled. This is a local presentation preference
 and does not change game rules or replay records.

@@ -13,6 +13,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** A machine display with large seven-segment scores, localized wind letters and seat lamps. */
 public final class TableIndicator {
+    public static final double HALF_WIDTH = .265;
     private static final float SURFACE = (float) TableGeometry.FELT_Y + .039f;
     private static final int LAMP = 0xffffd58a;
     private static final int DIGIT = 0xffb9efcf;
@@ -41,8 +42,8 @@ public final class TableIndicator {
 
     private static void housing(PoseStack pose, MultiBufferSource buffers, int light) {
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
-        TileMesh.box(pose, vertices, -.265f, (float) TableGeometry.FELT_Y, -.265f,
-            .265f, SURFACE - .004f, .265f, 0xff243c40, light);
+        TileMesh.box(pose, vertices, (float) -HALF_WIDTH, (float) TableGeometry.FELT_Y, (float) -HALF_WIDTH,
+            (float) HALF_WIDTH, SURFACE - .004f, (float) HALF_WIDTH, 0xff243c40, light);
         TileMesh.box(pose, vertices, -.25f, SURFACE - .004f, -.25f, .25f, SURFACE, .25f, 0xff101e23, light);
     }
 
