@@ -73,12 +73,15 @@ final class SettlementSmoke {
             if (!languageReload.isDone() || client.getOverlay() != null) return false;
             languageReload.join();
             if (localeTicks++ == 0) {
-                client.options.guiScale().set(4);
+                client.getWindow().setWindowed(960, 720);
+                client.options.guiScale().set(3);
                 client.resizeDisplay();
                 client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             }
             if (localeTicks < 8) return false;
             if (localeTicks == 8) {
+                if (client.screen.width != 320 || client.screen.height != 240)
+                    throw new IllegalStateException("Settlement locale viewport was not 320x240");
                 checkBounds(client);
                 capture(client, output, "18-settlement-" + LANGUAGES[locale] + ".png");
                 click(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.result_page.2").getString());
@@ -157,9 +160,12 @@ final class SettlementSmoke {
         } else if (ticks == 45) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
             capture(client, output, "11-settlement-keyboard.png");
-            client.options.guiScale().set(4);
+            client.getWindow().setWindowed(960, 720);
+            client.options.guiScale().set(3);
             client.resizeDisplay();
         } else if (ticks == 50) {
+            if (client.screen.width != 320 || client.screen.height != 240)
+                throw new IllegalStateException("Settlement viewport was not 320x240");
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
             click(client, "Point changes");
@@ -175,6 +181,7 @@ final class SettlementSmoke {
         } else if (ticks == 60) {
             checkBounds(client);
             capture(client, output, "17-settlement-smallest-ranking.png");
+            client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2);
             client.resizeDisplay();
             click(client, "Point changes");
@@ -254,6 +261,14 @@ final class SettlementSmoke {
     }
 
     private static void checkBounds(Minecraft client) {
+        var help = net.minecraft.network.chat.Component.translatable("ui.mchjong.result_help");
+        if (client.font.width(help) > client.screen.width - 20)
+            throw new IllegalStateException("Settlement operations do not fit the footer: " + help.getString());
+        for (int suit = 0; suit < 3; suit++) {
+            var label = net.minecraft.network.chat.Component.translatable("sichuan.mchjong.suit." + suit + ".short");
+            if (client.font.width(label) > 40)
+                throw new IllegalStateException("Sichuan void label is clipped: " + label.getString());
+        }
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget)
             if (widget.getX() < 0 || widget.getY() < 0 || (widget.getX() + widget.getWidth()) > client.screen.width
                     || (widget.getY() + widget.getHeight()) > client.screen.height)

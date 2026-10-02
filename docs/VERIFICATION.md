@@ -19,6 +19,8 @@ gradlew.bat :fabric:runSmokeServer :forge:runSmokeServer --console=plain
 `--no-parallel --max-workers=2` bounds resource use. Dedicated-server launcher
 checks use isolated directories and `--initSettings`; they cover entrypoint and
 settings initialization, not simulated worlds. The default EULA is unchanged.
+Snapshot CI limits Gradle to two workers and uploads test reports, XML results,
+problem reports and the build log even when the build fails.
 
 Fabric and Forge run the shared integrated-server fixture, including worlds,
 packets, inventory transactions and rendering. Forge additionally supports
@@ -288,6 +290,15 @@ permissions and altered-event rejection. Run
 `gradlew.bat :fabric:test --tests "*ReplayStoreTest" --warning-mode fail --console=plain`.
 Asset tests cover deterministic output, texture/model contracts, translation key
 parity, duplicate keys, placeholders and literal source references.
+`ReplayPresentationTest` checks static MCR/Sichuan hand selectors and every frame's
+remaining wall count from real played openings through exhaustion, including both
+Sichuan presets. Run `:fabric:test --tests "*ReplayPresentationTest"`.
+`ChinesePickingTest` checks the projected centers of every concealed hand tile
+against the same oriented tile boxes, in real post-deal, midgame and late-game
+positions from all four seats at 320 × 240. Run `:fabric:test --tests "*ChinesePickingTest"`.
+The settlement smoke also checks complete operation hints at the minimum viewport
+and Sichuan short badge widths in all four languages; full suit names remain in
+player-card hover details and Sichuan screen narration.
 
 `RecipeBrowserDataSmoke` exercises loaded recipes and native NBT identity.
 Shared box, point-stick and equipment fixtures use real players,

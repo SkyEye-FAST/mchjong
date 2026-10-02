@@ -49,10 +49,11 @@ dismount with Minecraft's sneak control after closing it.
 
 ### Automatic-table MCR
 
-In the automatic-table lobby, the host selects MCR from the variant sidebar. Seat four human players and
-store a complete standard 144-tile box with eight flowers and a cloth. Assign
-seats, let all four players take their assigned stools, then each player presses
-Ready. The host can set move time and the per-hand reserve in Match settings → Time control before
+In the automatic-table lobby, the host selects MCR from the variant sidebar. Fill
+all four seats with humans and built-in Bots, and store a complete standard
+144-tile box with eight flowers and a cloth. Assign seats; each human takes their
+assigned stool and presses Ready. Bots are ready automatically. For one human
+and three Bots, follow [Rooms and permissions](ROOMS.md#computer-players). The host can set move time and the per-hand reserve in Match settings → Time control before
 play. The table runs a fixed sixteen-hand match.
 
 The seated view shows physical walls, six-column rivers, left-corner melds,
@@ -75,14 +76,16 @@ requires an explicit declaration. These deadlines continue for absent players
 while someone remains seated. Exit votes and a fully unoccupied table pause play
 and clocks; returning to a retained table resumes the remaining time.
 Settlement shows localized fan names and payments. The next hand starts after all
-four confirmations or ten seconds, retaining the chosen view. The match ends
+human confirmations or ten seconds, retaining the chosen view; Bots confirm automatically. The match ends
 after the sixteenth hand.
 
 ### Automatic-table Sichuan
 
-Select Sichuan from the lobby sidebar, seat four humans and supply a uniform case covering the 108 suited
-tiles and a cloth. The host chooses MIL SBR 2025 or T/TFMJ 01—2024 in the rule
-editor before everyone presses Ready. Both run an eight-hand match.
+Select Sichuan from the lobby sidebar, fill its four seats with humans and
+built-in Bots, and supply a uniform case covering the 108 suited tiles and a
+cloth. The host chooses MIL SBR 2025 or T/TFMJ 01—2024 in the rule editor before
+each human takes their assigned stool and presses Ready; Bots are ready
+automatically. The [one-human/three-Bot flow](ROOMS.md#computer-players) also applies. Both run an eight-hand match.
 
 With MIL SBR, select a hand tile and confirm the void-suit action to secretly bind
 its suit and that physical tile as your first discard. A naturally absent suit

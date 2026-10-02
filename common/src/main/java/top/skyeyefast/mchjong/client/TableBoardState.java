@@ -18,7 +18,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
     }
     private static Component voidLabel(SichuanView.Seat seat) {
         return seat.won() ? Component.translatable("sichuan.mchjong.won").withStyle(style -> style.withColor(MahjongUi.POSITIVE))
-            : seat.voidSuit() < 0 ? Component.literal("—") : Component.translatable("sichuan.mchjong.suit." + seat.voidSuit());
+            : seat.voidSuit() < 0 ? Component.literal("—") : Component.translatable("sichuan.mchjong.suit." + seat.voidSuit() + ".short");
     }
     record Seat(int points, List<Integer> hand, int drawn, List<Meld> melds,
                 List<Discard> river, List<Integer> norths, boolean exposed, MahjongVariant variant) {
