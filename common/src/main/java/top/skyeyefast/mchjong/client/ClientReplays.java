@@ -45,11 +45,7 @@ public final class ClientReplays {
                 if (match == null || match.handCount() == 0) throw new IllegalArgumentException("Empty replay");
                 // Compile and validate every completed hand before user-controlled seeking can render it.
                 ReplayCodec.validate(match);
-                client.setScreen(switch (match.variant()) {
-                    case RIICHI -> new ReplayScreen(client.screen, match);
-                    case MCR -> new McrReplayScreen(client.screen, match);
-                    case SICHUAN -> new SichuanReplayScreen(client.screen, match);
-                });
+                client.setScreen(new ReplayScreen(client.screen, match));
             }
         } catch (RuntimeException failure) {
             TRANSFER.reset();
@@ -80,9 +76,8 @@ public final class ClientReplays {
     }
 
     public static Path export(ReplayMatch match) throws IOException {
-        if (match.variant() != MahjongVariant.RIICHI) throw new IllegalArgumentException("Tenhou export requires Riichi");
         Path path = Minecraft.getInstance().gameDirectory.toPath().resolve("replays/mchjong").resolve(match.id() + ".json");
-        byte[] contents = TableNetworking.JSON.toJson(TenhouReplay.export(match)).getBytes(StandardCharsets.UTF_8);
+        byte[] contents = TableNetworking.JSON.toJson(match.variant() == MahjongVariant.RIICHI ? TenhouReplay.export(match) : match).getBytes(StandardCharsets.UTF_8);
         ReplayStore.atomicWrite(path, contents);
         return path.toAbsolutePath();
     }

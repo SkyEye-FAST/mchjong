@@ -1,150 +1,45 @@
 package top.skyeyefast.mchjong.client;
 
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.McrGame;
 import top.skyeyefast.mchjong.engine.McrSession;
-import top.skyeyefast.mchjong.engine.McrSettlement;
-import top.skyeyefast.mchjong.engine.RoomAction;
-import top.skyeyefast.mchjong.network.McrNextHandPayload;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.TableSessionControlPayload;
-import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
+import top.skyeyefast.mchjong.network.McrNextHandPayload;
 
-/** MCR fan and payment receipt, independent of Riichi result terminology. */
-public final class McrResultsScreen extends Screen {
-    private final BlockPos pos;
-    private long shownRevision = -1;
-    private boolean pending;
-    private int page;
-    private final boolean immersive;
-    private record Row(Component text, int color) {}
-
-    public McrResultsScreen(BlockPos pos) {
-        this(pos, false);
-    }
-
+/** Rule-specific synchronization for the shared settlement interface. */
+public final class McrResultsScreen extends TableResultsScreen {
+    public McrResultsScreen(BlockPos pos) { this(pos, false); }
     public McrResultsScreen(BlockPos pos, boolean immersive) {
-        super(Component.translatable("mcr.mchjong.results"));
-        this.pos = pos.immutable();
-        this.immersive = immersive;
+        super(pos, immersive, Component.translatable("mcr.mchjong.results"));
     }
-
-    public boolean immersive() { return immersive; }
-
-    public BlockPos tablePos() { return pos; }
-    @Override public boolean isPauseScreen() { return false; }
-    @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
-
-    private McrSession.View view() {
-        if (minecraft.level == null || !(minecraft.level.getBlockEntity(pos) instanceof MahjongTableBlockEntity table)) return null;
-        return table.clientMcrView();
+    private McrSession.View view() { return table() == null ? null : table().clientMcrView(); }
+    @Override protected Presentation snapshot() {
+        var t = table(); var v = view();
+        if (t == null || v == null || t.clientTableRoom() == null || v.game().result() == null) return null;
+        var deck = t.clientMcrDeck();
+        return new Presentation(v.revision(), TableBoardState.live(v.game()), TableResultState.mcr(v.game(), v.participants()), t.clientTableRoom(),
+            deck.preset(), deck.material(), deck.back(), deck.backPreset(), t.clientMcrCloth(),
+            tile -> TileMesh.artwork(deck.tile(tile)), v.game().phase() == McrGame.Phase.MATCH_END);
     }
-
-    public void receivedView() {
-        var view = view();
-        if (view != null) { pending = false; rebuild(); }
+    @Override protected void nextHandButton(int width, int height, int scale) {
+        var v = view(); if (v == null || v.game().viewerSeat() < 0) return;
+        int span = Math.min(260 * scale, width - 24 * scale);
+        var button = new MahjongButton((width - span) / 2, height - 26 * scale, span, 20 * scale,
+            Component.translatable((v.confirmed() & (1 << v.game().viewerSeat())) != 0 ? "ui.mchjong.confirmed" : "mcr.mchjong.next_hand"), ignored -> {
+                var current = view();
+                if (pending || current == null || !current.canConfirmNextHand() || minecraft.getConnection() == null) return;
+                pending = true;
+                minecraft.getConnection().send(PayloadPackets.serverbound(new McrNextHandPayload(tablePos(),
+                    current.tableId(), current.incarnation(), current.game().decision())));
+                rebuild();
+            }).primary().textScale(scale);
+        button.active = !pending && v.canConfirmNextHand(); addRenderableWidget(button);
     }
-
-    @Override protected void init() { rebuild(); }
-
-    private void rebuild() {
-        clearWidgets();
-        var view = view();
-        if (view == null) return;
-        var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
-        var room = table.clientTableRoom();
-        if (room == null) return;
-        if (view.revision() != shownRevision) pending = false;
-        shownRevision = view.revision();
-        if (room.exitVote() != null) {
-            TableExitControls.voteButtons(pos, room, width, height).forEach(this::addRenderableWidget);
-            return;
-        }
-        if (room.viewerSeat() >= 0 && room.lifecycle() != top.skyeyefast.mchjong.engine.TableSession.Lifecycle.FINISHED)
-            addRenderableWidget(MahjongButton.create(Component.translatable("ui.mchjong.exit"), ignored ->
-                TableExitControls.send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false))
-                .bounds(width - 60, 6, 52, 20).build());
-        int pages = Math.max(1, (rows(view).size() + rowsPerPage() - 1) / rowsPerPage());
-        page = Math.min(page, pages - 1);
-        if (pages > 1) {
-            addRenderableWidget(MahjongButton.create(Component.literal("‹"), ignored -> {
-                page = Math.floorMod(page - 1, pages); rebuild();
-            }).bounds((width - 60) / 2, height - 56, 26, 20).build());
-            addRenderableWidget(MahjongButton.create(Component.literal("›"), ignored -> {
-                page = (page + 1) % pages; rebuild();
-            }).bounds((width - 60) / 2 + 34, height - 56, 26, 20).build());
-        }
-        if (view.game().phase() == McrGame.Phase.MATCH_END) {
-            int action = room == null ? -1 : room.actions().indexOf(new RoomAction(RoomAction.Type.RETURN_TO_LOBBY));
-            if (action >= 0) {
-                var button = MahjongButton.create(Component.translatable("action.mchjong.return_to_lobby"), ignored -> {
-                    if (pending || minecraft.getConnection() == null) return;
-                    pending = true;
-                    RoomLobbyControls.send(pos, room, action);
-                    rebuild();
-                }).bounds((width - Math.min(260, width - 24)) / 2, height - 32,
-                    Math.min(260, width - 24), 22).build().primary();
-                button.active = !pending;
-                addRenderableWidget(button);
-            }
-            return;
-        }
-        if (!view.canConfirmNextHand()) return;
-        var button = MahjongButton.create(Component.translatable("mcr.mchjong.next_hand"), ignored -> {
-            if (pending || minecraft.getConnection() == null) return;
-            pending = true;
-            minecraft.getConnection().send(PayloadPackets.serverbound(new McrNextHandPayload(pos, view.tableId(),
-                view.incarnation(), view.game().decision())));
-            rebuild();
-        }).bounds((width - Math.min(260, width - 24)) / 2, height - 32, Math.min(260, width - 24), 22).build().primary();
-        button.active = !pending;
-        addRenderableWidget(button);
-    }
-
-    private int rowsPerPage() { return Math.max(4, (height - 100) / 12); }
-
-    private java.util.List<Row> rows(McrSession.View view) {
-        var game = view.game();
-        var rows = new java.util.ArrayList<Row>();
-        if (game.result() instanceof McrSettlement.Win win) {
-            rows.add(new Row(Component.translatable("mcr.mchjong.winner", view.participants().get(win.winner()).name()), MahjongUi.TEXT));
-            for (var fan : win.score().fans()) {
-                rows.add(new Row(Component.translatable("mcr.mchjong.fan." + fan.id().toLowerCase(java.util.Locale.ROOT))
-                    .append(" ×" + fan.count() + "  " + fan.points()), MahjongUi.MUTED));
-            }
-            rows.add(new Row(Component.translatable("mcr.mchjong.total_fan", win.score().totalFan()), MahjongUi.ACCENT));
-            rows.add(new Row(Component.translatable("mcr.mchjong.flowers", game.seats().get(win.winner()).flowers().size()), MahjongUi.TEXT));
-        } else rows.add(new Row(Component.translatable("mcr.mchjong.draw_result"), MahjongUi.TEXT));
-        for (int seat = 0; seat < 4; seat++) rows.add(new Row(Component.literal(view.participants().get(seat).name() + "  "
-            + game.result().deltas().get(seat) + "  →  " + game.seats().get(seat).points()),
-            seat == game.viewerSeat() ? MahjongUi.ACCENT : MahjongUi.TEXT));
-        for (var penalty : game.penalties()) if (penalty.handNumber() == game.handNumber())
-            rows.add(new Row(Component.translatable("mcr.mchjong.penalty", view.participants().get(penalty.offender()).name(),
-                penalty.deltas().get(penalty.offender())), MahjongUi.NEGATIVE));
-        return rows;
-    }
-
-    @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
-        graphics.fill(0, 0, width, height, 0xff0b1418);
-        graphics.fill(0, 0, width, height, MahjongUi.PANEL);
-        MahjongUi.backdrop(graphics, width, height, 420);
-        var view = view();
-        if (view == null) return;
-        var game = view.game();
-        int span = Math.min(400, width - 24), x = (width - span) / 2;
-        graphics.drawCenteredString(font, Component.translatable(game.phase() == McrGame.Phase.MATCH_END
-            ? "mcr.mchjong.match_end" : "mcr.mchjong.results"), width / 2, 10, MahjongUi.ACCENT);
-        var rows = rows(view);
-        for (int index = page * rowsPerPage(); index < rows.size() && index < (page + 1) * rowsPerPage(); index++) {
-            var row = rows.get(index);
-            MahjongUi.text(graphics, font, row.text(), x, 28 + (index % rowsPerPage()) * 12,
-                span, row.color(), false);
-        }
-        var table = (MahjongTableBlockEntity) minecraft.level.getBlockEntity(pos);
-        TableExitControls.renderVote(graphics, font, table.clientTableRoom(), width, height);
-        super.render(graphics, mouseX, mouseY, partialTick);
+    @Override protected Component progressText() {
+        var v = view(); if (v == null || v.game().phase() != McrGame.Phase.HAND_END) return Component.empty();
+        long elapsed = v.paused() ? 0 : table().clientViewAgeMillis() / 50;
+        int seconds = (int) (Math.max(0, v.settlementTicks() - elapsed) + 19) / 20;
+        return Component.translatable("ui.mchjong.settlement_reading", Integer.bitCount(v.confirmed()), 4, seconds);
     }
 }

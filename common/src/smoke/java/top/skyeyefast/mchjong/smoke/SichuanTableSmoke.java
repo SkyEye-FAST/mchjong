@@ -21,7 +21,7 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.SichuanLobbyScreen;
 import top.skyeyefast.mchjong.client.SichuanTableScreen;
 import top.skyeyefast.mchjong.client.SichuanResultsScreen;
-import top.skyeyefast.mchjong.client.SichuanReplayScreen;
+import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.engine.SichuanAction;
@@ -470,7 +470,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 19 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 require(replay.match().id().equals(replayId) && replay.match().complete() && replay.match().handCount() == 8,
                     "Browser did not fetch the completed Sichuan replay");
                 require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
@@ -480,7 +480,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 20 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), ignored -> {});
                 for (int hand = 1; hand < 8; hand++) replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0);
                 require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
@@ -488,7 +488,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 21 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 require(replay.cursor() > 1 && replay.match().header().finalScores().size() == 4,
                     "Sichuan replay did not seek to final standings");
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay-settlement.png", client.getMainRenderTarget(), ignored -> {});

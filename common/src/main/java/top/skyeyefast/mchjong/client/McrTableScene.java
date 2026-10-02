@@ -22,7 +22,7 @@ public final class McrTableScene {
     // The short end meets the next wall with the same seam as adjacent stacks.
     public static final double WALL_OFFSET = WALL_LENGTH / 2 - WALL_Z + HEIGHT / 2 + (WALL_STEP - WIDTH);
     public static final double HAND_Z = RiichiTableScene.HAND_Z;
-    public static final double MELD_LEFT = -RiichiTableScene.MELD_RIGHT;
+    public static final double MELD_RIGHT = RiichiTableScene.MELD_RIGHT;
     public static final double RIVER_Z = RiichiTableScene.RIVER_Z;
     public enum Area { WALL, HAND, RIVER, MELD, FLOWER }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
@@ -72,39 +72,39 @@ public final class McrTableScene {
             var melds = new ArrayList<McrMeldLayout>();
             for (var meld : player.melds()) melds.add(McrMeldLayout.of(meld, seat, ended));
             double meldWidth = melds.stream().mapToDouble(McrMeldLayout::width).sum() * TILE_SCALE;
-            double flowerStart = meldWidth + (!melds.isEmpty() && !player.flowers().isEmpty() ? DEPTH / 4 : 0);
-            double publicWidth = flowerStart + player.flowers().size() * WIDTH;
-            double handGap = publicWidth > 0 && !hand.isEmpty() ? RiichiTableScene.HAND_MELD_GAP : 0;
-            double rowWidth = publicWidth + handGap + hand.size() * WIDTH + (drawn ? DEPTH / 2 : 0);
-            // A full flower run and four kongs share one rail, clear of the adjacent seat's corner.
-            double rowRight = HAND_Z - HEIGHT / 2 - .035;
-            double fit = Math.min(1, (rowRight - MELD_LEFT) / rowWidth);
-            float rowScale = (float) (TILE_SCALE * fit);
-            fit = rowScale / (double) TILE_SCALE;
-            double handLeft = Math.max(-(hand.size() - 1) * WIDTH * fit / 2,
-                MELD_LEFT + (publicWidth + handGap + WIDTH / 2) * fit);
+            double flowerLeft = -HAND_Z + HEIGHT / 2 + .035;
+            double handWidth = hand.size() * WIDTH + (drawn ? RiichiTableScene.DRAW_GAP : 0);
+            double gap = hand.isEmpty() ? 0 : RiichiTableScene.HAND_MELD_GAP;
+            double flowerWidth = player.flowers().size() * WIDTH;
+            double rowWidth = flowerWidth + handWidth + meldWidth + (flowerWidth > 0 ? gap : 0) + (meldWidth > 0 ? gap : 0);
+            float rowScale = (float) (TILE_SCALE * Math.min(1, (MELD_RIGHT - flowerLeft) / Math.max(WIDTH, rowWidth)));
+            double fit = rowScale / (double) TILE_SCALE;
+            double handLeft = -(handWidth - WIDTH) * fit / 2;
+            if (meldWidth > 0) handLeft = Math.min(handLeft, MELD_RIGHT - (meldWidth + gap + handWidth - WIDTH / 2) * fit);
+            if (flowerWidth > 0) handLeft = Math.max(handLeft, flowerLeft + (flowerWidth + gap + WIDTH / 2) * fit);
             for (int index = 0; index < hand.size(); index++) {
-                boolean flat = seat == winner;
+                boolean flat = ended;
                 int original = indices.get(index);
                 result.add(piece(hand.get(original), seat, Area.HAND, original,
-                    handLeft + (index * WIDTH + (drawn && index == hand.size() - 1 ? DEPTH / 2 : 0)) * fit,
+                    handLeft + (index * WIDTH + (drawn && index == hand.size() - 1 ? RiichiTableScene.DRAW_GAP : 0)) * fit,
                     (flat ? DEPTH : HEIGHT) * fit / 2, HAND_Z, 0, flat, false, rowScale));
             }
             for (var part : McrRiverLayout.of(player.river()))
                 result.add(piece(part.tile(), seat, Area.RIVER, part.historyIndex(), part.x() * TILE_SCALE,
                     DEPTH / 2, RIVER_Z + part.z() * TILE_SCALE, 0, true, false, TILE_SCALE));
-            double left = MELD_LEFT;
+            double right = MELD_RIGHT;
             for (int group = 0; group < player.melds().size(); group++) {
                 var layout = melds.get(group);
+                double left = right - layout.width() * rowScale;
                 for (int index = 0; index < layout.parts().size(); index++) {
                     var part = layout.parts().get(index);
                     result.add(piece(part.tile(), seat, Area.MELD, group * 4 + index, left + part.x() * rowScale,
                         DEPTH * fit / 2, HAND_Z + part.z() * rowScale, part.sideways() ? 90 : 0, true, part.back(), rowScale));
                 }
-                left += layout.width() * rowScale;
+                right = left;
             }
             for (var part : McrFlowerLayout.of(player.flowers()))
-                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), MELD_LEFT + flowerStart * fit + part.x() * rowScale,
+                result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), flowerLeft + part.x() * rowScale,
                     DEPTH * fit / 2, HAND_Z, 0, true, false, rowScale));
         }
         return List.copyOf(result);

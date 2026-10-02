@@ -62,13 +62,13 @@ public final class RiichiAudio {
         if (before != null && (!before.tableId().equals(view.tableId()) || before.viewerSeat() != view.viewerSeat())) {
             SPEECH.clear();
         }
-        if (view.viewerSeat() >= 0 && RiichiResults.available(view)) {
+        if (view.viewerSeat() >= 0 && TableResults.available(view)) {
             if (result == null || !result.matches(view)) {
                 SPEECH.clear();
                 VoicePresets.stop();
                 result = new ResultReadout(view, Util.getMillis());
                 acknowledged = -1;
-                finalVoicePlayed = before == null || RiichiResults.available(before);
+                finalVoicePlayed = before == null || TableResults.available(before);
                 // Joining/reopening an already completed hand must not replay its announcements.
                 if (finalVoicePlayed) result.finish(Util.getMillis());
             }

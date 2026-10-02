@@ -36,8 +36,17 @@ public final class ResultReadout {
         if (wins.isEmpty()) finish(now);
     }
 
+    ResultReadout(TableResultState view, long now) {
+        table = null; hand = -1; viewer = view.viewerSeat(); wins = List.of();
+        rows = view.wins().stream().map(w -> w.rows().stream().map(TableResultState.Row::voice).toList()).toList();
+        limits = view.wins().stream().map(TableResultState.Win::limitVoice).toList();
+        visible = new int[rows.size()]; scored = new long[rows.size()]; graded = new boolean[rows.size()];
+        java.util.Arrays.fill(scored, -1); next = now + 400;
+        if (rows.isEmpty()) finish(now);
+    }
+
     public boolean matches(RiichiView view) {
-        return view != null && table.equals(view.tableId()) && hand == view.handNumber()
+        return view != null && table != null && table.equals(view.tableId()) && hand == view.handNumber()
             && viewer == view.viewerSeat() && wins.equals(view.wins())
             && (view.phase() == RiichiView.Phase.HAND_END || view.phase() == RiichiView.Phase.MATCH_END);
     }
@@ -78,7 +87,7 @@ public final class ResultReadout {
             return new Event(stage, winner, limits.get(winner));
         }
         if (stage == Stage.LIMIT && now - quietSince < 250) return null;
-        if (winner + 1 < wins.size()) {
+        if (winner + 1 < visible.length) {
             winner++;
             stage = Stage.NEXT_WINNER;
             next = now + 350;

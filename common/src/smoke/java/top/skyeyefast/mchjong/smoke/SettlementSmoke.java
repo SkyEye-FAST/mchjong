@@ -6,7 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.client.RiichiResults;
+import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.RiichiAudio;
 import top.skyeyefast.mchjong.client.TableSettings;
@@ -121,7 +121,7 @@ final class SettlementSmoke {
             voiceDecode.join();
             if (!heardRecording || captureStage != 4) throw new IllegalStateException("Readout did not visit every recorded stage");
             checkSettledPoints(client);
-            RiichiResults panel = panel(client);
+            TableResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 15, panel.getY() + 25, 0);
             sequenceComplete = true;
         }
@@ -134,7 +134,7 @@ final class SettlementSmoke {
         } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
-            RiichiResults panel = panel(client);
+            TableResults panel = panel(client);
             int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
             client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
         } else if (ticks == 20) {
@@ -147,11 +147,11 @@ final class SettlementSmoke {
             capture(client, output, "10-settlement-small.png");
             click(client, "View table");
         } else if (ticks == 35) {
-            if (client.screen.children().stream().anyMatch(RiichiResults.class::isInstance))
+            if (client.screen.children().stream().anyMatch(TableResults.class::isInstance))
                 throw new IllegalStateException("Settlement could not be collapsed");
             click(client, "Show results");
         } else if (ticks == 40) {
-            RiichiResults panel = panel(client);
+            TableResults panel = panel(client);
             client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
             client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
         } else if (ticks == 45) {
@@ -242,8 +242,8 @@ final class SettlementSmoke {
         return false;
     }
 
-    private static RiichiResults panel(Minecraft client) {
-        return client.screen.children().stream().filter(RiichiResults.class::isInstance).map(RiichiResults.class::cast)
+    private static TableResults panel(Minecraft client) {
+        return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
     }
 

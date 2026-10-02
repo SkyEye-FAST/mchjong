@@ -32,8 +32,8 @@ public final class ReplayScreen extends Screen {
     private boolean playing;
     private boolean roundsOpen;
     private boolean wallOpen;
-    private ReplayPlayback.Timeline playback;
-    private RiichiBoard board;
+    private ReplayPresentation playback;
+    private TableBoard board;
     private TableHand viewerHand;
     private Timeline timeline;
     private Button play;
@@ -43,7 +43,10 @@ public final class ReplayScreen extends Screen {
     private Button previousDecision;
     private Button nextDecision;
     private RoundList rounds;
-    private ReplayResultPanel result;
+    private TableResults result;
+    private TableResults.Page resultPage = TableResults.Page.HAND;
+    private boolean resultExpanded = true;
+    private final java.util.List<AbstractWidget> resultControls = new ArrayList<>();
     private ReplayWallPanel wallPanel;
     private ReplayDecisionPanel decisionPanel;
     private final java.util.List<AbstractWidget> playbackControls = new ArrayList<>();
@@ -53,21 +56,22 @@ public final class ReplayScreen extends Screen {
         super(Component.translatable("replay.mchjong.title"));
         this.parent = parent;
         this.match = match;
+        playback = ReplayPresentation.of(match, 0);
     }
 
     public ReplayMatch match() { return match; }
     public int cursor() { return cursor; }
+    public int handIndex() { return handIndex; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int x, int y, float partialTick) {}
 
-    private ReplayHand hand() { return match.riichi().hands().get(handIndex); }
-    private ReplayPlayback.Frame frame() { return playback.frames().get(cursor); }
+    private ReplayPresentation.Frame frame() { return playback.frames().get(cursor); }
     private int steps() { return playback.frames().size() - 1; }
 
     @Override protected void init() {
-        playbackControls.clear();
+        playbackControls.clear(); resultControls.clear();
         if (viewer < 0) viewer = localViewer();
-        playback = ReplayPlayback.timeline(match, handIndex);
+        if (playback == null) playback = ReplayPresentation.of(match, handIndex);
         cursor = Math.clamp(cursor, 0, steps());
 
         var previousHand = addRenderableWidget(MahjongButton.create(Component.literal("<"), ignored -> changeHand(-1))
@@ -81,7 +85,7 @@ public final class ReplayScreen extends Screen {
         int nextX = 48 + roundButton.getWidth();
         var nextHand = addRenderableWidget(MahjongButton.create(Component.literal(">"), ignored -> changeHand(1))
             .bounds(nextX, 29, 30, 20).build());
-        nextHand.active = handIndex + 1 < match.riichi().hands().size();
+        nextHand.active = handIndex + 1 < match.handCount();
 
         speedButton = addRenderableWidget(MahjongButton.create(Component.empty(), ignored -> cycleSpeed())
             .bounds(width - 10 - speedWidth, 29, speedWidth, 20).build());
@@ -113,15 +117,28 @@ public final class ReplayScreen extends Screen {
             .bounds(10, height - 28, bottomSpan, 20).build());
         addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.wall"), ignored -> toggleWall())
             .bounds(14 + bottomSpan, height - 28, bottomSpan, 20).build());
-        addRenderableWidget(MahjongButton.create(Component.translatable("replay.mchjong.export"), ignored -> export())
+        addRenderableWidget(MahjongButton.create(Component.translatable(match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? "replay.mchjong.export" : "replay.mchjong.export_native"), ignored -> export())
             .bounds(18 + bottomSpan * 2, height - 28, bottomSpan, 20).build());
 
-        result = addRenderableWidget(new ReplayResultPanel(font, match, hand(), PRESET, 10, 67, width - 20,
-            Math.max(72, height - 151), viewer));
+        result = addRenderableWidget(new TableResults(font, playback.result().withViewer(viewer), PRESET, top.skyeyefast.mchjong.item.TileMaterial.BONE,
+            null, TileBackPresets.DEFAULT, 10, 91, width - 20, Math.max(48, height - 175), 0, resultPage, 0, 1).artwork(this::artwork));
+        var pages = new java.util.ArrayList<TableResults.Page>();
+        pages.add(TableResults.Page.HAND); pages.add(TableResults.Page.POINTS);
+        if (handIndex + 1 == match.handCount()) pages.add(TableResults.Page.MATCH);
+        if (!playback.result().payments().isEmpty()) pages.add(TableResults.Page.PAYMENTS);
+        int tabWidth = (width - 24) / (pages.size() + 1);
+        for (int i = 0; i < pages.size(); i++) { var page = pages.get(i);
+            resultControls.add(addRenderableWidget(MahjongButton.create(Component.translatable("ui.mchjong.result_page." + page.ordinal()), ignored -> {
+                resultPage = page; resultExpanded = true; rebuildWidgets();
+            }).bounds(10 + i * tabWidth, 67, tabWidth - 3, 20).build().selected(page == resultPage && resultExpanded)));
+        }
+        resultControls.add(addRenderableWidget(MahjongButton.create(Component.translatable(resultExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"), ignored -> {
+            resultExpanded = !resultExpanded; refresh();
+        }).bounds(10 + pages.size() * tabWidth, 67, tabWidth - 3, 20).build()));
         int decisionPanelWidth = Math.min(220, Math.max(140, width / 3));
         decisionPanel = addRenderableWidget(new ReplayDecisionPanel(font, match, width - decisionPanelWidth - 12, 78,
             decisionPanelWidth, Math.min(126, Math.max(70, height / 3))));
-        wallPanel = addRenderableWidget(new ReplayWallPanel(font, match, hand(), PRESET, 10, 54, width - 20,
+        wallPanel = addRenderableWidget(new ReplayWallPanel(font, match, playback, PRESET, 10, 54, width - 20,
             Math.max(96, height - 90)));
         int listWidth = Math.min(240, width - 28);
         rounds = addRenderableWidget(new RoundList((width - listWidth) / 2, 54, listWidth, Math.min(190, Math.max(70, height - 146))));
@@ -134,19 +151,23 @@ public final class ReplayScreen extends Screen {
             for (int seat = 0; seat < match.participants().size(); seat++)
                 if (match.participants().get(seat).id().equals(id)) return seat;
         }
-        return Math.clamp(match.riichi().initialDealer(), 0, match.riichi().rules().players() - 1);
+        return 0;
     }
 
     private void layoutFrame() {
         var frame = frame();
         int controlsTop = height - 78;
-        viewerHand = new TableHand(frame.seats().get(viewer), viewer, width, controlsTop, height < 360 ? 17 : 21);
+        var player = frame.board().seats().get(viewer);
+        viewerHand = new TableHand(player.hand(), player.drawn(), player.melds(), viewer, width, controlsTop, height < 360 ? 17 : 21, false, match.variant());
         int boardBottom = Math.max(120, viewerHand.top() - 5);
-        board = new RiichiBoard(RiichiBoardState.replay(match, hand(), frame, viewer), 8, width - 8, 67, boardBottom, boardBottom);
-        result.visible = result.active = frame.settled() && !wallOpen;
+        board = new TableBoard(frame.board().replay(viewer), 8, width - 8, 67, boardBottom, boardBottom);
+        result.visible = result.active = frame.settled() && resultExpanded && !wallOpen && !roundsOpen;
         result.setViewer(viewer);
+        for (var control : resultControls) control.visible = control.active = frame.settled() && !wallOpen && !roundsOpen;
+        resultControls.getLast().setMessage(Component.translatable(resultExpanded ? "ui.mchjong.view_table" : "ui.mchjong.view_results"));
         var decision = currentDecision();
-        decisionPanel.show(decision, decision == null ? java.util.List.of() : ReplayDecisionAnalysis.analyze(match, handIndex, decision));
+        decisionPanel.show(decision, decision == null || match.variant() != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? java.util.List.of()
+            : ReplayDecisionAnalysis.analyze(match, handIndex, match.riichi().hands().get(handIndex).decisions().get(decision.index())));
         decisionPanel.visible = decisionPanel.active = decision != null && !wallOpen && !roundsOpen && !frame.settled();
         wallPanel.show(frame);
         wallPanel.visible = wallPanel.active = wallOpen;
@@ -168,30 +189,17 @@ public final class ReplayScreen extends Screen {
         nextDecision.active = !wallOpen && hasDecision(1);
     }
 
-    private boolean reviewable(ReplayHand.Decision decision) {
-        if (decision.seat() != viewer) return false;
-        if (decision.options().size() > 1) return true;
-        var type = decision.options().get(decision.selected()).type();
-        return type != top.skyeyefast.mchjong.engine.RiichiAction.Type.DISCARD && type != top.skyeyefast.mchjong.engine.RiichiAction.Type.PASS;
-    }
+    private boolean reviewable(ReplayPresentation.Decision decision) { return decision.seat() == viewer; }
+    private int decisionCursor(ReplayPresentation.Decision decision) { return decision.cursor(); }
 
-    private int decisionCursor(ReplayHand.Decision decision) {
-        int target = 0;
-        for (int i = 0; i < playback.frames().size(); i++) {
-            if (playback.frames().get(i).rawCursor() > decision.eventCursor()) break;
-            target = i;
-        }
-        return target;
-    }
-
-    private ReplayHand.Decision currentDecision() {
-        for (var decision : hand().decisions())
+    private ReplayPresentation.Decision currentDecision() {
+        for (var decision : playback.decisions())
             if (reviewable(decision) && decisionCursor(decision) == cursor) return decision;
         return null;
     }
 
     private boolean hasDecision(int direction) {
-        for (var decision : hand().decisions()) if (reviewable(decision)) {
+        for (var decision : playback.decisions()) if (reviewable(decision)) {
             int target = decisionCursor(decision);
             if (direction < 0 ? target < cursor : target > cursor) return true;
         }
@@ -200,7 +208,7 @@ public final class ReplayScreen extends Screen {
 
     private void jumpDecision(int direction) {
         int target = direction < 0 ? -1 : Integer.MAX_VALUE;
-        for (var decision : hand().decisions()) if (reviewable(decision)) {
+        for (var decision : playback.decisions()) if (reviewable(decision)) {
             int candidate = decisionCursor(decision);
             if (direction < 0 && candidate < cursor) target = Math.max(target, candidate);
             if (direction > 0 && candidate > cursor) target = Math.min(target, candidate);
@@ -228,9 +236,10 @@ public final class ReplayScreen extends Screen {
     private void changeHand(int offset) { changeHandTo(handIndex + offset); }
 
     private void changeHandTo(int index) {
-        int next = Math.clamp(index, 0, match.riichi().hands().size() - 1);
+        int next = Math.clamp(index, 0, match.handCount() - 1);
         if (next == handIndex && playback != null) { roundsOpen = false; refresh(); return; }
-        handIndex = next;
+        resultPage = TableResults.Page.HAND; resultExpanded = true;
+        handIndex = next; playback = null;
         cursor = 0;
         playing = false;
         playbackClock = 0;
@@ -255,7 +264,7 @@ public final class ReplayScreen extends Screen {
     }
 
     private void cycleViewer(int offset) {
-        viewer = Math.floorMod(viewer + offset, match.riichi().rules().players());
+        viewer = Math.floorMod(viewer + offset, match.participants().size());
         refresh();
     }
 
@@ -296,55 +305,40 @@ public final class ReplayScreen extends Screen {
         }
     }
 
-    private Component roundLabel(int index) {
-        var replayHand = match.riichi().hands().get(index);
-        int wind = Math.min(3, replayHand.round() / match.riichi().rules().players());
-        return Component.translatable("ui.mchjong.round", Component.translatable("wind.mchjong." + WINDS[wind]),
-            replayHand.round() % match.riichi().rules().players() + 1, replayHand.honba());
-    }
-
-    private Component eventName() {
-        var frame = frame();
-        if (frame.settled()) return Component.translatable("result.mchjong." + hand().result());
-        if (frame.event() == null) return Component.translatable("replay.mchjong.initial");
-        var event = frame.event();
-        String key = switch (event.kind()) {
-            case DRAW -> "replay.mchjong.draw";
-            case DISCARD -> event.riichi() ? "action.mchjong.riichi" : "action.mchjong.discard";
-            case NUKI -> "action.mchjong.nuki";
-            case MELD -> "action.mchjong." + event.meld().type().name().toLowerCase(Locale.ROOT);
-            case RIICHI -> "replay.mchjong.deposit";
-            case DORA -> "ui.mchjong.result_indicators";
-        };
-        return event.seat() < 0 ? Component.translatable(key) : Component.literal(match.participants().get(event.seat()).name())
-            .append("  ").append(Component.translatable(key));
-    }
+    private Component roundLabel(int index) { return ReplayPresentation.roundLabel(match, index); }
+    private Component eventName() { return frame().caption(); }
 
     @Override public void render(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
         MahjongUi.backdrop(graphics, width, height, width - 24);
         MahjongUi.text(graphics, font, status.getString().isEmpty() ? title : status, 12, 11, width - 24, MahjongUi.TEXT, true);
         MahjongUi.text(graphics, font, eventName(), 12, 54, width - 24, MahjongUi.ACCENT, true);
-        if (!frame().settled() && !wallOpen) {
-            board.render(graphics, RiichiBoardState.replay(match, hand(), frame(), viewer), PRESET);
+        if ((!frame().settled() || !resultExpanded) && !wallOpen) {
+            board.render(graphics, frame().board().replay(viewer), PRESET, Tile.ABSENT, top.skyeyefast.mchjong.item.TileMaterial.BONE, null, TileBackPresets.DEFAULT, null, null, 0, this::artwork);
             renderPlayerCards(graphics);
-            viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, PRESET);
+            viewerHand.render(graphics, Tile.ABSENT, Tile.ABSENT, ignored -> 0, Tile.ABSENT, PRESET, top.skyeyefast.mchjong.item.TileMaterial.BONE, null, TileBackPresets.DEFAULT, null, null, 0, this::artwork);
             renderDora(graphics);
         }
         super.render(graphics, mouseX, mouseY, partialTick);
     }
 
     private void renderPlayerCards(GuiGraphics graphics) {
-        for (int seat = 0; seat < match.riichi().rules().players(); seat++) {
+        for (int seat = 0; seat < match.participants().size(); seat++) {
             var card = board.card(seat);
-            var player = frame().seats().get(seat);
+            var player = frame().board().seats().get(seat);
             graphics.fill(card.x(), card.y(), card.right(), card.bottom(), seat == viewer ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             if (seat == viewer) graphics.renderOutline(card.x(), card.y(), card.width(), card.height(), MahjongUi.ACCENT);
-            int inset = PlayerPortrait.draw(graphics, player, card.x() + 4, card.y() + 3, 10);
-            MahjongUi.text(graphics, font, player.entityBot() ? Component.translatable(player.name()) : Component.literal(player.name()), card.x() + 5 + inset, card.y() + 4,
+            var participant = match.participants().get(seat);
+            int inset = PlayerPortrait.draw(graphics, false, participant.bot(), participant.name(), card.x() + 4, card.y() + 3, 10);
+            MahjongUi.text(graphics, font, Component.literal(participant.name()), card.x() + 5 + inset, card.y() + 4,
                 card.width() - 9 - inset, MahjongUi.TEXT, false);
             if (board.scoresOnCards()) MahjongUi.text(graphics, font, Component.translatable("ui.mchjong.points", player.points()),
                 card.x() + 5, card.y() + 17, card.width() - 10, MahjongUi.MUTED, false);
         }
+    }
+
+    private int artwork(int tile) {
+        return match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? TileMesh.face(tile)
+            : Tile.isFlower(tile) ? 37 + tile - 136 : Tile.kind(tile);
     }
 
     private void renderDora(GuiGraphics graphics) {
@@ -365,7 +359,7 @@ public final class ReplayScreen extends Screen {
     @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
         if (super.mouseClicked(mouseX, mouseY, button)) return true;
         if (button == 0 && !frame().settled() && board != null) {
-            for (int seat = 0; seat < match.riichi().rules().players(); seat++) {
+            for (int seat = 0; seat < match.participants().size(); seat++) {
                 var card = board.card(seat);
                 if (mouseX >= card.x() && mouseX < card.right() && mouseY >= card.y() && mouseY < card.bottom()) {
                     viewer = seat;
@@ -419,15 +413,15 @@ public final class ReplayScreen extends Screen {
         @Override protected void renderWidget(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {
             MahjongUi.panel(graphics, getX(), getY(), width, height);
             graphics.enableScissor(getX() + 2, getY() + 2, getX() + width - 2, getY() + height - 2);
-            for (int i = 0; i < match.riichi().hands().size(); i++) {
+            for (int i = 0; i < match.handCount(); i++) {
                 int y = getY() + i * ROW - scroll;
                 if (y + ROW < getY() || y > getY() + height) continue;
                 graphics.fill(getX() + 4, y + 3, getX() + width - 7, y + ROW - 2, i == handIndex ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                var label = roundLabel(i).copy().append("  ").append(Component.translatable("result.mchjong." + match.riichi().hands().get(i).result()));
+                var label = roundLabel(i);
                 MahjongUi.text(graphics, font, label, getX() + 9, y + 8, width - 20, i == handIndex ? MahjongUi.ACCENT : MahjongUi.TEXT, false);
             }
             graphics.disableScissor();
-            int content = match.riichi().hands().size() * ROW;
+            int content = match.handCount() * ROW;
             if (content > height) {
                 int thumb = Math.max(14, height * height / content);
                 int y = getY() + scroll * (height - thumb) / (content - height);
@@ -439,13 +433,13 @@ public final class ReplayScreen extends Screen {
         @Override public boolean mouseClicked(double mouseX, double mouseY, int button) {
             if (button != 0 || !isMouseOver(mouseX, mouseY)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
-            if (entry >= 0 && entry < match.riichi().hands().size()) changeHandTo(entry);
+            if (entry >= 0 && entry < match.handCount()) changeHandTo(entry);
             return true;
         }
 
         @Override public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
             if (!isMouseOver(mouseX, mouseY)) return false;
-            scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.riichi().hands().size() * ROW - height));
+            scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, match.handCount() * ROW - height));
             return true;
         }
 

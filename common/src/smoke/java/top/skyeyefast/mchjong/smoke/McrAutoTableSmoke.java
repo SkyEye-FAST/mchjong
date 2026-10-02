@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.McrResultsScreen;
 import top.skyeyefast.mchjong.client.McrLobbyScreen;
 import top.skyeyefast.mchjong.client.McrTableScreen;
-import top.skyeyefast.mchjong.client.McrReplayScreen;
+import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.client.TableLeaveScreen;
@@ -270,7 +270,7 @@ final class McrAutoTableSmoke {
                     break;
                 }
                 check(hint.isFocused() && hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
-                    "hints.mchjong.after_discard").getString()), "MCR native hint focus or narration lost the discard preview");
+                    "hints.mchjong.after_discard", "").getString()), "MCR native hint focus or narration lost the discard preview");
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
@@ -391,7 +391,7 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 16 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 check(replay.match().variant() == MahjongVariant.MCR && replay.cursor() == 0,
                     "MCR replay did not open at the initial deal");
                 replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
@@ -400,13 +400,13 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 17 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay.png", client.getMainRenderTarget(), message -> {});
                 replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
                 stage++;
             }
             case 18 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 check(replay.cursor() > 1, "MCR replay did not seek to settlement");
                 SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay-settlement.png", client.getMainRenderTarget(), message -> {});
                 replay.onClose();

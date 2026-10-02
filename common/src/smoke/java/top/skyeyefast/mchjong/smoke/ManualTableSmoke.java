@@ -45,9 +45,11 @@ final class ManualTableSmoke {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(Component.translatable("ui.mchjong.view_immersive").getString()))
             .findFirst().orElseThrow();
-        check(!button.active, "Immersive button enabled before dealing completed");
+        check(button.active, "Immersive button disabled during preparation");
         client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
+        check(((RiichiTableScreen) client.screen).immersive(), "View shortcut unavailable during preparation");
+        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut failed to return to seated play");
     }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;

@@ -37,7 +37,7 @@ class FurnitureShapeTest {
         var mesh = new Mesh();
         var pose = new PoseStack();
         var before = new org.joml.Matrix4f(pose.last().pose());
-        RiichiIndicator.renderStandby(pose, ignored -> mesh, 0);
+        TableIndicator.renderStandby(pose, ignored -> mesh, 0);
         assertFalse(mesh.vertices.isEmpty());
         assertTrue(mesh.vertices.stream().allMatch(vertex -> vertex.position.isFinite()));
         assertTrue(mesh.vertices.stream().allMatch(vertex -> Math.abs(vertex.position.x) <= .266f

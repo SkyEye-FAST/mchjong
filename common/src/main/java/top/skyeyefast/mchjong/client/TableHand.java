@@ -16,18 +16,19 @@ final class TableHand {
     private final List<top.skyeyefast.mchjong.engine.Meld> melds;
     private final int right, owner;
     private final boolean perspective;
+    private final top.skyeyefast.mchjong.engine.MahjongVariant variant;
 
     TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth) {
         this(player, owner, width, height, maxTileWidth, false);
     }
 
     TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
-        this(player.hand(), player.drawn(), player.melds(), owner, width, height, maxTileWidth, perspective);
+        this(player.hand(), player.drawn(), player.melds(), owner, width, height, maxTileWidth, perspective, top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI);
     }
 
     TableHand(List<Integer> tiles, int drawn, List<top.skyeyefast.mchjong.engine.Meld> melds,
-              int owner, int width, int height, int maxTileWidth, boolean perspective) {
-        this.owner = owner;
+              int owner, int width, int height, int maxTileWidth, boolean perspective, top.skyeyefast.mchjong.engine.MahjongVariant variant) {
+        this.owner = owner; this.variant = variant;
         this.melds = melds;
         this.perspective = perspective;
         right = width - (perspective ? 24 : 8);
@@ -89,7 +90,13 @@ final class TableHand {
 
     void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
                 TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye,
-                net.minecraft.resources.ResourceLocation backPreset, RiichiAnimation deal, RiichiBoard.Point source, long now) {
+                net.minecraft.resources.ResourceLocation backPreset, TableDeal deal, TableBoard.Point source, long now) {
+        render(graphics, selected, hovered, highlight, suppressedTile, preset, material, dye, backPreset, deal, source, now, TileMesh::face);
+    }
+    void render(GuiGraphics graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
+                TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye,
+                net.minecraft.resources.ResourceLocation backPreset, TableDeal deal, TableBoard.Point source, long now,
+                IntUnaryOperator artwork) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
@@ -108,14 +115,13 @@ final class TableHand {
                 int movingX = (int) Math.round(source.x() + (x(i) + tileWidth / 2.0 - source.x()) * progress);
                 int movingY = (int) Math.round(source.y() + (top + tileHeight / 2.0 - source.y()) * progress
                     - Math.sin(Math.PI * fraction) * 22);
-                TileGui.tile3d(graphics, tile, movingX - movingWidth / 2, movingY - movingHeight / 2, movingWidth,
-                    fraction < .45, false, false, false, Math.max(2, movingWidth / 8), preset, material, dye, backPreset);
+                TileGui.tileArtwork(graphics, tile, movingX - movingWidth / 2, movingY - movingHeight / 2, movingWidth,
+                    fraction < .45, false, false, false, Math.max(2, movingWidth / 8), preset, material, dye, backPreset, artwork);
                 continue;
             }
             if (tile != suppressedTile) {
-                if (perspective) TileGui.tile3d(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
-                    Math.max(2, tileWidth / 8), preset, material, dye, backPreset);
-                else TileGui.tile(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false, preset, material, dye, backPreset);
+                TileGui.tileArtwork(graphics, tile, x(i), top, tileWidth, tile < 0, false, false, false,
+                    perspective ? Math.max(2, tileWidth / 8) : 0, preset, material, dye, backPreset, artwork);
                 if (color != 0) graphics.renderOutline(x(i), top, tileWidth, tileHeight, color);
             }
         }
@@ -127,10 +133,10 @@ final class TableHand {
         int meldHeight = Math.round(meldTileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         int meldY = y + tileHeight - meldHeight;
         for (var meld : melds) {
-            meldX -= TileGui.meldWidth(meld, owner, meldTileWidth);
-            TileGui.meld(graphics, meld, owner, meldX, meldY, meldTileWidth, preset, material, dye, backPreset);
+            meldX -= TileGui.meldWidth(MeldLayout.of(meld, owner, variant, true), meldTileWidth);
+            TileGui.meldArtwork(graphics, MeldLayout.of(meld, owner, variant, true), meldX, meldY, meldTileWidth, 0, preset, material, dye, backPreset, artwork);
         }
     }
 
-    private int meldWidth(int width) { return melds.stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, width)).sum(); }
+    private int meldWidth(int width) { return melds.stream().mapToInt(meld -> TileGui.meldWidth(MeldLayout.of(meld, owner, variant, true), width)).sum(); }
 }

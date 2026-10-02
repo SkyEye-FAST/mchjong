@@ -15,7 +15,7 @@ final class TableToolbar {
     private TableToolbar() {}
 
     static List<MahjongButton> build(Screen parent, BlockPos pos, TableRoomView room, int width,
-                                     boolean immersive, boolean viewAvailable, Runnable switchView) {
+                                     boolean immersive, Runnable switchView) {
         var client = Minecraft.getInstance();
         int scale = immersive ? 2 : 1, right = width - 8 * scale, y = 8 * scale;
         var buttons = new ArrayList<MahjongButton>();
@@ -34,8 +34,7 @@ final class TableToolbar {
             var button = MahjongButton.create(caption, ignored -> actions[current].run())
                 .bounds(right - span, y, span, 20 * scale).tooltip(Tooltip.create(fullCaption)).build().textScale(scale);
             if (index == 2) {
-                button.active = viewAvailable;
-                button.setTooltip(Tooltip.create(Component.translatable(viewAvailable ? "ui.mchjong.switch_view" : "ui.mchjong.immersive_after_deal",
+                button.setTooltip(Tooltip.create(Component.translatable("ui.mchjong.switch_view",
                     TableKeys.VIEW.getTranslatedKeyMessage())));
             }
             buttons.add(button);
