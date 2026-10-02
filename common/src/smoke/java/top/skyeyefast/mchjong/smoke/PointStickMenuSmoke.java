@@ -141,13 +141,13 @@ final class PointStickMenuSmoke {
         verifySupplies(table);
         player.level().setBlock(TableGeometry.stool(table.getBlockPos(), 0), MahjongContent.STOOL.defaultBlockState(), 3);
         table.sit(player, 0);
-        var game = table.participantGame(player);
+        var game = table.participantSession(player);
         check(game != null, "Payment fixture did not obtain an authenticated seat");
         var recipient = new java.util.UUID(8418, 91);
         check(game.join(recipient, "Recipient", 1), "Recipient could not join the payment fixture");
         table.equipment().drawer(0).setItem(8, stick(1000, 3));
         SeatingFixtures.startPositioned(game, player.getUUID(), recipient);
-        check(game.phase() == top.skyeyefast.mchjong.engine.Game.Phase.SHUFFLE, "Payment fixture did not start");
+        check(game.view(null).phase() == top.skyeyefast.mchjong.engine.RiichiView.Phase.SHUFFLE, "Payment fixture did not start");
         var menu = open(player, table, 0);
         check(menu.clickMenuButton(player, 1) && menu.recipientSide() == 1, "Recipient row could not be selected");
         var initialOutput = net.minecraft.world.level.storage.TagValueOutput.createWithContext(
@@ -187,7 +187,7 @@ final class PointStickMenuSmoke {
         check(menu.getSlot(recipientSlot).getItem().getCount() == 6, "Collect-all took another human's sticks");
         check(expected.equals(snapshot(player, table, menu, bounds)), "Seated transfer changed the physical currency multiset");
         menu.broadcastChanges();
-        check(menu.score(0) == game.points(0) && menu.score(1) == game.points(1), "Settlement reference did not reach the native menu");
+        check(menu.score(0) == game.game().points(0) && menu.score(1) == game.game().points(1), "Settlement reference did not reach the native menu");
         // Native menu data travels as signed shorts; reconstruct both a large positive and negative score.
         var receiver = new PointStickMenu(211, player.getInventory());
         receiver.setData(3, (short) 100000);

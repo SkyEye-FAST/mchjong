@@ -19,8 +19,8 @@ public final class TableEquipment {
     private final SimpleContainer[] drawers = new SimpleContainer[4];
     private ItemStack cloth = ItemStack.EMPTY;
     private MahjongSupplies.Deck deck;
-    private top.skyeyefast.mchjong.engine.RuleConfig rules = top.skyeyefast.mchjong.engine.RuleSet.MAHJONG_SOUL_4.config()
-        .with(top.skyeyefast.mchjong.engine.RuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
+    private top.skyeyefast.mchjong.engine.RiichiRules rules = top.skyeyefast.mchjong.engine.RiichiPreset.MAHJONG_SOUL_4.config()
+        .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal());
     private int activeBox = -1;
     private boolean loading;
     private java.util.List<ItemStack> matchSticks = java.util.List.of();
@@ -59,6 +59,29 @@ public final class TableEquipment {
     public net.minecraft.resources.Identifier backPreset() { return backPreset; }
     public MahjongSupplies.Deck deck() { return deck; }
     public int activeBox() { return activeBox; }
+
+    /** Inspect each case independently; this does not change the selected Riichi deck or appearance. */
+    public McrStock mcrStock() {
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var candidate = top.skyeyefast.mchjong.item.McrDeck.select(boxes.getItem(slot));
+            if (candidate != null) return new McrStock(slot, candidate);
+        }
+        return null;
+    }
+
+    public record McrStock(int boxSlot, top.skyeyefast.mchjong.item.McrDeck deck) {
+        public McrStock {
+            if (boxSlot < 0 || boxSlot >= BOX_SLOTS) throw new IllegalArgumentException("Invalid MCR case slot");
+            java.util.Objects.requireNonNull(deck);
+        }
+    }
+    public top.skyeyefast.mchjong.item.SichuanDeck sichuanStock() {
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var candidate = top.skyeyefast.mchjong.item.SichuanDeck.select(boxes.getItem(slot));
+            if (candidate != null) return candidate;
+        }
+        return null;
+    }
     public boolean matchActive() { return !matchSticks.isEmpty(); }
 
     public void beginMatch() {
@@ -197,7 +220,7 @@ public final class TableEquipment {
         return mask;
     }
 
-    public boolean selectRules(top.skyeyefast.mchjong.engine.RuleConfig rules) {
+    public boolean selectRules(top.skyeyefast.mchjong.engine.RiichiRules rules) {
         if (this.rules.equals(rules)) return false;
         this.rules = rules;
         var previous = deck;

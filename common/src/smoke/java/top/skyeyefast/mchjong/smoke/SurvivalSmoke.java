@@ -44,8 +44,8 @@ final class SurvivalSmoke {
             check(!drops.getFirst().has(DataComponents.CONTAINER) && !drops.getFirst().has(DataComponents.BLOCK_ENTITY_DATA), "Furniture loot duplicated equipment");
             var packet = table.getUpdatePacket();
             check(packet != null && packet.getTag().equals(table.getUpdateTag(level.registryAccess())), "Wrong appearance packet");
-            check(!packet.getTag().contains("game") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
-            check("glass".equals(packet.getTag().getString("tile_material").orElseThrow()), "Missing glass appearance");
+            check(!packet.getTag().contains("session") && !packet.getTag().contains("boxes") && !packet.getTag().contains("cloth"), "Private inventory in appearance packet");
+            check("glass".equals(packet.getTag().getString("tile_material")), "Missing glass appearance");
         }
         var stool = new FurnitureBlockEntity(BlockPos.ZERO, MahjongContent.STOOL.defaultBlockState());
         stool.setLevel(level);

@@ -20,15 +20,57 @@ final class Wall {
     long openingSeed;
     int diceOne, diceTwo;
 
-    Wall(RuleConfig rules, long seed, int dealer) {
+    record Saved(List<Integer> tiles, List<Integer> replacements, List<Integer> dora, List<Integer> ura,
+                 int cursor, int liveEnd, int replacementIndex, int revealed, int pendingIndicators,
+                 int breakOffset, long openingSeed, int diceOne, int diceTwo) {
+        Saved {
+            tiles = List.copyOf(tiles);
+            replacements = List.copyOf(replacements);
+            dora = List.copyOf(dora);
+            ura = List.copyOf(ura);
+        }
+    }
+
+    private Wall() {}
+
+    Saved save() {
+        return new Saved(tiles, replacements, dora, ura, cursor, liveEnd, replacementIndex,
+            revealed, pendingIndicators, breakOffset, openingSeed, diceOne, diceTwo);
+    }
+
+    static Wall restore(Saved saved) {
+        var wall = new Wall();
+        wall.tiles = new ArrayList<>(saved.tiles());
+        wall.replacements = new ArrayList<>(saved.replacements());
+        wall.dora = new ArrayList<>(saved.dora());
+        wall.ura = new ArrayList<>(saved.ura());
+        wall.cursor = saved.cursor();
+        wall.liveEnd = saved.liveEnd();
+        wall.replacementIndex = saved.replacementIndex();
+        wall.revealed = saved.revealed();
+        wall.pendingIndicators = saved.pendingIndicators();
+        wall.breakOffset = saved.breakOffset();
+        wall.openingSeed = saved.openingSeed();
+        wall.diceOne = saved.diceOne();
+        wall.diceTwo = saved.diceTwo();
+        if (wall.cursor < 0 || wall.liveEnd < wall.cursor || wall.liveEnd > wall.tiles.size() - 14
+            || wall.replacementIndex < 0 || wall.replacementIndex > wall.replacements.size()
+            || wall.revealed < 1 || wall.revealed > 5 || wall.pendingIndicators < 0
+            || wall.pendingIndicators + wall.revealed > 5 || wall.dora.size() != 5 || wall.ura.size() != 5
+            || wall.diceOne < 0 || wall.diceOne > 6 || wall.diceTwo < 0 || wall.diceTwo > 6)
+            throw new IllegalArgumentException("Invalid Riichi wall state");
+        return wall;
+    }
+
+    Wall(RiichiRules rules, long seed, int dealer) {
         this(rules, seed, dealer, Tile.set(rules.sanma(), rules.redFives()));
     }
 
-    Wall(RuleConfig rules, long seed, int dealer, List<Integer> supplied) {
+    Wall(RiichiRules rules, long seed, int dealer, List<Integer> supplied) {
         this(rules, seed, dealer, supplied, true);
     }
 
-    Wall(RuleConfig rules, long seed, int dealer, List<Integer> supplied, boolean open) {
+    Wall(RiichiRules rules, long seed, int dealer, List<Integer> supplied, boolean open) {
         if (!Tile.validSet(supplied) || supplied.size() != (rules.sanma() ? 108 : 136) || !rules.allows(RedFives.of(supplied)))
             throw new IllegalArgumentException("A wall requires one complete supplied set");
         tiles = new ArrayList<>(supplied);
@@ -50,7 +92,7 @@ final class Wall {
     }
 
     int remaining() { return Math.max(0, liveEnd - cursor); }
-    void open(RuleConfig rules, int dealer) {
+    void open(RiichiRules rules, int dealer) {
         if (diceOne != 0 || cursor != 0) throw new IllegalStateException("Wall already opened");
         var random = new Random(openingSeed);
         diceOne = random.nextInt(6) + 1;
@@ -122,7 +164,7 @@ final class Wall {
         return result;
     }
 
-    static ReplayWall replay(RuleConfig rules, long seed, int dealer, List<Integer> supplied) {
+    static ReplayWall replay(RiichiRules rules, long seed, int dealer, List<Integer> supplied) {
         Wall wall = new Wall(rules, seed, dealer, supplied, true);
         return new ReplayWall(List.copyOf(wall.tiles), wall.breakOffset, List.copyOf(wall.replacements),
             List.copyOf(wall.dora), List.copyOf(wall.ura));

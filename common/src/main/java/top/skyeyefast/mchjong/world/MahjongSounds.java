@@ -8,8 +8,8 @@ import net.minecraft.resources.Identifier;
 
 /** Resource-pack event names form the customization contract on both loaders. */
 public final class MahjongSounds {
-    public static final List<String> EFFECTS = List.of("wall", "deal", "draw", "tsumogiri", "tedashi", "riichi",
-        "chi", "pon", "kan", "nuki", "ron", "tsumo", "draw_end", "match_end", "countdown", "turn");
+    public static final List<String> EFFECTS = List.of(
+        "tile_draw", "tile_discard", "tile_call", "tile_kong", "riichi_stick", "dice", "table_mechanical", "score_reveal", "grade_reveal", "ui_accent", "ron", "tsumo", "draw_end", "match_end", "countdown");
     public static final List<String> VOICES = java.util.stream.Stream.concat(
         java.util.stream.Stream.of("riichi", "double_riichi", "chi", "pon", "kan", "nuki", "ron", "tsumo", "draw_end", "match_end"),
         top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.keySet().stream()).toList();

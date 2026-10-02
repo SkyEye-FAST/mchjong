@@ -2,7 +2,7 @@ package top.skyeyefast.mchjong.engine
 
 /** Public per-opponent evidence. Risk, pressure and estimated value are ordinal heuristics. */
 internal class BotDefence(
-    private val view: TableView,
+    private val view: RiichiView,
     private val level: BotDifficulty,
     private val value: BotValue,
     unseen: IntArray,
@@ -42,13 +42,13 @@ internal class BotDefence(
             val wind = Tile.EAST + Math.floorMod(seat - view.dealer(), view.rules().players())
             opponent.melds().forEach { meld ->
                 meld.tiles().forEach { bonus += value.bonus(it) }
-                if (meld.type() != Meld.Type.CHI) {
+                if (meld.type() != Meld.Type.SEQUENCE) {
                     if (meld.kind() >= Tile.WHITE) han++
                     if (meld.kind() == wind) han++
                     if (meld.kind() == Tile.EAST + view.round() / view.rules().players()) han++
                 }
             }
-            if (opponent.melds().size == 4 && opponent.melds().none { it.type() == Meld.Type.CHI }) han += 2
+            if (opponent.melds().size == 4 && opponent.melds().none { it.type() == Meld.Type.SEQUENCE }) han += 2
             // Visible yaku/bonus content and elapsed turns strengthen an open-hand signal;
             // neither calls nor discards prove tenpai or concealed yaku.
             val progress = minOf(1.0, opponent.river().size / 16.0)
@@ -66,7 +66,7 @@ internal class BotDefence(
             // bonuses are an exchangeable estimate from public remaining counts,
             // never an inspection of concealed identities or an asserted han.
             val hiddenBonus = opponent.hand().size * bonusMass / maxOf(1, total)
-            val estimate = HandAnalyzer.estimatedPayment(
+            val estimate = RiichiHandAnalyzer.estimatedPayment(
                 maxOf(view.rules().minHan().toDouble(), han.toDouble()) + bonus + hiddenBonus,
                 seat == view.dealer(),
                 true,

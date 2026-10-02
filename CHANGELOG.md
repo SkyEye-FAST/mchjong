@@ -9,6 +9,69 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Include synchronized world policy in MCR and Sichuan room snapshots.
+
+- Unify Riichi, MCR and Sichuan lobbies with a separate variant sidebar, shared roster and preparation footer; use compact floating lobby/settings panels without left-edge control decorations or repeated headings, align rule editors and match toolbars, share World/Room/Personal settings, and use explicit personal choices with category-only resets.
+
+- Unify table presentation with aligned square controls and HUD cards, stable furniture UVs and head/item transforms, original Mahjong effects and a distinct points beat before Riichi grade announcements.
+
+- Give the Sichuan Bot gradual, public-copy-aware seven-pairs, all-pungs, full-flush and root/kong route evaluation for discards and calls, valuing compatible combinations through the shared scorer and current fan cap.
+- Give the MCR Bot gradual, public-copy-aware eight-fan route evaluation for discards and calls, preserving viable scoring structures instead of pursuing tile efficiency alone.
+- Run ledger-scored eight-hand Sichuan matches with dealer succession, explicit draw checks and persistent session hand advancement.
+- Redraw Kanto, Sichuan, Taiwan and Fujian tile faces, remove retired external source notices for the redrawn presets, and supply the regional presets as individual transparent PNG engravings for the shared atlas generator.
+- Share the immersive canvas and seated camera controls between Riichi and MCR, with separate rule-specific scenes and explicitly named Riichi presentation components.
+- Share exit voting and paused-match leave confirmation between Riichi and MCR, with explicitly named rule-specific network protocols and Riichi state.
+- Keep Riichi lobby settings outside match views, name rule-specific state explicitly, and give MCR independent player persistence.
+- Separate Riichi room and match ownership into `RiichiSession` and `RiichiGame`, with explicit restore state and Riichi-only view fields.
+- Use one room view and action protocol for Riichi and MCR, with target-variant capacity and explicit MCR hand confirmation.
+- Give Riichi and MCR one shared room lifecycle and one private table session save, with rule-specific match state and explicit Riichi naming.
+
+### Fixed
+
+- Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
+
+- Restore the Immersive view caption, separate lobby portraits from status text, use locale-appropriate phrasing and punctuation, reduce the stool inventory icon, and render furniture in both maid head slots with its full item textures and components.
+- Separate MIL SBR 2025 from T/TFMJ 01—2024: use each preset's wall layout, refund the SBR shooting kong instead of transferring its income, distinguish Kong and Root fan names, and preserve secret bound first-discard choices through play, saves and replays.
+- Keep MCR flowers and Riichi extracted norths in the same horizontal rail as hands and melds.
+- Center MCR rivers like Riichi, place melds and flowers on the owner's left, and omit walls from the immersive MCR table.
+- Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.
+- Highlight every tile in a wall pickup packet and allow grabbing any tile in that packet.
+- Close MCR wall corners with a fine tile seam while retaining the four projecting ends.
+
+### Added
+
+- Share private auto win, no calls and physical drawn-tile discard controls across Riichi, MCR and Sichuan, with rule-owned legal-action selection, MCR eight-fan qualification, Sichuan win/void/first-discard protection and restored per-seat preferences.
+- Extend the shared, world-policy-controlled room convenience hints to MCR and Sichuan: private-hand discard progress, public unseen copies, scorer-backed MCR eight-fan qualification, Sichuan void tiles and capped ready values, and recipient-only passed-win restrictions through the common hand-hint interaction.
+- Add one deterministic built-in Sichuan Bot for SBR 2025 and T/TFMJ 01—2024, supporting one human and three Bots through eight hands with shared room controls, private-view decisions, inactive Bot clocks, automatic confirmations, save restoration and replay participant flags.
+- Configure Sichuan room rules before play through a grouped, server-confirmed editor, with exact preset/Custom labels, host-only stale-safe proposals and readiness reset.
+- Record native Sichuan replays with physical openings, accepted decisions, complete settlement ledgers and cumulative scores, retain sealed hands through restart-safe matches, and browse event-by-event playback and final standings through the shared archive.
+- Add seated and immersive Sichuan tables, recipient-safe hand and void-suit displays, shared exit voting, detailed ledger results and explicit next-hand confirmations through the eight-hand match.
+- Add an independent Sichuan SBR 2025 hand engine, explicit rules, blood-battle payments and draw checks, private save/restore, and a shared three-variant lobby with Sichuan action controls.
+
+- Add Sichuan, Taiwan and Fujian tile faces with regional flowers and framed white dragons; list regional presets in Sichuan, Hong Kong, Taiwan and Fujian order.
+- Record native MCR replays with physical openings, authoritative decisions, penalties and settlement, and play them back on the MCR table through the shared archive.
+- Add a built-in MCR Bot through shared room controls, supporting one human and three Bots through a complete sixteen-hand match with private-view decisions and persistent server scheduling.
+- Add configurable MCR action clocks, safe timeout defaults, automatic draws and flower replacement, and timed hand confirmation with exact countdown restoration.
+- Add seated and immersive MCR play with physical hand selection, shared camera controls and localized actions and fan names in all four languages.
+- Add built-in Hong Kong tile-face preset with multicolored traditional flower engravings and white dragon frame.
+- Play a fixed four-player, sixteen-hand MCR match on automatic tables using a complete 144-tile case, recipient-safe controls and separate fan settlement.
+- Add discoverable external Riichi Bot choices with preset matching, server configuration and visible service errors.
+- Add independent MCR physical scenes with offset four-wall geometry, compact six-column rivers, source-marked flat melds and a separate public flower area.
+- Keep MCR walls in physical slots with two-roll opening metadata, first/third-stack dealer jumps and upper-before-lower front and tail traversal.
+- Separate MCR declarations from Riichi actions and name shared meld structures independently of rules, with explicit library and presentation mappings.
+- Select complete, appearance-matched 144-tile MCR stock from individual physical cases and map independent flower identities to item faces.
+- Bind MCR matches to authenticated participants and observed seats, with presence pauses, unanimous hand advancement and restore-safe request identities.
+- Add recipient-safe MCR views with private actions, concealed-kong redaction, public flower/penalty data and separate bounded view encoding.
+- Add explicit MCR saves with validated wall/player state, resumable response windows and independent penalty/result restoration.
+- Add raw MCR dealing and independent zero-sum win, wrong-win penalty and exhaustive-draw payment records.
+- Add an engine-only sixteen-hand MCR match with ordered initial flower replacement, validated actions, single-winner arbitration, kong/robbing transactions and separate wrong-win penalties with hand-scoped stop-win status.
+- Add the engine's standard 144-tile MCR stock, separate physical flower area and finite wall with automatic tail replacement and complete tile accounting.
+- Add a privately bundled MCR hand-analysis boundary with explicit tile, meld and winning-context conversion and separate fan results; name the existing Riichi adapter `RiichiHandAnalyzer`.
+
+## [0.8.2] - 2026-09-28
+
+### Changed
+
 - Show built-in preset identity as a gray tooltip annotation while keeping choice labels to preset names.
 - Clarify personal settings and preset navigation with distinct category and source levels, and compact settlement tables with aligned numeric headings.
 - Separate participant hand visibility, spectator information policy and physical open-hands presentation, with server-side redaction for each viewer role.
@@ -396,7 +459,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.8.1...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.8.2...HEAD
+[0.8.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.2
 [0.8.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.1
 [0.8.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.0
 [0.7.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.7.2

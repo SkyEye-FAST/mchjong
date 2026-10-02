@@ -1,9 +1,7 @@
 package top.skyeyefast.mchjong.engine
 
-import kotlin.math.ln1p
-
 /** Complete hands use the engine scorer. Incomplete hands have explicitly heuristic potential. */
-internal class BotValue(private val view: TableView) {
+internal class BotValue(private val view: RiichiView) {
     @JvmField
     val dora: IntArray = HandBonuses.indicators(view.wall(), view.rules().sanma())
 
@@ -64,7 +62,7 @@ internal class BotValue(private val view: TableView) {
         val potentialHan = assessment.han + payoutOption + bonuses
         val estimate = if (viable) {
             // Cache point-table endpoints, not each continuously varying route
-            // estimate. Interpolation remains identical to HandAnalyzer's scenarios.
+            // estimate. Interpolation remains identical to RiichiHandAnalyzer's scenarios.
             val lower = kotlin.math.floor(potentialHan).toInt().coerceAtLeast(1)
             val fraction = (potentialHan - lower).coerceIn(0.0, 1.0)
             estimatedPayment(lower) * (1 - fraction) + estimatedPayment(lower + 1) * fraction
@@ -78,23 +76,14 @@ internal class BotValue(private val view: TableView) {
     }
 
     private fun estimatedPayment(han: Int): Double = potentialPayments.getOrPut(han) {
-        HandAnalyzer.estimatedPayment(han.toDouble(), wind() == 0, false, view.rules())
-    }
-
-    /** Upper bound for the general beam's retention/potential ranking only.
-     * Every supported plan is at most 13 estimated yaku han; an established
-     * declaration adds at most two. Legal tenpai scoring bypasses this beam. */
-    fun rankUpper(state: BotAnalysis.State, shanten: Int): Double {
-        val bonuses = bonus(state, Tile.ABSENT)
-        if (shanten == 0) return bonuses * 3.0
-        return 24 + bonuses * 3.0 + ln1p(estimatedPayment(15 + bonuses) / 1000) * 6
+        RiichiHandAnalyzer.estimatedPayment(han.toDouble(), wind() == 0, false, view.rules())
     }
 
     fun score(state: BotAnalysis.State, winning: Int, tsumo: Boolean, replacement: Boolean): HandScore? {
         val bonus = bonus(state, winning)
         val key = ScoreKey(
             state.hand().map { BotAnalysis.face(it) }.sorted(),
-            state.melds().map { it.libraryNotation() }.sorted(),
+            state.melds().map { MahjongUtilsInterop.meldNotation(it) }.sorted(),
             bonus,
             BotAnalysis.face(winning),
             tsumo,
@@ -106,7 +95,7 @@ internal class BotValue(private val view: TableView) {
             if (replacement && tsumo) add("Rinshan")
         }
         if (!scores.containsKey(key)) {
-            scores[key] = HandAnalyzer.score(
+            scores[key] = RiichiHandAnalyzer.score(
                 state.hand(),
                 state.melds(),
                 winning,
@@ -125,7 +114,7 @@ internal class BotValue(private val view: TableView) {
         expected(score, if (state.riichi() && view.rules().uraDora()) uraDistribution(state, winning, remaining) else doubleArrayOf(1.0))
 
     private fun expected(score: HandScore, ura: DoubleArray): Double = ura.indices.sumOf { bonus ->
-        ura[bonus] * HandAnalyzer.bonusPayment(score, bonus, wind() == 0, view.rules())
+        ura[bonus] * RiichiHandAnalyzer.bonusPayment(score, bonus, wind() == 0, view.rules())
     }
 
     fun waits(state: BotAnalysis.State, kinds: Set<Int>, remaining: IntArray): Waits {

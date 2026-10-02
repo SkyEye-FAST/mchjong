@@ -75,7 +75,7 @@ class TileMeshTest {
             pose.translate(.2, 1.1, -.4);
             pose.mulPose(Axis.YP.rotationDegrees(yaw));
             pose.mulPose(Axis.XP.rotationDegrees(pitch));
-            pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
             var transformed = new Mesh();
             TileMesh.drawOutline(pose, transformed, MahjongUi.ACCENT);
             for (int i = 0; i < local.vertices.size(); i++)
@@ -89,7 +89,7 @@ class TileMeshTest {
             var pose = new PoseStack();
             pose.mulPose(Axis.YP.rotationDegrees(90));
             pose.mulPose(Axis.XP.rotationDegrees(pitch));
-            pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
             var mesh = new Mesh();
             var material = top.skyeyefast.mchjong.item.TileMaterial.BONE;
             TileMesh.drawBody(pose, mesh, 0, material, null);

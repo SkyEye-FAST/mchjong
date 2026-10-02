@@ -10,7 +10,7 @@ import net.minecraft.world.item.Items;
 import top.skyeyefast.mchjong.config.BuiltinPresets;
 
 /** A player's local cosmetic choices. */
-public final class PersonalPresetsScreen extends Screen {
+public final class PersonalPresetsScreen extends Screen implements TableChildScreen {
     private final Screen parent;
     private int tab;
     private int page;
@@ -24,6 +24,7 @@ public final class PersonalPresetsScreen extends Screen {
         super(Component.translatable("settings.mchjong.personal_presets"));
         this.parent = parent;
     }
+    @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
@@ -35,7 +36,7 @@ public final class PersonalPresetsScreen extends Screen {
         contentSpan = layout.bodyWidth();
         previewWidth = tab == 0 ? Math.min(88, contentSpan / 4) : 0;
         for (int category = 0; category < 2; category++) {
-            int index = category, top = 38 + category * 78;
+            int index = category, top = layout.contentTop() + category * 78;
             addRenderableWidget(MahjongButton.create(Component.translatable(category == 0 ? "settings.mchjong.stick_preset" : "settings.mchjong.voice_preset"), ignored -> {
                 tab = index; page = 0; init();
             }).bounds(layout.left(), top, layout.rail(), 22).build().navigation());
@@ -55,12 +56,12 @@ public final class PersonalPresetsScreen extends Screen {
             var origin = tab == 0 ? RiichiStickPresets.source(id) : VoicePresets.source(id);
             Component label = tab == 0 ? RiichiStickPresets.label(id) : VoicePresets.label(id);
             addRenderableWidget(MahjongButton.create(label,
-                ignored -> choose(id)).bounds(contentLeft + previewWidth, 60 + i * 22,
+                ignored -> choose(id)).bounds(contentLeft + previewWidth, layout.contentTop() + i * 22,
                     contentSpan - previewWidth, 20)
                 .tooltip(origin.tooltip(label, id)).build()
                 .option(label, Component.empty()).checked(id.equals(tab == 0 ? TableSettings.get().riichiStickPreset : TableSettings.get().voicePreset)));
         }
-        int navY = height - 56;
+        int navY = layout.paging();
         var previous = MahjongButton.create(Component.literal("<"), ignored -> { page--; init(); })
             .bounds(contentLeft, navY, 30, 20).build();
         previous.active = page > 0;
@@ -70,7 +71,7 @@ public final class PersonalPresetsScreen extends Screen {
         next.active = (page + 1) * rows < choices.size();
         addRenderableWidget(next);
         addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> onClose())
-            .bounds(contentLeft + contentSpan - Math.min(120, contentSpan), height - 30, Math.min(120, contentSpan), 20).build().primary());
+            .bounds(contentLeft + contentSpan - Math.min(120, contentSpan), layout.footer(), Math.min(120, contentSpan), 20).build().primary());
     }
 
     private void choose(Identifier id) {
@@ -82,7 +83,7 @@ public final class PersonalPresetsScreen extends Screen {
             settings.voicePreset = id;
             settings.voiceSource = TableSettings.VoiceSource.SELECTED;
             VoicePresets.sendChoice();
-            TableAudio.settingsChanged();
+            RiichiAudio.settingsChanged();
         }
         try { settings.save(TableSettings.configPath()); saveFailed = false; }
         catch (IOException failure) { saveFailed = true; }
@@ -90,14 +91,13 @@ public final class PersonalPresetsScreen extends Screen {
     }
 
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
-        layout.paint(graphics, font, width, Component.translatable("settings.mchjong.scope.personal").append(" › ").append(title),
-            Component.translatable(tab == 0 ? "settings.mchjong.stick_preset" : "settings.mchjong.voice_preset").append(" / ").append(source.label()));
+        layout.paint(graphics, font, title);
         for (int category = 0; category < 2; category++)
-            graphics.fill(layout.left(), 38 + category * 78, layout.left() + layout.rail(), 108 + category * 78, MahjongUi.INPUT);
+            graphics.fill(layout.left(), layout.contentTop() + category * 78, layout.left() + layout.rail(), layout.contentTop() + 70 + category * 78, MahjongUi.INPUT);
         var choices = choices();
         int rows = layout.rows();
         if (tab == 0) for (int i = 0; i < rows && page * rows + i < choices.size(); i++) {
-            graphics.fill(contentLeft, 60 + i * 22, contentLeft + previewWidth, 80 + i * 22, MahjongUi.INPUT);
+            graphics.fill(contentLeft, layout.contentTop() + i * 22, contentLeft + previewWidth, layout.contentTop() + 20 + i * 22, MahjongUi.INPUT);
             var id = choices.get(page * rows + i);
             if (BuiltinPresets.STICKS.contains(id)) {
                 var item = switch (id.getPath()) {
@@ -106,14 +106,13 @@ public final class PersonalPresetsScreen extends Screen {
                     case "end_rod" -> Items.END_ROD;
                     default -> throw new IllegalStateException(id.toString());
                 };
-                graphics.item(new ItemStack(item), contentLeft + (previewWidth - 16) / 2, 62 + i * 22);
-            } else graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, RiichiStickPresets.texture(id),
-                contentLeft + 4, 67 + i * 22, 0, 0, previewWidth - 8, 7, 384, 32, 384, 32);
+                graphics.item(new ItemStack(item), contentLeft + (previewWidth - 16) / 2, layout.contentTop() + 2 + i * 22);
+            } else graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, RiichiStickPresets.texture(id), contentLeft + 4, layout.contentTop() + 7 + i * 22, 0, 0, previewWidth - 8, 7, 384, 32, 384, 32);
         }
         if (choices.size() > rows) graphics.centeredText(font,
-            (page + 1) + " / " + ((choices.size() - 1) / rows + 1), contentLeft + contentSpan / 2, height - 51, MahjongUi.MUTED);
-        if (saveFailed) graphics.centeredText(font, Component.translatable("settings.mchjong.save_failed"),
-            width / 2, height - 76, MahjongUi.NEGATIVE);
+            (page + 1) + " / " + ((choices.size() - 1) / rows + 1), contentLeft + contentSpan / 2, layout.paging() + 6, MahjongUi.MUTED);
+        if (saveFailed) MahjongUi.text(graphics, font, Component.translatable("settings.mchjong.save_failed"),
+            contentLeft, layout.paging() - 10, contentSpan, MahjongUi.NEGATIVE, false);
         super.extractRenderState(graphics, x, y, partialTick);
     }
     private java.util.List<Identifier> choices() {

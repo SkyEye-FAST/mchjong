@@ -14,7 +14,7 @@ import javax.imageio.ImageIO;
  * layout.
  */
 final class TileArtwork {
-    static final List<String> PRESETS = List.of("kansai", "kanto");
+    static final List<String> PRESETS = List.of("kansai", "kanto", "sichuan", "hong_kong", "taiwan", "fujian");
     static final int WIDTH = 256, HEIGHT = 384, ATLAS_WIDTH = 2048, ATLAS_HEIGHT = 4096;
     static final int FACE_COUNT = 45, BACK = 0;
     static final List<String> FACE_KEYS = List.of(
@@ -26,11 +26,13 @@ final class TileArtwork {
             "1q", "2q", "3q", "4q", "5q", "6q", "7q", "8q");
 
     private final BufferedImage[] engravings = new BufferedImage[FACE_COUNT];
+    private final String preset;
     private final String notice;
 
     TileArtwork(Path presets, String preset) throws IOException {
         if (!PRESETS.contains(preset))
             throw new IllegalArgumentException("Unknown face preset: " + preset);
+        this.preset = preset;
         Path directory = presets.resolve(preset);
         Path tilesDir = directory.resolve("tiles");
         for (int face = 0; face < FACE_COUNT; face++) {
@@ -71,7 +73,7 @@ final class TileArtwork {
                 g.setColor(Color.WHITE);
                 g.fillRect(4, 4, WIDTH - 8, HEIGHT - 8);
             }
-            if (face != 31 && engravings[face] != null) {
+            if (engravings[face] != null && (!preset.equals("kansai") && !preset.equals("kanto") || face != 31)) {
                 g.setRenderingHint(RenderingHints.KEY_INTERPOLATION, RenderingHints.VALUE_INTERPOLATION_BICUBIC);
                 // Preserve the source proportions on the 2:3 tile with a clear margin.
                 g.drawImage(engravings[face], 8, 32, 240, 320, null);

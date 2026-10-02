@@ -13,8 +13,8 @@ import java.util.regex.Pattern;
 import javax.imageio.ImageIO;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.io.TempDir;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiAction;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import static org.junit.jupiter.api.Assertions.*;
 
 class AssetContractTest {
@@ -40,7 +40,7 @@ class AssetContractTest {
                 .getAsJsonObject();
         JsonObject translations = JsonParser.parseString(Files.readString(languages.resolve("en_us.json")))
                 .getAsJsonObject();
-        assertEquals(26 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
+        assertEquals(25 + top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.size(), sounds.size());
         top.skyeyefast.mchjong.engine.ScoreAnnouncements.SUBTITLES.forEach((event, subtitle) ->
             assertEquals(subtitle, sounds.getAsJsonObject("voice." + event).get("subtitle").getAsString()));
         for (var entry : sounds.entrySet()) {
@@ -50,8 +50,14 @@ class AssetContractTest {
                 assertTrue(sound.getAsJsonArray("sounds").isEmpty());
             else
                 for (var choice : sound.getAsJsonArray("sounds")) {
-                    assertEquals("event", choice.getAsJsonObject().get("type").getAsString());
-                    assertTrue(choice.getAsJsonObject().get("name").getAsString().startsWith("minecraft:"));
+                    var item = choice.getAsJsonObject();
+                    assertFalse(item.has("type"), "Effects must use project-owned samples");
+                    String name = item.get("name").getAsString();
+                    assertTrue(name.startsWith("mchjong:table/"));
+                    byte[] audio = Files.readAllBytes(languages.getParent().resolve("sounds/" + name.substring(8) + ".ogg"));
+                    assertEquals("OggS", new String(audio, 0, 4, java.nio.charset.StandardCharsets.US_ASCII));
+                    assertTrue(audio.length > 1000);
+                    assertFalse(item.get("stream").getAsBoolean());
                 }
         }
     }
@@ -90,10 +96,16 @@ class AssetContractTest {
                                 .toList(),
                         format.matcher(value).results().map(m -> m.group()).sorted().toList(), language + ": " + key);
             }
-            for (RuleSet rules : RuleSet.values())
+            for (RiichiPreset rules : RiichiPreset.values())
                 assertTrue(translated.has(rules.translationKey()), language + ": " + rules);
-            for (Action.Type action : Action.Type.values())
-                assertTrue(translated.has(new Action(action).translationKey()), language + ": " + action);
+            for (RiichiAction.Type action : RiichiAction.Type.values())
+                assertTrue(translated.has(new RiichiAction(action).translationKey()), language + ": " + action);
+            for (var action : top.skyeyefast.mchjong.engine.McrAction.Type.values())
+                assertTrue(translated.has("mcr.mchjong.action." + action.name().toLowerCase(Locale.ROOT)), language + ": " + action);
+            for (var action : top.skyeyefast.mchjong.engine.SichuanAction.Type.values())
+                assertTrue(translated.has("sichuan.mchjong.action." + action.name().toLowerCase(Locale.ROOT)), language + ": " + action);
+            for (var variant : top.skyeyefast.mchjong.engine.MahjongVariant.values())
+                assertTrue(translated.has("variant.mchjong." + variant.name().toLowerCase(Locale.ROOT)), language + ": " + variant);
         }
     }
 
@@ -101,7 +113,7 @@ class AssetContractTest {
     void atlasContainsEveryDistinctFaceAtItsDeclaredCoordinates() throws Exception {
         Set<String> designs = new HashSet<>();
         for (String preset : TileArtwork.PRESETS) {
-            String prefix = preset.equals("kanto") ? "kanto/" : "";
+            String prefix = preset.equals("kansai") ? "" : preset + "/";
             BufferedImage atlas = ImageIO
                     .read(resources.resolve("assets/mchjong/textures/" + prefix + "tiles.png").toFile());
             assertEquals(2048, atlas.getWidth());
@@ -123,15 +135,21 @@ class AssetContractTest {
                 hashes.add(hash);
                 if (i == 0)
                     designs.add(hash);
-                if (i == 31)
+                if (i == 31 && (preset.equals("kansai") || preset.equals("kanto")))
                     assertTrue(Arrays.stream(tile.getRGB(8, 8, 240, 368, null, 0, 240))
                             .allMatch(pixel -> pixel == 0xffffffff), "White dragon remains blank");
+                else {
+                    var glyph = reference.glyph(i);
+                    long ink = Arrays.stream(glyph.getRGB(0, 0, 256, 384, null, 0, 256))
+                        .filter(pixel -> pixel >>> 24 >= 128).count();
+                    assertTrue(ink > 500 && ink < 256 * 384 / 2, preset + ": visible engraving without tile background on " + i);
+                }
             }
             assertEquals(45, hashes.size(), "Distinct numbered, honor, red and flower faces");
             assertTrue(Arrays.stream(atlas.getRGB(2016, 4064, 32, 32, null, 0, 32))
                     .allMatch(pixel -> pixel == 0xffffffff), "Neutral material swatch");
         }
-        assertEquals(2, designs.size(), "The presets must not render the same ordinary faces");
+        assertEquals(TileArtwork.PRESETS.size(), designs.size(), "The presets must not render the same ordinary faces");
         assertFalse(Files.exists(resources.resolve("assets/mchjong/textures/tile/edge.png")));
     }
 
@@ -207,7 +225,15 @@ class AssetContractTest {
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("kanto"));
         assertFalse(
                 Files.readString(resources.resolve("META-INF/licenses/kanto-source.json")).contains("unauthorized"));
+        for (String preset : List.of("sichuan", "taiwan", "fujian")) {
+            String notice = Files.readString(resources.resolve("META-INF/licenses/" + preset + "-source.json"));
+            assertTrue(notice.contains(preset));
+            assertFalse(notice.contains("unauthorized"));
+            JsonObject metadata = JsonParser.parseString(notice).getAsJsonObject();
+            assertFalse(metadata.has("details"), preset + " should not retain details");
+        }
         assertTrue(Files.readString(resources.resolve("META-INF/licenses/kansai-source.json")).contains("lietxia"));
+        assertTrue(Files.readString(resources.resolve("META-INF/licenses/hong_kong-source.json")).contains("samoheen"));
     }
 
     @Test
@@ -217,7 +243,9 @@ class AssetContractTest {
             JsonObject model = JsonParser
                     .parseString(Files.readString(resources.resolve("assets/mchjong/models/item/" + name + ".json")))
                     .getAsJsonObject();
-            assertTrue(model.getAsJsonObject("display").has("head"), name + " needs a head-slot transform");
+            if (name.endsWith("mahjong_table") || name.equals("mahjong_stool"))
+                assertFalse(model.has("display"), "Furniture context transforms belong to the shared renderer");
+            else assertTrue(model.getAsJsonObject("display").has("head"), name + " needs a head-slot transform");
         }
         for (String name : List.of("mahjong_table", "automatic_mahjong_table", "mahjong_stool")) {
             JsonObject model = JsonParser

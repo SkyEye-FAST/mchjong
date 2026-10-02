@@ -273,9 +273,9 @@ class PhysicalSuppliesTest {
             assertEquals(converted, deck.tiles().stream().filter(top.skyeyefast.mchjong.engine.Tile::red).count());
             assertEquals(136, new java.util.HashSet<>(deck.tiles()).size());
             equipment.boxes().setItem(1, updated);
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.M_LEAGUE.config());
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RiichiPreset.M_LEAGUE.config());
             assertEquals(converted == 3 ? 1 : -1, equipment.activeBox());
-            equipment.selectRules(top.skyeyefast.mchjong.engine.RuleSet.WRC.config());
+            equipment.selectRules(top.skyeyefast.mchjong.engine.RiichiPreset.WRC.config());
             assertEquals(0, equipment.activeBox());
             if (converted == 4) {
                 assertEquals(top.skyeyefast.mchjong.engine.RedFives.FOUR, MahjongSupplies.deck(printed).redFives());
@@ -299,6 +299,7 @@ class PhysicalSuppliesTest {
                 assertEquals(data.notation(), data.label(true, TileFacePreset.KANSAI).getString());
                 assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "bamboo", "chrysanthemum").get(flower), data.flowerKey(TileFacePreset.KANSAI));
                 assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "fortune", "prosperity", "longevity", "nobility").get(flower), data.flowerKey(TileFacePreset.KANTO));
+                assertEquals("flower.mchjong." + List.of("spring", "summer", "autumn", "winter", "plum", "orchid", "chrysanthemum", "bamboo").get(flower), data.flowerKey(TileFacePreset.HONG_KONG));
                 assertEquals(data, TileData.CODEC.parse(com.mojang.serialization.JsonOps.INSTANCE,
                     TileData.CODEC.encodeStart(com.mojang.serialization.JsonOps.INSTANCE, data).getOrThrow()).getOrThrow());
                 contents.set(37 + flower, stack);
@@ -326,6 +327,138 @@ class PhysicalSuppliesTest {
         }
         assertFalse(new TileData(42, TileMaterial.BONE, false).valid());
         assertFalse(new TileData(34, TileMaterial.BONE, true).valid());
+    }
+
+    @Test void sichuanStockUsesAllThreeSuitsFromOneUniformCase() {
+        var source = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
+        var original = source.copy();
+        var stock = top.skyeyefast.mchjong.item.SichuanDeck.select(source);
+        assertNotNull(stock);
+        assertEquals(top.skyeyefast.mchjong.engine.Tile.sichuanSet(), stock.tiles());
+        assertTrue(ItemStack.matches(original, source));
+        var contents = MahjongSupplies.contents(source);
+        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++) {
+            var tile = MahjongSupplies.tile(contents.get(slot));
+            if (!contents.get(slot).isEmpty() && tile.face() == 1) contents.set(slot, ItemStack.EMPTY);
+        }
+        MahjongSupplies.setContents(source, contents);
+        assertNull(top.skyeyefast.mchjong.item.SichuanDeck.select(source));
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        equipment.boxes().setItem(0, source);
+        var complement = MahjongSupplies.contents(original);
+        for (int slot = 0; slot < MahjongSupplies.TILE_SLOTS; slot++)
+            if (!complement.get(slot).isEmpty() && MahjongSupplies.tile(complement.get(slot)).face() != 1) complement.set(slot, ItemStack.EMPTY);
+        var partial = original.copy(); MahjongSupplies.setContents(partial, complement);
+        equipment.boxes().setItem(1, partial);
+        assertNull(equipment.sichuanStock());
+        equipment.boxes().setItem(1, original);
+        assertNotNull(equipment.sichuanStock());
+    }
+
+    @Test void mcrStockSelectsOneUniform144TileSetWithoutChangingEitherCase() {
+        var complete = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
+        complete.set(DataComponents.CUSTOM_NAME, Component.literal("MCR stock"));
+        var original = complete.copy();
+        var equipment = new top.skyeyefast.mchjong.world.TableEquipment(() -> {});
+        var ordinary = MahjongSupplies.completeBox(TileMaterial.BONE);
+        equipment.boxes().setItem(0, ordinary);
+        equipment.boxes().setItem(1, complete);
+        int riichiBox = equipment.activeBox();
+        var riichiDeck = equipment.deck();
+        var selected = equipment.mcrStock();
+        assertNotNull(selected);
+        assertEquals(1, selected.boxSlot());
+        assertEquals(144, selected.deck().tiles().size());
+        assertTrue(top.skyeyefast.mchjong.engine.Tile.validMcrSet(selected.deck().tiles()));
+        assertTrue(ItemStack.matches(original, complete));
+        assertEquals(riichiBox, equipment.activeBox());
+        assertEquals(riichiDeck, equipment.deck(), "Inspecting MCR stock cannot change the selected Riichi appearance");
+        assertFalse(equipment.matchActive(), "MCR selection cannot reserve Riichi point-stick kits");
+
+        var marked = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.THREE);
+        assertNull(top.skyeyefast.mchjong.item.McrDeck.select(marked), "Red fives cannot replace ordinary fives");
+        var surplus = MahjongSupplies.contents(complete);
+        surplus.get(0).grow(1);
+        surplus.set(42, MahjongSupplies.tile(new TileData(4, TileMaterial.BONE, true), 1));
+        var extras = box(surplus);
+        var unchanged = extras.copy();
+        assertEquals(144, top.skyeyefast.mchjong.item.McrDeck.select(extras).tiles().size());
+        assertTrue(ItemStack.matches(unchanged, extras), "Spare tiles and red markings stay in inventory");
+
+        var missingFlower = MahjongSupplies.contents(complete);
+        missingFlower.set(34, ItemStack.EMPTY);
+        missingFlower.get(35).grow(1);
+        assertNull(top.skyeyefast.mchjong.item.McrDeck.select(box(missingFlower)), "A duplicated flower cannot replace a missing one");
+        assertNotNull(MahjongSupplies.deck(box(missingFlower)), "Flowers remain outside the Riichi set");
+
+        List<java.util.function.Consumer<ItemStack>> mismatches = List.of(
+            stack -> stack.set(MahjongComponents.TILE, new TileData(34, TileMaterial.QUARTZ, false)),
+            stack -> stack.set(DataComponents.BASE_COLOR, DyeColor.RED),
+            stack -> stack.set(MahjongComponents.FACE_PRESET, TileFacePreset.KANTO),
+            stack -> stack.set(MahjongComponents.BACK_PRESET, net.minecraft.resources.Identifier.parse("example:other")));
+        for (var mismatch : mismatches) {
+            var items = MahjongSupplies.contents(complete);
+            mismatch.accept(items.get(34));
+            assertNull(top.skyeyefast.mchjong.item.McrDeck.select(box(items)), "Flowers must match all four appearance properties");
+            assertNotNull(MahjongSupplies.deck(box(items)));
+        }
+        var flowers = new ArrayList<ItemStack>();
+        for (int face = 34; face < 42; face++) flowers.add(MahjongSupplies.tile(new TileData(face, TileMaterial.BONE, false), 1));
+        equipment.boxes().setItem(1, box(flowers));
+        assertNull(equipment.mcrStock(), "Ordinary tiles in one box cannot be pooled with flowers from the other");
+        assertNotNull(equipment.deck());
+        assertTrue(ItemStack.matches(original, complete));
+    }
+
+    @Test void mcrPhysicalStockStartsAndRestoresAnIdentityBoundMatch(MinecraftServer server) {
+        var source = MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE);
+        var contents = MahjongSupplies.contents(source);
+        for (var stack : contents) if (stack.is(MahjongContent.TILE_ITEM)) {
+            stack.set(DataComponents.BASE_COLOR, DyeColor.CYAN);
+            stack.set(MahjongComponents.FACE_PRESET, TileFacePreset.KANTO);
+            stack.set(MahjongComponents.BACK_PRESET, net.minecraft.resources.Identifier.parse("example:mcr"));
+        }
+        MahjongSupplies.setContents(source, contents);
+        var saved = ItemStack.CODEC.encodeStart(RegistryOps.create(NbtOps.INSTANCE, server.registryAccess()), source).getOrThrow();
+        var loaded = ItemStack.CODEC.parse(RegistryOps.create(NbtOps.INSTANCE, server.registryAccess()), saved).getOrThrow();
+        var deck = top.skyeyefast.mchjong.item.McrDeck.select(loaded);
+        assertNotNull(deck);
+        assertEquals(DyeColor.CYAN, deck.back());
+        assertEquals(TileFacePreset.KANTO, deck.preset());
+        assertEquals(net.minecraft.resources.Identifier.parse("example:mcr"), deck.backPreset());
+        assertEquals(34, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.SPRING.id()).face());
+        assertEquals(35, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.SUMMER.id()).face());
+        assertEquals(36, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.AUTUMN.id()).face());
+        assertEquals(37, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.WINTER.id()).face());
+        assertEquals(38, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.PLUM.id()).face());
+        assertEquals(39, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.ORCHID.id()).face());
+        assertEquals(40, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.BAMBOO.id()).face());
+        assertEquals(41, deck.tile(top.skyeyefast.mchjong.engine.FlowerTile.CHRYSANTHEMUM.id()).face());
+        assertEquals(0, deck.tile(0).face());
+        assertThrows(IllegalArgumentException.class, () -> deck.tile(top.skyeyefast.mchjong.engine.Tile.HIDDEN));
+        assertThrows(IllegalArgumentException.class, () -> deck.tile(top.skyeyefast.mchjong.engine.Tile.id(4, 0, true)));
+
+        var participants = java.util.stream.IntStream.range(0, 4).mapToObj(seat ->
+            new top.skyeyefast.mchjong.engine.TableParticipant(new java.util.UUID(1, seat + 1), "Player " + seat)).toList();
+        var session = top.skyeyefast.mchjong.engine.McrSession.start(new java.util.UUID(2, 1), participants, 711, deck.tiles());
+        var mounts = new java.util.HashMap<java.util.UUID, Integer>();
+        for (int seat = 0; seat < 4; seat++) mounts.put(participants.get(seat).id(), seat);
+        session.synchronizeSeats(mounts);
+        var east = participants.getFirst().id();
+        var view = session.view(east);
+        var dealer = view.game().seats().getFirst();
+        assertEquals(14, dealer.hand().size() + dealer.flowers().size(), "Initial flowers are held separately before replacement");
+        assertEquals(view, top.skyeyefast.mchjong.engine.McrCodec.decodeSessionView(
+            top.skyeyefast.mchjong.engine.McrCodec.encodeSessionView(view)));
+        assertTrue(session.act(east, view.tableId(), view.incarnation(), view.game().decision(), 0));
+        String state = top.skyeyefast.mchjong.engine.McrCodec.saveSession(session);
+        var restored = top.skyeyefast.mchjong.engine.McrCodec.restoreSession(state);
+        assertTrue(restored.view(east).paused());
+        restored.synchronizeSeats(mounts);
+        assertEquals(session.view(east).game().seats(), restored.view(east).game().seats());
+        assertEquals(session.view(east).game().actions(), restored.view(east).game().actions());
+        assertTrue(ItemStack.matches(source, loaded));
+        assertEquals(saved, ItemStack.CODEC.encodeStart(RegistryOps.create(NbtOps.INSTANCE, server.registryAccess()), source).getOrThrow(), "Running a match does not rewrite physical box contents");
     }
 
     @Test void noRedCompositionRequiresFourOrdinaryFivesInEveryUsedSuit() {
@@ -541,7 +674,7 @@ class PhysicalSuppliesTest {
             publicData.keySet());
         assertTrue(ItemStack.matches(source, loaded.drawer(2).removeItemNoUpdate(0)));
         assertTrue(loaded.drawer(2).removeItemNoUpdate(0).isEmpty());
-        assertFalse(saved.contains("game"));
+        assertFalse(saved.contains("session"));
     }
 
     @Test void equipmentSnapshotsOwnTheirDrawerStacks(MinecraftServer server) {

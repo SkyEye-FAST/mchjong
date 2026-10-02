@@ -6,7 +6,7 @@ import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.network.PayloadPackets;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.network.TableSessionControlPayload;
 
 /** The last player to dismount decides whether the paused match remains at the table. */
 public final class TableLeaveScreen extends Screen {
@@ -52,7 +52,7 @@ public final class TableLeaveScreen extends Screen {
         if (answered) return;
         answered = true;
         if (minecraft.getConnection() != null) minecraft.getConnection().send(PayloadPackets.serverbound(
-            new TableControlPayload(pos, tableId, TableControlPayload.Operation.RESOLVE_LEAVE, decision, retain)));
+            new TableSessionControlPayload(pos, tableId, TableSessionControlPayload.Operation.RESOLVE_LEAVE, decision, retain)));
         minecraft.setScreen(null);
     }
 

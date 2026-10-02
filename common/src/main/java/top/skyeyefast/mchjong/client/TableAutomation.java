@@ -2,31 +2,53 @@ package top.skyeyefast.mchjong.client;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.function.Supplier;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.core.BlockPos;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.engine.AutoPlay;
-import top.skyeyefast.mchjong.engine.Game;
-import top.skyeyefast.mchjong.engine.TableView;
-import top.skyeyefast.mchjong.network.TableControlPayload;
+import top.skyeyefast.mchjong.engine.MatchAutomation;
+import top.skyeyefast.mchjong.engine.TableRoomView;
+import top.skyeyefast.mchjong.network.MatchAutomationPayload;
+import top.skyeyefast.mchjong.network.PayloadPackets;
 
 /** Collapsible match controls backed by the seated player's authoritative preferences. */
 final class TableAutomation {
-    private final TableScreen parent;
+    private final Screen parent;
+    private final Supplier<List<Toggle>> options;
+    record Toggle(String key, boolean enabled, Runnable send) {}
     private final Runnable rebuild;
     private boolean expanded;
     private boolean pending;
     private List<MahjongButton> buttons = List.of();
 
-    TableAutomation(TableScreen parent, Runnable rebuild) {
+    TableAutomation(Screen parent, Supplier<List<Toggle>> options, Runnable rebuild) {
         this.parent = parent;
+        this.options = options;
         this.rebuild = rebuild;
     }
 
-    static boolean available(TableView view) {
-        return view != null && view.viewerSeat() >= 0 && view.autoPlay() != null
-            && (view.phase() == Game.Phase.TURN || view.phase() == Game.Phase.REACTION) && view.exitVote() == null;
+    boolean available() { return !options.get().isEmpty(); }
+
+    static List<Toggle> common(BlockPos pos, TableRoomView room, long decision) {
+        if (room == null || room.automation() == null || room.paused() || room.exitVote() != null) return List.of();
+        var toggles = new ArrayList<Toggle>();
+        for (var option : MatchAutomation.Option.values()) {
+            String key = switch (option) {
+                case WIN -> "ui.mchjong.auto_win";
+                case NO_CALLS -> "ui.mchjong.no_calls";
+                case DISCARD -> "ui.mchjong.auto_discard";
+            };
+            boolean enabled = room.automation().enabled(option);
+            toggles.add(new Toggle(key, enabled, () -> {
+                var connection = Minecraft.getInstance().getConnection();
+                if (connection != null) connection.send(PayloadPackets.serverbound(new MatchAutomationPayload(
+                    pos, room.tableId(), room.incarnation(), decision, option, !enabled)));
+            }));
+        }
+        return toggles;
     }
 
     int width(int screenWidth) { return expanded ? Math.min(124, Math.max(96, (screenWidth - 28) / 3)) : 44; }
@@ -43,10 +65,11 @@ final class TableAutomation {
         rebuild.run();
     }
 
-    List<MahjongButton> build(TableView view, int screenWidth, int bottom, boolean horizontal) {
+    List<MahjongButton> build(int screenWidth, int bottom, boolean horizontal) {
         buttons = new ArrayList<>();
-        if (!available(view)) { pending = false; return buttons; }
-        int count = view.rules().sanma() ? 5 : 4;
+        var choices = options.get();
+        if (choices.isEmpty()) { pending = false; return buttons; }
+        int count = choices.size();
         int width = horizontal ? expanded ? Math.min(180, (screenWidth - 96 - count * 8) / count) : 46 : width(screenWidth) - 20;
         int gap = horizontal ? 8 : 0;
         int buttonHeight = horizontal ? 36 : 20;
@@ -54,31 +77,17 @@ final class TableAutomation {
         int height = horizontal ? buttonHeight : count * 20 + (count - 1) * gap, top = bottom - height;
         int horizontalSpan = count * width + count * gap + toggleWidth;
         int origin = horizontal ? Math.max(8, (screenWidth - horizontalSpan) / 2) : 8;
-        for (var option : AutoPlay.Option.values()) {
-            if (option == AutoPlay.Option.KITA && !view.rules().sanma()) continue;
-            String key = switch (option) {
-                case SORT -> "ui.mchjong.auto_sort";
-                case WIN -> "ui.mchjong.auto_win";
-                case NO_CALLS -> "ui.mchjong.no_calls";
-                case DISCARD -> "ui.mchjong.auto_discard";
-                case KITA -> "ui.mchjong.auto_kita";
-            };
-            var operation = switch (option) {
-                case SORT -> TableControlPayload.Operation.AUTO_SORT;
-                case WIN -> TableControlPayload.Operation.AUTO_WIN;
-                case NO_CALLS -> TableControlPayload.Operation.NO_CALLS;
-                case DISCARD -> TableControlPayload.Operation.AUTO_DISCARD;
-                case KITA -> TableControlPayload.Operation.AUTO_KITA;
-            };
-            boolean enabled = view.autoPlay().enabled(option);
+        for (int index = 0; index < choices.size(); index++) {
+            var choice = choices.get(index);
+            String key = choice.key();
+            boolean enabled = choice.enabled();
             var label = Component.translatable("settings.mchjong.toggle", Component.translatable(key),
                 Component.translatable(enabled ? "options.on" : "options.off"));
-            var button = new MahjongButton(origin + (horizontal ? option.ordinal() * (width + gap) : 0),
-                top + (horizontal ? 0 : option.ordinal() * (20 + gap)), width, buttonHeight, label, ignored -> {
-                var current = parent.view();
-                if (pending || !available(current)) return;
+            var button = new MahjongButton(origin + (horizontal ? index * (width + gap) : 0),
+                top + (horizontal ? 0 : index * (20 + gap)), width, buttonHeight, label, ignored -> {
+                if (pending || !available()) return;
                 pending = true;
-                parent.control(current, operation, current.decision(), !current.autoPlay().enabled(option));
+                choice.send().run();
                 rebuild.run();
             }) {
                 @Override protected void extractContents(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float partialTick) {

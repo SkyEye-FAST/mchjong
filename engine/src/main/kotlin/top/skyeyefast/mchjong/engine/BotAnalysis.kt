@@ -6,7 +6,7 @@ import kotlin.math.ln1p
 import kotlin.math.pow
 
 /** Decision-local shape cache and bounded draw/discard search. All draws are face categories. */
-internal class BotAnalysis(private val view: TableView, private val level: BotDifficulty) {
+internal class BotAnalysis(private val view: RiichiView, private val level: BotDifficulty) {
     @JvmField
     val value = BotValue(view)
 
@@ -20,7 +20,7 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     private val bestDiscards = HashMap<ShapeKey, Map<Int, TileEfficiency>>()
     private val hands = HashMap<ShapeKey, TileEfficiency>()
     private val waits = HashMap<ShapeKey, Set<Int>>()
-    private val advances = HashMap<State, Double>()
+    private val advances = HashMap<State, Forecast>()
 
     @JvmField
     var drawNodes = 0
@@ -120,10 +120,21 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         val terms: Utility,
     )
 
+    @JvmRecord
+    data class Forecast(
+        val endpoint: Double,
+        val danger: Double,
+        val reserve: Double,
+        val riichi: Double,
+        val win: Double,
+    ) {
+        fun total(): Double = endpoint - danger + reserve - riichi + win
+    }
+
     private data class ShapeKey(val hand: kotlin.collections.List<Int>, val melds: kotlin.collections.List<String>) {
         constructor(state: State) : this(
             state.hand().map { Tile.kind(it) }.sorted(),
-            state.melds().map { it.libraryNotation() }.sorted(),
+            state.melds().map { MahjongUtilsInterop.meldNotation(it) }.sorted(),
         )
     }
 
@@ -147,10 +158,10 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
     }
 
     fun discards(state: State): Map<Int, TileEfficiency> =
-        discards.getOrPut(ShapeKey(state)) { HandAnalyzer.discardEfficiency(state.hand(), state.melds(), false) }
+        discards.getOrPut(ShapeKey(state)) { RiichiHandAnalyzer.discardEfficiency(state.hand(), state.melds(), false) }
 
     fun shape(state: State): TileEfficiency =
-        hands.getOrPut(ShapeKey(state)) { HandAnalyzer.handEfficiency(state.hand(), state.melds(), false) }
+        hands.getOrPut(ShapeKey(state)) { RiichiHandAnalyzer.handEfficiency(state.hand(), state.melds(), false) }
 
     fun evaluate(state: State, shape: TileEfficiency, remaining: IntArray): Evaluation {
         val live = live(shape.improving, remaining)
@@ -160,13 +171,14 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         val potential = value.potential(state, shape.shanten, remaining)
         hands.putIfAbsent(key, shape)
         val waitValue = if (shape.shanten == 0) {
-            value.waits(state, waits.getOrPut(key) { HandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
+            value.waits(state, waits.getOrPut(key) { RiichiHandAnalyzer.waits(state.hand(), state.melds()) }, remaining)
         } else {
             BotValue.Waits.EMPTY
         }
         val points = if (shape.shanten == 0) waitValue.average() else potential.estimate
         // Ordinal utilities, not fitted win/deal-in probabilities or expected monetary returns.
-        val valueTerm = pointUtility(points, shape.shanten == 0)
+        val valueTerm = pointUtility(points, shape.shanten == 0) +
+            if (shape.shanten == 0) minOf(8.0, waitValue.quality()) * view.riichiSticks() * 0.4 else 0.0
         val legality = (if (level != BotDifficulty.EASY && !potential.viable && shape.shanten > 0) -45.0 else 0.0) +
             if (shape.shanten == 0 && waitValue.quality() == 0.0) -55.0 else 0.0
         val terms = Utility(speed(shape, remaining), potential.retention, valueTerm, waitValue.quality() * 2, legality)
@@ -175,25 +187,33 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
 
     /** One draw and best discard; unseen tiles are an exchangeable sampling approximation,
      * including opponents' tiles/dead wall, never a claim about the actual live wall. */
-    fun forward(state: State, baseline: Evaluation, replacement: Boolean): Double {
-        val distance = if (
-            view.phase() == Game.Phase.REACTION &&
+    private fun distance(state: State): Int = if (
+            view.phase() == RiichiView.Phase.REACTION &&
             state.melds().size == view.seats()[view.viewerSeat()].melds().size
         ) {
             Math.floorMod(view.viewerSeat() - view.turn(), view.rules().players())
         } else {
             view.rules().players()
         }
-        if (!replacement && view.remaining() < maxOf(1, distance)) return baseline.utility
+
+    fun canReachNextTurn(state: State): Boolean = view.remaining() >= maxOf(1, distance(state))
+
+    fun forward(state: State, baseline: Evaluation, replacement: Boolean): Forecast {
+        val distance = distance(state)
+        if (!replacement && !canReachNextTurn(state))
+            return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
         if (!replacement && baseline.shanten == 1) {
             return advances.getOrPut(state) { advance(state, baseline, distance) }
         }
         val branches = unseen.count { it > 0 }
-        if (drawNodes + branches > SEARCH_ROOTS * 37) return baseline.utility
+        check(drawNodes + branches <= SEARCH_ROOTS * 37) { "General search exceeded its root budget" }
         // Both endpoints use the same immediate evaluator, without another draw
         // hidden inside a good-shape analysis at the continuation leaves.
-        val leafBaseline = baseline.utility
-        var sum = 0.0
+        var endpoint = 0.0
+        var danger = 0.0
+        var reserve = 0.0
+        var riichi = 0.0
+        var win = 0.0
         var total = 0
         for (face in unseen.indices) {
             val count = unseen[face]
@@ -203,59 +223,52 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             remaining[face]--
             val drawn = tile(face)
             val withDraw = state.draw(drawn)
-            var best = Double.NEGATIVE_INFINITY
+            var best: Forecast? = null
             if (baseline.shanten == 0 && Tile.kind(drawn) in shape(state).improving) {
-                val win = value.score(state, drawn, true, replacement)
-                if (win != null) {
-                    sum += count * (120 + ln1p(value.winningPayment(state, drawn, win, unseen) / 1000.0) * 16)
+                val scored = value.score(state, drawn, true, replacement)
+                if (scored != null) {
+                    win += count * (120 + ln1p((value.winningPayment(state, drawn, scored, unseen) +
+                        view.riichiSticks() * 1000) / 1000.0) * 16)
                     total += count
                     continue
                 }
             }
             val shapes = if (state.riichi()) mapOf(Tile.kind(drawn) to shape(state)) else discards(withDraw)
-            // Rank each structural continuation once. Every tenpai continuation
-            // near readiness uses scoring; distant hands keep a two-leaf beam.
-            val candidates = ArrayList<State>()
+            // Every ready continuation is scored. Other continuations retain
+            // distinct speed, value and safety routes within the leaf budget.
+            val candidates = ArrayList<Pair<State, TileEfficiency>>()
             val faces = HashSet<Int>()
             for (discard in withDraw.hand()) {
                 if (state.riichi() && discard != drawn || !faces.add(face(discard))) continue
-                candidates += withDraw.discard(discard, false)
+                candidates += withDraw.discard(discard, false) to shapes[Tile.kind(discard)]!!
             }
-            val ready = if (baseline.shanten <= 1) candidates.filter { shapes[removedFace(withDraw, it) % 34]!!.shanten == 0 } else emptyList()
-            val leaves = ready.ifEmpty {
-                val order = compareByDescending<Pair<State, Double>> { it.second }
-                    .thenBy { it.first.orderKey() }
-                val upper = candidates.map { next ->
-                    val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
-                    next to (speed(candidateShape, remaining) + value.rankUpper(next, candidateShape.shanten))
-                }.sortedWith(order)
-                val beam = ArrayList<Pair<State, Double>>(3)
-                for ((next, ceiling) in upper) {
-                    // This is a conservative numerical bound, not an extra beam
-                    // cutoff. No omitted candidate can beat the retained top two.
-                    if (beam.size == 2 && ceiling < beam[1].second) break
-                    val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
-                    val potential = value.potential(next, candidateShape.shanten, remaining)
-                    beam += next to (speed(candidateShape, remaining) + potential.retention + ln1p(potential.estimate / 1000) * 6)
-                    beam.sortWith(order)
-                    if (beam.size > 2) beam.removeAt(2)
-                }
-                beam.map { it.first }
+            val ready = if (baseline.shanten <= 1) candidates.filter { it.second.shanten == 0 } else emptyList()
+            val leaves = if (ready.isEmpty()) selectLeaves(withDraw, candidates, remaining) else
+                ready.map { (next, candidateShape) -> Triple(next, candidateShape, evaluate(next, candidateShape, remaining)) }
+            for ((next, candidateShape, evaluated) in leaves) {
+                val result = continuation(withDraw, next, candidateShape, evaluated, remaining, replacement, distance)
+                if (best == null || result.total() > best.total()) best = result
             }
-            for (next in leaves) {
-                val candidateShape = shapes[removedFace(withDraw, next) % 34]!!
-                best = maxOf(best, continuation(withDraw, next, candidateShape, remaining, replacement, distance))
-            }
-            sum += count * if (best.isFinite()) best else leafBaseline
+            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+            endpoint += count * result.endpoint
+            danger += count * result.danger
+            reserve += count * result.reserve
+            riichi += count * result.riichi
+            win += count * result.win
             total += count
         }
-        return if (total == 0) baseline.utility else baseline.utility + sum / total - leafBaseline
+        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, win / total)
     }
 
     /** All advancing tenpai discards, plus bounded same-shanten improvements.
      * Keeping the drawn tile can improve a wait shape before it advances shanten. */
-    private fun advance(state: State, baseline: Evaluation, distance: Int): Double {
-        var gain = 0.0
+    private fun advance(state: State, baseline: Evaluation, distance: Int): Forecast {
+        var endpoint = 0.0
+        var danger = 0.0
+        var reserve = 0.0
+        var riichi = 0.0
+        var total = 0
         val improving = shape(state).improving
         for (face in unseen.indices) {
             val count = unseen[face]
@@ -264,48 +277,106 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
             remaining[face]--
             val withDraw = state.draw(tile(face))
             val shapes = bestDiscards.getOrPut(ShapeKey(withDraw)) {
-                HandAnalyzer.bestDiscardEfficiency(withDraw.hand(), withDraw.melds())
+                RiichiHandAnalyzer.bestDiscardEfficiency(withDraw.hand(), withDraw.melds())
             }
             val faces = HashSet<Int>()
-            var best = Double.NEGATIVE_INFINITY
+            var best: Forecast? = null
             val candidates = ArrayList<Pair<State, TileEfficiency>>()
             for (discard in withDraw.hand()) {
                 val shape = shapes[Tile.kind(discard)] ?: continue
                 if (!faces.add(face(discard))) continue
                 candidates += withDraw.discard(discard, false) to shape
             }
-            val leaves = if (face % 34 in improving) candidates else {
-                val ranked = candidates.sortedWith(compareByDescending<Pair<State, TileEfficiency>> { live(it.second.improving, remaining) }
-                    .thenBy { it.first.orderKey() }).take(2)
+            val leaves = if (face % 34 in improving) {
+                candidates.map { (next, shape) -> Triple(next, shape, evaluate(next, shape, remaining)) }
+            } else {
+                val ranked = selectLeaves(withDraw, candidates, remaining)
                 // Keep the unchanged hand as a value/defence baseline even when another
                 // shape has more immediate improving tiles.
-                (ranked + (withDraw.discard(tile(face), false) to shape(state))).distinctBy { it.first }
+                val unchanged = withDraw.discard(tile(face), false)
+                if (ranked.any { it.first == unchanged }) ranked else {
+                    val unchangedShape = shape(state)
+                    ranked + Triple(unchanged, unchangedShape, evaluate(unchanged, unchangedShape, remaining))
+                }
             }
-            for ((next, shape) in leaves) {
-                best = maxOf(best, continuation(withDraw, next, shape, remaining, false, distance))
+            for ((next, shape, evaluated) in leaves) {
+                val result = continuation(withDraw, next, shape, evaluated, remaining, false, distance)
+                if (best == null || result.total() > best.total()) best = result
             }
-            if (best.isFinite()) gain += count * (best - baseline.utility)
+            val result = best ?: Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+            endpoint += count * result.endpoint
+            danger += count * result.danger
+            reserve += count * result.reserve
+            riichi += count * result.riichi
+            total += count
         }
-        return baseline.utility + gain / maxOf(1, unseen.sum())
+        if (total == 0) return Forecast(baseline.utility, 0.0, defence.reserve(state), 0.0, 0.0)
+        return Forecast(endpoint / total, danger / total, reserve / total, riichi / total, 0.0)
     }
 
-    private fun continuation(before: State, next: State, shape: TileEfficiency, remaining: IntArray,
-                             replacement: Boolean, distance: Int): Double {
-        val evaluated = evaluate(next, shape, remaining)
+    private fun selectLeaves(before: State, candidates: List<Pair<State, TileEfficiency>>,
+                             remaining: IntArray): List<Triple<State, TileEfficiency, Evaluation>> {
+        if (candidates.size <= 2) return candidates.map { (state, shape) -> Triple(state, shape, evaluate(state, shape, remaining)) }
+        data class Leaf(val state: State, val shape: TileEfficiency, val evaluated: Evaluation,
+                        val safety: Double) {
+            fun offense(): Double = evaluated.utility - evaluated.terms.speed
+            fun total(): Double = evaluated.utility + safety
+        }
+        val leaves = candidates.distinctBy { it.first }.map { (state, shape) ->
+            val evaluated = evaluate(state, shape, remaining)
+            val discarded = tile(removedFace(before, state))
+            Leaf(state, shape, evaluated,
+                defence.reserve(state) - defence.penalty(discarded, defence.mode(evaluated)))
+        }
+        fun dominates(first: Leaf, second: Leaf): Boolean =
+            first.evaluated.shanten <= second.evaluated.shanten && first.evaluated.live >= second.evaluated.live &&
+                first.offense() >= second.offense() && first.safety >= second.safety &&
+                (first.evaluated.shanten < second.evaluated.shanten || first.evaluated.live > second.evaluated.live ||
+                    first.offense() > second.offense() || first.safety > second.safety)
+        val frontier = leaves.filter { leaf -> leaves.none { it !== leaf && dominates(it, leaf) } }
+        val selected = mutableListOf(frontier.maxWithOrNull(compareBy<Leaf> { it.total() }.thenByDescending { it.state.orderKey() })!!)
+        val dimensions: List<(Leaf) -> Double> = listOf(
+            { it.evaluated.terms.speed }, { it.offense() }, { it.safety },
+        )
+        val ranges = dimensions.map { dimension -> frontier.maxOf(dimension) - frontier.minOf(dimension) }
+        while (selected.size < 2) {
+            val next = frontier.asSequence().filter { it !in selected }.maxWithOrNull(
+                compareBy<Leaf> { leaf ->
+                    dimensions.indices.maxOf { dimension ->
+                        (dimensions[dimension](leaf) - selected.maxOf(dimensions[dimension])) /
+                            maxOf(1.0, ranges[dimension])
+                    }
+                }.thenBy { it.total() }.thenByDescending { it.state.orderKey() },
+            ) ?: break
+            selected += next
+        }
+        return selected.map { Triple(it.state, it.shape, it.evaluated) }
+    }
+
+    private fun continuation(before: State, next: State, shape: TileEfficiency, evaluated: Evaluation, remaining: IntArray,
+                             replacement: Boolean, distance: Int): Forecast {
         var utility = evaluated.utility
+        var selected = evaluated
+        var riichi = 0.0
         if (shape.shanten == 0 && !next.riichi() && next.melds().all { it.closed() } &&
             view.remaining() - (if (replacement) 1 else maxOf(1, distance)) >= view.rules().minRiichiWall() &&
             (!view.rules().needsRiichiDeposit() || view.seats()[view.viewerSeat()].points() >= 1000)) {
             val declared = State(next.hand(), next.melds(), next.norths(), next.river(), true, next.ronBlocked(), before.riichiHan())
             val ready = evaluate(declared, shape, remaining)
-            utility = maxOf(utility, ready.utility - riichiCost(ready))
+            val cost = riichiCost(ready, view.remaining() - (if (replacement) 1 else maxOf(1, distance)))
+            if (ready.utility - cost > utility) {
+                utility = ready.utility
+                selected = ready
+                riichi = cost
+            }
         }
         val discard = tile(removedFace(before, next))
-        return utility - defence.penalty(discard, defence.mode(evaluated)) + defence.reserve(next)
+        return Forecast(utility, defence.penalty(discard, defence.mode(selected)), defence.reserve(next),
+            riichi, 0.0)
     }
 
-    fun riichiCost(hand: Evaluation): Double {
-        val draws = maxOf(1.0, view.remaining() / view.rules().players().toDouble())
+    fun riichiCost(hand: Evaluation, remaining: Int = view.remaining()): Double {
+        val draws = maxOf(1.0, remaining / view.rules().players().toDouble())
         // Conditional gain is weighed against a certain deposit and locked defence.
         // The exchangeable-draw chance is an approximation, not a calibrated win rate.
         val mass = maxOf(1, unseen.sum()).toDouble()
@@ -313,7 +384,8 @@ internal class BotAnalysis(private val view: TableView, private val level: BotDi
         // Price a forfeited deposit on the same payout scale as the candidate hand.
         val deposit = if (view.rules().needsRiichiDeposit())
             (pointUtility(hand.points, true) - pointUtility(maxOf(0.0, hand.points - 1000), true)) * (1 - chance) else 0.0
-        return deposit + defence.pressure() * 8 + 4 / draws
+        return deposit + defence.pressure() * 8 + 4 / draws +
+            if (defence.placementUrgency(hand.points) < 1) 5.0 else 0.0
     }
 
     private fun pointUtility(points: Double, ready: Boolean): Double =

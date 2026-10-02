@@ -5,13 +5,13 @@ import java.util.HashSet
 /** Public table information and the recipient's own hand, never opponents' concealed tiles. */
 object VisibleTiles {
     @JvmStatic
-    fun counts(view: TableView): IntArray {
+    fun counts(view: RiichiView): IntArray {
         val counts = IntArray(34)
         for (tile in tiles(view)) counts[Tile.kind(tile)]++
         return counts
     }
 
-    internal fun tiles(view: TableView): Set<Int> {
+    internal fun tiles(view: RiichiView): Set<Int> {
         val visible = HashSet<Int>()
         if (view.viewerSeat() in view.seats().indices) visible += view.seats()[view.viewerSeat()].hand()
         for (seat in view.seats()) {

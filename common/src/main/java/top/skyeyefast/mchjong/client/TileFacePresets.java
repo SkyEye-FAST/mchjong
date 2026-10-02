@@ -65,7 +65,7 @@ public final class TileFacePresets {
             try (var reader = resource.openAsReader()) {
                 String name = path.getPath().substring("tile_face_presets/".length(), path.getPath().length() - 5);
                 var id = new TileFacePreset(Identifier.fromNamespaceAndPath(path.getNamespace(), name));
-                if (!id.equals(TileFacePreset.KANSAI) && !id.equals(TileFacePreset.KANTO)) return;
+                if (!TileFacePreset.BUILTINS.contains(id)) return;
                 var json = JsonParser.parseReader(reader).getAsJsonObject();
                 Definition definition = new Definition(Identifier.parse(json.get("atlas").getAsString()),
                     Identifier.parse(json.get("glyphs").getAsString()));
@@ -180,11 +180,6 @@ public final class TileFacePresets {
         update();
     }
 
-    private static Definition register(TileFacePreset preset, Map<String, byte[]> images, String prefix,
-                                       Set<Identifier> locations) throws IOException {
-        return register(preset, TileFaceImages.compose(images), prefix, locations);
-    }
-
     private static Definition register(TileFacePreset preset, TileFaceImages.Pair pair, String prefix,
                                        Set<Identifier> locations) {
         String path = prefix + "/" + preset.id().getNamespace() + "/" + preset.id().getPath();
@@ -193,8 +188,6 @@ public final class TileFacePresets {
         var textures = Minecraft.getInstance().getTextureManager();
         textures.register(atlasId, new PresetTexture(pair.atlas()));
         textures.register(glyphsId, new PresetTexture(pair.glyphs()));
-
-
         locations.add(atlasId); locations.add(glyphsId);
         return new Definition(atlasId, glyphsId);
     }
@@ -214,7 +207,11 @@ public final class TileFacePresets {
         var merged = new HashMap<>(local);
         merged.putAll(server);
         definitions = Map.copyOf(merged);
-        choices = merged.keySet().stream().sorted(java.util.Comparator.comparing(TileFacePreset::getSerializedName)).toList();
+        choices = merged.keySet().stream().sorted(java.util.Comparator
+            .comparingInt((TileFacePreset id) -> {
+                int index = TileFacePreset.BUILTINS.indexOf(id);
+                return index < 0 ? TileFacePreset.BUILTINS.size() : index;
+            }).thenComparing(TileFacePreset::getSerializedName)).toList();
         TileRenderTypes.reload();
     }
 }

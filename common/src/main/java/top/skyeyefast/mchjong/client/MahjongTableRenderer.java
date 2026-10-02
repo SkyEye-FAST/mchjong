@@ -13,7 +13,7 @@ import net.minecraft.client.renderer.rendertype.RenderTypes;
 import net.minecraft.client.renderer.state.level.CameraRenderState;
 import net.minecraft.util.Util;
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -25,18 +25,23 @@ public final class MahjongTableRenderer
     private enum Layer { BACK, BODY, FACE, PATTERN, OUTLINE }
 
     public static final class State extends BlockEntityRenderState {
-        TableView view;
+        RiichiView view;
         FurnitureWood wood;
         net.minecraft.world.item.DyeColor cloth;
         boolean automatic;
+        boolean lobby;
+        List<McrTableScene.Piece> mcrPieces;
+        top.skyeyefast.mchjong.item.McrDeck mcrDeck;
+        List<SichuanTableScene.Piece> sichuanPieces;
+        top.skyeyefast.mchjong.item.SichuanDeck sichuanDeck;
         TileMaterial material;
         net.minecraft.world.item.DyeColor back;
         TileFacePreset preset;
         net.minecraft.resources.Identifier backPreset;
-        TableAnimation animation;
+        RiichiAnimation animation;
         boolean animated;
         long now;
-        List<TableAnimation.Frame> frames = List.of();
+        List<RiichiAnimation.Frame> frames = List.of();
     }
 
     public MahjongTableRenderer(BlockEntityRendererProvider.Context context) {}
@@ -50,6 +55,11 @@ public final class MahjongTableRenderer
         state.wood = table.wood();
         state.cloth = table.equipment().hasCloth() ? table.equipment().clothColor() : null;
         state.automatic = table.automatic();
+        state.lobby = table.clientRoom() == null || table.clientRoom().lobby();
+        state.mcrDeck = table.clientMcrDeck();
+        state.mcrPieces = table.clientMcrView() == null ? null : McrTableScene.build(table.clientMcrView().game());
+        state.sichuanDeck = table.clientSichuanDeck();
+        state.sichuanPieces = table.clientSichuanView() == null ? null : SichuanTableScene.build(table.clientSichuanView().game());
         state.material = table.equipment().material();
         state.back = table.equipment().back();
         state.preset = table.equipment().preset();
@@ -60,7 +70,7 @@ public final class MahjongTableRenderer
             return;
         }
         state.now = Util.getMillis();
-        state.animation = TableAnimation.of(table);
+        state.animation = RiichiAnimation.of(table);
         state.animation.accept(state.view, state.now);
         state.animated = TableSettings.get().animations;
         state.frames = state.animated ? state.animation.sample(state.now) : state.animation.settled();
@@ -71,6 +81,18 @@ public final class MahjongTableRenderer
         pose.pushPose();
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, state.lightCoords, state.wood, state.cloth, state.automatic);
+        if (state.automatic && state.lobby) RiichiIndicator.renderStandby(pose, buffers, state.lightCoords);
+        if (state.sichuanPieces != null && state.sichuanDeck != null) {
+            var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);
+            var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
+            SichuanSceneRenderer.render(state.sichuanPieces, state.sichuanDeck, pose, buffers, state.lightCoords,
+                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece));
+        } else if (state.mcrPieces != null && state.mcrDeck != null) {
+            var screen = Minecraft.getInstance().screen instanceof McrTableScreen mcr
+                && mcr.tablePos().equals(state.blockPos) ? mcr : null;
+            McrSceneRenderer.render(state.mcrPieces, state.mcrDeck, pose, buffers, state.lightCoords,
+                piece -> screen == null ? 0 : screen.highlight(piece), piece -> screen != null && screen.selected(piece));
+        }
         pose.popPose();
         if (state.view == null) {
             buffers.submit(pose);
@@ -85,9 +107,9 @@ public final class MahjongTableRenderer
             tiles(state, pose, buffers, Layer.BODY);
         }
         tiles(state, pose, buffers, Layer.FACE);
-        if (state.automatic) TableIndicator.render(state.view, pose, buffers, state.lightCoords);
-        TableDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
-        TableDice.renderWorld(state.view, pose, collector, state.lightCoords);
+        if (state.automatic) RiichiIndicator.render(state.view, pose, buffers, state.lightCoords);
+        RiichiDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
+        RiichiDice.renderWorld(state.view, pose, collector, state.lightCoords);
         if (glass) {
             tiles(state, pose, buffers, Layer.BACK);
             tiles(state, pose, buffers, Layer.BODY);
@@ -106,10 +128,10 @@ public final class MahjongTableRenderer
             case PATTERN -> TileRenderTypes.backPattern(state.backPreset);
             case OUTLINE -> RenderTypes.lines();
         });
-        TableScreen screen = TableScreen.active(Minecraft.getInstance().screen);
-        for (TableAnimation.Frame frame : state.frames) {
-            TableScene.Piece piece = frame.piece();
-            if (piece.area() == TableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
+        RiichiTableScreen screen = RiichiTableScreen.active(Minecraft.getInstance().screen);
+        for (RiichiAnimation.Frame frame : state.frames) {
+            RiichiTableScene.Piece piece = frame.piece();
+            if (piece.area() == RiichiTableScene.Area.RIVER && !TableSettings.get().showRiver) continue;
             int highlight = layer == Layer.OUTLINE && screen != null ? screen.highlight(state.blockPos, piece) : 0;
             if (layer == Layer.OUTLINE && highlight == 0) continue;
             pose.pushPose();
@@ -118,7 +140,7 @@ public final class MahjongTableRenderer
             pose.translate(position.x, position.y + (selected ? .035 : 0), position.z);
             pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
             pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
-            pose.scale(TableScene.TILE_SCALE, TableScene.TILE_SCALE, TableScene.TILE_SCALE);
+            pose.scale(RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE, RiichiTableScene.TILE_SCALE);
             // A face-down tile turns the back image toward the table center, including during a flip.
             boolean faceDown = frame.pitch() > 0;
             switch (layer) {

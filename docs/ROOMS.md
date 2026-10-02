@@ -1,18 +1,67 @@
 # Rooms, permissions and settings
 
-The lobby directly exposes player count, rule preset, rule details, hand visibility,
-time allowances, invitations and participants. The primary button fills empty seats
-and starts seat preparation. Leave room and the host's Close room control stay
-in the top toolbar. The Settings button groups additional controls into World, Room and Personal.
+Riichi, MCR and Sichuan use the same lobby. Select the variant from the left
+sidebar, then use Players and bots to manage the roster or Match settings to
+configure the selected variant. Variant selection is available to the host during
+gathering on automatic tables without Bots. Fill empty seats and seat preparation
+have separate footer buttons. Leave room and the host's Close room control stay
+in the top toolbar. Settings groups controls into World, Room and Personal.
 Administrators can edit world values in the World tab; other players can inspect them. Personal
 display, input, camera and audio settings remain local to each player and are also
 available through MChjong's mod-list Config button. Automatic
 play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
-The room host can enable **Tenpai hints** in Settings → Room during preparation.
-The room shares this choice with every participant. When enabled, the table
-shows waits and unseen-copy counts from each player's authorized view.
+The room host can enable **Convenience hints** during preparation: Settings → Room
+or the lobby Match settings tab for all three variants. All three rules share
+the setting, including when changing variants. World `allowConvenienceHints`
+can disable it in both waiting and running rooms.
+
+Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
+a legal discard previews the resulting hand. Activate the MCR/Sichuan diamond
+to page through tile rows when the popup needs more space. Riichi shows its structural waits.
+MCR shows shanten, improving tiles and structural waits, with non-flower fan for
+ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
+offered winning tile uses its public last-wall/robbing-kong circumstances. Future
+draw circumstances are not assumed. Flowers do not satisfy the minimum.
+
+Sichuan shows remaining void-suit tiles until the suit clears, then shanten and
+improving tiles. Ready hands show each wait's structural fan and capped value,
+and their maximum ready value under the room rules. These draw-check values
+exclude win circumstances and self-draw bonuses. A passed-win restriction is
+shown only to its owner; it restricts discard wins to higher capped fan until
+the engine clears it. Hints do not declare wins or submit actions.
+
+Counts use your own hand and public tiles, deduplicate claimed tiles and include
+exhausted structural waits at zero. They describe unseen copies, never the real
+wall or opponents' concealed hands. A structurally ready hand can therefore have
+no publicly available copies; Sichuan readiness still follows its draw scorer.
+
+## MCR Bot rooms
+
+Select MCR with a complete 144-tile set, fill the empty seats with Bots, begin seat
+preparation and ready at the assigned stool. The shared room controls also add or
+remove individual Bots. One human and three built-in Bots can play all sixteen
+hands. World `allowBots` controls Bot availability during preparation.
+
+Bots confirm each completed hand automatically. Human confirmation advances early;
+the server also advances after the reading period. Leaving the last occupied human
+stool pauses the match, and returning resumes it. A sole human can close the match
+directly; rooms with multiple humans use the shared exit vote.
+
+## Sichuan Bot rooms
+
+Select Sichuan with a complete 108-tile suited set. Both SBR 2025 and T/TFMJ 01—2024
+support one human and three built-in Bots through all eight hands. Fill the empty
+seats, or add/remove individual Bots, then begin seat preparation and ready at your
+assigned stool. Sichuan has one built-in Bot choice.
+
+Bots are ready automatically and confirm each completed hand. Human confirmation
+advances early; the server also advances after the reading period. Leaving the last
+human stool pauses Bots and the match. Returning resumes the saved decisions.
+World `allowBots` controls preparation; running matches retain their roster.
+Scores, final standings and replay participants include Bots. See
+[Bot analysis](BOTS.md#sichuan-built-in-opponent) for their decision boundary.
 
 ## World policy
 
@@ -59,7 +108,7 @@ individual mahjong options into world settings.
 
 ## Hand visibility
 
-The host chooses Hand visibility directly in the lobby before play. The choice is
+The host chooses Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
 saved with that table, and changing it clears readiness:
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
@@ -93,9 +142,9 @@ a remaining human. Standing up to move to an assigned stool retains room members
 
 Players join by sitting on a stool. The waiting room has three stages: gathering,
 wind drawing on an ordinary table, and occupying the assigned seats. The host
-can fill empty places with bots or configure them directly on the top seat cards.
+can fill empty places with bots or configure them directly in the roster rows.
 
-The centered primary button fills empty places, then advances seat preparation.
+Fill empty seats adds Bots; the separate primary button advances seat preparation.
 Once all places have occupants, an ordinary table presents
 face-down wind tiles: each human chooses one, then bots draw the remainder. An
 automatic table shuffles the entire roster immediately. The original east seat is
@@ -103,7 +152,7 @@ the south-side stool; the other winds follow the physical table order. The inter
 shows each destination's coordinates so wind assignments cannot be confused with
 world compass directions.
 
-Assignment keeps the host, personal preferences and bot difficulty attached to
+Assignment keeps the host, personal preferences and bot choice attached to
 their respective participants. A player whose stool changed is dismounted and
 must sit on the assigned stool. The server verifies actual mounts, including after
 reload; a Ready packet cannot substitute for being there. All humans must be in
@@ -118,14 +167,18 @@ up during repositioning preserves the reservation; Leave room releases it.
 
 ## Computer players
 
-Each bot can be set to Easy or Hard during any waiting-room stage.
-Changing the roster or difficulty clears human readiness. Bots remain ready while
-humans reposition themselves.
+Each Riichi bot can be set to Easy or Hard during any waiting-room stage. Automatic
+tables also offer the external Bots discovered from the administrator's
+[Bot Service configuration](BOTS.md#local-bot-service) when their player count
+and rule preset match the room. Changing the roster or Bot choice clears human
+readiness. Bots remain ready while humans reposition themselves.
 
-The control in each empty or bot-occupied top seat card cycles through Easy, Hard
-and Empty.
-A physically seated human cannot be replaced; their control is
-reserved for transferring room ownership. Fill empty seats adds Easy bots.
+The control in each empty or bot-occupied roster row cycles through Easy,
+Hard, compatible external Bots and Empty. External choices retain their stable
+Bot ID in the room save. A service error appears on the affected roster row and
+its hover details while that Bot waits for a decision. A physically seated human
+cannot be replaced; their control is reserved for transferring room ownership.
+Fill empty seats adds Easy bots.
 
 Easy prioritizes current shanten, live improving tiles and retaining value, with
 productive calls and basic defense against clear threats. Hard adds bounded
@@ -135,14 +188,14 @@ trade a little immediate efficiency for better development or retain safe tiles
 while advancing a valuable hand. Both compare legal calls, riichi, kans and north
 extraction under the table's rules.
 
-Both use only their own hand and public tiles. They do not read opponents'
-concealed tiles, even when room visibility allows players to see those hands, and do
-not inspect the wall seed. Bot decisions use deterministic heuristic evaluation.
+The built-in levels use only their own hand and public tiles. They do not read
+opponents' concealed tiles, even when room visibility allows players to see
+those hands, and do not inspect the wall seed. Their decisions use deterministic
+heuristic evaluation.
 
 ## Invitations
 
-Use Invite beside a vacant lobby seat to choose an online player. Invite player
-in the lobby opens the same selector. You can also use `/mchjong invite <player>`, with an online
+Use Invite player at the bottom of the lobby sidebar or Settings → Room to choose an online player. You can also use `/mchjong invite <player>`, with an online
 player's name or UUID. Invitations are recipient-bound,
 expire after 60 seconds, and are checked again when accepted. A player may send
 one invitation every five seconds.

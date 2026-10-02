@@ -26,8 +26,8 @@ final class BoxInterfaceSmoke {
             windowWidth = client.getWindow().getScreenWidth();
             windowHeight = client.getWindow().getScreenHeight();
             client.options.guiScale().set(3);
-            GLFW.glfwSetWindowSize(client.getWindow().handle(), 960, 720);
-            client.resizeGui();
+            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), 960, 720);
+            client.resizeDisplay();
             sample = 0;
             select(client, LANGUAGES[sample]);
             return false;
@@ -46,7 +46,10 @@ final class BoxInterfaceSmoke {
         var menu = (MahjongBoxMenu) client.player.containerMenu;
         if (reagentStage > 0) return reagents(client, output, menu);
         var choices = top.skyeyefast.mchjong.client.TileFacePresets.choices();
-        var preset = choices.get(sample % choices.size());
+        var builtins = top.skyeyefast.mchjong.item.TileFacePreset.BUILTINS;
+        require(choices.stream().filter(builtins::contains).toList().equals(builtins), "Built-in face preset order changed");
+        var preset = sample == 0 ? top.skyeyefast.mchjong.item.TileFacePreset.SICHUAN
+            : top.skyeyefast.mchjong.item.TileFacePreset.KANTO;
         if (!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset)) {
             require(settled < 400, "Face printing timed out: language=" + LANGUAGES[sample]
                 + ", requested=" + preset + ", received=" + MahjongSupplies.facePreset(menu.getSlot(0).getItem())
@@ -59,12 +62,11 @@ final class BoxInterfaceSmoke {
                 var option = client.screen.children().stream()
                     .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
                     .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
-                    .filter(child -> child.getMessage().getString().equals(
-                        top.skyeyefast.mchjong.client.TileFacePresets.label(preset).getString()))
+                    .filter(child -> child.getMessage().getString().equals(top.skyeyefast.mchjong.client.TileFacePresets.label(preset).getString()))
                     .findFirst().orElseThrow();
                 client.screen.setFocused(option);
                 option.setFocused(true);
-                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
+                client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
                 require(client.screen instanceof MahjongBoxScreen, "Selection did not return to the box");
                 require(!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(preset), "Selection applied before confirmation");
                 press(client, "box.mchjong.apply");
@@ -82,7 +84,7 @@ final class BoxInterfaceSmoke {
         require(bounds.top() >= 0 && bounds.bottom() <= client.screen.height - 24, "Box overlaps recipe-browser controls");
         for (var slot : menu.slots)
             require(slot.x >= 0 && slot.y >= 0 && slot.x + 16 < bounds.width() && slot.y + 16 < bounds.height(), "Slot outside the box panel");
-        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-small.png", client.getMainRenderTarget(), ignored -> {});
         if (sample == 0) {
             reagentStage = 1;
             reagent(client, net.minecraft.world.item.ItemStack.EMPTY);
@@ -128,8 +130,8 @@ final class BoxInterfaceSmoke {
         sample++;
         if (sample == LANGUAGES.length) {
             client.options.guiScale().set(scale);
-            GLFW.glfwSetWindowSize(client.getWindow().handle(), windowWidth, windowHeight);
-            client.resizeGui();
+            GLFW.glfwSetWindowSize(client.getWindow().getWindow(), windowWidth, windowHeight);
+            client.resizeDisplay();
             select(client, language);
         } else select(client, LANGUAGES[sample]);
         return false;
@@ -152,7 +154,7 @@ final class BoxInterfaceSmoke {
     }
 
     private void capture(Minecraft client, Path output, String state) {
-        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), "41-box-" + LANGUAGES[sample] + "-" + state + ".png", client.getMainRenderTarget(), ignored -> {});
     }
 
     private static void verifyTileLabels(Minecraft client) {
@@ -188,7 +190,7 @@ final class BoxInterfaceSmoke {
             .filter(child -> matches(child.getMessage(), key))
             .findFirst().orElseThrow();
         require(button.active && button.visible, "Inactive preset control: " + key);
-        button.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+        button.onPress();
     }
 
     private static boolean matches(Component message, String key) {

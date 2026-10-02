@@ -12,8 +12,8 @@ class ReplayDecisionAnalysisTest {
     @Test void hiddenOpponentTilesNeverChangeVisibleCandidateCounts() {
         ReplayMatch hiddenWaits = fixture(true);
         ReplayMatch otherTiles = fixture(false);
-        var first = hiddenWaits.hands().getFirst().decisions().getFirst();
-        var second = otherTiles.hands().getFirst().decisions().getFirst();
+        var first = hiddenWaits.riichi().hands().getFirst().decisions().getFirst();
+        var second = otherTiles.riichi().hands().getFirst().decisions().getFirst();
         var hidden = ReplayDecisionAnalysis.analyze(hiddenWaits, 0, first).getFirst();
         var clear = ReplayDecisionAnalysis.analyze(otherTiles, 0, second).getFirst();
 
@@ -25,7 +25,7 @@ class ReplayDecisionAnalysisTest {
     }
 
     private ReplayMatch fixture(boolean hideSouths) {
-        RuleConfig rules = RuleSet.TENHOU_4.config();
+        RiichiRules rules = RiichiPreset.TENHOU_4.config();
         var wall = wall(rules);
         var self = List.of(
             tile(0,0), tile(1,0), tile(2,0),
@@ -52,24 +52,24 @@ class ReplayDecisionAnalysisTest {
             }
             hands.add(List.copyOf(hand));
         }
-        var seats = new ArrayList<TableView.Seat>();
+        var seats = new ArrayList<RiichiView.Seat>();
         var participants = new ArrayList<ReplayMatch.Participant>();
         for (int seat = 0; seat < 4; seat++) {
             participants.add(new ReplayMatch.Participant(new UUID(8, seat + 1), "Player " + seat, false));
-            seats.add(new TableView.Seat(false, "Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
+            seats.add(new RiichiView.Seat(false, "Player " + seat, true, false, false, 25000, hands.get(seat), Tile.ABSENT,
                 List.of(), List.of(), List.of(), false, false, false));
         }
         var events = List.of(new ReplayHand.Event(ReplayHand.Kind.DRAW, 0, draw, null, false, false, true));
         var decisions = List.of(new ReplayHand.Decision(0, 1,
-            List.of(new Action(Action.Type.DISCARD, draw), new Action(Action.Type.DISCARD, self.getFirst())), 0));
+            List.of(new RiichiAction(RiichiAction.Type.DISCARD, draw), new RiichiAction(RiichiAction.Type.DISCARD, self.getFirst())), 0));
         var replayHand = new ReplayHand(1, 0, 0, 0, 0, List.of(25000,25000,25000,25000), hands,
             List.of(tile(Tile.WHITE, 0)), wall, events, decisions, seats, List.of(), "exhaustive",
             List.of(0,0,0,0), List.of(tile(Tile.WHITE,0)), List.of(), List.of(), List.of());
-        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, rules, 0, participants,
-            List.of(replayHand), false, rules.redFives());
+        return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, participants, MahjongVariant.RIICHI, false,
+            new RiichiReplay(rules, 0, rules.redFives(), List.of(replayHand)), null, null);
     }
 
-    private static ReplayWall wall(RuleConfig rules) {
+    private static ReplayWall wall(RiichiRules rules) {
         var tiles = Tile.set(false, rules.redFives());
         int end = tiles.size();
         var replacements = new ArrayList<Integer>();

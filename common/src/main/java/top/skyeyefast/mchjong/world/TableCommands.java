@@ -8,7 +8,7 @@ import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.engine.SpectatorHandVisibility;
 import top.skyeyefast.mchjong.engine.TimeControl;
 
@@ -62,13 +62,13 @@ public final class TableCommands {
         world.then(Commands.literal("forcedPreset")
             .then(Commands.argument("preset", com.mojang.brigadier.arguments.StringArgumentType.word())
                 .suggests((context, builder) -> net.minecraft.commands.SharedSuggestionProvider.suggest(
-                    java.util.stream.Stream.concat(java.util.stream.Stream.of("none"), java.util.Arrays.stream(RuleSet.values())
+                    java.util.stream.Stream.concat(java.util.stream.Stream.of("none"), java.util.Arrays.stream(RiichiPreset.values())
                         .map(value -> value.name().toLowerCase(java.util.Locale.ROOT))).toList(), builder))
                 .executes(context -> {
                     try {
                         String value = com.mojang.brigadier.arguments.StringArgumentType.getString(context, "preset");
                         WorldSettings.of(context.getSource().getServer()).setForcedPreset(value.equalsIgnoreCase("none") ? null
-                            : RuleSet.valueOf(value.toUpperCase(java.util.Locale.ROOT)));
+                            : RiichiPreset.valueOf(value.toUpperCase(java.util.Locale.ROOT)));
                     } catch (java.io.IOException | IllegalArgumentException failure) {
                         throw error("message.mchjong.world_settings_failed");
                     }
@@ -81,8 +81,8 @@ public final class TableCommands {
                     ServerPlayer player = context.getSource().getPlayerOrException();
                     ServerPlayer successor = net.minecraft.commands.arguments.EntityArgument.getPlayer(context, "player");
                     MahjongTableBlockEntity table = table(player);
-                    if (table.participantGame(successor) == null
-                        || !table.participantGame(player).transferHost(player.getUUID(), successor.getUUID()))
+                    if (table.participantSession(successor) == null
+                        || !table.participantSession(player).transferHost(player.getUUID(), successor.getUUID()))
                         throw error("message.mchjong.host_transfer_failed");
                     table.setChanged();
                     player.sendSystemMessage(Component.translatable("message.mchjong.host_transferred", successor.getDisplayName()));
@@ -112,8 +112,8 @@ public final class TableCommands {
                 .then(Commands.argument("reserve", IntegerArgumentType.integer(0, 600))
                     .then(Commands.argument("move", IntegerArgumentType.integer(1, 120)).executes(context -> {
                         ServerPlayer player = context.getSource().getPlayerOrException();
-                        MahjongTableBlockEntity table = table(player);
-                        boolean changed = table.participantGame(player).configureClock(player.getUUID(), new TimeControl(
+                        MahjongTableBlockEntity table = clockTable(player);
+                        boolean changed = table.participantRoom(player).configureClock(player.getUUID(), new TimeControl(
                             IntegerArgumentType.getInteger(context, "reserve"), IntegerArgumentType.getInteger(context, "move")));
                         if (!changed) throw error("message.mchjong.host_lobby");
                         table.setChanged();
@@ -154,9 +154,14 @@ public final class TableCommands {
         return new SimpleCommandExceptionType(Component.translatable(key)).create();
     }
     static MahjongTableBlockEntity table(ServerPlayer player) throws CommandSyntaxException {
+        var table = clockTable(player);
+        if (table.participantSession(player) != null) return table;
+        throw error("message.mchjong.seat_required");
+    }
+    private static MahjongTableBlockEntity clockTable(ServerPlayer player) throws CommandSyntaxException {
         if (player.isAlive() && !player.isSpectator() && player.getVehicle() instanceof SeatEntity seat
             && player.level().getBlockEntity(seat.tablePos()) instanceof MahjongTableBlockEntity table
-            && table.participantGame(player) != null) return table;
+            && table.participantRoom(player) != null) return table;
         throw error("message.mchjong.seat_required");
     }
 }

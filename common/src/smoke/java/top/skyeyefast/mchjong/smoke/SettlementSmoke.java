@@ -5,23 +5,23 @@ import java.util.ArrayList;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
-import top.skyeyefast.mchjong.engine.Action;
-import top.skyeyefast.mchjong.client.TableResults;
-import top.skyeyefast.mchjong.client.TableScreen;
-import top.skyeyefast.mchjong.client.TableAudio;
+import top.skyeyefast.mchjong.engine.RiichiAction;
+import top.skyeyefast.mchjong.client.RiichiResults;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
+import top.skyeyefast.mchjong.client.RiichiAudio;
 import top.skyeyefast.mchjong.client.TableSettings;
 import top.skyeyefast.mchjong.client.VoicePresets;
 import top.skyeyefast.mchjong.engine.ScoreAnnouncements;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.HandScore;
 import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Visual fixtures only; never replace the authoritative game or send fabricated actions. */
 final class SettlementSmoke {
-    private TableView fixture;
+    private RiichiView fixture;
     private int ticks;
     private boolean animations;
     private boolean sequenceComplete, heardRecording;
@@ -43,8 +43,8 @@ final class SettlementSmoke {
             voiceSource = settings.voiceSource;
             voiceVolume = settings.voiceVolume;
             var preset = net.minecraft.resources.Identifier.parse("smoke:readout");
-            // Decode an existing game recording; no third-party voice assets enter the project.
-            try (var sound = client.getResourceManager().open(net.minecraft.resources.Identifier.parse("minecraft:sounds/random/click.ogg"))) {
+            // Reuse an original project effect as a bounded smoke-only voice recording.
+            try (var sound = client.getResourceManager().open(net.minecraft.resources.Identifier.parse("mchjong:sounds/table/score_reveal.ogg"))) {
                 byte[] recording = sound.readAllBytes();
                 var recordings = new java.util.HashMap<String, byte[]>();
                 ScoreAnnouncements.SUBTITLES.keySet().forEach(event -> recordings.put(event, recording));
@@ -61,7 +61,7 @@ final class SettlementSmoke {
             fixture = fixture(table.clientView());
             client.setScreen(null);
             acceptFixture(table, fixture);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         }
         acceptFixture(table, fixture);
         if (ticks >= 110) {
@@ -74,8 +74,8 @@ final class SettlementSmoke {
             languageReload.join();
             if (localeTicks++ == 0) {
                 client.options.guiScale().set(4);
-                client.resizeGui();
-                client.setScreen(new TableScreen(table.getBlockPos()));
+                client.resizeDisplay();
+                client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             }
             if (localeTicks < 8) return false;
             if (localeTicks == 8) {
@@ -94,7 +94,7 @@ final class SettlementSmoke {
         if (!sequenceComplete) {
             if (++sequenceTicks > 900) throw new IllegalStateException("Settlement readout stalled");
             if (voiceDecode.isDone()) voiceDecode.join();
-            var readout = TableAudio.result(fixture);
+            var readout = RiichiAudio.result(fixture);
             if (readout == null) throw new IllegalStateException("Missing settlement readout");
             heardRecording |= VoicePresets.playing();
             int visible = readout.visibleRows(0);
@@ -106,10 +106,12 @@ final class SettlementSmoke {
                 captureStage++;
             } else if (captureStage == 2 && readout.scoredAt(0) >= 0
                     && net.minecraft.util.Util.getMillis() - readout.scoredAt(0) >= 50) {
+                if (readout.limitVisible(0)) throw new IllegalStateException("Grade appeared in the points beat");
                 capture(client, output, "06-readout-points.png");
                 captureStage++;
-            } else if (captureStage == 3 && readout.scoredAt(0) >= 0
-                    && net.minecraft.util.Util.getMillis() - readout.scoredAt(0) >= 500) {
+            } else if (captureStage == 3 && readout.limitVisible(0)) {
+                if (net.minecraft.util.Util.getMillis() - readout.scoredAt(0) < 750)
+                    throw new IllegalStateException("Grade did not leave a 750ms points beat");
                 capture(client, output, "06-readout-grade.png");
                 captureStage++;
             }
@@ -119,46 +121,44 @@ final class SettlementSmoke {
             voiceDecode.join();
             if (!heardRecording || captureStage != 4) throw new IllegalStateException("Readout did not visit every recorded stage");
             checkSettledPoints(client);
-            TableResults panel = panel(client);
-            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(panel.getX() + 15, panel.getY() + 25, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+            RiichiResults panel = panel(client);
+            client.screen.mouseClicked(panel.getX() + 15, panel.getY() + 25, 0);
             sequenceComplete = true;
         }
         ticks++;
         if (ticks == 2) {
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         } else if (ticks == 6) {
             capture(client, output, "07-readout-complete-immersive.png");
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
-            TableResults panel = panel(client);
+            RiichiResults panel = panel(client);
             int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
-            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
-                panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+            client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
         } else if (ticks == 20) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Second winner was not selectable");
             capture(client, output, "09-settlement-details.png");
             client.options.guiScale().set(3);
-            client.resizeGui();
+            client.resizeDisplay();
         } else if (ticks == 30) {
             checkBounds(client);
             capture(client, output, "10-settlement-small.png");
             click(client, "View table");
         } else if (ticks == 35) {
-            if (client.screen.children().stream().anyMatch(TableResults.class::isInstance))
+            if (client.screen.children().stream().anyMatch(RiichiResults.class::isInstance))
                 throw new IllegalStateException("Settlement could not be collapsed");
             click(client, "Show results");
         } else if (ticks == 40) {
-            TableResults panel = panel(client);
-            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
-                panel.getX() + 20, panel.getY() + 60, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
+            RiichiResults panel = panel(client);
+            client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
         } else if (ticks == 45) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
             capture(client, output, "11-settlement-keyboard.png");
             client.options.guiScale().set(4);
-            client.resizeGui();
+            client.resizeDisplay();
         } else if (ticks == 50) {
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
@@ -166,7 +166,7 @@ final class SettlementSmoke {
             checkSettledPoints(client);
             click(client, "Point changes");
             checkSettledPoints(client);
-            ((TableScreen) client.screen).receivedView();
+            ((RiichiTableScreen) client.screen).receivedView();
         } else if (ticks == 55) {
             checkBounds(client);
             checkSettledPoints(client);
@@ -176,7 +176,7 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "17-settlement-smallest-ranking.png");
             client.options.guiScale().set(2);
-            client.resizeGui();
+            client.resizeDisplay();
             click(client, "Point changes");
             checkSettledPoints(client);
         } else if (ticks == 70) {
@@ -185,48 +185,48 @@ final class SettlementSmoke {
             click(client, "Final standings");
         } else if (ticks == 80) {
             capture(client, output, "13-settlement-ranking.png");
-            var win = new TableView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
+            var win = new RiichiView.Win(0, 2, 126, new HandScore(78, 0, 6, 288000, 0, 0,
                 List.of("Daisushi", "SuankoTanki", "Tsuiso", "Tenhou"), 0));
             var changes = List.of(288000, 0, -288000, 0);
-            var seats = new ArrayList<TableView.Seat>();
+            var seats = new ArrayList<RiichiView.Seat>();
             for (int seat = 0; seat < fixture.seats().size(); seat++) {
                 var player = fixture.seats().get(seat);
-                seats.add(new TableView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(),
+                seats.add(new RiichiView.Seat(player.entityBot(), player.name(), player.occupied(), player.bot(),
                     player.ready(), 25000 + changes.get(seat), player.hand(), player.drawn(), player.melds(),
                     player.river(), player.norths(), player.riichi(), player.exposed(), player.doubleRiichi()));
             }
-            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber() + 1, fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+            fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber() + 1, fixture.rules(), RiichiView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, seats, List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
+                fixture.wallBreak(), fixture.wall(), null, seats, List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)),
                 List.of(win), "ron", changes, List.of(), List.of(), fixture.timeControl(), fixture.clocks(), List.of(),
-                fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+                fixture.playerHandVisibility(), fixture.openHands(), null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), ScoreAnnouncements.maximumTicks(List.of(win)), 0);
             acceptFixture(table, fixture);
-            TableAudio.finishResult();
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            RiichiAudio.finishResult();
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 85) {
             capture(client, output, "13-yakuman.png");
             client.options.guiScale().set(4);
-            client.resizeGui();
+            client.resizeDisplay();
         } else if (ticks == 90) {
             checkBounds(client);
             capture(client, output, "13-yakuman-smallest.png");
         } else if (ticks == 95) {
             checkBounds(client);
-            fixture = new TableView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
-                fixture.handNumber(), fixture.rules(), Game.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
+            fixture = new RiichiView(fixture.tableId(), fixture.revision() + 1, fixture.decision() + 1,
+                fixture.handNumber(), fixture.rules(), RiichiView.Phase.HAND_END, fixture.viewerSeat(), fixture.dealer(),
                 fixture.round(), fixture.honba(), fixture.riichiSticks(), fixture.turn(), fixture.remaining(),
-                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new Action(Action.Type.SKIP_SETTLEMENT)),
+                fixture.wallBreak(), fixture.wall(), null, fixture.seats(), List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)),
                 List.of(), "exhaustive", List.of(1500,1500,-1500,-1500), List.of(), List.of(),
-                fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of());
+                fixture.timeControl(), fixture.clocks(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, fixture.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
             acceptFixture(table, fixture);
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
-            if (!((TableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
         } else if (ticks == 105) {
             capture(client, output, "14-settlement-draw-immersive.png");
-            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
+            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
@@ -237,13 +237,13 @@ final class SettlementSmoke {
             VoicePresets.stop();
             fixture = fixture(fixture);
             acceptFixture(table, fixture);
-            TableAudio.finishResult();
+            RiichiAudio.finishResult();
         }
         return false;
     }
 
-    private static TableResults panel(Minecraft client) {
-        return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
+    private static RiichiResults panel(Minecraft client) {
+        return client.screen.children().stream().filter(RiichiResults.class::isInstance).map(RiichiResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
     }
 
@@ -263,48 +263,41 @@ final class SettlementSmoke {
     private static void click(Minecraft client, String label) {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
-            button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
     }
 
-    static void acceptFixture(MahjongTableBlockEntity table, TableView view) {
+    static void acceptFixture(MahjongTableBlockEntity table, RiichiView view) {
         table.acceptView(view);
-        var room = table.clientRoom();
-        table.acceptRoom(new top.skyeyefast.mchjong.engine.RoomView(room.host(), room.convenienceHints(), room.seating(),
-            room.availableWinds(), room.seats(), view.phase() == Game.Phase.MATCH_END
-                ? ScoreAnnouncements.maximumTicks(view.wins()) + Game.SETTLEMENT_TICKS
-                : view.phase() == Game.Phase.HAND_END ? ScoreAnnouncements.maximumTicks(view.wins()) : 0,
-            room.settlementSkippedSeats()));
-        if (table.clientView() == view) TableAudio.accept(table, view);
+        if (table.clientView() == view) RiichiAudio.accept(table, view);
     }
 
-    static TableView fixture(TableView base) {
-        var seats = new ArrayList<TableView.Seat>();
+    static RiichiView fixture(RiichiView base) {
+        var seats = new ArrayList<RiichiView.Seat>();
         int[] points = {49000, 33000, -7000, 25000};
         for (int seat = 0; seat < 4; seat++) {
             var original = base.seats().get(seat);
             List<Integer> hand = seat < 2 ? List.of(0, 4, 8, 36, 40, 44, 72, 76, 80, 108, 109, 124, 125)
                 : java.util.Collections.nCopies(13, Tile.HIDDEN);
             List<Meld> melds = switch (seat) {
-                case 0 -> List.of(new Meld(Meld.Type.CLOSED_KAN, List.of(16, 17, 18, 19), 0, Tile.ABSENT));
-                case 1 -> List.of(new Meld(Meld.Type.OPEN_KAN, List.of(52, 53, 54, 55), 2, 52),
-                    new Meld(Meld.Type.CLOSED_KAN, List.of(56, 57, 58, 59), 1, 56));
-                case 2 -> List.of(new Meld(Meld.Type.CHI, List.of(88, 92, 96), 1, 88));
+                case 0 -> List.of(new Meld(Meld.Type.CONCEALED_QUAD, List.of(16, 17, 18, 19), 0, Tile.ABSENT));
+                case 1 -> List.of(new Meld(Meld.Type.OPEN_QUAD, List.of(52, 53, 54, 55), 2, 52),
+                    new Meld(Meld.Type.CONCEALED_QUAD, List.of(56, 57, 58, 59), 1, 56));
+                case 2 -> List.of(new Meld(Meld.Type.SEQUENCE, List.of(88, 92, 96), 1, 88));
                 default -> List.of();
             };
-            seats.add(new TableView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
+            seats.add(new RiichiView.Seat(false, seat == 0 ? "A player with a long display name" : "Player " + (seat + 1),
                 true, false, false, points[seat], hand, Tile.ABSENT, melds, original.river(), List.of(), seat == 0, seat < 2, false));
         }
-        var wins = List.of(new TableView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
+        var wins = List.of(new RiichiView.Win(0, 2, 126, new HandScore(10, 40, 0, 24000, 8000, 8000,
                 List.of("Richi", "Ippatsu", "Chanta", "Sanshoku", "Haku", "SelfWind", "RoundWind"), 1)),
-            new TableView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
-        return new TableView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), Game.Phase.MATCH_END,
+            new RiichiView.Win(1, 2, 126, new HandScore(5, 40, 0, 8000, 4000, 2000, List.of("Honitsu", "Chanta", "Haku"), 1)));
+        return new RiichiView(base.tableId(), base.revision() + 10000, base.decision() + 10000, base.handNumber(), base.rules(), RiichiView.Phase.MATCH_END,
             0, 0, 7, 0, 0, 2, base.remaining(), base.wallBreak(), base.wall(), null, seats,
-            List.of(new Action(Action.Type.SKIP_SETTLEMENT)), wins, "ron",
-            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of());
+            List.of(new RiichiAction(RiichiAction.Type.SKIP_SETTLEMENT)), wins, "ron",
+            List.of(24000, 8000, -32000, 0), List.of(69.0, 13.0, -57.0, -25.0), List.of(15.0, 5.0, -15.0, -5.0), base.timeControl(), base.clocks(), List.of(1, 2, 4, 3), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), ScoreAnnouncements.maximumTicks(wins) + RiichiGame.SETTLEMENT_TICKS, 0);
     }
 }

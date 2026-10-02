@@ -106,7 +106,7 @@ public final class GenerateAssets {
             g.dispose();
             glyphGraphics.dispose();
         }
-        String path = preset.equals("kanto") ? "kanto/" : "";
+        String path = preset.equals("kansai") ? "" : preset + "/";
         text("assets/mchjong/tile_face_presets/" + preset + ".json",
             "{\"atlas\":\"mchjong:textures/" + path + "tiles.png\",\"glyphs\":\"mchjong:textures/" + path + "tile_glyphs.png\"}");
         png(path + "tiles", atlas);
@@ -131,8 +131,15 @@ public final class GenerateAssets {
             text("assets/mchjong/blockstates/" + name + ".json", "{\"variants\":{\"\":{\"model\":\"mchjong:block/" + name + "\"}}}");
         }
         for (String name : new String[]{"mahjong_table", "automatic_mahjong_table", "mahjong_stool", "mahjong_tile", "mahjong_box", "table_cloth", "point_stick"}) {
-            String rotation = name.equals("mahjong_tile") ? "[25,35,0]"
-                : name.endsWith("mahjong_table") ? "[15,225,0]" : "[30,225,0]";
+            if (name.endsWith("mahjong_table") || name.equals("mahjong_stool")) {
+                text("assets/mchjong/models/item/" + name + ".json",
+                    "{\"parent\":\"minecraft:builtin/entity\",\"textures\":{\"particle\":\"mchjong:furniture/wood_oak\"},\"gui_light\":\"side\"}");
+                text("assets/mchjong/items/" + name + ".json",
+                    "{\"model\":{\"type\":\"minecraft:special\",\"base\":\"mchjong:item/" + name
+                        + "\",\"model\":{\"type\":\"mchjong:supply\"}}}");
+                continue;
+            }
+            String rotation = name.equals("mahjong_tile") ? "[25,35,0]" : "[30,225,0]";
             String lighting = name.equals("mahjong_tile") ? "front" : "side";
             // Vanilla mirrors X translation and Y/Z rotation for the left hand.
             // Like a held sword, the free end rises outward while the printed surface faces inward.

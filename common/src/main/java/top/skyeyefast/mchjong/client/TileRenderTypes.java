@@ -43,5 +43,18 @@ public final class TileRenderTypes {
     public static RenderType gui(Identifier texture) {
         return RenderTypes.entityTranslucent(texture);
     }
-    public static void reload() {}
+    private static Identifier clothId(net.minecraft.world.item.DyeColor dye, boolean folded) {
+        return Identifier.fromNamespaceAndPath("mchjong", "cloth/" + dye.getName() + (folded ? "/folded" : "/table"));
+    }
+    public static RenderType cloth(net.minecraft.world.item.DyeColor dye, boolean folded) {
+        return RenderTypes.entityCutout(clothId(dye, folded));
+    }
+    public static void reload() {
+        var textures = net.minecraft.client.Minecraft.getInstance().getTextureManager();
+        for (var dye : net.minecraft.world.item.DyeColor.values()) for (boolean folded : new boolean[]{false, true}) {
+            var id = clothId(dye, folded);
+            textures.release(id);
+            textures.register(id, new ClothTexture(dye, folded));
+        }
+    }
 }

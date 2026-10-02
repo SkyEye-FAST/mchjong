@@ -15,7 +15,7 @@ import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayHand;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.YakuCatalog;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
@@ -141,7 +141,7 @@ final class ReplayResultPanel extends AbstractWidget {
         }
     }
 
-    private static int handWidth(TableView.Seat player, int owner, int concealed, int tileWidth) {
+    private static int handWidth(RiichiView.Seat player, int owner, int concealed, int tileWidth) {
         return concealed * (tileWidth + 1)
             + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
     }

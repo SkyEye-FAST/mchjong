@@ -15,11 +15,12 @@ import net.minecraft.util.ProblemReporter;
 import net.minecraft.world.level.storage.TagValueInput;
 import net.minecraft.world.level.storage.TagValueOutput;
 import top.skyeyefast.mchjong.compat.maid.MaidMahjongTask;
-import top.skyeyefast.mchjong.engine.Action;
+import top.skyeyefast.mchjong.engine.RoomAction;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.BotDifficulty;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.TrainingBot;
-import top.skyeyefast.mchjong.network.TableActionPayload;
+import top.skyeyefast.mchjong.network.RiichiActionPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
@@ -31,6 +32,8 @@ final class MaidIntegrationSmoke {
     private CompoundTag saved;
     private int maidSeat;
     private boolean capturedLobby;
+    private int headCapture;
+    private net.minecraft.client.gui.screens.Screen previousScreen;
     private CompletableFuture<Boolean> work;
 
     boolean tick(Minecraft client, BlockPos center, Path output) {
@@ -54,6 +57,24 @@ final class MaidIntegrationSmoke {
             }
             require(seated != null && seated.getVehicle() instanceof SeatEntity,
                 "Client maid lost its synchronized seat at step " + step);
+            if (step == 2 && headCapture < 4) {
+                require(seated.getItemBySlot(net.minecraft.world.entity.EquipmentSlot.HEAD).is(
+                    top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM), "Maid HEAD equipment did not synchronize");
+                if (headCapture == 0) {
+                    seated.getConfigManager().setChatBubbleShow(false);
+                    previousScreen = client.screen;
+                    client.setScreen(new MaidFurnitureSmokeScreen(seated));
+                } else if (headCapture == 1) {
+                    SmokeScreenshots.grab(output.toFile(), "maid-furniture-head.png", client.getMainRenderTarget(), ignored -> {});
+                    seated.setModelId("geckolib:winefox");
+                } else if (headCapture == 2) {
+                    SmokeScreenshots.grab(output.toFile(), "maid-gecko-furniture-head.png", client.getMainRenderTarget(), ignored -> {});
+                    seated.setModelId("touhou_little_maid:hakurei_reimu");
+                } else client.setScreen(previousScreen);
+                headCapture++;
+                stageTicks = 0;
+                return false;
+            }
             if (step == 2) require(!Component.translatable("model.touhou_little_maid.hakurei_reimu.name").getString().startsWith("model."),
                 "Default maid model name is not localized");
             if (step == 2) {
@@ -96,7 +117,7 @@ final class MaidIntegrationSmoke {
             ServerPlayer owner = client.getSingleplayerServer().getPlayerList().getPlayer(ownerId);
             var level = owner.level();
             var table = (MahjongTableBlockEntity) level.getBlockEntity(center);
-            Game game = table.participantGame(owner);
+            top.skyeyefast.mchjong.engine.RiichiSession game = table.participantSession(owner);
             if (currentStep == 0) {
                 require(game != null, "Owner is not a participant");
                 var task = TaskManager.findTask(MaidMahjongTask.ID).orElseThrow(() -> new IllegalStateException("Maid task extension not discovered"));
@@ -104,6 +125,8 @@ final class MaidIntegrationSmoke {
                 maid.tame(owner);
                 maid.setRideable(false);
                 maid.setModelId("touhou_little_maid:hakurei_reimu");
+                maid.setItemSlot(net.minecraft.world.entity.EquipmentSlot.HEAD,
+                    new net.minecraft.world.item.ItemStack(top.skyeyefast.mchjong.world.MahjongContent.TABLE_ITEM));
                 var stool = TableGeometry.stool(center, 1);
                 maid.snapTo(stool.getX() + 1.5, stool.getY(), stool.getZ() + .5, 90, 0);
                 maid.setSchedule(MaidSchedule.ALL);
@@ -129,14 +152,14 @@ final class MaidIntegrationSmoke {
                         "Maid did not join before her owner sat down");
                     table.sit(owner, seat.seat() == 0 ? 1 : 0);
                 }
-                Game joined = table.participantGame(owner);
+                top.skyeyefast.mchjong.engine.RiichiSession joined = table.participantSession(owner);
                 require(joined != null && joined.entityBot(maidId) && joined.seatOf(maidId) == seat.seat(),
                     "Maid mount and game membership differ");
-                require(joined.view(null).seats().get(seat.seat()).name()
+                require(joined.roomView(null).seats().get(seat.seat()).participant().name()
                     .equals("model.touhou_little_maid.hakurei_reimu.name"), "Maid model translation key was lost");
                 if (currentStep == 5) {
-                    act(table, owner, Action.Type.FILL_BOTS);
-                    act(table, owner, Action.Type.BEGIN_SEATING);
+                    act(table, owner, RoomAction.Type.FILL_BOTS);
+                    act(table, owner, RoomAction.Type.BEGIN_SEATING);
                 }
                 return true;
             }
@@ -155,12 +178,12 @@ final class MaidIntegrationSmoke {
                 if (game == null) return false;
                 require(maid.getVehicle() instanceof SeatEntity seat && seat.seat() == game.seatOf(maidId),
                     "Wind assignment failed to move the maid: assigned=" + game.seatOf(maidId) + ", vehicle=" + maid.getVehicle());
-                if (game.phase() == Game.Phase.LOBBY) {
-                    act(table, owner, Action.Type.READY);
+                if (game.lobby()) {
+                    act(table, owner, RoomAction.Type.READY);
                     return false;
                 }
                 var view = game.view(ownerId);
-                if (!view.actions().isEmpty()) table.act(owner, new TableActionPayload(center, game.tableId(), view.decision(), TrainingBot.choose(view, BotDifficulty.EASY)));
+                if (!view.actions().isEmpty()) table.act(owner, new RiichiActionPayload(center, game.tableId(), view.decision(), TrainingBot.choose(view, BotDifficulty.EASY)));
                 maidSeat = game.seatOf(maidId);
                 game.validate();
                 return !game.view(null).seats().get(maidSeat).river().isEmpty();
@@ -181,11 +204,12 @@ final class MaidIntegrationSmoke {
         return false;
     }
 
-    private static void act(MahjongTableBlockEntity table, ServerPlayer owner, Action.Type type) {
-        var game = table.participantGame(owner);
-        var view = game.view(owner.getUUID());
+    private static void act(MahjongTableBlockEntity table, ServerPlayer owner, RoomAction.Type type) {
+        var game = table.participantSession(owner);
+        var view = game.roomView(owner.getUUID());
         for (int index = 0; index < view.actions().size(); index++) if (view.actions().get(index).type() == type) {
-            table.act(owner, new TableActionPayload(table.getBlockPos(), game.tableId(), view.decision(), index));
+            table.actRoom(owner, new top.skyeyefast.mchjong.network.TableRoomActionPayload(table.getBlockPos(),
+                game.tableId(), view.incarnation(), view.decision(), index));
             return;
         }
     }

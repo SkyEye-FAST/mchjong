@@ -36,7 +36,7 @@ data, shared across dimensions and retained across player deaths and reconnects.
 | --- | --- | --- |
 | `mchjong:wood` | `oak`, `spruce`, `birch`, `jungle`, `acacia`, `dark_oak`, `mangrove`, `cherry`, `bamboo`, `crimson`, `warped` | Table and stool items |
 | `mchjong:tile` | `{face, material, red}` | Tile items |
-| `mchjong:face_preset` | Built-in `kansai` or `kanto`, or a configured ZIP preset | Tile-face design |
+| `mchjong:face_preset` | Built-in `kansai`, `kanto`, `sichuan`, `hong_kong`, `taiwan` or `fujian`, or a configured ZIP preset | Tile-face design |
 | `mchjong:back_preset` | Default or a configured ZIP preset | Tile-back pattern |
 | `mchjong:points` | `-10000`, `0`, `100`, `1000`, `5000`, `10000` | Point sticks |
 | `minecraft:base_color` | One of the 16 vanilla dye colors | Tile backs, cloth, stool cushions |
@@ -45,7 +45,9 @@ data, shared across dimensions and retained across player deaths and reconnects.
 Tile `face = -1` means unengraved. Faces `0..26` are the three suits; `27..33`
 are the winds and dragons, in engine order. Faces `34..41` are spring, summer,
 autumn, winter, plum, orchid, bamboo and chrysanthemum in Kansai, written `1q..8q`.
-Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴).
+Kanto's `5q..8q` show fortune, prosperity, longevity and nobility (福禄寿貴); Sichuan,
+Hong Kong, Taiwan and Fujian's
+`5q..8q` show plum, orchid, chrysanthemum and bamboo (梅蘭菊竹).
 Tooltips use localized names by default; Settings > Handling switches to mpsz/q notation.
 Only faces `4`, `13`, `22` can have `red = true`. Material is one of the twelve
 wood variants in `TileMaterial`, or `bone`, `quartz`, `calcite`, `glass` or
@@ -75,6 +77,23 @@ NeoForge defers intrusive object creation until registry events.
 `GenerateAssets` generates textures and client models. `GenerateData` serializes
 server data through `SurvivalRecipes` and `FurnitureData`, with separate
 synchronized Gradle outputs and reproducibility checks.
+
+## MCR stock boundary
+
+`McrDeck.select` uses the existing box/component validation and inspects one case
+without consuming or rewriting its contents. A selected set contains four
+ordinary copies of each of the 34 kinds and one of each of the eight flowers.
+All selected tiles share material, back color, face preset and back preset.
+Spare tiles remain in the case; red markings do not substitute for missing
+ordinary fives. Each returned deck supplies the standard 144 physical engine
+identities. `McrDeck.tile` explicitly maps physical flower IDs to their item
+faces, independently of ordinary `Tile.kind` analysis.
+
+`TableEquipment.mcrStock` checks its two cases independently and returns the
+source slot and deck. Stock selection leaves the Riichi selection, public
+appearance and point-stick reservations unchanged. It is a supply check;
+cloth, room readiness, active-match locking and start authorization belong to
+the table lifecycle that consumes the selection.
 
 ## Recipe catalogue and identity
 

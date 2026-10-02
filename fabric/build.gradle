@@ -86,10 +86,31 @@ sourceSets.main {
     resources.srcDir '../common/src/main/resources'
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/assets')
     resources.srcDir rootProject.layout.buildDirectory.dir('generated/data')
+    resources.srcDir layout.buildDirectory.dir('generated/ponder')
+}
+
+// Native Minecraft NBT APIs, isolated from the mod's main compilation and packaging.
+sourceSets {
+    ponderData {
+        java.srcDir '../common/src/ponderData/java'
+        compileClasspath += sourceSets.main.compileClasspath
+    }
+}
+sourceSets.ponderData.runtimeClasspath += sourceSets.ponderData.compileClasspath
+tasks.register('generatePonder', JavaExec) {
+    dependsOn tasks.named('ponderDataClasses')
+    classpath = sourceSets.ponderData.runtimeClasspath
+    mainClass = 'top.skyeyefast.mchjong.data.GeneratePonderStructure'
+    def output = layout.buildDirectory.dir('generated/ponder')
+    args output.get().asFile.absolutePath
+    inputs.files sourceSets.ponderData.allSource
+    outputs.dir output
+    doFirst { delete output }
+    javaLauncher = javaToolchains.launcherFor { languageVersion = JavaLanguageVersion.of(java_version.toInteger()) }
 }
 
 processResources {
-    dependsOn ':art:generateAssets', ':art:generateData'
+    dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder'
     def properties = [
         version: project.version,
         minecraft_version: minecraft_version,
@@ -112,7 +133,7 @@ tasks.withType(JavaCompile).configureEach {
     options.release = java_version.toInteger()
 }
 
-tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData' }
+tasks.named('sourcesJar') { dependsOn ':art:generateAssets', ':art:generateData', 'generatePonder' }
 jar { from(rootProject.file('LICENSE')) }
 
 // This mod is loaded only by the visual smoke run, never packaged for players.
@@ -132,11 +153,14 @@ def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('fal
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
+def mcrLayoutSmoke = providers.gradleProperty('smokeMcrLayout').getOrElse('false').toBoolean()
+def mcrAutoSmoke = providers.gradleProperty('smokeMcrAuto').getOrElse('false').toBoolean()
+def sichuanSmoke = providers.gradleProperty('smokeSichuan').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 def maidSmoke = providers.gradleProperty('withMaid').getOrElse('false').toBoolean()
 if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
-def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+def smokeProfile = sichuanSmoke ? 'sichuan-' : mcrAutoSmoke ? 'mcr-auto-' : mcrLayoutSmoke ? 'mcr-layout-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
@@ -160,6 +184,9 @@ loom {
             runDir smokeRun.get().asFile.absolutePath
             programArgs '--width', '1280', '--height', '800'
             property 'mchjong.smoke', 'true'
+            property 'mchjong.smoke.mcrLayoutOnly', mcrLayoutSmoke.toString()
+            property 'mchjong.smoke.mcrAutoOnly', mcrAutoSmoke.toString()
+            property 'mchjong.smoke.sichuanOnly', sichuanSmoke.toString()
             property 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
             property 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             property 'mchjong.smoke.maid', maidSmoke.toString()

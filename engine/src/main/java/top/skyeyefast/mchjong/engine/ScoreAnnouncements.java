@@ -45,11 +45,11 @@ public final class ScoreAnnouncements {
     }
 
     /** One shared receipt order for the visible rows and their recordings. */
-    public static List<Row> rows(TableView view, TableView.Win win) {
+    public static List<Row> rows(RiichiView view, RiichiView.Win win) {
         var score = win.score();
         var player = view.seats().get(win.seat());
         var result = new ArrayList<Row>();
-        var values = HandAnalyzer.yakuValues(score.yaku(), player.melds().stream().allMatch(Meld::closed), view.rules());
+        var values = RiichiHandAnalyzer.yakuValues(score.yaku(), player.melds().stream().allMatch(Meld::closed), view.rules());
         values.stream().filter(value -> score.yakuman() == 0 || value.yakuman())
             .sorted(Comparator.comparingInt(value -> ORDER.indexOf(value.name()))).forEach(value -> {
                 String voice = switch (value.name()) {
@@ -104,10 +104,10 @@ public final class ScoreAnnouncements {
     }
 
     /** A finite server fallback also covers missing/disconnected presentation clients. */
-    public static int maximumTicks(List<TableView.Win> wins) {
-        if (wins.isEmpty()) return Game.SETTLEMENT_TICKS;
+    public static int maximumTicks(List<RiichiView.Win> wins) {
+        if (wins.isEmpty()) return RiichiGame.SETTLEMENT_TICKS;
         int recordings = 1; // Opening ron/tsumo, then every winner's rows and final grade.
         for (var win : wins) recordings += win.score().yaku().size() + Math.min(4, win.score().dora()) + 2;
-        return Game.SETTLEMENT_TICKS + recordings * (MAX_VOICE_MILLIS / 50 + 10);
+        return RiichiGame.SETTLEMENT_TICKS + recordings * (MAX_VOICE_MILLIS / 50 + 10);
     }
 }

@@ -7,18 +7,19 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.network.chat.Component;
-import top.skyeyefast.mchjong.client.TableAnimation;
+import top.skyeyefast.mchjong.client.RiichiAnimation;
 import top.skyeyefast.mchjong.client.TableLeaveScreen;
-import top.skyeyefast.mchjong.client.TableScreen;
+import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.TableSettings;
-import top.skyeyefast.mchjong.client.TableRulesScreen;
-import top.skyeyefast.mchjong.engine.Game;
+import top.skyeyefast.mchjong.client.RiichiRulesScreen;
+import top.skyeyefast.mchjong.engine.RiichiGame;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.RedFives;
-import top.skyeyefast.mchjong.engine.RuleOption;
-import top.skyeyefast.mchjong.engine.RuleSet;
+import top.skyeyefast.mchjong.engine.RiichiRuleOption;
+import top.skyeyefast.mchjong.engine.RiichiPreset;
 import top.skyeyefast.mchjong.item.MahjongComponents;
 import top.skyeyefast.mchjong.item.MahjongSupplies;
-import top.skyeyefast.mchjong.network.TableRulesPayload;
+import top.skyeyefast.mchjong.network.RiichiRulesPayload;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Uses the live integrated server and real control packets before any display-only fixtures. */
@@ -43,22 +44,25 @@ final class TableControlSmoke {
         if (ticks > timeout) throw new IllegalStateException("Table controls timed out at stage " + stage);
         if (reseated != null && reseated.isDone()) reseated.join();
         var view = table.clientView();
+        var room = table.clientRoom();
+        var configuration = table.clientRiichiSettings();
+        if (room == null || configuration == null) return false;
         var settings = TableSettings.get();
         if (stage == 0) {
             remainingHidden = !settings.show(TableSettings.Information.REMAINING);
             if (!remainingHidden) settings.toggle(TableSettings.Information.REMAINING);
             settings.showRiver = false;
             require(settings.show(TableSettings.Information.REMAINING), "Hidden river removed the remaining wall count");
-            client.setScreen(new TableScreen(table.getBlockPos()));
+            client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             next(1);
         } else if (stage == 1 && ticks > 10) {
             capture(client, output, "23-hidden-river.png");
             click(client, "ui.mchjong.exit");
             next(2);
-        } else if (stage == 2 && view.phase() == Game.Phase.LOBBY && view.viewerSeat() < 0 && !client.player.isPassenger()) {
+        } else if (stage == 2 && room.lobby() && room.viewerSeat() < 0 && !client.player.isPassenger()) {
             require(client.screen == null, "Exiting the table did not close its controls");
-            require(view.seats().stream().noneMatch(seat -> seat.occupied()), "Exiting left a seat reserved");
-            require(view.wall().isEmpty(), "Exiting left the old wall on the table");
+            require(room.seats().stream().noneMatch(seat -> seat.participant().id() != null), "Exiting left a seat reserved");
+            require(view == null, "Exiting left the old match on the table");
             capture(client, output, "24-exited-table.png");
             UUID id = client.player.getUUID();
             var pos = table.getBlockPos();
@@ -71,29 +75,29 @@ final class TableControlSmoke {
                 } catch (Throwable failure) { reseated.completeExceptionally(failure); }
             });
             next(3);
-        } else if (stage == 3 && client.screen instanceof TableScreen && view.viewerSeat() == 0 && ticks > 10) {
-            if (!view.rules().sanma()) click(client, "ui.mchjong.players.3");
+        } else if (stage == 3 && client.screen instanceof RiichiTableScreen && room.viewerSeat() == 0 && ticks > 10) {
+            if (!configuration.rules().sanma()) click(client, "ui.mchjong.players.3");
             next(4);
-        } else if (stage == 4 && view.rules().players() == 3) {
-            require(view.rules().preset().players() == 3, "Four-player preset selected in the three-player lobby");
+        } else if (stage == 4 && configuration.rules().players() == 3) {
+            require(configuration.rules().preset().players() == 3, "Four-player preset selected in the three-player lobby");
             capture(client, output, "25-three-player-lobby.png");
             AutomationControlsSmoke.checkOptions(client, 0);
             click(client, "ui.mchjong.players.4");
             next(5);
-        } else if (stage == 5 && view.rules().players() == 4 && selectPreset(client, view, RuleSet.JPML_A)) {
-            require(view.seats().stream().allMatch(seat -> seat.points() == 30000), "JPML A initial points");
+        } else if (stage == 5 && configuration.rules().players() == 4 && selectPreset(client, configuration, RiichiPreset.JPML_A)) {
+            require(configuration.rules().startingPoints() == 30000, "JPML A initial points");
             capture(client, output, "25a-league-a-lobby.png");
             next(8);
-        } else if (stage == 8 && selectPreset(client, view, RuleSet.WRC)) {
+        } else if (stage == 8 && selectPreset(client, configuration, RiichiPreset.WRC)) {
             require((table.clientRedOptions() & 1) != 0, "WRC rejected the default no-red box");
             capture(client, output, "25b-wrc-lobby.png");
             next(9);
-        } else if (stage == 9 && selectPreset(client, view, RuleSet.MAHJONG_SOUL_4)) {
+        } else if (stage == 9 && selectPreset(client, configuration, RiichiPreset.MAHJONG_SOUL_4)) {
             next(11);
-        } else if (stage == 11 && view.rules().preset() == RuleSet.MAHJONG_SOUL_4 && ticks > 5) {
+        } else if (stage == 11 && configuration.rules().preset() == RiichiPreset.MAHJONG_SOUL_4 && ticks > 5) {
             click(client, "rules.mchjong.title");
             next(12);
-        } else if (stage == 12 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 12 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             require(!widget(client, RedFives.THREE.translationKey()).active && !widget(client, RedFives.FOUR.translationKey()).active,
                 "Unavailable red choices are enabled");
             require(client.screen.children().stream().noneMatch(EditBox.class::isInstance), "Preset options exposed fixed numeric editors");
@@ -105,13 +109,13 @@ final class TableControlSmoke {
             selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeGui();
+            client.resizeDisplay();
             next(20);
         } else if (stage == 20 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
             languageReload.join();
             require(client.screen.width == 320 && client.screen.height == 240, "Preset options minimum viewport");
             client.screen.onClose();
-            require(client.screen instanceof TableScreen, "Rules screen did not return to lobby");
+            require(client.screen instanceof RiichiTableScreen, "Rules screen did not return to lobby");
             next(30);
         } else if (stage == 30 && ticks > 5) {
             capture(client, output, "25n-no-red-lobby-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
@@ -119,28 +123,28 @@ final class TableControlSmoke {
             AutomationControlsSmoke.checkBounds(client);
             var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
-                    Component.translatable(view.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            press(client, selector);
-            var unavailablePreset = widget(client, RuleSet.M_LEAGUE.presetKey());
+                    Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
+            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
+            var unavailablePreset = widget(client, RiichiPreset.M_LEAGUE.presetKey());
             require(!unavailablePreset.active, "Unavailable preset is enabled");
             AutomationControlsSmoke.checkBounds(client);
             double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().handle();
+            long window = client.getWindow().getWindow();
             var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
             require(cursor != null, "Missing native cursor callback");
             try { cursor.invoke(window, (unavailablePreset.getX() + 5) * scale, (unavailablePreset.getY() + 5) * scale); }
             finally { org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, cursor); }
             next(31);
         } else if (stage == 31 && ticks > 10) {
-            require(widget(client, RuleSet.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
+            require(widget(client, RiichiPreset.M_LEAGUE.presetKey()).isHovered(), "Disabled preset was not hovered");
             capture(client, output, "25m-presets-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
-                    Component.translatable(view.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            press(client, selector);
+                    Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
+            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
             var unavailable = widget(client, RedFives.THREE.translationKey());
             double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().handle();
+            long window = client.getWindow().getWindow();
             // Drive the installed callback without moving or capturing the user's desktop cursor.
             var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
             require(cursor != null, "Missing native cursor callback");
@@ -152,7 +156,7 @@ final class TableControlSmoke {
             capture(client, output, "25h-insufficient-reds-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var nextPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().equals(">")).findFirst().orElseThrow();
-            press(client, nextPage);
+            client.screen.mouseClicked(nextPage.getX() + 5, nextPage.getY() + 5, 0);
             click(client, "rules.mchjong.option.min_han.4");
             click(client, "rules.mchjong.option.match_length.1");
             next(29);
@@ -161,7 +165,7 @@ final class TableControlSmoke {
             capture(client, output, "25l-match-options-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var previousPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().equals("<")).findFirst().orElseThrow();
-            press(client, previousPage);
+            client.screen.mouseClicked(previousPage.getX() + 5, previousPage.getY() + 5, 0);
             if (++ruleLanguage < RULE_LANGUAGES.length) {
                 selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
                 next(20);
@@ -170,18 +174,18 @@ final class TableControlSmoke {
             selectRuleLanguage(client, originalLanguage);
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
-            client.resizeGui();
+            client.resizeDisplay();
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             reseated = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
-                var game = serverTable.participantGame(player);
+                var game = serverTable.participantSession(player);
                 var original = game.rules();
-                long decision = game.view(id).decision();
-                serverTable.configureRules(player, new TableRulesPayload(pos, game.tableId(), decision,
-                    original.with(RuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
-                require(game.rules().equals(original) && game.view(id).decision() == decision,
+                long decision = game.roomView(id).decision();
+                serverTable.configureRules(player, new RiichiRulesPayload(pos, game.tableId(), decision,
+                    original.with(RiichiRuleOption.RED_FIVES, RedFives.FOUR.ordinal())));
+                require(game.rules().equals(original) && game.roomView(id).decision() == decision,
                     "Forged red selection bypassed physical stock checks");
                 var box = serverTable.equipment().boxes().getItem(0).copy();
                 var items = MahjongSupplies.contents(box);
@@ -206,13 +210,13 @@ final class TableControlSmoke {
             var label = Component.translatable("rules.mchjong.option.kuitan").getString();
             var kuitan = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            press(client, kuitan);
+            client.screen.mouseClicked(kuitan.getX() + 5, kuitan.getY() + 5, 0);
             capture(client, output, "25i-red-stock-options.png");
             click(client, "rules.mchjong.apply");
             next(23);
-        } else if (stage == 23 && client.screen instanceof TableScreen && view.rules().redFives() == RedFives.FOUR && ticks > 5) {
-            require(!view.rules().custom() && !view.rules().kuitan(), "Preset variants were classified as custom");
-            require(view.rules().minHan() == 4 && view.rules().matchLength() == 1, "Match options were not acknowledged");
+        } else if (stage == 23 && client.screen instanceof RiichiTableScreen && configuration.rules().redFives() == RedFives.FOUR && ticks > 5) {
+            require(!configuration.rules().custom() && !configuration.rules().kuitan(), "Preset variants were classified as custom");
+            require(configuration.rules().minHan() == 4 && configuration.rules().matchLength() == 1, "Match options were not acknowledged");
             require((table.clientRedOptions() & 1) != 0, "Surplus box cannot start play");
             click(client, "rules.mchjong.title");
             click(client, "rules.mchjong.mode.details");
@@ -225,7 +229,7 @@ final class TableControlSmoke {
             click(client, "rules.mchjong.mode.custom");
             click(client, "rules.mchjong.group.points");
             next(24);
-        } else if (stage == 24 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 24 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             var start = field(client, "rules.mchjong.option.starting_points");
             start.setValue("32101");
             client.screen.tick();
@@ -242,12 +246,12 @@ final class TableControlSmoke {
             String label = Component.translatable("rules.mchjong.option.ippatsu").getString();
             var toggle = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            press(client, toggle);
+            client.screen.mouseClicked(toggle.getX() + 5, toggle.getY() + 5, 0);
             originalWidth = client.getWindow().getScreenWidth(); originalHeight = client.getWindow().getScreenHeight();
             originalScale = client.options.guiScale().get();
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeGui();
+            client.resizeDisplay();
             next(15);
         } else if (stage == 15 && ticks > 5) {
             require(client.screen.width == 320 && client.screen.height == 240, "Custom rules minimum viewport");
@@ -255,7 +259,7 @@ final class TableControlSmoke {
             capture(client, output, "25e-custom-scoring-320x240.png");
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
-            client.resizeGui();
+            client.resizeDisplay();
             next(16);
         } else if (stage == 16 && ticks > 5) {
             capture(client, output, "25f-custom-scoring.png");
@@ -263,23 +267,23 @@ final class TableControlSmoke {
             String label = Component.translatable("rules.mchjong.option.bankruptcy").getString();
             var bankruptcy = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            press(client, bankruptcy);
+            client.screen.mouseClicked(bankruptcy.getX() + 5, bankruptcy.getY() + 5, 0);
             click(client, "rules.mchjong.apply");
             next(17);
-        } else if (stage == 17 && client.screen instanceof TableScreen && view.rules().custom() && ticks > 5) {
-            require(view.rules().startingPoints() == 32100 && view.rules().returnPoints() == 33300 && !view.rules().ippatsu(),
+        } else if (stage == 17 && client.screen instanceof RiichiTableScreen && configuration.rules().custom() && ticks > 5) {
+            require(configuration.rules().startingPoints() == 32100 && configuration.rules().returnPoints() == 33300 && !configuration.rules().ippatsu(),
                 "Custom rule proposal was not synchronized");
-            require(!view.rules().bankruptcy(), "Custom bankruptcy setting was not acknowledged");
-            require(view.seats().stream().allMatch(seat -> seat.points() == 32100), "Custom starting points not applied");
+            require(!configuration.rules().bankruptcy(), "Custom bankruptcy setting was not acknowledged");
+            require(configuration.rules().startingPoints() == 32100, "Custom starting points not applied");
             capture(client, output, "25g-custom-lobby.png");
             click(client, "rules.mchjong.title");
             next(18);
-        } else if (stage == 18 && client.screen instanceof TableRulesScreen && ticks > 5) {
+        } else if (stage == 18 && client.screen instanceof RiichiRulesScreen && ticks > 5) {
             field(client, "rules.mchjong.option.starting_points").setValue("40000");
             click(client, "gui.cancel");
             next(19);
-        } else if (stage == 19 && client.screen instanceof TableScreen && ticks > 5) {
-            require(view.rules().startingPoints() == 32100, "Cancel changed server rules");
+        } else if (stage == 19 && client.screen instanceof RiichiTableScreen && ticks > 5) {
+            require(configuration.rules().startingPoints() == 32100, "Cancel changed server rules");
             click(client, "settings.mchjong.scopes");
             click(client, "settings.mchjong.scope.world");
             next(26);
@@ -301,8 +305,7 @@ final class TableControlSmoke {
                     var policy = top.skyeyefast.mchjong.world.WorldSettings.of(server);
                     var before = policy.policy();
                     originalWorldPolicy = before;
-                    var low = commands.parse("mchjong world invitationTeleport true",
-                        player.createCommandSourceStack().withPermission(net.minecraft.server.permissions.PermissionSet.NO_PERMISSIONS));
+                    var low = commands.parse("mchjong world invitationTeleport true", player.createCommandSourceStack().withPermission(0));
                     try { commands.execute(low); throw new IllegalStateException("Non-admin changed world settings"); }
                     catch (com.mojang.brigadier.exceptions.CommandSyntaxException expected) { /* Permission denied. */ }
                     require(before.equals(policy.policy()), "Denied command mutated world settings");
@@ -310,24 +313,25 @@ final class TableControlSmoke {
                     commands.execute("mchjong world reload", server.createCommandSourceStack());
                     require(policy.policy().invitationTeleport(), "World policy did not persist");
                     var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
-                    var game = serverTable.participantGame(player);
-                    require(game.configureOpenHands(id, game.view(id).decision(), true),
+                    InvitationSmoke.verify(player, serverTable);
+                    var game = serverTable.participantSession(player);
+                    require(game.configureOpenHands(id, game.roomView(id).decision(), true),
                         "Host cannot configure room open hands");
-                    require(game.configureClock(id, game.view(id).timeControl()), "Cannot configure room clock");
-                    require(game.view(id).openHands() && policy.policy().invitationTeleport(),
+                    require(game.configureClock(id, game.timeControl()), "Cannot configure room clock");
+                    require(game.openHands() && policy.policy().invitationTeleport(),
                         "Room setting replaced world policy");
-                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException failure) {
+                } catch (com.mojang.brigadier.exceptions.CommandSyntaxException | java.io.IOException failure) {
                     throw new IllegalStateException(failure);
                 }
             });
             next(6);
-        } else if (stage == 6 && view.openHands()) {
-            click(client, "room.mchjong.start_bots");
+        } else if (stage == 6 && configuration.openHands()) {
+            click(client, "action.mchjong.fill_bots");
             next(28);
         } else if (stage == 28) {
             if (preparation.tick(client, table, output, "26-room")) next(7);
-        } else if (stage == 7 && view.phase() == Game.Phase.TURN && ticks > 60
-            && !TableAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())) {
+        } else if (stage == 7 && view != null && view.phase() == RiichiView.Phase.TURN && ticks > 60
+            && !RiichiAnimation.of(table).dealing(net.minecraft.util.Util.getMillis())) {
             require(view.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile >= 0),
                 "Server did not deliver the agreed open hands to the seated player");
             capture(client, output, "26-open-hands.png");
@@ -349,7 +353,7 @@ final class TableControlSmoke {
             });
             next(32);
         } else if (stage == 32 && reseated.isDone() && client.screen instanceof TableLeaveScreen && ticks > 5) {
-            require(view.viewerSeat() < 0 && view.phase() == Game.Phase.TURN, "Last dismount did not pause the active match");
+            require(view.viewerSeat() < 0 && view.phase() == RiichiView.Phase.TURN, "Last dismount did not pause the active match");
             capture(client, output, "26-paused-leave-choice.png");
             click(client, "ui.mchjong.leave_match_keep");
             next(33);
@@ -373,19 +377,18 @@ final class TableControlSmoke {
         languageReload = client.reloadResourcePacks();
     }
     private void next(int value) { stage = value; ticks = 0; }
-    private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.TableView view, RuleSet target) {
-        require(view.rules().preset() != RuleSet.M_LEAGUE, "Preset selector selected unavailable red fives");
-        require(view.rules().preset().players() == target.players(), "Preset selector changed player count");
+    private boolean selectPreset(Minecraft client, top.skyeyefast.mchjong.engine.RiichiRoomSettings configuration, RiichiPreset target) {
+        require(configuration.rules().preset() != RiichiPreset.M_LEAGUE, "Preset selector selected unavailable red fives");
+        require(configuration.rules().preset().players() == target.players(), "Preset selector changed player count");
         if (ticks < 10) return false;
-        if (view.rules().preset() == target && client.screen instanceof TableScreen) return true;
-        if (client.screen instanceof TableScreen && ticks % 10 == 0) {
+        if (configuration.rules().preset() == target && client.screen instanceof RiichiTableScreen) return true;
+        if (client.screen instanceof RiichiTableScreen && ticks % 10 == 0) {
             String label = Component.translatable("rules.mchjong.preset",
-                Component.translatable(view.rules().preset().presetKey())).getString();
-            var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-                .filter(widget -> widget.getMessage().getString().startsWith(label)).findFirst().orElseThrow();
+                Component.translatable(configuration.rules().preset().presetKey())).getString();
+            var button = LobbySmoke.find(client, label);
             require(button.active, "Host preset selector is disabled");
-            press(client, button);
-        } else if (client.screen instanceof TableRulesScreen && ticks % 10 == 0) {
+            client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        } else if (client.screen instanceof RiichiRulesScreen && ticks % 10 == 0) {
             String choice = Component.translatable(target.presetKey()).getString();
             if (client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .anyMatch(widget -> widget.getMessage().getString().equals(choice))) {
@@ -403,17 +406,12 @@ final class TableControlSmoke {
     }
     private static void click(Minecraft client, String key) {
         String label = Component.translatable(key).getString();
-        var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
-            .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
+        var button = LobbySmoke.find(client, label);
         require(button.active, "Disabled control: " + key);
-        press(client, button);
-    }
-    private static void press(Minecraft client, AbstractWidget button) {
-        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(
-            button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
     }
     private static void capture(Minecraft client, Path output, String file) {
-        SmokeScreenshots.grab(output.toFile(), file, client.getMainRenderTarget(), 1, ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), file, client.getMainRenderTarget(), ignored -> {});
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

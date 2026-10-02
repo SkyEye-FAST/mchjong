@@ -1,9 +1,122 @@
 # Training opponent analysis
 
-The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `HandAnalyzer`. Its
+## MCR built-in opponent
+
+MCR rooms offer one built-in opponent through the shared room Bot controls and
+world `allowBots` policy. One human can play a complete sixteen-hand match with
+three Bots. See [Rooms](ROOMS.md#mcr-bot-rooms) for preparation and pause controls.
+
+`McrBot` receives only its own recipient-safe `McrView`. The engine supplies
+minimum-fan qualification for issued win actions; qualifying wins take priority.
+Discard analysis combines `McrHandAnalyzer`'s structural shanten and effective
+tiles with `McrBotRoutes`' gradual evidence for reaching eight non-flower fan.
+The library supplies special-form distances; copy-consuming targets cover seven
+pairs, thirteen orphans, lesser/greater honors and knitted tiles, knitted straight,
+pungs, half/full flush, outside/terminal hands, pure straight, pure shifted/triple
+chows, pure shifted pungs, mixed shifted/triple chows, mixed straight, all types
+and upper/middle/lower tiles. Fixed melds occupy actual slots and restrict shapes.
+Missing copies discount each route continuously; an exhausted indispensable kind
+excludes its target. Alternatives compete rather than adding hypothetical fan.
+Regular targets are confirmed by the existing scorer for each missing kind that
+could finish the hand, so an unrelated retained pair cannot invent a wait bonus.
+Six-fan routes need a scorer-confirmed companion or concealed-hand contribution.
+Near readiness, ordinary discard/self-draw waits are scored with current winds,
+without assuming flowers, last-tile or kong bonuses.
+
+A decision reconstructs a preferred route from its retained structure. Route
+feasibility and retention can outweigh wider raw effective tiles or a one-shanten
+retreat; larger discard retreats are excluded. Equal evaluations use the lowest
+physical tile ID. Availability deduplicates owned tiles, public rivers, exposed
+melds and the offered tile. Concealed opponents and wall identities never enter
+evaluation. Route fitting uses a bounded beam and a missing-copy cutoff; its
+feasibility is heuristic evidence, not a calibrated probability or an exhaustive
+search of every winning hand.
+
+Chows and pungs use the same evaluation after their best mandatory discard and
+require strict improvement over passing. Kongs must improve a guaranteed
+continuation that discards the replacement, accounting for the consumed copy of
+every publicly possible replacement kind. Equal outcomes retain the existing hand. The server
+waits twelve ticks before Bot decisions, while the session also owns automatic
+draws and flower replacements. Bot actions and completed-hand confirmations share
+the normal room pause, exit and persistence lifecycle.
+
+## Sichuan built-in opponent
+
+SBR 2025 and T/TFMJ 01—2024 rooms offer one built-in Bot through the shared room
+controls and world `allowBots` policy. One human and three Bots can finish all
+eight hands. See [Rooms](ROOMS.md#sichuan-bot-rooms) for preparation and pauses.
+
+`SichuanBot` reads only its seat's recipient-safe `SichuanView` and selects an
+issued action index. Decisions are deterministic. Void selection combines suit
+size, pairs, triplets, connected fragments and shape efficiency. SBR submits the
+suit together with a legal secret physical first discard; heavenly void leaves
+that choice unbound. Issued actions preserve the bound discard and force clearing
+the void suit before ordinary discards.
+
+`SichuanHandAnalyzer` reuses mahjong-utils regular shapes and accounts for Sichuan
+seven pairs, where a four counts as two pairs. `SichuanBotValue` fits gradual,
+copy-consuming targets for seven pairs, all pungs, full flush, roots and declared
+kongs, including full-flush combinations. The analyzer validates and scores the
+completed targets under the current rules. Target distance and scarce missing
+copies discount their value; incompatible alternatives compete rather than adding
+hypothetical fan. Fixed melds exclude seven pairs and restrict flush suits. Capped
+payout supplies the value reward, so additional fan above `fanCap` has no marginal
+reward. This bounded target fitting is heuristic evidence, not another shanten or
+scoring implementation.
+
+Discards combine route value and distance with shanten and remaining effective
+copies, allowing at most one shanten of retreat. Equal evaluations prefer shape
+efficiency and then the lowest physical ID. Public availability deduplicates the
+Bot's tiles, rivers, melds and focus; a simulated discard remains visible. The
+revealed middle tiles of a concealed kong identify all four copies. Opponent hands
+and future wall identities stay hidden.
+
+Legal wins are accepted. Pungs must improve the same evaluation after their best
+mandatory discard. Kongs compare the concealed remainder before replacement, so
+discarding the unknown replacement preserves the evaluated shape. Immediate income
+under the current rules can settle a close comparison, but cannot justify worse
+shanten; delayed added kongs supply no such income. Flower-pig sanctions suppress
+this income preference. The server waits twelve ticks, leaves Bot clocks inactive, confirms
+completed hands automatically and saves pending delay, roster and replay flags.
+
+## Local bot service
+
+The server administrator can enable external opponents with
+`config/mchjong/bot-service.json`:
+
+```json
+{
+  "endpoint": "http://127.0.0.1:8791",
+  "timeout_ms": 10000
+}
+```
+
+Restart the Minecraft server after changing the file. At startup it requests
+`GET /v1/bots` and offers each discovered Bot as a separate automatic-table
+room seat choice beside EASY and HARD. The room offers external Bots only for their advertised
+player count and exact rule preset. The adapter currently advertises `TENHOU_4`
+and `TENHOU_3` for its respective models. The room save keeps only the stable
+Bot ID; the endpoint remains in administrator-owned configuration.
+
+The server sends each bot's opening hand, public hand events, current legal
+actions and decision token. Other players' drawn tile identities are hidden.
+Each table runtime has a session UUID, while the service keeps separate state
+for each seat and hand. Requests include `protocol_version: 1`, the selected
+`bot_id` and exact `preset`. The reply contains only an index from that request's
+legal actions. The server checks the echoed version, Bot ID, table, session,
+hand, seat and decision before applying it. An unavailable service, timeout or
+invalid reply appears as a short room error; the selected external seat waits
+for administrator intervention. EASY and HARD continue to use
+the built-in engine bot. Lobby and settlement automation stays in the game engine.
+
+The service API exposes `GET /v1/health`, `GET /v1/bots` and
+`POST /v1/decisions`. Its request/response schema and startup arguments are
+documented in the service repository.
+
+The two levels, EASY and HARD, share mahjong-utils 0.7.7 through `RiichiHandAnalyzer`. Its
 `ShantenWithGot.discardToAdvance` and `ShantenWithoutGot.advance` provide
 structural efficiency; `waits` supplies structural
-tenpai and `score` supplies legal yaku, fu and actual payments under `RuleConfig`.
+tenpai and `score` supplies legal yaku, fu and actual payments under `RiichiRules`.
 Incomplete hands use labelled yaku potential, never the complete-hand scorer.
 The existing Java interop boundary selects the pinned library's JVM-visible
 analysis switches: it keeps input validation, every discard and the existing
@@ -40,7 +153,7 @@ declaration. Non-advancing draws also compare the two widest continuations with
 keeping the existing hand, allowing connected shapes to improve before shanten
 decreases. The retained hand includes the simulated discard in its furiten state.
 These roots have their own decision-local cache and do not consume
-the general three-root budget. `HandAnalyzer.bestDiscardEfficiency` uses the
+the general three-root budget. `RiichiHandAnalyzer.bestDiscardEfficiency` uses the
 library's best-shanten mode: advancing draws have a minimum of zero, so every tied
 tenpai discard is retained, including regular and special-hand alternatives,
 while retreat branches are omitted. This horizon exhaustively covers immediate
@@ -77,7 +190,7 @@ number. Its exponential decay supplies gradual `progress` as supporting tiles ar
 kept or discarded. This is heuristic evidence, not a calibrated completion
 probability or a legal-yaku assertion. A target requiring unavailable copies is
 excluded. Scores, custom yaku minima and completed waits remain owned by
-`HandAnalyzer` and `BotValue`.
+`RiichiHandAnalyzer` and `BotValue`.
 
 Alternatives compete: the selected plan has one primary route and at most one
 discounted compatible companion. Sequence templates do not accumulate with

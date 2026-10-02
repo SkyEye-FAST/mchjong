@@ -1,26 +1,29 @@
 package top.skyeyefast.mchjong.engine;
 
-import com.google.gson.Gson;
 import java.util.List;
 import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import static org.junit.jupiter.api.Assertions.*;
 
 class TimeControlTest {
-    private static Game game(int reserve, int move) {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 31);
-        for (int seat = 0; seat < 4; seat++) game.join(new UUID(1, seat), "Player " + seat, seat);
-        assertTrue(game.configureClock(game.players[0].id, new TimeControl(reserve, move)));
-        GameLifecycleTest.startPositioned(game);
-        return game;
+    private static RiichiGame game(int reserve, int move) {
+        return game(reserve, move, false);
     }
-    private static void tick(Game game, int ticks) { for (int i = 0; i < ticks; i++) game.tick(); }
+    private static RiichiGame game(int reserve, int move, boolean manual) {
+        RiichiSession session = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 31);
+        if (manual) session.configureEquipment(true, Tile.set(false));
+        for (int seat = 0; seat < 4; seat++) session.join(new UUID(1, seat), "Player " + seat, seat);
+        assertTrue(session.configureClock(session.participants[0].id, new TimeControl(reserve, move)));
+        GameLifecycleTest.startPositioned(session);
+        return session.game();
+    }
+    private static void tick(RiichiGame game, int ticks) { for (int i = 0; i < ticks; i++) game.tick(); }
 
     @Test void dealDoesNotUseAllowanceAndMoveTimeIsSpentBeforeReserve() {
-        Game game = game(2, 1);
+        RiichiGame game = game(2, 1);
         int seat = game.turn;
-        assertFalse(game.view(game.players[seat].id).clocks().get(seat).active());
-        tick(game, Game.DEAL_TICKS);
+        assertFalse(game.view(game.players[seat].member.id).clocks().get(seat).active());
+        tick(game, RiichiGame.DEAL_TICKS);
         assertEquals(20, game.moveTicks[seat]);
         assertEquals(40, game.reserveTicks[seat]);
         tick(game, 20);
@@ -32,11 +35,11 @@ class TimeControlTest {
     }
 
     @Test void timeoutDiscardsTheDrawnTileWithoutClaimingAWin() {
-        Game game = game(1, 1);
+        RiichiGame game = game(1, 1);
         int seat = game.turn, drawn = game.players[seat].drawn;
-        long decision = game.decision;
-        tick(game, Game.DEAL_TICKS + 39);
-        assertEquals(decision, game.decision);
+        long decision = game.decision();
+        tick(game, RiichiGame.DEAL_TICKS + 39);
+        assertEquals(decision, game.decision());
         game.tick();
         assertEquals(drawn, game.players[seat].river.getLast().tile());
         assertTrue(game.players[seat].river.getLast().tsumogiri());
@@ -44,25 +47,25 @@ class TimeControlTest {
     }
 
     @Test void respondersUseIndependentClocksAndAnAnswerStopsChargingReserve() {
-        Game game = game(2, 1);
-        game.newDecision(Game.Phase.REACTION);
-        game.options.set(1, List.of(new Action(Action.Type.PASS)));
-        game.options.set(2, List.of(new Action(Action.Type.PASS)));
+        RiichiGame game = game(2, 1);
+        game.newDecision(RiichiGame.Phase.REACTION);
+        game.options.set(1, List.of(new RiichiAction(RiichiAction.Type.PASS)));
+        game.options.set(2, List.of(new RiichiAction(RiichiAction.Type.PASS)));
         tick(game, 30);
         assertEquals(30, game.reserveTicks[1]);
         assertEquals(30, game.reserveTicks[2]);
-        assertTrue(game.act(game.players[1].id, game.decision, 0));
+        assertTrue(game.act(game.players[1].member.id, game.decision(), 0));
         tick(game, 10);
         assertEquals(30, game.reserveTicks[1]);
         assertEquals(20, game.reserveTicks[2]);
-        assertFalse(game.view(game.players[1].id).clocks().get(1).active());
+        assertFalse(game.view(game.players[1].member.id).clocks().get(1).active());
     }
 
     @Test void newDecisionRefreshesOnlyMoveAllowanceAndNewHandRefreshesReserve() {
-        Game game = game(2, 1);
+        RiichiGame game = game(2, 1);
         game.reserveTicks[0] = 7;
         game.moveTicks[0] = 0;
-        game.newDecision(Game.Phase.TURN);
+        game.newDecision(RiichiGame.Phase.TURN);
         assertEquals(7, game.reserveTicks[0]);
         assertEquals(20, game.moveTicks[0]);
         game.startHand();
@@ -70,69 +73,68 @@ class TimeControlTest {
     }
 
     @Test void settlementCountsDownWithoutChargingClocksAndReloadPreservesTime() {
-        Game game = game(2, 1);
-        tick(game, Game.DEAL_TICKS + 27);
-        Game restored = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        RiichiGame game = game(2, 1);
+        tick(game, RiichiGame.DEAL_TICKS + 27);
+        RiichiGame restored = GameLifecycleTest.reloadMounted(game);
         assertArrayEquals(game.reserveTicks, restored.reserveTicks);
         assertArrayEquals(game.moveTicks, restored.moveTicks);
         restored.validate();
-        Settlement.abort(restored, "nine_terminals");
+        RiichiSettlement.abort(restored, "nine_terminals");
         int[] reserve = restored.reserveTicks.clone();
         tick(restored, 99);
-        restored = new Gson().fromJson(new Gson().toJson(restored), Game.class);
-        assertEquals(101, restored.roomView().settlementTicks());
+        restored = GameLifecycleTest.reloadMounted(restored);
+        assertEquals(101, restored.view(null).settlementTicks());
         tick(restored, 100);
         assertArrayEquals(reserve, restored.reserveTicks);
-        assertEquals(Game.Phase.HAND_END, restored.phase());
+        assertEquals(RiichiGame.Phase.HAND_END, restored.phase());
         assertTrue(restored.view(null).clocks().stream().noneMatch(TimeControl.Clock::active));
         restored.tick();
-        assertEquals(Game.Phase.TURN, restored.phase());
-        assertEquals(0, restored.roomView().settlementTicks());
+        assertEquals(RiichiGame.Phase.TURN, restored.phase());
+        assertEquals(0, restored.view(null).settlementTicks());
     }
 
     @Test void winningReceiptsKeepAFiniteServerDeadlineWithoutAcknowledgements() {
-        Game game = game(2, 1);
-        Settlement.abort(game, "nine_terminals");
-        game.wins = List.of(new TableView.Win(0, 1, 0,
+        RiichiGame game = game(2, 1);
+        RiichiSettlement.abort(game, "nine_terminals");
+        game.wins = List.of(new RiichiView.Win(0, 1, 0,
             new HandScore(5, 40, 0, 12000, 0, 0, List.of("Richi", "Chanta"), 2)));
         int limit = ScoreAnnouncements.maximumTicks(game.wins);
         int[] reserve = game.reserveTicks.clone();
-        assertEquals(limit, game.roomView().settlementTicks());
+        assertEquals(limit, game.view(null).settlementTicks());
         tick(game, limit - 2);
-        game = new Gson().fromJson(new Gson().toJson(game), Game.class);
+        game = GameLifecycleTest.reloadMounted(game);
         game.tick();
-        assertEquals(Game.Phase.HAND_END, game.phase());
+        assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         assertArrayEquals(reserve, game.reserveTicks);
         game.tick();
-        assertEquals(Game.Phase.TURN, game.phase());
+        assertEquals(RiichiGame.Phase.TURN, game.phase());
     }
 
     @Test void manualCollectionCannotSkipSettlementAndUncollectedHandsStillAdvance() {
-        Game game = game(2, 1);
-        game.manual = true;
-        Settlement.abort(game, "nine_terminals");
-        for (var player : game.players) assertTrue(game.act(player.id, game.decision, 0));
-        assertEquals(Game.Phase.HAND_END, game.phase());
-        tick(game, Game.SETTLEMENT_TICKS - 1);
-        assertEquals(Game.Phase.HAND_END, game.phase());
+        RiichiGame game = game(2, 1, true);
+        RiichiSettlement.abort(game, "nine_terminals");
+        for (var player : game.players) assertTrue(game.act(player.member.id, game.decision(), 0));
+        assertEquals(RiichiGame.Phase.HAND_END, game.phase());
+        tick(game, RiichiGame.SETTLEMENT_TICKS - 1);
+        assertEquals(RiichiGame.Phase.HAND_END, game.phase());
         game.tick();
-        assertEquals(Game.Phase.SHUFFLE, game.phase());
-        Settlement.abort(game, "nine_terminals");
-        tick(game, Game.SETTLEMENT_TICKS);
-        assertEquals(Game.Phase.SHUFFLE, game.phase());
+        assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
+        RiichiSettlement.abort(game, "nine_terminals");
+        tick(game, RiichiGame.SETTLEMENT_TICKS);
+        assertEquals(RiichiGame.Phase.SHUFFLE, game.phase());
     }
 
     @Test void onlyLobbyHostCanConfigureAndChangingSettingsClearsReadiness() {
-        Game game = new Game(UUID.randomUUID(), RuleSet.TENHOU_4, 1);
+        RiichiSession game = new RiichiSession(UUID.randomUUID(), RiichiPreset.TENHOU_4, 1);
         UUID host = UUID.randomUUID(), guest = UUID.randomUUID();
         game.join(host, "Host", 0); game.join(guest, "Guest", 1);
-        game.players[1].ready = true;
+        game.participants[1].ready = true;
         assertFalse(game.configureClock(guest, new TimeControl(0, 1)));
         assertFalse(game.configureClock(UUID.randomUUID(), new TimeControl(0, 1)));
         assertTrue(game.configureClock(host, new TimeControl(0, 1)));
-        assertFalse(game.players[1].ready);
-        Game started = game(2, 1);
-        assertFalse(started.configureClock(started.players[0].id, new TimeControl(20, 5)));
+        assertFalse(game.participants[1].ready);
+        RiichiGame started = game(2, 1);
+        assertFalse(started.session.configureClock(started.players[0].member.id, new TimeControl(20, 5)));
     }
 
     @Test void invalidSettingsAreRejectedAndInterpolationNeverBecomesNegative() {

@@ -8,8 +8,6 @@ import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.client.input.KeyEvent;
-import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import org.lwjgl.glfw.GLFW;
 import top.skyeyefast.mchjong.engine.ReplayMatch;
@@ -75,8 +73,8 @@ public final class ReplayBrowserScreen extends Screen {
 
     void delete(java.util.UUID id) { ClientReplays.delete(id, index.search(), index.oldestFirst()); }
 
-    @Override public boolean keyPressed(KeyEvent event) {
-        int key = event.key();
+    @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
         if (search.isFocused() && (key == GLFW.GLFW_KEY_ENTER || key == GLFW.GLFW_KEY_KP_ENTER)) {
             refresh(0, index.oldestFirst());
             return true;
@@ -128,7 +126,11 @@ public final class ReplayBrowserScreen extends Screen {
                 var info = Component.translatable("replay.mchjong.entry", date, match.hands(),
                     Component.translatable(match.complete() ? "replay.mchjong.finished" : "replay.mchjong.ongoing"));
                 MahjongUi.text(graphics, font, info, getX() + 9, y + 21, width - 22, MahjongUi.MUTED, false);
-                graphics.text(font, Component.translatable(match.rules().translationKey()), getX() + 9, y + 33, MahjongUi.ACCENT);
+                graphics.text(font, Component.translatable(switch (match.variant()) {
+                    case RIICHI -> match.riichiRules().translationKey();
+                    case MCR -> "mcr.mchjong.title";
+                    case SICHUAN -> "sichuan.mchjong.title";
+                }), getX() + 9, y + 33, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }
             graphics.disableScissor();
@@ -140,9 +142,10 @@ public final class ReplayBrowserScreen extends Screen {
                 graphics.fill(getX() + width - 5, y, getX() + width - 3, y + thumb, MahjongUi.ACCENT);
             }
         }
-        @Override public boolean mouseClicked(MouseButtonEvent event, boolean doubleClick) {
-            double mouseY = event.y();
-            if (!super.mouseClicked(event, doubleClick)) return false;
+        @Override public boolean mouseClicked(net.minecraft.client.input.MouseButtonEvent event, boolean doubleClick) {
+        double mouseX = event.x(), mouseY = event.y();
+        int button = event.button();
+            if (!super.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(mouseX, mouseY, event.buttonInfo()), doubleClick)) return false;
             int entry = (int) (mouseY - getY() + scroll) / ROW;
             if (entry >= 0 && entry < index.matches().size()) {
                 long now = net.minecraft.util.Util.getMillis();
@@ -158,9 +161,9 @@ public final class ReplayBrowserScreen extends Screen {
             scroll = Math.clamp(scroll - (int) Math.round(vertical * ROW), 0, Math.max(0, index.matches().size() * ROW - height));
             return true;
         }
-        @Override public boolean keyPressed(KeyEvent event) {
+        @Override public boolean keyPressed(net.minecraft.client.input.KeyEvent event) {
+        int key = event.key(), scan = event.scancode(), modifiers = event.modifiers();
             if (!isFocused()) return false;
-            int key = event.key();
             switch (key) {
                 case GLFW.GLFW_KEY_UP -> move(-1);
                 case GLFW.GLFW_KEY_DOWN -> move(1);

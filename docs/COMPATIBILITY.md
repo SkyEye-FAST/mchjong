@@ -11,6 +11,16 @@ The [README tables](../README.md#compatibility) cover all three version lines.
 Branch synchronization, Java boundaries and release pins are documented in
 [Development](DEVELOPMENT.md#version-synchronization-and-artifacts).
 
+## Embedded engine dependencies
+
+The engine declares `top.skyeyefast:mcr-mahjong:0.1.0` in its Maven Central
+dependencies, alongside `io.github.ssttkkl:mahjong-utils-jvm:0.7.7`. The exact
+pins live in `gradle.properties`. The engine Shadow JAR relocates mcr-mahjong
+under `top.skyeyefast.mchjong.internal.mcr`, together with its private Kotlin
+runtime. Fabric, Forge and NeoForge consume the same `embeddedEngine` artifact
+with no external engine dependency graph. The analysis contracts are described
+in [Architecture](ARCHITECTURE.md#hand-analysis-boundaries).
+
 ## Optional integrations
 
 | Integration | Pinned distribution | Development profile |

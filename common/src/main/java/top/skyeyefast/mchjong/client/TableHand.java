@@ -3,7 +3,7 @@ package top.skyeyefast.mchjong.client;
 import java.util.List;
 import java.util.function.IntUnaryOperator;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
-import top.skyeyefast.mchjong.engine.TableView;
+import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
@@ -17,17 +17,22 @@ final class TableHand {
     private final int right, owner;
     private final boolean perspective;
 
-    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth) {
+    TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth) {
         this(player, owner, width, height, maxTileWidth, false);
     }
 
-    TableHand(TableView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
+    TableHand(RiichiView.Seat player, int owner, int width, int height, int maxTileWidth, boolean perspective) {
+        this(player.hand(), player.drawn(), player.melds(), owner, width, height, maxTileWidth, perspective);
+    }
+
+    TableHand(List<Integer> tiles, int drawn, List<top.skyeyefast.mchjong.engine.Meld> melds,
+              int owner, int width, int height, int maxTileWidth, boolean perspective) {
         this.owner = owner;
-        this.melds = player.melds();
+        this.melds = melds;
         this.perspective = perspective;
         right = width - (perspective ? 24 : 8);
-        tiles = player.hand();
-        drawn = player.drawn();
+        this.tiles = tiles;
+        this.drawn = drawn;
         tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / 14));
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.getLast() != drawn ? 0 : Math.max(18, tileWidth / 2);
@@ -84,7 +89,7 @@ final class TableHand {
 
     void render(GuiGraphicsExtractor graphics, int selected, int hovered, IntUnaryOperator highlight, int suppressedTile,
                 TileFacePreset preset, TileMaterial material, net.minecraft.world.item.DyeColor dye,
-                net.minecraft.resources.Identifier backPreset, TableAnimation deal, TableBoard.Point source, long now) {
+                net.minecraft.resources.Identifier backPreset, RiichiAnimation deal, RiichiBoard.Point source, long now) {
         if (perspective) {
             int railLeft = Math.max(8, left - 24), railRight = Math.min(right + 8, left + span + 26);
             graphics.fill(railLeft + 8, y + tileHeight + 5, railRight + 10, y + tileHeight + 20, 0x66000000);
