@@ -45,15 +45,24 @@ MCR presentation uses its own scene and layout types. Dimensions derive from
 runs left to right as seen by the seated player; z increases toward that player.
 All four seats use the same local poses rotated by `TableGeometry.orient`.
 
-The built wall has four straight eighteen-stack sides, each stack upper/lower.
-Each side is displaced along its length in the same local direction, so one
-end extends past its adjacent wall while the opposite end stops short. This
-fourfold pinwheel arrangement forms the offset hash-shaped enclosure rather
-than endpoint-aligned square corners. Offset, corner clearance and the small
-inter-stack seam come from tile dimensions; the short end meets the adjacent
-wall with that same fine seam, and stacks do not overlap at the corners.
-Rendered slot indices are the engine's fixed physical slots, independent of the
-opening and draw order.
+MCR and Sichuan built walls use four complete, straight, double-layer walls,
+each tilted 12 degrees relative to its owner's table edge. Stack centers advance
+along the tilted wall tangent, and each tile's yaw follows that same tangent.
+Rotate the complete local pose by 90 degrees for successive seats: all four
+walls retain the same local tilt and handedness, forming a rotated hash/pinwheel
+outline. Wall centers follow the compact length of the neighboring wall: each
+short end approaches its neighbor's side with a narrow clearance, while the long
+end extends past that junction. Keep the four walls gathered around the center,
+without intersections or large disconnected corner gaps. The complete wall must
+leave the central instrument panel visible from the default seated camera.
+Stack pitch equals tile width, so neighboring tiles touch edge to edge along the
+wall tangent, as in Riichi. Check intersections using oriented tile bounds;
+world-axis AABBs of tightly packed tilted tiles may overlap. Every tile stays on
+the felt.
+MCR retains eighteen stacks per side and 144 tiles. Sichuan retains 108 tiles,
+centering each wall using its actual thirteen or fourteen stacks according to
+`eastWestLongWall`. Rendered slot indices remain the engine's fixed physical
+slots, independent of opening, draw and replacement traversal.
 
 Each river packs only physically present discards, six per row from left to
 right. The first row is closest to the table center and further rows expand
@@ -454,7 +463,8 @@ occupied widths from the real `TileMesh` dimensions, including sideways called
 tiles and front-aligned added kans. All tiles in a meld share the same bottom
 edge toward their owner. An added-kan tile lies flat immediately in front of
 the sideways called tile, toward the center, at the same height.
-Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to edge.
+Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to
+edge. MCR and Sichuan wall stacks touch along their tilted wall tangent.
 Keep the deliberate drawn-tile and hand-to-meld gaps separate from those physical
 contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.

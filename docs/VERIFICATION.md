@@ -122,8 +122,16 @@ gradlew.bat :fabric:runSmokeClient -PsmokeMcrLayout=true "-PsmokeScreenshots=mcr
 
 Inspect the two images in `fabric/build/smoke/mcr-layout-evidence/screenshots`
 and the fresh `PASS.txt`/`FAIL.txt` marker. Select `mcr-wall.png` when changing the
-built wall. Omit `smokeScreenshots` for assertion-only
-runs. Compile the other affected loaders without duplicating these shared images.
+built wall. The same fixture captures complete Sichuan walls with
+`sichuan-wall-east-west.png` and `sichuan-wall-north-south.png`, covering both
+13/14-stack assignments. Inspect the whole-wall tilt relative to the table edges
+and matching tile yaw in all three wall captures. The `smokeMcrAuto` profile
+provides `mcr-wall-seated.png`; `smokeSichuan` provides
+`sichuan-wall-east-west-seated.png` and `sichuan-wall-north-south-seated.png`.
+These display-only full-wall snapshots use the real seated world camera and
+active automatic-table instrument panel. Check corner proximity and unobstructed
+center labels in these views as well as the overhead captures. Omit `smokeScreenshots` for
+assertion-only runs. Compile the other affected loaders without duplicating these shared images.
 
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item
 identities, appearance matching, separate-case selection and the supplied-stock
