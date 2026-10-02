@@ -355,9 +355,12 @@ final class SichuanTableSmoke {
                     if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
                     double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                     double horizontal = (screen.width - 1280 * scale) / 2
-                        + (289 + tiles.indexOf(selectedTile) * 52 + (selectedTile == player.drawn() ? 26 : 0)) * scale;
-                    double vertical = (screen.height - 800 * scale) / 2 + 666 * scale;
+                        + (248 + tiles.indexOf(selectedTile) * 58 + (selectedTile == player.drawn() ? 29 : 0)) * scale;
+                    double vertical = (screen.height - 800 * scale) / 2 + 690 * scale;
                     require(screen.mouseClicked(horizontal, vertical, 0), "Immersive Sichuan picking failed");
+                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    require(screen.selected(piece), "Immersive Sichuan picking selected a different tile");
+                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
                     picked = true; settled = 0; break;
                 }
                 var hint = screen.children().stream().filter(child -> child instanceof MahjongButton
