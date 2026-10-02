@@ -30,6 +30,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Tilt the complete MCR and Sichuan double-layer walls by 12 degrees in a consistent pinwheel layout, rotating both stack centers and tile yaw with tightly touching stacks and closely gathered corners, keeping the center panel visible from seated play while preserving physical slots and rule-specific wall traversal.
+
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
 
 - Restore the Immersive view caption, separate lobby portraits from status text, use locale-appropriate phrasing and punctuation, reduce the stool inventory icon, and render furniture in both maid head slots with its full item textures and components.

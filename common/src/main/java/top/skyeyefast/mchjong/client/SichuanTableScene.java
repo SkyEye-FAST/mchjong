@@ -16,7 +16,6 @@ public final class SichuanTableScene {
     public static final double HEIGHT = TileMesh.HEIGHT * (double) TILE_SCALE;
     public static final double DEPTH = TileMesh.DEPTH * (double) TILE_SCALE;
     public static final double HAND_Z = RiichiTableScene.HAND_Z;
-    public static final double WALL_Z = .76;
     public static final double RIVER_Z = .34;
     private static final double MELD_RIGHT = RiichiTableScene.MELD_RIGHT;
     public enum Area { WALL, HAND, RIVER, MELD }
@@ -40,13 +39,18 @@ public final class SichuanTableScene {
 
     private static List<Piece> wall(List<Integer> slots, boolean eastWestLongWall) {
         var pieces = new ArrayList<Piece>();
-        for (int seat = 0; seat < 4; seat++) for (int column = 0; column < SichuanWallLayout.stacks(seat, eastWestLongWall); column++)
+        for (int seat = 0; seat < 4; seat++) {
+            int stacks = SichuanWallLayout.stacks(seat, eastWestLongWall);
+            var wall = TiltedWallLayout.compact(stacks,
+                SichuanWallLayout.stacks((seat + 1) % 4, eastWestLongWall), WIDTH, HEIGHT);
+            for (int column = 0; column < stacks; column++)
             for (int layer = 0; layer < 2; layer++) {
                 int slot = SichuanWallLayout.slot(seat, column, layer, eastWestLongWall);
+                var position = wall.position(column);
                 if (slots.get(slot) != Tile.ABSENT) pieces.add(piece(slots.get(slot), seat, Area.WALL, slot,
-                    ((SichuanWallLayout.stacks(seat, eastWestLongWall) - 1) / 2.0 - column) * WIDTH,
-                    (layer == 0 ? 1.5 : .5) * DEPTH, WALL_Z, 0, true, true, TILE_SCALE));
+                    position.x, (layer == 0 ? 1.5 : .5) * DEPTH, position.z, wall.yaw(), true, true, TILE_SCALE));
             }
+        }
         return List.copyOf(pieces);
     }
 

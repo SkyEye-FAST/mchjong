@@ -13,16 +13,38 @@ import static org.junit.jupiter.api.Assertions.*;
 
 class SichuanPresentationTest {
     @Test void wallUsesAll108PhysicalSlotsWithoutCornerIntersections() {
-        for (var preset : SichuanPreset.values()) verifyWall(preset.config().eastWestLongWall());
+        for (boolean eastWestLongWall : new boolean[]{false, true}) verifyWall(eastWestLongWall);
     }
 
     private static void verifyWall(boolean eastWestLongWall) {
         var pieces = SichuanTableScene.fullWall(eastWestLongWall);
         assertEquals(108, pieces.size());
         assertEquals(108, pieces.stream().map(SichuanTableScene.Piece::index).distinct().count());
+        int firstStacks = SichuanWallLayout.stacks(0, eastWestLongWall);
+        var firstDirection = pieces.get(0).position().subtract(pieces.get((firstStacks - 1) * 2).position()).normalize();
         for (int seat = 0; seat < 4; seat++) {
             int owner = seat;
             assertEquals(((seat % 2 == 0) == eastWestLongWall ? 28 : 26), pieces.stream().filter(piece -> piece.seat() == owner).count());
+            int stacks = SichuanWallLayout.stacks(seat, eastWestLongWall);
+            var upper = new ArrayList<SichuanTableScene.Piece>();
+            for (int column = 0; column < stacks; column++) {
+                int upperSlot = SichuanWallLayout.slot(seat, column, 0, eastWestLongWall);
+                int lowerSlot = SichuanWallLayout.slot(seat, column, 1, eastWestLongWall);
+                var top = pieces.stream().filter(piece -> piece.index() == upperSlot).findFirst().orElseThrow();
+                var bottom = pieces.stream().filter(piece -> piece.index() == lowerSlot).findFirst().orElseThrow();
+                assertEquals(top.position().x, bottom.position().x);
+                assertEquals(top.position().z, bottom.position().z);
+                assertEquals(SichuanTableScene.DEPTH, top.position().y - bottom.position().y, 1e-8);
+                assertEquals(top.yaw(), bottom.yaw());
+                upper.add(top);
+            }
+            WallGeometryAssertions.tiltedSide(upper.stream().map(SichuanTableScene.Piece::position).toList(),
+                upper.stream().map(SichuanTableScene.Piece::yaw).toList(), seat, firstDirection, SichuanTableScene.WIDTH);
+            int nextSeat = (seat + 1) % 4;
+            int nextSlot = SichuanWallLayout.slot(nextSeat, SichuanWallLayout.stacks(nextSeat, eastWestLongWall) - 1, 0, eastWestLongWall);
+            var next = pieces.stream().filter(piece -> piece.index() == nextSlot).findFirst().orElseThrow();
+            WallGeometryAssertions.corner(upper.getFirst().position(), upper.getLast().position(),
+                next.position(), upper.getFirst().yaw(), SichuanTableScene.WIDTH, SichuanTableScene.HEIGHT);
         }
         for (var piece : pieces) {
             assertEquals(Tile.HIDDEN, piece.tile());
@@ -30,9 +52,13 @@ class SichuanPresentationTest {
             var bounds = bounds(piece);
             assertTrue(Math.max(Math.abs(bounds.minX), Math.abs(bounds.maxX)) < TableGeometry.FELT_HALF_WIDTH);
             assertTrue(Math.max(Math.abs(bounds.minZ), Math.abs(bounds.maxZ)) < TableGeometry.FELT_HALF_WIDTH);
+            WallGeometryAssertions.clearCenter(piece.position(), piece.yaw(), SichuanTableScene.WIDTH,
+                SichuanTableScene.HEIGHT, SichuanTableScene.DEPTH);
         }
         for (int first = 0; first < pieces.size(); first++) for (int second = first + 1; second < pieces.size(); second++)
-            assertFalse(bounds(pieces.get(first)).deflate(1e-7).intersects(bounds(pieces.get(second)).deflate(1e-7)));
+            assertFalse(WallGeometryAssertions.intersects(pieces.get(first).position(), pieces.get(first).yaw(),
+                pieces.get(second).position(), pieces.get(second).yaw(), SichuanTableScene.WIDTH,
+                SichuanTableScene.HEIGHT, SichuanTableScene.DEPTH));
     }
 
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {
@@ -146,8 +172,10 @@ class SichuanPresentationTest {
             RoomSeating.Stage.POSITIONING, List.of(), seats, List.of(), null, false, false, true, top.skyeyefast.mchjong.engine.MatchAutomation.DEFAULT);
     }
     private static AABB bounds(SichuanTableScene.Piece piece) {
-        double horizontal = piece.seat() % 2 == 0 ? SichuanTableScene.WIDTH : SichuanTableScene.HEIGHT;
-        double depth = piece.seat() % 2 == 0 ? SichuanTableScene.HEIGHT : SichuanTableScene.WIDTH;
+        double cosine = Math.abs(Math.cos(Math.toRadians(piece.yaw())));
+        double sine = Math.abs(Math.sin(Math.toRadians(piece.yaw())));
+        double horizontal = SichuanTableScene.WIDTH * cosine + SichuanTableScene.HEIGHT * sine;
+        double depth = SichuanTableScene.WIDTH * sine + SichuanTableScene.HEIGHT * cosine;
         var position = piece.position();
         return new AABB(position.x - horizontal / 2, position.y - SichuanTableScene.DEPTH / 2, position.z - depth / 2,
             position.x + horizontal / 2, position.y + SichuanTableScene.DEPTH / 2, position.z + depth / 2);
