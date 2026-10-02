@@ -190,7 +190,7 @@ final class RoomFlowSmoke {
             var serverTable = (MahjongTableBlockEntity) player.serverLevel().getBlockEntity(pos);
             var game = serverTable.participantSession(player);
             require(game != null, "Settlement fixture has no participant");
-            var saved = serverTable.saveWithoutMetadata(player.registryAccess());
+            var saved = serverTable.saveWithoutMetadata();
             var envelope = com.google.gson.JsonParser.parseString(new String(saved.getByteArray("session"),
                 java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
             var state = envelope.getAsJsonObject("state");
@@ -207,7 +207,7 @@ final class RoomFlowSmoke {
             match.add("finalScores", TableNetworking.JSON.toJsonTree(end ? List.of(0.0, 0.0, 0.0, 0.0) : List.of()));
             match.add("finalRanks", TableNetworking.JSON.toJsonTree(end ? List.of(1, 2, 3, 4) : List.of()));
             saved.putByteArray("session", envelope.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
-            serverTable.loadWithComponents(saved, player.registryAccess());
+            serverTable.load(saved);
             require(serverTable.participantSession(player).view(id).phase() == (end ? RiichiView.Phase.MATCH_END : RiichiView.Phase.HAND_END),
                 "Saved settlement fixture did not load");
             serverTable.open(player);

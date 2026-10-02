@@ -30,6 +30,9 @@ public final class TilePicking {
             piece.scale(), origin, direction, lifted, 0);
     }
 
+    static double distanceSquared(TableAnimation.Pose pose, float scale, Vec3 origin, Vec3 direction, boolean lifted) {
+        return distanceSquared(pose.position(), pose.yaw(), pose.pitch(), scale, origin, direction, lifted, 0);
+    }
     private static double distanceSquared(Vec3 position, float yaw, float pitch, float scale,
                                           Vec3 origin, Vec3 direction, boolean lifted, double padding) {
         var inverse = new Matrix4f().translation((float) position.x,

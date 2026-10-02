@@ -21,12 +21,12 @@ import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 
 /** A single-screen settlement, with a winner selector for multiple ron and no scroll viewport. */
-public final class RiichiResults extends AbstractWidget {
-    public enum Page { HAND, POINTS, MATCH }
+public final class TableResults extends AbstractWidget {
+    public enum Page { HAND, POINTS, MATCH, PAYMENTS }
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
-    private final RiichiView view;
-    private final List<List<ScoreAnnouncements.Row>> receipts;
+    private TableResultState view;
+    private final List<List<TableResultState.Row>> receipts;
     private final TileFacePreset preset;
     private final TileMaterial material;
     private final DyeColor dye;
@@ -36,39 +36,42 @@ public final class RiichiResults extends AbstractWidget {
     private final int contentScale;
     private int winner;
     private ResultReadout readout;
+    private int paymentPage;
+    private java.util.function.IntUnaryOperator artwork = TileMesh::face;
     private final List<Hit> hits = new ArrayList<>();
     private record Hit(int x, int y, int width, int height, Component text) {
         boolean contains(double px, double py) { return px >= x && px < x + width && py >= y && py < y + height; }
     }
 
-    public RiichiResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
                         int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
         this(font, view, preset, material, dye, TileBackPresets.DEFAULT, x, y, width, height, winner, page, started, contentScale);
     }
 
-    public RiichiResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, TileMaterial material, DyeColor dye,
                         net.minecraft.resources.ResourceLocation backPreset,
                         int x, int y, int width, int height, int winner, Page page, long started, int contentScale) {
-        super(x, y, width, height, Component.translatable("result.mchjong." + view.result()));
-        this.font = font;
-        this.view = view;
-        this.receipts = view.wins().stream().map(win -> ScoreAnnouncements.rows(view, win)).toList();
-        this.preset = preset;
-        this.material = material;
-        this.dye = dye;
-        this.backPreset = backPreset;
-        this.page = page;
-        this.started = started;
-        this.contentScale = contentScale;
+        this(font, TableResultState.riichi(view), preset, material, dye, backPreset, x, y, width, height, winner, page, started, contentScale);
+    }
+
+    TableResults(Font font, TableResultState view, TileFacePreset preset, TileMaterial material, DyeColor dye,
+                 net.minecraft.resources.ResourceLocation backPreset, int x, int y, int width, int height,
+                 int winner, Page page, long started, int contentScale) {
+        super(x, y, width, height, view.heading());
+        this.font = font; this.view = view; this.receipts = view.wins().stream().map(TableResultState.Win::rows).toList();
+        this.preset = preset; this.material = material; this.dye = dye; this.backPreset = backPreset;
+        this.page = page; this.started = started; this.contentScale = contentScale;
         this.winner = net.minecraft.util.Mth.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
     }
 
-    public RiichiResults(Font font, RiichiView view, TileFacePreset preset, int x, int y, int width, int height,
+    public TableResults(Font font, RiichiView view, TileFacePreset preset, int x, int y, int width, int height,
                         int winner, Page page, long started, int contentScale) {
         this(font, view, preset, TileMaterial.BONE, null, x, y, width, height, winner, page, started, contentScale);
     }
 
-    public RiichiResults readout(ResultReadout value) { readout = value; return this; }
+    public TableResults readout(ResultReadout value) { readout = value; return this; }
+    TableResults artwork(java.util.function.IntUnaryOperator value) { artwork = value; return this; }
+    void setViewer(int viewer) { view = view.withViewer(viewer); }
     public int selectedWinner() { return readout != null && !readout.complete() ? readout.winner() : winner; }
     public TileMaterial material() { return material; }
     public DyeColor dye() { return dye; }
@@ -108,10 +111,16 @@ public final class RiichiResults extends AbstractWidget {
     private void renderContent(GuiGraphics graphics, int mouseX, int mouseY, int width, int height) {
         int x = 0, y = 0;
         Component heading = page == Page.HAND ? getMessage() : Component.translatable(
-            page == Page.POINTS ? "ui.mchjong.point_changes" : "ui.mchjong.match_complete");
+            page == Page.POINTS ? "ui.mchjong.point_changes" : page == Page.PAYMENTS ? "ui.mchjong.result_page.3" : "ui.mchjong.match_complete");
         line(graphics, heading, x + 9, y + 7, width - 18, GOLD);
         int top = y + 23, bottom = y + height - 6;
-        if (page != Page.HAND) {
+        if (page == Page.PAYMENTS) {
+            int rows = Math.max(1, (bottom - top - 16) / 13);
+            paymentPage = Math.min(paymentPage, Math.max(0, (view.payments().size() - 1) / rows));
+            for (int i = paymentPage * rows; i < Math.min(view.payments().size(), (paymentPage + 1) * rows); i++)
+                line(graphics, view.payments().get(i), 10, top + (i % rows) * 13, width - 20, TEXT);
+            line(graphics, Component.literal((paymentPage + 1) + " / " + Math.max(1, (view.payments().size() + rows - 1) / rows)), 10, bottom - 12, width - 20, MUTED);
+        } else if (page != Page.HAND) {
             scoreTable(graphics, x + 8, top, width - 16, bottom - top);
         } else {
             boolean sidebar = width >= 500;
@@ -123,7 +132,7 @@ public final class RiichiResults extends AbstractWidget {
                 for (int i = 0; i < view.wins().size(); i++) {
                     int tabX = x + 10 + i * tabWidth;
                     graphics.fill(tabX, top - 2, tabX + tabWidth - 3, top + 12, i == winner ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-                    name(graphics, view.wins().get(i).seat(), RiichiTableScreen.playerName(view, view.wins().get(i).seat()), tabX + 4, top + 1, tabWidth - 10,
+                    name(graphics, view.wins().get(i).seat(), view.name(view.wins().get(i).seat()), tabX + 4, top + 1, tabWidth - 10,
                         i == winner ? GOLD : MUTED);
                 }
                 top += 18;
@@ -150,12 +159,10 @@ public final class RiichiResults extends AbstractWidget {
     private int winningHand(GuiGraphics graphics, int span, boolean compact) {
         var win = view.wins().get(winner);
         var player = view.seats().get(win.seat());
-        Component source = win.from() < 0 ? Component.translatable("result.mchjong." + view.result())
-            : Component.translatable("ui.mchjong.ron_from", RiichiTableScreen.playerName(view, win.from()));
-        Component score = win.score().yakuman() > 0 ? Component.translatable("ui.mchjong.yakuman", win.score().yakuman())
-            : Component.translatable("ui.mchjong.han_fu", win.score().han(), win.score().fu());
+        Component source = win.source();
+        Component score = win.score();
         boolean named = view.wins().size() == 1;
-        if (named) name(graphics, win.seat(), RiichiTableScreen.playerName(view, win.seat()), 0, 0, span, GOLD);
+        if (named) name(graphics, win.seat(), view.name(win.seat()), 0, 0, span, GOLD);
         boolean scored = readout == null || readout.scoredAt(winner) >= 0;
         text(graphics, scored ? score.copy().append("  ").append(source) : source, 0, named ? 12 : 0, span, MUTED);
         int y = named ? 28 : 16;
@@ -168,13 +175,13 @@ public final class RiichiResults extends AbstractWidget {
             int x = 0;
             for (int i = 0; i < hand.size(); i++) {
                 if (i == hand.size() - 1) x += 4;
-                if (graphics != null) TileGui.tile(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, false, preset, material, dye, backPreset);
+                if (graphics != null) TileGui.tileArtwork(graphics, hand.get(i), x, y + tileWidth / 2, tileWidth, false, false, i == hand.size() - 1, false, 0, preset, material, dye, backPreset, artwork);
                 x += tileWidth + 1;
             }
             for (var meld : player.melds()) {
                 x += 5;
-                if (graphics != null) TileGui.meld(graphics, meld, win.seat(), x, y + tileWidth / 2, tileWidth, preset, material, dye, backPreset);
-                x += TileGui.meldWidth(meld, win.seat(), tileWidth);
+                if (graphics != null) TileGui.meldArtwork(graphics, player.layout(meld, win.seat()), x, y + tileWidth / 2, tileWidth, 0, preset, material, dye, backPreset, artwork);
+                x += TileGui.meldWidth(player.layout(meld, win.seat()), tileWidth);
             }
             y += tileWidth * 2 + 5;
         }
@@ -186,9 +193,9 @@ public final class RiichiResults extends AbstractWidget {
             int rowHeight = 0;
             for (int col = 0; col < columns && first + col < yaku.size(); col++) {
                 var row = yaku.get(first + col);
-                Component han = Component.translatable("ui.mchjong.han", row.han());
-                int badgeWidth = row.han() > 0 ? font.width(han) + 8 : 0;
-                var lines = font.split(Component.translatable(row.translationKey()), Math.max(1, colWidth - badgeWidth - 13));
+                Component han = row.badge();
+                int badgeWidth = !han.getString().isEmpty() ? font.width(han) + 8 : 0;
+                var lines = font.split(row.label(), Math.max(1, colWidth - badgeWidth - 13));
                 int color = readout != null && !readout.complete() && first + col == visible - 1 ? GOLD : TEXT;
                 if (graphics != null && first + col < visible) {
                     if (badgeWidth > 0) badge(graphics, han,
@@ -200,41 +207,37 @@ public final class RiichiResults extends AbstractWidget {
             }
             y += rowHeight + 2;
         }
+        y += 8;
         // Reserve the complete receipt from the first frame, so new rows never move the hand.
-        String limit = ScoreAnnouncements.limit(win.score(), win.seat() == view.dealer());
+        boolean hasGrade = !win.grade().getString().isEmpty();
         int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
         Component points = Component.translatable("ui.mchjong.points", gain);
-        Component grade = limit == null ? Component.empty() : Component.translatable(ScoreAnnouncements.SUBTITLES.get(limit));
-        int gradeWidth = limit == null ? 0 : 2 * (font.width(grade) + 8);
-        boolean beside = compact && limit != null && 2 * font.width(points) + gradeWidth + 8 <= span;
-        int scoreHeight = limit == null || beside ? 28 : 54;
+        Component grade = win.grade();
+        int gradeWidth = !hasGrade ? 0 : 2 * (font.width(grade) + 8);
+        boolean beside = compact && hasGrade && 2 * font.width(points) + gradeWidth + 8 <= span;
+        int scoreHeight = !hasGrade || beside ? 28 : 54;
         if (scored) {
-            if (graphics != null) graphics.fill(0, y, span, y + scoreHeight, MahjongUi.INPUT);
             largeText(graphics, points, 0, y + 2, beside ? span - gradeWidth - 8 : span, GOLD);
-            if (graphics != null && limit != null && (readout == null || readout.limitVisible(winner)))
+            if (graphics != null && hasGrade && (readout == null || readout.limitVisible(winner)))
                 largeBadge(graphics, grade, beside ? span - gradeWidth : 0, beside ? y : y + 26);
         }
         y += scoreHeight;
         if (win.tile() >= 0) {
             y += 4;
             int leftHeight = indicators(graphics, 0, y, span / 2 - 4, false, compact);
-            int rightHeight = player.riichi() ? indicators(graphics, span / 2, y, span / 2 - 4, true, compact) : 0;
+            int rightHeight = indicators(graphics, span / 2, y, span / 2 - 4, true, compact);
             y += Math.max(leftHeight, rightHeight);
         }
         return y + 2;
     }
 
-    private int handWidth(int tiles, RiichiView.Seat player, int owner, int tileWidth, int handGap) {
+    private int handWidth(int tiles, TableResultState.Seat player, int owner, int tileWidth, int handGap) {
         return tiles * (tileWidth + 1) + handGap
-            + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(meld, owner, tileWidth) + 5).sum();
+            + player.melds().stream().mapToInt(meld -> TileGui.meldWidth(player.layout(meld, owner), tileWidth) + 5).sum();
     }
 
     private int indicators(GuiGraphics graphics, int x, int y, int span, boolean ura, boolean compact) {
-        var tiles = new ArrayList<Integer>();
-        for (int i = 0; i < 5; i++) {
-            int index = view.wall().size() - (ura ? 6 : 5) - 2 * i;
-            if (index >= 0 && view.wall().get(index) >= 0) tiles.add(view.wall().get(index));
-        }
+        var tiles = ura ? view.wins().get(winner).ura() : view.wins().get(winner).indicators();
         if (tiles.isEmpty()) return 0;
         Component label = Component.translatable(compact ? ura ? "ui.mchjong.ura.short" : "ui.mchjong.dora.short"
             : ura ? "ui.mchjong.ura_indicators" : "ui.mchjong.result_indicators");
@@ -252,9 +255,8 @@ public final class RiichiResults extends AbstractWidget {
         for (int seat = 0; seat < view.seats().size(); seat++) {
             var player = view.seats().get(seat);
             int cx = x + seat % columns * cardWidth, cy = y + seat / columns * cardHeight;
-            Component status = Component.translatable(view.result().equals("exhaustive")
-                ? player.exposed() ? "ui.mchjong.tenpai" : "ui.mchjong.noten" : "ui.mchjong.no_winner");
-            name(graphics, seat, RiichiTableScreen.playerName(view, seat), cx, cy, cardWidth - 8, TEXT);
+            Component status = player.status();
+            name(graphics, seat, view.name(seat), cx, cy, cardWidth - 8, TEXT);
             line(graphics, status, cx, cy + 11, cardWidth - 8, player.exposed() ? GOLD : MUTED);
             int concealed = player.exposed() ? player.hand().size() : 0;
             if (concealed > 0 || !player.melds().isEmpty()) {
@@ -262,13 +264,13 @@ public final class RiichiResults extends AbstractWidget {
                 while (tileWidth > 4 && handWidth(concealed, player, seat, tileWidth, 0) > cardWidth - 8) tileWidth--;
                 int tx = cx, tileY = cy + 24 + tileWidth / 2;
                 if (player.exposed()) for (int tile : player.hand()) {
-                    TileGui.tile(graphics, tile, tx, tileY, tileWidth, false, false, false, false, preset, material, dye, backPreset);
+                    TileGui.tileArtwork(graphics, tile, tx, tileY, tileWidth, false, false, false, false, 0, preset, material, dye, backPreset, artwork);
                     tx += tileWidth + 1;
                 }
                 for (var meld : player.melds()) {
                     tx += 5;
-                    TileGui.meld(graphics, meld, seat, tx, tileY, tileWidth, preset, material, dye, backPreset);
-                    tx += TileGui.meldWidth(meld, seat, tileWidth);
+                    TileGui.meldArtwork(graphics, player.layout(meld, seat), tx, tileY, tileWidth, 0, preset, material, dye, backPreset, artwork);
+                    tx += TileGui.meldWidth(player.layout(meld, seat), tileWidth);
                 }
             }
         }
@@ -279,9 +281,10 @@ public final class RiichiResults extends AbstractWidget {
         var order = IntStream.range(0, view.seats().size()).boxed().toList();
         if (standings && view.finalRanks().size() == view.seats().size())
             order = order.stream().sorted(Comparator.comparingInt(seat -> view.finalRanks().get(seat))).toList();
-        int[] ends = standings ? new int[]{span * 40 / 100, span * 62 / 100, span * 80 / 100, span - 4}
+        boolean uma = view.seats().get(0).variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI;
+        int[] ends = standings && !uma ? new int[]{span * 65 / 100, span - 4} : standings ? new int[]{span * 40 / 100, span * 62 / 100, span * 80 / 100, span - 4}
             : new int[]{span * 38 / 100, span * 59 / 100, span * 78 / 100, span - 4};
-        String[] labels = standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.uma.short", "ui.mchjong.final.short"}
+        String[] labels = standings && !uma ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short"} : standings ? new String[]{"ui.mchjong.player", "ui.mchjong.points.short", "ui.mchjong.uma.short", "ui.mchjong.final.short"}
             : new String[]{"ui.mchjong.player", "ui.mchjong.before", "ui.mchjong.change", "ui.mchjong.after"};
         graphics.fill(x, y, x + span, y + 17, MahjongUi.INPUT);
         graphics.fill(x, y + 16, x + span, y + 17, MahjongUi.EDGE);
@@ -299,12 +302,12 @@ public final class RiichiResults extends AbstractWidget {
             graphics.fill(x, cy, x + span, cy + rowHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             graphics.fill(x, cy + rowHeight - 1, x + span, cy + rowHeight, MahjongUi.EDGE);
             if (seat == view.viewerSeat()) graphics.fill(x, cy, x + 2, cy + rowHeight - 1, GOLD);
-            Component name = RiichiTableScreen.playerName(view, seat);
+            Component name = view.name(seat);
             if (standings && seat < view.finalRanks().size()) name = Component.literal(view.finalRanks().get(seat) + ". ").append(name);
             int textY = cy + Math.max(2, (rowHeight - 9) / 2);
             name(graphics, seat, name, x + 4, textY, ends[0] - 8, TEXT);
             int points = displayedPoints(seat);
-            List<String> values = standings ? List.of(Integer.toString(player.points()),
+            List<String> values = standings && !uma ? List.of(Integer.toString(player.points())) : standings ? List.of(Integer.toString(player.points()),
                 seat < view.finalUma().size() ? String.format(Locale.ROOT, "%+.2f", view.finalUma().get(seat)) : "—",
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
                 : List.of(Integer.toString(player.points() - delta), pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—", Integer.toString(points));
@@ -337,7 +340,7 @@ public final class RiichiResults extends AbstractWidget {
             int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
             int points = displayedPoints(seat);
             graphics.fill(cx, cy, cx + cardWidth - 3, cy + cardHeight - 3, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
-            Component name = RiichiTableScreen.playerName(view, seat);
+            Component name = view.name(seat);
             if (page == Page.MATCH && seat < view.finalRanks().size())
                 name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat)).append("  ").append(name);
             name(graphics, seat, name, cx + 4, cy + 3, cardWidth - 11, TEXT);
@@ -353,7 +356,8 @@ public final class RiichiResults extends AbstractWidget {
     }
 
     private void name(GuiGraphics graphics, int seat, Component name, int x, int y, int span, int color) {
-        int inset = PlayerPortrait.draw(graphics, view.seats().get(seat), x, y - 1, 10);
+        var p = view.seats().get(seat);
+        int inset = p.occupied() ? PlayerPortrait.draw(graphics, p.entityBot(), p.bot(), p.name().getString(), x, y - 1, 10) : 0;
         line(graphics, name, x + inset, y, span - inset, color);
     }
 
@@ -383,11 +387,11 @@ public final class RiichiResults extends AbstractWidget {
         if (graphics != null) MahjongUi.text(graphics, font, text, x, y, span, color, false);
         if (font.width(text) > span) hits.add(new Hit(x, y, span, 10, text));
     }
-    private Component winnerSummary(RiichiView.Win win) {
-        var summary = RiichiTableScreen.playerName(view, win.seat()).copy();
+    private Component winnerSummary(TableResultState.Win win) {
+        var summary = view.name(win.seat()).copy();
         for (var row : receipts.get(view.wins().indexOf(win))) {
-            summary.append("  ").append(Component.translatable(row.translationKey()));
-            if (row.han() > 0) summary.append(" ").append(Component.translatable("ui.mchjong.han", row.han()));
+            summary.append("  ").append(row.label());
+            if (!row.badge().getString().isEmpty()) summary.append(" ").append(row.badge());
         }
         return summary;
     }
@@ -398,6 +402,7 @@ public final class RiichiResults extends AbstractWidget {
         if (button == 0 && page == Page.HAND && view.wins().size() > 1 && localY >= 21 && localY < 36) {
             int span = contentWidth - 20 - (contentWidth >= 500 ? 156 : 0);
             if (localX >= 10 && localX < 10 + span) {
+                if (readout != null) readout.finish(Util.getMillis());
                 RiichiAudio.finishResult();
                 winner = Math.min(view.wins().size() - 1, (int) (localX - 10) / (span / view.wins().size()));
                 return true;
@@ -405,9 +410,18 @@ public final class RiichiResults extends AbstractWidget {
         }
         return super.mouseClicked(x, y, button);
     }
+    @Override public boolean mouseScrolled(double x, double y, double vertical) {
+        if (page != Page.PAYMENTS) return false;
+        paymentPage = Math.max(0, paymentPage + (vertical < 0 ? 1 : -1));
+        return true;
+    }
     @Override public boolean keyPressed(int key, int scanCode, int modifiers) {
+        if (page == Page.PAYMENTS && (key == GLFW.GLFW_KEY_PAGE_UP || key == GLFW.GLFW_KEY_PAGE_DOWN)) {
+            paymentPage = Math.max(0, paymentPage + (key == GLFW.GLFW_KEY_PAGE_DOWN ? 1 : -1)); return true;
+        }
         if (page == Page.HAND && view.wins().size() > 1 && (key == GLFW.GLFW_KEY_LEFT || key == GLFW.GLFW_KEY_RIGHT)) {
             winner = selectedWinner();
+            if (readout != null) readout.finish(Util.getMillis());
             RiichiAudio.finishResult();
             winner = Math.floorMod(winner + (key == GLFW.GLFW_KEY_LEFT ? -1 : 1), view.wins().size());
             return true;
@@ -417,7 +431,7 @@ public final class RiichiResults extends AbstractWidget {
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {
         var summary = getMessage().copy();
         for (int seat = 0; seat < view.seats().size(); seat++)
-            summary.append(". ").append(RiichiTableScreen.playerName(view, seat)).append(" ")
+            summary.append(". ").append(view.name(seat)).append(" ")
                 .append(Component.translatable("ui.mchjong.points", view.seats().get(seat).points()));
         for (var win : view.wins()) summary.append(". ").append(winnerSummary(win));
         output.add(NarratedElementType.TITLE, summary);

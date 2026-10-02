@@ -12,13 +12,13 @@ import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** A machine display with large seven-segment scores, localized wind letters and seat lamps. */
-public final class RiichiIndicator {
+public final class TableIndicator {
     private static final float SURFACE = (float) TableGeometry.FELT_Y + .039f;
     private static final int LAMP = 0xffffd58a;
     private static final int DIGIT = 0xffb9efcf;
     private static final int[] DIGITS = {0x3f, 0x06, 0x5b, 0x4f, 0x66, 0x6d, 0x7d, 0x07, 0x7f, 0x6f};
     private static final String[] WINDS = {"east", "south", "west", "north"};
-    private RiichiIndicator() {}
+    private TableIndicator() {}
 
     public static int segments(char character) {
         if (character == '-') return 0x40;
@@ -47,9 +47,19 @@ public final class RiichiIndicator {
     }
 
     public static void render(RiichiView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        render(TableBoardState.live(view), view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION, true, pose, buffers, light);
+    }
+    public static void render(top.skyeyefast.mchjong.engine.McrView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        render(TableBoardState.live(view), view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.TURN
+            || view.phase() == top.skyeyefast.mchjong.engine.McrGame.Phase.REACTION, true, pose, buffers, light);
+    }
+    public static void render(top.skyeyefast.mchjong.engine.SichuanView view, PoseStack pose, MultiBufferSource buffers, int light) {
+        render(TableBoardState.live(view), view.phase() == top.skyeyefast.mchjong.engine.SichuanGame.Phase.TURN
+            || view.phase() == top.skyeyefast.mchjong.engine.SichuanGame.Phase.REACTION, false, pose, buffers, light);
+    }
+    private static void render(TableBoardState view, boolean playing, boolean winds, PoseStack pose, MultiBufferSource buffers, int light) {
         housing(pose, buffers, light);
         var vertices = buffers.getBuffer(TileRenderTypes.FACES);
-        boolean playing = view.phase() == RiichiView.Phase.TURN || view.phase() == RiichiView.Phase.REACTION;
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
@@ -62,33 +72,38 @@ public final class RiichiIndicator {
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(Math.max(0, view.viewerSeat()) * 90));
         // Round number is a row of pips; the wall and stick pictograms identify their counters.
-        for (int pip = 0; pip <= view.round() % view.rules().players(); pip++)
+        for (int pip = 0; pip <= view.round() % view.players(); pip++)
             panel(pose, vertices, .002f + pip * .022f, -.066f, .012f + pip * .022f, -.056f, LAMP, light);
         for (int tile = 0; tile < 3; tile++)
             panel(pose, vertices, -.083f + tile * .015f, -.012f, -.071f + tile * .015f, .016f, DIGIT, light);
         number(pose, vertices, view.remaining(), .03f, -.022f, .046f, .08f, DIGIT, light);
+        if (view.honba() >= 0) {
         panel(pose, vertices, -.104f, .065f, -.059f, .071f, LAMP, light);
         number(pose, vertices, view.honba(), -.026f, .047f, .036f, .068f, LAMP, light);
         panel(pose, vertices, .023f, .065f, .068f, .071f, DIGIT, light);
         number(pose, vertices, view.riichiSticks(), .102f, .047f, .036f, .068f, DIGIT, light);
+        }
         pose.popPose();
 
         // Font rendering switches buffers; finish the machine mesh before drawing any text.
         for (int seat = 0; seat < view.seats().size(); seat++) {
             pose.pushPose();
             pose.mulPose(Axis.YP.rotationDegrees(seat * 90));
-            wind(pose, buffers, Math.floorMod(seat - view.dealer(), view.rules().players()), -.119f, .202f, light);
+            if (winds) wind(pose, buffers, Math.floorMod(seat - view.dealer(), view.players()), -.119f, .202f, light);
+            else label(pose, buffers, Component.literal(Integer.toString(seat + 1)), -.119f, .202f, light);
             pose.popPose();
         }
         pose.pushPose();
         pose.mulPose(Axis.YP.rotationDegrees(Math.max(0, view.viewerSeat()) * 90));
-        wind(pose, buffers, Math.min(3, view.round() / view.rules().players()), -.04f, -.061f, light);
+        if (winds) wind(pose, buffers, Math.min(3, view.round() / view.players()), -.04f, -.061f, light);
         pose.popPose();
     }
 
     private static void wind(PoseStack pose, MultiBufferSource buffers, int wind, float x, float z, int light) {
+        label(pose, buffers, Component.translatable("wind.mchjong." + WINDS[wind] + ".short"), x, z, light);
+    }
+    private static void label(PoseStack pose, MultiBufferSource buffers, Component text, float x, float z, int light) {
         var font = Minecraft.getInstance().font;
-        var text = Component.translatable("wind.mchjong." + WINDS[wind] + ".short");
         float scale = .05f / Math.max(font.lineHeight, font.width(text));
         pose.pushPose();
         pose.translate(x, SURFACE + .004f, z);

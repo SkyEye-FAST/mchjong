@@ -62,9 +62,9 @@ Every river tile has the same upright face orientation and width.
 The group is centered in front of its owner at the same origin and row spacing
 as the Riichi river. The immersive MCR table uses these positions and omits walls.
 
-Melds lie face up at the owner's left-hand corner, at the same depth as the hand.
-The earliest meld starts at the corner and later melds extend right. The hand
-stays centered when possible and shifts right only enough to clear the actual
+Melds lie face up at the owner's right-hand corner, at the same depth as the hand.
+The earliest meld starts at the corner and later melds extend left. The hand
+stays centered when possible and shifts left only enough to clear the actual
 meld bounds. The claimed tile is rotated ninety degrees: left for the previous
 player, middle for the opposite player and right for the next player. A chow
 uses the left source only. A concealed kong has four face-down tiles during play
@@ -72,8 +72,8 @@ and turns face up after the hand ends. Open quads and
 supplemented triplets use the same four-tile flat row; the fourth tile does
 not form a separate raised or forward stack.
 
-Flowers lie face up in one continuous run between the left-corner melds and the
-hand, at the same depth. Their actual width participates in hand clearance.
+Flowers lie face up in one continuous run at the left end of the hand rail,
+at the same depth. Their actual width participates in hand clearance.
 When a full flower run and kongs fill the rail, scale that seat's hand, melds and
 flowers together just enough to fit between the neighboring corners.
 The scene preserves the source indices in its pieces and does not reconstruct
@@ -81,7 +81,8 @@ hidden tile identities to arrange them. `McrView` remains the visibility authori
 
 The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
 Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
-foreground hand. Left-corner melds and flowers retain their MCR rail positions.
+foreground hand, player plaques, center display and motion as Riichi and Sichuan.
+MCR retains its flower rail and native flat-kong display.
 Compact edge cards show player names, winds and scores; the current turn is marked
 with brass. Automatic flower replacement names the player currently replacing.
 Discards come from hand selection, while claims, kongs, wins and pass use localized
@@ -150,12 +151,19 @@ Settlement reserves the complete receipt layout before revealing individual yaku
 rows. Highlight the current row with the shared accent; points precede the hand
 grade. Put each ordinary yaku's han in a solid square-cornered badge directly
 after the yaku name's last line; natural yakuman have no han badge. Enlarge
-points and hand grades together. Show the hand grade in
+points and hand grades together. Leave eight logical pixels after the fan/yaku
+list before the enlarged score, and draw the score without a background box. Show the hand grade in
 a brass-filled badge beneath the points, or beside them in compact receipts.
 Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
+All three variants share the complete table, player-card, action-grid, camera,
+settings, settlement and replay design. Rule adapters supply native winds,
+flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;
+MCR and Sichuan standings show cumulative points, without Riichi uma fields.
+Dense payment ledgers paginate with the wheel or Page Up/Down; their original
+entry order and related-entry links remain visible.
 All three variants share one lobby layout. The left rail selects Riichi, MCR or
 Sichuan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,
@@ -305,6 +313,13 @@ furiten badge below it. Each plaque contains only portrait, name, wind and score
 turn, riichi and presence use small marks. The central
 device carries the round, remaining tiles, turn direction and graphical honba/riichi
 point sticks with counts. It must not spell out honba or deposits.
+MCR and Sichuan use a separate compact instrument panel: a short round caption
+above a larger remaining-tile count, with four owner-positioned seat badges.
+MCR badges show seat winds and the caption uses the actual prevailing wind.
+Sichuan badges show authorized void suits or the public won state; unpublished
+void choices remain blank. A brass edge marks the dealer and the active seat uses
+the shared selected surface. ROUND, REMAINING, TURN and the variant's WINDS or
+STATUS preferences remain independent. Native panels have no deposit counters.
 Use the same resource-pack tile faces and server-issued actions as seated play.
 In replay diagrams, dim tsumogiri and mark tedashi. Live play keeps both at normal
 brightness and distinguishes their movement by animation. The sideways riichi discard
@@ -408,11 +423,11 @@ Ordinary tables show two dice in the central felt area after every wall is built
 The dealer can then focus/click the dice to pick them up and roll via
 the native action control. Both faces use the item textures; hovering the region
 shows a compact face + face = total panel with native narrated numeric text.
-On ordinary tables, immersive play becomes available after dealing completes,
-including its visible animation, and returns to seated play for the next hand's
-preparation. Automatic tables retain immersive play while packets travel to each
-hand, using the shared deal timeline and keeping tile actions locked until arrival. Dice and
-their hover target belong exclusively to seated play.
+Players and spectators can switch between seated and immersive play throughout
+preparation and play. Both the toolbar and the view key use the same unrestricted
+presentation toggle. Automatic tables use the shared deal timeline and keep tile
+actions locked until arrival. Dice and their hover target belong exclusively to
+seated play.
 The completed match returns dice and point-stick positions to storage.
 
 The physical table reserves a 3 x 3 block footprint around a 2.875-block frame
@@ -517,6 +532,8 @@ Riichi draws and ordinary discards advance after
 12 server ticks on both tables, retaining legal concealed-kan and north-extraction
 choices. Ordinary tables start with a 30-second move allowance and 120-second
 hand reserve; lobby hosts can edit both values.
+Automatic table indicators retain their housing, inactive panels and lamps before
+a game starts; active views supply native seat scores and turn lights for all rules.
 Ordinary tables present their central deposits directly on the felt. Automatic tables use a compact
 seven-segment display, large localized wind characters, round pips and seat lamps.
 English winds use E/S/W/N; Chinese and Japanese use their localized characters.

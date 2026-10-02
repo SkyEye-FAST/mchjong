@@ -21,6 +21,11 @@ public final class ClientSichuanNetworking {
         table.acceptSichuanView(view, room, payload.deck(), payload.cloth(), payload.settings());
         if (table.clientTableRoom() != room) return;
         table.acceptWorldPolicy(payload.world());
+        boolean opening = view != null && previousRoom != null && previousRoom.lobby()
+            && previousRoom.tableId().equals(payload.room().tableId()) && previousRoom.incarnation().equals(payload.room().incarnation());
+        TableAnimation.of(table).accept(view == null ? null : TableBoardState.live(view.game()), view == null ? java.util.List.of() : TableAnimation.world(view.game()), payload.room().tableId(), payload.room().incarnation(),
+            view == null ? payload.room().revision() : view.revision(), view == null ? 0 : view.game().handNumber(), opening, net.minecraft.Util.getMillis());
+
         if (view != null && previousRoom != null && previousRoom.tableId().equals(payload.room().tableId())
             && previousRoom.incarnation().equals(payload.room().incarnation())) {
             if (previous == null && previousRoom.lobby()

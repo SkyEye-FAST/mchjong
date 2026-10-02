@@ -21,15 +21,15 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 public final class SichuanTableScreen extends Screen {
     private final BlockPos pos;
     private long shownRevision = -1, decision = -1, lastClickAt;
-    private int page, selected = Tile.ABSENT, hovered = Tile.ABSENT, lastClicked = Tile.ABSENT;
+    private int selected = Tile.ABSENT, hovered = Tile.ABSENT, lastClicked = Tile.ABSENT;
     private boolean pending;
     private final TableViewController presentation = new TableViewController();
     private float framePartial;
     private TableHand hand;
-    private SichuanImmersiveTable board;
+    private TableBoard board;
     private TableTurnClock turnClock;
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
-    private int actionTop;
+    private int actionTop, actionHeight;
     private final TableHints hints = new TableHints();
     private final TableAutomation automation = new TableAutomation(this, this::automationOptions, this::rebuild);
 
@@ -53,6 +53,7 @@ public final class SichuanTableScreen extends Screen {
         return screen instanceof SichuanTableScreen table ? table : null;
     }
     public static boolean isOpen(Screen screen) {
+        screen = TableChildScreen.root(screen);
         return active(screen) != null || screen instanceof SichuanResultsScreen || screen instanceof SichuanLobbyScreen
             || screen instanceof SichuanRulesScreen;
     }
@@ -88,16 +89,16 @@ public final class SichuanTableScreen extends Screen {
         if (shownRevision != view.revision()) pending = false;
         shownRevision = view.revision();
         if (decision != game.decision()) {
-            decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT; page = 0;
+            decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT;
             hints.clearPreview();
         }
         hand = null;
-        board = immersive() ? new SichuanImmersiveTable(game.viewerSeat()) : null;
+        board = immersive() ? new TableBoard(TableBoardState.live(game), 20, 1260, 68, 620, 800, true) : null;
         if (immersive() && game.viewerSeat() >= 0) {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-            hand = new TableHand(tiles, player.drawn(), List.of(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - (automation.available() ? 80 : 20), 52, true);
+            hand = new TableHand(tiles, player.drawn(), player.melds(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - (automation.available() ? 60 : 30), 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN);
         }
         if (room.exitVote() != null) {
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
@@ -105,7 +106,7 @@ public final class SichuanTableScreen extends Screen {
         }
         int textScale = contentScale(), canvasWidth = uiWidth();
         turnClock = addRenderableWidget(new TableTurnClock());
-        TableToolbar.build(this, pos, room, uiWidth(), immersive(), game.viewerSeat() >= 0, this::toggleView)
+        TableToolbar.build(this, pos, room, uiWidth(), immersive(), this::toggleView)
             .forEach(this::addRenderableWidget);
         automation.build(uiWidth(), immersive() ? uiHeight() - 32 : uiHeight() - 17, immersive()).forEach(this::addRenderableWidget);
         automation.restoreFocus(automationFocus);
@@ -116,23 +117,15 @@ public final class SichuanTableScreen extends Screen {
                 && game.actions().get(actionIndex).type() != SichuanAction.Type.DRAW
                 && (game.actions().get(actionIndex).type() != SichuanAction.Type.VOID_SUIT
                     || game.actions().get(actionIndex).tiles().isEmpty())) choices.add(actionIndex);
-        int pages = Math.max(1, (choices.size() + 3) / 4);
-        page = Math.min(page, pages - 1);
-        int cell = immersive() ? 224 : Math.min(110, (canvasWidth - 28 - (automation.available() ? automation.width(canvasWidth) + 8 : 0)) / 2);
-        int actionY = immersive() ? 562 : uiHeight() - 112;
-        actionTop = actionY;
-        for (int slot = 0; slot < 4 && page * 4 + slot < choices.size(); slot++) {
-            int index = choices.get(page * 4 + slot);
-            var button = new ActionButton(canvasWidth - 8 - (2 - slot % 2) * (cell + 4), actionY + slot / 2 * 28 * textScale,
-                cell, 26 * textScale, game.actions().get(index), () -> send(view, index));
+        var grid = TableActionLayout.of(choices.size(), uiWidth(), uiHeight(), hand == null ? -1 : hand.top(),
+            immersive(), automation.available() && !immersive() ? automation.width(uiWidth()) + 8 : 0);
+        actionTop = grid.top(); actionHeight = grid.spanHeight();
+        for (int slot = 0; slot < choices.size(); slot++) {
+            int index = choices.get(slot);
+            var button = new ActionButton(grid.x(slot), grid.y(slot), grid.width(), grid.height(),
+                game.actions().get(index), () -> send(view, index));
             button.active = !pending && !view.paused(); addRenderableWidget(button);
             decisionControls.add(button);
-        }
-        if (pages > 1) {
-            decisionControls.add(addRenderableWidget(new MahjongButton(canvasWidth - 68 * textScale, actionY - 22 * textScale, 28 * textScale, 20 * textScale,
-                Component.literal("‹"), ignored -> { page = Math.floorMod(page - 1, pages); rebuild(); }).textScale(textScale)));
-            decisionControls.add(addRenderableWidget(new MahjongButton(canvasWidth - 36 * textScale, actionY - 22 * textScale, 28 * textScale, 20 * textScale,
-                Component.literal("›"), ignored -> { page = (page + 1) % pages; rebuild(); }).textScale(textScale)));
         }
         if (game.viewerSeat() >= 0) for (int tile : game.seats().get(game.viewerSeat()).hand()) {
             var target = addRenderableWidget(new HandTarget(tile));
@@ -200,7 +193,7 @@ public final class SichuanTableScreen extends Screen {
         var pointer = projection().pointer(positionX, positionY);
         double closest = Double.POSITIVE_INFINITY; int tile = Tile.ABSENT;
         for (var piece : SichuanTableScene.build(view.game())) if (ownHand(piece)) {
-            double distance = TilePicking.distanceSquared(piece, pointer.origin(), pointer.ray(), selected(piece));
+            double distance = TilePicking.distanceSquared(TableAnimation.of(table()).worldPose(piece, Util.getMillis()), piece.scale(), pointer.origin(), pointer.ray(), selected(piece));
             if (distance < closest) { closest = distance; tile = piece.tile(); }
         }
         return tile;
@@ -209,7 +202,7 @@ public final class SichuanTableScreen extends Screen {
         if (hand != null) return hand.point(tile, selected, hovered);
         var view = view(); if (view == null) return null;
         for (var piece : SichuanTableScene.build(view.game())) if (ownHand(piece) && piece.tile() == tile) {
-            var point = projection().project(piece.position().add(0, selected(piece) ? .035 : 0, 0), .01);
+            var point = projection().project(TableAnimation.of(table()).worldPose(piece, Util.getMillis()).position().add(0, selected(piece) ? .035 : 0, 0), .01);
             return point == null ? null : new TableHand.Point((int) point.x(), (int) point.y());
         }
         return null;
@@ -222,7 +215,7 @@ public final class SichuanTableScreen extends Screen {
         if (turnClock != null && view.game().viewerSeat() >= 0) {
             var clock = view.clocks().get(view.game().viewerSeat()).after(table().clientViewAgeMillis());
             int textScale = contentScale(), bottom = clockBottom();
-            int nextTop = bottom - 84 * textScale;
+            int nextTop = bottom - actionHeight;
             for (var widget : decisionControls) widget.setY(widget.getY() + nextTop - actionTop);
             actionTop = nextTop;
             turnClock.update(clock, uiWidth() - 16 * textScale, bottom, textScale);
@@ -233,14 +226,14 @@ public final class SichuanTableScreen extends Screen {
         try {
             if (immersive()) {
                 graphics.fill(0, 0, TableCanvas.WIDTH, TableCanvas.HEIGHT, MahjongUi.INPUT);
-                board.render(graphics, view.game(), table().clientSichuanDeck(), table().clientSichuanCloth());
+                var deck = table().clientSichuanDeck(); var animation = TableAnimation.of(table()); long now = Util.getMillis();
+                board.render(graphics, TableBoardState.live(view.game()), deck.preset(), animation.riverSuppressed(now), deck.material(), deck.back(), deck.backPreset(),
+                    table().clientSichuanCloth(), animation, now, tile -> TileMesh.artwork(deck.tile(tile)));
             }
             hovered = transform.contains(mouseX, mouseY) ? pick(mx, my) : Tile.ABSENT;
             int textScale = contentScale();
             graphics.pose().pushPose(); graphics.pose().translate(0, 0, 400); graphics.pose().scale(textScale, textScale, 1);
             int canvasWidth = uiWidth() / textScale;
-            graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.hand", view.game().handNumber(), view.game().rules().matchHands(), view.game().wall().remaining()),
-                canvasWidth / 2, immersive() ? 170 : 32, MahjongUi.TEXT);
             if (view.paused()) graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.paused"), canvasWidth / 2,
                 immersive() ? 183 : 43, MahjongUi.NEGATIVE);
             else if (view.game().submitted()) graphics.drawCenteredString(font, Component.translatable("sichuan.mchjong.responded"),
@@ -254,8 +247,13 @@ public final class SichuanTableScreen extends Screen {
             if (hand != null) {
                 var deck = table().clientSichuanDeck();
                 int focus = getFocused() instanceof HandTarget target ? target.tile : hovered;
-                hand.render(graphics, selected, focus, tile -> tile == selected ? MahjongUi.ACCENT : 0, Tile.ABSENT,
-                    deck.preset(), deck.material(), deck.back(), deck.backPreset(), null, null, 0);
+                hand.render(graphics, selected, focus, tile -> tile == selected ? MahjongUi.ACCENT : 0, TableAnimation.of(table()).handSuppressed(Util.getMillis()),
+                    deck.preset(), deck.material(), deck.back(), deck.backPreset(), TableAnimation.of(table()), board.drawSource(), Util.getMillis(), tile -> TileMesh.artwork(deck.tile(tile)));
+            }
+            if (board != null) {
+                var deck = table().clientSichuanDeck();
+                TableAnimation.of(table()).render(graphics, board, hand, TableCanvas.HEIGHT - (automation.available() ? 60 : 30), Util.getMillis(),
+                    deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             }
             updateHints();
             graphics.pose().pushPose(); graphics.pose().translate(0, 0, 600);
@@ -275,30 +273,10 @@ public final class SichuanTableScreen extends Screen {
             graphics.pose().popPose();
         } finally { transform.end(graphics); }
     }
-    private void renderSeats(GuiGraphics graphics, SichuanSession.View view, int mouseX, int mouseY) {
-        int viewer = Math.max(0, view.game().viewerSeat());
-        for (int seat = 0; seat < 4; seat++) {
-            int side = Math.floorMod(seat - viewer, 4), textScale = contentScale();
-            int cardWidth = immersive() ? 180 : Math.min(120, width / 3), positionX, positionY;
-            if (immersive()) { var rect = TableCanvas.card(side); positionX = rect.left(); positionY = rect.top(); }
-            else { positionX = side == 1 || side == 2 ? width - cardWidth - 8 : 8; positionY = side == 0 || side == 1 ? 90 : 50; }
-            var player = view.game().seats().get(seat);
-            var participant = table().clientTableRoom().seats().get(seat).participant();
-            int cardHeight = 36 * textScale;
-            graphics.fill(positionX, positionY, positionX + cardWidth, positionY + cardHeight, MahjongUi.PANEL);
-            if (view.game().turn() == seat && !player.won()) graphics.fill(positionX, positionY, positionX + 2 * textScale, positionY + cardHeight, MahjongUi.ACCENT);
-            PlayerPortrait.draw(graphics, participant, positionX + 4, positionY + 4, 10 * textScale);
-            graphics.pose().pushPose(); graphics.pose().translate(positionX + 4, positionY + 4, 0); graphics.pose().scale(textScale, textScale, 1);
-            MahjongUi.text(graphics, font, Component.literal(participant.name()), 14, 0, cardWidth / textScale - 20, MahjongUi.TEXT, false);
-            var score = Component.translatable("sichuan.mchjong.score", view.game().scores().get(seat));
-            if (view.game().dealer() == seat) score = Component.translatable("ui.mchjong.annotation", score, Component.translatable("sichuan.mchjong.dealer"));
-            MahjongUi.text(graphics, font, score, 0, 11, cardWidth / textScale - 8, MahjongUi.TEXT, false);
-            var state = SichuanTableScene.status(player);
-            MahjongUi.text(graphics, font, state, 0, 22, cardWidth / textScale - 8, player.won() ? MahjongUi.POSITIVE : MahjongUi.MUTED, false);
-            graphics.pose().popPose();
-            if (mouseX >= positionX && mouseX < positionX + cardWidth && mouseY >= positionY && mouseY < positionY + cardHeight)
-                graphics.renderTooltip(font, Component.literal(participant.name()).append("\n").append(score).append("\n").append(state), mouseX, mouseY);
-        }
+    private void renderSeats(GuiGraphics g, SichuanSession.View view, int mouseX, int mouseY) {
+        var deck = table().clientSichuanDeck();
+        TableHud.render(font, g, TableBoardState.live(view.game()), table().clientTableRoom(), view.game().seats().stream().map(SichuanTableScene::status).toList(),
+            uiWidth(), immersive(), deck.preset(), deck.material(), deck.back(), deck.backPreset(), mouseX, mouseY, tile -> TileMesh.artwork(deck.tile(tile)));
     }
     private void renderClaims(GuiGraphics graphics, SichuanSession.View view) {
         var claims = SichuanTableScene.claims(view.game()).stream().filter(claim -> claim.winners().size() > 1).toList();
@@ -321,9 +299,10 @@ public final class SichuanTableScreen extends Screen {
         var projection = projection();
         double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
         for (var piece : SichuanTableScene.build(view().game())) if (ownHand(piece)) {
-            var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
-                (float) piece.position().y, (float) piece.position().z)
-                .rotateY((float) Math.toRadians(piece.yaw())).scale(piece.scale());
+            var pose = TableAnimation.of(table()).worldPose(piece, Util.getMillis());
+            var transform = new org.joml.Matrix4f().translation((float) pose.position().x,
+                (float) pose.position().y, (float) pose.position().z)
+                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch())).scale(piece.scale());
             for (int positionX = -1; positionX <= 1; positionX += 2) for (int positionY = -1; positionY <= 1; positionY += 2) for (int z = -1; z <= 1; z += 2) {
                 var corner = transform.transformPosition(new org.joml.Vector3f(positionX * TileMesh.WIDTH / 2,
                     positionY * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
@@ -365,9 +344,10 @@ public final class SichuanTableScreen extends Screen {
         double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
         double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
         for (var piece : SichuanTableScene.build(view().game())) if (ownHand(piece)) {
-            var transform = new org.joml.Matrix4f().translation((float) piece.position().x,
-                (float) piece.position().y, (float) piece.position().z)
-                .rotateY((float) Math.toRadians(piece.yaw())).scale(piece.scale());
+            var pose = TableAnimation.of(table()).worldPose(piece, Util.getMillis());
+            var transform = new org.joml.Matrix4f().translation((float) pose.position().x,
+                (float) pose.position().y, (float) pose.position().z)
+                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch())).scale(piece.scale());
             for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
                 var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
                     y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
@@ -463,8 +443,8 @@ public final class SichuanTableScreen extends Screen {
             int textWidth = width / textScale - icons - 8;
             MahjongUi.text(graphics, font, getMessage(), 0, 5, textWidth, active ? MahjongUi.TEXT : MahjongUi.DISABLED, false);
             var deck = table().clientSichuanDeck();
-            for (int actionIndex = 0; icons > 0 && actionIndex < action.tiles().size(); actionIndex++) TileGui.tile(graphics, action.tiles().get(actionIndex), textWidth + actionIndex * 10, 0, 9,
-                false, false, false, false, deck.preset(), deck.material(), deck.back(), deck.backPreset());
+            for (int actionIndex = 0; icons > 0 && actionIndex < action.tiles().size(); actionIndex++) TileGui.tileArtwork(graphics, action.tiles().get(actionIndex), textWidth + actionIndex * 10, 0, 9,
+                false, false, false, false, 0, deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             graphics.pose().popPose();
         }
     }

@@ -11,9 +11,7 @@ import net.minecraft.core.BlockPos;
 import net.minecraft.network.Connection;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.PacketFlow;
-import net.minecraft.server.level.ClientInformation;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.CommonListenerCookie;
 import net.minecraft.server.network.ServerGamePacketListenerImpl;
 import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.McrLobbyScreen;
@@ -21,7 +19,7 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.SichuanLobbyScreen;
 import top.skyeyefast.mchjong.client.SichuanTableScreen;
 import top.skyeyefast.mchjong.client.SichuanResultsScreen;
-import top.skyeyefast.mchjong.client.SichuanReplayScreen;
+import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.client.ReplayBrowserScreen;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.engine.SichuanAction;
@@ -283,8 +281,8 @@ final class SichuanTableSmoke {
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
-                    var saved = target.saveWithoutMetadata(main.registryAccess());
-                    target.loadWithComponents(saved, main.registryAccess());
+                    var saved = target.saveWithoutMetadata();
+                    target.load(saved);
                     for (var guest : guests) {
                         var session = (SichuanSession) target.participantRoom(guest);
                         require(session != null, "Restored Sichuan seat lost authorization");
@@ -470,7 +468,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 19 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 require(replay.match().id().equals(replayId) && replay.match().complete() && replay.match().handCount() == 8,
                     "Browser did not fetch the completed Sichuan replay");
                 require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
@@ -480,7 +478,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 20 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), ignored -> {});
                 for (int hand = 1; hand < 8; hand++) replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0);
                 require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
@@ -488,7 +486,7 @@ final class SichuanTableSmoke {
                 stage++;
             }
             case 21 -> {
-                if (!(client.screen instanceof SichuanReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 require(replay.cursor() > 1 && replay.match().header().finalScores().size() == 4,
                     "Sichuan replay did not seek to final standings");
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay-settlement.png", client.getMainRenderTarget(), ignored -> {});
@@ -549,7 +547,7 @@ final class SichuanTableSmoke {
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var target = (MahjongTableBlockEntity) main.serverLevel().getBlockEntity(pos);
-                    target.loadWithComponents(target.saveWithoutMetadata(main.registryAccess()), main.registryAccess());
+                    target.load(target.saveWithoutMetadata());
                     var session = (SichuanSession) target.participantRoom(main);
                     session.synchronizeSeats(java.util.Map.of(mainId, session.seatOf(mainId)));
                     require(session.participants().stream().filter(top.skyeyefast.mchjong.engine.TableParticipant::bot).count() == 3,
@@ -661,9 +659,8 @@ final class SichuanTableSmoke {
     }
     private static final class Guest extends ServerPlayer {
         Guest(ServerPlayer main, int number) {
-            super(main.server, main.serverLevel(), new GameProfile(UUID.randomUUID(), "SichuanGuest" + number), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(main.server, new Connection(PacketFlow.SERVERBOUND), this,
-                CommonListenerCookie.createInitial(getGameProfile(), false)) {
+            super(main.server, main.serverLevel(), new GameProfile(UUID.randomUUID(), "SichuanGuest" + number));
+            connection = new ServerGamePacketListenerImpl(main.server, new Connection(PacketFlow.SERVERBOUND), this) {
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
             };
         }

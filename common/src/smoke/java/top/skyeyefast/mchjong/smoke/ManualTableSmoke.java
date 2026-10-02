@@ -8,7 +8,6 @@ import java.util.function.Consumer;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.DyeColor;
@@ -45,9 +44,11 @@ final class ManualTableSmoke {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(Component.translatable("ui.mchjong.view_immersive").getString()))
             .findFirst().orElseThrow();
-        check(!button.active, "Immersive button enabled before dealing completed");
+        check(button.active, "Immersive button disabled during preparation");
         client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut bypassed preparation lock");
+        check(((RiichiTableScreen) client.screen).immersive(), "View shortcut unavailable during preparation");
+        client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        check(!((RiichiTableScreen) client.screen).immersive(), "View shortcut failed to return to seated play");
     }
     private static final BlockPos CENTER = new BlockPos(10, 64, 0);
     private int stage, ticks, totalTicks, packets, remaining;
@@ -333,7 +334,7 @@ final class ManualTableSmoke {
             level.setBlock(CENTER.offset(x, -1, z), Blocks.SMOOTH_STONE.defaultBlockState(), 3);
         level.setBlock(CENTER, MahjongContent.TABLE.defaultBlockState(), 3);
         var furniture = new ItemStack(MahjongContent.TABLE_ITEM);
-        furniture.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
+        top.skyeyefast.mchjong.item.MahjongComponents.wood(furniture, FurnitureWood.WARPED);
         MahjongContent.TABLE.setPlacedBy(level, CENTER, MahjongContent.TABLE.defaultBlockState(), player, furniture);
         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
         installedBox = PointStickMenuSmoke.stockedBox(TileMaterial.GLASS, DyeColor.CYAN);
@@ -342,7 +343,7 @@ final class ManualTableSmoke {
         TableStorageSmoke.put(player, table, 0, box);
         check(box.isEmpty(), "Storage transfer did not move the physical box");
         var cloth = new ItemStack(MahjongContent.CLOTH_ITEM);
-        cloth.set(DataComponents.BASE_COLOR, DyeColor.RED);
+        top.skyeyefast.mchjong.item.MahjongComponents.color(cloth, DyeColor.RED);
         table.useEquipment(player, cloth);
         check(cloth.isEmpty(), "Survival installation did not consume the cloth");
         // Pin only the server fixture's initial seed so the real human is the initial dealer.
@@ -351,12 +352,12 @@ final class ManualTableSmoke {
         var game = new top.skyeyefast.mchjong.engine.RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4.config()
             .with(top.skyeyefast.mchjong.engine.RiichiRuleOption.RED_FIVES, top.skyeyefast.mchjong.engine.RedFives.NONE.ordinal()), seed);
         game.configureEquipment(true, table.equipment().deck().tiles());
-        var saved = table.saveWithoutMetadata(level.registryAccess());
+        var saved = table.saveWithoutMetadata();
         saved.putByteArray("session", top.skyeyefast.mchjong.engine.TableSessionCodec.save(game).getBytes(java.nio.charset.StandardCharsets.UTF_8));
-        table.loadWithComponents(saved, level.registryAccess());
+        table.load(saved);
         var stool = new ItemStack(MahjongContent.STOOL_ITEM);
-        stool.set(MahjongComponents.WOOD, FurnitureWood.WARPED);
-        stool.set(DataComponents.BASE_COLOR, DyeColor.RED);
+        top.skyeyefast.mchjong.item.MahjongComponents.wood(stool, FurnitureWood.WARPED);
+        top.skyeyefast.mchjong.item.MahjongComponents.color(stool, DyeColor.RED);
         for (int side = 0; side < 4; side++) {
             var pos = TableGeometry.stool(CENTER, side);
             level.setBlock(pos, MahjongContent.STOOL.defaultBlockState(), 3);
@@ -364,7 +365,7 @@ final class ManualTableSmoke {
         }
         player.teleportTo(level, CENTER.getX() + .5, 64, 3.5, 180, 30);
         var sticks = new ItemStack(MahjongContent.POINT_STICK, 3);
-        sticks.set(MahjongComponents.POINTS, 1000);
+        top.skyeyefast.mchjong.item.MahjongComponents.points(sticks, 1000);
         PointStickMenuSmoke.put(player, table, 0, sticks);
         table.equipment().drawer(0).setItem(top.skyeyefast.mchjong.world.TableEquipment.BUST_SLOT, PointStickMenuSmoke.stick(-10000, 1));
         check(sticks.isEmpty(), "Manual fixture did not transfer its physical drawer sticks");
@@ -375,11 +376,11 @@ final class ManualTableSmoke {
         var game = table.participantSession(player);
         check(game != null && game.view(null).phase() == RiichiView.Phase.DRAW && game.manual(), "Manual server was not waiting for the draw");
         game.validate();
-        var saved = table.saveWithoutMetadata(player.registryAccess());
+        var saved = table.saveWithoutMetadata();
         var loaded = new MahjongTableBlockEntity(pos, table.getBlockState());
         loaded.setLevel(player.serverLevel());
-        loaded.loadWithComponents(saved, player.registryAccess());
-        var restored = loaded.saveWithoutMetadata(player.registryAccess());
+        loaded.load(saved);
+        var restored = loaded.saveWithoutMetadata();
         var before = com.google.gson.JsonParser.parseString(new String(saved.getByteArray("session"), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
         var after = com.google.gson.JsonParser.parseString(new String(restored.getByteArray("session"), java.nio.charset.StandardCharsets.UTF_8)).getAsJsonObject();
         var beforeRoom = before.getAsJsonObject("state").getAsJsonObject("room");
@@ -392,8 +393,8 @@ final class ManualTableSmoke {
         check(before.equals(after), "Manual match state changed during world serialization");
         restored.putByteArray("session", saved.getByteArray("session"));
         check(saved.equals(restored), "Manual equipment changed during world serialization");
-        table.loadWithComponents(table.getUpdateTag(player.registryAccess()), player.registryAccess());
-        check(saved.equals(table.saveWithoutMetadata(player.registryAccess())), "Public appearance update erased private game/equipment state");
+        table.load(table.getUpdateTag());
+        check(saved.equals(table.saveWithoutMetadata()), "Public appearance update erased private game/equipment state");
         check(!TableNetworking.JSON.toJson(game.view(null)).contains("suppliedTiles"), "Physical/private wall leaked to spectators");
     }
 

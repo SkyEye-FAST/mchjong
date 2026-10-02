@@ -23,8 +23,8 @@ click also opens it. **Delete** (or the Delete key while the list is focused) op
 a confirmation screen; Escape or Cancel does not change any records. Deletion
 retains the active filter and sort order and returns to its first page.
 
-The browser labels Riichi, MCR and Sichuan records separately. The Riichi viewer uses the
-same four-seat screen-space table layout as immersive play.
+The browser labels Riichi, MCR and Sichuan records separately. All three use the
+same table viewer, player cards, timeline, playback speeds and navigation.
 The upper hand selector opens a scrollable list for direct hand selection; the
 viewpoint control rotates any participant to the bottom seat. Playback supports
 0.5x, 1x, 2x and 4x speed. Lower controls seek to the initial deal, step backward,
@@ -56,28 +56,21 @@ estimate.
 The viewer provides read-only playback of matches recorded by this server.
 Live games and their clocks continue independently during replay viewing.
 
-MCR replays open on the MCR table layout. Left/Right move between recorded
-events, Up/Down switch hands, and V rotates the viewpoint. The controls also
-step through events and change hands or viewpoint. The display reconstructs
-all four hands, rivers, melds and flower areas from the sealed physical opening
-and the server's issued and selected actions. Settlement shows the recorded
-fan, payments and wrong-win penalties.
-
-Sichuan replays open on the Sichuan table layout with all four hands, melds,
-rivers, void suits, retired winners and cumulative scores visible. Left/Right
-step through accepted decisions and their public events, Up/Down switch hands,
-Home/End seek to the initial deal or settlement, and V rotates the viewpoint.
-The hand and event buttons provide the same navigation. Receipts reuse the
-Sichuan result display: each win and fan, kong payment, linked call transfer and
-rounding supplement, refund, flower-pig deduction and ready-hand payment remains
-in ledger order. PgUp/PgDn or the receipt arrows change receipt pages. The final
-hand also shows the completed match's cumulative scores and tied placements.
+MCR playback retains the sealed 144-tile opening, hands, flowers, native melds,
+fan and wrong-win penalties. Sichuan retains its 108-tile wall, void suits,
+retired winners and cumulative scores. Settlement tabs show every win/fan,
+point changes and final standings. MCR penalties and Sichuan payments use the
+shared details page; the original ledger order, transfers, related entries,
+refunds and draw deductions remain intact. Use the wheel or PgUp/PgDn for dense
+details. **View table** returns to the final hand diagram without losing the
+current viewpoint or replay position.
 
 Riichi export is explicit: **Export Tenhou JSON** writes UTF-8 JSON to
 `<game directory>/replays/mchjong/<match UUID>.json`, using an atomic replacement.
 The chat shows the full path or the screen reports a failure. Re-exporting the
 same match replaces that match's local export. No file is opened automatically
-and nothing is uploaded to an external service.
+and nothing is uploaded to an external service. MCR and Sichuan use **Export replay
+JSON**, writing their native sealed match record to the same local directory.
 
 ## Privacy and persistence
 

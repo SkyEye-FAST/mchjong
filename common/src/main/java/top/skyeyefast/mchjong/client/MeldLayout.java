@@ -10,11 +10,20 @@ public record MeldLayout(List<Part> parts, double width) {
     public record Part(int tile, double x, double z, boolean sideways, boolean back) {}
     public MeldLayout { parts = List.copyOf(parts); }
 
+    public static MeldLayout of(Meld meld, int owner, top.skyeyefast.mchjong.engine.MahjongVariant variant, boolean reveal) {
+        if (variant != top.skyeyefast.mchjong.engine.MahjongVariant.MCR) {
+            var layout = of(meld, owner);
+            if (variant != top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN || !reveal) return layout;
+            return new MeldLayout(layout.parts().stream().map(part -> new Part(part.tile(), part.x(), part.z(), part.sideways(), false)).toList(), layout.width());
+        }
+        var nativeLayout = McrMeldLayout.of(meld, owner, reveal);
+        return new MeldLayout(nativeLayout.parts().stream().map(part -> new Part(part.tile(), part.x(), part.z(), part.sideways(), part.back())).toList(), nativeLayout.width());
+    }
     public static MeldLayout of(Meld meld, int owner) {
         var tiles = new ArrayList<>(meld.tiles());
         Integer added = meld.type() == Meld.Type.ADDED_QUAD ? tiles.remove(tiles.size() - 1) : null;
         if (!meld.closed()) tiles.remove(Integer.valueOf(meld.calledTile()));
-        tiles.sort(Tile.ORDER);
+        if (!meld.closed()) tiles.sort(Tile.ORDER);
         int called = -1;
         if (!meld.closed()) {
             int relative = Math.floorMod(meld.fromSeat() - owner, 4);

@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Changed
 
+- Share the complete Riichi table, player cards, action layout, camera, settings, settlement and replay presentation with MCR and Sichuan, preserving native flowers, winds, void suits, fan and payment records; add their deal/draw/discard motion and native wind/void-suit center instruments, remove the settlement score background, and allow players and spectators to enter immersive view throughout preparation.
+
 - Include synchronized world policy in MCR and Sichuan room snapshots.
 
 - Unify Riichi, MCR and Sichuan lobbies with a separate variant sidebar, shared roster and preparation footer; use compact floating lobby/settings panels without left-edge control decorations or repeated headings, align rule editors and match toolbars, share World/Room/Personal settings, and use explicit personal choices with category-only resets.

@@ -22,7 +22,7 @@ final class PlayerPortrait {
         return draw(graphics, player.entityBot(), player.bot(), player.name(), x, y, size);
     }
 
-    private static int draw(GuiGraphics graphics, boolean entityBot, boolean bot, String name, int x, int y, int size) {
+    static int draw(GuiGraphics graphics, boolean entityBot, boolean bot, String name, int x, int y, int size) {
         if (graphics != null) {
             if (entityBot) {
                 graphics.blit(MAID_ICON, x, y, size, size, 16, 16, 32, 32, 64, 64);

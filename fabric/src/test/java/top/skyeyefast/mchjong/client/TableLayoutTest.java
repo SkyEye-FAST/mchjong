@@ -50,7 +50,7 @@ class TableLayoutTest {
             act(game, id, RoomAction.Type.BEGIN_SEATING);
             assertTrue(game.join(id, "Host", game.seatOf(id)));
             act(game, id, RoomAction.Type.READY);
-            assertFalse(RiichiBoardState.live(game.view(id)).layHandsOpen());
+            assertFalse(TableBoardState.live(game.view(id)).layHandsOpen());
             for (var viewer : new UUID[]{null, id}) {
                 var pieces = RiichiTableScene.build(game.view(viewer)).stream().filter(p -> p.area() == RiichiTableScene.Area.HAND).toList();
                 assertFalse(pieces.isEmpty());
@@ -64,7 +64,7 @@ class TableLayoutTest {
         act(open, id, RoomAction.Type.BEGIN_SEATING);
         assertTrue(open.join(id, "Host", open.seatOf(id)));
         act(open, id, RoomAction.Type.READY);
-        assertTrue(RiichiBoardState.live(open.view(id)).layHandsOpen());
+        assertTrue(TableBoardState.live(open.view(id)).layHandsOpen());
         assertTrue(RiichiTableScene.build(open.view(id)).stream().filter(p -> p.area() == RiichiTableScene.Area.HAND)
             .allMatch(RiichiTableScene.Piece::flat));
     }
@@ -79,7 +79,7 @@ class TableLayoutTest {
                         : type == Meld.Type.TRIPLET ? List.of(i * 4, i * 4 + 1, i * 4 + 2)
                         : List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3);
                     melds.add(new Meld(type, tiles, type == Meld.Type.CONCEALED_QUAD ? 0 : source,
-                        type == Meld.Type.CONCEALED_QUAD ? Tile.ABSENT : tiles.getFirst()));
+                        type == Meld.Type.CONCEALED_QUAD ? Tile.ABSENT : tiles.get(0)));
                 }
                 int size = 14 - count * 3;
                 var hand = java.util.stream.IntStream.range(100, 100 + size).boxed().toList();
@@ -132,7 +132,7 @@ class TableLayoutTest {
                 for (int i = 0; i < count; i++) melds.add(new Meld(Meld.Type.OPEN_QUAD,
                     List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), (seat + 1) % rules.players(), i * 4));
                 var hand = java.util.stream.IntStream.range(80, 94 - count * 3).boxed().toList();
-                seats.add(new RiichiView.Seat(false, "Test", true, false, false, 25000, hand, hand.getLast(),
+                seats.add(new RiichiView.Seat(false, "Test", true, false, false, 25000, hand, hand.get(hand.size() - 1),
                     melds, List.of(), rules.sanma() ? List.of(120, 121, 122, 123) : List.of(), false, true, false));
             }
             var view = new RiichiView(v.tableId(), v.revision(), v.decision(), v.handNumber(), v.rules(), v.phase(), v.viewerSeat(),
@@ -203,7 +203,7 @@ class TableLayoutTest {
                     + (after.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH);
                 assertEquals(widths / 2, after.x() - before.x(), 1e-7);
             }
-            var added = layout.parts().getLast();
+            var added = layout.parts().get(layout.parts().size() - 1);
             var called = layout.parts().stream().filter(p -> p.tile() == 0).findFirst().orElseThrow();
             assertTrue(added.sideways());
             assertEquals(called.x(), added.x());

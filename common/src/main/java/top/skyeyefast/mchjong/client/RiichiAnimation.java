@@ -15,7 +15,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 
 /** Recipient-safe, interruptible presentation. Sampling never advances the game or sends a packet. */
-public final class RiichiAnimation {
+public final class RiichiAnimation implements TableDeal {
     public static final long DEAL_MILLIS = RiichiGame.DEAL_TICKS * 50L;
     private static final Map<MahjongTableBlockEntity, RiichiAnimation> TABLES = new WeakHashMap<>();
     public record Frame(RiichiTableScene.Piece piece, float pitch) {}
@@ -58,7 +58,7 @@ public final class RiichiAnimation {
     public List<Frame> settled() { return settled; }
     public boolean dealing(long now) { return now < openingUntil; }
 
-    double dealProgress(int seat, int index, long now) {
+    @Override public double dealProgress(int seat, int index, long now) {
         if (!dealing(now)) return 1;
         for (var target : settled) {
             var piece = target.piece();

@@ -352,7 +352,7 @@ record publishes another player's restriction, including after hand completion. 
 authenticated participant receives only their own
 actions. `SichuanLobbyScreen` owns room preparation; `SichuanTableScreen` owns
 private declarations and issued match actions. `SichuanResultsScreen` presents
-each completed hand through `SichuanResults`, consuming the authoritative ledger
+each completed hand through `TableResults`, consuming the authoritative ledger
 in order: win methods and fan patterns, kong payments, linked call transfers and
 top-ups, refunds, ready checks and flower-pig deductions. It displays both the
 hand delta and cumulative score. `HAND_END` provides an authenticated next-hand
@@ -469,8 +469,8 @@ shared tile meshes and materials. `SichuanViewPayload` supplies that uniform cas
 appearance and cloth alongside the redacted recipient view, not private stock.
 
 `SichuanTableScreen` composes `TableViewController`, `TableCanvas`, `SeatedCamera`
-and `TilePicking`. `SichuanImmersiveTable` adapts the same public poses to
-`ImmersiveTable` and `TableProjection`, with a recipient-only `TableHand` in the
+and `TilePicking`. `TableBoardState` adapts the recipient view to the shared
+`TableBoard` and `TableImmersiveTable`, with a recipient-only `TableHand` in the
 foreground. The persistent HUD shows hand number, dealer, cumulative scores,
 published void suits and winner status. Undeclared opponent choices remain
 pending, and winning opponent hands stay concealed until the hand ends. The
@@ -498,9 +498,9 @@ The dimensional and visibility contracts are in [Interface style](UI_STYLE.md#mc
 `McrTableScreen` opens over the seated world and composes `TableViewController`
 for camera input and view switching, and `TableCanvas` for the opaque 1280 × 800
 canvas, letterboxing and pointer conversion. The world renderer consumes
-`McrTableScene.build`; `McrImmersiveTable` consumes its public immersive rail and
-river poses through `ImmersiveTable` primitives and `TableProjection`, with a
-private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
+`McrTableScene.build`; `TableBoardState` supplies the same shared immersive
+rails, rivers, perspective solids and player plaques used by Riichi and Sichuan,
+with a private `TableHand` in the foreground. `TilePicking` intersects the MCR piece's
 actual scale and orientation.
 Hand selection resolves only issued discard indices; other declarations use
 native action buttons with localized names and tile previews. View changes retain
@@ -696,23 +696,32 @@ seat-local distance, height, yaw/pitch, target translation and interpolated insp
 progress. `SeatedCamera` bridges native free look and the loader tick lifecycle.
 `RiichiTableScreen`, `McrTableScreen` and `SichuanTableScreen` compose `TableViewController`, which owns
 view mode, inspect/reset, held arrows, right-drag look/pan and wheel distance/height.
-Each screen controls when switching is allowed and retains its own actions, HUD,
-hand selection and settlement. `TableKeys` supplies registered, rebindable actions;
+View switching is available to players and spectators throughout preparation
+and play. Each rule adapter retains its own issued actions and hand selection;
+`TableHud`, `TableActionLayout` and `TableResults` own common presentation. `TableKeys` supplies registered, rebindable actions;
 `SeatedTableProjection` derives screen anchors and picking rays from the rendered
 camera. `TableCanvas` owns the fixed 1280 × 800 immersive transform and black bars,
 so rendering and pointer input use the same coordinates.
 
 `ImmersiveTable` owns tile solids, material/artwork lookup, contact shadows and
-depth painting through `TableProjection`. `RiichiImmersiveTable` owns Riichi rails,
-rivers, extracted norths, center device and draw/discard motion;
-`McrImmersiveTable` and `SichuanImmersiveTable` own their rule-specific scene
-adapters. All three compose the same primitives.
-`RiichiBoard` supplies Riichi information and animation anchors, including the
-separate flat replay layout. `TableHand`, `TileMesh` and `TilePicking` retain their
-shared hand, mesh and intersection responsibilities. Riichi scene, animation,
-HUD, action and result components use the `Riichi*` prefix; shared camera,
-settings and session-exit components keep neutral names. Rendering consumes
-recipient-safe views and remains read-only.
+painting through `TableProjection`. `TableBoardState` supplies immutable display
+primitives from authorized live views or sealed replays. `TableImmersiveTable`
+owns the same rails, rivers, public extraction/flower rail and center device for
+all variants. `MeldLayout` retains each rule's concealed and upgraded-kong display.
+`TableBoard` owns projected anchors and the flat replay layout. `TableHand`,
+`TileMesh` and `TilePicking` share hand, mesh and intersection responsibilities.
+`TableDeal` supplies deal timing; `RiichiAnimation` retains Riichi declarations
+and `TableAnimation` adapts MCR/Sichuan deal, draw, discard and world transitions.
+World picking samples the same pose as rendering. Recipient/view changes clear
+motion sources instead of reconstructing private identities.
+
+`TableResultState` adapts native fan, yaku, score and payment records without
+recomputing rules. `TableResults` owns receipt, point changes, final standings and
+payment pages; `ResultReadout` sequences rows and the score transition.
+`TableResultsScreen` composes the common canvas, camera, navigation and controls
+for MCR/Sichuan protocol adapters. `ReplayPresentation` adapts each native replay
+timeline to `ReplayScreen`, the shared decision panel and initial wall panel.
+Rendering remains read-only and consumes only authorized data.
 
 `PlayerPortrait` draws Minecraft's cached player-list skins before names in table,
 room and settlement views. Missing player-list entries use the native default
@@ -777,7 +786,7 @@ wall slot empty while the last live tile becomes dead in place. Revealing dora o
 does not change their physical layers. This follows the deal in the
 [EMA Riichi rules](https://mahjong-europe.org/portal/images/docs/Riichi-rules-2025-EN.pdf).
 
-`RiichiResults` is a separate, narrated single-screen receipt widget. It uses compact
+`TableResults` is a separate, narrated single-screen receipt widget. It uses compact
 hands, yaku columns and point tables rather than a scroll viewport. Multiple ron
 winners have a mouse/keyboard selector. It displays server-authored deltas and final scores without recalculating settlement or
 inventing a private tie-break order. Input stays in `RiichiTableScreen`; requests are
@@ -958,8 +967,8 @@ archives without applying payments or requeuing acknowledged records.
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
 `ReplayCodec` checks complete typed JSON fields and validates rule-specific timelines.
-The shared browser lists each variant and final standings; `SichuanReplayScreen`
-uses the Sichuan scene and ledger receipt for event/hand navigation and final totals.
+The shared browser lists each variant and final standings; `ReplayScreen` uses
+native timelines through `ReplayPresentation` for common navigation and receipts.
 Sealed playback exposes all four hands through replay frames, while running
 `SichuanView` projections continue to enforce recipient-safe privacy.
 The viewer never feeds recorded actions back into a live match. `TenhouReplay`

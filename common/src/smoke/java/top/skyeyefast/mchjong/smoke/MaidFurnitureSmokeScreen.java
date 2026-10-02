@@ -30,15 +30,15 @@ final class MaidFurnitureSmokeScreen extends Screen {
         try {
             for (int row = 0; row < 2; row++) for (int col = 0; col < 3; col++) {
                 var stack = new ItemStack(items[col]);
-                stack.set(MahjongComponents.WOOD, FurnitureWood.CHERRY);
-                stack.set(net.minecraft.core.component.DataComponents.BASE_COLOR, net.minecraft.world.item.DyeColor.BLUE);
+                top.skyeyefast.mchjong.item.MahjongComponents.wood(stack, FurnitureWood.CHERRY);
+                top.skyeyefast.mchjong.item.MahjongComponents.color(stack, net.minecraft.world.item.DyeColor.BLUE);
                 maid.setItemSlot(EquipmentSlot.HEAD, row == 0 ? stack : new ItemStack(Items.SKELETON_SKULL));
                 maid.setBackpackShowItem(row == 0 ? ItemStack.EMPTY : stack);
                 int left = col * width / 3, right = (col + 1) * width / 3;
                 int top = 24 + row * (height - 24) / 2, bottom = 24 + (row + 1) * (height - 24) / 2;
                 graphics.drawCenteredString(font, stack.getHoverName(), (left + right) / 2, top, 0xfff1eee3);
-                InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, left + 4, top + 12, right - 4, bottom,
-                    (bottom - top - 20) / 3, .1f, (left + right) / 2f - 30, (top + bottom) / 2f - 15, maid);
+                InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, (left + right) / 2, bottom - 8,
+                    (bottom - top - 20) / 3, 30, 15, maid);
             }
         } finally {
             maid.setItemSlot(EquipmentSlot.HEAD, head);

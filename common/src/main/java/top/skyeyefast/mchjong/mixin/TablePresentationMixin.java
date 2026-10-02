@@ -14,7 +14,7 @@ import top.skyeyefast.mchjong.client.RiichiTableScreen;
 @Mixin(GameRenderer.class)
 public abstract class TablePresentationMixin {
     @Inject(method = "renderItemInHand", at = @At("HEAD"), cancellable = true)
-    private void mchjong$tableHands(Camera camera, float delta, Matrix4f projection, CallbackInfo callback) {
+    private void mchjong$tableHands(com.mojang.blaze3d.vertex.PoseStack pose, Camera camera, float delta, CallbackInfo callback) {
         var screen = Minecraft.getInstance().screen;
         if (RiichiTableScreen.active(screen) != null || top.skyeyefast.mchjong.client.McrTableScreen.isOpen(screen)
             || top.skyeyefast.mchjong.client.SichuanTableScreen.isOpen(screen)) callback.cancel();

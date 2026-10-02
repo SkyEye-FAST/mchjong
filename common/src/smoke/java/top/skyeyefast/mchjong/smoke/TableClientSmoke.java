@@ -103,7 +103,7 @@ public final class TableClientSmoke {
                 onboarding.onClose();
                 return;
             }
-            if (step == 0 && client.screen instanceof TitleScreen) {
+            if (step == 0 && client.screen instanceof TitleScreen && client.getOverlay() == null) {
                 AudioEffectsSmoke.verify(client);
                 Files.createDirectories(output);
                 Files.deleteIfExists(output.resolve("PASS.txt"));

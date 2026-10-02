@@ -116,20 +116,20 @@ class TablePresentationTest {
 
     @Test void immersiveSeatsFollowTheViewerAndSanmaLeavesNoEmptyOpponent() {
         for (int players : new int[]{3, 4}) for (int viewer = 0; viewer < players; viewer++) {
-            assertEquals(0, RiichiBoard.side(viewer, viewer, players));
-            assertEquals(1, RiichiBoard.side((viewer + 1) % players, viewer, players));
-            assertEquals(3, RiichiBoard.side((viewer + players - 1) % players, viewer, players));
-            if (players == 4) assertEquals(2, RiichiBoard.side((viewer + 2) % players, viewer, players));
+            assertEquals(0, TableBoard.side(viewer, viewer, players));
+            assertEquals(1, TableBoard.side((viewer + 1) % players, viewer, players));
+            assertEquals(3, TableBoard.side((viewer + players - 1) % players, viewer, players));
+            if (players == 4) assertEquals(2, TableBoard.side((viewer + 2) % players, viewer, players));
         }
     }
 
     @Test void livePresentationUsesPerspectiveWithoutReplayDiscardColors() {
         var id = java.util.UUID.randomUUID();
         var game = TableLayoutTest.startSession(top.skyeyefast.mchjong.engine.RiichiPreset.TENHOU_4, id);
-        var state = RiichiBoardState.live(game.view(id));
+        var state = TableBoardState.live(game.view(id));
         assertFalse(state.dimTsumogiri());
         assertFalse(state.markTedashi());
-        var board = new RiichiBoard(state, 20, 1260, 68, 620, 800, true);
+        var board = new TableBoard(state, 20, 1260, 68, 620, 800, true);
         assertTrue(board.perspective());
     }
 
@@ -169,8 +169,8 @@ class TablePresentationTest {
         var hidden = new top.skyeyefast.mchjong.engine.RiichiView.Seat(false, "Opponent", true, false, false,
             25000, java.util.Collections.nCopies(14, top.skyeyefast.mchjong.engine.Tile.HIDDEN),
             top.skyeyefast.mchjong.engine.Tile.HIDDEN, List.of(), List.of(), List.of(), false, false, false);
-        assertEquals(195, RiichiImmersiveTable.discardSourceX(hidden, 1, 0, 4, 60, true));
-        assertEquals(0, RiichiImmersiveTable.discardSourceX(hidden, 1, 0, 4, 60, false));
+        assertEquals(195, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, true));
+        assertEquals(0, TableImmersiveTable.discardSourceX(TableBoardState.seat(hidden), 1, 0, 4, 60, false));
     }
 
     @Test void recordedVoicesHaveNoDeviceSpeechMode() {
@@ -186,7 +186,7 @@ class TablePresentationTest {
             var game = TableLayoutTest.startSession(rules, id);
             var view = game.view(id);
             int left = 20, right = 1260, top = 68, bottom = 620;
-            var board = new RiichiBoard(RiichiBoardState.live(view), left, right, top, bottom, 800, true);
+            var board = new TableBoard(TableBoardState.live(view), left, right, top, bottom, 800, true);
             assertTrue(board.perspective());
             var local = board.card(view.viewerSeat());
             assertTrue(local.x() < TableCanvas.WIDTH / 4, "Local plaque belongs on the lower-left perimeter");
@@ -207,10 +207,10 @@ class TablePresentationTest {
 
     @Test void machineDigitsAreDistinctAndSupportNegativeScores() {
         var patterns = new HashSet<Integer>();
-        for (char digit = '0'; digit <= '9'; digit++) assertTrue(patterns.add(RiichiIndicator.segments(digit)));
-        assertEquals(0x7f, RiichiIndicator.segments('8'));
-        assertEquals(0x40, RiichiIndicator.segments('-'));
-        assertThrows(IllegalArgumentException.class, () -> RiichiIndicator.segments('A'));
+        for (char digit = '0'; digit <= '9'; digit++) assertTrue(patterns.add(TableIndicator.segments(digit)));
+        assertEquals(0x7f, TableIndicator.segments('8'));
+        assertEquals(0x40, TableIndicator.segments('-'));
+        assertThrows(IllegalArgumentException.class, () -> TableIndicator.segments('A'));
     }
 
     @Test void denseRiversKeepReadablePixelsAndMeldsReflowBeforeShrinking() {
@@ -230,7 +230,7 @@ class TablePresentationTest {
             top.skyeyefast.mchjong.engine.RiichiView.Phase.TURN, 0, 0, 0, 0, 0, 0, 0,
             base.wallBreak(), base.wall(), null, seats, List.of(), List.of(), "playing", List.of(), List.of(), List.of(),
             base.timeControl(), List.of(), List.of(), top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, base.autoPlay(), false, 1, java.util.Map.of(), List.of(), 0, 0);
-        var immersive = new RiichiBoard(RiichiBoardState.live(view), 20, 1260, 68, 620, 800, true);
+        var immersive = new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true);
         assertTrue(immersive.riverRowWidth(0, 1) > immersive.riverRowWidth(0, 0),
             "The local river grows subtly toward the foreground");
         assertTrue(immersive.riverRowWidth(2, 3) < immersive.riverRowWidth(2, 0),
@@ -238,7 +238,7 @@ class TablePresentationTest {
         assertTrue(immersive.riverRowWidth(1, 1) <= immersive.riverRowWidth(1, 0),
             "Side rivers retain their own shallow depth plane");
         for (int bottom : new int[]{178, 203}) {
-            var board = new RiichiBoard(RiichiBoardState.live(view), 8, 472, 38, bottom, bottom);
+            var board = new TableBoard(TableBoardState.live(view), 8, 472, 38, bottom, bottom);
             assertTrue(board.riverTileWidth() >= 8);
             assertEquals(bottom == 178, board.scoresOnCards());
             for (int seat = 0; seat < 4; seat++) {
@@ -259,8 +259,8 @@ class TablePresentationTest {
             List.of(80, 81), 81, melds, List.of(), List.of(), false, false, false);
         int meldWidth = melds.stream().mapToInt(m -> TileGui.meldWidth(m, 0, 30) + 5).sum();
         for (int side = 0; side < 4; side++) {
-            double handLeft = RiichiImmersiveTable.handLeft(player, 0, side);
-            double corner = RiichiImmersiveTable.meldCorner(side);
+            double handLeft = TableImmersiveTable.handLeft(TableBoardState.seat(player), 0, side);
+            double corner = TableImmersiveTable.meldCorner(side);
             double halfWidth = side % 2 == 0 ? 510 : 425;
             double halfDepth = side % 2 == 0 ? 425 : 510;
             assertEquals(halfWidth - 3, corner, "Melds stay at the owner's right corner");
@@ -273,7 +273,7 @@ class TablePresentationTest {
                 for (var part : MeldLayout.of(meld, 0).parts()) {
                     double scale = 30.0 / TileMesh.WIDTH;
                     double x = right + part.x() * scale;
-                    double z = RiichiImmersiveTable.outerRail(side) + part.z() * scale;
+                    double z = TableImmersiveTable.outerRail(side) + part.z() * scale;
                     double w = (part.sideways() ? TileMesh.HEIGHT : TileMesh.WIDTH) * scale;
                     double d = (part.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) * scale;
                     assertTrue(x - w / 2 >= -halfWidth && x + w / 2 <= halfWidth);
@@ -283,11 +283,11 @@ class TablePresentationTest {
                 right -= 5;
             }
         }
-        int width = RiichiBoard.outerTileWidth(player, 0, 157);
+        int width = TableBoard.outerTileWidth(TableBoardState.seat(player), 0, 157);
         assertEquals(10, width);
-        var rails = RiichiBoard.meldRails(player, 0, width, 157);
+        var rails = TableBoard.meldRails(TableBoardState.seat(player), 0, width, 157);
         assertEquals(2, rails.size());
-        assertEquals(2, RiichiBoard.meldRails(player, 0, width, 195).size(),
+        assertEquals(2, TableBoard.meldRails(TableBoardState.seat(player), 0, width, 195).size(),
             "A wider rail must still reserve a visible concealed tile before fitting four kans");
         assertEquals(4, rails.stream().mapToInt(List::size).sum());
         for (var rail : rails) assertTrue(rail.stream().mapToInt(meld -> TileGui.meldWidth(meld, 0, width)).sum() <= 157);
@@ -302,9 +302,9 @@ class TablePresentationTest {
             List.of(seat), List.of(), List.of(), "ron", List.of(0), List.of(), List.of(),
             top.skyeyefast.mchjong.engine.TimeControl.DEFAULT, List.of(), List.of(),
             top.skyeyefast.mchjong.engine.PlayerHandVisibility.SELF, false, null, null, null, false, 1, java.util.Map.of(), List.of(), 0, 0);
-        var results = new RiichiResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
+        var results = new TableResults(null, view, top.skyeyefast.mchjong.item.TileFacePreset.KANSAI,
             top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, net.minecraft.world.item.DyeColor.PURPLE,
-            0, 0, 300, 200, 0, RiichiResults.Page.HAND, 0L, 1);
+            0, 0, 300, 200, 0, TableResults.Page.HAND, 0L, 1);
         assertEquals(top.skyeyefast.mchjong.item.TileMaterial.AMETHYST, results.material());
         assertEquals(net.minecraft.world.item.DyeColor.PURPLE, results.dye());
     }
