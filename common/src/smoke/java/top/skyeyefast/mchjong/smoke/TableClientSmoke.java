@@ -48,7 +48,7 @@ public final class TableClientSmoke {
     private final boolean roomOnly = Boolean.getBoolean("mchjong.smoke.roomOnly");
     private final boolean settlementOnly = Boolean.getBoolean("mchjong.smoke.settlementOnly");
     private final boolean manualOnly = Boolean.getBoolean("mchjong.smoke.manualOnly");
-    private final boolean guidesOnly = Boolean.getBoolean("mchjong.smoke.ponderOnly") || Boolean.getBoolean("mchjong.smoke.browserOnly");
+    private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
     private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly || mcrAutoOnly || sichuanOnly;
@@ -95,7 +95,7 @@ public final class TableClientSmoke {
             if (step == 43 || step == 44) client.options.keyShift.setDown(true);
             if (serverFailure.get() != null) throw new IllegalStateException("Server smoke failed", serverFailure.get());
             // Presence checks wait through real server grace periods in each automatic room.
-            if (ticks > (Boolean.getBoolean("mchjong.smoke.ponder") ? 8600 : 6600))
+            if (ticks > 6600)
                 throw new IllegalStateException("Smoke timed out at step " + step + ", screen=" + client.screen);
             if (step == 0 && client.screen instanceof net.minecraft.client.gui.screens.AccessibilityOnboardingScreen onboarding) {
                 onboarding.onClose();
@@ -116,10 +116,6 @@ public final class TableClientSmoke {
                 TableSettings.get().reset();
                 TableSettings.get().recommendPatchouli = Boolean.getBoolean("mchjong.smoke.patchouliOnly");
                 client.resizeGui();
-                GameRules rules = new GameRules(net.minecraft.world.flag.FeatureFlags.DEFAULT_FLAGS);
-                rules.set(GameRules.SPAWN_MOBS, false, null);
-                rules.set(GameRules.ADVANCE_WEATHER, false, null);
-                rules.set(GameRules.ADVANCE_TIME, false, null);
                 client.createWorldOpenFlows().createFreshLevel("table-smoke-" + System.currentTimeMillis(),
                     new LevelSettings("MChjong isolated smoke", GameType.CREATIVE, new LevelSettings.DifficultySettings(Difficulty.PEACEFUL, false, false),
                         true, WorldDataConfiguration.DEFAULT), new WorldOptions(12345, false, false),
@@ -132,9 +128,9 @@ public final class TableClientSmoke {
                     step = 38;
                     return;
                 }
-                if (guidesOnly) {
-                    require(Boolean.getBoolean("mchjong.smoke.ponder") || !System.getProperty("mchjong.smoke.browser", "none").equals("none"),
-                        "Choose an installed Ponder or recipe-browser profile for the focused guide checks");
+                if (browserOnly) {
+                    require(!System.getProperty("mchjong.smoke.browser", "none").equals("none"),
+                        "Choose an installed recipe-browser profile for the focused checks");
                     step = 37;
                     entered = ticks;
                     return;
@@ -521,8 +517,6 @@ public final class TableClientSmoke {
                 step = 25; entered = ticks;
             } else if (step == 25) {
                 if (!browserSmoke.tick(client, output)) return;
-                if (!Boolean.getBoolean("mchjong.smoke.ponder"))
-                    Files.writeString(output.resolve("ponder-optional.txt"), "Base client gameplay passed with Ponder absent.\n");
                 Files.writeString(output.resolve("survival-checks.txt"), "Real server menus: carrier lock, clicks, shift transfers, hotbar/offhand swaps, dragging, collection, invalidation and conservation. Native stonecutter: component cache invalidation, no re-engraving, preserved material/color and shift result conservation. Equipment: native placement, replacement, public/private updates, save/load, active locks, sanma full-set recovery, point-stick independence, root/placeholder destruction and explosions. Real ordinary-table client: shuffle, own wall, 4/4/4/1 packets, dealer and normal draws, discard, private hands, waiting without auto-handling, manual save/load and exit with exact box recovery.\n");
                 Files.writeString(output.resolve("PASS.txt"), "World placement, seating, private deal, standalone discard confirmation, river synchronization, HD texture filtering and resource reload, no-scroll multi-winner settlement, resize, collapse, keyboard navigation and rendered wall/deal/discard/pon/riichi/closed-kan transitions passed. Live control packets verified solo exit, complete seat release, rejoining, three/four-player preset selection and open hands. Hidden rivers retain the remaining wall count. Settlement and animation screenshots use display-only fixtures. Engine-generated replay archival, authorized command fetch, chunk reassembly, replay list, timeline keyboard seeking, resized replay UI, sound registry and Tenhou JSON export-button checks passed.\n");
                 LOG.info("MCHJONG_CLIENT_SMOKE_PASS");
@@ -558,10 +552,9 @@ public final class TableClientSmoke {
                 LOG.info("MCHJONG_MAID_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 37) {
-                if (!browserSmoke.tick(client, output)
-                   ) return;
-                Files.writeString(output.resolve("PASS.txt"), "Focused recipe-browser checks and requested Ponder registration, localization, playback, reload and replay checks passed.\n");
-                LOG.info("MCHJONG_PONDER_SMOKE_PASS");
+                if (!browserSmoke.tick(client, output)) return;
+                Files.writeString(output.resolve("PASS.txt"), "Focused recipe-browser checks passed.\n");
+                LOG.info("MCHJONG_BROWSER_SMOKE_PASS");
                 step = 13; entered = ticks;
             } else if (step == 38 && ManualSmoke.tick(client, output)) {
                 Files.writeString(output.resolve("PASS.txt"), "Patchouli manual: selected installed/absent profile, entry rendering and recommendation controls passed.\n");

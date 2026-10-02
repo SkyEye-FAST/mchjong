@@ -127,7 +127,10 @@ final class SichuanTableSmoke {
                     for (int seat = 1; seat < 4; seat++) {
                         var guest = new Guest(main, seat); guests.add(guest);
                         guest.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
-                        main.level().addNewPlayer(guest); server.getPlayerList().getPlayers().add(guest);
+                        main.level().addNewPlayer(guest);
+                        var players = (top.skyeyefast.mchjong.smoke.mixin.SmokePlayerListAccessor) server.getPlayerList();
+                        players.mchjong$players().add(guest);
+                        players.mchjong$playersByUUID().put(guest.getUUID(), guest);
                         target.sit(guest, seat);
                     }
                     target.open(main);
@@ -665,7 +668,9 @@ final class SichuanTableSmoke {
     private static final class Guest extends ServerPlayer {
         Guest(ServerPlayer main, int number) {
             super(main.level().getServer(), main.level(), new GameProfile(UUID.randomUUID(), "SichuanGuest" + number), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(main.level().getServer(), new net.minecraft.network.Connection(PacketFlow.SERVERBOUND), this,
+            var network = new net.minecraft.network.Connection(PacketFlow.SERVERBOUND);
+            new io.netty.channel.embedded.EmbeddedChannel(network);
+            connection = new ServerGamePacketListenerImpl(main.level().getServer(), network, this,
                 CommonListenerCookie.createInitial(getGameProfile(), false)) {
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
             };

@@ -91,7 +91,9 @@ final class McrAutoTableSmoke {
                         guests.add(guest);
                         guest.setPos(pos.getX() + .5, pos.getY(), pos.getZ() + .5);
                         level.addNewPlayer(guest);
-                        server.getPlayerList().getPlayers().add(guest);
+                        var players = (top.skyeyefast.mchjong.smoke.mixin.SmokePlayerListAccessor) server.getPlayerList();
+                        players.mchjong$players().add(guest);
+                        players.mchjong$playersByUUID().put(guest.getUUID(), guest);
                         table.sit(guest, seat);
                     }
                     table.open(main);
@@ -460,7 +462,9 @@ final class McrAutoTableSmoke {
     private static final class Guest extends ServerPlayer {
         Guest(ServerPlayer main, int number) {
             super(main.level().getServer(), main.level(), new GameProfile(UUID.randomUUID(), "McrGuest" + number), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(main.level().getServer(), new net.minecraft.network.Connection(PacketFlow.SERVERBOUND), this,
+            var network = new net.minecraft.network.Connection(PacketFlow.SERVERBOUND);
+            new io.netty.channel.embedded.EmbeddedChannel(network);
+            connection = new ServerGamePacketListenerImpl(main.level().getServer(), network, this,
                 CommonListenerCookie.createInitial(getGameProfile(), false)) {
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
             };
