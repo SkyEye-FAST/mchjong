@@ -7,6 +7,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.0] - 2026-10-03
+
 ### Changed
 
 - Share the complete Riichi table, player cards, action layout, camera, settings, settlement and replay presentation with MCR and Sichuan, preserving native flowers, winds, void suits, fan and payment records; add their deal/draw/discard motion and native wind/void-suit center instruments, remove the settlement score background, and allow players and spectators to enter immersive view throughout preparation.
@@ -487,7 +489,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.8.2...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.9.0...HEAD
+[0.9.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.9.0
 [0.8.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.2
 [0.8.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.1
 [0.8.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.0
