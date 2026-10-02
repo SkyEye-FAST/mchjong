@@ -56,9 +56,9 @@ final class ConvenienceHintsSmoke {
             throw new IllegalStateException("Scored hint narration is incomplete: " + label);
         checkHintBounds(client, hint);
         SmokeScreenshots.grab(output.toFile(), (mcrRule ? "mcr" : "sichuan") + "-scored-hints-"
-            + (sample == 0 ? "seated.png" : "immersive.png"), client.getMainRenderTarget(), ignored -> {});
+            + (sample == 0 ? "seated.png" : "immersive.png"), client.getMainRenderTarget(), 1, ignored -> {});
         if (++sample < 2) { show(client, table, mcrRule); return; }
-        client.getWindow().setWindowed(width, height); client.options.guiScale().set(guiScale); client.resizeDisplay();
+        client.getWindow().setWindowed(width, height); client.options.guiScale().set(guiScale); client.resizeGui();
         TableSettings.get().discardMode = discardMode;
         table.acceptRoom(room);
         if (mcrRule) {
@@ -73,7 +73,7 @@ final class ConvenienceHintsSmoke {
 
     private void show(Minecraft client, MahjongTableBlockEntity table, boolean mcrRule) {
         client.getWindow().setWindowed(sample == 0 ? 960 : 1280, sample == 0 ? 720 : 800);
-        client.options.guiScale().set(sample == 0 ? 3 : 2); client.resizeDisplay(); ticks = 0;
+        client.options.guiScale().set(sample == 0 ? 3 : 2); client.resizeGui(); ticks = 0;
         var fixtureRoom = new TableRoomView(room.tableId(), room.incarnation(), Long.MAX_VALUE / 4 + sample,
             room.decision(), room.variant(), room.lifecycle(), room.host(), room.viewerSeat(), false, true, false,
             room.seating(), List.of(), room.seats(), List.of(), null, false, true, true, room.automation());
@@ -94,7 +94,7 @@ final class ConvenienceHintsSmoke {
             var tileLabel = table.clientMcrDeck().tile(36).label(TableSettings.get().tileLabels == TableSettings.TileLabels.MPSZ, table.clientMcrDeck().preset());
             client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                 .filter(button -> button.getClass().getSimpleName().equals("HandTarget") && button.getMessage().equals(tileLabel))
-                .findFirst().orElseThrow().onPress();
+                .findFirst().orElseThrow().onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
         } else {
             var base = sichuan.game(); var seats = new ArrayList<SichuanView.Seat>();
             for (int seat = 0; seat < 4; seat++) seats.add(new SichuanView.Seat(seat == viewer ? tiles("1111222233334m")

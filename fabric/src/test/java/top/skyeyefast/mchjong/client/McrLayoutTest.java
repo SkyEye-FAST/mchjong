@@ -15,6 +15,17 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 import static org.junit.jupiter.api.Assertions.*;
 
 class McrLayoutTest {
+    @Test void centerUsesNativeWindKindsAndKeepsOwnerLabelsWhenViewerChanges() {
+        var indicator = TableBoardState.live(new McrGame(711).view(-1)).indicator();
+        var title = (net.minecraft.network.chat.contents.TranslatableContents) indicator.title().getContents();
+        assertEquals("mcr.mchjong.indicator_round", title.getKey());
+        var prevailing = (net.minecraft.network.chat.Component) title.getArgs()[0];
+        assertEquals("wind.mchjong.east.short", ((net.minecraft.network.chat.contents.TranslatableContents) prevailing.getContents()).getKey());
+        assertEquals(List.of("east", "south", "west", "north"), indicator.seats().stream()
+            .map(label -> ((net.minecraft.network.chat.contents.TranslatableContents) label.getContents()).getKey().replace("wind.mchjong.", "").replace(".short", "")).toList());
+        assertEquals(indicator, TableBoardState.live(new McrGame(711).view(0)).replay(2).indicator());
+    }
+
     @Test void fourRotatedStraightWallsKeepTheirOffsetAndDoNotIntersect() {
         var pieces = McrTableScene.fullWall();
         assertEquals(144, pieces.size());
@@ -106,7 +117,7 @@ class McrLayoutTest {
         }
     }
 
-    @Test void leftCornerMeldsClearHandsAndFlowersAtEverySeat() {
+    @Test void rightCornerMeldsClearHandsAndLeftFlowerRailAtEverySeat() {
         var base = new McrGame(711).view(0);
         var seats = new ArrayList<McrView.Seat>();
         for (int seat = 0; seat < 4; seat++) {
@@ -129,7 +140,7 @@ class McrLayoutTest {
         for (var piece : scene) {
             var local = TableGeometry.orient(piece.position().x, piece.position().y, piece.position().z, (4 - piece.seat()) % 4);
             if (piece.area() == McrTableScene.Area.MELD && piece.index() == 0)
-                assertEquals(-RiichiTableScene.MELD_RIGHT + TileMesh.HEIGHT * (double) piece.scale() / 2, local.x, 1e-8);
+                assertEquals(RiichiTableScene.MELD_RIGHT - (3 * (double) TileMesh.WIDTH + TileMesh.HEIGHT / 2.0) * (double) piece.scale(), local.x, 1e-8);
             if (piece.area() == McrTableScene.Area.RIVER) {
                 assertEquals(-2.5 * RiichiTableScene.RIVER_STEP, local.x, 1e-8);
                 assertEquals(RiichiTableScene.RIVER_Z, local.z, 1e-8);

@@ -22,12 +22,20 @@ final class InputSmoke {
     private InputSmoke() {}
 
     static void pointer(Minecraft client, double x, double y) {
-        long window = client.getWindow().getWindow();
+        long window = client.getWindow().handle();
         var cursor = GLFW.glfwSetCursorPosCallback(window, null);
         if (cursor == null) throw new IllegalStateException("Missing native cursor callback");
         try { cursor.invoke(window, x * client.getWindow().getScreenWidth() / client.screen.width,
             y * client.getWindow().getScreenHeight() / client.screen.height); }
         finally { GLFW.glfwSetCursorPosCallback(window, cursor); }
+    }
+
+    static void focus(Minecraft client, boolean active) {
+        long window = client.getWindow().handle();
+        var callback = GLFW.glfwSetWindowFocusCallback(window, null);
+        if (callback == null) throw new IllegalStateException("Missing native focus callback");
+        try { callback.invoke(window, active); }
+        finally { GLFW.glfwSetWindowFocusCallback(window, callback); }
     }
 
     static void pointerWidget(Minecraft client, AbstractWidget widget) {
@@ -44,9 +52,9 @@ final class InputSmoke {
 
     static void verify(Minecraft client, MahjongTableBlockEntity table) {
         boolean active = client.isWindowActive();
-        client.setWindowActive(true);
+        focus(client, true);
         try { verifyFocused(client, table); }
-        finally { client.setWindowActive(active); }
+        finally { focus(client, active); }
     }
 
     private static void verifyFocused(Minecraft client, MahjongTableBlockEntity table) {
@@ -66,36 +74,36 @@ final class InputSmoke {
         client.setScreen(screen);
         TableSettings.get().animations = false;
         screen.resetView();
-        screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_C, 0, 0));
         require(screen.inspecting(), "Holding C did not inspect the seated view");
-        screen.keyReleased(GLFW.GLFW_KEY_C, 0, 0);
+        screen.keyReleased(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_C, 0, 0));
         require(!screen.inspecting(), "Releasing C retained inspect input");
         if (client.player.getVehicle() instanceof top.skyeyefast.mchjong.world.SeatEntity seat) {
             var before = TableSettings.get().cameraPosition(seat);
             float pitch = TableSettings.get().camera().pitch();
-            screen.mouseClicked(screen.width / 2.0, screen.height / 2.0, 1);
-            screen.mouseDragged(screen.width / 2.0, screen.height / 2.0, 1, 1, -1);
+            screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(screen.width / 2.0, screen.height / 2.0, new net.minecraft.client.input.MouseButtonInfo(1, 0)), false);
+            screen.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(screen.width / 2.0, screen.height / 2.0, new net.minecraft.client.input.MouseButtonInfo(1, 0)), 1, -1);
             require(TableSettings.get().camera().pitch() == pitch, "Deadzone changed camera pitch");
-            screen.mouseDragged(screen.width / 2.0, screen.height / 2.0 - 20, 1, 0, -20);
-            screen.mouseReleased(screen.width / 2.0, screen.height / 2.0 - 20, 1);
+            screen.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(screen.width / 2.0, screen.height / 2.0 - 20, new net.minecraft.client.input.MouseButtonInfo(1, 0)), 0, -20);
+            screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(screen.width / 2.0, screen.height / 2.0 - 20, new net.minecraft.client.input.MouseButtonInfo(1, 0)));
             require(TableSettings.get().camera().pitch() < pitch, "Right-drag did not tilt the view");
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Free look moved the eye");
             screen.mouseScrolled(screen.width / 2.0, screen.height / 2.0, 0, 2);
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) > .1, "Wheel did not move the eye");
             float yaw = TableSettings.get().camera().yaw(seat.seat());
-            screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
             for (int i = 0; i < 3; i++) screen.tick();
-            screen.keyReleased(GLFW.GLFW_KEY_RIGHT, 0, 0);
+            screen.keyReleased(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
             require(TableSettings.get().camera().yaw(seat.seat()) > yaw + 2, "Held arrow did not continuously turn");
             yaw = TableSettings.get().camera().yaw(seat.seat());
-            screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
-            client.setWindowActive(false);
+            screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
+            focus(client, false);
             screen.tick();
-            client.setWindowActive(true);
+            focus(client, true);
             screen.tick();
             require(TableSettings.get().camera().yaw(seat.seat()) == yaw, "Unfocused camera retained held arrows");
             require(fixture.seats().get(0).hand().stream().noneMatch(tile -> selected(screen, fixture, tile)), "Arrow selected a tile");
-            screen.keyPressed(GLFW.GLFW_KEY_HOME, 0, 0);
+            screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_HOME, 0, 0));
             require(TableSettings.get().cameraPosition(seat).distanceTo(before) < 1e-6, "Home did not restore the eye");
             require(TableSettings.get().camera().pitch() == pitch, "Home did not restore pitch");
         }
@@ -104,45 +112,45 @@ final class InputSmoke {
         var inspectKey = top.skyeyefast.mchjong.client.TableKeys.INSPECT;
         inspectKey.setKey(com.mojang.blaze3d.platform.InputConstants.Type.KEYSYM.getOrCreate(GLFW.GLFW_KEY_I));
         net.minecraft.client.KeyMapping.resetMapping();
-        screen.keyPressed(GLFW.GLFW_KEY_C, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_C, 0, 0));
         require(!screen.inspecting(), "Old inspect binding still active");
-        screen.keyPressed(GLFW.GLFW_KEY_I, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_I, 0, 0));
         require(screen.inspecting(), "Rebound inspect key did not work");
-        screen.keyReleased(GLFW.GLFW_KEY_I, 0, 0);
+        screen.keyReleased(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_I, 0, 0));
         inspectKey.setKey(inspectKey.getDefaultKey());
         net.minecraft.client.KeyMapping.resetMapping();
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-        screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_R, 0, 0));
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi selection is not discoverable");
         clickHand(screen, fixture, 8);
         require(!selected(screen, fixture, 8), "Riichi selection accepted an illegal discard");
-        screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
         require(client.screen == screen && !button(screen, "ui.mchjong.cancel_riichi"), "Esc closed the table instead of cancelling riichi");
         TableSettings.get().discardMode = TableSettings.DiscardMode.CONFIRM;
         clickHand(screen, fixture, 13);
         require(selected(screen, fixture, 13), "Mouse did not select the drawn tile");
         var cancelPoint = screenPoint(screen, new HandPoint(top.skyeyefast.mchjong.client.TableCanvas.WIDTH / 2.0,
             top.skyeyefast.mchjong.client.TableCanvas.HEIGHT - 19));
-        screen.mouseClicked(cancelPoint.x(), cancelPoint.y(), 1);
-        screen.mouseReleased(cancelPoint.x(), cancelPoint.y(), 1);
+        screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(cancelPoint.x(), cancelPoint.y(), new net.minecraft.client.input.MouseButtonInfo(1, 0)), false);
+        screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(cancelPoint.x(), cancelPoint.y(), new net.minecraft.client.input.MouseButtonInfo(1, 0)));
         require(!selected(screen, fixture, 13), "Right-click failed to cancel the selected tile");
-        screen.keyPressed(GLFW.GLFW_KEY_R, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_R, 0, 0));
         require(button(screen, "ui.mchjong.cancel_riichi"), "Riichi could not be reopened after cancellation");
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
         require(!screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Switching view lost riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_RIGHT, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
         screen.tick();
-        screen.keyReleased(GLFW.GLFW_KEY_RIGHT, 0, 0);
+        screen.keyReleased(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_RIGHT, 0, 0));
         require(button(screen, "ui.mchjong.cancel_riichi"), "Camera arrow cancelled riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
         require(screen.immersive() && button(screen, "ui.mchjong.cancel_riichi"), "Returning to immersive lost riichi selection mode");
-        screen.keyPressed(GLFW.GLFW_KEY_ESCAPE, 0, 0);
+        screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ESCAPE, 0, 0));
         screen.resetView();
     }
 
     static void clickHand(RiichiTableScreen screen, RiichiView view, int tile) {
         var point = screenPoint(screen, handPoint(screen, view, tile));
-        screen.mouseClicked(point.x(), point.y(), 0);
+        screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(point.x(), point.y(), new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     static void pointerHand(Minecraft client, RiichiTableScreen screen, RiichiView view, int tile) {

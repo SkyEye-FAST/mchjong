@@ -18,7 +18,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 final class ReplayDecisionPanel extends AbstractWidget {
     private final Font font;
     private final ReplayMatch match;
-    private ReplayHand.Decision decision;
+    private ReplayPresentation.Decision decision;
     private List<ReplayDecisionAnalysis.Candidate> analysis = List.of();
     private final List<Hit> hits = new ArrayList<>();
     private record Hit(int x, int y, int width, int height, Component tooltip) {
@@ -31,7 +31,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
         this.match = match;
     }
 
-    void show(ReplayHand.Decision decision, List<ReplayDecisionAnalysis.Candidate> analysis) {
+    void show(ReplayPresentation.Decision decision, List<ReplayDecisionAnalysis.Candidate> analysis) {
         this.decision = decision;
         this.analysis = analysis == null ? List.of() : analysis;
     }
@@ -52,7 +52,7 @@ final class ReplayDecisionPanel extends AbstractWidget {
             int x = getX() + 6 + col * colWidth, y = getY() + 20 + row * rowHeight;
             boolean selected = index == decision.selected();
             if (selected) graphics.fill(x, y, x + colWidth - 3, y + rowHeight - 1, MahjongUi.SELECTED);
-            var label = label(decision.options().get(index));
+            var label = decision.options().get(index);
             var candidate = index < analysis.size() ? analysis.get(index) : null;
             if (candidate != null) label = label.copy().append("  ").append(shape(candidate));
             MahjongUi.text(graphics, font, label, x + 3, y + 2, colWidth - 9,
@@ -78,24 +78,11 @@ final class ReplayDecisionPanel extends AbstractWidget {
         return text;
     }
 
-    private Component label(RiichiAction action) {
-        var text = Component.translatable(action.translationKey());
-        if (action.tiles().isEmpty()) return text;
-        var suffix = new StringBuilder();
-        for (int tile : action.tiles()) {
-            if (suffix.length() > 0) suffix.append(' ');
-            int kind = Tile.kind(tile);
-            if (Tile.red(tile) && kind < 27 && kind % 9 == 4) suffix.append('0').append("mps".charAt(kind / 9));
-            else suffix.append(Tile.notation(kind));
-        }
-        return text.copy().append("  ").append(suffix.toString());
-    }
-
     @Override protected void updateWidgetNarration(NarrationElementOutput output) {
         if (decision == null) return;
         var summary = Component.translatable("replay.mchjong.decision_for", match.participants().get(decision.seat()).name());
         summary.append(". ").append(Component.translatable("replay.mchjong.selected"))
-            .append(" ").append(label(decision.options().get(decision.selected())));
+            .append(" ").append(decision.options().get(decision.selected()));
         output.add(NarratedElementType.TITLE, summary);
     }
 }

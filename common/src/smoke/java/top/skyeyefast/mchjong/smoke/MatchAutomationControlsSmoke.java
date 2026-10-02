@@ -21,7 +21,7 @@ final class MatchAutomationControlsSmoke {
         if (++ticks < 4) return false;
         switch (stage) {
             case 0 -> {
-                client.getWindow().setWindowed(960, 720); client.options.guiScale().set(3); client.resizeDisplay();
+                client.getWindow().setWindowed(960, 720); client.options.guiScale().set(3); client.resizeGui();
                 next();
             }
             case 1 -> {
@@ -33,18 +33,18 @@ final class MatchAutomationControlsSmoke {
                 bounds(client);
                 var button = option(client);
                 client.screen.setFocused(button);
-                require(client.screen.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0), "Automation rejected native keyboard input");
+                require(client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0)), "Automation rejected native keyboard input");
                 next();
             }
             case 3 -> {
                 if (!room.automation().win() || !option(client).active) return false;
                 require(client.screen.getFocused() == option(client), "Automation lost focus on acknowledgement");
-                option(client).onClick(option(client).getX() + 2, option(client).getY() + 2);
+                option(client).onClick(new net.minecraft.client.input.MouseButtonEvent(option(client).getX() + 2, option(client).getY() + 2, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
                 next();
             }
             case 4 -> {
                 if (room.automation().win() || !option(client).active) return false;
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0); next();
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0)); next();
             }
             case 5 -> {
                 require(immersive(client), "Automation lost the immersive view");
@@ -56,8 +56,8 @@ final class MatchAutomationControlsSmoke {
                 bounds(client);
                 require(!room.automation().win() && !room.automation().noCalls() && !room.automation().discard(),
                     "Automation round trip changed another preference");
-                client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
-                client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeDisplay();
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+                client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeGui();
                 next();
             }
             default -> throw new IllegalStateException("Unexpected automation smoke stage");
@@ -83,8 +83,8 @@ final class MatchAutomationControlsSmoke {
             x = (client.screen.width - 1280 * scale) / 2 + x * scale;
             y = (client.screen.height - 800 * scale) / 2 + y * scale;
         }
-        require(client.screen.mouseClicked(x, y, 0), "Automation control rejected pointer input");
-        client.screen.mouseReleased(x, y, 0);
+        require(client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false), "Automation control rejected pointer input");
+        client.screen.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)));
     }
     private static void bounds(Minecraft client) {
         int width = immersive(client) ? 1280 : client.screen.width, height = immersive(client) ? 800 : client.screen.height;
@@ -110,7 +110,7 @@ final class MatchAutomationControlsSmoke {
             Component.translatable("ui.mchjong.auto_kita").getString())), "Riichi controls leaked into another rule");
     }
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }

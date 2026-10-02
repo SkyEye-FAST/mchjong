@@ -26,6 +26,9 @@ public final class MahjongTableRenderer
 
     public static final class State extends BlockEntityRenderState {
         RiichiView view;
+        top.skyeyefast.mchjong.engine.McrView mcrView;
+        top.skyeyefast.mchjong.engine.SichuanView sichuanView;
+        TableAnimation tableAnimation;
         FurnitureWood wood;
         net.minecraft.world.item.DyeColor cloth;
         boolean automatic;
@@ -52,6 +55,10 @@ public final class MahjongTableRenderer
             Vec3 cameraPos, ModelFeatureRenderer.CrumblingOverlay crumbling) {
         BlockEntityRenderer.super.extractRenderState(table, state, partialTick, cameraPos, crumbling);
         state.view = table.clientView();
+        state.mcrView = table.clientMcrView() == null ? null : table.clientMcrView().game();
+        state.sichuanView = table.clientSichuanView() == null ? null : table.clientSichuanView().game();
+        state.tableAnimation = TableAnimation.of(table);
+        state.now = Util.getMillis();
         state.wood = table.wood();
         state.cloth = table.equipment().hasCloth() ? table.equipment().clothColor() : null;
         state.automatic = table.automatic();
@@ -81,17 +88,19 @@ public final class MahjongTableRenderer
         pose.pushPose();
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, state.lightCoords, state.wood, state.cloth, state.automatic);
-        if (state.automatic && state.lobby) RiichiIndicator.renderStandby(pose, buffers, state.lightCoords);
+        if (state.automatic && state.lobby) TableIndicator.renderStandby(pose, buffers, state.lightCoords);
         if (state.sichuanPieces != null && state.sichuanDeck != null) {
             var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);
             var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
             SichuanSceneRenderer.render(state.sichuanPieces, state.sichuanDeck, pose, buffers, state.lightCoords,
-                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece));
+                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now);
+            if (state.automatic) TableIndicator.render(state.sichuanView, pose, buffers, state.lightCoords);
         } else if (state.mcrPieces != null && state.mcrDeck != null) {
             var screen = Minecraft.getInstance().screen instanceof McrTableScreen mcr
                 && mcr.tablePos().equals(state.blockPos) ? mcr : null;
             McrSceneRenderer.render(state.mcrPieces, state.mcrDeck, pose, buffers, state.lightCoords,
-                piece -> screen == null ? 0 : screen.highlight(piece), piece -> screen != null && screen.selected(piece));
+                piece -> screen == null ? 0 : screen.highlight(piece), piece -> screen != null && screen.selected(piece), state.tableAnimation, state.now);
+            if (state.automatic) TableIndicator.render(state.mcrView, pose, buffers, state.lightCoords);
         }
         pose.popPose();
         if (state.view == null) {
@@ -107,7 +116,7 @@ public final class MahjongTableRenderer
             tiles(state, pose, buffers, Layer.BODY);
         }
         tiles(state, pose, buffers, Layer.FACE);
-        if (state.automatic) RiichiIndicator.render(state.view, pose, buffers, state.lightCoords);
+        if (state.automatic) TableIndicator.render(state.view, pose, buffers, state.lightCoords);
         RiichiDeposits.render(state.view, state.automatic, state.animation, state.animated, state.now, pose, buffers, collector, state.lightCoords);
         RiichiDice.renderWorld(state.view, pose, collector, state.lightCoords);
         if (glass) {

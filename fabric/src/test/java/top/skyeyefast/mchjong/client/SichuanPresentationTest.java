@@ -38,7 +38,9 @@ class SichuanPresentationTest {
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {
         var game = new SichuanGame(711);
         var declaration = game.view(0);
-        assertTrue(SichuanResults.rows(declaration, room(false)).isEmpty());
+        assertNull(declaration.result());
+        assertEquals("—", TableBoardState.live(declaration).indicator().seats().get(1).getString());
+        assertTrue(TableBoardState.live(declaration).seats().get(1).hand().stream().allMatch(tile -> tile == Tile.HIDDEN));
         var pieces = SichuanTableScene.build(declaration);
         assertTrue(pieces.stream().filter(piece -> piece.area() == SichuanTableScene.Area.HAND && piece.seat() != 0)
             .allMatch(piece -> piece.tile() == Tile.HIDDEN));
@@ -51,6 +53,12 @@ class SichuanPresentationTest {
         var score = new SichuanSettlement.Score(0, 1, List.of());
         var winners = List.of(new SichuanView.Winner(1, 0, 16, false, false, score), new SichuanView.Winner(2, 0, 16, false, false, score));
         var live = view(SichuanGame.Phase.TURN, seats, winners, List.of(), null);
+        var shared = TableBoardState.live(live);
+        assertEquals("sichuan.mchjong.suit.2", key(shared.indicator().seats().get(0)));
+        assertEquals("sichuan.mchjong.won", key(shared.indicator().seats().get(1)));
+        assertFalse(shared.seats().get(1).exposed(), "A live winner must retain recipient visibility");
+        assertEquals(List.of(Tile.HIDDEN, 1, 2, Tile.HIDDEN), shared.seats().get(1).layout(kong, 1).parts().stream().map(MeldLayout.Part::tile).toList());
+        assertEquals(List.of(true, false, false, true), shared.seats().get(1).layout(kong, 1).parts().stream().map(MeldLayout.Part::back).toList());
         pieces = SichuanTableScene.build(live);
         var meld = pieces.stream().filter(piece -> piece.area() == SichuanTableScene.Area.MELD).toList();
         assertEquals(List.of(true, false, false, true), meld.stream().map(SichuanTableScene.Piece::back).toList());
@@ -78,11 +86,10 @@ class SichuanPresentationTest {
             SichuanSettlement.DrawStatus.WON, SichuanSettlement.DrawStatus.READY, SichuanSettlement.DrawStatus.ACTIVE_FLOWER_PIG), true);
         var seats = Collections.nCopies(4, new SichuanView.Seat(List.of(16), List.of(), List.of(), 2, false, Tile.ABSENT, Tile.ABSENT));
         var ended = view(SichuanGame.Phase.HAND_END, seats, List.of(), ledger, result);
-        var rows = SichuanResults.rows(ended, room(false));
-        assertEquals(result.deltas().get(0).toString(), ((TranslatableContents) rows.get(1).text().getContents()).getArgs()[1]);
-        assertEquals(100, ((TranslatableContents) rows.get(1).text().getContents()).getArgs()[2]);
-        var paymentRows = rows.stream().map(row -> row.text())
-            .filter(text -> key(text).equals("sichuan.mchjong.payment_row") || key(text).equals("ui.mchjong.annotation")).toList();
+        var receipt = receipt(ended);
+        assertEquals(result.deltas(), receipt.deltas());
+        assertEquals(100, receipt.seats().get(0).points());
+        var paymentRows = receipt.payments();
         assertEquals(ledger.size(), paymentRows.size());
         for (int index = 0; index < ledger.size(); index++) {
             var entry = ledger.get(index);
@@ -104,19 +111,24 @@ class SichuanPresentationTest {
             else assertEquals("player" + entry.recipient(), recipient.getString());
             assertEquals(entry.amount(), args[4]);
         }
-        assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.full_flush")));
-        assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root")));
-        assertTrue(rows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.kong")));
-        var tfmjRows = SichuanResults.rows(SichuanPreset.TFMJ_2024.config(), result, seats, ended.scores(), 0,
-            List.of("player0", "player1", "player2", "player3"));
-        assertTrue(tfmjRows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root_with_kong")));
-        assertFalse(tfmjRows.stream().anyMatch(row -> key(row.text()).equals("sichuan.mchjong.fan.root")));
-        assertTrue(rows.stream().anyMatch(row -> row.tiles().equals(List.of(16))));
+        var rows = receipt.wins().getFirst().rows();
+        assertTrue(rows.stream().anyMatch(row -> key(row.label()).equals("sichuan.mchjong.fan.full_flush")));
+        assertTrue(rows.stream().anyMatch(row -> key(row.label()).equals("sichuan.mchjong.fan.root")));
+        assertTrue(rows.stream().anyMatch(row -> key(row.label()).equals("sichuan.mchjong.fan.kong")));
+        var tfmj = TableResultState.sichuan(SichuanPreset.TFMJ_2024.config(), result, seats, ended.scores(), 0,
+            room(false).seats().stream().map(TableRoomView.Seat::participant).toList());
+        assertTrue(tfmj.wins().getFirst().rows().stream().anyMatch(row -> key(row.label()).equals("sichuan.mchjong.fan.root_with_kong")));
+        assertFalse(tfmj.wins().getFirst().rows().stream().anyMatch(row -> key(row.label()).equals("sichuan.mchjong.fan.root")));
+        assertEquals(List.of(16), receipt.seats().get(1).hand());
         var finalView = view(SichuanGame.Phase.MATCH_END, seats, List.of(), ledger, result);
         assertEquals(8, finalView.handNumber());
-        assertEquals(rows, SichuanResults.rows(finalView, room(true)));
+        assertEquals(receipt, receipt(finalView));
     }
 
+    private static TableResultState receipt(SichuanView view) {
+        return TableResultState.sichuan(view.rules(), view.result(), view.seats(), view.scores(), view.viewerSeat(),
+            room(false).seats().stream().map(TableRoomView.Seat::participant).toList());
+    }
     private static String key(net.minecraft.network.chat.Component text) {
         return text.getContents() instanceof TranslatableContents contents ? contents.getKey() : "";
     }

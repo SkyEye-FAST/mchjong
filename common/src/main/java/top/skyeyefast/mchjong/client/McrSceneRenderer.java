@@ -20,6 +20,11 @@ public final class McrSceneRenderer {
                               PoseStack pose, MultiBufferSource buffers, int light,
                               java.util.function.ToIntFunction<McrTableScene.Piece> highlight,
                               java.util.function.Predicate<McrTableScene.Piece> selected) {
+        render(pieces, deck, pose, buffers, light, highlight, selected, null, 0);
+    }
+    static void render(List<McrTableScene.Piece> pieces, McrDeck deck, PoseStack pose, MultiBufferSource buffers, int light,
+                       java.util.function.ToIntFunction<McrTableScene.Piece> highlight, java.util.function.Predicate<McrTableScene.Piece> selected,
+                       TableAnimation animation, long now) {
         var order = deck.material() == top.skyeyefast.mchjong.item.TileMaterial.GLASS
             ? new Layer[]{Layer.FACE, Layer.BACK, Layer.BODY, Layer.PATTERN, Layer.OUTLINE} : Layer.values();
         for (var layer : order) {
@@ -34,18 +39,19 @@ public final class McrSceneRenderer {
                 int color = layer == Layer.OUTLINE ? highlight.applyAsInt(piece) : 0;
                 if (layer == Layer.OUTLINE && color == 0) continue;
                 pose.pushPose();
-                var position = piece.position();
+                var frame = animation == null ? new TableAnimation.Pose(piece.position(), piece.yaw(), piece.flat() ? piece.back() ? 90 : -90 : 0, piece.tile(), piece.back()) : animation.worldPose(piece, now);
+                var position = frame.position();
                 pose.translate(position.x, position.y + (selected.test(piece) ? .035 : 0), position.z);
-                pose.mulPose(Axis.YP.rotationDegrees(piece.yaw()));
-                boolean faceDown = piece.flat() && piece.back();
-                if (piece.flat()) pose.mulPose(Axis.XP.rotationDegrees(faceDown ? 90 : -90));
+                pose.mulPose(Axis.YP.rotationDegrees(frame.yaw()));
+                boolean faceDown = frame.back() && frame.pitch() > 0;
+                pose.mulPose(Axis.XP.rotationDegrees(frame.pitch()));
                 pose.scale(piece.scale(), piece.scale(), piece.scale());
                 switch (layer) {
                     case BACK -> TileMesh.drawBack(pose, vertices, faceDown, light, deck.material(), deck.back());
                     case BODY -> TileMesh.drawBody(pose, vertices, light, deck.material(), deck.back());
                     case FACE -> {
-                        if (piece.tile() >= 0 && !piece.back())
-                            TileMesh.drawArtwork(pose, vertices, TileMesh.artwork(deck.tile(piece.tile())), light);
+                        if (frame.tile() >= 0 && !frame.back())
+                            TileMesh.drawArtwork(pose, vertices, TileMesh.artwork(deck.tile(frame.tile())), light);
                         else TileMesh.drawFace(pose, vertices, -1, true, light);
                     }
                     case PATTERN -> TileMesh.drawBackPattern(pose, vertices, faceDown, light);

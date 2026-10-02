@@ -22,7 +22,7 @@ final class PlayerPortrait {
         return draw(graphics, player.entityBot(), player.bot(), player.name(), x, y, size);
     }
 
-    private static int draw(GuiGraphicsExtractor graphics, boolean entityBot, boolean bot, String name, int x, int y, int size) {
+    static int draw(GuiGraphicsExtractor graphics, boolean entityBot, boolean bot, String name, int x, int y, int size) {
         if (graphics != null) {
             if (entityBot) {
                 graphics.blit(net.minecraft.client.renderer.RenderPipelines.GUI_TEXTURED, MAID_ICON, x, y, 16, 16, size, size, 32, 32, 64, 64);

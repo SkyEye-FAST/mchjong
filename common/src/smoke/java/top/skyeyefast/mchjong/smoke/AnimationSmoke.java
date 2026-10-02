@@ -19,7 +19,6 @@ import top.skyeyefast.mchjong.engine.RiichiGame;
 import top.skyeyefast.mchjong.engine.Meld;
 import top.skyeyefast.mchjong.engine.RiichiView;
 import top.skyeyefast.mchjong.engine.Tile;
-import top.skyeyefast.mchjong.mixin.GameRendererAccessor;
 import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
@@ -60,7 +59,7 @@ final class AnimationSmoke {
             RiichiTableScreen screen = new RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
-            if (layoutsOnly) screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            if (layoutsOnly) screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             table.acceptView(fixture);
             screen.receivedView();
             for (var information : TableSettings.Information.values())
@@ -78,7 +77,7 @@ final class AnimationSmoke {
             if (RiichiAnimation.of(table).dealing(Util.getMillis())) throw new IllegalStateException("Deal did not finish");
             capture(client, output, layoutsOnly ? "14-immersive-deal-complete.png" : "14-animated-deal-complete.png");
             if (layoutsOnly) {
-                client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 hidden.forEach(TableSettings.get()::toggle);
                 hidden.clear();
                 TableSettings.get().animations = false;
@@ -130,7 +129,7 @@ final class AnimationSmoke {
             guiScale = client.options.guiScale().get();
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             var melds = IntStream.range(0, 4).mapToObj(i -> new Meld(Meld.Type.OPEN_QUAD,
                 List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), i % 3 + 1, i * 4)).toList();
             var seats = new ArrayList<>(fixture.seats());
@@ -149,12 +148,12 @@ final class AnimationSmoke {
         if (ticks == 206) {
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
-            client.resizeDisplay();
+            client.resizeGui();
         }
         if (ticks == 220) {
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             ticks = 322;
         }
         if (ticks == 322) {
@@ -181,7 +180,7 @@ final class AnimationSmoke {
             seats.set(leftSeat, new RiichiView.Seat(left.entityBot(), left.name(), left.occupied(), left.bot(), left.ready(), left.points(),
                 Collections.nCopies(5, Tile.HIDDEN), Tile.ABSENT, leftMelds, left.river(), left.norths(), left.riichi(), false, left.doubleRiichi()));
             update(table, seats, fixture.wall(), 2);
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("320x240 disabled the fixed immersive canvas");
             String label = net.minecraft.network.chat.Component.translatable("ui.mchjong.automation_show").getString();
             AutomationControlsSmoke.click(client, label);
@@ -190,24 +189,24 @@ final class AnimationSmoke {
             capture(client, output, "57-immersive-rivers-melds-320x240-letterbox.png");
             client.getWindow().setWindowed(960, 600);
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Resize disabled immersive canvas");
         }
         if (ticks == 327) {
             capture(client, output, "57-immersive-rivers-melds-480x300.png");
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("GUI scale change disabled immersive canvas");
             capture(client, output, "57-immersive-rivers-melds-320x240-gui3-letterbox.png");
             client.getWindow().setWindowed(windowWidth, windowHeight);
             client.options.guiScale().set(guiScale);
-            client.resizeDisplay();
+            client.resizeGui();
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Restoring viewport disabled immersive canvas");
         }
         if (ticks == 328) {
             capture(client, output, "57-immersive-rivers-melds-640x400.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         }
         if (layoutsOnly && ticks == 328) { ticks = 359; return false; }
         if (ticks == 328) originalHighlight = TableSettings.get().highlightTiles;
@@ -225,7 +224,7 @@ final class AnimationSmoke {
             update(table, seats, fixture.wall());
             TableSettings.get().animations = true;
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         }
         if (ticks == 364 || ticks == 384 || ticks == 404) {
             int owner = ticks == 404 ? 1 : 0;
@@ -253,7 +252,7 @@ final class AnimationSmoke {
             seats.set(0, seat(hand, player.melds(), player.river(), player.riichi()));
             update(table, seats, fixture.wall());
         }
-        if (ticks == 420) client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+        if (ticks == 420) client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         if (layoutsOnly && ticks >= 420) return true;
         if (ticks >= 422) return deposits.tick(client, table, output);
         return false;
@@ -278,11 +277,11 @@ final class AnimationSmoke {
     /** Check the complete rendered tile envelopes, not just the centers of the last meld. */
     private static void verifyCornerVisible(Minecraft client, MahjongTableBlockEntity table) {
         var camera = client.gameRenderer.getMainCamera();
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         var forward = new Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         var right = new Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
         var up = right.cross(forward);
-        double fov = ((GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        double fov = camera.getFov();
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
         for (var piece : RiichiTableScene.build(table.clientView())) {
             if (piece.seat() != 0 || piece.area() != RiichiTableScene.Area.HAND && piece.area() != RiichiTableScene.Area.MELD) continue;
@@ -292,7 +291,7 @@ final class AnimationSmoke {
             if (Math.floorMod(Math.round(piece.yaw() / 90), 2) == 1) { double swap = x; x = z; z = swap; }
             for (int dx : new int[]{-1, 1}) for (int dy : new int[]{-1, 1}) for (int dz : new int[]{-1, 1}) {
                 var point = TableGeometry.world(table.getBlockPos(), piece.position().add(dx * x, dy * y, dz * z))
-                    .subtract(camera.getPosition());
+                    .subtract(camera.position());
                 double depth = point.dot(forward);
                 double screenX = client.screen.width / 2.0 + point.dot(right) * focal / depth;
                 double screenY = client.screen.height / 2.0 - point.dot(up) * focal / depth;
@@ -306,6 +305,6 @@ final class AnimationSmoke {
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

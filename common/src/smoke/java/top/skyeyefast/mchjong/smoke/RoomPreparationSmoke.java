@@ -49,7 +49,7 @@ final class RoomPreparationSmoke {
         if (RiichiTableScreen.active(client.screen) == null || ticks % 5 != 0) return false;
         if (room.seating() == RoomSeating.Stage.GATHERING) {
             var roster = LobbySmoke.find(client, Component.translatable("room.mchjong.participants").getString());
-            if (roster != null) roster.onPress();
+            if (roster != null) roster.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             boolean full = room.actions().stream().anyMatch(action -> action.type() == RoomAction.Type.BEGIN_SEATING);
             if (full && botCycle < 4 && botCycle != 2) {
                 if (botSeat < 0) for (int seat = 0; seat < room.seats().size(); seat++)
@@ -146,12 +146,12 @@ final class RoomPreparationSmoke {
     private static void clickLabel(Minecraft client, String label) {
         for (var child : client.screen.children()) if (child instanceof AbstractWidget button && button.active
             && (button.getMessage().getString().equals(label) || button.getMessage().getString().equals(label + " ›"))) {
-            client.screen.mouseClicked(button.getX() + 3, button.getY() + 3, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(button.getX() + 3, button.getY() + 3, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             return;
         }
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 }

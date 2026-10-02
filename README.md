@@ -51,7 +51,7 @@ Optional integrations are scoped to the loader named in each cell:
 | REI supply recipes | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 | Ponder tutorials | Fabric, NeoForge | Fabric, Forge | — |
 | Patchouli handbook | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
-| Mod Menu personal settings | Fabric | — | Fabric |
+| Mod Menu personal settings | Fabric | Fabric | Fabric |
 | Create workshop | NeoForge | Fabric, Forge | — |
 | Touhou Little Maid players | Fabric, NeoForge | Fabric, Forge | Fabric, NeoForge |
 

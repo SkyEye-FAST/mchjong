@@ -10,7 +10,9 @@ import net.neoforged.neoforge.common.NeoForge;
 public final class NeoForgeSmoke {
     private static boolean checkedConfigScreen;
 
-    public NeoForgeSmoke() {
+    public NeoForgeSmoke(net.neoforged.bus.api.IEventBus bus) {
+        bus.addListener((net.neoforged.neoforge.client.event.RegisterPictureInPictureRenderersEvent event) ->
+            event.register(SmokeMesh.State.class, SmokeMesh.Renderer::new));
         if (Boolean.getBoolean("mchjong.smoke")) {
             var smoke = new TableClientSmoke();
             NeoForge.EVENT_BUS.addListener((ClientTickEvent.Post event) -> {

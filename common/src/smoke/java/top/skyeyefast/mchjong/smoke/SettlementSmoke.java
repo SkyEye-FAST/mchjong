@@ -6,7 +6,7 @@ import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.AbstractWidget;
 import top.skyeyefast.mchjong.engine.RiichiAction;
-import top.skyeyefast.mchjong.client.RiichiResults;
+import top.skyeyefast.mchjong.client.TableResults;
 import top.skyeyefast.mchjong.client.RiichiTableScreen;
 import top.skyeyefast.mchjong.client.RiichiAudio;
 import top.skyeyefast.mchjong.client.TableSettings;
@@ -74,7 +74,7 @@ final class SettlementSmoke {
             languageReload.join();
             if (localeTicks++ == 0) {
                 client.options.guiScale().set(4);
-                client.resizeDisplay();
+                client.resizeGui();
                 client.setScreen(new RiichiTableScreen(table.getBlockPos()));
             }
             if (localeTicks < 8) return false;
@@ -121,44 +121,44 @@ final class SettlementSmoke {
             voiceDecode.join();
             if (!heardRecording || captureStage != 4) throw new IllegalStateException("Readout did not visit every recorded stage");
             checkSettledPoints(client);
-            RiichiResults panel = panel(client);
-            client.screen.mouseClicked(panel.getX() + 15, panel.getY() + 25, 0);
+            TableResults panel = panel(client);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(panel.getX() + 15, panel.getY() + 25, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             sequenceComplete = true;
         }
         ticks++;
         if (ticks == 2) {
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         } else if (ticks == 6) {
             capture(client, output, "07-readout-complete-immersive.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         } else if (ticks == 10) {
             checkBounds(client);
             capture(client, output, "08-settlement.png");
-            RiichiResults panel = panel(client);
+            TableResults panel = panel(client);
             int span = panel.getWidth() - 20 - (panel.getWidth() >= 500 ? 156 : 0);
-            client.screen.mouseClicked(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(panel.getX() + 10 + span * 3 / 4, panel.getY() + 25, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
         } else if (ticks == 20) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Second winner was not selectable");
             capture(client, output, "09-settlement-details.png");
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
         } else if (ticks == 30) {
             checkBounds(client);
             capture(client, output, "10-settlement-small.png");
             click(client, "View table");
         } else if (ticks == 35) {
-            if (client.screen.children().stream().anyMatch(RiichiResults.class::isInstance))
+            if (client.screen.children().stream().anyMatch(TableResults.class::isInstance))
                 throw new IllegalStateException("Settlement could not be collapsed");
             click(client, "Show results");
         } else if (ticks == 40) {
-            RiichiResults panel = panel(client);
-            client.screen.mouseClicked(panel.getX() + 20, panel.getY() + 60, 0);
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+            TableResults panel = panel(client);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(panel.getX() + 20, panel.getY() + 60, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
         } else if (ticks == 45) {
             if (panel(client).selectedWinner() != 1) throw new IllegalStateException("Keyboard winner selection failed");
             capture(client, output, "11-settlement-keyboard.png");
             client.options.guiScale().set(4);
-            client.resizeDisplay();
+            client.resizeGui();
         } else if (ticks == 50) {
             checkBounds(client);
             capture(client, output, "15-settlement-smallest.png");
@@ -176,7 +176,7 @@ final class SettlementSmoke {
             checkBounds(client);
             capture(client, output, "17-settlement-smallest-ranking.png");
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
             click(client, "Point changes");
             checkSettledPoints(client);
         } else if (ticks == 70) {
@@ -207,7 +207,7 @@ final class SettlementSmoke {
         } else if (ticks == 85) {
             capture(client, output, "13-yakuman.png");
             client.options.guiScale().set(4);
-            client.resizeDisplay();
+            client.resizeGui();
         } else if (ticks == 90) {
             checkBounds(client);
             capture(client, output, "13-yakuman-smallest.png");
@@ -222,11 +222,11 @@ final class SettlementSmoke {
             acceptFixture(table, fixture);
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
         } else if (ticks == 100) {
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             if (!((RiichiTableScreen) client.screen).immersive()) throw new IllegalStateException("Settlement did not enter immersive view");
         } else if (ticks == 105) {
             capture(client, output, "14-settlement-draw-immersive.png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
         } else if (ticks == 110) {
             checkBounds(client);
             capture(client, output, "14-settlement-draw.png");
@@ -242,8 +242,8 @@ final class SettlementSmoke {
         return false;
     }
 
-    private static RiichiResults panel(Minecraft client) {
-        return client.screen.children().stream().filter(RiichiResults.class::isInstance).map(RiichiResults.class::cast)
+    private static TableResults panel(Minecraft client) {
+        return client.screen.children().stream().filter(TableResults.class::isInstance).map(TableResults.class::cast)
             .findFirst().orElseThrow(() -> new IllegalStateException("Missing settlement panel"));
     }
 
@@ -263,11 +263,11 @@ final class SettlementSmoke {
     private static void click(Minecraft client, String label) {
         var button = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
 
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
 
     static void acceptFixture(MahjongTableBlockEntity table, RiichiView view) {

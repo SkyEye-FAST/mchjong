@@ -15,10 +15,10 @@ public final class SichuanTableScene {
     public static final double WIDTH = TileMesh.WIDTH * (double) TILE_SCALE;
     public static final double HEIGHT = TileMesh.HEIGHT * (double) TILE_SCALE;
     public static final double DEPTH = TileMesh.DEPTH * (double) TILE_SCALE;
-    public static final double HAND_Z = 1.15;
+    public static final double HAND_Z = RiichiTableScene.HAND_Z;
     public static final double WALL_Z = .76;
     public static final double RIVER_Z = .34;
-    private static final double MELD_RIGHT = 1.02;
+    private static final double MELD_RIGHT = RiichiTableScene.MELD_RIGHT;
     public enum Area { WALL, HAND, RIVER, MELD }
     public record Piece(int tile, int seat, Area area, int index, Vec3 position,
                         float yaw, boolean flat, boolean back, float scale) {}
@@ -63,18 +63,19 @@ public final class SichuanTableScene {
         var pieces = new ArrayList<>(wall(slots, eastWestLongWall));
         for (int seat = 0; seat < 4; seat++) {
             var player = seats.get(seat);
-            double meldWidth = player.melds().stream().mapToDouble(meld -> meld.tiles().size() * WIDTH + DEPTH / 4).sum();
+            int owner = seat;
+            double meldWidth = player.melds().stream().mapToDouble(meld -> MeldLayout.of(meld, owner).width() * TILE_SCALE + .08).sum();
             boolean drawn = player.drawn() != Tile.ABSENT && !player.hand().isEmpty();
-            double handWidth = player.hand().size() * WIDTH + (drawn ? DEPTH / 2 : 0);
+            double handWidth = player.hand().size() * WIDTH + (drawn ? RiichiTableScene.DRAW_GAP : 0);
             double handLeft = -(handWidth - WIDTH) / 2;
-            if (meldWidth > 0) handLeft = Math.min(handLeft, MELD_RIGHT - meldWidth - DEPTH / 2 - handWidth + WIDTH / 2);
+            if (meldWidth > 0) handLeft = Math.min(handLeft, MELD_RIGHT - meldWidth - RiichiTableScene.HAND_MELD_GAP - handWidth + WIDTH / 2);
             var indices = new ArrayList<>(java.util.stream.IntStream.range(0, player.hand().size()).boxed().toList());
             int drawnIndex = player.drawn() >= 0 ? player.hand().indexOf(player.drawn()) : -1;
             if (drawnIndex >= 0) { indices.remove(Integer.valueOf(drawnIndex)); indices.add(drawnIndex); }
             for (int index = 0; index < indices.size(); index++) {
                 int original = indices.get(index);
                 pieces.add(piece(player.hand().get(original), seat, Area.HAND, original,
-                    handLeft + index * WIDTH + (drawn && index == indices.size() - 1 ? DEPTH / 2 : 0),
+                    handLeft + index * WIDTH + (drawn && index == indices.size() - 1 ? RiichiTableScene.DRAW_GAP : 0),
                     (ended ? DEPTH : HEIGHT) / 2, HAND_Z, 0, ended, false, TILE_SCALE));
             }
             int visible = 0;
@@ -88,13 +89,15 @@ public final class SichuanTableScene {
             double right = MELD_RIGHT;
             for (int group = 0; group < player.melds().size(); group++) {
                 var meld = player.melds().get(group);
-                for (int index = 0; index < meld.tiles().size(); index++) {
-                    boolean back = meld.closed() && !ended && (index == 0 || index == 3);
-                    pieces.add(piece(meld.tiles().get(index), seat, Area.MELD, group * 4 + index,
-                        right - (meld.tiles().size() - index - .5) * WIDTH, DEPTH / 2, HAND_Z,
-                        0, true, back, TILE_SCALE));
+                var layout = MeldLayout.of(meld, seat, top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN, ended);
+                right -= layout.width() * TILE_SCALE;
+                for (int index = 0; index < layout.parts().size(); index++) {
+                    var part = layout.parts().get(index);
+                    pieces.add(piece(part.tile(), seat, Area.MELD, group * 4 + index,
+                        right + part.x() * TILE_SCALE, DEPTH / 2, HAND_Z + part.z() * TILE_SCALE,
+                        part.sideways() ? 90 : 0, true, part.back(), TILE_SCALE));
                 }
-                right -= meld.tiles().size() * WIDTH + DEPTH / 4;
+                right -= .08;
             }
         }
         return List.copyOf(pieces);

@@ -19,7 +19,7 @@ import top.skyeyefast.mchjong.client.MahjongButton;
 import top.skyeyefast.mchjong.client.McrResultsScreen;
 import top.skyeyefast.mchjong.client.McrLobbyScreen;
 import top.skyeyefast.mchjong.client.McrTableScreen;
-import top.skyeyefast.mchjong.client.McrReplayScreen;
+import top.skyeyefast.mchjong.client.ReplayScreen;
 import top.skyeyefast.mchjong.client.ClientReplays;
 import top.skyeyefast.mchjong.replay.ReplayServer;
 import top.skyeyefast.mchjong.client.TableLeaveScreen;
@@ -104,14 +104,14 @@ final class McrAutoTableSmoke {
                 check(client.screen instanceof McrLobbyScreen, "MCR preparation did not open its room screen");
                 if (!clockConfigured) {
                     var clockButton = LobbySmoke.find(client, net.minecraft.network.chat.Component.translatable("ui.mchjong.clock_settings").getString());
-                    clockButton.onPress();
+                    clockButton.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                     check(client.screen instanceof top.skyeyefast.mchjong.client.TableClockScreen, "MCR did not open the shared clock editor");
                     var fields = client.screen.children().stream().filter(net.minecraft.client.gui.components.EditBox.class::isInstance)
                         .map(net.minecraft.client.gui.components.EditBox.class::cast).toList();
                     fields.get(0).setValue("30"); fields.get(1).setValue("7");
                     client.screen.children().stream().filter(child -> child instanceof MahjongButton button
                         && button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable("gui.done").getString()))
-                        .map(child -> (MahjongButton) child).findFirst().orElseThrow().onPress();
+                        .map(child -> (MahjongButton) child).findFirst().orElseThrow().onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                     clockConfigured = true;
                     break;
                 }
@@ -120,12 +120,12 @@ final class McrAutoTableSmoke {
                     LobbySmoke.settings(client);
                     client.screen.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                         .filter(button -> button.getMessage().getString().startsWith(net.minecraft.network.chat.Component.translatable(
-                            "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress();
+                            "settings.mchjong.convenience_hints").getString())).findFirst().orElseThrow().onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                     hintsConfigured = true;
                     break;
                 }
                 if (!lobby.convenienceHints()) break;
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), message -> {});
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-lobby.png", client.getMainRenderTarget(), 1, message -> {});
                 int index = lobby.actions().indexOf(new RoomAction(RoomAction.Type.BEGIN_SEATING));
                 check(index >= 0, "MCR lobby cannot assign four seats");
                 client.getConnection().send(PayloadPackets.serverbound(new top.skyeyefast.mchjong.network.TableRoomActionPayload(pos, lobby.tableId(),
@@ -200,7 +200,7 @@ final class McrAutoTableSmoke {
                     check(view.game().actions().isEmpty(), "MCR client received actions during the vote");
                     check(screen.children().stream().filter(child -> child instanceof MahjongButton).count() == 2,
                         "MCR vote controls were not shown");
-                    SmokeScreenshots.grab(output.toFile(), "mcr-auto-vote.png", client.getMainRenderTarget(), message -> {});
+                    SmokeScreenshots.grab(output.toFile(), "mcr-auto-vote.png", client.getMainRenderTarget(), 1, message -> {});
                     task = server.submit(() -> {
                         var guest = guests.getFirst();
                         var table = (MahjongTableBlockEntity) guest.level().getBlockEntity(pos);
@@ -249,15 +249,15 @@ final class McrAutoTableSmoke {
                     "MCR action clock did not use the configured room time");
                 if (presentationStep == 0) {
                     check(!screen.immersive(), "MCR play must open in the seated world view");
-                    SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), message -> {});
+                    SmokeScreenshots.grab(output.toFile(), "mcr-auto-play.png", client.getMainRenderTarget(), 1, message -> {});
                     top.skyeyefast.mchjong.client.TableSettings.get().discardMode = top.skyeyefast.mchjong.client.TableSettings.DiscardMode.CONFIRM;
                     var piece = top.skyeyefast.mchjong.client.McrTableScene.build(view.game()).stream()
                         .filter(p -> p.area() == top.skyeyefast.mchjong.client.McrTableScene.Area.HAND
                             && p.seat() == view.game().viewerSeat() && p.tile() == view.game().actions().get(index).tiles().getFirst())
                         .findFirst().orElseThrow();
                     var pointer = project(client, pos, piece.position());
-                    check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Seated MCR hand picking failed");
-                    screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                    check(screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(pointer.x, pointer.y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false) && screen.selected(piece), "Seated MCR hand picking failed");
+                    screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                     check(screen.immersive(), "MCR view binding did not open the immersive canvas");
                     presentationStep++;
                     break;
@@ -270,15 +270,15 @@ final class McrAutoTableSmoke {
                     break;
                 }
                 check(hint.isFocused() && hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
-                    "hints.mchjong.after_discard").getString()), "MCR native hint focus or narration lost the discard preview");
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), message -> {});
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), message -> {});
+                    "hints.mchjong.after_discard", "").getString()), "MCR native hint focus or narration lost the discard preview");
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-hints.png", client.getMainRenderTarget(), 1, message -> {});
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-immersive.png", client.getMainRenderTarget(), 1, message -> {});
                 double scale = Math.min(screen.width / 1280.0, screen.height / 800.0);
                 double x = (screen.width - 1280 * scale) / 2 + 289 * scale;
                 double y = (screen.height - 800 * scale) / 2 + 666 * scale;
                 firstDecision = view.game().decision();
-                check(screen.mouseClicked(x, y, 0), "Immersive hand did not accept canvas coordinates");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0);
+                check(screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(x, y, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false), "Immersive hand did not accept canvas coordinates");
+                screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                 stage++;
             }
             case 8 -> {
@@ -303,7 +303,7 @@ final class McrAutoTableSmoke {
                 check(responses > 0, "No MCR response traveled through the action handler");
                 check(view.game().phase() == McrGame.Phase.HAND_END && view.game().result() != null,
                     "MCR result was not delivered to the settlement screen");
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-results.png", client.getMainRenderTarget(), message -> {});
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-results.png", client.getMainRenderTarget(), 1, message -> {});
                 task = server.submit(() -> {
                     var main = server.getPlayerList().getPlayer(mainId);
                     var table = (MahjongTableBlockEntity) main.level().getBlockEntity(pos);
@@ -324,7 +324,7 @@ final class McrAutoTableSmoke {
                     && button.getMessage().getString().equals(net.minecraft.network.chat.Component.translatable(
                         "mcr.mchjong.next_hand").getString())).map(child -> (MahjongButton) child).findFirst()
                     .orElseThrow(() -> new IllegalStateException("MCR confirmation button is missing"));
-                confirm.onPress();
+                confirm.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                 stage++;
             }
             case 11 -> {
@@ -352,7 +352,7 @@ final class McrAutoTableSmoke {
                 if (!(client.screen instanceof TableLeaveScreen leave)) break;
                 check(clientTable.clientMcrView().paused(), "MCR leave prompt has an active match");
                 leaveRevision = clientTable.clientTableRoom().revision();
-                ((MahjongButton) leave.children().getFirst()).onPress();
+                ((MahjongButton) leave.children().getFirst()).onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                 stage++;
             }
             case 13 -> {
@@ -391,24 +391,24 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 16 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 check(replay.match().variant() == MahjongVariant.MCR && replay.cursor() == 0,
                     "MCR replay did not open at the initial deal");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0);
+                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
                 check(replay.cursor() == 1, "MCR replay did not advance one event");
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
                 stage++;
             }
             case 17 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay.png", client.getMainRenderTarget(), message -> {});
-                replay.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0);
+                if (!(client.screen instanceof ReplayScreen replay)) break;
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay.png", client.getMainRenderTarget(), 1, message -> {});
+                replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_END, 0, 0));
                 stage++;
             }
             case 18 -> {
-                if (!(client.screen instanceof McrReplayScreen replay)) break;
+                if (!(client.screen instanceof ReplayScreen replay)) break;
                 check(replay.cursor() > 1, "MCR replay did not seek to settlement");
-                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay-settlement.png", client.getMainRenderTarget(), message -> {});
+                SmokeScreenshots.grab(output.toFile(), "mcr-auto-replay-settlement.png", client.getMainRenderTarget(), 1, message -> {});
                 replay.onClose();
                 return true;
             }
@@ -447,11 +447,11 @@ final class McrAutoTableSmoke {
 
     private static net.minecraft.world.phys.Vec3 project(Minecraft client, BlockPos pos, net.minecraft.world.phys.Vec3 point) {
         var camera = client.gameRenderer.getMainCamera();
-        double yaw = Math.toRadians(camera.getYRot()), pitch = Math.toRadians(camera.getXRot());
+        double yaw = Math.toRadians(camera.yRot()), pitch = Math.toRadians(camera.xRot());
         var forward = new net.minecraft.world.phys.Vec3(-Math.sin(yaw) * Math.cos(pitch), -Math.sin(pitch), Math.cos(yaw) * Math.cos(pitch));
         var right = new net.minecraft.world.phys.Vec3(-Math.cos(yaw), 0, -Math.sin(yaw));
-        var delta = top.skyeyefast.mchjong.world.TableGeometry.world(pos, point).subtract(camera.getPosition());
-        double fov = ((top.skyeyefast.mchjong.mixin.GameRendererAccessor) client.gameRenderer).mchjong$getFov(camera, 1, true);
+        var delta = top.skyeyefast.mchjong.world.TableGeometry.world(pos, point).subtract(camera.position());
+        double fov = camera.getFov();
         double focal = client.screen.height / (2 * Math.tan(Math.toRadians(fov) / 2));
         return new net.minecraft.world.phys.Vec3(client.screen.width / 2.0 + delta.dot(right) * focal / delta.dot(forward),
             client.screen.height / 2.0 - delta.dot(right.cross(forward)) * focal / delta.dot(forward), 0);
@@ -459,8 +459,8 @@ final class McrAutoTableSmoke {
 
     private static final class Guest extends ServerPlayer {
         Guest(ServerPlayer main, int number) {
-            super(main.server, main.level(), new GameProfile(UUID.randomUUID(), "McrGuest" + number), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(main.server, new Connection(PacketFlow.SERVERBOUND), this,
+            super(main.level().getServer(), main.level(), new GameProfile(UUID.randomUUID(), "McrGuest" + number), ClientInformation.createDefault());
+            connection = new ServerGamePacketListenerImpl(main.level().getServer(), new net.minecraft.network.Connection(PacketFlow.SERVERBOUND), this,
                 CommonListenerCookie.createInitial(getGameProfile(), false)) {
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
             };

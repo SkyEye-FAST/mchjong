@@ -39,7 +39,7 @@ final class RiichiHud {
         return regions.stream().filter(region -> region.contains(x, y)).map(Region::text).findFirst().orElse(null);
     }
 
-    void render(Font font, GuiGraphicsExtractor graphics, RiichiView view, TableRoomView room, int width, TileFacePreset preset, RiichiBoard board) {
+    void render(Font font, GuiGraphicsExtractor graphics, RiichiView view, TableRoomView room, int width, TileFacePreset preset, TableBoard board) {
         render(font, graphics, view, room, null, width, preset, top.skyeyefast.mchjong.item.TileMaterial.BONE, null,
             TileBackPresets.DEFAULT, board);
     }
@@ -47,7 +47,7 @@ final class RiichiHud {
     void render(Font font, GuiGraphicsExtractor graphics, RiichiView view, TableRoomView room, BotServiceState botService,
                 int width, TileFacePreset preset,
                 top.skyeyefast.mchjong.item.TileMaterial material, net.minecraft.world.item.DyeColor dye,
-                net.minecraft.resources.Identifier backPreset, RiichiBoard board) {
+                net.minecraft.resources.Identifier backPreset, TableBoard board) {
         clear();
         TableSettings settings = TableSettings.get();
         int headerWidth = board == null ? Math.min(280, Math.max(84, width - 224))
@@ -81,7 +81,7 @@ final class RiichiHud {
         int depositSpan = deposits ? 34 + font.width(Integer.toString(view.honba())) + font.width(Integer.toString(view.riichiSticks())) : 0;
         int depositX = 8 + headerWidth - 4 - (compactHeader ? 0 : indicatorSpan) - depositSpan;
         if (compactHeader && !remaining.getString().isEmpty()) remaining = Component.translatable("ui.mchjong.remaining.short", view.remaining());
-        if (!RiichiResults.available(view)
+        if (!TableResults.available(view)
             && (!title.getString().isEmpty() || !remaining.getString().isEmpty() || deposits || !indicators.isEmpty())) {
             int headerHeight = board != null ? 48 : 26;
             MahjongUi.panel(graphics, 8, 7, headerWidth, headerHeight);
@@ -162,13 +162,8 @@ final class RiichiHud {
                 var card = board.card(seat);
                 x = card.x(); top = card.y(); cardWidth = card.width(); cardHeight = card.height();
             }
-            if (board != null && board.perspective()) {
-                graphics.fill(x, top, x + cardWidth, top + cardHeight,
-                    seat == view.viewerSeat() ? 0xc832554f : 0xb80c2024);
-                graphics.outline(x, top, cardWidth, cardHeight,
-                    seat == view.turn() ? MahjongUi.ACCENT : seat == view.viewerSeat() ? 0xff73938b : 0xff355257);
-            } else graphics.fill(x, top, x + cardWidth, top + cardHeight,
-                seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.PANEL);
+            TableHud.surface(graphics, x, top, cardWidth, cardHeight, board != null && board.perspective(),
+                seat == view.viewerSeat(), seat == view.turn() && settings.show(TableSettings.Information.TURN));
             boolean turn = seat == view.turn() && settings.show(TableSettings.Information.TURN);
             boolean riichi = player.riichi() && settings.show(TableSettings.Information.STATUS);
             if (riichi) {

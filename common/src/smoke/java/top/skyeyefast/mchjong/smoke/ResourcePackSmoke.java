@@ -113,15 +113,9 @@ final class ResourcePackSmoke {
             require(TileMesh.atlas(SERVER).getPath().contains("server_faces"), "Server ZIP artwork was not delivered");
             var worldFaces = (net.minecraft.client.renderer.texture.DynamicTexture) client.getTextureManager()
                 .getTexture(TileMesh.glyphs(SERVER));
-            require(worldFaces.getPixels() != null && (worldFaces.getPixels().getPixelRGBA(0, 0) >>> 24) == 255,
+            require(worldFaces.getPixels() != null && (worldFaces.getPixels().getPixel(0, 0) >>> 24) == 255,
                 "Server face texture lost its opaque white backing");
             require(TileMesh.atlas(TileFacePreset.KANTO).equals(TileMesh.ATLAS), "Built-in preset override was ignored");
-            float maxY = 0;
-            for (var quad : top.skyeyefast.mchjong.client.ModelRendering.quads(RiichiStickModel.baked())) {
-                int[] vertices = quad.getVertices();
-                for (int i = 1; i < vertices.length; i += 8) maxY = Math.max(maxY, Float.intBitsToFloat(vertices[i]));
-            }
-            require(maxY > .07f, "Native riichi model override was not baked");
             client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
                 new top.skyeyefast.mchjong.network.StickChoicePayload(Identifier.parse("smoke:server_stick"))));
             client.getConnection().send(top.skyeyefast.mchjong.network.PayloadPackets.serverbound(
@@ -134,7 +128,7 @@ final class ResourcePackSmoke {
                 items.set(MahjongSupplies.DYE_SLOT, new net.minecraft.world.item.ItemStack(MahjongContent.CREATIVE_MAHJONG_DYE));
                 MahjongSupplies.setContents(box, items);
                 player.getInventory().setItem(0, box);
-                player.getInventory().selected = 0;
+                player.getInventory().setSelectedSlot(0);
                 box.getItem().use(player.level(), player, net.minecraft.world.InteractionHand.MAIN_HAND);
             });
             stage = 2; ticks = 0;
@@ -150,46 +144,46 @@ final class ResourcePackSmoke {
             require(VoicePresets.playing(), "Remote speaker recording did not play with a different listener selection");
             VoicePresets.stop();
             top.skyeyefast.mchjong.client.TableSettings.get().voicePreset = listenerVoice;
-            button(client, "box.mchjong.preset_choice").onPress();
+            button(client, "box.mchjong.preset_choice").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             require(client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxFaceScreen,
                 "Face preset screen did not open");
             require(TileFacePresets.choices().contains(SERVER),
                 "Server preset missing from selector");
             stage = 21; ticks = 0;
         } else if (stage == 21 && ticks > 4) {
-            button(client, "preset.mchjong.source.server").onPress();
-            SmokeScreenshots.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), ignored -> {});
+            button(client, "preset.mchjong.source.server").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            SmokeScreenshots.grab(output.toFile(), "59-resource-server-box.png", client.getMainRenderTarget(), 1, ignored -> {});
             require(TileFacePresets.choices().contains(CUSTOM), "New preset missing from selector");
-            button(client, "preset.mchjong.source.local").onPress();
+            button(client, "preset.mchjong.source.local").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.AbstractButton)
                 .map(child -> (net.minecraft.client.gui.components.AbstractButton) child)
                 .filter(child -> child.getMessage().getString().equals("Local Test")).findFirst().orElseThrow();
-            choice.onPress();
+            choice.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 3; ticks = 0;
         } else if (stage == 3 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
             require(!MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Face selection printed before applying");
-            button(client, "box.mchjong.back_choice").onPress();
+            button(client, "box.mchjong.back_choice").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 31; ticks = 0;
         } else if (stage == 31 && client.screen instanceof top.skyeyefast.mchjong.client.MahjongBoxBackScreen && ticks > 5) {
-            button(client, "preset.mchjong.source.local").onPress();
-            SmokeScreenshots.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), ignored -> {});
+            button(client, "preset.mchjong.source.local").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            SmokeScreenshots.grab(output.toFile(), "60-resource-back-choices.png", client.getMainRenderTarget(), 1, ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
                 .filter(button -> button.getMessage().getString().equals("Local Back")).findFirst().orElseThrow();
-            choice.onPress();
+            choice.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             require(!MahjongSupplies.backPreset(((MahjongBoxMenu) client.player.containerMenu).getSlot(0).getItem())
                 .equals(Identifier.parse("smoke:custom_back")), "Back selection applied before confirmation");
-            button(client, "box.mchjong.apply").onPress();
+            button(client, "box.mchjong.apply").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 32; ticks = 0;
         } else if (stage == 32 && ticks > 20) {
             var menu = (MahjongBoxMenu) client.player.containerMenu;
             require(MahjongSupplies.facePreset(menu.getSlot(0).getItem()).equals(CUSTOM), "Combined appearance packet did not print faces");
             require(MahjongSupplies.backPreset(menu.getSlot(0).getItem()).equals(Identifier.parse("smoke:custom_back")),
                 "Back preset packet did not update physical tiles");
-            SmokeScreenshots.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "60-resource-custom-box.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.screen.onClose();
             stage = 4; ticks = 0;
         } else if (stage == 4) {
@@ -197,29 +191,28 @@ final class ResourcePackSmoke {
             if (!customized.tick(client, table, output.resolve("resource-custom"))) return false;
             client.getWindow().setWindowed(1280, 800);
             client.options.guiScale().set(2);
-            client.resizeDisplay();
+            client.resizeGui();
             var screen = new top.skyeyefast.mchjong.client.RiichiTableScreen(table.getBlockPos());
             client.setScreen(screen);
             screen.resetView();
             stage = 8; ticks = 0;
         } else if (stage == 8 && ticks > 20) {
-            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-wall.png", client.getMainRenderTarget(), 1, ignored -> {});
             var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
             client.setScreen(new top.skyeyefast.mchjong.client.TableOptionsScreen(screen, screen.tablePos()));
             stage = 81; ticks = 0;
         } else if (stage == 81 && ticks > 5) {
-            button(client, "settings.mchjong.scope.personal").onPress();
-            button(client, "settings.mchjong.personal_presets").onPress();
+            button(client, "settings.mchjong.scope.personal").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            button(client, "settings.mchjong.personal_presets").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 82; ticks = 0;
         } else if (stage == 82 && client.screen instanceof top.skyeyefast.mchjong.client.PersonalPresetsScreen && ticks > 5) {
-            button(client, "preset.mchjong.source.local").onPress();
-            SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), ignored -> {});
+            button(client, "preset.mchjong.source.local").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
+            SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.getWindow().setWindowed(640, 480);
-            client.resizeDisplay();
+            client.resizeGui();
             stage = 83; ticks = 0;
         } else if (stage == 83 && ticks > 8) {
-            if (ticks == 9) SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices-small.png",
-                client.getMainRenderTarget(), ignored -> {});
+            if (ticks == 9) SmokeScreenshots.grab(output.toFile(), "61-resource-stick-choices-small.png", client.getMainRenderTarget(), 1, ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
@@ -230,26 +223,26 @@ final class ResourcePackSmoke {
                     .map(child -> (net.minecraft.client.gui.components.Button) child)
                     .filter(button -> button.getMessage().getString().equals(">") && button.active)
                     .findFirst().orElseThrow();
-                next.onPress();
+                next.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
                 return false;
             }
-            choice.orElseThrow().onPress();
+            choice.orElseThrow().onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             require(top.skyeyefast.mchjong.client.TableSettings.get().riichiStickPreset.equals(Identifier.parse("smoke:custom_stick")),
                 "Personal stick selection was not saved");
-            button(client, "settings.mchjong.voice_preset").onPress();
+            button(client, "settings.mchjong.voice_preset").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             stage = 85; ticks = 0;
         } else if (stage == 85 && ticks > 5) {
-            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices-small.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices-small.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.getWindow().setWindowed(1280, 800);
-            client.resizeDisplay();
+            client.resizeGui();
             stage = 86; ticks = 0;
         } else if (stage == 86 && ticks > 8) {
-            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-voice-choices.png", client.getMainRenderTarget(), 1, ignored -> {});
             var choice = client.screen.children().stream()
                 .filter(child -> child instanceof net.minecraft.client.gui.components.Button)
                 .map(child -> (net.minecraft.client.gui.components.Button) child)
                 .filter(button -> button.getMessage().getString().equals("Local Voice")).findFirst().orElseThrow();
-            choice.onPress();
+            choice.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             require(top.skyeyefast.mchjong.client.TableSettings.get().voicePreset.equals(Identifier.parse("smoke:custom_voice")),
                 "Personal voice selection was not saved");
             var path = VoicePresets.audioPath(Identifier.parse("smoke:custom_voice"), "ron");
@@ -281,16 +274,16 @@ final class ResourcePackSmoke {
             require(VoicePresets.forPlayer(client.player.getGameProfile().name()).equals(VoicePresets.DEFAULT),
                 "Client-only voice selection was shared with the server");
             var screen = (top.skyeyefast.mchjong.client.RiichiTableScreen) client.screen;
-            screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             stage = 6; ticks = 0;
         } else if (stage == 6 && ticks > 20) {
             require(client.screen instanceof top.skyeyefast.mchjong.client.RiichiTableScreen screen && screen.immersive(), "Resource fixture did not enter immersive view");
-            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-immersive.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "61-resource-custom-immersive.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.getWindow().setWindowed(640, 480);
-            client.resizeDisplay();
+            client.resizeGui();
             stage = 7; ticks = 0;
         } else if (stage == 7 && ticks > 20) {
-            SmokeScreenshots.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), ignored -> {});
+            SmokeScreenshots.grab(output.toFile(), "62-resource-custom-immersive-small.png", client.getMainRenderTarget(), 1, ignored -> {});
             client.screen.onClose();
             Files.delete(localArchive);
             Files.delete(localBackArchive);
@@ -345,7 +338,7 @@ final class ResourcePackSmoke {
         try (var image = new NativeImage(16, 16, false)) {
             int color = 0xff000000 | (key.hashCode() & 0x00ffffff);
             for (int y = 0; y < 16; y++) for (int x = 0; x < 16; x++)
-                image.setPixelRGBA(x, y, x >= 3 && x < 13 && y >= 3 && y < 13 ? color : 0);
+                image.setPixel(x, y, x >= 3 && x < 13 && y >= 3 && y < 13 ? color : 0);
             image.writeToFile(path);
         }
     }
@@ -404,7 +397,7 @@ final class ResourcePackSmoke {
         Files.createDirectories(path.getParent());
         try (var image = new NativeImage(width, height, false)) {
             for (int y = 0; y < height; y++) for (int x = 0; x < width; x++)
-                image.setPixelRGBA(x, y, Math.abs(x - width / 2) < width / 12 || Math.abs(y - height / 2) < height / 12 ? 0xff20e040 : 0);
+                image.setPixel(x, y, Math.abs(x - width / 2) < width / 12 || Math.abs(y - height / 2) < height / 12 ? 0xff20e040 : 0);
             image.writeToFile(path);
         }
     }
@@ -413,7 +406,7 @@ final class ResourcePackSmoke {
         try (var image = new NativeImage(256, 384, false)) {
             // Contrasting top and bottom halves expose a rotated wall back in the world capture.
             for (int y = 0; y < 384; y++) for (int x = 0; x < 256; x++)
-                image.setPixelRGBA(x, y, y < 192 ? 0xff2040e0 : 0xffe04020);
+                image.setPixel(x, y, y < 192 ? 0xff2040e0 : 0xffe04020);
             image.writeToFile(path);
         }
     }

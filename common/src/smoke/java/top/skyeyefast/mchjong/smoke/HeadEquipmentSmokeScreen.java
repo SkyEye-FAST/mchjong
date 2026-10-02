@@ -18,7 +18,7 @@ final class HeadEquipmentSmokeScreen extends Screen {
     @Override public void extractRenderState(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {
         graphics.fill(0, 0, width, height, 0xff18292e);
         graphics.centeredText(font, title, width / 2, 12, 0xffe3c082);
-        InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, width / 2 - 110, 28,
+        InventoryScreen.extractEntityInInventoryFollowsMouse(graphics, width / 2 - 110, 28,
             width / 2 + 110, height - 12, Math.min(90, (height - 60) / 3), .1f,
             width / 2f - 35, height / 2f - 25, entity);
     }

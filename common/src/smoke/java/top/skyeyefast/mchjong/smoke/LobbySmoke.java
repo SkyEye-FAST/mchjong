@@ -14,7 +14,7 @@ final class LobbySmoke {
     }
     static void settings(Minecraft client) {
         var tab = visible(client, Component.translatable("lobby.mchjong.match_settings").getString());
-        if (tab != null) tab.onPress();
+        if (tab != null) tab.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
     }
     static AbstractButton find(Minecraft client, String text) {
         var result = visible(client, text);
@@ -26,7 +26,7 @@ final class LobbySmoke {
             var next = visible(client, "›");
             if (next == null) next = visible(client, ">");
             if (next == null || !next.active) break;
-            next.onPress();
+            next.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
         }
         return null;
     }

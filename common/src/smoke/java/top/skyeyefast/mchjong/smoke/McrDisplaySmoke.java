@@ -47,7 +47,7 @@ final class McrDisplaySmoke {
             Files.createDirectories(output);
             client.options.guiScale().set(2);
             client.options.pauseOnLostFocus = false;
-            client.resizeDisplay();
+            client.resizeGui();
             display = new Display();
             client.setScreen(display);
             return false;
@@ -55,7 +55,7 @@ final class McrDisplaySmoke {
         if (client.getOverlay() != null) return false;
         if (display.frames < 20) return false;
         if (++frameTicks == 1)
-            SmokeScreenshots.grab(output.toFile(), IMAGES[stage], client.getMainRenderTarget(), message -> {});
+            SmokeScreenshots.grab(output.toFile(), IMAGES[stage], client.getMainRenderTarget(), 1, message -> {});
         boolean capture = List.of(System.getProperty("mchjong.smoke.screenshots", "").split(",")).contains(IMAGES[stage]);
         if (frameTicks > 2 && (!capture || Files.isRegularFile(output.resolve("screenshots").resolve(IMAGES[stage])))) {
             if (++stage == IMAGES.length) return true;
@@ -84,21 +84,15 @@ final class McrDisplaySmoke {
             graphics.fill(0, 0, width, height, MahjongUi.PANEL);
             graphics.centeredText(font, stage > 0 ? "MCR | six-column rivers, public melds and flowers"
                 : "MCR | 144 tiles / 72 stacks / four 18-stack walls", width / 2, 12, MahjongUi.TEXT);
-            graphics.flush();
-            var pose = graphics.pose();
             float scale = (float) Math.min(width / (2 * TableGeometry.OUTER_HALF_WIDTH + .4),
                 (height - 48) / (2 * TableGeometry.OUTER_HALF_WIDTH + .4));
-            pose.pushPose();
-            pose.translate(width / 2.0, height / 2.0 + 12, 500);
-            pose.scale(scale, -scale, scale);
-            pose.mulPose(Axis.XP.rotationDegrees(64));
-            pose.translate(0, -TableGeometry.FELT_Y, 0);
-            RenderSystem.enableDepthTest();
-            FurnitureMesh.table(pose, graphics.bufferSource(), 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
-            McrSceneRenderer.render(stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position()),
-                deck, pose, graphics.bufferSource(), 0xf000f0);
-            graphics.flush();
-            pose.popPose();
+            var pieces = stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position());
+            SmokeMesh.extract(graphics, 0, 24, width, height - 24, scale, (pose, buffers) -> {
+                pose.mulPose(Axis.XP.rotationDegrees(64));
+                pose.translate(0, -TableGeometry.FELT_Y, 0);
+                FurnitureMesh.table(pose, buffers, 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
+                McrSceneRenderer.render(pieces, deck, pose, buffers, 0xf000f0);
+            });
             graphics.centeredText(font, "Shared tile mesh and physical-slot scene; no room mode is enabled",
                 width / 2, height - 20, MahjongUi.MUTED);
         }

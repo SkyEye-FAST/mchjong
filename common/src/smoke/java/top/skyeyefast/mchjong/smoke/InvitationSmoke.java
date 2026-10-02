@@ -20,13 +20,13 @@ final class InvitationSmoke {
     private InvitationSmoke() {}
 
     static void verify(ServerPlayer sender, MahjongTableBlockEntity table) throws java.io.IOException, CommandSyntaxException {
-        var worldCommand = sender.server.getCommands().getDispatcher().getRoot().getChild("mchjong").getChild("world");
-        check(!worldCommand.canUse(sender.createCommandSourceStack().withPermission(1)), "Non-administrator can access world settings");
-        check(worldCommand.canUse(sender.createCommandSourceStack().withPermission(2)), "Administrator cannot access world settings");
-        var policy = WorldSettings.of(sender.server);
+        var worldCommand = sender.level().getServer().getCommands().getDispatcher().getRoot().getChild("mchjong").getChild("world");
+        check(!worldCommand.canUse(sender.createCommandSourceStack().withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.forLevel(net.minecraft.server.permissions.PermissionLevel.byId(1)))), "Non-administrator can access world settings");
+        check(worldCommand.canUse(sender.createCommandSourceStack().withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.forLevel(net.minecraft.server.permissions.PermissionLevel.byId(2)))), "Administrator cannot access world settings");
+        var policy = WorldSettings.of(sender.level().getServer());
         var original = policy.policy();
         var recipient = new Recipient(sender);
-        var dispatcher = sender.server.getCommands().getDispatcher();
+        var dispatcher = sender.level().getServer().getCommands().getDispatcher();
         for (String target : new String[]{sender.getUUID().toString(), sender.getGameProfile().name(), UUID.randomUUID().toString()}) {
             var parsed = dispatcher.parse("mchjong invite " + target, sender.createCommandSourceStack());
             check(parsed.getExceptions().isEmpty() && !parsed.getReader().canRead(), "Invitation target failed command parsing: " + target);
@@ -90,8 +90,8 @@ final class InvitationSmoke {
     private static final class Recipient extends ServerPlayer {
         UUID token;
         Recipient(ServerPlayer sender) {
-            super(sender.server, sender.level(), new GameProfile(UUID.randomUUID(), "InvitedTest"), ClientInformation.createDefault());
-            connection = new ServerGamePacketListenerImpl(sender.server, new Connection(PacketFlow.SERVERBOUND), this,
+            super(sender.level().getServer(), sender.level(), new GameProfile(UUID.randomUUID(), "InvitedTest"), ClientInformation.createDefault());
+            connection = new ServerGamePacketListenerImpl(sender.level().getServer(), new net.minecraft.network.Connection(PacketFlow.SERVERBOUND), this,
                 CommonListenerCookie.createInitial(getGameProfile(), false)) {
                 // The recipient exists only on the server; it has no client or negotiated payload channels.
                 @Override public void send(net.minecraft.network.protocol.Packet<?> packet) {}
@@ -100,8 +100,8 @@ final class InvitationSmoke {
         @Override public void sendSystemMessage(Component message) { readLink(message); }
         private void readLink(Component message) {
             var click = message.getStyle().getClickEvent();
-            if (click != null && click.getAction() == ClickEvent.Action.RUN_COMMAND && click.getValue().startsWith("/mchjong accept "))
-                token = UUID.fromString(click.getValue().substring("/mchjong accept ".length()));
+            if (click instanceof ClickEvent.RunCommand run && run.command().startsWith("/mchjong accept "))
+                token = UUID.fromString(run.command().substring("/mchjong accept ".length()));
             for (var child : message.getSiblings()) readLink(child);
         }
     }

@@ -10,7 +10,8 @@
     ]
   },
   "mixins": [
-    "mchjong.smoke.mixins.json"
+    "mchjong.smoke.mixins.json",
+    "mchjong.smoke.fabric.mixins.json"
   ],
   "depends": {
     "mchjong": "*",

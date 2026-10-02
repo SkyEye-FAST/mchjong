@@ -13,26 +13,26 @@ import top.skyeyefast.mchjong.item.TileMaterial;
 import static top.skyeyefast.mchjong.client.ImmersiveTable.*;
 
 /** Riichi immersive rails, rivers, deposits and presentation motion. */
-final class RiichiImmersiveTable {
+final class TableImmersiveTable {
     static final int RIVER_WIDTH = 32;
     private static final int RIVER_START = 120;
     private final ImmersiveTable mesh = new ImmersiveTable();
-    private final Map<Integer, RiichiBoard.Point> points = new HashMap<>();
+    private final Map<Integer, TableBoard.Point> points = new HashMap<>();
     private final Map<Integer, Integer> widths = new HashMap<>();
     private record RiverPose(int side, double x, double z) {}
     private final Map<Integer, RiverPose> rivers = new HashMap<>();
     private final int viewer, players;
     private final int[] rows = new int[4];
 
-    RiichiImmersiveTable(RiichiBoardState view) {
+    TableImmersiveTable(TableBoardState view) {
         viewer = view.viewerSeat();
         players = view.players();
         for (int seat = 0; seat < players; seat++) rows[side(seat)] = Math.max(2,
             ((int) view.seats().get(seat).river().stream().filter(d -> !d.called()).count() + 5) / 6);
     }
 
-    private int side(int seat) { return RiichiBoard.side(seat, viewer, players); }
-    RiichiBoard.Point point(int tile) { return points.get(tile); }
+    private int side(int seat) { return TableBoard.side(seat, viewer, players); }
+    TableBoard.Point point(int tile) { return points.get(tile); }
     int width(int tile, int fallback) { return widths.getOrDefault(tile, fallback); }
     int riverWidth(int seat, int row) {
         var a = TableProjection.seat(side(seat), -16, RIVER_START + row * 50, thickness(RIVER_WIDTH));
@@ -40,7 +40,7 @@ final class RiichiImmersiveTable {
         return (int) Math.round(Math.hypot(b.x() - a.x(), b.y() - a.y()));
     }
 
-    RiichiBoard.Rect riverArea(int seat) {
+    TableBoard.Rect riverArea(int seat) {
         int side = side(seat);
         float minX = Float.MAX_VALUE, minY = Float.MAX_VALUE, maxX = -Float.MAX_VALUE, maxY = -Float.MAX_VALUE;
         for (double x : new double[]{-114, 114}) for (double z : new double[]{RIVER_START, RIVER_START + rows[side] * 50})
@@ -49,13 +49,13 @@ final class RiichiImmersiveTable {
                 minX = Math.min(minX, p.x()); maxX = Math.max(maxX, p.x());
                 minY = Math.min(minY, p.y()); maxY = Math.max(maxY, p.y());
             }
-        return new RiichiBoard.Rect((int) minX, (int) minY, (int) Math.ceil(maxX - minX), (int) Math.ceil(maxY - minY));
+        return new TableBoard.Rect((int) minX, (int) minY, (int) Math.ceil(maxX - minX), (int) Math.ceil(maxY - minY));
     }
 
-    void render(GuiGraphicsExtractor graphics, RiichiBoardState view, TileFacePreset preset, int suppressed,
+    void render(GuiGraphicsExtractor graphics, TableBoardState view, TileFacePreset preset, int suppressed,
                 TileMaterial material, net.minecraft.world.item.DyeColor dye, Identifier backPreset,
-                net.minecraft.world.item.DyeColor cloth, RiichiAnimation deal, long now) {
-        mesh.begin(graphics, preset, material, dye, backPreset, TileMesh::face);
+                net.minecraft.world.item.DyeColor cloth, TableDeal deal, long now, java.util.function.IntUnaryOperator artwork) {
+        mesh.begin(graphics, preset, material, dye, backPreset, artwork);
         points.clear(); widths.clear(); rivers.clear();
         // The frame and cloth use exactly the same camera as the tile geometry.
         mesh.box(0, 0, 0, 1060, 890, -20, -5, 0xff0e252a, 0xff263f43);
@@ -65,8 +65,9 @@ final class RiichiImmersiveTable {
         mesh.flat(0, -508, -423, 508, -420, .1, shade(felt, .82));
         mesh.flat(0, -508, 420, 508, 423, .1, shade(felt, .82));
         mesh.paint(graphics);
-        mesh.box(0, 0, 0, 190, 192, 0, 8, 0xff101d23, 0xff52666b);
-        mesh.flat(0, -87, -88, 87, 88, 8.1, 0xff30464c);
+        int half = view.indicator() == null ? 95 : 110;
+        mesh.box(0, 0, 0, half * 2, half * 2, 0, 8, 0xff101d23, 0xff52666b);
+        mesh.flat(0, -half + 8, -half + 8, half - 8, half - 8, 8.1, 0xff30464c);
         mesh.flat(0, -72, -69, 72, 69, 8.2, 0xff101f29);
         mesh.paint(graphics);
         if (view.turn() >= 0 && TableSettings.get().show(TableSettings.Information.TURN))
@@ -75,14 +76,14 @@ final class RiichiImmersiveTable {
             if (seat != viewer) outer(view.seats().get(seat), seat, view.layHandsOpen(), deal, now);
             else {
                 norths(seat, view.seats().get(seat).norths());
-                melds(seat, view.seats().get(seat).melds());
+                melds(seat, view.seats().get(seat));
             }
             if (TableSettings.get().showRiver) river(view, seat, suppressed);
         }
         mesh.paint(graphics);
     }
 
-    private void outer(RiichiView.Seat player, int seat, boolean layHandsOpen, RiichiAnimation deal, long now) {
+    private void outer(TableBoardState.Seat player, int seat, boolean layHandsOpen, TableDeal deal, long now) {
         int side = side(seat), w = 30;
         double rail = outerRail(side);
         double handX = handLeft(player, seat, side);
@@ -96,7 +97,7 @@ final class RiichiImmersiveTable {
             }
             handX += w;
         }
-        melds(seat, player.melds());
+        melds(seat, player);
         norths(seat, player.norths());
     }
 
@@ -122,13 +123,13 @@ final class RiichiImmersiveTable {
         });
     }
 
-    private void melds(int seat, List<Meld> melds) {
+    private void melds(int seat, TableBoardState.Seat player) {
         int side = side(seat), w = 30;
         double x = meldCorner(side);
         double z = outerRail(side);
-        for (var meld : melds) {
-            x -= TileGui.meldWidth(meld, seat, w);
-            for (var part : MeldLayout.of(meld, seat).parts()) {
+        for (var meld : player.melds()) {
+            x -= TileGui.meldWidth(player.layout(meld, seat), w);
+            for (var part : player.layout(meld, seat).parts()) {
                 double scale = w / (double) TileMesh.WIDTH;
                 tile(part.tile(), side, x + part.x() * scale, z + part.z() * scale, w, part.back(), part.sideways(), false, 0);
             }
@@ -142,21 +143,21 @@ final class RiichiImmersiveTable {
         return (side % 2 == 0 ? 425 : 510) - 3 - 30 * RATIO / 2;
     }
 
-    static double handLeft(RiichiView.Seat player, int seat, int side) {
+    static double handLeft(TableBoardState.Seat player, int seat, int side) {
         int handWidth = player.hand().size() * 30;
         double meldLeft = meldCorner(side);
-        for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(meld, seat, 30) + 5;
+        for (var meld : player.melds()) meldLeft -= TileGui.meldWidth(player.layout(meld, seat), 30) + 5;
         return Math.min(-handWidth / 2.0, meldLeft - 18 - handWidth);
     }
 
-    static double discardSourceX(RiichiView.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
+    static double discardSourceX(TableBoardState.Seat player, int seat, int viewer, int players, int tile, boolean tsumogiri) {
         int index = player.hand().indexOf(tile);
         // Hidden identities remain unknown; a draw still has a public end-of-hand position.
         double slot = index >= 0 ? index + .5 : tsumogiri ? player.hand().size() - .5 : player.hand().size() / 2.0;
-        return handLeft(player, seat, RiichiBoard.side(seat, viewer, players)) + slot * 30;
+        return handLeft(player, seat, TableBoard.side(seat, viewer, players)) + slot * 30;
     }
 
-    private void river(RiichiBoardState view, int seat, int suppressed) {
+    private void river(TableBoardState view, int seat, int suppressed) {
         var river = view.seats().get(seat).river().stream().filter(d -> !d.called()).toList();
         for (int i = 0; i < river.size(); i++) {
             int row = i / 6, start = row * 6;
@@ -180,7 +181,7 @@ final class RiichiImmersiveTable {
     private void anchor(int tile, int side, double x, double z, double h, int width) {
         if (tile < 0) return;
         var p = TableProjection.seat(side, x, z, h);
-        points.put(tile, new RiichiBoard.Point(Math.round(p.x()), Math.round(p.y())));
+        points.put(tile, new TableBoard.Point(Math.round(p.x()), Math.round(p.y())));
         var world = vertex(side, x, z, h);
         widths.put(tile, (int) Math.round(width * TableProjection.scale(world.z(), h)));
     }

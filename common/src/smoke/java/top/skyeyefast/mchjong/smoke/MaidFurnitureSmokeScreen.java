@@ -37,7 +37,7 @@ final class MaidFurnitureSmokeScreen extends Screen {
                 int left = col * width / 3, right = (col + 1) * width / 3;
                 int top = 24 + row * (height - 24) / 2, bottom = 24 + (row + 1) * (height - 24) / 2;
                 graphics.centeredText(font, stack.getHoverName(), (left + right) / 2, top, 0xfff1eee3);
-                InventoryScreen.renderEntityInInventoryFollowsMouse(graphics, left + 4, top + 12, right - 4, bottom,
+                InventoryScreen.extractEntityInInventoryFollowsMouse(graphics, left + 4, top + 12, right - 4, bottom,
                     (bottom - top - 20) / 3, .1f, (left + right) / 2f - 30, (top + bottom) / 2f - 15, maid);
             }
         } finally {

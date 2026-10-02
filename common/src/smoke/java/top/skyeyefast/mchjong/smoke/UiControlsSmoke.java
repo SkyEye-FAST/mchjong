@@ -18,12 +18,12 @@ final class UiControlsSmoke {
     static void verify(Minecraft client) {
         for (int[] size : new int[][] {{320, 240}, {640, 400}, {1280, 800}}) {
             var settings = new TableSettingsScreen(new RiichiTableScreen(BlockPos.ZERO));
-            settings.init(client, size[0], size[1]);
+            settings.init(size[0], size[1]);
             for (int tab = 0; tab < 4; tab++) {
                 String label = Component.translatable("settings.mchjong.tab." + tab).getString();
                 var button = settings.children().stream().filter(MahjongButton.class::isInstance).map(MahjongButton.class::cast)
                     .filter(widget -> widget.getMessage().getString().equals(label)).findFirst().orElseThrow();
-                require(settings.mouseClicked(button.getX() + 5, button.getY() + 5, 0), "Themed tab is not clickable");
+                require(settings.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false), "Themed tab is not clickable");
                 var widgets = settings.children().stream().filter(AbstractWidget.class::isInstance)
                     .map(AbstractWidget.class::cast).filter(widget -> widget.visible).toList();
                 for (int i = 0; i < widgets.size(); i++) {
@@ -43,29 +43,29 @@ final class UiControlsSmoke {
         var presses = new AtomicInteger();
         var button = new MahjongButton(0, 0, 100, 20, Component.translatable("gui.done"), ignored -> presses.incrementAndGet());
         button.setFocused(true);
-        require(button.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0) && presses.get() == 1, "Themed button lost keyboard activation");
+        require(button.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0)) && presses.get() == 1, "Themed button lost keyboard activation");
         button.active = false;
-        button.keyPressed(GLFW.GLFW_KEY_ENTER, 0, 0);
-        button.mouseClicked(5, 5, 0);
+        button.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_ENTER, 0, 0));
+        button.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(5, 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
         require(presses.get() == 1, "Disabled button activated");
         var field = new MahjongEditBox(client.font, 0, 0, 100, 20, Component.translatable("ui.mchjong.reserve_time"));
         field.setFilter(value -> value.matches("[0-9]{0,3}"));
         field.setValue("12");
         field.setFocused(true);
-        field.charTyped('3', 0);
+        field.charTyped(new net.minecraft.client.input.CharacterEvent('3'));
         require(field.getValue().equals("123"), "Themed field lost text entry");
-        field.charTyped('x', 0);
+        field.charTyped(new net.minecraft.client.input.CharacterEvent('x'));
         require(field.getValue().equals("123"), "Themed field bypasses its filter");
-        field.keyPressed(GLFW.GLFW_KEY_BACKSPACE, 0, 0);
+        field.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_BACKSPACE, 0, 0));
         require(field.getValue().equals("12"), "Themed field lost cursor editing");
         var changes = new AtomicInteger();
         var slider = new MahjongSlider(0, 0, 100, 20, Component.translatable("replay.mchjong.title"), 0.5) {
             @Override protected void updateMessage() {}
             @Override protected void applyValue() { changes.incrementAndGet(); }
         };
-        slider.mouseClicked(90, 10, 0);
-        slider.mouseDragged(20, 10, 0, -70, 0);
-        slider.mouseReleased(20, 10, 0);
+        slider.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(90, 10, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
+        slider.mouseDragged(new net.minecraft.client.input.MouseButtonEvent(20, 10, new net.minecraft.client.input.MouseButtonInfo(0, 0)), -70, 0);
+        slider.mouseReleased(new net.minecraft.client.input.MouseButtonEvent(20, 10, new net.minecraft.client.input.MouseButtonInfo(0, 0)));
         require(changes.get() >= 2, "Themed slider lost native clicking or dragging");
     }
 

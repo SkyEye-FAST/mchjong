@@ -41,7 +41,7 @@ final class HandVisibilitySmoke {
                 "settings.mchjong.hand_visibility." + configuration.playerHandVisibility().name().toLowerCase(java.util.Locale.ROOT))).getString();
             var button = LobbySmoke.find(client, label);
             require(button.active, "Host visibility control is disabled");
-            if (configuration.playerHandVisibility() != visibility) button.onPress();
+            if (configuration.playerHandVisibility() != visibility) button.onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
             next(1);
         } else if (stage == 1 && configuration.playerHandVisibility() == visibility && ticks > 5) {
             next(2);
@@ -67,19 +67,19 @@ final class HandVisibilitySmoke {
             seat = view.viewerSeat();
             require(seat >= 0, "Missing seated snapshot");
             capture(client, output, "seated-" + visibility + ".png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             next(9);
         } else if (stage == 9 && ticks > 10) {
             require(client.screen instanceof RiichiTableScreen screen && screen.immersive(), "Missing immersive view");
             capture(client, output, "immersive-" + visibility + ".png");
-            client.screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
+            client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             work = client.getSingleplayerServer().submit(() -> {
                 var player = client.getSingleplayerServer().getPlayerList().getPlayer(id);
                 var serverTable = (MahjongTableBlockEntity) player.level().getBlockEntity(pos);
                 player.stopRiding();
-                player.teleportTo(player.level(), pos.getX() + .5, pos.getY() + .3, pos.getZ() + 2.6, 180, 35);
+                player.teleportTo(player.level(), pos.getX() + .5, pos.getY() + .3, pos.getZ() + 2.6, java.util.Set.of(), 180, 35, false);
                 require(serverTable.participantSession(player) == null, "Unmounted observer retained action authority");
                 serverTable.open(player);
             });
@@ -122,10 +122,10 @@ final class HandVisibilitySmoke {
     private static void resize(Minecraft client, boolean small) {
         client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
         client.options.guiScale().set(small ? 3 : 2);
-        client.resizeDisplay();
+        client.resizeGui();
     }
     private static void capture(Minecraft client, Path output, String name) {
-        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean condition, String message) {
         if (!condition) throw new IllegalStateException(message);

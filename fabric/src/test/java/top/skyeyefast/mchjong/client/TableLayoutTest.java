@@ -50,7 +50,7 @@ class TableLayoutTest {
             act(game, id, RoomAction.Type.BEGIN_SEATING);
             assertTrue(game.join(id, "Host", game.seatOf(id)));
             act(game, id, RoomAction.Type.READY);
-            assertFalse(RiichiBoardState.live(game.view(id)).layHandsOpen());
+            assertFalse(TableBoardState.live(game.view(id)).layHandsOpen());
             for (var viewer : new UUID[]{null, id}) {
                 var pieces = RiichiTableScene.build(game.view(viewer)).stream().filter(p -> p.area() == RiichiTableScene.Area.HAND).toList();
                 assertFalse(pieces.isEmpty());
@@ -64,7 +64,7 @@ class TableLayoutTest {
         act(open, id, RoomAction.Type.BEGIN_SEATING);
         assertTrue(open.join(id, "Host", open.seatOf(id)));
         act(open, id, RoomAction.Type.READY);
-        assertTrue(RiichiBoardState.live(open.view(id)).layHandsOpen());
+        assertTrue(TableBoardState.live(open.view(id)).layHandsOpen());
         assertTrue(RiichiTableScene.build(open.view(id)).stream().filter(p -> p.area() == RiichiTableScene.Area.HAND)
             .allMatch(RiichiTableScene.Piece::flat));
     }

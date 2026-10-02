@@ -126,10 +126,13 @@ def visibilitySmoke = providers.gradleProperty('smokeVisibility').getOrElse('fal
 def roomSmoke = providers.gradleProperty('smokeRoom').getOrElse('false').toBoolean()
 def manualSmoke = providers.gradleProperty('smokeManual').getOrElse('false').toBoolean()
 def settlementSmoke = providers.gradleProperty('smokeSettlement').getOrElse('false').toBoolean()
+def mcrLayoutSmoke = providers.gradleProperty('smokeMcrLayout').getOrElse('false').toBoolean()
+def mcrAutoSmoke = providers.gradleProperty('smokeMcrAuto').getOrElse('false').toBoolean()
+def sichuanSmoke = providers.gradleProperty('smokeSichuan').getOrElse('false').toBoolean()
 def browserSmoke = providers.gradleProperty('smokeBrowser').getOrElse('false').toBoolean()
 def recipeBrowser = providers.gradleProperty('recipeBrowser').getOrElse('none')
 if (!(recipeBrowser in ['none', 'jei', 'rei'])) throw new GradleException('recipeBrowser must be none, jei or rei')
-def smokeProfile = settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
+def smokeProfile = sichuanSmoke ? 'sichuan-' : mcrAutoSmoke ? 'mcr-auto-' : mcrLayoutSmoke ? 'mcr-layout-' : settlementSmoke ? 'settlement-' : maidSmoke ? 'maid-' : paletteSmoke ? 'palette-' : manualSmoke ? 'manual-' : browserSmoke ? 'browser-' : roomSmoke ? 'room-' : visibilitySmoke ? 'visibility-' : interfaceSmoke ? 'interface-' : seatingSmoke ? 'seating-' : itemsSmoke ? 'items-' : recipeBrowser != 'none' ? recipeBrowser + '-' : ''
 if (providers.gradleProperty('smokePatchouli').getOrElse('false').toBoolean())
     smokeProfile = providers.gradleProperty('withPatchouli').getOrElse('false').toBoolean() ? 'patchouli-installed-' : 'patchouli-absent-'
 def smokeEvidence = layout.buildDirectory.dir("smoke/${smokeProfile}evidence")
@@ -152,6 +155,9 @@ neoForge {
             gameDirectory = smokeRun.get().asFile
             programArguments = ['--width', '1280', '--height', '800']
             systemProperty 'mchjong.smoke', 'true'
+            systemProperty 'mchjong.smoke.mcrLayoutOnly', mcrLayoutSmoke.toString()
+            systemProperty 'mchjong.smoke.mcrAutoOnly', mcrAutoSmoke.toString()
+            systemProperty 'mchjong.smoke.sichuanOnly', sichuanSmoke.toString()
             systemProperty 'mchjong.smoke.patchouliOnly', providers.gradleProperty('smokePatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.patchouli', providers.gradleProperty('withPatchouli').getOrElse('false')
             systemProperty 'mchjong.smoke.maid', maidSmoke.toString()

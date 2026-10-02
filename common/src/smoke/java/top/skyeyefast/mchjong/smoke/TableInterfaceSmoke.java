@@ -59,7 +59,7 @@ final class TableInterfaceSmoke {
         if (ticks == 1) {
             client.getWindow().setWindowed(small ? 960 : 1280, small ? 720 : 800);
             client.options.guiScale().set(small ? 3 : 2);
-            client.resizeDisplay();
+            client.resizeGui();
             var view = snapshot(table, state);
             var room = table.clientRoom();
             table.acceptRoom(new top.skyeyefast.mchjong.engine.TableRoomView(room.tableId(), room.incarnation(),
@@ -71,7 +71,7 @@ final class TableInterfaceSmoke {
             settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
             if (!immersive && state == 3) settings.camera().look(0, 85 - settings.camera().pitch());
             client.setScreen(new RiichiTableScreen(table.getBlockPos()));
-            if (immersive) client.screen.keyPressed(GLFW.GLFW_KEY_V, 0, 0);
+            if (immersive) client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
             require(((RiichiTableScreen) client.screen).immersive() == immersive, "Fixture entered wrong table view");
             if (state == 1) {
                 RiichiTableScreen opened = (RiichiTableScreen) client.screen;
@@ -82,7 +82,7 @@ final class TableInterfaceSmoke {
                 require(client.screen == opened && opened.immersive(),
                     "Opening the exit vote replaced the immersive table screen");
             }
-            if (state == 0) button(client, "action.mchjong.riichi").onPress();
+            if (state == 0) button(client, "action.mchjong.riichi").onPress(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0));
         }
         if (++ticks < 12) return false;
         for (var child : client.screen.children()) if (child instanceof AbstractWidget widget && widget.visible) {
@@ -106,7 +106,7 @@ final class TableInterfaceSmoke {
             case 3 -> "reserve"; case 4 -> "meld"; default -> "reaction"; };
         SmokeScreenshots.grab(output.toFile(), "60-" + (immersive ? "immersive-" : "seated-")
             + current.language() + "-" + stateName
-            + (small ? "-small.png" : ".png"), client.getMainRenderTarget(), ignored -> {});
+            + (small ? "-small.png" : ".png"), client.getMainRenderTarget(), 1, ignored -> {});
         sample++; ticks = 0;
         return false;
     }

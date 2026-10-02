@@ -27,13 +27,13 @@ import static org.junit.jupiter.api.Assertions.*;
 @ExtendWith(EphemeralTestServerProvider.class)
 class ServerIntegrationTest {
     @Test void registriesAndRecipesLoadOnDedicatedServer(MinecraftServer server) {
-        assertSame(MahjongContent.TABLE, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.STOOL, BuiltInRegistries.BLOCK.get(MahjongContent.id("mahjong_stool")));
-        assertSame(MahjongContent.TABLE_ITEM, BuiltInRegistries.ITEM.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.TABLE_ENTITY, BuiltInRegistries.BLOCK_ENTITY_TYPE.get(MahjongContent.id("mahjong_table")));
-        assertSame(MahjongContent.SEAT_ENTITY, BuiltInRegistries.ENTITY_TYPE.get(MahjongContent.id("seat")));
+        assertSame(MahjongContent.TABLE, BuiltInRegistries.BLOCK.getValue(MahjongContent.id("mahjong_table")));
+        assertSame(MahjongContent.STOOL, BuiltInRegistries.BLOCK.getValue(MahjongContent.id("mahjong_stool")));
+        assertSame(MahjongContent.TABLE_ITEM, BuiltInRegistries.ITEM.getValue(MahjongContent.id("mahjong_table")));
+        assertSame(MahjongContent.TABLE_ENTITY, BuiltInRegistries.BLOCK_ENTITY_TYPE.getValue(MahjongContent.id("mahjong_table")));
+        assertSame(MahjongContent.SEAT_ENTITY, BuiltInRegistries.ENTITY_TYPE.getValue(MahjongContent.id("seat")));
         top.skyeyefast.mchjong.world.MahjongSounds.EVENTS.forEach((name, sound) ->
-            assertSame(sound, BuiltInRegistries.SOUND_EVENT.get(MahjongContent.id(name))));
+            assertSame(sound, BuiltInRegistries.SOUND_EVENT.getValue(MahjongContent.id(name))));
         assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_table"))).isPresent());
         assertTrue(server.getRecipeManager().byKey(net.minecraft.resources.ResourceKey.create(net.minecraft.core.registries.Registries.RECIPE, MahjongContent.id("mahjong_stool"))).isPresent());
         var commands = server.getCommands().getDispatcher().getRoot().getChild("mchjong");

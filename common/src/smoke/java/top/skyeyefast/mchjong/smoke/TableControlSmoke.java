@@ -109,7 +109,7 @@ final class TableControlSmoke {
             selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             next(20);
         } else if (stage == 20 && ticks > 5 && languageReload.isDone() && client.getOverlay() == null) {
             languageReload.join();
@@ -124,12 +124,12 @@ final class TableControlSmoke {
             var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
                     Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(selector.getX() + 5, selector.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             var unavailablePreset = widget(client, RiichiPreset.M_LEAGUE.presetKey());
             require(!unavailablePreset.active, "Unavailable preset is enabled");
             AutomationControlsSmoke.checkBounds(client);
             double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().getWindow();
+            long window = client.getWindow().handle();
             var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
             require(cursor != null, "Missing native cursor callback");
             try { cursor.invoke(window, (unavailablePreset.getX() + 5) * scale, (unavailablePreset.getY() + 5) * scale); }
@@ -141,10 +141,10 @@ final class TableControlSmoke {
             var selector = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().startsWith(Component.translatable("rules.mchjong.preset",
                     Component.translatable(configuration.rules().preset().presetKey())).getString())).findFirst().orElseThrow();
-            client.screen.mouseClicked(selector.getX() + 5, selector.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(selector.getX() + 5, selector.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             var unavailable = widget(client, RedFives.THREE.translationKey());
             double scale = client.getWindow().getGuiScale();
-            long window = client.getWindow().getWindow();
+            long window = client.getWindow().handle();
             // Drive the installed callback without moving or capturing the user's desktop cursor.
             var cursor = org.lwjgl.glfw.GLFW.glfwSetCursorPosCallback(window, null);
             require(cursor != null, "Missing native cursor callback");
@@ -156,7 +156,7 @@ final class TableControlSmoke {
             capture(client, output, "25h-insufficient-reds-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var nextPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().equals(">")).findFirst().orElseThrow();
-            client.screen.mouseClicked(nextPage.getX() + 5, nextPage.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(nextPage.getX() + 5, nextPage.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             click(client, "rules.mchjong.option.min_han.4");
             click(client, "rules.mchjong.option.match_length.1");
             next(29);
@@ -165,7 +165,7 @@ final class TableControlSmoke {
             capture(client, output, "25l-match-options-" + RULE_LANGUAGES[ruleLanguage] + "-320x240.png");
             var previousPage = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().equals("<")).findFirst().orElseThrow();
-            client.screen.mouseClicked(previousPage.getX() + 5, previousPage.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(previousPage.getX() + 5, previousPage.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             if (++ruleLanguage < RULE_LANGUAGES.length) {
                 selectRuleLanguage(client, RULE_LANGUAGES[ruleLanguage]);
                 next(20);
@@ -174,7 +174,7 @@ final class TableControlSmoke {
             selectRuleLanguage(client, originalLanguage);
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
-            client.resizeDisplay();
+            client.resizeGui();
             var id = client.player.getUUID();
             var pos = table.getBlockPos();
             reseated = client.getSingleplayerServer().submit(() -> {
@@ -210,7 +210,7 @@ final class TableControlSmoke {
             var label = Component.translatable("rules.mchjong.option.kuitan").getString();
             var kuitan = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            client.screen.mouseClicked(kuitan.getX() + 5, kuitan.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(kuitan.getX() + 5, kuitan.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             capture(client, output, "25i-red-stock-options.png");
             click(client, "rules.mchjong.apply");
             next(23);
@@ -246,12 +246,12 @@ final class TableControlSmoke {
             String label = Component.translatable("rules.mchjong.option.ippatsu").getString();
             var toggle = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            client.screen.mouseClicked(toggle.getX() + 5, toggle.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(toggle.getX() + 5, toggle.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             originalWidth = client.getWindow().getScreenWidth(); originalHeight = client.getWindow().getScreenHeight();
             originalScale = client.options.guiScale().get();
             client.getWindow().setWindowed(960, 720);
             client.options.guiScale().set(3);
-            client.resizeDisplay();
+            client.resizeGui();
             next(15);
         } else if (stage == 15 && ticks > 5) {
             require(client.screen.width == 320 && client.screen.height == 240, "Custom rules minimum viewport");
@@ -259,7 +259,7 @@ final class TableControlSmoke {
             capture(client, output, "25e-custom-scoring-320x240.png");
             client.getWindow().setWindowed(originalWidth, originalHeight);
             client.options.guiScale().set(originalScale);
-            client.resizeDisplay();
+            client.resizeGui();
             next(16);
         } else if (stage == 16 && ticks > 5) {
             capture(client, output, "25f-custom-scoring.png");
@@ -267,7 +267,7 @@ final class TableControlSmoke {
             String label = Component.translatable("rules.mchjong.option.bankruptcy").getString();
             var bankruptcy = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
                 .filter(widget -> widget.getMessage().getString().contains(label)).findFirst().orElseThrow();
-            client.screen.mouseClicked(bankruptcy.getX() + 5, bankruptcy.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(bankruptcy.getX() + 5, bankruptcy.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
             click(client, "rules.mchjong.apply");
             next(17);
         } else if (stage == 17 && client.screen instanceof RiichiTableScreen && configuration.rules().custom() && ticks > 5) {
@@ -305,7 +305,7 @@ final class TableControlSmoke {
                     var policy = top.skyeyefast.mchjong.world.WorldSettings.of(server);
                     var before = policy.policy();
                     originalWorldPolicy = before;
-                    var low = commands.parse("mchjong world invitationTeleport true", player.createCommandSourceStack().withPermission(0));
+                    var low = commands.parse("mchjong world invitationTeleport true", player.createCommandSourceStack().withPermission(net.minecraft.server.permissions.LevelBasedPermissionSet.forLevel(net.minecraft.server.permissions.PermissionLevel.byId(0))));
                     try { commands.execute(low); throw new IllegalStateException("Non-admin changed world settings"); }
                     catch (com.mojang.brigadier.exceptions.CommandSyntaxException expected) { /* Permission denied. */ }
                     require(before.equals(policy.policy()), "Denied command mutated world settings");
@@ -387,7 +387,7 @@ final class TableControlSmoke {
                 Component.translatable(configuration.rules().preset().presetKey())).getString();
             var button = LobbySmoke.find(client, label);
             require(button.active, "Host preset selector is disabled");
-            client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+            client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
         } else if (client.screen instanceof RiichiRulesScreen && ticks % 10 == 0) {
             String choice = Component.translatable(target.presetKey()).getString();
             if (client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
@@ -408,10 +408,10 @@ final class TableControlSmoke {
         String label = Component.translatable(key).getString();
         var button = LobbySmoke.find(client, label);
         require(button.active, "Disabled control: " + key);
-        client.screen.mouseClicked(button.getX() + 5, button.getY() + 5, 0);
+        client.screen.mouseClicked(new net.minecraft.client.input.MouseButtonEvent(button.getX() + 5, button.getY() + 5, new net.minecraft.client.input.MouseButtonInfo(0, 0)), false);
     }
     private static void capture(Minecraft client, Path output, String file) {
-        SmokeScreenshots.grab(output.toFile(), file, client.getMainRenderTarget(), ignored -> {});
+        SmokeScreenshots.grab(output.toFile(), file, client.getMainRenderTarget(), 1, ignored -> {});
     }
     private static void require(boolean condition, String message) { if (!condition) throw new IllegalStateException(message); }
 }
