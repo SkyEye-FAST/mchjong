@@ -30,15 +30,16 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
+- Restore full-size Chinese tiles for MCR and Sichuan, calibrate their independent 12-degree automatic-table lift rails to real table proportions, return melds to the owner’s left and place later river rows in actually vacated wall space; verify conserved post-deal, midgame and late-game positions across both Sichuan wall assignments without dynamic tile scaling.
+
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
 
 - Restore the Immersive view caption, separate lobby portraits from status text, use locale-appropriate phrasing and punctuation, reduce the stool inventory icon, and render furniture in both maid head slots with its full item textures and components.
 - Separate MIL SBR 2025 from T/TFMJ 01—2024: use each preset's wall layout, refund the SBR shooting kong instead of transferring its income, distinguish Kong and Root fan names, and preserve secret bound first-discard choices through play, saves and replays.
-- Keep MCR flowers and Riichi extracted norths in the same horizontal rail as hands and melds.
-- Center MCR rivers like Riichi, place melds and flowers on the owner's left, and omit walls from the immersive MCR table.
+- Keep Riichi extracted norths in the same horizontal rail as hands and melds.
+- Omit walls from the immersive MCR table.
 - Reveal MCR concealed kongs after a hand ends while keeping other concealed hands private.
 - Highlight every tile in a wall pickup packet and allow grabbing any tile in that packet.
-- Close MCR wall corners with a fine tile seam while retaining the four projecting ends.
 
 ### Added
 

@@ -40,44 +40,68 @@ left-edge vertical accent strips; selected navigation uses a short bottom rule.
 
 ## MCR physical layout
 
-MCR presentation uses its own scene and layout types. Dimensions derive from
-`TileMesh.WIDTH`, `HEIGHT` and `DEPTH` at the scene's tile scale. Seat-local x
-runs left to right as seen by the seated player; z increases toward that player.
-All four seats use the same local poses rotated by `TableGeometry.orient`.
+MCR and Sichuan use the original `TileMesh` dimensions at a fixed physical scale
+of 1.0 for walls, hands, rivers, melds and MCR flowers. The 2.625-block felt
+represents an approximately 815–850 mm automatic table; the .160-block tile
+height represents approximately 50–52 mm Chinese machine tiles. Counts never
+change physical tile size. Riichi retains its own dimensions and layout.
+Seat-local x runs left to right as seen by the seated player; z increases toward
+that player. Rotate the complete local poses by `TableGeometry.orient`.
 
-The built wall has four straight eighteen-stack sides, each stack upper/lower.
-Each side is displaced along its length in the same local direction, so one
-end extends past its adjacent wall while the opposite end stops short. This
-fourfold pinwheel arrangement forms the offset hash-shaped enclosure rather
-than endpoint-aligned square corners. Offset, corner clearance and the small
-inter-stack seam come from tile dimensions; the short end meets the adjacent
-wall with that same fine seam, and stacks do not overlap at the corners.
-Rendered slot indices are the engine's fixed physical slots, independent of the
-opening and draw order.
+The four straight, double-layer walls tilt 12 degrees with the same handedness.
+Stack centers advance along the tilted tangent, and tile yaw follows it; rotate
+both the centers and yaw by successive 90-degree turns. `TiltedWallLayout` owns
+one fixed lift rail and tangent offset, independently of hand positions and stack
+count. Its physical reference is the approximately 85 cm table and 30.5 ± 1 cm
+opposite-wall gap described in [CN107233724B](https://patents.google.com/patent/CN107233724B/zh).
+The client explicitly interprets that gap as the clear distance between opposite
+inner faces, measured perpendicular to the walls. It uses 31.4 cm within that
+tolerance: the inner-edge gap is approximately .970 block, and the lift-rail
+centerline spacing is that gap plus one .160-block tile height. Do not substitute
+seat-local z separation for this normal measurement. This is a documented
+calibration choice; the patent text does not explicitly call its gap a centerline measurement.
+The .50-block tangent offset keeps the full eighteen-stack wall inside the felt.
+Shorter Sichuan walls retain the same rail and center, leaving larger end gaps.
 
-Each river packs only physically present discards, six per row from left to
-right. The first row is closest to the table center and further rows expand
-toward the player. A called-away history entry occupies no river position.
-Every river tile has the same upright face orientation and width.
-The group is centered in front of its owner at the same origin and row spacing
-as the Riichi river. The immersive MCR table uses these positions and omits walls.
+MCR retains eighteen stacks per side and 144 tiles. Sichuan retains 108 tiles and
+thirteen/fourteen stacks according to `eastWestLongWall`. Stack pitch equals tile
+width. Physical slot indices, opening and front/tail traversal remain engine-owned.
+Check oriented bounds rather than overlapping world-axis AABBs. The complete wall
+stays inside the felt and keeps the automatic instrument panel visible.
 
-Melds lie face up at the owner's right-hand corner, at the same depth as the hand.
-The earliest meld starts at the corner and later melds extend left. The hand
-stays centered when possible and shifts left only enough to clear the actual
-meld bounds. The claimed tile is rotated ninety degrees: left for the previous
-player, middle for the opposite player and right for the next player. A chow
-uses the left source only. A concealed kong has four face-down tiles during play
-and turns face up after the hand ends. Open quads and
-supplemented triplets use the same four-tile flat row; the fourth tile does
-not form a separate raised or forward stack.
+Rivers pack physically present discards six per row, preserving history indices
+while omitting called-away entries. Derive the first row center from
+`TableIndicator.HALF_WIDTH + tileHeight / 2 + .005`; offset the row by half a tile
+width to separate neighboring owners' corners. Later rows advance toward the
+player by at least one actual tile height. When a remaining wall segment occupies
+a later row, slide the row into available space or use the next available row.
+`ChineseTableLayout` checks the actual oriented walls, public tiles, hands and
+center housing. Already emptied wall positions are usable river space. An unusually long river
+can start another six-column bank when its outward lane is full. Rendering
+and picking consume the resulting piece poses together.
 
-Flowers lie face up in one continuous run at the left end of the hand rail,
-at the same depth. Their actual width participates in hand clearance.
-When a full flower run and kongs fill the rail, scale that seat's hand, melds and
-flowers together just enough to fit between the neighboring corners.
-The scene preserves the source indices in its pieces and does not reconstruct
-hidden tile identities to arrange them. `McrView` remains the visibility authority.
+Chinese melds begin in the owner's left corner, with chronological groups
+extending right. A neighboring wall end can temporarily occupy part of that
+public area; place an actual group in front of that end or advance it right to
+the next clear space. Preserve group order and physical size. Keep the concealed
+hand centered unless an actual meld at the hand's depth requires the minimum
+rightward displacement. Reserve no absent groups. The called tile's sideways
+position still identifies its supplier: previous player left, opposite middle,
+next player right. A chow uses the previous player. MCR kongs use one flat
+four-tile row; Sichuan retains its native added-kong arrangement. Concealed kongs
+retain native visibility during play and reveal after the hand ends.
+
+MCR flowers have a separate public row in front of the right half of the hand;
+they do not displace left-side melds. No seat row is scaled to fit flowers or
+kongs. Public-zone placement checks the actual wall occupancy at fixed tile size.
+The scene preserves source indices and never reconstructs hidden identities.
+`McrView` and `SichuanView` remain the visibility authorities.
+
+Geometry acceptance uses conserved engine positions: complete walls before any
+hands or rivers exist, actual post-deal slots, and multiple openings advanced
+through midgame, late game and termination. Each accepted action must preserve
+the original physical stock. Complete walls combined with maximum hands, melds
+and four river rows are not gameplay space constraints.
 
 The MCR seat overlay uses the same world camera and tile-box picking as Riichi.
 Its immersive view uses the same fixed 1280 × 800 canvas, perspective solids and
@@ -290,9 +314,10 @@ solid tile bodies and upright concealed opponent hands.
 Tile faces and dyed resource-pack backs share that geometry and use fixed lighting.
 The viewer's
 large interactive hand and raised tile rack form the foreground along the bottom. Place
-the viewer's melds flat on the table at the right-hand corner, with the earliest
+the Riichi viewer's melds flat on the table at the right-hand corner, with the earliest
 meld nearest that corner and later melds extending left. Apply the same owner-relative
-right-end rule to every seat. Extracted norths lie in one run at the left end
+right-end rule to every Riichi seat. Chinese variants use the left-side public
+layout above. Extracted norths lie in one run at the left end
 of the same outer rail as the melds.
 Place immersive automation in a compact centered horizontal strip below the hand, with
 action buttons above the right end of the hand, clear of the central rivers and table melds. Seated automation keeps its
@@ -305,7 +330,7 @@ the table camera. Align sideways riichi tiles to the same owner-relative top edg
 the other tiles in their row, matching seated play. The viewer's rows grow
 toward the foreground, the opposite rows recede toward the far rail, and the side rivers
 remain broad enough to read rather than becoming screen-edge strips. Keep opponent hands
-and melds on the same outer rail, with melds anchored at the owner's right-hand end.
+and native melds at their owner-relative public areas; Riichi uses the right-hand end.
 Place compact player plaques at the matching canvas edges: self at the bottom-left,
 opponents at the left, right and top center. Keep every plaque clear of hands, melds
 and rivers. Reserve the space beside the local plaque for footer help and keep its
@@ -362,7 +387,7 @@ longer arc. Riichi rotation occurs near landing. These animations are presentati
 and never alter the authoritative action or tile identity.
 Reserve at least 18 logical pixels of face width for immersive river tiles and 20 pixels
 for opponent meld tiles. Allocate river depth per seat before reducing these sizes.
-Opponent melds stay in one row at the owner's corner and the hand shifts left
+Riichi opponent melds stay in one row at the owner's corner and the hand shifts left
 to clear them, retaining the minimum face width. Player names have a portrait immediately before them; practice bots use
 a distinct robot portrait and maid companions use the default Reimu icon. Immersive
 plaque text may scale above native size for the 1280 × 800 canvas. Ellipsize long
@@ -436,7 +461,7 @@ dimensions; the furniture mesh, footprint colliders, placement checks, stool
 lookup and dismount positions must use those same dimensions.
 Keep this compact footprint; do not enlarge the furniture to avoid hand layout.
 
-Melds start at the player's right-hand table corner and extend left along the
+Riichi melds start at the player's right-hand table corner and extend left along the
 same depth as the hand. Never move melds forward into a rail between the hand
 and the wall. The concealed hand stays centered on the table while its right
 edge, including any drawn tile and draw gap, clears the actual meld bounds by
@@ -454,13 +479,14 @@ occupied widths from the real `TileMesh` dimensions, including sideways called
 tiles and front-aligned added kans. All tiles in a meld share the same bottom
 edge toward their owner. An added-kan tile lies flat immediately in front of
 the sideways called tile, toward the center, at the same height.
-Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to edge.
+Concealed hand tiles, wall tiles, river tiles and adjacent melds touch edge to
+edge. MCR and Sichuan wall stacks touch along their tilted wall tangent.
 Keep the deliberate drawn-tile and hand-to-meld gaps separate from those physical
 contact rules. Keep all four seat orientations and exposed
 hands within the playing surface. A stored box must not cover an active hand.
 Extend wooden rails and cloth at their existing texture
 density rather than stretching the whole furniture mesh. Camera limits and
-defaults must keep the compact table and its right corner usable from the seated view.
+defaults must keep the compact table and its public corners usable from the seated view.
 
 The default first-person seated camera is 2 blocks from the center and
 2.10 blocks above the table's base, aiming at the felt 0.20 blocks toward the
@@ -487,7 +513,8 @@ normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
-Its left edge stays on a fourteen-tile rail, with exposed melds fitted to its right.
+Its left edge stays on a fourteen-tile rail; public melds use the variant’s
+owner-relative corner.
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.

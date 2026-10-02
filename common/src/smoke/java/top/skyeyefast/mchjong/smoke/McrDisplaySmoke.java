@@ -1,11 +1,8 @@
 package top.skyeyefast.mchjong.smoke;
 
-import com.mojang.blaze3d.systems.RenderSystem;
 import com.mojang.math.Axis;
 import java.nio.file.Files;
 import java.nio.file.Path;
-import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
@@ -18,22 +15,24 @@ import top.skyeyefast.mchjong.client.FurnitureMesh;
 import top.skyeyefast.mchjong.client.MahjongUi;
 import top.skyeyefast.mchjong.client.McrSceneRenderer;
 import top.skyeyefast.mchjong.client.McrTableScene;
-import top.skyeyefast.mchjong.engine.McrDiscard;
-import top.skyeyefast.mchjong.engine.McrGame;
-import top.skyeyefast.mchjong.engine.McrOpening;
+import top.skyeyefast.mchjong.client.SichuanSceneRenderer;
+import top.skyeyefast.mchjong.client.SichuanTableScene;
+import top.skyeyefast.mchjong.client.TableIndicator;
 import top.skyeyefast.mchjong.engine.McrView;
-import top.skyeyefast.mchjong.engine.McrWallLayout;
-import top.skyeyefast.mchjong.engine.Meld;
-import top.skyeyefast.mchjong.engine.Tile;
+import top.skyeyefast.mchjong.engine.SichuanView;
 import top.skyeyefast.mchjong.item.FurnitureWood;
 import top.skyeyefast.mchjong.item.McrDeck;
+import top.skyeyefast.mchjong.item.SichuanDeck;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 import top.skyeyefast.mchjong.item.TileMaterial;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Shared-client physical and immersive render fixtures, without a second gameplay smoke. */
 final class McrDisplaySmoke {
-    private static final String[] IMAGES = {"mcr-wall.png", "mcr-play.png", "mcr-immersive.png"};
+    private static final String[] IMAGES = {"mcr-wall.png", "mcr-dealt.png", "mcr-midgame.png", "mcr-late.png",
+        "sichuan-wall-east-west.png", "sichuan-dealt-east-west.png", "sichuan-midgame-east-west.png", "sichuan-late-east-west.png",
+        "sichuan-wall-north-south.png", "sichuan-dealt-north-south.png", "sichuan-midgame-north-south.png", "sichuan-late-north-south.png",
+        "mcr-immersive.png"};
     private Display display;
     private int ticks;
     private int frameTicks;
@@ -67,69 +66,67 @@ final class McrDisplaySmoke {
     }
 
     private static final class Display extends Screen {
-        private final List<McrTableScene.Piece> wall = McrTableScene.fullWall();
-        private final List<McrTableScene.Piece> play = McrTableScene.build(position());
+        private final List<McrView> mcr = List.of(mcrPosition(91, 0), mcrPosition(40, 0), mcrPosition(4, 0));
+        private final List<SichuanView> eastWest = List.of(sichuanPosition(true, 55, 0), sichuanPosition(true, 25, 0), sichuanPosition(true, 4, 0));
+        private final List<SichuanView> northSouth = List.of(sichuanPosition(false, 55, 0), sichuanPosition(false, 25, 0), sichuanPosition(false, 4, 0));
         private final McrDeck deck = new McrDeck(TileMaterial.BONE, DyeColor.BLUE, TileFacePreset.KANSAI,
             Identifier.fromNamespaceAndPath("mchjong", "default"));
+        private final SichuanDeck sichuanDeck = new SichuanDeck(TileMaterial.BONE, DyeColor.BLUE, TileFacePreset.KANSAI,
+            Identifier.fromNamespaceAndPath("mchjong", "default"));
+
         private int stage;
         private int frames;
 
         Display() {
             super(Component.literal("MCR layout verification"));
-            if (wall.size() != 144 || play.size() != 144) throw new IllegalStateException("Display lost physical tiles");
+
         }
 
         @Override public void extractRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float delta) {
             frames++;
             graphics.fill(0, 0, width, height, MahjongUi.PANEL);
-            graphics.centeredText(font, stage > 0 ? "MCR | six-column rivers, public melds and flowers"
-                : "MCR | 144 tiles / 72 stacks / four 18-stack walls", width / 2, 12, MahjongUi.TEXT);
+            String variant = stage < 4 || stage == 12 ? "MCR" : stage < 8 ? "Sichuan SBR / East-West long wall" : "Sichuan TFMJ / North-South long wall";
+            String phase = stage == 12 ? "actual midgame / wall-free display" : switch (stage % 4) { case 0 -> "complete wall"; case 1 -> "actual post-deal"; case 2 -> "actual midgame"; default -> "actual late game"; };
+            graphics.centeredText(font, variant + " | " + phase + " | original Chinese tile size / 12-degree tilt",
+                width / 2, 12, MahjongUi.TEXT);
             float scale = (float) Math.min(width / (2 * TableGeometry.OUTER_HALF_WIDTH + .4),
                 (height - 48) / (2 * TableGeometry.OUTER_HALF_WIDTH + .4));
-            var pieces = stage == 0 ? wall : stage == 1 ? play : McrTableScene.immersive(position());
             SmokeMesh.extract(graphics, 0, 24, width, height - 24, scale, (pose, buffers) -> {
+                // Native picture-in-picture flips z; restore the layout fixture's world axes.
+                pose.scale(1, -1, -1);
                 pose.mulPose(Axis.XP.rotationDegrees(64));
                 pose.translate(0, -TableGeometry.FELT_Y, 0);
-                FurnitureMesh.table(pose, buffers, 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, false);
-                McrSceneRenderer.render(pieces, deck, pose, buffers, 0xf000f0);
+                FurnitureMesh.table(pose, buffers, 0xf000f0, FurnitureWood.OAK, DyeColor.CYAN, true);
+                if (stage % 4 == 0 && stage != 12) TableIndicator.renderStandby(pose, buffers, 0xf000f0);
+                if (stage < 4 || stage == 12) {
+                    var view = mcr.get(stage == 12 ? 1 : Math.max(0, stage - 1));
+                    if (stage != 0) TableIndicator.render(view, pose, buffers, 0xf000f0);
+                    McrSceneRenderer.render(stage == 0 ? McrTableScene.fullWall()
+                        : stage == 12 ? McrTableScene.immersive(view) : McrTableScene.build(view), deck, pose, buffers, 0xf000f0);
+                } else {
+                    boolean eastWestLong = stage < 8;
+                    int phaseIndex = stage % 4;
+                    var view = (eastWestLong ? eastWest : northSouth).get(Math.max(0, phaseIndex - 1));
+                    if (phaseIndex != 0) TableIndicator.render(view, pose, buffers, 0xf000f0);
+                    SichuanSceneRenderer.render(phaseIndex == 0 ? SichuanTableScene.fullWall(eastWestLong) : SichuanTableScene.build(view),
+                        sichuanDeck, pose, buffers, 0xf000f0);
+                }
             });
             graphics.centeredText(font, "Shared tile mesh and physical-slot scene; no room mode is enabled",
+
                 width / 2, height - 20, MahjongUi.MUTED);
         }
     }
 
-    /** Allocate one complete physical stock, then redact opponents exactly at the view boundary. */
-    private static McrView position() {
-        var opening = McrOpening.of(0, new McrOpening.Roll(2, 3), new McrOpening.Roll(3, 4));
-        var stock = new ArrayList<>(Tile.mcrSet());
-        var melds = List.of(
-            List.of(new Meld(Meld.Type.SEQUENCE, List.of(0, 4, 8), 3, 0),
-                new Meld(Meld.Type.TRIPLET, List.of(124, 125, 126), 2, 124),
-                new Meld(Meld.Type.OPEN_QUAD, List.of(48, 49, 50, 51), 1, 48)),
-            List.of(new Meld(Meld.Type.CONCEALED_QUAD, List.of(88, 89, 90, 91), 1, Tile.ABSENT)),
-            List.of(new Meld(Meld.Type.ADDED_QUAD, List.of(72, 73, 74, 75), 0, 72)),
-            List.<Meld>of());
-        for (var groups : melds) for (var meld : groups) stock.removeAll(meld.tiles());
-        var seats = new ArrayList<McrView.Seat>();
-        for (int seat = 0; seat < 4; seat++) {
-            int size = (seat == 0 ? 14 : 13) - melds.get(seat).size() * 3;
-            var hand = new ArrayList<Integer>();
-            for (int i = 0; i < size; i++) hand.add(stock.remove(0));
-            var river = new ArrayList<McrDiscard>();
-            for (int i = 0; i < (seat == 0 ? 19 : 13); i++) river.add(new McrDiscard(stock.remove(0), false, false));
-            // These history entries refer to physical tiles already allocated to another player's meld.
-            int called = switch (seat) { case 0 -> 72; case 1 -> 48; case 2 -> 124; default -> 0; };
-            river.add(4, new McrDiscard(called, true, false));
-            var flowers = List.of(136 + seat * 2, 137 + seat * 2);
-            stock.removeAll(flowers);
-            var publicMelds = melds.get(seat).stream().map(meld -> meld.closed()
-                ? new Meld(meld.type(), Collections.nCopies(4, Tile.HIDDEN), meld.fromSeat(), Tile.ABSENT) : meld).toList();
-            seats.add(new McrView.Seat(Tile.EAST + seat, 0, seat == 0 ? hand : Collections.nCopies(size, Tile.HIDDEN),
-                seat == 0 ? hand.get(hand.size() - 1) : Tile.ABSENT, publicMelds, river, flowers, false));
-        }
-        var wall = new ArrayList<>(Collections.nCopies(144, Tile.ABSENT));
-        for (int i = 0; i < stock.size(); i++) wall.set(McrWallLayout.drawSlot(opening, 108 + i), Tile.HIDDEN);
-        return new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, stock.size(), opening,
-            wall, null, seats, List.of(), false, false, null, List.of());
+    static McrView mcrPosition(int remaining, int viewer) {
+        return top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.mcr(711, remaining, viewer, view -> {
+            if (McrTableScene.build(view).size() != 144) throw new IllegalStateException("MCR capture lost physical stock");
+        });
+    }
+
+    static SichuanView sichuanPosition(boolean eastWest, int remaining, int viewer) {
+        return top.skyeyefast.mchjong.fixture.ChineseGameplayFixtures.sichuan(711, eastWest, remaining, viewer, false, view -> {
+            if (SichuanTableScene.build(view).size() != 108) throw new IllegalStateException("Sichuan capture lost physical stock");
+        });
     }
 }

@@ -819,7 +819,7 @@ stage boundary, including when opened partway through settlement.
 settings. See [Interface style](UI_STYLE.md) for its shared layout contract. The top toolbar offers individual
 leave and host-only dissolution. `RiichiHud` keeps player summaries along the screen edge and puts
 long names and supplementary details in hover text. Action buttons stay along
-the lower edge rather than covering the table center. The concealed run stays
+the lower edge rather than covering the table center. The Riichi concealed run stays
 centered whenever the right-corner melds leave enough space; otherwise it shifts
 left by exactly the missing clearance, rather than centering in the remaining
 space. Only an actual drawn tile occupies the separate draw slot; unused draw
@@ -827,10 +827,12 @@ and meld slots cannot push a waiting hand left. `MeldLayout` supplies the real
 occupied width, including sideways calls and front-aligned added kans, to both hand
 clearance and meld rendering.
 The table reserves a 3 x 3 footprint with dimensions shared by placement,
-colliders, furniture and seating. Melds are anchored at the owner's right-hand
+colliders, furniture and seating. Riichi melds are anchored at the owner's right-hand
 corner, beside the hand at the same depth. Extracted norths form one continuous run
 to the left of the hand, clear of the adjacent player's corner. The table's
-two-slot inventory stores up to two cases inside the furniture.
+two-slot inventory stores up to two cases inside the furniture. Chinese variants
+use left-side public melds and an independent automatic-table wall rail; their
+physical contract is in [Interface style](UI_STYLE.md#mcr-physical-layout).
 Rivers pack six visible tiles per row, close gaps
 left by calls and account for the width of sideways riichi discards. Hiding rivers
 is a local rendering preference; it also forces the remaining-wall count and
