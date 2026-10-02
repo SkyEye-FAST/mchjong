@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** MCR-only physical scene. The same seat-local geometry is rotated for every player. */
 public final class McrTableScene {
-    public static final float TILE_SCALE = .82f;
+    public static final float TILE_SCALE = .69f;
     public static final double WIDTH = (double) TileMesh.WIDTH * TILE_SCALE;
     public static final double HEIGHT = (double) TileMesh.HEIGHT * TILE_SCALE;
     public static final double DEPTH = (double) TileMesh.DEPTH * TILE_SCALE;

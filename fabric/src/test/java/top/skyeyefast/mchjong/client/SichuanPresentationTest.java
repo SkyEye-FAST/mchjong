@@ -76,6 +76,35 @@ class SichuanPresentationTest {
         }
     }
 
+    @Test void wallsClearHandsAndMeldsInBothAssignments() {
+        for (boolean eastWestLongWall : new boolean[]{false, true}) {
+            var rules = (eastWestLongWall ? SichuanPreset.SBR_2025 : SichuanPreset.TFMJ_2024).config();
+            WallGeometryAssertions.noIntersections(SichuanTableScene.build(new SichuanGame(711, rules, Tile.sichuanSet()).view(0))
+                .stream().map(WallGeometryAssertions::solid).toList());
+            for (var phase : List.of(SichuanGame.Phase.TURN, SichuanGame.Phase.HAND_END)) {
+                for (int meldCount : new int[]{0, 4}) {
+                    var seats = new ArrayList<SichuanView.Seat>();
+                    for (int seat = 0; seat < 4; seat++) {
+                        var melds = new ArrayList<Meld>();
+                        for (int group = 0; group < meldCount; group++) melds.add(new Meld(Meld.Type.OPEN_QUAD,
+                            List.of(0, 1, 2, 3), (seat + 3) % 4, 0));
+                        var river = new ArrayList<SichuanPlayerState.Discard>();
+                        for (int index = 0; index < 24; index++) river.add(new SichuanPlayerState.Discard(index, false));
+                        seats.add(new SichuanView.Seat(Collections.nCopies(14 - 3 * meldCount, Tile.HIDDEN),
+                            melds, river, 0, false, Tile.HIDDEN, Tile.ABSENT));
+                    }
+                    // Capacity fixture, not a stock-conserving gameplay snapshot.
+                    var view = new SichuanView(1, 1, rules, phase, 1, 0, Collections.nCopies(4, 0), 0, 0,
+                        new SichuanView.Wall(Collections.nCopies(108, Tile.HIDDEN), 0, 1, 1, eastWestLongWall),
+                        seats, Tile.ABSENT, -1, false, false, List.of(), List.of(), List.of(),
+                        phase == SichuanGame.Phase.HAND_END ? new SichuanSettlement.Result(List.of(), List.of(),
+                            Collections.nCopies(4, SichuanSettlement.DrawStatus.NOT_READY), true) : null, -1);
+                    WallGeometryAssertions.noIntersections(SichuanTableScene.build(view).stream().map(WallGeometryAssertions::solid).toList());
+                }
+            }
+        }
+    }
+
     @Test void scenesConsumeOnlyRecipientSafeViewsAndKeepPublicClaimIdentity() {
         var game = new SichuanGame(711);
         var declaration = game.view(0);

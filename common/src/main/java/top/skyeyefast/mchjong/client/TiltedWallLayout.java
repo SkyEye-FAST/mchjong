@@ -1,7 +1,6 @@
 package top.skyeyefast.mchjong.client;
 
 import net.minecraft.world.phys.Vec3;
-import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Seat-local projection only; columns and physical slots belong to the rule's wall layout. */
 record TiltedWallLayout(int stacks, double pitch, float angle, double centerX, double centerZ) {
@@ -10,10 +9,11 @@ record TiltedWallLayout(int stacks, double pitch, float angle, double centerX, d
     static TiltedWallLayout compact(int stacks, double width, double height) {
         double along = height;
         double angle = Math.toRadians(ANGLE);
+        // Reserve the outer hand/meld rail, including the depth of face-up tiles.
         // One automatic-table rail, sized for the longest (18-stack) wall's rotated bounds.
         // Shorter walls change only their tangent span, leaving more room at the corners.
         double halfDepth = 18 * width / 2 * Math.sin(angle) + height / 2 * Math.cos(angle);
-        double railZ = TableGeometry.FELT_HALF_WIDTH - .02 - halfDepth;
+        double railZ = RiichiTableScene.HAND_Z - height / 2 - .02 - halfDepth;
         double outward = (railZ - Math.sin(angle) * along) / Math.cos(angle);
         return new TiltedWallLayout(stacks, width, ANGLE,
             Math.cos(angle) * along - Math.sin(angle) * outward,

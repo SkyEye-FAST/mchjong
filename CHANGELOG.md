@@ -30,7 +30,7 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Fixed
 
-- Position the 12-degree MCR and Sichuan pinwheel walls on one outer automatic-table rail, leaving room for four six-tile river rows around the center device; shorter Sichuan walls retain that radius with larger corner gaps, while stack contact, tile yaw, physical slots and rule-specific traversal remain unchanged.
+- Fit the 12-degree MCR and Sichuan pinwheel walls between four six-tile river rows and the occupied outer hand/meld rails, using one physical tile scale of 0.69 across both variants; shorter Sichuan walls retain the same radius with larger corner gaps, while stack contact, tile yaw, physical slots and rule-specific traversal remain unchanged.
 
 - Render the automatic table’s center indicator housing and inactive seat panels before a match begins.
 

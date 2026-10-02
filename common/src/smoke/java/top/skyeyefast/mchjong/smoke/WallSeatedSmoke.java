@@ -12,7 +12,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 import top.skyeyefast.mchjong.world.SeatEntity;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
-/** Display-only full walls in the real seated world renderer, including the active center panel. */
+/** Full walls, occupied capacity fixtures and post-deal scenes in the real seated world renderer. */
 public final class WallSeatedSmoke {
     public static boolean fullMcrWall;
     private int sample = -1, ticks;
@@ -42,10 +42,17 @@ public final class WallSeatedSmoke {
         var expected = TableSettings.get().cameraPosition(seat);
         if (client.gameRenderer.getMainCamera().getPosition().distanceTo(expected) > .01)
             throw new IllegalStateException("Wall capture is not using the seated world camera");
-        String name = mcrRule ? "mcr-wall-seated.png" : sample == 0
-            ? "sichuan-wall-east-west-seated.png" : "sichuan-wall-north-south-seated.png";
+        String name = mcrRule ? switch (sample) {
+            case 0 -> "mcr-wall-seated.png";
+            case 1 -> "mcr-space-seated.png";
+            default -> "mcr-dealt-seated.png";
+        } : "sichuan-" + switch (sample / 2) {
+            case 0 -> "wall";
+            case 1 -> "space";
+            default -> "dealt";
+        } + (sample % 2 == 0 ? "-east-west-seated.png" : "-north-south-seated.png");
         SmokeScreenshots.grab(output.toFile(), name, client.getMainRenderTarget(), ignored -> {});
-        if (!mcrRule && ++sample < 2) { show(client, table, false); return; }
+        if (++sample < (mcrRule ? 3 : 6)) { show(client, table, mcrRule); return; }
         table.acceptRoom(room);
         fullMcrWall = false;
         if (mcrRule) {
@@ -68,25 +75,30 @@ public final class WallSeatedSmoke {
         if (mcrRule) {
             var base = mcr.game();
             // McrView represents post-deal state only. The smoke renderer supplies the unopened wall.
-            fullMcrWall = true;
+            fullMcrWall = sample < 2;
             var seats = base.seats().stream().map(player -> new McrView.Seat(player.wind(), 0,
                 List.<Integer>of(), Tile.ABSENT, List.<Meld>of(), List.<McrDiscard>of(), List.<Integer>of(), false)).toList();
             var game = new McrView(1, 1, base.handNumber(), McrGame.Phase.TURN, room.viewerSeat(), base.dealer(),
                 base.roundWind(), room.viewerSeat(), base.remaining(), base.opening(), base.wall(),
                 null, seats, List.of(), false, false, null, List.of());
+            if (sample == 1) game = McrDisplaySmoke.railFixture(room.viewerSeat());
+            if (sample == 2) game = new McrGame(711).view(room.viewerSeat());
             var view = new McrSession.View(mcr.tableId(), mcr.incarnation(), fixtureRoom.revision(), mcr.participants(),
                 15, 0, false, clocks, 0, game);
             table.acceptMcrView(view, fixtureRoom, table.clientMcrDeck(), table.clientMcrCloth(), table.clientMcrTimeControl());
             client.setScreen(new McrTableScreen(table.getBlockPos()));
         } else {
             var base = sichuan.game();
-            var rules = (sample == 0 ? SichuanPreset.SBR_2025 : SichuanPreset.TFMJ_2024).config();
+            boolean eastWestLongWall = sample % 2 == 0;
+            var rules = (eastWestLongWall ? SichuanPreset.SBR_2025 : SichuanPreset.TFMJ_2024).config();
             var wall = new SichuanView.Wall(Collections.nCopies(108, Tile.HIDDEN), base.dealer(), 1, 1, rules.eastWestLongWall());
             var seats = Collections.nCopies(4, new SichuanView.Seat(List.of(), List.of(), List.of(),
                 0, false, Tile.ABSENT, Tile.ABSENT));
             var game = new SichuanView(1, 1, rules, SichuanGame.Phase.TURN, base.handNumber(), base.dealer(), base.scores(),
                 room.viewerSeat(), room.viewerSeat(), wall, seats, Tile.ABSENT, -1, false, false,
                 List.of(), List.of(), List.of(), null, -1);
+            if (sample / 2 == 1) game = McrDisplaySmoke.railFixture(eastWestLongWall, room.viewerSeat());
+            if (sample / 2 == 2) game = McrDisplaySmoke.dealt(eastWestLongWall, room.viewerSeat());
             var view = new SichuanSession.View(sichuan.tableId(), sichuan.incarnation(), fixtureRoom.revision(),
                 false, clocks, 0, 0, game);
             table.acceptSichuanView(view, fixtureRoom, table.clientSichuanDeck(), table.clientSichuanCloth(),

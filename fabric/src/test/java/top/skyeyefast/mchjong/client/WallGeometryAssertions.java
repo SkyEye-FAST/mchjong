@@ -26,6 +26,8 @@ final class WallGeometryAssertions {
                 innerWallBoundary = Math.min(innerWallBoundary, local.z);
                 assertTrue(Math.max(Math.abs(local.x), Math.abs(local.z)) < TableGeometry.FELT_HALF_WIDTH,
                     "Every rotated wall corner must stay on the felt");
+                assertTrue(local.z <= RiichiTableScene.HAND_Z - height / 2 - .02 + 1e-8,
+                    "Every rotated wall corner must clear the outer face-up hand and meld rail");
             }
         }
         assertTrue(innerWallBoundary >= riverInner + requiredRiverDepth + wallRiverGap,
@@ -73,18 +75,42 @@ final class WallGeometryAssertions {
 
     static boolean intersects(Vec3 first, float firstYaw, Vec3 second, float secondYaw,
                               double width, double height, double depth) {
-        if (Math.abs(first.y - second.y) >= depth - 1e-7) return false;
-        var delta = second.subtract(first);
-        var firstX = tangent(firstYaw);
-        var firstZ = tangent(firstYaw - 90);
-        var secondX = tangent(secondYaw);
-        var secondZ = tangent(secondYaw - 90);
+        return intersects(new Solid(first, firstYaw, width, depth, height),
+            new Solid(second, secondYaw, width, depth, height));
+    }
+
+    record Solid(Vec3 position, float yaw, double width, double height, double depth) {}
+
+    static boolean intersects(Solid first, Solid second) {
+        if (Math.abs(first.position().y - second.position().y) >= (first.height() + second.height()) / 2 - 1e-7) return false;
+        var delta = second.position().subtract(first.position());
+        var firstX = tangent(first.yaw());
+        var firstZ = tangent(first.yaw() - 90);
+        var secondX = tangent(second.yaw());
+        var secondZ = tangent(second.yaw() - 90);
         for (var axis : List.of(firstX, firstZ, secondX, secondZ)) {
-            double radius = (width * (Math.abs(firstX.dot(axis)) + Math.abs(secondX.dot(axis)))
-                + height * (Math.abs(firstZ.dot(axis)) + Math.abs(secondZ.dot(axis)))) / 2;
+            double radius = (first.width() * Math.abs(firstX.dot(axis)) + second.width() * Math.abs(secondX.dot(axis))
+                + first.depth() * Math.abs(firstZ.dot(axis)) + second.depth() * Math.abs(secondZ.dot(axis))) / 2;
             if (Math.abs(delta.dot(axis)) >= radius - 1e-7) return false;
         }
         return true;
+    }
+
+    static Solid solid(McrTableScene.Piece piece) {
+        return new Solid(piece.position(), piece.yaw(), TileMesh.WIDTH * (double) piece.scale(),
+            (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale(),
+            (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale());
+    }
+
+    static Solid solid(SichuanTableScene.Piece piece) {
+        return new Solid(piece.position(), piece.yaw(), TileMesh.WIDTH * (double) piece.scale(),
+            (piece.flat() ? TileMesh.DEPTH : TileMesh.HEIGHT) * (double) piece.scale(),
+            (piece.flat() ? TileMesh.HEIGHT : TileMesh.DEPTH) * (double) piece.scale());
+    }
+
+    static void noIntersections(List<Solid> solids) {
+        for (int i = 0; i < solids.size(); i++) for (int j = i + 1; j < solids.size(); j++)
+            assertFalse(intersects(solids.get(i), solids.get(j)), "Scene pieces intersect: " + i + ", " + j);
     }
 
     private static Vec3 tangent(float yaw) {

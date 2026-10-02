@@ -51,8 +51,10 @@ along the tilted wall tangent, and each tile's yaw follows that same tangent.
 Rotate the complete local pose by 90 degrees for successive seats: all four
 walls retain the same local tilt and handedness, forming a rotated hash/pinwheel
 outline. All automatic-table walls share one outer lift rail, independent of
-stack count. Derive its radius from the felt edge and the rotated bounds of the
-longest supported wall, leaving a felt margin. MCR's eighteen-stack walls and
+stack count. MCR and Sichuan use one physical tile scale of 0.69 for walls,
+rivers, hands, melds and flowers. Derive the wall radius from the face-up outer
+hand/meld rail and the rotated bounds of the longest supported wall, leaving a
+positive gap to that rail as well as a felt margin. MCR's eighteen-stack walls and
 Sichuan's thirteen/fourteen-stack walls retain the same centers; shorter walls
 leave larger corner gaps instead of shrinking toward the center. Keep the actual
 oriented inner wall boundary beyond the center housing, four six-tile river rows
@@ -71,8 +73,8 @@ Each river packs only physically present discards, six per row from left to
 right. The first row is closest to the table center and further rows expand
 toward the player. A called-away history entry occupies no river position.
 Every river tile has the same upright face orientation and width.
-The group is centered in front of its owner at the same origin and row spacing
-as the Riichi river. The immersive MCR table uses these positions and omits walls.
+The group is centered in front of its owner, with row spacing equal to the
+scene's scaled tile height. The immersive MCR table uses these positions and omits walls.
 
 Melds lie face up at the owner's right-hand corner, at the same depth as the hand.
 The earliest meld starts at the corner and later melds extend left. The hand

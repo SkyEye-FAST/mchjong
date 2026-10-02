@@ -107,7 +107,10 @@ tail replacements, exhaustion and conservation across player-owned zones.
 `McrWallLayoutTest` owns the 72-stack topology, both dice rolls, physical packet
 and first/third jump sources, front/tail traversal and restored physical cursors.
 `McrLayoutTest` owns the rotated hash-shaped wall clearance, compact six-column
-rivers, left-corner source-marked flat melds, flower/hand separation and scene source indices.
+rivers, right-corner source-marked flat melds, flower/hand separation and scene source indices.
+It checks complete walls together with four river rows and occupied standing or
+face-up hand/meld/flower rails, plus actual post-deal scenes. `SichuanPresentationTest`
+checks the same mixed-scene collision boundary in both 13/14-stack assignments.
 Run the shared presentation checks with
 `gradlew.bat :fabric:test --tests "*McrLayoutTest" --tests "*TableLayoutTest" --tests "*CompactTableLayoutTest" --warning-mode fail --console=plain`.
 
@@ -134,8 +137,15 @@ corner gaps and unobstructed center labels in these views as well as the overhea
 The layout profile also supplies `mcr-wall-rivers.png`,
 `sichuan-wall-east-west-rivers.png` and `sichuan-wall-north-south-rivers.png`:
 display-only clearance stress fixtures combining complete walls with four six-tile
-river rows per seat, rather than legal physical-stock snapshots. Inspect the
-inward wall ends, center housing clearance and felt margins. Omit `smokeScreenshots` for
+river rows, hands and melds per seat, plus MCR flowers, rather than legal physical-stock
+snapshots. Their seated equivalents are `mcr-space-seated.png`,
+`sichuan-space-east-west-seated.png` and `sichuan-space-north-south-seated.png`.
+Actual post-deal captures are `mcr-dealt.png`, `sichuan-dealt-east-west.png` and
+`sichuan-dealt-north-south.png` in the layout profile, and `mcr-dealt-seated.png`,
+`sichuan-dealt-east-west-seated.png` and `sichuan-dealt-north-south-seated.png` in
+the respective seated profiles. Inspect both inward and outward wall ends,
+center housing clearance, occupied outer rails and felt margins. Empty-hand full-wall
+captures alone do not establish wall/hand clearance. Omit `smokeScreenshots` for
 assertion-only runs. Compile the other affected loaders without duplicating these shared images.
 
 The two `PhysicalSuppliesTest.mcr*` cases own native case admission, flower/item

@@ -11,7 +11,7 @@ import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.world.TableGeometry;
 
 public final class SichuanTableScene {
-    public static final float TILE_SCALE = .82f;
+    public static final float TILE_SCALE = .69f;
     public static final double WIDTH = TileMesh.WIDTH * (double) TILE_SCALE;
     public static final double HEIGHT = TileMesh.HEIGHT * (double) TILE_SCALE;
     public static final double DEPTH = TileMesh.DEPTH * (double) TILE_SCALE;

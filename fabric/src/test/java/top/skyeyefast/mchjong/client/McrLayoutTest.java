@@ -121,6 +121,7 @@ class McrLayoutTest {
         var game = new McrGame(711);
         var scene = McrTableScene.build(game.view(0));
         assertEquals(144, scene.size());
+        WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
         for (var piece : scene) {
             if (piece.area() == McrTableScene.Area.HAND && piece.seat() == 0)
                 assertEquals(game.hand(0).get(piece.index()), piece.tile());
@@ -142,32 +143,52 @@ class McrLayoutTest {
                 melds.add(new Meld(Meld.Type.OPEN_QUAD, List.of(tile, tile + 1, tile + 2, tile + 3),
                     (seat + 3) % 4, tile));
             }
+            var river = new ArrayList<McrDiscard>();
+            for (int index = 0; index < 24; index++) river.add(new McrDiscard(index, false, false));
             seats.add(new McrView.Seat(Tile.EAST + seat, 0,
                 seat == 0 ? List.of(16, 17) : List.of(Tile.HIDDEN, Tile.HIDDEN), seat == 0 ? 17 : Tile.HIDDEN,
-                melds, List.of(new McrDiscard(seat * 32 + 18, false, false)),
+                melds, river,
                 seat == 0 ? java.util.Arrays.stream(FlowerTile.values()).map(FlowerTile::id).toList() : List.of(), false));
         }
         var view = new McrView(1, 1, 1, McrGame.Phase.TURN, 0, 0, Tile.EAST, 0, 0, base.opening(),
             java.util.Collections.nCopies(144, Tile.ABSENT), null, seats, List.of(), false, false, null, List.of());
-        var scene = McrTableScene.build(view);
-        assertEquals(scene, McrTableScene.immersive(view));
+        var scene = new ArrayList<>(McrTableScene.fullWall());
+        scene.addAll(McrTableScene.build(view));
+        assertEquals(scene.stream().filter(piece -> piece.area() != McrTableScene.Area.WALL).toList(), McrTableScene.immersive(view));
         assertTrue(McrTableScene.immersive(base).stream().noneMatch(piece -> piece.area() == McrTableScene.Area.WALL));
         for (var piece : scene) {
             var local = TableGeometry.orient(piece.position().x, piece.position().y, piece.position().z, (4 - piece.seat()) % 4);
             if (piece.area() == McrTableScene.Area.MELD && piece.index() == 0)
                 assertEquals(RiichiTableScene.MELD_RIGHT - (3 * (double) TileMesh.WIDTH + TileMesh.HEIGHT / 2.0) * (double) piece.scale(), local.x, 1e-8);
             if (piece.area() == McrTableScene.Area.RIVER) {
-                assertEquals(-2.5 * RiichiTableScene.RIVER_STEP, local.x, 1e-8);
-                assertEquals(RiichiTableScene.RIVER_Z, local.z, 1e-8);
+                assertEquals((piece.index() % 6 - 2.5) * McrTableScene.WIDTH, local.x, 1e-8);
+                assertEquals(McrTableScene.RIVER_Z + piece.index() / 6 * McrTableScene.HEIGHT, local.z, 1e-8);
             }
             if (piece.area() == McrTableScene.Area.FLOWER) assertEquals(McrTableScene.HAND_Z, local.z, 1e-8);
             var bounds = bounds(piece);
             assertTrue(Math.max(Math.abs(bounds.minX), Math.abs(bounds.maxX)) <= TableGeometry.FELT_HALF_WIDTH);
             assertTrue(Math.max(Math.abs(bounds.minZ), Math.abs(bounds.maxZ)) <= TableGeometry.FELT_HALF_WIDTH);
         }
-        for (int i = 0; i < scene.size(); i++) for (int j = i + 1; j < scene.size(); j++)
-            assertFalse(bounds(scene.get(i)).deflate(1e-7).intersects(bounds(scene.get(j)).deflate(1e-7)),
-                "Hand, flower and meld areas overlap");
+        WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
+    }
+
+    @Test void completeWallClearsStandingAndRevealedFourteenTileHands() {
+        var base = new McrGame(711).view(0);
+        for (var phase : List.of(McrGame.Phase.TURN, McrGame.Phase.HAND_END)) {
+            var seats = new ArrayList<McrView.Seat>();
+            var river = new ArrayList<McrDiscard>();
+            for (int index = 0; index < 24; index++) river.add(new McrDiscard(index, false, false));
+            for (int seat = 0; seat < 4; seat++) seats.add(new McrView.Seat(Tile.EAST + seat, 0,
+                seat == 0 ? java.util.stream.IntStream.range(0, 14).boxed().toList() : java.util.Collections.nCopies(14, Tile.HIDDEN),
+                seat == 0 ? 13 : Tile.HIDDEN, List.of(), river, List.of(), false));
+            // Capacity fixture deliberately keeps the entire wall while occupying every hand rail.
+            var view = new McrView(1, 1, 1, phase, 0, 0, Tile.EAST, 0, 0, base.opening(),
+                java.util.Collections.nCopies(144, Tile.ABSENT), null, seats, List.of(), false, false,
+                phase == McrGame.Phase.HAND_END ? new top.skyeyefast.mchjong.engine.McrSettlement.Draw() : null, List.of());
+            var scene = new ArrayList<>(McrTableScene.fullWall());
+            scene.addAll(McrTableScene.build(view));
+            WallGeometryAssertions.noIntersections(scene.stream().map(WallGeometryAssertions::solid).toList());
+        }
     }
 
     private static AABB bounds(McrTableScene.Piece piece) {

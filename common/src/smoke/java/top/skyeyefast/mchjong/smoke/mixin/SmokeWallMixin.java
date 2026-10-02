@@ -15,6 +15,8 @@ abstract class SmokeWallMixin {
     @Redirect(method = "render", at = @At(value = "INVOKE", target =
         "Ltop/skyeyefast/mchjong/client/McrTableScene;build(Ltop/skyeyefast/mchjong/engine/McrView;)Ljava/util/List;"))
     private List<McrTableScene.Piece> unopenedWall(McrView view) {
-        return WallSeatedSmoke.fullMcrWall ? McrTableScene.fullWall() : McrTableScene.build(view);
+        var scene = McrTableScene.build(view);
+        return WallSeatedSmoke.fullMcrWall ? java.util.stream.Stream.concat(McrTableScene.fullWall().stream(),
+            scene.stream().filter(piece -> piece.area() != McrTableScene.Area.WALL)).toList() : scene;
     }
 }
