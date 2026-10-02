@@ -1035,7 +1035,11 @@ public final class RiichiTableScreen extends Screen {
         graphics.pose().translate(left, uiHeight() - 13 * scale);
         graphics.pose().scale(scale, scale);
         int available = (uiWidth() - left - (hints.visible ? 48 * scale : 10)) / scale;
-        graphics.text(font, font.plainSubstrByWidth(text.getString(), available), 0, 0, color, true);
+        if (TableResults.available(view())) {
+            var lines = font.split(text, available);
+            for (int line = 0; line < lines.size(); line++)
+                graphics.text(font, lines.get(line), 0, (line - lines.size() + 1) * 11, color, true);
+        } else graphics.text(font, font.plainSubstrByWidth(text.getString(), available), 0, 0, color, true);
         graphics.pose().popMatrix();
     }
 

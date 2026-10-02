@@ -22,8 +22,9 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
                 yield Component.translatable("ui.mchjong.round", Component.translatable("wind.mchjong."
                     + new String[]{"east", "south", "west", "north"}[Math.min(3, h.round() / players)]), h.round() % players + 1, h.honba());
             }
-            case MCR -> Component.translatable("mcr.mchjong.hand", index + 1, match.mcr().hands().get(index).wall().size());
-            case SICHUAN -> Component.translatable("sichuan.mchjong.hand", index + 1, match.sichuan().rules().matchHands(), 108);
+            case MCR -> Component.translatable("mcr.mchjong.indicator_round", Component.translatable("wind.mchjong."
+                + new String[]{"east", "south", "west", "north"}[index / 4] + ".short"), index + 1);
+            case SICHUAN -> Component.translatable("sichuan.mchjong.indicator_round", index + 1, match.sichuan().rules().matchHands());
         };
     }
     static ReplayPresentation of(ReplayMatch match, int index) {
@@ -129,7 +130,10 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
                 case PAYMENT -> "sichuan.mchjong.payment." + f.state().ledger().get(e.ledgerId()).type().name().toLowerCase(Locale.ROOT);
                 case SETTLEMENT -> "sichuan.mchjong.results";
             };
-            return new Frame(TableBoardState.replay(f, 0), caption(match, e == null ? -1 : e.seat(), key), f.state().result() != null,
+            var label = e != null && e.kind() == SichuanReplayHand.Kind.SETTLEMENT
+                ? Component.translatable(key, f.state().handNumber())
+                : caption(match, e == null ? -1 : e.seat(), key);
+            return new Frame(TableBoardState.replay(f, 0), label, f.state().result() != null,
                 List.of(), e == null ? 0 : e.actionCursor(), 0);
         }).toList();
         var cursors = frames.stream().map(Frame::rawCursor).toList(); var decisions = new ArrayList<Decision>();

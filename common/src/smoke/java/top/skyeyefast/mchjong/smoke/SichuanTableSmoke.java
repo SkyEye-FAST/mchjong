@@ -482,6 +482,7 @@ final class SichuanTableSmoke {
                 require(replay.match().id().equals(replayId) && replay.match().complete() && replay.match().handCount() == 8,
                     "Browser did not fetch the completed Sichuan replay");
                 require(replay.cursor() == 0 && replay.handIndex() == 0, "Sichuan replay did not open at the initial deal");
+                settled = 0;
                 replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_RIGHT, 0, 0));
                 require(replay.cursor() == 1, "Sichuan replay did not step one event");
                 replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0));
@@ -489,6 +490,7 @@ final class SichuanTableSmoke {
             }
             case 20 -> {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
+                if (++settled < 8) break;
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay.png", client.getMainRenderTarget(), 1, ignored -> {});
                 for (int hand = 1; hand < 8; hand++) replay.keyPressed(new net.minecraft.client.input.KeyEvent(org.lwjgl.glfw.GLFW.GLFW_KEY_DOWN, 0, 0));
                 require(replay.handIndex() == 7 && replay.cursor() == 0, "Sichuan replay hand navigation failed");
@@ -497,7 +499,9 @@ final class SichuanTableSmoke {
             }
             case 21 -> {
                 if (!(client.screen instanceof ReplayScreen replay)) break;
-                require(replay.cursor() > 1 && replay.match().header().finalScores().size() == 4,
+                if (++settled < 16) break;
+                require(replay.cursor() == top.skyeyefast.mchjong.engine.SichuanReplayPlayback.timeline(replay.match(), 7).frames().size() - 1
+                    && replay.match().header().finalScores().size() == 4,
                     "Sichuan replay did not seek to final standings");
                 SmokeScreenshots.grab(output.toFile(), "sichuan-replay-settlement.png", client.getMainRenderTarget(), 1, ignored -> {});
                 replay.onClose();
