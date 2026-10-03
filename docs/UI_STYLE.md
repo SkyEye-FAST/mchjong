@@ -513,8 +513,10 @@ normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button or V switches to the
 immersive GUI. `TableHand` displays only the recipient's own hand along the bottom,
 retaining the drawn-tile gap and normal selection, discard and riichi controls.
-Its left edge stays on a fourteen-tile rail; public melds use the variant’s
-owner-relative corner.
+It uses a stable fourteen-tile rail, anchoring short Riichi hands at the left
+and short Chinese hands at the right to clear the variant's public meld corner.
+The Chinese foreground hand reserves its automation strip throughout play, so
+changes in available controls never move the hand vertically.
 Action buttons stay above it. Switching views preserves world camera orientation;
 closing the overlay reveals the seated world. Third-person remains under Minecraft's
 control. Seat cards retain names, wind and scores in both presentations.

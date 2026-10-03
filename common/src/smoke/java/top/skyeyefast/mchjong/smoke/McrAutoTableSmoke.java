@@ -175,8 +175,8 @@ final class McrAutoTableSmoke {
                 stage++;
             }
             case 6 -> {
-                if (!(client.screen instanceof McrTableScreen screen)) break;
                 if (!automation.tick(client, clientTable, output, "mcr")) break;
+                if (!(client.screen instanceof McrTableScreen screen)) break;
                 var view = clientTable.clientMcrView();
                 check(view != null && view.seated() == 15 && view.game().wall().size() == 144,
                     "MCR screen lacks the complete seated wall");
