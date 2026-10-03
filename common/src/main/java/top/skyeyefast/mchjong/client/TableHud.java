@@ -34,6 +34,7 @@ final class TableHud {
                 Component.translatable("ui.mchjong.remaining.short", state.remaining()), 12, 22, header - 8, MahjongUi.MUTED, false);
         }
         boolean visible = settings.show(TableSettings.Information.NAMES) || settings.show(TableSettings.Information.POINTS)
+            || settings.show(TableSettings.Information.WINDS)
             || settings.show(TableSettings.Information.STATUS) || settings.show(TableSettings.Information.MELDS)
             || settings.show(TableSettings.Information.COUNTS) || settings.show(TableSettings.Information.RANKS);
         for (int seat = 0; visible && seat < state.players(); seat++) {
@@ -49,9 +50,15 @@ final class TableHud {
             surface(g, x, y, w, h, immersive, seat == state.viewerSeat(), turn);
             int inset = settings.show(TableSettings.Information.NAMES) ? PlayerPortrait.draw(g, member.participant(),
                 x + (immersive ? 8 : 5), y + (immersive ? 8 : 2), immersive ? 32 : 10) : 0;
-            Component name = settings.show(TableSettings.Information.NAMES) ? Component.literal(member.participant().name()) : Component.empty();
-            Component score = settings.show(TableSettings.Information.POINTS) ? Component.translatable("ui.mchjong.points", p.points()) : Component.empty();
-            if (settings.show(TableSettings.Information.STATUS)) score = score.copy().append("  ").append(statuses.get(seat));
+            Component name = settings.show(TableSettings.Information.NAMES)
+                ? member.participant().bot() && !member.participant().entityBot()
+                    ? Component.translatable("ui.mchjong.bot.short", seat + 1)
+                    : Component.literal(member.participant().name()) : Component.empty();
+            boolean badge = settings.show(p.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR
+                ? TableSettings.Information.WINDS : TableSettings.Information.STATUS);
+            Component score = badge && state.indicator() != null ? state.indicator().seats().get(seat) : Component.empty();
+            if (settings.show(TableSettings.Information.POINTS)) score = score.copy()
+                .append(score.getString().isEmpty() ? "" : " ").append(Integer.toString(p.points()));
             int color = disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
             text(font, g, name, x + (immersive ? 8 : 5) + inset, y + (immersive ? 6 : 4), w - inset - 18, color, immersive ? 1.75f : 1);
             text(font, g, score, x + (immersive ? 8 + inset : 5), y + (immersive ? 27 : 14), w - (immersive ? inset + 18 : 10),

@@ -7,6 +7,12 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+## [0.9.1] - 2026-10-03
+
+### Fixed
+
+- Keep MCR and Sichuan immersive hands vertically stable as automation controls change, anchor shortened hands away from left-side melds, separate active clocks from action buttons, and use compact wind/void-suit and score labels in player cards.
+
 ## [0.9.0] - 2026-10-03
 
 ### Changed
@@ -467,7 +473,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 - Deterministic high-resolution tile artwork generation and resource-pack tile-back customization.
 - GitHub Release automation for tagged versions, publishing both Fabric and NeoForge artifacts.
 
-[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.9.0...HEAD
+[Unreleased]: https://github.com/SkyEye-FAST/mchjong/compare/0.9.1...HEAD
+[0.9.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.9.1
 [0.9.0]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.9.0
 [0.8.2]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.2
 [0.8.1]: https://github.com/SkyEye-FAST/mchjong/releases/tag/0.8.1

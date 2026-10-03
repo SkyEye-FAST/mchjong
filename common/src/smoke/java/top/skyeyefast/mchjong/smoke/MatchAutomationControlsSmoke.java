@@ -13,7 +13,7 @@ import top.skyeyefast.mchjong.world.MahjongTableBlockEntity;
 final class MatchAutomationControlsSmoke {
     private int stage, ticks;
     boolean tick(Minecraft client, MahjongTableBlockEntity table, Path output, String prefix) {
-        if (stage == 7) return true;
+        if (stage == 11) return true;
         var room = table.clientTableRoom();
         if (stage == 0 && client.screen.children().stream().filter(AbstractWidget.class::isInstance)
             .map(AbstractWidget.class::cast).noneMatch(widget -> widget.getMessage().getString()
@@ -56,13 +56,37 @@ final class MatchAutomationControlsSmoke {
                 bounds(client);
                 require(!room.automation().win() && !room.automation().noCalls() && !room.automation().discard(),
                     "Automation round trip changed another preference");
+                press(client, "replay.mchjong.title"); next();
+            }
+            case 7 -> {
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.ReplayBrowserScreen browser)) {
+                    require(ticks < 80, "Immersive replay button did not open the browser");
+                    return false;
+                }
+                if (ticks < 16) return false;
+                browser.onClose(); next();
+            }
+            case 8 -> {
+                require(immersive(client), "Replay browser lost its immersive parent");
                 client.screen.keyPressed(new net.minecraft.client.input.KeyEvent(GLFW.GLFW_KEY_V, 0, 0));
+                press(client, "replay.mchjong.title.short"); next();
+            }
+            case 9 -> {
+                if (!(client.screen instanceof top.skyeyefast.mchjong.client.ReplayBrowserScreen browser)) {
+                    require(ticks < 80, "Seated replay button did not open the browser");
+                    return false;
+                }
+                if (ticks < 16) return false;
+                browser.onClose(); next();
+            }
+            case 10 -> {
+                require(!immersive(client), "Replay browser lost its seated parent");
                 client.getWindow().setWindowed(1280, 800); client.options.guiScale().set(2); client.resizeGui();
                 next();
             }
             default -> throw new IllegalStateException("Unexpected automation smoke stage");
         }
-        return stage == 7;
+        return stage == 11;
     }
     private void next() { stage++; ticks = 0; }
     private static AbstractWidget option(Minecraft client) {
@@ -90,7 +114,7 @@ final class MatchAutomationControlsSmoke {
         int width = immersive(client) ? 1280 : client.screen.width, height = immersive(client) ? 800 : client.screen.height;
         var widgets = client.screen.children().stream().filter(AbstractWidget.class::isInstance).map(AbstractWidget.class::cast)
             .filter(widget -> widget.visible && !widget.getClass().getSimpleName().equals("HandTarget")
-                && !widget.getClass().getSimpleName().equals("TableHints") && !widget.getClass().getSimpleName().equals("TableTurnClock")).toList();
+                && !widget.getClass().getSimpleName().equals("TableHints")).toList();
         for (int index = 0; index < widgets.size(); index++) {
             var a = widgets.get(index);
             require(a.getX() >= 0 && a.getY() >= 0 && a.getRight() <= width && a.getBottom() <= height, "Automation exceeds canvas");

@@ -154,6 +154,32 @@ class TablePresentationTest {
             hand.pick(drawn.x() + hand.tileWidth() / 2 + 1, drawn.y(), -1), "No invisible side extrusion is clickable");
     }
 
+    @Test void chineseForegroundHandsClearLeftMeldsAndKeepPickingAligned() {
+        for (var variant : List.of(top.skyeyefast.mchjong.engine.MahjongVariant.MCR,
+                top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN)) {
+            for (int count = 0; count <= 4; count++) {
+                var melds = java.util.stream.IntStream.range(0, count).mapToObj(i ->
+                    new top.skyeyefast.mchjong.engine.Meld(top.skyeyefast.mchjong.engine.Meld.Type.OPEN_QUAD,
+                        List.of(i * 4, i * 4 + 1, i * 4 + 2, i * 4 + 3), 3, i * 4)).toList();
+                var tiles = java.util.stream.IntStream.range(32, 46 - 3 * count).boxed().toList();
+                var hand = new TableHand(tiles, tiles.getLast(), melds, 0, 1280, 740, 58, true, variant);
+                var first = hand.point(tiles.getFirst());
+                if (count > 0) {
+                    double right = -TableImmersiveTable.meldCorner(0);
+                    for (var meld : melds) right += TileGui.meldWidth(MeldLayout.of(meld, 0, variant, true), 30) + 5;
+                    var edge = TableProjection.seat(0, right, 422, ImmersiveTable.thickness(30));
+                    assertTrue(first.x() - hand.tileWidth() / 2 - 24 > edge.x(),
+                        "Foreground rack must clear the projected left meld corner");
+                }
+                for (int tile : tiles) {
+                    var point = hand.point(tile);
+                    assertEquals(tile, hand.pick(point.x(), point.y(), -1));
+                    assertEquals(first.y(), point.y());
+                }
+            }
+        }
+    }
+
     @Test void immersiveDiscardsLandExactlyAndKeepDistinctUncoloredTrajectories() {
         var start = new TableProjection.Point(600, 680);
         var end = TableProjection.seat(0, -80, 165, ImmersiveTable.thickness(32));
