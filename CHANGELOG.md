@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Fixed
+
+- Keep MCR and Sichuan immersive hands vertically stable as automation controls change, anchor shortened hands away from left-side melds, separate active clocks from action buttons, and use compact wind/void-suit and score labels in player cards.
+
 ## [0.9.0] - 2026-10-03
 
 ### Changed

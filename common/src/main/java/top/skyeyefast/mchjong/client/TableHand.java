@@ -38,8 +38,10 @@ final class TableHand {
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.getLast() != drawn ? 0 : Math.max(18, tileWidth / 2);
         span = tiles.size() * tileWidth + gap;
-        // Keep a stable fourteen-tile rail; a short hand must not cover the right-corner melds.
-        left = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(18, tileWidth / 2)) / 2;
+        // Anchor short hands opposite their variant's public meld corner on the same stable rail.
+        int railLeft = (width - Math.max(14, tiles.size()) * tileWidth - Math.max(18, tileWidth / 2)) / 2;
+        left = perspective && variant != top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI
+            ? width - railLeft - span : railLeft;
         y = height - (perspective ? 15 : 20) - tileHeight;
     }
 

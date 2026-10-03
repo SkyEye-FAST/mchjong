@@ -107,7 +107,7 @@ public final class SichuanTableScreen extends Screen {
             var player = game.seats().get(game.viewerSeat());
             var tiles = new ArrayList<>(player.hand());
             if (player.drawn() >= 0 && tiles.remove(Integer.valueOf(player.drawn()))) tiles.add(player.drawn());
-            hand = new TableHand(tiles, player.drawn(), player.melds(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - (automation.available() ? 60 : 30), 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN);
+            hand = new TableHand(tiles, player.drawn(), player.melds(), game.viewerSeat(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 60, 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN);
         }
         if (room.exitVote() != null) {
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
@@ -224,7 +224,7 @@ public final class SichuanTableScreen extends Screen {
         if (turnClock != null && view.game().viewerSeat() >= 0) {
             var clock = view.clocks().get(view.game().viewerSeat()).after(table().clientViewAgeMillis());
             int textScale = contentScale(), bottom = clockBottom();
-            int nextTop = bottom - actionHeight;
+            int nextTop = bottom - (clock.active() ? 28 * contentScale() : 0) - actionHeight;
             for (var widget : decisionControls) widget.setY(widget.getY() + nextTop - actionTop);
             actionTop = nextTop;
             turnClock.update(clock, uiWidth() - 16 * textScale, bottom, textScale);
@@ -261,7 +261,7 @@ public final class SichuanTableScreen extends Screen {
             }
             if (board != null) {
                 var deck = table().clientSichuanDeck();
-                TableAnimation.of(table()).render(graphics, board, hand, TableCanvas.HEIGHT - (automation.available() ? 60 : 30), Util.getMillis(),
+                TableAnimation.of(table()).render(graphics, board, hand, TableCanvas.HEIGHT - 60, Util.getMillis(),
                     deck.preset(), deck.material(), deck.back(), deck.backPreset(), tile -> TileMesh.artwork(deck.tile(tile)));
             }
             updateHints();
