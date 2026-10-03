@@ -255,7 +255,8 @@ legal physical draw discards under void-suit priority and SBR first-discard bind
 private/restored preferences and Riichi-only sort/north behavior.
 The MCR and Sichuan client profiles also run `MatchAutomationControlsSmoke` for
 native pointer/keyboard packets, acknowledgement focus, 320 x 240 seated controls
-and the fixed immersive canvas. Opt-in captures are `mcr-automation-seated.png`,
+and the fixed immersive canvas, including clock/control separation and opening
+and returning from the replay browser by pointer in both views. Opt-in captures are `mcr-automation-seated.png`,
 `mcr-automation-immersive.png`, `sichuan-automation-seated.png` and
 `sichuan-automation-immersive.png`.
 `McrBotTest` owns shared one-human/three-Bot preparation, world policy, recipient-only
