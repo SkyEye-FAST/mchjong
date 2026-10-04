@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** The closed, server-owned room boundary shared by the built-in rule runtimes. */
-public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession {
+public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession, TaiwanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
 
@@ -36,7 +36,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     protected TableSession(UUID tableId, MahjongVariant variant, int capacity, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
-        this.variant = Objects.requireNonNull(variant);
+        if (variant == null && !(this instanceof TaiwanSession)) throw new IllegalArgumentException("Missing built-in variant");
+        this.variant = variant;
         this.capacity = capacity;
         this.seed = seed;
         for (int seat = 0; seat < 4; seat++) participants[seat] = new Participant();
@@ -45,6 +46,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     public UUID tableId() { return tableId; }
     public UUID incarnation() { return incarnation; }
+    /** Null only for the independent, unregistered Taiwan engine runtime. */
     public MahjongVariant variant() { return variant; }
     public int capacity() { return capacity; }
     public Lifecycle lifecycle() { return lifecycle; }
@@ -223,6 +225,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     /** Change the built-in ruleset while retaining only the prepared human roster. */
     public TableSession selectVariant(UUID actor, long expectedDecision, MahjongVariant selected) {
+        if (variant == null) return null;
         if (selected == null || selected == variant || !lobby() || !isHost(actor)
             || expectedDecision != decision || exitVote != null || manual
             || seating.stage != RoomSeating.Stage.GATHERING) return null;
@@ -478,6 +481,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     public List<RoomAction> roomActions(UUID actor) { return roomActions(seatOf(actor)); }
 
     public final TableRoomView roomView(UUID recipient) {
+        if (variant == null) throw new IllegalStateException("Unregistered runtime owns its independent room view");
         int viewer = lobby() ? seatOf(recipient) : viewerSeat(recipient);
         var seats = new ArrayList<TableRoomView.Seat>();
         var available = new ArrayList<Integer>();
@@ -572,7 +576,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     protected final void validateRoom() {
         Objects.requireNonNull(tableId);
-        Objects.requireNonNull(variant);
+        if (variant == null && !(this instanceof TaiwanSession)) throw new IllegalStateException("Missing built-in variant");
         Objects.requireNonNull(lifecycle);
         if (capacity != 3 && capacity != 4
             || participants == null || participants.length != 4 || revision < 1 || decision < 1)
@@ -653,7 +657,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
                         boolean convenienceHints, List<MatchAutomation> automation) {
         public State {
             Objects.requireNonNull(tableId);
-            Objects.requireNonNull(variant);
+            if (variant == null && (capacity != 4 || manual)) throw new IllegalArgumentException("Invalid standalone room");
             Objects.requireNonNull(seating);
             Objects.requireNonNull(lifecycle);
             participants = List.copyOf(participants);

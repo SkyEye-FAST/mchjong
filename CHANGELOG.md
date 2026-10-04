@@ -9,6 +9,8 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ### Added
 
+- Add fixed Taiwan wall slots, strict private persistence and recipient-safe projections, plus an independent four-human engine session with four-wind matches, repeat-dealer progression, cumulative scores, clocks and resumable hand acknowledgements; keep Taiwan outside variant dispatch and Minecraft integration.
+
 - Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld analysis, source-qualified tai profiles and the `TaiwanHandAnalyzer` boundary; audit all scoring patterns and provide an independent engine-only Taiwan hand with physical wall/dealing, flower replacement, legal calls, passing, kong robbery and balanced settlement. Document the selected match-rule sources and unresolved interpretations; generalize the shared 144-tile stock factory.
 
 ## [0.9.1] - 2026-10-03

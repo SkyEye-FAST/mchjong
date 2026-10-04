@@ -15,7 +15,7 @@ class TaiwanRules(
     val payment: Payment = Payment(),
 ) {
     enum class Reserve { FIXED_SIXTEEN, SIXTEEN_PLUS_KONGS }
-    data class Payment(val base: Long = 1, val perTai: Long = 1, val dealerTai: Int = 1, val repeatTai: Int = 2) {
+    @JvmRecord data class Payment(val base: Long = 1, val perTai: Long = 1, val dealerTai: Int = 1, val repeatTai: Int = 2) {
         init {
             require(base in 0..1_000_000 && perTai in 1..1_000_000)
             require(dealerTai in 0..1000 && repeatTai in 0..1000)
@@ -34,7 +34,9 @@ class TaiwanRules(
     enum class FlowerSets { ADD_SEAT_FLOWER, REPLACE_SEAT_FLOWER }
     enum class Pinfu { DISCARD_SEQUENCES, MULTIPLE_WAIT_DISCARD_SEQUENCES }
     enum class Replacements { KONG_ONLY, KONG_OR_FLOWER }
-    @JvmRecord data class Source(val url: String, val clause: String)
+    @JvmRecord data class Source(val url: String, val clause: String) {
+        init { require(url.startsWith("https://") && url.length <= 4096 && clause.isNotBlank() && clause.length <= 4096) }
+    }
     val values: Map<Pattern, Int> = java.util.Map.copyOf(values)
     val exclusions: Map<Pattern, Set<Pattern>> = java.util.Map.copyOf(exclusions.mapValues { java.util.Set.copyOf(it.value) })
     val sources: Map<Pattern, Source> = java.util.Map.copyOf(sources)

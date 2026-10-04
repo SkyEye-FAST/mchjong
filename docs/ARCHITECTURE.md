@@ -10,7 +10,8 @@ allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   shared `TableSession` room lifecycle, rule-specific `RiichiSession` and
-  `McrSession` and `SichuanSession` ownership, active `RiichiGame`, `McrGame`
+  `McrSession` and `SichuanSession` ownership, plus the independent, unregistered
+  `TaiwanSession` entry point, active `RiichiGame`, `McrGame`
   and `SichuanGame` orchestration,
   simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
@@ -55,8 +56,9 @@ Artifact names include both loader and Minecraft version to keep releases distin
 `TaiwanHandAnalyzer` is the sole production boundary to the independent
 Kotlin/JVM 17 `taiwan-mahjong` composite build. It owns physical identity and
 meld-provenance conversion; the library owns five-meld sixteen-tile structure,
-analysis and source-qualified tai scoring. This first stage has no playable
-Taiwan session. See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
+analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
+the engine-only runtime without changing that algorithm/score boundary.
+See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
 and the separate match-layer contract.
 
 `Meld.Type` names physical structures: sequence, triplet, open quad, concealed
@@ -141,6 +143,39 @@ below-minimum declarations produce separate `Penalty` events. Self-draw charges
 each opponent eight plus total fan points; discard wins charge the discarder that
 amount and the other opponents eight each. A wrong-win penalty transfers ten
 points to each opponent, independently of hand results.
+
+## Taiwan engine runtime
+
+`TaiwanWallLayout` is the fixed 136/144-slot contract shared by logic, private
+saves and future presentation. `TaiwanWall` marks taken slots absent rather than
+rotating identities. Its front traversal is upper/lower in increasing physical
+slot order from the cut; tail replacement reverses that order. The no-flower
+seventeen-stack overflow and numbered-side traversal are frozen project preset
+rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
+
+`TaiwanGameState` and `TaiwanSession.State` each accept only format 1. Game restore
+checks physical conservation, player structure/provenance, cursor occupancy,
+replacement/chronology counts, passing/ready state, pending offers and terminal
+score/payment consistency. Actions are rederived; saved response choices must
+remain legal and submitted. Revision/decision tokens refresh. `TaiwanView` is
+independent of private saves: opponents have concealed counts, covered kongs stay
+hidden, declared claim tiles are public, and only the recipient gets their actions,
+passing restriction and response status. Completion publishes awards and payments
+without hand/decomposition exposure. Wall slots never disclose future identities.
+`TaiwanCodec` enforces complete typed fields, duplicate/unknown-field rejection,
+sixteen nesting levels, a 65,536-character game/view bound and an 8 MiB session bound.
+
+`TaiwanSession` owns one four-wind match, completing sixteen dealer positions
+while allowing dealer wins/exhaustion to repeat even the last position. Cumulative
+scores derive from completed terminal hand proofs and the current settlement.
+Rules, stock, future seed, clocks, result reading time and acknowledgements persist;
+restore validates the dealer/wind/continuation chain and renews room incarnation.
+Absence and exit votes pause the session; authenticated human acknowledgement or
+200 active ticks advances a nonfinal result. Clocks are recipient-only in views.
+This four-human session inherits `TableSession` but has no `MahjongVariant` identity;
+its independent view and codec are the supported engine entry points. Built-in
+room views/table codec and variant selection do not dispatch to it. No Minecraft,
+Bot, replay, networking or UI integration exists.
 
 ## MCR match orchestration
 

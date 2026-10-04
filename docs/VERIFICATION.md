@@ -343,7 +343,7 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Taiwan hand library
 
 ```text
-gradlew.bat :taiwan-mahjong:check :engine:test --tests=top.skyeyefast.mchjong.engine.TaiwanHandAnalyzerTest --tests=top.skyeyefast.mchjong.engine.TaiwanGameTest :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
+gradlew.bat :taiwan-mahjong:check :engine:test --tests="*Taiwan*Test" :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
 ```
 
 The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
@@ -367,11 +367,23 @@ passing/reset, ready locking, flower payer routing, reserve policies and exhaust
 Seeded games finish with conserved stock and balanced transfers in both presets.
 These verify the source-composed contract in [Taiwan design](TAIWAN_DESIGN.md),
 including its explicitly identified house choices. Dice-count evidence is an
-indexed teaching appendix whose full PDF could not be fetched. Dice overflow, combined
+indexed teaching appendix whose full PDF could not be fetched. No-flower dice overflow
+and tail-layer traversal are frozen project preset rules, rather than temporary semantics. Combined
 flower cap/base allocation and the exact non-winning-discard interpretation lack
 a single complete publisher specification. Eight-and-a-half pairs remains outside
 the selected profiles; the library ledger records the conflicting historical rules.
-No Taiwan session, network, UI or loader runtime is registered or validated.
+`TaiwanRuntimeTest` owns fixed slot/cursor contracts across both stocks, every
+dealer/dice sum, action-by-action persistence, legal/still-submitted reactions,
+pending added-kong commit/robbery, passing/ready restore, concealed-kong and
+end-of-hand privacy, strict JSON rejection and settlement recomputation.
+`TaiwanSessionTest` owns four-human preparation, both physical stocks,
+incarnation/mount authorization, recipient-only clocks/response privacy,
+paused/restored allowances and exit votes, partial hand acknowledgements,
+exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
+complete four-wind matches for both presets and cumulative-score idempotence.
+The deterministic legal-action test driver is not a production Bot.
+Taiwan uses its independent engine session/codec; no variant dispatch, network,
+UI, Bot, Replay or loader runtime is registered or validated.
 
 ## Bot checks
 

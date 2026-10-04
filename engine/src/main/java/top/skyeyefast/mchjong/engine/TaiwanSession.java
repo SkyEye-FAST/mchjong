@@ -1,0 +1,243 @@
+package top.skyeyefast.mchjong.engine;
+
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.UUID;
+
+/** Independent four-human engine entry point; deliberately absent from variant dispatch. */
+public final class TaiwanSession extends TableSession {
+    private static final long SEED_STEP = 0x9e3779b97f4a7c15L;
+    private static final int READING_TICKS = 200;
+    private TaiwanGameState.Rules rules;
+    private List<Integer> stock = List.of();
+    private TimeControl control = TimeControl.DEFAULT;
+    private final List<TimeControl.Clock> clocks = new ArrayList<>();
+    private final List<TaiwanGameState> completed = new ArrayList<>();
+    private TaiwanGame game;
+    private long futureSeed;
+    private int confirmed;
+    private int age;
+
+    public TaiwanSession(UUID tableId, long seed, TaiwanRules rules) {
+        super(tableId, null, 4, seed);
+        this.rules = TaiwanGameState.Rules.of(Objects.requireNonNull(rules));
+    }
+    public TaiwanSession(UUID tableId, long seed) { this(tableId,seed,TaiwanPreset.POCKET_COMMON.rules()); }
+    public TaiwanGame game() { return game; }
+    public TaiwanRules rules() { return rules.restore(); }
+    @Override protected long matchDecision() { return game == null ? decision : game.getDecision(); }
+    @Override protected boolean pauseForAbsence() { return !hasSeatedHuman(); }
+    @Override protected boolean canReturnToLobby(int seat) { return seat == host(); }
+    @Override public TimeControl timeControl() { return control; }
+    @Override public boolean configureClock(UUID actor, TimeControl value) {
+        if (!lobby() || exitVote != null || !isHost(actor)) return false;
+        control = Objects.requireNonNull(value); resetReadiness(); changed(true); return true;
+    }
+    public boolean configureRules(UUID actor, TaiwanRules value) {
+        if (!lobby() || exitVote != null || !isHost(actor)) return false;
+        var proposed = TaiwanGameState.Rules.of(value);
+        if (proposed.equals(rules)) return false;
+        rules = proposed; resetReadiness(); changed(true); return true;
+    }
+    @Override public boolean equipped() { return validStock(stock,rules); }
+    private static boolean validStock(List<Integer> tiles, TaiwanGameState.Rules rules) {
+        var expected = rules.flowers() == TaiwanRules.Flowers.NONE ? Tile.set(false,RedFives.NONE) : Tile.standard144Set();
+        return tiles.size() == expected.size() && new java.util.HashSet<>(tiles).equals(new java.util.HashSet<>(expected));
+    }
+    @Override public boolean configureEquipment(boolean manual, List<Integer> tiles) {
+        if (manual || !lobby() || exitVote != null) return false;
+        tiles = List.copyOf(tiles);
+        if (!tiles.isEmpty() && !(Tile.validStandard144Set(tiles) || tiles.size() == 136 && new java.util.HashSet<>(tiles).equals(new java.util.HashSet<>(Tile.set(false,RedFives.NONE)))))
+            throw new IllegalArgumentException("Taiwan needs an undecorated 136/144 stock");
+        if (stock.equals(tiles)) return false;
+        stock = tiles; resetReadiness(); changed(true); return true;
+    }
+    /** Engine hosts may supply an already positioned human roster without Minecraft dependencies. */
+    public static TaiwanSession start(UUID table, List<TableParticipant> roster, long seed, List<Integer> stock, TaiwanRules rules) {
+        validateRoster(roster);
+        var session = new TaiwanSession(table,seed,rules);
+        for (int s = 0; s < 4; s++) session.participants[s] = Participant.restore(roster.get(s));
+        session.hostId = roster.get(0).id();
+        session.seating.positioned(4);
+        session.configureEquipment(false,stock);
+        session.startMatch();
+        return session;
+    }
+    @Override protected void startMatch() {
+        if (!equipped()) throw new IllegalStateException("Missing Taiwan stock");
+        validateRoster(participants());
+        completed.clear(); futureSeed = seed;
+        deal(0,Tile.EAST,0);
+        lifecycle = Lifecycle.PLAYING; renewIncarnation(); updateEnd();
+    }
+    private void deal(int dealer, int wind, int continuation) {
+        long previous = game == null ? 0 : game.getDecision();
+        var random = new java.util.Random(futureSeed);
+        futureSeed += SEED_STEP;
+        var tiles = new ArrayList<>(stock); Collections.shuffle(tiles,random);
+        var dice = List.of(random.nextInt(6)+1,random.nextInt(6)+1,random.nextInt(6)+1);
+        game = new TaiwanGame(rules.restore(),new TaiwanOpening(dealer,dice),tiles,wind,continuation);
+        game.rebaseDecision(previous);
+        confirmed = 0; resetClock(true);
+    }
+    @Override protected void clearMatch() { game = null; completed.clear(); clocks.clear(); confirmed = age = 0; futureSeed = 0; }
+    private int rotations() {
+        return (int) completed.stream().filter(h -> h.settlement().nextDealer() != h.opening().dealer()).count();
+    }
+    public boolean matchEnded() {
+        return game != null && game.getSettlement() != null && rotations() == 15
+            && game.getSettlement().getNextDealer() != game.getOpening().getDealer();
+    }
+    public List<Long> scores() {
+        var totals = new long[4];
+        for (var hand : completed) for (int s = 0; s < 4; s++) totals[s] = Math.addExact(totals[s],hand.settlement().deltas().get(s));
+        if (game != null && game.getSettlement() != null) for (int s = 0; s < 4; s++) totals[s] = Math.addExact(totals[s],game.getSettlement().getDeltas().get(s));
+        return List.of(totals[0],totals[1],totals[2],totals[3]);
+    }
+    private void updateEnd() { if (matchEnded()) lifecycle = Lifecycle.FINISHED; }
+    public boolean act(UUID actor, UUID table, UUID incarnation, long token, int index) {
+        if (game == null || lifecycle != Lifecycle.PLAYING || paused() || exitVote != null) return false;
+        int seat = authorize(actor,table,incarnation,token,game.getDecision());
+        return seat >= 0 && apply(seat,token,index);
+    }
+    private boolean apply(int seat, long token, int index) {
+        var d = game.decisions().stream().filter(v -> v.getSeat() == seat && v.getToken() == token).findFirst().orElse(null);
+        if (d == null || index < 0 || index >= d.getActions().size()) return false;
+        game.submit(seat,token,index);
+        if (game.getDecision() != token || game.getPhase() == TaiwanGame.Phase.FINISHED) resetClock(false);
+        updateEnd(); changed(false); return true;
+    }
+    public boolean confirmNextHand(UUID actor, UUID table, UUID incarnation, long token) {
+        if (game == null || paused() || exitVote != null || lifecycle != Lifecycle.PLAYING || game.getPhase() != TaiwanGame.Phase.FINISHED) return false;
+        int seat = authorize(actor,table,incarnation,token,game.getDecision());
+        if (seat < 0 || (confirmed & 1 << seat) != 0) return false;
+        confirmed |= 1 << seat;
+        if (confirmed == 15) nextHand();
+        changed(false); return true;
+    }
+    private void nextHand() {
+        if (game.getPhase() != TaiwanGame.Phase.FINISHED || matchEnded()) throw new IllegalStateException("Cannot advance hand");
+        var result = game.getSettlement();
+        completed.add(game.save());
+        int rotation = rotations();
+        deal(result.getNextDealer(),Tile.EAST + rotation / 4,result.getNextContinuation());
+        updateEnd(); changed(false);
+    }
+    private void resetClock(boolean newHand) {
+        age = 0;
+        if (newHand) resetAutomation();
+        for (int s = 0; s < 4; s++) {
+            int reserve = newHand ? control.reserveSeconds()*20 : clocks.get(s).reserveTicks();
+            var clock = new TimeControl.Clock(control.moveSeconds()*20,reserve,false);
+            if (clocks.size() <= s) clocks.add(clock); else clocks.set(s,clock);
+        }
+    }
+    private boolean active(int seat) { return game != null && !paused() && exitVote == null && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
+    @Override public void tick() {
+        if (!tickRoom() || game == null || lifecycle != Lifecycle.PLAYING) return;
+        age++;
+        if (game.getPhase() == TaiwanGame.Phase.FINISHED) { if (age >= READING_TICKS) nextHand(); return; }
+        long token = game.getDecision();
+        for (int s = 0; s < 4; s++) if (active(s)) {
+            var c = clocks.get(s); var next = new TimeControl.Clock(c.moveTicks(),c.reserveTicks(),true).after(50);
+            clocks.set(s,new TimeControl.Clock(next.moveTicks(),next.reserveTicks(),false));
+        }
+        for (var d : game.decisions()) {
+            var c = clocks.get(d.getSeat());
+            if (game.getDecision() != token) break;
+            if (c.moveTicks()+c.reserveTicks() > 0) continue;
+            int fallback = -1;
+            int drawn = game.view(d.getSeat()).seats().get(d.getSeat()).drawn();
+            for (int i = 0; i < d.getActions().size(); i++) {
+                var a = d.getActions().get(i);
+                if (a.getType() == TaiwanAction.Type.PASS) { fallback = i; break; }
+                if (a.getType() == TaiwanAction.Type.DISCARD) {
+                    if (fallback < 0) fallback = i;
+                    if (a.getTiles().get(0) == drawn) { fallback = i; break; }
+                }
+            }
+            if (fallback >= 0) apply(d.getSeat(),token,fallback);
+        }
+    }
+
+    public State save() { return new State(State.FORMAT,saveRoom(),rules,stock,control,clocks,age,confirmed,futureSeed,completed,game == null ? null : game.save()); }
+    public static TaiwanSession restore(State state) {
+        var session = new TaiwanSession(state.room().tableId(),state.room().seed(),state.rules().restore());
+        session.restoreRoom(state.room()); session.stock = state.stock(); session.control = state.control();
+        session.clocks.addAll(state.clocks()); session.age = state.age(); session.confirmed = state.confirmed(); session.futureSeed = state.futureSeed();
+        int rotations = 0; int dealer = 0; int continuation = 0;
+        for (var saved : state.completed()) {
+            validatePosition(saved,state.rules(),dealer,Tile.EAST+rotations/4,continuation);
+            var restored = TaiwanGame.restore(saved);
+            if (restored.getPhase() != TaiwanGame.Phase.FINISHED || rotations >= 16) throw new IllegalArgumentException("Invalid completed Taiwan hand");
+            var result = restored.getSettlement();
+            if (result.getNextDealer() != dealer) rotations++;
+            dealer = result.getNextDealer(); continuation = result.getNextContinuation();
+            session.completed.add(saved);
+        }
+        if (state.game() != null) {
+            if (rotations >= 16) throw new IllegalArgumentException("Taiwan match already ended");
+            validatePosition(state.game(),state.rules(),dealer,Tile.EAST+rotations/4,continuation);
+            session.game = TaiwanGame.restore(state.game());
+            if (state.futureSeed() != state.room().seed() + SEED_STEP*(state.completed().size()+1L)
+                || (state.room().lifecycle() == Lifecycle.FINISHED) != session.matchEnded()) throw new IllegalArgumentException("Invalid Taiwan match chain");
+            validateRoster(session.participants()); session.scores();
+        }
+        return session;
+    }
+    private static void validatePosition(TaiwanGameState state, TaiwanGameState.Rules rules, int dealer, int wind, int continuation) {
+        if (!state.rules().equals(rules) || state.opening().dealer() != dealer || state.roundWind() != wind || state.continuation() != continuation)
+            throw new IllegalArgumentException("Invalid Taiwan dealer/round chain");
+    }
+    private static void validateRoster(List<TableParticipant> roster) {
+        if (roster.size() != 4 || roster.stream().anyMatch(p -> p.id() == null || p.bot() || p.entityBot() || p.externalBotId() != null)
+            || roster.stream().map(TableParticipant::id).distinct().count() != 4) throw new IllegalArgumentException("Taiwan requires four human participants");
+    }
+    public record State(int format, TableSession.State room, TaiwanGameState.Rules rules, List<Integer> stock,
+                        TimeControl control, List<TimeControl.Clock> clocks, int age, int confirmed, long futureSeed,
+                        List<TaiwanGameState> completed, TaiwanGameState game) {
+        public static final int FORMAT = 1;
+        public State {
+            Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(control);
+            stock = List.copyOf(stock); clocks = List.copyOf(clocks); completed = List.copyOf(completed);
+            if (format != FORMAT || room.variant() != null || room.capacity() != 4 || room.manual()
+                || (room.lifecycle() == Lifecycle.LOBBY) != (game == null) || age < 0 || age > 14_400
+                || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != TaiwanGame.Phase.FINISHED || room.lifecycle() != Lifecycle.PLAYING)
+                || clocks.size() != (game == null ? 0 : 4) || game == null && (!completed.isEmpty() || age != 0 || futureSeed != 0)
+                || game != null && (!validStock(stock,rules) || game.phase() == TaiwanGame.Phase.FINISHED && age >= READING_TICKS)
+                || clocks.stream().anyMatch(c -> c.active() || c.moveTicks() < 0 || c.reserveTicks() < 0 || c.moveTicks() > control.moveSeconds()*20 || c.reserveTicks() > control.reserveSeconds()*20))
+                throw new IllegalArgumentException("Invalid Taiwan session state");
+        }
+    }
+    /** Independent room projection, including lobby settings, with no registered variant payload. */
+    public View view(UUID recipient) {
+        int seat = lobby() ? seatOf(recipient) : viewerSeat(recipient);
+        boolean stopped = paused() || exitVote != null;
+        TimeControl.Clock visible = null;
+        if (game != null && seat >= 0) { var c = clocks.get(seat); visible = new TimeControl.Clock(c.moveTicks(),c.reserveTicks(),active(seat)); }
+        return new View(tableId,incarnation,revision,decision,lifecycle,seat,host(),participants(),seated(),rules,control,equipped(),stopped,
+            seat < 0 ? List.of() : roomActions(recipient),exitVote,leaveDecision(recipient),confirmed,age,
+            visible,completed.size()+1,scores(),game == null ? null : game.view(seat,!stopped));
+    }
+    public record View(UUID tableId, UUID incarnation, long revision, long roomDecision, Lifecycle lifecycle, int recipient, int host,
+                       List<TableParticipant> participants, int seated, TaiwanGameState.Rules rules, TimeControl control,
+                       boolean equipped, boolean paused, List<RoomAction> roomActions, ExitVote exitVote, boolean leaveDecision,
+                       int confirmed, int age, TimeControl.Clock clock, int handNumber, List<Long> scores, TaiwanView game) {
+        public View {
+            Objects.requireNonNull(tableId); Objects.requireNonNull(incarnation); Objects.requireNonNull(lifecycle);
+            Objects.requireNonNull(rules); Objects.requireNonNull(control);
+            participants = List.copyOf(participants); roomActions = List.copyOf(roomActions); scores = List.copyOf(scores);
+            if (revision < 1 || roomDecision < 1 || recipient < -1 || recipient > 3 || host < -1 || host > 3 || participants.size() != 4
+                || seated < 0 || seated > 15 || confirmed < 0 || confirmed >= 15 || age < 0 || age > 14_400 || handNumber < 1
+                || scores.size() != 4 || scores.stream().mapToLong(Long::longValue).sum() != 0
+                || (lifecycle == Lifecycle.LOBBY) != (game == null) || (clock != null) != (game != null && recipient >= 0)
+                || recipient < 0 && !roomActions.isEmpty()
+                || game != null && (game.recipient() != recipient || !game.rules().equals(rules) || paused && !game.actions().isEmpty())
+                || clock != null && (clock.moveTicks() < 0 || clock.reserveTicks() < 0 || clock.moveTicks() > control.moveSeconds()*20 || clock.reserveTicks() > control.reserveSeconds()*20 || paused && clock.active()))
+                throw new IllegalArgumentException("Invalid Taiwan session view");
+        }
+    }
+}

@@ -2,7 +2,8 @@
 
 This is the requested integration design, not a claim of playable Minecraft
 support. Implemented now: independent library, structure/analysis, two documented
-scoring profiles, the analysis adapter and a deterministic engine-only single hand. The
+scoring profiles, the analysis adapter, deterministic hands, strict persistence,
+recipient projections and an independent four-human match session. The
 existing playable variants remain Riichi, MCR and Sichuan.
 
 ## Ownership
@@ -28,7 +29,7 @@ Taipei label because the selected source does not substantiate that geography.
 `SOUTHERN_COMMON` is explicitly a composed common preset. Taichung has no preset
 until independent, adequate evidence supports its choices.
 
-## Selected single-hand contract
+## Selected runtime contract
 
 Checked 2026-10-04. This is a **project composition**, not a reproduction of any
 one publisher's game or an official regional standard. P and S below are the
@@ -41,6 +42,7 @@ scoring ledger's sources. F and W supply independently selected match semantics.
 | P: [口袋 rules](https://pocket.funclub.com.tw/rule) | Hand awards, compulsory flower victories, lone-flower payer, dealer one tai and two tai per repeat. |
 | S: [EASTKING differences](https://www.eastking.com.tw/blog/posts/mahjong-south-north-differences) | Southern composition omits flowers and dealer tai and caps the hand at four tai before continuation. |
 | D: [NTUNHS repository, teaching appendix p. 70](https://irlib.ntunhs.edu.tw/retrieve/573/101NTCN0687006-001.pdf) | Indexed appendix describes three dice, four packet rounds and dealer's extra tile. Teaching material, not an official competition standard; direct PDF fetch timed out during this audit. |
+| M: [戲谷 terminology](https://www.mjonline.com.tw/content/mj/rules_04.html) | Four successive winds form one full match; dealer wins and exhaustion retain the dealer. Concealed kongs remain covered. |
 
 F's kong eligibility is selected instead of W's predecessor/open-kong-win
 restrictions. W's additional chi/pong pass and discard restrictions are not part
@@ -58,13 +60,33 @@ The cut opens that dealer's wall, **not** a second dice-selected wall. The stock
 contains four right-to-left walls, upper/lower tile per stack; seats advance
 counterclockwise. Skip the dice sum of stacks; deal four-tile packets four times,
 then dealer takes one. Initial replacements cycle dealer-first, deferring new
-flowers to the next round. The linear index wraps when a 136-tile wall has only seventeen
-stacks. That overflow convention is a project decision pending a stronger source.
+flowers to the next round.
+
+`TaiwanWallLayout` freezes the current preset's physical contract for both stocks.
+Side numbers are the engine's seat numbers `0..3`; each side has eighteen stacks
+with flowers, seventeen without. Columns count from that side's right edge;
+`slot = side * (stockSize / 4) + 2 * column + layer`, with upper `0`, lower `1`.
+The cut is `(dealer * (stockSize / 4) + 2 * diceSum) mod stockSize`.
+Ordinary traversal starts at the cut and increments slots modulo the stock size:
+upper before lower, then the next column, then the next numbered side. Tail
+replacement is its exact reverse, starting immediately before the cut: lower
+before upper, then the preceding column/side. Reserve permission applies to both.
+These numbered-side traversal and tail-layer choices are explicit project rules;
+consumers must use the layout rather than infer a different compass traversal.
+
+In 136 mode a sum of seventeen skips the whole dealer wall; eighteen also skips
+the next side's first stack. For dealer three those cuts are slot zero and slot
+two respectively. The 2026-10-04 source audit found no stronger primary Taiwan
+specification for this no-flower overflow or tail-layer order. They are now final
+rules of these composed presets, with no provisional interpretation or alternate
+fallback. F supports starting after the counted stacks and replacing from the
+tail; it does not establish the entire physical indexing contract above.
 
 `Tile.standard144Set()` supplies 136 ordinary identities plus eight flowers.
 `Flowers.NONE` selects 136 undecorated ordinary tiles. All physical IDs must occur
-exactly once. `TaiwanWall` rotates at the cut, draws from the front and replaces
-from the tail. Reserve remains inaccessible for both ordinary and replacement
+exactly once. `TaiwanWall` retains identities in fixed slots until taken, then
+marks those slots absent. Front/tail cursors count takes in the layout's two
+traversals; identities never rotate in storage. Reserve remains inaccessible for both ordinary and replacement
 draws: default sixteen plus one per completed kong. A kong is offered only if its increased reserve still leaves a replacement;
 a final flower without a legal replacement ends the hand in exhaustion. These
 end-of-wall details are explicit deterministic interpretations of F's reserve,
@@ -130,13 +152,88 @@ P identifies payers but does not specify the ambiguous combined case. The immuta
 settlement retains both raw scores, per-payer hand/dealer tai and balanced deltas.
 Arithmetic and configuration bounds prevent payment overflow.
 
+## Match lifecycle
+
+The first session plays **one full match: East, South, West, North, four dealer
+positions per wind**. M explicitly defines four winds per match; F defines a
+circle by all four players taking the dealer role. A dealer position is completed
+only when a nondealer wins. Dealer wins and exhaustive draws increment
+continuation and retain that position, including the last North dealer. Every
+four completed dealer positions advances the round wind; the sixteenth ends the
+match. There is no time-limit, bankruptcy, automatic winner-stop or repeat cap.
+The unlimited final repeat is the project's composition of those succession
+clauses, rather than a claim that every publisher uses the same stop rule.
+Match length is fixed here, so no speculative match-length options are added to
+`TaiwanRules`. Seat zero starts as dealer; initial seating belongs to the host.
+
+`TaiwanSession` extends `TableSession` and owns rules, the complete undecorated
+136/144 stock, independent `TimeControl` allowances, one current game and completed
+hand proofs. Each new hand uses the saved future seed, the settlement's next
+dealer/continuation and the derived round wind. Scores start at zero and are the
+exact sum of completed `TaiwanSettlement.deltas` plus the current settlement,
+with checked arithmetic. Advancing or restoring never pays a hand twice.
+Completed proofs are private terminal game states for validating the dealer,
+score and rule chain; they contain no event timeline or replay API.
+
+Four human participants use the existing identity/mount authority. No human
+seated, or an active exit vote, pauses decisions, allowances and result reading.
+Pending responders spend their independent move allowance then reserve; timeout
+passes a reaction or discards the legal drawn tile, otherwise the first discard.
+Each hand replenishes reserves. A result remains until all four humans acknowledge
+or 200 active ticks pass. Partial acknowledgements and the remaining reading time
+survive saves. The final result is terminal and does not accept next-hand requests.
+
+## Persistence and privacy
+
+`TaiwanGameState` format **1** is the only accepted private game format. It saves
+the complete rules/opening, round/continuation, phase/turn, fixed wall slots and
+front/tail/kong counts, physical player zones, ready/passing state, discard/call/
+draw chronology, drawn tile and origin, pre-turn wait/reset provenance, pending
+discard or added kong, submitted responses and terminal settlement provenance.
+Legal decisions are rebuilt, never serialized. Restore checks stock conservation,
+structural hand sizes, meld source seats/called tiles, wall occupancy/cursors,
+replacement counts, ready restrictions and pending transactions. Submitted choices
+must still match rebuilt actions; duplicate or complete pending response windows
+are rejected. Terminal scores and payments are recomputed and compared with the
+saved result. Decision/revision authority refreshes on restore; session hand
+boundaries also advance decision tokens.
+
+`TaiwanSession.State` format **1** independently saves the common room, rules,
+stock, future seed, completed proofs, current game, clock reserves, decision age
+and confirmations. Restore validates the entire dealer/wind/continuation chain
+and scores before returning a session, creates a fresh incarnation, and requires
+live presence to be observed again. `TaiwanCodec` separates private game/session
+saves from recipient view documents, rejects malformed data without replacement
+games, bounds game/view documents to 65,536 characters and session saves to 8 MiB,
+and limits nesting to sixteen. All fields, including nullable fields, are required;
+duplicates, unknown keys, invalid enum/map keys and incorrectly typed or out-of-range
+integers/booleans are rejected.
+
+`TaiwanView` is a separate immutable model. A recipient sees their complete hand,
+draw identity, legal actions, passing restriction and own submitted-response flag.
+Other concealed hands have only a count. Spectators (`-1`) receive no private
+actions, response flag, passing restriction or clock. Flowers, physical rivers,
+ready declarations and exposed melds are public. M's covered concealed-kong
+semantics use four hidden identities for every other recipient, including after
+completion. Declaring an added kong publicly offers that fourth tile during
+robbery; this declared tile is a public focus, while response choices remain
+private. Every wall slot carries only hidden/absent occupancy, even after the hand.
+Completion publishes awards and payments, with no private decomposition or
+automatic reveal of any opponent's hand. The selected rules do not require all
+hands to be exposed. Session views expose only the recipient's clock, so clock
+activation cannot reveal another player's submitted reaction.
+
 ## Acceptance boundary
 
 The engine can run a full single hand from a physical permutation or seed, expose
-legal decisions, and return a settlement. Player snapshots contain all information
-and must not be sent to clients. No `TaiwanSession`, recipient `TaiwanView`, save,
-replay, bot, network, UI or loader integration exists. `MahjongVariant.TAIWAN` is
-not registered. Library tests establish scoring semantics; engine tests establish
+legal decisions, persist/restore and return a settlement. The independent session
+can complete four winds with restored scores and private views. Player inspection
+snapshots and saves contain all information and must never be sent as views.
+`TaiwanSession` has no built-in variant identity (`variant()` returns null), owns
+its independent room projection, and is reachable only through its engine entry
+and `TaiwanCodec`; the built-in table codec rejects it. `MahjongVariant.TAIWAN`
+is not registered. No Minecraft UI/network, Bot or Replay integration is added.
+Library tests establish scoring semantics; engine tests establish
 this explicit composition, not unknown regional rules or Minecraft runtime play.
 
 See [Verification](VERIFICATION.md#taiwan-hand-library) for focused commands.

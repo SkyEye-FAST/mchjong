@@ -6,7 +6,9 @@ class TaiwanSettlement internal constructor(
     val flowerScore: TaiwanHandAnalyzer.FlowerScore?, transfers: List<Transfer>,
     val nextDealer: Int, val nextContinuation: Int,
 ) {
-    data class Transfer(val from: Int, val to: Int, val base: Long, val handTai: Int, val dealerTai: Int, val amount: Long)
+    @JvmRecord data class Transfer(val from: Int, val to: Int, val base: Long, val handTai: Int, val dealerTai: Int, val amount: Long) {
+        init { require(from in 0..3 && to in 0..3 && from != to && base in 0..1_000_000 && handTai in 0..1_000_000 && dealerTai >= 0 && amount >= base) }
+    }
     val transfers: List<Transfer> = java.util.List.copyOf(transfers)
     val deltas: List<Long> = java.util.List.copyOf(List(4) { seat ->
         transfers.sumOf { if (it.to == seat) it.amount else if (it.from == seat) -it.amount else 0L }

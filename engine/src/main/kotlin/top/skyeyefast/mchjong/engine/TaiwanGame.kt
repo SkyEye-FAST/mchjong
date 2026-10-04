@@ -3,13 +3,17 @@ package top.skyeyefast.mchjong.engine
 import top.skyeyefast.mchjong.engine.TaiwanAction.Type
 
 /** Independent deterministic single-hand engine. Only issued decisions can mutate play. */
-class TaiwanGame(
+class TaiwanGame private constructor(
     val rules: TaiwanRules,
     val opening: TaiwanOpening,
     stock: List<Int>,
-    val roundWind: Int = Tile.EAST,
-    val continuation: Int = 0,
+    val roundWind: Int,
+    val continuation: Int,
+    restoredWall: TaiwanWall?,
+    deal: Boolean,
 ) {
+    constructor(rules: TaiwanRules, opening: TaiwanOpening, stock: List<Int>, roundWind: Int = Tile.EAST, continuation: Int = 0) :
+        this(rules, opening, stock, roundWind, continuation, null, true)
     enum class Phase { TURN, REACTION, FINISHED }
     private class Player {
         val hand = mutableListOf<Int>()
@@ -22,8 +26,8 @@ class TaiwanGame(
     }
     private data class Offered(val seat: Int, val tile: Int, val addedMeld: Int? = null)
     private val players = List(4) { Player() }
-    val wall = TaiwanWall(stock, opening, rules)
-    private val stockIds = stock.toSet()
+    val wall = restoredWall ?: TaiwanWall(stock, opening, rules)
+    private val stockIds = TaiwanWall.expected(rules).toSet()
     var phase = Phase.TURN
         private set
     var turn: Int = opening.dealer
@@ -31,28 +35,35 @@ class TaiwanGame(
     var settlement: TaiwanSettlement? = null
         private set
     private var token = 0L
+    var revision = 1L
+        private set
+    val decision: Long get() = token
     private var issued = emptyList<TaiwanDecision>()
     private val responses = mutableMapOf<Int, TaiwanAction>()
     private var offered: Offered? = null
     private var drawn = Tile.ABSENT
+    private var turnDrawn = Tile.ABSENT
     private var origin = TaiwanWinContext.DrawOrigin.ORDINARY
     private var turnWaits = emptySet<Int>()
     private var calls = 0
     private var draws = 0
+    private var outcome: TaiwanGameState.Outcome? = null
 
     init {
         require(roundWind in Tile.EAST..Tile.NORTH && continuation in 0..1_000_000)
-        repeat(4) {
-            repeat(4) { offset -> repeat(4) { players[seat(offset)].hand += checkNotNull(wall.draw()) } }
+        if (deal) {
+            repeat(4) {
+                repeat(4) { offset -> repeat(4) { players[seat(offset)].hand += checkNotNull(wall.draw()) } }
+            }
+            drawn = checkNotNull(wall.draw())
+            players[turn].hand += drawn
+            initialFlowers()
+            if (settlement == null) {
+                turnWaits = waitsWithoutDraw(turn)
+                publishTurn()
+            }
+            checkConservation()
         }
-        drawn = checkNotNull(wall.draw())
-        players[turn].hand += drawn
-        initialFlowers()
-        if (settlement == null) {
-            turnWaits = waitsWithoutDraw(turn)
-            publishTurn()
-        }
-        checkConservation()
     }
 
     private fun seat(offset: Int) = (opening.dealer + offset) % 4
@@ -72,6 +83,7 @@ class TaiwanGame(
             responses[seat] = action
             if (responses.size == issued.size) resolve()
         } else takeTurn(action)
+        revision = Math.addExact(revision, 1)
         checkConservation()
     }
 
@@ -137,6 +149,7 @@ class TaiwanGame(
     private fun waitsWithoutDraw(s: Int): Set<Int> = TaiwanHandAnalyzer.waits(players[s].hand - drawn, players[s].melds, s)
 
     private fun publishTurn() {
+        turnDrawn = drawn
         phase = Phase.TURN
         offered = null
         responses.clear()
@@ -262,6 +275,7 @@ class TaiwanGame(
             p.melds += Meld(type, action.tiles + offer.tile, offer.seat, offer.tile)
             calls++
             drawn = Tile.ABSENT
+            origin = TaiwanWinContext.DrawOrigin.ORDINARY
             if (action.type == Type.OPEN_KONG) {
                 wall.completeKong()
                 drawReplacement(TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT)
@@ -282,6 +296,7 @@ class TaiwanGame(
 
     private fun draw(first: Int?, drawOrigin: TaiwanWinContext.DrawOrigin) {
         val p = players[turn]
+        drawn = Tile.ABSENT
         var tile = first
         origin = drawOrigin
         while (tile != null && Tile.isFlower(tile)) {
@@ -290,7 +305,7 @@ class TaiwanGame(
             if (robber != null && rules.values.getValue(TaiwanRules.Pattern.SEVEN_ROBS_ONE) > 0) {
                 val special = checkNotNull(TaiwanHandAnalyzer.flowerWin(players[robber].hand, players[robber].melds, robber,
                     Tile.ABSENT, context(robber, TaiwanWinContext.Method.SELF_DRAW), TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER, rules))
-                finish(robber, turn, null, special, turn)
+                finish(robber, turn, null, special, turn, TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER)
                 return
             }
             origin = TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT
@@ -323,12 +338,21 @@ class TaiwanGame(
             TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT, c.lastTile, c.opening, c.ready)
         val special = checkNotNull(TaiwanHandAnalyzer.flowerWin(if (initialSixteen) p.hand else p.hand - winning,
             p.melds, s, winning, flowerContext, event, rules))
-        finish(s, if (eight) null else other, special.handScore, special, if (eight) null else other)
+        finish(s, if (eight) null else other, special.handScore, special, if (eight) null else other, event)
         return true
     }
 
     private fun finish(winner: Int?, supplier: Int?, score: TaiwanHandAnalyzer.Score?,
-                       flowers: TaiwanHandAnalyzer.FlowerScore? = null, flowerPayer: Int? = null) {
+                       flowers: TaiwanHandAnalyzer.FlowerScore? = null, flowerPayer: Int? = null,
+                       flowerEvent: TaiwanHandAnalyzer.FlowerEvent? = null) {
+        token = Math.addExact(token, 1)
+        val method = if (flowers != null || supplier == null) TaiwanWinContext.Method.SELF_DRAW else
+            if (offered?.addedMeld != null) TaiwanWinContext.Method.ROBBING_KONG else TaiwanWinContext.Method.DISCARD
+        val tile = if (winner == null || flowerEvent in setOf(TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER,
+            TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT, TaiwanHandAnalyzer.FlowerEvent.SEVEN_AFTER_INITIAL_REPLACEMENT)) Tile.ABSENT
+            else if (method == TaiwanWinContext.Method.SELF_DRAW) drawn else checkNotNull(offered).tile
+        outcome = TaiwanGameState.Outcome(winner, supplier, tile, method, flowerEvent, flowerPayer,
+            if (flowers == null && supplier != null) offered?.let { TaiwanGameState.Offer(it.seat, it.tile, it.addedMeld) } else null)
         val transfers = mutableListOf<TaiwanSettlement.Transfer>()
         if (winner != null) {
             val ordinaryTai = if (flowers == null) score?.tai ?: 0 else minOf(score?.rawTai ?: 0, maxOf(0, flowers.tai - minOf(flowers.award.tai, flowers.tai)))
@@ -350,9 +374,70 @@ class TaiwanGame(
         issued = emptyList()
         responses.clear()
         offered = null
+        if (drawn !in players[turn].hand) drawn = Tile.ABSENT
+    }
+
+    fun save(): TaiwanGameState = TaiwanGameState(TaiwanGameState.FORMAT, TaiwanGameState.Rules.of(rules),
+        TaiwanGameState.Opening(opening.dealer, opening.dice), roundWind, continuation, revision, token, phase, turn,
+        wall.save(), players.map { TaiwanGameState.Player(it.hand, it.melds, it.flowers, it.river, it.ready, it.passed, it.discards) },
+        drawn, turnDrawn, origin, turnWaits, calls, draws, offered?.let { TaiwanGameState.Offer(it.seat, it.tile, it.addedMeld) },
+        responses.map { TaiwanGameState.Reply(it.key, TaiwanGameState.Action.of(it.value)) }, outcome, TaiwanGameState.Result.of(settlement))
+
+    fun view(recipient: Int): TaiwanView = view(recipient, true)
+    fun view(recipient: Int, allowActions: Boolean): TaiwanView {
+        require(recipient in -1..3)
+        return TaiwanView(revision, token, TaiwanGameState.Rules.of(rules), TaiwanGameState.Opening(opening.dealer, opening.dice),
+            roundWind, continuation, phase, turn, recipient, wall.drawable, wall.reserve,
+            wall.physicalSlots().map { if (it == Tile.ABSENT) it else Tile.HIDDEN },
+            players.mapIndexed { s, p -> TaiwanView.Seat(p.hand.size, if (s == recipient) p.hand.sortedWith(Tile.ORDER) else emptyList(),
+                if (s == recipient) drawn.takeIf { s == turn && it in p.hand } ?: Tile.ABSENT else Tile.ABSENT,
+                p.melds.map { if (it.closed() && s != recipient) Meld(it.type(), List(4) { Tile.HIDDEN }, s, Tile.ABSENT) else it },
+                p.flowers, p.river, p.ready) },
+            offered?.let { TaiwanView.Focus(it.seat, it.tile, it.addedMeld != null) },
+            if (allowActions) decisions().singleOrNull { it.seat == recipient }?.actions?.map(TaiwanGameState.Action::of).orEmpty() else emptyList(),
+            recipient in responses, if (recipient >= 0) players[recipient].passed else null, TaiwanView.Result.of(settlement))
     }
 
     companion object {
+        @JvmStatic fun restore(state: TaiwanGameState): TaiwanGame {
+            val rules = state.rules().restore()
+            val opening = state.opening().restore()
+            val game = TaiwanGame(rules, opening, emptyList(), state.roundWind(), state.continuation(),
+                TaiwanWall.restore(state.wall(), opening, rules), false)
+            game.phase = state.phase()
+            game.turn = state.turn()
+            game.token = state.decision()
+            game.revision = state.revision()
+            game.drawn = state.drawn()
+            game.turnDrawn = state.turnDrawn()
+            game.origin = state.origin()
+            game.turnWaits = state.turnWaits()
+            game.calls = state.calls()
+            game.draws = state.draws()
+            for ((seat, saved) in state.players().withIndex()) {
+                val p = game.players[seat]
+                p.hand += saved.hand(); p.melds += saved.melds(); p.flowers += saved.flowers(); p.river += saved.river()
+                p.ready = saved.ready(); p.passed = saved.passed(); p.discards = saved.discards()
+            }
+            game.offered = state.offer()?.let { Offered(it.seat(), it.tile(), it.addedMeld()) }
+            game.outcome = state.outcome()
+            game.validateRestored(state)
+            // Rebuild every action from the position. A response stores a choice, never an action cache.
+            if (game.phase == Phase.TURN) game.publishTurn()
+            else if (game.phase == Phase.REACTION) {
+                game.react(checkNotNull(game.offered))
+                for (reply in state.replies()) {
+                    require(reply.seat() !in game.responses)
+                    val action = game.issued.singleOrNull { it.seat == reply.seat() }?.actions
+                        ?.singleOrNull { TaiwanGameState.Action.of(it) == reply.action() }
+                    require(action != null) { "Saved response is no longer legal" }
+                    game.responses[reply.seat()] = action
+                }
+            } else game.token = Math.addExact(game.token, 1)
+            game.revision = Math.addExact(game.revision, 1)
+            game.checkConservation()
+            return game
+        }
         @JvmStatic fun shuffled(seed: Long, rules: TaiwanRules = TaiwanPreset.POCKET_COMMON.rules(), dealer: Int = 0,
                                 roundWind: Int = Tile.EAST, continuation: Int = 0): TaiwanGame {
             val random = java.util.Random(seed)
@@ -360,5 +445,136 @@ class TaiwanGame(
             java.util.Collections.shuffle(stock, random)
             return TaiwanGame(rules, TaiwanOpening(dealer, List(3) { random.nextInt(6) + 1 }), stock, roundWind, continuation)
         }
+    }
+
+    private fun validateRestored(state: TaiwanGameState) {
+        require(turnDrawn == Tile.ABSENT || turnDrawn in 0..135)
+        require((phase == Phase.REACTION) == (offered != null))
+        require(phase == Phase.REACTION || state.replies().isEmpty())
+        require((phase == Phase.FINISHED) == (state.settlement() != null && outcome != null))
+        require(phase == Phase.FINISHED || state.settlement() == null && outcome == null)
+        val all = wall.remaining() + players.flatMap { it.hand + it.melds.flatMap(Meld::tiles) + it.flowers.map(FlowerTile::id) + it.river }
+        require(all.size == stockIds.size && all.toSet() == stockIds) { "Invalid physical stock" }
+        require(wall.kongs == players.sumOf { p -> p.melds.count { it.quad() } })
+        require(calls == players.sumOf { p -> p.melds.size + p.melds.count { it.type() == Meld.Type.ADDED_QUAD } })
+        val terminal = outcome
+        val initialFlower = terminal?.flowerEvent() in setOf(TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT,
+            TaiwanHandAnalyzer.FlowerEvent.SEVEN_AFTER_INITIAL_REPLACEMENT)
+        val tailTakes = players.sumOf { it.flowers.size } + wall.kongs
+        val missingReplacement = terminal?.flowerEvent() == TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER ||
+            phase == Phase.FINISHED && terminal?.winner() == null && state.wall().tail() == tailTakes - 1
+        require(state.wall().tail() == tailTakes - if (missingReplacement) 1 else 0)
+        require(origin != TaiwanWinContext.DrawOrigin.KONG_REPLACEMENT || players[turn].melds.any { it.quad() })
+        require(origin != TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT || players[turn].flowers.isNotEmpty())
+        for ((seat, p) in players.withIndex()) {
+            val expected = if (phase != Phase.FINISHED) {
+                if (phase == Phase.TURN && seat == turn || offered?.addedMeld != null && seat == turn) 17 else 16
+            } else when {
+                initialFlower -> if (seat == opening.dealer) 17 else 16
+                terminal?.winner() == seat && terminal.tile() != Tile.ABSENT -> 17
+                else -> 16
+            }
+            require(p.hand.size + p.melds.size * 3 == expected)
+            require(p.hand.all { it in 0..135 } && p.river.all { it in 0..135 })
+            // The adapter remains the single owner of meld structure/provenance validation.
+            val base = if (expected == 17) p.hand.dropLast(1) else p.hand
+            TaiwanHandAnalyzer.waits(base, p.melds, seat)
+            require(p.ready != TaiwanWinContext.Ready.HEAVENLY || seat == opening.dealer)
+            require(p.ready != TaiwanWinContext.Ready.EARTHLY || seat != opening.dealer)
+            require(p.ready == TaiwanWinContext.Ready.NONE || p.discards > 0)
+            if (p.ready != TaiwanWinContext.Ready.NONE && phase != Phase.FINISHED) {
+                val readyBase = if (expected == 17) p.hand - drawn else p.hand
+                require(TaiwanHandAnalyzer.waits(readyBase, p.melds, seat).isNotEmpty())
+            }
+            val claims = players.sumOf { other -> other.melds.count { !it.closed() && it.fromSeat() == seat } }
+            val ron = if (terminal?.flowerEvent() == null && terminal?.supplier() == seat && terminal.method() == TaiwanWinContext.Method.DISCARD) 1 else 0
+            require(p.discards == p.river.size + claims + ron) { "Invalid discard chronology" }
+        }
+        require(state.wall().front() == 65 + draws || phase == Phase.FINISHED && terminal?.winner() == null && state.wall().front() == 64 + draws)
+        require(drawn == Tile.ABSENT || drawn in players[turn].hand)
+        offered?.let { offer ->
+            require(offer.seat == turn)
+            if (offer.addedMeld == null) {
+                require(drawn == Tile.ABSENT && players[turn].river.lastOrNull() == offer.tile)
+                val beforeDiscard = players[turn].hand + offer.tile
+                val base = if (turnDrawn != Tile.ABSENT) {
+                    require(turnDrawn in beforeDiscard)
+                    beforeDiscard - turnDrawn
+                } else {
+                    val last = players[turn].melds.lastOrNull()
+                    require(last != null && last.type() in setOf(Meld.Type.SEQUENCE, Meld.Type.TRIPLET))
+                    beforeDiscard + last.tiles().filter { it != last.calledTile() }
+                }
+                val melds = if (turnDrawn == Tile.ABSENT) players[turn].melds.dropLast(1) else players[turn].melds
+                require(turnWaits == TaiwanHandAnalyzer.waits(base, melds, turn))
+            } else {
+                require(offer.tile == drawn && players[turn].ready == TaiwanWinContext.Ready.NONE && wall.canKong())
+                val meld = players[turn].melds.getOrNull(offer.addedMeld)
+                require(meld?.type() == Meld.Type.TRIPLET && meld.kind() == Tile.kind(offer.tile))
+                require(turnDrawn == drawn && turnWaits == waitsWithoutDraw(turn))
+            }
+        }
+        if (phase == Phase.TURN) {
+            require(turnDrawn == drawn)
+            if (drawn != Tile.ABSENT) require(turnWaits == waitsWithoutDraw(turn))
+            else {
+                val p = players[turn]
+                val last = p.melds.lastOrNull()
+                require(last != null && last.type() in setOf(Meld.Type.SEQUENCE, Meld.Type.TRIPLET) && p.ready == TaiwanWinContext.Ready.NONE)
+                require(turnWaits == TaiwanHandAnalyzer.waits(p.hand + last.tiles().filter { it != last.calledTile() }, p.melds.dropLast(1), turn))
+            }
+        }
+        if (phase == Phase.FINISHED) restoreSettlement(checkNotNull(terminal), checkNotNull(state.settlement()))
+    }
+
+    /** Session hand boundaries keep request tokens increasing within one room incarnation. */
+    fun rebaseDecision(previous: Long) {
+        require(previous >= 0 && previous < Long.MAX_VALUE - 1)
+        token = Math.addExact(maxOf(token, previous), 1)
+        issued = issued.map { TaiwanDecision(token, it.seat, it.actions) }
+    }
+
+    private fun restoreSettlement(end: TaiwanGameState.Outcome, saved: TaiwanGameState.Result) {
+        if (end.winner() == null) {
+            require(wall.drawable == 0 && end.supplier() == null && end.tile() == Tile.ABSENT && end.flowerEvent() == null && end.flowerPayer() == null && end.winningOffer() == null)
+            finish(null, null, null)
+        } else {
+            val s = end.winner()
+            val p = players[s]
+            val event = end.flowerEvent()
+            if (event == null) {
+                require(!p.passed && end.flowerPayer() == null && end.tile() in p.hand)
+                if (end.method() == TaiwanWinContext.Method.SELF_DRAW) require(end.supplier() == null && end.winningOffer() == null && s == turn && end.tile() == drawn)
+                else {
+                    val offer = checkNotNull(end.winningOffer())
+                    require(offer.seat() == end.supplier() && offer.seat() == turn && offer.tile() == end.tile())
+                    require((end.method() == TaiwanWinContext.Method.ROBBING_KONG) == (offer.addedMeld() != null))
+                    if (offer.addedMeld() != null) {
+                        val meld = players[turn].melds.getOrNull(offer.addedMeld())
+                        require(meld?.type() == Meld.Type.TRIPLET && meld.kind() == Tile.kind(end.tile()))
+                        require(wall.canKong() && players[turn].ready == TaiwanWinContext.Ready.NONE && turnDrawn == end.tile())
+                    }
+                    offered = Offered(offer.seat(), offer.tile(), offer.addedMeld())
+                }
+                val score = checkNotNull(TaiwanHandAnalyzer.score(p.hand - end.tile(), p.melds, s, end.tile(), context(s, end.method()), rules))
+                finish(s, end.supplier(), score)
+            } else {
+                require(end.method() == TaiwanWinContext.Method.SELF_DRAW && end.winningOffer() == null)
+                val eight = event in setOf(TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_REPLACEMENT, TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT)
+                require(p.flowers.size == if (eight) 8 else 7)
+                val payer = if (eight) null else (0..3).single { it != s && players[it].flowers.size == 1 }
+                require(end.supplier() == payer && end.flowerPayer() == payer)
+                val initial = event in setOf(TaiwanHandAnalyzer.FlowerEvent.EIGHT_AFTER_INITIAL_REPLACEMENT, TaiwanHandAnalyzer.FlowerEvent.SEVEN_AFTER_INITIAL_REPLACEMENT)
+                if (initial) require(draws == 0 && calls == 0 && players.all { it.discards == 0 } && s != opening.dealer && end.tile() == Tile.ABSENT)
+                else if (event == TaiwanHandAnalyzer.FlowerEvent.SEVEN_ON_OPPONENT_FLOWER) require(end.tile() == Tile.ABSENT && payer == turn)
+                else require(end.tile() == drawn && s == turn && end.tile() in p.hand)
+                val c = context(s, TaiwanWinContext.Method.SELF_DRAW)
+                val fc = TaiwanWinContext(c.method, c.seatWind, c.roundWind, c.flowerNumber, c.flowers,
+                    TaiwanWinContext.DrawOrigin.FLOWER_REPLACEMENT, c.lastTile, c.opening, c.ready)
+                val flower = checkNotNull(TaiwanHandAnalyzer.flowerWin(p.hand - end.tile(), p.melds, s, end.tile(), fc, event, rules))
+                finish(s, payer, flower.handScore, flower, payer, event)
+            }
+        }
+        require(TaiwanGameState.Result.of(settlement) == saved && outcome == end) { "Settlement disagrees with position" }
     }
 }

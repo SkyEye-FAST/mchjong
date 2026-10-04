@@ -22,6 +22,7 @@ public final class TableSessionCodec {
     private TableSessionCodec() {}
 
     public static String save(TableSession session) {
+        if (session.variant() == null) throw new IllegalArgumentException("Unregistered runtimes use their independent codec");
         var envelope = new JsonObject();
         envelope.addProperty("format", FORMAT);
         envelope.addProperty("variant", session.variant().name());
