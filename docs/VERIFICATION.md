@@ -343,7 +343,7 @@ screenshot inventories, timings and experiment histories remain outside tracked 
 ## Taiwan hand library
 
 ```text
-gradlew.bat :taiwan-mahjong:test :engine:test --tests "*TaiwanHandAnalyzerTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
+gradlew.bat :taiwan-mahjong:check :engine:test --tests=top.skyeyefast.mchjong.engine.TaiwanHandAnalyzerTest --tests=top.skyeyefast.mchjong.engine.TaiwanGameTest :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
 ```
 
 The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
@@ -352,7 +352,26 @@ discard availability, source-qualified scoring/exclusions and flower victories.
 `TaiwanHandAnalyzerTest` owns physical identity/provenance, named flower mapping,
 public-copy deduplication and the library-free engine API. The MCR dependency is
 a test-only four-meld remainder oracle, not a Taiwan rules authority. `buildAll`
-includes the standalone library's `check`. No Taiwan client runtime is registered.
+includes the standalone library's `check`.
+
+`PatternRegressionTest` has a source-bearing positive witness for every pattern,
+plus exact exclusion sets, ron/self-draw concealment, competing decompositions
+and winning placements, cap tie-breaking and initial flower events. Existing
+scoring tests cover compound flower caps and custom flower/pinfu policies.
+
+`TaiwanGameTest` uses complete physical stock permutations, not mutable state
+fixtures. It exercises initial flower rounds, ordinary draw/discard, stale action
+rejection, chi/pong priority, nearest ron independent of response order, all three
+kong forms, robbery before committing an added kong, replacement self-draw,
+passing/reset, ready locking, flower payer routing, reserve policies and exhaustion.
+Seeded games finish with conserved stock and balanced transfers in both presets.
+These verify the source-composed contract in [Taiwan design](TAIWAN_DESIGN.md),
+including its explicitly identified house choices. Dice-count evidence is an
+indexed teaching appendix whose full PDF could not be fetched. Dice overflow, combined
+flower cap/base allocation and the exact non-winning-discard interpretation lack
+a single complete publisher specification. Eight-and-a-half pairs remains outside
+the selected profiles; the library ledger records the conflicting historical rules.
+No Taiwan session, network, UI or loader runtime is registered or validated.
 
 ## Bot checks
 

@@ -82,16 +82,19 @@ object TaiwanHandAnalyzer {
     class Score(val shape: Shape, val winningGroup: Int, awards: List<Award>, val rawTai: Int, val tai: Int) {
         val awards: List<Award> = java.util.List.copyOf(awards)
     }
-    enum class FlowerEvent { EIGHT_AFTER_REPLACEMENT, SEVEN_AFTER_REPLACEMENT, SEVEN_ON_OPPONENT_FLOWER }
+    enum class FlowerEvent {
+        EIGHT_AFTER_REPLACEMENT, SEVEN_AFTER_REPLACEMENT, SEVEN_ON_OPPONENT_FLOWER,
+        EIGHT_AFTER_INITIAL_REPLACEMENT, SEVEN_AFTER_INITIAL_REPLACEMENT
+    }
     class FlowerScore(val award: Award, val handScore: Score?, val rawTai: Int, val tai: Int)
 
-    /** Event provenance and the remaining flower's owner are established by the future game host. */
+    /** The game certifies event provenance, initial replacement completion and the other flower owner. */
     @JvmStatic
     fun flowerWin(concealed: List<Int>, melds: List<Meld>, owner: Int, replacementTile: Int,
                   context: TaiwanWinContext, event: FlowerEvent, rules: TaiwanRules): FlowerScore? {
         validate(concealed, melds, owner)
         val c = libraryContext(context)
-        val replacement = if (event == FlowerEvent.SEVEN_ON_OPPONENT_FLOWER) {
+        val replacement = if (event != FlowerEvent.EIGHT_AFTER_REPLACEMENT && event != FlowerEvent.SEVEN_AFTER_REPLACEMENT) {
             require(replacementTile == Tile.ABSENT)
             null
         } else {
@@ -187,6 +190,7 @@ object TaiwanHandAnalyzer {
                 entry.value.map { TaiwanRules.Pattern.valueOf(it.name) }.toSet()
             }, r.sources.mapKeys { TaiwanRules.Pattern.valueOf(it.key.name) }.mapValues { TaiwanRules.Source(it.value.url, it.value.clause) },
             TaiwanRules.Flowers.valueOf(r.flowers.name), TaiwanRules.FlowerSets.valueOf(r.flowerSets.name),
-            TaiwanRules.Pinfu.valueOf(r.pinfu.name), TaiwanRules.Replacements.valueOf(r.replacements.name), r.taiLimit)
+            TaiwanRules.Pinfu.valueOf(r.pinfu.name), TaiwanRules.Replacements.valueOf(r.replacements.name), r.taiLimit,
+            payment = TaiwanRules.Payment(dealerTai = if (preset == TaiwanPreset.SOUTHERN_COMMON) 0 else 1))
     }
 }
