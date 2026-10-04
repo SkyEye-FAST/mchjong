@@ -30,7 +30,7 @@ public record TaiwanGameState(int format, Rules rules, Opening opening, int roun
                         Integer taiLimit, TaiwanRules.Reserve reserve, TaiwanRules.Payment payment) {
         public Rules {
             values = Map.copyOf(values); sources = Map.copyOf(sources);
-            exclusions = exclusions.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> Set.copyOf(e.getValue())));
+            exclusions = exclusions.entrySet().stream().collect(java.util.stream.Collectors.toUnmodifiableMap(Map.Entry::getKey, e -> java.util.Collections.unmodifiableSet(e.getValue().stream().sorted().collect(java.util.stream.Collectors.toCollection(() -> new java.util.LinkedHashSet<TaiwanRules.Pattern>())))));
             Objects.requireNonNull(flowers); Objects.requireNonNull(flowerSets); Objects.requireNonNull(pinfu);
             Objects.requireNonNull(replacements); Objects.requireNonNull(reserve); Objects.requireNonNull(payment);
             new TaiwanRules(name,values,exclusions,sources,flowers,flowerSets,pinfu,replacements,taiLimit,reserve,payment);

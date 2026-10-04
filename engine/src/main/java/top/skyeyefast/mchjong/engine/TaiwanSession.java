@@ -7,7 +7,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Independent four-human engine entry point; deliberately absent from variant dispatch. */
+/** Four-human Taiwanese match in the shared room lifecycle. */
 public final class TaiwanSession extends TableSession {
     private static final long SEED_STEP = 0x9e3779b97f4a7c15L;
     private static final int READING_TICKS = 200;
@@ -22,7 +22,7 @@ public final class TaiwanSession extends TableSession {
     private int age;
 
     public TaiwanSession(UUID tableId, long seed, TaiwanRules rules) {
-        super(tableId, null, 4, seed);
+        super(tableId, MahjongVariant.TAIWAN, 4, seed);
         this.rules = TaiwanGameState.Rules.of(Objects.requireNonNull(rules));
     }
     public TaiwanSession(UUID tableId, long seed) { this(tableId,seed,TaiwanPreset.POCKET_COMMON.rules()); }
@@ -36,9 +36,15 @@ public final class TaiwanSession extends TableSession {
         if (!lobby() || exitVote != null || !isHost(actor)) return false;
         control = Objects.requireNonNull(value); resetReadiness(); changed(true); return true;
     }
+    public TaiwanRoomSettings roomSettings() { return new TaiwanRoomSettings(rules, control, worldPolicy.allowCustomRules()); }
+    public boolean configureRules(UUID actor, long token, TaiwanRules value) {
+        if (token != decision) return false;
+        return configureRules(actor, value);
+    }
     public boolean configureRules(UUID actor, TaiwanRules value) {
         if (!lobby() || exitVote != null || !isHost(actor)) return false;
         var proposed = TaiwanGameState.Rules.of(value);
+        if (!worldPolicy.allowCustomRules() && java.util.Arrays.stream(TaiwanPreset.values()).noneMatch(p -> TaiwanGameState.Rules.of(p.rules()).equals(proposed))) return false;
         if (proposed.equals(rules)) return false;
         rules = proposed; resetReadiness(); changed(true); return true;
     }
@@ -203,7 +209,7 @@ public final class TaiwanSession extends TableSession {
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(control);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks); completed = List.copyOf(completed);
-            if (format != FORMAT || room.variant() != null || room.capacity() != 4 || room.manual()
+            if (format != FORMAT || room.variant() != MahjongVariant.TAIWAN || room.capacity() != 4 || room.manual() || room.participants().stream().anyMatch(TableParticipant::bot)
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null) || age < 0 || age > 14_400
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != TaiwanGame.Phase.FINISHED || room.lifecycle() != Lifecycle.PLAYING)
                 || clocks.size() != (game == null ? 0 : 4) || game == null && (!completed.isEmpty() || age != 0 || futureSeed != 0)
@@ -212,7 +218,7 @@ public final class TaiwanSession extends TableSession {
                 throw new IllegalArgumentException("Invalid Taiwan session state");
         }
     }
-    /** Independent room projection, including lobby settings, with no registered variant payload. */
+    /** Recipient-safe match projection; common preparation uses TableRoomView. */
     public View view(UUID recipient) {
         int seat = lobby() ? seatOf(recipient) : viewerSeat(recipient);
         boolean stopped = paused() || exitVote != null;

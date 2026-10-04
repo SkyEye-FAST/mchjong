@@ -28,14 +28,13 @@ class TaiwanSessionTest {
         assertTrue(index>=0,"Missing $type/$kind")
         assertTrue(session.act(roster[seat].id(),session.tableId(),session.incarnation(),v.decision(),index))
     }
-    @Test fun humanRoomUsesBothStocksAndItsOwnCodecWithoutVariantDispatch() {
+    @Test fun humanRoomUsesBothStocksAndRegisteredVariantDispatch() {
         for (preset in TaiwanPreset.entries) {
             val rules=preset.rules(); val room=TaiwanSession(UUID.randomUUID(),24,rules)
             roster.forEachIndexed { seat,p -> assertTrue(room.join(p.id(),p.name(),seat)) }
             assertTrue(room.configureEquipment(false,TaiwanWall.expected(rules)))
-            assertNull(room.variant()); assertTrue(room.view(roster[0].id()).equipped())
-            assertThrows(IllegalArgumentException::class.java) { TableSessionCodec.save(room) }
-            val lobby=TaiwanCodec.restoreSession(TaiwanCodec.saveSession(room))
+            assertEquals(MahjongVariant.TAIWAN,room.variant()); assertTrue(room.view(roster[0].id()).equipped())
+            val lobby=(TableSessionCodec.restore(TableSessionCodec.save(room)) as TaiwanSession)
             mount(lobby)
             val actions=lobby.roomActions(roster[0].id())
             val begin=actions.indexOfFirst { it.type()==RoomAction.Type.BEGIN_SEATING }

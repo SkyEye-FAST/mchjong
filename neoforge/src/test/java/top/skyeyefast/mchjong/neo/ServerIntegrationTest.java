@@ -158,7 +158,7 @@ class ServerIntegrationTest {
             assertTrue(decoded.actions().isEmpty());
             assertTrue(decoded.seats().stream().flatMap(seat -> seat.hand().stream()).allMatch(tile -> tile == -1));
             assertFalse(payload.view().contains("\"seed\""));
-            var choice = new top.skyeyefast.mchjong.network.TableVariantPayload(request.pos(), request.tableId(), 17,
+            var choice = new top.skyeyefast.mchjong.network.TableVariantPayload(request.pos(), request.tableId(), UUID.randomUUID(), 17,
                 top.skyeyefast.mchjong.engine.MahjongVariant.MCR);
             top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.encode(buffer, choice);
             assertEquals(choice, top.skyeyefast.mchjong.network.TableVariantPayload.CODEC.decode(buffer));

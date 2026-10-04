@@ -45,6 +45,11 @@ final class TableAnimation implements TableDeal {
     static List<WorldTile> world(top.skyeyefast.mchjong.engine.SichuanView view) {
         return SichuanTableScene.build(view).stream().map(TableAnimation::world).toList();
     }
+    static List<WorldTile> world(top.skyeyefast.mchjong.engine.TaiwanView view) {
+        return TaiwanTableScene.build(view).stream().map(TableAnimation::world).toList();
+    }
+    private static WorldTile world(TaiwanTableScene.Piece p) { return new WorldTile(p.tile(), p.seat(), p.area().name(), p.index(), p.position(), p.yaw(), p.flat() ? p.back() ? 90 : -90 : 0, p.back()); }
+    Pose worldPose(TaiwanTableScene.Piece piece, long now) { return worldPose(world(piece), now); }
     private static WorldTile world(McrTableScene.Piece p) { return new WorldTile(p.tile(), p.seat(), p.area().name(), p.index(), p.position(), p.yaw(), p.flat() ? p.back() ? 90 : -90 : 0, p.back()); }
     private static WorldTile world(SichuanTableScene.Piece p) { return new WorldTile(p.tile(), p.seat(), p.area().name(), p.index(), p.position(), p.yaw(), p.flat() ? p.back() ? 90 : -90 : 0, p.back()); }
     Pose worldPose(McrTableScene.Piece piece, long now) { return worldPose(world(piece), now); }
@@ -74,7 +79,8 @@ final class TableAnimation implements TableDeal {
             long start = now, duration = 280; double arc = 0;
             if (newHand && tile.area().equals("HAND")) {
                 int offset = Math.floorMod(tile.seat() - next.dealer(), next.players());
-                int packet = tile.index() < 12 ? tile.index() / 4 * next.players() + offset : 3 * next.players() + offset;
+                int packets = next.seats().get(tile.seat()).variant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 4 : 3;
+                int packet = tile.index() < packets * 4 ? tile.index() / 4 * next.players() + offset : packets * next.players() + offset;
                 start += 480 + packet * 110L; duration = 300; arc = .16;
                 from = new Pose(top.skyeyefast.mchjong.world.TableGeometry.orient(.2, top.skyeyefast.mchjong.world.TableGeometry.FELT_Y, .76, tile.seat()), tile.yaw(), 90, Tile.HIDDEN, true);
             } else if (same && source == null && tile.area().equals("HAND") && !removedWalls.isEmpty()) {
@@ -110,8 +116,10 @@ final class TableAnimation implements TableDeal {
     @Override public double dealProgress(int seat, int index, long now) {
         if (!dealing(now)) return 1;
         int players = previous.players(), offset = Math.floorMod(seat - previous.dealer(), players);
-        int packet = index < 12 ? index / 4 * players + offset : index == 12 ? 3 * players + offset : 4 * players;
-        long start = dealStarted + 480 + packet * 110L + (index < 12 ? index % 4 * 12L : 0);
+        int packets = previous.seats().get(seat).variant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN ? 4 : 3;
+        int count = packets * 4;
+        int packet = index < count ? index / 4 * players + offset : index == count ? packets * players + offset : (packets + 1) * players;
+        long start = dealStarted + 480 + packet * 110L + (index < count ? index % 4 * 12L : 0);
         return Math.clamp((now - start) / 300.0, 0, 1);
     }
     private boolean discardActive(long now) { return TableSettings.get().animations && discard != null && now < discard.started() + ImmersiveMotion.duration(discard.tsumogiri()); }
@@ -126,7 +134,9 @@ final class TableAnimation implements TableDeal {
             var before = discard.before().seats().get(discard.seat());
             TableHand.Point source = null; int width = 30;
             if (discard.seat() == previous.viewerSeat()) {
-                var old = new TableHand(before.hand(), before.drawn(), before.melds(), discard.seat(), TableCanvas.WIDTH, handHeight, 58, true, before.variant());
+                var tiles = new java.util.ArrayList<>(before.hand());
+                if (before.drawn() >= 0 && tiles.remove(Integer.valueOf(before.drawn()))) tiles.add(before.drawn());
+                var old = new TableHand(tiles, before.drawn(), before.melds(), discard.seat(), TableCanvas.WIDTH, handHeight, 58, true, before.variant());
                 source = old.point(discard.tile()); width = old.tileWidth();
             }
             double opponent = TableImmersiveTable.discardSourceX(before, discard.seat(), previous.viewerSeat(), previous.players(), discard.tile(), discard.tsumogiri());

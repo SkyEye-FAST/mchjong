@@ -20,7 +20,7 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
         return seat.won() ? Component.translatable("sichuan.mchjong.won").withStyle(style -> style.withColor(MahjongUi.POSITIVE))
             : seat.voidSuit() < 0 ? Component.literal("—") : Component.translatable("sichuan.mchjong.suit." + seat.voidSuit() + ".short");
     }
-    record Seat(int points, List<Integer> hand, int drawn, List<Meld> melds,
+    record Seat(long points, List<Integer> hand, int drawn, List<Meld> melds,
                 List<Discard> river, List<Integer> norths, boolean exposed, MahjongVariant variant) {
         MeldLayout layout(Meld meld, int owner) { return MeldLayout.of(meld, owner, variant, exposed); }
         Seat {
@@ -69,6 +69,21 @@ record TableBoardState(int viewerSeat, int players, int dealer, int round, int h
             Component.translatable("sichuan.mchjong.hand", view.handNumber(), view.rules().matchHands(), view.wall().remaining()),
             new Indicator(Component.translatable("sichuan.mchjong.indicator_round", view.handNumber(), view.rules().matchHands()),
                 view.seats().stream().map(TableBoardState::voidLabel).toList()));
+    }
+    static TableBoardState live(TaiwanSession.View view) {
+        var game = view.game();
+        var seats = java.util.stream.IntStream.range(0, 4).mapToObj(i -> {
+            var player = game.seats().get(i);
+            var hand = i == game.recipient() ? player.concealed() : java.util.Collections.nCopies(player.concealedCount(), Tile.HIDDEN);
+            return new Seat(view.scores().get(i), hand, player.drawn(), player.melds(), player.river().stream()
+                .map(t -> new Discard(t, false, false, false)).toList(), player.flowers().stream().map(FlowerTile::id).toList(), false, MahjongVariant.TAIWAN);
+        }).toList();
+        int dealer = game.opening().dealer();
+        int round = (game.roundWind() - Tile.EAST) * 4 + dealer;
+        var caption = Component.translatable("taiwan.mchjong.round", wind(game.roundWind() - Tile.EAST), dealer + 1, game.continuation());
+        return new TableBoardState(game.recipient(), 4, dealer, round, -1, -1, game.turn(), game.drawable(), seats,
+            game.focus() == null ? null : new Focus(game.focus().tile()), false, false, false, caption,
+            new Indicator(caption, java.util.stream.IntStream.range(0, 4).mapToObj(i -> wind(Math.floorMod(i - dealer, 4))).toList()));
     }
     TableBoardState replay(int viewer) {
         return new TableBoardState(viewer, players, dealer, round, honba, riichiSticks, turn, remaining, seats, focus,

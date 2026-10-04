@@ -20,7 +20,7 @@ class ConvenienceHintsTest {
             assertTrue(session.roomView(guest).convenienceHints());
             var restored = TableSessionCodec.restore(TableSessionCodec.save(session));
             assertTrue(restored.convenienceHints());
-            var next = session.selectVariant(host, session.decision(),
+            var next = session.selectVariant(host, session.incarnation(), session.decision(),
                 session.variant() == MahjongVariant.MCR ? MahjongVariant.SICHUAN : MahjongVariant.MCR);
             assertNotNull(next); assertTrue(next.convenienceHints());
             restored.configureWorld(new WorldPolicy(false, false, true, 5000, true, true, true, true, null));

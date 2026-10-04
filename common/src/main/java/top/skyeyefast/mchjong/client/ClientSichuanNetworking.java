@@ -57,7 +57,7 @@ public final class ClientSichuanNetworking {
             }
             if (!payload.open() && client.screen instanceof TableClockScreen clock && clock.sichuanScreen() != null
                 && clock.sichuanScreen().tablePos().equals(payload.pos())) return;
-            if (payload.open() || showing || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
+            if (payload.open() || showing || rootScreen instanceof TaiwanLobbyScreen taiwan && taiwan.tablePos().equals(payload.pos()) || rootScreen instanceof McrLobbyScreen lobby && lobby.tablePos().equals(payload.pos())
                 || RiichiTableScreen.active(client.screen) != null && RiichiTableScreen.active(client.screen).tablePos().equals(payload.pos())) {
                 if (rootScreen instanceof SichuanLobbyScreen lobby && lobby.tablePos().equals(payload.pos())) lobby.receivedView();
                 else client.setScreen(new SichuanLobbyScreen(payload.pos()));

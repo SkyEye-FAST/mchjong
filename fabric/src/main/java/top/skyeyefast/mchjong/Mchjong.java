@@ -90,8 +90,12 @@ public class Mchjong implements ModInitializer {
             top.skyeyefast.mchjong.network.McrActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.SichuanActionPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanActionPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TaiwanActionPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanActionPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.SichuanNextHandPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TaiwanNextHandPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanNextHandPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
             top.skyeyefast.mchjong.network.TableVariantPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.VoiceChoicePayload.TYPE, top.skyeyefast.mchjong.network.VoiceChoicePayload.CODEC);
@@ -114,12 +118,16 @@ public class Mchjong implements ModInitializer {
             (payload, context) -> context.server().execute(() -> payload.handle(context.player())));
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.RiichiRulesPayload.TYPE, top.skyeyefast.mchjong.network.RiichiRulesPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE, top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TaiwanRulesPayload.TYPE, top.skyeyefast.mchjong.network.TaiwanRulesPayload.CODEC);
+        PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.TaiwanClockPayload.TYPE, top.skyeyefast.mchjong.network.TaiwanClockPayload.CODEC);
         PayloadTypeRegistry.playC2S().register(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.RiichiVisibilityPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(RiichiViewPayload.TYPE, RiichiViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.McrViewPayload.TYPE,
             top.skyeyefast.mchjong.network.McrViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.SichuanViewPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC);
+        PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.TaiwanViewPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanViewPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC);
         PayloadTypeRegistry.playS2C().register(top.skyeyefast.mchjong.network.StickAppearancePayload.TYPE, top.skyeyefast.mchjong.network.StickAppearancePayload.CODEC);
@@ -133,7 +141,11 @@ public class Mchjong implements ModInitializer {
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanActionPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanActionPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanNextHandPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanNextHandPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
@@ -150,6 +162,10 @@ public class Mchjong implements ModInitializer {
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiRulesPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanRulesPayload.TYPE,
+            (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
+        ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanClockPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));
         ServerPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE,
             (payload, context) -> context.server().execute(() -> TableNetworking.receive(context.player(), payload)));

@@ -25,7 +25,7 @@ final class TableToolbar {
         Runnable[] actions = {() -> TableExitControls.send(pos, room, TableSessionControlPayload.Operation.REQUEST_EXIT, room.decision(), false),
             () -> client.setScreen(new TableOptionsScreen(parent, pos)), switchView, () -> ClientReplays.list(0, "", false)};
         for (int index = 0; index < keys.length; index++) {
-            if (index == 0 && room.viewerSeat() < 0) continue;
+            if (index == 0 && room.viewerSeat() < 0 || index == 3 && room.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN) continue;
             int current = index;
             var fullCaption = Component.translatable(keys[index]);
             boolean compact = !immersive && width < 560;

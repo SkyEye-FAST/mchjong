@@ -15,6 +15,7 @@ public final class ReplayCodec {
                 case RIICHI -> ReplayPlayback.timeline(match, index);
                 case MCR -> McrReplayPlayback.timeline(match, index);
                 case SICHUAN -> SichuanReplayPlayback.timeline(match, index);
+                case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
             }
         }
     }

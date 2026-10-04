@@ -6,6 +6,8 @@ import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import top.skyeyefast.mchjong.engine.TimeControl;
+import top.skyeyefast.mchjong.network.PayloadPackets;
+import top.skyeyefast.mchjong.network.TaiwanClockPayload;
 
 /** The host edits server-owned lobby settings, not a client-side timeout. */
 public final class TableClockScreen extends Screen implements TableChildScreen {
@@ -24,6 +26,7 @@ public final class TableClockScreen extends Screen implements TableChildScreen {
     public RiichiTableScreen tableScreen() { return TableChildScreen.root(parent) instanceof RiichiTableScreen table ? table : null; }
     public McrLobbyScreen mcrLobby() { return TableChildScreen.root(parent) instanceof McrLobbyScreen lobby ? lobby : null; }
     public SichuanLobbyScreen sichuanScreen() { return TableChildScreen.root(parent) instanceof SichuanLobbyScreen screen ? screen : null; }
+    public TaiwanLobbyScreen taiwanLobby() { return TableChildScreen.root(parent) instanceof TaiwanLobbyScreen lobby ? lobby : null; }
     @Override public Screen parent() { return parent; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void renderBackground(GuiGraphics graphics, int mouseX, int mouseY, float partialTick) {}
@@ -38,7 +41,10 @@ public final class TableClockScreen extends Screen implements TableChildScreen {
         apply = addRenderableWidget(MahjongButton.create(Component.translatable("gui.done"), ignored -> {
             TimeControl control = control();
             if (control != null && minecraft.getConnection() != null) {
-                minecraft.getConnection().sendCommand("mchjong clock " + control.reserveSeconds() + " " + control.moveSeconds());
+                if (taiwanLobby() != null) {
+                    var lobby = taiwanLobby(); var room = lobby.room();
+                    minecraft.getConnection().send(PayloadPackets.serverbound(new TaiwanClockPayload(lobby.tablePos(), room.tableId(), room.incarnation(), room.decision(), control)));
+                } else minecraft.getConnection().sendCommand("mchjong clock " + control.reserveSeconds() + " " + control.moveSeconds());
                 onClose();
             }
         }).bounds(left, top + 148, 96, 20).build().primary());

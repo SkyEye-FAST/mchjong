@@ -129,6 +129,7 @@ public final class ReplayBrowserScreen extends Screen {
                     case RIICHI -> match.riichiRules().translationKey();
                     case MCR -> "mcr.mchjong.title";
                     case SICHUAN -> "sichuan.mchjong.title";
+                    case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
                 }), getX() + 9, y + 33, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }

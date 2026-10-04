@@ -22,7 +22,6 @@ public final class TableSessionCodec {
     private TableSessionCodec() {}
 
     public static String save(TableSession session) {
-        if (session.variant() == null) throw new IllegalArgumentException("Unregistered runtimes use their independent codec");
         var envelope = new JsonObject();
         envelope.addProperty("format", FORMAT);
         envelope.addProperty("variant", session.variant().name());
@@ -30,6 +29,7 @@ public final class TableSessionCodec {
             case RIICHI -> RiichiCodec.save((RiichiSession) session);
             case MCR -> parse(McrCodec.saveSession((McrSession) session));
             case SICHUAN -> parse(SichuanCodec.saveSession((SichuanSession) session));
+            case TAIWAN -> parse(TaiwanCodec.saveSession((TaiwanSession) session));
         });
         String encoded = JSON.toJson(envelope);
         if (encoded.length() > MAX_CHARS) throw new IllegalArgumentException("Table save exceeds its size limit");
@@ -47,6 +47,7 @@ public final class TableSessionCodec {
             case RIICHI -> RiichiCodec.restore(envelope.get("state"));
             case MCR -> McrCodec.restoreSession(envelope.get("state").toString());
             case SICHUAN -> SichuanCodec.restoreSession(envelope.get("state").toString());
+            case TAIWAN -> TaiwanCodec.restoreSession(envelope.get("state").toString());
         };
         if (session.variant() != variant) throw new IllegalArgumentException("Table variant does not match its state");
         return session;

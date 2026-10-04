@@ -55,6 +55,8 @@ public final class MchjongClient implements ClientModInitializer {
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientMcrNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.SichuanViewPayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientSichuanNetworking.receive(payload)));
+        ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.TaiwanViewPayload.TYPE,
+            (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.ClientTaiwanNetworking.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.VoiceAppearancePayload.TYPE,
             (payload, context) -> context.client().execute(() -> top.skyeyefast.mchjong.client.VoicePresets.receive(payload)));
         ClientPlayNetworking.registerGlobalReceiver(top.skyeyefast.mchjong.network.ReplayPayload.TYPE,

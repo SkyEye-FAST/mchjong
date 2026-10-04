@@ -96,7 +96,7 @@ final class RoomLobby {
         var replays = RoomLobbyControls.button(Component.translatable("replay.mchjong.title"), layout.left(), layout.footer(), layout.rail(),
             () -> ClientReplays.list(0, "", false)).navigation();
         replays.active = table() != null && table().clientWorldPolicy().replaysEnabled();
-        buttons.add(replays);
+        if (room.variant() != MahjongVariant.TAIWAN) buttons.add(replays);
         var invite = RoomLobbyControls.button(Component.translatable("ui.mchjong.invite"), layout.left(), layout.footer() - 24, layout.rail(),
             () -> client.setScreen(new TableInviteScreen(parent, pos))).navigation().shortCaption(Component.translatable("ui.mchjong.invite.short"));
         invite.active = room.viewerSeat() >= 0 && room.lobby() && table().clientWorldPolicy().invitationsEnabled();
@@ -137,7 +137,7 @@ final class RoomLobby {
             int y = layout.contentTop() + seat * pitch;
             var participant = room.seats().get(seat).participant();
             int action = nextBot(room, seat);
-            if (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED) {
+            if (room.variant() != MahjongVariant.TAIWAN && (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED)) {
                 int target = action;
                 var label = participant.bot() ? botName(room, seat).copy().append(" ›") : Component.translatable("room.mchjong.add_bot");
                 var button = RoomLobbyControls.button(label, layout.bodyLeft() + layout.bodyWidth() - 78, y, 78, () -> send(room, target));
@@ -247,13 +247,19 @@ final class RoomLobby {
             options.add(new Option(Component.translatable("sichuan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
                 () -> client.setScreen(new SichuanRulesScreen(parent, room, settings))));
         }
+        if (root instanceof TaiwanLobbyScreen) {
+            var settings = table.clientTaiwanSettings();
+            options.add(new Option(Component.translatable("taiwan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
+                () -> client.setScreen(new TaiwanRulesScreen(parent, pos))));
+        }
         options.add(new Option(Component.translatable("room.mchjong.participants"), Component.literal("›"), null, true,
             () -> client.setScreen(new TableParticipantsScreen(parent, pos))));
         var time = room.variant() == MahjongVariant.RIICHI ? table.clientRiichiSettings().timeControl()
-            : room.variant() == MahjongVariant.MCR ? table.clientMcrTimeControl() : table.clientSichuanSettings().timeControl();
+            : room.variant() == MahjongVariant.MCR ? table.clientMcrTimeControl()
+            : room.variant() == MahjongVariant.TAIWAN ? table.clientTaiwanSettings().timeControl() : table.clientSichuanSettings().timeControl();
         options.add(new Option(Component.translatable("ui.mchjong.clock_settings"), Component.translatable("lobby.mchjong.clock_summary", time.moveSeconds(), time.reserveSeconds()), null, host(room) && room.lobby(),
             () -> client.setScreen(new TableClockScreen(parent, time))));
-        options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
+        if (room.variant() != MahjongVariant.TAIWAN) options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
             () -> TableExitControls.send(pos, room, TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), !room.convenienceHints())));
         options.add(new Option(Component.translatable("ui.mchjong.invite"), Component.literal("›"), null, room.viewerSeat() >= 0 && room.lobby() && table.clientWorldPolicy().invitationsEnabled(),
             () -> client.setScreen(new TableInviteScreen(parent, pos))));

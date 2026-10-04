@@ -37,7 +37,7 @@ data class ReplayMatch(
     ) {
         init {
             require(
-                startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
+                variant != MahjongVariant.TAIWAN && startedAt > 0 && updatedAt >= startedAt && hands in 1..1024 &&
                     (variant == MahjongVariant.RIICHI) == (riichiRules != null) &&
                     (variant == MahjongVariant.SICHUAN) == (sichuanRules != null) &&
                     (variant != MahjongVariant.MCR || hands <= 16 && (!complete || hands == 16)) &&
@@ -60,7 +60,7 @@ data class ReplayMatch(
     }
 
     init {
-        require(startedAt > 0 && updatedAt >= startedAt &&
+        require(variant != MahjongVariant.TAIWAN && startedAt > 0 && updatedAt >= startedAt &&
             (variant == MahjongVariant.RIICHI) == (riichi != null) &&
             (variant == MahjongVariant.MCR) == (mcr != null) &&
             (variant == MahjongVariant.SICHUAN) == (sichuan != null) &&

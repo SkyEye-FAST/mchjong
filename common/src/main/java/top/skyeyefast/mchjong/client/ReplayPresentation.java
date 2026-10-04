@@ -25,6 +25,7 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             case MCR -> Component.translatable("mcr.mchjong.indicator_round", Component.translatable("wind.mchjong."
                 + new String[]{"east", "south", "west", "north"}[index / 4] + ".short"), index + 1);
             case SICHUAN -> Component.translatable("sichuan.mchjong.indicator_round", index + 1, match.sichuan().rules().matchHands());
+            case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
         };
     }
     static ReplayPresentation of(ReplayMatch match, int index) {
@@ -32,6 +33,7 @@ record ReplayPresentation(List<Frame> frames, List<Decision> decisions, TableRes
             case RIICHI -> riichi(match, index);
             case MCR -> mcr(match, index);
             case SICHUAN -> sichuan(match, index);
+            case TAIWAN -> throw new IllegalArgumentException("Taiwan replay is unavailable");
         };
     }
     private static Component caption(ReplayMatch match, int seat, String key) {

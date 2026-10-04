@@ -25,6 +25,9 @@ public final class TaiwanCodec {
 
     private TaiwanCodec() {}
 
+    public static String encodeRules(TaiwanGameState.Rules rules) { return encode(java.util.Objects.requireNonNull(rules)); }
+    public static TaiwanGameState.Rules decodeRules(String json) { return decode(json, TaiwanGameState.Rules.class); }
+
     public static String save(TaiwanGame game) { return encode(game.save()); }
 
     public static String saveSession(TaiwanSession session) { return encode(session.save(), MAX_SESSION_CHARS); }
