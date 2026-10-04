@@ -10,9 +10,8 @@ allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   shared `TableSession` room lifecycle, rule-specific `RiichiSession` and
-  `McrSession` and `SichuanSession` ownership, plus the independent, unregistered
-  `TaiwanSession` entry point, active `RiichiGame`, `McrGame`
-  and `SichuanGame` orchestration,
+  `McrSession`, `SichuanSession` and `TaiwanSession` ownership, active
+  `RiichiGame`, `McrGame`, `SichuanGame` and `TaiwanGame` orchestration,
   simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
@@ -21,7 +20,7 @@ allows it.
   replay-format transformation. Kotlin APIs called from Java keep ordinary JVM
   entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
   required), so Java orchestration does not need Kotlin-specific call shapes. The
-  engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, Kotlin
+  engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, taiwan-mahjong, Kotlin
   and kotlinx. Each loader embeds that self-contained artifact without requiring
   an external Kotlin language mod or MCR library. Engine production
   Java and Kotlin bytecode targets Java 17, allowing the same domain artifact to
@@ -57,7 +56,7 @@ Artifact names include both loader and Minecraft version to keep releases distin
 Kotlin/JVM 17 `taiwan-mahjong` composite build. It owns physical identity and
 meld-provenance conversion; the library owns five-meld sixteen-tile structure,
 analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
-the engine-only runtime without changing that algorithm/score boundary.
+the Taiwan runtime without changing that algorithm/score boundary.
 See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
 and the separate match-layer contract.
 
@@ -147,7 +146,7 @@ points to each opponent, independently of hand results.
 ## Taiwan engine runtime
 
 `TaiwanWallLayout` is the fixed 136/144-slot contract shared by logic, private
-saves and future presentation. `TaiwanWall` marks taken slots absent rather than
+saves and `TaiwanTableScene`. `TaiwanWall` marks taken slots absent rather than
 rotating identities. Its front traversal is upper/lower in increasing physical
 slot order from the cut; tail replacement reverses that order. The no-flower
 seventeen-stack overflow and numbered-side traversal are frozen project preset
@@ -172,10 +171,32 @@ Rules, stock, future seed, clocks, result reading time and acknowledgements pers
 restore validates the dealer/wind/continuation chain and renews room incarnation.
 Absence and exit votes pause the session; authenticated human acknowledgement or
 200 active ticks advances a nonfinal result. Clocks are recipient-only in views.
-This four-human session inherits `TableSession` but has no `MahjongVariant` identity;
-its independent view and codec are the supported engine entry points. Built-in
-room views/table codec and variant selection do not dispatch to it. No Minecraft,
-Bot, replay, networking or UI integration exists.
+This four-human session uses `MahjongVariant.TAIWAN` throughout the shared room
+lifecycle. Every `TableSession` requires a concrete variant. `selectVariant` creates
+its session, and `TableSessionCodec` dispatches the registered Taiwan envelope to
+`TaiwanCodec`; there is one world persistence path.
+
+`TaiwanDeck` owns Taiwan equipment admission independently of `McrDeck`, reusing
+case component parsing and tile artwork. Pocket requires 144 physical tiles
+(136 ordinary tiles and eight flowers); Southern requires the 136 ordinary tiles.
+Cases are selected individually with uniform material, back and face preset.
+`TableHost` checks automatic-table/cloth/stock availability before preparation.
+The block entity observes seats, reconstructs presence after NBT load and sends
+only authorized recipient views through `TaiwanViewPayload`.
+
+`TaiwanActionPayload`, `TaiwanRulesPayload`, `TaiwanClockPayload` and
+`TaiwanNextHandPayload` bind requests to table UUID, incarnation and the current
+match or room decision. Rules and clock edits are host-only lobby operations;
+custom values respect world policy. All loaders register these shared handlers.
+`TaiwanLobbyScreen`, `TaiwanRulesScreen`, `TaiwanTableScreen` and
+`TaiwanResultsScreen` provide preparation, issued actions, public settlement and
+next-hand acknowledgement. The shared clock editor sends Taiwan clock requests.
+`TaiwanTableScene` consumes Taiwan's fixed physical slots for both wall sizes,
+with sixteen-tile hands, public flowers/rivers and five native meld groups.
+Chinese meld/flower placement, HUD, buttons and seated/immersive controls are
+shared presentation primitives. Covered opponent kongs and hands remain hidden
+at settlement. Cumulative scores use long values throughout presentation.
+Taiwan has no Replay, built-in/external Bot or convenience-hint integration.
 
 ## MCR match orchestration
 
@@ -406,12 +427,13 @@ provides configured-match cumulative standings and the issued return-to-lobby co
 
 ### Shared rooms and rule sessions
 
-`MahjongVariant` selects Riichi, MCR or Sichuan through explicit built-in dispatch. `TableSession` owns
+`MahjongVariant` selects Riichi, MCR, Sichuan or Taiwan through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
 request incarnation, convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
-`RoomAction` choices for all three rules. `TableSession.actRoom` resolves only issued
+`RoomAction` choices for all four rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
+Variant selection is bound to the table UUID, incarnation and room decision.
 A variant change creates a new concrete session with the target variant's capacity,
 retaining eligible human seats and fresh preparation state. `RiichiSession`
 owns Riichi room rules, equipment, visibility, bot choices, rewards, replay queue
@@ -466,23 +488,23 @@ before restoration. The block entity stores the private session JSON as UTF-8
 NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 
 `TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`,
-`McrActionPayload` and `SichuanActionPayload` carry only their respective issued
+`McrActionPayload`, `SichuanActionPayload` and `TaiwanActionPayload` carry only their respective issued
 match-action indices. Lobby selectors share `variant.mchjong.*` labels and divide
 their available width across the built-in variants.
-`McrNextHandPayload` and `SichuanNextHandPayload` carry their respective
+`McrNextHandPayload`, `SichuanNextHandPayload` and `TaiwanNextHandPayload` carry their respective
 completed-hand confirmations separately from gameplay actions. `TableNetworking`
 and `MahjongTableBlockEntity` verify reach, table, incarnation and decision, then
 resolve the acting seat from the authenticated sender. Duplicate confirmations
 do not change the count or deadline.
-`RiichiViewPayload`, `McrViewPayload` and `SichuanViewPayload` carry the public
+`RiichiViewPayload`, `McrViewPayload`, `SichuanViewPayload` and `TaiwanViewPayload` carry the public
 `TableRoomView` and synchronized world policy alongside their rule-specific recipient-safe projections.
-All three view payloads send the last-player leave decision directly to its
+All four view payloads send the last-player leave decision directly to its
 unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
-`ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
+`ClientMcrNetworking`, `ClientSichuanNetworking` and `ClientTaiwanNetworking` decode and apply their respective views.
 `RoomLobby` owns the shared variant rail, roster, settings and stage footer.
-`RiichiTableScreen`, `McrLobbyScreen` and `SichuanLobbyScreen` adapt their confirmed
+`RiichiTableScreen`, `McrLobbyScreen`, `SichuanLobbyScreen` and `TaiwanLobbyScreen` adapt their confirmed
 rule state to that component. `TableToolbar`, `TableOptionsScreen`,
 `TableParticipantsScreen` and `TableInviteScreen` share navigation across variants;
 `TableChildScreen` retains the parent chain for snapshot routing and returns.

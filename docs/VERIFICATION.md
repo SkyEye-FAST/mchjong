@@ -382,8 +382,27 @@ paused/restored allowances and exit votes, partial hand acknowledgements,
 exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
 complete four-wind matches for both presets and cumulative-score idempotence.
 The deterministic legal-action test driver is not a production Bot.
-Taiwan uses its independent engine session/codec; no variant dispatch, network,
-UI, Bot, Replay or loader runtime is registered or validated.
+`TaiwanIntegrationTest` owns native case admission, appearance, all five Taiwan
+wire codecs and private/public NBT separation on the NeoForge test server.
+`TaiwanPresentationTest` checks both fixed-slot wall sizes and conserved physical
+scenes through native actions and settlement, including hidden opponent hands,
+felt boundaries and intersections.
+
+```text
+gradlew.bat :fabric:test --tests "*TaiwanPresentationTest" :forge:compileJava :neoforge:test --tests "*TaiwanIntegrationTest" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true "-PsmokeScreenshots=taiwan-table.png,taiwan-immersive.png,taiwan-results.png,taiwan-payments.png,taiwan-match-end.png,taiwan-rules.png" --warning-mode fail --console=plain
+```
+
+The focused Fabric profile uses one real client and three mounted human test
+identities. It switches Riichi/MCR/Sichuan/Taiwan lobbies, edits both presets through
+registered packets, checks 136/144 case admission and seats four participants.
+It exercises initial flower replacement, native calls, recipient/spectator privacy,
+seated and immersive discard selection, exit-vote pause, result/next-hand packets,
+NBT restore and a complete East/South/West/North match. Old decisions and
+pre-restore incarnations are rejected. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`
+and `fabric/build/smoke/taiwan-evidence/PASS.txt`, with no `FAIL.txt`; inspect the
+requested captures there. The legal-action driver is test-only. Taiwan Replay,
+Bot, external Bot and complex convenience hints are not supported.
 
 ## Bot checks
 

@@ -1,10 +1,10 @@
 # Taiwanese sixteen-tile engine and integration boundary
 
-This is the requested integration design, not a claim of playable Minecraft
-support. Implemented now: independent library, structure/analysis, two documented
-scoring profiles, the analysis adapter, deterministic hands, strict persistence,
-recipient projections and an independent four-human match session. The
-existing playable variants remain Riichi, MCR and Sichuan.
+Taiwan is the fourth built-in Minecraft variant alongside Riichi, MCR and Sichuan.
+The independent library owns structure/analysis and two documented scoring
+profiles; the engine owns deterministic hands, strict persistence, recipient
+projections and a four-human match session. The common world/network/client layer
+provides automatic-table preparation, native actions and a complete four-wind match.
 
 ## Ownership
 
@@ -198,7 +198,7 @@ are rejected. Terminal scores and payments are recomputed and compared with the
 saved result. Decision/revision authority refreshes on restore; session hand
 boundaries also advance decision tokens.
 
-`TaiwanSession.State` format **1** independently saves the common room, rules,
+`TaiwanSession.State` format **1** saves the common room, rules,
 stock, future seed, completed proofs, current game, clock reserves, decision age
 and confirmations. Restore validates the entire dealer/wind/continuation chain
 and scores before returning a session, creates a fresh incarnation, and requires
@@ -223,17 +223,45 @@ automatic reveal of any opponent's hand. The selected rules do not require all
 hands to be exposed. Session views expose only the recipient's clock, so clock
 activation cannot reveal another player's submitted reaction.
 
-## Acceptance boundary
+## Minecraft integration and acceptance
 
-The engine can run a full single hand from a physical permutation or seed, expose
-legal decisions, persist/restore and return a settlement. The independent session
-can complete four winds with restored scores and private views. Player inspection
-snapshots and saves contain all information and must never be sent as views.
-`TaiwanSession` has no built-in variant identity (`variant()` returns null), owns
-its independent room projection, and is reachable only through its engine entry
-and `TaiwanCodec`; the built-in table codec rejects it. `MahjongVariant.TAIWAN`
-is not registered. No Minecraft UI/network, Bot or Replay integration is added.
-Library tests establish scoring semantics; engine tests establish
-this explicit composition, not unknown regional rules or Minecraft runtime play.
+`MahjongVariant.TAIWAN`, `TableSession.selectVariant` and `TableSessionCodec`
+register Taiwan through the same room, identity and NBT envelope as the other
+variants. `TaiwanCodec` owns the nested Taiwan data. Every session requires its
+variant identity; there is no alternate world restore path.
+
+`TableHost` prepares Taiwan only on an automatic table with cloth and matching
+stock. `TaiwanDeck` selects one physical case through the existing supplies parser:
+Pocket requires four copies of every ordinary kind plus eight distinct flowers
+(144 tiles total); Southern uses the 136 ordinary tiles. Material, back and face
+preset come from those physical tiles. Taiwan does not use `McrDeck`.
+
+The registered view payload carries public room/rules/world/appearance state and
+an optional recipient-safe session view. Action, rules, clock and next-hand
+payloads carry table UUID, incarnation and the relevant current decision. Shared
+reach, authenticated participant and mount checks authorize them. Lobby edits
+require the host and obey world custom-rule policy. Restore renews incarnation,
+reobserves mounts and invalidates pre-restore requests. Exit votes, absence pauses
+and hand acknowledgements use the common lifecycle.
+
+The Taiwan lobby and rule editor expose Pocket/Southern presets, reserve policy
+and payment values; the shared editor configures move/reserve clocks. The table
+screen offers server-issued chow, pong, kong, ready, win and pass choices plus
+physical discard picking in seated and immersive views. `TaiwanTableScene` uses
+`TaiwanWallLayout` fixed slots for seventeen/eighteen stacks per side, sixteen-tile
+hands, flowers, physical rivers and up to five melds. Chinese presentation
+primitives share placement and artwork without controlling Taiwan rules or wall
+indexing. Results show public tai awards, transfers, cumulative scores and
+next-hand confirmation; the sixteenth completed dealer position ends the match.
+Opponents' hands and covered kongs stay hidden even at settlement.
+
+Focused Fabric smoke uses one real client and three mounted human test identities.
+It covers four-variant switching, both stock boundaries, initial flower replacement,
+issued calls, recipient privacy, seated/immersive discard packets, exit pause,
+settlement/next-hand packets, NBT restoration, final North completion and stale
+incarnation/decision rejection. Test-only legal-action drivers are not production
+Bots. Replay, built-in/external Bots and complex convenience hints remain outside
+Taiwan support. Maven Central publication and compatibility-port synchronization
+are separate work.
 
 See [Verification](VERIFICATION.md#taiwan-hand-library) for focused commands.

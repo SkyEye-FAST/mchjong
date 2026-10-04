@@ -1,6 +1,6 @@
 # Rooms, permissions and settings
 
-Riichi, MCR and Sichuan use the same lobby. Select the variant from the left
+Riichi, MCR, Sichuan and Taiwan use the same lobby. Select the variant from the left
 sidebar, then use Players and bots to manage the roster or Match settings to
 configure the selected variant. Variant selection is available to the host during
 gathering on automatic tables without Bots. Fill empty seats and seat preparation
@@ -13,8 +13,8 @@ play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
 The room host can enable **Convenience hints** during preparation: Settings → Room
-or the lobby Match settings tab for all three variants. All three rules share
-the setting, including when changing variants. World `allowConvenienceHints`
+or the lobby Match settings tab for Riichi, MCR and Sichuan. These rules share
+the setting, including when changing variants. Taiwan does not expose hints. World `allowConvenienceHints`
 can disable it in both waiting and running rooms.
 
 Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
@@ -108,7 +108,7 @@ individual mahjong options into world settings.
 
 ## Hand visibility
 
-The host chooses Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
+Riichi hosts choose Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
 saved with that table, and changing it clears readiness:
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
@@ -128,6 +128,11 @@ redacted by `spectatorHandVisibility`: `hidden` reveals none, `follow_players`
 never exceeds the room's participant visibility, and `all` reveals every hand.
 None of these values grants additional information to participants. Spectating
 leaves participant seats available and grants no game actions.
+
+Taiwan always supplies only the recipient's own concealed hand. Opponent hands
+and covered kongs stay hidden at settlement, and spectators receive no concealed
+identities or private decisions even when the world enables wider Riichi visibility.
+Its four seats require human players; Bot replacement is unavailable.
 
 ## Room ownership
 

@@ -2,8 +2,8 @@
 
 [Documentation](README.md) · [Playing guide](PLAYING.md)
 
-MChjong supports three- and four-player riichi mahjong. The presets and custom
-settings below specify the rule configurations and table options.
+The sections below describe Riichi and Taiwan presets and table options. MCR
+and Sichuan operation is covered in the [Playing guide](PLAYING.md).
 
 ## Preset options and custom rules
 
@@ -156,3 +156,23 @@ Physical identity and red marking are represented separately. Walls, hands,
 melds, scoring and replays retain the actual red markings. Replay metadata also
 stores the set composition, so Tenhou exports report the correct `aka51`,
 `aka52` and `aka53` counts even when a red tile was never drawn.
+
+## Taiwan presets
+
+Taiwan uses four human players with sixteen-tile hands and a complete four-wind
+match. Pocket common includes eight flowers in a 144-tile stock; Southern common
+uses the 136 ordinary tiles. Both start cumulative scores at zero and retain the
+dealer on a dealer win or draw. The match ends after all sixteen dealer positions
+complete, allowing repeat hands at the last North position.
+
+The lobby host chooses a preset, reserve policy and payment values before play.
+Payment has a base amount, per-tai unit, dealer tai and repeat-dealer tai. Default
+values are one each. Changing rules clears readiness. World custom-rule policy
+can limit editing to the named presets. Apply waits for the server reply; Cancel
+returns without applying the draft. Time control is a separate room setting.
+
+The implemented profiles are source-qualified compositions. Exact scoring,
+flower victories, passing restrictions and reserve choices belong to the
+[Taiwan design contract](TAIWAN_DESIGN.md), with sources owned by the independent
+library. See [Playing Taiwan](PLAYING.md#automatic-table-taiwan) for controls,
+privacy and progression.

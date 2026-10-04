@@ -8,7 +8,8 @@ presentation across its supported Fabric, Forge and NeoForge builds.
 
 MChjong supports **three- and four-player riichi mahjong**, featuring
 Mahjong Soul, Tenhou, M.League, JPML A and WRC presets with configurable table
-options. See [Rules and presets](docs/RULES.md) for details.
+options, plus four-player MCR, Sichuan and Taiwan on automatic tables. See
+[Playing](docs/PLAYING.md) and [Rules and presets](docs/RULES.md) for details.
 
 ## Features
 
@@ -42,6 +43,9 @@ Current build profiles support these Minecraft versions and loaders:
 | 1.21.1 | `main` | 21 | Fabric, Forge, NeoForge | Uses the Fabric artifact |
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
 | 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
+
+Taiwan gameplay is available in the `main` 1.21.1 profile; the compatibility
+profiles have not received this integration.
 
 Optional integrations are scoped to the loader named in each cell:
 
