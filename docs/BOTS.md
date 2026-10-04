@@ -1,5 +1,42 @@
 # Training opponent analysis
 
+## Taiwan built-in opponent
+
+Taiwan rooms use the shared add/remove, difficulty and fill-seat controls under
+world `allowBots` policy. EASY and HARD currently share one deterministic policy.
+One human and three built-in Bots can finish East, South, West and North, including
+repeat dealers. External Bots are unavailable for Taiwan.
+
+`TaiwanBot.choose` accepts only its recipient-safe `TaiwanView` and returns an
+issued action index. Legal wins take priority. Discards use
+`TaiwanHandAnalyzer.discards/analyze` in this order: lowest shanten, most remaining
+effective copies, most live wait kinds, remaining-copy-weighted scorable tai,
+modest rule-valued shape potential, openness and lowest physical tile ID.
+Availability deduplicates the Bot's tiles, public rivers, exposed melds and focus.
+Covered opponent kongs, opponent hands, future wall identities and seeds never
+enter analysis. A simulated discard remains publicly known.
+
+Live waits use the current scorer for ordinary discard and self-draw, current
+winds, flowers and ready declaration. Caps and exclusions come from the rules;
+preset names do not select behavior. Incomplete hands use small copy-aware honor,
+triplet, flush and concealment support estimates. These estimates are tie-break
+evidence, not awarded tai or a search through scoring routes. A legal ready
+discard competes with ordinary discards and wins an otherwise equal comparison.
+
+Chows and pongs simulate their best legal mandatory discard. They require a
+shanten improvement, at least two additional effective copies, or a clear scored
+wait-value gain; merely offering a call supplies no benefit. Kongs first preserve
+the shanten of the guaranteed continuation that discards the replacement. They
+then compare one replacement/best-discard step weighted by publicly unseen
+ordinary copies, including scorer-confirmed replacement wins. A small expected
+gain is insufficient, and opening adds a cost. No specific replacement or flower
+award is assumed. Unprofitable reactions pass.
+
+The session waits twelve active ticks before decisions, never spends Bot clocks,
+and automatically confirms nonfinal hand results. Pending delay, roster,
+difficulty and confirmations survive saves. Absence and exit votes pause Bot
+actions and result reading through the shared room lifecycle.
+
 ## MCR built-in opponent
 
 MCR rooms offer one built-in opponent through the shared room Bot controls and

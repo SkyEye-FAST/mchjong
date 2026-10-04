@@ -137,7 +137,7 @@ final class RoomLobby {
             int y = layout.contentTop() + seat * pitch;
             var participant = room.seats().get(seat).participant();
             int action = nextBot(room, seat);
-            if (room.variant() != MahjongVariant.TAIWAN && (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED)) {
+            if (participant.id() == null || participant.bot() || room.seats().get(seat).presence() == PlayerPresence.DISCONNECTED) {
                 int target = action;
                 var label = participant.bot() ? botName(room, seat).copy().append(" ›") : Component.translatable("room.mchjong.add_bot");
                 var button = RoomLobbyControls.button(label, layout.bodyLeft() + layout.bodyWidth() - 78, y, 78, () -> send(room, target));

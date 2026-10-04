@@ -7,10 +7,11 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 
-/** Four-human Taiwanese match in the shared room lifecycle. */
+/** Taiwanese match with humans and built-in opponents in the shared room lifecycle. */
 public final class TaiwanSession extends TableSession {
     private static final long SEED_STEP = 0x9e3779b97f4a7c15L;
     private static final int READING_TICKS = 200;
+    private static final int BOT_ACTION_TICKS = 12;
     private TaiwanGameState.Rules rules;
     private List<Integer> stock = List.of();
     private TimeControl control = TimeControl.DEFAULT;
@@ -30,6 +31,26 @@ public final class TaiwanSession extends TableSession {
     public TaiwanRules rules() { return rules.restore(); }
     @Override protected long matchDecision() { return game == null ? decision : game.getDecision(); }
     @Override protected boolean pauseForAbsence() { return !hasSeatedHuman(); }
+    @Override protected boolean allowsBots() { return worldPolicy.allowBots(); }
+    @Override protected void addBotChoices(List<RoomAction> actions, int target, Participant member) {
+        for (var difficulty : BotDifficulty.values()) if (!member.bot || member.botDifficulty != difficulty)
+            actions.add(new RoomAction(RoomAction.Type.SET_BOT,List.of(target,difficulty.ordinal())));
+    }
+    @Override protected void setBotChoice(int target, int choice) {
+        if (choice < 0 || choice >= BotDifficulty.values().length) throw new IllegalArgumentException("Unknown Taiwan bot");
+        setBot(target,BotDifficulty.values()[choice]);
+    }
+    @Override public void configureWorld(WorldPolicy policy) {
+        boolean botsChanged = worldPolicy.allowBots() != policy.allowBots();
+        super.configureWorld(policy);
+        if (lobby() && !policy.allowBots()) {
+            for (int seat = 0; seat < 4; seat++) if (participants[seat].bot) {
+                participants[seat] = new Participant(); botsChanged = true;
+            }
+            if (botsChanged) { seating = new RoomSeating(); resetReadiness(); }
+        }
+        if (botsChanged) changed(lobby());
+    }
     @Override protected boolean canReturnToLobby(int seat) { return seat == host(); }
     @Override public TimeControl timeControl() { return control; }
     @Override public boolean configureClock(UUID actor, TimeControl value) {
@@ -61,12 +82,12 @@ public final class TaiwanSession extends TableSession {
         if (stock.equals(tiles)) return false;
         stock = tiles; resetReadiness(); changed(true); return true;
     }
-    /** Engine hosts may supply an already positioned human roster without Minecraft dependencies. */
+    /** Engine hosts may supply an already positioned roster without Minecraft dependencies. */
     public static TaiwanSession start(UUID table, List<TableParticipant> roster, long seed, List<Integer> stock, TaiwanRules rules) {
         validateRoster(roster);
         var session = new TaiwanSession(table,seed,rules);
         for (int s = 0; s < 4; s++) session.participants[s] = Participant.restore(roster.get(s));
-        session.hostId = roster.get(0).id();
+        session.hostId = roster.stream().filter(p -> !p.bot()).findFirst().orElseThrow().id();
         session.seating.positioned(4);
         session.configureEquipment(false,stock);
         session.startMatch();
@@ -113,16 +134,21 @@ public final class TaiwanSession extends TableSession {
         var d = game.decisions().stream().filter(v -> v.getSeat() == seat && v.getToken() == token).findFirst().orElse(null);
         if (d == null || index < 0 || index >= d.getActions().size()) return false;
         game.submit(seat,token,index);
+        if (game.getPhase() == TaiwanGame.Phase.FINISHED && !matchEnded()) confirmBots();
         if (game.getDecision() != token || game.getPhase() == TaiwanGame.Phase.FINISHED) resetClock(false);
         updateEnd(); changed(false); return true;
     }
     public boolean confirmNextHand(UUID actor, UUID table, UUID incarnation, long token) {
         if (game == null || paused() || exitVote != null || lifecycle != Lifecycle.PLAYING || game.getPhase() != TaiwanGame.Phase.FINISHED) return false;
         int seat = authorize(actor,table,incarnation,token,game.getDecision());
-        if (seat < 0 || (confirmed & 1 << seat) != 0) return false;
+        if (seat < 0 || participants[seat].bot || (confirmed & 1 << seat) != 0) return false;
+        confirmBots();
         confirmed |= 1 << seat;
         if (confirmed == 15) nextHand();
         changed(false); return true;
+    }
+    private void confirmBots() {
+        for (int seat = 0; seat < 4; seat++) if (participants[seat].bot) confirmed |= 1 << seat;
     }
     private void nextHand() {
         if (game.getPhase() != TaiwanGame.Phase.FINISHED || matchEnded()) throw new IllegalStateException("Cannot advance hand");
@@ -141,11 +167,16 @@ public final class TaiwanSession extends TableSession {
             if (clocks.size() <= s) clocks.add(clock); else clocks.set(s,clock);
         }
     }
-    private boolean active(int seat) { return game != null && !paused() && exitVote == null && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
+    private boolean active(int seat) { return !participants[seat].bot && game != null && !paused() && exitVote == null && game.decisions().stream().anyMatch(d -> d.getSeat() == seat); }
     @Override public void tick() {
         if (!tickRoom() || game == null || lifecycle != Lifecycle.PLAYING) return;
-        age++;
-        if (game.getPhase() == TaiwanGame.Phase.FINISHED) { if (age >= READING_TICKS) nextHand(); return; }
+        age = Math.min(14_400,age + 1);
+        if (game.getPhase() == TaiwanGame.Phase.FINISHED) {
+            confirmBots();
+            if (confirmed == 15 || age >= READING_TICKS) nextHand();
+            else if (age % 10 == 0) changed(false);
+            return;
+        }
         long token = game.getDecision();
         for (int s = 0; s < 4; s++) if (active(s)) {
             var c = clocks.get(s); var next = new TimeControl.Clock(c.moveTicks(),c.reserveTicks(),true).after(50);
@@ -154,6 +185,13 @@ public final class TaiwanSession extends TableSession {
         for (var d : game.decisions()) {
             var c = clocks.get(d.getSeat());
             if (game.getDecision() != token) break;
+            if (participants[d.getSeat()].bot) {
+                if (age >= BOT_ACTION_TICKS) {
+                    int choice = TaiwanBot.choose(game.view(d.getSeat()));
+                    if (choice >= 0) apply(d.getSeat(),token,choice);
+                }
+                continue;
+            }
             if (c.moveTicks()+c.reserveTicks() > 0) continue;
             int fallback = -1;
             int drawn = game.view(d.getSeat()).seats().get(d.getSeat()).drawn();
@@ -167,6 +205,7 @@ public final class TaiwanSession extends TableSession {
             }
             if (fallback >= 0) apply(d.getSeat(),token,fallback);
         }
+        if (age % 10 == 0) changed(false);
     }
 
     public State save() { return new State(State.FORMAT,saveRoom(),rules,stock,control,clocks,age,confirmed,futureSeed,completed,game == null ? null : game.save()); }
@@ -199,8 +238,9 @@ public final class TaiwanSession extends TableSession {
             throw new IllegalArgumentException("Invalid Taiwan dealer/round chain");
     }
     private static void validateRoster(List<TableParticipant> roster) {
-        if (roster.size() != 4 || roster.stream().anyMatch(p -> p.id() == null || p.bot() || p.entityBot() || p.externalBotId() != null)
-            || roster.stream().map(TableParticipant::id).distinct().count() != 4) throw new IllegalArgumentException("Taiwan requires four human participants");
+        if (roster.size() != 4 || roster.stream().anyMatch(p -> p.id() == null || p.entityBot() || p.externalBotId() != null || p.bot() && !p.ready())
+            || roster.stream().allMatch(TableParticipant::bot) || roster.stream().map(TableParticipant::id).distinct().count() != 4)
+            throw new IllegalArgumentException("Taiwan requires four participants including a human and only built-in bots");
     }
     public record State(int format, TableSession.State room, TaiwanGameState.Rules rules, List<Integer> stock,
                         TimeControl control, List<TimeControl.Clock> clocks, int age, int confirmed, long futureSeed,
@@ -209,7 +249,8 @@ public final class TaiwanSession extends TableSession {
         public State {
             Objects.requireNonNull(room); Objects.requireNonNull(rules); Objects.requireNonNull(control);
             stock = List.copyOf(stock); clocks = List.copyOf(clocks); completed = List.copyOf(completed);
-            if (format != FORMAT || room.variant() != MahjongVariant.TAIWAN || room.capacity() != 4 || room.manual() || room.participants().stream().anyMatch(TableParticipant::bot)
+            if (format != FORMAT || room.variant() != MahjongVariant.TAIWAN || room.capacity() != 4 || room.manual()
+                || room.participants().stream().anyMatch(p -> p.entityBot() || p.externalBotId() != null || p.bot() && !p.ready())
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null) || age < 0 || age > 14_400
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != TaiwanGame.Phase.FINISHED || room.lifecycle() != Lifecycle.PLAYING)
                 || clocks.size() != (game == null ? 0 : 4) || game == null && (!completed.isEmpty() || age != 0 || futureSeed != 0)

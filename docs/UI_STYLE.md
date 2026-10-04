@@ -191,8 +191,8 @@ entry order and related-entry links remain visible. Taiwan receipts show public
 tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
-are shared. Its lobby exposes human seats, presets, payment/reserve rules and
-clocks, with no Bot, Replay or convenience-hint controls.
+are shared. Its lobby exposes human and built-in Bot seats, presets,
+payment/reserve rules and clocks, with no Replay or convenience-hint controls.
 All four variants share one lobby layout. The left rail selects Riichi, MCR,
 Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,

@@ -171,7 +171,7 @@ Rules, stock, future seed, clocks, result reading time and acknowledgements pers
 restore validates the dealer/wind/continuation chain and renews room incarnation.
 Absence and exit votes pause the session; authenticated human acknowledgement or
 200 active ticks advances a nonfinal result. Clocks are recipient-only in views.
-This four-human session uses `MahjongVariant.TAIWAN` throughout the shared room
+This human/built-in-Bot session uses `MahjongVariant.TAIWAN` throughout the shared room
 lifecycle. Every `TableSession` requires a concrete variant. `selectVariant` creates
 its session, and `TableSessionCodec` dispatches the registered Taiwan envelope to
 `TaiwanCodec`; there is one world persistence path.
@@ -196,7 +196,13 @@ with sixteen-tile hands, public flowers/rivers and five native meld groups.
 Chinese meld/flower placement, HUD, buttons and seated/immersive controls are
 shared presentation primitives. Covered opponent kongs and hands remain hidden
 at settlement. Cumulative scores use long values throughout presentation.
-Taiwan has no Replay, built-in/external Bot or convenience-hint integration.
+`TaiwanBot` consumes only its recipient-safe `TaiwanView`, selecting issued actions
+with the existing analyzer and current scorer. Shared room controls admit built-in
+Bots, automatically ready them and retain their difficulty. The session schedules
+them after twelve active ticks with inactive Bot clocks and automatic nonfinal
+result confirmations. One human and three Bots can complete all four winds,
+including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).
+Taiwan has no Replay, external Bot or convenience-hint integration.
 
 ## MCR match orchestration
 

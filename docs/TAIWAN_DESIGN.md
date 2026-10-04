@@ -3,7 +3,7 @@
 Taiwan is the fourth built-in Minecraft variant alongside Riichi, MCR and Sichuan.
 The independent library owns structure/analysis and two documented scoring
 profiles; the engine owns deterministic hands, strict persistence, recipient
-projections and a four-human match session. The common world/network/client layer
+projections and a human/built-in-Bot match session. The common world/network/client layer
 provides automatic-table preparation, native actions and a complete four-wind match.
 
 ## Ownership
@@ -175,11 +175,15 @@ with checked arithmetic. Advancing or restoring never pays a hand twice.
 Completed proofs are private terminal game states for validating the dealer,
 score and rule chain; they contain no event timeline or replay API.
 
-Four human participants use the existing identity/mount authority. No human
+Human participants use the existing identity/mount authority. Built-in Bots use
+the shared room controls, become ready automatically and select issued actions
+only from their own recipient-safe views. EASY and HARD share the first policy;
+see [Bot analysis](BOTS.md#taiwan-built-in-opponent). No human
 seated, or an active exit vote, pauses decisions, allowances and result reading.
 Pending responders spend their independent move allowance then reserve; timeout
 passes a reaction or discards the legal drawn tile, otherwise the first discard.
-Each hand replenishes reserves. A result remains until all four humans acknowledge
+Each hand replenishes reserves. Bots wait twelve active ticks and spend no clock.
+They confirm nonfinal results automatically. A result remains until all humans acknowledge
 or 200 active ticks pass. Partial acknowledgements and the remaining reading time
 survive saves. The final result is terminal and does not accept next-hand requests.
 
@@ -259,8 +263,10 @@ Focused Fabric smoke uses one real client and three mounted human test identitie
 It covers four-variant switching, both stock boundaries, initial flower replacement,
 issued calls, recipient privacy, seated/immersive discard packets, exit pause,
 settlement/next-hand packets, NBT restoration, final North completion and stale
-incarnation/decision rejection. Test-only legal-action drivers are not production
-Bots. Replay, built-in/external Bots and complex convenience hints remain outside
+incarnation/decision rejection. It also prepares and restores a Bot roster through
+native room handlers and finishes a one-human/three-Bot Southern match. Test-only
+human legal-action drivers are not production Bots. Both presets' complete
+four-wind Bot matches have engine coverage. Replay, external Bots and complex convenience hints remain outside
 Taiwan support. Maven Central publication and compatibility-port synchronization
 are separate work.
 

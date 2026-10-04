@@ -382,6 +382,13 @@ paused/restored allowances and exit votes, partial hand acknowledgements,
 exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
 complete four-wind matches for both presets and cumulative-score idempotence.
 The deterministic legal-action test driver is not a production Bot.
+`TaiwanBotTest` owns win priority, shanten/effective-copy ordering, live-wait
+quality and current-rule scoring, conservative and beneficial calls/replacements,
+hidden-hand/wall independence, shared room Bot controls/world policy, delayed
+paused/restored decisions, inactive Bot clocks and automatic hand confirmations.
+Both presets complete one-human/three-Bot four-wind matches with physical
+conservation, restored settlements and balanced cumulative scores. Run
+`gradlew.bat :engine:test --tests "*TaiwanBotTest" --warning-mode fail --console=plain`.
 `TaiwanIntegrationTest` owns native case admission, appearance, all five Taiwan
 wire codecs and private/public NBT separation on the NeoForge test server.
 `TaiwanPresentationTest` checks both fixed-slot wall sizes and conserved physical
@@ -398,11 +405,14 @@ identities. It switches Riichi/MCR/Sichuan/Taiwan lobbies, edits both presets th
 registered packets, checks 136/144 case admission and seats four participants.
 It exercises initial flower replacement, native calls, recipient/spectator privacy,
 seated and immersive discard selection, exit-vote pause, result/next-hand packets,
-NBT restore and a complete East/South/West/North match. Old decisions and
+NBT restore and a complete East/South/West/North match. It then adds, changes,
+removes and fills Bot seats through native room handlers, restores their NBT
+roster and completes a Southern one-human/three-Bot match with automatic result
+confirmations, conserved tiles, private views and balanced final scores. Old decisions and
 pre-restore incarnations are rejected. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`
 and `fabric/build/smoke/taiwan-evidence/PASS.txt`, with no `FAIL.txt`; inspect the
 requested captures there. The legal-action driver is test-only. Taiwan Replay,
-Bot, external Bot and complex convenience hints are not supported.
+external Bot and complex convenience hints are not supported.
 
 ## Bot checks
 

@@ -17,7 +17,7 @@ import top.skyeyefast.mchjong.engine.*;
 import top.skyeyefast.mchjong.network.*;
 import top.skyeyefast.mchjong.world.*;
 
-/** Real client packets and three mounted human test identities; the driver is test-only. */
+/** Real client packets, mounted human fixtures and a complete built-in Bot room. */
 final class TaiwanTableSmoke {
     private final List<Guest> guests = new ArrayList<>();
     private final List<MahjongVariant> variants = List.of(MahjongVariant.MCR, MahjongVariant.SICHUAN, MahjongVariant.TAIWAN, MahjongVariant.RIICHI, MahjongVariant.TAIWAN);
@@ -244,6 +244,12 @@ final class TaiwanTableSmoke {
                 if (++captures == 1) press(client, "ui.mchjong.result_page.2");
                 if (captures < 12) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-match-end.png", client.getMainRenderTarget(), ignored -> {});
+                task = server.submit(() -> botMatch(target(client, pos), main(client), pos)); stage++;
+            }
+            case 19 -> {
+                if (view == null || view.lifecycle() != TableSession.Lifecycle.FINISHED || !(client.screen instanceof TaiwanResultsScreen)) break;
+                check(room.seats().stream().filter(s -> s.participant().bot()).count() == 3, "Taiwan final Bot roster missing");
+                check(view.game().roundWind() == Tile.NORTH && view.game().opening().dealer() == 3, "Taiwan Bot match did not complete four winds");
                 return true;
             }
             default -> throw new IllegalStateException("Bad Taiwan smoke stage");
@@ -254,6 +260,59 @@ final class TaiwanTableSmoke {
     private ServerPlayer main(Minecraft client) { return client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID()); }
     private MahjongTableBlockEntity target(Minecraft client, BlockPos pos) { return (MahjongTableBlockEntity) main(client).serverLevel().getBlockEntity(pos); }
     private List<ServerPlayer> players(ServerPlayer main) { var all = new ArrayList<ServerPlayer>(guests); all.add(main); return all; }
+    private static void roomAction(MahjongTableBlockEntity table, ServerPlayer player, BlockPos pos, RoomAction action) {
+        var room = table.roomView(player);
+        int index = room.actions().indexOf(action); check(index >= 0, "Missing Taiwan room action " + action);
+        TableNetworking.receive(player, new TableRoomActionPayload(pos, room.tableId(), room.incarnation(), room.decision(), index));
+    }
+    private void botMatch(MahjongTableBlockEntity table, ServerPlayer player, BlockPos pos) {
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.RETURN_TO_LOBBY));
+        for (var guest : guests) {
+            roomAction(table, guest, pos, new RoomAction(RoomAction.Type.LEAVE_ROOM));
+            if (guest.getVehicle() instanceof SeatEntity seat) { guest.stopRiding(); seat.discard(); }
+            player.server.getPlayerList().getPlayers().remove(guest); guest.discard();
+        }
+        guests.clear();
+        var room = table.roomView(player);
+        int target = (room.viewerSeat() + 1) % 4;
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.SET_BOT, List.of(target, 0)));
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.SET_BOT, List.of(target, 1)));
+        check(table.roomView(player).seats().get(target).participant().difficulty() == BotDifficulty.HARD, "Taiwan difficulty packet rejected");
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.REMOVE_BOT, target));
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.FILL_BOTS));
+        var roster = table.roomView(player).seats().stream().map(TableRoomView.Seat::participant).toList();
+        check(roster.stream().filter(TableParticipant::bot).count() == 3 && roster.stream().filter(TableParticipant::bot).allMatch(TableParticipant::ready), "Taiwan Bots not automatically ready");
+        var saved = table.saveWithoutMetadata(player.registryAccess()); table.loadWithComponents(saved, player.registryAccess());
+        check(table.roomView(player).seats().stream().map(TableRoomView.Seat::participant).toList().equals(roster), "Taiwan NBT lost Bot roster");
+        room = table.roomView(player);
+        TableNetworking.receive(player, new TaiwanRulesPayload(pos, room.tableId(), room.incarnation(), room.decision(), TaiwanGameState.Rules.of(TaiwanPreset.SOUTHERN_COMMON.rules())));
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.BEGIN_SEATING));
+        if (player.getVehicle() instanceof SeatEntity seat) { player.stopRiding(); seat.discard(); }
+        table.sit(player, table.participantRoom(player).seatOf(player.getUUID()));
+        roomAction(table, player, pos, new RoomAction(RoomAction.Type.READY));
+        int hands = 0;
+        for (int ticks = 0; ticks < 200_000; ticks++) {
+            var view = table.taiwanView(player);
+            if (view.lifecycle() == TableSession.Lifecycle.FINISHED) break;
+            var session = (TaiwanSession) table.participantRoom(player);
+            session.game().checkConservation();
+            if (view.game().result() != null) {
+                check(++hands < 250, "Taiwan Bot match did not progress");
+                for (int seat = 0; seat < 4; seat++) if (session.trainingSeat(seat)) check((view.confirmed() & 1 << seat) != 0, "Taiwan Bot result unconfirmed");
+                var before = view.scores();
+                saved = table.saveWithoutMetadata(player.registryAccess()); table.loadWithComponents(saved, player.registryAccess());
+                check(table.taiwanView(player).scores().equals(before), "Taiwan Bot restore repaid result");
+                confirm(table, player, pos);
+            } else {
+                if (!view.game().actions().isEmpty()) TableNetworking.receive(player,
+                    new TaiwanActionPayload(pos, view.tableId(), view.incarnation(), view.game().decision(), TaiwanBot.choose(view.game())));
+                ((TaiwanSession) table.participantRoom(player)).tick();
+            }
+        }
+        var end = table.taiwanView(player);
+        check(end.lifecycle() == TableSession.Lifecycle.FINISHED && end.scores().stream().mapToLong(Long::longValue).sum() == 0, "Taiwan Bot match did not finish with balanced scores");
+        checkPrivacy(table, player); table.open(player);
+    }
     private void driveOne(MahjongTableBlockEntity table, ServerPlayer main, BlockPos pos) {
         for (var player : players(main)) {
             var view = table.taiwanView(player); if (view.game().actions().isEmpty()) continue;
