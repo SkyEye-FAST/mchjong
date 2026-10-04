@@ -53,7 +53,7 @@ class McrWallLayoutTest {
 
     @Test void packetsAndFirstThirdJumpLeaveExactFrontAndTailSlotsAcrossRestore() {
         var opening = McrGameTest.OPENING; // Dealer zero, break at column nine of wall zero.
-        var wall = new McrWall(Tile.mcrSet(), opening);
+        var wall = new McrWall(Tile.standard144Set(), opening);
         var plan = McrWallLayout.initialDeal(opening);
         assertEquals(53, plan.size());
         assertEquals(53, plan.stream().map(McrWallLayout.Take::slot).distinct().count());

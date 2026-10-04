@@ -7,6 +7,10 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Added
+
+- Add the independent JVM 17 `taiwan-mahjong` hand library, five-meld structural analysis, source-qualified common and southern-style tai profiles, flower wins and the `TaiwanHandAnalyzer` engine boundary; document the separate Taiwan match integration design and generalize the shared 144-tile stock factory.
+
 ## [0.9.1] - 2026-10-03
 
 ### Fixed

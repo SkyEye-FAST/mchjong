@@ -15,6 +15,8 @@ jobs:
     steps:
       - name: Checkout
         uses: actions/checkout@v7
+        with:
+          submodules: recursive
 
       - name: Validate release version
         id: version
@@ -89,6 +91,7 @@ jobs:
         with:
           ref: ${{ steps.version.outputs.compat_1201_ref }}
           path: compat-1.20.1
+          submodules: recursive
 
       - name: Build Minecraft 1.20.1 release artifacts
         working-directory: compat-1.20.1
@@ -99,6 +102,7 @@ jobs:
         with:
           ref: ${{ steps.version.outputs.compat_2612_ref }}
           path: compat-26.1.2
+          submodules: recursive
 
       - name: Setup Java 25
         uses: actions/setup-java@v6

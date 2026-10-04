@@ -15,7 +15,7 @@ class ReplayPresentationTest {
         .mapToObj(seat -> new TableParticipant(new UUID(82, seat), "Player " + seat)).toList();
 
     @Test void mcrRoundSelectionIsStaticAndRemainingFollowsEveryFrame() {
-        var session = McrSession.start(TABLE, PLAYERS, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, PLAYERS, 711, Tile.standard144Set());
         session.synchronizeSeats(Map.of(PLAYERS.get(0).id(), 0, PLAYERS.get(1).id(), 1,
             PLAYERS.get(2).id(), 2, PLAYERS.get(3).id(), 3));
         for (int step = 0; step < 1000 && session.pendingReplays().isEmpty(); step++) {

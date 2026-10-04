@@ -340,6 +340,20 @@ Report commands, results and coverage limits in the delivery message or PR.
 Guides retain reusable instructions and current contracts; individual run logs,
 screenshot inventories, timings and experiment histories remain outside tracked docs.
 
+## Taiwan hand library
+
+```text
+gradlew.bat :taiwan-mahjong:test :engine:test --tests "*TaiwanHandAnalyzerTest" :engine:shadowJar --configure-on-demand --warning-mode fail --console=plain
+```
+
+The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
+Its tests own five-meld decomposition, exact copy-aware distance, effective tiles,
+discard availability, source-qualified scoring/exclusions and flower victories.
+`TaiwanHandAnalyzerTest` owns physical identity/provenance, named flower mapping,
+public-copy deduplication and the library-free engine API. The MCR dependency is
+a test-only four-meld remainder oracle, not a Taiwan rules authority. `buildAll`
+includes the standalone library's `check`. No Taiwan client runtime is registered.
+
 ## Bot checks
 
 Use `:engine:test --tests "*TrainingBotTest"` for decision regressions.

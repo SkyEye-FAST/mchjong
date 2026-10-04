@@ -34,7 +34,7 @@ class RoomSeatingTest {
         assertEquals(0, session.seatOf(id(0)));
         assertEquals(1, session.seatOf(id(1)));
         assertNotEquals(riichi.incarnation(), session.incarnation());
-        assertTrue(session.configureEquipment(false, Tile.mcrSet()));
+        assertTrue(session.configureEquipment(false, Tile.standard144Set()));
         assertTrue(session.join(id(2), "West", 2));
         assertTrue(session.join(id(3), "North", 3));
         session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3));

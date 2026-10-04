@@ -52,6 +52,13 @@ Artifact names include both loader and Minecraft version to keep releases distin
 
 ## Hand analysis boundaries
 
+`TaiwanHandAnalyzer` is the sole production boundary to the independent
+Kotlin/JVM 17 `taiwan-mahjong` composite build. It owns physical identity and
+meld-provenance conversion; the library owns five-meld sixteen-tile structure,
+analysis and source-qualified tai scoring. This first stage has no playable
+Taiwan session. See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
+and the separate match-layer contract.
+
 `Meld.Type` names physical structures: sequence, triplet, open quad, concealed
 quad and added quad. The last preserves the original triplet's supplier and
 fourth-tile provenance. Riichi declarations map explicitly at the `RiichiAction`
@@ -95,7 +102,7 @@ payments.
 
 `Tile.kind` covers the 34 ordinary kinds. `FlowerTile` assigns one physical ID to
 each of Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo and Chrysanthemum;
-`Tile.mcrSet` combines those eight identities with 136 ordinary tiles. Flowers
+`Tile.standard144Set` combines those eight identities with 136 ordinary tiles. Flowers
 have their own `McrPlayerState.flowers` area and are included by
 `McrPlayerState.physicalTiles` accounting, separately from concealed tiles.
 `RiichiPlayerState` tracks extracted norths and Riichi-only declarations.

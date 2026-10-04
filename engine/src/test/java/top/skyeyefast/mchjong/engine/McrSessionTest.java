@@ -97,7 +97,7 @@ class McrSessionTest {
 
     @Test void preparedRosterAndCompleteStockStartOneShuffledMatch() {
         var roster = new ArrayList<>(ROSTER);
-        var stock = new ArrayList<>(Tile.mcrSet());
+        var stock = new ArrayList<>(Tile.standard144Set());
         var session = McrSession.start(TABLE, roster, 711, stock);
         roster.clear(); stock.clear();
         assertEquals(0, session.seatOf(id(0)));
@@ -112,13 +112,13 @@ class McrSessionTest {
             assertEquals(reference.hand(seat), session.view(id(seat)).game().seats().get(seat).hand());
         assertThrows(UnsupportedOperationException.class, () -> session.save().room().participants().clear());
         assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE, ROSTER, 1, Tile.set(false)));
-        assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE, ROSTER.subList(0, 3), 1, Tile.mcrSet()));
+        assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE, ROSTER.subList(0, 3), 1, Tile.standard144Set()));
         assertThrows(IllegalArgumentException.class, () -> McrSession.start(TABLE,
-            List.of(ROSTER.get(0), ROSTER.get(1), ROSTER.get(2), ROSTER.get(0)), 1, Tile.mcrSet()));
+            List.of(ROSTER.get(0), ROSTER.get(1), ROSTER.get(2), ROSTER.get(0)), 1, Tile.standard144Set()));
     }
 
     @Test void senderBindingRejectsForeignStaleAndUnmountedRequestsWithoutMutation() {
-        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         session.synchronizeSeats(MOUNTS);
         var offered = session.view(id(0));
         String saved = McrCodec.saveSession(session);
@@ -151,7 +151,7 @@ class McrSessionTest {
     }
 
     @Test void sharedExitVotePausesMcrActionsAndSurvivesRestore() {
-        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         session.synchronizeSeats(MOUNTS);
         var before = session.view(id(0));
         assertTrue(session.requestExit(id(0)));
@@ -178,7 +178,7 @@ class McrSessionTest {
     }
 
     @Test void lastPlayerMayKeepOrEndPausedMcrMatchAfterDismount() {
-        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         session.synchronizeSeats(MOUNTS);
         session.unseat(id(0));
         assertFalse(session.paused());
@@ -234,7 +234,7 @@ class McrSessionTest {
         play(second, 1, WIN);
         assertEquals(1, ((McrSettlement.Win) second.view(id(1)).game().result()).winner());
         assertTrue(second.view(id(1)).canConfirmNextHand());
-        var otherMatch = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var otherMatch = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         assertNotEquals(session.incarnation(), otherMatch.incarnation());
     }
 
@@ -291,7 +291,7 @@ class McrSessionTest {
     }
 
     @Test void privateAndRecipientEnvelopesStaySeparateAndValidateRosterIdentity() {
-        var session = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         session.synchronizeSeats(MOUNTS);
         for (UUID viewer : new UUID[]{id(0), id(1), OUTSIDER, null}) {
             var view = session.view(viewer);
@@ -325,7 +325,7 @@ class McrSessionTest {
         var room = new TableSession.State(TABLE, MahjongVariant.MCR, 4, ROSTER.getFirst().id(),
             ROSTER, seating.save(), TableSession.Lifecycle.PLAYING, 1, 1, 711, false, null, null, 0, 0, false, java.util.Collections.nCopies(4, MatchAutomation.DEFAULT));
         var clocks = java.util.Collections.nCopies(4, new TimeControl.Clock(control.moveSeconds() * 20, control.reserveSeconds() * 20, false));
-        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.mcrSet(), 0,
+        var session = McrSession.restore(new McrSession.State(McrSession.State.FORMAT, room, Tile.standard144Set(), 0,
             control, clocks, 0, game.save(), null, null, List.of()));
         session.synchronizeSeats(MOUNTS);
         return session;
@@ -404,7 +404,7 @@ class McrSessionTest {
         tick(session, 20);
         assertEquals(tile, session.save().game().players().get(3).river().getLast().tile());
 
-        var flowers = McrSession.start(TABLE, ROSTER, 711, Tile.mcrSet());
+        var flowers = McrSession.start(TABLE, ROSTER, 711, Tile.standard144Set());
         flowers.synchronizeSeats(MOUNTS);
         assertEquals(McrGame.Phase.INITIAL_FLOWERS, flowers.save().game().phase());
         tick(flowers, McrSession.AUTO_ACTION_TICKS - 1);

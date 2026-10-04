@@ -22,7 +22,7 @@ class McrReplayTest {
         assertNotNull(game.result());
         var hand = recorder.finish(game);
         assertEquals(144, hand.wall().size());
-        assertTrue(Tile.validMcrSet(hand.wall()));
+        assertTrue(Tile.validStandard144Set(hand.wall()));
         assertEquals(14, hand.initialHands().get(0).size());
         assertEquals(1, hand.penalties().size());
         assertTrue(hand.events().stream().anyMatch(event -> event.kind() == McrReplayHand.Kind.WRONG_WIN));
@@ -46,7 +46,7 @@ class McrReplayTest {
     @Test @Timeout(20) void sessionSaveRetainsUnwrittenHandOnceAndRestoreContinuesCurrentRecorder() {
         var roster = List.of(new TableParticipant(id(0), "East"), new TableParticipant(id(1), "South"),
             new TableParticipant(id(2), "West"), new TableParticipant(id(3), "North"));
-        var session = McrSession.start(TABLE, roster, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, roster, 711, Tile.standard144Set());
         session.synchronizeSeats(Map.of(id(0), 0, id(1), 1, id(2), 2, id(3), 3));
         for (int step = 0; step < 650 && session.view(id(0)).game().result() == null; step++) {
             if (step == 10) {
@@ -113,7 +113,7 @@ class McrReplayTest {
 
         var roster = List.of(new TableParticipant(id(0), "East"), new TableParticipant(id(1), "South"),
             new TableParticipant(id(2), "West"), new TableParticipant(id(3), "Bot", true, false, BotDifficulty.EASY, null, true));
-        var session = McrSession.start(TABLE, roster, 711, Tile.mcrSet());
+        var session = McrSession.start(TABLE, roster, 711, Tile.standard144Set());
         assertTrue(session.save().replay().participants().get(3).bot());
         assertFalse(session.save().replay().permits(id(3)));
     }

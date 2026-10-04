@@ -1,0 +1,3 @@
+[submodule "taiwan-mahjong"]
+	path = taiwan-mahjong
+	url = https://github.com/SkyEye-FAST/taiwan-mahjong.git
