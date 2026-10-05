@@ -13,4 +13,4 @@ plugins {
 
 rootProject.name = 'mchjong'
 include 'engine', 'fabric', 'forge', 'neoforge', 'art'
-includeBuild('taiwan-mahjong')
+if (providers.gradleProperty('taiwanSource').getOrElse('true').toBoolean()) includeBuild('taiwan-mahjong')

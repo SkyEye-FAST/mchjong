@@ -443,6 +443,26 @@ disabling world policy removes the hint widget and restoring policy keeps the
 room choice disabled. The legal-action driver is test-only. Taiwan external
 Bot is not supported.
 
+### Taiwan compatibility profiles
+
+Both compatibility profiles retain main's Taiwan game/save/view/replay semantics.
+Use each branch's toolchain (JDK 21 build / Java 17 Minecraft on 1.20.1; JDK 25
+on 26.1.2), build that branch's two loader artifacts, and run this focused subset:
+
+```text
+gradlew.bat :engine:test --tests "*TaiwanGameTest.openingUsesFourPacketsAndRoundBasedFlowers" --tests "*TaiwanBotTest.issuedWinsAlwaysTakePriorityInBothPresets" --tests "*TaiwanReplayTest.bothWallsOrdinaryPlayAndRecorderRestoreKeepExactPhysicalState" --tests "*TaiwanHintsTest.shantenEffectiveTilesAndLegalDiscardPreview" :fabric:test --tests "*TaiwanPresentationTest" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true --warning-mode fail --console=plain
+```
+
+Build with `:fabric:build :forge:build -x test` on 1.20.1 or
+`:fabric:build :neoforge:build -x test` on 26.1.2; the focused tests above run
+separately. The real client fixture checks variant registration, both native
+stocks, a complete opening/match, Bot control/decisions, NBT, Replay/hints and
+seated/immersive packets. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`, `PASS.txt`
+and no `FAIL.txt` in that branch's `fabric/build/smoke/taiwan-evidence`.
+The 26.1.2 native server boundary also runs `:neoforge:test --tests
+"*TaiwanIntegrationTest"`. These focused checks do not repeat main's full matrix.
+
 ## Bot checks
 
 Use `:engine:test --tests "*TrainingBotTest"` for decision regressions.

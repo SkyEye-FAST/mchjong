@@ -306,8 +306,10 @@ human legal-action drivers are not production Bots. Both presets' complete
 four-wind Bot matches have engine coverage. The smoke retrieves the completed
 Taiwan match through the shared browser, opens playback, steps events, changes
 viewpoints, inspects an opening flower and settlement, and returns to the list.
-External Bots and convenience hints remain outside Taiwan support.
-Maven Central publication and compatibility-port synchronization
-are separate work.
+Taiwan shares the room/world convenience-hint policy, with recipient-only analysis
+and scored discard/wait previews. External Bots remain unavailable. The 1.20.1
+and 26.1.2 profiles retain these game/save/view/replay contracts while adapting
+only their Minecraft, loader, rendering, networking and resource APIs. Library
+publication checks belong to its [independent repository](https://github.com/SkyEye-FAST/taiwan-mahjong).
 
 See [Verification](VERIFICATION.md#taiwan-hand-library) for focused commands.

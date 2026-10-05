@@ -44,8 +44,10 @@ Current build profiles support these Minecraft versions and loaders:
 | 1.20.1 | `compat/1.20.1` | 17 | Fabric, Forge | Uses the Fabric artifact |
 | 26.1.2 | `compat/26.1.2` | 25 | Fabric, NeoForge | Uses the Fabric artifact |
 
-Taiwan gameplay is available in the `main` 1.21.1 profile; the compatibility
-profiles have not received this integration.
+Taiwan is playable on all three profiles, with Pocket/Southern 144/136-tile
+stocks, complete four-wind matches, one built-in Bot option, native replays and
+convenience hints. See [Taiwan verification](docs/VERIFICATION.md#taiwan-hand-library)
+for the focused build and client checks.
 
 Optional integrations are scoped to the loader named in each cell:
 
