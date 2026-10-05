@@ -259,7 +259,7 @@ final class RoomLobby {
             : room.variant() == MahjongVariant.TAIWAN ? table.clientTaiwanSettings().timeControl() : table.clientSichuanSettings().timeControl();
         options.add(new Option(Component.translatable("ui.mchjong.clock_settings"), Component.translatable("lobby.mchjong.clock_summary", time.moveSeconds(), time.reserveSeconds()), null, host(room) && room.lobby(),
             () -> client.setScreen(new TableClockScreen(parent, time))));
-        if (room.variant() != MahjongVariant.TAIWAN) options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
+        options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),
             () -> TableExitControls.send(pos, room, TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), !room.convenienceHints())));
         options.add(new Option(Component.translatable("ui.mchjong.invite"), Component.literal("›"), null, room.viewerSeat() >= 0 && room.lobby() && table.clientWorldPolicy().invitationsEnabled(),
             () -> client.setScreen(new TableInviteScreen(parent, pos))));

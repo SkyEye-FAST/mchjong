@@ -202,8 +202,8 @@ Bots, automatically ready them and retain their difficulty. The session schedule
 them after twelve active ticks with inactive Bot clocks and automatic nonfinal
 result confirmations. One human and three Bots can complete all four winds,
 including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).
-Taiwan records native replays through the shared archive and browser; external Bot
-and convenience-hint integration remain unavailable.
+Taiwan records native replays through the shared archive and browser and shares
+the room convenience-hint setting. External Bot integration remains unavailable.
 
 ## MCR match orchestration
 
@@ -810,8 +810,20 @@ non-flower fan for ordinary discard/self-draw contexts and current public claim
 circumstances. Sichuan uses structural scores and `readyValue`, with its recipient's
 passed-win restriction. Public physical tile accounting excludes opponent hands
 and wall identities. `TableHintsButton` shares the native focus target and icon;
-`TableHints` formats the MCR/Sichuan results above the existing projected private
+`TaiwanHints` consumes only `TaiwanView`, using `TaiwanHandAnalyzer` and the view's
+complete `TaiwanRules` for sixteen-tile shanten, effective tiles, legal discard
+previews and per-wait capped ron/self-draw tai. It counts unique physical IDs from
+the owner's hand/melds/flowers, public rivers/exposed melds and current focus;
+covered opponent kongs, opponent hands and future wall identities are excluded.
+Exhausted structural waits remain visible at zero. Ordinary future-win contexts
+retain only confirmed flowers, winds and READY declarations; they never assume
+last tiles, replacements, robbery or opening wins. A current public reaction focus
+separately carries its known last-discard/robbing context. Passing keeps structural
+waits and marks the current win restriction. Spectators get no private analysis.
+`TableHints` formats the MCR/Sichuan/Taiwan results above the existing projected private
 hand without introducing a common analysis interface.
+Taiwan's seated and immersive adapters gate analysis on the synchronized room/world
+policy before calling the analyzer, sharing native focus, tile rows and pagination.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
 copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent

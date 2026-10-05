@@ -41,6 +41,11 @@ final class TaiwanTableSmoke {
             case 0 -> { task = server.submit(() -> target(client, pos).sit(main(client), 0)); stage++; }
             case 1 -> {
                 if (room == null || room.viewerSeat() < 0) break;
+                if (!room.convenienceHints()) {
+                    client.getConnection().send(PayloadPackets.serverbound(new TableSessionControlPayload(pos, room.tableId(),
+                        TableSessionControlPayload.Operation.CONVENIENCE_HINTS, room.decision(), true)));
+                    break;
+                }
                 if (choice == variants.size()) { stage = 3; break; }
                 client.getConnection().send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.incarnation(), room.decision(), variants.get(choice))));
                 stage++;
@@ -53,6 +58,7 @@ final class TaiwanTableSmoke {
                     case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
                     case TAIWAN -> client.screen instanceof TaiwanLobbyScreen;
                 }, "Variant switch did not route its lobby");
+                check(room.convenienceHints(), "Variant switch lost shared hints");
                 choice++; stage = 1;
             }
             case 3 -> {
@@ -163,12 +169,33 @@ final class TaiwanTableSmoke {
                 var piece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 var pointer = project(client, pos, piece.position());
                 check(screen.mouseClicked(pointer.x, pointer.y, 0) && screen.selected(piece), "Taiwan seated picking failed");
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0); captures = 0; stage++;
+                captures = 0; stage = 51;
+            }
+            case 51 -> {
+                var screen = (TaiwanTableScreen) client.screen;
+                if (++captures < 6) break;
+                var hint = hint(screen);
+                checkHint(hint, screen);
+                screen.setFocused(hint); captures = 0; stage = 52;
+            }
+            case 52 -> {
+                var screen = (TaiwanTableScreen) client.screen;
+                if (++captures < 6) break;
+                check(hint(screen).isFocused(), "Taiwan seated hints lost focus");
+                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-seated.png", client.getMainRenderTarget(), ignored -> {});
+                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0); captures = 0; stage = 13;
             }
             case 13 -> {
                 if (!(client.screen instanceof TaiwanTableScreen screen) || !screen.immersive()) break;
                 SmokeScreenshots.grab(output.toFile(), "taiwan-immersive.png", client.getMainRenderTarget(), ignored -> {});
                 if (++captures < 12) break;
+                var hint = hint(screen);
+                checkHint(hint, screen);
+                screen.setFocused(hint);
+                if (captures < 18) break;
+                check(hint.isFocused(), "Taiwan immersive hints lost focus");
+                SmokeScreenshots.grab(output.toFile(), "taiwan-hints-immersive.png", client.getMainRenderTarget(), ignored -> {});
+                screen.setFocused(null);
                 var own = view.game().seats().get(view.game().recipient());
                 var tiles = new ArrayList<>(own.concealed());
                 if (own.drawn() >= 0 && tiles.remove(Integer.valueOf(own.drawn()))) tiles.add(own.drawn());
@@ -183,7 +210,20 @@ final class TaiwanTableSmoke {
                 var selectedPiece = TaiwanTableScene.build(view.game()).stream().filter(p -> p.area() == TaiwanTableScene.Area.HAND && p.seat() == view.game().recipient() && p.tile() == selectedTile).findFirst().orElseThrow();
                 check(screen.selected(selectedPiece), "Taiwan immersive selected wrong tile");
                 screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_V, 0, 0);
-                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); sentDecision = view.game().decision(); stage++;
+                task = server.submit(() -> setHintsPolicy(server, false)); stage = 53;
+            }
+            case 53 -> {
+                if (table.clientWorldPolicy().allowConvenienceHints() || room.convenienceHints()) break;
+                var screen = (TaiwanTableScreen) client.screen;
+                check(!hint(screen).visible && !hint(screen).active && !hint(screen).isFocused(), "World policy left Taiwan hints visible");
+                task = server.submit(() -> setHintsPolicy(server, true)); stage = 54;
+            }
+            case 54 -> {
+                if (!table.clientWorldPolicy().allowConvenienceHints()) break;
+                var screen = (TaiwanTableScreen) client.screen;
+                check(!room.convenienceHints() && !hint(screen).visible, "Disabled room hints reappeared after world policy restored");
+                screen.setFocused(null);
+                screen.keyPressed(org.lwjgl.glfw.GLFW.GLFW_KEY_ENTER, 0, 0); sentDecision = view.game().decision(); stage = 14;
             }
             case 14 -> {
                 if (view.game().decision() == sentDecision) break;
@@ -304,6 +344,24 @@ final class TaiwanTableSmoke {
             default -> throw new IllegalStateException("Bad Taiwan smoke stage");
         }
         return false;
+    }
+
+    private static MahjongButton hint(TaiwanTableScreen screen) {
+        return screen.children().stream().filter(child -> child instanceof MahjongButton
+            && child.getClass().getSimpleName().equals("TableHints")).map(child -> (MahjongButton) child).findFirst().orElseThrow();
+    }
+    private static void checkHint(MahjongButton hint, TaiwanTableScreen screen) {
+        check(hint.visible && hint.active, "Taiwan selected discard has no convenience preview");
+        check(hint.getMessage().getString().contains(net.minecraft.network.chat.Component.translatable(
+            "hints.mchjong.after_discard", "").getString()), "Taiwan hints lost discard preview narration");
+        int width = screen.immersive() ? TableCanvas.WIDTH : screen.width;
+        int height = screen.immersive() ? TableCanvas.HEIGHT : screen.height;
+        check(hint.getX() >= 0 && hint.getY() >= 0 && hint.getRight() <= width && hint.getBottom() <= height,
+            "Taiwan hint icon exceeds its canvas");
+    }
+    private static void setHintsPolicy(net.minecraft.server.MinecraftServer server, boolean allowed) {
+        try { WorldSettings.of(server).set("allowConvenienceHints", allowed); }
+        catch (java.io.IOException failure) { throw new java.io.UncheckedIOException(failure); }
     }
 
     private ServerPlayer main(Minecraft client) { return client.getSingleplayerServer().getPlayerList().getPlayer(client.player.getUUID()); }

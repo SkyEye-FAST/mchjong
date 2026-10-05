@@ -192,7 +192,7 @@ tai awards and transfers while keeping opponent hands and covered kongs hidden.
 Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
 hands and five melds at full tile size; Chinese artwork and placement primitives
 are shared. Its lobby exposes human and built-in Bot seats, presets,
-payment/reserve rules, clocks and shared Replay navigation, with no convenience-hint controls.
+payment/reserve rules, clocks, shared Replay navigation and convenience hints.
 All four variants share one lobby layout. The left rail selects Riichi, MCR,
 Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,
@@ -272,7 +272,7 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Room settings include default-off convenience hints for all three rules. A small diamond
+Room settings include default-off convenience hints for all four rules. A small diamond
 with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
@@ -288,7 +288,8 @@ controls or player cards restrict the space, preserving the hand anchor and
 native text size. MCR and Sichuan retain this native focus and popup style with
 shanten/effective-tile previews; MCR shows scorer-backed non-flower fan qualification,
 and Sichuan shows void tiles, structural capped values and its owner's passed-win
-restriction. Dense MCR/Sichuan tile rows paginate within the available height;
+restriction. Taiwan adds sixteen-tile shanten/effective previews, separate ron/self-draw
+tai and its owner's passing restriction. Dense MCR/Sichuan/Taiwan tile rows paginate within the available height;
 native activation of the diamond advances the page while narration retains all
 tile rows. Shared presentation does not alter either table's hand geometry.
 The room host can change this setting during preparation.

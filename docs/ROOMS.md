@@ -13,12 +13,12 @@ play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
 The room host can enable **Convenience hints** during preparation: Settings → Room
-or the lobby Match settings tab for Riichi, MCR and Sichuan. These rules share
-the setting, including when changing variants. Taiwan does not expose hints. World `allowConvenienceHints`
+or the lobby Match settings tab for Riichi, MCR, Sichuan and Taiwan. All four share
+the setting, including when changing variants. World `allowConvenienceHints`
 can disable it in both waiting and running rooms.
 
 Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
-a legal discard previews the resulting hand. Activate the MCR/Sichuan diamond
+a legal discard previews the resulting hand. Activate the MCR/Sichuan/Taiwan diamond
 to page through tile rows when the popup needs more space. Riichi shows its structural waits.
 MCR shows shanten, improving tiles and structural waits, with non-flower fan for
 ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
@@ -31,6 +31,21 @@ and their maximum ready value under the room rules. These draw-check values
 exclude win circumstances and self-draw bonuses. A passed-win restriction is
 shown only to its owner; it restricts discard wins to higher capped fan until
 the engine clears it. Hints do not declare wins or submit actions.
+
+Taiwan shows sixteen-tile shanten, effective tiles and every structural wait with
+public remaining counts. Each wait has separate ron and self-draw tai under the
+current room rules, including the preset's cap, concealment, honors, seat/round
+winds, already revealed flowers and READY. A drawn hand shows its pre-draw
+structure until you hover or select a legal discard. Passing (過水) retains the
+structural waits while marking that you currently cannot win. READY keeps its
+waits and tai. Spectators receive no private hints, and disabling hints stops
+client analysis and display.
+
+Future waits never assume last-tile, replacement, robbing-kong or opening-win
+bonuses, future flowers or unknown replacement sources. A currently offered public
+reaction tile separately shows its confirmed claim tai in parentheses. Public
+counting includes only your hand/melds/flowers, public rivers/exposed melds and the
+current focus; covered opponent kongs contribute no hidden identities.
 
 Counts use your own hand and public tiles, deduplicate claimed tiles and include
 exhausted structural waits at zero. They describe unseen copies, never the real

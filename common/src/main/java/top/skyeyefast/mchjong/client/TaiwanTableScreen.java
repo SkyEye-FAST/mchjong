@@ -28,6 +28,7 @@ public final class TaiwanTableScreen extends Screen {
     private TableHand hand;
     private TableBoard board;
     private TableTurnClock turnClock;
+    private final TableHints hints = new TableHints();
     private final List<AbstractWidget> decisionControls = new ArrayList<>();
     private int actionTop, actionHeight;
     public TaiwanTableScreen(BlockPos pos) { this(pos, false); }
@@ -65,6 +66,7 @@ public final class TaiwanTableScreen extends Screen {
 
     private void rebuild() {
         int focusedTile = getFocused() instanceof HandTarget target ? target.tile : Tile.ABSENT;
+        boolean hintFocused = getFocused() == hints;
         clearWidgets();
         turnClock = null;
         decisionControls.clear();
@@ -75,6 +77,7 @@ public final class TaiwanTableScreen extends Screen {
         shownRevision = view.revision();
         if (decision != game.decision()) {
             decision = game.decision(); selected = hovered = lastClicked = Tile.ABSENT;
+            hints.clearPreview();
         }
         hand = null;
         board = immersive() ? new TableBoard(TableBoardState.live(view), 20, 1260, 68, 620, 800, true) : null;
@@ -85,6 +88,7 @@ public final class TaiwanTableScreen extends Screen {
             hand = new TableHand(tiles, player.drawn(), player.melds(), game.recipient(), TableCanvas.WIDTH, TableCanvas.HEIGHT - 60, 58, true, top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN);
         }
         if (room.exitVote() != null) {
+            hints.clearPreview();
             TableExitControls.voteButtons(pos, room, uiWidth(), uiHeight(), contentScale()).forEach(this::addRenderableWidget);
             return;
         }
@@ -110,6 +114,9 @@ public final class TaiwanTableScreen extends Screen {
             var target = addRenderableWidget(new HandTarget(tile));
             if (tile == focusedTile) setFocused(target);
         }
+        addRenderableWidget(hints);
+        updateHints();
+        if (hintFocused && hints.visible) setFocused(hints);
     }
     private void send(TaiwanSession.View snapshot, int index) {
         var current = view();
@@ -206,6 +213,7 @@ public final class TaiwanTableScreen extends Screen {
                     table().clientTaiwanCloth(), animation, now, tile -> TileMesh.artwork(deck.tile(tile)));
             }
             hovered = transform.contains(mouseX, mouseY) ? pick(mx, my) : Tile.ABSENT;
+            updateHints();
             int s = contentScale();
             g.pose().pushPose(); g.pose().translate(0, 0, 400); g.pose().scale(s, s, 1);
             int w = uiWidth() / s;
@@ -239,6 +247,7 @@ public final class TaiwanTableScreen extends Screen {
                 g.pose().popPose();
             }
             if (hovered >= 0 && table().clientTableRoom().exitVote() == null) g.renderTooltip(font, tileLabel(hovered), mx, my);
+            hints.renderPopup(g, font, table().clientTaiwanDeck().preset());
             g.pose().popPose();
         } finally { transform.end(g); }
     }
@@ -272,10 +281,59 @@ public final class TaiwanTableScreen extends Screen {
             return height - 24;
         return Math.max(190, Math.min(height - 24, (int) top - 6));
     }
+    private void updateHints() {
+        var room = table().clientTableRoom();
+        if (!room.convenienceHints() || !room.allowConvenienceHints() || pending || room.exitVote() != null
+            || view().paused() || view().game().recipient() < 0) {
+            hints.clearPreview();
+            return;
+        }
+        int scale = contentScale();
+        var bounds = privateHandBounds();
+        if (bounds == null) { hints.clearPreview(); return; }
+        int center = hand == null ? bounds.left() + bounds.width() / 2 : hand.centerX();
+        int bottom = bounds.top() - 4 * scale;
+        int half = Math.min(center - 8, uiWidth() - 8 - center);
+        for (var widget : decisionControls) if (widget.visible && widget.getY() < bottom
+            && widget.getBottom() > bottom - 100 * scale) {
+            if (widget.getX() > center) half = Math.min(half, widget.getX() - center - 4);
+            else if (widget.getRight() < center) half = Math.min(half, center - widget.getRight() - 4);
+        }
+        int focus = getFocused() instanceof HandTarget target ? target.tile : hovered;
+        hints.update(view().game(), focus, selected, font, center, bottom, Math.max(0, half), 38, scale);
+        hints.setX(uiWidth() - 30 * scale);
+        hints.setY(uiHeight() - 16 * scale);
+    }
+
+    private net.minecraft.client.gui.navigation.ScreenRectangle privateHandBounds() {
+        if (hand != null) return new net.minecraft.client.gui.navigation.ScreenRectangle(0, hand.top(), uiWidth(), uiHeight() - hand.top());
+        var projection = projection();
+        double left = Double.POSITIVE_INFINITY, right = Double.NEGATIVE_INFINITY;
+        double top = Double.POSITIVE_INFINITY, bottom = Double.NEGATIVE_INFINITY;
+        for (var piece : TaiwanTableScene.build(view().game())) if (ownHand(piece)) {
+            var pose = TableAnimation.of(table()).worldPose(piece, Util.getMillis());
+            var transform = new org.joml.Matrix4f().translation((float) pose.position().x,
+                (float) pose.position().y, (float) pose.position().z)
+                .rotateY((float) Math.toRadians(pose.yaw())).rotateX((float) Math.toRadians(pose.pitch())).scale(piece.scale());
+            for (int x = -1; x <= 1; x += 2) for (int y = -1; y <= 1; y += 2) for (int z = -1; z <= 1; z += 2) {
+                var corner = transform.transformPosition(new org.joml.Vector3f(x * TileMesh.WIDTH / 2,
+                    y * TileMesh.HEIGHT / 2, z * TileMesh.DEPTH / 2));
+                var point = projection.project(new net.minecraft.world.phys.Vec3(corner.x, corner.y + .035, corner.z), .01);
+                if (point != null) {
+                    left = Math.min(left, point.x()); right = Math.max(right, point.x());
+                    top = Math.min(top, point.y()); bottom = Math.max(bottom, point.y());
+                }
+            }
+        }
+        if (!Double.isFinite(top) || top >= height || bottom <= 0 || left >= width || right <= 0) return null;
+        int x = (int) Math.max(0, left), y = (int) Math.max(0, top);
+        return new net.minecraft.client.gui.navigation.ScreenRectangle(x, y,
+            (int) Math.min(width, Math.ceil(right)) - x, (int) Math.min(height, Math.ceil(bottom)) - y);
+    }
     private void toggleView() { presentation.toggle(); rebuild(); }
     public void resetView() { presentation.reset(); }
     @Override public void tick() { presentation.tick(); }
-    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; rebuild(); }
+    private void cancelSelection() { selected = lastClicked = Tile.ABSENT; hints.clearPreview(); rebuild(); }
     @Override public boolean mouseClicked(double x, double y, int button) {
         if (presentation.mouseBinding(button, this::toggleView, this::resetView)) return true;
         if (TableKeys.PASS.matchesMouse(button)) { pass(); return true; }

@@ -10,13 +10,16 @@ import top.skyeyefast.mchjong.engine.McrHints;
 import top.skyeyefast.mchjong.engine.McrView;
 import top.skyeyefast.mchjong.engine.SichuanHints;
 import top.skyeyefast.mchjong.engine.SichuanView;
+import top.skyeyefast.mchjong.engine.TaiwanHints;
+import top.skyeyefast.mchjong.engine.TaiwanView;
 import top.skyeyefast.mchjong.engine.Tile;
 import top.skyeyefast.mchjong.item.TileFacePreset;
 
-/** Presentation shared by the two rule-specific analyzers; it has no gameplay authority. */
+/** Shared presentation of rule-specific analysis; it has no gameplay authority. */
 final class TableHints extends TableHintsButton {
     private final McrHints mcr = new McrHints();
     private final SichuanHints sichuan = new SichuanHints();
+    private final TaiwanHints taiwan = new TaiwanHints();
     private int previewDiscard = Tile.ABSENT, lastSelected = Tile.ABSENT;
     private List<Entry> entries = List.of();
     private List<FormattedCharSequence> lines = List.of();
@@ -84,6 +87,25 @@ final class TableHints extends TableHintsButton {
             }
         }
         if (preview.passedFan() >= 0) summary.append("\n").append(Component.translatable("hints.mchjong.sichuan.passed_fan", preview.passedFan()));
+        present(summary, rows, font, center, bottom, halfWidth, topBound, scale);
+    }
+
+    void update(TaiwanView view, int hovered, int selected, Font font, int center, int bottom, int halfWidth, int topBound, int scale) {
+        var preview = taiwan.preview(view, discard(hovered, selected));
+        if (preview == null) { visible = active = false; setFocused(false); return; }
+        var summary = heading(preview.discard(), preview.shanten());
+        if (preview.shanten() == 0) summary.append("\n").append(Component.translatable("hints.mchjong.taiwan.tai_basis"));
+        if (preview.passedWin()) summary.append("\n").append(Component.translatable("hints.mchjong.taiwan.passed_win"));
+        var rows = new ArrayList<Entry>();
+        for (var tile : preview.tiles()) {
+            var value = tile.discardTai() < 0 ? Component.empty() : Component.literal(tile.discardTai() + " / " + tile.drawTai());
+            var detail = tile.discardTai() < 0 ? Component.empty() : Component.translatable("hints.mchjong.taiwan.tai", tile.discardTai(), tile.drawTai());
+            if (tile.currentTai() >= 0) {
+                value = value.copy().append(" (" + tile.currentTai() + ")");
+                detail = detail.copy().append("\n").append(Component.translatable("hints.mchjong.taiwan.current_tai", tile.currentTai()));
+            }
+            rows.add(new Entry(tile.kind(), tile.remaining(), value, detail));
+        }
         present(summary, rows, font, center, bottom, halfWidth, topBound, scale);
     }
 

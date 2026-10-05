@@ -118,7 +118,8 @@ Confirm the next hand or wait ten active seconds. Dealer wins and draws repeat;
 a nondealer win advances the dealer. Complete all four dealer positions in each
 of East, South, West and North to end the match. Exit votes and absence pause the
 room, and saved tables resume with their current decisions and scores.
-Taiwan requires human players and has no replay or convenience-hint controls.
+Shared room controls provide built-in Bots, native replays and convenience hints;
+see [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
 See [Taiwan rules](RULES.md#taiwan-presets) for preset and payment settings.
 
 ## Point-stick payments
