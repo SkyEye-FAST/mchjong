@@ -28,7 +28,7 @@ final class RoomLobbyControls {
         var button = button(label, x, y, width, () -> {
             var connection = Minecraft.getInstance().getConnection();
             if (connection != null && room.variant() != choice) {
-                connection.send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.decision(), choice)));
+                connection.send(PayloadPackets.serverbound(new TableVariantPayload(pos, room.tableId(), room.incarnation(), room.decision(), choice)));
                 sent.run();
             }
         }).selected(room.variant() == choice);

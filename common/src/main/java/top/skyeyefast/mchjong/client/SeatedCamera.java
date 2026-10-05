@@ -42,6 +42,7 @@ public final class SeatedCamera {
         boolean inspect = firstPerson && (screen instanceof RiichiTableScreen table
             ? table.inspecting() : screen instanceof McrTableScreen mcr ? mcr.inspecting()
             : screen instanceof SichuanTableScreen sichuan ? sichuan.inspecting()
+            : screen instanceof TaiwanTableScreen taiwan ? taiwan.inspecting()
             : screen instanceof TableResultsScreen results ? results.inspecting()
             : client.screen == null && TableKeys.INSPECT.isDown());
         pose.tick(inspect);

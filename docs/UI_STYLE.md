@@ -182,14 +182,19 @@ Small receipts reserve their body for the hand and yaku; the Point changes page
 provides the complete score table. Reserve both badge and text
 space before the readout begins. Do not reflow the hand or restart the readout
 on a resize or snapshot refresh.
-All three variants share the complete table, player-card, action-grid, camera,
-settings, settlement and replay design. Rule adapters supply native winds,
+All four variants share the table, player-card, action-grid, camera, settings
+and settlement design. All four share replay presentation. Rule adapters supply native winds,
 flowers, void suits, yaku/fan and payment data. Receipts retain native win methods;
-MCR and Sichuan standings show cumulative points, without Riichi uma fields.
+MCR, Sichuan and Taiwan standings show cumulative points, without Riichi uma fields.
 Dense payment ledgers paginate with the wheel or Page Up/Down; their original
-entry order and related-entry links remain visible.
-All three variants share one lobby layout. The left rail selects Riichi, MCR or
-Sichuan; variant selection never appears among that variant's settings. The body
+entry order and related-entry links remain visible. Taiwan receipts show public
+tai awards and transfers while keeping opponent hands and covered kongs hidden.
+Taiwan uses its own fixed 136/144-slot wall scene and accommodates sixteen-tile
+hands and five melds at full tile size; Chinese artwork and placement primitives
+are shared. Its lobby exposes human and built-in Bot seats, presets,
+payment/reserve rules, clocks, shared Replay navigation and convenience hints.
+All four variants share one lobby layout. The left rail selects Riichi, MCR,
+Sichuan or Taiwan; variant selection never appears among that variant's settings. The body
 has Players and bots and Match settings tabs. Keep the roster visible on arrival,
 with per-seat Bot and ownership controls. Match settings paginate player count,
 presets, detailed rules, visibility, timing and convenience hints. Invitation and
@@ -267,7 +272,7 @@ Minimum yaku han uses explicit one/two/four choices and match length uses
 East-only/East–South choices. Bankruptcy stays visible in the preset overview
 and is editable in custom match flow; its tooltip states the negative/zero boundary.
 
-Room settings include default-off convenience hints for all three rules. A small diamond
+Room settings include default-off convenience hints for all four rules. A small diamond
 with an exclamation mark appears near the private hand when analysis is available.
 Hover or native keyboard focus opens structural waits and unseen-copy counts,
 including exhausted waits at zero. The native narration includes every wait and count.
@@ -283,7 +288,8 @@ controls or player cards restrict the space, preserving the hand anchor and
 native text size. MCR and Sichuan retain this native focus and popup style with
 shanten/effective-tile previews; MCR shows scorer-backed non-flower fan qualification,
 and Sichuan shows void tiles, structural capped values and its owner's passed-win
-restriction. Dense MCR/Sichuan tile rows paginate within the available height;
+restriction. Taiwan adds sixteen-tile shanten/effective previews, separate ron/self-draw
+tai and its owner's passing restriction. Dense MCR/Sichuan/Taiwan tile rows paginate within the available height;
 native activation of the diamond advances the page while narration retains all
 tile rows. Shared presentation does not alter either table's hand geometry.
 The room host can change this setting during preparation.
@@ -507,7 +513,7 @@ table axes, bounded to 0.55 blocks on each axis. Holding arrows adjusts yaw/pitc
 at 20 degrees per second. Home restores distance, height, direction, target and
 inspect progress. Minecraft controls third-person views. Camera sliders preserve
 the current look direction; saved personal adjustments remain adjustable, and Restore defaults applies
-the current elevated seating view. All three variants use the same top-right toolbar order: Replays, view, Settings,
+the current elevated seating view. All four variants use the same top-right toolbar order: Replays, view, Settings,
 and Exit. Narrow seated overlays use short captions with the full names on hover;
 normal and immersive toolbars size buttons from their translated captions.
 The top-bar view button or V switches to the

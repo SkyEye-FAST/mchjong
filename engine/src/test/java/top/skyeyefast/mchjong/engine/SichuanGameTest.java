@@ -441,7 +441,7 @@ class SichuanGameTest {
         var id = UUID.randomUUID();
         TableSession session = new RiichiSession(UUID.randomUUID(), RiichiPreset.MAHJONG_SOUL_4, 5);
         assertTrue(session.join(id, "host", 0));
-        session = session.selectVariant(id, session.decision(), MahjongVariant.SICHUAN);
+        session = session.selectVariant(id, session.incarnation(), session.decision(), MahjongVariant.SICHUAN);
         assertInstanceOf(SichuanSession.class, session);
         assertEquals(4, session.capacity());
         assertTrue(session.configureEquipment(false, Tile.sichuanSet()));
@@ -450,7 +450,7 @@ class SichuanGameTest {
         assertEquals(MahjongVariant.SICHUAN, restored.variant());
         assertNotEquals(session.incarnation(), restored.incarnation());
         assertTrue(restored.equipped());
-        assertInstanceOf(McrSession.class, restored.selectVariant(id, restored.decision(), MahjongVariant.MCR));
+        assertInstanceOf(McrSession.class, restored.selectVariant(id, restored.incarnation(), restored.decision(), MahjongVariant.MCR));
     }
 
     @Test void consecutiveKongsTransferTheWholeChainToMultipleWinners() {

@@ -95,6 +95,17 @@ appearance and point-stick reservations unchanged. It is a supply check;
 cloth, room readiness, active-match locking and start authorization belong to
 the table lifecycle that consumes the selection.
 
+## Taiwan stock boundary
+
+`TaiwanDeck.select` validates one case independently through the existing supplies
+parser. Pocket selects four ordinary copies of each kind and eight distinct
+flowers (144 physical identities); Southern selects the 136 ordinary identities.
+Red fives cannot replace ordinary fives. Every selected tile shares material,
+back color, face preset and back preset. Extra tiles remain in inventory.
+`TableEquipment.taiwanStock` checks each case separately without pooling contents
+or changing Riichi stock/point-stick reservations. Taiwan flower identities use
+its own deck boundary; `McrDeck` remains specific to MCR.
+
 ## Recipe catalogue and identity
 
 `MahjongCatalog` is shared by the loaders. Empty and complete 144-tile cases are

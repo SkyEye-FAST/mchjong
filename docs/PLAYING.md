@@ -2,7 +2,7 @@
 
 [Documentation](README.md) · [Project overview](../README.md)
 
-MChjong features three- and four-player riichi mahjong, four-player MCR and Sichuan on
+MChjong features three- and four-player riichi mahjong, four-player MCR, Sichuan and Taiwan on
 automatic tables. See
 [Rules and presets](RULES.md) for available presets and custom settings.
 
@@ -97,6 +97,31 @@ hand or wait ten seconds; the eighth hand shows cumulative standings.
 See [Sichuan rule contracts](ARCHITECTURE.md#sichuan-match-orchestration)
 for settlement differences and [Replays](REPLAYS.md) for recorded selections.
 
+### Automatic-table Taiwan
+
+Select Taiwan from the lobby sidebar and fill all four seats with human players.
+Supply a cloth and one matching case: Pocket common uses 136 ordinary tiles plus
+eight flowers; Southern common uses the 136 ordinary tiles without flowers.
+Choose the preset in Taiwanese rules, set move/reserve time in Time control,
+assign seats and have each player sit at their assigned stool and press Ready.
+
+The dealer starts with seventeen tiles and the others with sixteen. Draws and
+flower replacements are automatic. Select a physical tile to discard; Chow,
+Pong, Kong, Ready, Win and Pass buttons appear when legal. The same hand selection,
+Enter confirmation, P response and V seated/immersive controls apply. Ready
+includes the declared discard and locks subsequent discards to the drawn tile.
+Flowers, rivers and exposed melds remain public. Opponent concealed hands and
+covered kongs remain hidden, including after settlement.
+
+Results show tai awards, each payment and cumulative points starting from zero.
+Confirm the next hand or wait ten active seconds. Dealer wins and draws repeat;
+a nondealer win advances the dealer. Complete all four dealer positions in each
+of East, South, West and North to end the match. Exit votes and absence pause the
+room, and saved tables resume with their current decisions and scores.
+Shared room controls provide built-in Bots, native replays and convenience hints;
+see [Rooms](ROOMS.md) and [Replays](REPLAYS.md) for access and operation.
+See [Taiwan rules](RULES.md#taiwan-presets) for preset and payment settings.
+
 ## Point-stick payments
 
 Ordinary tables have a wooden point-stick drawer on each side. Open one from the
@@ -120,7 +145,7 @@ choose the rule preset for that player count. **Settings** separates world,
 room and personal controls. Open **MChjong → Config** in the mod list to adjust
 your personal display, interaction, view, audio, riichi-stick and voice choices
 before joining a table. On Fabric and Quilt, install Mod Menu to use that entry;
-NeoForge provides it in its Mods screen. Hosts choose **Hand visibility** for their room:
+NeoForge provides it in its Mods screen. Riichi hosts choose **Hand visibility** for their room:
 visible to all players, visible to riichi players, or visible only to self. **Open
 hands** is a separate room option that physically lays every hand face up. Spectator
 access and spectator hand visibility are controlled by the world's administrator
@@ -140,7 +165,7 @@ archive; an unfinished hand is not scored.
 
 Click tiles directly on the physical table. Personal settings offer single-click,
 double-click, or select-and-confirm discards. Shift-click selects without
-discarding. On automatic tables, turning off **Sort hand** keeps the current
+discarding. In Riichi, turning off **Sort hand** keeps the current
 tile order. Drag a tile onto another tile to move it within your hand; drag it
 up by at least 48 GUI pixels to discard it. In immersive view, the threshold
 is 96 pixels on the fixed virtual canvas. A shorter drag keeps the tile in
@@ -157,7 +182,7 @@ Rebind C, V, Home, R, P and E in Minecraft's Controls → Key Binds → Mahjong 
 Use the top-bar view button or V to switch between the seated and immersive
 views. Immersive play uses one fixed 1280 × 800 virtual mahjong layout: your large
 clickable hand and raised rack form the foreground. Riichi melds lie flat at each
-owner's right-hand table corner; MCR and Sichuan melds begin on the owner's left
+owner's right-hand table corner; MCR, Sichuan and Taiwan melds begin on the owner's left
 and extend right. Four rivers surround the compact central table device.
 One perspective camera projects the cloth, solid tiles and upright opponent hands.
 Long melds wrap into the owner's inner corner. Compact player plaques remain at
@@ -186,7 +211,7 @@ and does not change game rules or replay records.
 
 ## Automatic-table quick controls
 
-During an automatic-table match, all three rules offer auto win, no calls and
+Riichi, MCR and Sichuan automatic-table matches offer auto win, no calls and
 auto discard. Riichi additionally offers auto sort and auto kita in three-player games.
 The side arrow switches between localized initials and full labels; each option
 remains clickable and keyboard-accessible in either presentation. Filled or
@@ -204,6 +229,9 @@ discard requires another tile. Riichi auto kita uses legal north extractions
 before automatic discards, while a possible win always takes priority.
 
 ## Results and progression
+
+The following readout and reveal options describe Riichi; Taiwan progression and
+privacy are described in its table section above.
 
 Results reveal yaku one at a time with the selected voice preset, followed by
 points and the hand grade. They also show winning hands and melds, and revealed

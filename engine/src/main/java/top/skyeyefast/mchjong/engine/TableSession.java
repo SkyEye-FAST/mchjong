@@ -10,7 +10,7 @@ import java.util.Set;
 import java.util.UUID;
 
 /** The closed, server-owned room boundary shared by the built-in rule runtimes. */
-public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession {
+public abstract sealed class TableSession permits RiichiSession, McrSession, SichuanSession, TaiwanSession {
     public enum Lifecycle { LOBBY, PLAYING, FINISHED }
     public static final int AWAY_GRACE_TICKS = 5 * 20;
 
@@ -36,7 +36,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
 
     protected TableSession(UUID tableId, MahjongVariant variant, int capacity, long seed) {
         this.tableId = Objects.requireNonNull(tableId);
-        this.variant = Objects.requireNonNull(variant);
+        Objects.requireNonNull(variant);
+        this.variant = variant;
         this.capacity = capacity;
         this.seed = seed;
         for (int seat = 0; seat < 4; seat++) participants[seat] = new Participant();
@@ -222,8 +223,8 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
     }
 
     /** Change the built-in ruleset while retaining only the prepared human roster. */
-    public TableSession selectVariant(UUID actor, long expectedDecision, MahjongVariant selected) {
-        if (selected == null || selected == variant || !lobby() || !isHost(actor)
+    public TableSession selectVariant(UUID actor, UUID incarnation, long expectedDecision, MahjongVariant selected) {
+        if (!this.incarnation.equals(incarnation) || selected == null || selected == variant || !lobby() || !isHost(actor)
             || expectedDecision != decision || exitVote != null || manual
             || seating.stage != RoomSeating.Stage.GATHERING) return null;
         for (Participant participant : participants) if (participant.bot) return null;
@@ -231,6 +232,7 @@ public abstract sealed class TableSession permits RiichiSession, McrSession, Sic
             case RIICHI -> new RiichiSession(tableId, RiichiPreset.MAHJONG_SOUL_4, seed);
             case MCR -> new McrSession(tableId, seed);
             case SICHUAN -> new SichuanSession(tableId, seed);
+            case TAIWAN -> new TaiwanSession(tableId, seed);
         };
         for (int seat = 0; seat < replacement.capacity; seat++)
             if (seat < capacity && participants[seat].id != null)

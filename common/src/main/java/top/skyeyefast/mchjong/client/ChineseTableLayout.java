@@ -7,6 +7,10 @@ import top.skyeyefast.mchjong.world.TableGeometry;
 
 /** Fixed-size public tiles use the space actually vacated by the physical wall. */
 final class ChineseTableLayout {
+    static final double HAND_Z = TableGeometry.FELT_HALF_WIDTH - TileMesh.HEIGHT / 2.0 - .015;
+    static final double MELD_LEFT = -TableGeometry.FELT_HALF_WIDTH + .015;
+    static final double RIVER_Z = TableIndicator.HALF_WIDTH + TileMesh.HEIGHT / 2.0 + .005;
+    static final double RIVER_X = TileMesh.WIDTH / 2.0;
     record Bounds(Vec3 center, float yaw, double width, double depth) {}
     private ChineseTableLayout() {}
 
@@ -16,7 +20,7 @@ final class ChineseTableLayout {
 
     static List<Vec3> melds(List<MeldLayout> layouts, int seat, List<Bounds> occupied) {
         var origins = new ArrayList<Vec3>();
-        double left = McrTableScene.MELD_LEFT;
+        double left = MELD_LEFT;
         for (var layout : layouts) {
             double minZ = layout.parts().stream().mapToDouble(p -> p.z() - (p.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2).min().orElse(0);
             double maxZ = layout.parts().stream().mapToDouble(p -> p.z() + (p.sideways() ? TileMesh.WIDTH : TileMesh.HEIGHT) / 2).max().orElse(0);
@@ -24,7 +28,7 @@ final class ChineseTableLayout {
             search: for (int shift = 0; shift < 24; shift++) {
                 double x = left + shift * TileMesh.WIDTH;
                 for (int row = 0; row < 4; row++) {
-                    double z = McrTableScene.HAND_Z - row * (TileMesh.HEIGHT + .04);
+                    double z = HAND_Z - row * (TileMesh.HEIGHT + .04);
                     if (clear(box(x + layout.width() / 2, z + (minZ + maxZ) / 2, layout.width(), maxZ - minZ, seat), occupied)) {
                         origin = new Vec3(x, 0, z);
                         break search;
@@ -42,12 +46,12 @@ final class ChineseTableLayout {
     static List<List<Vec3>> rivers(List<Integer> counts, List<Bounds> occupied) {
         var result = new ArrayList<List<Vec3>>();
         for (int seat = 0; seat < 4; seat++) result.add(new ArrayList<>());
-        var nextZ = new double[]{McrTableScene.RIVER_Z, McrTableScene.RIVER_Z, McrTableScene.RIVER_Z, McrTableScene.RIVER_Z};
+        var nextZ = new double[]{RIVER_Z, RIVER_Z, RIVER_Z, RIVER_Z};
         int rows = counts.stream().mapToInt(count -> (count + 5) / 6).max().orElse(0);
         for (int row = 0; row < rows; row++) for (int seat = 0; seat < 4; seat++) {
             int count = Math.min(6, counts.get(seat) - row * 6);
             if (count <= 0) continue;
-            double left = McrTableScene.RIVER_X - 2.5 * TileMesh.WIDTH;
+            double left = RIVER_X - 2.5 * TileMesh.WIDTH;
             double width = count * (double) TileMesh.WIDTH;
             double preferred = left + (count - 1) * TileMesh.WIDTH / 2;
             Vec3 center = null;
@@ -68,7 +72,7 @@ final class ChineseTableLayout {
                 search: for (int depth = 0; depth < 5; depth++) for (int shift = 0; shift <= 24; shift++) {
                     int offset = shift == 0 ? 0 : (shift % 2 == 1 ? -(shift + 1) / 2 : shift / 2);
                     double x = preferred + offset * TileMesh.WIDTH;
-                    double z = McrTableScene.RIVER_Z + depth * TileMesh.HEIGHT;
+                    double z = RIVER_Z + depth * TileMesh.HEIGHT;
                     if (clear(box(x, z, width, TileMesh.HEIGHT, seat), occupied)) {
                         center = new Vec3(x, 0, z);
                         break search;

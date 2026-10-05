@@ -38,6 +38,8 @@ public final class TableClientSmoke {
     private final McrDisplaySmoke mcrDisplay = Boolean.getBoolean("mchjong.smoke.mcrLayoutOnly") ? new McrDisplaySmoke() : null;
     private final boolean mcrAutoOnly = Boolean.getBoolean("mchjong.smoke.mcrAutoOnly");
     private final McrAutoTableSmoke mcrAutoSmoke = new McrAutoTableSmoke();
+    private final boolean taiwanOnly = Boolean.getBoolean("mchjong.smoke.taiwanOnly");
+    private final TaiwanTableSmoke taiwanSmoke = new TaiwanTableSmoke();
     private final boolean sichuanOnly = Boolean.getBoolean("mchjong.smoke.sichuanOnly");
     private final SichuanTableSmoke sichuanSmoke = new SichuanTableSmoke();
     private final boolean itemsOnly = Boolean.getBoolean("mchjong.smoke.itemsOnly");
@@ -51,7 +53,7 @@ public final class TableClientSmoke {
     private final boolean browserOnly = Boolean.getBoolean("mchjong.smoke.browserOnly");
     private final boolean maidOnly = Boolean.getBoolean("mchjong.smoke.maid");
     private final MaidIntegrationSmoke maidSmoke = maidOnly ? new MaidIntegrationSmoke() : null;
-    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly || mcrAutoOnly || sichuanOnly;
+    private final boolean visualOnly = itemsOnly || paletteOnly || seatingOnly || interfaceOnly || visibilityOnly || roomOnly || manualOnly || maidOnly || settlementOnly || mcrAutoOnly || sichuanOnly || taiwanOnly;
     private final RoomFlowSmoke roomSmoke = new RoomFlowSmoke();
     private final HandVisibilitySmoke visibilitySmoke = new HandVisibilitySmoke();
     private final AtomicReference<Throwable> serverFailure = new AtomicReference<>();
@@ -162,7 +164,7 @@ public final class TableClientSmoke {
                         furniture.set(top.skyeyefast.mchjong.item.MahjongComponents.WOOD, top.skyeyefast.mchjong.item.FurnitureWood.CHERRY);
                         MahjongContent.AUTO_TABLE.setPlacedBy(level, CENTER, MahjongContent.AUTO_TABLE.defaultBlockState(), player, furniture);
                         var table = (MahjongTableBlockEntity) level.getBlockEntity(CENTER);
-                        table.equipment().boxes().setItem(0, mcrAutoOnly || sichuanOnly
+                        table.equipment().boxes().setItem(0, mcrAutoOnly || sichuanOnly || taiwanOnly
                             ? top.skyeyefast.mchjong.item.MahjongSupplies.stockedBox(top.skyeyefast.mchjong.engine.RedFives.NONE)
                             : top.skyeyefast.mchjong.item.MahjongSupplies.engrave(
                             top.skyeyefast.mchjong.item.MahjongSupplies.completeBox(
@@ -209,7 +211,7 @@ public final class TableClientSmoke {
                 });
                 step = 2; entered = ticks;
             } else if (step == 2 && ticks - entered > 60 && client.level.getBlockEntity(CENTER) instanceof MahjongTableBlockEntity) {
-                require(mcrAutoOnly || sichuanOnly || ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
+                require(mcrAutoOnly || sichuanOnly || taiwanOnly || ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment().preset()
                     .equals(top.skyeyefast.mchjong.item.TileFacePreset.KANTO), "Client table lost its synchronized face preset");
                 if (seatingOnly) {
                     var equipment = ((MahjongTableBlockEntity) client.level.getBlockEntity(CENTER)).equipment();
@@ -219,6 +221,7 @@ public final class TableClientSmoke {
                 }
                 if (mcrAutoOnly) { step = 41; entered = ticks; return; }
                 if (sichuanOnly) { step = 42; entered = ticks; return; }
+                if (taiwanOnly) { step = 45; entered = ticks; return; }
                 if (manualOnly) { step = 19; entered = ticks; return; }
                 if (paletteOnly) {
                     client.setScreen(new MaterialPaletteSmoke());
@@ -236,6 +239,11 @@ public final class TableClientSmoke {
                 }
                 client.setScreen(new MaterialPaletteSmoke());
                 step = 31; entered = ticks;
+            } else if (step == 45) {
+                if (taiwanSmoke.tick(client, CENTER, output)) {
+                    Files.writeString(output.resolve("PASS.txt"), "Taiwan four-variant switching, 136/144 equipment, real play, flowers/calls, recipient privacy, settlement/confirmations, NBT restoration, four winds, stale authority, shared replay browser/open/event/viewer/settlement/return and one-human/three-Bot replay standings passed\n");
+                    LOG.info("MCHJONG_TAIWAN_SMOKE_PASS"); step = 14; client.stop();
+                }
             } else if (step == 42) {
                 if (sichuanSmoke.tick(client, CENTER, output)) {
                     Files.writeString(output.resolve("PASS.txt"), "Sichuan lobby, private declarations, NBT restore, seated/immersive picking and discard, exit vote, results, next-hand packets, eight-hand matches, native Bot room controls, one-human/three-Bot NBT restore, automatic confirmations and Bot replay standings passed\n");

@@ -247,10 +247,16 @@ final class RoomLobby {
             options.add(new Option(Component.translatable("sichuan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
                 () -> client.setScreen(new SichuanRulesScreen(parent, room, settings))));
         }
+        if (root instanceof TaiwanLobbyScreen) {
+            var settings = table.clientTaiwanSettings();
+            options.add(new Option(Component.translatable("taiwan.mchjong.rules.title").append(": ").append(Component.translatable(settings.presetKey())), Component.literal("›"), null, true,
+                () -> client.setScreen(new TaiwanRulesScreen(parent, pos))));
+        }
         options.add(new Option(Component.translatable("room.mchjong.participants"), Component.literal("›"), null, true,
             () -> client.setScreen(new TableParticipantsScreen(parent, pos))));
         var time = room.variant() == MahjongVariant.RIICHI ? table.clientRiichiSettings().timeControl()
-            : room.variant() == MahjongVariant.MCR ? table.clientMcrTimeControl() : table.clientSichuanSettings().timeControl();
+            : room.variant() == MahjongVariant.MCR ? table.clientMcrTimeControl()
+            : room.variant() == MahjongVariant.TAIWAN ? table.clientTaiwanSettings().timeControl() : table.clientSichuanSettings().timeControl();
         options.add(new Option(Component.translatable("ui.mchjong.clock_settings"), Component.translatable("lobby.mchjong.clock_summary", time.moveSeconds(), time.reserveSeconds()), null, host(room) && room.lobby(),
             () -> client.setScreen(new TableClockScreen(parent, time))));
         options.add(new Option(Component.translatable("settings.mchjong.convenience_hints"), Component.empty(), room.convenienceHints(), host(room) && room.lobby() && room.allowConvenienceHints(),

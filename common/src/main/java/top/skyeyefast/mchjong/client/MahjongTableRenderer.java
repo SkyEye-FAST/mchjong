@@ -28,6 +28,9 @@ public final class MahjongTableRenderer
         RiichiView view;
         top.skyeyefast.mchjong.engine.McrView mcrView;
         top.skyeyefast.mchjong.engine.SichuanView sichuanView;
+        top.skyeyefast.mchjong.engine.TaiwanSession.View taiwanView;
+        List<TaiwanTableScene.Piece> taiwanPieces;
+        top.skyeyefast.mchjong.item.TaiwanDeck taiwanDeck;
         TableAnimation tableAnimation;
         FurnitureWood wood;
         net.minecraft.world.item.DyeColor cloth;
@@ -57,6 +60,9 @@ public final class MahjongTableRenderer
         state.view = table.clientView();
         state.mcrView = table.clientMcrView() == null ? null : table.clientMcrView().game();
         state.sichuanView = table.clientSichuanView() == null ? null : table.clientSichuanView().game();
+        state.taiwanView = table.clientTaiwanView();
+        state.taiwanDeck = table.clientTaiwanDeck();
+        state.taiwanPieces = state.taiwanView == null ? null : TaiwanTableScene.build(state.taiwanView.game());
         state.tableAnimation = TableAnimation.of(table);
         state.now = Util.getMillis();
         state.wood = table.wood();
@@ -89,7 +95,13 @@ public final class MahjongTableRenderer
         pose.translate(.5, 0, .5);
         FurnitureMesh.table(pose, buffers, state.lightCoords, state.wood, state.cloth, state.automatic);
         if (state.automatic && state.lobby) TableIndicator.renderStandby(pose, buffers, state.lightCoords);
-        if (state.sichuanPieces != null && state.sichuanDeck != null) {
+        if (state.taiwanPieces != null && state.taiwanDeck != null) {
+            var screen = TaiwanTableScreen.active(Minecraft.getInstance().screen);
+            var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
+            TaiwanSceneRenderer.render(state.taiwanPieces, state.taiwanDeck, pose, buffers, state.lightCoords,
+                piece -> active == null ? 0 : active.highlight(piece), piece -> active != null && active.selected(piece), state.tableAnimation, state.now);
+            if (state.automatic) TableIndicator.render(state.taiwanView, pose, buffers, state.lightCoords);
+        } else if (state.sichuanPieces != null && state.sichuanDeck != null) {
             var screen = SichuanTableScreen.active(Minecraft.getInstance().screen);
             var active = screen != null && screen.tablePos().equals(state.blockPos) ? screen : null;
             SichuanSceneRenderer.render(state.sichuanPieces, state.sichuanDeck, pose, buffers, state.lightCoords,

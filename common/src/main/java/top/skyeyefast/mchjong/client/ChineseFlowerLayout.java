@@ -5,9 +5,9 @@ import java.util.List;
 import top.skyeyefast.mchjong.engine.Tile;
 
 /** A single public flower run alongside the melds and standing hand. */
-public final class McrFlowerLayout {
+public final class ChineseFlowerLayout {
     public record Part(int tile, int index, double x, double z) {}
-    private McrFlowerLayout() {}
+    private ChineseFlowerLayout() {}
 
     public static List<Part> of(List<Integer> flowers) {
         if (flowers.size() > 8 || flowers.stream().distinct().count() != flowers.size())

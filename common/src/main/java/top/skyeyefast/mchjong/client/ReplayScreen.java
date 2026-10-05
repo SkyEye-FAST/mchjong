@@ -62,6 +62,7 @@ public final class ReplayScreen extends Screen {
     public ReplayMatch match() { return match; }
     public int cursor() { return cursor; }
     public int handIndex() { return handIndex; }
+    public int viewerSeat() { return viewer; }
     @Override public boolean isPauseScreen() { return false; }
     @Override public void extractBackground(GuiGraphicsExtractor graphics, int x, int y, float partialTick) {}
 
@@ -120,7 +121,7 @@ public final class ReplayScreen extends Screen {
         addRenderableWidget(MahjongButton.create(Component.translatable(match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.RIICHI ? "replay.mchjong.export" : "replay.mchjong.export_native"), ignored -> export())
             .bounds(18 + bottomSpan * 2, height - 28, bottomSpan, 20).build());
 
-        result = addRenderableWidget(new TableResults(font, playback.result().withViewer(viewer), PRESET, top.skyeyefast.mchjong.item.TileMaterial.BONE,
+        result = addRenderableWidget(new TableResults(font, playback.result(), PRESET, top.skyeyefast.mchjong.item.TileMaterial.BONE,
             null, TileBackPresets.DEFAULT, 10, 91, width - 20, Math.max(48, height - 175), 0, resultPage, 0, 1).artwork(this::artwork));
         var pages = new java.util.ArrayList<TableResults.Page>();
         pages.add(TableResults.Page.HAND); pages.add(TableResults.Page.POINTS);
@@ -157,7 +158,7 @@ public final class ReplayScreen extends Screen {
     private void layoutFrame() {
         var frame = frame();
         int controlsTop = height - 78;
-        var player = frame.board().seats().get(viewer);
+        var player = frame.board().replay(viewer).seats().get(viewer);
         viewerHand = new TableHand(player.hand(), player.drawn(), player.melds(), viewer, width, controlsTop, height < 360 ? 17 : 21, false, match.variant());
         int boardBottom = Math.max(120, viewerHand.top() - 5);
         board = new TableBoard(frame.board().replay(viewer), 8, width - 8, 67, boardBottom, boardBottom);

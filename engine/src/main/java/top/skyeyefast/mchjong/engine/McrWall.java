@@ -16,11 +16,11 @@ final class McrWall {
     private int remaining;
 
     McrWall(long seed) {
-        this(seed, 0, Tile.mcrSet());
+        this(seed, 0, Tile.standard144Set());
     }
 
     McrWall(long seed, int dealer, List<Integer> stock) {
-        if (!Tile.validMcrSet(stock)) throw new IllegalArgumentException("An MCR wall requires one standard 144-tile set");
+        if (!Tile.validStandard144Set(stock)) throw new IllegalArgumentException("An MCR wall requires one standard 144-tile set");
         tiles = new ArrayList<>(stock);
         var random = new Random(seed);
         Collections.shuffle(tiles, random);
@@ -30,7 +30,7 @@ final class McrWall {
 
     /** A complete physical placement and an explicit opening, for deterministic dealing. */
     McrWall(List<Integer> physical, McrOpening opening) {
-        if (!Tile.validMcrSet(physical)) throw new IllegalArgumentException("An MCR wall requires one standard 144-tile set");
+        if (!Tile.validStandard144Set(physical)) throw new IllegalArgumentException("An MCR wall requires one standard 144-tile set");
         tiles = new ArrayList<>(physical);
         this.opening = Objects.requireNonNull(opening);
         remaining = McrWallLayout.SLOTS;
@@ -92,6 +92,6 @@ final class McrWall {
                 if (!seen.add(tile)) throw new IllegalStateException("Duplicated physical tile: " + tile);
             }
         }
-        if (!seen.equals(new HashSet<>(Tile.mcrSet()))) throw new IllegalStateException("MCR tile conservation failed");
+        if (!seen.equals(new HashSet<>(Tile.standard144Set()))) throw new IllegalStateException("MCR tile conservation failed");
     }
 }

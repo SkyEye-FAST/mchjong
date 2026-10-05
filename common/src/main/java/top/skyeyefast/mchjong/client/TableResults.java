@@ -26,6 +26,7 @@ public final class TableResults extends AbstractWidget {
     private static final int TEXT = MahjongUi.TEXT, MUTED = MahjongUi.MUTED, GOLD = MahjongUi.ACCENT;
     private final Font font;
     private TableResultState view;
+    private final TableResultState source;
     private final List<List<TableResultState.Row>> receipts;
     private final TileFacePreset preset;
     private final TileMaterial material;
@@ -58,7 +59,7 @@ public final class TableResults extends AbstractWidget {
                  net.minecraft.resources.Identifier backPreset, int x, int y, int width, int height,
                  int winner, Page page, long started, int contentScale) {
         super(x, y, width, height, view.heading());
-        this.font = font; this.view = view; this.receipts = view.wins().stream().map(TableResultState.Win::rows).toList();
+        this.font = font; this.source = view; this.view = view.withViewer(view.viewerSeat()); this.receipts = view.wins().stream().map(TableResultState.Win::rows).toList();
         this.preset = preset; this.material = material; this.dye = dye; this.backPreset = backPreset;
         this.page = page; this.started = started; this.contentScale = contentScale;
         this.winner = Math.clamp(winner, 0, Math.max(0, view.wins().size() - 1));
@@ -71,17 +72,17 @@ public final class TableResults extends AbstractWidget {
 
     public TableResults readout(ResultReadout value) { readout = value; return this; }
     TableResults artwork(java.util.function.IntUnaryOperator value) { artwork = value; return this; }
-    void setViewer(int viewer) { view = view.withViewer(viewer); }
+    void setViewer(int viewer) { view = source.withViewer(viewer); }
     public int selectedWinner() { return readout != null && !readout.complete() ? readout.winner() : winner; }
     public TileMaterial material() { return material; }
     public DyeColor dye() { return dye; }
     /** Every result page presents the same once-per-settlement score transition. */
-    public int displayedPoints(int seat) {
-        int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
+    public long displayedPoints(int seat) {
+        long delta = seat < view.deltas().size() ? view.deltas().get(seat).longValue() : 0;
         long pointsAt = readout == null ? started : readout.pointsAt();
         double progress = pointsAt < 0 ? 0 : TableSettings.get().animations
             ? Math.clamp((Util.getMillis() - pointsAt - 250) / 900.0, 0, 1) : 1;
-        return view.seats().get(seat).points() - delta + (int) Math.round(delta * progress);
+        return view.seats().get(seat).points() - delta + Math.round(delta * progress);
     }
     private boolean pointsVisible() { return readout == null || readout.pointsAt() >= 0; }
     public static boolean available(RiichiView view) {
@@ -210,7 +211,7 @@ public final class TableResults extends AbstractWidget {
         y += 8;
         // Reserve the complete receipt from the first frame, so new rows never move the hand.
         boolean hasGrade = !win.grade().getString().isEmpty();
-        int gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()) : 0;
+        long gain = win.seat() < view.deltas().size() ? view.deltas().get(win.seat()).longValue() : 0;
         Component points = Component.translatable("ui.mchjong.points", gain);
         Component grade = win.grade();
         int gradeWidth = !hasGrade ? 0 : 2 * (font.width(grade) + 8);
@@ -298,7 +299,7 @@ public final class TableResults extends AbstractWidget {
         for (int row = 0; row < order.size(); row++) {
             int seat = order.get(row), cy = y + 18 + row * rowHeight;
             var player = view.seats().get(seat);
-            int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
+            long delta = seat < view.deltas().size() ? view.deltas().get(seat).longValue() : 0;
             graphics.fill(x, cy, x + span, cy + rowHeight, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             graphics.fill(x, cy + rowHeight - 1, x + span, cy + rowHeight, MahjongUi.EDGE);
             if (seat == view.viewerSeat()) graphics.fill(x, cy, x + 2, cy + rowHeight - 1, GOLD);
@@ -306,11 +307,11 @@ public final class TableResults extends AbstractWidget {
             if (standings && seat < view.finalRanks().size()) name = Component.literal(view.finalRanks().get(seat) + ". ").append(name);
             int textY = cy + Math.max(2, (rowHeight - 9) / 2);
             name(graphics, seat, name, x + 4, textY, ends[0] - 8, TEXT);
-            int points = displayedPoints(seat);
-            List<String> values = standings && !uma ? List.of(Integer.toString(player.points())) : standings ? List.of(Integer.toString(player.points()),
+            long points = displayedPoints(seat);
+            List<String> values = standings && !uma ? List.of(Long.toString(player.points())) : standings ? List.of(Long.toString(player.points()),
                 seat < view.finalUma().size() ? String.format(Locale.ROOT, "%+.2f", view.finalUma().get(seat)) : "—",
                 seat < view.finalScores().size() ? String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)) : "—")
-                : List.of(Integer.toString(player.points() - delta), pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—", Integer.toString(points));
+                : List.of(Long.toString(player.points() - delta), pointsVisible() ? String.format(Locale.ROOT, "%+d", delta) : "—", Long.toString(points));
             for (int i = 0; i < values.size(); i++) {
                 String value = values.get(i);
                 int color = standings ? i > 0 ? value.startsWith("-") ? MahjongUi.NEGATIVE : GOLD : TEXT
@@ -337,14 +338,14 @@ public final class TableResults extends AbstractWidget {
             int seat = order.get(index);
             var player = view.seats().get(seat);
             int cx = x + (horizontal ? index * cardWidth : 0), cy = y + (horizontal ? 0 : index * cardHeight);
-            int delta = seat < view.deltas().size() ? view.deltas().get(seat) : 0;
-            int points = displayedPoints(seat);
+            long delta = seat < view.deltas().size() ? view.deltas().get(seat).longValue() : 0;
+            long points = displayedPoints(seat);
             graphics.fill(cx, cy, cx + cardWidth - 3, cy + cardHeight - 3, seat == view.viewerSeat() ? MahjongUi.SELECTED : MahjongUi.SURFACE);
             Component name = view.name(seat);
             if (page == Page.MATCH && seat < view.finalRanks().size())
                 name = Component.translatable("ui.mchjong.rank", view.finalRanks().get(seat)).append("  ").append(name);
             name(graphics, seat, name, cx + 4, cy + 3, cardWidth - 11, TEXT);
-            String amount = horizontal ? Integer.toString(points) : player.points() - delta + " → " + points;
+            String amount = horizontal ? Long.toString(points) : player.points() - delta + " → " + points;
             text(graphics, Component.literal(amount), cx + 4, cy + 14, cardWidth - 11, TEXT);
             Component change = page == Page.MATCH && seat < view.finalScores().size()
                 ? Component.translatable("ui.mchjong.final_score", String.format(Locale.ROOT, "%+.1f", view.finalScores().get(seat)))

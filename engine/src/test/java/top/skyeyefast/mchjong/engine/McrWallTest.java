@@ -11,7 +11,7 @@ import static top.skyeyefast.mchjong.engine.McrGameTest.physical;
 
 class McrWallTest {
     @Test void rawDealingDoesNotReplaceOrSkipFlowers() {
-        var order = new ArrayList<>(Tile.mcrSet());
+        var order = new ArrayList<>(Tile.standard144Set());
         Collections.swap(order, 0, order.indexOf(FlowerTile.SPRING.id()));
         var wall = new McrWall(physical(order), OPENING);
         assertEquals(FlowerTile.SPRING.id(), wall.drawRaw());
@@ -23,7 +23,7 @@ class McrWallTest {
     }
 
     @Test void standardStockSeparatesEightPhysicalFlowersFromTheOrdinaryKinds() {
-        var stock = Tile.mcrSet();
+        var stock = Tile.standard144Set();
         assertEquals(144, stock.size());
         assertEquals(144, new HashSet<>(stock).size());
         assertEquals(Tile.set(false, RedFives.NONE), stock.stream().filter(tile -> !Tile.isFlower(tile)).toList());
@@ -34,16 +34,16 @@ class McrWallTest {
         }
         assertNull(FlowerTile.of(Tile.HIDDEN));
         assertFalse(Tile.isFlower(Tile.ABSENT));
-        assertTrue(Tile.validMcrSet(stock));
+        assertTrue(Tile.validStandard144Set(stock));
         assertFalse(Tile.validSet(stock));
-        assertFalse(Tile.validMcrSet(Tile.set(true)));
+        assertFalse(Tile.validStandard144Set(Tile.set(true)));
         assertThrows(IllegalArgumentException.class, () -> new McrWall(Tile.set(false), OPENING));
         var invalid = new ArrayList<>(stock);
         invalid.set(143, invalid.get(142));
-        assertFalse(Tile.validMcrSet(invalid));
+        assertFalse(Tile.validStandard144Set(invalid));
         invalid = new ArrayList<>(stock);
         invalid.set(16, Tile.id(4, 0, true));
-        assertFalse(Tile.validMcrSet(invalid));
+        assertFalse(Tile.validStandard144Set(invalid));
     }
 
     @Test void allZonesConserve144TilesAcrossFrontAndTailDraws() {
@@ -82,7 +82,7 @@ class McrWallTest {
     }
 
     @Test void rawTailTakesExactlyOneTileWithoutSkippingFlowers() {
-        var order = new ArrayList<>(Tile.mcrSet());
+        var order = new ArrayList<>(Tile.standard144Set());
         Collections.swap(order, 0, order.indexOf(FlowerTile.SUMMER.id()));
         var wall = new McrWall(physical(order), OPENING);
         assertEquals(FlowerTile.SUMMER.id(), wall.drawRaw());
@@ -93,7 +93,7 @@ class McrWallTest {
     }
 
     @Test void flowerOnlyExhaustionKeepsOwnershipAndResetClearsTheFlowerArea() {
-        var wall = new McrWall(physical(Tile.mcrSet()), OPENING);
+        var wall = new McrWall(physical(Tile.standard144Set()), OPENING);
         var player = new McrPlayerState();
         for (int i = 0; i < 136; i++) player.hand.add(wall.drawRaw());
         assertEquals(8, wall.remaining());

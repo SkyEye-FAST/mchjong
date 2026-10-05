@@ -60,5 +60,7 @@ spotless {
 tasks.register('buildAll') {
     group = 'build'
     description = 'Test the shared engine and build all loader artifacts for the selected Minecraft profile.'
+    if (providers.gradleProperty('taiwanSource').getOrElse('true').toBoolean())
+        dependsOn gradle.includedBuild('taiwan-mahjong').task(':check')
     dependsOn ':fabric:build', ':engine:check', ':neoforge:build', ':art:check', 'spotlessCheck'
 }

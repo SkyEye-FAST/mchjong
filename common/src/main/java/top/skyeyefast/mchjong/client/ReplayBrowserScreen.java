@@ -100,7 +100,9 @@ public final class ReplayBrowserScreen extends Screen {
                 int seat = seats.get(i);
                 if (i > 0) text.append("  ");
                 text.append(Component.literal(match.finalRanks().get(seat) + ". " + match.names().get(seat) + " "
-                    + String.format(java.util.Locale.ROOT, "%+.1f", match.finalScores().get(seat))));
+                    + (match.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.TAIWAN
+                        ? String.format(java.util.Locale.ROOT, "%+d", match.taiwanScores().get(seat))
+                        : String.format(java.util.Locale.ROOT, "%+.1f", match.finalScores().get(seat)))));
             }
             return text;
         }
@@ -130,6 +132,7 @@ public final class ReplayBrowserScreen extends Screen {
                     case RIICHI -> match.riichiRules().translationKey();
                     case MCR -> "mcr.mchjong.title";
                     case SICHUAN -> "sichuan.mchjong.title";
+                    case TAIWAN -> "taiwan.mchjong.title";
                 }), getX() + 9, y + 33, MahjongUi.ACCENT);
                 MahjongUi.text(graphics, font, standings(match), getX() + 9, y + 46, width - 22, MahjongUi.MUTED, false);
             }

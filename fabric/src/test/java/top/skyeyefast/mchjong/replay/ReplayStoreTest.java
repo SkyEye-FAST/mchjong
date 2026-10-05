@@ -24,6 +24,12 @@ import top.skyeyefast.mchjong.engine.SichuanPreset;
 import top.skyeyefast.mchjong.engine.SichuanReplay;
 import top.skyeyefast.mchjong.engine.SichuanReplayRecorder;
 import top.skyeyefast.mchjong.engine.SichuanRules;
+import top.skyeyefast.mchjong.engine.TaiwanAction;
+import top.skyeyefast.mchjong.engine.TaiwanGame;
+import top.skyeyefast.mchjong.engine.TaiwanGameState;
+import top.skyeyefast.mchjong.engine.TaiwanPreset;
+import top.skyeyefast.mchjong.engine.TaiwanReplay;
+import top.skyeyefast.mchjong.engine.TaiwanReplayRecorder;
 import static org.junit.jupiter.api.Assertions.*;
 
 class ReplayStoreTest {
@@ -48,7 +54,7 @@ class ReplayStoreTest {
             List.of(35000,35000,35000), dealt, List.of(132), wall, List.of(), List.of(), seats, List.of(), "nine_terminals",
             List.of(0,0,0), List.of(132), List.of(), List.of(), List.of())).toList();
         return new ReplayMatch(id, new UUID(2, 1), 1, 2, players, MahjongVariant.RIICHI, false,
-            new RiichiReplay(RiichiPreset.TENHOU_3.config(), 0, top.skyeyefast.mchjong.engine.RedFives.THREE, records), null, null);
+            new RiichiReplay(RiichiPreset.TENHOU_3.config(), 0, top.skyeyefast.mchjong.engine.RedFives.THREE, records), null, null, null);
     }
 
     private ReplayWall wall() {
@@ -136,7 +142,7 @@ class ReplayStoreTest {
         for (int number = 0; number < 14; number++) {
             var value = match(new UUID(7, number), 1);
             store.save(new ReplayMatch(value.id(), value.tableId(), 1, 20 + number, value.participants(),
-                value.variant(), false, value.riichi(), null, null));
+                value.variant(), false, value.riichi(), null, null, null));
         }
         assertEquals(new UUID(7, 13), store.list(owner, 0, "oWnEr", false).matches().getFirst().id());
         assertEquals(new UUID(7, 0), store.list(owner, 0, "  GUEST  ", true).matches().getFirst().id());
@@ -189,7 +195,7 @@ class ReplayStoreTest {
         var players = List.of(new ReplayMatch.Participant(owner, "Owner", false), new ReplayMatch.Participant(other, "Guest", false),
             new ReplayMatch.Participant(bot, "Third", false), new ReplayMatch.Participant(new UUID(1, 4), "Fourth", false));
         var match = new ReplayMatch(UUID.randomUUID(), new UUID(2, 1), 1, 2, players, MahjongVariant.SICHUAN, true,
-            null, null, new SichuanReplay(rules, List.of(recorder.finish(game))));
+            null, null, new SichuanReplay(rules, List.of(recorder.finish(game))), null);
         var store = new ReplayStore(directory, json);
         store.save(match);
         var index = store.list(owner, 0, "Owner", false);
@@ -203,5 +209,35 @@ class ReplayStoreTest {
             .get(0).getAsJsonObject().addProperty("seat", 3);
         Files.writeString(directory.resolve(match.id() + ".json"), tree.toString());
         assertThrows(IOException.class, () -> store.load(owner, match.id()));
+    }
+    @Test void taiwanNativeArchivesUseSharedParticipantPermissionsAndRejectAlteredAutomaticEvents() throws Exception {
+        for (var preset : TaiwanPreset.values()) {
+            var game = TaiwanGame.shuffled(4,preset.rules(),0,Tile.EAST,0);
+            var recorder = new TaiwanReplayRecorder(1,List.of(0L,0L,0L,0L),game);
+            for (int move = 0; move < 1000 && game.getPhase() != TaiwanGame.Phase.FINISHED; move++) {
+                var d = game.decisions().getFirst(); int selected = -1;
+                for (int i = 0; i < d.getActions().size(); i++) if (d.getActions().get(i).getType() == TaiwanAction.Type.PASS
+                    || d.getActions().get(i).getType() == TaiwanAction.Type.DISCARD) { selected = i; break; }
+                var before = game.save(); game.submit(d.getSeat(),d.getToken(),selected);
+                recorder.accepted(before,d.getSeat(),d.getActions(),selected,game);
+            }
+            var players = List.of(new ReplayMatch.Participant(owner,"Owner",false),new ReplayMatch.Participant(other,"Guest",false),
+                new ReplayMatch.Participant(bot,"Bot",true),new ReplayMatch.Participant(new UUID(1,4),"Fourth",true));
+            var match = new ReplayMatch(UUID.randomUUID(),new UUID(2,1),1,2,players,MahjongVariant.TAIWAN,false,null,null,null,
+                new TaiwanReplay(TaiwanGameState.Rules.of(preset.rules()),List.of(recorder.finish(game))));
+            var store = new ReplayStore(directory,json); store.save(match);
+            assertEquals(match,store.load(owner,match.id())); assertEquals(match,store.load(other,match.id()));
+            assertTrue(store.list(owner,0,preset.rules().getName(),false).matches().isEmpty());
+            assertTrue(store.list(owner,0,"Owner",false).matches().contains(match.header()));
+            assertThrows(IOException.class,() -> store.load(bot,match.id()));
+            assertThrows(IOException.class,() -> store.load(UUID.randomUUID(),match.id()));
+            var path = directory.resolve(match.id()+".json");
+            var tree = com.google.gson.JsonParser.parseString(Files.readString(path)).getAsJsonObject();
+            tree.getAsJsonObject("taiwan").getAsJsonArray("hands").get(0).getAsJsonObject().getAsJsonObject("recording")
+                .getAsJsonArray("events").get(0).getAsJsonObject().addProperty("front",66);
+            Files.writeString(path,tree.toString());
+            assertThrows(IOException.class,() -> store.load(owner,match.id()));
+            assertFalse(Files.exists(directory.resolve("by-player").resolve(bot.toString()).resolve(match.id()+".json")));
+        }
     }
 }

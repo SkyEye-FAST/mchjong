@@ -40,6 +40,30 @@ public final class TableNetworking {
             table.configureSichuanRules(player, payload);
     }
 
+    public static void receive(ServerPlayer player, TaiwanActionPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.taiwanAction(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, TaiwanNextHandPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.confirmTaiwanNextHand(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, TaiwanRulesPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.configureTaiwanRules(player, payload);
+    }
+
+    public static void receive(ServerPlayer player, TaiwanClockPayload payload) {
+        if (!canReach(player, payload.pos())) return;
+        if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)
+            table.configureTaiwanClock(player, payload);
+    }
+
     public static void receive(ServerPlayer player, TableRoomActionPayload payload) {
         if (!canReach(player, payload.pos())) return;
         if (player.level().getBlockEntity(payload.pos()) instanceof MahjongTableBlockEntity table)

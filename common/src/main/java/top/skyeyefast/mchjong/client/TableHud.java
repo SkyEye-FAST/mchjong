@@ -54,11 +54,11 @@ final class TableHud {
                 ? member.participant().bot() && !member.participant().entityBot()
                     ? Component.translatable("ui.mchjong.bot.short", seat + 1)
                     : Component.literal(member.participant().name()) : Component.empty();
-            boolean badge = settings.show(p.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.MCR
-                ? TableSettings.Information.WINDS : TableSettings.Information.STATUS);
+            boolean badge = settings.show(p.variant() == top.skyeyefast.mchjong.engine.MahjongVariant.SICHUAN
+                ? TableSettings.Information.STATUS : TableSettings.Information.WINDS);
             Component score = badge && state.indicator() != null ? state.indicator().seats().get(seat) : Component.empty();
             if (settings.show(TableSettings.Information.POINTS)) score = score.copy()
-                .append(score.getString().isEmpty() ? "" : " ").append(Integer.toString(p.points()));
+                .append(score.getString().isEmpty() ? "" : " ").append(Long.toString(p.points()));
             int color = disconnected ? MahjongUi.NEGATIVE : MahjongUi.TEXT;
             text(font, g, name, x + (immersive ? 8 : 5) + inset, y + (immersive ? 6 : 4), w - inset - 18, color, immersive ? 1.75f : 1);
             text(font, g, score, x + (immersive ? 8 + inset : 5), y + (immersive ? 27 : 14), w - (immersive ? inset + 18 : 10),

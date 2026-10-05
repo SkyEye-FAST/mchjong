@@ -82,6 +82,14 @@ public final class TableEquipment {
         }
         return null;
     }
+    public top.skyeyefast.mchjong.item.TaiwanDeck taiwanStock(top.skyeyefast.mchjong.engine.TaiwanRules rules) {
+        boolean flowers = rules.getFlowers() != top.skyeyefast.mchjong.engine.TaiwanRules.Flowers.NONE;
+        for (int slot = 0; slot < BOX_SLOTS; slot++) {
+            var candidate = top.skyeyefast.mchjong.item.TaiwanDeck.select(boxes.getItem(slot), flowers);
+            if (candidate != null) return candidate;
+        }
+        return null;
+    }
     public boolean matchActive() { return !matchSticks.isEmpty(); }
 
     public void beginMatch() {

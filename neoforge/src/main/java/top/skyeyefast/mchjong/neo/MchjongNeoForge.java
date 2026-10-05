@@ -139,9 +139,17 @@ public final class MchjongNeoForge {
         registrar.playToServer(top.skyeyefast.mchjong.network.SichuanActionPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanActionPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TaiwanActionPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanActionPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
             });
         registrar.playToServer(top.skyeyefast.mchjong.network.SichuanNextHandPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanNextHandPayload.CODEC, (payload, context) -> {
+                if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TaiwanNextHandPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanNextHandPayload.CODEC, (payload, context) -> {
                 if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
             });
         registrar.playToServer(top.skyeyefast.mchjong.network.TableVariantPayload.TYPE,
@@ -172,6 +180,12 @@ public final class MchjongNeoForge {
         registrar.playToServer(top.skyeyefast.mchjong.network.SichuanRulesPayload.TYPE, top.skyeyefast.mchjong.network.SichuanRulesPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TaiwanRulesPayload.TYPE, top.skyeyefast.mchjong.network.TaiwanRulesPayload.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
+        registrar.playToServer(top.skyeyefast.mchjong.network.TaiwanClockPayload.TYPE, top.skyeyefast.mchjong.network.TaiwanClockPayload.CODEC, (payload, context) -> {
+            if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
+        });
         registrar.playToServer(top.skyeyefast.mchjong.network.RiichiVisibilityPayload.TYPE, top.skyeyefast.mchjong.network.RiichiVisibilityPayload.CODEC, (payload, context) -> {
             if (context.player() instanceof ServerPlayer player) TableNetworking.receive(player, payload);
         });
@@ -183,6 +197,9 @@ public final class MchjongNeoForge {
         registrar.playToClient(top.skyeyefast.mchjong.network.SichuanViewPayload.TYPE,
             top.skyeyefast.mchjong.network.SichuanViewPayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.ClientSichuanNetworking.receive(payload));
+        registrar.playToClient(top.skyeyefast.mchjong.network.TaiwanViewPayload.TYPE,
+            top.skyeyefast.mchjong.network.TaiwanViewPayload.CODEC,
+            (payload, context) -> top.skyeyefast.mchjong.client.ClientTaiwanNetworking.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.ReplayPayload.TYPE, top.skyeyefast.mchjong.network.ReplayPayload.CODEC,
             (payload, context) -> top.skyeyefast.mchjong.client.ClientReplays.receive(payload));
         registrar.playToClient(top.skyeyefast.mchjong.network.PresetBundlePayload.TYPE, top.skyeyefast.mchjong.network.PresetBundlePayload.CODEC,

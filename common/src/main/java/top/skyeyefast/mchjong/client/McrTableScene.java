@@ -91,7 +91,7 @@ public final class McrTableScene {
                         DEPTH / 2, origins.get(group).z + part.z(), part.sideways() ? 90 : 0, true, part.back(), TILE_SCALE));
                 }
             }
-            for (var part : McrFlowerLayout.of(player.flowers()))
+            for (var part : ChineseFlowerLayout.of(player.flowers()))
                 result.add(piece(part.tile(), seat, Area.FLOWER, part.index(), .30 + part.x(),
                     DEPTH / 2, HAND_Z - HEIGHT - .02, 0, true, false, TILE_SCALE));
         }

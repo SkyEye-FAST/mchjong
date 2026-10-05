@@ -94,6 +94,7 @@ final class SichuanTableSmoke {
                     case RIICHI -> client.screen instanceof RiichiTableScreen;
                     case MCR -> client.screen instanceof McrLobbyScreen;
                     case SICHUAN -> client.screen instanceof SichuanLobbyScreen;
+                    case TAIWAN -> client.screen instanceof top.skyeyefast.mchjong.client.TaiwanLobbyScreen;
                 }, "Variant did not open its own screen");
                 client.getWindow().setWindowed(960, 720);
                 client.options.guiScale().set(3); client.resizeGui();

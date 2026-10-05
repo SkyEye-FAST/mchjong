@@ -10,8 +10,8 @@ allows it.
 
 * `engine`: Minecraft-independent mixed Java/Kotlin domain. Java retains the
   shared `TableSession` room lifecycle, rule-specific `RiichiSession` and
-  `McrSession` and `SichuanSession` ownership, active `RiichiGame`, `McrGame`
-  and `SichuanGame` orchestration,
+  `McrSession`, `SichuanSession` and `TaiwanSession` ownership, active
+  `RiichiGame`, `McrGame`, `SichuanGame` and `TaiwanGame` orchestration,
   simple records/DTOs and the JVM interop shim for
   mahjong-utils internals. Kotlin owns algorithmic and value-oriented helpers
   where its collection and null-safety model materially reduces boilerplate,
@@ -20,7 +20,7 @@ allows it.
   replay-format transformation. Kotlin APIs called from Java keep ordinary JVM
   entry points (`@JvmStatic`, `@JvmField`, `@JvmRecord` or explicit fields where
   required), so Java orchestration does not need Kotlin-specific call shapes. The
-  engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, Kotlin
+  engine Shadow archive embeds and relocates mahjong-utils, mcr-mahjong, taiwan-mahjong, Kotlin
   and kotlinx. Each loader embeds that self-contained artifact without requiring
   an external Kotlin language mod or MCR library. Engine production
   Java and Kotlin bytecode targets Java 17, allowing the same domain artifact to
@@ -51,6 +51,15 @@ metadata and version-specific resources. Quilt consumes the matching Fabric JAR.
 Artifact names include both loader and Minecraft version to keep releases distinct.
 
 ## Hand analysis boundaries
+
+`TaiwanHandAnalyzer` is the sole production boundary to the independent
+Kotlin/JVM 17 `taiwan-mahjong` library. Source development uses a composite build;
+`-PtaiwanSource=false` selects the declared Maven dependency. It owns physical identity and
+meld-provenance conversion; the library owns five-meld sixteen-tile structure,
+analysis and source-qualified tai scoring. `TaiwanGame` and `TaiwanSession` own
+the Taiwan runtime without changing that algorithm/score boundary.
+See [Taiwan integration design](TAIWAN_DESIGN.md) for ownership
+and the separate match-layer contract.
 
 `Meld.Type` names physical structures: sequence, triplet, open quad, concealed
 quad and added quad. The last preserves the original triplet's supplier and
@@ -95,7 +104,7 @@ payments.
 
 `Tile.kind` covers the 34 ordinary kinds. `FlowerTile` assigns one physical ID to
 each of Spring, Summer, Autumn, Winter, Plum, Orchid, Bamboo and Chrysanthemum;
-`Tile.mcrSet` combines those eight identities with 136 ordinary tiles. Flowers
+`Tile.standard144Set` combines those eight identities with 136 ordinary tiles. Flowers
 have their own `McrPlayerState.flowers` area and are included by
 `McrPlayerState.physicalTiles` accounting, separately from concealed tiles.
 `RiichiPlayerState` tracks extracted norths and Riichi-only declarations.
@@ -134,6 +143,68 @@ below-minimum declarations produce separate `Penalty` events. Self-draw charges
 each opponent eight plus total fan points; discard wins charge the discarder that
 amount and the other opponents eight each. A wrong-win penalty transfers ten
 points to each opponent, independently of hand results.
+
+## Taiwan engine runtime
+
+`TaiwanWallLayout` is the fixed 136/144-slot contract shared by logic, private
+saves and `TaiwanTableScene`. `TaiwanWall` marks taken slots absent rather than
+rotating identities. Its front traversal is upper/lower in increasing physical
+slot order from the cut; tail replacement reverses that order. The no-flower
+seventeen-stack overflow and numbered-side traversal are frozen project preset
+rules. Exact indexing and source limits belong to [Taiwan design](TAIWAN_DESIGN.md#opening-and-wall-representation).
+
+`TaiwanGameState` accepts only format 1; `TaiwanSession.State` accepts only format 2. Game restore
+checks physical conservation, player structure/provenance, cursor occupancy,
+replacement/chronology counts, passing/ready state, pending offers and terminal
+score/payment consistency. Actions are rederived; saved response choices must
+remain legal and submitted. Revision/decision tokens refresh. `TaiwanView` is
+independent of private saves: opponents have concealed counts, covered kongs stay
+hidden, declared claim tiles are public, and only the recipient gets their actions,
+passing restriction and response status. Completion publishes awards and payments
+without hand/decomposition exposure. Wall slots never disclose future identities.
+`TaiwanCodec` enforces complete typed fields, duplicate/unknown-field rejection,
+sixteen nesting levels, a 65,536-character game/view bound and an 8 MiB session bound.
+
+`TaiwanSession` owns one four-wind match, completing sixteen dealer positions
+while allowing dealer wins/exhaustion to repeat even the last position. Cumulative
+scores derive from completed terminal hand proofs and the current settlement.
+Rules, stock, future seed, clocks, result reading time and acknowledgements persist;
+restore validates the dealer/wind/continuation chain and renews room incarnation.
+Absence and exit votes pause the session; authenticated human acknowledgement or
+200 active ticks advances a nonfinal result. Clocks are recipient-only in views.
+This human/built-in-Bot session uses `MahjongVariant.TAIWAN` throughout the shared room
+lifecycle. Every `TableSession` requires a concrete variant. `selectVariant` creates
+its session, and `TableSessionCodec` dispatches the registered Taiwan envelope to
+`TaiwanCodec`; there is one world persistence path.
+
+`TaiwanDeck` owns Taiwan equipment admission independently of `McrDeck`, reusing
+case component parsing and tile artwork. Pocket requires 144 physical tiles
+(136 ordinary tiles and eight flowers); Southern requires the 136 ordinary tiles.
+Cases are selected individually with uniform material, back and face preset.
+`TableHost` checks automatic-table/cloth/stock availability before preparation.
+The block entity observes seats, reconstructs presence after NBT load and sends
+only authorized recipient views through `TaiwanViewPayload`.
+
+`TaiwanActionPayload`, `TaiwanRulesPayload`, `TaiwanClockPayload` and
+`TaiwanNextHandPayload` bind requests to table UUID, incarnation and the current
+match or room decision. Rules and clock edits are host-only lobby operations;
+custom values respect world policy. All loaders register these shared handlers.
+`TaiwanLobbyScreen`, `TaiwanRulesScreen`, `TaiwanTableScreen` and
+`TaiwanResultsScreen` provide preparation, issued actions, public settlement and
+next-hand acknowledgement. The shared clock editor sends Taiwan clock requests.
+`TaiwanTableScene` consumes Taiwan's fixed physical slots for both wall sizes,
+with sixteen-tile hands, public flowers/rivers and five native meld groups.
+Chinese meld/flower placement, HUD, buttons and seated/immersive controls are
+shared presentation primitives. Covered opponent kongs and hands remain hidden
+at settlement. Cumulative scores use long values throughout presentation.
+`TaiwanBot` consumes only its recipient-safe `TaiwanView`, selecting issued actions
+with the existing analyzer and current scorer. Shared room controls admit built-in
+Bots through one built-in option and automatically ready them. The session schedules
+them after twelve active ticks with inactive Bot clocks and automatic nonfinal
+result confirmations. One human and three Bots can complete all four winds,
+including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).
+Taiwan records native replays through the shared archive and browser and shares
+the room convenience-hint setting. External Bot integration remains unavailable.
 
 ## MCR match orchestration
 
@@ -364,12 +435,13 @@ provides configured-match cumulative standings and the issued return-to-lobby co
 
 ### Shared rooms and rule sessions
 
-`MahjongVariant` selects Riichi, MCR or Sichuan through explicit built-in dispatch. `TableSession` owns
+`MahjongVariant` selects Riichi, MCR, Sichuan or Taiwan through explicit built-in dispatch. `TableSession` owns
 the table UUID, host, participants, seats, readiness, observed presence, variant,
 request incarnation, convenience-hint setting, exit controls and room lifecycle. `RoomSeating` owns the
 concealed wind lottery. `TableRoomView` projects this state and recipient-specific
-`RoomAction` choices for all three rules. `TableSession.actRoom` resolves only issued
+`RoomAction` choices for all four rules. `TableSession.actRoom` resolves only issued
 room-action indices against the table, incarnation and current room decision.
+Variant selection is bound to the table UUID, incarnation and room decision.
 A variant change creates a new concrete session with the target variant's capacity,
 retaining eligible human seats and fresh preparation state. `RiichiSession`
 owns Riichi room rules, equipment, visibility, bot choices, rewards, replay queue
@@ -424,23 +496,23 @@ before restoration. The block entity stores the private session JSON as UTF-8
 NBT bytes so completed replay queues fit beyond NBT's single-string limit.
 
 `TableRoomActionPayload` carries a common room-action index. `RiichiActionPayload`,
-`McrActionPayload` and `SichuanActionPayload` carry only their respective issued
+`McrActionPayload`, `SichuanActionPayload` and `TaiwanActionPayload` carry only their respective issued
 match-action indices. Lobby selectors share `variant.mchjong.*` labels and divide
 their available width across the built-in variants.
-`McrNextHandPayload` and `SichuanNextHandPayload` carry their respective
+`McrNextHandPayload`, `SichuanNextHandPayload` and `TaiwanNextHandPayload` carry their respective
 completed-hand confirmations separately from gameplay actions. `TableNetworking`
 and `MahjongTableBlockEntity` verify reach, table, incarnation and decision, then
 resolve the acting seat from the authenticated sender. Duplicate confirmations
 do not change the count or deadline.
-`RiichiViewPayload`, `McrViewPayload` and `SichuanViewPayload` carry the public
+`RiichiViewPayload`, `McrViewPayload`, `SichuanViewPayload` and `TaiwanViewPayload` carry the public
 `TableRoomView` and synchronized world policy alongside their rule-specific recipient-safe projections.
-All three view payloads send the last-player leave decision directly to its
+All four view payloads send the last-player leave decision directly to its
 unmounted recipient.
 `RiichiVisibilityPayload` and `RiichiHandOrderPayload` carry Riichi-only
 preparation and private-hand changes. `ClientRiichiNetworking` and
-`ClientMcrNetworking` and `ClientSichuanNetworking` decode and apply their respective views.
+`ClientMcrNetworking`, `ClientSichuanNetworking` and `ClientTaiwanNetworking` decode and apply their respective views.
 `RoomLobby` owns the shared variant rail, roster, settings and stage footer.
-`RiichiTableScreen`, `McrLobbyScreen` and `SichuanLobbyScreen` adapt their confirmed
+`RiichiTableScreen`, `McrLobbyScreen`, `SichuanLobbyScreen` and `TaiwanLobbyScreen` adapt their confirmed
 rule state to that component. `TableToolbar`, `TableOptionsScreen`,
 `TableParticipantsScreen` and `TableInviteScreen` share navigation across variants;
 `TableChildScreen` retains the parent chain for snapshot routing and returns.
@@ -739,8 +811,20 @@ non-flower fan for ordinary discard/self-draw contexts and current public claim
 circumstances. Sichuan uses structural scores and `readyValue`, with its recipient's
 passed-win restriction. Public physical tile accounting excludes opponent hands
 and wall identities. `TableHintsButton` shares the native focus target and icon;
-`TableHints` formats the MCR/Sichuan results above the existing projected private
+`TaiwanHints` consumes only `TaiwanView`, using `TaiwanHandAnalyzer` and the view's
+complete `TaiwanRules` for sixteen-tile shanten, effective tiles, legal discard
+previews and per-wait capped ron/self-draw tai. It counts unique physical IDs from
+the owner's hand/melds/flowers, public rivers/exposed melds and current focus;
+covered opponent kongs, opponent hands and future wall identities are excluded.
+Exhausted structural waits remain visible at zero. Ordinary future-win contexts
+retain only confirmed flowers, winds and READY declarations; they never assume
+last tiles, replacements, robbery or opening wins. A current public reaction focus
+separately carries its known last-discard/robbing context. Passing keeps structural
+waits and marks the current win restriction. Spectators get no private analysis.
+`TableHints` formats the MCR/Sichuan/Taiwan results above the existing projected private
 hand without introducing a common analysis interface.
+Taiwan's seated and immersive adapters gate analysis on the synchronized room/world
+policy before calling the analyzer, sharing native focus, tile rows and pagination.
 Training decisions layer `BotAnalysis` (cached shape and bounded development),
 `BotValue` (legal scoring and payout scenarios), `BotYakuPotential` (gradual,
 copy-aware incomplete-hand routes), and `BotDefence` (public per-opponent
@@ -946,9 +1030,9 @@ completion callback. See `AUDIO.md` for the recording contract.
 
 Replay recording and playback live in the Minecraft-independent engine.
 `ReplayMatch` holds shared identity, participants, variant, timestamps and
-completion state; `RiichiReplay`, `McrReplay` and `SichuanReplay` own independent
+completion state; `RiichiReplay`, `McrReplay`, `SichuanReplay` and `TaiwanReplay` own independent
 completed-hand types, and exactly one payload matches the selected variant.
-MCR and Sichuan record complete physical openings and accepted server decisions,
+MCR, Sichuan and Taiwan record complete physical openings and accepted server decisions,
 then reconstruct read-only event frames by executing their own game rules and
 checking each event. `SichuanReplayHand` seals the 108 physical wall slots, dice
 and dealer, starting cumulative scores, initial hands, void suits, issued choices
@@ -960,14 +1044,33 @@ match once; closing a match queues its already sealed hands. Private session sav
 retain the current recorder, sealed hands and unacknowledged archives. Restoration
 reexecutes the recorder and verifies it against the saved game, and validates queued
 archives without applying payments or requeuing acknowledged records.
+`TaiwanReplayHand` independently seals its hand number, rules, three-die opening,
+round/dealer/continuation, complete fixed 136/144-slot wall, raw opening player
+zones, starting long scores, issued options and accepted indices, physical events,
+terminal state/settlement and ending scores. `TaiwanGame` supplies passive physical
+checkpoints at automatic and action boundaries; `TaiwanReplayRecorder` derives
+events from their differences without performing game transitions. Automatic
+opening flowers, consecutive replacements and flower victories have events at
+the current decision cursor, including zero, without invented player decisions.
+`TaiwanReplayPlayback` reconstructs the real opening, submits every recorded
+choice and checks regenerated options, events/cursors, conservation and complete
+terminal state. `TaiwanReplay` validates wind/dealer/repeat and score succession;
+sixteen completed dealer positions finish the match. `ReplayMatch.Header` retains
+Taiwan's final scores as long values and derives ranks before display conversion.
+`TaiwanSession` persists its recorder, sealed hands and archive queue, reexecutes
+the active recorder against its saved game and queues one complete four-wind
+match. Closing early archives only sealed hands. Acknowledgement survives restores.
 `ReplayStore` handles bounded atomic files, searchable indexes and per-player durable
 deletion markers; `ReplayServer` handles
 permissions and commands, and `ReplayTransfer` handles bounded reassembly.
 `ReplayCodec` checks complete typed JSON fields and validates rule-specific timelines.
 The shared browser lists each variant and final standings; `ReplayScreen` uses
 native timelines through `ReplayPresentation` for common navigation and receipts.
-Sealed playback exposes all four hands through replay frames, while running
-`SichuanView` projections continue to enforce recipient-safe privacy.
+Sealed Riichi/MCR/Sichuan playback exposes all hands through replay frames. Taiwan
+presentation projects the selected player's hand and covered kongs separately for
+each viewpoint, including settlement, while keeping other hands hidden. Its wall
+panel uses `TaiwanWallLayout`; hand, meld, flower, river and receipt primitives
+remain shared. Running recipient projections retain their existing privacy.
 The viewer never feeds recorded actions back into a live match. `TenhouReplay`
 consumes completed Riichi records and does not rerun
 scoring. See `REPLAYS.md` for the storage layout and interchange details.

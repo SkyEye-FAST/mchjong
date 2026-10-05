@@ -25,7 +25,7 @@ class TenhouFormatTest {
                 match.participants(), MahjongVariant.RIICHI, false, new RiichiReplay(match.riichi().rules()
                     .with(RiichiRuleOption.RED_FIVES, reds.ordinal()).with(RiichiRuleOption.KUITAN, 0)
                     .with(RiichiRuleOption.MATCH_LENGTH, length).with(RiichiRuleOption.MIN_HAN, 4),
-                    match.riichi().initialDealer(), reds, match.riichi().hands()), null, null);
+                    match.riichi().initialDealer(), reds, match.riichi().hands()), null, null, null);
             var rule = (java.util.Map<?, ?>) TenhouReplay.export(configured).get("rule");
             for (int suit = 0; suit < 3; suit++) assertEquals(reds.count(suit), rule.get("aka5" + (suit + 1)));
             assertFalse(rule.get("disp").toString().contains("喰"));
@@ -100,7 +100,7 @@ class TenhouFormatTest {
         ReplayHand hand = new ReplayHand(1,round,dealer,0,0,points,hands,List.of(132),wall(rules),events,List.of(),seats,
             List.of(),result,Collections.nCopies(count,0),List.of(132),List.of(),List.of(),List.of());
         return new ReplayMatch(UUID.randomUUID(), UUID.randomUUID(), 1, 2, participants, MahjongVariant.RIICHI, false,
-            new RiichiReplay(rules.config(), dealer, rules.defaultRedFives(), List.of(hand)), null, null);
+            new RiichiReplay(rules.config(), dealer, rules.defaultRedFives(), List.of(hand)), null, null, null);
     }
 
     private static ReplayWall wall(RiichiPreset rules) {

@@ -139,6 +139,7 @@ public final class TableSettingsScreen extends Screen implements TableChildScree
         if (TableChildScreen.root(parent) instanceof RiichiTableScreen table) table.resetView();
         else if (TableChildScreen.root(parent) instanceof McrTableScreen table) table.resetView();
         else if (TableChildScreen.root(parent) instanceof SichuanTableScreen table) table.resetView();
+        else if (TableChildScreen.root(parent) instanceof TaiwanTableScreen table) table.resetView();
         else settings.camera().reset(settings.cameraDistance, settings.cameraHeight);
     }
 
@@ -156,7 +157,7 @@ public final class TableSettingsScreen extends Screen implements TableChildScree
             settings.save(TableSettings.configPath());
             var root = TableChildScreen.root(parent);
             boolean table = root instanceof RiichiTableScreen || root instanceof McrTableScreen || root instanceof SichuanTableScreen
-                || root instanceof McrLobbyScreen || root instanceof SichuanLobbyScreen;
+                || root instanceof McrLobbyScreen || root instanceof SichuanLobbyScreen || root instanceof TaiwanTableScreen || root instanceof TaiwanLobbyScreen;
             minecraft.setScreen(minecraft.level == null && table ? null : parent);
         } catch (IOException failure) {
             org.slf4j.LoggerFactory.getLogger("mchjong").error("Cannot save table settings", failure);

@@ -1,6 +1,6 @@
 # Rooms, permissions and settings
 
-Riichi, MCR and Sichuan use the same lobby. Select the variant from the left
+Riichi, MCR, Sichuan and Taiwan use the same lobby. Select the variant from the left
 sidebar, then use Players and bots to manage the roster or Match settings to
 configure the selected variant. Variant selection is available to the host during
 gathering on automatic tables without Bots. Fill empty seats and seat preparation
@@ -13,12 +13,12 @@ play preferences belong to the individual seated player and remain accessible
 from the match overlay.
 
 The room host can enable **Convenience hints** during preparation: Settings → Room
-or the lobby Match settings tab for all three variants. All three rules share
+or the lobby Match settings tab for Riichi, MCR, Sichuan and Taiwan. All four share
 the setting, including when changing variants. World `allowConvenienceHints`
 can disable it in both waiting and running rooms.
 
 Hover or focus the diamond beside your hand to inspect hints; hovering or selecting
-a legal discard previews the resulting hand. Activate the MCR/Sichuan diamond
+a legal discard previews the resulting hand. Activate the MCR/Sichuan/Taiwan diamond
 to page through tile rows when the popup needs more space. Riichi shows its structural waits.
 MCR shows shanten, improving tiles and structural waits, with non-flower fan for
 ordinary discard wins/self-draws and an eight-fan qualification mark. A currently
@@ -31,6 +31,21 @@ and their maximum ready value under the room rules. These draw-check values
 exclude win circumstances and self-draw bonuses. A passed-win restriction is
 shown only to its owner; it restricts discard wins to higher capped fan until
 the engine clears it. Hints do not declare wins or submit actions.
+
+Taiwan shows sixteen-tile shanten, effective tiles and every structural wait with
+public remaining counts. Each wait has separate ron and self-draw tai under the
+current room rules, including the preset's cap, concealment, honors, seat/round
+winds, already revealed flowers and READY. A drawn hand shows its pre-draw
+structure until you hover or select a legal discard. Passing (過水) retains the
+structural waits while marking that you currently cannot win. READY keeps its
+waits and tai. Spectators receive no private hints, and disabling hints stops
+client analysis and display.
+
+Future waits never assume last-tile, replacement, robbing-kong or opening-win
+bonuses, future flowers or unknown replacement sources. A currently offered public
+reaction tile separately shows its confirmed claim tai in parentheses. Public
+counting includes only your hand/melds/flowers, public rivers/exposed melds and the
+current focus; covered opponent kongs contribute no hidden identities.
 
 Counts use your own hand and public tiles, deduplicate claimed tiles and include
 exhausted structural waits at zero. They describe unseen copies, never the real
@@ -62,6 +77,20 @@ human stool pauses Bots and the match. Returning resumes the saved decisions.
 World `allowBots` controls preparation; running matches retain their roster.
 Scores, final standings and replay participants include Bots. See
 [Bot analysis](BOTS.md#sichuan-built-in-opponent) for their decision boundary.
+
+## Taiwan Bot rooms
+
+Pocket uses a complete 144-tile set with eight flowers; Southern uses the 136
+ordinary tiles. Both support one human and three built-in Bots through East,
+South, West and North, including repeat dealers. Add individual Bots or fill
+empty seats, then prepare seats and ready at your assigned stool. Bots are ready
+automatically and confirm nonfinal results. Easy and Hard use the current built-in
+policy described in [Bot analysis](BOTS.md#taiwan-built-in-opponent).
+
+Leaving the last human stool pauses decisions and result reading; returning resumes
+them. World `allowBots` controls preparation. Scores, final standings and native
+replay participants retain Bot identities. Replays use the shared browser and
+human-participant permissions; see [Replays](REPLAYS.md).
 
 ## World policy
 
@@ -108,7 +137,7 @@ individual mahjong options into world settings.
 
 ## Hand visibility
 
-The host chooses Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
+Riichi hosts choose Hand visibility in the lobby Match settings tab or Settings → Room before play. The choice is
 saved with that table, and changing it clears readiness:
 
 - **Visible only to self:** each seated player sees their own hand. This is the default.
@@ -128,6 +157,11 @@ redacted by `spectatorHandVisibility`: `hidden` reveals none, `follow_players`
 never exceeds the room's participant visibility, and `all` reveals every hand.
 None of these values grants additional information to participants. Spectating
 leaves participant seats available and grants no game actions.
+
+Taiwan always supplies only the recipient's own concealed hand. Opponent hands
+and covered kongs stay hidden at settlement, and spectators receive no concealed
+identities or private decisions even when the world enables wider Riichi visibility.
+Its four seats support humans and built-in Bots, including one human with three Bots.
 
 ## Room ownership
 

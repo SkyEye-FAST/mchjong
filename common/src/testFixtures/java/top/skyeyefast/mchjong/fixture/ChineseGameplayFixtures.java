@@ -84,7 +84,7 @@ public final class ChineseGameplayFixtures {
         for (var take : McrWallLayout.initialDeal(opening)) if (take.seat() == 0)
             slots.set(take.slot(), dealerTiles.get(dealerIndex++));
         for (int tail = 0; tail < 12; tail++) slots.set(McrWallLayout.replacementSlot(opening, tail), 6 + tail);
-        var unused = new ArrayList<>(Tile.mcrSet());
+        var unused = new ArrayList<>(Tile.standard144Set());
         unused.removeAll(slots);
         for (int slot = 0; slot < slots.size(); slot++) if (slots.get(slot) == Tile.ABSENT) slots.set(slot, unused.removeFirst());
         var game = new McrGame(711, slots, opening);

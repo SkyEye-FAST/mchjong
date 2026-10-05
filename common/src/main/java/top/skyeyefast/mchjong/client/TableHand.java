@@ -34,7 +34,7 @@ final class TableHand {
         right = width - (perspective ? 24 : 8);
         this.tiles = tiles;
         this.drawn = drawn;
-        tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / 14));
+        tileWidth = Math.max(1, Math.min(maxTileWidth, (width - 36) / Math.max(14, tiles.size())));
         tileHeight = Math.round(tileWidth * TileMesh.HEIGHT / TileMesh.WIDTH);
         gap = drawn == Tile.ABSENT || tiles.isEmpty() || tiles.getLast() != drawn ? 0 : Math.max(18, tileWidth / 2);
         span = tiles.size() * tileWidth + gap;

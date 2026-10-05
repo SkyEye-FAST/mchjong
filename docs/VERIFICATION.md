@@ -196,7 +196,7 @@ restrictions and lobby/match save restoration. Run
 `gradlew.bat :engine:test --tests "*SichuanRoomSettingsTest" --warning-mode fail --console=plain`.
 
 `ConvenienceHintsTest` owns the shared room hint setting, world-policy restriction,
-save/variant retention, MCR structural versus eight-non-flower-fan waits, Sichuan
+save/variant retention across all four variants, MCR structural versus eight-non-flower-fan waits, Sichuan
 void tiles and structural/capped ready values, and public-copy accounting. The
 MCR privacy fixture and `SichuanGameTest.hintsIgnoreOpponentsConcealedHandsAndFutureWallIdentities`
 change private hands and wall identities without changing hint results.
@@ -286,14 +286,15 @@ recipient privacy. Lifecycle/manual checks exercise both player counts; enumerat
 presets only where rules differ. `CompactTableLayoutTest` owns hand clearance and
 picking; `TableLayoutTest` owns melds, rivers and walls. Replay storage/authorization
 belongs to `ReplayStoreTest`, and bounded chunk reassembly to `ReplayTransferTest`.
-The storage suite also checks Sichuan browser headers, final standings, participant
+The storage suite also checks Sichuan/Taiwan browser headers, final standings, participant
 permissions and altered-event rejection. Run
 `gradlew.bat :fabric:test --tests "*ReplayStoreTest" --warning-mode fail --console=plain`.
 Asset tests cover deterministic output, texture/model contracts, translation key
 parity, duplicate keys, placeholders and literal source references.
-`ReplayPresentationTest` checks static MCR/Sichuan hand selectors and every frame's
+`ReplayPresentationTest` checks static MCR/Sichuan/Taiwan hand selectors and every frame's
 remaining wall count from real played openings through exhaustion, including both
-Sichuan presets. Run `:fabric:test --tests "*ReplayPresentationTest"`.
+Sichuan presets, both Taiwan wall sizes and Taiwan viewpoint/settlement privacy.
+Run `:fabric:test --tests "*ReplayPresentationTest"`.
 `ChinesePickingTest` checks the projected centers of every concealed hand tile
 against the same oriented tile boxes, in real post-deal, midgame and late-game
 positions from all four seats at 320 × 240. Run `:fabric:test --tests "*ChinesePickingTest"`.
@@ -339,6 +340,128 @@ visual acceptance requires viewing the affected state.
 Report commands, results and coverage limits in the delivery message or PR.
 Guides retain reusable instructions and current contracts; individual run logs,
 screenshot inventories, timings and experiment histories remain outside tracked docs.
+
+## Taiwan hand library
+
+```text
+gradlew.bat :taiwan-mahjong:check :engine:test --tests="*Taiwan*Test" :engine:shadowJar spotlessCheck --configure-on-demand --warning-mode fail --console=plain
+```
+
+The standalone library also runs with its own wrapper in `taiwan-mahjong/`.
+Its tests own five-meld decomposition, exact copy-aware distance, effective tiles,
+discard availability, source-qualified scoring/exclusions and flower victories.
+`TaiwanHandAnalyzerTest` owns physical identity/provenance, named flower mapping,
+public-copy deduplication and the library-free engine API. The MCR dependency is
+a test-only four-meld remainder oracle, not a Taiwan rules authority. `buildAll`
+includes the standalone library's `check`.
+
+`TaiwanHintsTest` owns shanten/effective tiles, legal discard previews, multiple
+waits with distinct ron/self-draw tai, Pocket/Southern and current-rule caps,
+concealment/honors/winds/known flowers, passing/READY, exhausted waits and physical
+river/meld/focus aliases. It excludes covered opponent kongs, private hands,
+future wall order and spectator analysis; only current public reaction context
+can add situational tai. Run
+`gradlew.bat :engine:test --tests "*TaiwanHintsTest" --tests "*ConvenienceHintsTest" --warning-mode fail --console=plain`.
+
+`PatternRegressionTest` has a source-bearing positive witness for every pattern,
+plus exact exclusion sets, ron/self-draw concealment, competing decompositions
+and winning placements, cap tie-breaking and initial flower events. Existing
+scoring tests cover compound flower caps and custom flower/pinfu policies.
+
+`TaiwanGameTest` uses complete physical stock permutations, not mutable state
+fixtures. It exercises initial flower rounds, ordinary draw/discard, stale action
+rejection, chi/pong priority, nearest ron independent of response order, all three
+kong forms, robbery before committing an added kong, replacement self-draw,
+passing/reset, ready locking, flower payer routing, reserve policies and exhaustion.
+Seeded games finish with conserved stock and balanced transfers in both presets.
+These verify the source-composed contract in [Taiwan design](TAIWAN_DESIGN.md),
+including its explicitly identified house choices. Dice-count evidence is an
+indexed teaching appendix whose full PDF could not be fetched. No-flower dice overflow
+and tail-layer traversal are frozen project preset rules, rather than temporary semantics. Combined
+flower cap/base allocation and the exact non-winning-discard interpretation lack
+a single complete publisher specification. Eight-and-a-half pairs remains outside
+the selected profiles; the library ledger records the conflicting historical rules.
+`TaiwanRuntimeTest` owns fixed slot/cursor contracts across both stocks, every
+dealer/dice sum, action-by-action persistence, legal/still-submitted reactions,
+pending added-kong commit/robbery, passing/ready restore, concealed-kong and
+end-of-hand privacy, strict JSON rejection and settlement recomputation.
+`TaiwanReplayTest` owns independent sealed 136/144-slot openings, accepted options
+and indices, ordinary play, initial/consecutive flowers, chi/pong arbitration,
+all three kongs and robbery, ready/ordinary/flower wins and exhaustion. It checks
+mid-hand and partial-reaction recorder restoration, exact final state/scores,
+physical conservation at event frames, altered options/selection/events/wall/
+settlement rejection, complete one-human/three-Bot four-wind archive/ranks,
+participant/Bot permissions and queue acknowledgement without duplication.
+
+```text
+gradlew.bat :engine:test --tests "*TaiwanReplayTest" :fabric:test --tests "*ReplayPresentationTest" --tests "*ReplayStoreTest" --warning-mode fail --console=plain
+```
+`TaiwanSessionTest` owns four-human preparation, both physical stocks,
+incarnation/mount authorization, recipient-only clocks/response privacy,
+paused/restored allowances and exit votes, partial hand acknowledgements,
+exhaustion/repeat dealer, wind progression, guaranteed final-dealer repeat,
+complete four-wind matches for both presets and cumulative-score idempotence.
+The deterministic legal-action test driver is not a production Bot.
+`TaiwanBotTest` owns win priority, shanten/effective-copy ordering, live-wait
+quality and current-rule scoring, conservative and beneficial calls/replacements,
+hidden-hand/wall independence, shared room Bot controls/world policy, delayed
+paused/restored decisions, inactive Bot clocks and automatic hand confirmations.
+Both presets complete one-human/three-Bot four-wind matches with physical
+conservation, restored settlements and balanced cumulative scores. Run
+`gradlew.bat :engine:test --tests "*TaiwanBotTest" --warning-mode fail --console=plain`.
+`TaiwanIntegrationTest` owns native case admission, appearance, all five Taiwan
+wire codecs and private/public NBT separation on the NeoForge test server.
+`TaiwanPresentationTest` checks both fixed-slot wall sizes and conserved physical
+scenes through native actions and settlement, including hidden opponent hands,
+felt boundaries and intersections.
+
+```text
+gradlew.bat :fabric:test --tests "*TaiwanPresentationTest" :forge:compileJava :neoforge:test --tests "*TaiwanIntegrationTest" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true "-PsmokeScreenshots=taiwan-table.png,taiwan-immersive.png,taiwan-results.png,taiwan-payments.png,taiwan-match-end.png,taiwan-rules.png" --warning-mode fail --console=plain
+```
+
+The focused Fabric profile uses one real client and three mounted human test
+identities. It switches Riichi/MCR/Sichuan/Taiwan lobbies, edits both presets through
+registered packets, checks 136/144 case admission and seats four participants.
+It exercises initial flower replacement, native calls, recipient/spectator privacy,
+seated and immersive discard selection, focused convenience-hint previews and
+world-policy disabling, exit-vote pause, result/next-hand packets,
+NBT restore and a complete East/South/West/North match. It then adds, changes,
+removes and fills Bot seats through native room handlers, restores their NBT
+roster and completes a Southern one-human/three-Bot match with automatic result
+confirmations, conserved tiles, private views and balanced final scores. Old decisions and
+pre-restore incarnations are rejected. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`
+and `fabric/build/smoke/taiwan-evidence/PASS.txt`, with no `FAIL.txt`; inspect the
+requested captures there. The profile also retrieves the completed native match
+from the shared replay browser, opens it, steps two events, changes viewpoints,
+inspects an initial flower, opens hand settlement and returns to the list.
+Use `-PsmokeScreenshots=taiwan-replay.png,taiwan-replay-settlement.png` for these
+affected playback states. Use
+`-PsmokeScreenshots=taiwan-hints-seated.png,taiwan-hints-immersive.png` for the
+native hints focus in both views. Variant switching retains the shared setting;
+disabling world policy removes the hint widget and restoring policy keeps the
+room choice disabled. The legal-action driver is test-only. Taiwan external
+Bot is not supported.
+
+### Taiwan compatibility profiles
+
+Both compatibility profiles retain main's Taiwan game/save/view/replay semantics.
+Use each branch's toolchain (JDK 21 build / Java 17 Minecraft on 1.20.1; JDK 25
+on 26.1.2), build that branch's two loader artifacts, and run this focused subset:
+
+```text
+gradlew.bat :engine:test --tests "*TaiwanGameTest.openingUsesFourPacketsAndRoundBasedFlowers" --tests "*TaiwanBotTest.issuedWinsAlwaysTakePriorityInBothPresets" --tests "*TaiwanReplayTest.bothWallsOrdinaryPlayAndRecorderRestoreKeepExactPhysicalState" --tests "*TaiwanHintsTest.shantenEffectiveTilesAndLegalDiscardPreview" :fabric:test --tests "*TaiwanPresentationTest" --warning-mode fail --console=plain
+gradlew.bat :fabric:runSmokeClient -PsmokeTaiwan=true --warning-mode fail --console=plain
+```
+
+Build with `:fabric:build :forge:build -x test` on 1.20.1 or
+`:fabric:build :neoforge:build -x test` on 26.1.2; the focused tests above run
+separately. The real client fixture checks variant registration, both native
+stocks, a complete opening/match, Bot control/decisions, NBT, Replay/hints and
+seated/immersive packets. Require fresh `MCHJONG_TAIWAN_SMOKE_PASS`, `PASS.txt`
+and no `FAIL.txt` in that branch's `fabric/build/smoke/taiwan-evidence`.
+The 26.1.2 native server boundary also runs `:neoforge:test --tests
+"*TaiwanIntegrationTest"`. These focused checks do not repeat main's full matrix.
 
 ## Bot checks
 

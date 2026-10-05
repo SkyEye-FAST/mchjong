@@ -187,7 +187,7 @@ public final class McrGame {
     public boolean nextHand() {
         if (phase != Phase.HAND_END) return false;
         handIndex++;
-        startHand(new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), Tile.mcrSet()));
+        startHand(new McrWall(seed + WALL_SEED_STEP * handIndex, dealer(), Tile.standard144Set()));
         revision = Math.addExact(revision, 1);
         return true;
     }

@@ -369,7 +369,7 @@ class PhysicalSuppliesTest {
         assertNotNull(selected);
         assertEquals(1, selected.boxSlot());
         assertEquals(144, selected.deck().tiles().size());
-        assertTrue(top.skyeyefast.mchjong.engine.Tile.validMcrSet(selected.deck().tiles()));
+        assertTrue(top.skyeyefast.mchjong.engine.Tile.validStandard144Set(selected.deck().tiles()));
         assertTrue(ItemStack.matches(original, complete));
         assertEquals(riichiBox, equipment.activeBox());
         assertEquals(riichiDeck, equipment.deck(), "Inspecting MCR stock cannot change the selected Riichi appearance");
