@@ -198,7 +198,7 @@ shared presentation primitives. Covered opponent kongs and hands remain hidden
 at settlement. Cumulative scores use long values throughout presentation.
 `TaiwanBot` consumes only its recipient-safe `TaiwanView`, selecting issued actions
 with the existing analyzer and current scorer. Shared room controls admit built-in
-Bots, automatically ready them and retain their difficulty. The session schedules
+Bots through one built-in option and automatically ready them. The session schedules
 them after twelve active ticks with inactive Bot clocks and automatic nonfinal
 result confirmations. One human and three Bots can complete all four winds,
 including repeats, through pauses and restoration. See [Bot analysis](BOTS.md#taiwan-built-in-opponent).

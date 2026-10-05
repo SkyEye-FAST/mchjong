@@ -7,13 +7,17 @@ and this project follows [Semantic Versioning](https://semver.org/spec/v2.0.0.ht
 
 ## [Unreleased]
 
+### Changed
+
+- Offer one formal Taiwan built-in Bot option, matching MCR/Sichuan; remove ineffective difficulty choices and reject unsupported Taiwan Bot values in private saves.
+
 ### Added
 
 - Add recipient-safe Taiwan convenience hints with sixteen-tile shanten/effective and discard previews, per-wait rule-scored ron/self-draw tai, public remaining counts including exhausted waits, passing/READY support and shared seated/immersive pagination; share room/world policy and setting persistence across all variants, with focused engine and Fabric smoke coverage.
 
 - Add independent native Taiwan replay recording and strict engine playback, resumable decision/automatic-flower/kong timelines, complete four-wind archives with exact long standings and participant permissions, and shared browser/viewpoint/settlement presentation; verify recorder restores, altered-record rejection and real Fabric replay navigation.
 
-- Add recipient-safe Taiwan built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room difficulty and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
+- Add recipient-safe Taiwan built-in Bots with rule-driven discard/wait scoring, conservative call/kong decisions, shared room add/remove and fill controls, delayed paused/restored actions, inactive Bot clocks and automatic hand confirmations; verify complete one-human/three-Bot four-wind matches for both presets.
 
 - Register Taiwan as the fourth built-in variant with shared room/NBT lifecycle, recipient-safe Minecraft packets, independent 136/144 physical stock and fixed-slot scene, preset/payment/clock editors, playable seated/immersive actions, private settlement and complete four-wind matches; add focused Fabric end-to-end coverage.
 

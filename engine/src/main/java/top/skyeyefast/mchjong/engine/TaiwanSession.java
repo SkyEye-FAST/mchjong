@@ -36,12 +36,11 @@ public final class TaiwanSession extends TableSession {
     @Override protected boolean pauseForAbsence() { return !hasSeatedHuman(); }
     @Override protected boolean allowsBots() { return worldPolicy.allowBots(); }
     @Override protected void addBotChoices(List<RoomAction> actions, int target, Participant member) {
-        for (var difficulty : BotDifficulty.values()) if (!member.bot || member.botDifficulty != difficulty)
-            actions.add(new RoomAction(RoomAction.Type.SET_BOT,List.of(target,difficulty.ordinal())));
+        if (!member.bot) actions.add(new RoomAction(RoomAction.Type.SET_BOT,List.of(target,0)));
     }
     @Override protected void setBotChoice(int target, int choice) {
-        if (choice < 0 || choice >= BotDifficulty.values().length) throw new IllegalArgumentException("Unknown Taiwan bot");
-        setBot(target,BotDifficulty.values()[choice]);
+        if (choice != 0) throw new IllegalArgumentException("Unknown Taiwan bot");
+        setBot(target,BotDifficulty.EASY);
     }
     @Override public void configureWorld(WorldPolicy policy) {
         boolean botsChanged = worldPolicy.allowBots() != policy.allowBots();
@@ -284,7 +283,7 @@ public final class TaiwanSession extends TableSession {
             throw new IllegalArgumentException("Invalid Taiwan dealer/round chain");
     }
     private static void validateRoster(List<TableParticipant> roster) {
-        if (roster.size() != 4 || roster.stream().anyMatch(p -> p.id() == null || p.entityBot() || p.externalBotId() != null || p.bot() && !p.ready())
+        if (roster.size() != 4 || roster.stream().anyMatch(p -> p.id() == null || p.entityBot() || p.externalBotId() != null || p.bot() && (!p.ready() || p.difficulty() != BotDifficulty.EASY))
             || roster.stream().allMatch(TableParticipant::bot) || roster.stream().map(TableParticipant::id).distinct().count() != 4)
             throw new IllegalArgumentException("Taiwan requires four participants including a human and only built-in bots");
     }
@@ -310,7 +309,7 @@ public final class TaiwanSession extends TableSession {
                     || replay != null && m.id().equals(replay.id()) && (!replay.complete() || !m.equals(replay))))
                 throw new IllegalArgumentException("Invalid Taiwan replay session state");
             if (format != FORMAT || room.variant() != MahjongVariant.TAIWAN || room.capacity() != 4 || room.manual()
-                || room.participants().stream().anyMatch(p -> p.entityBot() || p.externalBotId() != null || p.bot() && !p.ready())
+                || room.participants().stream().anyMatch(p -> p.entityBot() || p.externalBotId() != null || p.bot() && (!p.ready() || p.difficulty() != BotDifficulty.EASY))
                 || (room.lifecycle() == Lifecycle.LOBBY) != (game == null) || age < 0 || age > 14_400
                 || confirmed < 0 || confirmed >= 15 || confirmed != 0 && (game == null || game.phase() != TaiwanGame.Phase.FINISHED || room.lifecycle() != Lifecycle.PLAYING)
                 || clocks.size() != (game == null ? 0 : 4) || game == null && (!completed.isEmpty() || age != 0 || futureSeed != 0)

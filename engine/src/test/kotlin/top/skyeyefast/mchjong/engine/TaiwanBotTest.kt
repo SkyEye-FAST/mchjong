@@ -153,7 +153,7 @@ class TaiwanBotTest {
 
     private val human = UUID(0, 1)
     private val roster = List(4) { seat -> if (seat == 0) TableParticipant(human, "Human") else
-        TableParticipant(UUID(0, seat + 1L), "Bot $seat", true, false, BotDifficulty.entries[seat % 2], null, true) }
+        TableParticipant(UUID(0, seat + 1L), "Bot $seat", true, false, BotDifficulty.EASY, null, true) }
     private fun mount(room: TaiwanSession) = room.synchronizeSeats(mapOf(human to room.seatOf(human)))
     private fun room(game: TaiwanGame): TaiwanSession {
         val start = TaiwanSession.start(UUID.randomUUID(), roster, 4, TaiwanWall.expected(game.rules), game.rules)
@@ -199,13 +199,22 @@ class TaiwanBotTest {
         assertTrue(index >= 0, "Missing $type $arguments")
         assertTrue(room.actRoom(human, room.tableId(), room.incarnation(), room.decision(), index))
     }
-    @Test fun sharedRoomControlsFillRemoveDifficultyReadyAndPolicy() {
+    @Test fun sharedRoomControlsExposeOneBotFillRemoveReadyAndPolicy() {
         val room = TaiwanSession(UUID.randomUUID(), 4)
         assertTrue(room.join(human, "Human", 0))
         assertTrue(room.configureEquipment(false, TaiwanWall.expected(room.rules())))
         roomAction(room, RoomAction.Type.SET_BOT, listOf(1, 0))
-        roomAction(room, RoomAction.Type.SET_BOT, listOf(1, 1))
-        assertEquals(BotDifficulty.HARD, room.participants()[1].difficulty())
+        assertEquals(BotDifficulty.EASY, room.participants()[1].difficulty())
+        assertTrue(room.roomActions(human).none { it.type() == RoomAction.Type.SET_BOT && it.arguments().first() == 1 })
+        assertTrue(room.roomActions(human).filter { it.type() == RoomAction.Type.SET_BOT }.all { it.arguments()[1] == 0 })
+        val invalidRoster = roster.toMutableList().also {
+            it[1] = TableParticipant(it[1].id(), it[1].name(), true, false, BotDifficulty.HARD, null, true)
+        }
+        assertThrows(IllegalArgumentException::class.java) {
+            TaiwanSession.start(UUID.randomUUID(), invalidRoster, 4, TaiwanWall.expected(room.rules()), room.rules())
+        }
+        val saved = TaiwanCodec.saveSession(room)
+        assertThrows(IllegalArgumentException::class.java) { TaiwanCodec.restoreSession(saved.replace("\"EASY\"", "\"HARD\"")) }
         roomAction(room, RoomAction.Type.REMOVE_BOT, listOf(1))
         roomAction(room, RoomAction.Type.FILL_BOTS)
         assertTrue(room.participants().drop(1).all { it.bot() && it.ready() && it.externalBotId() == null })

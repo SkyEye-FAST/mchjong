@@ -383,8 +383,8 @@ final class TaiwanTableSmoke {
         var room = table.roomView(player);
         int target = (room.viewerSeat() + 1) % 4;
         roomAction(table, player, pos, new RoomAction(RoomAction.Type.SET_BOT, List.of(target, 0)));
-        roomAction(table, player, pos, new RoomAction(RoomAction.Type.SET_BOT, List.of(target, 1)));
-        check(table.roomView(player).seats().get(target).participant().difficulty() == BotDifficulty.HARD, "Taiwan difficulty packet rejected");
+        check(table.roomView(player).seats().get(target).participant().difficulty() == BotDifficulty.EASY, "Taiwan built-in Bot packet rejected");
+        check(table.roomView(player).actions().stream().filter(a -> a.type() == RoomAction.Type.SET_BOT).allMatch(a -> a.arguments().get(1) == 0), "Taiwan exposed an unsupported Bot choice");
         roomAction(table, player, pos, new RoomAction(RoomAction.Type.REMOVE_BOT, target));
         roomAction(table, player, pos, new RoomAction(RoomAction.Type.FILL_BOTS));
         var roster = table.roomView(player).seats().stream().map(TableRoomView.Seat::participant).toList();

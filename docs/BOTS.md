@@ -2,8 +2,8 @@
 
 ## Taiwan built-in opponent
 
-Taiwan rooms use the shared add/remove, difficulty and fill-seat controls under
-world `allowBots` policy. EASY and HARD currently share one deterministic policy.
+Taiwan rooms offer one built-in opponent through the shared add/remove and
+fill-seat controls under world `allowBots` policy. It uses one deterministic policy.
 One human and three built-in Bots can finish East, South, West and North, including
 repeat dealers. External Bots are unavailable for Taiwan.
 

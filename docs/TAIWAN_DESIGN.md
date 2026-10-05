@@ -177,7 +177,7 @@ score and rule chain. Native sealed hands retain the corresponding event timelin
 
 Human participants use the existing identity/mount authority. Built-in Bots use
 the shared room controls, become ready automatically and select issued actions
-only from their own recipient-safe views. EASY and HARD share the first policy;
+only from their own recipient-safe views. Taiwan offers one built-in Bot policy;
 see [Bot analysis](BOTS.md#taiwan-built-in-opponent). No human
 seated, or an active exit vote, pauses decisions, allowances and result reading.
 Pending responders spend their independent move allowance then reserve; timeout
